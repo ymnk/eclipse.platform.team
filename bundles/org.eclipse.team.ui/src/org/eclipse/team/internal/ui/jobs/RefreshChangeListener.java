@@ -28,16 +28,27 @@ class RefreshChangeListener implements ISubscriberChangeListener {
 		for (Iterator it = changes.iterator(); it.hasNext();) {
 			ISubscriberChangeEvent delta = (ISubscriberChangeEvent) it.next();
 			SyncInfo info = set.getSyncInfo(delta.getResource());
-			if (info != null) {
-				int direction = info.getKind() & SyncInfo.DIRECTION_MASK;
-				if (direction == SyncInfo.INCOMING || direction == SyncInfo.CONFLICTING) {
-					changedSyncInfos.add(info);
-				}
+			if (info != null && interestingChange(info)) {			
+				changedSyncInfos.add(info);
 			}
 		}
 		return (SyncInfo[]) changedSyncInfos.toArray(new SyncInfo[changedSyncInfos.size()]);
 	}
 
+	private boolean interestingChange(SyncInfo info) {
+		int kind = info.getKind();
+		if(isThreeWay()) {
+			int direction = SyncInfo.getDirection(kind);
+			return (direction == SyncInfo.INCOMING || direction == SyncInfo.CONFLICTING);
+		} else {
+			return SyncInfo.getChange(kind) != SyncInfo.IN_SYNC;
+		}
+	}
+	
+	private boolean isThreeWay() {
+		return collector.getSubscriber().getResourceComparator().isThreeWay();
+	}
+	
 	public void clear() {
 		changes.clear();
 	}

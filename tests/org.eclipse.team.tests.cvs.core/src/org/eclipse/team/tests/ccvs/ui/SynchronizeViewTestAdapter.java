@@ -16,16 +16,17 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CompareParticipant;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscriber.*;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 
 /**
  * SyncInfoSource that obtains SyncInfo from the SynchronizeView's SyncSet.
@@ -95,6 +96,20 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		return mergeSubscriber;
 	}
 	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#createCompareSubscriber(org.eclipse.core.resources.IProject, org.eclipse.team.internal.ccvs.core.CVSTag)
+	 */
+	public CVSCompareSubscriber createCompareSubscriber(IProject project, CVSTag tag) {
+		CVSCompareSubscriber s = super.createCompareSubscriber(project, tag);
+		ISynchronizeManager synchronizeManager = TeamUI.getSynchronizeManager();
+		ISynchronizeParticipant participant = new CompareParticipant(s);
+		synchronizeManager.addSynchronizeParticipants(
+				new ISynchronizeParticipant[] {participant});		
+		ISynchronizeView view = synchronizeManager.showSynchronizeViewInActivePage(null);
+		view.display(participant);
+		return s;
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#tearDown()

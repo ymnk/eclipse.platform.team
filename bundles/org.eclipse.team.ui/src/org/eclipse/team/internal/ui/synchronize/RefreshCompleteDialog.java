@@ -45,7 +45,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private Button promptWhenNoChanges;
 	private Button promptWithChanges;
 	private IDialogSettings settings;
-
+	private SyncInfoTree syncInfoSet = new SyncInfoTree();
+	
 	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event, SubscriberParticipant participant) {
 		super(parentShell, Policy.bind("RefreshCompleteDialog.4", participant.getName())); //$NON-NLS-1$
 		this.participant = participant;

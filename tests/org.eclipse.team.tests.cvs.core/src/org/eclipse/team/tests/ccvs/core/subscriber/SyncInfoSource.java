@@ -10,9 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import junit.framework.AssertionFailedError;
 
@@ -23,8 +21,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.*;
 
 /**
  * This class acts as the source for the sync info used by the subscriber tests.
@@ -35,10 +32,17 @@ public class SyncInfoSource {
 
 	protected static IProgressMonitor DEFAULT_MONITOR = new NullProgressMonitor();
 	protected List mergeSubscribers = new ArrayList();
+	protected List compareSubscribers = new ArrayList();
 	
 	public CVSMergeSubscriber createMergeSubscriber(IProject project, CVSTag root, CVSTag branch) {
 		CVSMergeSubscriber subscriber = new CVSMergeSubscriber(new IResource[] { project }, root, branch);
 		mergeSubscribers.add(subscriber);
+		return subscriber;
+	}
+	
+	public CVSCompareSubscriber createCompareSubscriber(IProject project, CVSTag tag) {
+		CVSCompareSubscriber subscriber = new CVSCompareSubscriber(new IResource[] { project }, tag);
+		compareSubscribers.add(subscriber);
 		return subscriber;
 	}
 	
