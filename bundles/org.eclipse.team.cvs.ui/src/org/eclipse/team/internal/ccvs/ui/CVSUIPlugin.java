@@ -7,8 +7,9 @@ package org.eclipse.team.internal.ccvs.ui;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPluginDescriptor;
@@ -20,7 +21,6 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSRemoteFile;
@@ -66,6 +66,12 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 * The repository manager
 	 */
 	private RepositoryManager repositoryManager;
+	
+	/** 
+	 * The list of resources that are auto-managed when added to a cvs project.
+	 * The list is read at startup from the persisted file.
+	 */
+	private String[] autoManagePatterns = new String[0];
 	
 	/**
 	 * CVSUIPlugin constructor
@@ -255,4 +261,18 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			throw new CoreException(e.getStatus());
 		}
 	}
+	/**
+	 * Gets the patterns that identify resources that will be automatically managed.
+	 */
+	public String[] getAutoManagePatterns() {
+		return autoManagePatterns;
+	}
+
+	/**
+	 * Sets the patterns that identify resources that will be automatically managed.
+	 */
+	public void setAutoManagePatterns(String[] autoManagePatterns) {
+		this.autoManagePatterns = autoManagePatterns;
+	}
+
 }
