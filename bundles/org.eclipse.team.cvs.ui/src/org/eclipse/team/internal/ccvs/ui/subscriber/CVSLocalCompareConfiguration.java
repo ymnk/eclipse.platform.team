@@ -52,8 +52,15 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet()); //$NON-NLS-1$
 		this.subscriber = subscriber;
 		this.collector = collector;
-		this.filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null, new SyncInfoFilter.ContentComparisonSyncInfoFilter());
+		this.filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null, new SyncInfoFilter() {
+			private SyncInfoFilter contentCompare = new SyncInfoFilter.ContentComparisonSyncInfoFilter();
+			public boolean select(SyncInfo info, IProgressMonitor monitor) {
+				// Want to select infos whose contents do not match
+				return !contentCompare.select(info, monitor);
+			}
+		});
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#dispose()
 	 */

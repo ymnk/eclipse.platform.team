@@ -20,12 +20,15 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.*;
 
 /**
- * This class provides the infrastucture for processing/dispatching of events in the 
- * background. This is useful to allow blocking operations to be more responsive by
- * delegating event processing and UI updating to background job.
- * <p>
- * This is also useful for scheduling changes that require a workspace lock but can't
- * be performed in a change delta.
+ * This class provides the infrastucture for processing/dispatching of events using a 
+ * background job. This is useful in the following situations. 
+ * <ul>
+ * <li>an operation is potentially long running but a resposive UI is desired
+ * while the operation is being performed.</li>
+ * <li>a change is a POST_CHANGE delta requires further modifications to the workspace
+ * which cannot be performed in the delta handler because the workspace is locked.</li>
+ * <li>a data structure is not thread safe and requires serialized operations.<li> 
+ * </ul>
  * </p>
  * @since 3.0
  */
@@ -147,7 +150,7 @@ public abstract class BackgroundEventHandler {
 	protected void jobDone(IJobChangeEvent event) {
 		if (isShutdown()) {
 			// The handler has been shutdown. Clean up the queue.
-			synchronized(this) {
+			synchronized(awaitingProcessing) {
 				awaitingProcessing.clear();
 			}
 		} else if (! isQueueEmpty()) {
@@ -182,42 +185,53 @@ public abstract class BackgroundEventHandler {
 	/**
 	 * Queue the event and start the job if it's not already doing work. If the job is 
 	 * already running then notify in case it was waiting.
+	 * @param event the event to be queued
 	 */
-	protected synchronized void queueEvent(Event event) {
-		if (Policy.DEBUG_BACKGROUND_EVENTS) {
-			System.out.println("Event queued on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		awaitingProcessing.add(event);
-		if (!isShutdown() && eventHandlerJob != null) {
-			if(eventHandlerJob.getState() == Job.NONE) {
-				schedule();
-			} else {
-				notify();
+	protected void queueEvent(Event event) {
+		synchronized(awaitingProcessing) {
+			if (Policy.DEBUG_BACKGROUND_EVENTS) {
+				System.out.println("Event queued on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			awaitingProcessing.add(event);
+			if (!isShutdown() && eventHandlerJob != null) {
+				if(eventHandlerJob.getState() == Job.NONE) {
+					schedule();
+				} else {
+					notify();
+				}
 			}
 		}
 	}
 	
+	/**
+	 * Return the name that is to be associated with the background job.
+	 * @return the job name
+	 */
 	protected String getName() {
 		return jobName;
 	}
 
-	/**
-	 * Get the next resource to be calculated.
-	 * @return Event to be processed
+	/*
+	 * Return the next event that has been queued, removing it from the queue. 
+	 * @return the next event in the queue
 	 */
-	private synchronized Event nextElement() {
-		if (isShutdown() || isQueueEmpty()) {
-			return null;
+	private Event nextElement() {
+		synchronized(awaitingProcessing) {
+			if (isShutdown() || isQueueEmpty()) {
+				return null;
+			}
+			return (Event) awaitingProcessing.remove(0);
 		}
-		return (Event) awaitingProcessing.remove(0);
 	}
 	
 	/**
 	 * Return whether there are unprocessed events on the event queue.
 	 * @return whether there are unprocessed events on the queue
 	 */
-	protected synchronized boolean isQueueEmpty() {
-		return awaitingProcessing.isEmpty();
+	protected boolean isQueueEmpty() {
+		synchronized(awaitingProcessing) {
+			return awaitingProcessing.isEmpty();
+		}
 	}
 	
 	/**
@@ -274,7 +288,7 @@ public abstract class BackgroundEventHandler {
 	 * @return <code>true</code> if processed events should be dispatched and
 	 * <code>false</code> otherwise
 	 */
-	private boolean isReadyForDispath() {		
+	protected boolean isReadyForDispath() {		
 		long duration = System.currentTimeMillis() - processingEventsDuration;
 		if(duration >= DISPATCH_DELAY) {
 			return true;
@@ -305,15 +319,22 @@ public abstract class BackgroundEventHandler {
 	 * Process the event in the context of a running background job. Subclasses may
 	 * (but are not required to) check the provided monitor for cancelation and shut down the 
 	 * receiver by invoking the <code>shutdown()</code> method.
+	 * <p>
+	 * In many cases, a background event handler will translate incoming events into outgoing
+	 * events. If this is the case, the handler should accumulate these events in the 
+	 * <code>proceessEvent</code> method and propogate them from the <code>dispatchEvent</code>
+	 * method which is invoked periodically in order to batch outgoing events and avoid
+	 * the UI "disco ball" effect.
 	 * 
-	 * @param event
-	 * @param monitor
+	 * @param event the <code>Event</code> to be processed
+	 * @param monitor a progress monitor
 	 */
 	protected abstract void processEvent(Event event, IProgressMonitor monitor) throws CoreException;
 
 	/**
-	 * @return Returns the eventHandlerJob.
-	 */
+	 * Return the job from which the <code>processedEvent</code> method is invoked. 
+	 * @return Returns the background event handlig job.
+	 */ 
 	public Job getEventHandlerJob() {
 		return eventHandlerJob;
 	}

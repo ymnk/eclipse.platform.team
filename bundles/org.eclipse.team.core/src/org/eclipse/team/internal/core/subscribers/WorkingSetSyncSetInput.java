@@ -11,8 +11,6 @@
 package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 
@@ -27,12 +25,6 @@ public class WorkingSetSyncSetInput extends SyncSetInputFromSyncSet {
 	
 	public void setWorkingSet(IResource[] resources) {
 		workingSetFilter.setWorkingSet(resources);
-		try {
-			// TODO::
-			reset(new NullProgressMonitor());
-		} catch (TeamException e) {
-			// TODO: ??
-		}
 	}
 	
 	public IResource[] getWorkingSet() {

@@ -18,27 +18,44 @@ import org.eclipse.team.internal.core.subscribers.*;
  * A <code>SyncInfoFilter</code> tests a <code>SyncInfo</code> for inclusion
  * typically in a <code>SyncInfoSet</code>.
  * 
+ * @see SyncInfo
+ * @see SyncInfoSet
+ * 
+ * @since 3.0
  */
 public abstract class SyncInfoFilter {
 	
 	/**
-	 * Filter that selects those <code>SyncInfo</code> whose contents do not match.
+	 * Selects <code>SyncInfo</code> whose contents match.
 	 */
 	public static class ContentComparisonSyncInfoFilter extends SyncInfoFilter {
 		ContentComparator criteria = new ContentComparator(false);
+		/**
+		 * Create a filter that does not ignore whitespace.
+		 */
+		public ContentComparisonSyncInfoFilter() {
+			this(false);
+		}
+		/**
+		 * Create a filter and configure how whitspace is handled.
+		 * @param ignoreWhitespace whether whitespace should be ignored
+		 */
+		public ContentComparisonSyncInfoFilter(boolean ignoreWhitespace) {
+			criteria = new ContentComparator(ignoreWhitespace);
+		}
 		public boolean select(SyncInfo info, IProgressMonitor monitor) {
 			ISubscriberResource remote = info.getRemote();
 			IResource local = info.getLocal();
 			if (remote == null) return local.exists();
 			if (!local.exists()) return true;
-			return !criteria.compare(local, remote, monitor);
+			return criteria.compare(local, remote, monitor);
 		}
 	}
 	
 	/**
-	 * Return true if the provided SyncInfo matches the filter.
+	 * Return <code>true</code> if the provided <code>SyncInfo</code> matches the filter.
 	 * 
-	 * @param info the sync info to be tested
+	 * @param info the <code>SyncInfo</code> to be tested
 	 * @param monitor a progress monitor
 	 * @return
 	 */
