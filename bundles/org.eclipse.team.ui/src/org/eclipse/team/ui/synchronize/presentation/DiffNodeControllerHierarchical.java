@@ -49,7 +49,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	// labels updated. This is required to support displaying information in a 
 	// parent label that is dependant on the state of its children. For example,
 	// showing conflict markers on folders if it contains child conflicts.
-	private Set parentsToUpdate = new HashSet();
+	private Set pendingLabelUpdates = new HashSet();
 	
 	// Map from resources to model objects. This allows effecient lookup
 	// of model objects based on changes occuring to resources.
@@ -296,7 +296,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 			handleResourceChanges(event);
 			handleResourceRemovals(event);
 			handleResourceAdditions(event);
-			updateParentLabels();
+			firePendingLabelUpdates();
 		} finally {
 			viewer.getControl().setRedraw(true);
 		}
@@ -330,17 +330,42 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 			// it, otherwise remove the old diff node and create a new
 			// sub-tree.
 			if (diffNode != null) {
-				if(diffNode instanceof SyncInfoDiffNode) {
-					((SyncInfoDiffNode)diffNode).update(info);
-					refreshInViewer(diffNode);
-				} else {
-					removeFromViewer(local);
-					addResources(new IResource[] {local});
-				}
+				handleChange(diffNode, info);
 			}
 		}
 	}
 	
+	/**
+	 * Handle the change for the existing diff node. The diff node
+	 * should be changed to have the given sync info
+	 * @param diffNode the diff node to be changed
+	 * @param info the new sync info for the diff node
+	 */
+	protected void handleChange(DiffNode diffNode, SyncInfo info) {
+		IResource local = info.getLocal();
+		// TODO: Get any additional sync bits
+		if(diffNode instanceof SyncInfoDiffNode) {
+			boolean wasConflict = isConflicting(diffNode);
+			// The update preserves any of the additional sync info bits
+			((SyncInfoDiffNode)diffNode).update(info);
+			boolean isConflict = isConflicting(diffNode);
+			updateLabel(diffNode);
+			if (wasConflict && !isConflict) {
+				conflictRemoved(diffNode);
+			} else if (!wasConflict && isConflict) {
+				setParentConflict(diffNode);
+			}
+		} else {
+			removeFromViewer(local);
+			addResources(new IResource[] {local});
+		}
+		// TODO: set any additional sync info bits
+	}
+
+	protected boolean isConflicting(DiffNode diffNode) {
+		return (diffNode.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING;
+	}
+
 	/**
 	 * Update the viewer for the sync set removals in the provided event. This
 	 * method is invoked by <code>handleChanges(ISyncInfoSetChangeEvent)</code>.
@@ -348,12 +373,23 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param event
 	 */
 	protected void handleResourceRemovals(ISyncInfoTreeChangeEvent event) {
+		// Remove the removed subtrees
 		IResource[] removedRoots = event.getRemovedSubtreeRoots();
-		if (removedRoots.length == 0)
-			return;
-		DiffNode[] nodes = new DiffNode[removedRoots.length];
 		for (int i = 0; i < removedRoots.length; i++) {
 			removeFromViewer(removedRoots[i]);
+		}
+		// We have to look for folders that may no longer be in the set
+		// (i.e. are in-sync) but still have descendants in the set
+		IResource[] removedResources = event.getRemovedResources();
+		for (int i = 0; i < removedResources.length; i++) {
+			IResource resource = removedResources[i];
+			if (resource.getType() != IResource.FILE) {
+				DiffNode node = getModelObject(resource);
+				if (node != null) {
+					removeFromViewer(resource);
+					addResources(new IResource[] {resource});
+				}
+			}
 		}
 	}
 
@@ -395,14 +431,6 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	protected SyncInfoTree getSyncInfoTree() {
 		return set;
 	}
-	
-	protected void refreshInViewer(DiffNode diffNode) {
-		if (canUpdateViewer()) {
-			AbstractTreeViewer tree = getTreeViewer();
-			viewer.refresh(diffNode, true);
-			updateParentLabels(diffNode);
-		}
-	}
 
 	/**
 	 * Remove any traces of the resource and any of it's descendants in the
@@ -412,20 +440,26 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 */
 	protected void removeFromViewer(IResource resource) {
 		DiffNode node = getModelObject(resource);
+		if (node == null) return;
+		boolean wasConflict = isConflicting(node);
 		clearModelObjects(node);
+		if (wasConflict) {
+			conflictRemoved(node);
+		}
 		if (canUpdateViewer()) {
 			AbstractTreeViewer tree = getTreeViewer();
 			tree.remove(node);
-			updateParentLabels(node);
 		}
 	}
 
 	protected void addToViewer(DiffNode node) {
 		associateDiffNode(node);
+		if (isConflicting(node)) {
+			setParentConflict(node);
+		}
 		if (canUpdateViewer()) {
 			AbstractTreeViewer tree = getTreeViewer();
 			tree.add(node.getParent(), node);
-			updateParentLabels(node);
 		}
 	}
 
@@ -459,14 +493,14 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * Forces the viewer to update the labels for parents whose children have
 	 * changed during this round of sync set changes.
 	 */
-	protected void updateParentLabels() {
+	protected void firePendingLabelUpdates() {
 		try {
 			if (canUpdateViewer()) {
 				AbstractTreeViewer tree = getTreeViewer();
-				tree.update(parentsToUpdate.toArray(new Object[parentsToUpdate.size()]), null);
+				tree.update(pendingLabelUpdates.toArray(new Object[pendingLabelUpdates.size()]), null);
 			}
 		} finally {
-			parentsToUpdate.clear();
+			pendingLabelUpdates.clear();
 		}
 	}
 
@@ -479,12 +513,106 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * Changed parents are accumulated and updated at the end of the change
 	 * processing
 	 */
-	protected void updateParentLabels(DiffNode diffNode) {
-		IDiffContainer parent = diffNode.getParent();
-		while (parent != null) {
-			parentsToUpdate.add(parent);
-			parent = parent.getParent();
+	protected void setParentConflict(DiffNode diffNode) {
+		propogateFlag(diffNode, AdaptableDiffNode.PROPOGATED_CONFLICT);
+	}
+	
+	/**
+	 * The given node has changed from a conflict. The PARENT_OF_CONFLICT
+	 * flag needs to be recalculated for the nodes parents
+	 * @param diffNode the node whose conflict state change
+	 */
+	protected void conflictRemoved(DiffNode diffNode) {
+		recalculateParentFlag(diffNode, AdaptableDiffNode.PROPOGATED_CONFLICT);
+	}
+	
+	public void setBusy(DiffNode[] nodes) {
+		for (int i = 0; i < nodes.length; i++) {
+			DiffNode node = nodes[i];
+			propogateFlag(node, AdaptableDiffNode.BUSY);
 		}
+	}
+	
+	public void clearBusy(DiffNode[] nodes) {
+		for (int i = 0; i < nodes.length; i++) {
+			DiffNode node = nodes[i];
+			recalculateParentFlag(node, AdaptableDiffNode.BUSY);
+		}
+	}
+	
+	/**
+	 * Add the given flag to the sync kind of the diff node and
+	 * all of its ancestors.
+	 * @param diffNode the diff node
+	 * @param flag the flag to be added to the diff node and its ancestors
+	 */
+	private void propogateFlag(DiffNode diffNode, int flag) {
+		addFlag(diffNode, flag);
+		DiffNode parent = (DiffNode)diffNode.getParent();
+		while (parent != null) {
+			if (hasFlag(parent, flag)) return;
+			addFlag(parent, flag);
+			parent = (DiffNode)parent.getParent();
+		}
+	}
+
+	/**
+	 * Return whether the given diff node has the one-bit flag set
+	 * in its sync kind.
+	 * @param diffNode the diff node
+	 * @param flag the one-bit flag
+	 * @return <code>true</code> if the flag is set in the diff node's sync kind
+	 */
+	private boolean hasFlag(DiffNode diffNode, int flag) {
+		return (((AdaptableDiffNode)diffNode).getFlags() & flag) != 0;
+	}
+	
+	private void addFlag(DiffNode diffNode, int flag) {
+		((AdaptableDiffNode)diffNode).addFlag(flag);
+		updateLabel(diffNode);
+	}
+	
+	private void removeFlag(DiffNode diffNode, int flag) {
+		((AdaptableDiffNode)diffNode).removeFlag(flag);
+		updateLabel(diffNode);
+	}
+	
+	private void recalculateParentFlag(DiffNode diffNode, int flag) {
+		removeFlag(diffNode, flag);
+		DiffNode parent = (DiffNode)diffNode.getParent();
+		if (parent != null) {
+			// If the parent doesn't have the tag, no recalculation is required
+			// Also, if the parent still has a child with the tag, no recalculation is needed
+			if (hasFlag(parent, flag) && !hasChildWithFlag(parent, flag)) {
+				// The parent no longer has the flag so propogate the reclaculation
+				recalculateParentFlag(parent, flag);
+			}
+		}
+	}
+	
+	/**
+	 * @param parent
+	 * @param flag
+	 * @return
+	 */
+	private boolean hasChildWithFlag(DiffNode parent, int flag) {
+		IDiffElement[] childen = parent.getChildren();
+		for (int i = 0; i < childen.length; i++) {
+			IDiffElement element = childen[i];
+			if (hasFlag((DiffNode)element, flag)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Update the label of the given diff node. Diff nodes
+	 * are accumulated and updated in a single call.
+	 * @param diffNode the diff node to be updated
+	 */
+	protected void updateLabel(DiffNode diffNode) {
+		pendingLabelUpdates.add(diffNode);
 	}
 	
 	/* (non-Javadoc)

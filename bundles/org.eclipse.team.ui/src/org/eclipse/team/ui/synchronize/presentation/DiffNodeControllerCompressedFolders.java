@@ -15,7 +15,6 @@ import java.util.*;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -205,8 +204,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 			} else {
 				// Either The folder node was added as the parent of a newly added out-of-sync file
 				// or the file was somehow already there so just refresh
-				refreshInViewer(existingNode);
-				
+				handleChange(existingNode, info);
 			}
 		}
 	}
@@ -216,44 +214,43 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	 */
 	protected void handleResourceRemovals(ISyncInfoTreeChangeEvent event) {
 		IResource[] roots = event.getRemovedSubtreeRoots();
-		Set removals = new HashSet();
 		
 		// First, deal with any projects that have been removed
-		List remainingRoots = new ArrayList();
+		List removedProjects = new ArrayList();
 		for (int i = 0; i < roots.length; i++) {
 			IResource resource = roots[i];
 			if (resource.getType() == IResource.PROJECT) {
-				DiffNode modelObject = getModelObject(resource);
-				removals.add(modelObject);
-				clearModelObjects(modelObject);
-			} else {
-				remainingRoots.add(resource);
+				removeFromViewer(resource);
+				removedProjects.add(resource);
 			}
 		}
-		roots = (IResource[]) remainingRoots.toArray(new IResource[remainingRoots.size()]);
 
-		// Then determine the other model objects that must be removed
-		if (roots.length > 0) {
-			IResource[] resources = event.getRemovedResources();
-			for (int i = 0; i < resources.length; i++) {
-				IResource resource = resources[i];
-				if (isChildOfRoot(resource, roots) || isCompressedParentEmpty(resource)) {
-					// A root of the resource has also been removed.
-					// However, the resource's model parent would be a 
-					// compressed folder on the resource's parent folder.
-					resource = resource.getParent();
-				}
-				DiffNode modelObject = getModelObject(resource);
-				if (modelObject != null) {
-					removals.add(modelObject);
-					clearModelObjects(modelObject);
-					updateParentLabels(modelObject);
+		IResource[] resources = event.getRemovedResources();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if (!removedProjects.contains(resource.getProject())) {
+				if (resource.getType() == IResource.FILE) {
+					if (isCompressedParentEmpty(resource)) {
+						// The parent compressed folder is also empty so remove it
+						removeFromViewer(resource.getParent());
+					} else {
+						removeFromViewer(resource);
+					}
+				} else {
+					// A folder has been removed (i.e. is in-sync)
+					// but may still contain children
+					// TODO: The remove followed by and add has a major
+					// problem since the remove does a removeToRoot.
+					// If it's the lst thing in the set (or subtree)
+					// the add will fail (silently even)
+					// Should just use remove but I don't have time
+					// to test it right now
+					removeFromViewer(resource);
+					if (hasFileMembers((IContainer)resource)) {
+						addResources(new IResource[] {resource});
+					}
 				}
 			}
-		}
-		AbstractTreeViewer tree = getTreeViewer();
-		if (tree != null) {
-			tree.remove(removals.toArray(new Object[removals.size()]));
 		}
 	}
 	
@@ -264,26 +261,19 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 				|| parent.getType() == IResource.PROJECT) {
 			return false;
 		}
+		return !hasFileMembers(parent);
+	}
+
+	private boolean hasFileMembers(IContainer parent) {
 		// Check if the sync set has any file children of the parent
 		IResource[] members = getSyncInfoTree().members(parent);
 		for (int i = 0; i < members.length; i++) {
 			IResource member = members[i];
 			if (member.getType() == IResource.FILE) {
-				return false;
-			}
-		}
-		// The parent does not contain any files
-		return true;
-	}
-
-	private boolean isChildOfRoot(IResource resource, IResource[] roots) {
-		for (int i = 0; i < roots.length; i++) {
-			IResource root = roots[i];
-			if (!root.equals(resource)
-					&& root.getFullPath().isPrefixOf(resource.getFullPath())) {
 				return true;
 			}
 		}
+		// The parent does not contain any files
 		return false;
 	}
 }

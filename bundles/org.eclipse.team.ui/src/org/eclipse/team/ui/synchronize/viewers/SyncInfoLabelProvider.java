@@ -16,11 +16,13 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.presentation.*;
+import org.eclipse.team.ui.synchronize.presentation.AdaptableDiffNode;
+import org.eclipse.ui.internal.WorkbenchColors;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
@@ -80,6 +82,12 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
 	 */
 	public Color getForeground(Object element) {
+		if (element instanceof AdaptableDiffNode) {
+			AdaptableDiffNode node = (AdaptableDiffNode)element;
+			if(node.hasFlag(AdaptableDiffNode.BUSY)) {
+				return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
+			}
+		}
 		return null;
 	}
 
@@ -174,23 +182,8 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 * @return whether the node has descendant conflicts
 	 */
 	private boolean hasDecendantConflicts(DiffNode node) {
-		if(node instanceof SyncInfoDiffNode) {
-			/*SyncInfoDiffNode diffNode = (SyncInfoDiffNode)node;
-			IResource resource = diffNode.getResource();
-			// If this node has no resource, we can't tell
-			// The subclass which created the node with no resource should have overridden this method
-			if (resource.getType() == IResource.FILE) return false;
-			// If the set has no conflicts then the node doesn't either
-			SyncInfoTree set = diffNode.getSyncInfoTree();
-			if (set.hasConflicts()) {
-				SyncInfo[] infos = set.getSyncInfos(resource, IResource.DEPTH_INFINITE);
-				for (int i = 0; i < infos.length; i++) {
-					SyncInfo info = infos[i];
-					if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
-						return true;
-					}
-				}
-			}*/
+		if(node instanceof AdaptableDiffNode) {
+			return ((AdaptableDiffNode)node).hasFlag(AdaptableDiffNode.PROPOGATED_CONFLICT);
 		}
 		return false;
 	}
