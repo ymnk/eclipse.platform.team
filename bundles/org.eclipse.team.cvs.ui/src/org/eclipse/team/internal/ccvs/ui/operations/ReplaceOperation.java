@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -33,7 +34,11 @@ public class ReplaceOperation extends UpdateOperation {
 		super(part, resources, new LocalOption[] { Update.IGNORE_LOCAL_CHANGES }, tag);
 	}
 
-	/* (non-Javadoc)
+	public ReplaceOperation(IWorkbenchPart part, ResourceMapping[] mappings, CVSTag tag, boolean b) {
+        super(part, mappings, new LocalOption[] { Update.IGNORE_LOCAL_CHANGES }, tag);
+    }
+
+    /* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
 	 */
 	protected String getTaskName() {

@@ -171,4 +171,9 @@ public abstract class MappingSelectionDialog extends DetailsDialog implements IP
      * @return the list label
      */
     protected abstract String getResourceListMessage(ResourceMapping mapping);
+
+    public ResourceMapping[] getMappings() {
+        return mappings;
+    }
+    
 }

@@ -21,11 +21,14 @@ Should we add this? We could also remove the getProjects() from the traversal.
 
 Pending Items:
 
- - Action nablement code is not mapping aware
+ - WorkspaceAction enablement code is not mapping aware
+    - However, enablement is performed used the resources obtained from the traversals
+    - The resources will be collected for each action. Would be nice to do it once and share the result
  
- - Decide how to convert selected resources into mappers. Choices are a single mapper for multiple resources or 
+ - [DONE] Decide how to convert selected resources into mappers. Choices are a single mapper for multiple resources or 
    a mapper per resource. The advantage of the second approach is that the mapper list will display each resource
    as opposed to a single entry that must be expanded or selected to see the resources it maps to.
+   - a mapper per resource will be used
  
  - [DONE] CVS commands need to respect DO_NOT_RECURSE flag 
  	- DONE and TESTED for Update, Commit, Add, Tag and Branch
@@ -34,10 +37,15 @@ Pending Items:
 
  - [DONE] Commit needs to be reworked but I'm postponing this until Silvio is done
 
- - [DEFERRED] Sync/Compare with Tag/Merge are a bit more complicated.
-   - they require a scope that will allow the particpant to access the depth of the traversals
+ - Sync/Compare with Tag/Merge are a bit more complicated.
+   - [DEFERRED] they require a scope that will allow the particpant to access the depth of the traversals
    - for now, they will be deep on th roots of the traversals
+   - [DONE] not enabled properly (because they are not subclasses of WorkspaceTraversalAction)
 
+ - Replace with Latest/Tag
+   - [DONE] use Mapping dialog for dirty overwrite
+   - run operation on mapping
+   
  - [DEFERRED] EditAction, UneditAction, ShowEditorsAction, GenerateDiffFileAction do not follow the standard action/operation pattern.
    - The patch is complicated by current architecture (i.e. single resource root)
 
@@ -63,15 +71,18 @@ Pending Items:
      need to be added to provide access to the traversal depth
      
  - Transitive adapters
-   - [PATCH READY] transitivity from IResource to ResourceMapping in adapter manager
+   - [PATCH READY BUT NOT NEEDED] transitivity from IResource to ResourceMapping in adapter manager
      - is this need if UI does special handing?
    - [PATCH READY] add ResourceMapping support to objectContribution handling
-   - repository persistant property filtering for ResourceMappings (PropertyTester)
+   - [PATCH READY] repository persistant property filtering for ResourceMappings (PropertyTester)
    	  - remove WorkbenchResourceMapping action filter!
    
  - Add to version control, ignore on Project
      
  - Performance!!!
+ 
+ - Provide context on update, replace that allows client to see remote state
+   - update example to use the context
      
 Summary of changes:
 

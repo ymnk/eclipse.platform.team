@@ -10,12 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.actions;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -61,17 +63,17 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         return getSelectedResourceMappings(CVSProviderPlugin.getTypeId());
     }
     
-    /**
-     * Return the selected traversals that are on CVS resources.
-     * @return the selected traversals that are on CVS resources
-     * @throws InvocationTargetException 
-     */
-    private /* temporarily */ ResourceTraversal[] getSelectedTraversals() throws InvocationTargetException {
-        try {
-            return getSelectedTraversals(CVSProviderPlugin.getTypeId());
-        } catch (TeamException e) {
-            throw new InvocationTargetException(e);
+    protected static IResource[] getRootTraversalResources(ResourceMapping[] mappings, ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
+        List result = new ArrayList();
+        for (int i = 0; i < mappings.length; i++) {
+            ResourceMapping mapping = mappings[i];
+            ResourceTraversal[] traversals = mapping.getTraversals(context, monitor);
+            for (int j = 0; j < traversals.length; j++) {
+                ResourceTraversal traversal = traversals[j];
+                result.addAll(Arrays.asList(traversal.getResources()));
+            }
         }
+        return (IResource[]) result.toArray(new IResource[result.size()]);
     }
 
 }
