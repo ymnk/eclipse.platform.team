@@ -13,12 +13,10 @@ package org.eclipse.team.core.subscribers;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.subscribers.SubscriberEventHandler;
-import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
+import org.eclipse.team.internal.core.subscribers.*;
 
 /**
  * This collector maintains a {@link SyncInfoSet} for a particular team subscriber keeping
@@ -34,6 +32,7 @@ import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
 public final class SubscriberSyncInfoCollector implements IResourceChangeListener, ISubscriberChangeListener {
 
 	private SyncSetInputFromSubscriber subscriberInput;
+	private SyncSetInputFromSyncSet filteredInput;
 	private SubscriberEventHandler eventHandler;
 	private Subscriber subscriber;
 	private IResource[] roots;
@@ -63,6 +62,12 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 		Assert.isNotNull(subscriber);
 		this.eventHandler = new SubscriberEventHandler(subscriber);
 		this.subscriberInput = eventHandler.getSyncSetInput();
+		filteredInput = new SyncSetInputFromSyncSet(subscriberInput.getSyncSet(), getEventHandler());
+		filteredInput.setFilter(new SyncInfoFilter() {
+			public boolean select(SyncInfo info, IProgressMonitor monitor) {
+				return true;
+			}
+		});
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
 		subscriber.addListener(this);
 	}
@@ -124,6 +129,9 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	public void dispose() {
 		eventHandler.shutdown();
 		subscriberInput.disconnect();
+		if(filteredInput != null) {
+			filteredInput.disconnect();
+		}
 		getSubscriber().removeListener(this);		
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 	}
@@ -304,5 +312,31 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 */
 	public SyncInfoTree getSubscriberSyncInfoSet() {
 		return subscriberInput.getSyncSet();
+	}
+	
+	public SyncInfoTree getSyncInfoSet() {
+		return filteredInput.getSyncSet();
+	}
+	
+	/**
+	 * Set the filter for this collector. Only elements that match the filter will
+	 * be in the out sync info set.
+	 * @see getSyncInfoSet()
+	 * @param filter the sync info filter
+	 */
+	public void setFilter(SyncInfoFilter filter) {
+		filteredInput.setFilter(filter);
+		filteredInput.reset();
+	}
+	
+	/**
+	 * Return the filter that is filtering the output of this collector.
+	 * @return a sync info filter
+	 */
+	public SyncInfoFilter getFilter() {
+		if(filteredInput != null) {
+			return filteredInput.getFilter();
+		}
+		return null;
 	}
 }

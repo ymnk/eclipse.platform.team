@@ -63,7 +63,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 			}
 		};
 		this.collector = new FilteredSyncInfoCollector(
-				participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
+				participant.getSubscriberSyncInfoCollector().getSyncInfoSet(), 
 				syncInfoSet, 
 				filter);		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
@@ -109,7 +109,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	}
 
 	protected SyncInfoSet getSubscriberSyncInfoSet() {
-		return participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
+		return participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
 	}
 	
 	/* (non-Javadoc)

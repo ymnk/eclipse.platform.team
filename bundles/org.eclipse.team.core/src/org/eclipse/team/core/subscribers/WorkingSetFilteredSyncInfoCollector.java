@@ -48,7 +48,7 @@ public final class WorkingSetFilteredSyncInfoCollector {
 		this.roots = roots;
 		this.eventHandler = collector.getEventHandler();	
 		// TODO: optimize and don't use working set if no roots are passed in
-		workingSetInput = new WorkingSetSyncSetInput((SubscriberSyncInfoSet)collector.getSubscriberSyncInfoSet(), getEventHandler());
+		workingSetInput = new WorkingSetSyncSetInput((SubscriberSyncInfoSet)collector.getSyncInfoSet(), getEventHandler());
 		filteredInput = new SyncSetInputFromSyncSet(workingSetInput.getSyncSet(), getEventHandler());
 		filteredInput.setFilter(new SyncInfoFilter() {
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
