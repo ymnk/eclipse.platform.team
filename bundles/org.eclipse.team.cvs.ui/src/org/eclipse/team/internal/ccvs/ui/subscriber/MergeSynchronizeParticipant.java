@@ -10,16 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.core.SaveContext;
 import org.eclipse.team.internal.core.SaveContextXMLWriter;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.PartInitException;
@@ -34,7 +34,6 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	public MergeSynchronizeParticipant(CVSMergeSubscriber subscriber) {
 		super();
 		setSubscriber(subscriber);
-		setImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION));
 	}
 			
 	/* (non-Javadoc)
@@ -42,14 +41,18 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	 */
 	protected void setSubscriber(TeamSubscriber subscriber) {
 		super.setSubscriber(subscriber);
-		setId(subscriber.getId());
-		setName(subscriber.getName());
+		String id = CVSMergeSubscriber.QUALIFIED_NAME;
+		try {
+			setInitializationData(TeamUI.getSynchronizeManager().getParticipantDescriptor(id).getConfigurationElement(), id, null);
+		} catch (CoreException e) {
+			CVSUIPlugin.log(e);
+		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
 	 */
-	public void init(QualifiedName id) throws PartInitException {
+	public void init(String instanceid) throws PartInitException {
 		SaveContext ctx; //$NON-NLS-1$
 		try {
 			ctx = SaveContextXMLWriter.readXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(id.getLocalName()));
@@ -62,7 +65,7 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#saveState(org.eclipse.team.core.ISaveContext)
 	 */
-	public void saveState() {
+	public void saveState(int instanceid) {
 		SubscriberInput input = getInput();
 		CVSMergeSubscriber s =(CVSMergeSubscriber)input.getSubscriber(); 
 		SaveContext ctx = s.saveState();

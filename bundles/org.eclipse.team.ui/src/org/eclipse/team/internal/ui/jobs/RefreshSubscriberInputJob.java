@@ -98,7 +98,6 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 					for (Iterator it = inputs.iterator(); it.hasNext();) {
 						SubscriberInput input = (SubscriberInput) it.next();
 						TeamSubscriber subscriber = input.getSubscriber();
-						monitor.setTaskName(subscriber.getName());
 						subscriber.refresh(input.workingSetRoots(), IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
 					}
 				} catch(TeamException e) {
@@ -118,7 +117,7 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 	 */
 	protected String getTaskName() {
 		// Return a meaningfull task nam since the job name will be generic
-		return Policy.bind("RefreshSubscriberJob.1", String.valueOf(inputs.size()), "all");
+		return Policy.bind("RefreshSubscriberJob.1", String.valueOf(inputs.size()), "all"); //$NON-NLS-1$
 	}
 	
 	/* (non-Javadoc)

@@ -16,6 +16,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.OpenWithMenu;
@@ -29,16 +30,18 @@ public class OpenWithActionGroup extends ActionGroup {
 
 	private OpenFileInSystemEditorAction openFileAction;
 	private OpenInCompareAction openInCompareAction;
+	private TeamSubscriberParticipantPage page;
 	private IViewPart part;
 
-	public OpenWithActionGroup(IViewPart part) {
-		this.part = part;
+	public OpenWithActionGroup(TeamSubscriberParticipantPage page) {
+		this.page = page;
+		this.part = page.getSynchronizeView();
 		makeActions();
 	}
 
 	protected void makeActions() {
 		openFileAction = new OpenFileInSystemEditorAction(part.getSite().getPage());
-		openInCompareAction = new OpenInCompareAction(part);		
+		openInCompareAction = new OpenInCompareAction(page);		
 	}
 
 	public void fillContextMenu(IMenuManager menu) {

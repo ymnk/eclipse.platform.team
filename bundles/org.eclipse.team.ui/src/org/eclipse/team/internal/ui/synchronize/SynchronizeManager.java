@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.ISaveContext;
@@ -32,6 +31,7 @@ import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.registry.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
 import org.eclipse.team.ui.ITeamUIConstants;
@@ -62,6 +62,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	
 	/**
 	 * List of registered synchronize view pages
+	 * {String id -> List participant instances}
 	 */
 	private Map synchronizeParticipants = new HashMap(10); 
 	private SynchronizeParticipantRegistry participantRegistry = new SynchronizeParticipantRegistry();
@@ -73,9 +74,12 @@ public class SynchronizeManager implements ISynchronizeManager {
 	// save context constants
 	private final static String CTX_PARTICIPANTS = "syncparticipants"; //$NON-NLS-1$
 	private final static String CTX_PARTICIPANT = "participant"; //$NON-NLS-1$
-	private final static String CTX_QUALIFIED_NAME = "qualified_name"; //$NON-NLS-1$
-	private final static String CTX_LOCAL_NAME = "local_name"; //$NON-NLS-1$
+	private final static String CTX_ID = "id"; //$NON-NLS-1$
+	private final static String CTX_INSTANCE_ID = "id"; //$NON-NLS-1$
 	private final static String FILENAME = "syncParticipants.xml"; //$NON-NLS-1$
+
+	public final static String DUMMY_INSTANCE_ID = "placeholder"; //$NON-NLS-1$
+
 	
 	/**
 	 * Notifies a participant listeners of additions or removals
@@ -197,7 +201,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#find(java.lang.String)
 	 */
-	public ISynchronizeParticipant find(QualifiedName id) {
+	public ISynchronizeParticipant find(String id, String instance_id) {
 		return (ISynchronizeParticipant)synchronizeParticipants.get(id);
 	}
 	
@@ -246,14 +250,13 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 */
 	public void initialize() {
 		try {
-			// Initialize the participant registry
+			// Initialize the participant registry - reads all participant extension descriptions.
 			participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
 			
-			// Instantiate and register any participants saved from a previous session
+			// Instantiate and register any participants saved from a previous session.
 			restoreSynchronizeParticipants();
 			
-			// Instantiate and register any static participant that has not already been
-			// created.
+			// Instantiate and register any static participant that has not already been created.
 			SynchronizeParticipantDescriptor[] desc = participantRegistry.getSynchronizeParticipants();
 			List participants = new ArrayList();
 			for (int i = 0; i < desc.length; i++) {
@@ -281,15 +284,14 @@ public class SynchronizeManager implements ISynchronizeManager {
 			for (int i = 0; i < contexts.length; i++) {
 				ISaveContext context = contexts[i];
 				if(context.getName().equals(CTX_PARTICIPANT)) {
-					String qualified_name = context.getAttribute(CTX_QUALIFIED_NAME);
-					String local_name = context.getAttribute(CTX_LOCAL_NAME);
-					SynchronizeParticipantDescriptor desc = participantRegistry.find(qualified_name);
-					QualifiedName id = new QualifiedName(qualified_name, local_name);					
+					String id = context.getAttribute(CTX_ID);
+					String instanceid = context.getAttribute(CTX_INSTANCE_ID);
+					SynchronizeParticipantDescriptor desc = participantRegistry.find(id);				
 					if(desc != null) {
 						IConfigurationElement cfgElement = desc.getConfigurationElement();
-						participants.add(createParticipant(id, desc));
+						participants.add(createParticipant(instanceid, desc));
 					} else {
-						TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id.toString()), null)); //$NON-NLS-1$
+						TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id), null)); //$NON-NLS-1$
 					}
 				}
 			}
@@ -302,10 +304,10 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/**
 	 * Creates a participant instance with the given id from the participant description
 	 */
-	private ISynchronizeParticipant createParticipant(QualifiedName id, SynchronizeParticipantDescriptor desc) throws CoreException {
+	private ISynchronizeParticipant createParticipant(String instanceid, SynchronizeParticipantDescriptor desc) throws CoreException {
 		ISynchronizeParticipant participant = (ISynchronizeParticipant)TeamUIPlugin.createExtension(desc.getConfigurationElement(), SynchronizeParticipantDescriptor.ATT_CLASS);
-		participant.setInitializationData(desc.getConfigurationElement(), id.toString(), id);
-		participant.init(id);
+		participant.setInitializationData(desc.getConfigurationElement(), instanceid, null);
+		participant.init(instanceid);
 		return participant;
 	}
 
@@ -319,21 +321,32 @@ public class SynchronizeManager implements ISynchronizeManager {
 		List children = new ArrayList();
 		try {
 			for (Iterator it = synchronizeParticipants.values().iterator(); it.hasNext();) {			
-				ISynchronizeParticipant participant = (ISynchronizeParticipant) it.next();			
-				QualifiedName id = participant.getId();
-				ISaveContext item = new SaveContext();				
-				item.setName(CTX_PARTICIPANT);
-				Map attributes = new HashMap();
-				attributes.put(CTX_QUALIFIED_NAME, id.getQualifier());
-				attributes.put(CTX_LOCAL_NAME, id.getLocalName());
-				item.setAttributes(attributes);				
-				children.add(item);
-				participant.saveState();
+				List participants = (List) it.next();
+				int instanceid = 0;
+				for (Iterator it2 = participants.iterator(); it2.hasNext(); ) {
+					ISynchronizeParticipant participant = (ISynchronizeParticipant) it2.next();				
+					ISaveContext item = new SaveContext();				
+					item.setName(CTX_PARTICIPANT);
+					Map attributes = new HashMap();
+					attributes.put(CTX_ID, participant.getId());
+					attributes.put(CTX_INSTANCE_ID, new Integer(instanceid));
+					item.setAttributes(attributes);				
+					children.add(item);
+					participant.saveState(instanceid);
+					instanceid++;
+				}
 			}
 			root.setChildren((SaveContext[])children.toArray(new SaveContext[children.size()]));
 			SaveContextXMLWriter.writeXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME, (SaveContext)root);
 		} catch (TeamException e) {
 			TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.10"), e)); //$NON-NLS-1$
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeManager#getParticipantDescriptor(java.lang.String)
+	 */
+	public ISynchronizeParticipantDescriptor getParticipantDescriptor(String id) {
+		return participantRegistry.find(id);
 	}
 }

@@ -32,12 +32,10 @@ import org.eclipse.ui.IWorkbenchActionConstants;
  */
 public class NavigateAction extends Action {
 	private final int direction;
-	private IViewPart part;
 	private TeamSubscriberParticipantPage page;
 	
 	public NavigateAction(IViewPart part, TeamSubscriberParticipantPage page, int direction) {
 		this.page = page;
-		this.part = part;
 		this.direction = direction;
 
 		IKeyBindingService kbs = part.getSite().getKeyBindingService();		
@@ -69,12 +67,12 @@ public class NavigateAction extends Action {
 		if(info.getLocal().getType() != IResource.FILE) {
 			if(! navigable.gotoDifference(direction)) {
 				info = getSyncInfoFromSelection();
-				OpenInCompareAction.openCompareEditor(part, info, true /* keep focus */);
+				OpenInCompareAction.openCompareEditor(page, info, true /* keep focus */);
 			}
 			return;
 		}
 		
-		IEditorPart editor = OpenInCompareAction.findOpenCompareEditor(part.getSite(), info.getLocal());			
+		IEditorPart editor = OpenInCompareAction.findOpenCompareEditor(page.getSynchronizeView().getSite(), info.getLocal());			
 		boolean atEnd = false;
 		CompareEditorInput input;
 		ICompareNavigator navigator;
@@ -87,19 +85,19 @@ public class NavigateAction extends Action {
 				if(navigator.selectChange(direction == INavigableControl.NEXT)) {
 					if(! navigable.gotoDifference(direction)) {
 						info = getSyncInfoFromSelection();
-						OpenInCompareAction.openCompareEditor(part, info, true /* keep focus */);
+						OpenInCompareAction.openCompareEditor(page, info, true /* keep focus */);
 					}
 				}				
 			}
 		} else {
 			// otherwise, select the next change and open a compare editor which will automatically
 			// show the first change.
-			OpenInCompareAction.openCompareEditor(part, info, true /* keep focus */);
+			OpenInCompareAction.openCompareEditor(page, info, true /* keep focus */);
 		}
 	}
 
 	private SyncInfo getSyncInfoFromSelection() {
-		IStructuredSelection selection = (IStructuredSelection)part.getSite().getPage().getSelection();
+		IStructuredSelection selection = (IStructuredSelection)page.getSynchronizeView().getSite().getPage().getSelection();
 		if(selection == null) return null;
 		Object obj = selection.getFirstElement();
 		SyncInfo info = OpenInCompareAction.getSyncInfo(obj);

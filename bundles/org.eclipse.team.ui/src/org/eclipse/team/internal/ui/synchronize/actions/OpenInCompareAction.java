@@ -28,7 +28,14 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoCompareInput;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorReference;
+import org.eclipse.ui.IReusableEditor;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPartSite;
 
 /**
  * Action to open a compare editor from a SyncInfo object.
@@ -38,9 +45,9 @@ import org.eclipse.ui.*;
  */
 public class OpenInCompareAction extends Action {
 	
-	private IViewPart part;
+	private TeamSubscriberParticipantPage part;
 	
-	public OpenInCompareAction(IViewPart part) {
+	public OpenInCompareAction(TeamSubscriberParticipantPage part) {
 		this.part = part;
 		Utils.initAction(this, "action.openInCompareEditor."); //$NON-NLS-1$
 	}
@@ -54,23 +61,23 @@ public class OpenInCompareAction extends Action {
 		}
 	}
 	
-	public static SyncInfoCompareInput openCompareEditor(IViewPart part, SyncInfo info, boolean keepFocus) {		
-		SyncInfoCompareInput input = getCompareInput(info);
+	public static SyncInfoCompareInput openCompareEditor(TeamSubscriberParticipantPage page, SyncInfo info, boolean keepFocus) {		
+		SyncInfoCompareInput input = getCompareInput(page.getParticipant(), info);
 		if(input != null) {
-			IWorkbenchPage page = part.getSite().getPage();
-			IEditorPart editor = findReusableCompareEditor(page);			
+			IWorkbenchPage wpage = page.getSite().getPage();
+			IEditorPart editor = findReusableCompareEditor(wpage);			
 			
 			if(editor != null) {
 				IEditorInput otherInput = editor.getEditorInput();
 				if(otherInput instanceof SyncInfoCompareInput && otherInput.equals(input)) {
 					// simply provide focus to editor
-					page.activate(editor);
+					wpage.activate(editor);
 				} else {
 					// if editor is currently not open on that input either re-use existing
 					if (!prefetchFileContents(info)) return null;
 					if(editor != null && editor instanceof IReusableEditor) {
 						CompareUI.reuseCompareEditor(input, (IReusableEditor)editor);
-						page.activate(editor);
+						wpage.activate(editor);
 					}
 				}
 			} else {
@@ -78,7 +85,7 @@ public class OpenInCompareAction extends Action {
 			}
 			
 			if(keepFocus) {
-				page.activate(part);
+				wpage.activate(page.getSynchronizeView());
 			}
 			return input;
 		}			
@@ -122,9 +129,9 @@ public class OpenInCompareAction extends Action {
 	/**
 	 * Returns a SyncInfoCompareInput instance for the current selection.
 	 */
-	private static SyncInfoCompareInput getCompareInput(SyncInfo info) {
+	private static SyncInfoCompareInput getCompareInput(ISynchronizeParticipant participant, SyncInfo info) {
 		if (info != null && info.getLocal() instanceof IFile) {
-			return SyncInfoCompareInput.createInput(info);								
+			return SyncInfoCompareInput.createInput(participant, info);								
 		}
 		return null;
 	}				

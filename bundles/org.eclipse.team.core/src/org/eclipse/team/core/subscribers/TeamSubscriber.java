@@ -31,20 +31,7 @@ import org.eclipse.team.core.sync.IRemoteResource;
 abstract public class TeamSubscriber {
 	
 	private List listeners = new ArrayList(1);
-	
-	/**
-	 * Return the unique id that identified this subscriber.
-	 */
-	abstract public QualifiedName getId();
-	
-	/**
-	 * Return the name of this subscription, in a format that is suitable for 
-	 * display to an end user.
-	 * 
-	 * @return String representing the name of this subscription. 
-	 */
-	abstract public String getName();
-	
+
 	/**
 	 * Return the description of this subscription, in a format that is suitable for 
 	 * display to an end user. The description should contain enough details to

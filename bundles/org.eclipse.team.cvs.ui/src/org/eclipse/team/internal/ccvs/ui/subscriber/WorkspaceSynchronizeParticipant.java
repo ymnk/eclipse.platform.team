@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
@@ -20,12 +19,12 @@ import org.eclipse.ui.part.IPageBookViewPage;
 
 public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 
-	public final static QualifiedName ID = new QualifiedName("org.eclipse.team.cvs.ui.cvsworkspace-participant", "syncparticipant"); //$NON-NLS-1$ //$NON-NLS-2$
+	public final static String ID = "org.eclipse.team.cvs.ui.cvsworkspace-participant"; //$NON-NLS-1$
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
 	 */
-	public void init(QualifiedName id) throws PartInitException {
+	public void init(String id) throws PartInitException {
 		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
 		setSubscriber(subscriber);
 	}
@@ -33,7 +32,7 @@ public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#saveState(org.eclipse.team.core.ISaveContext)
 	 */
-	public void saveState() {
+	public void saveState(int instanceid) {
 		// no state to save
 	}
 	

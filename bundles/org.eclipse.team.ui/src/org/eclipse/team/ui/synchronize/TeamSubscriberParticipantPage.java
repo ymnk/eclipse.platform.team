@@ -148,7 +148,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		createViewer(composite);
 				
 		// create actions
-		openWithActions = new OpenWithActionGroup(view);
+		openWithActions = new OpenWithActionGroup(this);
 		refactorActions = new RefactorActionGroup(view);
 		gotoNext = new NavigateAction(view, this, INavigableControl.NEXT);		
 		gotoPrevious = new NavigateAction(view, this, INavigableControl.PREVIOUS);
@@ -199,7 +199,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	
 	private void hookContextMenu() {
 		if(getViewer() != null) {
-			MenuManager menuMgr = new MenuManager(participant.getId().getQualifier()); //$NON-NLS-1$
+			MenuManager menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
 			menuMgr.setRemoveAllWhenShown(true);
 			menuMgr.addMenuListener(new IMenuListener() {
 				public void menuAboutToShow(IMenuManager manager) {
@@ -208,7 +208,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			});
 			Menu menu = menuMgr.createContextMenu(viewer.getControl());
 			viewer.getControl().setMenu(menu);			
-			getSite().registerContextMenu(participant.getId().getQualifier(), menuMgr, viewer);
+			getSite().registerContextMenu(participant.getId(), menuMgr, viewer);
 		}
 	}	
 
@@ -594,5 +594,12 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 */
 	public TeamSubscriberParticipant getParticipant() {
 		return participant;
+	}
+	
+	/**
+	 * @return Returns the view.
+	 */
+	public ISynchronizeView getSynchronizeView() {
+		return view;
 	}
 }

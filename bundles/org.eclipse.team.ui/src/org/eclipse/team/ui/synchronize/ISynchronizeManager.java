@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.internal.ui.registry.ISynchronizeParticipantDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 
 /**
@@ -74,11 +74,21 @@ public interface ISynchronizeManager {
 	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage page);
 	
 	/**
-	 * Returns a registered synchronize participant with the given id, io <code>null</code>
-	 * if one with that id is not registered.
+	 * Returns a registered synchronize participant with the given id and instance id.
+	 * If instance id is <code>null</code> the first registered participant with id
+	 * is returned.
 	 * 
-	 * @return a registered synchronize participant with the given id, io <code>null</code>
+	 * @return a registered synchronize participant with the given id, or <code>null</code>
 	 * if one with that id is not registered.
 	 */
-	public ISynchronizeParticipant find(QualifiedName id);
+	public ISynchronizeParticipant find(String id, String instance_id);
+	
+	/**
+	 * Returns the participant descriptor for the given participant id or 
+	 * <code>null</code> if a descriptor is not found for that id.
+	 * 
+	 * @return the participant descriptor for the given participant id or 
+	 * <code>null</code> if a descriptor is not found for that id.
+	 */
+	public ISynchronizeParticipantDescriptor getParticipantDescriptor(String id);
 }

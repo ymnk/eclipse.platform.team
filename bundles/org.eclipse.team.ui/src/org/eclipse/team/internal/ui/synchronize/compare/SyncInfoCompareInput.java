@@ -29,15 +29,18 @@ import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 
 public class SyncInfoCompareInput extends CompareEditorInput {
 
 	private SyncInfo sync;
 	private SyncInfoDiffNode node;
 	private static Image titleImage;
+	private static ISynchronizeParticipant participant;
 	
-	public static SyncInfoCompareInput createInput(SyncInfo sync) {
+	public static SyncInfoCompareInput createInput(ISynchronizeParticipant participant, SyncInfo sync) {
 				
+		SyncInfoCompareInput.participant = participant;
 		// Create the local ITypedElement
 		ITypedElement localTypedElement = SyncInfoDiffNode.createTypeElement(sync.getLocal(), sync.getKind());
 		
@@ -109,7 +112,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	 * @see org.eclipse.compare.CompareEditorInput#getTitle()
 	 */
 	public String getTitle() {		
-		return Policy.bind("SyncInfoCompareInput.title", sync.getSubscriber().getName(),  node.getName()); //$NON-NLS-1$
+		return Policy.bind("SyncInfoCompareInput.title", participant.getName(),  node.getName()); //$NON-NLS-1$
 	}
 	
 	protected void updateLabels() {
@@ -156,7 +159,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	 * @see org.eclipse.ui.IEditorInput#getToolTipText()
 	 */
 	public String getToolTipText() {
-	return Policy.bind("SyncInfoCompareInput.tooltip", sync.getSubscriber().getName(),  node.getName()); //$NON-NLS-1$
+	return Policy.bind("SyncInfoCompareInput.tooltip", participant.getName(),  node.getName()); //$NON-NLS-1$
 	}
 
 	/* (non-Javadoc)

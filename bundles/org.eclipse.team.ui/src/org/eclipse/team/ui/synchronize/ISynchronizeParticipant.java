@@ -11,7 +11,6 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.runtime.IExecutableExtension;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.ui.PartInitException;
@@ -37,7 +36,7 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @return the unique id that identified the <i>type <i>of this
 	 *         synchronize participant.
 	 */
-	public QualifiedName getId();
+	public String getId();
 
 	/**
 	 * Returns the name of this synchronize participant.
@@ -84,12 +83,12 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @exception PartInitException
 	 *                if this participant was not initialized successfully
 	 */
-	public void init(QualifiedName id) throws PartInitException;
+	public void init(String id) throws PartInitException;
 
 	/**
 	 * Saves the participants object state.
 	 */
-	public void saveState();
+	public void saveState(int instanceid);
 
 	/**
 	 * Adds a listener for changes to properties of this synchronize

@@ -19,7 +19,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 public class SynchronizeParticipantRegistry extends RegistryReader {
 
-	private static final String TAG_SYNCPARTICIPANT = "participant";
+	private static final String TAG_SYNCPARTICIPANT = "participant"; //$NON-NLS-1$
 	private Map participants = new HashMap();
 	
 	public SynchronizeParticipantRegistry() {
@@ -35,7 +35,7 @@ public class SynchronizeParticipantRegistry extends RegistryReader {
 			SynchronizeParticipantDescriptor desc;
 			try {
 				desc = new SynchronizeParticipantDescriptor(element, descText);
-				participants.put(desc.getId().getQualifier(), desc);
+				participants.put(desc.getId(), desc);
 			} catch (CoreException e) {
 				TeamUIPlugin.log(e);
 			}

@@ -79,7 +79,7 @@ public class RefreshAction extends Action {
 		// The scheduled background refresh will restart automatically.
 		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
 		if(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_BACKGROUND_SYNC)) {			
-			RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", new Integer(resources.length).toString(), subscriber.getName()), resources, subscriber); //$NON-NLS-1$
+			RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", new Integer(resources.length).toString(), ""), resources, subscriber);
 			JobStatusHandler.schedule(job, SubscriberAction.SUBSCRIBER_JOB_TYPE);
 		} else { 			
 			runBlocking(subscriber, resources);

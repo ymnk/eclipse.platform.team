@@ -127,7 +127,6 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 					return Status.CANCEL_STATUS;
 				}
 				try {					
-					monitor.setTaskName(subscriber.getName());
 					subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
 				} catch(TeamException e) {
 					status.merge(e.getStatus());

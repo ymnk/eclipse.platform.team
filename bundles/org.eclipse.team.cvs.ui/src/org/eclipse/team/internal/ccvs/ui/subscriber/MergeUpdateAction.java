@@ -99,7 +99,7 @@ public class MergeUpdateAction extends SafeUpdateAction {
 			// Assumption that all nodes are from the same subscriber.
 			currentSubcriber = nodes[0].getSubscriber();
 			if (!(currentSubcriber instanceof CVSMergeSubscriber)) {
-				throw new CVSException(Policy.bind("MergeUpdateAction.invalidSubscriber", currentSubcriber.getId().toString())); //$NON-NLS-1$
+				throw new CVSException(Policy.bind("MergeUpdateAction.invalidSubscriber", currentSubcriber.toString())); //$NON-NLS-1$
 			}
 			CVSTag startTag = ((CVSMergeSubscriber)currentSubcriber).getStartTag();
 			CVSTag endTag = ((CVSMergeSubscriber)currentSubcriber).getEndTag();

@@ -14,7 +14,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.ListenerList;
@@ -37,7 +36,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	private ListenerList fListeners;
 
 	private String fName;
-	private QualifiedName fId;
+	private String fId;
 	private ImageDescriptor fImageDescriptor;
 	protected IConfigurationElement configElement;
 
@@ -152,7 +151,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * 
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#getId()
 	 */
-	public QualifiedName getId() {
+	public String getId() {
 		return fId;
 	}
 
@@ -210,7 +209,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		configElement = config;
 
 		// Id
-		fId = new QualifiedName(config.getAttribute("qualified_name"), config.getAttribute("local_name"));
+		fId = config.getAttribute("id");
 
 		// Title.
 		fName = config.getAttribute("name"); //$NON-NLS-1$
@@ -250,10 +249,6 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * implementation does nothing. Subclasses may override.
 	 */
 	protected void dispose() {
-	}
-	
-	protected void setId(QualifiedName id) {
-		this.fId = id;
 	}
 	
 	/**

@@ -16,8 +16,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.ui.IActionFilter;
+import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
 
 /**
  * A SynchronizeViewNode instance appears in the Synchronize View. Actions contributed to
@@ -26,7 +25,7 @@ import org.eclipse.ui.IActionFilter;
  * <p>
  * @see org.eclipse.team.ui.sync.ISynchronizeViewNode
  */
-public class SynchronizeViewNode implements IAdaptable, IActionFilter, ITeamSubscriberParticipantNode {
+public class SynchronizeViewNode implements IAdaptable, ITeamSubscriberParticipantNode {
 
 	private IResource resource;
 	private SubscriberInput input;
@@ -113,22 +112,5 @@ public class SynchronizeViewNode implements IAdaptable, IActionFilter, ITeamSubs
 	 */
 	public String toString() {
 		return "SynchronizeViewNode for " + getResource().getFullPath().toString(); //$NON-NLS-1$
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IActionFilter#testAttribute(java.lang.Object, java.lang.String, java.lang.String)
-	 */
-	public boolean testAttribute(Object target, String name, String value) {
-		if (!(target instanceof SynchronizeViewNode)) {
-			return false;
-		}
-		TeamSubscriber subscriber = ((SynchronizeViewNode) target).getTeamSubscriber();
-		String qualifier = subscriber.getId().getQualifier();
-		if (name.equals("startsWith")) { //$NON-NLS-1$			
-			return qualifier.startsWith(value);
-		} else if(name.equals("equals")) { //$NON-NLS-1$
-			return qualifier.equals(value);
-		}
-		return false;
 	}
 }
