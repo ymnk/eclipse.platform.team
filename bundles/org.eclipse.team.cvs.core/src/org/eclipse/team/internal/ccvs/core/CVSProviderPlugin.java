@@ -38,7 +38,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.RemoteContentsCache;
+import org.eclipse.team.core.subscribers.RemoteContentsCache;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
