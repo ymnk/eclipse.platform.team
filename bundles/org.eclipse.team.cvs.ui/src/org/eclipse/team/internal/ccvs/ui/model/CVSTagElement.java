@@ -23,7 +23,7 @@ import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public class CVSTagElement extends CVSModelElement implements IAdaptable {
+public class CVSTagElement extends CVSModelElement implements IAdaptable, IDeferredWorkbenchAdapter {
 	CVSTag tag;
 	ICVSRepositoryLocation root;
 
@@ -57,20 +57,6 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 		return root.hashCode() ^ tag.hashCode();
 	}
 
-	public Object[] internalGetChildren(Object o, IWorkingSet set, IProgressMonitor monitor) throws TeamException {
-		ICVSRemoteResource[] children = CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
-		if (set != null)
-			children = CVSUIPlugin.getPlugin().getRepositoryManager().filterResources(set, children);
-		return children;
-	}
-
-	/**
-	 * Return children of the root with this tag.
-	 */
-	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
-		return internalGetChildren(o, null, monitor);
-	}
-
 	public ImageDescriptor getImageDescriptor(Object object) {
 		if (!(object instanceof CVSTagElement))
 			return null;
@@ -90,6 +76,11 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 			return null;
 		return ((CVSTagElement) o).tag.getName();
 	}
+	
+	public String toString() {
+		return tag.getName();
+	}
+	
 	public Object getParent(Object o) {
 		if (!(o instanceof CVSTagElement))
 			return null;
@@ -97,7 +88,10 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	}
 
 	protected Object[] fetchChildren(Object o, IProgressMonitor monitor) throws TeamException {
-		return CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
+		ICVSRemoteResource[] children = CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
+		if (getWorkingSet() != null)
+			children = CVSUIPlugin.getPlugin().getRepositoryManager().filterResources(getWorkingSet(), children);
+		return children;
 	}
 	
 	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
@@ -111,12 +105,16 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	public String getUniqueId() {
 		return "org.eclipse.team.cvs.ui.model.tagelement";
 	}
-	
+
 	public boolean isContainer() {
 		return true;
 	}
 	
 	public boolean isDeferred() {
 		return true;
+	}
+
+	public boolean isThreadSafe() {
+		return false;
 	}
 }

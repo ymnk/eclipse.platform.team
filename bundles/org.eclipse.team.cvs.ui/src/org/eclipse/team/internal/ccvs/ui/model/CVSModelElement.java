@@ -15,13 +15,13 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.progress.IElementCollector;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public abstract class CVSModelElement implements IDeferredWorkbenchAdapter {
+public abstract class CVSModelElement implements IWorkbenchAdapter {
 	
 	private IRunnableContext runnableContext;
 	private IWorkingSet workingSet;
@@ -95,24 +95,5 @@ public abstract class CVSModelElement implements IDeferredWorkbenchAdapter {
 	 */
 	protected void handle(Throwable t) {
 		CVSUIPlugin.openError(null, null, null, t, CVSUIPlugin.LOG_NONTEAM_EXCEPTIONS);
-	}
-		
-	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
-	}
-	
-	public String getUniqueId() {
-		return "org.eclipse.team.cvs.ui.cvsmodelelement";
-	}
-
-	public boolean isContainer() {		
-		return false;
-	}
-	
-	public boolean isDeferred() {
-		return false;
-	}
-
-	public boolean isThreadSafe() {	
-		return false;
-	}
+	}		
 }

@@ -23,8 +23,11 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 
 abstract public class DeferredElementCollector implements IElementCollector {
 	
+	private int BATCH_SIZE = 5;
 	private Viewer viewer;
 	private boolean DEBUG = true;
+	private long FAKE_LATENCY = 100; // milliseconds
+	boolean hasAddedChildren = false;
 	
 	private class RemoteJob extends UIJob {
 		Object[] newElements;
@@ -47,12 +50,26 @@ abstract public class DeferredElementCollector implements IElementCollector {
 			if (monitor.isCanceled()) {
 				return Status.CANCEL_STATUS;
 			}
+			
+			if(DEBUG) {
+				System.out.print("DeferredCollector adding to viewer [" + newElements.length + "]: ");
+				for (int i = 0; i < newElements.length; i++) {
+					System.out.print(newElements[i].toString() + ",");
+				}	
+				System.out.print("\n");
+			}
+			hasAddedChildren = true;
 			if(viewer instanceof AbstractTreeViewer) {
 				((AbstractTreeViewer) viewer).add(parent, newElements);
 			}
 			return Status.OK_STATUS;
 		}
 		void runBatch(Object[] elements) {
+			if(elements.length == 0) {
+				if(viewer instanceof AbstractTreeViewer) {
+					//((AbstractTreeViewer) viewer).
+				}
+			}
 			working = true;
 			this.newElements = elements;
 			schedule();
@@ -71,7 +88,7 @@ abstract public class DeferredElementCollector implements IElementCollector {
 		if (viewer instanceof AbstractTreeViewer) {
 			RemoteJob remoteJob = new RemoteJob(parent);
 			int batchStart = 0;
-			int batchEnd = 0;
+			int batchEnd = children.length > BATCH_SIZE ? BATCH_SIZE : children.length;
 			//process children until all children have been sent to the UI
 			while (batchStart < children.length) {	
 				if (monitor.isCanceled()) {
@@ -79,22 +96,33 @@ abstract public class DeferredElementCollector implements IElementCollector {
 					return;
 				}				
 				
-				if(DEBUG) slowDown(100);
+				if(DEBUG) slowDown(FAKE_LATENCY);
 			
 				//only send a new batch when the last batch is finished
 				if (!remoteJob.isWorking()) {
-					int batchLength = batchEnd - batchStart + 1;
+					int batchLength = batchEnd - batchStart;
 					Object[] batch = new Object[batchLength];
 					System.arraycopy(children, batchStart, batch, 0, batchLength);
+					
 					remoteJob.runBatch(batch);
-					batchStart = batchEnd + 1;
+					
+					batchStart += batchLength;
+					batchEnd = (batchStart + BATCH_SIZE);
+					if(batchEnd >= children.length) {
+						batchEnd = children.length;
+					} 
 				}
-				if (batchEnd < children.length)
-					batchEnd++;
 			}
 		} else {
 			viewer.refresh();
 		}
+	}
+	
+	public void done(Object parent) {
+//		if (viewer instanceof AbstractTreeViewer) {
+//			RemoteJob remoteJob = new RemoteJob(parent);
+//			remoteJob.runBatch(new Object[0]);
+//		}
 	}
 	
 	private void slowDown(long time) {
