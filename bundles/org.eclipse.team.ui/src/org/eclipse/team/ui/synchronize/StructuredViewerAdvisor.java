@@ -137,21 +137,27 @@ public abstract class StructuredViewerAdvisor {
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setContentProvider(getContentProvider());
 		hookContextMenu(viewer);
-		
-		initializeActions(viewer);
 	}
 	
 	/*
 	 * Initializes actions that are contributed directly by the advisor.
 	 * @param viewer the viewer being installed
 	 */
-	private void initializeActions(StructuredViewer viewer) {
+	private void initializeWorkingSetActions() {
 		// view menu
 		workingSetGroup = new WorkingSetFilterActionGroup(
 				configuration.getSite().getShell(), 
 				getUniqueId(configuration.getParticipant()), 
 				propertyListener, 
-				configuration.getWorkingSet());		
+				configuration.getWorkingSet());
+		configuration.addPropertyChangeListener(new IPropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent event) {
+				if (event.getProperty().equals(ISynchronizePageConfiguration.P_WORKING_SET)) {
+					IWorkingSet set = configuration.getWorkingSet();
+					workingSetGroup.setWorkingSet(set);
+				}
+			}
+		});
 		statusLine = new StatusLineContributionGroup(
 				configuration.getSite().getShell(), 
 				configuration, 
@@ -164,6 +170,9 @@ public abstract class StructuredViewerAdvisor {
 	public void dispose() {
 		if (statusLine != null) {
 			statusLine.dispose();
+		}
+		if (workingSetGroup != null) {
+			workingSetGroup.dispose();
 		}
 		if (getActionGroup() != null) {
 			getActionGroup().dispose();
@@ -357,18 +366,17 @@ public abstract class StructuredViewerAdvisor {
 				}
 				groups = (String[]) o;
 				int start = 0;
-				if (workingSetGroup != null) {
-					if (groups.length > 0
-							&& groups[0]
-									.equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
-						// Special handling for working set group
-						workingSetGroup.fillActionBars(actionBars);
-						menu.add(new Separator());
-						menu.add(new Separator());
-						menu.add(new Separator(getGroupId("others"))); //$NON-NLS-1$
-						menu.add(new Separator());
-						start = 1;
-					}
+				if (groups.length > 0
+						&& groups[0]
+								.equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
+					// Special handling for working set group
+					initializeWorkingSetActions();
+					workingSetGroup.fillActionBars(actionBars);
+					menu.add(new Separator());
+					menu.add(new Separator());
+					menu.add(new Separator(getGroupId("others"))); //$NON-NLS-1$
+					menu.add(new Separator());
+					start = 1;
 				}
 				for (int i = start; i < groups.length; i++) {
 					String group = groups[i];
@@ -379,7 +387,7 @@ public abstract class StructuredViewerAdvisor {
 			}
 			// status line
 			IStatusLineManager statusLineMgr = actionBars.getStatusLineManager();
-			if (statusLineMgr != null) {
+			if (statusLineMgr != null && statusLine != null) {
 				statusLine.fillActionBars(actionBars);
 			}
 			

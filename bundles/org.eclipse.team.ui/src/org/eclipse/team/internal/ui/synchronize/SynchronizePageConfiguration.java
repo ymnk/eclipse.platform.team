@@ -515,6 +515,6 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#setComparisonType(java.lang.String)
 	 */
 	public void setComparisonType(String type) {
-		setProperty(P_VIEWER_STYLE,type);
+		setProperty(P_COMPARISON_TYPE,type);
 	}
 }

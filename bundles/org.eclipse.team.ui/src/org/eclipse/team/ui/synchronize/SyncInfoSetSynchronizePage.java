@@ -210,6 +210,7 @@ public abstract class SyncInfoSetSynchronizePage extends Page implements ISynchr
 	}
 
 	private boolean internalSetWorkingSet(IWorkingSet oldSet, IWorkingSet workingSet) {
+		if (workingSet == null && oldSet == null) return false;
 		if (workingSet == null || !workingSet.equals(oldSet)) {
 			updateWorkingSet(workingSet);
 			IDialogSettings settings = getSettings();

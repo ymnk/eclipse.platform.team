@@ -121,7 +121,7 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 		// before the menu is shown.
 		// It is also quite possible that this menu hasn't been created when a
 		// setWorking set property change occurs.
-		if(bars.getMenuManager().find(id) != null) {
+		if(bars != null && bars.getMenuManager().find(id) != null) {
 			updateMruContribution(bars.getMenuManager());
 		}
 		//bars.updateActionBars();
