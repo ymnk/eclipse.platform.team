@@ -20,7 +20,7 @@ import org.eclipse.team.core.*;
 import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
 import org.eclipse.team.internal.core.registry.DeploymentProviderRegistry;
 
-public class DeploymentProviderManager implements IDeploymentProviderManager  {
+public class DeploymentProviderManager implements IDeploymentProviderManager, IResourceChangeListener  {
 	
 	// key for remembering if state has been loaded for a project
 	private static final QualifiedName WRITE_TIMESTAMP = new QualifiedName(TeamPlugin.ID, "writetime"); //$NON-NLS-1$
@@ -270,15 +270,13 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	 * manager. Each participant is also given the chance to save it's state. 
 	 */
 	private void saveState(IProject project) throws TeamException {
-		IFile settingsFile = project.getFile(FILENAME);
+		File file = getNonsharedSettingsFile(project);
 		try {
-			// Obtain a rule to ensure that others don't modify the file
-			Platform.getJobManager().beginRule(settingsFile, null);
 			XMLMemento xmlMemento = XMLMemento.createWriteRoot(CTX_PROVIDERS);	
 			List providers = (List)mappings.get(project);
 			if(providers == null) {
-				if(settingsFile.exists()) {
-					settingsFile.delete(true /* force */, true /* keep history */, null);
+				if (file.exists()) {
+					file.delete();
 				}
 			} else {
 				for (Iterator it2 = providers.iterator(); it2.hasNext(); ) {
@@ -287,24 +285,8 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 					node.putString(CTX_ID, mapping.getDescription().getId());
 					node.putString(CTX_PATH, mapping.getContainer().getProjectRelativePath().toString());
 					mapping.getProvider().saveState(node.createChild(CTX_PROVIDER_DATA));
-				}
-				if(! settingsFile.exists()) {
-					settingsFile.create(new ByteArrayInputStream(new byte[0]), true, null);
-				}
-				Writer writer = new BufferedWriter(new FileWriter(settingsFile.getLocation().toFile()));
-				try {
-					xmlMemento.save(writer);
-				} finally {
-					writer.close();
-					settingsFile.refreshLocal(IResource.DEPTH_ZERO, null);
-					settingsFile.setPersistentProperty(WRITE_TIMESTAMP, Long.toString(settingsFile.getModificationStamp()));
-				}
-				// Write the state to the meta-data area as well to ensure that
-				// external modifications made before the state is loaded do not
-				// result in leaked resources
-				IPath metaPath = project.getPluginWorkingLocation(TeamPlugin.getPlugin().getDescriptor());
-				metaPath = metaPath.append(FILENAME);
-				writer = new BufferedWriter(new FileWriter(metaPath.toFile()));
+				}				
+				Writer writer = new BufferedWriter(new FileWriter(file));
 				try {
 					xmlMemento.save(writer);
 				} finally {
@@ -315,35 +297,34 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			throw new TeamException("An I/O error occurred while persisting the deployment configurations for project {0}." + project.getName(), e);
 		} catch(CoreException ce) {
 			throw TeamException.asTeamException(ce);
-		} finally {
-			Platform.getJobManager().endRule(settingsFile);
 		}
 	}
 	
+	/**
+	 * @param project
+	 * @return
+	 */
+	private File getNonsharedSettingsFile(IProject project) {
+		IPath metaPath = project.getPluginWorkingLocation(TeamPlugin.getPlugin().getDescriptor());
+		metaPath = metaPath.append(FILENAME);
+		File file = metaPath.toFile();
+		return file;
+	}
+
 	/*
 	 * Load the mappings for the given project and return them.
 	 */
 	private Mapping[] loadMappings(IProject project) throws TeamException, CoreException {
-		IFile file = project.getFile(FILENAME);
+		File file = getNonsharedSettingsFile(project);
 		if(! file.exists()) {
 			// The file may have been deleted before our delta listener was loaded.
 			// If there are any deployments stored in the meta data area, dispose of them
 			// TODO: See if there were any before and dispose of them
 			return new Mapping[0];
 		}
-		String timestamp = file.getPersistentProperty(WRITE_TIMESTAMP);
-		try {
-			if (timestamp == null || Long.getLong(timestamp).longValue() != file.getModificationStamp()) {
-				// The file has been modified externally
-				// TODO:
-			}
-		} catch (NumberFormatException e1) {
-			// The write timestamp was corrupt.
-			// TODO: 
-		}
 		Reader reader;
 		try {
-			reader = new BufferedReader(new FileReader(file.getLocation().toFile()));
+			reader = new BufferedReader(new FileReader(file));
 		} catch (FileNotFoundException e) {
 			return new Mapping[0];
 		}
@@ -351,32 +332,40 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	}
 
 	private Mapping[] loadMappings(IProject project, Reader reader) throws TeamException {
-		IMemento memento = XMLMemento.createReadRoot(reader);
-		IMemento[] providers = memento.getChildren(CTX_PROVIDER);
-		List projectMappings = new ArrayList();
-		for (int i = 0; i < providers.length; i++) {
-			IMemento memento2 = providers[i];			
-			String id = memento2.getString(CTX_ID);
-			IPath location = new Path(memento2.getString(CTX_PATH));
-			
-			if(! project.exists(location)) {
-				TeamPlugin.log(IStatus.ERROR, "Previously deployed folder {0} in project {1} no longer exists." + location + project.getName(), null);
+		try {
+			IMemento memento = XMLMemento.createReadRoot(reader);
+			IMemento[] providers = memento.getChildren(CTX_PROVIDER);
+			List projectMappings = new ArrayList();
+			for (int i = 0; i < providers.length; i++) {
+				IMemento memento2 = providers[i];			
+				String id = memento2.getString(CTX_ID);
+				IPath location = new Path(memento2.getString(CTX_PATH));
+				
+				if(! project.exists(location)) {
+					TeamPlugin.log(IStatus.ERROR, "Previously deployed folder {0} in project {1} no longer exists." + location + project.getName(), null);
+				}
+				IResource resource = location.isEmpty() ? (IContainer)project : project.findMember(location);
+				if (resource.getType() == IResource.FILE) {
+					TeamPlugin.log(IStatus.ERROR, "Previously deployed resource {0} in project {1} is now a file and cannot be deployed." + location + project.getName(), null);
+				}
+				IContainer container = (IContainer)resource;
+				DeploymentProviderDescriptor desc = registry.find(id);				
+				if(desc != null) {
+					Mapping m = new Mapping(desc, container);
+					m.setProviderState(memento2.getChild(CTX_PROVIDER_DATA));
+					projectMappings.add(m);
+				} else {
+					TeamPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.9", id), null); //$NON-NLS-1$
+				}
 			}
-			IResource resource = location.isEmpty() ? (IContainer)project : project.findMember(location);
-			if (resource.getType() == IResource.FILE) {
-				TeamPlugin.log(IStatus.ERROR, "Previously deployed resource {0} in project {1} is now a file and cannot be deployed." + location + project.getName(), null);
-			}
-			IContainer container = (IContainer)resource;
-			DeploymentProviderDescriptor desc = registry.find(id);				
-			if(desc != null) {
-				Mapping m = new Mapping(desc, container);
-				m.setProviderState(memento2.getChild(CTX_PROVIDER_DATA));
-				projectMappings.add(m);
-			} else {
-				TeamPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.9", id), null); //$NON-NLS-1$
+			return (Mapping[]) projectMappings.toArray(new Mapping[projectMappings.size()]);
+		} finally {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				// ignore
 			}
 		}
-		return (Mapping[]) projectMappings.toArray(new Mapping[projectMappings.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -398,6 +387,61 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			}
 		}
 		return (IResource[]) roots.toArray(new IResource[roots.size()]);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
+	 */
+	public void resourceChanged(IResourceChangeEvent event) {
+		processDelta(event.getDelta());
+	}
+
+	private void processDelta(IResourceDelta delta) {
+		IResource resource = delta.getResource();
+		int kind = delta.getKind();
+
+		if (resource.getType() == IResource.PROJECT) {
+			// Handle a deleted project
+			if (((kind & IResourceDelta.REMOVED) != 0)) {
+				handleProjectRemoval((IProject)resource);
+				return;
+			}
+			// Handle a closed project
+			if ((delta.getFlags() & IResourceDelta.OPEN) != 0 && !((IProject) resource).isOpen()) {
+				handleProjectClose((IProject)resource);
+				return;
+			}
+		}
+
+		if (((kind & IResourceDelta.REMOVED) != 0) && (resource.getType() == IResource.FOLDER)) {
+			handleFolderRemoval((IFolder)resource);
+		}
+
+		// Handle changed children
+		IResourceDelta[] affectedChildren = delta.getAffectedChildren(IResourceDelta.CHANGED | IResourceDelta.REMOVED | IResourceDelta.ADDED);
+		for (int i = 0; i < affectedChildren.length; i++) {
+			processDelta(affectedChildren[i]);
+		}
+	}
+
+	private void handleFolderRemoval(IFolder folder) {
+		DeploymentProvider[] providers = getMappings(folder);
+		for (int i = 0; i < providers.length; i++) {
+			DeploymentProvider provider = providers[i];
+			try {
+				unmap(folder, provider);
+			} catch (TeamException e) {
+				TeamPlugin.log(e);
+			}
+		}
+	}
+
+	private void handleProjectClose(IProject project) {
+		mappings.remove(project);
+	}
+
+	private void handleProjectRemoval(IProject project) {
+		mappings.remove(project);
 	}
 
 }
