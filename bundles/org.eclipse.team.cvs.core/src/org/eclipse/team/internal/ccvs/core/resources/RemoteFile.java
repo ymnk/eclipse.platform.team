@@ -623,4 +623,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		setSyncInfo(new ResourceSyncInfo(syncBytes), ICVSFile.UNKNOWN);
 	}
 
+	public String toString() {
+		return getName() + " " + getRevision();
+	}
 }
