@@ -13,19 +13,17 @@ package org.eclipse.team.ui.synchronize;
 import java.util.*;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.events.*;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.ui.*;
-import org.eclipse.ui.internal.PluginAction;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 /**
@@ -65,19 +63,6 @@ import org.eclipse.ui.model.BaseWorkbenchContentProvider;
  */
 public abstract class StructuredViewerAdvisor {
 	
-	public interface IContextMenuListener {
-		// Contants used to identify customizable menu areas
-		public static final String FILE_MENU = "File"; //$NON-NLS-1$
-		public static final String EDIT_MENU = "Edit"; //$NON-NLS-1$
-		public static final String NAVIGATE_MENU = "Navigate"; //$NON-NLS-1$
-		public void fillContextMenu(IMenuManager manager);
-	}
-
-	// Workbench site is used to register the context menu for the viewer
-	private IWorkbenchPartSite site;
-	// The id to use for registration of the context menu. If null then menu will not allow viewer contributions. 
-	private String targetID;
-
 	// The physical model shown to the user in the provided viewer. The information in 
 	// this set is transformed by the model provider into the actual logical model displayed
 	// in the viewer.
@@ -88,8 +73,7 @@ public abstract class StructuredViewerAdvisor {
 	
 	// Listeners for model changes
 	private ListenerList listeners;
-	
-	private ListenerList contextMenuListeners;
+	private ISynchronizeConfiguration configuration;
 	
 	/**
 	 * Action that allows changing the model providers supported by this advisor.
@@ -141,20 +125,9 @@ public abstract class StructuredViewerAdvisor {
 	 * case a site will be found using the default workbench page.
 	 * @param set the set of <code>SyncInfo</code> objects that are to be shown to the user.
 	 */
-	public StructuredViewerAdvisor(String targetID, IWorkbenchPartSite site, SyncInfoSet set) {
+	public StructuredViewerAdvisor(ISynchronizeConfiguration configuration, SyncInfoSet set) {
+		this.configuration = configuration;
 		this.set = set;
-		this.targetID = targetID;
-		this.site = site;
-	}
-
-	/**
-	 * Create an advisor that will provide a presentation model based on the given sync info set.
-	 * Note that it's important to call {@link #dispose()} when finished with an advisor.
-	 * 
-	 * @param set the set of <code>SyncInfo</code> objects that are to be shown to the user.
-	 */
-	public StructuredViewerAdvisor(SyncInfoSet set) {
-		this(null, null, set);
 	}
 		
 	/**
@@ -170,7 +143,6 @@ public abstract class StructuredViewerAdvisor {
 		this.viewer = viewer;
 	
 		initializeListeners(viewer);
-		hookContextMenu(viewer);
 		initializeActions(viewer);
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setContentProvider(getContentProvider());
@@ -215,17 +187,6 @@ public abstract class StructuredViewerAdvisor {
 		if(modelProvider != null) {
 			modelProvider.dispose();
 		}
-	}
-
-	/**
-	 * Return the targetID that is used to obtain context menu items from the workbench. When
-	 * a context menu is added to the viewer, this ID is registered with the workbench to allow
-	 * viewer contributions.
-	 * 
-	 * @return the targetID or <code>null</code> if this advisor doesn't allow contributions.
-	 */
-	public String getTargetID() {
-		return targetID;
 	}
 
 	/**
@@ -312,51 +273,6 @@ public abstract class StructuredViewerAdvisor {
 		}
 		modelProvider = createModelProvider(id);		
 		return modelProvider.prepareInput(monitor);
-	}
-
-	/**
-	 * Add a context menu listener that will get invoked when the context
-	 * menu is shown for the viewer associated with this advisor.
-	 * @param listener a context menu listener
-	 */
-	public void addContextMenuListener(IContextMenuListener listener) {
-		if (contextMenuListeners == null) {
-			contextMenuListeners = new ListenerList();
-		}
-		contextMenuListeners.add(listener);
-	}
-	
-	/**
-	 * Remove a previously registered content menu listener.
-	 * Removing a listener that is not registered has no effect.
-	 * @param listener a context menu listener
-	 */
-	public void removeContextMenuListener(IContextMenuListener listener) {
-		if (contextMenuListeners != null) {
-			contextMenuListeners.remove(listener);
-		}
-	}
-	
-	/**
-	 * Callback that is invoked when a context menu is about to be shown in the
-	 * viewer. Subsclasses must implement to contribute menus. Also, menus can
-	 * contributed by creating a viewer contribution with a <code>targetID</code> 
-	 * that groups sets of actions that are related.
-	 * 
-	 * @param viewer the viewer in which the context menu is being shown.
-	 * @param manager the menu manager to which actions can be added.
-	 */
-	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
-		manager.add(new Separator(IContextMenuListener.FILE_MENU));
-		manager.add(new Separator(IContextMenuListener.EDIT_MENU));
-		manager.add(new Separator(IContextMenuListener.NAVIGATE_MENU));
-		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-		if (contextMenuListeners != null) {
-			Object[] l= contextMenuListeners.getListeners();
-			for (int i= 0; i < l.length; i++) {
-				((IContextMenuListener) l[i]).fillContextMenu(manager);
-			}
-		}
 	}
 	
 	/**
@@ -452,16 +368,6 @@ public abstract class StructuredViewerAdvisor {
 	 * @return <code>true</code> if the viewer is valid, <code>false</code> otherwise.
 	 */
 	protected abstract boolean validateViewer(StructuredViewer viewer);
-	
-	/**
-	 * Returns whether workbench menu items whould be included in the context
-	 * menu. By default, this returns <code>true</code> if there is a menu id
-	 * and <code>false</code> otherwise
-	 * @return whether to include workbench context menu items
-	 */
-	protected boolean allowParticipantMenuContributions() {
-		return getTargetID() != null;
-	}
 
 	/**
 	 * Run the runnable in the UI thread.
@@ -517,61 +423,6 @@ public abstract class StructuredViewerAdvisor {
 	}
 
 	/**
-	 * Method invoked from <code>initializeViewer(StructuredViewer)</code>
-	 * in order to configure the viewer to call <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
-	 * when a context menu is being displayed in viewer.
-	 * 
-	 * @param viewer the viewer being initialized
-	 * @see fillContextMenu(StructuredViewer, IMenuManager)
-	 */
-	protected final void hookContextMenu(final StructuredViewer viewer) {
-		final MenuManager menuMgr = new MenuManager(getTargetID()); //$NON-NLS-1$
-		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener() {
-	
-			public void menuAboutToShow(IMenuManager manager) {
-				fillContextMenu(viewer, manager);
-			}
-		});
-		Menu menu = menuMgr.createContextMenu(viewer.getControl());
-		menu.addMenuListener(new MenuListener() {
-	
-			public void menuHidden(MenuEvent e) {
-			}
-	
-			// Hack to allow action contributions to update their
-			// state before the menu is shown. This is required when
-			// the state of the selection changes and the contributions
-			// need to update enablement based on this.
-			public void menuShown(MenuEvent e) {
-				IContributionItem[] items = menuMgr.getItems();
-				for (int i = 0; i < items.length; i++) {
-					IContributionItem item = items[i];
-					if (item instanceof ActionContributionItem) {
-						IAction actionItem = ((ActionContributionItem) item).getAction();
-						if (actionItem instanceof PluginAction) {
-							((PluginAction) actionItem).selectionChanged(viewer.getSelection());
-						}
-					}
-				}
-			}
-		});
-		viewer.getControl().setMenu(menu);
-		if (allowParticipantMenuContributions()) {
-			IWorkbenchPartSite ws = getWorkbenchPartSite();
-			if(ws == null)
-				Utils.findSite(viewer.getControl());
-			if (ws == null) 
-				ws = Utils.findSite();
-			if (ws != null) {
-				ws.registerContextMenu(getTargetID(), menuMgr, viewer);
-			} else {
-				TeamUIPlugin.log(IStatus.ERROR, "Cannot add menu contributions because the site cannot be found: " + getTargetID(), null); //$NON-NLS-1$
-			}
-		}
-	}
-
-	/**
 	 * Called to set the input to a viewer. The input to a viewer is always the model created
 	 * by the model provider.
 	 * 
@@ -589,13 +440,5 @@ public abstract class StructuredViewerAdvisor {
 			});
 		}
 		viewer.setInput(modelProvider.getModelRoot());
-	}
-	
-	/**
-	 * Returns the part site in which to register the context menu viewer contributions for this
-	 * advisor.
-	 */
-	protected IWorkbenchPartSite getWorkbenchPartSite() {
-		return this.site;
 	}
 }

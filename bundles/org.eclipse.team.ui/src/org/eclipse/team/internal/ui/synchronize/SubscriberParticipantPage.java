@@ -24,8 +24,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
-import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
@@ -41,7 +40,7 @@ import org.eclipse.ui.part.*;
  * </p> 
  * @since 3.0
  */
-public final class SubscriberParticipantPage implements IPageBookViewPage, IPropertyChangeListener, IAdaptable {
+public final class SubscriberParticipantPage extends Page implements ISynchronizePage, IPropertyChangeListener, IAdaptable {
 	
 	/** 
 	 * Settings constant for section name (value <code>SubscriberParticipantPage</code>).
@@ -70,7 +69,6 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	private Viewer changesViewer;
 	private boolean settingWorkingSet = false;
 	private SubscriberParticipant participant;
-	private IPageSite site;
 	
 	// Toolbar and status line actions for this page, note that context menu actions shown in 
 	// the changes viewer are contributed via the viewer and not the page.
@@ -83,6 +81,7 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
 	private StructuredViewerAdvisor viewerAdvisor;
+	private ISynchronizePageSite site;
 		
 	/**
 	 * Constructs a new SynchronizeView.
@@ -125,8 +124,8 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 				return viewerAdvisor.navigate(next);
 			}
 		};
-		gotoNext = new NavigateAction(configuration, nav, true /*next*/);		
-		gotoPrevious = new NavigateAction(configuration, nav, false /*previous*/);
+		gotoNext = new NavigateAction(configuration.getPart(), configuration.getParticipant().getName(), nav, true /*next*/);		
+		gotoPrevious = new NavigateAction(configuration.getPart(), configuration.getParticipant().getName(), nav, false /*previous*/);
 		
 		if(participant.doesSupportSynchronize()) {
 			refreshAllAction = new Action() {
@@ -175,15 +174,19 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	}
 	
 	private Shell getShell() {
-		return site.getShell();
+		return getSynchronizePageSite().getShell();
 	}
-
+	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IViewPart#init(org.eclipse.ui.IViewSite, org.eclipse.ui.IMemento)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeViewPage#init(org.eclipse.ui.IWorkbenchPart)
 	 */
-	public void init(IPageSite site) throws PartInitException {
+	public void init(ISynchronizePageSite site) {
 		this.site = site;
 		configuration.init(site);
+	}
+	
+	public ISynchronizePageSite getSynchronizePageSite() {
+		return site;
 	}
 	
 	/* (non-Javadoc)
@@ -199,6 +202,7 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	public void dispose() {
 		statusLine.dispose();
 		changesSection.dispose();
+		composite.dispose();
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 		participant.removePropertyChangeListener(this);
 	}
@@ -282,13 +286,6 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.part.IPageBookViewPage#getSite()
-	 */
-	public IPageSite getSite() {
-		return this.site;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
@@ -317,7 +314,7 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 		viewer.getControl().setLayoutData(data);
 		viewerAdvisor = new TreeViewerAdvisor(configuration.getParticipant().getId(), configuration.getPart().getSite(), getFilteredCollector().getSyncInfoTree());
 		viewerAdvisor.initializeViewer(viewer);
-		getSite().setSelectionProvider(viewer);		
+		getSynchronizePageSite().setSelectionProvider(viewer);		
 		return viewer;
 	}
 	

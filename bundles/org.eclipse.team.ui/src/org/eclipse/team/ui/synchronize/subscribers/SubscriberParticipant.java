@@ -94,13 +94,6 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createSynchronizeConfiguration(org.eclipse.ui.IWorkbenchPart)
-	 */
-	public ISynchronizeConfiguration createSynchronizeConfiguration(IWorkbenchPart part) {
-		return new SubscriberConfiguration(this);
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createRefreshPage()
 	 */
 	public IWizard createSynchronizeWizard() {
@@ -207,6 +200,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * as returned by <code>getMode()</code>.
 	 */
 	protected void preCollectingChanges() {
+		//TODO: Is this needed
 	}
 	
 	/**
@@ -214,7 +208,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @return
 	 */
 	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
-		return new SynchronizeViewerAdvisor(configuration, syncInfoTree);
+		return new TreeViewerAdvisor(configuration, syncInfoTree);
 	}
 	
 	/**

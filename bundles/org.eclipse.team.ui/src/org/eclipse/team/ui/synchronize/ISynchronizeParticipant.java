@@ -97,16 +97,6 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	public IPageBookViewPage createPage();
 	
 	/**
-	 * Creates a default synchronize configuration that is used to control various
-	 * UI elements of the participant.
-	 * 
-	 * @param part the part that will be displaying the participants page, or <code>null</code>
-	 * if the page is being shown in a dialog or other UI composite.
-	 * @return a new synchronize configuration
-	 */
-	public ISynchronizeConfiguration createSynchronizeConfiguration(IWorkbenchPart part);
-	
-	/**
 	 * Creates and returns a wizard page used to globally synchronize this participant. Participants
 	 * returning a wizard will get added to the global Team synchronize action and users can
 	 * easily initiate a synchronization on the participant. The implementor can decide exactly

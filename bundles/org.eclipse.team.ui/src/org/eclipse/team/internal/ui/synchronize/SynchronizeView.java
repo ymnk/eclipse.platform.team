@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -19,12 +20,24 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeManager;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.ISynchronizePage;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.part.*;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.part.IPage;
+import org.eclipse.ui.part.IPageBookViewPage;
+import org.eclipse.ui.part.MessagePage;
+import org.eclipse.ui.part.PageBook;
+import org.eclipse.ui.part.PageBookView;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
@@ -145,6 +158,23 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.part.PageBookView#initPage(org.eclipse.ui.part.IPageBookViewPage)
+	 */
+	protected void initPage(IPageBookViewPage page) {
+		// Give the page an IPageSite
+		super.initPage(page);
+		// A page site does not provide everything the page may need
+		// Also provide the synchronize page site if the page is a synchronize view page
+		if (page instanceof ISynchronizePage) {
+			try {
+				((ISynchronizePage)page).init(new WorkbenchPartSynchronizePageSite(this));
+			} catch (PartInitException e) {
+				TeamUIPlugin.log(IStatus.ERROR, e.getMessage(), e);
+			}
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.PageBookView#isImportant(org.eclipse.ui.IWorkbenchPart)
 	 */
