@@ -180,11 +180,16 @@ public class SyncSet {
 	}
 
 	public void add(SyncInfo info) {
+		internalAddSyncInfo(info);
+		changes.added(info);
+		IResource local = info.getLocal();
+		addToParents(local, local);
+	}
+
+	private void internalAddSyncInfo(SyncInfo info) {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		resources.put(path, info);
-		changes.added(info);
-		addToParents(local, local);
 	}
 
 	protected void remove(SyncInfo info) {
@@ -196,6 +201,7 @@ public class SyncSet {
 	}
 	
 	protected void changed(SyncInfo info) {
+		internalAddSyncInfo(info);
 		changes.changed(info);
 	}
 
