@@ -546,7 +546,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	 * Flush all cached info for the file and it's ancestors
 	 */
 	protected void flushModificationCache() throws CVSException {
-		EclipseSynchronizer.getInstance().flushModificationCache(getIFile());
+		EclipseSynchronizer.getInstance().flushModificationCache(getIFile(), IResource.DEPTH_ZERO);
 
 	}
 }

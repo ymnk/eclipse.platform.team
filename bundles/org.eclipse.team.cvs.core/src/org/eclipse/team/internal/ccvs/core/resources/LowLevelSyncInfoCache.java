@@ -11,6 +11,8 @@
 package org.eclipse.team.internal.ccvs.core.resources;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
@@ -25,6 +27,8 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
  */
 /*package*/ abstract class LowLevelSyncInfoCache {
 
+	// the resources plugin synchronizer is used to cache and possibly persist. These
+	// are keys for storing the sync info.
 	/*package*/ static final QualifiedName FOLDER_SYNC_KEY = new QualifiedName(CVSProviderPlugin.ID, "folder-sync"); //$NON-NLS-1$
 	/*package*/ static final QualifiedName RESOURCE_SYNC_KEY = new QualifiedName(CVSProviderPlugin.ID, "resource-sync"); //$NON-NLS-1$
 	/*package*/ static final QualifiedName IGNORE_SYNC_KEY = new QualifiedName(CVSProviderPlugin.ID, "folder-ignore"); //$NON-NLS-1$
@@ -111,4 +115,32 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 	 * @param monitor the progress monitor, may be null
 	 */
 	/*package*/ abstract IStatus commitCache(IProgressMonitor monitor);
+	
+	/*package*/ abstract String getDirtyIndicator(IResource resource) throws CVSException;
+	
+	/*package*/ abstract void setDirtyIndicator(IResource resource, String indicator) throws CVSException;
+	
+	/**
+	 * Return the dirty count for the given folder. For existing folders, the
+	 * dirty count may not have been calculated yet and this method will return
+	 * -1 in that case.
+	 */
+	/*package*/ abstract int getCachedDirtyCount(IContainer container) throws CVSException;
+	
+	/**
+	 * Set the dirty count for the given container to the given count.
+	 *
+	 * @param container
+	 * @param count
+	 * @throws CVSException
+	 */
+	/*package*/ abstract void setCachedDirtyCount(IContainer container, int count) throws CVSException;
+	
+	/*package*/ abstract void flushDirtyCache(IResource resource) throws CVSException;
+	
+	/*package*/ abstract boolean addDeletedChild(IContainer container, IFile file) throws CVSException;
+
+	/*package*/ abstract boolean removeDeletedChild(IContainer container, IFile file) throws CVSException;
+	
+	/*package*/ abstract boolean isSyncInfoLoaded(IContainer parent) throws CVSException;
 }

@@ -17,11 +17,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
@@ -35,7 +37,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  */
 /*package*/ class SessionPropertySyncInfoCache extends LowLevelSyncInfoCache {
 	
-	private static final String[] NULL_IGNORES = new String[0];
+	/*package*/ static final String[] NULL_IGNORES = new String[0];
 	private static final FolderSyncInfo NULL_FOLDER_SYNC_INFO = new FolderSyncInfo("", "", null, false); //$NON-NLS-1$ //$NON-NLS-2$
 	private static final byte[][] EMPTY_RESOURCE_SYNC_INFOS = new byte[0][0];
 	
@@ -128,6 +130,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * @see #cacheFolderSync
 	 */
 	/*package*/ FolderSyncInfo getCachedFolderSync(IContainer container) throws CVSException {
+		if (!container.exists()) return null;
 		try {
 			FolderSyncInfo info = (FolderSyncInfo)container.getSessionProperty(FOLDER_SYNC_KEY);
 			if (info == null) {
@@ -151,6 +154,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * @see #cacheResourceSyncForChildren
 	 */
 	/*package*/ byte[][] getCachedResourceSyncForChildren(IContainer container) throws CVSException {
+		if (!container.exists()) return EMPTY_RESOURCE_SYNC_INFOS;
 		try {
 			byte[][] infos = (byte[][])container.getSessionProperty(RESOURCE_SYNC_KEY);
 			// todo: move check to caller
@@ -189,7 +193,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 			throw CVSException.wrapException(e);
 		}
 	}
-
+	
 	/**
 	 * Sets the array of folder ignore patterns for the container, must not be null.
 	 * Folder must exist and must not be the workspace root.
@@ -337,5 +341,203 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 		} finally {
 			monitor.done();
 		}
+	}
+
+	/*package*/ void setDirtyIndicator(IResource resource, String indicator) throws CVSException {
+		if (resource.getType() == IResource.FILE) {
+			internalSetDirtyIndicator((IFile)resource, indicator);
+		} else {
+			internalSetDirtyIndicator((IContainer)resource, indicator);
+		}
+	}
+	/*package*/ String getDirtyIndicator(IResource resource) throws CVSException {
+		if (resource.getType() == IResource.FILE) {
+			return internalGetDirtyIndicator((IFile)resource);
+		} else {
+			return internalGetDirtyIndicator((IContainer)resource);
+		}
+	}
+	private void internalSetDirtyIndicator(IFile file, String indicator) throws CVSException {
+		try {
+			file.setSessionProperty(IS_DIRTY, indicator);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	private String internalGetDirtyIndicator(IFile file) throws CVSException {
+		try {
+			return (String)file.getSessionProperty(IS_DIRTY);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	private void internalSetDirtyIndicator(IContainer container, String indicator) throws CVSException {
+		try {
+			container.setPersistentProperty(IS_DIRTY, indicator);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	private String internalGetDirtyIndicator(IContainer container) throws CVSException {
+		try {
+			return container.getPersistentProperty(IS_DIRTY);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+		
+	/**
+	 * Return the dirty count for the given folder. For existing folders, the
+	 * dirty count may not have been calculated yet and this method will return
+	 * null in that case. For phantom folders, the dirty count is calculated if
+	 * it does not exist yet.
+	 */
+	/*package*/ int getCachedDirtyCount(IContainer container) throws CVSException {
+		if (!container.exists()) return -1;
+		try {
+			Integer dirtyCount = (Integer)container.getSessionProperty(DIRTY_COUNT);
+			if (dirtyCount == null) {
+				return -1;
+			} else {
+				return dirtyCount.intValue();
+			}
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	/*package*/ void setCachedDirtyCount(IContainer container, int count) throws CVSException {
+		if (!container.exists()) return;
+		try {
+			container.setSessionProperty(DIRTY_COUNT, new Integer(count));
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	/*
+	 * Flush all cached info for the container and it's ancestors
+	 */
+	/*package*/ void flushDirtyCache(IResource resource) throws CVSException {
+		if (resource.exists()) {
+			try {
+				if (resource.getType() == IResource.FILE) {
+					resource.setSessionProperty(IS_DIRTY, null);
+					resource.setSessionProperty(CLEAN_UPDATE, null);
+				} else {
+					resource.setSessionProperty(DIRTY_COUNT, null);
+					resource.setSessionProperty(DELETED_CHILDREN, null);
+					resource.setPersistentProperty(IS_DIRTY, null);
+				}
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			}
+		}
+	}
+	
+	/*
+	 * Add the deleted child and return true if it didn't exist before
+	 */
+	/*package*/ boolean addDeletedChild(IContainer container, IFile file) throws CVSException {
+		try {
+			Set deletedFiles = getDeletedChildren(container);
+			if (deletedFiles == null)
+				deletedFiles = new HashSet();
+			String fileName = file.getName();
+			if (deletedFiles.contains(fileName))
+				return false;
+			deletedFiles.add(fileName);
+			setDeletedChildren(container, deletedFiles);
+			return true;
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+
+	/*package*/ boolean removeDeletedChild(IContainer container, IFile file) throws CVSException {
+		try {
+			Set deletedFiles = getDeletedChildren(container);
+			if (deletedFiles == null || deletedFiles.isEmpty())
+				return false;
+			String fileName = file.getName();
+			if (!deletedFiles.contains(fileName))
+				return false;
+			deletedFiles.remove(fileName);
+			if (deletedFiles.isEmpty()) deletedFiles = null;
+			setDeletedChildren(container, deletedFiles);
+			return true;
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	protected void setDeletedChildren(IContainer parent, Set deletedFiles) throws CVSException {
+		if (!parent.exists()) return;
+		try {
+			parent.setSessionProperty(DELETED_CHILDREN, deletedFiles);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+
+	private Set getDeletedChildren(IContainer parent) throws CoreException {
+		if (!parent.exists()) return null;
+		return (Set)parent.getSessionProperty(DELETED_CHILDREN);
+	}
+	
+	/**
+	 * Method updated flags the objetc as having been modfied by the updated
+	 * handler. This flag is read during the resource delta to determine whether
+	 * the modification made the file dirty or not.
+	 *
+	 * @param mFile
+	 */
+	/*package*/ void markFileAsUpdated(IFile file) throws CVSException {
+		try {
+			file.setSessionProperty(CLEAN_UPDATE, UPDATED_INDICATOR);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+
+	/*package*/ boolean contentsChangedByUpdate(IFile file) throws CVSException {
+		try {
+			Object indicator = file.getSessionProperty(CLEAN_UPDATE);
+			boolean updated = false;
+			if (indicator == UPDATED_INDICATOR) {
+				// the file was changed due to a clean update (i.e. no local mods) so skip it
+				file.setSessionProperty(CLEAN_UPDATE, null);
+				file.setSessionProperty(IS_DIRTY, NOT_DIRTY_INDICATOR);
+				updated = true;
+			}
+			return updated;
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	/**
+	 * Method isSyncInfoLoaded returns true if all the sync info for the
+	 * provided resources is loaded into the internal cache.
+	 *
+	 * @param resources
+	 * @param i
+	 * @return boolean
+	 */
+	/*package*/ boolean isSyncInfoLoaded(IContainer parent) throws CVSException {
+		try {
+			if (parent.getFolder(new Path(SyncFileWriter.CVS_DIRNAME)).exists()) {
+				if (parent.getSessionProperty(RESOURCE_SYNC_KEY) == null)
+					return false;
+				if (parent.getSessionProperty(FOLDER_SYNC_KEY) == null)
+					return false;
+				if (parent.getSessionProperty(IGNORE_SYNC_KEY) == null)
+					return false;
+			}
+		} catch (CoreException e) {
+			// let future operations surface the error
+			return false;
+		}
+		return true;
 	}
 }
