@@ -17,7 +17,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CompareWithLatestParticipant;
+import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
@@ -30,18 +30,12 @@ public class SyncAction extends WorkspaceAction {
 	public void execute(IAction action) throws InvocationTargetException {
 		IResource[] resources = getResourcesToSync();
 		if (resources == null || resources.length == 0) return;
-		
-		//WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		//if(participant != null) {
-		//		participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$
-		//}
-		CompareWithLatestParticipant participant = null;
-		SubscriberParticipant[] participants = SubscriberParticipant.getMatchingParticipant(CompareWithLatestParticipant.ID, resources);
-		if(participants.length == 0) {
-			participant = new CompareWithLatestParticipant(resources);
+		// First check if there is an existing matching participant
+		WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)SubscriberParticipant.getMatchingParticipant(WorkspaceSynchronizeParticipant.ID, resources);	
+		// If there isn't, create one and add to the manager
+		if (participant == null) {
+			participant = new WorkspaceSynchronizeParticipant(resources);
 			TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
-		} else {
-			participant = (CompareWithLatestParticipant)participants[0];
 		}
 		participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$
 	}

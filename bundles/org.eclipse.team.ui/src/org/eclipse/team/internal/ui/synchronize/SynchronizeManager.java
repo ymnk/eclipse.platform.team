@@ -20,10 +20,7 @@ import org.eclipse.jface.util.ListenerList;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
-import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
-import org.eclipse.team.internal.ui.registry.SynchronizeWizardDescription;
-import org.eclipse.team.internal.ui.registry.SynchronizeWizardRegistry;
+import org.eclipse.team.internal.ui.registry.*;
 import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.*;
@@ -330,6 +327,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 					ref.setParticipant(participant);
 					participantReferences.put(key, ref);
 					added.add(participant);
+					removeMatchingPinnedParticipant(participant.getId());
 				} catch (PartInitException e) {
 					TeamUIPlugin.log(e);
 					continue;
@@ -339,6 +337,26 @@ public class SynchronizeManager implements ISynchronizeManager {
 		if (!added.isEmpty()) {
 			saveState();
 			fireUpdate((ISynchronizeParticipant[]) added.toArray(new ISynchronizeParticipant[added.size()]), ADDED);
+		}
+	}
+	
+	private void removeMatchingPinnedParticipant(String id) {
+		ISynchronizeParticipantReference[] refs = get(id);
+		if (refs.length > 0) {
+			// Find an un-pinned participant and replace it
+			for (int i = 0; i < refs.length; i++) {
+				ISynchronizeParticipantReference reference = refs[i];
+				ISynchronizeParticipant p;
+				try {
+					p = reference.getParticipant();
+					if (!p.isPinned()) {
+						removeSynchronizeParticipants(new ISynchronizeParticipant[]{p});
+						break;
+					}
+				} catch (TeamException e) {
+					continue;
+				}
+			}
 		}
 	}
 
@@ -376,6 +394,21 @@ public class SynchronizeManager implements ISynchronizeManager {
 	public ISynchronizeParticipantReference get(String id, String secondaryId) {
 		String key = Utils.getKey(id, secondaryId);
 		return (ISynchronizeParticipantReference) participantReferences.get(key);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeManager#get(java.lang.String)
+	 */
+	public ISynchronizeParticipantReference[] get(String id) {
+		ISynchronizeParticipantReference[] refs = getSynchronizeParticipants();
+		ArrayList refsForId = new ArrayList();
+		for (int i = 0; i < refs.length; i++) {
+			ISynchronizeParticipantReference reference = refs[i];
+			if(reference.getId().equals(id)) {
+				refsForId.add(reference);
+			}
+		}
+		return (ISynchronizeParticipantReference[]) refsForId.toArray(new ISynchronizeParticipantReference[refsForId.size()]);
 	}
 	
 	/*

@@ -10,9 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -27,18 +25,9 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
-import org.eclipse.team.internal.ui.synchronize.RefreshSubscriberJob;
-import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicy;
-import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicyInModalDialog;
-import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
-import org.eclipse.team.internal.ui.synchronize.SubscriberRefreshSchedule;
-import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.*;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IWorkbenchSite;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -169,10 +158,9 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	/**
 	 * Returns a participant that matches the scoping 
 	 */
-	public static SubscriberParticipant[] getMatchingParticipant(String ID, IResource[] resources) {
+	public static SubscriberParticipant getMatchingParticipant(String ID, IResource[] resources) {
 		ISynchronizeParticipantReference[] refs = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-		List participants = new ArrayList();
-		for (int i = 0; i < refs.length; i++) {
+			for (int i = 0; i < refs.length; i++) {
 			ISynchronizeParticipantReference reference = refs[i];
 			if(reference.getId().equals(ID)) {
 					SubscriberParticipant p;
@@ -185,11 +173,11 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 					Arrays.sort(resources, Utils.resourceComparator);
 					Arrays.sort(roots, Utils.resourceComparator);
 					if (Arrays.equals(resources, roots)) {
-						participants.add(p);
+						return p;
 					}
 			}
 		}
-		return (SubscriberParticipant[]) participants.toArray(new SubscriberParticipant[participants.size()]);
+		return null;
 	}
 		
 	/* (non-Javadoc)

@@ -28,7 +28,13 @@ public class CVSSynchronizeWizard extends SubscriberParticipantWizard {
 	 * @see org.eclipse.team.internal.ui.synchronize.SubscriberParticipantWizard#createParticipant(org.eclipse.core.resources.IResource[])
 	 */
 	protected SubscriberParticipant createParticipant(IResource[] resources) {
-		return new WorkspaceSynchronizeParticipant(resources);
+		// First check if there is an existing matching participant
+		WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)SubscriberParticipant.getMatchingParticipant(WorkspaceSynchronizeParticipant.ID, resources);	
+		// If there isn't, create one and add to the manager
+		if (participant == null) {
+			return new WorkspaceSynchronizeParticipant(resources);
+		} else {
+			return participant;
+		}
 	}
-
 }

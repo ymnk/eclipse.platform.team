@@ -38,7 +38,7 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 		selectionPage = new GlobalRefreshResourceSelectionPage(getRootResources());
 		selectionPage.setTitle("Create");
 		selectionPage.setDescription("Create CVS Synchronize Participant");
-		selectionPage.setMessage("Select the resources that will be synchronized by the newly created CVS synchronize participant.");
+		selectionPage.setMessage("Select the resources that will be synchronized by the newly created synchronize participant.");
 		addPage(selectionPage);
 	}
 
