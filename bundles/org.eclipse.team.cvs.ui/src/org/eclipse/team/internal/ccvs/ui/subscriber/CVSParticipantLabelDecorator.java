@@ -14,25 +14,15 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.IFontDecorator;
-import org.eclipse.jface.viewers.ILabelDecorator;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.*;
+import org.eclipse.team.core.change.ChangeSet;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
-import org.eclipse.team.internal.ccvs.ui.CVSDecoration;
-import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
@@ -76,7 +66,7 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 				}
 			}
 		if (element instanceof CommitSetDiffNode) {
-		    CommitSet set = ((CommitSetDiffNode)element).getSet();
+		    ChangeSet set = ((CommitSetDiffNode)element).getSet();
 		    if (CommitSetManager.getInstance().isDefault(set)) {
 		        text = Policy.bind("CommitSetDiffNode.0", text); //$NON-NLS-1$
 		    }
@@ -145,7 +135,7 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 
 	public Font decorateFont(Object element) {
 		if (element instanceof CommitSetDiffNode) {
-		    CommitSet set = ((CommitSetDiffNode)element).getSet();
+		    ChangeSet set = ((CommitSetDiffNode)element).getSet();
 		    if (CommitSetManager.getInstance().isDefault(set)) {
 		    	if (boldFont == null) {
 					Font defaultFont = JFaceResources.getDefaultFont();

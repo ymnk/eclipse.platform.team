@@ -707,7 +707,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			}
 			
 			console.shutdown();
-			CommitSetManager.getInstance().shutdown();
+			CommitSetManager.getInstance().dispose();
 		} finally {
 			super.stop(context);
 		}

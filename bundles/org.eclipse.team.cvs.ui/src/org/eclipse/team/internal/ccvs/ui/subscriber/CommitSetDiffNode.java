@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.team.core.change.ChangeSet;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ui.synchronize.SynchronizeModelElement;
@@ -23,9 +24,9 @@ import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
  */
 public class CommitSetDiffNode extends SynchronizeModelElement {
 
-    private final CommitSet set;
+    private final ChangeSet set;
 
-    public CommitSetDiffNode(ISynchronizeModelElement parent, CommitSet set) {
+    public CommitSetDiffNode(ISynchronizeModelElement parent, ChangeSet set) {
         super(parent);
         this.set = set;
     }
@@ -37,7 +38,7 @@ public class CommitSetDiffNode extends SynchronizeModelElement {
         return null;
     }
 
-    public CommitSet getSet() {
+    public ChangeSet getSet() {
         return set;
     }
     

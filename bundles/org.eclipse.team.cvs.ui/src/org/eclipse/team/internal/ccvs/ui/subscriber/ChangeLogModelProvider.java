@@ -29,6 +29,8 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.change.ChangeSet;
+import org.eclipse.team.core.change.IChangeSetChangeListener;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.*;
@@ -63,7 +65,7 @@ import org.eclipse.ui.progress.UIJob;
  * 
  * @since 3.0
  */
-public class ChangeLogModelProvider extends CompositeModelProvider implements ICommitSetChangeListener {
+public class ChangeLogModelProvider extends CompositeModelProvider implements IChangeSetChangeListener {
 	// Log operation that is used to fetch revision histories from the server. It also
 	// provides caching so we keep it around.
     private LogEntryCache logs;
@@ -159,14 +161,14 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
                         public void run() {
                             try {
                                 IResource[] resources = Utils.getResources(getSelectedDiffElements());
-                                CommitSet set = CommitSetManager.getInstance().createCommitSet(Policy.bind("ChangeLogModelProvider.1"), null); //$NON-NLS-1$
+                                ChangeSet set = CommitSetManager.getInstance().createSet(Policy.bind("ChangeLogModelProvider.1"), null); //$NON-NLS-1$
                         		CommitSetDialog dialog = new CommitSetDialog(getConfiguration().getSite().getShell(), set, resources,
                         		        Policy.bind("ChangeLogModelProvider.2"), Policy.bind("ChangeLogModelProvider.3")); //$NON-NLS-1$ //$NON-NLS-2$
                         		dialog.open();
                         		if (dialog.getReturnCode() != InputDialog.OK) return;
-                        		set.addFiles(resources);
+                        		set.add(resources);
                 	            CommitSetManager.getInstance().add(set);
-                            } catch (CVSException e) {
+                            } catch (TeamException e) {
                                 CVSUIPlugin.openError(getConfiguration().getSite().getShell(),
                                         Policy.bind("ChangeLogModelProvider.4a"), Policy.bind("ChangeLogModelProvider.5a"), e); //$NON-NLS-1$ //$NON-NLS-2$
                             }
@@ -192,7 +194,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
             return getSelectedSet() != null;
         }
 
-        protected CommitSet getSelectedSet() {
+        protected ChangeSet getSelectedSet() {
             IStructuredSelection selection = getStructuredSelection();
             if (selection.size() == 1) {
                 Object first = selection.getFirstElement();
@@ -211,9 +213,9 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
         }
         
         public void run() {
-            CommitSet set = getSelectedSet();
+            ChangeSet set = getSelectedSet();
             if (set == null) return;
-    		CommitSetDialog dialog = new CommitSetDialog(getConfiguration().getSite().getShell(), set, set.getFiles(),
+    		CommitSetDialog dialog = new CommitSetDialog(getConfiguration().getSite().getShell(), set, set.getResources(),
     		        Policy.bind("ChangeLogModelProvider.7"), Policy.bind("ChangeLogModelProvider.8")); //$NON-NLS-1$ //$NON-NLS-2$
     		dialog.open();
     		if (dialog.getReturnCode() != InputDialog.OK) return;
@@ -229,7 +231,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
         }
         
         public void run() {
-            CommitSet set = getSelectedSet();
+            ChangeSet set = getSelectedSet();
             if (set == null) return;
     		CommitSetManager.getInstance().makeDefault(set);
         }
@@ -238,9 +240,9 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	
 	private class AddToCommitSetAction extends SynchronizeModelAction {
 	 
-        private final CommitSet set;
+        private final ChangeSet set;
 	    
-        public AddToCommitSetAction(ISynchronizePageConfiguration configuration, CommitSet set, ISelection selection) {
+        public AddToCommitSetAction(ISynchronizePageConfiguration configuration, ChangeSet set, ISelection selection) {
             super(set.getTitle(), configuration);
             this.set = set;
             selectionChanged(selection);
@@ -265,8 +267,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
                 public void run(IProgressMonitor monitor)
                         throws InvocationTargetException, InterruptedException {
                     try {
-                        set.addFiles(Utils.getResources(getSelectedDiffElements()));
-                    } catch (CVSException e) {
+                        set.add(Utils.getResources(getSelectedDiffElements()));
+                    } catch (TeamException e) {
                         CVSUIPlugin.openError(getConfiguration().getSite().getShell(),
                                 Policy.bind("ChangeLogModelProvider.10"), Policy.bind("ChangeLogModelProvider.11"), e); //$NON-NLS-1$ //$NON-NLS-2$
                     }
@@ -480,13 +482,13 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		}
 		
         protected void addCommitSets(IMenuManager manager) {
-            CommitSet[] sets = CommitSetManager.getInstance().getSets();
+            ChangeSet[] sets = CommitSetManager.getInstance().getSets();
             ISelection selection = getContext().getSelection();
             createCommitSet.selectionChanged(selection);
 			addToCommitSet.add(createCommitSet);
 			addToCommitSet.add(new Separator());
             for (int i = 0; i < sets.length; i++) {
-                CommitSet set = sets[i];
+                ChangeSet set = sets[i];
                 AddToCommitSetAction action = new AddToCommitSetAction(getConfiguration(), set, selection);
                 manager.add(action);
             }
@@ -591,6 +593,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		}
 	};
 	private static final ChangeLogModelProviderDescriptor descriptor = new ChangeLogModelProviderDescriptor();
+
+    private ChangeSet defaultSet;
 	
 	public ChangeLogModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set, String id) {
 		super(configuration, set);
@@ -846,7 +850,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
      * Add the local change to the appropriate outgoing commit set
      */
     private void addLocalChange(SyncInfo info) {
-        CommitSet set = getCommitSetFor(info);
+        ChangeSet set = getCommitSetFor(info);
         if (set == null) {
             addToCommitSetProvider(info, getModelRoot());
         } else {
@@ -948,7 +952,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 * Find an existing comment set
 	 * TODO: we could do better than a linear lookup?
 	 */
-    private CommitSetDiffNode getDiffNodeFor(CommitSet set) {
+    private CommitSetDiffNode getDiffNodeFor(ChangeSet set) {
         if (set == null) return null;
 		IDiffElement[] elements = getModelRoot().getChildren();
 		for (int i = 0; i < elements.length; i++) {
@@ -968,10 +972,10 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 * TODO: we could do better than a linear lookup?
 	 * TODO: can a file be in multiple sets?
 	 */
-    private CommitSet getCommitSetFor(SyncInfo info) {
-        CommitSet[] sets = CommitSetManager.getInstance().getSets();
+    private ChangeSet getCommitSetFor(SyncInfo info) {
+        ChangeSet[] sets = CommitSetManager.getInstance().getSets();
         for (int i = 0; i < sets.length; i++) {
-            CommitSet set = sets[i];
+            ChangeSet set = sets[i];
             if (set.contains(info.getLocal())) {
                 return set;
             }
@@ -1241,31 +1245,24 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#setAdded(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet)
      */
-    public void setAdded(CommitSet set) {
-        refresh(set.getFiles(), true /* we may not be in the UI thread */);
+    public void setAdded(ChangeSet set) {
+        refresh(set.getResources(), true /* we may not be in the UI thread */);
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#setRemoved(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet)
      */
-    public void setRemoved(CommitSet set) {
-        refresh(set.getFiles(), true /* we may not be in the UI thread */);
+    public void setRemoved(ChangeSet set) {
+        refresh(set.getResources(), true /* we may not be in the UI thread */);
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#titleChanged(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet)
      */
-    public void titleChanged(CommitSet set) {
+    public void titleChanged(ChangeSet set) {
         // We need to refresh all the files because the title is used
         // to cache the commit set (i.e. used as the hashCode in various maps)
-        refresh(set.getFiles(), true /* we may not be in the UI thread */);
-    }
-
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#filesChanged(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet, org.eclipse.core.resources.IFile[])
-     */
-    public void filesChanged(CommitSet set, IFile[] files) {
-        refresh(files, true /* we may not be in the UI thread */);
+        refresh(set.getResources(), true /* we may not be in the UI thread */);
     }
     
     private void refresh(final IResource[] resources, boolean performSyncExec) {
@@ -1313,19 +1310,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
                 }
             });
         }
-    }
-
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
-     */
-    public void propertyChange(PropertyChangeEvent event) {
-        if (event.getProperty().equals(CommitSetManager.DEFAULT_SET)) {
-            CommitSet oldValue = (CommitSet)event.getOldValue();
-            refreshNode(getDiffNodeFor(oldValue));
-            CommitSet newValue = (CommitSet)event.getNewValue();
-            refreshNode(getDiffNodeFor(newValue));
-        }
-        
     }
 
     /* (non-Javadoc)
@@ -1391,6 +1375,26 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
      */
     public ViewerSorter getEmbeddedSorter() {
         return embeddedSorter;
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.core.change.IChangeSetChangeListener#defaultSetChanged(org.eclipse.team.core.change.ChangeSet)
+     */
+    public void defaultSetChanged(ChangeSet set) {
+        if (defaultSet != null) {
+            refreshNode(getDiffNodeFor(defaultSet));
+        }
+        defaultSet = set;
+        if (defaultSet != null) {
+            refreshNode(getDiffNodeFor(defaultSet));
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.core.change.IChangeSetChangeListener#resourcesChanged(org.eclipse.team.core.change.ChangeSet, org.eclipse.core.resources.IResource[])
+     */
+    public void resourcesChanged(ChangeSet set, IResource[] resources) {
+        refresh(resources, true /* we may not be in the UI thread */);
     }
     
 }

@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.team.core.change.ChangeSet;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 
@@ -61,8 +62,8 @@ public class ChangeLogModelSorter extends ViewerSorter {
 		//if one or both objects are not resources, returned a comparison 
 		//based on class.
 		if (o1 instanceof  CommitSetDiffNode && o2 instanceof CommitSetDiffNode) {
-		    CommitSet s1 = ((CommitSetDiffNode) o1).getSet();
-		    CommitSet s2 = ((CommitSetDiffNode) o2).getSet();
+		    ChangeSet s1 = ((CommitSetDiffNode) o1).getSet();
+		    ChangeSet s2 = ((CommitSetDiffNode) o2).getSet();
 			return compareNames(s1.getTitle(), s2.getTitle());
 		}
 		
