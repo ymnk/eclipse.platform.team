@@ -84,7 +84,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 
 	private static QualifiedName getUniqueId() {
 		String uniqueId = Long.toString(System.currentTimeMillis());
-		return new QualifiedName(CVSSubscriberFactory.ID, UNIQUE_ID_PREFIX + uniqueId);
+		return new QualifiedName(null, "CVS" + UNIQUE_ID_PREFIX + uniqueId);
 	}
 	
 	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		
@@ -202,7 +202,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		return state;
 	}
 	
-	public static CVSMergeSubscriber restore(QualifiedName id, SaveContext saveContext) throws CVSException {
+	public static CVSMergeSubscriber restore(String id, SaveContext saveContext) throws CVSException {
 		String name = saveContext.getName(); 
 		if(! name.equals("merge")) { //$NON-NLS-1$
 			throw new CVSException(Policy.bind("CVSMergeSubscriber.13", name)); //$NON-NLS-1$
@@ -232,7 +232,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 			throw new CVSException(Policy.bind("CVSMergeSubscriber.22", id.toString())); //$NON-NLS-1$
 		}
 		IResource[] roots = (IResource[]) resources.toArray(new IResource[resources.size()]);
-		return new CVSMergeSubscriber(id, roots, start, end);
+		return new CVSMergeSubscriber(new QualifiedName(id, null), roots, start, end);
 	}
 	
 	public CVSTag getStartTag() {

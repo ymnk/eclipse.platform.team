@@ -36,6 +36,10 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	private Action updateAdapter;
 	private final static String PARTICIPANT_ID = "org.eclipse.team.cvs.ui.cvsmerge_syncparticipant";
 	
+	public CVSMergeSynchronizeParticipant() {
+		super();
+	}
+	
 	public CVSMergeSynchronizeParticipant(CVSMergeSubscriber subscriber) {
 		super();
 		setSubscriber(subscriber);

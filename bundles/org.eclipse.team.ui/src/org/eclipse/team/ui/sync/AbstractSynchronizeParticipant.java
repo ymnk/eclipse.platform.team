@@ -29,8 +29,9 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	
 	private String fName;	
 	private String fId;
+	private String fInstanceId;
 	private ImageDescriptor fImageDescriptor;
-	private IConfigurationElement configElement;
+	protected IConfigurationElement configElement;
 		
 	/**
 	 * Used to notify this console of lifecycle methods <code>init()</code>
@@ -155,6 +156,21 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	public String getId() {
 		return fId;
 	}
+	
+	protected void setId(String id) {
+		this.fId = id;
+	}
+	
+	/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#getId()
+		 */
+		public String getInstanceId() {
+			return fInstanceId;
+		}
+	
+		protected void setInstanceId(String id) {
+			this.fInstanceId = id;
+		}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsole#addPropertyChangeListener(org.eclipse.jface.util.IPropertyChangeListener)

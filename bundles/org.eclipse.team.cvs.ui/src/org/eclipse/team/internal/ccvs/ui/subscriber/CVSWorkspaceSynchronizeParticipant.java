@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -57,7 +56,7 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
 	 */
-	public void init(ISaveContext saveContext) throws PartInitException {
+	public void init(String instance_id) throws PartInitException {
 		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
 		setSubscriber(subscriber);
 	}
@@ -65,7 +64,7 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#saveState(org.eclipse.team.core.ISaveContext)
 	 */
-	public void saveState(ISaveContext saveContext) {
+	public void saveState() {
 		// no state to save
 	}
 }

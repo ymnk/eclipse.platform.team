@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ui.sync.pages;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +24,9 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.core.SaveContext;
 import org.eclipse.team.internal.core.SaveContextXMLWriter;
+import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -61,6 +64,8 @@ public class SynchronizeManager implements ISynchronizeManager {
 	private final static String CTX_PARTICIPANTS = "syncparticipants";
 	private final static String CTX_PARTICIPANT = "participant";
 	private final static String CTX_ID = "id";
+	private final static String CTX_INSTANCE_ID = "instance_id";
+	private final static String FILENAME = "syncParticipants.xml";
 	
 	/**
 	 * Notifies a participant listeners of additions or removals
@@ -114,6 +119,10 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 	}	
 	
+	public SynchronizeManager() {
+		super();
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#addSynchronizeParticipantListener(org.eclipse.team.ui.sync.ISynchronizeParticipantListener)
 	 */
@@ -146,6 +155,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 			}
 		}
 		if (!added.isEmpty()) {
+			saveState();
 			fireUpdate((ISynchronizeParticipant[])added.toArray(new ISynchronizeParticipant[added.size()]), ADDED);
 		}
 	}
@@ -162,6 +172,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 			}
 		}
 		if (!removed.isEmpty()) {
+			saveState();
 			fireUpdate((ISynchronizeParticipant[])removed.toArray(new ISynchronizeParticipant[removed.size()]), REMOVED);
 		}
 	}
@@ -216,50 +227,73 @@ public class SynchronizeManager implements ISynchronizeManager {
 	
 	public void restoreParticipants() throws PartInitException, TeamException, CoreException {
 		participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
-		boolean firstTime = restoreSynchronizeParticipants();
-		if(!firstTime) {
-			SynchronizePartnerDescriptor[] desc = participantRegistry.getSynchronizeParticipants();
-			for (int i = 0; i < desc.length; i++) {
-				SynchronizePartnerDescriptor descriptor = desc[i];
-				if(descriptor.isStatic()) {
-					createParticipant(null, null, descriptor);
-				}
+		restoreSynchronizeParticipants();
+		// Create any new participants that had previously not been added (e.g. new plugins being
+		// added.
+		SynchronizePartnerDescriptor[] desc = participantRegistry.getSynchronizeParticipants();
+		List participants = new ArrayList();
+		for (int i = 0; i < desc.length; i++) {
+			SynchronizePartnerDescriptor descriptor = desc[i];
+			if(descriptor.isStatic() && ! synchronizeParticipants.containsKey(descriptor.getId())) {
+				participants.add(createParticipant(descriptor.getId(), null, descriptor));
 			}
+		}
+		if(! participants.isEmpty()) {
+			addSynchronizeParticipants((ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]));
 		}
 	}
 	
-	public void dispose() {
-	}
-	
-	private boolean restoreSynchronizeParticipants() throws TeamException, PartInitException, CoreException {
-		ISaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamUIPlugin.getPlugin(), "subscribers"); //$NON-NLS-1$
+	private void restoreSynchronizeParticipants() throws TeamException, PartInitException, CoreException {
+		ISaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME); //$NON-NLS-1$
 		if(root != null && root.getName().equals(CTX_PARTICIPANTS)) {
+			List participants = new ArrayList();
 			ISaveContext[] contexts = root.getChildren();
 			for (int i = 0; i < contexts.length; i++) {
 				ISaveContext context = contexts[i];
 				if(context.getName().equals(CTX_PARTICIPANT)) {
 					String id = context.getAttribute(CTX_ID);
-					ISaveContext[] children = context.getChildren();
+					String instance_id = context.getAttribute(CTX_INSTANCE_ID);
 					SynchronizePartnerDescriptor desc = participantRegistry.find(id);
 					if(desc != null) {
 						IConfigurationElement cfgElement = desc.getConfigurationElement();
-						createParticipant(id, children, desc);
+						participants.add(createParticipant(id, instance_id, desc));
 					}
 				}
 			}
-			return true;
+			if(! participants.isEmpty()) {
+				addSynchronizeParticipants((ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]));
+			}
 		}
-		return false;
 	}
-
-	private void createParticipant(String id, ISaveContext[] children, SynchronizePartnerDescriptor desc) throws CoreException, PartInitException {
+	
+	private ISynchronizeParticipant createParticipant(String id, String instance_id, SynchronizePartnerDescriptor desc) throws CoreException, PartInitException {
 		ISynchronizeParticipant participant = (ISynchronizeParticipant)TeamUIPlugin.createExtension(desc.getConfigurationElement(), SynchronizePartnerDescriptor.ATT_CLASS);
 		participant.setInitializationData(desc.getConfigurationElement(), id, null);
-		if(children != null) {
-			participant.init(children[0]);
-		} else {
-			participant.init(null);
-		}			
-		addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+		participant.init(instance_id);
+		return participant;
+	}
+	
+	private void saveState() {
+		ISaveContext root = new SaveContext();
+		root.setName(CTX_PARTICIPANTS);
+		List children = new ArrayList();
+		try {
+			for (Iterator it = synchronizeParticipants.values().iterator(); it.hasNext();) {			
+				ISynchronizeParticipant participant = (ISynchronizeParticipant) it.next();			
+				String id = participant.getId();
+				ISaveContext item = new SaveContext();				
+				item.setName(CTX_PARTICIPANT);
+				Map attributes = new HashMap();
+				attributes.put(CTX_ID, id);
+				attributes.put(CTX_INSTANCE_ID, participant.getInstanceId());
+				item.setAttributes(attributes);				
+				children.add(item);
+				participant.saveState();
+			}
+			root.setChildren((SaveContext[])children.toArray(new SaveContext[children.size()]));
+			SaveContextXMLWriter.writeXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME, (SaveContext)root); //$NON-NLS-1$
+		} catch (TeamException e) {
+			TeamPlugin.log(e);
+		}
 	}
 }

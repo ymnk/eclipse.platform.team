@@ -1,7 +1,6 @@
 package org.eclipse.team.ui.sync;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -66,13 +65,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	protected void setSubscriber(TeamSubscriber subscriber) {
 		this.input = new SubscriberInput(subscriber);
 		this.currentMode = BOTH_MODE;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#getUniqueId()
-	 */
-	public QualifiedName getUniqueId() {
-		return input.getSubscriber().getId();
 	}
 	
 	/* (non-Javadoc)

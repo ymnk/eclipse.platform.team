@@ -22,10 +22,10 @@ import org.xml.sax.SAXException;
 
 public class SaveContextXMLWriter extends PrintWriter {
 	protected int tab;
-
+	
 	/* constants */
 	protected static final String XML_VERSION = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"; //$NON-NLS-1$
-
+	
 	public SaveContextXMLWriter(OutputStream output) throws UnsupportedEncodingException {
 		super(new OutputStreamWriter(output, "UTF8")); //$NON-NLS-1$
 		tab = 0;
@@ -169,6 +169,14 @@ public class SaveContextXMLWriter extends PrintWriter {
 			}
 		} catch (IOException e) {
 			throw new TeamException(new Status(Status.ERROR, TeamPlugin.ID, TeamException.UNABLE, Policy.bind("RepositoryManager.save",stateFile.getAbsolutePath()), e));  //$NON-NLS-1$
+		}
+	}
+	
+	static public void deleteXMLPluginMetaFile(Plugin plugin, String filename) {		
+		IPath pluginStateLocation = plugin.getStateLocation();
+		File stateFile = pluginStateLocation.append(filename).toFile();
+		if (stateFile.exists()) {
+			stateFile.delete();
 		}
 	}
 	

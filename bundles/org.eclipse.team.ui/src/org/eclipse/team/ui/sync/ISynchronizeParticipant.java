@@ -13,7 +13,6 @@ package org.eclipse.team.ui.sync;
 import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.team.core.ISaveContext;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -26,11 +25,20 @@ import org.eclipse.ui.part.IPageBookViewPage;
  */
 public interface ISynchronizeParticipant extends IExecutableExtension {
 	/**
-	 * Returns the unique id of this synchronize participant.
+	 * Returns the unique id that identified the <i>type<i> of this synchronize participant.
 	 * 
-	 * @return the unique id of this synchronize participant
+	 * @return the unique id that identified the <i>type<i> of this synchronize participant.
 	 */
 	public String getId();
+	
+	/**
+	 * Returns the dynamic instance id of this synchronize participant. For dynamic
+	 * participants (e.g. participants that support multiple instance of the same
+	 * type) this id is used to differentiate these dynamic instances.
+	 * 
+	 * @return the dynamic instance id of this synchronize participant
+	 */
+	public String getInstanceId();
 	
 	/**
 	 * Returns the name of this synchronize participant.
@@ -58,10 +66,8 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	public IPageBookViewPage createPage(ISynchronizeView view);
 	
 	/**
-	 * Initializes this participant with the given synchronize view.  A save context is passed to
-	 * the participant which contains a snapshot of the participants state from a previous
-	 * session.  Where possible, the participant should try to recreate that state
-	 * within the synchronize view.
+	 * Initializes this participant with the given synchronize view.  The instance id is
+	 * passed to the participant.
 	 * <p>
 	 * This method is automatically called by the team plugin shortly after synchronize 
 	 * view construction.  It marks the start of the views's lifecycle. Clients must 
@@ -72,14 +78,12 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @param saveContext the ISynchronizeParticipant state or null if there is no previous saved state
 	 * @exception PartInitException if this participant was not initialized successfully
 	 */
-	public void init(ISaveContext saveContext) throws PartInitException;
+	public void init(String instance_id) throws PartInitException;
 	
 	/**
-	 * Saves the participants object state within a save context.
-	 *
-	 * @param memento a memento to receive the object state
+	 * Saves the participants object state.
 	 */
-	public void saveState(ISaveContext saveContext);
+	public void saveState();
 	
 	/**
 	 * Adds a listener for changes to properties of this synchronize participant.
