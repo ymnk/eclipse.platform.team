@@ -98,7 +98,7 @@ public class CVSLightweightDecorator
 				public void run(IProgressMonitor monitor) throws CVSException {
 					// file is dirty or file has been merged by an update
 					if(!cvsResource.isIgnored()) {
-						isDirty[0] = cvsResource.isModified();
+						isDirty[0] = cvsResource.isModified(null);
 					}
 				}
 			}, null);

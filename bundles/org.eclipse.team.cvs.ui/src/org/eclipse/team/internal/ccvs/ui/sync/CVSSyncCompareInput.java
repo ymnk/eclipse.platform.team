@@ -464,7 +464,7 @@ public class CVSSyncCompareInput extends SyncCompareInput {
 		try {
 			// file is dirty or file has been merged by an update
 			if(!cvsFile.isIgnored()) {
-				return cvsFile.isModified();
+				return cvsFile.isModified(null);
 			} else {
 				return false;
 			} 
