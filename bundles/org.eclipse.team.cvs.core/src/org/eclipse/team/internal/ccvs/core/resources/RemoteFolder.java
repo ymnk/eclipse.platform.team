@@ -72,9 +72,6 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		List newRemoteFiles = new ArrayList();
 		boolean exists = true;
 		List exceptions = new ArrayList();
-		protected List getExceptions() {
-			return exceptions;
-		}
 		protected List getNewRemoteDirectories() {
 			return newRemoteDirectories;
 		}
@@ -117,11 +114,33 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		}
 		public void fileDoesNotExist(ICVSFolder parent, String filename) {
 		}
-		public boolean foundChildren() {
-			return newRemoteDirectories.size() + newRemoteFiles.size() != 0;
-		}
-		public boolean parentFolderExists() {
-			return exists;
+
+		public void performErrorCheck(IStatus status) throws CVSException {
+			if (status.getCode() == CVSStatus.SERVER_ERROR) {
+				// Only throw the exception if no files or folders were found
+				if (newRemoteDirectories.size() + newRemoteFiles.size() == 0) {
+					throw new CVSServerException(status);
+				} else {
+					CVSProviderPlugin.log(new CVSServerException(status));
+				}
+						
+			}
+			if (!exists) {
+				throw new CVSException(new CVSStatus(CVSStatus.ERROR, CVSStatus.DOES_NOT_EXIST, Policy.bind("RemoteFolder.doesNotExist", getRepositoryRelativePath()))); //$NON-NLS-1$
+			}
+			
+			// Report any internal exceptions that occured fetching the members
+			if ( ! exceptions.isEmpty()) {
+				if (exceptions.size() == 1) {
+					throw (CVSException)exceptions.get(0);
+				} else {
+					MultiStatus multi = new MultiStatus(CVSProviderPlugin.ID, 0, Policy.bind("RemoteFolder.errorFetchingMembers"), null); //$NON-NLS-1$
+					for (int i = 0; i < exceptions.size(); i++) {
+						multi.merge(((CVSException)exceptions.get(i)).getStatus());
+					}
+					throw new CVSException(multi);
+				}
+			}
 		}
 	}
 
@@ -349,35 +368,12 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 				
 			// Perform an update to retrieve the child files and folders
 			IStatus status = performUpdate(tag, listener, Policy.subMonitorFor(progress, 50));
+			Policy.checkCanceled(monitor);
 			
-			if (status.getCode() == CVSStatus.SERVER_ERROR) {
-				// Only throw the exception if no files or folders were found
-				if (!listener.foundChildren()) {
-					throw new CVSServerException(status);
-				} else {
-					CVSProviderPlugin.log(new CVSServerException(status));
-				}
-						
-			}
-			if (! listener.parentFolderExists()) {
-				throw new CVSException(new CVSStatus(CVSStatus.ERROR, CVSStatus.DOES_NOT_EXIST, Policy.bind("RemoteFolder.doesNotExist", getRepositoryRelativePath()))); //$NON-NLS-1$
-			}
-			
-			// Report any internal exceptions that occured fetching the members
-			if ( ! listener.getExceptions().isEmpty()) {
-				if (listener.getExceptions().size() == 1) {
-					throw (CVSException)listener.getExceptions().get(0);
-				} else {
-					MultiStatus multi = new MultiStatus(CVSProviderPlugin.ID, 0, Policy.bind("RemoteFolder.errorFetchingMembers"), null); //$NON-NLS-1$
-					for (int i = 0; i < listener.getExceptions().size(); i++) {
-						multi.merge(((CVSException)listener.getExceptions().get(i)).getStatus());
-					}
-					throw new CVSException(multi);
-				}
-			}
+			// Handle any errors that were identified by the listener
+			listener.performErrorCheck(status);
 			
 			// Convert the file names to remote resources
-			Policy.checkCanceled(monitor);
 			List result = new ArrayList();
 			List remoteFiles = new ArrayList();
 			for (int i=0;i<listener.getNewRemoteFiles().size();i++) {
