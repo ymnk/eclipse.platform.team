@@ -21,6 +21,10 @@ Should we add this? We could also remove the getProjects() from the traversal.
 
 Pending Items:
 
+ - Decide how to convert selected resources into mappers. Choices are a single mapper for multiple resources or 
+   a mapper per resource. The advantage of the second approach is that the mapper list will display each resource
+   as opposed to a single entry that must be expanded or selected to see the resources it maps to.
+ 
  - CVS commands need to respect DO_NOT_RECURSE flag [DONE and TESTED for Update, Commit, Add, Tag and Branch]
 
  - Workspace subscriber refreshes are always deep but could be optimized to be shallow when possible
@@ -33,6 +37,12 @@ Pending Items:
 
  - TagLocalAction requires dirty prompting: need a dialog which shows mappers and traversals
     - also the TagAction hierarchy is smelly due to shared code between local and remote tagging
+    
+ - Need a mapper view that has a list of selected mappers and a details area that shows the resources that each mapper maps to.
+   - this is generally usefule and could be used for TagLocalAction prompt
+ 
+ - Could also have a mapper view that shows the selected mappers and shows a sync page for the mappers.
+   - this is required for the new commit wizard and could be used for the TagLocalAction prompt
  
  - Synchronize view actions?
  

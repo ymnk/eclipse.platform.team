@@ -10,12 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.operations;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -29,9 +26,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
  */
 public final class WorkspaceResourceMapper extends ResourceMapping {
     
-    private final IResource[] resources;
+    private final IResource resource;
     private final int depth;
-    IProject[] projects;
     
     /**
      * Convert the provided resources to one or more resource mappers
@@ -41,31 +37,28 @@ public final class WorkspaceResourceMapper extends ResourceMapping {
      * @return a resource mappers that traverses the resources
      */
     public static ResourceMapping[] asResourceMappers(final IResource[] resources, int depth) {
-        return new ResourceMapping[] { new WorkspaceResourceMapper(resources, depth) };
+        List result = new ArrayList();
+        for (int i = 0; i < resources.length; i++) {
+            IResource resource = resources[i];
+            result.add(new WorkspaceResourceMapper(resource, depth));
+        }
+        return (ResourceMapping[]) result.toArray(new ResourceMapping[result.size()]);
     }
     
-    public WorkspaceResourceMapper(IResource[] resources, int depth) {
-        this.resources = resources;
+    public WorkspaceResourceMapper(IResource resource, int depth) {
+        this.resource = resource;
         this.depth = depth;
     }
     public Object getModelObject() {
-        return ResourcesPlugin.getWorkspace().getRoot();
+        return resource;
     }
     public IProject[] getProjects() {
-        if (projects == null) {
-            Set set = new HashSet();
-            for (int i = 0; i < resources.length; i++) {
-                IResource resource = resources[i];
-                set.add(resource.getProject());
-            }
-            projects = (IProject[]) set.toArray(new IProject[set.size()]);
-        }
-        return projects;
+        return new IProject[] { resource.getProject() };
     }
     public ResourceTraversal[] getTraversals(ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
-        return asTraversals(resources, depth, context);
+        return asTraversal(resource, depth, context);
     }
-    private ResourceTraversal[] asTraversals(final IResource[] resources, final int depth, ResourceMappingContext context) {
-        return new ResourceTraversal[] { new ResourceTraversal(resources, depth)} ;
+    private ResourceTraversal[] asTraversal(IResource resource, final int depth, ResourceMappingContext context) {
+        return new ResourceTraversal[] { new ResourceTraversal(new IResource[] { resource }, depth)} ;
     }
 }

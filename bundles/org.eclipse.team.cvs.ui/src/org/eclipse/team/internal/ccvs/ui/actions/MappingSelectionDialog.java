@@ -29,6 +29,7 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
+import org.eclipse.team.internal.ui.dialogs.ResourceMappingResourceDisplayArea;
 import org.eclipse.ui.model.*;
 
 /**
@@ -42,6 +43,8 @@ public class MappingSelectionDialog extends DetailsDialog {
     private CheckboxTableViewer viewer;
     private Object[] checkedMappings;
     private final Subscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
+    
+    ResourceMappingResourceDisplayArea mappingArea;
 
     public MappingSelectionDialog(Shell parentShell, String dialogTitle, ResourceMapping[] mappings, FastSyncInfoFilter resourceFilter) {
         super(parentShell, dialogTitle);
@@ -53,9 +56,13 @@ public class MappingSelectionDialog extends DetailsDialog {
      * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#createMainDialogArea(org.eclipse.swt.widgets.Composite)
      */
     protected void createMainDialogArea(Composite parent) {
+        Composite composite = createComposite(parent);
+        
+        createWrappingLabel(composite, "The following elements contain uncommitted changes that will not be versioned. Uncheck those that should be excluded from the tag operation.");
+        
         // TODO: add handling for a single resource mapper
         // TODO: add handling for a single resource mapper that was derived from directly selected resources
-        viewer = CheckboxTableViewer.newCheckList(parent, SWT.NONE);
+        viewer = CheckboxTableViewer.newCheckList(composite, SWT.SINGLE | SWT.BORDER);
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = 150;
         viewer.getControl().setLayoutData(data);
@@ -68,6 +75,13 @@ public class MappingSelectionDialog extends DetailsDialog {
                 updateEnablements();
             }
         });
+        viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+            public void selectionChanged(SelectionChangedEvent event) {
+                if (mappingArea != null) {
+                    mappingArea.setMapping(getSelectedMapping());
+                }
+            }
+        });
         viewer.setCheckedElements(mappings);
         // TODO: Add select/deselect all buttons
     }
@@ -76,7 +90,22 @@ public class MappingSelectionDialog extends DetailsDialog {
      * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#createDropDownDialogArea(org.eclipse.swt.widgets.Composite)
      */
     protected Composite createDropDownDialogArea(Composite parent) {
-        // TODO Auto-generated method stub
+        if (mappingArea == null) {
+            mappingArea = new ResourceMappingResourceDisplayArea(getSelectedMapping());
+        }
+        Composite c = createComposite(parent);
+        mappingArea.createArea(c);
+        return c;
+    }
+
+    private ResourceMapping getSelectedMapping() {
+        ISelection selection = viewer.getSelection();
+        if (selection instanceof IStructuredSelection) {
+            IStructuredSelection ss = (IStructuredSelection) selection;
+            Object firstElement = ss.getFirstElement();
+            if (firstElement instanceof ResourceMapping)
+                return (ResourceMapping)firstElement;
+        }
         return null;
     }
 
