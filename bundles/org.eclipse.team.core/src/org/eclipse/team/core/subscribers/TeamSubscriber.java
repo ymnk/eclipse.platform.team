@@ -251,4 +251,15 @@ abstract public class TeamSubscriber {
 	public SyncInfo[] getAllOutOfSync(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
 		return null;
 	}
+	
+	/**
+	 * Return an ITeamOperations instance that allows clients to perform some basic
+	 * team operations. If <code>null</code> is returned then the subscriber does not
+	 * support any of the basic team operations. If an instance ins returned, the client 
+	 * can query the interface to determine which operations are supported.
+	 * @return an instance of ITeamOperations
+	 */
+	public ITeamOperations getTeamOperations() {
+		return null;
+	}
 }
