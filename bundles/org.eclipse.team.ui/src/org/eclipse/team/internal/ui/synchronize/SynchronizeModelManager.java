@@ -185,16 +185,20 @@ public abstract class SynchronizeModelManager implements IActionContribution {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(IActionBars actionBars) {
+	public void fillActionBars(IActionBars actionBars) {
 		if (toggleModelProviderActions == null) return;
 		IToolBarManager toolbar = actionBars.getToolBarManager();
 		IMenuManager menu = actionBars.getMenuManager();
-		if(menu != null && menu.find(ISynchronizePageConfiguration.LAYOUT_GROUP) != null) {
+		IContributionItem group = configuration.findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);
+		if(menu != null && group != null) {
 			MenuManager layout = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$
-			menu.appendToGroup(ISynchronizePageConfiguration.LAYOUT_GROUP, layout);	
+			menu.appendToGroup(group.getId(), layout);	
 			appendToMenu(null, layout);
-		} else if(toolbar != null && toolbar.find(ISynchronizePageConfiguration.LAYOUT_GROUP) != null) {
-			appendToMenu(ISynchronizePageConfiguration.LAYOUT_GROUP, toolbar);
+		} else if(toolbar != null) {
+			group = configuration.findGroup(toolbar, ISynchronizePageConfiguration.LAYOUT_GROUP);
+			if (group != null) {
+				appendToMenu(group.getId(), toolbar);
+			}
 		}
 	}
 	

@@ -28,19 +28,19 @@ public interface IActionContribution {
 	public void initialize(ISynchronizePageConfiguration configuration);
 	
 	/**
+	 * Contribute to the action bars of the part to which this
+	 * contribution is associated. 
+	 * @param actionBars the actions bars of the part
+	 */
+	public void fillActionBars(IActionBars actionBars);
+	
+	/**
 	 * Contribute actions to the context menu of the part to 
 	 * which this contribution is associated. This method is
 	 * invoked each time the context menu is shown.
 	 * @param manager the menu manager for the context menu
 	 */
 	public void fillContextMenu(IMenuManager manager);
-	
-	/**
-	 * Contribute to the action bars of the part to which this
-	 * contribution is associated. 
-	 * @param actionBars the actions bars of the part
-	 */
-	public void setActionBars(IActionBars actionBars);
 	
 	/**
 	 * Dispose of any resources associated with the actions of this

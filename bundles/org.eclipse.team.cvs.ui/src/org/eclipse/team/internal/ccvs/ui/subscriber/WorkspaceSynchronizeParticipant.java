@@ -10,14 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.*;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.internal.ui.synchronize.actions.SubscriberParticipantActionContribution;
+import org.eclipse.team.internal.ui.synchronize.actions.AbstractActionContribution;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
@@ -36,10 +35,12 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 	/**
 	 * CVS workspace action contribution
 	 */
-	public class WorkspaceActionContribution extends SubscriberParticipantActionContribution {
+	public class WorkspaceActionContribution extends AbstractActionContribution {
 		private ActionDelegateWrapper commitToolbar;
 		private ActionDelegateWrapper updateToolbar;
+		private ISynchronizePageConfiguration configuration;
 		public void initialize(ISynchronizePageConfiguration configuration) {
+			this.configuration = configuration;
 			commitToolbar = new ActionDelegateWrapper(new SubscriberCommitAction(), configuration.getSite().getPart());
 			WorkspaceUpdateAction action = new WorkspaceUpdateAction();
 			action.setPromptBeforeUpdate(true);
@@ -48,14 +49,14 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 			Utils.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
 			super.initialize(configuration);
 		}
-		public void setActionBars(IActionBars actionBars) {
+		public void fillActionBars(IActionBars actionBars) {
 			IToolBarManager toolbar = actionBars.getToolBarManager();
-			if (toolbar != null && toolbar.find(ACTION_GROUP) != null) {
-				toolbar.add(new Separator());
-				toolbar.appendToGroup(ACTION_GROUP, updateToolbar);
-				toolbar.appendToGroup(ACTION_GROUP, commitToolbar);
+			IContributionItem group = configuration.findGroup(toolbar, ACTION_GROUP);
+			if (toolbar != null && group != null) {
+				toolbar.appendToGroup(group.getId(), updateToolbar);
+				toolbar.appendToGroup(group.getId(), commitToolbar);
 			}
-			super.setActionBars(actionBars);
+			super.fillActionBars(actionBars);
 		}
 		protected void modelChanged(ISynchronizeModelElement element) {
 			commitToolbar.setSelection(element);
@@ -77,13 +78,7 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
-		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, 
-			new String[] { 
-				ISynchronizePageConfiguration.SYNCHRONIZE_GROUP,  
-				ISynchronizePageConfiguration.NAVIGATE_GROUP, 
-				ISynchronizePageConfiguration.MODE_GROUP, 
-				ACTION_GROUP
-			});
+		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ACTION_GROUP);
 		configuration.addActionContribution(new WorkspaceActionContribution());
 		((ISubscriberPageConfiguration)configuration).setSupportedModes(ISubscriberPageConfiguration.ALL_MODES);
 	}

@@ -46,10 +46,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 */
 	private static final String STORE_SECTION_POSTFIX = "SubscriberParticipantPage"; //$NON-NLS-1$
 	/** 
-	 * Settings constant for sort order (value <code>SubscriberParticipantPage</code>).
-	 */
-	private static final String STORE_SORT_TYPE = "SubscriberParticipantPage.STORE_SORT_TYPE"; //$NON-NLS-1$
-	/** 
 	 * Settings constant for working set (value <code>SubscriberParticipantPage</code>).
 	 */
 	private static final String STORE_WORKING_SET = "SubscriberParticipantPage.STORE_WORKING_SET"; //$NON-NLS-1$
@@ -66,7 +62,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	private Composite composite;
 	private ChangesSection changesSection;
 	private Viewer changesViewer;
-	private boolean settingWorkingSet = false;
 	private SubscriberParticipant participant;
 	
 	// Toolbar and status line actions for this page, note that context menu actions shown in 
@@ -210,7 +205,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 			String[] groups = (String[])o;
 			for (int i = 0; i < groups.length; i++) {
 				String group = groups[i];
-				manager.add(new Separator(group));
+				manager.add(new Separator(getGroupId(group)));
 			}
 
 			// view menu
@@ -234,15 +229,19 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 			}
 			for (int i = start; i < groups.length; i++) {
 				String group = groups[i];
-				menu.add(new Separator(group));
+				menu.add(new Separator(getGroupId(group)));
 				
 			}
 			
 			// status line
 			statusLine.fillActionBars(actionBars);
 			
-			((IActionContribution)configuration).setActionBars(actionBars);
+			((IActionContribution)configuration).fillActionBars(actionBars);
 		}		
+	}
+
+	private String getGroupId(String group) {
+		return ((SynchronizePageConfiguration)configuration).getGroupId(group);
 	}
 
 	/* (non-Javadoc)
@@ -251,7 +250,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	public void propertyChange(PropertyChangeEvent event) {
 		// Working set changed by user
 		if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
-			settingWorkingSet = true;
 			configuration.setWorkingSet((IWorkingSet)event.getNewValue());
 		// Change to showing of sync state in text labels preference
 		} else if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {

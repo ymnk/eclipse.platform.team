@@ -33,11 +33,13 @@ public final class SubscriberActionContribution implements IActionContribution {
 	private Action refreshAllAction;
 	private Action refreshSelectionAction;
 	private DirectionFilterActionGroup modes;
+	private ISynchronizePageConfiguration configuration;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(final ISynchronizePageConfiguration configuration) {
+		this.configuration = configuration;
 		final SubscriberParticipant participant = (SubscriberParticipant)configuration.getParticipant();
 		final ISynchronizePageSite site = configuration.getSite();
 		// toolbar
@@ -85,38 +87,39 @@ public final class SubscriberActionContribution implements IActionContribution {
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
 	 */
 	public void fillContextMenu(IMenuManager manager) {
-		if (refreshSelectionAction != null && manager.find(ISynchronizePageConfiguration.SYNCHRONIZE_GROUP) != null) {
-			manager.appendToGroup(ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, refreshSelectionAction);
+		IContributionItem group = configuration.findGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP);
+		if (refreshSelectionAction != null && group != null) {
+			manager.appendToGroup(group.getId(), refreshSelectionAction);
 		}	
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(IActionBars actionBars) {
+	public void fillActionBars(IActionBars actionBars) {
 		if(actionBars != null) {
 			
 			// toolbar
-			IToolBarManager manager = actionBars.getToolBarManager();			
-			if(refreshAllAction != null 
-					&& manager.find(ISynchronizePageConfiguration.SYNCHRONIZE_GROUP) != null) {
-				manager.appendToGroup(ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, refreshAllAction);
+			IToolBarManager manager = actionBars.getToolBarManager();
+			IContributionItem group = configuration.findGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP);
+			if(refreshAllAction != null && group != null) {
+				manager.appendToGroup(group.getId(), refreshAllAction);
 			}
 			
-			if (modes != null 
-					&& manager.find(ISynchronizePageConfiguration.MODE_GROUP) != null) {
-				modes.fillToolBar(ISynchronizePageConfiguration.MODE_GROUP, manager);
+			group = configuration.findGroup(manager, ISynchronizePageConfiguration.MODE_GROUP);
+			if (modes != null  && group != null) {
+				modes.fillToolBar(group.getId(), manager);
 			}
 
 			// view menu
 			IMenuManager menu = actionBars.getMenuManager();
-			if (configureSchedule != null
-					&& menu.find(ISynchronizePageConfiguration.SYNCHRONIZE_GROUP) != null) {
-				menu.appendToGroup(ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, configureSchedule);
+			group = configuration.findGroup(menu, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP);
+			if (configureSchedule != null && group != null) {
+				menu.appendToGroup(group.getId(), configureSchedule);
 			}
-			if (showPreferences != null
-					&& menu.find(ISynchronizePageConfiguration.PREFERENCES_GROUP) != null) {
-				menu.appendToGroup(ISynchronizePageConfiguration.PREFERENCES_GROUP, showPreferences);
+			group = configuration.findGroup(menu, ISynchronizePageConfiguration.PREFERENCES_GROUP);
+			if (showPreferences != null && group != null) {
+				menu.appendToGroup(group.getId(), showPreferences);
 			}
 		}		
 	}
@@ -125,6 +128,6 @@ public final class SubscriberActionContribution implements IActionContribution {
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
 	 */
 	public void dispose() {
-		// Nothing to dispose
+		configuration.removeActionContribution(this);
 	}
 }

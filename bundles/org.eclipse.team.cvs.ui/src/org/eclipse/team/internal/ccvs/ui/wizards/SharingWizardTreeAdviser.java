@@ -76,8 +76,8 @@ public class SharingWizardTreeAdviser extends TreeViewerAdvisor implements ISync
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(IActionBars actionBars) {
-		super.setActionBars(actionBars);
+	public void fillActionBars(IActionBars actionBars) {
+		super.fillActionBars(actionBars);
 		IToolBarManager toolbar = actionBars.getToolBarManager();
 		if (toolbar != null) {
 			toolbar.add(new Separator());

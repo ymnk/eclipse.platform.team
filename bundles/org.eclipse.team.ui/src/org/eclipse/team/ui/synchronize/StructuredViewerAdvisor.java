@@ -204,7 +204,7 @@ public abstract class StructuredViewerAdvisor {
 	}
 	
 	private void handleOpen() {
-		Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_OPEN_ACTION);
+		Object o = getConfiguration().getProperty(SynchronizePageConfiguration.P_OPEN_ACTION);
 		if (o instanceof IAction) {
 			IAction action = (IAction)o;
 			action.run();
@@ -359,8 +359,12 @@ public abstract class StructuredViewerAdvisor {
 		String[] groups = (String[])o;
 		for (int i = 0; i < groups.length; i++) {
 			String group = groups[i];
-			manager.add(new Separator(group));
+			manager.add(new Separator(getGroupId(group)));
 		}
 		((SynchronizePageConfiguration)configuration).fillContextMenu(manager);
+	}
+	
+	private String getGroupId(String group) {
+		return ((SynchronizePageConfiguration)configuration).getGroupId(group);
 	}
 }

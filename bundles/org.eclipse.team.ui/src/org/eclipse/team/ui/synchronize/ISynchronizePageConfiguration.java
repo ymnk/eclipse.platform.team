@@ -10,7 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.jface.action.IContributionItem;
+import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
@@ -57,7 +60,9 @@ public interface ISynchronizePageConfiguration {
 	 * menu of the page. The value for this
 	 * property should be a string array. If this property is
 	 * set to <code>null</code>, the <code>DEFAULT_TOOLBAR_MENU</code>
-	 * is used.
+	 * is used. Also, the groups mentioned in the <code>DEFAULT_TOOLBAR_MENU</code>
+	 * can be removed but will always appear in the same order if 
+	 * included.
 	 */
 	public static final String P_TOOLBAR_MENU = TeamUIPlugin.ID + ".P_TOOLBAR_MENU"; //$NON-NLS-1$
 
@@ -69,9 +74,13 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_CONTEXT_MENU = TeamUIPlugin.ID + ".P_CONTEXT_MENU"; //$NON-NLS-1$
 	
 	/**
-	 * The configuration property that defines
-	 * the groups in the dropdown view menu of the page. The value for this
-	 * property should be a string array.
+	 * Property constant that defines the groups in the dropdown view 
+	 * menu of the page. The value for this
+	 * property should be a string array. If this property is
+	 * set to <code>null</code>, the <code>DEFAULT_VIEW_MENU</code>
+	 * is used. Also, the groups mentioned in the <code>DEFAULT_VIEW_MENU</code>
+	 * can be removed but will always appear in the same order if 
+	 * included.
 	 */
 	public static final String P_VIEW_MENU = TeamUIPlugin.ID + ".P_VIEW_MENU"; //$NON-NLS-1$
 	
@@ -83,13 +92,6 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public static final String P_OBJECT_CONTRIBUTION_ID = TeamUIPlugin.ID +  ".P_OBJECT_CONTRIBUTION_ID"; //$NON-NLS-1$
 	
-	/**
-	 * The configuration property that opens the current selection in the
-	 * page. The registered <code>IAction</code> is invoked on a single or
-	 * double click depending on the open strategy chosen by the user.
-	 */
-	public static final String P_OPEN_ACTION = TeamUIPlugin.ID + ".P_OPEN_ACTION"; //$NON-NLS-1$
-
 	/**
 	 * Property constant for the working set used to filter the visible
 	 * elements of the model. The value can be any <code>IWorkingSet</code>
@@ -155,17 +157,31 @@ public interface ISynchronizePageConfiguration {
 	public static final String LAYOUT_GROUP = "layout"; //$NON-NLS-1$
 
 	/**
-	 * This is the default group ordering used for the context menu of a page.
+	 * These are the default groups used for the context menu of a page.
+	 * Clients can remove, add and change the ordering for groups in
+	 * the context menu.
 	 */
 	public static final String[] DEFAULT_CONTEXT_MENU = new String[] { FILE_GROUP,  EDIT_GROUP, SYNCHRONIZE_GROUP, NAVIGATE_GROUP, OBJECT_CONTRIBUTIONS_GROUP};
 
 	/**
-	 * This is the default group ordering used for the toobar of a page.
+	 * These are the default groups used for the toolbar of a page.
+	 * These groups will always appear in this order in the toolbar.
+	 * Clients can disable one or more of these groups by setting
+	 * the <code>P_TOOLBAR_MENU</code> property to an array that
+	 * contains a subset of these. Clients can also add groups 
+	 * by adding new unique group ids to the array. Added groups 
+	 * will appear in the order specified but after the default groups.
 	 */
 	public static final String[] DEFAULT_TOOLBAR_MENU = new String[] { SYNCHRONIZE_GROUP, NAVIGATE_GROUP, MODE_GROUP,  LAYOUT_GROUP };
 	
 	/**
-	 * This is the default group ordering used for the toobar of a page.
+	 * These are the default groups used for the dropdown view menu of a page.
+	 * These groups will always appear in this order in the view menu.
+	 * Clients can disable one or more of these groups by setting
+	 * the <code>P_VIEW_MENU</code> property to an array that
+	 * contains a subset of these. Clients can also add groups 
+	 * by adding new unique group ids to the array. Added groups 
+	 * will appear in the order specified but after the default groups.
 	 */
 	public static final String[] DEFAULT_VIEW_MENU = new String[] { WORKING_SET_GROUP, LAYOUT_GROUP, SYNCHRONIZE_GROUP, PREFERENCES_GROUP };
 
@@ -232,4 +248,27 @@ public interface ISynchronizePageConfiguration {
 	 * @param contribution an action contributio
 	 */
 	public abstract void removeActionContribution(IActionContribution contribution);
+	
+	public void addLabelDecorator(ILabelDecorator decorator);
+	
+	/**
+	 * Set the groups that are to be added to the menu identified
+	 * by the menu property id.
+	 * @param menuPropertyId the menu property id (one of <code>P_CONTEXT_MENU</code>,
+	 * <code>P_VIEW_MENU</code> or <code>P_TOOLBAR_MENU</code>)
+	 * @param groups a array of groups Ids
+	 */
+	public void setMenuGroups(String menuPropertyId, String[] groups);
+	
+	/**
+	 * Adds a menu group of the gievn id to the end of the menu groups list
+	 * for the given menu property id.
+	 * @param menuPropertyId the menu property id (one of <code>P_CONTEXT_MENU</code>,
+	 * <code>P_VIEW_MENU</code> or <code>P_TOOLBAR_MENU</code>)
+	 * @param groupId the id of the group to be added to the end of the menu
+	 * group list
+	 */
+	public void addMenuGroup(String menuPropertyId, String groupId);
+	
+	public IContributionItem findGroup(IContributionManager menu, String groupId);
 }

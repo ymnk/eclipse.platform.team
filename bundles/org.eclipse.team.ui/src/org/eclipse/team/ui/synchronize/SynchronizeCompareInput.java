@@ -184,7 +184,7 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 			tbm.add(new Separator("navigation")); //$NON-NLS-1$
 			contributeToToolBar(tbm);
 			IActionBars bars = getActionBars(tbm);
-			getViewerConfiguration().setActionBars(bars);
+			getViewerConfiguration().fillActionBars(bars);
 			tbm.update(true);
 		}
 	}

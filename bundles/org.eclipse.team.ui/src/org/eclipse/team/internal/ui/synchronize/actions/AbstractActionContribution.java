@@ -17,14 +17,13 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewPart;
 
 /**
  * Actions common to CVS, FTP and WebDAV particpants
  */
-public abstract class SubscriberParticipantActionContribution implements IActionContribution, IPropertyChangeListener {
+public abstract class AbstractActionContribution implements IActionContribution, IPropertyChangeListener {
 
 	private ISynchronizePageConfiguration configuration;
 	private RemoveSynchronizeParticipantAction removeAction;
@@ -44,7 +43,7 @@ public abstract class SubscriberParticipantActionContribution implements IAction
 	
 	protected void createRemoveAction(ISynchronizePageConfiguration configuration) {
 		if (configuration.getSite().getPart() instanceof IViewPart) {
-			SubscriberParticipant p = (SubscriberParticipant)configuration.getParticipant();
+			ISynchronizeParticipant p = configuration.getParticipant();
 			removeAction = new RemoveSynchronizeParticipantAction(p);
 		}
 	}
@@ -66,7 +65,7 @@ public abstract class SubscriberParticipantActionContribution implements IAction
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(IActionBars actionBars) {
+	public void fillActionBars(IActionBars actionBars) {
 		if(actionBars != null) {
 			IToolBarManager toolbar = actionBars.getToolBarManager();
 			if(toolbar != null) {

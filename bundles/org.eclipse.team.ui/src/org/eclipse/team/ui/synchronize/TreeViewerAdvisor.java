@@ -346,23 +346,26 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
 	 */
 	public void fillContextMenu(IMenuManager manager) {
-		if (expandAllAction != null  && manager.find(ISynchronizePageConfiguration.NAVIGATE_GROUP) != null) {
-			manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAllAction);
+		IContributionItem group = getConfiguration().findGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP);
+		if (expandAllAction != null  && group != null) {
+			manager.appendToGroup(group.getId(), expandAllAction);
 		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(IActionBars actionBars) {
+	public void fillActionBars(IActionBars actionBars) {
 		if(actionBars != null) {
 			IToolBarManager manager = actionBars.getToolBarManager();
-			if (manager.find(ISynchronizePageConfiguration.NAVIGATE_GROUP) != null) {
+			ISynchronizePageConfiguration configuration = getConfiguration();
+			IContributionItem group = configuration.findGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP);
+			if (group != null) {
 				if(gotoNext != null) {
-					manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, gotoNext);
-					manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, gotoPrevious);
+					manager.appendToGroup(group.getId(), gotoNext);
+					manager.appendToGroup(group.getId(), gotoPrevious);
 				}
-				manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, collapseAll);
+				manager.appendToGroup(group.getId(), collapseAll);
 			}
 		}
 	}

@@ -14,8 +14,11 @@ import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.util.*;
+import org.eclipse.jface.viewers.ILabelDecorator;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
 
@@ -24,6 +27,14 @@ import org.eclipse.ui.IActionBars;
  */
 public abstract class SynchronizePageConfiguration implements ISynchronizePageConfiguration, IActionContribution {
 
+	/**
+	 * The hidden configuration property that opens the current selection in the
+	 * page. The registered <code>IAction</code> is invoked on a single or
+	 * double click depending on the open strategy chosen by the user.
+	 */
+	public static final String P_OPEN_ACTION = TeamUIPlugin.ID + ".P_OPEN_ACTION"; //$NON-NLS-1$
+
+	
 	private ISynchronizeParticipant participant;
 	private ISynchronizePageSite site;
 	private ListenerList propertyChangeListeners = new ListenerList();
@@ -40,6 +51,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 		setProperty(P_OBJECT_CONTRIBUTION_ID, participant.getId());
 		setProperty(P_CONTEXT_MENU, DEFAULT_CONTEXT_MENU);
 		setProperty(P_TOOLBAR_MENU, DEFAULT_TOOLBAR_MENU);
+		setProperty(P_VIEW_MENU, DEFAULT_VIEW_MENU);
 		setProperty(P_LABEL_PROVIDER, new SynchronizeModelElementLabelProvider());
 		addActionContribution(new SynchronizePageActions());
 	}
@@ -185,7 +197,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 * Callback invoked from the page to fil the action bars.
 	 * @param actionBars the action bars of the view
 	 */
-	public void setActionBars(final IActionBars actionBars) {
+	public void fillActionBars(final IActionBars actionBars) {
 		if (!actionsInitialized) {
 			initialize(this);
 		}
@@ -197,7 +209,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 					// Logged by Platform
 				}
 				public void run() throws Exception {
-					contribution.setActionBars(actionBars);
+					contribution.fillActionBars(actionBars);
 				}
 			});
 		}
@@ -219,5 +231,60 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 				}
 			});
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#setMenu(java.lang.String, java.lang.String[])
+	 */
+	public void setMenuGroups(String menuPropertyId, String[] groups) {
+		setProperty(menuPropertyId, groups);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#appendMenu(java.lang.String, java.lang.String)
+	 */
+	public void addMenuGroup(String menuPropertyId, String groupId) {
+		String[] menuGroups = (String[])getProperty(menuPropertyId);
+		if (menuGroups == null) {
+			menuGroups = getDefault(menuPropertyId);
+		}
+		String[] newGroups = new String[menuGroups.length + 1];
+		System.arraycopy(menuGroups, 0, newGroups, 0, menuGroups.length);
+		newGroups[menuGroups.length] = groupId;
+		setProperty(menuPropertyId, newGroups);
+	}
+
+	protected String[] getDefault(String menuPropertyId) {
+		if (menuPropertyId.equals(P_CONTEXT_MENU)) {
+			return DEFAULT_CONTEXT_MENU;
+		} else if (menuPropertyId.equals(P_VIEW_MENU)) {
+			return DEFAULT_VIEW_MENU;
+		} else if (menuPropertyId.equals(P_TOOLBAR_MENU)) {
+			return DEFAULT_TOOLBAR_MENU;
+		} else {
+			return new String[0];
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#addLabelDecorator(org.eclipse.jface.viewers.ILabelDecorator)
+	 */
+	public void addLabelDecorator(ILabelDecorator decorator) {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @param group
+	 * @return
+	 */
+	public String getGroupId(String group) {
+		return getParticipant().getId() + group;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#findGroup(org.eclipse.jface.action.IContributionManager, java.lang.String)
+	 */
+	public IContributionItem findGroup(IContributionManager menu, String groupId) {
+		return menu.find(getGroupId(groupId));
 	}
 }

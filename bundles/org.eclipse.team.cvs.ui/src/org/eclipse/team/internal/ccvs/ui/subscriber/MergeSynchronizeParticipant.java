@@ -15,6 +15,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -22,7 +23,7 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.internal.ui.synchronize.actions.SubscriberParticipantActionContribution;
+import org.eclipse.team.internal.ui.synchronize.actions.AbstractActionContribution;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
@@ -47,9 +48,11 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	/**
 	 * Actions for the merge particpant's toolbar
 	 */
-	public class MergeParticipantActionContribution extends SubscriberParticipantActionContribution {
+	public class MergeParticipantActionContribution extends AbstractActionContribution {
 		private ActionDelegateWrapper updateAdapter;
+		private ISynchronizePageConfiguration configuration;
 		public void initialize(ISynchronizePageConfiguration configuration) {
+			this.configuration = configuration;
 			createRemoveAction(configuration);
 			MergeUpdateAction action = new MergeUpdateAction();
 			action.setPromptBeforeUpdate(true);
@@ -61,16 +64,15 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 		protected void modelChanged(ISynchronizeModelElement input) {
 			updateAdapter.setSelection(input);
 		}
-		public void setActionBars(IActionBars actionBars) {
+		public void fillActionBars(IActionBars actionBars) {
 			if(actionBars != null) {
 				IToolBarManager toolbar = actionBars.getToolBarManager();
-				if(toolbar != null) {
-					if(toolbar.find(ACTION_GROUP) != null) {
-						toolbar.appendToGroup(ACTION_GROUP, updateAdapter);
-					}
+				IContributionItem group = configuration.findGroup(toolbar, ACTION_GROUP);
+				if(toolbar != null && group != null) {
+					toolbar.appendToGroup(group.getId(), updateAdapter);
 				}
 			}	
-			super.setActionBars(actionBars);
+			super.fillActionBars(actionBars);
 		}
 	}
 	
@@ -200,11 +202,7 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
-		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] { 
-				ISynchronizePageConfiguration.SYNCHRONIZE_GROUP,  
-				ISynchronizePageConfiguration.NAVIGATE_GROUP, 
-				ISynchronizePageConfiguration.MODE_GROUP, 
-				ACTION_GROUP});
+		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ACTION_GROUP);
 		((ISubscriberPageConfiguration)configuration).setSupportedModes(ISubscriberPageConfiguration.INCOMING_MODE | ISubscriberPageConfiguration.CONFLICTING_MODE);
 		configuration.addActionContribution(new MergeParticipantActionContribution());
 	}
