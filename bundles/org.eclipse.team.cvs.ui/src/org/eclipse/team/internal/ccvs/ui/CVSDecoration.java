@@ -35,6 +35,12 @@ import org.eclipse.ui.themes.ITheme;
  * decoration APIs. As such a client can convert between them using helpers
  * defined in this class.
  * </p>
+ * TODO: 
+ * profile
+ * add colors and fonts to preferences instead of being hard coded
+ * what to do with CVSDecorationConfiguration class?
+ * preference page externalizations
+ * preference page preview should update when theme changes
  * 
  * @since 3.1
  */
@@ -47,10 +53,9 @@ public class CVSDecoration {
 	private Color bkgColor;
 	private Color fgColor;
 	private Font font;
-	// Type of the resource being decorated (e.g. IResource.PROJECT,
-	// IResource.FILE, IResource.FOLDER)
-	private int resourceType = IResource.FILE;
+	
 	// Properties
+	private int resourceType = IResource.FILE;
 	private boolean watchEditEnabled = false;
 	private boolean isDirty = false;
 	private boolean isIgnored = false;
@@ -66,7 +71,7 @@ public class CVSDecoration {
 	private ICVSRepositoryLocation location;
 	private String keywordSubstitution;
 
-	// Text states to show
+	// Text formatters
 	private String fileFormatter;
 	private String folderFormatter;
 	private String projectFormatter;
@@ -74,8 +79,6 @@ public class CVSDecoration {
 	private String addedTextIndicator;
 	private String resourceName;
 	
-	// Color indicators
-	// Font indicators
 	//	Images cached for better performance
 	private static ImageDescriptor dirty;
 	private static ImageDescriptor checkedIn;
@@ -85,6 +88,8 @@ public class CVSDecoration {
 	private static ImageDescriptor newResource;
 	private static ImageDescriptor edited;
 	
+	// List of preferences used to configure the decorations that
+	// are applied.
 	private Preferences preferences;
 
 	/*
@@ -119,10 +124,8 @@ public class CVSDecoration {
 	}
 
 	/**
-	 * Default constructor uses the preferences to determine text decoration
-	 * formatters and
-	 *  
-	 * @param resourceType
+	 * Default constructor uses the plug-in's preferences to determine text decoration
+	 * formatters and preferences.
 	 */
 	public CVSDecoration(String resourceName) {
 		// 	TODO: for efficiency don't look up a pref until its needed
