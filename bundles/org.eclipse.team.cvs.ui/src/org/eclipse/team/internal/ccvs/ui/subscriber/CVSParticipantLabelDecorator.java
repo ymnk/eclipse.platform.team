@@ -19,6 +19,7 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
@@ -37,24 +38,32 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 	}
 	
 	public String decorateText(String input, Object element) {
-		String text = input;
-		if (element instanceof ISynchronizeModelElement) {
-			IResource resource =  ((ISynchronizeModelElement)element).getResource();
-			if(resource != null && resource.getType() != IResource.ROOT) {
-				CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
-				CVSLightweightDecorator.decorateTextLabel(resource, decoration, false, true, getRevisionNumber((ISynchronizeModelElement)element));
-				StringBuffer output = new StringBuffer(25);
-				if(decoration.prefix != null) {
-					output.append(decoration.prefix);
+		try {
+			String text = input;
+			if (element instanceof ISynchronizeModelElement) {
+				IResource resource = ((ISynchronizeModelElement) element).getResource();
+				if (resource != null && resource.getType() != IResource.ROOT) {
+					// Prepare the decoration but substitute revision and hide dirty indicator
+					CVSDecoration decoration = CVSLightweightDecorator.decorate(resource);
+					decoration.setRevision(getRevisionNumber((ISynchronizeModelElement) element));
+					decoration.setDirty(false);
+					decoration.compute();
+					// Update label
+					StringBuffer output = new StringBuffer(25);
+					if (decoration.getPrefix() != null) {
+						output.append(decoration.getPrefix());
+					}
+					output.append(text);
+					if (decoration.getSuffix() != null) {
+						output.append(decoration.getSuffix());
+					}
+					return output.toString();
 				}
-				output.append(text);
-				if(decoration.suffix != null) {
-					output.append(decoration.suffix);
-				}
-				return output.toString();
 			}
+			return text;
+		} catch (CVSException e) {
+			return input;
 		}
-		return text;
 	}
 	public Image decorateImage(Image base, Object element) {
 		return base;
