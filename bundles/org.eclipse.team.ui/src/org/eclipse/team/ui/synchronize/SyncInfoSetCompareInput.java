@@ -21,6 +21,7 @@ import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 
 /**
  * A <code>CompareEditorInput</code> whose diff viewer shows the resources contained
@@ -51,11 +52,10 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 		final StructuredViewer viewer = internalCreateDiffViewer(parent, diffViewerConfiguration);
 		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
 		
-		if(viewer instanceof INavigatable) { 
+		if(viewer instanceof TreeViewer) { 
 			INavigatable nav= new INavigatable() {
 				public boolean gotoDifference(boolean next) {
-					// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
-					return ((INavigatable)viewer).gotoDifference(next);
+					return TreeViewerUtils.navigate((TreeViewer)viewer, next, true /*fire open*/, false);
 				}
 			};
 			viewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);

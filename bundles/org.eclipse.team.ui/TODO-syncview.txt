@@ -69,17 +69,17 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 ======================================================================
  PR LIST (26-01-2004)
 ======================================================================
-- navigable APIs must be consolidated, sync view navigation
-- compare configuration review
+x navigable APIs must be consolidated, sync view navigation
+x compare configuration review
 - logical view extensions
   - based on project natures
   - ui (e.g. layouts/context menu??)
-- content provider should not assume diff nodes have associated resources
+x content provider should not assume diff nodes have associated resources
   - content provider input? Is it a diff node or sync set? diff node hack required for getting the
     compare editor input working.
-- viewer input as a diffnode with a sync set seems wrong?
+x viewer input as a diffnode with a sync set seems wrong?
 - share reconciling with existing (e.g. using compare contents to resolve)
-- comment grouping logical view
+x comment grouping logical view
 - target migration
 
 ======================================================================
@@ -103,10 +103,12 @@ x compare input requires root node to have children or diff viewer is not added
   [jm] I think this it's fine to have root nodes return true to hasChildren. I don't like
   compares subtle way of determining is the diff viewer should be shown, but in our case a
   root node can safely always have children.
-- several places require a resource
+x several places require a resource
   - e.g. conflict propogation requires a resource but shouldn't (modified to work without a resource)
   x conflicts do not propogate in comment view [jm] fixed
   [jm] we have to change this assumption everywhere! Actions, label decorators... and such. 
+  [jm] does sync info diff node require a resource? currently it does. But I still don't like
+  the SyncSet methods that take IResource.ROOT to return first level children.
 - there are times when the sync set changes but the input hasn't yet and the given input
   doesn't handle outgoing changes. For example, when changing from incoming to outgoing with
   the change log root, the change log root gets a reset from the sync set then the input
@@ -115,8 +117,7 @@ x compare input requires root node to have children or diff viewer is not added
   in some fashion. I recall that we discussed the restriction that a sync diff root node must
   show all elements in it's sync set. Could the comment builder place all outgoing changes in 
   an additional section. The user would never see this but it would fulfill the contract.
-  [mv] for efficiency, we should still try to couple the mode change with the content provider
-  change so that the diff node tree is not built and displayed twice during a change
+  [jm] yes, this is what i ended up doing.
 - the test cases starve the subscriber event handler such that an event has additions and removals for the same resources
   - this causes failures in the diff tree builders
   - although less likely in UI, can still happen

@@ -29,16 +29,35 @@ import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
 
 /**
- * Configures the following behavior of a SyncInfoDiffTreeViewer:
+ * A <code>DiffTreeViewerConfiguration</code> object controls various UI
+ * aspects of sync info viewers like the context menu, toolbar, content
+ * provider, and label provider.
+ * <p>
+ * It provides extended viewer contributions by allowing them to be scoped
+ * to a particular {@link ISynchronizeParticipant}. To enable declarative action
+ * contributions for a configuration there are two steps required:
  * <ul>
- * <li>context menus
- * <li>
+ * <li>Create a viewer contribution with a <code>targetID</code> that groups
+ * sets of actions that are related. A common pratice if to use the participant 
+ * id as the targetID. 
+ * <pre>
+ * <viewerContribution
+ *   id="org.eclipse.team.ccvs.ui.CVSCompareSubscriberContributions"
+ *   targetID="org.eclipse.team.cvs.ui.compare-participant">	
+ *   ...
+ * </pre> 
+ * <li>Create a configuration instance with a <code>menuID</code> that matches 
+ * the targetID in the viewer contribution.
+ * </ul>
+ * <p>
+ * Clients may use this class as is, or subclass to add new state and behavior.
+ * </p>
  * @since 3.0
  */
 public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	
 	private SyncInfoSet set;
-	private String menuId;
+	private String menuID;
 	private StructuredViewer viewer;
 	
 	private ExpandAllAction expandAllAction;
@@ -61,8 +80,8 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @param menuId the id of menu objectContributions
 	 * @param set the <code>SyncInfoSet</code> to be displayed in the resulting diff viewer
 	 */
-	public DiffTreeViewerConfiguration(String menuId, SyncInfoSet set) {
-		this.menuId = menuId;
+	public DiffTreeViewerConfiguration(String menuID, SyncInfoSet set) {
+		this.menuID = menuID;
 		this.set = set;
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 	}
@@ -180,7 +199,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @see fillContextMenu(StructuredViewer, IMenuManager)
 	 */
 	protected void hookContextMenu(final StructuredViewer viewer) {
-		final MenuManager menuMgr = new MenuManager(menuId); //$NON-NLS-1$
+		final MenuManager menuMgr = new MenuManager(menuID); //$NON-NLS-1$
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
@@ -216,7 +235,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 				site = Utils.findSite();
 			}
 			if(site != null) {
-				site.registerContextMenu(menuId, menuMgr, viewer);
+				site.registerContextMenu(menuID, menuMgr, viewer);
 			}
 		}
 	}
@@ -267,7 +286,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @return the menuId.
 	 */
 	public String getMenuId() {
-		return menuId;
+		return menuID;
 	}
 
 	/**

@@ -3,6 +3,7 @@ package org.eclipse.team.ui.synchronize;
 import java.text.DateFormat;
 import java.util.Date;
 
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.Policy;
@@ -12,7 +13,7 @@ import org.eclipse.team.internal.ui.synchronize.IRefreshEvent;
 import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
 import org.eclipse.ui.IMemento;
 
-public class RefreshSchedule {
+public class TeamSubscriberRefreshSchedule {
 	private long refreshInterval = 3600; // 1 hour default
 	
 	private boolean enabled = false;
@@ -44,7 +45,7 @@ public class RefreshSchedule {
 	};
 	
 	
-	public RefreshSchedule(TeamSubscriberParticipant participant) {
+	public TeamSubscriberRefreshSchedule(TeamSubscriberParticipant participant) {
 		this.participant = participant;
 		RefreshSubscriberJob.addRefreshListener(refreshSubscriberListener);
 	}
@@ -59,13 +60,15 @@ public class RefreshSchedule {
 	/**
 	 * @param enabled The enabled to set.
 	 */
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(boolean enabled, boolean allowedToStart) {
 		boolean wasEnabled = isEnabled();
 		this.enabled = enabled;
 		if(enabled && ! wasEnabled) { 
-			//startJob();
+			if(allowedToStart) {
+				startJob();
+			}
 		} else {
-			//stopJob();
+			stopJob();
 		}
 	}
 	
@@ -97,7 +100,9 @@ public class RefreshSchedule {
 			return;
 		}
 		if(job == null) {
-			job = new RefreshSubscriberJob(Policy.bind("RefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getTeamSubscriberSyncInfoCollector()); //$NON-NLS-1$
+			job = new RefreshSubscriberJob(Policy.bind("TeamSubscriberRefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getTeamSubscriberSyncInfoCollector()); //$NON-NLS-1$
+		} else if(job.getState() != Job.NONE){
+			stopJob();
 		}
 		job.setRestartOnCancel(true);
 		job.setReschedule(true);
@@ -123,13 +128,13 @@ public class RefreshSchedule {
 		memento.putInteger(CTX_REFRESHSCHEDULE_INTERVAL, (int)refreshInterval);
 	}
 
-	public static RefreshSchedule init(IMemento memento, TeamSubscriberParticipant participant) {
-		RefreshSchedule schedule = new RefreshSchedule(participant);
+	public static TeamSubscriberRefreshSchedule init(IMemento memento, TeamSubscriberParticipant participant) {
+		TeamSubscriberRefreshSchedule schedule = new TeamSubscriberRefreshSchedule(participant);
 		if(memento != null) {
 			String enabled = memento.getString(CTX_REFRESHSCHEDULE_ENABLED);
 			int interval = memento.getInteger(CTX_REFRESHSCHEDULE_INTERVAL).intValue();
 			schedule.setRefreshInterval(interval);
-			schedule.setEnabled("true".equals(enabled) ? true : false); //$NON-NLS-1$
+			schedule.setEnabled("true".equals(enabled) ? true : false, false /* don't start job */); //$NON-NLS-1$
 		}
 		// Use the defaults if a schedule hasn't been saved or can't be found.
 		return schedule;
@@ -150,16 +155,16 @@ public class RefreshSchedule {
 		}
 		SyncInfo[] changes = event.getChanges();
 		if (changes.length != 0) {
-			text.append(Policy.bind("RefreshSchedule.6", Integer.toString(changes.length))); //$NON-NLS-1$
+			text.append(Policy.bind("TeamSubscriberRefreshSchedule.6", Integer.toString(changes.length))); //$NON-NLS-1$
 		} else {
-			text.append(Policy.bind("RefreshSchedule.7")); //$NON-NLS-1$
+			text.append(Policy.bind("TeamSubscriberRefreshSchedule.7")); //$NON-NLS-1$
 		}
 		return text.toString();
 	} 
 	
 	public String getScheduleAsString() {
 		if(! isEnabled()) {
-			return Policy.bind("RefreshSchedule.8"); //$NON-NLS-1$
+			return Policy.bind("TeamSubscriberRefreshSchedule.8"); //$NON-NLS-1$
 		}		
 		return getRefreshIntervalAsString();
 	}
@@ -181,10 +186,10 @@ public class RefreshSchedule {
 		}		
 		String unit;
 		if(minutes >= 1) {
-			unit = (hours ? Policy.bind("RefreshSchedule.9") : Policy.bind("RefreshSchedule.10")); //$NON-NLS-1$ //$NON-NLS-2$
+			unit = (hours ? Policy.bind("TeamSubscriberRefreshSchedule.9") : Policy.bind("TeamSubscriberRefreshSchedule.10")); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
-			unit = (hours ? Policy.bind("RefreshSchedule.11") : Policy.bind("RefreshSchedule.12")); //$NON-NLS-1$ //$NON-NLS-2$
+			unit = (hours ? Policy.bind("TeamSubscriberRefreshSchedule.11") : Policy.bind("TeamSubscriberRefreshSchedule.12")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		return Policy.bind("RefreshSchedule.13", Long.toString(minutes), unit); //$NON-NLS-1$
+		return Policy.bind("TeamSubscriberRefreshSchedule.13", Long.toString(minutes), unit); //$NON-NLS-1$
 	}
 }

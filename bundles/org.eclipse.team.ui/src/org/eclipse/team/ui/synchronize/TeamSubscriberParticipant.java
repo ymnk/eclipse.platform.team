@@ -34,7 +34,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	private FilteredSyncInfoCollector filteredSyncSet;
 	
-	private RefreshSchedule refreshSchedule;
+	private TeamSubscriberRefreshSchedule refreshSchedule;
 	
 	private int currentMode;
 	
@@ -81,7 +81,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public TeamSubscriberParticipant() {
 		super();
-		refreshSchedule = new RefreshSchedule(this);
+		refreshSchedule = new TeamSubscriberRefreshSchedule(this);
 	}
 	
 	/* (non-Javadoc)
@@ -104,12 +104,12 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		return currentMode;
 	}
 	
-	public void setRefreshSchedule(RefreshSchedule schedule) {
+	public void setRefreshSchedule(TeamSubscriberRefreshSchedule schedule) {
 		this.refreshSchedule = schedule;
 		firePropertyChange(this, P_SYNCVIEWPAGE_SCHEDULE, null, schedule);
 	}
 	
-	public RefreshSchedule getRefreshSchedule() {
+	public TeamSubscriberRefreshSchedule getRefreshSchedule() {
 		return refreshSchedule;
 	}
 	
@@ -176,6 +176,11 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			setWorkingSet(workingSet);
 		}
 		updateMode(getMode());
+		// start the refresh how that a subscriber has been added
+		TeamSubscriberRefreshSchedule schedule = getRefreshSchedule();
+		if(schedule.isEnabled()) {
+			getRefreshSchedule().startJob();
+		}
 	}
 	
 	/**
@@ -231,7 +236,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			if(settings != null) {
 				String set = settings.getString(P_SYNCVIEWPAGE_WORKINGSET);
 				String mode = settings.getString(P_SYNCVIEWPAGE_MODE);
-				RefreshSchedule schedule = RefreshSchedule.init(settings.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
+				TeamSubscriberRefreshSchedule schedule = TeamSubscriberRefreshSchedule.init(settings.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
 				setRefreshSchedule(schedule);
 				
 				if(set != null) {
