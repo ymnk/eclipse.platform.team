@@ -40,8 +40,6 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 					}
 					return output.toString();
 				}
-			} else if(element instanceof ChangeLogDiffNode) {
-				return ((ChangeLogDiffNode)element).getComment();
 			}
 			return text;
 		}

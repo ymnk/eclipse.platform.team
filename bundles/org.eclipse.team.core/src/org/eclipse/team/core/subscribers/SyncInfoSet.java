@@ -169,6 +169,11 @@ public class SyncInfoSet {
 				return new SyncInfo[] { info };
 			}
 		}
+		// if it's the root then return all out of sync resources.
+		if(resource.getType() == IResource.ROOT) {
+			return members();
+		}
+		// for folders return all children deep.
 		IContainer container = (IContainer)resource;
 		IPath path = container.getFullPath();
 		Set children = (Set)parents.get(path);

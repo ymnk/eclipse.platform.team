@@ -15,13 +15,27 @@ import java.util.Map;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.team.core.TeamException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder;
 
+/**
+ * It would be very useful to support showing changes grouped logically
+ * instead of grouped physically. This could be used for showing incoming
+ * changes and also for showing the results of comparisons.
+ * 
+ * Some problems with this:
+ * 1. you have to fetch the log entries to extract useful information by
+ * which to classify changes. this is expensive and can't be done in the
+ * ui thread.
+ * 
+ * 2. how to support logical groupins based on any of the information in
+ * the log entry?
+ */
 public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	
 	private Map commentRoots = new HashMap();
@@ -49,23 +63,30 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 		commentRoots.clear();
 		SyncInfo[] infos = set.members();
 		for (int i = 0; i < infos.length; i++) {
-			String comment = getSyncInfoComment((CVSSyncInfo) infos[i]);
-			ChangeLogDiffNode changeRoot = (ChangeLogDiffNode) commentRoots.get(comment);
-			if (changeRoot == null) {
-				changeRoot = new ChangeLogDiffNode(getRoot(), comment);
-				commentRoots.put(comment, changeRoot);
+			ILogEntry logEntry = getSyncInfoComment((CVSSyncInfo) infos[i]);
+			if(logEntry != null) {
+				String comment = logEntry.getComment();
+				ChangeLogDiffNode changeRoot = (ChangeLogDiffNode) commentRoots.get(comment);
+				if (changeRoot == null) {
+					changeRoot = new ChangeLogDiffNode(getRoot(), logEntry);
+					commentRoots.put(comment, changeRoot);
+				}
+				changeRoot.add(infos[i]);
 			}
-			changeRoot.add(infos[i]);
 		}		
 		return (ChangeLogDiffNode[]) commentRoots.values().toArray(new ChangeLogDiffNode[commentRoots.size()]);
 	}
 	
-	private String getSyncInfoComment(CVSSyncInfo info) {
+	private ILogEntry getSyncInfoComment(CVSSyncInfo info) {
 		try {
 			ICVSRemoteResource remote = (ICVSRemoteResource)info.getRemote();
-			return remote.getComment();
-		} catch (TeamException e) {
-			return e.getMessage();
+			if(remote instanceof RemoteFile) {
+				return ((RemoteFile)remote).getLogEntry(new NullProgressMonitor());
+			}
+			return null;
+		} catch (CVSException e) {
+			CVSUIPlugin.getPlugin().log(e);
+			return null;
 		}
 	}
 	

@@ -135,6 +135,9 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 			if(info == null) {
 				// TODO: How do we decorate parents of conflicts that have no resource
 				local = TreeViewerUtils.getResource(element);
+				// The reason we still overlay the compare image is to ensure
+				// that the image width for all images shown in the viewer
+				// are consistent.
 				decoratedImage = getCompareImage(base, SyncInfo.IN_SYNC);
 			} else {
 				local = info.getLocal();

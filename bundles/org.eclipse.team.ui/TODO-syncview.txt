@@ -2,11 +2,12 @@
  EXAMPLE TEAM UI API USAGES
 ======================================================================
 1. embeding sync viewer in dialog/wizard
-2. added a new content provider (logical views)
+2. added a new content provider (logical views of sync info changes)
 3. adding custom label decorations
 4. actions/menus
 5. fetching sync info set without instantiating a participant
 6. fetch and wait for the event collector to finish processing the changes
+7. showing in a diff viewer either a static model (doesn't update when changes occur) or dynamic
   
 ======================================================================
  PR LIST (07-01-2004)
@@ -103,7 +104,7 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
   root node can safely always have children.
 - several places require a resource
   - e.g. conflict propogation requires a resource but shouldn't (modified to work without a resource)
-  - conflicts do not propogate in comment view
+  x conflicts do not propogate in comment view [jm] fixed
   [jm] we have to change this assumption everywhere! Actions, label decorators... and such. 
 - there are times when the sync set changes but the input hasn't yet and the given input
   doesn't handle outgoing changes. For example, when changing from incoming to outgoing with
@@ -113,3 +114,6 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
   - this causes failures in the diff tree builders
   - although less likely in UI, can still happen
   - need tests for these scenarios to ensure generated event is correct after addition and removal
+- there are several places in SyncInfoSet and in the DiffNodes where we must use the workspace root
+as the input resource to imply get all members? Maybe this should be cleaned up a bit.
+- SyncInfoSet must be cleaned up a lot, the API is vague and method names are not clear.

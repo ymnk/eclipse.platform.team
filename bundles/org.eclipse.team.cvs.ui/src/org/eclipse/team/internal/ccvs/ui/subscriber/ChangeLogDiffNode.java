@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
@@ -23,15 +24,15 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, IWorkbenchAdapter {
 
-	private String comment;
+	private ILogEntry logEntry;
 
-	public ChangeLogDiffNode(DiffNode parent, String comment) {
+	public ChangeLogDiffNode(DiffNode parent, ILogEntry logEntry) {
 		super(parent, new MutableSyncInfoSet(), ResourcesPlugin.getWorkspace().getRoot());
-		this.comment = comment;
+		this.logEntry = logEntry;
 	}
 
-	public String getComment() {
-		return comment;
+	public ILogEntry getComment() {
+		return logEntry;
 	}
 	
 	public boolean equals(Object other) {
@@ -51,7 +52,7 @@ public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, I
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
 	 */
 	public String getLabel(Object o) {
-		return comment;
+		return logEntry.getComment() + "(" + logEntry.getAuthor() +")";
 	}
 
 	public void add(SyncInfo info) {
@@ -62,6 +63,6 @@ public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, I
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#toString()
 	 */
 	public String toString() {
-		return getComment();
+		return getLabel(null);
 	}
 }
