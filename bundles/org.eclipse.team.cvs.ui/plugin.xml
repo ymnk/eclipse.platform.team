@@ -762,13 +762,6 @@
             id="org.eclipse.team.ccvs.ui">
       </category>
       <view
-            name="%Console.name"
-            icon="icons/full/cview16/console_view.gif"
-            category="org.eclipse.team.ccvs.ui"
-            class="org.eclipse.team.internal.ccvs.ui.Console"
-            id="org.eclipse.team.ccvs.ui.console">
-      </view>
-      <view
             name="%RepositoriesView.name"
             icon="icons/full/cview16/repo_rep.gif"
             category="org.eclipse.team.ccvs.ui"
@@ -852,7 +845,7 @@
             objectClass="org.eclipse.core.resources.IResource"
             adaptable="true"
             label="%DecoratorStandard.name"
-            state="false"
+            state="true"
             lightweight= "true"
             quadrant = "BOTTOM_RIGHT"
             class="org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator"

@@ -91,7 +91,7 @@ public class CVSUITestCase extends LoggingTestCase {
 		// default case is to not show the console but don't disable it, this is
 		// the typical user experience.
 		if(SHOW_CONSOLE) {
-			showConsole();
+			//showConsole();
 		} else if(!USE_CONSOLE) {
 			CVSProviderPlugin.getPlugin().setConsoleListener(null);			
 		}
@@ -105,22 +105,6 @@ public class CVSUITestCase extends LoggingTestCase {
 		Utils.processEventsUntil(100);
 		closeAllTestWindows();
 		super.tearDown();
-	}
-
-	protected void showConsole() {
-		try {
-			IWorkbenchPage page = CVSUIPlugin.getActivePage();
-			IViewPart consolePart = page.findView(Console.CONSOLE_ID);
-			if (consolePart == null) {
-				IWorkbenchPart activePart = page.getActivePart();
-				consolePart = page.showView(Console.CONSOLE_ID);
-				//restore focus stolen by the creation of the console
-				if (activePart != null) page.activate(activePart);
-			} else {
-				page.bringToTop(consolePart);
-			}
-		} catch (PartInitException pe) {
-		}
 	}
 	
  	/** 

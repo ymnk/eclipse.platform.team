@@ -60,6 +60,8 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
@@ -622,7 +624,9 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		PreferenceConverter.setDefault(store, ICVSUIConstants.PREF_CONSOLE_COMMAND_COLOR, new RGB(0, 0, 0));
 		PreferenceConverter.setDefault(store, ICVSUIConstants.PREF_CONSOLE_MESSAGE_COLOR, new RGB(0, 0, 255));
 		PreferenceConverter.setDefault(store, ICVSUIConstants.PREF_CONSOLE_ERROR_COLOR, new RGB(255, 0, 0));
-		
+		store.setDefault(ICVSUIConstants.PREF_CONSOLE_SHOW_ON_ERROR, false);
+		store.setDefault(ICVSUIConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, false);
+			
 		store.setDefault(ICVSUIConstants.PREF_FILETEXT_DECORATION, CVSDecoratorConfiguration.DEFAULT_FILETEXTFORMAT);
 		store.setDefault(ICVSUIConstants.PREF_FOLDERTEXT_DECORATION, CVSDecoratorConfiguration.DEFAULT_FOLDERTEXTFORMAT);
 		store.setDefault(ICVSUIConstants.PREF_PROJECTTEXT_DECORATION, CVSDecoratorConfiguration.DEFAULT_PROJECTTEXTFORMAT);
@@ -677,11 +681,8 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		initializeImages();
 		initializePreferences();
 		
-		Console.startup();
-		
-		// Enable CVS decorators so that users don't have to enable via
-		// the preference pages.
-		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(CVSLightweightDecorator.ID, true);
+		console = new CVSOutputConsole();
+		ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] {console});
 	}
 	
 	public static IWorkingSet getWorkingSet(IResource[] resources, String name) {
@@ -707,7 +708,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			throw new CoreException(e.getStatus());
 		}
 		
-		Console.shutdown();
+		console.shutdown();
 	}
 	
 	/**
