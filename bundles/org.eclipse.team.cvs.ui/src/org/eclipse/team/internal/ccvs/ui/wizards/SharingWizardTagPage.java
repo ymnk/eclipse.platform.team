@@ -15,10 +15,10 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Tree;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.ui.*;
@@ -44,8 +44,8 @@ public class SharingWizardTagPage extends CVSWizardPage {
 	private Composite composite;
 	private Control buttons;
 	
-	public SharingWizardTagPage(String pageName, String title, ImageDescriptor titleImage, String description) {
-		super(pageName, title, titleImage, description);
+	public SharingWizardTagPage(String pageName, String title, ImageDescriptor titleImage) {
+		super(pageName, title, titleImage);
 	}
 
 	/* (non-Javadoc)
@@ -58,7 +58,7 @@ public class SharingWizardTagPage extends CVSWizardPage {
 		// set F1 help
 		WorkbenchHelp.setHelp(composite, IHelpContextIds.SHARE_WITH_EXISTING_TAG_SELETION_DIALOG);
 		
-		createWrappingLabel(parent, Policy.bind("SharingWizard.selectTag"), 0);
+		createWrappingLabel(composite, Policy.bind("SharingWizard.selectTag"), 0); //$NON-NLS-1$
 		
 		tagTree = createTree(composite);
 		tagTree.setSorter(new ProjectElementSorter());
@@ -70,6 +70,7 @@ public class SharingWizardTagPage extends CVSWizardPage {
 	private void setInput() {
 		if (remote != null && tagTree != null && !tagTree.getControl().isDisposed()) {
 			tagTree.setInput(new ProjectElement(remote, TagSelectionDialog.INCLUDE_HEAD_TAG | TagSelectionDialog.INCLUDE_BRANCHES));
+			tagTree.setSelection(new StructuredSelection(new TagElement(CVSTag.DEFAULT)));
 			if (buttons != null) {
 				buttons.dispose();
 				buttons = null;
@@ -108,16 +109,16 @@ public class SharingWizardTagPage extends CVSWizardPage {
 				updateEnablement();
 			}
 		});
-//		// select and close on double click
-//		// To do: use defaultselection instead of double click
-//		result.getTree().addMouseListener(new MouseAdapter() {
-//			public void mouseDoubleClick(MouseEvent e) {
-//				IStructuredSelection selection = (IStructuredSelection)tagTree.getSelection();
-//				if (!selection.isEmpty() && (selection.getFirstElement() instanceof TagElement)) {
-//					okPressed();
-//				}
-//			}
-//		});
+		// select and close on double click
+		// To do: use defaultselection instead of double click
+		result.getTree().addMouseListener(new MouseAdapter() {
+			public void mouseDoubleClick(MouseEvent e) {
+				IStructuredSelection selection = (IStructuredSelection)tagTree.getSelection();
+				if (!selection.isEmpty() && (selection.getFirstElement() instanceof TagElement)) {
+					SharingWizardTagPage.this.getContainer().showPage(getNextPage());
+				}
+			}
+		});
 		result.setSorter(new RepositorySorter());
 		
 		return result;

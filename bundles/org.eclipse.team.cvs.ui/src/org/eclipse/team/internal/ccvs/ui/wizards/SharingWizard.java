@@ -114,9 +114,9 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	
 	private void addSyncPage(ImageDescriptor sharingImage) {
 		syncPage = new SharingWizardSyncPage("syncPagePage",  //$NON-NLS-1$
-			"Share Project Resources", 
+			Policy.bind("SharingWizard.23"),  //$NON-NLS-1$
 			sharingImage,
-			"Synchronize the project resources with the repository");
+			Policy.bind("SharingWizard.24")); //$NON-NLS-1$
 		syncPage.setProject(project);
 		addPage(syncPage);
 	}
@@ -472,7 +472,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	
 	private void prepareTagPage(ICVSRemoteFolder remote) {
 		tagPage.setFolder(remote);
-		tagPage.setDescription("Module {0} exists on the server. Select the tag to reconcile with." + remote.getRepositoryRelativePath());
+		tagPage.setDescription(Policy.bind("SharingWizard.25") + remote.getRepositoryRelativePath()); //$NON-NLS-1$
 
 	}
 }

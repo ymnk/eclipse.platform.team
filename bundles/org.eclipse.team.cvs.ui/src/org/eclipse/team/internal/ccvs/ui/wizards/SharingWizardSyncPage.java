@@ -29,6 +29,7 @@ import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticip
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.viewers.SynchronizeCompareInput;
 import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 
 /**
  * Page that displays the compare input for sharing
@@ -79,7 +80,7 @@ public class SharingWizardSyncPage extends CVSWizardPage {
 		CompareConfiguration cc = new CompareConfiguration();
 		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
 			public String getTitle() {
-				return "Sharing";
+				return Policy.bind("SharingWizardSyncPage.0"); //$NON-NLS-1$
 			}
 		};
 		try {
