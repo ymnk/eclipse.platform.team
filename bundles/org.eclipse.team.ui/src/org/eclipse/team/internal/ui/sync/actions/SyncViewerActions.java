@@ -250,7 +250,9 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	protected void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
 		refreshSelectionAction.setEnabled(input != null);
-		
+		toggleViewerType.setEnabled(input != null);
+		chooseSubscriberAction.setEnabled(input != null);
+		chooseChangeFilterAction.setEnabled(input != null);
 		// refresh the selected filter
 		refreshFilters();
 	}

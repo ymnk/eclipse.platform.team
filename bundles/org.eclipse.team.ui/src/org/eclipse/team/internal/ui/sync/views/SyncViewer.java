@@ -106,11 +106,6 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	public static final int PROP_VIEWTYPE = 1;
 	
 	/**
-	 * The property id for <code>getWorkingSet</code>.
-	 */
-	public static final int PROP_WORKINGSET = 2;
-
-	/**
 	 * This view's id. The same value as in the plugin.xml.
 	 */
 	 public static final String VIEW_ID = "org.eclipse.team.sync.views.SyncViewer";  //$NON-NLS-1$
@@ -120,6 +115,11 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 * either a table or tree viewer.
 	 */
 	private StructuredViewer viewer;
+	
+	/*
+	 * Status label at top of view
+	 */
+	private Label status;
 	
 	/*
 	 * Parent composite of this view. It is remembered so that we can
@@ -132,7 +132,6 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 * viewer type constants
 	 */ 
 	private int currentViewType;
-	private int lastViewType;
 	
 	/*
 	 * Array of SubscriberInput objects. There is one of these for each subscriber
@@ -142,6 +141,8 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	private SubscriberInput input = null;
 	private SubscriberInput lastInput = null;
 	
+	private ViewStatusInformation statusInformation;
+	
 	/*
 	 * A set of common actions. They are hooked to the active SubscriberInput and
 	 * must be reset when the input changes.
@@ -149,15 +150,18 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	private SyncViewerActions actions;
 	
 	/*
-	 * View image
+	 * View images, registered with the plugin and disposed on shutdown.
 	 */
 	private Image refreshingImg;
 	private Image initialImg; 
 	private Image viewImage;
-
+	
+	/*
+	 * Change the tree layout between using compressed folders and regular folders
+	 */
 	private IPropertyChangeListener propertyListener = new IPropertyChangeListener() {
 		public void propertyChange(PropertyChangeEvent event) {
-			if (getCurrentViewType() == TREE_VIEW &&
+			if (viewer != null && getCurrentViewType() == TREE_VIEW &&
 				event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
 					setTreeViewerContentProvider();
 			}
@@ -216,7 +220,8 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 					setViewImage(refreshingImg);
 				}
 			}
-		});		
+		});
+		actions.setContext(null);	
 	}
 
 	private void setViewImage(Image image) {
@@ -243,24 +248,24 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 		}
 	}
 	
-	private void createViewer(Composite parent) {
-		switch(currentViewType) {
-			case TREE_VIEW:
-				createTreeViewerPartControl(parent); 
-				break;
-			case TABLE_VIEW:
-				createTableViewerPartControl(parent); 
-				break;
-		}
-		Label label = new Label(parent, SWT.WRAP);
-		label.setText("asfdasfd");
-		
-		if(input != null) {
+	private void createViewer(Composite parent) {		
+		if(input == null) {
+			Label label = new Label(parent, SWT.WRAP);
+			label.setText(Policy.bind("SyncViewer.noSubscribersMessage")); //$NON-NLS-1$
+		} else {
+			switch(currentViewType) {
+				case TREE_VIEW:
+					createTreeViewerPartControl(parent); 
+					break;
+				case TABLE_VIEW:
+					createTableViewerPartControl(parent); 
+					break;
+			}
 			viewer.setInput(input.getFilteredSyncSet());
-		}
-		hookContextMenu();
-		initializeListeners();
-		viewer.getControl().setFocus();
+			viewer.getControl().setFocus();
+			hookContextMenu();
+			initializeListeners();		
+		}		
 	}
 
 	private void createTreeViewerPartControl(Composite parent) {
@@ -457,7 +462,6 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 */
 	public synchronized void initializeSubscriberInput(final SubscriberInput input) {
 		Assert.isNotNull(input);
-		
 		this.lastInput = this.input;
 		this.input = input;
 		
@@ -474,6 +478,11 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
+				// create the viewer is it doesn't exist yet.
+				if(viewer == null) {
+					disposeChildren(composite);
+					createViewer(composite);
+				}
 				ActionContext context = new ActionContext(null);
 				context.setInput(input);
 				actions.setContext(context);
@@ -498,28 +507,33 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 			public void run() {
 				SubscriberInput input = getInput();
 				if(input != null) {
-					TeamSubscriber subscriber = input.getSubscriber();
-					String changesText = Policy.bind("LiveSyncView.titleChangeNumbers",  //$NON-NLS-1$
-														new Integer(input.getFilteredSyncSet().size()).toString(),
-														new Integer(input.getWorkingSetSyncSet().size()).toString(), 
-														new Integer(input.getSubscriberSyncSet().size()).toString());
-				 	setTitle(
-				 		Policy.bind("LiveSyncView.titleWithSubscriber", new String[] { //$NON-NLS-1$
-				 				Policy.bind("LiveSyncView.title"),  //$NON-NLS-1$
-				 				changesText,
-				 				subscriber.getName()}));
-				 	IWorkingSet ws = input.getWorkingSet();
-				 	if(ws != null) {
-				 		StringBuffer s = new StringBuffer(Policy.bind("LiveSyncView.titleTooltip", subscriber.getDescription(), ws.getName()));
-				 		IResource[] roots = input.workingSetRoots();
-				 		for (int i = 0; i < roots.length; i++) {
-							IResource resource = roots[i];
-							s.append(resource.getFullPath().toString() + "\n");
-						}
-				 		setTitleToolTip(s.toString());
-				 	} else {
-					 	setTitleToolTip(subscriber.getDescription());
-				 	}
+					ViewStatusInformation newStatus = new ViewStatusInformation(input);
+					if(statusInformation == null || ! statusInformation.equals(newStatus)) {
+						statusInformation = newStatus;
+						
+						TeamSubscriber subscriber = input.getSubscriber();
+						String changesText = Policy.bind("LiveSyncView.titleChangeNumbers",  //$NON-NLS-1$
+															new Long(statusInformation.getNumShowing()).toString(),
+															new Long(statusInformation.getNumInWorkingSet()).toString(), 
+															new Long(statusInformation.getNumInWorkspace()).toString());
+					 	setTitle(
+					 		Policy.bind("LiveSyncView.titleWithSubscriber", new String[] { //$NON-NLS-1$
+					 				Policy.bind("LiveSyncView.title"),  //$NON-NLS-1$
+					 				changesText,
+					 				subscriber.getName()}));
+					 	IWorkingSet ws = input.getWorkingSet();
+					 	if(ws != null) {
+					 		StringBuffer s = new StringBuffer(Policy.bind("LiveSyncView.titleTooltip", subscriber.getDescription(), ws.getName())); //$NON-NLS-1$
+					 		IResource[] roots = input.workingSetRoots();
+					 		for (int i = 0; i < roots.length; i++) {
+								IResource resource = roots[i];
+								s.append(resource.getFullPath().toString() + "\n"); //$NON-NLS-1$
+							}
+					 		setTitleToolTip(s.toString());
+					 	} else {
+						 	setTitleToolTip(subscriber.getDescription());
+					 	}
+					}
 				} else {
 					setTitle(Policy.bind("LiveSyncView.title")); //$NON-NLS-1$
 					setTitleToolTip(""); //$NON-NLS-1$
@@ -805,7 +819,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	}
 
 	private void fireSafePropertyChange(final int property) {
-		if(! viewer.getControl().isDisposed()) {
+		if(! composite.isDisposed()) {
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {		
 					firePropertyChange(property);

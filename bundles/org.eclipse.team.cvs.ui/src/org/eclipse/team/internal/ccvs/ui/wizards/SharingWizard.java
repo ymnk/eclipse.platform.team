@@ -53,6 +53,7 @@ import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.sync.ISyncViewer;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkingSet;
 
 /**
  * This wizard helps the user to import a new project in their workspace
@@ -299,6 +300,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 				}
 				ISyncViewer view = TeamUI.showSyncViewInActivePage(null);
 				if(view != null) {
+					IWorkingSet ws = CVSUIPlugin.getWorkingSet(new IResource[] {project}, Policy.bind("SyncAction.workingSetName")); //$NON-NLS-1$
 					view.setSelection(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), new IResource[] {project}, ISyncViewer.TREE_VIEW);
 				}
 			}

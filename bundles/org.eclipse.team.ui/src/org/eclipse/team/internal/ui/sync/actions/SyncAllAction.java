@@ -99,9 +99,10 @@ public class SyncAllAction implements IWorkbenchWindowPulldownDelegate2 {
 			TeamSubscriber subscriber = subscribers[i];
 			createAction(getCreatedMenu(), new SubscriberAction(subscriber), i + 1);
 		}
-		new Separator().fill(getCreatedMenu(), -1);
-		createAction(getCreatedMenu(), new SyncViewerShowPreferencesAction(window.getShell()), -1);
-		
+		if(subscribers.length > 0 ) {			
+			new Separator().fill(getCreatedMenu(), -1);
+		}
+		createAction(getCreatedMenu(), new SyncViewerShowPreferencesAction(window.getShell()), -1);		
 	}	
 	
 	/**

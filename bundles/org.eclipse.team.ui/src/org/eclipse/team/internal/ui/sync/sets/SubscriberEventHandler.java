@@ -24,20 +24,31 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 
+/**
+ * This handler collects changes and removals to resources and calculates their
+ * synchronization state in a background job. The result is fed input the SyncSetInput.
+ * 
+ * Exceptions that occur when the job is processing the events are ???.
+ */
 public class SubscriberEventHandler {
-	private SyncSetInputFromSubscriber set;
+	// The number of events to process before feeding into the set.
+	private static final int NOTIFICATION_BATCHING_NUMBER = 10;
 	
-	//	When decorations are computed they are added to this cache via decorated() method
-	 private List resultCache = new ArrayList();
+	// The set that receives notification when the resource synchronization state
+	// has been calculated by the job.
+	private SyncSetInputFromSubscriber set;
 
-	 // Objects that need an icon and text computed for display to the user
+	 // Events that need to be processed
 	 private List awaitingProcessing = new ArrayList();
+	 
+	 // Use to shutdown the job
 	 private boolean shutdown = false;
 
+	// The job that runs when events need to be processed
 	 Job eventHandlerJob;
 	
-	/*
-	 * Internal event that is processed by the event handler job
+	/**
+	 * Internal resource synchronization event. Can contain a result.
 	 */
 	class Event {
 		static final int REMOVAL = 1;
@@ -70,52 +81,67 @@ public class SubscriberEventHandler {
 			return result;
 		}
 	}
-	
+	/**
+	 * Create a handler. This will initialize all resources for the subscriber associated with
+	 * the set.
+	 * @param set the subscriber set to feed changes into
+	 */
 	public SubscriberEventHandler(SyncSetInputFromSubscriber set) {
 		this.set = set;
-		
-		IResource[] resources = set.getSubscriber().roots(); 
-		for (int i = 0; i < resources.length; i++) {
-			queueEvent(new Event(resources[i], Event.INITIALIZE, IResource.DEPTH_INFINITE));
-			
-		}		
+		initialize();
 		createEventHandlingJob();
 		eventHandlerJob.schedule();
 	}
-		
+	/**
+	 * Initialize all resources for the subscriber associated with the set. This will basically recalculate
+	 * all synchronization information for the subscriber.
+	 * @param resource
+	 * @param depth
+	 */
+	public void initialize() {
+		IResource[] resources = set.getSubscriber().roots(); 
+		for (int i = 0; i < resources.length; i++) {
+			queueEvent(new Event(resources[i], Event.INITIALIZE, IResource.DEPTH_INFINITE));			
+		}		
+	}
+	/**
+	 * Called by a client to indicate that a resource has changed and its synchronization state
+	 * should be recalculated.  
+	 * @param resource the changed resource
+	 * @param depth the depth of the change calculation
+	 */
 	public void change(IResource resource, int depth) {
 		queueEvent(new Event(resource, Event.CHANGE, depth));
-		// It's easier to allow sync tests to run with results available synchronously.
-	}
-
+	}	
+	/**
+	 * Called by a client to indicate that a resource has been removed and should be removed. The
+	 * removal will propagate to the set.
+	 * @param resource the resource that was removed
+	 */
 	public void remove(IResource resource) {
 		queueEvent(new Event(resource, Event.REMOVAL, IResource.DEPTH_INFINITE));
-		// It's easier to allow sync tests to run with results available synchronously.
-	}
-		
+	}	
 	 /**
-	  * Queue the element and its adapted value if it has not been already.
+	  * Queue the event and start the job if it's not already doing work.
 	  */
-	 synchronized void queueEvent(Event event) {
+	 synchronized private void queueEvent(Event event) {
 		 awaitingProcessing.add(event);
 		 if (shutdown || eventHandlerJob == null || eventHandlerJob.getState() != Job.NONE)
 			return;
 		 else {
 			eventHandlerJob.schedule();
 		 }
-	 }
-	
+	 }	
 	/**
-	  * Shutdown the decoration.
+	  * Shutdown the event handler.
 	  */
 	 void shutdown() {
 	 	shutdown = true;
 		eventHandlerJob.cancel();
 	 }
-
 	 /**
-	  * Get the next resource to be decorated.
-	  * @return IResource
+	  * Get the next resource to be calculated.
+	  * @return Event to be processed
 	  */
 	 synchronized Event nextElement() {
 		 if (shutdown || awaitingProcessing.isEmpty()) {
@@ -125,16 +151,16 @@ public class SubscriberEventHandler {
 	 }
 
 	 /**
-	  * Create the Thread used for running decoration.
+	  * Create the job used for processing the events in the queue. The job stops working when
+	  * the queue is empty.
 	  */
 	 private void createEventHandlingJob() {
 			 eventHandlerJob = new Job(Policy.bind("SubscriberEventHandler.jobName")) { //$NON-NLS-1$
 	
 			 public IStatus run(IProgressMonitor monitor) {
 				 monitor.beginTask(null, 100); //$NON-NLS-1$
-
+				List resultCache = new ArrayList();
 				 Event event;
-				 monitor.worked(20);
 				 while ((event = nextElement()) != null) {
 				 	
 				 	// cancellation is dangerous because this will leave the sync info in a bad state.
@@ -162,19 +188,21 @@ public class SubscriberEventHandler {
 						// the user may need a way to revalidate 
 					}
 				 	
-					 if (awaitingProcessing.isEmpty() || resultCache.size() > 10) {
+					 if (awaitingProcessing.isEmpty() || resultCache.size() > NOTIFICATION_BATCHING_NUMBER) {
 						 dispatchEvents((Event[])resultCache.toArray(new Event[resultCache.size()]));
 						 resultCache.clear();
 					 }
 				 }
-				 monitor.worked(80);
 				 return Status.OK_STATUS;
 			 }
 		 };
-
 		eventHandlerJob.setPriority(Job.SHORT);
+		eventHandlerJob.setSystem(true);
 	 }
-	
+	/**
+	 * Collect the calculated synchronization information for the given resource at the given depth. The
+	 * results are added to the provided list.
+	 */
 	private void collect(IResource resource, int depth, IProgressMonitor monitor, List results) throws TeamException {
 		
 		if(resource.getType() != IResource.FILE && depth != IResource.DEPTH_ZERO) {
@@ -193,6 +221,15 @@ public class SubscriberEventHandler {
 		}
 	}
 	
+	/**
+	 * Called to initialize to calculate the synchronization information using the optimized subscriber method. For
+	 * subscribers that don't support the optimization, all resources in the subscriber are manually re-calculated. 
+	 * @param resources the resources to check
+	 * @param depth the depth
+	 * @param monitor
+	 * @return Event[] the change events
+	 * @throws TeamException
+	 */
 	private Event[] getAllOutOfSync(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {		
 		SyncInfo[] infos = set.getSubscriber().getAllOutOfSync(resources, depth, monitor);
 		
@@ -215,21 +252,24 @@ public class SubscriberEventHandler {
 		}		
 	}
 	
+	/**
+	 * Feed the given events to the set. The appropriate method on the set is called
+	 * for each event type. 
+	 * @param events
+	 */
 	private void dispatchEvents(Event[] events) {
+		// this will batch the following set changes until endInput is called.
 		set.getSyncSet().beginInput();
 		for (int i = 0; i < events.length; i++) {
 			Event event = events[i];
 			switch(event.getType()) {
 				case Event.CHANGE : 
-					//System.out.println("EventHandler: changed " + event.getResource().getFullPath().toString());
 					set.collect(event.getResult());
 					break;
 				case Event.REMOVAL :
 					if(event.getDepth() == IResource.DEPTH_INFINITE) {
-						//System.out.println("EventHandler: removeAll " + event.getResource().getFullPath().toString());
 						set.getSyncSet().removeAllChildren(event.getResource());
 					} else {
-						//System.out.println("EventHandler: remove " + event.getResource().getFullPath().toString());
 						set.remove(event.getResource());
 					}
 					break;

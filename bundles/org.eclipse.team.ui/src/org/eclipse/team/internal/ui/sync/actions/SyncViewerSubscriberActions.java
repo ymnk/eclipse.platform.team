@@ -105,8 +105,10 @@ public class SyncViewerSubscriberActions extends SyncViewerActionGroup {
 	 */
 	protected void initializeActions() {
 		super.initializeActions();
-		String className = getSubscriberContext().getSubscriber().getClass().getName();
-		actions = (ContributedSubscriberAction[])definitions.get(className);
+		if(getSubscriberContext() != null) {
+			String className = getSubscriberContext().getSubscriber().getClass().getName();
+			actions = (ContributedSubscriberAction[])definitions.get(className);
+		}
 	}
 
 }

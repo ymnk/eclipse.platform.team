@@ -126,7 +126,10 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 	public void propertyChange(PropertyChangeEvent event) {
 		if (event.getProperty().equals(TeamUI.GLOBAL_IGNORES_CHANGED)) {
 			try {
+				// the reset will simply clear the set since a subscriber sync set doesn't
+				// implement fetchInput().
 				subscriberSyncSet.reset(new NullProgressMonitor());
+				eventHandler.initialize();
 			} catch (TeamException e) {
 				TeamUIPlugin.log(e);
 			}

@@ -271,14 +271,6 @@ public class SyncSet {
 		return (SyncInfo[]) resources.values().toArray(new SyncInfo[resources.size()]);
 	}
 
-	/**
-	 * @param e
-	 */
-	protected void log(TeamException e) {
-		// TODO: log or throw
-		TeamUIPlugin.log(e);
-	}
-	
 	protected void removeAllChildren(IResource resource) {
 		// The parent map contains a set of all out-of-sync children
 		Set allChildren = (Set)parents.get(resource.getFullPath());

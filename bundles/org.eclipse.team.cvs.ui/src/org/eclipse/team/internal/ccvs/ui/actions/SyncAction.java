@@ -20,27 +20,25 @@ import org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncView;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.sync.ISyncViewer;
 import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.PlatformUI;
 
 /**
  * Action for catchup/release in popup menus.
  */
 public class SyncAction extends WorkspaceAction {
 	
-	private static final String SYNC_WORKING_SET = "Latest CVS Synchronize";
-
 	public void execute(IAction action) throws InvocationTargetException {
 		if(CVSUIPlugin.getPlugin().getPreferenceStore().getBoolean(ICVSUIConstants.USE_NEW_SYNCVIEW)) {
 			IResource[] resources = getResourcesToSync();
 			if (resources == null || resources.length == 0) return;
 			
-			IWorkingSet workingSet = getWorkingSet(resources);
+			IWorkingSet workingSet = CVSUIPlugin.getWorkingSet(resources, Policy.bind("SyncAction.workingSetName")); //$NON-NLS-1$
 			ISyncViewer view = TeamUI.showSyncViewInActivePage(null);
 			if(view != null) {
 				CVSWorkspaceSubscriber cvsWorkspaceSubscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
@@ -53,17 +51,6 @@ public class SyncAction extends WorkspaceAction {
 		} 		
 	}
 	
-	private IWorkingSet getWorkingSet(IResource[] resources) {
-		IWorkingSet workingSet = PlatformUI.getWorkbench().getWorkingSetManager().getWorkingSet(SYNC_WORKING_SET);
-		if (workingSet == null) {
-			workingSet = PlatformUI.getWorkbench().getWorkingSetManager().createWorkingSet(SYNC_WORKING_SET, resources);
-			PlatformUI.getWorkbench().getWorkingSetManager().addWorkingSet(workingSet);
-		} else {
-			workingSet.setElements(resources);
-		}
-		return workingSet;
-	}
-
 	public void executeInOldSyncView(IAction action) throws InvocationTargetException {
 		try {
 			IResource[] resources = getResourcesToSync();

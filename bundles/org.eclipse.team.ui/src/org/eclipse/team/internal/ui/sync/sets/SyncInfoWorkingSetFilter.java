@@ -25,6 +25,9 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
 import org.eclipse.ui.IWorkingSet;
 
+/**
+ * WorkingSet filter for a SyncSet.
+ */
 public class SyncInfoWorkingSetFilter extends SyncInfoFilter {
 
 	private IWorkingSet workingSet;
