@@ -36,7 +36,7 @@ public class SSH2ServerConnection implements IServerConnection {
 	public void open(IProgressMonitor monitor) throws IOException, CVSAuthenticationException {
 		ConnectionProgressMonitor innerMonitor = new ConnectionProgressMonitor(monitor);
 		Session session = SSHPlugin.getPlugin().getPool().getSession(location, password, innerMonitor);
-		channel=(ChannelExec) session.openChannel("exec");
+		channel=(ChannelExec) session.openChannel("exec"); //$NON-NLS-1$
 		((ChannelExec)channel).setCommand(INVOKE_SVR_CMD);
 		channel.connect();
 		inputStream = channel.getInputStream();

@@ -19,6 +19,7 @@ import org
 	.CVSAuthenticationException;
 
 import com.jcraft.jsch.*;
+import org.eclipse.team.internal.ccvs.ssh.Policy;
 
 /**
  * A pool of active SSH connections.
@@ -52,7 +53,7 @@ public class SSHSessionPool {
 		} catch (UnknownHostException ex) {
 				throw ex;
 		} catch (AuthenticationException ex) {
-			throw new CVSAuthenticationException("Authentication failed");
+			throw new CVSAuthenticationException(Policy.bind("SSHSessionPool.AuthenticationFailed")); //$NON-NLS-1$
 		} catch (Exception ex) {
 			throw new IOException(ex.getMessage());
 		}
