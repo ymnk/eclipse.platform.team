@@ -225,12 +225,7 @@ public final class Team {
 	}
 	
 	/**
-	 * Utility method for removing a project nature from a project.
-	 * 
-	 * @param proj the project to remove the nature from
-	 * @param natureId the nature id to remove
-	 * @param monitor a progress monitor to indicate the duration of the operation, or
-	 * <code>null</code> if progress reporting is not required.
+	 * @deprecated Use RepositoryProvider.unmap(IProject)
 	 */
 	public static void removeNatureFromProject(IProject proj, String natureID, IProgressMonitor monitor) throws TeamException {
 		if(!RepositoryProvider.getProvider(proj).getID().equals(natureID))
@@ -238,16 +233,21 @@ public final class Team {
 
 		RepositoryProvider.unmap(proj);
 	}
-	
+
+	public static void reallyRemoveNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
+		try {
+			IProjectDescription description = proj.getDescription();
+			String[] prevNatures= description.getNatureIds();
+			List newNatures = new ArrayList(Arrays.asList(prevNatures));
+			newNatures.remove(natureId);
+			description.setNatureIds((String[])newNatures.toArray(new String[newNatures.size()]));
+			proj.setDescription(description, monitor);
+		} catch(CoreException e) {
+			throw wrapException(Policy.bind("manager.errorRemovingNature", proj.getName(), natureId), e); //$NON-NLS-1$
+		}
+	}	
 	/**
-	 * Utility method for adding a nature to a project.
-	 * 
-	 * @param proj the project to add the nature
-	 * @param natureId the id of the nature to assign to the project
-	 * @param monitor a progress monitor to indicate the duration of the operation, or
-	 * <code>null</code> if progress reporting is not required.
-	 * 
-	 * @exception TeamException if a problem occured setting the nature
+	 * @deprecated Use RepositoryProvider.map(IProject, String)
 	 */
 	public static void addNatureToProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
 		RepositoryProvider.map(proj, natureId);

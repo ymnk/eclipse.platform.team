@@ -115,9 +115,12 @@ final public class TeamPlugin extends Plugin {
 		return new TeamException(new Status(status.getSeverity(), ID, status.getCode(), status.getMessage(), e));
 	}
 	
-	public static void convertNatureToProperty(IProject project, String id) throws TeamException {
-		Team.removeNatureFromProject(project, id, new NullProgressMonitor());
-		RepositoryProvider.map(project, id);
+	public static void convertNatureToProperty(IProject project) throws TeamException {
+		RepositoryProvider provider = RepositoryProvider.getProvider(project);
+		String providerId = provider.getID();	
+		
+		RepositoryProvider.map(project, providerId);
+		Team.reallyRemoveNatureFromProject(project, providerId, new NullProgressMonitor());
 	}
 
 }
