@@ -277,7 +277,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	 * Warn user that some files could not be updated.
 	 * Note: This method is designed to be overridden by test cases.
 	 */
-	protected void warnAboutFailedResources(final SyncInfoSet syncSet) {
+	protected void warnAboutFailedResources(final MutableSyncInfoSet syncSet) {
 		final int[] result = new int[] {Dialog.CANCEL};
 		TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {
 			public void run() {

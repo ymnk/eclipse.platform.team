@@ -32,7 +32,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	private TeamSubscriberSyncInfoCollector collector;
 	
-	private SyncInfoSetCollector filteredSyncSet;
+	private FilteredSyncInfoCollector filteredSyncSet;
 	
 	private RefreshSchedule refreshSchedule;
 	
@@ -147,17 +147,27 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		collector.dispose();
 	}
 	
-	public final SyncInfoSetCollector getSyncInfoSetCollector() {
+	/**
+	 * Return the <code>FilteredSyncInfoCollector</code> for this participant.
+	 * Thsi collector maintains the set of all out-of-sync resources that
+	 * are being displayed on the participant's synchronize view page.
+	 */
+	public final FilteredSyncInfoCollector getFilteredSyncInfoCollector() {
 		return filteredSyncSet; 
 	}
 	
-	public final TeamSubscriberSyncInfoCollector getSyncInfoCollector() {
+	/**
+	 * Return the <code>TeamSubscriberSyncInfoCollector</code> for the participant.
+	 * This collector maintains the set of all out-of-sync resources for the subscriber.
+	 * @return the <code>TeamSubscriberSyncInfoCollector</code> for this participant
+	 */
+	public final TeamSubscriberSyncInfoCollector getTeamSubscriberSyncInfoCollector() {
 		return collector;
 	}
 	
 	protected void setSubscriber(TeamSubscriber subscriber) {
 		collector = new TeamSubscriberSyncInfoCollector(subscriber);
-		filteredSyncSet = new SyncInfoSetCollector(collector.getSyncInfoSet(), null /* no initial roots */, null /* no initial filter */);
+		filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null /* no initial roots */, null /* no initial filter */);
 
 		// listen for global ignore changes
 		TeamUI.addPropertyChangeListener(this);
@@ -168,6 +178,10 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		updateMode(getMode());
 	}
 	
+	/**
+	 * Get the <code>TeamSubscriber</code> for this participant
+	 * @return a <code>TamSubscriber</code>
+	 */
 	public TeamSubscriber getSubscriber() {
 		return collector.getTeamSubscriber();
 	}
@@ -200,7 +214,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			modeFilter = CONFLICTING_MODE_FILTER; break;
 		}
 
-			getSyncInfoSetCollector().setFilter(
+			getFilteredSyncInfoCollector().setFilter(
 					new SyncInfoFilter.AndSyncInfoFilter(
 							new SyncInfoFilter[] {
 									new SyncInfoFilter.SyncInfoDirectionFilter(modeFilter)

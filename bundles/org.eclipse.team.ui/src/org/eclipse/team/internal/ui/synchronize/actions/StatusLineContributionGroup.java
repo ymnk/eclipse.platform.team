@@ -42,7 +42,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	public StatusLineContributionGroup(final Shell shell, TeamSubscriberParticipant participant) {
 		super();
 		this.participant = participant;
-		this.collector = participant.getSyncInfoCollector();
+		this.collector = participant.getTeamSubscriberSyncInfoCollector();
 		this.incoming = createStatusLineContribution(INCOMING_ID, TeamSubscriberParticipant.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
 		this.outgoing = createStatusLineContribution(OUTGOING_ID, TeamSubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
 		this.conflicting = createStatusLineContribution(CONFLICTING_ID, TeamSubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$

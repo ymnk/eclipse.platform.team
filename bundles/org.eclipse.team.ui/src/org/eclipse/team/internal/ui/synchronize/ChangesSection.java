@@ -96,12 +96,12 @@ public class ChangesSection extends Composite {
 
 		calculateDescription();
 		
-		participant.getSyncInfoSetCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
-		participant.getSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
+		participant.getFilteredSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
+		participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
 	}
 	
 	private void calculateDescription() {
-		if(participant.getSyncInfoSetCollector().getSyncInfoSet().size() == 0) {
+		if(participant.getFilteredSyncInfoCollector().getSyncInfoSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
 					if (changesSectionContainer.isDisposed()) return;
@@ -132,9 +132,9 @@ public class ChangesSection extends Composite {
 		data.grabExcessVerticalSpace = true;
 		composite.setLayoutData(data);
 		
-		SyncInfoSet workspace = participant.getSyncInfoCollector().getSyncInfoSet();
-		SyncInfoSet workingSet = participant.getSyncInfoSetCollector().getWorkingSetSyncInfoSet();
-		SyncInfoSet filteredSet = participant.getSyncInfoSetCollector().getSyncInfoSet();
+		SyncInfoSet workspace = participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet workingSet = participant.getFilteredSyncInfoCollector().getWorkingSetSyncInfoSet();
+		SyncInfoSet filteredSet = participant.getFilteredSyncInfoCollector().getSyncInfoSet();
 		
 		int changesInWorkspace = workspace.size();
 		int changesInWorkingSet =workingSet.size();
@@ -205,7 +205,7 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
-		participant.getSyncInfoSetCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
-		participant.getSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
+		participant.getFilteredSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
+		participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
 	}
 }

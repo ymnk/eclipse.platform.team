@@ -21,18 +21,20 @@ import org.eclipse.team.internal.core.subscribers.WorkingSetSyncSetInput;
  * the provided filters.
  * 
  * @see TeamSubscriberSyncInfoCollector
+ * 
+ * @since 3.0
  */
-public final class SyncInfoSetCollector {
+public final class FilteredSyncInfoCollector {
 
 	private WorkingSetSyncSetInput workingSetInput;
 	private SyncSetInputFromSyncSet filteredInput;
 	private SyncInfoSet source;
 
-	public SyncInfoSetCollector(SyncInfoSet source, IResource[] workingSet, SyncInfoFilter filter) {
+	public FilteredSyncInfoCollector(SyncInfoSet source, IResource[] workingSet, SyncInfoFilter filter) {
 		this.source = source;
 		
 		// TODO: optimize and don't use working set if no roots are passed in
-		workingSetInput = new WorkingSetSyncSetInput((SyncInfoSet)source);
+		workingSetInput = new WorkingSetSyncSetInput(source);
 		workingSetInput.setWorkingSet(workingSet);		
 		filteredInput = new SyncSetInputFromSyncSet(workingSetInput.getSyncSet());
 		if(filter == null) {

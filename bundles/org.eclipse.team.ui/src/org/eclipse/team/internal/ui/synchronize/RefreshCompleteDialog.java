@@ -34,7 +34,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private Button promptWhenNoChanges;
 	private Button promptWithChanges;
 	private SyncInfoSetCompareInput compareEditorInput;
-	private SyncInfoSetCollector set;
+	private FilteredSyncInfoCollector set;
 	private IRefreshEvent event;
 	private final static int RESOURCE_LIST_SIZE = 10;
 	private IDialogSettings settings;
@@ -50,7 +50,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
 		
-		this.set = new SyncInfoSetCollector(participant.getSyncInfoCollector().getSyncInfoSet(), getResources(), null);
+		this.set = new FilteredSyncInfoCollector(participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet(), getResources(), null);
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
 				new SyncInfoSetCompareConfiguration(participant.getId(), set.getSyncInfoSet())); 
 		

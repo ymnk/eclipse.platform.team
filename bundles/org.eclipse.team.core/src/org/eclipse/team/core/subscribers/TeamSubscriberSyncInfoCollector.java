@@ -196,6 +196,8 @@ public final class TeamSubscriberSyncInfoCollector implements IResourceChangeLis
 	}
 
 	private boolean isAncestorOfRoot(IResource parent) {
+		// Always traverse into projects in case a root was removed
+		if (parent.getType() == IResource.ROOT) return true;
 		IResource[] roots = getRoots();
 		for (int i = 0; i < roots.length; i++) {
 			IResource resource = roots[i];

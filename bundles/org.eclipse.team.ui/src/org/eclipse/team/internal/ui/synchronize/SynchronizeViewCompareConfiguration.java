@@ -37,7 +37,7 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 	private TeamParticipantRefreshAction refreshSelectionAction;
 	
 	public SynchronizeViewCompareConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
-		super(participant.getId(), participant.getSyncInfoSetCollector().getSyncInfoSet());
+		super(participant.getId(), participant.getFilteredSyncInfoCollector().getSyncInfoSet());
 		this.view = view;
 		this.participant = participant;
 	}

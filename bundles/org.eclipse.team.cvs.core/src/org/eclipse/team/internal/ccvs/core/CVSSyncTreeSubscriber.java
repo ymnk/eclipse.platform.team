@@ -275,7 +275,15 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		}	
 		try {
 			Set allMembers = new HashSet();
-			allMembers.addAll(Arrays.asList(((IContainer)resource).members()));
+			try {
+				allMembers.addAll(Arrays.asList(((IContainer)resource).members()));
+			} catch (CoreException e) {
+				if (e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
+					// The resource is no longer exists so ignore the exception
+				} else {
+					throw e;
+				}
+			}
 			allMembers.addAll(Arrays.asList(getMembers(getRemoteSynchronizationCache(), resource)));
 			if (isThreeWay()) {
 				allMembers.addAll(Arrays.asList(getMembers(getBaseSynchronizationCache(), resource)));

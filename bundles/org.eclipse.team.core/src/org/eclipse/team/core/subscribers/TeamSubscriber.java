@@ -22,6 +22,14 @@ import org.eclipse.team.internal.core.TeamPlugin;
  * A TeamSubscriber provides synchronization between local resources and a
  * remote location that is used to share those resources.
  * 
+ * A TeamSubscriber is only required to send out change notification any time the sync
+ * state of a resoure changes but the local state does not. For instance,
+ * if the contents of a file have been modified or a file or folder has
+ * been deleted, the TeamSubscriber may or may not send out a TeamDelta.SYNC_CHANGED
+ * event. Also, if a project is deleted or closed, the TeamSubscriber is not required to
+ * issue a TeamDelta.ROOT_REMOVED event. It is up to clients to requery the subscriber
+ * when the state of a resource changes locally by listening to IResource deltas.
+ * 
  * [Note: How can we allow the refresh() operation to optimize the sync
  * calculation based on the currently configured compare criteria?]
  */

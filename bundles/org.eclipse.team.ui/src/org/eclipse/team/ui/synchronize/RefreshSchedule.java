@@ -91,12 +91,12 @@ public class RefreshSchedule {
 	}
 	
 	protected void startJob() {
-		SyncInfoSet set = participant.getSyncInfoSetCollector().getSyncInfoSet();
+		SyncInfoSet set = participant.getFilteredSyncInfoCollector().getSyncInfoSet();
 		if(set == null) { 
 			return;
 		}
 		if(job == null) {
-			job = new RefreshSubscriberJob("Refreshing '" + participant.getName() + "'. " + getRefreshIntervalAsString(), participant.getSyncInfoCollector()); //$NON-NLS-1$
+			job = new RefreshSubscriberJob("Refreshing '" + participant.getName() + "'. " + getRefreshIntervalAsString(), participant.getTeamSubscriberSyncInfoCollector()); //$NON-NLS-1$
 		}
 		job.setRestartOnCancel(true);
 		job.setReschedule(true);
