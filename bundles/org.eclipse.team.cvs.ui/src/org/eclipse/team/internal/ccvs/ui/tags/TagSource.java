@@ -102,10 +102,13 @@ public abstract class TagSource {
     public static TagSource create(ICVSResource[] resources) {
         if (resources.length == 1 && !resources[0].isFolder())
             return new SingleFileTagSource((ICVSFile)resources[0]);
-        // TODO Should use a better tag source that uses all folders somehow
-        return new SingleFolderTagSource(getFirstFolder(resources));
+        return create(getFolders(resources));
     }
-    
+
+    private static ICVSFolder[] getFolders(ICVSResource[] resources) {
+        return new ICVSFolder[] { getFirstFolder(resources) } ;
+    }
+
     /**
      * Create a tag source for a list of resources
      * @param resources one or more resources

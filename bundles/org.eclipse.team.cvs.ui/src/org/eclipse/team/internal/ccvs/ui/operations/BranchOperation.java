@@ -64,10 +64,9 @@ public class BranchOperation extends RepositoryProviderOperation {
 	protected boolean shouldRun() {
 		IResource[] resources = getResources();
 		boolean allSticky = areAllResourcesSticky(resources);
-		ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(resources[0].getProject());
 		final BranchPromptDialog dialog = new BranchPromptDialog(getShell(),
 											Policy.bind("BranchWizard.title"), //$NON-NLS-1$
-											getCVSResources(), 
+											getResources(), 
 											allSticky, 
 											calculateInitialVersionName(resources,allSticky));
 		if (dialog.open() != InputDialog.OK) return false;		

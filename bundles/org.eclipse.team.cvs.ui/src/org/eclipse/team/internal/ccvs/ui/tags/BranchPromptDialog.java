@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.tags;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -18,7 +20,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
@@ -42,9 +43,11 @@ public class BranchPromptDialog extends DetailsDialog {
 	// widgets;
     private TagSource tagSource;
     private TagSelectionArea tagArea;
+    private final IResource[] resources;
 	
-	public BranchPromptDialog(Shell parentShell, String title, ICVSResource[] resources, boolean allResourcesSticky, String versionName) {
+	public BranchPromptDialog(Shell parentShell, String title, IResource[] resources, boolean allResourcesSticky, String versionName) {
 		super(parentShell, title);
+        this.resources = resources;
 		this.tagSource = TagSource.create(resources);
 		this.allStickyResources = allResourcesSticky;
 		this.versionName = versionName;
@@ -79,6 +82,7 @@ public class BranchPromptDialog extends DetailsDialog {
 				updateVersionName(branchTag);
 			}
 		});
+		addBranchContentAssist();
 
 		final Button check = new Button(composite, SWT.CHECK);
 		data = new GridData();
@@ -123,7 +127,17 @@ public class BranchPromptDialog extends DetailsDialog {
 		branchText.setFocus();
 	}
 
-	/**
+    private void addBranchContentAssist() {
+        TagSource projectTagSource = LocalProjectTagSource.create(getSeedProject());
+        if (projectTagSource != null)
+            TagContentAssistProcessor.createContentAssistant(branchText, projectTagSource, TagSelectionArea.INCLUDE_BRANCHES); 
+    }
+
+    private IProject getSeedProject() {
+        return resources[0].getProject();
+    }
+
+    /**
 	 * Updates version name
 	 */
 	protected void updateVersionName(String branchName) {

@@ -45,7 +45,7 @@ public class TagAsVersionDialog extends DetailsDialog {
 	
 	public TagAsVersionDialog(Shell parentShell, String title, ITagOperation operation) {
 		super(parentShell, title);
-		this.tagSource = TagSource.create(operation.getCVSResources());
+		this.tagSource = operation.getTagSource();
 		this.operation = operation;
 	}
 	
