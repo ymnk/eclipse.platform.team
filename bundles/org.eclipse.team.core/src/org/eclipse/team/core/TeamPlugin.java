@@ -42,32 +42,29 @@ import org.eclipse.team.core.internal.Policy;
  * resource management plugin.
  * <p>
  * This plugin provides a lightweight registration and lookup service for
- * associating projects with providers. The registration mechanism is
- * based on the platform's project natures. Using projects natures allows
- * manipulating a project in a nature-specific way, for example UI 
- * contributions can be made conditional based on the nature of a project.
+ * managing global ignores patterns and file type associations. Also it 
+ * serves as a boot strap for registration of RepositoryProviderType classes.
  * </p>
  * 
- * @see ITeamNature
- * @see ITeamProvider
- * @see ITeamManager
+ * @see RepositoryProvider
+ * @see RepositoryProviderType
  */
 final public class TeamPlugin extends Plugin {
 
 	// The id of the core team plug-in
-	public static final String ID = "org.eclipse.team.core";
+	public static final String ID = "org.eclipse.team.core"; //$NON-NLS-1$
 
 	// The id of the providers extension point
-	private static final String PROVIDER_EXTENSION = "repository-provider-type";
+	private static final String PROVIDER_EXTENSION = "repository-provider-type"; //$NON-NLS-1$
 	
 	// The id of the file types extension point
-	private static final String FILE_TYPES_EXTENSION = "fileTypes";
+	private static final String FILE_TYPES_EXTENSION = "fileTypes"; //$NON-NLS-1$
 	
 	// The id of the global ignore extension point
-	private static final String IGNORE_EXTENSION = "ignore";
+	private static final String IGNORE_EXTENSION = "ignore"; //$NON-NLS-1$
 	
 	// File name of the persisted global ignore patterns
-	private final static String GLOBALIGNORE_FILE = ".globalIgnores";
+	private final static String GLOBALIGNORE_FILE = ".globalIgnores"; //$NON-NLS-1$
 	
 	// The ignore list that is read at startup from the persisted file
 	private static Map globalIgnore = new HashMap(11);
@@ -91,7 +88,7 @@ final public class TeamPlugin extends Plugin {
 	 */
 	public void startup() throws CoreException {
 		try {
-			Policy.localize("org.eclipse.team.core.internal.messages");						
+			Policy.localize("org.eclipse.team.core.internal.messages"); //$NON-NLS-1$
 			registry = new FileTypeRegistry();
 			registry.startup();
 			
@@ -179,7 +176,7 @@ final public class TeamPlugin extends Plugin {
 			// make sure that we update our state on disk
 			savePluginState();
 		} catch (TeamException ex) {
-			TeamPlugin.log(IStatus.WARNING, "setting global ignore", ex);
+			TeamPlugin.log(IStatus.WARNING, Policy.bind("TeamPlugin_setting_global_ignore_7"), ex); //$NON-NLS-1$
 		}
 	}
 	
@@ -196,7 +193,7 @@ final public class TeamPlugin extends Plugin {
 			description.setNatureIds(newNatures);
 			proj.setDescription(description, monitor);
 		} catch(CoreException e) {
-				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.errorSettingNature", 
+				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.errorSettingNature",  //$NON-NLS-1$
 														 proj.getName(), natureId), e));
 		}
 	}
@@ -213,7 +210,7 @@ final public class TeamPlugin extends Plugin {
 			description.setNatureIds((String[])newNatures.toArray(new String[newNatures.size()]));
 			proj.setDescription(description, monitor);
 		} catch(CoreException e) {
-				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.errorRemovingNature", 
+				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.errorRemovingNature",  //$NON-NLS-1$
 														 proj.getName(), natureId), e));
 		}
 	}
@@ -225,7 +222,7 @@ final public class TeamPlugin extends Plugin {
 
 		IExtensionPoint extensionPoint = Platform.getPluginRegistry().getExtensionPoint(TeamPlugin.ID, TeamPlugin.PROVIDER_EXTENSION);
 		if (extensionPoint == null) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.providerExtensionNotFound"), null));
+			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.providerExtensionNotFound"), null)); //$NON-NLS-1$
 		}
 
 		IExtension[] extensions = extensionPoint.getExtensions();
@@ -237,24 +234,24 @@ final public class TeamPlugin extends Plugin {
 			if (configs.length == 0) {
 				// there is no configuration element
 				// log as an error but continue to instantiate other executable extensions.
-				TeamPlugin.log(IStatus.ERROR, Policy.bind("manager.providerNoConfigElems", extension.getUniqueIdentifier()), null);
+				TeamPlugin.log(IStatus.ERROR, Policy.bind("manager.providerNoConfigElems", extension.getUniqueIdentifier()), null); //$NON-NLS-1$
 				continue;
 			}
 			IConfigurationElement config = configs[0];
 			String configName = config.getName();
-			if (!"repository".equals(config.getName())) {
-				String message = Policy.bind("resources.natureFormat", configName);
+			if (!"repository".equals(config.getName())) { //$NON-NLS-1$
+				String message = Policy.bind("resources.natureFormat", configName); //$NON-NLS-1$
 				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null));
 			}
 
 			try {
-				RepositoryProviderType providerType = (RepositoryProviderType) config.createExecutableExtension("provider-type");
+				RepositoryProviderType providerType = (RepositoryProviderType) config.createExecutableExtension("provider-type"); //$NON-NLS-1$
 				RepositoryProviderType.addProviderType(providerType);
 			} catch (ClassCastException e) {
-				String message = Policy.bind("resources.natureImplement", configName);
+				String message = Policy.bind("resources.natureImplement", configName); //$NON-NLS-1$
 				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null));
 			} catch (CoreException e){
-				String message = Policy.bind("resources.natureImplement", configName);
+				String message = Policy.bind("resources.natureImplement", configName); //$NON-NLS-1$
 				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null));
 			}
 		}
@@ -272,10 +269,10 @@ final public class TeamPlugin extends Plugin {
 				for (int i = 0; i < extensions.length; i++) {
 					IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
 					for (int j = 0; j < configElements.length; j++) {
-						String pattern = configElements[j].getAttribute("pattern");
+						String pattern = configElements[j].getAttribute("pattern"); //$NON-NLS-1$
 						if (pattern != null) {
-							String selected = configElements[j].getAttribute("selected");
-							boolean enabled = selected != null && selected.equalsIgnoreCase("true");
+							String selected = configElements[j].getAttribute("selected"); //$NON-NLS-1$
+							boolean enabled = selected != null && selected.equalsIgnoreCase("true"); //$NON-NLS-1$
 							// if this ignore doesn't already exist, add it to the global list
 							if (!globalIgnore.containsKey(pattern)) {
 								globalIgnore.put(pattern, new Boolean(enabled));
@@ -293,7 +290,7 @@ final public class TeamPlugin extends Plugin {
 	private void savePluginState() throws TeamException {
 		// save global ignore list to disk
 		IPath pluginStateLocation = TeamPlugin.getPlugin().getStateLocation();
-		File tempFile = pluginStateLocation.append(GLOBALIGNORE_FILE + ".tmp").toFile();
+		File tempFile = pluginStateLocation.append(GLOBALIGNORE_FILE + ".tmp").toFile(); //$NON-NLS-1$
 		File stateFile = pluginStateLocation.append(GLOBALIGNORE_FILE).toFile();
 		try {
 			DataOutputStream dos = new DataOutputStream(new FileOutputStream(tempFile));
@@ -303,9 +300,9 @@ final public class TeamPlugin extends Plugin {
 				stateFile.delete();
 			boolean renamed = tempFile.renameTo(stateFile);
 			if (!renamed)
-				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "renaming", null));
+				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("TeamPlugin_renaming_21"), null)); //$NON-NLS-1$
 		} catch (IOException ex) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "closing stream", ex));
+			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("TeamPlugin_closing_stream_22"), ex)); //$NON-NLS-1$
 		}
 	}
 	
@@ -349,7 +346,7 @@ final public class TeamPlugin extends Plugin {
 			} catch(FileNotFoundException e) {
 				// not a fatal error, there just happens not to be any state to read
 			} catch (IOException ex) {
-				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "closing stream", ex));			
+				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("TeamPlugin_closing_stream_23"), ex));			 //$NON-NLS-1$
 			}
 		}
 	}

@@ -15,6 +15,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.team.core.internal.Policy;
 
 /**
  * Describes a type of repository provider snf provides
@@ -42,7 +43,7 @@ abstract public class RepositoryProviderType {
 	 */
 	final public static void addProviderType(RepositoryProviderType providerType) throws TeamException {
 		if(providerTypes.containsKey(providerType.getID())) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "duplicate provider found in plugin.xml: " + providerType.getID(), null));
+			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProviderTypeduplicate_provider_found_in_plugin.xml___1") + providerType.getID(), null)); //$NON-NLS-1$
 		} else {
 			providerTypes.put(providerType.getID(), providerType);			
 		}
@@ -93,15 +94,16 @@ abstract public class RepositoryProviderType {
 	final public RepositoryProvider getInstance(IProject project) {
 		String id = getID();
 		try {
-			return (RepositoryProvider)project.getNature(id);
+			if(project.isOpen()) {
+				return (RepositoryProvider)project.getNature(id);
+			}
 		} catch(ClassCastException e) {
-			TeamPlugin.log(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "RepositoryProvider assigned to the project must be a subclass of RepositoryProvider: " + id, e));
-			return null;
+			TeamPlugin.log(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProviderTypeRepositoryProvider_assigned_to_the_project_must_be_a_subclass_of_RepositoryProvider___2") + id, e)); //$NON-NLS-1$
 		} catch(CoreException ex) {
 			// would happen if provider nature id is not registered with the resources plugin
-			TeamPlugin.log(new Status(IStatus.WARNING, TeamPlugin.ID, 0, "RepositoryProvider not registered as a nature id: " + id, ex));
-			return null;
+			TeamPlugin.log(new Status(IStatus.WARNING, TeamPlugin.ID, 0, Policy.bind("RepositoryProviderTypeRepositoryProvider_not_registered_as_a_nature_id___3") + id, ex)); //$NON-NLS-1$
 		}
+		return null;
 	}
 	
 	/**

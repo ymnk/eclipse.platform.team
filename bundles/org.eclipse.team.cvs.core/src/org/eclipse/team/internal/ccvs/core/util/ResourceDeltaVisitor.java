@@ -56,7 +56,7 @@ public abstract class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 								provider = RepositoryProviderType.getProvider(destination.getProject());
 							}
 							
-							if(provider.isOfType(CVSProviderPlugin.getTypeId())) {
+							if(provider != null && provider.isOfType(CVSProviderPlugin.getTypeId())) {
 								delta.accept(visitor);
 							}
 						}

@@ -5,12 +5,18 @@ package org.eclipse.team.ccvs.core;
  * All Rights Reserved.
  */
  
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -40,8 +46,11 @@ import org.eclipse.team.internal.ccvs.core.client.ResponseHandler;
 import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.client.Tag;
 import org.eclipse.team.internal.ccvs.core.client.Update;
+import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
+import org.eclipse.team.internal.ccvs.core.client.listeners.AdminKSubstListener;
 import org.eclipse.team.internal.ccvs.core.client.listeners.DiffListener;
+import org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.resources.CVSRemoteSyncElement;
@@ -80,7 +89,13 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
  * have them appear in Eclipse. This may be changed in the future.
  */
 public class CVSTeamProvider extends RepositoryProvider {
-
+	
+	private static final int CR_BYTE = 0x0D;
+	private static final int LF_BYTE = 0x0A;
+	private static final boolean IS_CRLF_PLATFORM = Arrays.equals(
+		System.getProperty("line.separator").getBytes(),
+		new byte[] { CR_BYTE, LF_BYTE });
+	
 	private CVSWorkspaceRoot workspaceRoot;
 	private IProject project;
 	private String comment = "";  //$NON-NLS-1$
@@ -639,7 +654,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 			CVSProvider.getInstance().addRepository(newLocation);
 			
 			// Set the project to use the new Locations
-			setRemoteRoot(newLocation, Policy.infiniteSubMonitorFor(monitor, 80));
+			setRemoteRoot(newLocation, Policy.subMonitorFor(monitor, 80));
 			return true;
 		} finally {
 			monitor.done();
@@ -886,30 +901,40 @@ public class CVSTeamProvider extends RepositoryProvider {
 	/*
 	 * This method expects to be passed an InfiniteSubProgressMonitor
 	 */
-	private void setRemoteRoot(ICVSRepositoryLocation location, final IProgressMonitor monitor) throws TeamException {
+	private void setRemoteRoot(ICVSRepositoryLocation location, IProgressMonitor monitor) throws TeamException {
 
 		// Check if there is a differnece between the new and old roots	
 		final String root = location.getLocation();
 		if (root.equals(workspaceRoot.getRemoteLocation())) 
 			return;
-				
+	
 		try {
-			// 256 ticks gives us a maximum of 1024 which seems reasonable for folders is a project
-			monitor.beginTask(Policy.bind("CVSTeamProvider.folderInfo", project.getName()), 256);  //$NON-NLS-1$
-			
-			// Visit all the children folders in order to set the root in the folder sync info
-			workspaceRoot.getLocalRoot().accept(new ICVSResourceVisitor() {
-				public void visitFile(ICVSFile file) throws CVSException {};
-				public void visitFolder(ICVSFolder folder) throws CVSException {
-					monitor.worked(1);
-					FolderSyncInfo info = folder.getFolderSyncInfo();
-					if (info != null) {
-						monitor.subTask(Policy.bind("CVSTeamProvider.updatingFolder", info.getRepository())); //$NON-NLS-1$
-						folder.setFolderSyncInfo(new FolderSyncInfo(info.getRepository(), root, info.getTag(), info.getIsStatic()));
-						folder.acceptChildren(this);
+			workspaceRoot.getLocalRoot().run(new ICVSRunnable() {
+				public void run(IProgressMonitor progress) throws CVSException {
+					try {
+						// 256 ticks gives us a maximum of 1024 which seems reasonable for folders is a project
+						progress.beginTask(null, 100);
+						final IProgressMonitor monitor = Policy.infiniteSubMonitorFor(progress, 100);
+						monitor.beginTask(Policy.bind("CVSTeamProvider.folderInfo", project.getName()), 256);  //$NON-NLS-1$
+		
+						// Visit all the children folders in order to set the root in the folder sync info
+						workspaceRoot.getLocalRoot().accept(new ICVSResourceVisitor() {
+							public void visitFile(ICVSFile file) throws CVSException {};
+							public void visitFolder(ICVSFolder folder) throws CVSException {
+								monitor.worked(1);
+								FolderSyncInfo info = folder.getFolderSyncInfo();
+								if (info != null) {
+									monitor.subTask(Policy.bind("CVSTeamProvider.updatingFolder", info.getRepository())); //$NON-NLS-1$
+									folder.setFolderSyncInfo(new FolderSyncInfo(info.getRepository(), root, info.getTag(), info.getIsStatic()));
+									folder.acceptChildren(this);
+								}
+							};
+						});
+					} finally {
+						progress.done();
 					}
-				};
-			});
+				}
+			}, monitor);
 		} finally {
 			monitor.done();
 		}
@@ -942,5 +967,227 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 */
 	public RepositoryProviderType getProviderType() {
 		return CVSRepositoryProviderType.getInstance();
+	}
+	
+	/**
+	 * Fixes the line delimiters in the local file to reflect the platform's
+	 * native encoding.  Performs CR/LF -> LF or LF -> CR/LF conversion
+	 * depending on the platform but does not affect delimiters that are
+	 * already correctly encoded.
+	 */
+	public static void cleanLineDelimiters(IFile file, boolean useCRLF, IProgressMonitor progress)
+		throws CVSException {
+		try {
+			// convert delimiters in memory
+			boolean changed = false;
+			InputStream is = null;
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			try {
+				is = new BufferedInputStream(file.getContents());
+				boolean seenCR = false;
+				int c;
+				while ((c = is.read()) != -1) {
+					if (c == LF_BYTE) {
+						if (useCRLF) {
+							bos.write(CR_BYTE);
+							if (! seenCR) changed = true; // added CR
+						} else {
+							if (seenCR) changed = true; // stripped CR
+						}
+						bos.write(LF_BYTE);
+						seenCR = false;
+					} else {
+						if (seenCR) {
+							bos.write(CR_BYTE); // preserve orphaned carriage returns
+							seenCR = false;
+						}
+						if (c == CR_BYTE) {
+							seenCR = true;
+						} else {
+							bos.write(c);
+						}
+					}
+				}
+				if (seenCR) {
+					bos.write(CR_BYTE); // preserve orphaned carriage returns
+				}
+			} finally {
+				if (is != null) is.close();
+				bos.close();
+			}
+			if (changed) {
+				// write file back to disk with corrected delimiters if changes were made
+				ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+				file.setContents(bis, false /*force*/, true /*keepHistory*/, progress);
+			} else {
+				// otherwise make the file dirty
+				makeDirty(file);
+			}
+		} catch (CoreException e) {
+			throw CVSException.wrapException(file, Policy.bind("CVSTeamProvider.cleanLineDelimitersException"), e);
+		} catch (IOException e) {
+			throw CVSException.wrapException(file, Policy.bind("CVSTeamProvider.cleanLineDelimitersException"), e);
+		}
+	}
+	
+		/**
+	 * Sets the keyword substitution mode for the specified resources.
+	 * <p>
+	 * Applies the following rules in order:<br>
+	 * <ul>
+	 *   <li>If a file is not managed, skips it.</li>
+	 *   <li>If a file is not changing modes, skips it.</li>
+	 *   <li>If a file is being changed from binary to text, corrects line delimiters
+	 *       then commits it, then admins it.</li>
+	 *   <li>If a file is added, changes the resource sync information locally.</li>
+	 *   <li>Otherwise commits the file (with FORCE to create a new revision), then admins it.</li>
+	 * </ul>
+	 * All files that are admin'd are committed with FORCE to prevent other developers from
+	 * casually trying to commit pending changes to the repository without first checking out
+	 * a new copy.  This is not a perfect solution, as they could just as easily do an UPDATE
+	 * and not obtain the new keyword sync info.
+	 * </p>
+	 * 
+	 * @param resources the resources to set keyword substitution mode
+	 * @param depth the recursion depth
+	 * @param toKSubst the desired keyword substitution mode
+	 * @param monitor the progress monitor
+	 * @return a status code indicating success or failure of the operation
+	 * 
+	 * @throws TeamException
+	 */
+	public IStatus setKeywordSubstitution(final IResource[] resources, final int depth,
+		final KSubstOption toKSubst, IProgressMonitor monitor) throws TeamException {
+		final IStatus[] result = new IStatus[] { ICommandOutputListener.OK };
+		workspaceRoot.getLocalRoot().run(new ICVSRunnable() {
+			public void run(final IProgressMonitor monitor) throws CVSException {
+				final boolean toBinary = toKSubst.isBinary();
+				final List /* of String */ filesToAdmin = new ArrayList();
+				final List /* of String */ filesToCommit = new ArrayList();
+				final Collection /* of ICVSFile */ filesToCommitAsText = new HashSet(); // need fast lookup
+		
+				final IProgressMonitor progress = Policy.monitorFor(monitor);
+				progress.beginTask(Policy.bind("CVSTeamProvider.preparingToSetKSubst"), 100);
+				try {
+					/*** get all possibly affected files (ensure no duplicates) ***/
+					final Set /* of IFile */ files = new HashSet();
+					for (int i = 0; i < resources.length; i++) {
+						final IResource currentResource = resources[i];
+						// throw an exception if the resource is not a child of the receiver
+						checkIsChild(currentResource);
+						try {
+							currentResource.accept(new IResourceVisitor() {
+								public boolean visit(IResource resource) throws CoreException {
+									if (resource.getType() == IResource.FILE) {
+										files.add(resource);
+									}
+									// always return true and let the depth determine if children are visited
+									return true;
+								}
+							}, depth, false);
+						} catch (CoreException e) {
+							throw new CVSException(new Status(IStatus.ERROR, CVSProviderPlugin.ID,
+								TeamException.UNABLE, Policy.bind("CVSTeamProvider.visitError", //$NON-NLS-1$
+								new Object[] { currentResource.getFullPath() }), e));
+						}
+					}
+					progress.worked(5);
+		
+					/*** determine the resources to be committed and those to be admin'd ***/
+					for (Iterator it = files.iterator(); it.hasNext();) {
+						IFile file = (IFile) it.next();
+						ICVSFile mFile = CVSWorkspaceRoot.getCVSFileFor(file);
+						// only set keyword substitution if resource is a managed file
+						if (mFile.isManaged()) {
+							ResourceSyncInfo info = mFile.getSyncInfo();
+							String fromMode = info.getKeywordMode();
+							KSubstOption fromKSubst = KSubstOption.fromMode(fromMode);
+		
+							// make sure we commit all added or changed resources
+							String remotePath = mFile.getRelativePath(workspaceRoot.getLocalRoot());
+		
+							// check if mode must be changed
+							if (! toKSubst.equals(fromKSubst)) {
+								if (info.isAdded()) {
+									// change resource sync info for outgoing addition
+									ResourceSyncInfo newInfo = new ResourceSyncInfo(
+										info.getName(), info.getRevision(), info.getTimeStamp(), toKSubst.toMode(),
+										info.getTag(), info.getPermissions());
+									mFile.setSyncInfo(newInfo);
+								} else if (info.isDeleted()) {
+									// ignore deletions
+								} else {
+									// file exists remotely
+									boolean fromBinary = fromKSubst.isBinary();
+									if (fromBinary && ! toBinary) {
+										// converting from binary to text
+										cleanLineDelimiters(file, IS_CRLF_PLATFORM, progress);
+										// remember to commit the cleaned resource as text before admin
+										filesToCommitAsText.add(mFile);
+									} else {
+										// force a commit to bump the revision number
+										makeDirty(file);
+									}
+									// remember to commit and admin the resource
+									filesToCommit.add(remotePath); // FORCE creation of a new revision
+									filesToAdmin.add(remotePath);
+								}
+							}
+						}
+					}
+					progress.worked(5);
+			
+					/*** commit then admin the resources ***/
+					if (filesToAdmin.size() != 0 || filesToCommit.size() != 0) {
+						Session s = new Session(workspaceRoot.getRemoteLocation(),
+							workspaceRoot.getLocalRoot(), false);
+						IProgressMonitor sessionProgress = Policy.subMonitorFor(progress, 90);
+						sessionProgress.beginTask(Policy.bind("CVSTeamProvider.settingKSubst"), 5 +
+							filesToAdmin.size() + filesToCommit.size());
+						try {
+							s.open(Policy.subMonitorFor(sessionProgress, 5));
+							
+							// commit files that changed from binary to text
+							// NOTE: The files are committed as text with conversions even if the
+							//       resource sync info still says "binary".
+							if (filesToCommit.size() != 0) {
+								s.setTextTransferOverride(filesToCommitAsText);
+								result[0] = Command.COMMIT.execute(s, Command.NO_GLOBAL_OPTIONS,
+									new LocalOption[] { Commit.DO_NOT_RECURSE, Commit.FORCE,
+										Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment) },
+									(String[]) filesToCommit.toArray(new String[filesToCommit.size()]),
+									null, Policy.subMonitorFor(sessionProgress, filesToCommit.size()));
+								s.setTextTransferOverride(null);
+								// if errors were encountered, abort
+								if (! result[0].isOK()) return;
+							}
+							
+							// admin files that changed keyword substitution mode
+							// NOTE: As confirmation of the completion of a command, the server replies
+							//       with the RCS command output if a change took place.  Rather than
+							//       assume that the command succeeded, we listen for these lines
+							//       and update the local ResourceSyncInfo for the particular files that
+							//       were actually changed remotely.
+							result[0] = Command.ADMIN.execute(s, Command.NO_GLOBAL_OPTIONS,
+								new LocalOption[] { toKSubst },
+								(String[]) filesToAdmin.toArray(new String[filesToAdmin.size()]),
+								new AdminKSubstListener(toKSubst.toMode()),
+								Policy.subMonitorFor(sessionProgress, filesToAdmin.size()));
+						} finally {
+							s.close();
+							sessionProgress.done();
+						}
+					}
+				} finally {
+					progress.done();
+				}
+			}
+		}, monitor);
+		return result[0];
+	}
+	
+	private static void makeDirty(IFile file) throws CVSException {
+		ICVSFile mFile = CVSWorkspaceRoot.getCVSFileFor(file);
+		mFile.setTimeStamp(null);
 	}
 }

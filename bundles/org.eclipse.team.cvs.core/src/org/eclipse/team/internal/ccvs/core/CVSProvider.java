@@ -582,7 +582,7 @@ public class CVSProvider implements ICVSProvider {
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			for (int i = 0; i < projects.length; i++) {
 				RepositoryProvider provider = RepositoryProviderType.getProvider(projects[i]);
-				if (provider.isOfType(CVSProviderPlugin.getTypeId())) {
+				if (provider!=null && provider.isOfType(CVSProviderPlugin.getTypeId())) {
 					ICVSFolder folder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(projects[i]);
 					FolderSyncInfo info = folder.getFolderSyncInfo();
 					if (info != null) {

@@ -12,6 +12,7 @@ import org.eclipse.core.resources.IFileModificationValidator;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.*;
+import org.eclipse.team.core.internal.Policy;
 
 /**
  * A concrete subclass of <code>RepositoryProvider</code> is created for each
@@ -61,9 +62,28 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 */
 	final public void configure() throws CoreException {
 		RepositoryProvider provider = RepositoryProviderType.getProvider(getProject());
-		if(provider!=null) {
-			throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "A provider is already associated with this project: " + provider, null));
-		}		
+		// Core Bug 11395
+		// When configure is called the nature has already been assigned to the project. This check will always
+		// fail. Also, if configure fails the nature is still added to the project.
+		//if(provider!=null) {
+		//	throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "A provider is already associated with this project: " + provider, null));
+		//}
+		// Alternate slower check
+		RepositoryProviderType[] types = RepositoryProviderType.getAllProviderTypes();
+		int count = 0;
+		for (int i = 0; i < types.length; i++) {
+			if(getProject().getNature(types[i].getID())!=null) {
+				count++;
+			}
+		}
+		if(count>1) {
+			try {
+				TeamPlugin.removeNatureFromProject(getProject(), getProviderType().getID(), null);
+			} catch(TeamException e) {
+				throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProvider_Error_removing_nature_from_project___1") + provider, null)); //$NON-NLS-1$
+			}
+			throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProvider_Too_many_providers_associated_with_project___2") + provider, null)); //$NON-NLS-1$
+		}			
 		configureProject();
 	}
 
@@ -118,6 +138,6 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 * @return a string description of this provider
 	 */
 	public String toString() {
-		return getProject().getName() + ":" + getProviderType();
+		return getProject().getName() + ":" + getProviderType(); //$NON-NLS-1$
 	}
 }

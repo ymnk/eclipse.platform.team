@@ -202,7 +202,7 @@ public class CVSProviderPlugin extends Plugin {
 							IProject project = (IProject)resource;
 							// Get the team provider for the project and
 							RepositoryProvider provider = RepositoryProviderType.getProvider(project);
-							if(!provider.isOfType(NATURE_ID)) continue;
+							if(provider==null || !provider.isOfType(NATURE_ID)) continue;
 							/* Check if the project description changed. */
 							if ((delta.getFlags() & IResourceDelta.DESCRIPTION) != 0) {
 								/* The project description changed. Write the file. */
