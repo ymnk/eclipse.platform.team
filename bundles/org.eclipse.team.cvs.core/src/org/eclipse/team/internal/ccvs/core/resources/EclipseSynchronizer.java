@@ -1107,7 +1107,7 @@ public class EclipseSynchronizer {
 		sessionPropertyCache.setDeletedChildren(parent, deletedFiles);
 	}
 	
-	protected void flushModificationCache(IResource resource, int depth) throws CVSException {
+	protected void flushDirtyCache(IResource resource, int depth) throws CVSException {
 		if (resource.getType() == IResource.ROOT) return;
 		try {
 			final CVSException[] exception = new CVSException[] { null };
