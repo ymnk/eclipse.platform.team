@@ -14,15 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
-import org.eclipse.team.internal.core.ExceptionCollector;
-import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.*;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.core.*;
 
 /**
  * Thsi class provides the infrastucture for processing events in the background 
@@ -40,6 +35,11 @@ public abstract class BackgroundEventHandler {
 
 	// Accumulate exceptions that occur
 	private ExceptionCollector errors;
+	
+	// time the last dispath took
+	private long processingEventsDuration = 0L;
+
+	private long DISPATCH_DELAY = 1500;
 	
 	/**
 	 * Resource event class. The type is specific to subclasses.
@@ -112,10 +112,10 @@ public abstract class BackgroundEventHandler {
 				return processEvents(monitor);
 			}
 			public boolean shouldRun() {
-				return hasUnprocessedEvents();
+				return ! isQueueEmpty();
 			}
 			public boolean shouldSchedule() {
-				return hasUnprocessedEvents();
+				return ! isQueueEmpty();
 			}
 		};
 		eventHandlerJob.addJobChangeListener(new JobChangeAdapter() {
@@ -137,7 +137,7 @@ public abstract class BackgroundEventHandler {
 			synchronized(this) {
 				awaitingProcessing.clear();
 			}
-		} else if (hasUnprocessedEvents()) {
+		} else if (! isQueueEmpty()) {
 			// An event squeaked in as the job was finishing. Reschedule the job.
 			schedule();
 		}
@@ -186,10 +186,12 @@ public abstract class BackgroundEventHandler {
 			System.out.println("Event queued on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		awaitingProcessing.add(event);
-		if (!isShutdown()
-			&& eventHandlerJob != null
-			&& eventHandlerJob.getState() == Job.NONE) {
-			schedule();
+		if (!isShutdown() && eventHandlerJob != null) {
+			if(eventHandlerJob.getState() == Job.NONE) {
+				schedule();
+			} else {
+				notify();
+			}
 		}
 	}
 	
@@ -198,7 +200,7 @@ public abstract class BackgroundEventHandler {
 	 * @return Event to be processed
 	 */
 	private synchronized Event nextElement() {
-		if (isShutdown() || !hasUnprocessedEvents()) {
+		if (isShutdown() || isQueueEmpty()) {
 			return null;
 		}
 		return (Event) awaitingProcessing.remove(0);
@@ -208,8 +210,8 @@ public abstract class BackgroundEventHandler {
 	 * Return whether there are unprocessed events on the event queue.
 	 * @return whether there are unprocessed events on the queue
 	 */
-	protected synchronized boolean hasUnprocessedEvents() {
-		return !awaitingProcessing.isEmpty();
+	protected synchronized boolean isQueueEmpty() {
+		return awaitingProcessing.isEmpty();
 	}
 	
 	/**
@@ -229,11 +231,16 @@ public abstract class BackgroundEventHandler {
 			subMonitor.beginTask(null, 1024);
 
 			Event event;
+			processingEventsDuration = System.currentTimeMillis();
 			while ((event = nextElement()) != null && ! isShutdown()) {			 	
 				try {
 					processEvent(event, subMonitor);
 					if (Policy.DEBUG_BACKGROUND_EVENTS) {
 						System.out.println("Event processed on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+					}
+					if(isReadyForDispath()) {
+						dispatchEvents();
+						processingEventsDuration = System.currentTimeMillis();
 					}
 				} catch (CoreException e) {
 					// handle exception but keep going
@@ -244,6 +251,29 @@ public abstract class BackgroundEventHandler {
 			monitor.done();
 		}
 		return errors.getStatus();
+	}
+
+	/**
+	 * Notify clients of processed events.
+	 */
+	protected abstract void dispatchEvents() throws TeamException;
+
+	private boolean isReadyForDispath() {		
+		long duration = System.currentTimeMillis() - processingEventsDuration;
+		if(duration >= DISPATCH_DELAY) {
+			return true;
+		}
+		synchronized(this) {
+			if(! isQueueEmpty()) {
+				return false;
+			}
+			try {
+				wait(this.DISPATCH_DELAY);
+			} catch (InterruptedException e) {
+				// just continue
+			}
+		}
+		return isQueueEmpty();
 	}
 
 	/**
