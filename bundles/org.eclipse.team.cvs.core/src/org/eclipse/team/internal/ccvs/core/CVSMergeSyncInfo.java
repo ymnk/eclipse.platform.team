@@ -46,7 +46,7 @@ public class CVSMergeSyncInfo extends CVSSyncInfo {
 		return kind;
 	}
 
-	public CVSMergeSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, TeamSubscriber subscriber) throws TeamException {
+	public CVSMergeSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, Subscriber subscriber) throws TeamException {
 		super(local, base, remote, subscriber);
 	}
 	

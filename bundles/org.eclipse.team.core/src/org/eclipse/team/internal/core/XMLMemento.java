@@ -19,7 +19,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.team.core.IMemento;
 import org.eclipse.team.core.TeamException;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;

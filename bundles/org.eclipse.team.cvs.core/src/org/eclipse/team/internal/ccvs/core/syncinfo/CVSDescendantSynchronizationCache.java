@@ -12,7 +12,7 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.utils.*;
+import org.eclipse.team.internal.core.subscribers.caches.*;
 import org.eclipse.team.internal.ccvs.core.*;
 
 /**

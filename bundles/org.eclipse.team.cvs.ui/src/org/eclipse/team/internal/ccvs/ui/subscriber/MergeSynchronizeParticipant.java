@@ -16,7 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -49,7 +49,7 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.TeamSubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
 	 */
-	protected void setSubscriber(TeamSubscriber subscriber) {
+	protected void setSubscriber(Subscriber subscriber) {
 		super.setSubscriber(subscriber);
 		String id = CVSMergeSubscriber.QUALIFIED_NAME;
 		try {

@@ -18,8 +18,8 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.utils.SynchronizationCache;
-import org.eclipse.team.core.subscribers.utils.SynchronizationSyncBytesCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
@@ -118,7 +118,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 			}
 		}		
 		
-		fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources));
+		fireTeamResourceChange(SubscriberChangeEvent.asSyncChangedDeltas(this, changedResources));
 	}
 
 	private boolean isLaterRevision(byte[] remoteBytes, byte[] localBytes) {
@@ -153,8 +153,8 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectConfigured(org.eclipse.core.resources.IProject)
 	 */
 	public void projectConfigured(IProject project) {
-		TeamDelta delta = new TeamDelta(this, TeamDelta.ROOT_ADDED, project);
-		fireTeamResourceChange(new TeamDelta[] {delta});
+		SubscriberChangeEvent delta = new SubscriberChangeEvent(this, ISubscriberChangeEvent.ROOT_ADDED, project);
+		fireTeamResourceChange(new SubscriberChangeEvent[] {delta});
 	}
 
 	/* (non-Javadoc)
@@ -166,8 +166,8 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		} catch (TeamException e) {
 			CVSProviderPlugin.log(e);
 		}
-		TeamDelta delta = new TeamDelta(this, TeamDelta.ROOT_REMOVED, project);
-		fireTeamResourceChange(new TeamDelta[] {delta});
+		SubscriberChangeEvent delta = new SubscriberChangeEvent(this, ISubscriberChangeEvent.ROOT_REMOVED, project);
+		fireTeamResourceChange(new SubscriberChangeEvent[] {delta});
 	}
 	
 	/* (non-Javadoc)
@@ -247,7 +247,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		IResource[] changedResources = 
 			new CVSRefreshOperation(remoteSynchronizer, baseSynchronizer, null).collectChanges(project, remote, IResource.DEPTH_INFINITE, monitor);
 		if (changedResources.length != 0) {
-			fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources));
+			fireTeamResourceChange(SubscriberChangeEvent.asSyncChangedDeltas(this, changedResources));
 		}
 	}
 	

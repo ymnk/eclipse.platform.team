@@ -5,17 +5,17 @@ import java.util.*;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.subscribers.*;
 
-class RefreshChangeListener implements ITeamResourceChangeListener {
+class RefreshChangeListener implements ISubscriberChangeListener {
 	private List changes = new ArrayList();
-	private TeamSubscriberSyncInfoCollector collector;
+	private SubscriberSyncInfoCollector collector;
 
-	RefreshChangeListener(TeamSubscriberSyncInfoCollector collector) {
+	RefreshChangeListener(SubscriberSyncInfoCollector collector) {
 		this.collector = collector;
 	}
-	public void teamResourceChanged(TeamDelta[] deltas) {
+	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
 		for (int i = 0; i < deltas.length; i++) {
-			TeamDelta delta = deltas[i];
-			if (delta.getFlags() == TeamDelta.SYNC_CHANGED) {
+			ISubscriberChangeEvent delta = deltas[i];
+			if (delta.getFlags() == ISubscriberChangeEvent.SYNC_CHANGED) {
 				changes.add(delta);
 			}
 		}
@@ -25,7 +25,7 @@ class RefreshChangeListener implements ITeamResourceChangeListener {
 		List changedSyncInfos = new ArrayList();
 		SyncInfoSet set = collector.getSyncInfoSet();
 		for (Iterator it = changes.iterator(); it.hasNext();) {
-			TeamDelta delta = (TeamDelta) it.next();
+			ISubscriberChangeEvent delta = (ISubscriberChangeEvent) it.next();
 			SyncInfo info = set.getSyncInfo(delta.getResource());
 			if (info != null) {
 				int direction = info.getKind() & SyncInfo.DIRECTION_MASK;

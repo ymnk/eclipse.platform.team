@@ -199,7 +199,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	}
 	
 	/**
-	 * Return true if the receiver's TeamSubscriber and Resource are equal to that of object.
+	 * Return true if the receiver's Subscriber and Resource are equal to that of object.
 	 * @param object The object to test
 	 * @return true has the same subsriber and resource
 	 */

@@ -23,7 +23,7 @@ import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IActionDelegate;
 
-public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncSetChangedListener {
+public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncInfoSetChangeListener {
 	
 	private List delegates = new ArrayList(2);
 	private CVSSynchronizeViewCompareConfiguration config;

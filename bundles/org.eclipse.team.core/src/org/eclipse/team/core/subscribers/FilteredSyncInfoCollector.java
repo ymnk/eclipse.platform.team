@@ -25,7 +25,7 @@ import org.eclipse.team.internal.core.subscribers.WorkingSetSyncSetInput;
  * 
  * @see SyncInfoSet
  * @see SyncInfoFilter
- * @see TeamSubscriberSyncInfoCollector
+ * @see SubscriberSyncInfoCollector
  * 
  * @since 3.0
  */

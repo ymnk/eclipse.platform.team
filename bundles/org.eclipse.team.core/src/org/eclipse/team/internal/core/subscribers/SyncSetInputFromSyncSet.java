@@ -19,7 +19,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
 /**
  * Ths class uses the contents of one sync set as the input of another.
  */
-public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetChangedListener {
+public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSetChangeListener {
 
 	SyncInfoSet inputSyncSet;
 

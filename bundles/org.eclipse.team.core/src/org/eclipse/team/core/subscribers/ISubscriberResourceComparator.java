@@ -13,7 +13,7 @@ package org.eclipse.team.core.subscribers;
 import org.eclipse.core.resources.IResource;
 
 /**
- * An <code>IComparisonCriteria</code> is provided by a <code>TeamSubscriber</code> 
+ * An <code>ISubscriberResourceComparator</code> is provided by a <code>Subscriber</code> 
  * and used by a <code>SyncInfo</code> to calculate the sync
  * state of the workspace resources. Subscribers should provide a criteria
  * best suited for their environment. For example, an FTP subscriber could choose to use file
@@ -21,10 +21,10 @@ import org.eclipse.core.resources.IResource;
  * use file revision numbers.
  * 
  * @see SyncInfo
- * @see TeamSubscriber
+ * @see Subscriber
  * @since 3.0
  */
-public interface IComparisonCriteria {
+public interface ISubscriberResourceComparator {
 	
 	/**
 	 * Returns <code>true</code> if the local resource

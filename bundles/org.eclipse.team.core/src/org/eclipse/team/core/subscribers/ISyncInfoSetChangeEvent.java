@@ -25,8 +25,8 @@ import org.eclipse.core.resources.IResource;
  * included in {@link SyncInfoSet} collections that doesn't maintain SyncInfo objects
  * for in-sync resources.
  *  
- * @see SyncInfoSet#addSyncSetChangedListener(ISyncSetChangedListener)
- * @see ISyncSetChangedListener
+ * @see SyncInfoSet#addSyncSetChangedListener(ISyncInfoSetChangeListener)
+ * @see ISyncInfoSetChangeListener
  * @since 3.0
  */
 public interface ISyncInfoSetChangeEvent {

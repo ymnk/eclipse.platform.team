@@ -19,21 +19,21 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
- * A TeamSubscriber provides synchronization between local resources and a
+ * A Subscriber provides synchronization between local resources and a
  * remote location that is used to share those resources.
  * 
- * A TeamSubscriber is only required to send out change notification any time the sync
+ * A Subscriber is only required to send out change notification any time the sync
  * state of a resoure changes but the local state does not. For instance,
  * if the contents of a file have been modified or a file or folder has
- * been deleted, the TeamSubscriber may or may not send out a TeamDelta.SYNC_CHANGED
- * event. Also, if a project is deleted or closed, the TeamSubscriber is not required to
- * issue a TeamDelta.ROOT_REMOVED event. It is up to clients to requery the subscriber
+ * been deleted, the Subscriber may or may not send out a SubscriberChangeEvent.SYNC_CHANGED
+ * event. Also, if a project is deleted or closed, the Subscriber is not required to
+ * issue a SubscriberChangeEvent.ROOT_REMOVED event. It is up to clients to requery the subscriber
  * when the state of a resource changes locally by listening to IResource deltas.
  * 
  * [Note: How can we allow the refresh() operation to optimize the sync
  * calculation based on the currently configured compare criteria?]
  */
-abstract public class TeamSubscriber {
+abstract public class Subscriber {
 
 	public static final QualifiedName SUBSCRIBER_JOB_TYPE = new QualifiedName(TeamPlugin.ID, "subcriber_job"); //$NON-NLS-1$
 
@@ -176,7 +176,7 @@ abstract public class TeamSubscriber {
 	 * Returns the comparison criteria that will be used by the sync info
 	 * created by this subscriber.
 	 */
-	abstract public IComparisonCriteria getDefaultComparisonCriteria();
+	abstract public ISubscriberResourceComparator getDefaultComparisonCriteria();
 
 	/**
 	 * Answers <code>true</code> if the base tree is maintained by this
@@ -198,7 +198,7 @@ abstract public class TeamSubscriber {
 	 * @param listener
 	 *                   a team resource change listener
 	 */
-	public void addListener(ITeamResourceChangeListener listener) {
+	public void addListener(ISubscriberChangeListener listener) {
 		synchronized (listeners) {
 			if (!listeners.contains(listener)) {
 				listeners.add(listener);
@@ -213,7 +213,7 @@ abstract public class TeamSubscriber {
 	 * @param listener
 	 *                   a team resource change listener
 	 */
-	public void removeListener(ITeamResourceChangeListener listener) {
+	public void removeListener(ISubscriberChangeListener listener) {
 		synchronized (listeners) {
 			listeners.remove(listener);
 		}
@@ -248,15 +248,15 @@ abstract public class TeamSubscriber {
 	 * Listener notification makes use of an ISafeRunnable to ensure that
 	 * client exceptions do not effect the notification to other clients.
 	 */
-	protected void fireTeamResourceChange(final TeamDelta[] deltas) {
-		ITeamResourceChangeListener[] allListeners;
+	protected void fireTeamResourceChange(final SubscriberChangeEvent[] deltas) {
+		ISubscriberChangeListener[] allListeners;
 		// Copy the listener list so we're not calling client code while synchronized
 		synchronized (listeners) {
-			allListeners = (ITeamResourceChangeListener[]) listeners.toArray(new ITeamResourceChangeListener[listeners.size()]);
+			allListeners = (ISubscriberChangeListener[]) listeners.toArray(new ISubscriberChangeListener[listeners.size()]);
 		}
 		// Notify the listeners safely so all will receive notification
 		for (int i = 0; i < allListeners.length; i++) {
-			final ITeamResourceChangeListener listener = allListeners[i];
+			final ISubscriberChangeListener listener = allListeners[i];
 			Platform.run(new ISafeRunnable() {
 				public void handleException(Throwable exception) {
 					// don't log the exception....it is already being logged in

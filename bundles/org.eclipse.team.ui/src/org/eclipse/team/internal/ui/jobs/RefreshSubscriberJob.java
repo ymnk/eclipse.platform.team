@@ -59,7 +59,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * is running the job is cancelled.
 	 */
 	private IResource[] resources;
-	private TeamSubscriberSyncInfoCollector collector;
+	private SubscriberSyncInfoCollector collector;
 	
 	/**
 	 * Refresh started/completed listener for every refresh
@@ -68,14 +68,14 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	
 	protected static class RefreshEvent implements IRefreshEvent {
 		int type; 
-		TeamSubscriber subscriber;
+		Subscriber subscriber;
 		SyncInfo[] changes;
 		long startTime = 0;
 		long stopTime = 0;
 		IStatus status;
 		IResource[] resources;
 		
-		RefreshEvent(int type, IResource[] resources, TeamSubscriber subscriber) {
+		RefreshEvent(int type, IResource[] resources, Subscriber subscriber) {
 			this.type = type;
 			this.subscriber = subscriber;
 			this.resources = resources;
@@ -85,7 +85,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			return type;
 		}
 
-		public TeamSubscriber getSubscriber() {
+		public Subscriber getSubscriber() {
 			return subscriber;
 		}
 
@@ -158,12 +158,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 	
 		
-	public RefreshSubscriberJob(String name, IResource[] resources, TeamSubscriberSyncInfoCollector collector) {
+	public RefreshSubscriberJob(String name, IResource[] resources, SubscriberSyncInfoCollector collector) {
 		this(name, collector);		
 		this.resources = resources;
 	}
 	
-	public RefreshSubscriberJob(String name, TeamSubscriberSyncInfoCollector collector) {
+	public RefreshSubscriberJob(String name, SubscriberSyncInfoCollector collector) {
 		super(name);
 		
 		this.collector = collector;
@@ -204,7 +204,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		// Synchronized to ensure only one refresh job is running at a particular time
 		synchronized (getFamily()) {	
 			MultiStatus status = new MultiStatus(TeamUIPlugin.ID, TeamException.UNABLE, Policy.bind("RefreshSubscriberJob.0"), null); //$NON-NLS-1$
-			TeamSubscriber subscriber = getSubscriber();
+			Subscriber subscriber = getSubscriber();
 			IResource[] roots = getResources();
 			
 			// if there are no resources to refresh, just return
@@ -260,7 +260,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		}
 	}
 	
-	protected TeamSubscriber getSubscriber() {
+	protected Subscriber getSubscriber() {
 		return collector.getTeamSubscriber();
 	}
 	

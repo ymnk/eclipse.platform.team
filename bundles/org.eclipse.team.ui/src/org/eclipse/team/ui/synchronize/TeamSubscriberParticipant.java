@@ -24,13 +24,13 @@ import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
  * A synchronize participant that displays synchronization information for local
- * resources that are managed via a {@link TeamSubscriber}.
+ * resources that are managed via a {@link Subscriber}.
  *
  * @since 3.0
  */
 public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
 	
-	private TeamSubscriberSyncInfoCollector collector;
+	private SubscriberSyncInfoCollector collector;
 	
 	private FilteredSyncInfoCollector filteredSyncSet;
 	
@@ -157,16 +157,16 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	/**
-	 * Return the <code>TeamSubscriberSyncInfoCollector</code> for the participant.
+	 * Return the <code>SubscriberSyncInfoCollector</code> for the participant.
 	 * This collector maintains the set of all out-of-sync resources for the subscriber.
-	 * @return the <code>TeamSubscriberSyncInfoCollector</code> for this participant
+	 * @return the <code>SubscriberSyncInfoCollector</code> for this participant
 	 */
-	public final TeamSubscriberSyncInfoCollector getTeamSubscriberSyncInfoCollector() {
+	public final SubscriberSyncInfoCollector getTeamSubscriberSyncInfoCollector() {
 		return collector;
 	}
 	
-	protected void setSubscriber(TeamSubscriber subscriber) {
-		collector = new TeamSubscriberSyncInfoCollector(subscriber);
+	protected void setSubscriber(Subscriber subscriber) {
+		collector = new SubscriberSyncInfoCollector(subscriber);
 		filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null /* no initial roots */, null /* no initial filter */);
 
 		// listen for global ignore changes
@@ -184,10 +184,10 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	/**
-	 * Get the <code>TeamSubscriber</code> for this participant
+	 * Get the <code>Subscriber</code> for this participant
 	 * @return a <code>TamSubscriber</code>
 	 */
-	public TeamSubscriber getSubscriber() {
+	public Subscriber getSubscriber() {
 		return collector.getTeamSubscriber();
 	}
 		

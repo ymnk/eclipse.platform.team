@@ -25,7 +25,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 
-public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
+public class SyncInfoDiffNodeBuilder implements ISyncInfoSetChangeListener {
 
 	private AbstractTreeViewer viewer;
 	private SyncInfoDiffNodeRoot root;

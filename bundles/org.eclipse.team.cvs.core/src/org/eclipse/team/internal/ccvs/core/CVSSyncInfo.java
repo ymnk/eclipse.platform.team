@@ -36,7 +36,7 @@ public class CVSSyncInfo extends SyncInfo {
 	private static final int REMOTE_DOES_NOT_EXIST = 4;
 	private static final int SYNC_INFO_CONFLICTS = 5;
 
-	public CVSSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, TeamSubscriber subscriber) throws TeamException {
+	public CVSSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, Subscriber subscriber) throws TeamException {
 		super(local, base, remote, subscriber);
 	}
 

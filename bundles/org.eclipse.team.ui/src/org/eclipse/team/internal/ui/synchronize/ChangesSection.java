@@ -61,7 +61,7 @@ public class ChangesSection extends Composite {
 	/**
 	 * Listen to sync set changes so that we can update message to user and totals.
 	 */
-	private ISyncSetChangedListener changedListener = new ISyncSetChangedListener() {
+	private ISyncInfoSetChangeListener changedListener = new ISyncInfoSetChangeListener() {
 		public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 			calculateDescription();
 		}

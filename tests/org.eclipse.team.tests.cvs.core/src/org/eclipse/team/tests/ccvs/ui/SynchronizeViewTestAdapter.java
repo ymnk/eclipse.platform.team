@@ -34,7 +34,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
 	}
 	
-	public SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
+	public SyncInfo getSyncInfo(Subscriber subscriber, IResource resource) throws TeamException {
 		SyncInfoSet set = getCollector(subscriber).getSyncInfoSet();
 		SyncInfo info = set.getSyncInfo(resource);
 		if (info == null) {
@@ -46,7 +46,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		return info;
 	}
 	
-	private TeamSubscriberParticipant getParticipant(TeamSubscriber subscriber) {
+	private TeamSubscriberParticipant getParticipant(Subscriber subscriber) {
 		// show the sync view
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
@@ -60,10 +60,10 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		return null;
 	}
 	
-	private TeamSubscriberSyncInfoCollector getCollector(TeamSubscriber subscriber) {
+	private SubscriberSyncInfoCollector getCollector(Subscriber subscriber) {
 		TeamSubscriberParticipant participant = getParticipant(subscriber);
 		if (participant == null) return null;
-		TeamSubscriberSyncInfoCollector syncInfoCollector = participant.getTeamSubscriberSyncInfoCollector();
+		SubscriberSyncInfoCollector syncInfoCollector = participant.getTeamSubscriberSyncInfoCollector();
 		EclipseTest.waitForSubscriberInputHandling(syncInfoCollector);
 		return syncInfoCollector;
 	}
@@ -71,7 +71,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#assertProjectRemoved(org.eclipse.team.core.subscribers.TeamSubscriber, org.eclipse.core.resources.IProject)
 	 */
-	protected void assertProjectRemoved(TeamSubscriber subscriber, IProject project) throws TeamException {		
+	protected void assertProjectRemoved(Subscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
 		SyncInfoSet set = getCollector(subscriber).getSyncInfoSet();
 		if (set.hasMembers(project)) {
@@ -112,7 +112,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#refresh(org.eclipse.team.core.subscribers.TeamSubscriber, org.eclipse.core.resources.IResource)
 	 */
-	public void refresh(TeamSubscriber subscriber, IResource resource) throws TeamException {
+	public void refresh(Subscriber subscriber, IResource resource) throws TeamException {
 		super.refresh(subscriber, resource);
 		EclipseTest.waitForSubscriberInputHandling(getCollector(subscriber));
 	}
@@ -120,7 +120,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#reset()
 	 */
-	public void reset(TeamSubscriber subscriber) throws TeamException {
+	public void reset(Subscriber subscriber) throws TeamException {
 		super.reset(subscriber);
 		getCollector(subscriber).reset(DEFAULT_MONITOR);
 	}

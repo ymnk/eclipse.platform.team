@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.core;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,7 +21,6 @@ import java.util.Map;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.ILock;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 

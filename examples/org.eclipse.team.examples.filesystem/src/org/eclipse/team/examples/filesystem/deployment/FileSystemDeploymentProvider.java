@@ -11,7 +11,7 @@
 package org.eclipse.team.examples.filesystem.deployment;
 
 import org.eclipse.team.core.DeploymentProvider;
-import org.eclipse.team.core.IMemento;
+import org.eclipse.team.internal.core.IMemento;
 
 public class FileSystemDeploymentProvider extends DeploymentProvider {
 

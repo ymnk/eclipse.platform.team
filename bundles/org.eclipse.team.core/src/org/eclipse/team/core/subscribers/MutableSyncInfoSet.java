@@ -71,7 +71,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * 
 	 * @param listener listener to register
 	 */
-	public void addSyncSetChangedListener(ISyncSetChangedListener listener) {
+	public void addSyncSetChangedListener(ISyncInfoSetChangeListener listener) {
 		synchronized(listeners) {
 			listeners.add(listener);
 		}
@@ -83,7 +83,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * 
 	 * @param listener listener to deregister
 	 */
-	public void removeSyncSetChangedListener(ISyncSetChangedListener listener) {
+	public void removeSyncSetChangedListener(ISyncInfoSetChangeListener listener) {
 		synchronized(listeners) {
 			listeners.remove(listener);
 		}
@@ -269,14 +269,14 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		// Ensure that the list of listeners is not changed while events are fired.
 		// Copy the listeners so that addition/removal is not blocked by event listeners
 		if(event.isEmpty() && ! event.isReset()) return;
-		ISyncSetChangedListener[] allListeners;
+		ISyncInfoSetChangeListener[] allListeners;
 		synchronized(listeners) {
-			allListeners = (ISyncSetChangedListener[]) listeners.toArray(new ISyncSetChangedListener[listeners.size()]);
+			allListeners = (ISyncInfoSetChangeListener[]) listeners.toArray(new ISyncInfoSetChangeListener[listeners.size()]);
 		}
 		// Fire the events using an ISafeRunnable
 		monitor.beginTask(null, 100 * allListeners.length);
 		for (int i = 0; i < allListeners.length; i++) {
-			final ISyncSetChangedListener listener = allListeners[i];
+			final ISyncInfoSetChangeListener listener = allListeners[i];
 			Platform.run(new ISafeRunnable() {
 				public void handleException(Throwable exception) {
 					// don't log the exception....it is already being logged in Platform#run

@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
@@ -34,7 +34,7 @@ public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 	 */
 	public void init(IMemento memento) throws PartInitException {
 		super.init(memento);
-		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
+		Subscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
 		setSubscriber(subscriber);
 	}		
 }

@@ -26,7 +26,7 @@ import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
  *   <li>{@link MutableSyncInfoSet}: used to dynamically collect changes 
  * from a team subscriber or some other
  * source and maintain the set of out-of-sync resources for display in a view.
- *   <li>{@link SelectionSyncInfoSet}: used to provide input to {@link TeamSubscriber} 
+ *   <li>{@link SelectionSyncInfoSet}: used to provide input to {@link Subscriber} 
  * specific operations that operate on a collection of {@link SyncInfo}.
  * </ul>
  * <p>
@@ -280,7 +280,7 @@ public abstract class SyncInfoSet {
 	 * 
 	 * @param listener listener to register
 	 */
-	public void addSyncSetChangedListener(ISyncSetChangedListener listener) {
+	public void addSyncSetChangedListener(ISyncInfoSetChangeListener listener) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -290,7 +290,7 @@ public abstract class SyncInfoSet {
 	 * 
 	 * @param listener listener to deregister
 	 */
-	public void removeSyncSetChangedListener(ISyncSetChangedListener listener) {
+	public void removeSyncSetChangedListener(ISyncInfoSetChangeListener listener) {
 		// Do nothing
 	}
 	

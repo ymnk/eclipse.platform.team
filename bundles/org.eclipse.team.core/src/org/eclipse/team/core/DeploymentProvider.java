@@ -12,6 +12,7 @@ package org.eclipse.team.core;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.runtime.*;
+import org.eclipse.team.internal.core.*;
 import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
 
 /**

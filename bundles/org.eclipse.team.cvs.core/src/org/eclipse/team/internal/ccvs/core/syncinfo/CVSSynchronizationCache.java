@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.utils.SynchronizationSyncBytesCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.Policy;
 

@@ -12,7 +12,7 @@ package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.Subscriber;
 
 /**
  * Records resource synchronization changes from a Team subscriber. The actual changes 
@@ -20,16 +20,16 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
  */
 public class SyncSetInputFromSubscriber extends SyncSetInput  {
 
-	private TeamSubscriber subscriber;
+	private Subscriber subscriber;
 
-	public SyncSetInputFromSubscriber(TeamSubscriber subscriber) {
+	public SyncSetInputFromSubscriber(Subscriber subscriber) {
 		this.subscriber = subscriber;
 	}
 		
 	public void disconnect() {
 	}
 	
-	public TeamSubscriber getSubscriber() {
+	public Subscriber getSubscriber() {
 		return subscriber;
 	}
 	

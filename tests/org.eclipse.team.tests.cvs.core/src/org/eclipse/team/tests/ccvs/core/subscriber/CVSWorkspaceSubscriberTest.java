@@ -152,7 +152,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		
 		registerSubscriberListener();
 		super.addResources(resources);
-		TeamDelta[] changes = deregisterSubscriberListener();
+		ISubscriberChangeEvent[] changes = deregisterSubscriberListener();
 		assertSyncChangesMatch(changes, (IResource[]) affected.toArray(new IResource[affected.size()]));
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
@@ -177,7 +177,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		IResource[] affected = collect(resources, new ResourceCondition(), IResource.DEPTH_INFINITE);
 		registerSubscriberListener();
 		super.deleteResources(resources);
-		TeamDelta[] changes = deregisterSubscriberListener();
+		ISubscriberChangeEvent[] changes = deregisterSubscriberListener();
 		assertSyncChangesMatch(changes, affected);
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
@@ -190,7 +190,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		}
 	}
 	
-	private TeamDelta[] deregisterSubscriberListener() throws TeamException {
+	private ISubscriberChangeEvent[] deregisterSubscriberListener() throws TeamException {
 		return deregisterSubscriberListener(getSubscriber());
 	}
 
@@ -206,7 +206,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 			}, IResource.DEPTH_INFINITE);
 		registerSubscriberListener();
 		super.commitResources(resources, depth);
-		TeamDelta[] changes = deregisterSubscriberListener();
+		ISubscriberChangeEvent[] changes = deregisterSubscriberListener();
 		assertSyncChangesMatch(changes, affected);
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
@@ -227,7 +227,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 			}, IResource.DEPTH_INFINITE);
 		registerSubscriberListener();
 		super.unmanageResources(resources);
-		TeamDelta[] changes = deregisterSubscriberListener();
+		ISubscriberChangeEvent[] changes = deregisterSubscriberListener();
 		assertSyncChangesMatch(changes, affected);
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];

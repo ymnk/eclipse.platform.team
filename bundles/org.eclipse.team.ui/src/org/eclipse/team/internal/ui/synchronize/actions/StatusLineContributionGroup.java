@@ -23,7 +23,7 @@ import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionGroup;
 
-public class StatusLineContributionGroup extends ActionGroup implements ISyncSetChangedListener {
+public class StatusLineContributionGroup extends ActionGroup implements ISyncInfoSetChangeListener {
 
 	private static final String INCOMING_ID = TeamUIPlugin.ID + "org.eclipse.team.iu.statusline.incoming"; //$NON-NLS-1$
 	private static final String OUTGOING_ID = TeamUIPlugin.ID + "org.eclipse.team.iu.statusline.outgoing"; //$NON-NLS-1$
@@ -37,7 +37,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private TeamSubscriberSyncInfoCollector collector;
+	private SubscriberSyncInfoCollector collector;
 	private TeamSubscriberParticipant participant;
 
 	public StatusLineContributionGroup(final Shell shell, TeamSubscriberParticipant participant) {

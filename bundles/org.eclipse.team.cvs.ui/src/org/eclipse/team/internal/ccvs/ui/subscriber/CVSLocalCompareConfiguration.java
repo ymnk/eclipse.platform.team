@@ -28,7 +28,7 @@ import org.eclipse.team.ui.synchronize.actions.RefreshAction;
 public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 
 	private CVSCompareSubscriber subscriber;
-	private TeamSubscriberSyncInfoCollector collector;
+	private SubscriberSyncInfoCollector collector;
 	private RefreshAction refreshAction;
 	private RefreshAction refreshAllAction;
 	private FilteredSyncInfoCollector filteredSyncSet;
@@ -43,11 +43,11 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	 */
 	public static CVSLocalCompareConfiguration create(IResource[] resources, CVSTag tag) {
 		CVSCompareSubscriber subscriber = new CVSCompareSubscriber(resources, tag);
-		TeamSubscriberSyncInfoCollector collector = new TeamSubscriberSyncInfoCollector(subscriber);
+		SubscriberSyncInfoCollector collector = new SubscriberSyncInfoCollector(subscriber);
 		return new CVSLocalCompareConfiguration(subscriber, collector);
 	}
 	
-	public CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, TeamSubscriberSyncInfoCollector collector) {
+	public CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, SubscriberSyncInfoCollector collector) {
 		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet()); //$NON-NLS-1$
 		this.subscriber = subscriber;
 		this.collector = collector;

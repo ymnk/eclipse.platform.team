@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.utils.*;
+import org.eclipse.team.internal.core.subscribers.caches.*;
 import org.eclipse.team.internal.ccvs.core.resources.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 
@@ -29,7 +29,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	
 	public static final String SYNC_KEY_QUALIFIER = "org.eclipse.team.cvs"; //$NON-NLS-1$
 	
-	private static IComparisonCriteria comparisonCriteria = new CVSRevisionNumberCompareCriteria();
+	private static ISubscriberResourceComparator comparisonCriteria = new CVSRevisionNumberCompareCriteria();
 	
 	private QualifiedName id;
 	private String name;
@@ -128,7 +128,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			allChanges.addAll(Arrays.asList(remoteChanges));
 			allChanges.addAll(Arrays.asList(baseChanges));
 			IResource[] changedResources = (IResource[]) allChanges.toArray(new IResource[allChanges.size()]);
-			fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources));
+			fireTeamResourceChange(SubscriberChangeEvent.asSyncChangedDeltas(this, changedResources));
 			return Status.OK_STATUS;
 		} catch (TeamException e) {
 			return new CVSStatus(IStatus.ERROR, Policy.bind("CVSSyncTreeSubscriber.2", resource.getFullPath().toString(), e.getMessage()), e); //$NON-NLS-1$
@@ -274,7 +274,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
 	 */
-	public IComparisonCriteria getDefaultComparisonCriteria() {
+	public ISubscriberResourceComparator getDefaultComparisonCriteria() {
 		return comparisonCriteria;
 	}
 	

@@ -21,7 +21,7 @@ import java.util.EventListener;
  * </p>
  * @see ITeamManager#addResourceStateChangeListener(IResourceStateChangeListener)
  */
-public interface ITeamResourceChangeListener extends EventListener{
+public interface ISubscriberChangeListener extends EventListener{
 	
 	/**
 	 * Notifies this listener that some resources' team properties have
@@ -39,6 +39,6 @@ public interface ITeamResourceChangeListener extends EventListener{
 	 * a hint to listeners that they should query the provider to determine the
 	 * resources new sync info.]
 	 */
-	public void teamResourceChanged(TeamDelta[] deltas);
+	public void teamResourceChanged(SubscriberChangeEvent[] deltas);
 }
 

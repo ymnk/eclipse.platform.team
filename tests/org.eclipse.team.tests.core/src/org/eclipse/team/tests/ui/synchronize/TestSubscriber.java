@@ -24,7 +24,7 @@ import org.eclipse.team.core.subscribers.*;
  * To change the template for this generated type comment go to
  * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
  */
-public class TestSubscriber extends TeamSubscriber {
+public class TestSubscriber extends Subscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDescription()
 	 */
@@ -74,8 +74,8 @@ public class TestSubscriber extends TeamSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
 	 */
-	public IComparisonCriteria getDefaultComparisonCriteria() {
-		return new IComparisonCriteria() {
+	public ISubscriberResourceComparator getDefaultComparisonCriteria() {
+		return new ISubscriberResourceComparator() {
 			public boolean compare(IResource local, ISubscriberResource remote) {
 				return false;
 			}

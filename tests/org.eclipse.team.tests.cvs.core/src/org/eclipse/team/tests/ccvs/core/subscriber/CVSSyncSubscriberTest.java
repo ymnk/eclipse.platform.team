@@ -30,7 +30,7 @@ import org.eclipse.team.tests.ccvs.ui.SynchronizeViewTestAdapter;
  */
 public abstract class CVSSyncSubscriberTest extends EclipseTest {
 
-	private ITeamResourceChangeListener listener;
+	private ISubscriberChangeListener listener;
 	private List accumulatedTeamDeltas = new ArrayList();
 	private static SyncInfoSource source = new SynchronizeViewTestAdapter();
 
@@ -46,8 +46,8 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		source = newSource;
 	}
 	
-	protected TeamSubscriber getWorkspaceSubscriber() throws TeamException {
-		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
+	protected Subscriber getWorkspaceSubscriber() throws TeamException {
+		Subscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
 		if (subscriber == null) fail("The CVS sync subsciber is not registered");
 		return subscriber;
 	}
@@ -57,7 +57,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		return source;
 	}
 	
-	protected void refresh(TeamSubscriber subscriber, IResource resource) throws TeamException {
+	protected void refresh(Subscriber subscriber, IResource resource) throws TeamException {
 		getSyncInfoSource().refresh(subscriber, resource);
 	}
 	
@@ -65,7 +65,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 	 * Assert that the specified resources in the subscriber have the specified sync kind
 	 * Ignore conflict types if they are not specified in the assert statement
 	 */
-	protected void assertSyncEquals(String message, TeamSubscriber subscriber, IContainer root, String[] resourcePaths, boolean refresh, int[] syncKinds) throws CoreException, TeamException {
+	protected void assertSyncEquals(String message, Subscriber subscriber, IContainer root, String[] resourcePaths, boolean refresh, int[] syncKinds) throws CoreException, TeamException {
 		assertTrue(resourcePaths.length == syncKinds.length);
 		if (refresh) refresh(subscriber, root);
 		IResource[] resources = getResources(root, resourcePaths);
@@ -75,7 +75,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		
 	}
 	
-	protected void assertSyncEquals(String message, TeamSubscriber subscriber, IResource resource, int syncKind) throws TeamException {
+	protected void assertSyncEquals(String message, Subscriber subscriber, IResource resource, int syncKind) throws TeamException {
 		int conflictTypeMask = 0x0F; // ignore manual and auto merge sync types for now.
 		SyncInfo info = getSyncInfo(subscriber, resource);
 		int kind;
@@ -90,7 +90,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 				   RemoteSyncElement.kindToString(kind), kind == kindOther);
 	}
 	
-	protected SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
+	protected SyncInfo getSyncInfo(Subscriber subscriber, IResource resource) throws TeamException {
 		return getSyncInfoSource().getSyncInfo(subscriber, resource);
 	}
 
@@ -98,13 +98,13 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 	 * @param changes
 	 * @param resources
 	 */
-	protected void assertSyncChangesMatch(TeamDelta[] changes, IResource[] resources) {
+	protected void assertSyncChangesMatch(ISubscriberChangeEvent[] changes, IResource[] resources) {
 		// First, ensure that all the resources appear in the delta
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
 			boolean found = false;
 			for (int j = 0; j < changes.length; j++) {
-				TeamDelta delta = changes[j];
+				ISubscriberChangeEvent delta = changes[j];
 				if (delta.getResource().equals(resource)) {
 					found = true;
 					break;
@@ -192,14 +192,14 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		return (IResource[]) affected.toArray(new IResource[affected.size()]);
 	}
 	
-	protected TeamDelta[] deregisterSubscriberListener(TeamSubscriber subscriber) throws TeamException {
+	protected ISubscriberChangeEvent[] deregisterSubscriberListener(Subscriber subscriber) throws TeamException {
 		subscriber.removeListener(listener);
-		return (TeamDelta[]) accumulatedTeamDeltas.toArray(new TeamDelta[accumulatedTeamDeltas.size()]);
+		return (ISubscriberChangeEvent[]) accumulatedTeamDeltas.toArray(new SubscriberChangeEvent[accumulatedTeamDeltas.size()]);
 	}
 
-	protected ITeamResourceChangeListener registerSubscriberListener(TeamSubscriber subscriber) throws TeamException {
-		listener = new ITeamResourceChangeListener() {
-			public void teamResourceChanged(TeamDelta[] deltas) {
+	protected ISubscriberChangeListener registerSubscriberListener(Subscriber subscriber) throws TeamException {
+		listener = new ISubscriberChangeListener() {
+			public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
 				accumulatedTeamDeltas.addAll(Arrays.asList(deltas));
 			}
 		};
@@ -208,7 +208,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		return listener;
 	}
 	
-	protected SyncInfo[] createSyncInfos(TeamSubscriber subscriber, IResource[] resources) throws TeamException {
+	protected SyncInfo[] createSyncInfos(Subscriber subscriber, IResource[] resources) throws TeamException {
 		SyncInfo[] result = new SyncInfo[resources.length];
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
@@ -217,7 +217,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		return result;
 	}
 
-	protected void assertProjectRemoved(TeamSubscriber subscriber, IProject project) throws TeamException {
+	protected void assertProjectRemoved(Subscriber subscriber, IProject project) throws TeamException {
 		getSyncInfoSource().assertProjectRemoved(subscriber, project);
 	}
 	

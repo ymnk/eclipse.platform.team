@@ -140,14 +140,14 @@ public class SyncInfo implements IAdaptable {
 	 private IResource local;
 	 private ISubscriberResource base;
 	 private ISubscriberResource remote;
-	 private TeamSubscriber subscriber;
+	 private Subscriber subscriber;
 	 
 	 private int syncKind;
 	
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, TeamSubscriber subscriber) throws TeamException {
+	public SyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, Subscriber subscriber) throws TeamException {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
@@ -209,7 +209,7 @@ public class SyncInfo implements IAdaptable {
 	 * Returns the subscriber that created and maintains this sync info
 	 * object. 
 	 */
-	public TeamSubscriber getSubscriber() {
+	public Subscriber getSubscriber() {
 		return subscriber;
 	}
 	
@@ -324,7 +324,7 @@ public class SyncInfo implements IAdaptable {
 	protected int calculateKind() throws TeamException {
 		int description = IN_SYNC;
 		
-		IComparisonCriteria criteria = subscriber.getDefaultComparisonCriteria();
+		ISubscriberResourceComparator criteria = subscriber.getDefaultComparisonCriteria();
 		
 		boolean localExists = local.exists();
 		

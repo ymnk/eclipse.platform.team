@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
@@ -27,11 +28,11 @@ public class RefreshAction extends Action {
 	
 	private ISelectionProvider selectionProvider;
 	private boolean refreshAll;
-	private TeamSubscriberSyncInfoCollector collector;
+	private SubscriberSyncInfoCollector collector;
 	private IRefreshSubscriberListener listener;
 	private String description;
 	
-	public static void run(String description, IResource[] resources, TeamSubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener) {
+	public static void run(String description, IResource[] resources, SubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener) {
 		// Cancel the scheduled background refresh or any other refresh that is happening.
 		// The scheduled background refresh will restart automatically.
 		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
@@ -39,10 +40,10 @@ public class RefreshAction extends Action {
 		if (listener != null) {
 			RefreshSubscriberJob.addRefreshListener(listener);
 		}
-		JobStatusHandler.schedule(job, TeamSubscriber.SUBSCRIBER_JOB_TYPE);
+		JobStatusHandler.schedule(job, Subscriber.SUBSCRIBER_JOB_TYPE);
 	}
 	
-	public RefreshAction(ISelectionProvider page, String description, TeamSubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener, boolean refreshAll) {
+	public RefreshAction(ISelectionProvider page, String description, SubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener, boolean refreshAll) {
 		this.selectionProvider = page;
 		this.description = description;
 		this.collector = collector;

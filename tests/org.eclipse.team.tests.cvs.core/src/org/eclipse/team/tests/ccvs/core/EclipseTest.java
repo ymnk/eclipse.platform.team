@@ -22,7 +22,7 @@ import org.eclipse.core.tests.harness.EclipseWorkspaceTest;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.TeamSubscriberSyncInfoCollector;
+import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
@@ -766,7 +766,7 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		waitForJobCompletion(SyncFileChangeListener.getDeferredHandler().getEventHandlerJob());
 	}
 	
-	public static void waitForSubscriberInputHandling(TeamSubscriberSyncInfoCollector input) {
+	public static void waitForSubscriberInputHandling(SubscriberSyncInfoCollector input) {
 		input.waitForCollector(new IProgressMonitor() {
 			public void beginTask(String name, int totalWork) {
 			}

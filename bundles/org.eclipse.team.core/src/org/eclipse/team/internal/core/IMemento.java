@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core;
+package org.eclipse.team.internal.core;
 
 /**
  * Interface to a memento used for saving the important state of an object

@@ -15,17 +15,18 @@ import java.util.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
-import org.eclipse.team.core.subscribers.TeamDelta;
-import org.eclipse.team.core.subscribers.utils.SessionSynchronizationCache;
-import org.eclipse.team.core.subscribers.utils.SynchronizationCache;
+import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
+import org.eclipse.team.core.subscribers.ISubscriberChangeListener;
+import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
+import org.eclipse.team.internal.core.subscribers.caches.SessionSynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
 import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * This subscriber is used when comparing the local workspace with its
  * corresponding remote.
  */
-public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ITeamResourceChangeListener {
+public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubscriberChangeListener {
 
 	public static final String QUALIFIED_NAME = CVSProviderPlugin.ID + ".compare"; //$NON-NLS-1$
 	private static final String UNIQUE_ID_PREFIX = "compare-"; //$NON-NLS-1$
@@ -103,18 +104,18 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ITeam
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.subscribers.TeamDelta[])
 	 */
-	public void teamResourceChanged(TeamDelta[] deltas) {
+	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
 		List outgoingDeltas = new ArrayList(deltas.length);
 		for (int i = 0; i < deltas.length; i++) {
-			TeamDelta delta = deltas[i];
-			if ((delta.getFlags() & TeamDelta.ROOT_REMOVED) != 0) {
+			ISubscriberChangeEvent delta = deltas[i];
+			if ((delta.getFlags() & ISubscriberChangeEvent.ROOT_REMOVED) != 0) {
 				IResource resource = delta.getResource();
 				outgoingDeltas.addAll(Arrays.asList(handleRemovedRoot(resource)));
-			} else if ((delta.getFlags() & TeamDelta.SYNC_CHANGED) != 0) {
+			} else if ((delta.getFlags() & ISubscriberChangeEvent.SYNC_CHANGED) != 0) {
 				IResource resource = delta.getResource();
 				try {
 					if (isSupervised(resource)) {
-						outgoingDeltas.add(new TeamDelta(this, delta.getFlags(), resource));
+						outgoingDeltas.add(new SubscriberChangeEvent(this, delta.getFlags(), resource));
 					}
 				} catch (TeamException e) {
 					// Log and ignore
@@ -123,10 +124,10 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ITeam
 			}
 		}
 		
-		fireTeamResourceChange((TeamDelta[]) outgoingDeltas.toArray(new TeamDelta[outgoingDeltas.size()]));
+		fireTeamResourceChange((SubscriberChangeEvent[]) outgoingDeltas.toArray(new SubscriberChangeEvent[outgoingDeltas.size()]));
 	}
 
-	private TeamDelta[] handleRemovedRoot(IResource removedRoot) {
+	private SubscriberChangeEvent[] handleRemovedRoot(IResource removedRoot) {
 		// Determine if any of the roots of the compare are affected
 		List removals = new ArrayList(resources.length);
 		for (int j = 0; j < resources.length; j++) {
@@ -137,7 +138,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ITeam
 			}
 		}
 		if (removals.isEmpty()) {
-			return new TeamDelta[0];
+			return new SubscriberChangeEvent[0];
 		}
 		
 		// Adjust the roots of the subscriber
@@ -147,9 +148,9 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ITeam
 		resources = (IResource[]) newRoots.toArray(new IResource[newRoots.size()]);
 		 
 		// Create the deltas for the removals
-		TeamDelta[] deltas = new TeamDelta[removals.size()];
+		SubscriberChangeEvent[] deltas = new SubscriberChangeEvent[removals.size()];
 		for (int i = 0; i < deltas.length; i++) {
-			deltas[i] = new TeamDelta(this, TeamDelta.ROOT_REMOVED, (IResource)removals.get(i));
+			deltas[i] = new SubscriberChangeEvent(this, ISubscriberChangeEvent.ROOT_REMOVED, (IResource)removals.get(i));
 		}
 		return deltas;
 	}

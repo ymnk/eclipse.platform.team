@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.core;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 
 /**

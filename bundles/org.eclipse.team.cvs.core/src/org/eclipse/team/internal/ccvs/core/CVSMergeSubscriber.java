@@ -17,8 +17,8 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.utils.SynchronizationCache;
-import org.eclipse.team.core.subscribers.utils.SynchronizationSyncBytesCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSynchronizationCache;
@@ -40,7 +40,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
  * TODO: Do certain operations (e.g. replace with) invalidate a merge subscriber?
  * TODO: How to ensure that sync info is flushed when merge roots are deleted?
  */
-public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResourceChangeListener, ITeamResourceChangeListener {
+public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResourceChangeListener, ISubscriberChangeListener {
 
 	public static final String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant"; //$NON-NLS-1$
 	private static final String UNIQUE_ID_PREFIX = "merge-"; //$NON-NLS-1$
@@ -91,7 +91,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 			IResource resource = resources[i];
 			internalMerged(resource);
 		}
-		fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, resources));
+		fireTeamResourceChange(SubscriberChangeEvent.asSyncChangedDeltas(this, resources));
 	}
 	
 	private void internalMerged(IResource resource) throws TeamException {
@@ -204,14 +204,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	 * (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.subscribers.TeamDelta[])
 	 */
-	public void teamResourceChanged(TeamDelta[] deltas) {		
+	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {		
 		for (int i = 0; i < deltas.length; i++) {
-			TeamDelta delta = deltas[i];
+			SubscriberChangeEvent delta = deltas[i];
 			switch(delta.getFlags()) {
-				case TeamDelta.ROOT_REMOVED:
+				case ISubscriberChangeEvent.ROOT_REMOVED:
 					IResource resource = delta.getResource();
 					if(roots.remove(resource))	{
-						fireTeamResourceChange(new TeamDelta[] {delta});
+						fireTeamResourceChange(new SubscriberChangeEvent[] {delta});
 					}						
 					break;
 			}

@@ -30,19 +30,19 @@ import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
  * </p>
  * @since 3.0
  */
-public final class TeamSubscriberSyncInfoCollector implements IResourceChangeListener, ITeamResourceChangeListener {
+public final class SubscriberSyncInfoCollector implements IResourceChangeListener, ISubscriberChangeListener {
 
 	private SyncSetInputFromSubscriber set;
 	private SubscriberEventHandler eventHandler;
-	private TeamSubscriber subscriber;
+	private Subscriber subscriber;
 	private IResource[] roots;
 
 	/**
 	 * Create a collector on the subscriber that collects out-of-sync resources
 	 * for all roots of the subscriber.
-	 * @param subscriber the TeamSubscriber
+	 * @param subscriber the Subscriber
 	 */
-	public TeamSubscriberSyncInfoCollector(TeamSubscriber subscriber) {
+	public SubscriberSyncInfoCollector(Subscriber subscriber) {
 		this(subscriber, null /* use the subscriber roots */);
 	}
 	
@@ -51,10 +51,10 @@ public final class TeamSubscriberSyncInfoCollector implements IResourceChangeLis
 	 * the given roots. If the roots are <code>null</code>, then all out-of-sync resources
 	 * from the subscriber are collected. An empty array of roots will cause no resources
 	 * to be collected.
-	 * @param subscriber the TeamSubscriber
+	 * @param subscriber the Subscriber
 	 * @param roots the roots of the out-of-sync resources to be collected
 	 */
-	public TeamSubscriberSyncInfoCollector(TeamSubscriber subscriber, IResource[] roots) {
+	public SubscriberSyncInfoCollector(Subscriber subscriber, IResource[] roots) {
 		this.roots = roots;
 		this.subscriber = subscriber;
 		Assert.isNotNull(subscriber);
@@ -96,7 +96,7 @@ public final class TeamSubscriberSyncInfoCollector implements IResourceChangeLis
 	
 	/**
 	 * Clears this collector's <code>SyncInfoSet</code> and causes it to be recreated from the
-	 * associated <code>TeamSubscriber</code>. The reset may occur in the background. If the
+	 * associated <code>Subscriber</code>. The reset may occur in the background. If the
 	 * caller wishes to wait for the reset to complete, they should call \
 	 * {@link waitForCollector(IProgressMonitor)}.
 	 * @param monitor a progress monitor
@@ -111,11 +111,11 @@ public final class TeamSubscriberSyncInfoCollector implements IResourceChangeLis
 	}
 
 	/**
-	 * Returns the <code>TeamSubscriber</code> associated with this collector.
+	 * Returns the <code>Subscriber</code> associated with this collector.
 	 * 
-	 * @return the <code>TeamSubscriber</code> associated with this collector.
+	 * @return the <code>Subscriber</code> associated with this collector.
 	 */
-	public TeamSubscriber getTeamSubscriber() {
+	public Subscriber getTeamSubscriber() {
 		return subscriber;
 	}
 
@@ -258,18 +258,18 @@ public final class TeamSubscriberSyncInfoCollector implements IResourceChangeLis
 	 * 
 	 * @see org.eclipse.team.core.sync.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.sync.TeamDelta[])
 	 */
-	public void teamResourceChanged(TeamDelta[] deltas) {
+	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
 		for (int i = 0; i < deltas.length; i++) {
 			switch (deltas[i].getFlags()) {
-				case TeamDelta.SYNC_CHANGED :
+				case ISubscriberChangeEvent.SYNC_CHANGED :
 					if (isAllRootsIncluded() || isDescendantOfRoot(deltas[i].getResource())) {
 						eventHandler.change(deltas[i].getResource(), IResource.DEPTH_ZERO);
 					}
 					break;
-				case TeamDelta.ROOT_REMOVED :
+				case ISubscriberChangeEvent.ROOT_REMOVED :
 					eventHandler.remove(deltas[i].getResource());
 					break;
-				case TeamDelta.ROOT_ADDED :
+				case ISubscriberChangeEvent.ROOT_ADDED :
 					if (isAllRootsIncluded() || isDescendantOfRoot(deltas[i].getResource())) {
 						eventHandler.change(deltas[i].getResource(), IResource.DEPTH_INFINITE);
 					}

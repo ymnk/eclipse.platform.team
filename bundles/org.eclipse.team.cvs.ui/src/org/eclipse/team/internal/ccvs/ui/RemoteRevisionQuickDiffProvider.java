@@ -27,9 +27,10 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
+import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
+import org.eclipse.team.core.subscribers.ISubscriberChangeListener;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamDelta;
+import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
@@ -95,15 +96,15 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 	/**
 	 * Updates the document if a sync changes occurs to the associated CVS file.
 	 */
-	private ITeamResourceChangeListener teamChangeListener = new ITeamResourceChangeListener() {
-		public void teamResourceChanged(TeamDelta[] deltas) {
+	private ISubscriberChangeListener teamChangeListener = new ISubscriberChangeListener() {
+		public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
 			if(initialized()) {
 				for (int i = 0; i < deltas.length; i++) {
-					TeamDelta delta = deltas[i];
+					ISubscriberChangeEvent delta = deltas[i];
 					IResource resource = delta.getResource();
 					if(resource.getType() == IResource.FILE && 
 					   fLastSyncState != null && resource.equals(fLastSyncState.getLocal())) {
-						if(delta.getFlags() == TeamDelta.SYNC_CHANGED) {
+						if(delta.getFlags() == ISubscriberChangeEvent.SYNC_CHANGED) {
 							fetchContentsInJob();
 						}
 					} 

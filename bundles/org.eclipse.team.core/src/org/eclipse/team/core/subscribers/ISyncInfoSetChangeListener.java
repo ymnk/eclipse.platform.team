@@ -29,7 +29,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * @see ISyncInfoSetChangeEvent
  * @since 3.0
  */
-public interface ISyncSetChangedListener {
+public interface ISyncInfoSetChangeListener {
 
 	/**
 	 * Sent when a {@link SyncInfoSet} changes. For example, when a resource's 

@@ -8,16 +8,19 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.internal.core;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.*;
 
 /**
  * This class provides the infrastucture for processing/dispatching of events using a 

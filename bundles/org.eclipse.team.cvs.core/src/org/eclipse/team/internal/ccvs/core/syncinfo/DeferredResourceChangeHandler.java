@@ -15,9 +15,9 @@ import java.util.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.BackgroundEventHandler;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
+import org.eclipse.team.internal.core.BackgroundEventHandler;
 
 /**
  * This class handles resources changes that are reported in deltas

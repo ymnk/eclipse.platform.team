@@ -56,7 +56,7 @@ public class SyncInfoWorkingSetFilter extends FastSyncInfoFilter {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.sync.views.SyncSetInputFromSubscriber#getRoots()
 	 */
-	public IResource[] getRoots(TeamSubscriber subscriber) {
+	public IResource[] getRoots(Subscriber subscriber) {
 		IResource[] roots = subscriber.roots();
 		if (isEmpty()) return roots;
 		
@@ -73,7 +73,7 @@ public class SyncInfoWorkingSetFilter extends FastSyncInfoFilter {
 	 * Answer the intersection between the given resource and it's children
 	 * and the receiver's working set.
 	 */
-	private IResource[] getIntersectionWithSet(TeamSubscriber subscriber, IResource resource) {
+	private IResource[] getIntersectionWithSet(Subscriber subscriber, IResource resource) {
 		List result = new ArrayList();
 		for (int i = 0; i < resources.length; i++) {
 			IResource setResource = resources[i];

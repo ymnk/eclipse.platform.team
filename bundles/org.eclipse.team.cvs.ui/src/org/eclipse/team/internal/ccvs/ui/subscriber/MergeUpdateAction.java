@@ -32,7 +32,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
  */
 public class MergeUpdateAction extends SafeUpdateAction {
 	
-	TeamSubscriber currentSubcriber = null;
+	Subscriber currentSubcriber = null;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.SafeUpdateAction#getOverwriteLocalChanges()

@@ -12,7 +12,7 @@ package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.subscribers.IComparisonCriteria;
+import org.eclipse.team.core.subscribers.ISubscriberResourceComparator;
 import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
@@ -20,7 +20,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 /**
  * CVSRevisionNumberCompareCriteria
  */
- public class CVSRevisionNumberCompareCriteria implements IComparisonCriteria {
+ public class CVSRevisionNumberCompareCriteria implements ISubscriberResourceComparator {
 	/* (non-Javadoc)
 	 * @see ComparisonCriteria#compare(Object, Object, IProgressMonitor)
 	 */

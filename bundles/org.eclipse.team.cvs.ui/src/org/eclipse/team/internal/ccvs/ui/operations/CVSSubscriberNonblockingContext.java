@@ -11,8 +11,8 @@
 package org.eclipse.team.internal.ccvs.ui.operations;
 
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.team.core.subscribers.JobStatusHandler;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.internal.core.JobStatusHandler;
 
 /**
  * This context uses the JobStatusHandler from SubscriberAction to ensure
@@ -24,7 +24,7 @@ public class CVSSubscriberNonblockingContext extends CVSNonblockingRunnableConte
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSNonblockingRunnableContext#schedule(org.eclipse.core.runtime.jobs.Job)
 	 */
 	protected void schedule(Job job) {
-		JobStatusHandler.schedule(job, TeamSubscriber.SUBSCRIBER_JOB_TYPE);
+		JobStatusHandler.schedule(job, Subscriber.SUBSCRIBER_JOB_TYPE);
 	}
 
 }
