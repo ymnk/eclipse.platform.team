@@ -40,7 +40,7 @@ import org.eclipse.ui.IWorkbench;
  * This wizard helps the user to import a new project in their workspace
  * into a CVS repository for the first time.
  */
-public class SharingWizard extends Wizard implements IConfigurationWizard {
+public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSWizard {
 	// The project to configure
 	private IProject project;
 
@@ -151,6 +151,11 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 		return Policy.bind("SharingWizard.heading"); //$NON-NLS-1$
 	}
 	public IWizardPage getNextPage(IWizardPage page) {
+		// Assume the page is about to be shown when this method is
+		// invoked
+		return getNextPage(page, true /* about to show*/);
+	}
+	public IWizardPage getNextPage(IWizardPage page, boolean aboutToShow) {
 		if (page == autoconnectPage) return null;
 		if (page == locationPage) {
 			if (locationPage.getLocation() == null) {
@@ -163,8 +168,12 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 			return modulePage;
 		}
 		if (page == modulePage) {
-			tagPage.setFolder(getRemoteFolder());
-			return tagPage;
+			if (aboutToShow && exists(getRemoteFolder())) {
+				tagPage.setFolder(getRemoteFolder());
+				return tagPage;
+			} else {
+				return finishPage;
+			}
 		}
 		if (page == tagPage) {
 			return finishPage;
@@ -470,5 +479,26 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 			exisitingRemote = null;
 			return false;
 		}
+	}
+	
+	private boolean exists(final ICVSRemoteFolder folder) {
+		final boolean[] result = new boolean[] { false };
+		try {
+			getContainer().run(true, true, new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor)
+						throws InvocationTargetException, InterruptedException {
+					try {
+						result[0] = exists(folder, monitor);
+					} catch (TeamException e) {
+						throw new InvocationTargetException(e);
+					}
+				}
+			});
+		} catch (InvocationTargetException e) {
+			CVSUIPlugin.openError(getContainer().getShell(), null, null, e);
+		} catch (InterruptedException e) {
+			// Cancelled. Assume the folder doesn't exist
+		}
+		return result[0];
 	}
 }
