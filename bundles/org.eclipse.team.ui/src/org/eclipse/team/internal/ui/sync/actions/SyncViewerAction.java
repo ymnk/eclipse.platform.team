@@ -11,37 +11,41 @@
 package org.eclipse.team.internal.ui.sync.actions;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
+import org.eclipse.ui.IViewPart;
 
 /**
  * This class acts as the superclass for all actions in the SyncViewer
  */
 public abstract class SyncViewerAction extends Action {
 
-	private SyncViewer syncView;
+	private IViewPart viewPart;
+	private ISelection selection;
 
 	/**
 	 * @param text
 	 */
-	public SyncViewerAction(SyncViewer viewer, String label) {
+	public SyncViewerAction(IViewPart viewPart, String label) {
 		super(label);
-		this.syncView = viewer;
-	}
-
-	/**
-	 * @return
-	 */
-	public SyncViewer getSyncView() {
-		return syncView;
+		this.viewPart = viewPart;
 	}
 
 	public Shell getShell() {
-		return syncView.getSite().getShell();
+		return viewPart.getSite().getShell();
 	}
 	
-	public Viewer getViewer() {
-		return syncView.getViewer();
+	/**
+	 * @return
+	 */
+	public ISelection getSelection() {
+		return selection;
+	}
+	
+	/**
+	 * @param selection
+	 */
+	public void selectionChanged(ISelection selection) {
+		this.selection = selection;
 	}
 }

@@ -57,13 +57,13 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	
 	// other view actions
 	private Action collapseAll;
-	private Action refreshAction;
+	private RefreshAction refreshAction;
 	private Action toggleViewerType;
 	private Action open;
 	
-	class RefreshAction extends Action {
+	class RefreshAction extends SyncViewerAction {
 		public RefreshAction() {
-			setText("Refresh with Repository");
+			super (getSyncView(), "Refresh with Repository");
 			setToolTipText("Refresh the selected resources with the repository");
 			setImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_REFRESH_ENABLED));
 			setDisabledImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_REFRESH_DISABLED));
@@ -72,20 +72,20 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		public void run() {
 			final SyncViewer view = getSyncView();
 			view.run(new IRunnableWithProgress() {
-						public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-							try {
-								monitor.beginTask(null, 100);
-								ActionContext context = getContext();
-								SubscriberInput input = (SubscriberInput)context.getInput();
-								IResource[] resources = input.getSubscriber().roots();
-								input.getSubscriber().refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
-							} catch (TeamException e) {
-								throw new InvocationTargetException(e);
-							} finally {
-								monitor.done();
-							}
-						}
-				});
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					try {
+						monitor.beginTask(null, 100);
+						ActionContext context = getContext();
+						SubscriberInput input = (SubscriberInput)context.getInput();
+						IResource[] resources = input.roots();
+						input.getSubscriber().refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+					} catch (TeamException e) {
+						throw new InvocationTargetException(e);
+					} finally {
+						monitor.done();
+					}
+				}
+			});
 		}
 	}
 	
@@ -138,6 +138,21 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#updateActionBars()
+	 */
+	public void updateActionBars() {
+		super.updateActionBars();
+		changeFilters.updateActionBars();
+		directionsFilters.updateActionBars();
+		comparisonCriteria.updateActionBars();
+		subscriberInputs.updateActionBars();
+		subscriberActions.updateActionBars();
+		
+		
+		refreshAction.selectionChanged(getContext().getSelection());
+	}
+
 	public SyncViewerActions(SyncViewer viewer) {
 		super(viewer);
 		createActions();
@@ -171,7 +186,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 				String property = event.getProperty();
 				
 				if (WorkingSetFilterActionGroup.CHANGE_WORKING_SET.equals(property)) {
-					SyncViewer syncView = getSyncView();
 					Object newValue = event.getNewValue();
 					
 					if (newValue instanceof IWorkingSet) {	

@@ -24,10 +24,10 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.IActionDelegate2;
 import org.eclipse.ui.IObjectActionDelegate;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.help.WorkbenchHelp;
 
@@ -104,8 +104,8 @@ public class ContributedSubscriberAction extends SyncViewerAction {
 	 * @param viewer
 	 * @param element
 	 */
-	public ContributedSubscriberAction(SyncViewer viewer, IConfigurationElement element) {
-		super(viewer, element.getAttribute("label"));
+	public ContributedSubscriberAction(IViewPart viewPart, IConfigurationElement element) {
+		super(viewPart, element.getAttribute("label"));
 		this.element = element;
 		String tooltip = element.getAttribute("tooltip");
 		String helpContextId = element.getAttribute("helpContextId");

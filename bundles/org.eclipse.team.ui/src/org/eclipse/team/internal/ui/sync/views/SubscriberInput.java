@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
@@ -19,7 +20,7 @@ import org.eclipse.ui.IWorkingSet;
 
 /**
  * SubscriberInput encapsulates the UI model for synchronization changes associated
- * with a SyncTreesubscriber. 
+ * with a SyncTreeSubscriber. 
  */
 public class SubscriberInput {
 
@@ -90,5 +91,12 @@ public class SubscriberInput {
 	 */
 	public void setWorkingSet(IWorkingSet set) {
 		subscriberInput.setWorkingSet(set);
+	}
+
+	/**
+	 * @return
+	 */
+	public IResource[] roots() throws TeamException {
+		return subscriberInput.getRoots();
 	}
 }

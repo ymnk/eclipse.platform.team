@@ -12,7 +12,7 @@ package org.eclipse.team.internal.ui.sync.actions;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.team.internal.ui.sync.views.ChangeFiltersContentProvider;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.dialogs.ListSelectionDialog;
 
 /**
@@ -22,8 +22,8 @@ public class FilterSyncViewerAction extends SyncViewerAction {
 
 	SyncViewerChangeFilters filters;
 	
-	public FilterSyncViewerAction(SyncViewer viewer, SyncViewerChangeFilters filters) {
-		super(viewer, "Filter...");
+	public FilterSyncViewerAction(IViewPart viewPart, SyncViewerChangeFilters filters) {
+		super(viewPart, "Filter...");
 		this.filters = filters;
 	}
 
@@ -44,7 +44,7 @@ public class FilterSyncViewerAction extends SyncViewerAction {
 		ListSelectionDialog dialog =
 			new ListSelectionDialog(
 				getShell(),
-				getSyncView(),
+				this /* the input can be any object */,
 				contentProvider,
 				filters.getLabelProvider(),
 				"Select the change types to be shown");

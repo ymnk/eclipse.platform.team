@@ -18,7 +18,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -32,11 +34,15 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableLayout;
@@ -61,11 +67,12 @@ import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.ui.part.IShowInSource;
+import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.part.ViewPart;
 
 public class SyncViewer extends ViewPart implements ITeamResourceChangeListener {
@@ -139,7 +146,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 				break;
 		}
 		hookContextMenu();
-		hookOpen();
+		initializeListeners();
 		
 		if(input != null) {
 			viewer.setInput(input.getSyncSet());
@@ -234,17 +241,91 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		actions.fillActionBars(bars);
 	}
 
+	/**
+	 * Adds the listeners to the viewer.
+	 * 
+	 * @param viewer the viewer
+	 * @since 2.0
+	 */
+	protected void initializeListeners() {
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				handleSelectionChanged(event);
+			}
+		});
+		viewer.addDoubleClickListener(new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				handleDoubleClick(event);
+			}
+		});
+		viewer.addOpenListener(new IOpenListener() {
+			public void open(OpenEvent event) {
+				handleOpen(event);
+			}
+		});
+//		viewer.getControl().addKeyListener(new KeyListener() {
+//			public void keyPressed(KeyEvent event) {
+//				handleKeyPressed(event);
+//			}
+//			public void keyReleased(KeyEvent event) {
+//				handleKeyReleased(event);
+//			}
+//		});
+	}
+	
+	/**
+	 * Handles a selection changed event from the viewer.
+	 * Updates the status line and the action bars, and links to editor (if option enabled).
+	 * 
+	 * @param event the selection event
+	 * @since 2.0
+	 */
+	protected void handleSelectionChanged(SelectionChangedEvent event) {
+		final IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+		updateStatusLine(sel);
+		updateActionBars(sel);
+// TODO: Need to decide if link to editor should be supported
+//		dragDetected = false;
+//		if (isLinkingEnabled()) {
+//			getShell().getDisplay().asyncExec(new Runnable() {
+//				public void run() {
+//					if (dragDetected == false) {
+//						// only synchronize with editor when the selection is not the result 
+//						// of a drag. Fixes bug 22274.
+//						linkToEditor(sel);
+//					}
+//				}
+//			});
+//		}
+	}
+
+	protected void handleOpen(OpenEvent event) {
+		actions.open();
+	}
+	/**
+	 * Handles a double-click event from the viewer.
+	 * Expands or collapses a folder when double-clicked.
+	 * 
+	 * @param event the double-click event
+	 * @since 2.0
+	 */
+	protected void handleDoubleClick(DoubleClickEvent event) {
+		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+		Object element = selection.getFirstElement();
+
+		// Double-clicking should expand/collapse containers
+		if (viewer instanceof TreeViewer) {
+			TreeViewer tree = (TreeViewer)viewer;
+			if (tree.isExpandable(element)) {
+				tree.setExpandedState(element, !tree.getExpandedState(element));
+			}
+		}
+
+	}
+	
 	private void initializeActions() {
 		actions = new SyncViewerActions(this);
 		actions.restore(memento);
-	}
-
-	private void hookOpen() {
-		viewer.addOpenListener(new IOpenListener() {
-			public void open(OpenEvent event) {
-				actions.open();
-			}
-		});
 	}
 	
 	private void showMessage(String message) {
@@ -454,5 +535,81 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		}
 		return selection;
 	}
+	
+	/**
+	 * This method enables "Show In" support for this view
+	 * 
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class key) {
+		if (key == IShowInSource.class) {
+			return new IShowInSource() {
+				public ShowInContext getShowInContext() {
+					StructuredViewer v = getViewer();
+					if (v == null) return null;
+					return new ShowInContext(null, v.getSelection());
+				}
+			};
+		}
+		return super.getAdapter(key);
+	}
+	
+	/**
+	 * Updates the action bar actions.
+	 * 
+	 * @param selection the current selection
+	 * @since 2.0
+	 */
+	protected void updateActionBars(IStructuredSelection selection) {
+		if (actions != null) {
+			ActionContext actionContext = actions.getContext();
+			actionContext.setSelection(selection);
+			actions.updateActionBars();
+		}
+	}
+	
+	/**
+	 * Updates the message shown in the status line.
+	 *
+	 * @param selection the current selection
+	 */
+	protected void updateStatusLine(IStructuredSelection selection) {
+		String msg = getStatusLineMessage(selection);
+		getViewSite().getActionBars().getStatusLineManager().setMessage(msg);
+	}
 
+	/**
+	 * Returns the message to show in the status line.
+	 *
+	 * @param selection the current selection
+	 * @return the status line message
+	 * @since 2.0
+	 */
+	protected String getStatusLineMessage(IStructuredSelection selection) {
+		if (selection.size() == 1) {
+			IResource resource = getResource(selection.getFirstElement());
+			if (resource == null) {
+				return "One item selected";
+			} else {
+				return resource.getFullPath().makeRelative().toString();
+			}
+		}
+		if (selection.size() > 1) {
+			return selection.size() + " items selected";
+		}
+		return ""; //$NON-NLS-1$
+	}
+
+	/**
+	 * @param object
+	 * @return
+	 */
+	private IResource getResource(Object object) {
+		if (object instanceof IResource) {
+			return (IResource)object;
+		} else if (object instanceof IAdaptable) {
+			return (IResource)((IAdaptable)object).getAdapter(IResource.class);
+		}
+		return null;
+	}
 }
