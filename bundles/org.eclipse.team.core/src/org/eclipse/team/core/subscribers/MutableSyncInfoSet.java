@@ -94,7 +94,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	public void changed(SyncInfo info) {
 		try {
 			beginInput();
-			internalAddSyncInfo(info);
+			internalChange(info);
 			changes.changed(info);
 		} finally {
 			endInput(null);
@@ -132,7 +132,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 				remove(resource);
 			}
 			if (recurse) {
-				IResource [] removed = internalGetDescendants(resource);
+				IResource [] removed = internalGetDeepSyncInfo(resource);
 				for (int i = 0; i < removed.length; i++) {
 					remove(removed[i]);
 				}
@@ -207,14 +207,13 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalAddedSubtreeRoot(org.eclipse.core.resources.IResource)
 	 */
 	protected void internalAddedSubtreeRoot(IResource parent) {
-		super.internalAddedSubtreeRoot(parent);
 		changes.addedSubtreeRoot(parent);
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalRemovedSubtreeRoot(org.eclipse.core.resources.IResource)
 	 */
 	protected void internalRemovedSubtreeRoot(IResource parent) {
-		super.internalRemovedSubtreeRoot(parent);
 		changes.removedSubtreeRoot(parent);
 	}
 	
@@ -232,4 +231,5 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		}
 		
 	}
+
 }

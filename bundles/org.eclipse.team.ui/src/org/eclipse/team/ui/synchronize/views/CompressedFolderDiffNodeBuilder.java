@@ -59,7 +59,7 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	private IDiffElement[] getProjectChildren(DiffNode parent, IProject project) {
 		// The out-of-sync elements could possibly include the project so the code 
 		// below is written to ignore the project
-		SyncInfo[] outOfSync = getRoot().getSyncInfoSet().getOutOfSyncDescendants(project);
+		SyncInfo[] outOfSync = getRoot().getSyncInfoSet().getSyncInfo(project, IResource.DEPTH_INFINITE);
 		Set result = new HashSet();
 		Set resourcesToShow = new HashSet();
 		for (int i = 0; i < outOfSync.length; i++) {

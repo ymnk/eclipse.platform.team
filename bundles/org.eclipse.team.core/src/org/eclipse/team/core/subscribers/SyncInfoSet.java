@@ -54,7 +54,7 @@ public abstract class SyncInfoSet {
 	private SyncInfoStatistics statistics = new SyncInfoStatistics();
 	
 	/**
-	 * Don't directly allow creating an empty immutable set.
+	 * Create an empty immutable set.
 	 */
 	protected SyncInfoSet() {
 	}
@@ -72,8 +72,8 @@ public abstract class SyncInfoSet {
 	}
 
 	/**
-	 * Return an array of all the resources that are known to be out-of-sync
-	 * @return
+	 * Return an array of <code>SyncInfo</code> for all out-of-sync resources that are contained by the set.
+	 * @return an array of <code>SyncInfo</code>
 	 */
 	public synchronized SyncInfo[] members() {
 		return (SyncInfo[]) resources.values().toArray(new SyncInfo[resources.size()]);
@@ -83,13 +83,14 @@ public abstract class SyncInfoSet {
 	 * Return the immediate children of the given resource who are either out-of-sync 
 	 * or contain out-of-sync resources.
 	 * 
-	 * @param resource 
-	 * @return
+	 * @param resource the parent resource 
+	 * @return the children of the resource that are either out-of-sync or are ancestors of
+	 * out-of-sync resources contained in the set
 	 */
 	public synchronized IResource[] members(IResource resource) {
 		if (resource.getType() == IResource.FILE) return new IResource[0];
 		IContainer parent = (IContainer)resource;
-		if (parent.getType() == IResource.ROOT) return getRoots(parent);
+		if (parent.getType() == IResource.ROOT) return internalMembers((IWorkspaceRoot)parent);
 		// OPTIMIZE: could be optimized so that we don't traverse all the deep 
 		// children to find the immediate ones.
 		Set children = new HashSet();
@@ -116,11 +117,12 @@ public abstract class SyncInfoSet {
 		return (IResource[]) children.toArray(new IResource[children.size()]);
 	}
 	
-
 	/**
-	 * Return wether the given resource has any children in the sync set
-	 * @param resource
-	 * @return
+	 * Return wether the given resource has any children in the sync set. The children
+	 * could be either out-of-sync resources that are contained by the set or containers
+	 * that are ancestors of out-of-sync resources contained by the set.
+	 * @param resource the parent resource
+	 * @return the members of the parent in the set.
 	 */
 	public boolean hasMembers(IResource resource) {
 		if (resource.getType() == IResource.FILE) return false;
@@ -132,14 +134,21 @@ public abstract class SyncInfoSet {
 	}
 	
 	/**
-	 * Return the out-of-sync descendants of the given resource. If the given resource
-	 * is out of sync, it will be included in the result.
+	 * Return the <code>SyncInfo</code> for each out-of-sync resource in the subtree rooted at the given resource
+	 * to the depth specified. The depth is on of:
+	 * <ul>
+	 * <li><code>IResource.DEPTH_ZERO</code>: the resource only,
+	 * <li><code>IResource.DEPTH_ONE</code>: the resource or its direct children,
+	 * <li><code>IResource.DEPTH_INFINITE</code>: the resource and all of it's descendants.
+	 * <ul>
+	 * If the given resource is out of sync, it will be included in the result.
 	 * 
-	 * @param container
-	 * @return
+	 * @param resource the root of the resource subtree
+	 * @param depth the depth of the subtree
+	 * @return the <code>SyncInfo</code> for any out-of-sync resources
 	 */
-	public synchronized SyncInfo[] getOutOfSyncDescendants(IResource resource) {
-		if (resource.getType() == IResource.FILE) {
+	public synchronized SyncInfo[] getSyncInfo(IResource resource, int depth) {
+		if (depth == IResource.DEPTH_ZERO || resource.getType() == IResource.FILE) {
 			SyncInfo info = getSyncInfo(resource);
 			if (info == null) {
 				return new SyncInfo[0];
@@ -147,13 +156,29 @@ public abstract class SyncInfoSet {
 				return new SyncInfo[] { info };
 			}
 		}
+		if (depth == IResource.DEPTH_ONE) {
+			List result = new ArrayList();
+			SyncInfo info = getSyncInfo(resource);
+			if (info != null) {
+				result.add(info);
+			}
+			IResource[] members = members(resource);
+			for (int i = 0; i < members.length; i++) {
+				IResource member = members[i];
+				info = getSyncInfo(member);
+				if (info != null) {
+					result.add(info);
+				}
+			}
+			return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+		}
 		// if it's the root then return all out of sync resources.
 		if(resource.getType() == IResource.ROOT) {
 			return members();
 		}
 		// for folders return all children deep.
 		List infos = new ArrayList();
-		IResource[] children = internalGetDescendants(resource);
+		IResource[] children = internalGetDeepSyncInfo(resource);
 		for (int i = 0; i < children.length; i++) {
 			IResource child = children[i];
 			SyncInfo info = getSyncInfo(child);
@@ -166,6 +191,10 @@ public abstract class SyncInfoSet {
 		return (SyncInfo[]) infos.toArray(new SyncInfo[infos.size()]);
 	}
 
+	/**
+	 * Return all out-of-sync resources contained in this set.
+	 * @return all out-of-sync resources
+	 */
 	public synchronized IResource[] getResources() {
 		SyncInfo[] infos = members();
 		List resources = new ArrayList();
@@ -176,23 +205,30 @@ public abstract class SyncInfoSet {
 		return (IResource[]) resources.toArray(new IResource[resources.size()]);
 	}
 	
+	/**
+	 * Return the <code>SyncInfo</code> for the given resource or <code>null</code>
+	 * if the resource is not contained in the set.
+	 * @param resource the resource
+	 * @return the <code>SyncInfo</code> for the resource or <code>null</code>
+	 */
 	public synchronized SyncInfo getSyncInfo(IResource resource) {
 		return (SyncInfo)resources.get(resource.getFullPath());
 	}
 
+	/**
+	 * Return the number of out-of-sync resources contained in this set.
+	 * @return the size of the set.
+	 */
 	public int size() {
 		return resources.size();		
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISyncInfoSet#dispose()
-	 */
-	public void dispose() {
-		// Nothing to do
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISyncInfoSet#countFor(int, int)
+	/**
+	 * Return the number of out-of-sync resources in the given set whose sync kind
+	 * matches the given kind and mask (e.g. <code>SyncInfo#getKind() & mask == kind</code>).
+	 * @param kind the sync kind
+	 * @param mask the sync kind mask
+	 * @return the number of matching resources in the set.
 	 */
 	public long countFor(int kind, int mask) {
 		return statistics.countFor(kind, mask);
@@ -207,33 +243,28 @@ public abstract class SyncInfoSet {
 	}
 	
 	/**
-	 * Returns true if this sync set has incoming changes.
-	 * Note that conflicts are not considered to be incoming changes.
+	 * Return whether the set is empty.
+	 * @return <code>true</code> if the set is empty
 	 */
-	public boolean hasIncomingChanges() {
-		return countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK) > 0;
-	}
-	
-	/**
-	 * Returns true if this sync set has outgoing changes.
-	 * Note that conflicts are not considered to be outgoing changes.
-	 */
-	public boolean hasOutgoingChanges() {
-		return countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK) > 0;
-	}
-		
 	public boolean isEmpty() {
 		return resources.isEmpty();
 	}
 
-	
+	/**
+	 * Add the <code>SyncInfo</code> to the set, adjusting any internal data structures.
+	 * @param info the <code>SyncInfo</code> being added.
+	 */
 	protected synchronized void internalAdd(SyncInfo info) {
-		internalAddSyncInfo(info);
+		internalChange(info);
 		IResource local = info.getLocal();
 		addToParents(local, local);
 	}
 	
-	protected void internalAddSyncInfo(SyncInfo info) {
+	/**
+	 * Change the sync info for a resource to be the supplied sync info.
+	 * @param info the new <code>SyncInfo</code>
+	 */
+	protected void internalChange(SyncInfo info) {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		SyncInfo oldSyncInfo = (SyncInfo)resources.put(path, info); 
@@ -248,7 +279,8 @@ public abstract class SyncInfoSet {
 	/*
 	 * This sync set maintains a data structure that maps a folder to the
 	 * set of out-of-sync resources at or below the folder. This method updates
-	 * this data sructure.
+	 * this data structure. It also invokes the <code>internalAddedSubtreeRoot</code>
+	 * for the highest added parent to allow subclass to record this in change events.
 	 */
 	private boolean addToParents(IResource resource, IResource parent) {
 		if (parent.getType() == IResource.ROOT) {
@@ -284,20 +316,28 @@ public abstract class SyncInfoSet {
 	 * this event.
 	 * @param parent the added subtree root
 	 */
-	protected void internalAddedSubtreeRoot(IResource parent) {
-		// do nothing by default
-	}
+	protected abstract void internalAddedSubtreeRoot(IResource parent);
 
-	protected synchronized SyncInfo internalRemove(IResource local) {
-		IPath path = local.getFullPath();
+	/**
+	 * Remove the resource from the set, updating all internal data structures.
+	 * @param resource the resource to be removed
+	 * @return the <code>SyncInfo</code> that was just removed
+	 */
+	protected synchronized SyncInfo internalRemove(IResource resource) {
+		IPath path = resource.getFullPath();
 		SyncInfo info = (SyncInfo)resources.remove(path);
 		if (info != null) {
 			statistics.remove(info);
 		}
-		removeFromParents(local, local);
+		removeFromParents(resource, resource);
 		return info;
 	}
 	
+	/*
+	 * Recursively remove the resource from it's parents in the internal data
+	 * structures of the set. Also, invoke the <code>internalRemoveSubtreeRoot</code>
+	 * method to allow subclass to include the subtree removal in a change event.
+	 */
 	private boolean removeFromParents(IResource resource, IResource parent) {
 		if (parent.getType() == IResource.ROOT) {
 			return false;
@@ -326,20 +366,21 @@ public abstract class SyncInfoSet {
 	
 	/**
 	 * This method is invoked when a resource is removed from the set.
-	 * The resource srgument is the highest resource that used to have
+	 * The resource argument is the highest resource that used to have
 	 * descendants in the set but no longer does.
 	 * @param parent the removed subtree root
 	 */
-	protected void internalRemovedSubtreeRoot(IResource parent) {
-		// do nothing by default
-	}
+	protected abstract void internalRemovedSubtreeRoot(IResource parent);
 
-	private IResource[] getRoots(IContainer root) {
+	/*
+	 * Return the projects that contain out-of-sync resources in the set
+	 */
+	private IResource[] internalMembers(IWorkspaceRoot root) {
 		Set possibleChildren = parents.keySet();
 		Set children = new HashSet();
 		for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
 			Object next = it.next();
-			IResource element = ((IWorkspaceRoot)root).findMember((IPath)next);
+			IResource element = root.findMember((IPath)next);
 			if (element != null) {
 				children.add(element.getProject());
 			}
@@ -379,7 +420,13 @@ public abstract class SyncInfoSet {
 		statistics.clear();
 	}
 	
-	protected synchronized IResource[] internalGetDescendants(IResource resource) {
+	/**
+	 * Return the <code>SyncInfo</code> for all out-of-sync resources in the
+	 * set that are at or below the given resource in the resource hierarchy.
+	 * @param resource the root resource
+	 * @return the <code>SyncInfo</code> for all out-of-sync resources at or below the given resource
+	 */
+	protected synchronized IResource[] internalGetDeepSyncInfo(IResource resource) {
 		// The parent map contains a set of all out-of-sync children
 		Set allChildren = (Set)parents.get(resource.getFullPath());
 		if (allChildren == null) return new IResource[0];

@@ -13,6 +13,7 @@ package org.eclipse.team.tests.ccvs.core.subscriber;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
@@ -65,7 +66,7 @@ public class SyncSetTests extends CVSSyncSubscriberTest {
 					while(! done[0]) {
 						try {
 							set.add(new TestSyncInfo());
-							set.getOutOfSyncDescendants(ResourcesPlugin.getWorkspace().getRoot());
+							set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot(), IResource.DEPTH_INFINITE);
 							set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot());
 							set.members();
 						} catch (Exception e) {
@@ -90,7 +91,7 @@ public class SyncSetTests extends CVSSyncSubscriberTest {
 		
 		for(int i = 0; i < 10000; i++) {
 			set.add(new TestSyncInfo());
-			set.getOutOfSyncDescendants(ResourcesPlugin.getWorkspace().getRoot());
+			set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot(), IResource.DEPTH_INFINITE);
 			set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot());
 			set.members();
 			set.members(ResourcesPlugin.getWorkspace().getRoot());

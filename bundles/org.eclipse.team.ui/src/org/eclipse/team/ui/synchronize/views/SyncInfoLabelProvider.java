@@ -216,7 +216,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 		// If the set has no conflicts then the node doesn't either
 		SyncInfoSet set = node.getSyncInfoSet();
 		if (set.hasConflicts()) {
-			SyncInfo[] infos = set.getOutOfSyncDescendants(resource);
+			SyncInfo[] infos = set.getSyncInfo(resource, IResource.DEPTH_INFINITE);
 			for (int i = 0; i < infos.length; i++) {
 				SyncInfo info = infos[i];
 				if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {

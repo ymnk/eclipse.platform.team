@@ -130,4 +130,34 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 		}
 		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
+
+	/**
+	 * Returns true if this sync set has incoming changes.
+	 * Note that conflicts are not considered to be incoming changes.
+	 */
+	public boolean hasIncomingChanges() {
+		return countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK) > 0;
+	}
+
+	/**
+	 * Returns true if this sync set has outgoing changes.
+	 * Note that conflicts are not considered to be outgoing changes.
+	 */
+	public boolean hasOutgoingChanges() {
+		return countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK) > 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalAddedSubtreeRoot(org.eclipse.core.resources.IResource)
+	 */
+	protected void internalAddedSubtreeRoot(IResource parent) {
+		// Do nothing
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalRemovedSubtreeRoot(org.eclipse.core.resources.IResource)
+	 */
+	protected void internalRemovedSubtreeRoot(IResource parent) {
+		// Do nothing
+	}
 }

@@ -74,7 +74,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	protected void assertProjectRemoved(TeamSubscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
 		SyncInfoSet set = getCollector(subscriber).getSyncInfoSet();
-		if (set.getOutOfSyncDescendants(project).length != 0) {
+		if (set.hasMembers(project)) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
 		}
 	}
