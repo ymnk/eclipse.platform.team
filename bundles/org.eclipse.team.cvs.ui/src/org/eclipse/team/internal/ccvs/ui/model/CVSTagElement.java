@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.model;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.progress.IElementCollector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
@@ -20,16 +21,14 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.ui.IWorkingSet;
+import org.eclipse.team.internal.uijobs.IDeferredWorkbenchAdapter;
+import org.eclipse.team.internal.uijobs.BatchSimilarSchedulingRule;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class CVSTagElement extends CVSModelElement implements IAdaptable, IDeferredWorkbenchAdapter {
 	CVSTag tag;
 	ICVSRepositoryLocation root;
 
-	/**
-	 * Create a branch tag
-	 */
 	public CVSTagElement(CVSTag tag, ICVSRepositoryLocation root) {
 		this.tag = tag;
 		this.root = root;
@@ -102,19 +101,11 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable, IDefer
 		}
 	}
 
-	public String getUniqueId() {
-		return "org.eclipse.team.cvs.ui.model.tagelement";
-	}
-
-	public boolean isContainer() {
-		return true;
+	public ISchedulingRule getRule() {
+		return new BatchSimilarSchedulingRule("org.eclipse.team.cvs.ui.model.tagelement");
 	}
 	
-	public boolean isDeferred() {
+	public boolean isContainer() {
 		return true;
-	}
-
-	public boolean isThreadSafe() {
-		return false;
 	}
 }

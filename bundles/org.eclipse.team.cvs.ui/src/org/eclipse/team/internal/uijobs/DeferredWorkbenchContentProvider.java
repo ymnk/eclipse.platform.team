@@ -8,14 +8,13 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.model;
+package org.eclipse.team.internal.uijobs;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.model.PendingUpdateAdapter;
@@ -23,19 +22,6 @@ import org.eclipse.ui.model.WorkbenchContentProvider;
 
 public class DeferredWorkbenchContentProvider extends WorkbenchContentProvider {
 
-	public class SerializeMeRule implements ISchedulingRule {
-		public String id;
-		public SerializeMeRule(String id) {
-			this.id = id;
-		}		
-		public boolean isConflicting(ISchedulingRule rule) {
-			if(rule instanceof SerializeMeRule) {
-				return ((SerializeMeRule)rule).id.equals(id);
-			}
-			return false;
-		}
-	}
-	
 	public boolean hasChildren(Object o) {
 		if(o == null) {
 			return false;
@@ -43,24 +29,17 @@ public class DeferredWorkbenchContentProvider extends WorkbenchContentProvider {
 		IWorkbenchAdapter adapter = getAdapter(o);
 		if (adapter instanceof IDeferredWorkbenchAdapter) {
 			IDeferredWorkbenchAdapter element = (IDeferredWorkbenchAdapter) adapter;
-			if(element.isDeferred()) {
-				return element.isContainer();
-			}
+			return element.isContainer();
 		}
 		return super.hasChildren(o);
 	}
 
 	public Object[] getChildren(final Object parent) {
-
 		IWorkbenchAdapter adapter = getAdapter(parent);
 		if (adapter instanceof IDeferredWorkbenchAdapter) {
 			IDeferredWorkbenchAdapter element = (IDeferredWorkbenchAdapter) adapter;
-			if (element.isDeferred()) {				
-				startFetchingDeferredChildren(parent, element);								
-				return new Object[] { new PendingUpdateAdapter()};
-			} else {
-				return adapter.getChildren(parent);
-			}
+			startFetchingDeferredChildren(parent, element);								
+			return new Object[] { new PendingUpdateAdapter()};
 		}
 		return super.getChildren(parent);
 	}
@@ -82,10 +61,7 @@ public class DeferredWorkbenchContentProvider extends WorkbenchContentProvider {
 		Job job = new Job() {
 			public IStatus run(IProgressMonitor monitor) {
 				try {								
-					System.out.println("DeferredJob: fetching children for parent: " + parent.toString());
 					adapter.fetchDeferredChildren(parent, collector, monitor);
-					System.out.println("DeferredJob: finished children for parent: " + parent.toString());
-					//collector.done(parent);
 				} catch(OperationCanceledException e) {
 					return Status.CANCEL_STATUS;
 				}
@@ -96,9 +72,7 @@ public class DeferredWorkbenchContentProvider extends WorkbenchContentProvider {
 			}
 		};		
 		
-		if(! adapter.isThreadSafe()) {
-			job.setRule(new SerializeMeRule(adapter.getUniqueId()));
-		}
+		job.setRule(adapter.getRule());
 		job.schedule();
 	}	
 }

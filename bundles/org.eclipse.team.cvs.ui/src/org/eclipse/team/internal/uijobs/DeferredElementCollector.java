@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.model;
+package org.eclipse.team.internal.uijobs;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -16,10 +16,10 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.progress.IElementCollector;
-import org.eclipse.jface.progress.UIJob;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.internal.ccvs.core.Policy;
+import org.eclipse.ui.progress.UIJob;
 
 abstract public class DeferredElementCollector implements IElementCollector {
 	
@@ -27,7 +27,6 @@ abstract public class DeferredElementCollector implements IElementCollector {
 	private Viewer viewer;
 	private boolean DEBUG = true;
 	private long FAKE_LATENCY = 100; // milliseconds
-	boolean hasAddedChildren = false;
 	
 	private class RemoteJob extends UIJob {
 		Object[] newElements;
@@ -50,26 +49,12 @@ abstract public class DeferredElementCollector implements IElementCollector {
 			if (monitor.isCanceled()) {
 				return Status.CANCEL_STATUS;
 			}
-			
-			if(DEBUG) {
-				System.out.print("DeferredCollector adding to viewer [" + newElements.length + "]: ");
-				for (int i = 0; i < newElements.length; i++) {
-					System.out.print(newElements[i].toString() + ",");
-				}	
-				System.out.print("\n");
-			}
-			hasAddedChildren = true;
 			if(viewer instanceof AbstractTreeViewer) {
 				((AbstractTreeViewer) viewer).add(parent, newElements);
 			}
 			return Status.OK_STATUS;
 		}
 		void runBatch(Object[] elements) {
-			if(elements.length == 0) {
-				if(viewer instanceof AbstractTreeViewer) {
-					//((AbstractTreeViewer) viewer).
-				}
-			}
 			working = true;
 			this.newElements = elements;
 			schedule();
@@ -87,6 +72,11 @@ abstract public class DeferredElementCollector implements IElementCollector {
 		monitor = Policy.monitorFor(monitor);
 		if (viewer instanceof AbstractTreeViewer) {
 			RemoteJob remoteJob = new RemoteJob(parent);
+			if(children.length == 0) {
+				remoteJob.runBatch(children);
+				return;
+			} 
+			
 			int batchStart = 0;
 			int batchEnd = children.length > BATCH_SIZE ? BATCH_SIZE : children.length;
 			//process children until all children have been sent to the UI
@@ -116,13 +106,6 @@ abstract public class DeferredElementCollector implements IElementCollector {
 		} else {
 			viewer.refresh();
 		}
-	}
-	
-	public void done(Object parent) {
-//		if (viewer instanceof AbstractTreeViewer) {
-//			RemoteJob remoteJob = new RemoteJob(parent);
-//			remoteJob.runBatch(new Object[0]);
-//		}
 	}
 	
 	private void slowDown(long time) {

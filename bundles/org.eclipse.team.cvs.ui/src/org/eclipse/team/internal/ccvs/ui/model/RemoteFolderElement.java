@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.model;
 
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.progress.IElementCollector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
@@ -20,6 +21,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.uijobs.*;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
@@ -54,18 +56,10 @@ public class RemoteFolderElement extends RemoteResourceElement implements IDefer
 		return ((ICVSRemoteFolder)o).members(monitor);
 	}
 
-	public boolean isDeferred() {
-		return true;
-	}
-	
-	public String getUniqueId() {
-		return "org.eclipse.team.cvs.ui.remotefolderelement";
-	}
-
 	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
 		try {
 			monitor = Policy.monitorFor(monitor);
-			monitor.beginTask(null, 100);
+			monitor.beginTask("Fetching remote children for " + getLabel(o), 100);
 			collector.add(fetchChildren(o, Policy.subMonitorFor(monitor, 90)), Policy.subMonitorFor(monitor, 10));
 		} catch (TeamException e) {
 			CVSUIPlugin.log(e);
@@ -74,8 +68,8 @@ public class RemoteFolderElement extends RemoteResourceElement implements IDefer
 		}
 	}
 
-	public boolean isThreadSafe() {
-		return false;
+	public ISchedulingRule getRule() {
+		return new BatchSimilarSchedulingRule("org.eclipse.team.ui.cvs.remotefolderelement");
 	}
 
 	public boolean isContainer() {
