@@ -11,8 +11,6 @@
 package org.eclipse.team.internal.ui.sync.actions;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
@@ -96,19 +94,6 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 		}
 	}
 
-	private ComparisonCriteria[] getActiveComparisonCriteria() {
-		List result = new ArrayList();
-		if(getSyncView().getInput() != null) {
-			for (int i = 0; i < actions.length; i++) {
-				ComparisonCriteriaAction action = actions[i];
-				if (action.isChecked()) {
-					result.add(action.getComparisonCriteria());
-				}
-			}
-		}
-		return (ComparisonCriteria[]) result.toArray(new ComparisonCriteria[result.size()]);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#fillContextMenu(org.eclipse.jface.action.IMenuManager)
 	 */

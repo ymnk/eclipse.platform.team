@@ -15,7 +15,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -23,10 +26,24 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.DecoratingLabelProvider;
+import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.TableLayout;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ITeamResourceChangeListener;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
@@ -34,7 +51,11 @@ import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.core.sync.TeamProvider;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.part.ViewPart;
@@ -88,8 +109,9 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		this.composite = parent;
 		
 		SyncTreeSubscriber[] subscribers = TeamProvider.getSubscribers();
-		if(subscribers.length > 0) {
-			initializeSubscriberInput(new SubscriberInput(subscribers[0]));
+		for (int i = 0; i < subscribers.length; i++) {
+			SyncTreeSubscriber subscriber = subscribers[i];
+			addSubscriber(subscriber);
 		}
 	}
 
@@ -210,7 +232,22 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		actions.restore(memento);
 	}
 
-	private void initializeSubscriberInput(final SubscriberInput input) {
+	private void hookOpen() {
+		viewer.addOpenListener(new IOpenListener() {
+			public void open(OpenEvent event) {
+				actions.open();
+			}
+		});
+	}
+	
+	private void showMessage(String message) {
+		MessageDialog.openInformation(
+			viewer.getControl().getShell(),
+			"Sample View",
+			message);
+	}
+
+	public void initializeSubscriberInput(final SubscriberInput input) {
 		this.input = input;
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -229,21 +266,6 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 				}
 			}
 		});
-	}
-	
-	private void hookOpen() {
-		viewer.addOpenListener(new IOpenListener() {
-			public void open(OpenEvent event) {
-				actions.open();
-			}
-		});
-	}
-	
-	private void showMessage(String message) {
-		MessageDialog.openInformation(
-			viewer.getControl().getShell(),
-			"Sample View",
-			message);
 	}
 
 	/**
@@ -392,17 +414,25 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	 * @see org.eclipse.team.core.sync.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.sync.TeamDelta[])
 	 */
 	public void teamResourceChanged(TeamDelta[] deltas) {
-		QualifiedName lastId = null;
 		for (int i = 0; i < deltas.length; i++) {
 			TeamDelta delta = deltas[i];
 			if(delta.getFlags() == TeamDelta.SUBSCRIBER_CREATED) {
 				SyncTreeSubscriber s = delta.getSubscriber();
-				subscriberInputs.put(s.getId(), new SubscriberInput(s));
-				lastId = s.getId();
+				addSubscriber(s);
 			}
 		}
-		if(! subscriberInputs.isEmpty()) {
-			initializeSubscriberInput((SubscriberInput)subscriberInputs.get(lastId));
+	}
+
+	private void addSubscriber(SyncTreeSubscriber s) {
+		SubscriberInput si = new SubscriberInput(s);
+		subscriberInputs.put(s.getId(), si);
+		ActionContext context = new ActionContext(null);
+		context.setInput(si);
+		actions.addContext(context);
+		
+		// show the last registered subscriber in the view
+		if(getInput()== null) {
+			initializeSubscriberInput(si);
 		}
 	}
 }

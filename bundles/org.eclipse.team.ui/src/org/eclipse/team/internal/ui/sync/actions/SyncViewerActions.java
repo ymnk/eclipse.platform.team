@@ -38,6 +38,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private SyncViewerDirectionFilters directionsFilters;
 	private SyncViewerChangeFilters changeFilters;
 	private SyncViewerComparisonCriteria comparisonCriteria;
+	private SyncViewerSubscriberListActions subscriberInputs;
 	
 	// other view actions
 	private Action refreshAction;
@@ -105,6 +106,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		directionsFilters = new SyncViewerDirectionFilters(syncView, this);
 		changeFilters = new SyncViewerChangeFilters(syncView, this);
 		comparisonCriteria = new SyncViewerComparisonCriteria(syncView);
+		subscriberInputs = new SyncViewerSubscriberListActions(syncView);
 		
 		// initialize other actions
 		refreshAction = new RefreshAction();
@@ -203,13 +205,19 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			actionBarMenu.removeAll();
 			actionBarMenu.add(new Separator());
 		} else {
-			actionBarMenu.removeAll();
-			comparisonCriteria.fillContextMenu(actionBarMenu);
-			actionBarMenu.add(new Separator());
-			changeFilters.fillContextMenu(actionBarMenu);
-			getSyncView().redraw();
+			updateDropDownMenu();
 		}
 	}
+
+	private void updateDropDownMenu() {
+		actionBarMenu.removeAll();
+		subscriberInputs.fillContextMenu(actionBarMenu);
+		actionBarMenu.add(new Separator());
+		comparisonCriteria.fillContextMenu(actionBarMenu);
+		actionBarMenu.add(new Separator());
+		changeFilters.fillContextMenu(actionBarMenu);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#setContext(org.eclipse.ui.actions.ActionContext)
 	 */
@@ -217,6 +225,18 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		changeFilters.setContext(context);
 		directionsFilters.setContext(context);
 		comparisonCriteria.setContext(context);
+		subscriberInputs.setContext(context);
+		
+		// causes initializeActions to be called. Must be called after
+		// setting the context for contained groups.
 		super.setContext(context);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#setContext(org.eclipse.ui.actions.ActionContext)
+	 */
+	public void addContext(ActionContext context) {
+		subscriberInputs.addContext(context);
+		updateDropDownMenu();
 	}
 }

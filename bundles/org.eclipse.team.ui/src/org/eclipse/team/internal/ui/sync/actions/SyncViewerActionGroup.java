@@ -54,6 +54,9 @@ public abstract class SyncViewerActionGroup extends ActionGroup {
 		initializeActions();
 	}
 
+	public void addContext(ActionContext context) {
+	}
+
 	protected void initializeActions() {
 	}
 
