@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ui.synchronize;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -22,7 +21,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.FastSyncInfoFilter.AndSyncInfoFilter;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -44,14 +42,8 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 	// Constants for persisting sorting options
 	private static final String P_LAST_COMMENTSORT = TeamUIPlugin.ID + ".P_LAST_COMMENT_SORT"; //$NON-NLS-1$
     
-    public static final AndSyncInfoFilter OUTGOING_FILE_FILTER = new AndSyncInfoFilter(new FastSyncInfoFilter[] {
-            new FastSyncInfoFilter() {
-                public boolean select(SyncInfo info) {
-                    return info.getLocal().getType() == IResource.FILE;
-                }
-            },
-            new SyncInfoDirectionFilter(new int[] { SyncInfo.OUTGOING, SyncInfo.CONFLICTING })
-    });
+    public static final FastSyncInfoFilter OUTGOING_RESOURCE_FILTER = new SyncInfoDirectionFilter(
+            new int[] { SyncInfo.OUTGOING, SyncInfo.CONFLICTING });
     
 	private class CreateChangeSetAction extends SynchronizeModelAction {
 	    
@@ -70,7 +62,7 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
          * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#getSyncInfoFilter()
          */
         protected FastSyncInfoFilter getSyncInfoFilter() {
-            return OUTGOING_FILE_FILTER;
+            return OUTGOING_RESOURCE_FILTER;
         }
         
         /* (non-Javadoc)
@@ -155,7 +147,7 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
          * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#getSyncInfoFilter()
          */
         protected FastSyncInfoFilter getSyncInfoFilter() {
-            return OUTGOING_FILE_FILTER;
+            return OUTGOING_RESOURCE_FILTER;
         }
         
 		protected boolean needsToSaveDirtyEditors() {

@@ -198,6 +198,7 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 			        if (targetSet != null) {
 				        targetSet.clear();
 				        targetSet.addAll(select(set.getSyncInfos()));
+				        rootSet.removeAll(set.getResources());
 			        }
 		        }
             }
@@ -217,6 +218,7 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 		                targetSet.removeAll(event.getRemovedResources());
 		                targetSet.addAll(select(event.getChangedResources()));
 		                targetSet.addAll(select(event.getAddedResources()));
+		                rootSet.removeAll(event.getSet().getResources());
 	                }
                 }
             }
