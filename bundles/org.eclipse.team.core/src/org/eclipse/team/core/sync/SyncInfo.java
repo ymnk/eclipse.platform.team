@@ -299,4 +299,12 @@ public class SyncInfo {
 	static public int getChange(int kind) {
 		return kind & CHANGE_MASK;
 	}
+	
+	public boolean equals(Object other) {
+		if(other == this) return true;
+		if(other instanceof SyncInfo) {
+			return getLocal().equals(((SyncInfo)other).getLocal());
+		}
+		return false;
+	}
 }
