@@ -1,9 +1,9 @@
 /*******************************************************************************
  * Copyright (c) 2000, 2004 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
+ * http://www.eclipse.org/legal/epl-v10.html
  * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -78,14 +78,6 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		GridData gd = new GridData(GridData.FILL_BOTH);
-		gd.widthHint = convertWidthInCharsToPixels(30);
-		/*
-		 * The hardcoded hint does not look elegant, but in reality
-		 * it does not make anything bound to this 100-pixel value,
-		 * because in any case the tree on the left is taller and
-		 * that's what really determines the height.
-		 */
-		gd.heightHint = 100;
 		table.setLayoutData(gd);
 		table.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event e) {
@@ -118,8 +110,8 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 			}
 		});
 		TableLayout tl = new TableLayout();
-		tl.addColumnData(new ColumnWeightData(15));
-		tl.addColumnData(new ColumnWeightData(1, 100));
+		tl.addColumnData(new ColumnWeightData(70, 100));
+		tl.addColumnData(new ColumnWeightData(30));
 		table.setLayout(tl);
 		
 		Composite buttons = new Composite(parent, SWT.NULL);
