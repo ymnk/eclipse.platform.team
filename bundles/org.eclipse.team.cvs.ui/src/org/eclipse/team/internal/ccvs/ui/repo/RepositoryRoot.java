@@ -39,7 +39,7 @@ public class RepositoryRoot extends PlatformObject {
 	// Map of String (module name) -> ICVSRemoteFolder (that is a defined module)
 	Map modulesCache;
 	Object modulesCacheLock = new Object();
-	// Lis of date tags
+	// List of date tags
 	List dateTags = new ArrayList();
 	
 	public static class TagCacheEntry {
@@ -333,25 +333,33 @@ public class RepositoryRoot extends PlatformObject {
 	 * Fetches tags from auto-refresh files.
 	 */
 	public CVSTag[] refreshDefinedTags(ICVSFolder folder, boolean recurse, IProgressMonitor monitor) throws TeamException {
-	    monitor.beginTask(null, 100);
-	    CVSTag[] tags = null;
-	    if (!recurse) {
-	        // Only try the auto-refresh file(s) if we are not recursing into sub-folders
-	        tags = fetchTagsUsingAutoRefreshFiles(folder, Policy.subMonitorFor(monitor, 50));
-	    }
-        if (tags == null || tags.length == 0) {
-            // There we're no tags found on the auto-refresh files or we we're aksed to go deep
-            // Try using the log command
-            tags = fetchTagsUsingLog(folder, recurse, Policy.subMonitorFor(monitor, 50));
-        }
+	    CVSTag[] tags = fetchTags(folder, recurse, monitor);
 		if (tags != null && tags.length > 0) {
 		    String remotePath = getRemotePathFor(folder);
 			addTags(remotePath, tags);
 		}
-		monitor.done();
 		return tags;
 	}
 	
+    /* package */ CVSTag[] fetchTags(ICVSFolder folder, boolean recurse, IProgressMonitor monitor) throws TeamException, CVSException {
+        monitor.beginTask(null, 100);
+        try {
+		    CVSTag[] tags = null;
+		    if (!recurse) {
+		        // Only try the auto-refresh file(s) if we are not recursing into sub-folders
+		        tags = fetchTagsUsingAutoRefreshFiles(folder, Policy.subMonitorFor(monitor, 50));
+		    }
+	        if (tags == null || tags.length == 0) {
+	            // There we're no tags found on the auto-refresh files or we we're aksed to go deep
+	            // Try using the log command
+	            tags = fetchTagsUsingLog(folder, recurse, Policy.subMonitorFor(monitor, 50));
+	        }
+	        return tags;
+        } finally {
+            monitor.done();
+        }
+    }
+
     private CVSTag[] fetchTagsUsingLog(ICVSFolder folder, final boolean recurse, IProgressMonitor monitor) throws CVSException {
         LogEntryCache logEntries = new LogEntryCache();
         RemoteLogOperation operation = new RemoteLogOperation(null, new ICVSRemoteResource[] { asRemoteResource(folder) }, null, null, logEntries) {
