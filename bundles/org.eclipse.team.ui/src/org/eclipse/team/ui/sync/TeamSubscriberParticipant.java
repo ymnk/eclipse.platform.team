@@ -3,6 +3,7 @@ package org.eclipse.team.ui.sync;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
@@ -123,7 +124,7 @@ public class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 		}
 	}
 	
-	public void setActionsBars(IActionBars actionBars) {		
+	public void setActionsBars(IActionBars actionBars, IToolBarManager detailsToolbar) {		
 	}
 	
 	/* (non-Javadoc)
@@ -132,8 +133,7 @@ public class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 	protected void dispose() {
 		super.dispose();
 		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
-		refreshJob.removeSubscriberInput(input);
-		
+		refreshJob.removeSubscriberInput(input);		
 		input.dispose();
 	}
 	

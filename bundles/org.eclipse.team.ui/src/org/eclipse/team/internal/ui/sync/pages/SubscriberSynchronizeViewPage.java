@@ -19,25 +19,25 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
-import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
-import org.eclipse.team.internal.ui.sync.sets.*;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.*;
 import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 import org.eclipse.team.ui.sync.actions.*;
+import org.eclipse.team.ui.sync.actions.workingsets.WorkingSetDropDownAction;
 import org.eclipse.team.ui.sync.actions.workingsets.WorkingSetFilterActionGroup;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
-public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSetChangedListener, IPropertyChangeListener {
+public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IPropertyChangeListener {
 	// The viewer that is shown in the view. Currently this can be either a table or tree viewer.
 	private StructuredViewer viewer;
 	
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
 	private Composite composite = null;
-	private StatisticsPanel statsPanel;
+	private TextToolbarManager tbMgr;
 	
 	// Viewer type constants
 	private int layout;
@@ -67,11 +67,12 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	private Action toggleLayoutTable;
 	private RefactorActionGroup refactorActions;
 	private SyncViewerShowPreferencesAction showPreferences;
-	private WorkingSetFilterActionGroup workingSetGroup;
 	private RefreshAction refreshAction;
 	private ComparisonCriteriaActionGroup comparisonCriteria;
 	private Action collapseAll;
 	private Action expandAll;
+
+	private WorkingSetDropDownAction workingSetGroup;
 	
 	/**
 	 * Constructs a new SynchronizeView.
@@ -95,6 +96,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		gridLayout.makeColumnsEqualWidth= false;
 		gridLayout.marginWidth= 0;
 		gridLayout.marginHeight = 0;
+		gridLayout.verticalSpacing = 0;
 		composite.setLayout(gridLayout);
 		
 		// Create the busy cursor with no control to start with (createViewer will set it)
@@ -110,9 +112,9 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		
 		toggleLayoutTable = new ToggleViewLayoutAction(page, TeamSubscriberParticipant.TABLE_LAYOUT);
 		toggleLayoutTree = new ToggleViewLayoutAction(page, TeamSubscriberParticipant.TREE_LAYOUT);
+		workingSetGroup = new WorkingSetDropDownAction(getSite().getShell(), this, view, page);
 		
 		showPreferences = new SyncViewerShowPreferencesAction(view.getSite().getShell());
-		workingSetGroup = new WorkingSetFilterActionGroup(getSite().getShell(), this, view, page);
 		
 		refreshAction = new RefreshAction(getSite().getPage(), input, true /* refresh all */);	
 		
@@ -138,9 +140,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		};
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
 		
-		updateStatusPanel();
-	
-		input.registerListeners(this);
 		page.addPropertyChangeListener(this);
 		updateMode(page.getMode());		
 	}
@@ -199,12 +198,12 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 			disposeChildren(composite);
 			createViewer(composite);
 			composite.layout();
+			setActionBars(null);
 			if(oldSelection == null || oldSelection.size() == 0) {
 				//gotoDifference(INavigableControl.NEXT);
 			} else {
 				viewer.setSelection(oldSelection, true);
 			}
-			updateStatusPanel();
 		}
 	}
 	
@@ -230,7 +229,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	}	
 	
 	protected void createViewer(Composite parent) {				
-		statsPanel = new StatisticsPanel(parent);
+		tbMgr = new TextToolbarManager(SWT.FLAT | SWT.HORIZONTAL);
+		tbMgr.createControl(parent);
 		switch(layout) {
 			case TeamSubscriberParticipant.TREE_LAYOUT:
 				createTreeViewerPartControl(parent); 
@@ -343,17 +343,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 			}
 		}		
 	}
-	
-	protected void updateStatusPanel() {
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				SubscriberInput input = getInput();
-				if(statsPanel != null) {	
-					statsPanel.update(new ViewStatusInformation(input));
-				}
-			}					 	
-		});
-	}
 		
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPage#setFocus()
@@ -371,13 +360,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
 	 */
 	public void dispose() {
-		// cancel and wait 
-		RefreshSubscriberInputJob job = TeamUIPlugin.getPlugin().getRefreshJob();
-		job.removeSubscriberInput(input);
-		
-		// Cleanup the subscriber inputs
-		input.deregisterListeners(this);
-		input.dispose();
 		busyCursor.dispose();
 	}
 	
@@ -452,13 +434,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	private IResource getResource(Object object) {
 		return (IResource)TeamAction.getAdapter(object, IResource.class);
 	}
-	
-	/**
-	 * Update the title when either the subscriber or filter sync set changes.
-	 */
-	public void syncSetChanged(SyncSetChangedEvent event) {
-		updateStatusPanel();
-	}
 
 	public void selectAll() {
 		if (getLayout() == TeamSubscriberParticipant.TABLE_LAYOUT) {
@@ -487,27 +462,31 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPage#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(final IActionBars actionBars) {		
-		IToolBarManager manager = actionBars.getToolBarManager();
-		manager.add(comparisonCriteria);
-		manager.add(refreshAction);
-		manager.add(new Separator(TeamSubscriberParticipant.MB_MODESGROUP));		
-		manager.add(gotoNext);
-		manager.add(gotoPrevious);
-		manager.add(collapseAll);
-		
-		// drop down menu
-		IMenuManager menu = actionBars.getMenuManager();
-		workingSetGroup.fillActionBars(actionBars);
-		MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
-		layoutMenu.add(toggleLayoutTable);
-		layoutMenu.add(toggleLayoutTree);
-		menu.add(layoutMenu);
-		menu.add(new Separator());
-		menu.add(showPreferences);
+	public void setActionBars(final IActionBars actionBars) {
+		if(actionBars != null) {
+			IToolBarManager manager = actionBars.getToolBarManager();
+			manager.add(comparisonCriteria);
+			manager.add(refreshAction);
+			manager.add(new Separator(TeamSubscriberParticipant.MB_MODESGROUP));		
+			manager.add(gotoNext);
+			manager.add(gotoPrevious);
+			manager.add(collapseAll);
+			
+			// drop down menu
+			IMenuManager menu = actionBars.getMenuManager();
+			MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
+			layoutMenu.add(toggleLayoutTable);
+			layoutMenu.add(toggleLayoutTree);
+			menu.add(layoutMenu);
+			menu.add(new Separator());
+			menu.add(showPreferences);
+		}
 		
 		// allow overrides
-		page.setActionsBars(actionBars);
+		tbMgr.add(workingSetGroup);
+		tbMgr.add(new Separator());
+		page.setActionsBars(actionBars, tbMgr);
+		tbMgr.update(true);
 	}
 
 	/* (non-Javadoc)
@@ -534,9 +513,9 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		} else if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
 			Object newValue = event.getNewValue();
 			if (newValue instanceof IWorkingSet) {	
-				updateWorkingSet((IWorkingSet)newValue);
+				page.setWorkingSet((IWorkingSet)newValue);
 			} else if (newValue == null) {
-				updateWorkingSet(null);
+				page.setWorkingSet(null);
 			}
 		}
 	}

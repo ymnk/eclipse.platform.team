@@ -22,7 +22,7 @@ import org.eclipse.team.ui.sync.actions.RemoveSynchronizeViewPageAction;
 import org.eclipse.ui.IActionBars;
 
 public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
-
+	
 	private RemoveSynchronizeViewPageAction removeAction;
 	private DirectionFilterActionGroup modes;
 	private Action updateAdapter;
@@ -31,7 +31,7 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 		super(subscriber, name, imageDescriptor);
 		makeActions();
 	}
-		
+	
 	private void makeActions() {
 		removeAction = new RemoveSynchronizeViewPageAction(this);
 		modes = new DirectionFilterActionGroup(this, INCOMING_MODE | CONFLICTING_MODE | BOTH_MODE);
@@ -39,17 +39,20 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 		Utilities.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle());
 		setMode(INCOMING_MODE);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.SubscriberPage#setActionsBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionsBars(IActionBars actionBars) {		
-		super.setActionsBars(actionBars);
-		IToolBarManager toolbar = actionBars.getToolBarManager();
-		toolbar.add(new Separator());
-		modes.fillActionBars(actionBars, null);
-		toolbar.add(new Separator());
-		actionBars.getToolBarManager().add(updateAdapter);
-		actionBars.getToolBarManager().add(removeAction);		
+	public void setActionsBars(IActionBars actionBars, IToolBarManager detailsToolbar) {		
+		if(actionBars != null) {
+			IToolBarManager toolbar = actionBars.getToolBarManager();
+			toolbar.add(new Separator());
+			toolbar.add(new Separator());
+			actionBars.getToolBarManager().add(updateAdapter);
+			actionBars.getToolBarManager().add(removeAction);
+		}
+		if(detailsToolbar != null) {
+			modes.fillToolBar(detailsToolbar);
+		}
 	}
 }

@@ -56,6 +56,8 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 	private ISynchronizeParticipant page;
 
 	private ISynchronizeView view;
+	
+	private boolean isMenuDynamic = false;
 
 	/**
 	 * Creates a new instance of the receiver
@@ -118,14 +120,17 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 		menuManager.add(editWorkingSetAction);
 		menuManager.add(new Separator());
 		menuManager.add(new Separator(SEPARATOR_ID));
-		
-		menuListener = new IMenuListener() {
-			public void menuAboutToShow(IMenuManager manager) {
-				removePreviousMruWorkingSetActions(manager);
-				addMruWorkingSetActions(manager);
-			}
-		};
-		menuManager.addMenuListener(menuListener);
+		if(isMenuDynamic) {
+			addMruWorkingSetActions(menuManager);
+		} else {
+			menuListener = new IMenuListener() {
+				public void menuAboutToShow(IMenuManager manager) {
+					removePreviousMruWorkingSetActions(manager);
+					addMruWorkingSetActions(manager);
+				}
+			};
+			menuManager.addMenuListener(menuListener);
+		}
 	};
 	/**
 	 * Returns the working set which is currently selected.
@@ -169,6 +174,8 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 		}
 	}
 	
-
+	public void setMenuDynamic(boolean isMenuDynamic) {
+		this.isMenuDynamic = isMenuDynamic;
+	}	
 }
 

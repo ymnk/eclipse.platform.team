@@ -16,9 +16,12 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.sync.sets.*;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionGroup;
 
 /**
@@ -26,7 +29,7 @@ import org.eclipse.ui.actions.ActionGroup;
  * The actions are presented to the user as toolbar buttons where only one
  * button is active at a time
  */
-public class DirectionFilterActionGroup extends ActionGroup implements IPropertyChangeListener {
+public class DirectionFilterActionGroup extends ActionGroup implements IPropertyChangeListener, ISyncSetChangedListener {
 	
 	// An array of the selection actions for the modes (indexed by mode constant)	
 	private List actions = new ArrayList(3);
@@ -71,7 +74,9 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 		this.page = page;
 		createActions();
 		page.addPropertyChangeListener(this);
+		page.getInput().registerListeners(this);
 		checkMode(page.getMode());
+		updateStats();
 	}
 	
 	/**
@@ -116,6 +121,16 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
+	 */
+	public void fillToolBar(IToolBarManager toolBar) {
+		for (Iterator it = actions.iterator(); it.hasNext();) {
+			DirectionFilterAction action = (DirectionFilterAction) it.next();
+			toolBar.add(action);
+		}
+	}
+	
 	private void checkMode(int mode) {
 		for (Iterator it = actions.iterator(); it.hasNext();) {
 			DirectionFilterAction action = (DirectionFilterAction)it.next();
@@ -143,5 +158,43 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	public void dispose() {
 		// TODO Auto-generated method stub
 		super.dispose();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
+	 */
+	public void syncSetChanged(SyncSetChangedEvent event) {
+		updateStats();		
+	}
+	
+	private void updateStats() {
+		SubscriberInput input = page.getInput();
+		SyncInfoStatistics workspaceSetStats = input.getSubscriberSyncSet().getStatistics();
+		SyncInfoStatistics workingSetSetStats = input.getWorkingSetSyncSet().getStatistics();
+		
+		int workspaceConflicting = (int)workspaceSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
+		int workspaceOutgoing = (int)workspaceSetStats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
+		int workspaceIncoming = (int)workspaceSetStats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
+		int workingSetConflicting = (int)workingSetSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
+		int workingSetOutgoing = (int)workingSetSetStats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
+		int workingSetIncoming = (int)workingSetSetStats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
+		
+		if(bothMode != null)
+		bothMode.setText(new Integer(input.getWorkingSetSyncSet().size()).toString());
+		if(input.getWorkingSet() != null) {
+			if(conflictsMode != null)
+				conflictsMode.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetConflicting).toString(), new Integer(workspaceConflicting).toString())); //$NON-NLS-1$
+			if(incomingMode != null)
+				incomingMode.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString())); //$NON-NLS-1$
+			if(outgoingMode != null)
+				outgoingMode.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetOutgoing).toString(), new Integer(workspaceOutgoing).toString())); //$NON-NLS-1$
+		} else {
+			if(conflictsMode != null)
+				conflictsMode.setText(new Integer(workspaceConflicting).toString()); //$NON-NLS-1$
+			if(incomingMode != null)
+				incomingMode.setText(new Integer(workspaceIncoming).toString()); //$NON-NLS-1$
+			if(outgoingMode != null)
+				outgoingMode.setText(new Integer(workspaceOutgoing).toString()); //$NON-NLS-1$
+		}								
 	}
 }
