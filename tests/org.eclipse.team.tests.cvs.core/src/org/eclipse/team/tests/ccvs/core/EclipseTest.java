@@ -341,10 +341,16 @@ public class EclipseTest extends ResourceTest {
 		}
 	}
 	public void makeBranch(IResource[] resources, CVSTag version, CVSTag branch, boolean update) throws CVSException {
-		BranchOperation op = new BranchOperation(null, asResourceMappers(resources, IResource.DEPTH_INFINITE));
-		op.setTags(version, branch, update);
-		executeHeadless(op);
+		ResourceMapping[] mappings = asResourceMappers(resources, IResource.DEPTH_INFINITE);
+        branch(mappings, version, branch, update);
 	}
+
+    protected void branch(ResourceMapping[] mappings, CVSTag version, CVSTag branch, boolean update) throws CVSException {
+        BranchOperation op = new BranchOperation(null, mappings);
+        op.setTags(version, branch, update);
+        executeHeadless(op);
+    }
+    
 	/**
 	 * Return a collection of resources defined by hierarchy. The resources
 	 * are added to the workspace and to the file system. If the manage flag is true, the

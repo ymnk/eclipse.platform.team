@@ -243,14 +243,15 @@ public abstract class Command extends Request {
 
 	/**
 	 * Send an array of Resources.
+	 * @param localOptions 
 	 * 
 	 * @see Command#sendFileStructure(ICVSResource,IProgressMonitor,boolean,boolean,boolean)
 	 */
 	protected void sendFileStructure(Session session, ICVSResource[] resources,
-		boolean emptyFolders, IProgressMonitor monitor) throws CVSException {
+		LocalOption[] localOptions, boolean emptyFolders, IProgressMonitor monitor) throws CVSException {
 		checkResourcesManaged(resources);
 		
-		new FileStructureVisitor(session, emptyFolders, true).visit(session, resources, monitor);
+		new FileStructureVisitor(session, localOptions, emptyFolders, true).visit(session, resources, monitor);
 	}
 
 	/**

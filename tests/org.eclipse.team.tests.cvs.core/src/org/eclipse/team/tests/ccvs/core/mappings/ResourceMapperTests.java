@@ -25,6 +25,7 @@ import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTree;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTreeBuilder;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.operations.WorkspaceResourceMapper;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
@@ -78,9 +79,52 @@ public class ResourceMapperTests extends EclipseTest {
         assertTagged(mapping, tag);
     }
     
+    /**
+     * Branch the resources in the given mapping.
+     * @throws CoreException 
+     * @throws IOException 
+     */
+    protected void branch(ResourceMapping mapping, CVSTag branch) throws CoreException, IOException {
+        CVSTag version = new CVSTag("Root_" + branch.getName(), CVSTag.VERSION);
+        branch(new ResourceMapping[] { mapping }, version, branch, true /* update */);
+        assertTagged(mapping, version);
+        assertBranched(mapping, branch);
+    }
+    
+    /*
+     * Need to ensure that only the resources contained in the mapping
+     * have the branch tag associated with them.
+     */
+    private void assertBranched(ResourceMapping mapping, CVSTag branch) throws CoreException, IOException {
+        // First, make sure the proper resources are tagged in the repo
+        assertTagged(mapping, branch);
+        // Now make sure the proper local files are tagged
+        final Map remotes = getTaggedRemoteFilesByPath(mapping, branch);
+        final Map locals = getTaggedLocalFilesByPath(mapping, branch);
+        for (Iterator iter = remotes.keySet().iterator(); iter.hasNext();) {
+            String key = (String)iter.next();
+            ICVSRemoteFile remote = (ICVSRemoteFile)remotes.get(key);
+            ICVSFile local = (ICVSFile)locals.get(key);
+            assertNotNull("Remotely tagged resource was not tagged locally: " + remote.getRepositoryRelativePath(), local);
+            assertEquals(local.getIResource().getParent().getFullPath(), remote, local, false, false /* include tags */);
+            assertEquals("Remotely tagged resource was not tagged locally: " + remote.getRepositoryRelativePath(), branch, local.getSyncInfo().getTag());
+            locals.remove(key);
+            iter.remove();
+        }
+        // The remote map should be empty after traversal
+        for (Iterator iter = remotes.keySet().iterator(); iter.hasNext();) {
+            String path = (String) iter.next();
+            fail("Remote file " + path + " was tagged remotely but not locally.");
+        }
+        // The local map should be empty after traversal
+        for (Iterator iter = locals.keySet().iterator(); iter.hasNext();) {
+            String path = (String) iter.next();
+            fail("Local file " + path + " was tagged locally but not remotely.");
+        }
+    }
+
     private void assertTagged(ResourceMapping mapping, final CVSTag tag) throws CoreException {
-        IProject[] projects = mapping.getProjects();
-        final Map tagged = getTaggedRemoteFilesByPath(projects, tag);
+        final Map tagged = getTaggedRemoteFilesByPath(mapping, tag);
         // Visit all the resources in the traversal and ensure that they are tagged
         visit(mapping, null, new IResourceVisitor() {
             public boolean visit(IResource resource) throws CoreException {
@@ -99,7 +143,29 @@ public class ResourceMapperTests extends EclipseTest {
         }
     }
 
-    private Map getTaggedRemoteFilesByPath(IProject[] projects, final CVSTag tag) throws CVSException {
+    private Map getTaggedLocalFilesByPath(ResourceMapping mapping, final CVSTag branch) throws CoreException {
+        final Map tagged = new HashMap();
+        IProject[] projects = mapping.getProjects();
+        for (int i = 0; i < projects.length; i++) {
+            IProject project = projects[i];
+            project.accept(new IResourceVisitor() {
+                public boolean visit(IResource resource) throws CoreException {
+                    if (resource.getType() == IResource.FILE) {
+                        ICVSFile file = (ICVSFile)getCVSResource(resource);
+                        ResourceSyncInfo info = file.getSyncInfo();
+                        if (info != null && info.getTag() != null && info.getTag().equals(branch)) {
+                            tagged.put(file.getRepositoryRelativePath(), file);
+                        }
+                    }
+                    return true;
+                }
+            });
+        }
+        return tagged;
+    }
+    
+    private Map getTaggedRemoteFilesByPath(ResourceMapping mapping, final CVSTag tag) throws CVSException {
+        IProject[] projects = mapping.getProjects();
         ICVSResource[] remotes = getRemoteTrees(projects, tag);
         final Map tagged = getFilesByPath(remotes);
         return tagged;
@@ -195,6 +261,8 @@ public class ResourceMapperTests extends EclipseTest {
      * Assert that the state of the resources in the set have not changed
      */
     private void assertUnchanged(SyncInfoTree set) throws TeamException {
+        //TODO: Need to refresh the subscriber since flush of remote state is deep
+        CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().refresh(set.getResources(), IResource.DEPTH_ZERO, DEFAULT_MONITOR);
         SyncInfo[] infos = set.getSyncInfos();
         for (int i = 0; i < infos.length; i++) {
             SyncInfo info = infos[i];
@@ -279,6 +347,8 @@ public class ResourceMapperTests extends EclipseTest {
         // Update the specific file
         update(asResourceMapping(new IResource[] { project.getFile("folder1/a.txt") }, IResource.DEPTH_ONE), null);
         
+        // Update everything
+        update(asResourceMapping(new IResource[] { project }, IResource.DEPTH_INFINITE), null);
         assertEquals(project, copy);
     }
 
@@ -298,9 +368,8 @@ public class ResourceMapperTests extends EclipseTest {
         // Now commit the file specifically
         commit(asResourceMapping(new IResource[] { copy.getFile("folder1/a.txt") }, IResource.DEPTH_ZERO), "A commit message");
         
-        // Update everything
-        update(asResourceMapping(new IResource[] { project }, IResource.DEPTH_INFINITE), null);
-        assertEquals(project, copy);
+        // Now commit everything
+        commit(asResourceMapping(new IResource[] { copy }, IResource.DEPTH_INFINITE), "A commit message");
     }
     
     public void testTag() throws Exception {
@@ -309,6 +378,18 @@ public class ResourceMapperTests extends EclipseTest {
 
         tag(asResourceMapping(new IResource[] { project }, IResource.DEPTH_ONE), new CVSTag("v1", CVSTag.VERSION));
         tag(asResourceMapping(new IResource[] { project.getFile("folder1/a.txt") }, IResource.DEPTH_ZERO), new CVSTag("v2", CVSTag.VERSION));
+    }
+    
+    public void testBranch() throws Exception {
+        // Create a test project, import it into cvs and check it out
+        IProject project = createProject("testBranch", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt" });
+
+        branch(asResourceMapping(new IResource[] { project }, IResource.DEPTH_ONE), new CVSTag("b1", CVSTag.BRANCH));
+        branch(asResourceMapping(new IResource[] { project.getFile("folder1/a.txt") }, IResource.DEPTH_ZERO), new CVSTag("b2", CVSTag.BRANCH));
+    }
+    
+    public void testAdd() {
+        
     }
     
 }

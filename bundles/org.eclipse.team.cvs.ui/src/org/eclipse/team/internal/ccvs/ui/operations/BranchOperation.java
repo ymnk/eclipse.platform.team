@@ -214,7 +214,6 @@ public class BranchOperation extends RepositoryProviderOperation {
 								if (info != null) {
 									monitor.subTask(Policy.bind("CVSTeamProvider.updatingFolder", info.getRepository())); //$NON-NLS-1$
 									folder.setFolderSyncInfo(new FolderSyncInfo(info.getRepository(), info.getRoot(), tag, info.getIsStatic()));
-									folder.acceptChildren(this);
 								}
 							}
 						}, recurse);

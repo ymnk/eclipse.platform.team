@@ -209,7 +209,7 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
             if (deepResources.length > 0)
                 execute(provider, deepResources, true /* recurse */, Policy.subMonitorFor(monitor, 100));
             if (shallowResources.length > 0)
-                execute(provider, deepResources, false /* recurse */, Policy.subMonitorFor(monitor, 100));
+                execute(provider, shallowResources, false /* recurse */, Policy.subMonitorFor(monitor, 100));
             if (nontraversedFolders.length > 0) {
                 handleNontraversedFolders(provider, nontraversedFolders, Policy.subMonitorFor(monitor, 10));
             }

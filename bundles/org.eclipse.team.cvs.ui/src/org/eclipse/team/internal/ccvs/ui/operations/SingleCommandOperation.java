@@ -39,7 +39,7 @@ public abstract class SingleCommandOperation extends RepositoryProviderOperation
 		Session session = new Session(getRemoteLocation(provider), getLocalRoot(provider), true /* output to console */);
 		session.open(Policy.subMonitorFor(monitor, 10), isServerModificationOperation());
 		try {
-			IStatus status = executeCommand(session, provider, getCVSArguments(resources), true, Policy.subMonitorFor(monitor, 90));
+			IStatus status = executeCommand(session, provider, getCVSArguments(resources), recurse, Policy.subMonitorFor(monitor, 90));
 			if (isReportableError(status)) {
 			    throw new CVSException(status);
             }
