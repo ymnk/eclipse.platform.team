@@ -44,7 +44,7 @@ public class NatureToPropertyAction extends TeamAction {
 					monitor.done();
 				}
 			}
-		}, "Convert Nature", this.PROGRESS_DIALOG);
+		}, Policy.bind("NatureToPropertyAction.label"), this.PROGRESS_DIALOG);  //$NON-NLS-1$
 	}
 
 }
