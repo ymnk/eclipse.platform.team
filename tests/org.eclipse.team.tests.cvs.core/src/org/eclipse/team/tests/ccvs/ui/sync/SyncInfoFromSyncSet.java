@@ -19,11 +19,15 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSynchronizeParticipant;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSynchronizeParticipant;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeManager;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 
@@ -32,7 +36,8 @@ import org.eclipse.team.ui.synchronize.ISynchronizeView;
  */
 public class SyncInfoFromSyncSet extends SyncInfoSource {
 
-	public SyncInfoFromSyncSet() {		
+	public SyncInfoFromSyncSet() {
+		TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
 	}
 	
 	public void waitForEventNotification(SubscriberInput input) {
@@ -67,12 +72,16 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 	
 	private SubscriberInput getInput(TeamSubscriber subscriber) {
 		// show the sync view
-		ISynchronizeView syncView = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
-		ISynchronizeParticipant participant = syncView.getParticipant();
-		if(participant instanceof CVSSynchronizeParticipant) {
-			SubscriberInput input = ((CVSSynchronizeParticipant)participant).getSubscriberInput();
-			waitForEventNotification(input);
-			return input;
+		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		for (int i = 0; i < participants.length; i++) {
+			ISynchronizeParticipant participant = participants[i];
+			if(participant.getId().equals(subscriber.getId())) {
+				if(participant instanceof CVSSynchronizeParticipant) {
+					SubscriberInput input = ((CVSSynchronizeParticipant)participant).getSubscriberInput();
+					waitForEventNotification(input);
+					return input;
+				}
+			}
 		}
 		return null;
 	}
@@ -86,6 +95,34 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 		SyncSet set = input.getFilteredSyncSet();
 		if (set.getOutOfSyncDescendants(project).length != 0) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#createMergeSubscriber(org.eclipse.core.resources.IProject, org.eclipse.team.internal.ccvs.core.CVSTag, org.eclipse.team.internal.ccvs.core.CVSTag)
+	 */
+	public CVSMergeSubscriber createMergeSubscriber(IProject project, CVSTag root, CVSTag branch) {
+		CVSMergeSubscriber mergeSubscriber = super.createMergeSubscriber(project, root, branch);
+		ISynchronizeManager synchronizeManager = TeamUI.getSynchronizeManager();
+		ISynchronizeParticipant participant = new CVSMergeSynchronizeParticipant(mergeSubscriber);
+		synchronizeManager.addSynchronizeParticipants(
+				new ISynchronizeParticipant[] {participant});		
+		ISynchronizeView view = synchronizeManager.showSynchronizeViewInActivePage(null);
+		view.display(participant);
+		return mergeSubscriber;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#tearDown()
+	 */
+	public void tearDown() {
+		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		for (int i = 0; i < participants.length; i++) {
+			ISynchronizeParticipant participant = participants[i];
+			if(participant.getId().getQualifier().equals(CVSMergeSubscriber.QUALIFIED_NAME)) {
+				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+			}
 		}
 	}
 }
