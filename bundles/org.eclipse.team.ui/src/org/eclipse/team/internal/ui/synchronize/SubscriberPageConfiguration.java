@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.subscribers.WorkingSetFilteredSyncInfoCollector;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
@@ -48,15 +49,15 @@ public class SubscriberPageConfiguration extends SynchronizePageConfiguration im
 	 */
 	private WorkingSetFilteredSyncInfoCollector collector;
 	
-	public SubscriberPageConfiguration(SubscriberParticipant participant) {
+	public SubscriberPageConfiguration(SubscriberParticipant participant, SubscriberSyncInfoCollector subscriberCollector) {
 		super(participant);
 		addActionContribution(new SubscriberActionContribution());
-		initializeCollector();
+		initializeCollector(subscriberCollector);
 	}
 	
-	private void initializeCollector() {
+	private void initializeCollector(SubscriberSyncInfoCollector subscriberCollector) {
 		SubscriberParticipant participant = (SubscriberParticipant)getParticipant();
-		collector = new WorkingSetFilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector(), participant.getSubscriber().roots());
+		collector = new WorkingSetFilteredSyncInfoCollector(subscriberCollector, participant.getSubscriber().roots());
 		collector.reset();
 		setProperty(P_SYNC_INFO_SET, collector.getSyncInfoTree());
 		setProperty(P_WORKING_SET_SYNC_INFO_SET, collector.getWorkingSetSyncInfoSet());

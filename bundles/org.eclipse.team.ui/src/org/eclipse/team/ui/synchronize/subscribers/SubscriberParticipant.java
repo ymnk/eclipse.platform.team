@@ -92,7 +92,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPageConfiguration()
 	 */
 	public final ISynchronizePageConfiguration createPageConfiguration() {
-		SubscriberPageConfiguration configuration = new SubscriberPageConfiguration(this);
+		SubscriberPageConfiguration configuration = new SubscriberPageConfiguration(this, getSubscriberSyncInfoCollector());
 		initializeConfiguration(configuration);
 		return configuration;
 	}

@@ -22,10 +22,9 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.synchronize.actions.SubscriberParticipantActionContribution;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
 import org.eclipse.ui.*;
 
