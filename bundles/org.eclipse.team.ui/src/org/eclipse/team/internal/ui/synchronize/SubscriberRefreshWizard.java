@@ -31,7 +31,6 @@ public class SubscriberRefreshWizard extends Wizard {
 
 	private SubscriberParticipant participant;
 	private GlobalRefreshResourceSelectionPage selectionPage;
-	private GlobalRefreshSchedulePage schedulePage;
 	private int scopeHint;
 
 	public SubscriberRefreshWizard(SubscriberParticipant participant) {
@@ -51,8 +50,6 @@ public class SubscriberRefreshWizard extends Wizard {
 	public void addPages() {
 		selectionPage = new GlobalRefreshResourceSelectionPage(participant, scopeHint);
 		addPage(selectionPage);
-		schedulePage = new GlobalRefreshSchedulePage(participant);
-		addPage(schedulePage);
 	}
 	
 	/* (non-Javadoc)
@@ -60,7 +57,6 @@ public class SubscriberRefreshWizard extends Wizard {
 	 */
 	public boolean performFinish() {
 		IResource[] resources = selectionPage.getCheckedResources();
-		schedulePage.performFinish();
 		if(resources != null && resources.length > 0) {
 			// We don't know in which site to show progress because a participant could actually be shown in multiple sites.
 			participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetails", participant.getName()), null); //$NON-NLS-1$ //$NON-NLS-2$
