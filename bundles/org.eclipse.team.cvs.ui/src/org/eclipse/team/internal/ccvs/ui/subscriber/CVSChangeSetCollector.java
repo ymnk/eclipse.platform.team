@@ -165,7 +165,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
          * @see org.eclipse.team.core.subscribers.ChangeSet#getComment()
          */
         public String getComment() {
-            return getComment();
+            return entry.getComment();
         }
 	}
 	
@@ -584,7 +584,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
         ChangeSet[] sets = getSets();
         for (int i = 0; i < sets.length; i++) {
             ChangeSet set = sets[i];
-            if (set.getComment() == logEntry.getComment()) {
+            if (set.getComment().equals(logEntry.getComment())) {
                 return set;
             }
         }

@@ -62,6 +62,9 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
 		configuration.addPropertyChangeListener(this);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, COMMIT_SET_GROUP);
 		configuration.addActionContribution(new CommitSetActionContribution());
+		if (configuration.getParticipant().getChangeSetCapability().supportsActiveChangeSets()) {
+		    configuration.addLabelDecorator(new ChangeSetLabelDecorator(configuration));
+		}
 	}
 
 	/* (non-Javadoc)
