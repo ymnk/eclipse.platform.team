@@ -57,7 +57,7 @@ public class HierarchicalModelManager extends SynchronizeModelManager {
 		}
 	}
 
-	private SyncInfoTree getSyncInfoSet() {
+	protected SyncInfoTree getSyncInfoSet() {
 		return (SyncInfoTree)getConfiguration().getProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET);
 	}
 	

@@ -48,7 +48,7 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      * Add the provider to the list of providers.
      * @param provider the provider to be added
      */
-    protected void addProvider(AbstractSynchronizeModelProvider provider) {
+    protected void addProvider(ISynchronizeModelProvider provider) {
         providers.add(provider);
     }
     
@@ -297,4 +297,20 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
             elementToProvider.clear();
         }
     }
+    
+    /**
+     * Helper method for creating a provider for the given id.
+     * @param parent the root node for the new provider
+     * @param id the id of the providers descriptor
+     * @return the new provider
+     */
+	protected ISynchronizeModelProvider createModelProvider(ISynchronizeModelElement parent, String id) {
+		if (id.endsWith(FlatModelProvider.FlatModelProviderDescriptor.ID)) {
+		    return new FlatModelProvider(getConfiguration(), getSyncInfoSet());
+		} else if(id.endsWith(CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID)) {
+			return new CompressedFoldersModelProvider(this, parent, getConfiguration(), getSyncInfoSet());
+		} else {
+			return new HierarchicalModelProvider(this, parent, getConfiguration(), getSyncInfoSet());
+		}
+	}
 }

@@ -91,7 +91,7 @@ public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
     public CompressedFoldersModelProvider(
             AbstractSynchronizeModelProvider parentProvider,
             ISynchronizeModelElement modelRoot,
-            ISynchronizePageConfiguration configuration, SyncInfoTree set) {
+            ISynchronizePageConfiguration configuration, SyncInfoSet set) {
         super(parentProvider, modelRoot, configuration, set);
     }
     

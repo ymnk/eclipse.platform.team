@@ -74,6 +74,9 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	private CVSTag tag1;
 	private CVSTag tag2;
 	
+	// The id of the sub-provider
+	private final String id;
+	
 	private Set queuedAdditions = new HashSet(); // Set of SyncInfo
 	
 	private Map rootToProvider = new HashMap(); // Maps ISynchronizeModelElement -> AbstractSynchronizeModelProvider
@@ -451,10 +454,11 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	};
 	private static final ChangeLogModelProviderDescriptor descriptor = new ChangeLogModelProviderDescriptor();
 	
-	public ChangeLogModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set, CVSTag tag1, CVSTag tag2) {
+	public ChangeLogModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set, CVSTag tag1, CVSTag tag2, String id) {
 		super(configuration, set);
 		this.tag1 = tag1;
 		this.tag2 = tag2;
+        this.id = id;
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, SORT_ORDER_GROUP);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, COMMIT_SET_GROUP);
 		this.sortGroup = new ChangeLogActionGroup();
@@ -724,7 +728,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
      * Add the info to the commit set rooted at the given node.
      */
     private void addToCommitSetProvider(SyncInfo info, ISynchronizeModelElement parent) {
-        AbstractSynchronizeModelProvider provider = getProviderRootedAt(parent);
+        ISynchronizeModelProvider provider = getProviderRootedAt(parent);
         if (provider == null) {
             // TODO: Will not get event batching for new providers
             provider = createProviderRootedAt(parent);
@@ -732,8 +736,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
         provider.getSyncInfoSet().add(info);
     }
 
-    private AbstractSynchronizeModelProvider createProviderRootedAt(ISynchronizeModelElement parent) {
-        AbstractSynchronizeModelProvider provider = new CompressedFoldersModelProvider(this, parent, getConfiguration(), new SyncInfoTree());
+    private ISynchronizeModelProvider createProviderRootedAt(ISynchronizeModelElement parent) {
+        ISynchronizeModelProvider provider = createModelProvider(parent, id);
         addProvider(provider);
         rootToProvider.put(parent, provider);
         return provider;
