@@ -602,6 +602,11 @@ public class CVSLightweightDecorator
 	 */
 	public void dispose() {
 		super.dispose();
+		// TODO: Need to purge cached decorator information
+		// also, this is already long running and should have progress feedback
+		// Perhaps an addition method on the new interface is appropriate
+		// Or a background job that is canceled if the decorators are reactivated
+		// or the dirty state is re-queried
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(false /* disabled */);
 	}
 	

@@ -1,0 +1,166 @@
+The output from the resource spy before CVS was loaded was (23 CVS projects):
+
+Total resource count: 23,634
+	Team private: 1,661
+	Phantom: 493
+	Markers: 1,151
+	SyncInfo: 1,545
+Number of layers: 5
+Number of nodes: 23,726
+Number of non-identical strings: 23,709
+Total memory used by nodes: 4,783,190
+	Nodes and ResourceInfo: 2,251,428
+	Strings: 1,740,002
+	Markers: 554,406
+	Sync info: 196,742
+	Session properties: 40,612
+		class [C: 15,124
+		class java.lang.String: 5,488
+		class java.util.HashMap$Entry: 5,432
+		class [Ljava.lang.Object;: 3,576
+		class [Ljava.util.HashMap$Entry;: 3,552
+		class java.util.HashMap: 3,256
+		class org.eclipse.core.internal.utils.ObjectMap: 2,980
+		class java.util.HashMap$EntrySet: 1,184
+		class org.eclipse.core.runtime.QualifiedName: 20
+The top 20 equal but non-identical strings are:
+	Repository->1,661
+	Root->1,661
+	CVS->1,661
+	Entries->1,647
+	Test.java->340
+	A_out.java->317
+	A_in.java->317
+	A.java->185
+	about.html->125
+	package.html->114
+	.project->106
+	.classpath->81
+	org->75
+	eclipse->74
+	plugin.xml->70
+	plugin.properties->64
+	internal->59
+	Tag->52
+	messages.properties->51
+	X.java->46
+	
+------------------------------------------------------
+After a refresh (thus loading CVS and all sync info for 23 plugin projects)
+
+Total resource count: 23,643
+	Team private: 1,661
+	Phantom: 502
+	Markers: 1,151
+	SyncInfo: 1,586
+Number of layers: 15
+Number of nodes: 23,919
+Number of non-identical strings: 23,723
+Total memory used by nodes: 6,192,507
+	Nodes and ResourceInfo: 2,262,484
+	Strings: 1,740,930
+	Markers: 554,406
+	Sync info: 203,281
+	Session properties: 1,431,406
+		class [B: 562,258
+		class [Ljava.lang.Object;: 332,960
+		class [C: 227,960
+		class org.eclipse.core.internal.utils.ObjectMap: 188,900
+		class java.lang.String: 55,188
+		class org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo: 46,060
+		class java.util.HashMap$Entry: 5,432
+		class [Ljava.util.HashMap$Entry;: 3,552
+		class java.util.HashMap: 3,256
+		class org.eclipse.team.internal.ccvs.core.util.StringMatcher: 1,188
+		class java.util.HashMap$EntrySet: 1,184
+		class java.util.ArrayList: 1,152
+		class org.eclipse.team.internal.ccvs.core.resources.CVSEntryLineTag: 1,140
+		class [Ljava.lang.String;: 544
+		class org.eclipse.team.internal.ccvs.core.util.FileNameMatcher: 480
+		class org.eclipse.core.runtime.QualifiedName: 140
+		class java.lang.Object: 12
+The top 20 equal but non-identical strings are:
+	Repository->1,661
+	Root->1,661
+	CVS->1,661
+	Entries->1,647
+	Test.java->340
+	A_out.java->319
+	A_in.java->319
+	A.java->186
+	about.html->125
+	package.html->114
+	.project->106
+	.classpath->81
+	org->75
+	eclipse->74
+	plugin.xml->70
+	plugin.properties->64
+	internal->59
+	Tag->52
+	messages.properties->51
+	X.java->46
+
+-----------------------------------------------------
+After expanding several CVS projects (~10) completely
+
+Total resource count: 23,643
+	Team private: 1,661
+	Phantom: 502
+	Markers: 1,151
+	SyncInfo: 1,586
+Number of layers: 17
+Number of nodes: 23,921
+Number of non-identical strings: 23,723
+Total memory used by nodes: 7,503,411
+	Nodes and ResourceInfo: 2,262,532
+	Strings: 1,740,930
+	Markers: 554,406
+	Sync info: 203,281
+	Session properties: 2,742,262
+		class [C: 1,275,116
+		class [B: 562,354
+		class [Ljava.lang.Object;: 428,112
+		class java.lang.String: 222,628
+		class org.eclipse.core.internal.utils.ObjectMap: 188,900
+		class org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo: 46,060
+		class java.util.HashMap$Entry: 5,432
+		class [Ljava.util.HashMap$Entry;: 3,552
+		class java.util.HashMap: 3,256
+		class org.eclipse.team.internal.ccvs.core.util.StringMatcher: 1,188
+		class java.util.HashMap$EntrySet: 1,184
+		class java.util.ArrayList: 1,152
+		class org.eclipse.team.internal.ccvs.core.resources.CVSEntryLineTag: 1,140
+		class [Ljava.lang.String;: 544
+		class org.eclipse.team.internal.ccvs.core.util.FileNameMatcher: 480
+		class org.eclipse.swt.graphics.RGB: 384
+		class org.eclipse.core.runtime.QualifiedName: 220
+		class org.eclipse.swt.graphics.ImageData: 160
+		class java.net.URL: 120
+		class [Lorg.eclipse.swt.graphics.RGB;: 96
+		class org.eclipse.swt.graphics.PaletteData: 88
+		class org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator$CachedImageDescriptor: 40
+		class org.eclipse.jface.resource.URLImageDescriptor: 32
+		class org.eclipse.core.internal.boot.PlatformURLHandler: 12
+		class java.lang.Object: 12
+The top 20 equal but non-identical strings are:
+	Repository->1,661
+	Root->1,661
+	CVS->1,661
+	Entries->1,647
+	Test.java->340
+	A_out.java->319
+	A_in.java->319
+	A.java->186
+	about.html->125
+	package.html->114
+	.project->106
+	.classpath->81
+	org->75
+	eclipse->74
+	plugin.xml->70
+	plugin.properties->64
+	internal->59
+	Tag->52
+	messages.properties->51
+	X.java->46
