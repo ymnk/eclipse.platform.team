@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
@@ -57,7 +58,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 			ISynchronizeParticipant participant = participants[i];
 			if(participant instanceof TeamSubscriberParticipant) {
 				SubscriberInputOld input = ((SubscriberInputSyncInfoSet)((TeamSubscriberParticipant)participant).getSyncInfoSet()).getInput();
-				TeamSubscriber s = input.getSubscriber();
+				TeamSubscriber s = input.getTeamSubscriber();
 				if(s == subscriber) {
 					EclipseTest.waitForSubscriberInputHandling(input);
 					return input;

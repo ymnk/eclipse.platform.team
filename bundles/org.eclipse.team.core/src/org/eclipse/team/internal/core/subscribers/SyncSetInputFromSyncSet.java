@@ -8,13 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.sets;
+package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.core.subscribers.*;
 
 /**
  * Ths class uses the contents of one sync set as the input of another.

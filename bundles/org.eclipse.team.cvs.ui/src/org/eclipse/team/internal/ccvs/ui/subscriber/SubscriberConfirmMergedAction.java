@@ -13,15 +13,13 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.ui.synchronize.MutableSyncInfoSet;
-import org.eclipse.team.ui.synchronize.SyncInfoSet;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.SyncInfoDirectionFilter;
 
 /**
  * This action marks the local resource as merged by updating the base
@@ -68,8 +66,8 @@ public class SubscriberConfirmMergedAction extends CVSSubscriberAction {
 			ICVSFolder parent = CVSWorkspaceRoot.getCVSFolderFor(cvsInfo.getLocal().getParent());
 			if (!parent.isCVSFolder()) {
 				// the parents must be made outgoing before the child can
-				SyncInfo parentInfo = cvsInfo.getSubscriber().getSyncInfo(parent.getIResource(), Policy.subMonitorFor(monitor, 10));
-				if (!makeOutgoing(parentInfo, Policy.subMonitorFor(monitor, 10))) {
+				SyncInfo parentInfo = cvsInfo.getSubscriber().getSyncInfo(parent.getIResource());
+				if (!makeOutgoing(parentInfo, Policy.subMonitorFor(monitor, 20))) {
 					return false;
 				}
 			}

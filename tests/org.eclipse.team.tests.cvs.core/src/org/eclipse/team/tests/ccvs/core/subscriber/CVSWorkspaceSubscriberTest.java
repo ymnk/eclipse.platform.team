@@ -30,6 +30,7 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction;
+import org.eclipse.team.internal.core.*;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 
@@ -934,16 +935,16 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		setContentsAndEnsureModified(project.getFile("folder1/a.txt"), "unique text"); // whitespace difference
 		
 		// Get the sync tree for the project
-		String oldId = getSubscriber().getCurrentComparisonCriteria().getId();
+		String oldId = getSubscriber().getDefaultComparisonCriteria().getId();
 		try {
-			getSubscriber().setCurrentComparisonCriteria(ContentComparisonCriteria.ID_DONTIGNORE_WS);
+			getSubscriber().setCurrentComparisonCriteria(ContentSyncInfoFilter.ID_DONTIGNORE_WS);
 			assertSyncEquals("testGranularityContents", project, 
 				new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
 				true, new int[] {
 					SyncInfo.IN_SYNC,
 					SyncInfo.IN_SYNC,
 					SyncInfo.CONFLICTING | SyncInfo.CHANGE });
-			getSubscriber().setCurrentComparisonCriteria(ContentComparisonCriteria.ID_IGNORE_WS);
+			getSubscriber().setCurrentComparisonCriteria(ContentSyncInfoFilter.ID_IGNORE_WS);
 			// TODO: Should not need to reset after a comparison criteria change (bug 46678)
 			getSyncInfoSource().reset(getSubscriber());
 			assertSyncEquals("testGranularityContents", project, 

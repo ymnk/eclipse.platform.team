@@ -20,11 +20,10 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.jobs.IJobListener;
-import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.internal.ui.synchronize.views.CompressedFolder;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.ISharedImages;
@@ -89,11 +88,11 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 							}
 						});
 			}
-		}, SubscriberAction.SUBSCRIBER_JOB_TYPE);
+		}, TeamSubscriber.SUBSCRIBER_JOB_TYPE);
 		
 		// The label provider may of been created after the subscriber job has been
 		// started.
-		this.working = JobStatusHandler.hasRunningJobs(SubscriberAction.SUBSCRIBER_JOB_TYPE);
+		this.working = JobStatusHandler.hasRunningJobs(TeamSubscriber.SUBSCRIBER_JOB_TYPE);
 	}
 	
 	protected String decorateText(String input, Object element) {

@@ -10,28 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.IResourceChangeListener;
-import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.IResourceDeltaVisitor;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
-import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
-import org.eclipse.team.core.subscribers.RemoteBytesSynchronizer;
-import org.eclipse.team.core.subscribers.RemoteSynchronizer;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamDelta;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.syncinfo.MergedSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteTagSynchronizer;
@@ -56,6 +41,8 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	public static final String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant"; //$NON-NLS-1$
 	private static final String UNIQUE_ID_PREFIX = "merge-"; //$NON-NLS-1$
 	
+	private IComparisonCriteria comparisonCriteria;
+	
 	private CVSTag start, end;
 	private List roots;
 	private RemoteTagSynchronizer remoteSynchronizer;
@@ -64,7 +51,11 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 
 	private static final byte[] NO_REMOTE = new byte[0];
 	
-
+	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		
+		this(getUniqueId(), roots, start, end);
+		this.comparisonCriteria = new ContentComparisonCriteria(false /* don't ignore whitespace */);
+	}
+	
 	protected IResource[] refreshRemote(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
 		IResource[] remoteChanges = super.refreshRemote(resource, depth, monitor);
 		adjustMergedResources(remoteChanges);
@@ -81,10 +72,6 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	private static QualifiedName getUniqueId() {
 		String uniqueId = Long.toString(System.currentTimeMillis());
 		return new QualifiedName(QUALIFIED_NAME, "CVS" + UNIQUE_ID_PREFIX + uniqueId); //$NON-NLS-1$
-	}
-	
-	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		
-		this(getUniqueId(), roots, start, end);
 	}
 	
 	public CVSMergeSubscriber(QualifiedName id, IResource[] roots, CVSTag start, CVSTag end) {		
@@ -105,20 +92,12 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		baseSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + start.getName(), start);
 		mergedSynchronizer = new MergedSynchronizer(syncKeyPrefix + "0merged"); //$NON-NLS-1$
 		
-		try {
-			setCurrentComparisonCriteria(ContentComparisonCriteria.ID_IGNORE_WS);
-		} catch (TeamException e) {
-			// use the default but log an exception because the content comparison should
-			// always be available.
-			CVSProviderPlugin.log(e);
-		}
-		
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
 		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().addListener(this);
 	}
 
-	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, IProgressMonitor monitor) throws TeamException {
-		return new CVSMergeSyncInfo(local, base, remote, this, monitor);
+	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
+		return new CVSMergeSyncInfo(local, base, remote, this);
 	}
 
 	public void merged(IResource[] resources) throws TeamException {
@@ -254,5 +233,12 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 					break;
 			}
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
+	 */
+	public IComparisonCriteria getDefaultComparisonCriteria() {
+		return comparisonCriteria;
 	}		
 }

@@ -21,6 +21,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.PruneFolderVisitor;
@@ -30,8 +31,6 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.MutableSyncInfoSet;
-import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 
 public abstract class CVSSubscriberAction extends SubscriberAction {
@@ -271,7 +270,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	}
 	
 	protected SyncInfo getParent(SyncInfo info) throws TeamException {
-		return info.getSubscriber().getSyncInfo(info.getLocal().getParent(), new NullProgressMonitor());
+		return info.getSubscriber().getSyncInfo(info.getLocal().getParent());
 	}
 
 	protected IResource[] getIResourcesFrom(SyncInfo[] nodes) {

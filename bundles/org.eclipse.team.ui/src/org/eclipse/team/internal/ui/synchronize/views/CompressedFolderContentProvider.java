@@ -15,7 +15,7 @@ import java.util.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
+import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**

@@ -21,12 +21,13 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.JobStatusHandler;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.jobs.*;
+import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
+import org.eclipse.team.internal.ui.jobs.RefreshUserNotificationPolicy;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
-import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.IWorkbenchPage;
 
 public class RefreshAction extends Action {
@@ -47,7 +48,7 @@ public class RefreshAction extends Action {
 			IResource[] resources = getResources((IStructuredSelection)selection);
 			if (refreshAll || resources.length == 0) {
 				// If no resources are selected, refresh all the subscriber roots
-				resources = participant.getSyncInfoCollector().subscriberRoots();
+				resources = participant.getSubscriber().roots();
 			}
 			run(resources, participant);
 		}					
@@ -74,7 +75,7 @@ public class RefreshAction extends Action {
 		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
 		RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", participant.getName()), resources, participant.getSyncInfoCollector()); //$NON-NLS-1$
 		RefreshSubscriberJob.addRefreshListener(new RefreshUserNotificationPolicy(participant));
-		JobStatusHandler.schedule(job, SubscriberAction.SUBSCRIBER_JOB_TYPE);
+		JobStatusHandler.schedule(job, TeamSubscriber.SUBSCRIBER_JOB_TYPE);
 	}
 		
 	private static void runBlocking(final TeamSubscriber s, final IResource[] resources) {

@@ -12,36 +12,19 @@ package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.subscribers.ComparisonCriteria;
+import org.eclipse.team.core.subscribers.IComparisonCriteria;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * CVSRevisionNumberCompareCriteria
  */
- public class CVSRevisionNumberCompareCriteria extends ComparisonCriteria {
-
-	/* (non-Javadoc)
-	 * @see ComparisonCriteria#getName()
-	 */
-	public String getName() {		
-		return Policy.bind("CVSRevisionNumberCompareCriteria.1"); //$NON-NLS-1$
-	}
-
-	/* (non-Javadoc)
-	 * @see ComparisonCriteria#getId()
-	 */
-	public String getId() {
-		return "org.eclipse.team.cvs.revisioncomparator"; //$NON-NLS-1$
-	}
-
+ public class CVSRevisionNumberCompareCriteria implements IComparisonCriteria {
 	/* (non-Javadoc)
 	 * @see ComparisonCriteria#compare(Object, Object, IProgressMonitor)
 	 */
-	public boolean compare(Object e1, Object e2, IProgressMonitor monitor) {
+	public boolean compare(Object e1, Object e2) {
 		if(e1 instanceof IResource && e2 instanceof IRemoteResource) {
 			return compare((IResource)e1, (IRemoteResource)e2);
 		} else if(e1 instanceof IRemoteResource && e2 instanceof IRemoteResource) {
@@ -89,12 +72,5 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 			CVSProviderPlugin.log(e);
 			return false;
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.ComparisonCriteria#usesFileContents()
-	 */
-	public boolean usesFileContents() {
-		return false;
 	}
 }

@@ -3,14 +3,12 @@ package org.eclipse.team.internal.ui.jobs;
 import java.util.*;
 
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.ui.synchronize.SyncInfoSet;
-import org.eclipse.team.ui.synchronize.SyncInfoCollector;
 
 class RefreshChangeListener implements ITeamResourceChangeListener {
 	private List changes = new ArrayList();
-	private SyncInfoCollector collector;
+	private TeamSubscriberSyncInfoCollector collector;
 
-	RefreshChangeListener(SyncInfoCollector collector) {
+	RefreshChangeListener(TeamSubscriberSyncInfoCollector collector) {
 		this.collector = collector;
 	}
 	public void teamResourceChanged(TeamDelta[] deltas) {

@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
@@ -35,8 +36,6 @@ import org.eclipse.ui.IViewActionDelegate;
  * @since 3.0
  */
 public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate, IEditorActionDelegate {
-	
-	public static final QualifiedName SUBSCRIBER_JOB_TYPE = new QualifiedName(TeamUIPlugin.ID, "subcriber_job"); //$NON-NLS-1$
 	
 	/**
 	 * This method returns all instances of SynchronizeViewNode that are in the current

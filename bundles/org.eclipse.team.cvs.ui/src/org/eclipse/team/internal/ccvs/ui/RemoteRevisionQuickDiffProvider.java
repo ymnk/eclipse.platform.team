@@ -218,7 +218,7 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 	private boolean computeChange(IProgressMonitor monitor) throws TeamException {
 		boolean needToUpdateReferenceDocument = false;
 		if(initialized()) {
-			SyncInfo info = getSyncState(getFileFromEditor(), monitor);
+			SyncInfo info = getSyncState(getFileFromEditor());
 			// check if 
 			if(info == null && fLastSyncState != null) {
 				return true;
@@ -243,9 +243,9 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 		System.out.println("+ CVSQuickDiff: was " + last + " is " + info.toString());
 	}
 
-	private SyncInfo getSyncState(IResource resource, IProgressMonitor monitor) throws TeamException {
+	private SyncInfo getSyncState(IResource resource) throws TeamException {
 		ICVSFile cvsFile = getManagedCVSFile();
-		return CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().getSyncInfo(resource, monitor);
+		return CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().getSyncInfo(resource);
 	}
 	
 	/**

@@ -8,10 +8,9 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * An event generated when a {@link ISyncInfoSet} collection is changed. The

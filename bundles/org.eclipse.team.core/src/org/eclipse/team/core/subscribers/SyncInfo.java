@@ -7,7 +7,6 @@ package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.Assert;
@@ -135,12 +134,12 @@ public class SyncInfo implements IAdaptable {
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
+	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, TeamSubscriber subscriber) throws TeamException {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
 		this.subscriber = subscriber;
-		this.syncKind = calculateKind(monitor);
+		this.syncKind = calculateKind();
 	}
 	
 	/**
@@ -309,11 +308,10 @@ public class SyncInfo implements IAdaptable {
 		return Policy.bind("RemoteSyncElement.delimit", label); //$NON-NLS-1$
 	}
 	
-	protected int calculateKind(IProgressMonitor progress) throws TeamException {
-		progress = Policy.monitorFor(progress);
+	protected int calculateKind() throws TeamException {
 		int description = IN_SYNC;
 		
-		ComparisonCriteria criteria = subscriber.getCurrentComparisonCriteria();
+		IComparisonCriteria criteria = subscriber.getDefaultComparisonCriteria();
 		
 		boolean localExists = local.exists();
 		
@@ -330,13 +328,8 @@ public class SyncInfo implements IAdaptable {
 						description = INCOMING | ADDITION;
 					} else {
 						description = CONFLICTING | ADDITION;
-						try {
-							progress.beginTask(null, 60);
-							if (criteria.compare(local, remote, Policy.subMonitorFor(progress, 30))) {
-								description |= PSEUDO_CONFLICT;
-							}
-						} finally {
-							progress.done();
+						if (criteria.compare(local, remote)) {
+							description |= PSEUDO_CONFLICT;
 						}
 					}
 				}
@@ -345,21 +338,20 @@ public class SyncInfo implements IAdaptable {
 					if (remote == null) {
 						description = CONFLICTING | DELETION | PSEUDO_CONFLICT;
 					} else {
-						if (criteria.compare(base, remote, progress))
+						if (criteria.compare(base, remote))
 							description = OUTGOING | DELETION;
 						else						
 							description = CONFLICTING | CHANGE;
 					}
 				} else {
 					if (remote == null) {
-						if (criteria.compare(local, base, progress))
+						if (criteria.compare(local, base))
 							description = INCOMING | DELETION;
 						else
 							description = CONFLICTING | CHANGE;
 					} else {
-						progress.beginTask(null, 90);
-						boolean ay = criteria.compare(local, base, Policy.subMonitorFor(progress, 30));
-						boolean am = criteria.compare(base, remote, Policy.subMonitorFor(progress, 30));
+						boolean ay = criteria.compare(local, base);
+						boolean am = criteria.compare(base, remote);
 						if (ay && am) {
 							// in-sync
 						} else if (ay && !am) {
@@ -367,11 +359,10 @@ public class SyncInfo implements IAdaptable {
 						} else if (!ay && am) {
 							description = OUTGOING | CHANGE;
 						} else {
-							if(! criteria.compare(local, remote, Policy.subMonitorFor(progress, 30))) {
+							if(! criteria.compare(local, remote)) {
 								description = CONFLICTING | CHANGE;
 							}
 						}
-						progress.done();
 					}
 				}
 			}
@@ -387,7 +378,7 @@ public class SyncInfo implements IAdaptable {
 				if (!localExists) {
 					description= ADDITION;
 				} else {
-					if (! criteria.compare(local, remote, Policy.subMonitorFor(progress, 30)))
+					if (! criteria.compare(local, remote))
 						description= CHANGE;
 				}
 			}

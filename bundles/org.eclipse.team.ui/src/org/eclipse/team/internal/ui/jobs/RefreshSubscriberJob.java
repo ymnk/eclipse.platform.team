@@ -18,11 +18,11 @@ import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.SyncInfoCollector;
 
 /**
  * Job to refresh a subscriber with its remote state.
@@ -59,7 +59,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * is running the job is cancelled.
 	 */
 	private IResource[] resources;
-	private SyncInfoCollector collector;
+	private TeamSubscriberSyncInfoCollector collector;
 	
 	/**
 	 * Refresh started/completed listener for every refresh
@@ -158,12 +158,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 	
 		
-	public RefreshSubscriberJob(String name, IResource[] resources, SyncInfoCollector collector) {
+	public RefreshSubscriberJob(String name, IResource[] resources, TeamSubscriberSyncInfoCollector collector) {
 		this(name, collector);		
 		this.resources = resources;
 	}
 	
-	public RefreshSubscriberJob(String name, SyncInfoCollector collector) {
+	public RefreshSubscriberJob(String name, TeamSubscriberSyncInfoCollector collector) {
 		super(name);
 		
 		this.collector = collector;
@@ -213,7 +213,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			}
 			
 			monitor.beginTask(null, 100);
-			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, roots, collector.getSubscriber());
+			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, roots, collector.getTeamSubscriber());
 			RefreshChangeListener changeListener = new RefreshChangeListener(collector);
 			try {
 				// Only allow one refresh job at a time
@@ -256,12 +256,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		if(resources != null) {
 			return resources;
 		} else {
-			return collector.getSubscriber().roots();
+			return collector.getTeamSubscriber().roots();
 		}
 	}
 	
 	protected TeamSubscriber getSubscriber() {
-		return collector.getSubscriber();
+		return collector.getTeamSubscriber();
 	}
 	
 	public long getScheduleDelay() {

@@ -15,12 +15,10 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -32,7 +30,7 @@ import org.eclipse.ui.part.IPageBookViewPage;
  */
 public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
 	
-	private SyncInfoCollector collector;
+	private TeamSubscriberSyncInfoCollector collector;
 	
 	private SyncInfoSetCollector filteredSyncSet;
 	
@@ -153,12 +151,12 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		return filteredSyncSet; 
 	}
 	
-	public final SyncInfoCollector getSyncInfoCollector() {
+	public final TeamSubscriberSyncInfoCollector getSyncInfoCollector() {
 		return collector;
 	}
 	
 	protected void setSubscriber(TeamSubscriber subscriber) {
-		collector = new SyncInfoCollector(subscriber, true);
+		collector = new TeamSubscriberSyncInfoCollector(subscriber);
 		filteredSyncSet = new SyncInfoSetCollector(collector.getSyncInfoSet(), null /* no initial roots */, null /* no initial filter */);
 
 		// listen for global ignore changes
@@ -170,8 +168,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		updateMode(getMode());
 	}
 	
-	protected TeamSubscriber getSubscriber() {
-		return collector.getSubscriber();
+	public TeamSubscriber getSubscriber() {
+		return collector.getTeamSubscriber();
 	}
 		
 	/* (non-Javadoc)
@@ -205,9 +203,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			getSyncInfoSetCollector().setFilter(
 					new SyncInfoFilter.AndSyncInfoFilter(
 							new SyncInfoFilter[] {
-									new SyncInfoFilter.SyncInfoDirectionFilter(modeFilter), 
-									new SyncInfoFilter.SyncInfoChangeTypeFilter(new int[] {SyncInfo.ADDITION, SyncInfo.DELETION, SyncInfo.CHANGE}),
-									new SyncInfoFilter.PseudoConflictFilter()
+									new SyncInfoFilter.SyncInfoDirectionFilter(modeFilter)
 							}), new NullProgressMonitor());
 		}
 	}

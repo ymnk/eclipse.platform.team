@@ -13,14 +13,25 @@ package org.eclipse.team.internal.ccvs.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.subscribers.RemoteSynchronizer;
+import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
+import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteTagSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 
@@ -30,6 +41,7 @@ import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IResourceStateChangeListener {
 	
 	private OptimizedRemoteSynchronizer remoteSynchronizer;
+	private IComparisonCriteria comparisonCriteria;
 	
 	// qualified name for remote sync info
 	private static final String REMOTE_RESOURCE_KEY = "remote-resource-key"; //$NON-NLS-1$
@@ -41,6 +53,8 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		remoteSynchronizer = new OptimizedRemoteSynchronizer(REMOTE_RESOURCE_KEY);
 		
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this); 
+		
+		comparisonCriteria = new CVSRevisionNumberCompareCriteria();
 	}
 
 	/* 
@@ -199,7 +213,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 					public boolean visit(IResource innerResource) throws CoreException {
 						try {
 							if (isOutOfSync(innerResource, infinite)) {
-								SyncInfo info = getSyncInfo(innerResource, infinite);
+								SyncInfo info = getSyncInfo(innerResource);
 								if (info != null && info.getKind() != 0) {
 									result.add(info);
 								}
@@ -270,4 +284,19 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		return remote;
 	}
 
+	public void setRemote(IProject project, IRemoteResource remote, IProgressMonitor monitor) throws TeamException {
+		List changedResources = new ArrayList();
+		((RemoteTagSynchronizer)getRemoteSynchronizer()).collectChanges(project, remote, changedResources, IResource.DEPTH_INFINITE, monitor);
+		if (!changedResources.isEmpty()) {
+			IResource[] changes = (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
+			fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changes));
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
+	 */
+	public IComparisonCriteria getDefaultComparisonCriteria() {
+		return comparisonCriteria;
+	}
 }

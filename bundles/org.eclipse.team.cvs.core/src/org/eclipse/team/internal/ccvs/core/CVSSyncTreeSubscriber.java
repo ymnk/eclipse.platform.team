@@ -10,34 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ComparisonCriteria;
-import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
-import org.eclipse.team.core.subscribers.RemoteSynchronizer;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.core.subscribers.TeamDelta;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * This class provides common funtionality for three way sychronizing
@@ -49,43 +30,10 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	private String name;
 	private String description;
 	
-	// options this subscriber supports for determining the sync state of resources
-	private Map comparisonCriterias = new HashMap();
-	private String defaultCriteria;
-	
 	CVSSyncTreeSubscriber(QualifiedName id, String name, String description) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
-		initializeComparisonCriteria();
-	}
-
-	/**
-	 * Method invoked from the constructor to initialize the comparison criteria
-	 * and the default criteria.
-	 * This method can be overriden by subclasses.
-	 */
-	protected void initializeComparisonCriteria() {				
-		// setup comparison criteria
-		ComparisonCriteria revisionNumberComparator = new CVSRevisionNumberCompareCriteria();
-		ComparisonCriteria contentsComparator = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, false /*consider whitespace */);
-		ComparisonCriteria contentsComparatorIgnoreWhitespace = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, true /* ignore whitespace */);
-		
-		addComparisonCriteria(revisionNumberComparator);
-		addComparisonCriteria(contentsComparator);
-		addComparisonCriteria(contentsComparatorIgnoreWhitespace);
-		
-		// default
-		defaultCriteria = revisionNumberComparator.getId();
-	}
-	
-	/**
-	 * Add the comparison criteria to the subscriber
-	 * 
-	 * @param comparator
-	 */
-	protected void addComparisonCriteria(ComparisonCriteria comparator) {
-		comparisonCriterias.put(comparator.getId(), comparator);
 	}
 
 	/* (non-Javadoc)
@@ -182,15 +130,15 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
 	 */
-	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
+	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
 		if (!isSupervised(resource)) return null;
 		IRemoteResource remoteResource = getRemoteResource(resource);
 		if(resource.getType() == IResource.FILE) {
 			IRemoteResource baseResource = getBaseResource(resource);
-			return getSyncInfo(resource, baseResource, remoteResource, monitor);
+			return getSyncInfo(resource, baseResource, remoteResource);
 		} else {
 			// In CVS, folders do not have a base. Hence, the remote is used as the base.
-			return getSyncInfo(resource, remoteResource, remoteResource, monitor);
+			return getSyncInfo(resource, remoteResource, remoteResource);
 		}
 	}
 
@@ -203,20 +151,8 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	 * @param monitor
 	 * @return
 	 */
-	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, IProgressMonitor monitor) throws TeamException {
-		try {
-			monitor = Policy.monitorFor(monitor);
-			monitor.beginTask(null, 100);
-			CVSSyncInfo info = new CVSSyncInfo(local, base, remote, this, Policy.subMonitorFor(monitor, 100));
-			
-			// if it's out of sync, then cache the contents
-			//if(info.getKind() != SyncInfo.IN_SYNC && remote != null) {
-			//	remote.getContents(Policy.subMonitorFor(monitor, 30));
-			//}
-			return info;
-		} finally {
-			monitor.done();
-		}
+	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
+			return new CVSSyncInfo(local, base, remote, this);
 	}
 
 	/* (non-Javadoc)
@@ -274,32 +210,8 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 		return getRemoteSynchronizer().refresh(resource, depth,  getCacheFileContentsHint(), monitor);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getCurrentComparisonCriteria()
-	 */
-	public ComparisonCriteria getCurrentComparisonCriteria() {		
-		return (ComparisonCriteria)comparisonCriterias.get(defaultCriteria);
-	}
-
 	private boolean getCacheFileContentsHint() {
-		return getCurrentComparisonCriteria().usesFileContents();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#setCurrentComparisonCriteria(java.lang.String)
-	 */
-	public void setCurrentComparisonCriteria(String id) throws TeamException {
-		if(! comparisonCriterias.containsKey(id)) {
-			throw new CVSException(Policy.bind("CVSSyncTreeSubscriber.0", id, getName())); //$NON-NLS-1$
-		}
-		this.defaultCriteria = id;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getComparisonCriterias()
-	 */
-	public ComparisonCriteria[] getComparisonCriterias() {
-		return (ComparisonCriteria[]) comparisonCriterias.values().toArray(new ComparisonCriteria[comparisonCriterias.size()]);
+		return false;
 	}
 
 	/* (non-Javadoc)

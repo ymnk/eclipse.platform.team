@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.jobs;
+package org.eclipse.team.core.subscribers;
 
 import java.util.*;
 

@@ -14,7 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.SyncInfoSet;
+import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**

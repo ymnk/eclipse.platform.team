@@ -3,6 +3,7 @@ package org.eclipse.team.ui.synchronize;
 import java.text.DateFormat;
 import java.util.Date;
 
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -60,9 +61,9 @@ public class RefreshSchedule {
 		boolean wasEnabled = isEnabled();
 		this.enabled = enabled;
 		if(enabled && ! wasEnabled) { 
-			startJob();
+			//startJob();
 		} else {
-			stopJob();
+			//stopJob();
 		}
 	}
 	

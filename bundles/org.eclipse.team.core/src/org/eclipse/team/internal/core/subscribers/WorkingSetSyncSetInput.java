@@ -8,13 +8,13 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.sets;
+package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.ui.synchronize.SyncInfoSet;
 
 public class WorkingSetSyncSetInput extends SyncSetInputFromSyncSet {
 

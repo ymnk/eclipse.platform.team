@@ -8,26 +8,32 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberEventHandler;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSetInputFromSubscriber;
+import org.eclipse.team.internal.core.subscribers.SubscriberEventHandler;
+import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
 
 /**
- *  
+ * This collector maintains a {@link SyncInfoSet} for a particular team subscriber keeping
+ * it up-to-date with both incoming changes and outgoing changes as they occur for 
+ * resources in the workspace.
+ * <p>
+ * The advantage of this collector is that it processes both resource and team
+ * subscriber deltas in a background thread.
+ * </p>
+ * @since 3.0
  */
-public class SyncInfoCollector implements IResourceChangeListener, ITeamResourceChangeListener {
+public class TeamSubscriberSyncInfoCollector implements IResourceChangeListener, ITeamResourceChangeListener {
 
 	private SyncSetInputFromSubscriber set;
 	private SubscriberEventHandler eventHandler;
 	private TeamSubscriber subscriber;
 
-	public SyncInfoCollector(TeamSubscriber subscriber, boolean trackOutgoingChanges) {
+	public TeamSubscriberSyncInfoCollector(TeamSubscriber subscriber) {
 		this.subscriber = subscriber;
 		Assert.isNotNull(subscriber);
 		set = new SyncSetInputFromSubscriber(subscriber);
@@ -37,49 +43,57 @@ public class SyncInfoCollector implements IResourceChangeListener, ITeamResource
 		subscriber.addListener(this);
 	}
 
-	public void waitForCollector() {
-		try {
-				eventHandler.getEventHandlerJob().join();
-		} catch (InterruptedException e) {
-			// continue
-		}
-	}
-
 	public SyncInfoSet getSyncInfoSet() {
 		return set.getSyncSet();
 	}
 
+	public void waitForCollector() {
+		try {
+			eventHandler.getEventHandlerJob().join();
+		} catch (InterruptedException e) {
+			// continue
+		}
+	}
+	
+	/**
+	 * Clears this collector's <code>SyncInfoSet</code> and causes it to be recreated from the
+	 * associated <code>TeamSubscriber</code>. 
+	 * @param monitor
+	 * @throws TeamException
+	 */
 	public void reset(IProgressMonitor monitor) throws TeamException {
 		set.reset(monitor);
 		eventHandler.initialize();
 	}
 
+	/**
+	 * Returns the <code>TeamSubscriber</code> associated with this collector.
+	 * 
+	 * @return the <code>TeamSubscriber</code> associated with this collector.
+	 */
 	public TeamSubscriber getTeamSubscriber() {
 		return subscriber;
 	}
 
-	public TeamSubscriber getSubscriber() {
-		return set.getSubscriber();
-	}
-
+	/**
+	 * Disposes of the background job associated with this collector and deregisters
+	 * all it's listeners. This method must be called when the collector is no longer
+	 * referenced and could be garbage collected.
+	 */
 	public void dispose() {
 		eventHandler.shutdown();
 
 		set.disconnect();
 
-		getSubscriber().removeListener(this);
-		
+		getTeamSubscriber().removeListener(this);		
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 	}
 
-	public IResource[] subscriberRoots() {
-		return getSubscriber().roots();
-	}
-
 	/**
-	 * Process the resource delta
+	 * Process the resource delta and posts all necessary events to the background
+	 * event handler.
 	 * 
-	 * @param delta
+	 * @param delta the resource delta to analyse
 	 */
 	private void processDelta(IResourceDelta delta) {
 		IResource resource = delta.getResource();
@@ -133,7 +147,7 @@ public class SyncInfoCollector implements IResourceChangeListener, ITeamResource
 	}
 
 	private boolean isVisibleProject(IProject project) {
-		IResource[] roots = subscriberRoots();
+		IResource[] roots = getTeamSubscriber().roots();
 		for (int i = 0; i < roots.length; i++) {
 			IResource resource = roots[i];
 			if (project.getFullPath().isPrefixOf(resource.getFullPath())) {

@@ -8,23 +8,21 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSetInputFromSyncSet;
-import org.eclipse.team.internal.ui.synchronize.sets.WorkingSetSyncSetInput;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
+import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSyncSet;
+import org.eclipse.team.internal.core.subscribers.WorkingSetSyncSetInput;
 
 /**
  * Collects changes from a provided sync info set and creates another set based on 
  * the provided filters.
  * 
- * @see SyncInfoCollector
+ * @see TeamSubscriberSyncInfoCollector
  */
-public class SyncInfoSetCollector {
+public final class SyncInfoSetCollector {
 
 	private WorkingSetSyncSetInput workingSetInput;
 	private SyncSetInputFromSyncSet filteredInput;
@@ -86,9 +84,6 @@ public class SyncInfoSetCollector {
 		return workingSetInput.getSyncSet();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISyncInfoSet#dispose()
-	 */
 	public void dispose() {
 		workingSetInput.disconnect();
 		if(filteredInput != null) {

@@ -8,9 +8,8 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.actions;
+package org.eclipse.team.core.subscribers;
 
-import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * A SyncInfoFilter can be used to control, at a fine grain, {@link SyncInfo} 

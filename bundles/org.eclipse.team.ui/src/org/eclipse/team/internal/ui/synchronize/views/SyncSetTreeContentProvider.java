@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ui.synchronize.views;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
+import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
 
 /**
  * This class provides the contents for a AbstractTreeViewer using a SyncSet as the model

@@ -8,14 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.sets;
+package org.eclipse.team.internal.core.subscribers;
 
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.SyncInfoSet;
-import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
+import org.eclipse.team.core.subscribers.*;
 
 /**
  * This event keeps track of the changes in a sync set

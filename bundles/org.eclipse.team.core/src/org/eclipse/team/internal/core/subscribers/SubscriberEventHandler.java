@@ -8,19 +8,16 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.sets;
+package org.eclipse.team.internal.core.subscribers;
 
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.BackgroundEventHandler;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.BackgroundEventHandler.Event;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
-import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * This handler collects changes and removals to resources and calculates their
@@ -91,7 +88,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * Schedule the job or process the events now.
 	 */
 	public void schedule() {
-		JobStatusHandler.schedule(getEventHandlerJob(), SubscriberAction.SUBSCRIBER_JOB_TYPE);
+		JobStatusHandler.schedule(getEventHandlerJob(), TeamSubscriber.SUBSCRIBER_JOB_TYPE);
 	}
 	
 	/**
@@ -151,7 +148,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		}
 
 		monitor.subTask(Policy.bind("SubscriberEventHandler.2", resource.getFullPath().toString())); //$NON-NLS-1$
-		SyncInfo info = set.getSubscriber().getSyncInfo(resource, monitor);
+		SyncInfo info = set.getSubscriber().getSyncInfo(resource);
 		// resource is no longer under the subscriber control
 		if (info == null) {
 			results.add(
@@ -187,7 +184,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 			// traverse all resources and calculate their state. 
 			if (infos == null) {
 				List events = new ArrayList();
-				IProgressMonitor subMonitor = Policy.subInfiniteMonitorFor(monitor, 50);
+				IProgressMonitor subMonitor = Policy.infiniteSubMonitorFor(monitor, 50);
 				subMonitor.beginTask(null, resources.length);
 				for (int i = 0; i < resources.length; i++) {
 					collect(

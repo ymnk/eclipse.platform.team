@@ -18,12 +18,12 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
-import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 
@@ -57,7 +57,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private Action configureSchedule;
 	private SyncViewerShowPreferencesAction showPreferences;
 	private RefreshAction refreshAllAction;
-	private ComparisonCriteriaActionGroup comparisonCriteriaGroup;
 	private Action collapseAll;
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
@@ -87,7 +86,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		composite.setLayoutData(data);
 		
 		// Create the busy cursor with no control to start with (createViewer will set it)
-		busyCursor = new JobBusyCursor(parent.getParent().getParent(), SubscriberAction.SUBSCRIBER_JOB_TYPE);
+		busyCursor = new JobBusyCursor(parent.getParent().getParent(), TeamSubscriber.SUBSCRIBER_JOB_TYPE);
 		
 		changesSection = new ChangesSection(composite, this);		
 		
@@ -117,7 +116,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		Utils.initAction(configureSchedule, "action.configureSchedulel."); //$NON-NLS-1$
 		
 		// view menu
-		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(getParticipant().getSyncInfoCollector());		
 		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), this, view, participant);		
 		showPreferences = new SyncViewerShowPreferencesAction(getShell());		
 		statusLine = new StatusLineContributionGroup(getShell(), getParticipant());
@@ -201,10 +199,9 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			IMenuManager menu = actionBars.getMenuManager();
 			MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
 			MenuManager comparisonCriteria = new MenuManager(Policy.bind("action.comparisonCriteria.label")); //$NON-NLS-1$
-			comparisonCriteriaGroup.addActionsToMenuMgr(comparisonCriteria);
+			//comparisonCriteriaGroup.addActionsToMenuMgr(comparisonCriteria);
 			workingSetGroup.fillActionBars(actionBars);
 			menu.add(new Separator());
-			menu.add(comparisonCriteria);
 			menu.add(new Separator());
 			menu.add(configureSchedule);
 			menu.add(new Separator());

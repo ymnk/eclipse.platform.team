@@ -8,20 +8,19 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.core.subscribers;
 
 import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
+import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
+import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 /**
  * A dynamic collection of {@link SyncInfo} objects. This data structure is optimized 
- * for fast retrieval of out-of-sync resources. There are
+ * for fast retrieval of out-of-sync resources . There are
  * generally two methods for obtaining instances of this collection:
  * <ul>
  *   <li>Create a {@link SyncInfoCollector} to dynamically collect changes from a team
@@ -31,7 +30,7 @@ import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
  * <p>
  * This set generates a {@link ISyncInfoSetChangeEvent} every time it is modified. 
  * </p>
- * @see SyncInfoCollector
+ * @see TeamSubscriberSyncInfoCollector
  * @see MutableSyncInfoSet
  * @since 3.0
  */
@@ -53,7 +52,7 @@ public class SyncInfoSet {
 	
 	/**
 	 * Don't directly allow creating an empty immutable set.
-\	 */
+	 */
 	protected SyncInfoSet() {
 		resetChanges();
 	}
@@ -181,7 +180,7 @@ public class SyncInfoSet {
 			if(info != null) {
 				infos.add(info);
 			} else {
-				TeamUIPlugin.log(IStatus.INFO, "missing sync info: " + child.getFullPath(), null); //$NON-NLS-1$
+				TeamPlugin.log(IStatus.INFO, "missing sync info: " + child.getFullPath(), null); //$NON-NLS-1$
 			}
 		}
 		return (SyncInfo[]) infos.toArray(new SyncInfo[infos.size()]);

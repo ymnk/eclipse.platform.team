@@ -8,16 +8,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.sets;
+package org.eclipse.team.internal.core.subscribers;
 
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
+import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * WorkingSet filter for a SyncSet.
@@ -87,7 +85,7 @@ public class SyncInfoWorkingSetFilter extends SyncInfoFilter {
 						}
 					} catch (TeamException e) {
 						// Log the exception and add the resource to the list
-						TeamUIPlugin.log(e);
+						TeamPlugin.log(e);
 						result.add(setResource);
 					}
 				} else if (isParent(setResource, resource)) {

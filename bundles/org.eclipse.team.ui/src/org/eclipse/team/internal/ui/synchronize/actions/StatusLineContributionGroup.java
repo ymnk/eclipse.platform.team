@@ -14,7 +14,9 @@ import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.core.subscribers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
@@ -36,7 +38,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private SyncInfoCollector collector;
+	private TeamSubscriberSyncInfoCollector collector;
 	private TeamSubscriberParticipant participant;
 
 	public StatusLineContributionGroup(final Shell shell, TeamSubscriberParticipant participant) {

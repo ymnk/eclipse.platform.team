@@ -59,3 +59,4 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
   - can you have non-diff nodes in the sync view? there shouldn't be any assumptions about the type of diff nodes in the sync view. Basically, any type of diff node should be supported. 
   This would allow adding logical elements to the view don't directly have an associated IResource or SyncInfo.
   - workbenchadapter for SyncInfoSet, SyncInfo objects?
+  - job status handler API or not??
