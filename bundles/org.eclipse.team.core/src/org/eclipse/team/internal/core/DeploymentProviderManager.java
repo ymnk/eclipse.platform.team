@@ -287,7 +287,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			DeploymentProviderDescriptor desc = registry.find(id);				
 			if(desc != null) {
 				Mapping m = map(container, desc);
-				m.setProviderState(memento2);				
+				m.setProviderState(memento2.getChild(CTX_PROVIDER_DATA));				
 			} else {
 				TeamPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.9", id), null); //$NON-NLS-1$
 			}
@@ -303,10 +303,12 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		for (int i = 0; i < projects.length; i++) {
 			IProject project = projects[i];
 			List mappings = getMappings(project);
-			for (Iterator iter = mappings.iterator(); iter.hasNext();) {
-				Mapping mapping = (Mapping) iter.next();
-				if (id == null || mapping.getDescription().getId().equals(id)) {
-					roots.add(mapping.getContainer());
+			if (mappings != null) {
+				for (Iterator iter = mappings.iterator(); iter.hasNext();) {
+					Mapping mapping = (Mapping) iter.next();
+					if (id == null || mapping.getDescription().getId().equals(id)) {
+						roots.add(mapping.getContainer());
+					}
 				}
 			}
 		}

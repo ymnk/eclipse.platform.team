@@ -13,9 +13,9 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.ISubscriberResource;
-import org.eclipse.team.core.subscribers.SyncBytesSubscriberResourceTree;
+import org.eclipse.team.core.subscribers.helpers.RefreshOperation;
+import org.eclipse.team.core.subscribers.helpers.SyncBytesSubscriberResourceTree;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 
 /**

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.core.subscribers.helpers;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;

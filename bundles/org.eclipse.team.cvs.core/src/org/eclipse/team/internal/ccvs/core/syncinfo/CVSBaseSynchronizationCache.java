@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SynchronizationCache;
+import org.eclipse.team.core.subscribers.helpers.SynchronizationCache;
 import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 
 

@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.subscribers.helpers.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSubscriberResourceTree;
 
 /**

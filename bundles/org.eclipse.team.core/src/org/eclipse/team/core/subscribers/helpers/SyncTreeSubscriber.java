@@ -8,13 +8,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.core.subscribers.helpers;
 
 import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Policy;
 
 /**
@@ -182,7 +183,7 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 		monitor = Policy.monitorFor(monitor);
 		try {
 			monitor.beginTask(null, isThreeWay() ? 100 : 60);
-			IResource[] baseChanges = refreshBase(resources, depth, Policy.subMonitorFor(monitor, 40));
+			IResource[] baseChanges;
 			if (isThreeWay()) {
 				baseChanges = refreshBase(resources, depth, Policy.subMonitorFor(monitor, 40));
 			} else {

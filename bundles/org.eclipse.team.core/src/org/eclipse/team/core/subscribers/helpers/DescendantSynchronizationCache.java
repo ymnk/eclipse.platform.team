@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.core.subscribers.helpers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
@@ -29,7 +29,7 @@ public class DescendantSynchronizationCache extends SynchronizationCache {
 	/**
 	 * This method will dispose the remote cache but not the base cache.
 	 * 
-	 * @see org.eclipse.team.core.subscribers.SynchronizationCache#dispose()
+	 * @see org.eclipse.team.core.subscribers.helpers.SynchronizationCache#dispose()
 	 */
 	public void dispose() {
 		remoteCache.dispose();
