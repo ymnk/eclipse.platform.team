@@ -12,7 +12,9 @@ package org.eclipse.team.internal.ccvs.ui.operations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.runtime.IPath;
@@ -99,8 +101,11 @@ public class RemoteCompareOperation extends RemoteOperation  implements RDiffSum
 			ICVSRemoteResource resource = getRemoteResource();
 			IStatus status = buildTrees(resource, Policy.subMonitorFor(monitor, 50));
 			if (status.isOK() && fetchContents) {
-				fetchFileContents(leftTree, Policy.subMonitorFor(monitor, 50));
-				fetchFileContents(rightTree, Policy.subMonitorFor(monitor, 50));
+				String[] overlappingFilePaths = getOverlappingFilePaths();
+				if (overlappingFilePaths.length > 0) {
+					fetchFileContents(leftTree, overlappingFilePaths, Policy.subMonitorFor(monitor, 50));
+					fetchFileContents(rightTree, overlappingFilePaths, Policy.subMonitorFor(monitor, 50));
+				}
 			}
 			collectStatus(status);
 			openCompareEditor(leftTree, rightTree);
@@ -109,12 +114,24 @@ public class RemoteCompareOperation extends RemoteOperation  implements RDiffSum
 		}
 	}
 
-	private void fetchFileContents(RemoteFolderTree tree, IProgressMonitor monitor) throws CVSException {
-		String[] filePaths = getFilePaths(tree);
-		if (filePaths.length > 0) {
-			FileContentCachingService.fetchFileContents(tree, filePaths, monitor);
+	private String[] getOverlappingFilePaths() {
+		String[] leftFiles = getFilePaths(leftTree);
+		String[] rightFiles = getFilePaths(leftTree);
+		Set set = new HashSet();
+		for (int i = 0; i < rightFiles.length; i++) {
+			String rightFile = rightFiles[i];
+			for (int j = 0; j < leftFiles.length; j++) {
+				String leftFile = leftFiles[j];
+				if (leftFile.equals(rightFile)) {
+					set.add(leftFile);
+				}
+			}
 		}
-		
+		return (String[]) set.toArray(new String[set.size()]);
+	}
+
+	private void fetchFileContents(RemoteFolderTree tree, String[] overlappingFilePaths, IProgressMonitor monitor) throws CVSException {
+		FileContentCachingService.fetchFileContents(tree, overlappingFilePaths, monitor);
 	}
 
 	private String[] getFilePaths(RemoteFolderTree tree) {
