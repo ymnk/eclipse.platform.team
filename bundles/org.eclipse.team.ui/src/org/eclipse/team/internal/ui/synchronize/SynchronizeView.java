@@ -26,6 +26,7 @@ import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.*;
+import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
  * Implements a Synchronize View that contains multiple synchronize participants. 
@@ -309,6 +310,11 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		updateForExistingParticipants();
 		getViewSite().getActionBars().updateActionBars();
 		updateTitle();
+		
+		IWorkbenchSiteProgressService progress = (IWorkbenchSiteProgressService)getSite().getAdapter(IWorkbenchSiteProgressService.class);
+		if(progress != null) {
+			progress.showBusyForFamily(ISynchronizeManager.FAMILY_SYNCHRONIZE_OPERATION);
+		}
 	}
 	
 	/**
@@ -318,13 +324,18 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
 		// create pages for consoles
 		ISynchronizeParticipantReference[] participants = manager.getSynchronizeParticipants();
+		boolean errorOccurred = false;
 		for (int i = 0; i < participants.length; i++) {
 			try {
 				participantsAdded(new ISynchronizeParticipant[] {participants[i].getParticipant()});
 			} catch (TeamException e) {
+				errorOccurred = true;
 				continue;
 			}
 			
+		}
+		if (errorOccurred) {
+			participants = manager.getSynchronizeParticipants();
 		}
 		try {
 			// decide which participant to show	on startup
@@ -359,8 +370,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * Method used by test cases to access the page for a participant
 	 */
 	public IPage getPage(ISynchronizeParticipant participant) {
-		ISynchronizeParticipantReference ref = TeamUI.getSynchronizeManager().get(participant.getId(), participant.getSecondaryId());
-		IWorkbenchPart part = getPart(ref);
+		IWorkbenchPart part = (IWorkbenchPart)fParticipantToPart.get(participant);
 		if (part == null) return null;
 		try {
 			return getPageRec(part).page;
@@ -369,9 +379,5 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 			// before accessing the page.
 			return null;
 		}
-	}
-
-	private IWorkbenchPart getPart(ISynchronizeParticipantReference ref) {
-		return (IWorkbenchPart)fParticipantToPart.get(ref);
 	}
 }

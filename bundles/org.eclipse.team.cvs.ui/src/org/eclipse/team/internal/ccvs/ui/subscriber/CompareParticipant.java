@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
@@ -121,8 +122,9 @@ public class CompareParticipant extends SubscriberParticipant {
 	/**
 	 * Refresh this participant and show the results in a model dialog.
 	 * @param resources
+	 * @deprecated This is used by the releng tools plugin
 	 */
 	public void refresh(IResource[] resources) {
-		refresh(resources, getRefreshListenerFactory().createModalDialogListener(getId(), this, getSubscriberSyncInfoCollector().getSyncInfoTree()), getName(), null);
+		refresh(resources, getRefreshListenerFactory().createModalDialogListener((Shell)null /* shell */, getId(), this, getSubscriberSyncInfoCollector().getSyncInfoTree()), getName(), null);
 	}
 }
