@@ -23,7 +23,11 @@ import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
 
 /**
- * This operation adjusts the cached synchronization bytes using the results of a refresh oepration
+ * This abstract superclass provides the logic for refreshing the synchronization bytes for
+ * remote resources that correspond to local resources. This class provides the logic to traverse
+ * the local and remote resource trees in order to cache the remote synchronization bytes in
+ * a <code>SynchronizationCache</code>. It also accumulates and returns all local resources 
+ * for which the corresponding remote has changed.
  */
 public abstract class TeamSubscriberRefreshOperation {
 	

@@ -19,8 +19,10 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Policy;
 
 /**
- * A specialization of TeamSubscriber that uses the ISynchronizer to store the sync bytes
- * for resources that do not exist locally.
+ * A specialization of TeamSubscriber that provides some additional logic for creating
+ * <code>SyncInfo</code> from <code>ISubscriberResource</code> instances and for
+ * adding comparison criteria. The <code>members()</code> also assumes that remote 
+ * instances are stored in the <code>ISynchronizer</code>.
  */
 public abstract class SyncTreeSubscriber extends TeamSubscriber {
 
