@@ -77,7 +77,8 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 		
 		input = createCompareInput();
 		input.createPartControl(pageBook);
-		infos = (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET);
+		syncPage = input.getControl();
+		infos = (SyncInfoSet)configuration.getSyncInfoSet();
 		infos.addSyncSetChangedListener(this);
 		
 		noChangesPage = createNoChangesPage(pageBook);

@@ -61,6 +61,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 	private CompareViewerPane fEditionPane;
 	private CompareViewerSwitchingPane fStructuredComparePane;
 	private Viewer viewer;
+	private Control control;
 
 	/*
 	 * Page site that allows hosting the participant page in a dialog.
@@ -283,6 +284,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 			}
 		};
 		vsplitter.setWeights(new int[]{30, 70});
+		control = parent;
 	}
 	
 	/*
@@ -303,6 +305,15 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 			if (ss.size() == 1)
 				fContentPane.setInput(ss.getFirstElement());
 		}
+	}
+	
+	/**
+	 * Returns the primary control for this part.
+	 * 
+	 * @return the primary control for this part.
+	 */
+	public Control getControl() {
+		return control;
 	}
 	
 	/**
