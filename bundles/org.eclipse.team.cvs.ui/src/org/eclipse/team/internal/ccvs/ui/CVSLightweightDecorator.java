@@ -151,7 +151,7 @@ public class CVSLightweightDecorator
 			isDirty = CVSDecorator.isDirty(resource);
 		}
 		
-		decorateTextLabel(resource, decoration, isDirty);
+		decorateTextLabel(resource, decoration, isDirty, true);
 		
 		ImageDescriptor overlay = getOverlay(resource, isDirty, cvsProvider);
 		if(overlay != null) { //actually sending null arg would work but this makes logic clearer
@@ -159,7 +159,8 @@ public class CVSLightweightDecorator
 		}
 	}
 
-	private void decorateTextLabel(IResource resource, IDecoration decoration, boolean isDirty) {
+//todo the showRevisions flag is temp, a better solution is DecoratorStrategy classes which have most the code below
+	public static void decorateTextLabel(IResource resource, IDecoration decoration, boolean isDirty, boolean showRevisions) {
 		try {
 			Map bindings = new HashMap(3);
 			String format = ""; //$NON-NLS-1$
@@ -209,7 +210,8 @@ public class CVSLightweightDecorator
 					if (fileInfo.isAdded()) {
 						bindings.put(CVSDecoratorConfiguration.ADDED_FLAG, store.getString(ICVSUIConstants.PREF_ADDED_FLAG));
 					} else {
-						bindings.put(CVSDecoratorConfiguration.FILE_REVISION, fileInfo.getRevision());
+						if(showRevisions)
+							bindings.put(CVSDecoratorConfiguration.FILE_REVISION, fileInfo.getRevision());
 					}
 					KSubstOption option = fileInfo.getKeywordMode() != null ?
 						fileInfo.getKeywordMode() :
@@ -221,7 +223,7 @@ public class CVSLightweightDecorator
 					bindings.put(CVSDecoratorConfiguration.FILE_KEYWORD, option.getShortDisplayText());
 				}
 			}
-
+		
 		CVSDecoratorConfiguration.decorate(decoration, format, bindings);
 			
 		} catch (CVSException e) {
@@ -279,7 +281,7 @@ public class CVSLightweightDecorator
 	 * one we think is the most important to show.
 	 * Return null if no overlay is to be used.
 	 */	
-	private ImageDescriptor getOverlay(IResource resource, boolean isDirty, CVSTeamProvider provider) {
+	public static ImageDescriptor getOverlay(IResource resource, boolean isDirty, CVSTeamProvider provider) {
 
 		// for efficiency don't look up a pref until its needed
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();

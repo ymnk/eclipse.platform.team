@@ -64,7 +64,7 @@ import org.eclipse.ui.IDecoratorManager;
  * the queue used between the decorator and the decorator runnable such that priority can be
  * given to visible elements when decoration requests are made.]
  */
-public class CVSDecorator extends LabelProvider implements ILabelDecorator, IResourceChangeListener, IResourceStateChangeListener, IDecorationNotifier {
+public class CVSDecorator implements IResourceChangeListener, IResourceStateChangeListener {
 	
 	// Resources that need an icon and text computed for display to the user
 	private List decoratorNeedsUpdating = new ArrayList();
@@ -82,49 +82,11 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 	// Keep track of deconfigured projects
 	private Set deconfiguredProjects = new HashSet();
 	
-	private static class DecoratorOverlayIcon extends OverlayIcon {		
-		public DecoratorOverlayIcon(Image base, ImageDescriptor[] overlays, int[] locations) {
-			super(base, overlays, locations, new Point(base.getBounds().width, base.getBounds().height));
-		}
-		protected void drawOverlays(ImageDescriptor[] overlays, int[] locations) {
-			Point size = getSize();
-			for (int i = 0; i < overlays.length; i++) {
-				ImageDescriptor overlay = overlays[i];
-				ImageData overlayData = overlay.getImageData();
-				switch (locations[i]) {
-					case TOP_LEFT:
-						drawImage(overlayData, 0, 0);			
-						break;
-					case TOP_RIGHT:
-						drawImage(overlayData, size.x - overlayData.width, 0);			
-						break;
-					case BOTTOM_LEFT:
-						drawImage(overlayData, 0, size.y - overlayData.height);			
-						break;
-					case BOTTOM_RIGHT:
-						drawImage(overlayData, size.x - overlayData.width, size.y - overlayData.height);			
-						break;
-				}
-			}
-		}
-	}
-	
-	/*
-	 * Return the CVSDecorator instance that is currently enabled.
-	 * Return null if we don't have a decorator or its not enabled.
-	 */ 
-	/* package */ static CVSDecorator getActiveCVSDecorator() {
-		IDecoratorManager manager = CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager();
-		if (manager.getEnabled(CVSUIPlugin.DECORATOR_ID))
-			return (CVSDecorator) manager.getLabelDecorator(CVSUIPlugin.DECORATOR_ID);
-		return null;
-	}
-	
 	/*
 	 * Blanket refresh the displaying of our decorator.
 	 */ 
 	public static void refresh() {
-		CVSDecorator activeDecorator = getActiveCVSDecorator();
+/*		CVSDecorator activeDecorator = getActiveCVSDecorator();
 		
 		if(activeDecorator == null)
 			return;	//nothing to do, our decorator isn't active
@@ -132,7 +94,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 		
 		//update all displaying of our decorator;
 		activeDecorator.fireLabelProviderChanged(new LabelProviderChangedEvent(activeDecorator));
-	}
+*/	}
 	
 	/*
 	 * Answers null if a provider does not exist or the provider is not a CVS provider. These resources
@@ -149,110 +111,12 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 
 	public CVSDecorator() {
 		// thread that calculates the decoration for a resource
-		decoratorUpdateThread = new Thread(new CVSDecorationRunnable(this), "CVS"); //$NON-NLS-1$
-		decoratorUpdateThread.start();
-		CVSProviderPlugin.addResourceStateChangeListener(this);
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.PRE_AUTO_BUILD);
+//		decoratorUpdateThread = new Thread(new CVSDecorationRunnable(this), "CVS"); //$NON-NLS-1$
+//		decoratorUpdateThread.start();
+//		CVSProviderPlugin.addResourceStateChangeListener(this);
+//		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.PRE_AUTO_BUILD);
 	}
 
-	public String decorateText(String text, Object o) {
-		IResource resource = getResource(o);
-		if (resource == null || text == null || resource.getType() == IResource.ROOT)
-			return text;
-		if (getCVSProviderFor(resource) == null)
-			return text;
-
-		CVSDecoration decoration = (CVSDecoration) cache.get(resource);
-
-		if (decoration != null) {
-			String format = decoration.getFormat();
-			if (format == null) {
-				return text;
-			} else {
-				Map bindings = decoration.getBindings();
-				if (bindings.isEmpty())
-					return text;
-				bindings.put(CVSDecoratorConfiguration.RESOURCE_NAME, text);
-				return CVSDecoratorConfiguration.bind(format, bindings);
-			}
-		} else {
-			addResourcesToBeDecorated(new IResource[] { resource });
-			return text;
-		}
-	}
-
-	public Image decorateImage(Image image, Object o) {
-		IResource resource = getResource(o);
-		if (resource == null || image == null || resource.getType() == IResource.ROOT)
-			return image;
-		if (getCVSProviderFor(resource) == null)
-			return image;
-
-		CVSDecoration decoration = (CVSDecoration) cache.get(resource);
-
-		if (decoration != null) {
-			List overlays = decoration.getOverlays();
-			int[] locations = decoration.getLocations();
-			if (overlays != null) {
-				return iconCache.getImageFor(new DecoratorOverlayIcon(image,
-					(ImageDescriptor[]) overlays.toArray(new ImageDescriptor[overlays.size()]), locations));
-			}
-		} else {
-			addResourcesToBeDecorated(new IResource[] { resource });
-		}
-		return image;
-	}
-
-	
-	/*
-	 * @see IDecorationNotifier#next()
-	 */
-	public synchronized IResource next() {
-		try {
-			if (shutdown) return null;
-			
-			if (decoratorNeedsUpdating.isEmpty()) {
-				wait();
-			}
-			// We were awakened.
-			if (shutdown) {
-				// The decorator was awakened by the plug-in as it was shutting down.
-				return null;
-			}
-			IResource resource = (IResource) decoratorNeedsUpdating.remove(0);
-
-			//System.out.println("++ Next: " + resource.getFullPath() + " remaining in cache: " + cache.size());
-
-			return resource;
-		} catch (InterruptedException e) {
-		}
-		return null;
-	}
-
-	/*
-	 * @see IDecorationNotifier#decorated(IResource[], CVSDecoration[])
-	 */
-	public synchronized void decorated(IResource[] resources, CVSDecoration[] decorations) {
-		if(!shutdown) {
-			List decorated = new ArrayList();
-
-			for (int i = 0; i < resources.length; i++) {
-				IResource resource= resources[i];
-				if(resource.exists()) {
-					cache.put(resource, decorations[i]);
-					decorated.add(resource);
-				}
-			}
-			postLabelEvent(new LabelProviderChangedEvent(this, decorated.toArray()));
-		}
-	}
-
-	/*
-	 * @see IDecorationNotifier#remaining()
-	 */
-	public int remaining() {
-		return decoratorNeedsUpdating.size();
-	}
 	/*
 	 * Handle resource changes and project description changes
 	 * 
@@ -321,7 +185,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 			resources.addAll(computeParents(resource));
 		}
 		
-		addResourcesToBeDecorated((IResource[]) resources.toArray(new IResource[resources.size()]));
+//		addResourcesToBeDecorated((IResource[]) resources.toArray(new IResource[resources.size()]));
 		
 		// post label events for resources that cannot or should not be decorated by CVS
 		if(!noProviderResources.isEmpty()) {
@@ -330,7 +194,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 				IResource element = (IResource) it.next();
 				resourcesToUpdate.add(element);
 			}
-			postLabelEvent(new LabelProviderChangedEvent(this, resourcesToUpdate.toArray()));
+//			postLabelEvent(new LabelProviderChangedEvent(this, resourcesToUpdate.toArray()));
 		}
 	}
 
@@ -366,49 +230,6 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 		return resources;
 	}
 	
-	private synchronized void addResourcesToBeDecorated(IResource[] resources) {
-		if (resources.length > 0) {
-			for (int i = 0; i < resources.length; i++) {
-				IResource resource = resources[i];
-				if(!decoratorNeedsUpdating.contains(resource)) {
-					decoratorNeedsUpdating.add(resource);
-				}
-			}
-			notify();
-		}
-	}
-
-	/**
-	 * Returns the resource for the given input object, or
-	 * null if there is no resource associated with it.
-	 * 
-	 * @param object  the object to find the resource for
-	 * @return the resource for the given object, or null
-	 */
-	private IResource getResource(Object object) {
-		if (object instanceof IResource) {
-			return (IResource)object;
-		}
-		if (object instanceof IAdaptable) {
-			return (IResource)((IAdaptable)object).getAdapter(IResource.class);
-		}
-		return null;
-	}
-
-	/**
-	 * Post the label event to the UI thread
-	 * 
-	 * @param events  the events to post
-	 */
-	private void postLabelEvent(final LabelProviderChangedEvent event) {
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				fireLabelProviderChanged(event);
-			}
-		});
-	} 
-
-	
 	private void shutdown() {
 		shutdown = true;
 		// Wake the thread up if it is asleep.
@@ -422,24 +243,6 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 		}
 	}
 		
-	/*
-	 * @see IBaseLabelProvider#dispose()
-	 */
-	public void dispose() {
-		super.dispose();
-		
-		// terminate decoration thread
-		shutdown();
-		
-		// unregister change listeners
-		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-		CVSProviderPlugin.removeResourceStateChangeListener(this);
-		
-		// dispose of images created as overlays
-		decoratorNeedsUpdating.clear();
-		clearCache();
-		iconCache.disposeAll();
-	}
 	/**
 	 * @see IResourceStateChangeListener#projectConfigured(IProject)
 	 */
