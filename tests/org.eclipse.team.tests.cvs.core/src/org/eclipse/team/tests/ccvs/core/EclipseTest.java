@@ -260,9 +260,6 @@ public class EclipseTest extends EclipseWorkspaceTest {
 	protected void assertEquals(IProject project1, IProject project2) throws CoreException, TeamException, IOException {
 		assertEquals(project1, project2, false, false);
 	}
-	protected void assertEquals(String message, IProject project1, IProject project2) throws CoreException, TeamException, IOException {
-		assertEquals(project1, project2, false, false);
-	}
 	
 	protected void assertEquals(IProject project1, IProject project2, boolean includeTimestamps, boolean includeTags) throws CoreException, TeamException, IOException {
 		assertEquals(getProvider(project1), getProvider(project2), includeTimestamps, includeTags);

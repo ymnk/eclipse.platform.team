@@ -3,20 +3,18 @@ package org.eclipse.team.tests.ccvs.core.compatible;
  * (c) Copyright IBM Corp. 2000, 2002.
  * All Rights Reserved.
  */
-import junit.awtui.TestRunner;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.eclipse.team.tests.ccvs.core.JUnitTestCase;
 
 public class ModuleTest extends JUnitTestCase {
-	
 	SameResultEnv env1;
 	SameResultEnv env2;
 	
 	public ModuleTest(String arg) {
 		super(arg);
-		env1 = new SameResultEnv(arg,getFile("checkout1"));
-		env2 = new SameResultEnv(arg,getFile("checkout2"));
+		env1 = new SameResultEnv(arg + "checkout1");
+		env2 = new SameResultEnv(arg + "checkout2");
 	}
 
 	public static void main(String[] args) {	
@@ -59,7 +57,7 @@ public class ModuleTest extends JUnitTestCase {
 	public void testSimpleModule() throws Exception {
 		setUpModuleFile(new String[]{"mod1 proj2"});
 		env1.execute("co",EMPTY_ARGS,new String[]{"mod1"});
-		env1.appendToFile("mod1/a.txt","Append");
+		env1.appendToFile("mod1/a.txt", new String[] { "Append" });
 		env1.execute("ci",new String[]{"-m","m"},new String[]{"mod1"});
 		env1.execute("update",EMPTY_ARGS,new String[]{"mod1"});
 	}
@@ -70,7 +68,7 @@ public class ModuleTest extends JUnitTestCase {
 										"mod1f &mod1-f1 &mod1-f2"});
 		
 		env1.execute("co",EMPTY_ARGS,new String[]{"mod1f"});
-		env1.appendToFile("mod1f/mod1-f1/b.txt","Append");
+		env1.appendToFile("mod1f/mod1-f1/b.txt", new String[] { "Append" });
 		env1.execute("ci",new String[]{"-m","m"},new String[]{"mod1f"});
 		env1.execute("update",EMPTY_ARGS,new String[]{"mod1f"});
 	}
@@ -82,7 +80,7 @@ public class ModuleTest extends JUnitTestCase {
 										"mod1f -a mod1-f1 mod1-f2"});
 		
 		env1.execute("co",EMPTY_ARGS,new String[]{"mod1f"});
-		env1.appendToFile("mod1-f1/b.txt","Append");
+		env1.appendToFile("mod1-f1/b.txt", new String[] { "Append" });
 		env1.execute("ci",new String[]{"-m","m"},new String[]{"mod1-f1","mod1-f2"});
 		env1.execute("update",EMPTY_ARGS,new String[]{"mod1-f1","mod1-f2"});
 	}
