@@ -9,6 +9,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.resources.ISynchronizer;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -54,6 +55,10 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	}
 	 
 	/*************** State Factory ***************/
+
+	public void registerWithSynchronizer() {
+		getSynchronizer().add(getIdentifier());
+	}
 
 	/**
 	 * Answers the synchronizer.
@@ -319,14 +324,14 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	 */
 	public void setProject(IProject project) {
 		super.setProject(project);
-		try {
-			restoreConfiguration();
+/*		try {
+			restoreConfiguration();  This will fail because root is null first time
 		} catch (CoreException e) {
 			TeamPlugin.log(IStatus.ERROR, "Error configuring project", e);
 		} catch (IOException e) {
 			TeamPlugin.log(IStatus.ERROR, "Error configuring project", e);
 		}
-	}
+*/	}
 
 
 
@@ -369,6 +374,8 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 		configure(configuration);
 
 		// Store the new configuration for future.
+		registerWithSynchronizer();
+
 		storeConfiguration(configuration);
 	}
 
@@ -380,13 +387,13 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 
 	/**
 	 * Associates the given configuration with the given project.
-	 * Stores the configuration under the <code>getType()</code> key.
+	 * Stores the configuration under the <code>getIdentifier()</code> key.
 	 */
 	private void storeConfiguration(Properties configuration) throws IOException, CoreException {
 		// Remove any old configuration first.
 		QualifiedName configKey = getIdentifier();
 		getSynchronizer().flushSyncInfo(configKey, getProject(), IResource.DEPTH_INFINITE);
-
+		
 		// Flatten the configuration to bytes.
 		ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 		byteStream.write(CONFIG_FORMAT_VERSION);
