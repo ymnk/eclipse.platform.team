@@ -31,7 +31,6 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
-import org.eclipse.team.internal.ccvs.core.util.Util;
 
 /**
  * CVSWorkspaceSubscriber
@@ -126,61 +125,13 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources));
 	}
 
-	/**
-	 * Return <code>true</code> if the remoteBytes represents a later revision on the same
-	 * branch as localBytes. Return <code>false</code> if remoteBytes is the same or an earlier 
-	 * revision or if the bytes are on a separate branch (or tag)
-	 * @param remoteBytes
-	 * @param localBytes
-	 * @return
-	 */
 	private boolean isLaterRevision(byte[] remoteBytes, byte[] localBytes) {
 		try {
-			// If the two byte arrays are the same, then the remote isn't a later revision
-			if (remoteBytes == localBytes) return false;
-			//	If the tags differ, then the remote isn't a later revision
-			byte[] remoteTag = ResourceSyncInfo.getTagBytes(remoteBytes);
-			byte[] localTag = ResourceSyncInfo.getTagBytes(localBytes);
-			if (!Util.equals(remoteTag, localTag)) return false;
-			// If the revisions are the same, the remote isn't later
-			String remoteRevision = ResourceSyncInfo.getRevision(remoteBytes);
-			String localRevision = ResourceSyncInfo.getRevision(localBytes);
-			if (remoteRevision.equals(localRevision)) return false;
-			return isLaterRevision(remoteRevision, localRevision);
+			return ResourceSyncInfo.isLaterRevisionOnSameBranch(remoteBytes, localBytes);
 		} catch (CVSException e) {
 			CVSProviderPlugin.log(e);
 			return false;
 		}
-	}
-
-	/**
-	 * Return true if the remoteRevision represents a later revision than the local revision
-	 * on the same branch.
-	 * @param remoteRevision
-	 * @param localRevision
-	 * @return
-	 */
-	private boolean isLaterRevision(String remoteRevision, String localRevision) {
-		int localDigits[] = Util.convertToDigits(localRevision);
-		if (localDigits.length == 0) return false;
-		int remoteDigits[] = Util.convertToDigits(remoteRevision);
-		if (remoteDigits.length == 0) return false;
-		if (localDigits.length > remoteDigits.length) {
-			// If there are more digits in the local revision then there is
-			// no way that the remote is later on the same branch
-			return false;
-		}
-		// For the remote to be later, at least one of the remote digits must
-		// be larger or, if all the remote and local digits are equals, there
-		// must be more remote digits
-		for (int i = 0; i < localDigits.length; i++) {
-			int localDigit = localDigits[i];
-			int remoteDigit = remoteDigits[i];
-			if (remoteDigit > localDigit) return true;
-			if (remoteDigit < localDigit) return false;
-		}
-		// All the leading digits are equals so the remote is later if it is longer
-		return remoteDigits.length > localDigits.length;
 	}
 
 	/* (non-Javadoc)
@@ -315,4 +266,12 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	private boolean hasIncomingChange(IResource resource) throws TeamException {
 		return remoteSynchronizer.isRemoteKnown(resource);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRevisionNumberCompareCriteria()
+	 */
+	protected CVSRevisionNumberCompareCriteria createRevisionNumberCompareCriteria() {
+		return new CVSRevisionOnBranchCompareCriteria();
+	}
+
 }

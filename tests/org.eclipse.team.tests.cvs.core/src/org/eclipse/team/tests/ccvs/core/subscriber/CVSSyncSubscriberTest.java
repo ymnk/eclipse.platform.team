@@ -31,6 +31,7 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.sync.RemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
+import org.eclipse.team.tests.ccvs.ui.SynchronizeViewTestAdapter;
 
 /**
  * Provides test methods common to CVS sync subscribers
@@ -39,7 +40,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 
 	private ITeamResourceChangeListener listener;
 	private List accumulatedTeamDeltas = new ArrayList();
-	private static SyncInfoSource source = new SyncInfoSource();
+	private static SyncInfoSource source = new SynchronizeViewTestAdapter();
 
 	public CVSSyncSubscriberTest() {
 		super();

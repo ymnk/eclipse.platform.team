@@ -1197,8 +1197,15 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 	
 	public void testProjectClose() throws TeamException, CoreException {
 		IProject project = createProject(new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		
+		setContentsAndEnsureModified(project.getFile("file1.txt"));
+		assertSyncEquals("testProjectClose sync check", project,
+				new String[] { "file1.txt"},
+				true, new int[] { 
+							  SyncInfo.OUTGOING | SyncInfo.CHANGE,
+					});
+		
 		project.close(null);
-		// TODO: dirty some resources and some incoming and ensure entries are removed
 		assertProjectRemoved(getWorkspaceSubscriber(), project);
 	}
 }

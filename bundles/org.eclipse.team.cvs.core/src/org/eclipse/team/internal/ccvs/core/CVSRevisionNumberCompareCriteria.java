@@ -75,20 +75,31 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 		}
 		ICVSFile cvsFile = CVSWorkspaceRoot.getCVSFileFor((IFile)e1);
 		try {
-			byte[] syncBytes1 = cvsFile.getSyncBytes();
-			byte[] syncBytes2 = ((ICVSRemoteFile)e2).getSyncBytes();
+			byte[] localBytes = cvsFile.getSyncBytes();
+			byte[] remoteBytes = ((ICVSRemoteFile)e2).getSyncBytes();
 		
-			if(syncBytes1 != null) {
-				if(ResourceSyncInfo.isDeletion(syncBytes1) || ResourceSyncInfo.isMerge(syncBytes1) || cvsFile.isModified(null)) {
+			if(localBytes != null) {
+				if(ResourceSyncInfo.isDeletion(localBytes) || ResourceSyncInfo.isMerge(localBytes) || cvsFile.isModified(null)) {
 					return false;
 				}
-				return ResourceSyncInfo.getRevision(syncBytes1).equals(ResourceSyncInfo.getRevision(syncBytes2));
+				return compare(localBytes, remoteBytes);
 			}
 			return false;
 		} catch(CVSException e) {
 			CVSProviderPlugin.log(e);
 			return false;
 		}
+	}
+
+	/**
+	 * Compare the localBytes with the remoteBytes for revision number equality
+	 * @param localBytes
+	 * @param remoteBytes
+	 * @return
+	 * @throws CVSException
+	 */
+	protected boolean compare(byte[] localBytes, byte[] remoteBytes) throws CVSException {
+		return ResourceSyncInfo.getRevision(localBytes).equals(ResourceSyncInfo.getRevision(remoteBytes));
 	}
 
 	/* (non-Javadoc)

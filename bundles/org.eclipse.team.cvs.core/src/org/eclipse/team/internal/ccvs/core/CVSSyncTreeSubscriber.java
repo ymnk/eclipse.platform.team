@@ -65,7 +65,7 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	 */
 	protected void initializeComparisonCriteria() {				
 		// setup comparison criteria
-		ComparisonCriteria revisionNumberComparator = new CVSRevisionNumberCompareCriteria();
+		ComparisonCriteria revisionNumberComparator = createRevisionNumberCompareCriteria();
 		ComparisonCriteria contentsComparator = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, false /*consider whitespace */);
 		ComparisonCriteria contentsComparatorIgnoreWhitespace = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, true /* ignore whitespace */);
 		
@@ -75,6 +75,10 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 		
 		// default
 		defaultCriteria = revisionNumberComparator.getId();
+	}
+	
+	protected CVSRevisionNumberCompareCriteria createRevisionNumberCompareCriteria() {
+		return new CVSRevisionNumberCompareCriteria(); 
 	}
 	
 	/**
