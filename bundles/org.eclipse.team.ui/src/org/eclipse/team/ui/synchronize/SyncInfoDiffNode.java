@@ -175,10 +175,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @return true has the same subsriber and resource
 	 */
 	public boolean equals(Object object) {
-		if(object == null) return false;
-		if (object != null || !object.getClass().equals(this.getClass())) {
-			return false;
-		}
 		return this==object;
 	}
 

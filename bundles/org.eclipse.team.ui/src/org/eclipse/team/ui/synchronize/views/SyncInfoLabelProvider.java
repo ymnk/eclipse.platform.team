@@ -25,6 +25,7 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.internal.WorkbenchColors;
@@ -129,11 +130,17 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 		Image base = workbenchLabelProvider.getImage(element);
 		if(base != null) {
 			SyncInfo info = getSyncInfo(element);
+			Image decoratedImage;
+			IResource local;
 			if(info == null) {
-				return getCompareImage(base, SyncInfo.IN_SYNC);
+				// TODO: How do we decorate parents of conflicts that have no resource
+				local = TreeViewerUtils.getResource(element);
+				decoratedImage = getCompareImage(base, SyncInfo.IN_SYNC);
+			} else {
+				local = info.getLocal();
+				decoratedImage = getCompareImage(base, info.getKind());
 			}
-			Image decoratedImage = getCompareImage(base, info.getKind());
-			return propagateConflicts(decoratedImage, element, info.getLocal()); 
+			return propagateConflicts(decoratedImage, element, local); 
 		}
 		return base;
 	}
@@ -166,7 +173,8 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	}
 	
 	private Image propagateConflicts(Image base, Object element, IResource resource) {
-		if(element instanceof SyncInfoDiffNode && resource.getType() != IResource.FILE) {
+		if (resource != null && resource.getType() == IResource.FILE) return base;
+		if(element instanceof SyncInfoDiffNode) {
 			// if the folder is already conflicting then don't bother propagating the conflict
 			int kind = getSyncKind(element);
 			if((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {

@@ -129,25 +129,31 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
 		viewer.getControl().setRedraw(false);
 		if (event.isReset()) {
-			// On a reset, clear the diff node model and rebuild it. Then refresh the 
-			// viewer.
-			clearModelObjects(getRoot());
-			resourceMap.clear();
-			buildTree(getRoot());
-			((StructuredViewer) viewer).refresh();
+			internalReset();
 		} else {
 			handleChanges(event);
 		}
 		viewer.getControl().setRedraw(true);
 	}
 	
-	protected void reset() {
-		viewer.getControl().setRedraw(false);
-		((AbstractTreeViewer) viewer).remove(getRoot());
+	/**
+	 * 
+	 */
+	protected void internalReset() {
+		// On a reset, clear the diff node model and rebuild it. Then refresh the 
+		// viewer.
+		viewer.remove(getRoot().getChildren());
 		clearModelObjects(getRoot());
 		resourceMap.clear();
+		associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), getRoot());
 		buildTree(getRoot());
+		// TODO: Is this refresh redundant?
 		((StructuredViewer) viewer).refresh();
+	}
+
+	protected void reset() {
+		viewer.getControl().setRedraw(false);
+		internalReset();
 		viewer.getControl().setRedraw(true);
 	}
 	
@@ -338,8 +344,8 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * Dispose of the builder
 	 */
 	public void dispose() {
-		resourceMap.clear();
 		root.getSyncInfoSet().removeSyncSetChangedListener(this);
+		resourceMap.clear();
 	}
 	/**
 	 * @return Returns the root.

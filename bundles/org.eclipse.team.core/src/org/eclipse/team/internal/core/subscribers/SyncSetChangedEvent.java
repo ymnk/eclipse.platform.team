@@ -83,9 +83,17 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	public void addedRoot(IResource parent) {
 		if (removedRoots.contains(parent)) {
 			// The root was re-added which is a no-op
+			// TODO: This is actually a change which needs to be handled somehow. But how?
 			removedRoots.remove(parent);
 		} else {
-			// TODO: May be added underneath another added root
+			// do not add the root if it is the child of another added root
+			for (Iterator iter = addedRoots.iterator(); iter.hasNext();) {
+				IResource root = (IResource) iter.next();
+				if (isParent(root, parent)) {
+					// There is a higher added root already in the list
+					return;
+				}
+			}
 			addedRoots.add(parent);
 		}
 		

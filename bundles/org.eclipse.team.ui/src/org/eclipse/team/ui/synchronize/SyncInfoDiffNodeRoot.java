@@ -60,4 +60,14 @@ public class SyncInfoDiffNodeRoot extends SyncInfoDiffNode {
 	public SyncInfoDiffNodeSorter getSorter() {
 		return new SyncInfoDiffNodeSorter();
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.structuremergeviewer.DiffContainer#hasChildren()
+	 */
+	public boolean hasChildren() {
+		// This is required to allow the sync framework to be used in wizards
+		// where the input is not populated until after the compare input is created
+		// (i.e. the compare input will only create the diff viewer if the input has children
+		return true;
+	}
 }
