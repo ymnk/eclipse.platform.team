@@ -20,7 +20,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ViewerSorter;
-import org.eclipse.swt.widgets.Control;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.core.synchronize.*;
@@ -44,42 +44,58 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 	
 	private SyncInfoSetChangeSetCollector checkedInCollector;
 	
-	private IChangeSetChangeListener checkedInCollectorListener = new IChangeSetChangeListener() {
+	private IChangeSetChangeListener changeSetListener = new IChangeSetChangeListener() {
 	    
         /* (non-Javadoc)
          * @see org.eclipse.team.core.subscribers.IChangeSetChangeListener#setAdded(org.eclipse.team.core.subscribers.ChangeSet)
          */
-        public void setAdded(ChangeSet set) {
-            ISynchronizeModelElement node = getModelElement(set);
-            ISynchronizeModelProvider provider = null;
-            if (node != null) {
-                provider = getProviderRootedAt(node);
+        public void setAdded(final ChangeSet set) {
+            final SyncInfoTree syncInfoSet;
+            // TODO: May need to be modified to work with two-way
+            if (set instanceof CheckedInChangeSet) {
+                syncInfoSet = set.getSyncInfoSet();
+            } else {
+                syncInfoSet = activeCollector.getSyncInfoSet(set);
             }
-            if (provider == null) {
-                provider = createProvider(set);
-            }
-            provider.prepareInput(null);
+            runViewUpdate(new Runnable() {
+                public void run() {
+                    createChangeSetModelElement(set, syncInfoSet);
+                }
+            });
         }
 
         /* (non-Javadoc)
          * @see org.eclipse.team.core.subscribers.IChangeSetChangeListener#defaultSetChanged(org.eclipse.team.core.subscribers.ChangeSet, org.eclipse.team.core.subscribers.ChangeSet)
          */
-        public void defaultSetChanged(ChangeSet previousDefault, ChangeSet set) {
-            // There is no default set for checked-in change sets
+        public void defaultSetChanged(final ChangeSet previousDefault, final ChangeSet set) {
+            runViewUpdate(new Runnable() {
+                public void run() {
+		            refreshLabel(previousDefault);
+		            refreshLabel(set);
+                }
+            });
         }
 
         /* (non-Javadoc)
          * @see org.eclipse.team.core.subscribers.IChangeSetChangeListener#setRemoved(org.eclipse.team.core.subscribers.ChangeSet)
          */
-        public void setRemoved(ChangeSet set) {
-            removeModelElementForSet(set);
+        public void setRemoved(final ChangeSet set) {
+            runViewUpdate(new Runnable() {
+                public void run() {
+                    removeModelElementForSet(set);
+                }
+            });
         }
 
         /* (non-Javadoc)
          * @see org.eclipse.team.core.subscribers.IChangeSetChangeListener#nameChanged(org.eclipse.team.core.subscribers.ChangeSet)
          */
-        public void nameChanged(ChangeSet set) {
-            // The name of checked-in change sets should not change
+        public void nameChanged(final ChangeSet set) {
+            runViewUpdate(new Runnable() {
+                public void run() {
+                    refreshLabel(set);
+                }
+            });
         }
 
         /* (non-Javadoc)
@@ -117,10 +133,11 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         if (changeSetCapability.supportsCheckedInChangeSets()) {
 	        checkedInCollector = changeSetCapability.createCheckedInChangeSetCollector(configuration);
 	        checkedInCollector.setProvider(this);
-	        checkedInCollector.addListener(checkedInCollectorListener);
+	        checkedInCollector.addListener(changeSetListener);
         }
         if (changeSetCapability.supportsActiveChangeSets()) {
             activeCollector = new ActiveChangeSetCollector(configuration, this);
+            activeCollector.setChangeSetChangeListener(changeSetListener);
             configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, ChangeSetActionGroup.CHANGE_SET_GROUP);
         }
     }
@@ -129,11 +146,16 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
      * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#handleChanges(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent, org.eclipse.core.runtime.IProgressMonitor)
      */
     protected void handleChanges(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
+        boolean handled = false;
         if (checkedInCollector != null && getChangeSetCapability().enableCheckedInChangeSetsFor(getConfiguration())) {
             checkedInCollector.handleChange(event);
-        } else if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
+            handled = true;
+        }
+        if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
             activeCollector.handleChange(event);
-        } else {
+            handled = true;
+        }
+        if (!handled) {
             // Forward the event to the root provider
             ISynchronizeModelProvider provider = getProviderRootedAt(getModelRoot());
             if (provider != null) {
@@ -177,20 +199,26 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 	        // First, disable the collectors
 		    if (checkedInCollector != null) {
 		        checkedInCollector.reset(null);
-		        checkedInCollector.removeListener(checkedInCollectorListener);
+		        checkedInCollector.removeListener(changeSetListener);
 		    }
-		    if (activeCollector != null) { 
+		    if (activeCollector != null) {
+		        activeCollector.setChangeSetChangeListener(null);
 		        activeCollector.reset(null);
 		    }
 	        
-	        // Then, re-enable the proper collection method
+            // Then, re-enable the proper collection method
+	        boolean handled = false;
 		    if (checkedInCollector != null && getChangeSetCapability().enableCheckedInChangeSetsFor(getConfiguration())) {
-		        checkedInCollector.addListener(checkedInCollectorListener);
+		        checkedInCollector.addListener(changeSetListener);
 		        checkedInCollector.reset(getSyncInfoSet());
-		        
-		    } else if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
+		        handled = true;
+		    }
+		    if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
+		        activeCollector.setChangeSetChangeListener(changeSetListener);
 	            activeCollector.reset(getSyncInfoSet());
-	        } else {
+	            handled = true;
+		    }
+		    if (!handled) {
 		        // Forward the sync info to the root provider and trigger a build
 	            ISynchronizeModelProvider provider = getProviderRootedAt(getModelRoot());
 	            if (provider != null) {
@@ -303,7 +331,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
     private void createRootProvider() {
         // Recreate the sub-provider at the root and use it's viewer sorter and action group
         SyncInfoTree tree;
-        if (activeCollector != null && getConfiguration().getMode() == ISynchronizePageConfiguration.OUTGOING_MODE) {
+        if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
             // When in outgoing mode, use the root set of the active change set collector at the root
             tree = activeCollector.getRootSet();
         } else {
@@ -326,13 +354,6 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
                 });
             }
         }
-    }
-    
-    /*
-     * Create a provider and node for the given change set
-     */
-    private ISynchronizeModelProvider createProvider(ChangeSet set) {
-        return createProvider(set, set.getSyncInfoSet());
     }
     
     /*
@@ -359,10 +380,11 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
     
     public void dispose() {
         if (checkedInCollector != null) {
-	        checkedInCollector.removeListener(checkedInCollectorListener);
+	        checkedInCollector.removeListener(changeSetListener);
 	        checkedInCollector.dispose();
         }
         if (activeCollector != null) {
+            activeCollector.setChangeSetChangeListener(null);
             activeCollector.dispose();
         }
         super.dispose();
@@ -372,19 +394,6 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
     public void waitUntilDone(IProgressMonitor monitor) {
         super.waitUntilDone(monitor);
         if (checkedInCollector != null) checkedInCollector.waitUntilDone(monitor);
-    }
-    
-    private void syncExec(final Runnable runnable) {
-		final Control ctrl = getViewer().getControl();
-		if (ctrl != null && !ctrl.isDisposed()) {
-			ctrl.getDisplay().syncExec(new Runnable() {
-				public void run() {
-					if (!ctrl.isDisposed()) {
-					    runnable.run();
-					}
-				}
-			});
-		}
     }
     
     void removeModelElementForSet(final ChangeSet set) {
@@ -400,11 +409,11 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         ChangeSet[] sets = activeCollector.getActiveChangeSetManager().getSets();
         for (int i = 0; i < sets.length; i++) {
             ChangeSet set = sets[i];
-            createActiveChangeSetModelElement(set);
+            createChangeSetModelElement(set, activeCollector.getSyncInfoSet(set));
         }
     }
 
-    public void createActiveChangeSetModelElement(final ChangeSet set) {
+    public void createChangeSetModelElement(ChangeSet set, SyncInfoTree tree) {
         // Add the model element and provider for the set
         ISynchronizeModelElement node = getModelElement(set);
         ISynchronizeModelProvider provider = null;
@@ -412,7 +421,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
             provider = getProviderRootedAt(node);
         }
         if (provider == null) {
-            provider = createProvider(set, activeCollector.getSyncInfoSet(set));
+            provider = createProvider(set, tree);
         }
         provider.prepareInput(null);
     }

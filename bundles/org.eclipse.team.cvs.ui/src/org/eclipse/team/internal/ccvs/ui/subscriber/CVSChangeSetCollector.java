@@ -11,56 +11,28 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ChangeSet;
-import org.eclipse.team.core.subscribers.CheckedInChangeSet;
-import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.core.variants.IResourceVariant;
-import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.ILogEntry;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.resources.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Util;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.HistoryView;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation.LogEntryCache;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector;
+import org.eclipse.team.ui.synchronize.*;
 
 /**
  * Collector that fetches the log for incoming CVS change sets
@@ -212,31 +184,6 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
      */
     protected void add(SyncInfo[] infos) {
         startUpdateJob(new SyncInfoSet(infos));
-        // Add any outgoing changes to the root set
-        for (int i = 0; i < infos.length; i++) {
-            SyncInfo info = infos[i];
-            if (isOutgoingChange(info)) {
-                addLocalChange(info);
-            }
-        }
-    }
-
-    private void addLocalChange(SyncInfo info) {
-        addToDefaultSet(DEFAULT_OUTGOING_SET_NAME, info);
-    }
-
-    private boolean isOutgoingChange(SyncInfo info) {
-        try {
-            SyncInfo threeWayInfo = info;
-            if (!threeWayInfo.getComparator().isThreeWay())
-                threeWayInfo = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().getSyncInfo(info.getLocal());
-            if (threeWayInfo == null) return false;
-            int direction = threeWayInfo.getKind() & SyncInfo.DIRECTION_MASK;
-            return (direction == SyncInfo.OUTGOING || direction == SyncInfo.CONFLICTING);
-        } catch (TeamException e) {
-            CVSUIPlugin.log(e);
-            return false;
-        }
     }
 
     /* (non-Javadoc)
