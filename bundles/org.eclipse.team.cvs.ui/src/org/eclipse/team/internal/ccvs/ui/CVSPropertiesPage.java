@@ -172,10 +172,11 @@ public class CVSPropertiesPage extends PropertyPage {
 			methodType.add(methods[i]);
 		}
 		try {
-			String method = cvsRoot.getRemoteLocation().getMethod().getName();
+			ICVSRepositoryLocation location = cvsRoot.getRemoteLocation();
+			String method = location.getMethod().getName();
 			methodType.select(methodType.indexOf(method));
 		
-			info = provider.getUserInfo(project);
+			info = location.getUserInfo(true);
 			userText.setText(info.getUsername());
 		} catch (TeamException e) {
 			handle(e);

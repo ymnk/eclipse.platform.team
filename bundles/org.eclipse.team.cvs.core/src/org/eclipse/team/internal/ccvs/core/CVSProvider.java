@@ -365,6 +365,8 @@ public class CVSProvider implements ICVSProvider {
 		
 		// Determine if the repository is known
 		boolean alreadyExists = isCached(location);
+		// Set the folder sync info of the project to point to the remote module
+		ICVSFolder folder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(project);
 			
 		try {
 			// Get the import properties
@@ -391,9 +393,7 @@ public class CVSProvider implements ICVSProvider {
 			} finally {
 				s.close();
 			}
-			
-			// Set the folder sync info of the project to point to the remote module
-			ICVSFolder folder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(project);
+						
 			folder.setFolderSyncInfo(new FolderSyncInfo(moduleName, location.getLocation(), null, false));
 
 			// Register the project with Team
@@ -412,7 +412,7 @@ public class CVSProvider implements ICVSProvider {
 				disposeRepository(location);
 			throw e;
 		} finally {
-			CVSProviderPlugin.getSynchronizer().save(project.getLocation().toFile(), Policy.subMonitorFor(monitor, 5));
+			folder.saveSyncInfo(Policy.subMonitorFor(monitor, 5));
 		}
 		// Add the repository if it didn't exist already
 		if ( ! alreadyExists)
@@ -483,7 +483,7 @@ public class CVSProvider implements ICVSProvider {
 		} catch (CoreException e) {
 			throw wrapException(e);
 		} finally {
-			CVSProviderPlugin.getSynchronizer().save(project.getLocation().toFile(), Policy.subMonitorFor(monitor, 5));
+			folder.saveSyncInfo(Policy.subMonitorFor(monitor, 5));
 		}
 	}
 	

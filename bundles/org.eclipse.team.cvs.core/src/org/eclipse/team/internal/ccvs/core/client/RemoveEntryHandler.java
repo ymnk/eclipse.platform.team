@@ -44,10 +44,6 @@ class RemoveEntryHandler extends ResponseHandler {
 		String fileName = repositoryFile.substring(repositoryFile.lastIndexOf("/") + 1); //$NON-NLS-1$
 		ICVSFolder mParent = session.getLocalRoot().getFolder(localDir);
 		ICVSFile mFile = mParent.getFile(fileName);
-
-		// NOTE: Should we do something here other than throw a run-time exception
-		Assert.isTrue(mParent.exists() && !mFile.exists());
-		
 		mFile.unmanage();
 	}
 

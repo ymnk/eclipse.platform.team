@@ -56,7 +56,6 @@ public class CVSProviderPlugin extends Plugin {
 	private String cvsServer = DEFAULT_CVS_SERVER;
 	
 	private static CVSProviderPlugin instance;
-	private static ICVSSynchronizer synchronizer;
 	
 	/**
 	 * The identifier for the CVS nature
@@ -156,8 +155,6 @@ public class CVSProviderPlugin extends Plugin {
 		super.startup();
 		Policy.localize("org.eclipse.team.internal.ccvs.core.messages"); //$NON-NLS-1$
 
-		synchronizer = new FileSystemSynchronizer();
-
 		CVSProvider.startup();
 		ProjectDescriptionManager.initializeChangeListener();
 		new OrphanedFolderListener().register();
@@ -170,14 +167,7 @@ public class CVSProviderPlugin extends Plugin {
 		super.shutdown();
 		CVSProvider.shutdown();
 	}
-
-	/**
-	 * Returns the synchronizer reponsible for managing the CVS meta information.
-	 */
-	public static ICVSSynchronizer getSynchronizer() {
-		return synchronizer;
-	}
-	
+		
 	/*
 	 * Add a resource change listener to the workspace in order to respond to 
 	 * resource deletions and moves and to ensure or project desription file is up to date.

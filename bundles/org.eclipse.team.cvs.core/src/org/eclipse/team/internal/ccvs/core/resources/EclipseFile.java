@@ -14,8 +14,10 @@ import java.text.ParseException;
 import java.util.Date;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.ICVSFile;
@@ -94,6 +96,11 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 			}
 		}		
 		getIOFile().setLastModified(millSec);
+		try {
+			resource.refreshLocal(IResource.DEPTH_ZERO, null);
+		} catch(CoreException e) {
+			throw CVSException.wrapException(e);
+		}
 	}
 
 	/*
@@ -158,7 +165,7 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	 * @see ICVSResource#unmanage()
 	 */
 	public void unmanage() throws CVSException {
-		CVSProviderPlugin.getSynchronizer().deleteResourceSync(getIOFile());
+		EclipseSynchronizer.getInstance().deleteResourceSync(resource, new NullProgressMonitor());
 	}
 	
 	/*

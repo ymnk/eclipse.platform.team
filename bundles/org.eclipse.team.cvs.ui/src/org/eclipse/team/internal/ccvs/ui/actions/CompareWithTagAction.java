@@ -18,6 +18,7 @@ import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSCompareEditorInput;
 import org.eclipse.team.internal.ccvs.ui.CVSResourceNode;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -50,7 +51,7 @@ public class CompareWithTagAction extends TeamAction {
 						return;
 					}
 					CVSTag tag = dialog.getResult();
-					ICVSRemoteResource remoteResource = (ICVSRemoteResource)provider.getRemoteTree(resource, tag, new NullProgressMonitor());
+					ICVSRemoteResource remoteResource = CVSWorkspaceRoot.getRemoteTree(resource, tag, new NullProgressMonitor());
 					CompareUI.openCompareEditor(new CVSCompareEditorInput(new CVSResourceNode(resource), new ResourceEditionNode(remoteResource)));
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);

@@ -151,7 +151,6 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		for (int i=0;i<resources.length;i++) {
 			CVSWorkspaceRoot.getCVSResourceFor(resources[i]).unmanage();
 		}
-		CVSProviderPlugin.getSynchronizer().save(container.getLocation().toFile(), DEFAULT_MONITOR);
 	}
 	
 	/**

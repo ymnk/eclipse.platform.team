@@ -10,11 +10,12 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.team.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.ITeamManager;
 import org.eclipse.team.core.ITeamProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.RepositoryManager;
@@ -55,9 +56,8 @@ public class CommitAction extends TeamAction {
 		for (int i = 0; i < resources.length; i++) {
 			ITeamProvider provider = manager.getProvider(resources[i].getProject());
 			if (provider == null) return false;
-			CVSTeamProvider cvsProvider = (CVSTeamProvider)provider;
-			if (!cvsProvider.isManaged(resources[i])) return false;
-			if (!cvsProvider.isCheckedOut(resources[i])) return false;
+			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
+			if (!cvsResource.isManaged()) return false;
 		}
 		return true;
 	}

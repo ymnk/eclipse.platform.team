@@ -194,7 +194,7 @@ public class RemoteResourceTest extends EclipseTest {
 		getProvider(project).checkin(new IResource[] {project}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 		
 		// Fetch the remote tree for the version
-		IRemoteSyncElement tree = getProvider(project).getRemoteSyncTree(project, v1Tag, DEFAULT_MONITOR);
+		IRemoteSyncElement tree = CVSWorkspaceRoot.getRemoteSyncTree(project, v1Tag, DEFAULT_MONITOR);
 
 		// Check out the project version
 		project = checkoutCopy(project, v1Tag);

@@ -17,6 +17,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.ccvs.core.ICVSRemoteFile;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.ccvs.core.ILogEntry;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
@@ -70,7 +71,7 @@ public class CompareWithRevisionAction extends TeamAction {
 	protected boolean isEnabled() throws TeamException {
 		IResource[] resources = getSelectedResources();
 		if (resources.length != 1) return false;
-		CVSTeamProvider provider = (CVSTeamProvider)TeamPlugin.getManager().getProvider(resources[0]);
-		return provider.isManaged(resources[0]);
+		ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resources[0]);
+		return cvsResource.isManaged();
 	}
 }

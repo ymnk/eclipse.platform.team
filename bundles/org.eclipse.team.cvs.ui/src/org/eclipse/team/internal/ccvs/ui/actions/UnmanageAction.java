@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.ITeamManager;
 import org.eclipse.team.core.ITeamProvider;
 import org.eclipse.team.core.TeamException;
@@ -189,7 +190,8 @@ public class UnmanageAction extends TeamAction {
 			if(resources[i].getType()!=IResource.PROJECT) return false;
 			ITeamProvider provider = manager.getProvider(resources[i].getProject());
 			if (provider == null) return false;
-			if (!((CVSTeamProvider)provider).isManaged(resources[i])) return false;
+			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
+			if (!cvsResource.isManaged()) return false;
 		}
 		return true;
 	}

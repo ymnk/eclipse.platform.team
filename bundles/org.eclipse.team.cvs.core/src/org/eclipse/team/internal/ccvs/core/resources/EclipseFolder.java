@@ -41,72 +41,48 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSFolder#getFolders()
 	 */
 	public ICVSFolder[] getFolders() throws CVSException {
-		try {
-			IContainer folder = (IContainer)resource;
-			
-			if(!resource.exists()) {
-				return new ICVSFolder[0];
-			}
-			
-			final List folders = new ArrayList();
-			
-			ResourceSyncInfo[] syncDirs = CVSProviderPlugin.getSynchronizer().members(getIOFile());
-			for (int i = 0; i < syncDirs.length; i++) {
-				if(syncDirs[i].isDirectory()) {
-					folders.add(new EclipseFolder(folder.getFolder(new Path(syncDirs[i].getName()))));
-				}			
-			}
-			
-			IResource[] members = folder.members();
-			for (int i = 0; i < members.length; i++) {
-				IResource child = members[i];
-				if(child.getType()!=IResource.FILE) {
-					EclipseFolder childFolder = new EclipseFolder((IContainer)child);
-					if(!childFolder.isIgnored() && !folders.contains(childFolder)) {
-						folders.add(childFolder);						
-					}		
-				}
-			}
-			return (ICVSFolder[]) folders.toArray(new ICVSFolder[folders.size()]);
-		} catch(CoreException e) {
-			throw new CVSException(e.getStatus());
+		if(!resource.exists()) {
+			return new ICVSFolder[0];
 		}
+		
+		IContainer folder = (IContainer)resource;			
+		final List folders = new ArrayList();
+		
+		IResource[] resources = EclipseSynchronizer.getInstance().members(folder);
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if(resources[i].getType()!=IResource.FILE) {
+				ICVSResource cvsResource = new EclipseFolder((IContainer)resources[i]);
+				if(!cvsResource.isIgnored()) {
+					folders.add(cvsResource);
+				}
+			}			
+		}	
+		return (ICVSFolder[]) folders.toArray(new ICVSFolder[folders.size()]);
 	}
 	
 	/**
 	 * @see ICVSFolder#getFiles()
 	 */
 	public ICVSFile[] getFiles() throws CVSException {
-		try {
-			IContainer folder = (IContainer)resource;
-			
-			if(!resource.exists()) {
-				return new ICVSFile[0];
-			}
-			
-			final List files = new ArrayList();
-			
-			ResourceSyncInfo[] syncFiles = CVSProviderPlugin.getSynchronizer().members(getIOFile());
-			for (int i = 0; i < syncFiles.length; i++) {
-				if(!syncFiles[i].isDirectory()) {
-					files.add(new EclipseFile((IFile)folder.getFile(new Path(syncFiles[i].getName()))));
-				}			
-			}
-			
-			IResource[] members = folder.members();
-			for (int i = 0; i < members.length; i++) {
-				IResource child = members[i];
-				if(child.getType()==IResource.FILE) {
-					EclipseFile childFile = new EclipseFile((IFile)child);
-					if(!childFile.isIgnored() && !files.contains(childFile)) {
-						files.add(childFile);						
-					}		
-				}
-			}				
-			return (ICVSFile[]) files.toArray(new ICVSFile[files.size()]);	
-		} catch(CoreException e) {
-			throw new CVSException(e.getStatus());
+		if(!resource.exists()) {
+			return new ICVSFile[0];
 		}
+		
+		IContainer folder = (IContainer)resource;			
+		final List files = new ArrayList();
+		
+		IResource[] resources = EclipseSynchronizer.getInstance().members(folder);
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if(resources[i].getType()==IResource.FILE) {
+				ICVSResource cvsResource = new EclipseFile((IFile)resources[i]);
+				if(!cvsResource.isIgnored()) {
+					files.add(cvsResource);
+				}
+			}			
+		}	
+		return (ICVSFile[]) files.toArray(new ICVSFile[files.size()]);
 	}
 
 	/**
@@ -205,14 +181,14 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSFolder#getFolderInfo()
 	 */
 	public FolderSyncInfo getFolderSyncInfo() throws CVSException {
-		return CVSProviderPlugin.getSynchronizer().getFolderSync(getIOFile());
+		return EclipseSynchronizer.getInstance().getFolderSync((IContainer)resource);
 	}
 
 	/*
 	 * @see ICVSFolder#setFolderInfo(FolderSyncInfo)
 	 */
 	public void setFolderSyncInfo(FolderSyncInfo folderInfo) throws CVSException {
-		CVSProviderPlugin.getSynchronizer().setFolderSync(getIOFile(), folderInfo);
+		EclipseSynchronizer.getInstance().setFolderSync((IContainer)resource, folderInfo);
 		// the server won't add directories as sync info, therefore it must be done when
 		// a directory is shared with the repository.
 		setSyncInfo(new ResourceSyncInfo(getName()));
@@ -223,7 +199,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 */
 	public boolean isCVSFolder() {
 		try {
-			return CVSProviderPlugin.getSynchronizer().getFolderSync(getIOFile()) != null;
+			return EclipseSynchronizer.getInstance().getFolderSync((IContainer)resource) != null;
 		} catch(CVSException e) {
 			return false;
 		}
@@ -233,7 +209,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSResource#unmanage()
 	 */
 	public void unmanage() throws CVSException {
-		CVSProviderPlugin.getSynchronizer().deleteFolderSync(getIOFile(), new NullProgressMonitor());
+		EclipseSynchronizer.getInstance().deleteFolderSync((IContainer)resource, new NullProgressMonitor());
 	}
 	
 	/*
@@ -249,7 +225,11 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	/*
 	 * @see ICVSFolder#getChild(String)
 	 */
-	public ICVSResource getChild(String path) throws CVSException {
+	public ICVSResource getChild(String namedPath) throws CVSException {
+		IPath path = new Path(namedPath);
+		if(path.segmentCount()==0) {
+			 return this;
+		}
 		IResource child = ((IContainer)resource).findMember(path);
 		if(child!=null) {
 			if(child.getType()==IResource.FILE) {

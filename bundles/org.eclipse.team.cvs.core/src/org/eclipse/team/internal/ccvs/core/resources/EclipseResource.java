@@ -133,7 +133,7 @@ abstract class EclipseResource implements ICVSResource {
 		
 		// 2. check .cvsignore file
 		if(!ignored) {
-			ignored = CVSProviderPlugin.getSynchronizer().isIgnored(getIOFile());		
+			ignored = EclipseSynchronizer.getInstance().isIgnored(resource);		
 		}
 		
 		// 3. check the parent
@@ -150,14 +150,14 @@ abstract class EclipseResource implements ICVSResource {
 	 * @see ICVSResource#setIgnored()
 	 */
 	public void setIgnored() throws CVSException {
-		CVSProviderPlugin.getSynchronizer().setIgnored(getIOFile(), null);
+		EclipseSynchronizer.getInstance().setIgnored(resource, null);
 	}
 	
 	/*
 	 * @see ICVSResource#setIgnoredAs(String)
 	 */
 	public void setIgnoredAs(String pattern) throws CVSException {
-		CVSProviderPlugin.getSynchronizer().setIgnored(getIOFile(), pattern);		
+		EclipseSynchronizer.getInstance().setIgnored(resource, pattern);		
 	}
 
 	/*
@@ -202,7 +202,7 @@ abstract class EclipseResource implements ICVSResource {
 	 * @see ICVSResource#getSyncInfo()
 	 */
 	public ResourceSyncInfo getSyncInfo() throws CVSException {
-		return CVSProviderPlugin.getSynchronizer().getResourceSync(getIOFile());
+		return EclipseSynchronizer.getInstance().getResourceSync(resource);
 	}
 
 	/*
@@ -210,7 +210,7 @@ abstract class EclipseResource implements ICVSResource {
 	 */
 	public void setSyncInfo(ResourceSyncInfo info) throws CVSException {
 		if (getParent().isCVSFolder()) {
-			CVSProviderPlugin.getSynchronizer().setResourceSync(getIOFile(), info);		
+			EclipseSynchronizer.getInstance().setResourceSync(resource, info);		
 		}
 	}
 	
@@ -240,23 +240,15 @@ abstract class EclipseResource implements ICVSResource {
 		return null;
 	}
 	
-		/*
+	/*
 	 * @see ICVSResource#reloadSyncInfo(IProgressMonitor)
 	 */
 	public void reloadSyncInfo(IProgressMonitor monitor) throws CVSException {
-		File file = getIOFile();
-		if(file!=null) {
-			CVSProviderPlugin.getSynchronizer().reload(file, monitor);
-		}
 	}
 
 	/*
 	 * @see ICVSResource#saveSyncInfo(IProgressMonitor)
 	 */
 	public void saveSyncInfo(IProgressMonitor monitor) throws CVSException {
-		File file = getIOFile();
-		if(file!=null) {
-			CVSProviderPlugin.getSynchronizer().save(file, monitor);
-		}
 	}
 }

@@ -23,7 +23,6 @@ import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener;
-import org.eclipse.team.internal.ccvs.core.resources.CVSFileNotFoundException;
 
 /**
  * Abstract base class for the commands which implements the ICommand 
@@ -262,9 +261,13 @@ public abstract class Command {
 				// which type we return since only the name of the resource is used
 				// and sent to the server.
 				if(resource==null) {
-					// XXX returning a folder because it is the safest choice when
-					// localRoot is a handle to the IWorkspaceRoot!
-					resource = localRoot.getFolder(arguments[i]);
+					if(localRoot.getName().length()==0) {
+						// XXX returning a folder because it is the safest choice when
+						// localRoot is a handle to the IWorkspaceRoot!
+						resource = localRoot.getFolder(arguments[i]);
+					} else {
+						resource = localRoot.getFile(arguments[i]);
+					}
 				}
 				resources[i] = resource;
 			}
@@ -295,10 +298,13 @@ public abstract class Command {
 	protected void checkResourcesManaged(ICVSResource[] resources) throws CVSException {
 		for (int i = 0; i < resources.length; ++i) {
 			ICVSFolder folder;
-			/// XXX should perhaps use a visitor instead of type checking
-			if (resources[i].isFolder()) folder = (ICVSFolder) resources[i];
-			else folder = resources[i].getParent();
-			if (folder==null || !folder.isCVSFolder()) {
+			if (resources[i].isFolder()) {
+				folder = (ICVSFolder) resources[i];
+			}
+			else {
+				folder = resources[i].getParent();
+			}
+			if (folder==null || (!folder.isCVSFolder() && folder.exists())) {
 				throw new CVSException(Policy.bind("Command.argumentNotManaged", folder.getName()));//$NON-NLS-1$
 			}
 		}
