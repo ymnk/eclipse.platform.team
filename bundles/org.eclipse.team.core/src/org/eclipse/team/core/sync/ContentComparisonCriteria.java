@@ -28,11 +28,11 @@ public class ContentComparisonCriteria extends ComparisonCriteria {
 	private boolean ignoreWhitespace = false;
 
 	public String getName() {
-		return "Comparing content";
+		return "Comparing content"  + (ignoreWhitespace ? " ignore whitespace": "");
 	}
 
 	public String getId() {
-		return "org.eclipse.team.comparisoncriteria.content";
+		return "org.eclipse.team.comparisoncriteria.content" + (ignoreWhitespace ? ".ignore": "");
 	}
 	
 	public ContentComparisonCriteria(ComparisonCriteria[] preConditions, boolean ignoreWhitespace) {
