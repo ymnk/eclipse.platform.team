@@ -96,29 +96,39 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 		lastFolderSend = mFolder;
 	}
 
-	/**
-	 * Send a file up to the server.
-	 * If it is modified send the content as well.
+	/*
+	 * Send the information about the file to the server.
+	 * 
+	 * If the file is modified, its contents are sent as well.
 	 */
 	protected void sendFile(ICVSFile mFile, boolean sendQuestionable, String mode) throws CVSException {
 
-		boolean binary = mode != null && mode.indexOf(ResourceSyncInfo.BINARY_TAG) != -1;
-
+		// Send the file's entry line to the server
 		if (mFile.isManaged()) {
 			session.sendEntry(mFile.getSyncInfo().getEntryLine(false));
-		} else if (sendQuestionable) {
-			session.sendQuestionable(mFile.getName());
-			return;
-		}
-
-		if (!mFile.exists()) {
-			return;
-		}
-
-		if (mFile.isModified()) {
-			session.sendModified(mFile, monitor, binary);
 		} else {
-			session.sendUnchanged(mFile.getName());
+			// If the file is not managed, send a questionable to the server if the file exists locally
+			// A unmanaged, locally non-existant file results from the explicit use of the file name as a command argument
+			if (sendQuestionable) {
+				if (mFile.exists()) {
+					session.sendQuestionable(mFile.getName());
+				}
+				return;
+			}
+		}
+		
+		// If the file exists, send the appropriate indication to the server
+		if (mFile.exists()) {
+			if (mFile.isModified()) {
+//				if (session.isNoLocalChanges()) {
+//					session.sendIsModified(mFile);
+//				} else {
+					boolean binary = mode != null && mode.indexOf(ResourceSyncInfo.BINARY_TAG) != -1;
+					session.sendModified(mFile, monitor, binary);
+//				}
+			} else {
+				session.sendUnchanged(mFile.getName());
+			}
 		}
 	}
 }

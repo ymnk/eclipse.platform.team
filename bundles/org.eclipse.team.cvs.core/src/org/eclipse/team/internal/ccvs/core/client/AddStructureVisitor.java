@@ -49,7 +49,7 @@ class AddStructureVisitor extends AbstractStructureVisitor {
 		
 		// We just send the fact, that the file is modified
 		// not the data, we do not need it.
-		session.sendIsModified(mFile.getName());
+		session.sendIsModified(mFile);
 		
 	}
 

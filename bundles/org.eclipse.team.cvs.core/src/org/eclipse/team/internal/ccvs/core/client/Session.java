@@ -162,8 +162,8 @@ public class Session {
 		connection.writeLine("Kopt " + arg);
 	}
 
-	public void sendIsModified(String file) throws CVSException {
-		connection.writeLine("Is-modified " + file);
+	public void sendIsModified(ICVSFile file) throws CVSException {
+		connection.writeLine("Is-modified " + file.getName());
 	}
 
 	public void sendStaticDirectory() throws CVSException {

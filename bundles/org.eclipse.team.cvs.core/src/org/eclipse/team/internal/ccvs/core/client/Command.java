@@ -213,7 +213,7 @@ public abstract class Command {
 				try {
 					resources[i] = localRoot.getChild(arguments[i]);
 				} catch (CVSFileNotFoundException e) {
-					// XXX Temporary fix to allow non-managed resources to be used as arguments
+					// Done to allow non-managed resources to be used as arguments
 					resources[i] = localRoot.getFile(arguments[i]);
 				}
 			}
