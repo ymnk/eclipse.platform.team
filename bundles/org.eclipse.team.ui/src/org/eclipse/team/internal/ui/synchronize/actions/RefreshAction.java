@@ -75,12 +75,8 @@ public class RefreshAction extends Action {
 		// Cancel the scheduled background refresh or any other refresh that is happening.
 		// The scheduled background refresh will restart automatically.
 		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
-		if(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_BACKGROUND_SYNC)) {			
-			RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", participant.getName()), resources, participant.getInput()); //$NON-NLS-1$
-			JobStatusHandler.schedule(job, SubscriberAction.SUBSCRIBER_JOB_TYPE);
-		} else { 			
-			runBlocking(participant.getInput().getSubscriber(), resources);
-		}
+		RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", participant.getName()), resources, participant.getInput()); //$NON-NLS-1$
+		JobStatusHandler.schedule(job, SubscriberAction.SUBSCRIBER_JOB_TYPE);
 	}
 		
 	private static void runBlocking(final TeamSubscriber s, final IResource[] resources) {

@@ -53,7 +53,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	/**
 	 * The schedule delay used when rescheduling a completed job 
 	 */
-	private static long scheduleDelay = 20000; 
+	private static long scheduleDelay;
 	
 	/**
 	 * The subscribers and roots to refresh. If these are changed when the job
@@ -79,10 +79,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		long startTime = 0;
 		long stopTime = 0;
 		IStatus status;
+		IResource[] resources;
 		
-		RefreshEvent(int type, TeamSubscriberParticipant participant) {
+		RefreshEvent(int type, IResource[] resources, TeamSubscriberParticipant participant) {
 			this.type = type;
 			this.participant = participant;
+			this.resources = resources;
 		}
 		
 		public int getRefreshType() {
@@ -136,6 +138,10 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		public void setStatus(IStatus status) {
 			this.status = status;
 		}
+
+		public IResource[] getResources() {
+			return resources;
+		}
 	}
 	
 	private abstract class Notification implements ISafeRunnable {
@@ -169,6 +175,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		this.input = input;
 		
 		setPriority(Job.DECORATE);
+		setRefreshInterval(3600 /* 1 hour */);
 		
 		addJobChangeListener(new JobChangeAdapter() {
 			public void done(IJobChangeEvent event) {
@@ -186,7 +193,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 	
 	public boolean shouldRun() {
-		return getSubscriber() != null;
+		return input != null && getSubscriber() != null;
 	}
 	
 	public boolean belongsTo(Object family) {		
@@ -214,7 +221,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			}
 			
 			monitor.beginTask(null, 100);
-			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, input.getParticipant());
+			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, roots, input.getParticipant());
 			RefreshChangeListener changeListener = new RefreshChangeListener(input);
 			try {
 				// Only allow one refresh job at a time

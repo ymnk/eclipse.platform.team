@@ -15,29 +15,22 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseTrackAdapter;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Layout;
-import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.ui.controls.IControlFactory;
 
 public abstract class FormSection implements IPropertyChangeListener {
 	public static final int SELECTION = 1;
 	private String headerColorKey = ControlFactory.DEFAULT_HEADER_COLOR;
 	private String headerText;
-	private String headerRightText;
+	//private String headerRightText;
+	private Composite headerRigthContents;
 	private Control client;
 	protected Label header;
-	protected Label headerRightLabel;
+	//protected Label headerRightLabel;
 	protected Control separator;
 	//private SectionChangeManager sectionManager;
 	private String description;
@@ -88,8 +81,8 @@ public abstract class FormSection implements IPropertyChangeListener {
 			if (headerPainted && header != null) {
 				Point hsize = header.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
 				maxWidth = Math.max(maxWidth, hsize.x);			
-				if (headerRightLabel != null) {
-					Point hrsize = headerRightLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
+				if (headerRigthContents != null) {
+					Point hrsize = headerRigthContents.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
 					maxWidth += hrsize.x;
 				}
 			}
@@ -138,8 +131,12 @@ public abstract class FormSection implements IPropertyChangeListener {
 				if (toggleSize != null)
 					hwidth = cwidth - toggleSize.x - 5;
 				Point hsize = header.computeSize(hwidth, SWT.DEFAULT, flush);
+				if(headerRigthContents != null) {
+					Point hrsize = headerRigthContents.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
+					hsize.y = Math.max(hrsize.y, hsize.y);
+				}
 				//Point hsize = header.computeSize(-1, SWT.DEFAULT, flush);
-				height += 18; //(hsize.y - 20);
+				height += 20; //(hsize.y - 20);
 				collapsedHeight = hsize.y;
 				height += vspacing;
 			}
@@ -176,17 +173,21 @@ public abstract class FormSection implements IPropertyChangeListener {
 					availableWidth = width - toggleSize.x - 5;
 				//hsize = header.computeSize(availableWidth, SWT.DEFAULT, flush);
 				hsize = header.computeSize(-1, SWT.DEFAULT, flush);
+				if(headerRigthContents != null) {
+					Point hrsize = headerRigthContents.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
+					hsize.y = Math.max(hrsize.y, hsize.y);
+				}
 				int hx = 0;
 				if (toggle != null) {
 					int ty = y + hsize.y - toggleSize.y;
 					toggle.setBounds(0, ty, toggleSize.x, toggleSize.y);
 					hx = toggleSize.x; // + 5;
 				}
-				if(headerRightLabel != null) {
-					Point hrsize = headerRightLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
+				if(headerRigthContents != null) {
+					Point hrsize = headerRigthContents.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
 					int restWidth = availableWidth;
 					availableWidth -= hrsize.x;
-					headerRightLabel.setBounds(availableWidth + hx, y, restWidth, hsize.y);
+					headerRigthContents.setBounds(availableWidth + hx, y, restWidth, hsize.y);
 				}
 				header.setBounds(hx, y, availableWidth, hsize.y);
 
@@ -251,10 +252,8 @@ public abstract class FormSection implements IPropertyChangeListener {
 
 		if (headerPainted) {
 			Color headerColor = factory.getColor(getHeaderColorKey());
-			header = factory.createHeadingLabel(section, getHeaderText(), headerColor, SWT.WRAP);			
-			if(headerRightText != null) {
-				headerRightLabel = factory.createLabel(section, getHeaderRightText(), SWT.WRAP);	
-			}			
+			header = factory.createHeadingLabel(section, getHeaderText(), headerColor, SWT.WRAP);
+			headerRigthContents = createHeaderRight(section, factory);
 			if (collapsable) {
 				toggle = new ToggleControl(section, SWT.NULL);
 				toggle.setSelection(collapsed);
@@ -321,6 +320,10 @@ public abstract class FormSection implements IPropertyChangeListener {
 		}
 	}
 
+	protected Composite createHeaderRight(Composite parent, ControlFactory factory) {
+		return null;
+	}
+	
 	protected Text createText(Composite parent, String label, ControlFactory factory) {
 		return createText(parent, label, factory, 1);
 	}
@@ -376,9 +379,6 @@ public abstract class FormSection implements IPropertyChangeListener {
 	}
 	public java.lang.String getHeaderText() {
 		return headerText;
-	}
-	public java.lang.String getHeaderRightText() {
-		return headerRightText;
 	}
 	public int getHeightHint() {
 		return heightHint;
@@ -452,11 +452,6 @@ public abstract class FormSection implements IPropertyChangeListener {
 		headerText = newHeaderText;
 		if (header != null)
 			header.setText(headerText);
-	}
-	public void setHeaderRightText(String newHeaderText) {
-		headerRightText = newHeaderText;
-		if (headerRightLabel != null)
-			headerRightLabel.setText(headerRightText);
 	}
 	public void setHeightHint(int newHeightHint) {
 		heightHint = newHeightHint;

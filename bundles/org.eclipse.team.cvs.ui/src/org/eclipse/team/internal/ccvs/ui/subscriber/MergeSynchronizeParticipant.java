@@ -20,7 +20,6 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IMemento;

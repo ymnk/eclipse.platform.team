@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.jobs;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
@@ -30,4 +31,6 @@ public interface IRefreshEvent {
 	public long getStopTime();
 	
 	public IStatus getStatus();
+	
+	public IResource[] getResources();
 }

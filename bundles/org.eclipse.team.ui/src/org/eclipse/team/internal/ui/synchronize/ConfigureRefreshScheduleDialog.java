@@ -7,7 +7,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.internal.ui.jobs.RefreshSchedule;
+import org.eclipse.team.ui.synchronize.RefreshSchedule;
 
 
 public class ConfigureRefreshScheduleDialog extends DetailsDialog {
@@ -120,7 +120,9 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			seconds = seconds * 60;
 		}
 		schedule.setRefreshInterval(seconds);
-		schedule.setEnabled(enableBackgroundRefresh.getSelection());
+		if(schedule.isEnabled() != enableBackgroundRefresh.getSelection()) {
+			schedule.setEnabled(enableBackgroundRefresh.getSelection());
+		}
 		
 		// update schedule
 		schedule.getParticipant().setRefreshSchedule(schedule);

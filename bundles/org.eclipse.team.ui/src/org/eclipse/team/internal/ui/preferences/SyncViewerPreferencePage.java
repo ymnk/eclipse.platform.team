@@ -29,17 +29,13 @@ import org.eclipse.ui.*;
  */
 public class SyncViewerPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage, IPreferenceIds {
 	
-	private BooleanFieldEditor bkgRefresh = null;
-	//private BooleanFieldEditor bkgScheduledRefresh = null;
-	//private IntegerFieldEditor2 scheduledDelay = null;
 	private BooleanFieldEditor compressFolders = null;
+	private BooleanFieldEditor smartModeSwitch = null;
 	private BooleanFieldEditor showSyncInLabels = null;
 	private BooleanFieldEditor promptWithChanges = null;
 	private BooleanFieldEditor promptWhenNoChanges = null;
 	private BooleanFieldEditor promptWithChangesBkg = null;
 	private BooleanFieldEditor promptWhenNoChangesBkg = null;
-	
-	private Group refreshGroup;
 	
 	private static class PerspectiveDescriptorComparator implements Comparator {
 		/*
@@ -149,19 +145,8 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 		addField(compressFolders);
 		showSyncInLabels = new BooleanFieldEditor(SYNCVIEW_VIEW_SYNCINFO_IN_LABEL, Policy.bind("SyncViewerPreferencePage.19"), SWT.NONE, displayGroup); //$NON-NLS-1$
 		addField(showSyncInLabels);
-		
-		refreshGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.11")); //$NON-NLS-1$
-		
-		bkgRefresh = new BooleanFieldEditor(SYNCVIEW_BACKGROUND_SYNC, Policy.bind("SyncViewerPreferencePage.12"), SWT.NONE, refreshGroup); //$NON-NLS-1$
-		addField(bkgRefresh);
-		
-		//bkgScheduledRefresh = new BooleanFieldEditor2(SYNCVIEW_SCHEDULED_SYNC, Policy.bind("SyncViewerPreferencePage.13"), SWT.NONE, refreshGroup); //$NON-NLS-1$
-		//addField(bkgScheduledRefresh);
-		
-		//scheduledDelay = new IntegerFieldEditor2(SYNCVIEW_DELAY, Policy.bind("SyncViewerPreferencePage.14"), refreshGroup, 2); //$NON-NLS-1$
-		//addField(scheduledDelay);
-				
-		//updateLastRunTime(createLabel(refreshGroup, null, 0));
+		//smartModeSwitch = new BooleanFieldEditor(SYNCVIEW_VIEW_SMART_MODE_SWITCH, "Smart mode switch", SWT.NONE, displayGroup); //$NON-NLS-1$
+		//addField(smartModeSwitch);
 		
 		Group promptGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.30")); //$NON-NLS-1$
 		
@@ -191,7 +176,6 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 		Dialog.applyDialogFont(getFieldEditorParent());
 		updateLayout(displayGroup);
 		updateLayout(perspectiveGroup);
-		updateLayout(refreshGroup);
 		getFieldEditorParent().layout(true);	
 	}
 	

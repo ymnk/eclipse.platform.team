@@ -1,17 +1,17 @@
-package org.eclipse.team.internal.ui.jobs;
+package org.eclipse.team.ui.synchronize;
 
 import java.text.DateFormat;
 import java.util.Date;
 
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.internal.ui.jobs.IRefreshEvent;
+import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.ui.IMemento;
 
 public class RefreshSchedule {
 	private long refreshInterval = 3600; // 1 hour default
-	
-	private IRefreshEvent lastRefreshEvent;
 	
 	private boolean enabled = false;
 	
@@ -44,9 +44,15 @@ public class RefreshSchedule {
 	 * @param enabled The enabled to set.
 	 */
 	public void setEnabled(boolean enabled) {
+		boolean wasEnabled = isEnabled();
 		this.enabled = enabled;
+		if(enabled && ! wasEnabled) { 
+			startJob();
+		} else {
+			stopJob();
+		}
 	}
-
+	
 	/**
 	 * @return Returns the refreshInterval.
 	 */
@@ -62,27 +68,16 @@ public class RefreshSchedule {
 	 * @param refreshInterval The refreshInterval to set.
 	 */
 	public void setRefreshInterval(long refreshInterval) {
+		stopJob();
 		this.refreshInterval = refreshInterval;
-	}
-	
-	public String lastRefreshEventAsString() {
-		long stopMills = lastRefreshEvent.getStopTime();
-		long startMills = lastRefreshEvent.getStartTime();
-		StringBuffer text = new StringBuffer();
-		if(stopMills <= 0) {
-			text.append(Policy.bind("SyncViewPreferencePage.lastRefreshRunNever")); //$NON-NLS-1$
-		} else {
-			Date lastTimeRun = new Date(stopMills);
-			text.append(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(lastTimeRun));
+		if(isEnabled()) {
+			startJob();
 		}
-		
-		
-		return text.toString();
-	} 
+	}
 	
 	protected void startJob() {
 		if(job == null) {
-			job = new RefreshSubscriberJob(Policy.bind("ScheduledSyncViewRefresh.taskName"), participant.getInput()); //$NON-NLS-1$
+			job = new RefreshSubscriberJob("Refreshing '" + participant.getName() + "'. " + getRefreshIntervalAsString(), participant.getInput()); //$NON-NLS-1$
 		}
 		job.setRestartOnCancel(true);
 		job.setReschedule(true);
@@ -90,12 +85,18 @@ public class RefreshSchedule {
 	}
 	
 	protected void stopJob() {
-		job.setRestartOnCancel(false /* don't restart the job */);
-		job.setReschedule(false);
-		job.cancel();
-		job = null;
+		if(job != null) {
+			job.setRestartOnCancel(false /* don't restart the job */);
+			job.setReschedule(false);
+			job.cancel();
+			job = null;
+		}
 	}
 
+	public void dispose() {
+		stopJob();
+	}
+	
 	public void saveState(IMemento memento) {
 		memento.putString(CTX_REFRESHSCHEDULE_ENABLED, Boolean.toString(enabled));
 		memento.putInteger(CTX_REFRESHSCHEDULE_INTERVAL, (int)refreshInterval);
@@ -103,17 +104,38 @@ public class RefreshSchedule {
 
 	public static RefreshSchedule init(IMemento memento, TeamSubscriberParticipant participant) {
 		RefreshSchedule schedule = new RefreshSchedule(participant);
-		String enabled = memento.getString(CTX_REFRESHSCHEDULE_ENABLED);
-		int interval = memento.getInteger(CTX_REFRESHSCHEDULE_INTERVAL).intValue();
-		schedule.setEnabled(Boolean.getBoolean(enabled));
-		schedule.setRefreshInterval(interval);
+		if(memento != null) {
+			String enabled = memento.getString(CTX_REFRESHSCHEDULE_ENABLED);
+			int interval = memento.getInteger(CTX_REFRESHSCHEDULE_INTERVAL).intValue();
+			schedule.setRefreshInterval(interval);
+			schedule.setEnabled("true".equals(enabled) ? true : false);
+		}
+		// Use the defaults if a schedule hasn't been saved or can't be found.
 		return schedule;
 	}
 
+	public static String refreshEventAsString(IRefreshEvent event) {
+		long stopMills = event.getStopTime();
+		long startMills = event.getStartTime();
+		SyncInfo[] changes = event.getChanges();
+		StringBuffer text = new StringBuffer();
+		if(stopMills <= 0) {
+			text.append(Policy.bind("SyncViewPreferencePage.lastRefreshRunNever")); //$NON-NLS-1$
+		} else {
+			Date lastTimeRun = new Date(stopMills);
+			text.append(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(lastTimeRun));
+		}				
+		return text.toString();
+	} 
+	
 	public String getScheduleAsString() {
 		if(! isEnabled()) {
 			return "Not Scheduled";
-		}
+		}		
+		return getRefreshIntervalAsString();
+	}
+	
+	private String getRefreshIntervalAsString() {
 		StringBuffer text = new StringBuffer();				
 		text.append("Every ");
 		boolean hours = false;

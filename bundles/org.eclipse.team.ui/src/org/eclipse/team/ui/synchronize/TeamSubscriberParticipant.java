@@ -15,7 +15,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.jobs.RefreshSchedule;
 import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantComposite;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
@@ -35,10 +34,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	private RefreshSchedule refreshSchedule;
 	
 	private int currentMode;
-	private int currentLayout;
 	
-	private String statusText = "Idle";
-
 	private IWorkingSet workingSet;
 	
 	/**
@@ -57,16 +53,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public static final String P_SYNCVIEWPAGE_WORKINGSET = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_WORKINGSET";	 //$NON-NLS-1$
 	
 	/**
-	 * Property constant indicating the status of a page has changed. 
-	 */
-	public static final String P_SYNCVIEWPAGE_STATUS = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_STATUS";	 //$NON-NLS-1$
-	
-	/**
-	 * Property constant indicating the last sync time of a page has changed. 
-	 */
-	public static final String P_SYNCVIEWPAGE_LASTSYNC = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_LASTSYNC";	 //$NON-NLS-1$
-	
-	/**
 	 * Property constant indicating the schedule of a page has changed. 
 	 */
 	public static final String P_SYNCVIEWPAGE_SCHEDULE = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_SCHEDULE";	 //$NON-NLS-1$
@@ -75,12 +61,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * Property constant indicating the mode of a page has changed. 
 	 */
 	public static final String P_SYNCVIEWPAGE_MODE = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_MODE";	 //$NON-NLS-1$
-	
-	/**
-	 * Property constant indicating the mode of a page has changed. 
-	 */
-	public static final String P_SYNCVIEWPAGE_LAYOUT = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_LAYOUT";	 //$NON-NLS-1$
-	
+		
 	/**
 	 * Modes are direction filters for the view
 	 */
@@ -89,18 +70,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public final static int BOTH_MODE = 0x4;
 	public final static int CONFLICTING_MODE = 0x8;
 	public final static int ALL_MODES = INCOMING_MODE | OUTGOING_MODE | CONFLICTING_MODE | BOTH_MODE;
-	
-	/**
-	 * View type constant (value 0) indicating that the synchronize view will be shown
-	 * as a tree.
-	 */
-	public static final int TREE_LAYOUT = 0;
-	
-	/**
-	 * View type constant (value 1) indicating that the synchronize view will be shown
-	 * as a table.
-	 */
-	public static final int TABLE_LAYOUT = 1;
 	
 	public TeamSubscriberParticipant() {
 		super();
@@ -125,16 +94,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		return currentMode;
 	}
 	
-	public void setLayout(int layout) {
-		int oldLayout = currentLayout;
-		currentLayout = layout;		
-		firePropertyChange(this, P_SYNCVIEWPAGE_LAYOUT, new Integer(oldLayout), new Integer(layout));
-	}
-	
-	public int getLayout() {
-		return currentLayout;
-	}
-	
 	public void setRefreshSchedule(RefreshSchedule schedule) {
 		this.refreshSchedule = schedule;
 		firePropertyChange(this, P_SYNCVIEWPAGE_SCHEDULE, null, schedule);
@@ -142,15 +101,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public RefreshSchedule getRefreshSchedule() {
 		return refreshSchedule;
-	}
-	
-	public void setStatusText(String text) {
-		statusText = text;
-		firePropertyChange(this, P_SYNCVIEWPAGE_STATUS, null, statusText);
-	}
-	
-	public String getStatusText() {
-		return statusText;
 	}
 	
 	public void setWorkingSet(IWorkingSet set) {
@@ -187,6 +137,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeViewPage#dispose()
 	 */
 	public void dispose() {
+		refreshSchedule.dispose();
 		removePropertyChangeListener(input);
 		input.dispose();
 	}
@@ -215,8 +166,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			if(settings != null) {
 				String set = settings.getString(P_SYNCVIEWPAGE_WORKINGSET);
 				String mode = settings.getString(P_SYNCVIEWPAGE_MODE);
-				String layout = settings.getString(P_SYNCVIEWPAGE_LAYOUT);
-				RefreshSchedule schedule = RefreshSchedule.init(memento.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
+				RefreshSchedule schedule = RefreshSchedule.init(settings.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
 				setRefreshSchedule(schedule);
 				
 				if(set != null) {
@@ -226,11 +176,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 					}
 				}
 				setMode(Integer.parseInt(mode));
-				setLayout(Integer.parseInt(layout));
 			}
 		} else {
 			setMode(BOTH_MODE);
-			setLayout(TREE_LAYOUT);
 		}
 	}
 
@@ -243,9 +191,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		if(set != null) {
 			settings.putString(P_SYNCVIEWPAGE_WORKINGSET, getWorkingSet().getName());
 		}
-		settings.putString(P_SYNCVIEWPAGE_LAYOUT, Integer.toString(getLayout()));
 		settings.putString(P_SYNCVIEWPAGE_MODE, Integer.toString(getMode()));
-		refreshSchedule.saveState(settings);
+		refreshSchedule.saveState(settings.createChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS));
 	}
 	
 	/* (non-Javadoc)

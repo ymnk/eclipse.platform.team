@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.widgets.ControlFactory;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.controls.IControlFactory;
@@ -47,14 +47,43 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 	public void createControl(Composite parent) {		
 		factory = new ControlFactory(parent.getDisplay());
 		factory.setBackgroundColor(factory.registerColor(COLOR_WHITE, 255, 255, 255));		
-		pageComposite = factory.createComposite(parent);
+		//ScrolledComposite scrolledPageComposite = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		//scrolledPageComposite.setBackground(factory.getBackgroundColor());		
+		pageComposite = factory.createComposite(parent, SWT.NONE);
+		//scrolledPageComposite.setContent(pageComposite);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
 		layout.verticalSpacing = 0;
 		layout.horizontalSpacing = 0;
 		pageComposite.setLayout(layout);
-
+		pageComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		//pageComposite.setSize(pageComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		
+		Composite introComposite = factory.createComposite(pageComposite);
+		layout = new GridLayout();
+		layout.marginHeight = 5;
+		layout.marginWidth = 5;
+		introComposite.setLayout(layout);
+		introComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		Label message = factory.createLabel(introComposite, "Manage the synchronization of files in your workspace with their remote locations.", SWT.WRAP);
+		GridData data =
+			new GridData(
+					GridData.GRAB_HORIZONTAL
+					| GridData.HORIZONTAL_ALIGN_FILL
+					| GridData.VERTICAL_ALIGN_BEGINNING);
+		data.widthHint = 200;
+		message.setLayoutData(data);
+				
+		Label seperator = factory.createSeparator(introComposite, SWT.HORIZONTAL);
+		data =
+			new GridData(
+					GridData.GRAB_HORIZONTAL
+					| GridData.HORIZONTAL_ALIGN_FILL
+					| GridData.VERTICAL_ALIGN_BEGINNING);
+		seperator.setLayoutData(data);
+		
 		createParticipants(pageComposite);
 		TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(this);
 	}
@@ -66,7 +95,7 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			participantsToComposites.put(participant, new ParticipantComposite(parent, factory, participant, view, SWT.NONE));
+			participantsToComposites.put(participant, new ParticipantOverviewComposite(parent, factory, participant, view, SWT.NONE));
 		}
 	}
 
@@ -94,7 +123,7 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 					for (int i = 0; i < participants.length; i++) {
 						if (isAvailable()) {
 							ISynchronizeParticipant participant = participants[i];
-							participantsToComposites.put(participant, new ParticipantComposite(pageComposite, factory, participant, view, SWT.NONE));
+							participantsToComposites.put(participant, new ParticipantOverviewComposite(pageComposite, factory, participant, view, SWT.NONE));
 							
 							// re-layout and redraw with new participant added
 							pageComposite.setRedraw(false);

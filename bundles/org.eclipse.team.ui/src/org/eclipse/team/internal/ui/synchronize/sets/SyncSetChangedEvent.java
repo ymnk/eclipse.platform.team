@@ -10,13 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.sets;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
 
 /**
  * This event keeps track of the changes in a sync set

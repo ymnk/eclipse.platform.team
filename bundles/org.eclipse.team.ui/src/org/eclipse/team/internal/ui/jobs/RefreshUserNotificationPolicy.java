@@ -1,11 +1,14 @@
 package org.eclipse.team.internal.ui.jobs;
 
+import org.eclipse.core.runtime.*;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.UIJob;
 
 public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener {
 
@@ -48,19 +51,32 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 		}
 		
 		if(shouldPrompt) {
-			notifyIfNeeded(event);
+			notifyIfNeededModal(event);
 		}
 	}
 	
-	private void notifyIfNeeded(final IRefreshEvent event) {
-		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-			public void run() {
+	private void notifyIfNeededModal(final IRefreshEvent event) {
+			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+				public void run() {
+					RefreshCompleteDialog d = new RefreshCompleteDialog(
+							new Shell(TeamUIPlugin.getStandardDisplay()), event);
+					d.setBlockOnOpen(false);
+					d.open();
+				}
+			});
+	}
+	
+	private void notifyIfNeededNonModal(final IRefreshEvent event) {
+		String message = "Refresh of '" + event.getParticipant().getName() + "' Complete.";
+		PlatformUI.getWorkbench().getProgressService().requestInUI(new UIJob(message) {
+			public IStatus runInUIThread(IProgressMonitor monitor) {
 				RefreshCompleteDialog d = new RefreshCompleteDialog(
 						new Shell(TeamUIPlugin.getStandardDisplay()), 
 						event);
 				d.setBlockOnOpen(false);
 				d.open();
+				return Status.OK_STATUS;
 			}
-		});
+		}, message);
 	}
 }

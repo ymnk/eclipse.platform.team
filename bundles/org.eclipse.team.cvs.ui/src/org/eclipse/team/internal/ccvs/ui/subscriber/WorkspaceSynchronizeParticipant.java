@@ -12,7 +12,6 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IMemento;

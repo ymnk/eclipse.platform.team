@@ -12,17 +12,18 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.internal.ui.widgets.HyperlinkAdapter;
 import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 
 
-public class ParticipantComposite extends Composite {
+public class ParticipantOverviewComposite extends Composite {
 
 	private ISynchronizeParticipant participant;	
 	private Image participantImage;
@@ -30,7 +31,7 @@ public class ParticipantComposite extends Composite {
 	private IControlFactory factory;
 	private Composite participantComposite;
 	
-	public ParticipantComposite(Composite parent, IControlFactory factory, ISynchronizeParticipant participant, ISynchronizeView view, int style) {
+	public ParticipantOverviewComposite(Composite parent, IControlFactory factory, ISynchronizeParticipant participant, ISynchronizeView view, int style) {
 		super(parent, style);
 		this.factory = factory;
 		this.participant = participant;		
@@ -64,13 +65,19 @@ public class ParticipantComposite extends Composite {
 				final Label label = factory.createLabel(composite, participant.getName(), SWT.WRAP);
 				label.setLayoutData(new GridData());
 				label.setFont(JFaceResources.getBannerFont());
-				label.setText(participant.getName());			
-				factory.turnIntoHyperlink(label, new HyperlinkAdapter() {
-					public void linkActivated(Control linkLabel) {
+				label.setText(participant.getName());
+			}	
+			{
+				Button button = factory.createButton(composite, "More...", SWT.FLAT);
+				button.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_END));
+				button.addSelectionListener(new SelectionListener() {
+					public void widgetSelected(SelectionEvent e) {
 						view.display(participant);
 					}
+					public void widgetDefaultSelected(SelectionEvent e) {
+					}
 				});
-			}			
+			}
 			{
 				final Composite composite_1 = factory.createComposite(composite, SWT.NONE);
 				final GridData gridData = new GridData(GridData.FILL_BOTH);
@@ -82,22 +89,6 @@ public class ParticipantComposite extends Composite {
 				composite_1.setLayout(gridLayout_1);
 				participantComposite = participant.createOverviewComposite(composite_1, factory, view);
 			}			
-//			{
-//				final Composite composite_1 = factory.createComposite(composite, SWT.NONE);
-//				final GridData gridData = new GridData(GridData.HORIZONTAL_ALIGN_END);
-//				gridData.horizontalSpan = 3;
-//				composite_1.setLayoutData(gridData);
-//				final GridLayout gridLayout_1 = new GridLayout();
-//				gridLayout_1.marginWidth = 0;
-//				gridLayout_1.marginHeight = 0;
-//				composite_1.setLayout(gridLayout_1);
-//				{
-//					final Button button = factory.createButton(composite_1, "Setup...", SWT.FLAT);
-//					GridData gd = new GridData();
-//					gd.horizontalAlignment = GridData.END;
-//					button.setLayoutData(gd);
-//				}
-//			}
 		}
 		return area;
 	}

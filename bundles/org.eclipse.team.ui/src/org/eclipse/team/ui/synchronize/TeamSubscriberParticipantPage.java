@@ -15,6 +15,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
@@ -24,8 +25,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.internal.ui.synchronize.ChangesSection;
-import org.eclipse.team.internal.ui.synchronize.SummarySection;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.internal.ui.widgets.ControlFactory;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
@@ -67,8 +66,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private OpenWithActionGroup openWithActions;
 	private NavigateAction gotoNext;
 	private NavigateAction gotoPrevious;
-	private Action toggleLayoutTree;
-	private Action toggleLayoutTable;
 	private SyncViewerShowPreferencesAction showPreferences;
 	private RefreshAction refreshAllAction;
 	private ComparisonCriteriaActionGroup comparisonCriteriaGroup;
@@ -88,7 +85,9 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @see org.eclipse.ui.part.IPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
+		//ScrolledComposite sc = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		composite = new Composite(parent, SWT.NONE); 
+		//sc.setContent(composite);
 		GridLayout gridLayout= new GridLayout();
 		gridLayout.makeColumnsEqualWidth= false;
 		gridLayout.marginWidth= 0;
@@ -120,8 +119,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		
 		// view menu
 		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(input);		
-		toggleLayoutTable = new ToggleViewLayoutAction(participant, TeamSubscriberParticipant.TABLE_LAYOUT);
-		toggleLayoutTree = new ToggleViewLayoutAction(participant, TeamSubscriberParticipant.TREE_LAYOUT);
 		workingSetGroup = new WorkingSetFilterActionGroup(getSite().getShell(), this, view, participant);		
 		showPreferences = new SyncViewerShowPreferencesAction(view.getSite().getShell());		
 		
@@ -221,8 +218,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			// view menu
 			IMenuManager menu = actionBars.getMenuManager();
 			MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
-			layoutMenu.add(toggleLayoutTable);
-			layoutMenu.add(toggleLayoutTree);
 			MenuManager comparisonCriteria = new MenuManager(Policy.bind("action.comparisonCriteria.label")); //$NON-NLS-1$
 			comparisonCriteriaGroup.addActionsToMenuMgr(comparisonCriteria);
 			workingSetGroup.fillActionBars(actionBars);
@@ -245,12 +240,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		// Layout change
-		if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_LAYOUT)) {
-			//switchViewerType(((Integer)event.getNewValue()).intValue());
-		// Working set changed via menu selection - notify participant and
-		// do all the real work when we get the next workset changed event
-		} else if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
+		// Working set changed by user
+		if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
 			if(settingWorkingSet) return;
 			settingWorkingSet = true;
 			participant.setWorkingSet((IWorkingSet)event.getNewValue());

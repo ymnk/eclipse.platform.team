@@ -35,7 +35,6 @@ import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkingSet;
 
 /**
  * This wizard helps the user to import a new project in their workspace
@@ -286,8 +285,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 						throw new InvocationTargetException(e);
 					}
 				}
-				IWorkingSet workingSet = CVSUIPlugin.getWorkingSet(new IResource[] {project}, Policy.bind("SyncAction.workingSetName")); //$NON-NLS-1$
-				CVSUIPlugin.showInSyncView(getContainer().getShell(), null, workingSet, TeamSubscriberParticipant.OUTGOING_MODE);
+				CVSUIPlugin.showInSyncView(getContainer().getShell(), null, TeamSubscriberParticipant.OUTGOING_MODE);
 			}
 		} catch (InterruptedException e) {
 			return true;

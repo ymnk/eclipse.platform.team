@@ -27,7 +27,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.internal.ui.synchronize.SynchronizeManager;
 import org.eclipse.team.internal.ui.synchronize.TeamSynchronizingPerspective;
-import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
@@ -138,19 +137,15 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 	 */
 	protected void initializePreferences() {
 		IPreferenceStore store = getPreferenceStore();
-		store.setDefault(IPreferenceIds.SYNCVIEW_BACKGROUND_SYNC, true);
-		store.setDefault(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC, false);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL, false);
-		store.setDefault(IPreferenceIds.SYNCVIEW_DELAY, 60 /* minutes */);
 		store.setDefault(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS, true);
-		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT, SyncViewerTableSorter.COL_NAME);
-		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT_REVERSED, false);
 		store.setDefault(IPreferenceIds.SYNCVIEW_SELECTED_MODE, TeamSubscriberParticipant.BOTH_MODE);
 		store.setDefault(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE, TeamSynchronizingPerspective.ID);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, true);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, true);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES, false);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES, true);
+		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_SMART_MODE_SWITCH, false);
 	}
 	
 	/**
