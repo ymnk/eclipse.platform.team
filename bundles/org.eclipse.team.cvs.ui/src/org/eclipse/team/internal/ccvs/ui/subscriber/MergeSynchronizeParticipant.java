@@ -108,7 +108,7 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	 * @see org.eclipse.team.ui.sync.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
 	 */
 	public  void setSubscriber(Subscriber subscriber) {
-		super.setSubscriber(subscriber);
+		super.setSubscriber(subscriber, null);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(CVSMergeSubscriber.ID); 
 			setInitializationData(descriptor);

@@ -128,7 +128,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 	
 	public WorkspaceSynchronizeParticipant(IResource[] resources) {
 		super(resources);
-		setSubscriber(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
+		setSubscriber(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), resources);
 	}
 	
 	/* (non-Javadoc)

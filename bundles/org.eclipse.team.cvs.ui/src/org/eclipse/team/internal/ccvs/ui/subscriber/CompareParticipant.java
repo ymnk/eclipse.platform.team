@@ -75,7 +75,7 @@ public class CompareParticipant extends CVSParticipant implements IPropertyChang
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.Subscriber)
 	 */
 	protected void setSubscriber(Subscriber subscriber) {
-		super.setSubscriber(subscriber);
+		super.setSubscriber(subscriber, null);
 		if (CVSUIPlugin.getPlugin().getPluginPreferences().getBoolean(ICVSUIConstants.PREF_CONSIDER_CONTENTS)) {
 			setSyncInfoFilter(contentComparison);
 		}

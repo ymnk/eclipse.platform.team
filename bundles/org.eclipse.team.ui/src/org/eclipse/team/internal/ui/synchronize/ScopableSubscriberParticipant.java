@@ -20,9 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.internal.core.subscribers.SyncInfoWorkingSetFilter;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
@@ -96,15 +94,10 @@ public abstract class ScopableSubscriberParticipant extends SubscriberParticipan
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.Subscriber)
 	 */
 	protected void setSubscriber(Subscriber subscriber) {
-		super.setSubscriber(subscriber);
 		if (this.resources != null && isSameResources(resources, getSubscriber().roots())) {
 			this.resources = null;
 		}
-		if (resources != null) {
-			SyncInfoWorkingSetFilter filter = new SyncInfoWorkingSetFilter();
-			filter.setWorkingSet(resources);
-			setSyncInfoFilter(filter);
-		}
+		super.setSubscriber(subscriber, this.resources);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = getDescriptor();
 			setInitializationData(descriptor);
@@ -121,28 +114,6 @@ public abstract class ScopableSubscriberParticipant extends SubscriberParticipan
 	 * @return the descriptor for this participant
 	 */
 	protected abstract ISynchronizeParticipantDescriptor getDescriptor();
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SubscriberParticipant#getResources()
-	 */
-	public IResource[] getResources() {
-		if (resources == null) {
-			return super.getResources();
-		}
-		return resources;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#getName()
-	 */
-	public String getName() {
-		String name = super.getName();
-		if (resources == null) {
-			return name + " (Workspace)";
-		} else {
-			return name + " " + Utils.convertSelection(resources, 4);
-		}
-	}
 	
 	private boolean isSameResources(IResource[] resources2, IResource[] resources3) {
 		if (resources2.length != resources3.length) return false;

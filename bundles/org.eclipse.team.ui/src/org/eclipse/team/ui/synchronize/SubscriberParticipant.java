@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -25,9 +26,18 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.team.internal.ui.synchronize.RefreshSubscriberJob;
+import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicy;
+import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicyInModalDialog;
+import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
+import org.eclipse.team.internal.ui.synchronize.SubscriberRefreshSchedule;
+import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -68,12 +78,11 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * Key for schedule in memento
 	 */
 	private static final String CTX_SUBSCRIBER_SCHEDULE_SETTINGS = TeamUIPlugin.ID + ".TEAMSUBSRCIBER_REFRESHSCHEDULE"; //$NON-NLS-1$
-	
+
 	/**
 	 * Constructor initializes the schedule. Subclasses must call this method.
 	 */
 	public SubscriberParticipant() {
-		super();
 		refreshSchedule = new SubscriberRefreshSchedule(this);
 	}
 	
@@ -86,12 +95,14 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	}
 	
 	/**
-	 * Returns the resources supervised by this participant.
+	 * Returns the resources supervised by this participant. It will
+	 * either be the roots of the subscriber or the resources 
+	 * provided when the subscriber was set.
 	 * 
 	 * @return the resources supervised by this participant.
 	 */
 	public IResource[] getResources() {
-		return collector.getSubscriber().roots();
+		return collector.getRoots();
 	}
 	
 	/**
@@ -130,6 +141,19 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		refreshSchedule.dispose();				
 		TeamUI.removePropertyChangeListener(this);
 		collector.dispose();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#getName()
+	 */
+	public String getName() {
+		String name = super.getName();
+		IResource[] resources = collector.getRoots();
+		if (resources == null) {
+			return name + " (Workspace)";
+		} else {
+			return name + " " + Utils.convertSelection(resources, 4);
+		}
 	}
 	
 	/**
@@ -274,10 +298,15 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * method is called in {@link #init(String, IMemento)}. This method will initialize
 	 * the sync info collector.
 	 * 
-	 * @param subscriber the subscriner to associate with this participant.
+	 * @param subscriber the subscriber to associate with this participant.
+	 * @param roots the root resources to be consider by this participant
+	 * (or <code>null</code> if all roots of the subscriber should be considered
 	 */
-	protected void setSubscriber(Subscriber subscriber) {
-		collector = new SubscriberSyncInfoCollector(subscriber);
+	protected void setSubscriber(Subscriber subscriber, IResource[] roots) {
+		if (roots != null && isSameResources(roots, subscriber.roots())) {
+			roots = null;
+		}
+		collector = new SubscriberSyncInfoCollector(subscriber, roots);
 		
 		// listen for global ignore changes
 		TeamUI.addPropertyChangeListener(this);
@@ -319,5 +348,17 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		RefreshSubscriberJob job = new RefreshSubscriberJob(this, jobName, taskName, resources, listener);
 		job.setUser(true);
 		Utils.schedule(job, site);
+	}
+	
+	private boolean isSameResources(IResource[] resources2, IResource[] resources3) {
+		if (resources2.length != resources3.length) return false;
+		List checkList = Arrays.asList(resources2);
+		for (int i = 0; i < resources3.length; i++) {
+			IResource resource = resources3[i];
+			if (!checkList.contains(resource)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
