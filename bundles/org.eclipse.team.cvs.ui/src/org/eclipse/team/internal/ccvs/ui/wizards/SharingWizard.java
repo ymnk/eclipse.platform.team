@@ -28,6 +28,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
@@ -197,15 +198,12 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 				return true;
 			} catch (InvocationTargetException e) {
 				CVSUIPlugin.openError(getContainer().getShell(), null, null, e);
+				result[0] = false;
 			}
 		}
 		// Add the location to the provider if it is new
-		if (isNewLocation) {
-			try {
-				CVSProviderPlugin.getPlugin().addRepository(location);
-			} catch (CVSException e) {
-				CVSUIPlugin.openError(getContainer().getShell(), null, null, e);
-			}
+		if (result[0] && isNewLocation) {
+			KnownRepositories.getInstance().addRepository(location, true /* broadcast */);
 		}
 		return result[0];
 	}
@@ -215,6 +213,14 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	 */
 	public boolean performCancel() {
 		boolean disposeLocation = isNewLocation;
+		ICVSRepositoryLocation location;
+		try {
+			location = getLocation();
+		} catch (TeamException e) {
+			CVSUIPlugin.log(e);
+			return true;
+		}
+		if (location == null) return true;
 		// If on the last page, offer to disconnect
 		if (getContainer().getCurrentPage() == syncPage) {
 			// Prompt to see if we should undo out work
@@ -223,11 +229,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 				disposeLocation = false;
 				// Add the location to the provider if it is new
 				if (isNewLocation) {
-					try {
-						CVSProviderPlugin.getPlugin().addRepository(location);
-					} catch (CVSException e) {
-						CVSUIPlugin.openError(getContainer().getShell(), null, null, e);
-					}
+					KnownRepositories.getInstance().addRepository(location, true /* broadcast */);
 				}
 			} else {
 				try {
@@ -248,17 +250,13 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		}
 		// Dispose of the location if appropriate
 		if (disposeLocation) {
-			try {
-				CVSProviderPlugin.getPlugin().disposeRepository(getLocation());
-			} catch (TeamException e) {
-				CVSUIPlugin.log(e);
-			}
+			KnownRepositories.getInstance().disposeRepository(location);
 		}
 		return super.performCancel();
 	}
 
 	private boolean promptToKeepMapping() {
-		return (MessageDialog.openQuestion(getShell(), "Keep Sharing?", "The project has been mapped to a remote module. Should this mapping be kept?"));
+		return (MessageDialog.openQuestion(getShell(), "Keep Sharing?", "Project {0} has been mapped to a remote module. Should this mapping be kept?" + project.getName()));
 	}
 
 	private void reconcileProject(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -303,8 +301,16 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	private ICVSRepositoryLocation recordLocation(ICVSRepositoryLocation newLocation) {
 		if (newLocation == null) return location;
 		if (location == null || !newLocation.equals(location)) {
+			if (location != null && isNewLocation) {
+				// Dispose of the previous location
+				KnownRepositories.getInstance().disposeRepository(location);
+			}
 			location = newLocation;
-			isNewLocation = !CVSProviderPlugin.getPlugin().isKnownRepository(newLocation.getLocation());
+			isNewLocation = !KnownRepositories.getInstance().isKnownRepository(newLocation.getLocation());
+			if (isNewLocation) {
+				// Add the location silently so we can work with it
+				location = KnownRepositories.getInstance().addRepository(location, false /* silently */);
+			}
 		}
 		return location;
 	}
@@ -397,14 +403,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 						}
 					});
 					if (!keep[0]) {
-						// Remove the root
-						try {
-							if (isNewLocation) {
-								CVSProviderPlugin.getPlugin().disposeRepository(location);
-							}
-						} catch (TeamException e1) {
-							CVSUIPlugin.openError(getContainer().getShell(), Policy.bind("exception"), null, e1, CVSUIPlugin.PERFORM_SYNC_EXEC); //$NON-NLS-1$
-						}
 						return false;
 					}
 					// They want to keep the connection anyway. Fall through.
@@ -419,7 +417,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		}
 	}
 	
-	private boolean shareProject(IProgressMonitor monitor) throws CVSException, InvocationTargetException, InterruptedException {
+	private boolean shareProject(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		monitor.beginTask(null, 100);
 		ICVSRepositoryLocation location = null;
 		try {
@@ -492,17 +490,13 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		try {
 			getContainer().run(true, true, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					try {
-						if (exists) {
-							reconcileProject(monitor);
-						} else {
-							shareProject(monitor);
-						}
-						// TODO: Sync subscriber input may be behind so view
-						// may be empty
-					} catch (CVSException e) {
-						throw new InvocationTargetException(e);
+					if (exists) {
+						reconcileProject(monitor);
+					} else {
+						shareProject(monitor);
 					}
+					// TODO: Sync subscriber input may be behind so view
+					// may be empty
 				}
 			});
 		} catch (InvocationTargetException e) {

@@ -20,8 +20,8 @@ import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.ui.*;
 
 public class NewLocationWizard extends Wizard {
@@ -63,7 +63,10 @@ public class NewLocationWizard extends Wizard {
 	public boolean performFinish() {
 		final ICVSRepositoryLocation[] location = new ICVSRepositoryLocation[] { null };
 		try {
+			// Create a handle to a repository location
 			location[0] = mainPage.getLocation();
+			// Add the location quitely so we can validate
+			location[0] = KnownRepositories.getInstance().addRepository(location[0], false /* don't tell anybody */);
 			if (mainPage.getValidate()) {
 				try {
 					new ProgressMonitorDialog(getShell()).run(true, true, new IRunnableWithProgress() {
@@ -82,9 +85,11 @@ public class NewLocationWizard extends Wizard {
 					if (t instanceof TeamException) {
 						throw (TeamException)t;
 					}
+					// Ignoe other exceptions but log them just in case.
+					CVSUIPlugin.log(IStatus.ERROR, e.getMessage(), e.getTargetException());
 				}
 			}
-			CVSProviderPlugin.getPlugin().addRepository(location[0]);
+			KnownRepositories.getInstance().addRepository(location[0], true /* let the world know */);
 		} catch (TeamException e) {
 			if (location[0] == null) {
 				// Exception creating the root, we cannot continue
@@ -105,15 +110,10 @@ public class NewLocationWizard extends Wizard {
 						Policy.bind("NewLocationWizard.validationFailedTitle"), //$NON-NLS-1$
 						Policy.bind("NewLocationWizard.validationFailedText", new Object[] {error.getMessage()})); //$NON-NLS-1$
 				}
-				try {
-					if (keep) {
-						CVSProviderPlugin.getPlugin().addRepository(location[0]);
-					} else {
-						CVSProviderPlugin.getPlugin().disposeRepository(location[0]);
-					}
-				} catch (TeamException e1) {
-					CVSUIPlugin.openError(getContainer().getShell(), Policy.bind("exception"), null, e1); //$NON-NLS-1$
-					return false;
+				if (keep) {
+					KnownRepositories.getInstance().addRepository(location[0], true /* let the world know */);
+				} else {
+					KnownRepositories.getInstance().disposeRepository(location[0]);
 				}
 				return keep;
 			}

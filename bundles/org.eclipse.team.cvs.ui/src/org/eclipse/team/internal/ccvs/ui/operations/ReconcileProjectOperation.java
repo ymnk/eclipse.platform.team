@@ -105,7 +105,7 @@ public class ReconcileProjectOperation extends ShareProjectOperation {
 		try {
 			if (resource.getType() == IResource.FILE) {
 				if (remote.isContainer()) {
-					CVSUIPlugin.log(IStatus.ERROR, "Local resource {0} is a file while the corresponding remote {1} is a folder" + resource.getFullPath().toString() + remote.getRepositoryRelativePath(), null);
+					CVSUIPlugin.log(IStatus.ERROR, Policy.bind("ReconcileProjectOperation.1", resource.getFullPath().toString(), remote.getRepositoryRelativePath()), null); //$NON-NLS-1$
 				} else {
 					IFile file = (IFile)resource;
 					IResourceVariant variant = (IResourceVariant)remote;
@@ -123,7 +123,7 @@ public class ReconcileProjectOperation extends ShareProjectOperation {
 				}
 			} else {
 				if (!remote.isContainer()) {
-					CVSUIPlugin.log(IStatus.ERROR, "Local resource {0} is a folder while the corresponding remote {1} is a file" + resource.getFullPath().toString() + remote.getRepositoryRelativePath(), null);
+					CVSUIPlugin.log(IStatus.ERROR, Policy.bind("ReconcileProjectOperation.2", resource.getFullPath().toString(), remote.getRepositoryRelativePath()), null); //$NON-NLS-1$
 				} else {
 					// Map the local folder to the remote folder.
 					// (Note that this will make phantoms for non-exisiting local folders)

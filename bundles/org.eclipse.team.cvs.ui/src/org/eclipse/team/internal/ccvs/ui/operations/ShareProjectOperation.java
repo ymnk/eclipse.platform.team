@@ -163,7 +163,7 @@ public class ShareProjectOperation extends CVSOperation {
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
 	 */
 	protected String getTaskName() {
-		return "Sharing project {0} as {1}" + project.getName() + moduleName;
+		return Policy.bind("ShareProjectOperation.0", project.getName(), moduleName); //$NON-NLS-1$
 	}
 
 	/**

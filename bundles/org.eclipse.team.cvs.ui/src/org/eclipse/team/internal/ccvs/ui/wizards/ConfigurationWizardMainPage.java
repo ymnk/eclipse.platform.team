@@ -137,14 +137,6 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 
 		Listener listener = new Listener() {
 			public void handleEvent(Event event) {
-				if (location != null &&
-						CVSProviderPlugin.getPlugin().isKnownRepository(location.getLocation())) {
-					try {
-						CVSProviderPlugin.getPlugin().disposeRepository(location);
-					} catch (CVSException e) {
-						// Just ignore this;
-					}
-				}
 				location = null;
 				updateWidgetEnablements();
 			}
@@ -280,7 +272,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	public ICVSRepositoryLocation getLocation() throws CVSException {
 		if (location == null) {
 			if (!isPageComplete()) return null;
-			location = CVSProviderPlugin.getPlugin().createRepository(createProperties());
+			location = CVSRepositoryLocation.fromProperties(createProperties());
 			saveWidgetValues();
 		}
 		return location;

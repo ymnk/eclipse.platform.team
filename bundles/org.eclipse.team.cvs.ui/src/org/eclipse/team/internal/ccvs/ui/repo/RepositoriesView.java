@@ -22,6 +22,7 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
@@ -274,7 +275,7 @@ public class RepositoriesView extends RemoteViewPart {
 			public void keyPressed(KeyEvent event) {
 				if (event.keyCode == SWT.F5) {
 					if (WorkbenchUserAuthenticator.USE_ALTERNATE_PROMPTER) {
-						ICVSRepositoryLocation[] locations = CVSProviderPlugin.getPlugin().getKnownRepositories();
+						ICVSRepositoryLocation[] locations = KnownRepositories.getInstance().getRepositories();
 						for (int i = 0; i < locations.length; i++) {
 							locations[i].flushUserInfo();
 						}
