@@ -32,10 +32,10 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
-import org.eclipse.team.internal.ccvs.ui.merge.TagSource;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSourceWorkbenchAdapter;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
@@ -120,7 +120,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 			sharingImage,
 			Policy.bind("SharingWizard.selectTag"), //$NON-NLS-1$
 			TagSource.EMPTY, // start with an empty tag source
-			ProjectElement.INCLUDE_HEAD_TAG | ProjectElement.INCLUDE_BRANCHES); //$NON-NLS-1$
+			TagSourceWorkbenchAdapter.INCLUDE_HEAD_TAG | TagSourceWorkbenchAdapter.INCLUDE_BRANCHES); //$NON-NLS-1$
 		tagPage.setCVSWizard(this);
 		tagPage.setHelpContxtId(IHelpContextIds.SHARING_TAG_SELETION_PAGE);
 		addPage(tagPage);

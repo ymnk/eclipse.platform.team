@@ -20,9 +20,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
-import org.eclipse.team.internal.ccvs.ui.merge.TagSource;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositorySorter;
+import org.eclipse.team.internal.ccvs.ui.tags.*;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSourceWorkbenchAdapter;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.ui.help.WorkbenchHelp;
@@ -160,7 +161,7 @@ public class BranchPromptDialog extends DetailsDialog {
 		label.setLayoutData(data);
 		
 		tagTree = createTree(composite);
-		tagTree.setInput(new ProjectElement(tagSource, ProjectElement.INCLUDE_BRANCHES | ProjectElement.INCLUDE_VERSIONS));
+		tagTree.setInput(new TagSourceWorkbenchAdapter(tagSource, TagSourceWorkbenchAdapter.INCLUDE_BRANCHES | TagSourceWorkbenchAdapter.INCLUDE_VERSIONS));
 		Runnable refresh = new Runnable() {
 			public void run() {
 				getShell().getDisplay().syncExec(new Runnable() {

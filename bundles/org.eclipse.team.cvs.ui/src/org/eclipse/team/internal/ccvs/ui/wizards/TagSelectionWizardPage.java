@@ -19,8 +19,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.TagSelectionArea;
-import org.eclipse.team.internal.ccvs.ui.merge.TagSource;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSelectionArea;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 import org.eclipse.ui.help.WorkbenchHelp;
 
 /**

@@ -16,8 +16,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteCompareOperation;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSelectionDialog;
 
 /**
  * Compare to versions of a remote resource.

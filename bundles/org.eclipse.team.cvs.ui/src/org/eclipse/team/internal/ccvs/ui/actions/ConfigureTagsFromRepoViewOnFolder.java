@@ -23,9 +23,9 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.TagConfigurationDialog;
-import org.eclipse.team.internal.ccvs.ui.merge.TagSource;
 import org.eclipse.team.internal.ccvs.ui.model.RemoteModule;
+import org.eclipse.team.internal.ccvs.ui.tags.TagConfigurationDialog;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 ;
 
 /**
