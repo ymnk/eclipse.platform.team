@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.repo;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
@@ -42,6 +43,7 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 	ICVSRepositoryLocation location;
 	
 	// Widgets
+	Text encodingText;
 	Text userText;
 	Text passwordText;
 	Combo methodType;
@@ -103,7 +105,7 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 		
 		createLabel(composite, Policy.bind("CVSPropertiesPage.connectionType"), 1); //$NON-NLS-1$
 		methodType = createCombo(composite);
-		
+
 		createLabel(composite, Policy.bind("CVSPropertiesPage.user"), 1); //$NON-NLS-1$
 		userText = createTextField(composite);
 		
@@ -118,6 +120,9 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 		
 		createLabel(composite, Policy.bind("CVSPropertiesPage.path"), 1); //$NON-NLS-1$
 		pathLabel = createLabel(composite, "", 2); //$NON-NLS-1$
+		
+		createLabel(composite, Policy.bind("CVSPropertiesPage.encoding"), 1); //$NON-NLS-1$
+		encodingText = createTextField(composite);
 
 		// Add some extra space
 		createLabel(composite, "", 3); //$NON-NLS-1$
@@ -129,6 +134,13 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 		
 		initializeValues();
 		updateWidgetEnablements();
+		
+		encodingText.addListener(SWT.Modify, new Listener() {
+			public void handleEvent(Event event) {
+				connectionInfoChanged = true;
+				updateWidgetEnablements();
+			}
+		});
 		passwordText.addListener(SWT.Modify, new Listener() {
 			public void handleEvent(Event event) {
 				passwordChanged = true;
@@ -301,6 +313,7 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 		String method = location.getMethod().getName();
 		methodType.select(methodType.indexOf(method));
 		info = location.getUserInfo(true);
+		encodingText.setText(location.getEncoding());
 		userText.setText(info.getUsername());
 		passwordText.setText("*********"); //$NON-NLS-1$
 		hostLabel.setText(location.getHost());
@@ -456,6 +469,7 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 	private void performNonConnectionInfoChanges() {
 		recordNewLabel((CVSRepositoryLocation)location);
 		recordReadWriteLocations((CVSRepositoryLocation)location);
+		location.setEncoding(encodingText.getText());
 	}
 	/*
 	 * @see PreferencesPage#performOk
@@ -506,6 +520,19 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 			setValid(false);
 			return;
 		}
+
+		try {
+			String enc = encodingText.getText();
+			if(enc!=null){
+				"".getBytes(enc); //$NON-NLS-1$
+			}
+		} catch (UnsupportedEncodingException ex) {
+			setErrorMessage(Policy.bind("ConfigurationWizardMainPage.invalidEncoding")); //$NON-NLS-1$
+			setValid(false);
+			return;
+		}
+
+		
 		setErrorMessage(null);
 		setValid(true);
 	}
@@ -545,7 +572,6 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 	private void recordReadWriteLocations(CVSRepositoryLocation location) {
 		location.setReadLocation(useDefaultReadWriteLocations.getSelection() ? null : readLocation.getText());
 		location.setWriteLocation(useDefaultReadWriteLocations.getSelection() ? null : writeLocation.getText());
-		// TODO: These will be lost if a crash occurres before shutdown
 	}
 }
 

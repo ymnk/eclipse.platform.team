@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.wizards;
 
 
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.List;
 
@@ -45,6 +46,8 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	private Text passwordText;
 	// Port
 	private Text portText;
+	// Encoding
+	private Text encodingText;
 	private Button useDefaultPort;
 	private Button useCustomPort;
 	// Host
@@ -193,6 +196,12 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 		portText = createTextField(portGroup);
 		portText.addListener(SWT.Modify, listener);
 		
+		// encoding 
+		createLabel(composite, Policy.bind("ConfigurationWizardMainPage.encoding")); //$NON-NLS-1$
+		encodingText = createTextField(composite);
+		encodingText.addListener(SWT.Modify, listener);
+		encodingText.setText(System.getProperty("file.encoding", "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
+		
 		// create a composite to ensure the validate button is in its own tab group
 		if (showValidate) {
 			Composite validateButtonTabGroup = new Composite(composite, SWT.NONE);
@@ -254,6 +263,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 		result.setProperty("user", userCombo.getText()); //$NON-NLS-1$
 		result.setProperty("password", passwordText.getText()); //$NON-NLS-1$
 		result.setProperty("host", hostCombo.getText()); //$NON-NLS-1$
+		result.setProperty("encoding", encodingText.getText()); //$NON-NLS-1$
 		if (useCustomPort.getSelection()) {
 			result.setProperty("port", portText.getText()); //$NON-NLS-1$
 		}
@@ -478,6 +488,19 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 				return;
 			}
 		}
+		
+		try {
+			String enc = encodingText.getText();
+			if(enc!=null){
+				"".getBytes(enc); //$NON-NLS-1$
+			}
+		} catch (UnsupportedEncodingException ex) {
+			setErrorMessage(Policy.bind("ConfigurationWizardMainPage.invalidEncoding")); //$NON-NLS-1$
+			setPageComplete(false);
+			return;
+		}
+
+		
 		setErrorMessage(null);
 		setPageComplete(true);
 	}
