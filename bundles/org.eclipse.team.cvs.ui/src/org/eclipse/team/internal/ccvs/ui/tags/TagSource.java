@@ -24,6 +24,11 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
  */
 public abstract class TagSource {
     
+    /*
+     * Special constant representing the BASE tag
+     */
+    public static final int BASE = -1;
+    
     public static final TagSource EMPTY = new TagSource() {
         public void commit(CVSTag[] tags, boolean replace, IProgressMonitor monitor) throws CVSException {
             // No-op
@@ -57,14 +62,23 @@ public abstract class TagSource {
     }
     
     public static int[] convertIncludeFlaqsToTagTypes(int includeFlags) {
-        if ((includeFlags & TagSelectionArea.INCLUDE_BRANCHES) > 0 && (includeFlags & TagSelectionArea.INCLUDE_VERSIONS) > 0) {
-            return new int [] { CVSTag.VERSION, CVSTag.BRANCH };
-        } else if ((includeFlags & (TagSelectionArea.INCLUDE_BRANCHES)) > 0) {
-            return new int [] { CVSTag.BRANCH };
-        } else if ((includeFlags & (TagSelectionArea.INCLUDE_VERSIONS)) > 0) {
-            return new int [] { CVSTag.VERSION };
+        List types = new ArrayList();
+        if ((includeFlags & TagSelectionArea.INCLUDE_BRANCHES) > 0)
+            types.add(new Integer(CVSTag.BRANCH));
+        if ((includeFlags & TagSelectionArea.INCLUDE_VERSIONS) > 0)
+            types.add(new Integer(CVSTag.VERSION));
+        if ((includeFlags & (TagSelectionArea.INCLUDE_HEAD_TAG)) > 0)
+            types.add(new Integer(CVSTag.HEAD));
+        if ((includeFlags & (TagSelectionArea.INCLUDE_DATES)) > 0)
+            types.add(new Integer(CVSTag.DATE));
+        if ((includeFlags & (TagSelectionArea.INCLUDE_BASE_TAG)) > 0)
+            types.add(new Integer(BASE));
+        int[] result = new int[types.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = ((Integer)types.get(i)).intValue();
+            
         }
-        return new int[] { };
+        return result;
     }
     
     /**
@@ -136,7 +150,15 @@ public abstract class TagSource {
 		}
 	}
 	
-    public abstract CVSTag[] getTags(int type);
+    public CVSTag[] getTags(int type) {
+        switch (type) {
+        	case BASE:
+        	    return new CVSTag[] { CVSTag.BASE };
+        	case CVSTag.HEAD:
+        	    return new CVSTag[] { CVSTag.DEFAULT };
+        }
+        return new CVSTag[0];
+    }
     
     public CVSTag[] getTags(int[] types) {
         if (types.length == 0) {

@@ -128,11 +128,11 @@ public class MergeWizardPage extends CVSWizardPage {
     }
 
     private CVSTag getTagFor(String text, boolean versionsOnly) {
-        if (text == CVSTag.DEFAULT.getName()) {
+        if (text.equals(CVSTag.DEFAULT.getName())) {
             if (versionsOnly) return null;
             return CVSTag.DEFAULT;
         }
-        if (text == CVSTag.BASE.getName()) {
+        if (text.equals(CVSTag.BASE.getName())) {
             if (versionsOnly) return null;
             return CVSTag.BASE;
         }
@@ -156,6 +156,12 @@ public class MergeWizardPage extends CVSWizardPage {
 	        endTag = selectedTag;
 	        if (endTagField != null) {
 	            endTagField.setText(endTag.getName());
+	            if (startTag == null && endTag.getType() == CVSTag.BRANCH) {
+	                CVSTag tag = findCommonBaseTag(endTag);
+	                if (tag != null) {
+	                    setStartTag(tag);
+	                }
+	            }
 	        }
 	        updateEnablements();           
         }
@@ -171,6 +177,17 @@ public class MergeWizardPage extends CVSWizardPage {
         }
     }
     
+    private CVSTag findCommonBaseTag(CVSTag tag) {
+        CVSTag[] tags = tagSource.getTags(CVSTag.VERSION);
+        for (int i = 0; i < tags.length; i++) {
+            CVSTag potentialMatch = tags[i];
+            if (potentialMatch.getName().indexOf(tag.getName()) != -1) {
+                return potentialMatch;
+            }
+        }
+        return null;
+    }
+
     private void updateEnablements() {
         if (endTag == null && endTagField.getText().length() > 0) {
             setErrorMessage("The specified end tag is not known to exist. Either enter a different tag or refresh the known tags.");

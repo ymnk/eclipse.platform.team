@@ -42,6 +42,9 @@ public class SingleFolderTagSource extends TagSource {
      * @see org.eclipse.team.internal.ccvs.ui.merge.TagSource#getTags(int)
      */
     public CVSTag[] getTags(int type) {
+        if (type == CVSTag.HEAD || type == BASE) {
+            return super.getTags(type);
+        }
         return getTags(getFolder(), type);
     }
 

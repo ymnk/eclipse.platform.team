@@ -10,28 +10,40 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.tags;
 
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 import org.eclipse.jface.contentassist.*;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.contentassist.*;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.ui.contentassist.ContentAssistHandler;
 
-
+/**
+ * A content assist processor for tags for use with Text widgets.
+ */
 public class TagContentAssistProcessor implements ISubjectControlContentAssistProcessor {
 
     private FilteredTagList tags;
     private String lastError;
+    private Map images = new HashMap();
 
     public static void createContentAssistant(Text text, TagSource tagSource, int includeFlags) {
-		ContentAssistHandler.createHandlerForText(text, createSubjectContentAssistant(new TagContentAssistProcessor(tagSource, includeFlags)));
+		final TagContentAssistProcessor tagContentAssistProcessor = new TagContentAssistProcessor(tagSource, includeFlags);
+		text.addDisposeListener(new DisposeListener() {
+            public void widgetDisposed(DisposeEvent e) {
+                tagContentAssistProcessor.dispose();
+            }
+        });
+        ContentAssistHandler.createHandlerForText(text, createSubjectContentAssistant(tagContentAssistProcessor));
 	}
-	
-	public static SubjectControlContentAssistant createSubjectContentAssistant(IContentAssistProcessor processor) {
+
+    private static SubjectControlContentAssistant createSubjectContentAssistant(IContentAssistProcessor processor) {
 		final SubjectControlContentAssistant contentAssistant= new SubjectControlContentAssistant();
 		
 		contentAssistant.setContentAssistProcessor(processor, IDocument.DEFAULT_CONTENT_TYPE);
@@ -68,7 +80,15 @@ public class TagContentAssistProcessor implements ISubjectControlContentAssistPr
                 for (int i = 0; i < matching.length; i++) {
                     CVSTag tag = matching[i];
                     String name = tag.getName();
+                    ImageDescriptor desc = TagElement.getImageDescriptor(tag);
                     Image image = null;
+                    if (desc != null) {
+                        image = (Image)images.get(desc);
+                        if (image == null) {
+                            image = desc.createImage();
+                            images.put(desc, image);
+                        }
+                    }
                     CompletionProposal proposal = new CompletionProposal(name, 0, docLength, name.length(), image, name, null, null);
                     proposals.add(proposal);
                 }
@@ -128,6 +148,16 @@ public class TagContentAssistProcessor implements ISubjectControlContentAssistPr
      */
     public IContextInformationValidator getContextInformationValidator() {
         return null;
+    }
+    
+	/**
+     * Dispose of any images created by the assistant
+     */
+    public void dispose() {
+        for (Iterator iter = images.values().iterator(); iter.hasNext();) {
+            Image image = (Image) iter.next();
+            image.dispose();
+        }
     }
     
 }

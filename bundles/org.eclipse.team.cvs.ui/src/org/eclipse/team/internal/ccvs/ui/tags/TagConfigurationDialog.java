@@ -116,6 +116,9 @@ public class TagConfigurationDialog extends Dialog {
          * @see org.eclipse.team.internal.ccvs.ui.merge.TagSource#getTags(int)
          */
         public CVSTag[] getTags(int type) {
+            if (type == CVSTag.HEAD || type == BASE) {
+                return super.getTags(type);
+            }
             List list = getTagList(type);
             if (list != null)
                 return (CVSTag[]) list.toArray(new CVSTag[list.size()]);

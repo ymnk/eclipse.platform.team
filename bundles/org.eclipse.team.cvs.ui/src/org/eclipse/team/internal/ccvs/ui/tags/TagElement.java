@@ -23,6 +23,16 @@ public class TagElement implements IWorkbenchAdapter, IAdaptable {
     Object parent;
 	CVSTag tag;
 	
+	public static ImageDescriptor getImageDescriptor(CVSTag tag) {
+        if (tag.getType() == CVSTag.BRANCH || tag.equals(CVSTag.DEFAULT)) {
+			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_TAG);
+		} else if (tag.getType() == CVSTag.DATE){
+			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_DATE);
+		}else {
+			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION);
+		}
+    }
+	
 	/**
 	 * @deprecated
 	 * @param tag
@@ -42,15 +52,9 @@ public class TagElement implements IWorkbenchAdapter, IAdaptable {
 		return null;
 	}
 	public ImageDescriptor getImageDescriptor(Object object) {
-		if (tag.getType() == CVSTag.BRANCH || tag == CVSTag.DEFAULT) {
-			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_TAG);
-		} else if (tag.getType() == CVSTag.DATE){
-			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_DATE);
-		}else {
-			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION);
-		}
+		return getImageDescriptor(tag);
 	}
-	public String getLabel(Object o) {
+    public String getLabel(Object o) {
 		if(tag.getType() == CVSTag.DATE){
 			Date date = tag.asDate();
 			if (date != null){
