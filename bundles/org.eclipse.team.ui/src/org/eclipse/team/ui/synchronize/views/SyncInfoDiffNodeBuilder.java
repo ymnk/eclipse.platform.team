@@ -89,6 +89,16 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		resourceMap.remove(childResource);
 	}
 	
+	protected void unassociateDeeply(IResource parentResource) {
+		unassociateDiffNode(parentResource);
+		for (Iterator iter = resourceMap.keySet().iterator(); iter.hasNext();) {
+			IResource r = (IResource) iter.next();
+			if (parentResource.getFullPath().isPrefixOf(r.getFullPath())) {
+				unassociateDiffNode(r);
+			}
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
@@ -198,7 +208,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 			nodes[i] = getModelObject(removedRoots[i]);
 			DiffNode node = nodes[i];
 			node.getParent().removeToRoot(node);
-			//TODO: Clean up hashMap
+			unassociateDeeply(removedRoots[i]);
 			updateParentLabels(node);
 		}
 		AbstractTreeViewer tree = getTreeViewer();

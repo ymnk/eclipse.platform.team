@@ -29,7 +29,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	private IResource resource;
 	private SyncInfoSet input;
 	private SyncInfo info;
-	private DiffNode parent;
 		
 	/**
 	 * Create an ITypedElement for the given local resource. The returned ITypedElement

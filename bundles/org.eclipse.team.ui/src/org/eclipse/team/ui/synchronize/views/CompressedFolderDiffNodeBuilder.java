@@ -139,7 +139,7 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 			IResource resource = roots[i];
 			if (resource.getType() == IResource.PROJECT) {
 				removals.add(getModelObject(resource));
-//				 TODO: clean up hash table
+				unassociateDeeply(resource);
 			} else {
 				remainingRoots.add(resource);
 			}
