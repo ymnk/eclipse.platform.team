@@ -1406,13 +1406,24 @@ public class EclipseSynchronizer {
 				}
 				getSyncInfoCacheFor(resource).flushDirtyCache(resource);
 			} finally {
-				flushDirtyCacheWithAncestors(resource.getParent());
+				IContainer parent = resource.getParent();
+				if(! alreadyflushed(parent)) {		
+					flushDirtyCacheWithAncestors(parent);
+				}
 			}
 		} finally {
 			endOperation(null);
 		}
 	}
 	
+	/**
+	 * @param parent
+	 * @return boolean
+	 */
+	private boolean alreadyflushed(IContainer resource) throws CVSException {
+		return getSyncInfoCacheFor(resource).isDirtyCacheFlushed(resource);
+	}
+
 	/**
 	 * Method updated flags the objetc as having been modfied by the updated
 	 * handler. This flag is read during the resource delta to determine whether

@@ -499,7 +499,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			EclipseSynchronizer.getInstance().flushDirtyCache(getIResource(), IResource.DEPTH_ZERO);
 			return;
 		}
-		setModified(isModified(getSyncInfo()));
+		flushWithAncestors();		
 	}
 	
 	/**

@@ -91,6 +91,11 @@ public class MoveDeleteHook implements IMoveDeleteHook {
 		
 		// No special handling required for team-private members
 		if (folder.isTeamPrivateMember()) return false;
+		
+		// DECORATOR I beleive that checking for the derived state of a resource will also help. They can
+		// essentially be ignored without having to check the ignore state of its parent tree.
+		// This would apply to all listeners (MoveDeleteHook, AddDeleteMoveListener, FileModificationManager).
+		
 		monitor.beginTask(null, 100);
 		try {
 			final ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor(folder);

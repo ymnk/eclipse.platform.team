@@ -16,6 +16,8 @@ import java.util.Set;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ISaveContext;
+import org.eclipse.core.resources.ISaveParticipant;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
@@ -29,7 +31,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  * This cache uses session properties to hold the bytes representing the sync
  * info
  */
-/*package*/ class SessionPropertySyncInfoCache extends SyncInfoCache {
+/*package*/ class SessionPropertySyncInfoCache extends SyncInfoCache implements ISaveParticipant {
 	
 	// key used on a folder to indicate that the resource sync has been cahced for it's children
 	private static final QualifiedName RESOURCE_SYNC_CACHED_KEY = new QualifiedName(CVSProviderPlugin.ID, "resource-sync-cached"); //$NON-NLS-1$
@@ -206,14 +208,14 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	}
 	private void internalSetDirtyIndicator(IContainer container, String indicator) throws CVSException {
 		try {
-			container.setPersistentProperty(IS_DIRTY, indicator);
+			container.setSessionProperty(IS_DIRTY, indicator);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
 	}
 	private String internalGetDirtyIndicator(IContainer container) throws CVSException {
 		try {
-			return container.getPersistentProperty(IS_DIRTY);
+			return (String)container.getSessionProperty(IS_DIRTY);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -260,7 +262,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 				} else {
 					resource.setSessionProperty(DIRTY_COUNT, null);
 					resource.setSessionProperty(DELETED_CHILDREN, null);
-					resource.setPersistentProperty(IS_DIRTY, null);
+					resource.setSessionProperty(IS_DIRTY, null);
 				}
 			} catch (CoreException e) {
 				throw CVSException.wrapException(e);
@@ -335,6 +337,8 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 
 	/*package*/ boolean contentsChangedByUpdate(IFile file) throws CVSException {
 		try {
+			// DECORATOR why isn't the IS_DIRTY flag set when the file is marked as updated? This
+			// would essentially cache the dirty state on checkout.
 			Object indicator = file.getSessionProperty(CLEAN_UPDATE);
 			boolean updated = false;
 			if (indicator == UPDATED_INDICATOR) {
@@ -393,5 +397,44 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#isDirtyCacheFlushed(org.eclipse.core.resources.IContainer)
+	 */
+	boolean isDirtyCacheFlushed(IContainer resource) throws CVSException {
+		if (resource.exists()) {
+			try {
+					return resource.getSessionProperty(IS_DIRTY) == null;					
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			}
+		}
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#doneSaving(org.eclipse.core.resources.ISaveContext)
+	 */
+	public void doneSaving(ISaveContext context) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#prepareToSave(org.eclipse.core.resources.ISaveContext)
+	 */
+	public void prepareToSave(ISaveContext context) throws CoreException {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#rollback(org.eclipse.core.resources.ISaveContext)
+	 */
+	public void rollback(ISaveContext context) {			
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#saving(org.eclipse.core.resources.ISaveContext)
+	 */
+	public void saving(ISaveContext context) throws CoreException {
+		if(context.getKind() & ISaveContext.FULL_SAVE == 0)
 	}
 }

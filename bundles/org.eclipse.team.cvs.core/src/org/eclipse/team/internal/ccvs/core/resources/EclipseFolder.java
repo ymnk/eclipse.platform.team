@@ -55,7 +55,16 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 */
 	public ICVSResource[] members(int flags) throws CVSException {		
 		final List result = new ArrayList();
-		IResource[] resources = EclipseSynchronizer.getInstance().members((IContainer)resource);
+		IResource[] resources = 	EclipseSynchronizer.getInstance().members((IContainer)resource);
+		
+		if(flags == ALL_MEMBERS) {
+			ICVSResource cvsResources[] = new ICVSResource[resources.length];
+			for (int i = 0; i < resources.length; i++) {				
+				cvsResources[i] = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
+			}
+			return cvsResources;
+		}
+		
 		boolean includeFiles = (((flags & FILE_MEMBERS) != 0) || ((flags & (FILE_MEMBERS | FOLDER_MEMBERS)) == 0));
 		boolean includeFolders = (((flags & FOLDER_MEMBERS) != 0) || ((flags & (FILE_MEMBERS | FOLDER_MEMBERS)) == 0));
 		boolean includeManaged = (((flags & MANAGED_MEMBERS) != 0) || ((flags & (MANAGED_MEMBERS | UNMANAGED_MEMBERS | IGNORED_MEMBERS)) == 0));
@@ -439,6 +448,12 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 */
 	private String determineDirtyCount(String indicator, boolean shared) throws CVSException {
 		IContainer container = (IContainer)getIResource();
+		
+		// DECORATOR this members call will cause all sync info from disk to be read at startup -
+		// could we instead use IResource::members(includePhantom)?
+		// It may not be that bad since the sync info will be read at some point anyway and it
+		// does not change the perceived startup time because it is done in a separate thread.
+		// But if we KNEW at shutdown that a file was clean, why not save that info?
 		ICVSResource[] children = members(ALL_UNIGNORED_MEMBERS);
 		int count = 0;
 		Set deletedChildren = new HashSet();

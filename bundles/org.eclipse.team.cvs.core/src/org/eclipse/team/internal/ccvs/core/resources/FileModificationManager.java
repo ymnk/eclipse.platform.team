@@ -59,6 +59,9 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 						if (!project.isAccessible()) {
 							return false;
 						}
+						if ((delta.getFlags() & IResourceDelta.OPEN) != 0) {
+							return false;
+						} 
 						if (RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId()) == null) {
 							return false;
 						}

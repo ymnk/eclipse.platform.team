@@ -41,6 +41,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.ui.ISharedImages;
@@ -97,14 +98,25 @@ public class CVSLightweightDecorator
 	public static boolean isDirty(final ICVSResource cvsFile) {
 		try {
 			final boolean[] isDirty = new boolean[] {false};
-			cvsFile.getParent().run(new ICVSRunnable() {
-				public void run(IProgressMonitor monitor) throws CVSException {
-					// file is dirty or file has been merged by an update
-					if(!cvsFile.isIgnored()) {
-						isDirty[0] = cvsFile.isModified();
-					}
-				}
-			}, null);
+			
+			// DECORATOR investigate the implications of not calling isModified() in a 
+			// workspace runnable. Maybe adding a check to EclipseSynchronizer such
+			// that the workspace is never modified (e.g. resulting in a delta) during this
+			// operation.
+			
+//			EclipseSynchronizer.getInstance().run(new ICVSRunnable() {
+//				public void run(IProgressMonitor monitor) throws CVSException {
+//					// file is dirty or file has been merged by an update
+//					if(!cvsFile.isIgnored()) {
+//						isDirty[0] = cvsFile.isModified();
+//					}
+//				}
+//			}, null);
+
+			if(!cvsFile.isIgnored()) {
+				isDirty[0] = cvsFile.isModified();
+			}
+
 			return isDirty[0];
 		} catch (CVSException e) {
 			//if we get an error report it to the log but assume dirty

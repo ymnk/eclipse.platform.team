@@ -318,4 +318,8 @@ public class Util {
 		}
 		return true;
 	}
+	
+	public static boolean isSet(int flags, int bits) {
+		return (flags & bits) != 0;
+	}	
 }

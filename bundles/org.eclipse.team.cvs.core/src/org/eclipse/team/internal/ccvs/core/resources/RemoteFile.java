@@ -107,6 +107,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		newInfo.setKeywordMode(Command.KSUBST_TEXT_EXPAND);
 		newInfo.setTag(tag);
 		syncBytes = newInfo.getBytes();
+		setWorkspaceSyncState(workspaceSyncState);
 	}
 		
 	public RemoteFile(RemoteFolder parent, byte[] syncBytes) throws CVSException {
@@ -621,5 +622,6 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	public void setSyncBytes(byte[] syncBytes) throws CVSException {
 		setSyncInfo(new ResourceSyncInfo(syncBytes));
 	}
+
 
 }
