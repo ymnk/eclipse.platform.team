@@ -34,7 +34,6 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 	 * @see ComparisonCriteria#getId()
 	 */
 	public String getId() {
-		// TODO Auto-generated method stub
 		return "org.eclipse.team.cvs.revisioncomparator";
 	}
 

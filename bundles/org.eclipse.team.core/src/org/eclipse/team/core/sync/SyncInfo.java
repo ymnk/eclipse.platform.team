@@ -284,10 +284,15 @@ public class SyncInfo {
 		return description;
 	}
 
-	/**
-	 * @return
-	 */
-	public boolean isInSync(IProgressMonitor monitor) {
-		return getSyncKind(monitor) == IN_SYNC;
+	static public boolean isInSync(int kind) {
+		return kind == IN_SYNC;
+	}
+	
+	static public int getDirection(int kind) {
+		return kind & DIRECTION_MASK;
+	}
+		
+	static public int getChange(int kind) {
+		return kind & CHANGE_MASK;
 	}
 }
