@@ -290,6 +290,7 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
+		forms.dispose();
 		configuration.removeActionContribution(changedListener);
 		getParticpantSyncInfoSet().removeSyncSetChangedListener(subscriberListener);
 	}

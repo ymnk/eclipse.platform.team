@@ -12,15 +12,23 @@ package org.eclipse.team.internal.ccvs.ui.actions;
  
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * Action to initiate a CVS workspace synchronize
@@ -28,19 +36,58 @@ import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 public class SyncAction extends WorkspaceAction {
 	
 	public void execute(IAction action) throws InvocationTargetException {
-		IResource[] resources = getResourcesToSync();
+		final IResource[] resources = getResourcesToSync();
 		if (resources == null || resources.length == 0) return;
-		// First check if there is an existing matching participant
-		WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)SubscriberParticipant.getMatchingParticipant(WorkspaceSynchronizeParticipant.ID, resources);	
-		// If there isn't, create one and add to the manager
-		if (participant == null) {
-			participant = new WorkspaceSynchronizeParticipant(resources);
-			TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+		
+		if(isSingleFile(resources)) {
+			showSingleFileComparison(getShell(), CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), resources[0]);
+		} else {
+			// First check if there is an existing matching participant
+			WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)SubscriberParticipant.getMatchingParticipant(WorkspaceSynchronizeParticipant.ID, resources);
+			// If there isn't, create one and add to the manager
+			if (participant == null) {
+				participant = new WorkspaceSynchronizeParticipant(resources);
+				TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+			}
+			participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 	
-	private boolean isSingleFile(IResource[] resources) {
+	/**
+	 * Refresh the subscriber directly and show the resulting synchronization state in a compare editor. If there
+	 * is no difference the user is prompted.
+	 * 
+	 * @param resources the file to refresh and compare
+	 */
+	public static void showSingleFileComparison(final Shell shell, final Subscriber subscriber, final IResource resource) {
+		try {
+			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					try {	
+						subscriber.refresh(new IResource[]{resource}, IResource.DEPTH_ZERO, monitor);
+						final SyncInfo info = subscriber.getSyncInfo(resource);
+						shell.getDisplay().syncExec(new Runnable() {
+							public void run() {
+								if (info.getKind() == SyncInfo.IN_SYNC) {
+									MessageDialog.openInformation(shell, "No Changes", "There are no changes between the workspace resource and the remote.");
+								} else {
+									SyncInfoCompareInput input = new SyncInfoCompareInput(subscriber.getName(), info);
+									CompareUI.openCompareEditor(input);
+								}
+							}
+						});
+					} catch (TeamException e) {
+						throw new InvocationTargetException(e);
+					}
+				}
+			});
+		} catch (InvocationTargetException e) {
+			Utils.handle(e);
+		} catch (InterruptedException e) {
+		}
+	}
+
+	public static boolean isSingleFile(IResource[] resources) {
 		return resources.length == 1 && resources[0].getType() == IResource.FILE;
 	}
 	

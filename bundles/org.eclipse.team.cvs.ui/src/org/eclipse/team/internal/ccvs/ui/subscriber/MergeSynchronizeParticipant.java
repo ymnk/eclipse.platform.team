@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
@@ -31,6 +33,7 @@ import org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
@@ -164,7 +167,46 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#getName()
 	 */
 	public String getName() {		
-		return ((CVSMergeSubscriber)getSubscriber()).getName() + " " + Utils.convertSelection(getSubscriber().roots(), 4);
+		return ((CVSMergeSubscriber)getSubscriber()).getName() + " " + Utils.convertSelection(getSubscriber().roots(), 4); //$NON-NLS-1$
+	}
+	
+	/*
+	 * Returns the start tag for this merge participant. The start tag is actually stored with the subscriber.
+	 */
+	protected CVSTag getStartTag() {
+		return ((CVSMergeSubscriber)getSubscriber()).getStartTag();
+	}
+	
+	/*
+	 * Returns the end tag for this merge participant. The end tag is actually stored with the subscriber.
+	 */
+	protected CVSTag getEndTag() {
+		return ((CVSMergeSubscriber)getSubscriber()).getEndTag();
+	}
+	
+	/*
+	 * Returns a merge participant that exist and is configured with the given set of resources, start, and end tags.
+	 */
+	public static MergeSynchronizeParticipant getMatchingParticipant(IResource[] resources, CVSTag startTag, CVSTag endTag) {
+		ISynchronizeParticipantReference[] refs = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		for (int i = 0; i < refs.length; i++) {
+			ISynchronizeParticipantReference reference = refs[i];
+			if (reference.getId().equals(CVSMergeSubscriber.ID)) {
+				MergeSynchronizeParticipant p;
+				try {
+					p = (MergeSynchronizeParticipant) reference.getParticipant();
+				} catch (TeamException e) {
+					continue;
+				}
+				IResource[] roots = p.getResources();
+				Arrays.sort(resources, Utils.resourceComparator);
+				Arrays.sort(roots, Utils.resourceComparator);
+				if (Arrays.equals(resources, roots) && p.getStartTag().equals(startTag) && p.getEndTag().equals(endTag)) {
+					return p;
+				}
+			}
+		}
+		return null;
 	}
 	
 	private void write(CVSMergeSubscriber s, IMemento memento) {

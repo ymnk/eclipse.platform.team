@@ -17,9 +17,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
@@ -53,9 +51,13 @@ public class MergeWizard extends Wizard {
 		CVSTag startTag = startPage.getTag();
 		CVSTag endTag = endPage.getTag();				
 		
-		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
-		MergeSynchronizeParticipant participant = new MergeSynchronizeParticipant(s);
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+		// First check if there is an existing matching participant, if so then re-use it
+		MergeSynchronizeParticipant participant = MergeSynchronizeParticipant.getMatchingParticipant(resources, startTag, endTag);
+		if(participant == null) {
+			CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
+			participant = new MergeSynchronizeParticipant(s);
+			TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+		}
 		participant.refresh(resources, Policy.bind("Participant.merging"), Policy.bind("Participant.mergingDetail", participant.getName()), null); //$NON-NLS-1$ //$NON-NLS-2$
 		return true;
 	}
