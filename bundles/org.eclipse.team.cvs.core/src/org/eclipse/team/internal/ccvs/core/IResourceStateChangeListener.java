@@ -20,8 +20,6 @@ import org.eclipse.core.resources.IResource;
  */
 public interface IResourceStateChangeListener extends EventListener{
 	
-	public static final int CONTENTS_MODIFIED = 0;
-	
 	/**
 	 * Notifies this listener that some resource sync info state changes have
 	 * already happened. For example, a resource's base revision may have
@@ -41,27 +39,9 @@ public interface IResourceStateChangeListener extends EventListener{
 	public void resourceSyncInfoChanged(IResource[] changedResources);
 	
 	/**
-	 * Notifies this listener that the resource's modification state has
-	 * changed. For example, the resource may have become dirty due to an edit
-	 * or may have become clean due to a commit. The method is only invoked for
-	 * resources that existed before and exist after the state change.
-	 * The resource tree may not be open to modification when this method is
-	 * invoked.
-	 * <p>
-	 * A changeType of NO_LONGER_MODIFIED indicates that the files are no longer
-	 * modified from a CVS standpoint (i.e. it was either committed or
-	 * reverted). A changeType of CONTENTS_MODIFIED indicates that the contents
-	 * of the files have been modified but does not gaurentee that the files are
-	 * modified from a CVS standpoint. The receiver must verify the proper
-	 * state. A changeType of SYNC_INFO_EXTERNALLY_MODIFIED indicates that the
-	 * sync info was modified by an external tool so the files may or may not
-	 * still be modified.
-	 * </p>
-	 * <p>
-	 * Resources reported with a changeType of NO_LONGER_MODIFIED or
-	 * SYNC_INFO_EXTERNALLY_MODIFIED will also be reported via a
-	 * <code>resourceSyncInfoChanged</code> invocation.
-	 * </p>
+	 * Notifies this listener that the resource's have been modified. This
+	 * doesn't necessarily mean that the resource state isModified. The listener
+	 * must check the state.
 	 * <p>
 	 * Note: This method is called by CVS team core; it is not intended to be
 	 * called directly by clients.
@@ -70,7 +50,7 @@ public interface IResourceStateChangeListener extends EventListener{
 	 * @param changedResources that have changed state
 	 * @param changeType the type of state change.
 	 */
-	public void resourceModificationStateChanged(IResource[] changedResources, int changeType);
+	public void resourceModified(IResource[] changedResources);
 	
 	/**
 	 * Notifies this listener that the project has just been configured

@@ -33,7 +33,6 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
 
 /**
  * This class performs several functions related to determining the modified
@@ -80,6 +79,10 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 						contentsChanged((IFile)resource);
 					} else if (delta.getKind() == IResourceDelta.ADDED) {
 						resourceAdded(resource);
+					} else if (delta.getKind() == IResourceDelta.REMOVED) {
+						// provide notifications for deletions since they may not have been managed
+						// The move/delete hook would have updated the parent counts properly
+						modifiedResources.add(resource);
 					}
 
 					return true;
@@ -87,9 +90,8 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 			});
 			if (!modifiedResources.isEmpty()) {
 				CVSProviderPlugin.broadcastModificationStateChanges(
-					(IResource[])modifiedResources.toArray(new IResource[modifiedResources.size()]),
-					IResourceStateChangeListener.CONTENTS_MODIFIED);
-					modifiedResources.clear();
+					(IResource[])modifiedResources.toArray(new IResource[modifiedResources.size()]));
+				modifiedResources.clear();
 			}
 		} catch (CoreException e) {
 			CVSProviderPlugin.log(e.getStatus());
@@ -158,12 +160,11 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 	public void contentsChanged(IFile file) throws CoreException {
 		try {
 			EclipseFile cvsFile = (EclipseFile)CVSWorkspaceRoot.getCVSFileFor(file);
-			if (cvsFile.handleModification(false /* addition */)) {
-				modifiedResources.add(file);
-			}
+			cvsFile.handleModification(false /* addition */);
+			// add all files to the modified list
+			modifiedResources.add(file);
 		} catch (CVSException e) {
-			// XXX Should wrap exception
-			throw new CoreException(e.getStatus());
+			throw e.toCoreException();
 		}
 	}
 	
@@ -182,8 +183,7 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 				modifiedResources.add(resource);
 			}
 		} catch (CVSException e) {
-			// XXX Should wrap exception
-			throw new CoreException(e.getStatus());
+			throw e.toCoreException();
 		}
 	}
 	/**

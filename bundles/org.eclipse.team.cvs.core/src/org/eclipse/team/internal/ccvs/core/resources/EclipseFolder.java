@@ -415,6 +415,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		boolean shared = isCVSFolder();
 		Integer count = EclipseSynchronizer.getInstance().getDirtyCount(container);
 		if (count == null) {
+			if (!exists()) return false;
 			String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(container);
 			if (indicator == null) {
 				// We have no cached info for the folder. We'll need to check directly,

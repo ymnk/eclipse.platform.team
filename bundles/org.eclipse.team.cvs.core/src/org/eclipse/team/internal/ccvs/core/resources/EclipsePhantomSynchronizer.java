@@ -226,7 +226,6 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 			beginOperation(null);
 			FolderSyncInfo folderInfo = getPhantomFolderSyncInfo(folder);
 			if (folderInfo != null) {
-				beginOperation(null);
 				Map map = getPhantomResourceSyncInfoMap(folder);
 				if (folder.getFolder(SyncFileWriter.CVS_DIRNAME).exists()) {
 					// There is already a CVS subdirectory which indicates that 

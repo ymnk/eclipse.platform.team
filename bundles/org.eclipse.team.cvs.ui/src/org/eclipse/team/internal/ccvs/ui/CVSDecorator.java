@@ -490,12 +490,8 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModificationStateChanged(org.eclipse.core.resources.IResource[])
 	 */
-	public void resourceModificationStateChanged(IResource[] changedResources, int changeType) {
-		// We are only concerned with content changes since all others 
-		// will have corresponding sync info changes.
-		if (changeType == IResourceStateChangeListener.CONTENTS_MODIFIED) {
-			resourceStateChanged(changedResources);
-		}
+	public void resourceModified(IResource[] changedResources) {
+		resourceStateChanged(changedResources);
 	}
 
 }

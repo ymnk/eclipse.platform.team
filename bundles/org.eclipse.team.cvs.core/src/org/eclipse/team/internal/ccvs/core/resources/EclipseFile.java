@@ -122,7 +122,9 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		if (indicator != null)
 			return indicator == EclipseSynchronizer.IS_DIRTY_INDICATOR;
 		// nothing cached, need to manually check (and record)
+		
 		ResourceSyncInfo info = getSyncInfo();
+		if (info == null && isIgnored()) return false;
 		// unmanaged files are reported as modified
 		boolean dirty = isModified(info);
 		setModified(dirty);

@@ -432,12 +432,12 @@ public class CVSProviderPlugin extends Plugin {
 		}
 	}
 	
-	public static void broadcastModificationStateChanges(final IResource[] resources, final int type) {
+	public static void broadcastModificationStateChanges(final IResource[] resources) {
 		for(Iterator it=listeners.iterator(); it.hasNext();) {
 			final IResourceStateChangeListener listener = (IResourceStateChangeListener)it.next();
 			ISafeRunnable code = new ISafeRunnable() {
 				public void run() throws Exception {
-					listener.resourceModificationStateChanged(resources, type);
+					listener.resourceModified(resources);
 				}
 				public void handleException(Throwable e) {
 					// don't log the exception....it is already being logged in Platform#run

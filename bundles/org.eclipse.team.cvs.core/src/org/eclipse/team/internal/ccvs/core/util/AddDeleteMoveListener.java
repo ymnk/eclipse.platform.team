@@ -463,7 +463,7 @@ public class AddDeleteMoveListener implements IResourceDeltaVisitor, IResourceCh
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModificationStateChanged(org.eclipse.core.resources.IResource[])
 	 */
-	public void resourceModificationStateChanged(IResource[] changedResources, int changeType) {
+	public void resourceModified(IResource[] changedResources) {
 		// Nothing to do here
 	}
 }
