@@ -99,7 +99,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 			}
 		}		
 		
-		fireTeamResourceChange(asSyncChangedDeltas(changedResources)); 
+		fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources)); 
 	}
 
 	/* (non-Javadoc)

@@ -33,12 +33,31 @@ public class CVSSubscriberFactory implements ISyncTreeSubscriberFactory {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ISyncTreeSubscriberFactory#createSubscriber(org.eclipse.core.runtime.QualifiedName, org.eclipse.team.internal.core.SaveContext)
 	 */
-	public SyncTreeSubscriber createSubscriber(QualifiedName id, SaveContext saveContext) throws TeamException {
-		String localName = id.getLocalName();
-		if(localName.startsWith(CVSMergeSubscriber.UNIQUE_ID_PREFIX)) {
+	public SyncTreeSubscriber restoreSubscriber(QualifiedName id, SaveContext saveContext) throws TeamException {
+		if(isMergeSubscriber(id)) {
 			return CVSMergeSubscriber.restore(id, saveContext);
 		}
 		// CVS workspace subscribers are automatically recreated when the platform restarts.
 		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncTreeSubscriberFactory#saveSubscriber(org.eclipse.team.core.subscribers.SyncTreeSubscriber)
+	 */
+	public SaveContext saveSubscriber(SyncTreeSubscriber subscriber) throws TeamException {
+		if(isMergeSubscriber(subscriber.getId())) {
+			return ((CVSMergeSubscriber)subscriber).saveState();
+		} else {
+			return null;
+		}
+	}
+	
+	private boolean isMergeSubscriber(QualifiedName id) {
+		String localName = id.getLocalName();
+		if(localName.startsWith(CVSMergeSubscriber.UNIQUE_ID_PREFIX)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

@@ -132,10 +132,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.SyncTreeSubscriber#saveState(org.eclipse.team.internal.core.SaveContext)
 	 */
-	public void saveState(SaveContext state) {
-		super.saveState(state);
-		
+	public SaveContext saveState() {
 		// start and end tags
+		SaveContext state = new SaveContext();
 		state.setName("merge");
 		state.putString("startTag", start.getName());
 		state.putInteger("startTagType", start.getType());
@@ -150,6 +149,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 			ctxRoots[i].putString("fullpath", roots[i].getFullPath().toString());			
 		}
 		state.setChildren(ctxRoots);
+		return state;
 	}
 	
 	public static CVSMergeSubscriber restore(QualifiedName id, SaveContext saveContext) throws CVSException {

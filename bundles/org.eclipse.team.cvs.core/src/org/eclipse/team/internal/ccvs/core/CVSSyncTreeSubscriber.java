@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.internal.resources.SaveContext;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -29,6 +30,7 @@ import org.eclipse.team.core.subscribers.ComparisonCriteria;
 import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
@@ -203,7 +205,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		allChanges.addAll(Arrays.asList(remoteChanges));
 		allChanges.addAll(Arrays.asList(baseChanges));
 		IResource[] changedResources = (IResource[]) allChanges.toArray(new IResource[allChanges.size()]);
-		fireTeamResourceChange(asSyncChangedDeltas(changedResources)); 
+		fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources)); 
 	}
 
 	/* (non-Javadoc)
