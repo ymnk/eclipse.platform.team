@@ -676,8 +676,8 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 	
 	/**
 	 * Guesses the file type of the given input.
-	 * Returns ITypedElement.TEXT_TYPE if the first 1000 bytes contain only values in the range 0-127.
-	 * Returns ITypedElement.UNKNOWN_TYPE if a single byte is out of this range.
+	 * Returns ITypedElement.TEXT_TYPE if no line is longer than 1000 bytes.
+	 * Returns ITypedElement.UNKNOWN_TYPE if a line is longer that 1000 bytes.
 	 * Returns <code>null</code> if the input isn't an <code>IStreamContentAccessor</code>.
 	 */
 	private static String guessType(ITypedElement input) {
@@ -688,11 +688,16 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 				is= sca.getContents();
 				if (is == null)
 					return null;
-				for (int i= 0; i < 1000; i++) {
+				int lineLength= 0;
+				while (true) {
 					int c= is.read();
 					if (c == -1)	// EOF
 						break;
-					if (c >= 128)
+					if (c == '\n' || c == '\r')	// reset line length
+						lineLength= 0;
+					else
+						lineLength++;
+					if (lineLength > 1000)
 						return ITypedElement.UNKNOWN_TYPE;
 				}
 				return ITypedElement.TEXT_TYPE;

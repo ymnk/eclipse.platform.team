@@ -2389,8 +2389,6 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		
 		int vh= te.getClientArea().height;
 		if (vh == 0) {
-			// seems to be a bug in TextEditor.getClientArea(): returns bogus value on first
-			// call; as a workaround we calculate the clientArea from its container...
 			Rectangle trim= te.computeTrim(0, 0, 0, 0);
 			int scrollbarHeight= trim.height;
 			
