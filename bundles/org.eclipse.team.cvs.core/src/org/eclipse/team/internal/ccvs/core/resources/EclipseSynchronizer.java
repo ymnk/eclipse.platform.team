@@ -50,6 +50,8 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock.IRunnableOnExit;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock.ThreadInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.FileNameMatcher;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
@@ -81,9 +83,6 @@ public class EclipseSynchronizer {
 	// track resources that have changed in a given operation
 	private ILock lock = Platform.getJobManager().newLock();
 	private ReentrantLock resourceLock = new ReentrantLock();
-	
-	private Set changedResources = new HashSet();
-	private Set changedFolders = new HashSet();
 	
 	private SessionPropertySyncInfoCache sessionPropertyCache = new SessionPropertySyncInfoCache();
 	private SynchronizerSyncInfoCache synchronizerCache = new SynchronizerSyncInfoCache();
@@ -144,7 +143,7 @@ public class EclipseSynchronizer {
 				if (oldInfo == null) {
 					adjustDirtyStateRecursively(folder, RECOMPUTE_INDICATOR);
 				}
-				changedFolders.add(folder);
+				folderChanged(folder);
 			} finally {
 				endOperation();
 			}
@@ -190,13 +189,13 @@ public class EclipseSynchronizer {
 				IResource[] children = folder.members(true);
 				for (int i = 0; i < children.length; i++) {
 					IResource resource = children[i];
-					changedResources.add(resource);
+					resourceChanged(resource);
 					// delete resource sync for all children
 					getSyncInfoCacheFor(resource).setCachedSyncBytes(resource, null);
 				}
 				// delete folder sync
 				getSyncInfoCacheFor(folder).setCachedFolderSync(folder, null);
-				changedFolders.add(folder);
+				folderChanged(folder);
 			} catch (CoreException e) {
 				throw CVSException.wrapException(e);
 			} finally {
@@ -205,6 +204,14 @@ public class EclipseSynchronizer {
 		} finally {
 			endBatching(null);
 		}
+	}
+
+	private void folderChanged(IContainer folder) {
+		resourceLock.folderChanged(folder);
+	}
+
+	private void resourceChanged(IResource resource) {
+		resourceLock.resourceChanged(resource);
 	}
 
 	/**
@@ -229,7 +236,7 @@ public class EclipseSynchronizer {
 				// cache resource sync for siblings, set for self, then notify
 				cacheResourceSyncForChildren(parent);
 				setCachedResourceSync(resource, info);
-				changedResources.add(resource);		
+				resourceChanged(resource);		
 			} finally {
 				endOperation();
 			}
@@ -303,7 +310,7 @@ public class EclipseSynchronizer {
 				// cache resource sync for siblings, set for self, then notify
 				cacheResourceSyncForChildren(parent);
 				setCachedSyncBytes(resource, syncBytes);
-				changedResources.add(resource);		
+				resourceChanged(resource);		
 			} finally {
 				endOperation();
 			}
@@ -330,7 +337,7 @@ public class EclipseSynchronizer {
 				if (getCachedSyncBytes(resource) != null) { // avoid redundant notifications
 					setCachedSyncBytes(resource, null);
 					clearDirtyIndicator(resource);
-					changedResources.add(resource);
+					resourceChanged(resource);
 				}
 			} finally {
 				endOperation();
@@ -459,17 +466,21 @@ public class EclipseSynchronizer {
 	 * if all the CVS sync information could not be written to disk.
 	 */
 	public void endBatching(IProgressMonitor monitor) throws CVSException {
-		if (resourceLock.release()) {
-			try {
-				beginOperation();
-				IStatus status = commitCache(monitor);
-				if (!status.isOK()) {
-					throw new CVSException(status);
+		resourceLock.release(new IRunnableOnExit() {
+			public void run(ThreadInfo info, IProgressMonitor monitor) throws CVSException {
+				if (info != null) {
+					try {
+						beginOperation();
+						IStatus status = commitCache(info, monitor);
+						if (!status.isOK()) {
+							throw new CVSException(status);
+						}
+					} finally {
+						endOperation();
+					}
 				}
-			} finally {
-				endOperation();
 			}
-		}
+		}, monitor);
 	}
 	
 	/*
@@ -512,16 +523,17 @@ public class EclipseSynchronizer {
 		try {
 			beginOperation();
 			
-			IStatus status = commitCache(Policy.subMonitorFor(monitor, 7));
+			// TODO: Is the following line necessary
+//			IStatus status = commitCache(Policy.subMonitorFor(monitor, 7));
 			
 			// purge from memory too if we were asked to
 			if (purgeCache) {
 				sessionPropertyCache.purgeCache(root, deep);
 			} 
 			
-			if (!status.isOK()) {
-				throw new CVSException(status);
-			}
+//			if (!status.isOK()) {
+//				throw new CVSException(status);
+//			}
 		} finally {
 			endOperation();
 		}
@@ -590,7 +602,7 @@ public class EclipseSynchronizer {
 							syncBytes = convertToDeletion(syncBytes);
 							synchronizerCache.setCachedSyncBytes(resource, syncBytes);
 						}
-						changedResources.add(resource);
+						resourceChanged(resource);
 					}
 				} else {
 					IContainer container = (IContainer)resource;
@@ -601,7 +613,7 @@ public class EclipseSynchronizer {
 						FolderSyncInfo info = getFolderSync(container);
 						if (info == null) return;
 						synchronizerCache.setCachedFolderSync(container, info);
-						changedFolders.add(container);
+						folderChanged(container);
 						// move the resource sync as well
 						byte[] syncBytes = getSyncBytes(resource);
 						synchronizerCache.setCachedSyncBytes(resource, syncBytes);
@@ -854,24 +866,26 @@ public class EclipseSynchronizer {
 	 * 
 	 * @param monitor the progress monitor, may be null
 	 */
-	private IStatus commitCache(IProgressMonitor monitor) {
-		if (changedFolders.isEmpty() && changedResources.isEmpty()) {
+	private IStatus commitCache(ThreadInfo threadInfo, IProgressMonitor monitor) {
+		if (threadInfo.isEmpty()) {
 			return SyncInfoCache.STATUS_OK;
 		}
 		List errors = new ArrayList();
 		try {
 			/*** prepare operation ***/
 			// find parents of changed resources
+			IResource[] changedResources = threadInfo.getChangedResources();
+			IContainer[] changedFolders = threadInfo.getChangedFolders();
 			Set dirtyParents = new HashSet();
-			for(Iterator it = changedResources.iterator(); it.hasNext();) {
-				IResource resource = (IResource) it.next();
+			for (int i = 0; i < changedResources.length; i++) {
+				IResource resource = changedResources[i];
 				IContainer folder = resource.getParent();
 				dirtyParents.add(folder);
 			}
 			
 			monitor = Policy.monitorFor(monitor);
 			int numDirty = dirtyParents.size();
-			int numResources = changedFolders.size() + numDirty;
+			int numResources = changedFolders.length + numDirty;
 			monitor.beginTask(null, numResources);
 			if(monitor.isCanceled()) {
 				monitor.subTask(Policy.bind("EclipseSynchronizer.UpdatingSyncEndOperationCancelled")); //$NON-NLS-1$
@@ -881,8 +895,8 @@ public class EclipseSynchronizer {
 			
 			/*** write sync info to disk ***/
 			// folder sync info changes
-			for(Iterator it = changedFolders.iterator(); it.hasNext();) {
-				IContainer folder = (IContainer) it.next();
+			for (int i = 0; i < changedFolders.length; i++) {
+				IContainer folder = changedFolders[i];
 				if (folder.exists() && folder.getType() != IResource.ROOT) {
 					try {
 						FolderSyncInfo info = sessionPropertyCache.getCachedFolderSync(folder);
@@ -952,13 +966,13 @@ public class EclipseSynchronizer {
 			
 			/*** broadcast events ***/
 			monitor.subTask(Policy.bind("EclipseSynchronizer.NotifyingListeners")); //$NON-NLS-1$
-			changedResources.addAll(changedFolders);
-			changedResources.addAll(dirtyParents);	
-			IResource[] resources = (IResource[]) changedResources.toArray(
-				new IResource[changedResources.size()]);
+			Set allChanges = new HashSet();
+			allChanges.addAll(Arrays.asList(changedResources));
+			allChanges.addAll(Arrays.asList(changedFolders));
+			allChanges.addAll(dirtyParents);	
+			IResource[] resources = (IResource[]) allChanges.toArray(
+				new IResource[allChanges.size()]);
 			broadcastResourceStateChanges(resources);
-			changedResources.clear();
-			changedFolders.clear();
 			if ( ! errors.isEmpty()) {
 				MultiStatus status = new MultiStatus(CVSProviderPlugin.ID, 
 											CVSStatus.COMMITTING_SYNC_INFO_FAILED, 
@@ -1008,7 +1022,7 @@ public class EclipseSynchronizer {
 	 */
 	private void setCachedSyncBytes(IResource resource, byte[] syncBytes) throws CVSException {
 		getSyncInfoCacheFor(resource).setCachedSyncBytes(resource, syncBytes);
-		changedResources.add(resource);
+		resourceChanged(resource);
 	}
 		
 	/**
@@ -1237,7 +1251,7 @@ public class EclipseSynchronizer {
 				if (info == null || info.isAdded() || info.isDeleted())
 					return;
 				SyncFileWriter.writeFileToBaseDirectory(file, monitor);
-				changedResources.add(file);
+				resourceChanged(file);
 			}
 		}, monitor);
 	}
@@ -1250,7 +1264,7 @@ public class EclipseSynchronizer {
 				if (info == null || info.isAdded())
 					return;
 				SyncFileWriter.restoreFileFromBaseDirectory(file, monitor);
-				changedResources.add(file);
+				resourceChanged(file);
 			}
 		}, monitor);
 	}

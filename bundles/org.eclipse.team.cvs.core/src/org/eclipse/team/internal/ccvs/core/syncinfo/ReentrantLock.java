@@ -11,11 +11,16 @@
 package org.eclipse.team.internal.ccvs.core.syncinfo;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 
@@ -36,10 +41,51 @@ public class ReentrantLock {
 
 	private final static boolean DEBUG = Policy.DEBUG_THREADING;
 	
-	private Map nestingCounts = new HashMap();
+	public class ThreadInfo {
+		private int nestingCount = 0;
+		private Set changedResources = new HashSet();
+		private Set changedFolders = new HashSet();
+		public void increment() {
+			nestingCount++;
+		}
+		public int decrement() {
+			nestingCount--;
+			return nestingCount;
+		}
+		public int getNestingCount() {
+			return nestingCount;
+		}
+		public void addChangedResource(IResource resource) {
+			changedResources.add(resource);
+		}
+		public void addChangedFolder(IContainer container) {
+			changedFolders.add(container);
+		}
+		public boolean isEmpty() {
+			return changedFolders.isEmpty() && changedResources.isEmpty();
+		}
+		public IResource[] getChangedResources() {
+			return (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
+		}
+		public IContainer[] getChangedFolders() {
+			return (IContainer[]) changedFolders.toArray(new IContainer[changedFolders.size()]);
+		}
+	}
+	
+	public interface IRunnableOnExit {
+		public void run(ThreadInfo info, IProgressMonitor monitor) throws CVSException;
+	}
+	
+	private Map infos = new HashMap();
 	
 	
 	public ReentrantLock() {
+	}
+	
+	private ThreadInfo getThreadInfo() {
+		Thread thisThread = Thread.currentThread();
+		ThreadInfo info = (ThreadInfo)infos.get(thisThread);
+		return info;
 	}
 	
 	public synchronized void acquire(IResource resource) {
@@ -48,17 +94,14 @@ public class ReentrantLock {
 	}
 	
 	private void incrementNestingCount(IResource resource) {
-		Thread thisThread = Thread.currentThread();
-		Integer wrapped = (Integer)nestingCounts.get(thisThread);
-		int nestingCount ;
-		if (wrapped == null) {
-			nestingCount = 1;
+		ThreadInfo info = getThreadInfo();
+		if (info == null) {
+			info = new ThreadInfo();
+			Thread thisThread = Thread.currentThread();
+			infos.put(thisThread, info);
 			if(DEBUG) System.out.println("[" + thisThread.getName() + "] acquired CVS lock on " + resource.getFullPath()); //$NON-NLS-1$ //$NON-NLS-2$
-		} else {
-			nestingCount = (wrapped.intValue());
-			nestingCount++;
 		}
-		nestingCounts.put(thisThread, new Integer(nestingCount));
+		info.increment();
 	}
 	
 	private void lock(IResource resource) {
@@ -90,20 +133,28 @@ public class ReentrantLock {
 	 * Release the lock held on any resources by this thread. Return true
 	 * if the thread no longer holds the lock (i.e. nesting count is 0).
 	 */
-	public synchronized boolean release() {
-		Thread thisThread = Thread.currentThread();
-		Integer wrapped = (Integer)nestingCounts.get(thisThread);
-		Assert.isNotNull(wrapped, "Unmatched acquire/release."); //$NON-NLS-1$
-		int nestingCount = (wrapped.intValue());
-		Assert.isTrue(nestingCount > 0, "Unmatched acquire/release."); //$NON-NLS-1$
-		if (--nestingCount == 0) {
+	public synchronized void release(IRunnableOnExit runnable, IProgressMonitor monitor) throws CVSException {
+		ThreadInfo info = getThreadInfo();
+		Assert.isNotNull(info, "Unmatched acquire/release."); //$NON-NLS-1$
+		Assert.isTrue(info.getNestingCount() > 0, "Unmatched acquire/release."); //$NON-NLS-1$
+		if (info.decrement() == 0) {
+			Thread thisThread = Thread.currentThread();
 			if(DEBUG) System.out.println("[" + thisThread.getName() + "] released CVS lock"); //$NON-NLS-1$ //$NON-NLS-2$
-			nestingCounts.remove(thisThread);
+			infos.remove(thisThread);
+			runnable.run(info, monitor);
 			unlock();
-			return true;
-		} else {
-			nestingCounts.put(thisThread, new Integer(nestingCount));
-			return false;
 		}
+	}
+
+	public void folderChanged(IContainer folder) {
+		ThreadInfo info = getThreadInfo();
+		Assert.isNotNull(info, "Folder changed outside of resource lock"); //$NON-NLS-1$
+		info.addChangedFolder(folder);
+	}
+
+	public void resourceChanged(IResource resource) {
+		ThreadInfo info = getThreadInfo();
+		Assert.isNotNull(info, "Folder changed outside of resource lock"); //$NON-NLS-1$
+		info.addChangedResource(resource);
 	}
 }
