@@ -196,11 +196,15 @@ public class CVSSyncInfo extends SyncInfo {
 					// We have a conflicting change, Update the local revision
 					info.setRevision(remote.getSyncInfo().getRevision());
 				} else {
-					// We have conflictin additions.
-					// We need to fetch the contents of the remote to get all the relevant information (timestamp, permissions)
-					// The most important thing we get is the keyword substitution mode which must be right to perform the commit
-					remote.getContents(Policy.monitorFor(monitor));
-					info = remote.getSyncInfo().cloneMutable();
+					try {
+						// We have conflictin additions.
+						// We need to fetch the contents of the remote to get all the relevant information (timestamp, permissions)
+						// The most important thing we get is the keyword substitution mode which must be right to perform the commit
+						remote.getStorage(Policy.monitorFor(monitor)).getContents();
+						info = remote.getSyncInfo().cloneMutable();
+					} catch (CoreException e) {
+						TeamException.asTeamException(e);
+					}
 				}
 			} else if (getBase() != null) {
 				// We have a remote deletion. Make the local an addition

@@ -19,8 +19,8 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.sync.RemoteSyncElement;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
@@ -87,8 +87,8 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 			kind = info.getKind() & conflictTypeMask;
 		}
 		assertTrue(message + ": improper sync state for " + resource + " expected " + 
-				   RemoteSyncElement.kindToString(kindOther) + " but was " +
-				   RemoteSyncElement.kindToString(kind), kind == kindOther);
+				   SyncInfo.kindToString(kindOther) + " but was " +
+				   SyncInfo.kindToString(kind), kind == kindOther);
 	}
 	
 	protected SyncInfo getSyncInfo(Subscriber subscriber, IResource resource) throws TeamException {

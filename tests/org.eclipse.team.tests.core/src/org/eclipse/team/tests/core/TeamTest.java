@@ -19,8 +19,6 @@ import junit.framework.TestSuite;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.tests.harness.EclipseWorkspaceTest;
-import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
 
 public class TeamTest extends EclipseWorkspaceTest {
 	protected static IProgressMonitor DEFAULT_MONITOR = new NullProgressMonitor();
@@ -147,22 +145,6 @@ public class TeamTest extends EclipseWorkspaceTest {
 			Thread.sleep(ms);
 		} catch (InterruptedException e) {
 			System.err.println("Testing was rudely interrupted.");
-		}
-	}
-
-	// Assert that the two containers have equal contents
-	protected void assertEquals(IRemoteResource container1, IResource container2) throws CoreException, TeamException {
-		if (container2.getType() == IResource.FILE) {
-			// Ignore .project file
-			if (container2.getName().equals(".project"))
-				return;
-			assertTrue(compareContent(container1.getContents(DEFAULT_MONITOR), ((IFile) container2).getContents()));
-		} else {
-			IRemoteResource[] remoteResources = container1.members(DEFAULT_MONITOR);
-			IResource[] localResources = ((IFolder) container2).members();
-			for (int i = 0; i < localResources.length; i++) {
-				assertEquals(remoteResources[i], localResources[i]);
-			}
 		}
 	}
 

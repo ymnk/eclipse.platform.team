@@ -17,7 +17,6 @@ import java.util.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.*;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.*;
@@ -459,8 +458,8 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	/*
 	 * @see IRemoteResource#members(IProgressMonitor)
 	 */
-	public IRemoteResource[] members(IProgressMonitor progress) {
-		return new IRemoteResource[0];
+	public ICVSRemoteResource[] members(IProgressMonitor progress) {
+		return new ICVSRemoteResource[0];
 	}
 
 	/*

@@ -17,13 +17,12 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCacheRefreshOperation;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.synchronize.ISubscriberResource;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCacheRefreshOperation;
 
 /**
  * CVS Specific refresh operation
@@ -65,7 +64,7 @@ public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#getRemoteChildren(org.eclipse.team.core.subscribers.ISubscriberResource, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected ISubscriberResource[] getRemoteChildren(ISubscriberResource remote, IProgressMonitor progress) throws TeamException {
-		IRemoteResource[] children = remote != null ? (IRemoteResource[])((RemoteResource)remote).members(progress) : new IRemoteResource[0];
+		ICVSRemoteResource[] children = remote != null ? (ICVSRemoteResource[])((RemoteResource)remote).members(progress) : new ICVSRemoteResource[0];
 		ISubscriberResource[] result = new ISubscriberResource[children.length];
 		for (int i = 0; i < children.length; i++) {
 			result[i] = (ISubscriberResource)children[i];
