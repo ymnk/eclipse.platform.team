@@ -109,7 +109,7 @@ x several places require a resource
   [jm] we have to change this assumption everywhere! Actions, label decorators... and such. 
   [jm] does sync info diff node require a resource? currently it does. But I still don't like
   the SyncSet methods that take IResource.ROOT to return first level children.
-- there are times when the sync set changes but the input hasn't yet and the given input
+x there are times when the sync set changes but the input hasn't yet and the given input
   doesn't handle outgoing changes. For example, when changing from incoming to outgoing with
   the change log root, the change log root gets a reset from the sync set then the input
   is changed. this can cause an NPE. Must look into the ordering here.
@@ -124,9 +124,9 @@ x several places require a resource
   - this causes failures in the diff tree builders
   - although less likely in UI, can still happen
   - need tests for these scenarios to ensure generated event is correct after addition and removal
-- there are several places in SyncInfoSet and in the DiffNodes where we must use the workspace root
+x there are several places in SyncInfoSet and in the DiffNodes where we must use the workspace root
   as the input resource to imply get all members? Maybe this should be cleaned up a bit.
-- SyncInfoSet must be cleaned up a lot, the API is vague and method names are not clear.
+x SyncInfoSet must be cleaned up a lot, the API is vague and method names are not clear.
   x we need a way to ensure that the sync set does not change while we are building a diff tree
   x events are only fired from endInput(). It should work in both batching and non-batching mode  
 x SyncInfoDiffNode doesn't have to return a resource or a syncinfo. By definition a diff node already has API
@@ -138,14 +138,14 @@ x SyncInfoDiffNode doesn't have to return a resource or a syncinfo. By definitio
 x sync view title says "Summary" when first opened
 - would like to show subscriber roots as compressed folders at root of sync view
   - sync set needs to have the concept of roots
-- How is a reset propogated through the sync set chain. 
+x How is a reset propogated through the sync set chain. 
   - I'm concerned that this is adhoc at the moment. we need to make it explicit.
 - why must clearModelObjects go deep? Can't you just disconnect from the parent?
 
 ======================================================================
  PR LIST (05-02-2004) MV
 ======================================================================
-- I notice that SyncInfoDiffNode requires a resource (via assert) and sync info is only obtained from 
+x I notice that SyncInfoDiffNode requires a resource (via assert) and sync info is only obtained from 
 SyncInfoDiffNodes (in Util). This is problematic as now the diff tree cannot contain diff nodes that
 do not map to a resource but parent nodes that do. The selection determination for SubscriberAction
 needs to walk the diff node tree for this case.
@@ -157,8 +157,7 @@ needs to walk the diff node tree for this case.
 viewer is created. But this should be solvable by ensuring that showInActivePerspective forces
 viewer creation.
 
-
 ==============================
 - initialize case doesn't work because main page is shown as empty but mode is correct
-- how do we handle changes to sync: re-create new nodes or update the nodes with new sync kind?
-- new projects don't show up?
+x how do we handle changes to sync: re-create new nodes or update the nodes with new sync kind?
+x new projects don't show up?

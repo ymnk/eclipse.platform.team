@@ -17,8 +17,8 @@ import org.eclipse.jface.util.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
@@ -134,11 +134,10 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @param viewer
 	 *            the viewer being initialized
 	 */
-	public void initializeViewer(Composite parent, AbstractTreeViewer viewer) {
+	public void initializeViewer(AbstractTreeViewer viewer) {
 		Assert.isTrue(this.viewer == null, "A DiffTreeViewerConfiguration can only be used with a single viewer."); //$NON-NLS-1$
 		this.viewer = viewer;
-		GridData data = new GridData(GridData.FILL_BOTH);
-		viewer.getControl().setLayoutData(data);
+
 		initializeListeners(viewer);
 		hookContextMenu(viewer);
 		initializeActions(viewer);

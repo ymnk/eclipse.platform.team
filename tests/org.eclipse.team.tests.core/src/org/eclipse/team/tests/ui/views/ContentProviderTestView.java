@@ -12,12 +12,8 @@ package org.eclipse.team.tests.ui.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.presentation.DiffNodeControllerCompressedFolders;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;
 import org.eclipse.ui.*;
-import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 import org.eclipse.ui.part.ViewPart;
 
 public class ContentProviderTestView extends ViewPart {
@@ -46,15 +42,6 @@ public class ContentProviderTestView extends ViewPart {
 
 	public void createPartControl(Composite parent) {
 		viewer = new TestTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		viewer.setContentProvider(new BaseWorkbenchContentProvider());
-		viewer.setLabelProvider(new SyncInfoLabelProvider());
-		setInput(new SyncInfoTree());
-	}
-
-	public void setInput(SyncInfoTree set) {
-		DiffNodeControllerCompressedFolders root = new DiffNodeControllerCompressedFolders(set);
-		viewer.setSorter(root.getViewerSorter());
-		viewer.setInput(root);
 	}
 
 	public void setFocus() {

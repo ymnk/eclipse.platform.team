@@ -14,9 +14,10 @@ import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.internal.ui.synchronize.views.ITreeViewerAccessor;
 import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
@@ -31,8 +32,10 @@ public final class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeVi
 	
 	public SyncInfoDiffCheckboxTreeViewer(Composite parent, DiffTreeViewerConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		getControl().setLayoutData(data);
 		this.configuration = configuration;
-		configuration.initializeViewer(parent, this);
+		configuration.initializeViewer(this);
 	}
 
 	/**

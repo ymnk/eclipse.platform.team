@@ -66,9 +66,9 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	
 	private SyncInfoTree set;
 
-	private class RootDiffNode extends AdaptableDiffNode {
+	private class RootDiffNode extends UnchangedResourceDiffNode {
 		public RootDiffNode() {
-			super(null, SyncInfo.IN_SYNC);
+			super(null, ResourcesPlugin.getWorkspace().getRoot());
 		}
 		public void fireChanges() {
 			fireChange();

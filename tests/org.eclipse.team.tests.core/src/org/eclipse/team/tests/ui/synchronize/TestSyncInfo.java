@@ -18,8 +18,8 @@ public class TestSyncInfo extends SyncInfo {
 
 	private int kind;
 	
-	public TestSyncInfo(IResource resource, int kind, TestSubscriber subscriber) throws TeamException {
-		super(resource, null, null, subscriber.getResourceComparator());
+	public TestSyncInfo(IResource resource, int kind) throws TeamException {
+		super(resource, null, null, null);
 		this.kind = kind;
 	}
 	

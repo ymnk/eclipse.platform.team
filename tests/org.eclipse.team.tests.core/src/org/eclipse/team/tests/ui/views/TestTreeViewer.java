@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.tests.ui.views;
 
+import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
 
 public class TestTreeViewer extends TreeViewer {
 
@@ -40,7 +40,7 @@ public class TestTreeViewer extends TreeViewer {
 		return super.getChildren(o);
 	}
 	
-	public boolean hasItemFor(SyncInfoDiffNode node) {
+	public boolean hasItemFor(DiffNode node) {
 		return findItem(node) != null;
 	}
 }
