@@ -235,9 +235,9 @@
          </action>
       </objectContribution>
       <objectContribution
-            objectClass="org.eclipse.team.core.traversals.IModelElement"
+            objectClass="org.eclipse.core.resources.mapping.IResourceMapper"
             adaptable="true"
-            id="org.eclipse.team.ccvs.ui.ModelElementContributions">
+            id="org.eclipse.team.ccvs.ui.ResourceMapperContributions">
          <filter
                name="projectPersistentProperty"
                value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">

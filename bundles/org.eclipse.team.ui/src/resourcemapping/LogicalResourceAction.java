@@ -8,31 +8,24 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.actions;
+package resourcemapping;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.eclipse.core.runtime.IAdapterManager;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.resources.mapping.IResourceMapper;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.traversals.IModelElement;
-import org.eclipse.ui.model.IWorkbenchAdapter;
-
+import org.eclipse.team.internal.ui.actions.TeamAction;
 
 public class LogicalResourceAction extends TeamAction {
 
 	public void run(IAction action) {
-		IAdapterManager adapterManager = Platform.getAdapterManager();
-		Object[] elements = getSelectedAdaptables(selection, IModelElement.class);
-		List uiAdapters = new ArrayList();
-		for (int i = 0; i < elements.length; i++) {
-			IModelElement element = (IModelElement)elements[i];
-			IWorkbenchAdapter adapter = (IWorkbenchAdapter)adapterManager.getAdapter(element, IWorkbenchAdapter.class);
-		}	
+		IResourceMapper[] m = (IResourceMapper[])getSelectedAdaptables(getSelection(), IResourceMapper.class);
+		ResourceMappingSelectionDialog d = new ResourceMappingSelectionDialog(Display.getDefault().getActiveShell(), m);
+		d.open();
 	}
 	
 	protected boolean isEnabled() throws TeamException {
-		return true;
+		IResourceMapper[] m = (IResourceMapper[])getSelectedAdaptables(getSelection(), IResourceMapper.class);
+		return (m != null && m.length > 0);
 	}
 }
