@@ -17,6 +17,8 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
 import org.eclipse.team.core.subscribers.TeamSubscriberSyncInfoCollector;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
@@ -31,6 +33,7 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 	private CVSCompareSubscriber subscriber;
 	private TeamSubscriberSyncInfoCollector collector;
 	private RefreshAction refreshAction;
+	private FilteredSyncInfoCollector filteredSyncSet;
 
 	/**
 	 * Return a <code>SyncInfoSetCompareConfiguration</code> that can be used in a
@@ -50,11 +53,13 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet());
 		this.subscriber = subscriber;
 		this.collector = collector;
+		this.filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null, new SyncInfoFilter.ContentComparisonSyncInfoFilter());
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#dispose()
 	 */
 	protected void dispose() {
+		filteredSyncSet.dispose();
 		collector.dispose();
 		subscriber.dispose();
 		super.dispose();
@@ -89,5 +94,11 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 	private void initializeActions(StructuredViewer viewer) {
 		refreshAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getTeamSubscriber()).getName(), collector, null /* no listener */, false);
 		
+	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#getSyncSet()
+	 */
+	public SyncInfoSet getSyncSet() {
+		return filteredSyncSet.getSyncInfoSet();
 	}
 }

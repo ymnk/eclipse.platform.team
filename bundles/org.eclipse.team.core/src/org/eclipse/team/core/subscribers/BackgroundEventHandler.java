@@ -250,7 +250,7 @@ public abstract class BackgroundEventHandler {
 						System.out.println("Event processed on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 					if(isReadyForDispath()) {
-						dispatchEvents();
+						dispatchEvents(Policy.subMonitorFor(subMonitor, 1));
 						processingEventsDuration = System.currentTimeMillis();
 					}
 				} catch (CoreException e) {
@@ -267,7 +267,7 @@ public abstract class BackgroundEventHandler {
 	/**
 	 * Notify clients of processed events.
 	 */
-	protected abstract void dispatchEvents() throws TeamException;
+	protected abstract void dispatchEvents(IProgressMonitor monitor) throws TeamException;
 
 	/**
 	 * Returns <code>true</code> if processed events should be dispatched and

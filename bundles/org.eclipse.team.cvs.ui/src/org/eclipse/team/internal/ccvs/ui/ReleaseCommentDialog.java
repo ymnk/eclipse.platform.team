@@ -27,7 +27,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoFilter;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.help.WorkbenchHelp;
@@ -88,7 +88,7 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		cc.setLeftEditable(false);
 		
 		TeamSubscriberParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		SyncInfoFilter.SyncInfoDirectionFilter filter = new SyncInfoFilter.SyncInfoDirectionFilter(SyncInfo.OUTGOING);
+		FastSyncInfoFilter.SyncInfoDirectionFilter filter = new FastSyncInfoFilter.SyncInfoDirectionFilter(SyncInfo.OUTGOING);
 		compareEditorInput = new SyncInfoSetCompareInput(cc, 
 				new SyncInfoSetCompareConfiguration(null, participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet()));
 		

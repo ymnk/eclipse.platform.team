@@ -44,32 +44,32 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 		if (inputSyncSet == null) return;
 		SyncInfo[] infos = inputSyncSet.members();
 		for (int i = 0; i < infos.length; i++) {
-			collect(infos[i]);
+			collect(infos[i], monitor);
 		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(ISyncInfoSetChangeEvent event) {
+	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		MutableSyncInfoSet syncSet = getSyncSet();
 		try {
 			syncSet.beginInput();
 			if (event.isReset()) {
 				syncSet.clear();
 			}
-			syncSetChanged(event.getChangedResources());			
-			syncSetChanged(event.getAddedResources());
+			syncSetChanged(event.getChangedResources(), monitor);			
+			syncSetChanged(event.getAddedResources(), monitor);
 			
 			remove(event.getRemovedResources());
 		} finally {
-			getSyncSet().endInput();
+			getSyncSet().endInput(monitor);
 		}
 	}
 
-	private void syncSetChanged(SyncInfo[] infos) {
+	private void syncSetChanged(SyncInfo[] infos, IProgressMonitor monitor) {
 		for (int i = 0; i < infos.length; i++) {
-			collect(infos[i]);
+			collect(infos[i], monitor);
 		}
 	}
 	

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.actions;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -73,7 +74,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	 * 
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(ISyncInfoSetChangeEvent event) {
+	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		if (collector != null) {
 			SyncInfoSet set = collector.getSyncInfoSet();
 			final int workspaceConflicting = (int) set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);

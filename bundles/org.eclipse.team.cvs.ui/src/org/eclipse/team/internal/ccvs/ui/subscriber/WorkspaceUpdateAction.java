@@ -19,7 +19,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
-import org.eclipse.team.core.subscribers.SyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
@@ -35,7 +35,7 @@ public class WorkspaceUpdateAction extends SafeUpdateAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.SubscriberAction#getSyncInfoFilter()
 	 */
-	protected SyncInfoFilter getSyncInfoFilter() {
+	protected FastSyncInfoFilter getSyncInfoFilter() {
 		return new SyncInfoDirectionFilter(new int[] {SyncInfo.INCOMING, SyncInfo.CONFLICTING});
 	}
 

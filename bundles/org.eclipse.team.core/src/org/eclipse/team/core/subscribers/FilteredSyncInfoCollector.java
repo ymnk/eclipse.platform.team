@@ -39,7 +39,7 @@ public final class FilteredSyncInfoCollector {
 		filteredInput = new SyncSetInputFromSyncSet(workingSetInput.getSyncSet());
 		if(filter == null) {
 			setFilter(new SyncInfoFilter() {
-				public boolean select(SyncInfo info) {
+				public boolean select(SyncInfo info, IProgressMonitor monitor) {
 					return true;
 				}
 			}, null);

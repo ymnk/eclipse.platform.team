@@ -14,7 +14,8 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.core.subscribers.SyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 public class MutableSyncInfoSet extends SyncInfoSet {
@@ -91,11 +92,11 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * This method is invoked by a SyncSetInput provider when the 
 	 * provider is done providing new input to the SyncSet
 	 */
-	public void endInput() {
-		fireChanges();
+	public void endInput(IProgressMonitor monitor) {
+		fireChanges(monitor);
 	}
 
-	private void fireChanges() {
+	private void fireChanges(final IProgressMonitor monitor) {
 		// Use a synchronized block to ensure that the event we send is static
 		final SyncSetChangedEvent event;
 		synchronized(this) {
@@ -110,6 +111,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 			allListeners = (ISyncSetChangedListener[]) listeners.toArray(new ISyncSetChangedListener[listeners.size()]);
 		}
 		// Fire the events using an ISafeRunnable
+		monitor.beginTask(null, 100 * allListeners.length);
 		for (int i = 0; i < allListeners.length; i++) {
 			final ISyncSetChangedListener listener = allListeners[i];
 			Platform.run(new ISafeRunnable() {
@@ -117,11 +119,12 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 					// don't log the exception....it is already being logged in Platform#run
 				}
 				public void run() throws Exception {
-					listener.syncSetChanged(event);
+					listener.syncSetChanged(event, Policy.subMonitorFor(monitor, 100));
 	
 				}
 			});
 		}
+		monitor.done();
 	}
 
 	private boolean removeFromParents(IResource resource, IResource parent) {
@@ -187,7 +190,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	/**
 	 * Indicate whether the set has nodes matching the given filter
 	 */
-	public boolean hasNodes(SyncInfoFilter filter) {
+	public boolean hasNodes(FastSyncInfoFilter filter) {
 		SyncInfo[] infos = members();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
@@ -201,7 +204,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	/**
 	 * Removes all nodes from this set that do not match the given filter
 	 */
-	public void selectNodes(SyncInfoFilter filter) {
+	public void selectNodes(FastSyncInfoFilter filter) {
 		SyncInfo[] infos = members();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
@@ -214,7 +217,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	/**
 	 * Removes all nodes from this set that match the given filter
 	 */
-	public void rejectNodes(SyncInfoFilter filter) {
+	public void rejectNodes(FastSyncInfoFilter filter) {
 		SyncInfo[] infos = members();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
@@ -227,7 +230,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	/**
 	 * Return all nodes in this set that match the given filter
 	 */
-	public SyncInfo[] getNodes(SyncInfoFilter filter) {
+	public SyncInfo[] getNodes(FastSyncInfoFilter filter) {
 		List result = new ArrayList();
 		SyncInfo[] infos = members();
 		for (int i = 0; i < infos.length; i++) {

@@ -70,7 +70,7 @@ public class DeferredResourceChangeHandler extends BackgroundEventHandler {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#dispatchEvents()
 	 */
-	protected void dispatchEvents() throws TeamException {
+	protected void dispatchEvents(IProgressMonitor monitor) throws TeamException {
 		EclipseSynchronizer.getInstance().ignoreFilesChanged(getParents(changedIgnoreFiles));
 		changedIgnoreFiles.clear();
 	}

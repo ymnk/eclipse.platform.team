@@ -19,8 +19,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfoFilter.OrSyncInfoFilter;
-import org.eclipse.team.core.subscribers.SyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter.OrSyncInfoFilter;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
@@ -44,9 +44,9 @@ public class MergeUpdateAction extends SafeUpdateAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.SubscriberAction#getSyncInfoFilter()
 	 */
-	protected SyncInfoFilter getSyncInfoFilter() {
+	protected FastSyncInfoFilter getSyncInfoFilter() {
 		// Update works for all incoming and conflicting nodes
-		return new OrSyncInfoFilter(new SyncInfoFilter[] {
+		return new OrSyncInfoFilter(new FastSyncInfoFilter[] {
 			new SyncInfoDirectionFilter(SyncInfo.INCOMING),
 			new SyncInfoDirectionFilter(SyncInfo.CONFLICTING)
 		});

@@ -171,4 +171,10 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ITeam
 		}
 		return false;
 	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getCacheFileContentsHint()
+	 */
+	protected boolean getCacheFileContentsHint() {
+		return true;
+	}
 }

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -61,7 +62,7 @@ public class ChangesSection extends Composite {
 	 * Listen to sync set changes so that we can update message to user and totals.
 	 */
 	private ISyncSetChangedListener changedListener = new ISyncSetChangedListener() {
-		public void syncSetChanged(ISyncInfoSetChangeEvent event) {
+		public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 			calculateDescription();
 		}
 	};

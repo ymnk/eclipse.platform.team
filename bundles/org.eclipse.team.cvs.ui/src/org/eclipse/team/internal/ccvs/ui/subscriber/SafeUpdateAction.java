@@ -20,7 +20,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfoFilter.*;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -47,7 +47,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 		try {
 			
 			// First, remove any known failure cases
-			SyncInfoFilter failFilter = getKnownFailureCases();
+			FastSyncInfoFilter failFilter = getKnownFailureCases();
 			SyncInfo[] willFail = syncSet.getNodes(failFilter);
 			syncSet.rejectNodes(failFilter);
 			skippedFiles.clear();
@@ -63,7 +63,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 			final MutableSyncInfoSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
 			
 			// Remove all these from the original sync set
-			syncSet.rejectNodes(new SyncInfoFilter() {
+			syncSet.rejectNodes(new FastSyncInfoFilter() {
 				public boolean select(SyncInfo info) {
 					return failedSet.getSyncInfo(info.getLocal()) != null;
 				}
@@ -199,21 +199,21 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	 * Return a filter which selects the cases that we know ahead of time
 	 * will fail on an update
 	 */
-	protected SyncInfoFilter getKnownFailureCases() {
-		return new OrSyncInfoFilter(new SyncInfoFilter[] {
+	protected FastSyncInfoFilter getKnownFailureCases() {
+		return new OrSyncInfoFilter(new FastSyncInfoFilter[] {
 			// Conflicting additions of files will fail
-			new AndSyncInfoFilter(new SyncInfoFilter[] {
-				SyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.ADDITION),
-				new SyncInfoFilter() {
+			new AndSyncInfoFilter(new FastSyncInfoFilter[] {
+				FastSyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.ADDITION),
+				new FastSyncInfoFilter() {
 					public boolean select(SyncInfo info) {
 						return info.getLocal().getType() == IResource.FILE;
 					}
 				}
 			}),
 			// Conflicting changes involving a deletion on one side will aways fail
-			new AndSyncInfoFilter(new SyncInfoFilter[] {
-				SyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
-				new SyncInfoFilter() {
+			new AndSyncInfoFilter(new FastSyncInfoFilter[] {
+				FastSyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
+				new FastSyncInfoFilter() {
 					public boolean select(SyncInfo info) {
 						ISubscriberResource remote = info.getRemote();
 						ISubscriberResource base = info.getBase();
@@ -229,9 +229,9 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 			}),
 			// Conflicts where the file type is binary will work but are not merged
 			// so they should be skipped
-			new AndSyncInfoFilter(new SyncInfoFilter[] {
-				SyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
-				new SyncInfoFilter() {
+			new AndSyncInfoFilter(new FastSyncInfoFilter[] {
+				FastSyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
+				new FastSyncInfoFilter() {
 					public boolean select(SyncInfo info) {
 						IResource local = info.getLocal();
 						if (local.getType() == IResource.FILE) {

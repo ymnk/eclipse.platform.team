@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+
 /**
  * Classes which implement this interface provide methods that deal with the
  * events that are generated as a {@link ISyncInfoSet} changes.
@@ -31,5 +33,5 @@ public interface ISyncSetChangedListener {
 	 * 
 	 * @param event an event containing information about the change.
 	 */
-	public void syncSetChanged(ISyncInfoSetChangeEvent event);
+	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor);
 }

@@ -15,12 +15,12 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**
  * This class provides the contents for a StructuredViewer using a SyncSet as the model
@@ -89,7 +89,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(final ISyncInfoSetChangeEvent event) {
+	public void syncSetChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		final Control ctrl = viewer.getControl();
 		if (ctrl != null && !ctrl.isDisposed()) {
 			ctrl.getDisplay().asyncExec(new Runnable() {

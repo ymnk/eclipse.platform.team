@@ -20,7 +20,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
 /**
  * WorkingSet filter for a SyncSet.
  */
-public class SyncInfoWorkingSetFilter extends SyncInfoFilter {
+public class SyncInfoWorkingSetFilter extends FastSyncInfoFilter {
 
 	private IResource[] resources;
 	

@@ -215,9 +215,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		}
 
 			getFilteredSyncInfoCollector().setFilter(
-					new SyncInfoFilter.AndSyncInfoFilter(
-							new SyncInfoFilter[] {
-									new SyncInfoFilter.SyncInfoDirectionFilter(modeFilter)
+					new FastSyncInfoFilter.AndSyncInfoFilter(
+							new FastSyncInfoFilter[] {
+									new FastSyncInfoFilter.SyncInfoDirectionFilter(modeFilter)
 							}), new NullProgressMonitor());
 		}
 	}

@@ -16,7 +16,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoFilter;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.*;
@@ -78,8 +78,8 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		return info != null && getSyncInfoFilter().select(info);
 	}
 
-	protected SyncInfoFilter getSyncInfoFilter() {
-		return new SyncInfoFilter();
+	protected FastSyncInfoFilter getSyncInfoFilter() {
+		return new FastSyncInfoFilter();
 	}
 
 	/**

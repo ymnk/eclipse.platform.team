@@ -216,14 +216,14 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * for each event type. 
 	 * @param events
 	 */
-	private void dispatchEvents(SubscriberEvent[] events) {
+	private void dispatchEvents(SubscriberEvent[] events, IProgressMonitor monitor) {
 		// this will batch the following set changes until endInput is called.
 		set.getSyncSet().beginInput();
 		for (int i = 0; i < events.length; i++) {
 			SubscriberEvent event = events[i];
 			switch (event.getType()) {
 				case SubscriberEvent.CHANGE :
-					set.collect(event.getResult());
+					set.collect(event.getResult(), monitor);
 					break;
 				case SubscriberEvent.REMOVAL :
 					if (event.getDepth() == IResource.DEPTH_INFINITE) {
@@ -234,7 +234,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 					break;
 			}
 		}
-		set.getSyncSet().endInput();
+		set.getSyncSet().endInput(monitor);
 	}
 	
 	/**
@@ -300,8 +300,8 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#dispatchEvents()
 	 */
-	protected void dispatchEvents() {
-		dispatchEvents((SubscriberEvent[]) resultCache.toArray(new SubscriberEvent[resultCache.size()]));
+	protected void dispatchEvents(IProgressMonitor monitor) {
+		dispatchEvents((SubscriberEvent[]) resultCache.toArray(new SubscriberEvent[resultCache.size()]), monitor);
 		resultCache.clear();
 	}
 }

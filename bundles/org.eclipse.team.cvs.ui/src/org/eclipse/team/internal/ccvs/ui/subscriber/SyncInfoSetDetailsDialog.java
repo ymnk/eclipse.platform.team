@@ -19,8 +19,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.ui.AdaptableResourceList;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
@@ -183,7 +181,7 @@ public abstract class SyncInfoSetDetailsDialog extends DetailsDialog {
 	protected void filterSyncSet() {
 		// Keep only the checked resources
 		if (selectedResources != null) {
-			getSyncSet().selectNodes(new SyncInfoFilter() {
+			getSyncSet().selectNodes(new FastSyncInfoFilter() {
 				public boolean select(SyncInfo info) {
 					IResource local = info.getLocal();
 					for (int i = 0; i < selectedResources.length; i++) {

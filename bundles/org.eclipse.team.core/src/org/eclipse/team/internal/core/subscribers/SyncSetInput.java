@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * This is the superclass for all SyncSet input providers
@@ -21,7 +22,7 @@ import org.eclipse.team.core.subscribers.*;
 public abstract class SyncSetInput {
 	
 	private MutableSyncInfoSet syncSet = new MutableSyncInfoSet();
-	private SyncInfoFilter filter = new SyncInfoFilter();
+	private SyncInfoFilter filter = new FastSyncInfoFilter();
 	
 	public MutableSyncInfoSet getSyncSet() {
 		return syncSet;
@@ -44,19 +45,22 @@ public abstract class SyncSetInput {
 	 */
 	public void reset(IProgressMonitor monitor) throws TeamException {
 		try {
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(null, 100);
 			syncSet.beginInput();
 			syncSet.clear();
-			fetchInput(monitor);
+			fetchInput(Policy.subMonitorFor(monitor, 90));
 		} finally {
-			getSyncSet().endInput();
+			getSyncSet().endInput(Policy.subMonitorFor(monitor, 10));
+			monitor.done();
 		}
 	}
 
 	/**
 	 * Collect the change in the provided sync info.
 	 */
-	protected void collect(SyncInfo info) {
-		boolean isOutOfSync = filter.select(info);
+	protected void collect(SyncInfo info, IProgressMonitor monitor) {
+		boolean isOutOfSync = filter.select(info, monitor);
 		SyncInfo oldInfo = syncSet.getSyncInfo(info.getLocal());
 		boolean wasOutOfSync = oldInfo != null;
 		if (isOutOfSync) {

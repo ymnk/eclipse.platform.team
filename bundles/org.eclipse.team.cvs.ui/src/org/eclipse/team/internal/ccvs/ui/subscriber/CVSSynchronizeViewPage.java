@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
@@ -110,7 +111,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 * 
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(ISyncInfoSetChangeEvent event) {
+	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		if (viewer != null && getSyncInfoSet() != null) {
 			IStructuredContentProvider cp = (IStructuredContentProvider) viewer.getContentProvider();

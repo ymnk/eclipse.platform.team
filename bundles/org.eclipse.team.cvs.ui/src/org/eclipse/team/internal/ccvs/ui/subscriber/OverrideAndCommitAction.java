@@ -13,14 +13,14 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
-import org.eclipse.team.core.subscribers.SyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
 
 public class OverrideAndCommitAction extends SubscriberCommitAction {
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.SubscriberAction#getSyncInfoFilter()
 	 */
-	protected SyncInfoFilter getSyncInfoFilter() {
+	protected FastSyncInfoFilter getSyncInfoFilter() {
 		return new SyncInfoDirectionFilter(new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING});
 	}
 	
