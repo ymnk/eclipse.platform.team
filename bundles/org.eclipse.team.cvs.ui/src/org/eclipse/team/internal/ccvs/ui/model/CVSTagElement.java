@@ -95,7 +95,7 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable, IDefer
 	
 	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
 		try {
-			collector.add(fetchChildren(o, null), null);
+			collector.add(fetchChildren(o, monitor), monitor);
 		} catch (TeamException e) {
 			CVSUIPlugin.log(e);
 		}
