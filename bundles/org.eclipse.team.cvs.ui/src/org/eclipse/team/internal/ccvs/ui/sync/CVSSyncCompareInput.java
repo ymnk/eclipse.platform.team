@@ -71,13 +71,13 @@ public class CVSSyncCompareInput extends SyncCompareInput {
 				} else file = null;
 
 				// avoid redundant updates -- identity test is good enough here
- 				if (file == previousTeamFile) return;
-				previousTeamFile = file;
-				getShell().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						updateToolTip(tree, file);
-					}
-				});
+// 				if (file == previousTeamFile || file == null) return;
+//				previousTeamFile = file;
+//				getShell().getDisplay().asyncExec(new Runnable() {
+//					public void run() {
+//						updateToolTip(tree, file);
+//					}
+//				});
 			}
 		});
 		return catchupReleaseViewer;

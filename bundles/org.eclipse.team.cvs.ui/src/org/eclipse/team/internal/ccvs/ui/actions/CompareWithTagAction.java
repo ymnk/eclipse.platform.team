@@ -22,6 +22,7 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSCompareEditorInput;
+import org.eclipse.team.internal.ccvs.ui.CVSLocalCompareEditorInput;
 import org.eclipse.team.internal.ccvs.ui.CVSResourceNode;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.ResourceEditionNode;
@@ -62,35 +63,7 @@ public class CompareWithTagAction extends TeamAction {
 		
 		if (tag[0] == null) return;
 		
-		
-		for (int i = 0; i < resources.length; i++) {
-			// Show a progress dialog while fethcing the remote tree
-			final IResource resource = resources[i];
-			run(new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
-					try {
-						monitor.beginTask(Policy.bind("CompareWithTagAction.fetching", tag[0].getName()), 100); //$NON-NLS-1$
-						remoteResource[0] = CVSWorkspaceRoot.getRemoteTree(resource, tag[0], Policy.subMonitorFor(monitor, 100));
-						monitor.done();
-					} catch (TeamException e) {
-						throw new InvocationTargetException(e);
-					}
-				}
-			}, Policy.bind("CompareWithTagAction.compare"), PROGRESS_DIALOG); //$NON-NLS-1$
-			
-			// Just to be safe...
-			if (remoteResource[0] == null) {
-				MessageDialog.openInformation(getShell(), Policy.bind("CompareWithTagAction.noRemote"), Policy.bind("CompareWithTagAction.noRemoteLong")); //$NON-NLS-1$ //$NON-NLS-2$
-				return;
-			}
-			
-			// Show a busy cursor while opening the compare view
-			run(new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
-					CompareUI.openCompareEditor(new CVSCompareEditorInput(new CVSResourceNode(resource), new ResourceEditionNode(remoteResource[0])));
-				}
-			}, Policy.bind("CompareWithTagAction.compare"), PROGRESS_BUSYCURSOR); //$NON-NLS-1$
-		}
+		CompareUI.openCompareEditor(new CVSLocalCompareEditorInput(resources, tag[0]));
 	}
 	
 	protected boolean isEnabled() {

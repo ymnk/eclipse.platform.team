@@ -219,45 +219,20 @@ public abstract class RemoteSyncElement extends LocalSyncElement implements IRem
 					}
 				}
 			}
-		} else { // three-way compare without access to base contents
+		} else { // two compare without access to base contents
 			if (remote == null) {
 				if (!localExists) {
-					// this should never happen
 					Assert.isTrue(false);
+					// shouldn't happen
 				} else {
-					// no remote but a local
-					if (!isDirty && isOutOfDate) {
-						description = INCOMING | DELETION;
-					} else if (isDirty && isOutOfDate) {
-						description = CONFLICTING | CHANGE;
-					} else if (!isDirty && !isOutOfDate) {
-						description = OUTGOING | ADDITION;
-					}
+					description= ADDITION;
 				}
 			} else {
 				if (!localExists) {
-					// a remote but no local
-					if (!isDirty && !isOutOfDate) {
-						description = INCOMING | ADDITION;
-					} else if (isDirty && !isOutOfDate) {
-						description = OUTGOING | DELETION;
-					} else if (isDirty && isOutOfDate) {
-						description = CONFLICTING | CHANGE;
-					}
+					description= DELETION;
 				} else {
-					// have a local and a remote			
-					if (!isDirty && !isOutOfDate && base != null) {
-						// ignore, there is no change;
-					} else if (!isDirty && isOutOfDate) {
-						description = INCOMING | CHANGE;
-					} else if (isDirty && !isOutOfDate) {
-						description = OUTGOING | CHANGE;
-					} else {
-						description = CONFLICTING | CHANGE;
-					}
-					// if contents are the same, then mark as pseudo change
-					if (description != IN_SYNC && compare(granularity, false, local, remote, progress))
-						description |= PSEUDO_CONFLICT;
+					if (! compare(granularity, !isDirty, local, remote, Policy.subMonitorFor(progress, 30)))
+						description= CHANGE;
 				}
 			}
 		}
