@@ -47,7 +47,7 @@
 		<one-of-nature id="org.eclipse.team.repository-provider"/>
 	</extension>
 
-	<!-- *************** Repository Provider **************** 
+	<!-- *************** Repository Provider **************** -->
 
 	<extension point="org.eclipse.team.core.repository">
 		<repository
@@ -55,10 +55,9 @@
 			class="org.eclipse.team.internal.ccvs.core.CVSTeamProvider"/>
 	</extension>
  
-	-->
  	<!-- *************** Resource patterns ignored by CVS **************** -->
  	<extension point="org.eclipse.team.core.ignore">
-		<ignore pattern = ".XXXX" selected = "true"/>
+		<ignore pattern = ".#*" selected = "true"/>
 	</extension>
  
   	<!-- *************** Markers **************** -->
