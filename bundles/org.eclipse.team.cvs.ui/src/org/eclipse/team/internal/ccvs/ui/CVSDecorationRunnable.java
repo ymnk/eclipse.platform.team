@@ -197,6 +197,10 @@ public class CVSDecorationRunnable implements Runnable {
 							KSubstOption.fromFile((IFile) resource);
 						bindings.put(CVSDecoratorConfiguration.FILE_KEYWORD, option.getShortDisplayText());
 						if (tag != null && (tag.getType() != CVSTag.HEAD)) {
+							String modifiedTag;
+							if(tag.getName().equals(fileInfo.getRevision())) {
+								modifiedTag = "Sticky";
+							}
 							bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, tag.getName());
 						}
 					} else {

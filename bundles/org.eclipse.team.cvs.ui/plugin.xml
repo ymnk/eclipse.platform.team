@@ -189,6 +189,13 @@
                menubarPath="team.main/group1"
                id="org.eclipse.team.ccvs.ui.sync">
          </action>
+         <action
+               label="%ReplaceWithTagAction.label"
+               tooltip="%ReplaceWithTagAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.ReplaceWithTagAction"
+               menubarPath="replaceWithMenu/replaceWithGroup"
+               id="org.eclipse.team.ccvs.ui.replaceWithTag">
+         </action>
       </objectContribution>
       <objectContribution
             objectClass="org.eclipse.core.resources.IProject"
@@ -218,13 +225,6 @@
                class="org.eclipse.team.internal.ccvs.ui.actions.BranchAction"
                menubarPath="team.main/group2"
                id="org.eclipse.team.ccvs.ui.branch">
-         </action>
-         <action
-               label="%ReplaceWithTagAction.label"
-               tooltip="%ReplaceWithTagAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.ReplaceWithTagAction"
-               menubarPath="replaceWithMenu/replaceWithGroup"
-               id="org.eclipse.team.ccvs.ui.replaceWithTag">
          </action>
       </objectContribution>
       <objectContribution

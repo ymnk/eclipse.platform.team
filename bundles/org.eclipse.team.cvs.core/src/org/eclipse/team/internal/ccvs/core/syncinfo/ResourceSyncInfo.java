@@ -330,10 +330,26 @@ public class ResourceSyncInfo {
 	public String toString() {
 		return getEntryLine(true, null /*no timestamp override*/);
 	}
+	
+	/**
+	 * Returns an editable copy of this resource sync.
+	 */
 	public MutableResourceSyncInfo cloneMutable() {
 		MutableResourceSyncInfo newSync = new MutableResourceSyncInfo(this);
 		return newSync;
 	}
+	
+	/**
+	 * Answers if this resource sync is sticky.
+	 */
+	public boolean isSticky() {
+		CVSTag tag = getTag();
+		if(tag != null && tag.getType() != CVSTag.BRANCH) {
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * Sets the tag for the resource.
 	 */

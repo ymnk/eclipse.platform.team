@@ -135,7 +135,7 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 					String revision = entry.getRevision();
 					if (file == null) return revision;
 					if (currentRevision != null && currentRevision.equals(revision)) {
-						Policy.bind("currentRevision", revision); //$NON-NLS-1$
+						revision = Policy.bind("currentRevision", revision); //$NON-NLS-1$
 					}
 					return revision;
 				case COL_TAGS:
@@ -215,24 +215,23 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 		});
 		
 
-// 		This code will add an action that allows getting a sticky revision of a file.
-//		It has been left removed until we can support removing the stickiness of
-//		the file.
-//		getRevisionAction = getContextMenuAction(Policy.bind("HistoryView.getRevisionAction"), new IWorkspaceRunnable() {
-//			public void run(IProgressMonitor monitor) throws CoreException {
-//				ICVSRemoteFile remoteFile = currentSelection.getRemoteFile();
-//				try {
-//					if(confirmOverwrite()) {
-//						CVSTeamProvider provider = (CVSTeamProvider)RepositoryProvider.getProvider(file.getProject());
-//						CVSTag revisionTag = new CVSTag(remoteFile.getRevision(), CVSTag.VERSION);
-//						provider.update(new IResource[] {file}, new Command.LocalOption[] {Command.UPDATE.IGNORE_LOCAL_CHANGES}, 
-//												   revisionTag, true /*create backups*/, monitor);
-//					}
-//				} catch (TeamException e) {
-//					throw new CoreException(e.getStatus());
-//				}
-//			}
-//		});
+		getRevisionAction = getContextMenuAction(Policy.bind("HistoryView.getRevisionAction"), new IWorkspaceRunnable() {
+			public void run(IProgressMonitor monitor) throws CoreException {
+				ICVSRemoteFile remoteFile = currentSelection.getRemoteFile();
+				try {
+					if(confirmOverwrite()) {
+						CVSTeamProvider provider = (CVSTeamProvider)RepositoryProvider.getProvider(file.getProject());
+						CVSTag revisionTag = new CVSTag(remoteFile.getRevision(), CVSTag.VERSION);
+						provider.update(new IResource[] {file}, new Command.LocalOption[] {Command.UPDATE.IGNORE_LOCAL_CHANGES}, 
+												   revisionTag, true /*create backups*/, monitor);
+						currentRevision = revisionTag.getName();
+						tableViewer.refresh();
+					}
+				} catch (TeamException e) {
+					throw new CoreException(e.getStatus());
+				}
+			}
+		});
 		
 
 
@@ -583,7 +582,7 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 			if (!sel.isEmpty()) {
 				if (sel instanceof IStructuredSelection) {
 					if (((IStructuredSelection)sel).size() == 1) {
-						//manager.add(getRevisionAction);
+						manager.add(getRevisionAction);
 						manager.add(getContentsAction);
 					}
 				}
@@ -621,7 +620,7 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 			if (first instanceof IResource) {
 				showHistory((IResource)first);
 			} else if (first instanceof ICVSRemoteFile) {
-				showHistory((ICVSRemoteFile)first);
+				showHistory((ICVSRemoteFile)first, null /* no current revision */);
 			}
 		}
 	}
@@ -668,12 +667,13 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 	/**
 	 * Shows the history for the given ICVSRemoteFile in the view.
 	 */
-	public void showHistory(ICVSRemoteFile file) {
+	public void showHistory(ICVSRemoteFile file, String currentRevision) {
 		if (file == null) {
 			tableViewer.setInput(null);
 			setTitle(Policy.bind("HistoryView.title")); //$NON-NLS-1$
 			return;
 		}
+		this.currentRevision = currentRevision;
 		this.file = null;
 		tableViewer.setInput(file);
 		setTitle(Policy.bind("HistoryView.titleWithArgument", file.getName())); //$NON-NLS-1$
@@ -689,7 +689,7 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 					IStructuredSelection ss = (IStructuredSelection)selection;
 					Object o = ss.getFirstElement();
 					currentSelection = (ILogEntry)o;
-					new ProgressMonitorDialog(getViewSite().getShell()).run(true, true, new WorkspaceModifyOperation() {
+					new ProgressMonitorDialog(getViewSite().getShell()).run(false, true, new WorkspaceModifyOperation() {
 						protected void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 							try {				
 								action.run(monitor);
