@@ -216,6 +216,8 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
     private EditChangeSetAction editChangeSet;
     private MakeDefaultChangeSetAction makeDefault;
     
+    private SynchronizePageActionGroup subActions;
+    
     /*
      * The currently chosen sort criteria
      */
@@ -250,6 +252,11 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 			editChangeSet = new EditChangeSetAction(configuration);
 			makeDefault = new MakeDefaultChangeSetAction(configuration);
 		}
+		
+		subActions = getChangeSetCapability().getActionGroup();
+		if (subActions != null) {
+		    subActions.initialize(configuration);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -273,6 +280,9 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 					CHANGE_SET_GROUP, 
 					makeDefault);
         }
+		if (subActions != null) {
+		    subActions.fillContextMenu(menu);
+		}
     }
     
     private void initializeSortCriteria(ISynchronizePageConfiguration configuration) {
@@ -327,6 +337,9 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 	    if (sortByComment != null) {
 			sortByComment.dispose();
 			sortByComment.removeAll();
+	    }
+	    if (subActions != null) {
+	        subActions.dispose();
 	    }
 		super.dispose();
 	}

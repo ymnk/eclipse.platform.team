@@ -125,14 +125,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 		}
 	}
 	
-	public class WorkspaceChangeSetCapability extends ChangeSetCapability {
-
-        /* (non-Javadoc)
-         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#supportsCheckedInChangeSets()
-         */
-        public boolean supportsCheckedInChangeSets() {
-            return true;
-        }
+	public class WorkspaceChangeSetCapability extends CVSChangeSetCapability {
 
         /* (non-Javadoc)
          * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#supportsActiveChangeSets()
@@ -174,24 +167,10 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
         }
 
         /* (non-Javadoc)
-         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#createCheckedInChangeSetCollector(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-         */
-        public SyncInfoSetChangeSetCollector createCheckedInChangeSetCollector(ISynchronizePageConfiguration configuration) {
-            return new CVSChangeSetCollector(configuration);
-        }
-
-        /* (non-Javadoc)
          * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#getActiveChangeSetManager()
          */
         public SubscriberChangeSetCollector getActiveChangeSetManager() {
             return CVSUIPlugin.getPlugin().getChangeSetManager();
-        }
-        
-        /* (non-Javadoc)
-         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#getActionGroup()
-         */
-        public SynchronizePageActionGroup getActionGroup() {
-            return new CVSChangeSetActionGroup();
         }
 	}
 	
