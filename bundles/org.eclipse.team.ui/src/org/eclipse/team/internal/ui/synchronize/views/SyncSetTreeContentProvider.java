@@ -35,10 +35,9 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 		IResource resource = getResource(element);
 		if (resource != null) {
 			return members(resource);
-		} else if (element instanceof SyncSet) {
+		} else {
 			return members(ResourcesPlugin.getWorkspace().getRoot());
 		}
-		return new Object[0];
 	}
 	
 	/* (non-Javadoc)

@@ -37,6 +37,5 @@ public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 		super.init(memento);
 		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
 		setSubscriber(subscriber);
-		TeamUIPlugin.getPlugin().getRefreshJob().addSubscriberInput(getInput());
 	}		
 }

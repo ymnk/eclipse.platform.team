@@ -76,7 +76,7 @@ public class SummarySection extends FormSection {
 	}
 	
 	public void updateHeaderRightText() {
-		setHeaderRightText(Utils.modeToString(participant.getMode()) + " | " + Utils.workingSetToString(participant.getWorkingSet(), 20));
+		setHeaderRightText(Utils.workingSetToString(participant.getWorkingSet(), 20));
 		reflow();
 	}
 }

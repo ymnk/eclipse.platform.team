@@ -14,17 +14,9 @@ package org.eclipse.team.internal.ui;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtension;
-import org.eclipse.core.runtime.IPluginDescriptor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -33,24 +25,20 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
-import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
-import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
 import org.eclipse.team.internal.ui.synchronize.SynchronizeManager;
 import org.eclipse.team.internal.ui.synchronize.TeamSynchronizingPerspective;
+import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.*;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
  * TeamUIPlugin is the plugin for generic, non-provider specific,
  * team UI functionality in the workbench.
  */
-public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeListener {
+public class TeamUIPlugin extends AbstractUIPlugin {
 
 	private static TeamUIPlugin instance;
 	
@@ -68,15 +56,6 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 	private Hashtable imageDescriptors = new Hashtable(20);
 	private static List disposeOnShutdownImages= new ArrayList();
 	
-	private RefreshSubscriberInputJob refreshJob;
-
-	/**
-	 * Returns the job that refreshes the active subscribers in the background.
-	 */
-	public RefreshSubscriberInputJob getRefreshJob() {
-		return refreshJob;
-	}
-
 	/**
 	 * Creates a new TeamUIPlugin.
 	 * 
@@ -205,18 +184,7 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 	 */
 	public void startup() throws CoreException {
 		Policy.localize("org.eclipse.team.internal.ui.messages"); //$NON-NLS-1$
-		initializePreferences();
-		
-		getPreferenceStore().addPropertyChangeListener(this);
-		
-		// startup auto-refresh job if necessary
-		refreshJob = new RefreshSubscriberInputJob(Policy.bind("ScheduledSyncViewRefresh.taskName")); //$NON-NLS-1$
-		refreshJob.setRefreshInterval(getPreferenceStore().getInt(IPreferenceIds.SYNCVIEW_DELAY) * 60);
-		if(getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC)) {
-			refreshJob.setRestartOnCancel(true);
-			refreshJob.setReschedule(true);
-			refreshJob.schedule(refreshJob.getScheduleDelay());
-		}
+		initializePreferences();		
 		((SynchronizeManager)TeamUI.getSynchronizeManager()).init();
 	}
 	
@@ -425,29 +393,5 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 		} catch (InterruptedException e2) {
 			// Nothing to be done
 		}
-	}
-	
-	public void propertyChange(PropertyChangeEvent event) {		
-		// update the background sync delay
-		if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_DELAY)) {
-			RefreshSubscriberJob refreshJob = getRefreshJob();
-			refreshJob.setRefreshInterval(getPreferenceStore().getInt(IPreferenceIds.SYNCVIEW_DELAY) * 60);
-		}
-		
-		// enable / disable the background sync job
-		if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC)) {
-			RefreshSubscriberJob refreshJob = getRefreshJob();
-			refreshJob.setRefreshInterval(getPreferenceStore().getInt(IPreferenceIds.SYNCVIEW_DELAY) * 60);
-			boolean value = getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC);
-			if(value) {
-				refreshJob.setRestartOnCancel(true);
-				refreshJob.setReschedule(true);
-				refreshJob.schedule(refreshJob.getRefreshInterval() * 1000);				
-			} else {				
-				refreshJob.setRestartOnCancel(false /* don't restart the job */);
-				refreshJob.setReschedule(false);
-				refreshJob.cancel();				
-			}
-		}
-	}
+	}	
 }

@@ -82,22 +82,22 @@ public class ParticipantComposite extends Composite {
 				composite_1.setLayout(gridLayout_1);
 				participantComposite = participant.createOverviewComposite(composite_1, factory, view);
 			}			
-			{
-				final Composite composite_1 = factory.createComposite(composite, SWT.NONE);
-				final GridData gridData = new GridData(GridData.HORIZONTAL_ALIGN_END);
-				gridData.horizontalSpan = 3;
-				composite_1.setLayoutData(gridData);
-				final GridLayout gridLayout_1 = new GridLayout();
-				gridLayout_1.marginWidth = 0;
-				gridLayout_1.marginHeight = 0;
-				composite_1.setLayout(gridLayout_1);
-				{
-					final Button button = factory.createButton(composite_1, "Setup...", SWT.FLAT);
-					GridData gd = new GridData();
-					gd.horizontalAlignment = GridData.END;
-					button.setLayoutData(gd);
-				}
-			}
+//			{
+//				final Composite composite_1 = factory.createComposite(composite, SWT.NONE);
+//				final GridData gridData = new GridData(GridData.HORIZONTAL_ALIGN_END);
+//				gridData.horizontalSpan = 3;
+//				composite_1.setLayoutData(gridData);
+//				final GridLayout gridLayout_1 = new GridLayout();
+//				gridLayout_1.marginWidth = 0;
+//				gridLayout_1.marginHeight = 0;
+//				composite_1.setLayout(gridLayout_1);
+//				{
+//					final Button button = factory.createButton(composite_1, "Setup...", SWT.FLAT);
+//					GridData gd = new GridData();
+//					gd.horizontalAlignment = GridData.END;
+//					button.setLayoutData(gd);
+//				}
+//			}
 		}
 		return area;
 	}

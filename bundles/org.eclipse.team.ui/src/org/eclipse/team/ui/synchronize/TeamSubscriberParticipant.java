@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
+import org.eclipse.team.internal.ui.jobs.RefreshSchedule;
 import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantComposite;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
@@ -32,10 +32,13 @@ import org.eclipse.ui.part.IPageBookViewPage;
 public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 	
 	private SubscriberInput input;
+	private RefreshSchedule refreshSchedule;
+	
 	private int currentMode;
 	private int currentLayout;
-	private long lastRefreshTime = -1;
+	
 	private String statusText = "Idle";
+
 	private IWorkingSet workingSet;
 	
 	/**
@@ -96,6 +99,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public TeamSubscriberParticipant() {
 		super();
+		refreshSchedule = new RefreshSchedule(this);
 	}
 	
 	/* (non-Javadoc)
@@ -126,14 +130,13 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		return currentLayout;
 	}
 	
-	public void setLastRefreshTime(long lastTimeRun) {
-		long oldRefreshTime = getLastRefreshTime();
-		lastRefreshTime = lastTimeRun;
-		firePropertyChange(this, P_SYNCVIEWPAGE_LASTSYNC, new Long(oldRefreshTime), new Long(lastRefreshTime));
+	public void setRefreshSchedule(RefreshSchedule schedule) {
+		this.refreshSchedule = schedule;
+		firePropertyChange(this, P_SYNCVIEWPAGE_SCHEDULE, null, schedule);
 	}
 	
-	public long getLastRefreshTime() {
-		return lastRefreshTime;
+	public RefreshSchedule getRefreshSchedule() {
+		return refreshSchedule;
 	}
 	
 	public void setStatusText(String text) {
@@ -179,8 +182,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeViewPage#dispose()
 	 */
 	public void dispose() {
-		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
-		refreshJob.removeSubscriberInput(input);
 		removePropertyChangeListener(input);
 		input.dispose();
 	}

@@ -28,7 +28,6 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.internal.ui.jobs.IRefreshEvent;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoSetCompareInput;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
@@ -38,12 +37,12 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private CompareEditorInput compareEditorInput;
 	private int type;
 	
-	public RefreshCompleteDialog(Shell parentShell, int type, SyncInfo[] changes, ITeamSubscriberSyncInfoSets[] inputs) {
+	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event) {
 		super(parentShell, "Synchronization Complete");
-		this.type = type;
+		this.type = event.getRefreshType();
 		setImageKey(DLG_IMG_INFO);
-		this.changes = changes;
-		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), inputs[0]) {
+		this.changes = event.getChanges();
+		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), event.getParticipant().getInput()) {
 			protected boolean allowParticipantMenuContributions() {
 				return true;
 			}

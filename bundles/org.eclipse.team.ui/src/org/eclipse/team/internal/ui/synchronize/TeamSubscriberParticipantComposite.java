@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.text.DateFormat;
-import java.util.Date;
-
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -24,10 +21,11 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.IJobListener;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.ui.controls.IControlFactory;
+import org.eclipse.team.ui.controls.IHyperlinkListener;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
@@ -118,6 +116,18 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 			{
 				final Label label = factory.createLabel(composite_1, "Refresh Schedule:");
 				gridData = new GridData();
+				factory.turnIntoHyperlink(label, new IHyperlinkListener() {
+					public void linkActivated(Control linkLabel) {
+						ConfigureRefreshScheduleDialog d = new ConfigureRefreshScheduleDialog(
+								new Shell(TeamUIPlugin.getStandardDisplay()), participant.getRefreshSchedule());
+						d.setBlockOnOpen(false);
+						d.open();
+					}
+					public void linkEntered(Control linkLabel) {
+					}
+					public void linkExited(Control linkLabel) {
+					}
+				});
 				label.setLayoutData(gridData);
 			}
 			{
@@ -125,7 +135,7 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 				gridData = new GridData(GridData.FILL_HORIZONTAL);
 				gridData.grabExcessHorizontalSpace = true;
 				scheduleLabel.setLayoutData(gridData);
-			}
+			}			
 			{
 				final Label label = factory.createLabel(composite_1, "Status");
 				gridData = new GridData();
@@ -194,19 +204,6 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 	}
 
 	private void updateLastRefreshLabel() {
-		long mills = participant.getLastRefreshTime();
-		final String text;
-		if(mills <= 0) {
-			text = Policy.bind("SyncViewPreferencePage.lastRefreshRunNever"); //$NON-NLS-1$
-		} else {
-			Date lastTimeRun = new Date(mills);
-			text = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(lastTimeRun);
-		}
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				lastSyncLabel.setText(text);
-			}
-		});
 	}
 	
 	protected void hookContextMenu() {

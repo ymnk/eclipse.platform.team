@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.jobs;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
-public interface IRefreshEvent {
-	
+public interface IRefreshEvent {	
 	public static final int SCHEDULED_REFRESH = 1; 
 	
 	public static final int USER_REFRESH = 2;
@@ -21,4 +22,12 @@ public interface IRefreshEvent {
 	public int getRefreshType();
 	
 	public TeamSubscriberParticipant getParticipant();
+	
+	public SyncInfo[] getChanges();
+	
+	public long getStartTime();
+	
+	public long getStopTime();
+	
+	public IStatus getStatus();
 }

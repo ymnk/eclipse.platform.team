@@ -3,13 +3,14 @@
 	ordered queue of refreshes. Also, participant will need a schedule object to encapsulate the schedule logic.
 - P3 status message could be more precise instead of simply "Working". But to do this we need access to the job progress monitor 
   and it isn't available API from the UI.
-- P1 end of refresh prompt should be a property change notice, and let the participant decide what to do!
+x P1 end of refresh prompt should be a property change notice, and let the participant decide what to do!
 - P2 decide overview page contents and how it should be used
 - P1 mode switching at the end of a refresh to ensure that changes are shown if available
 - P2 need an event for adding roots to a subscriber to update the list shown
 - P3 support for table widget in changes page
 - remove duplicated tree/table viewers classes. the orignial ones simply have the INavigable behavior.
-s P1 make changes section only be a pagebook. this would easily allow adding any number of composites to the page?
+x P1 make changes section only be a pagebook. this would easily allow adding any number of composites to the page?
+  should look at memory consuption and ensure that we are disposing properly!
 - compareeditorinput fetcheds remote content outside of a progress monitor
 - decorations for SyncInfoDiffElements (of which type.. project persistent property setting?)
 - labels for compare editors (text merge viewers and title for diff viewer)
@@ -19,4 +20,5 @@ x generic navigate support for SyncInfoDiffTreeViewer, PRd compare for API suppo
 x INavigable in compare needs to be made API.
 - details dialog needs to create composites once then display them. Or only create once!!!!
 - sync set filtering creation must be more precise. For example you should be able to specify a root and a direction.
-- cvs update/commit action in sync view toolbar are not updating their state anymore :(
+x cvs update/commit action in sync view toolbar are not updating their state anymore :(
+- teamsubcriberparticipant needs to be de-coupled from a sync set presentation (e.g. mode, working set...)

@@ -30,8 +30,8 @@ import org.eclipse.ui.*;
 public class SyncViewerPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage, IPreferenceIds {
 	
 	private BooleanFieldEditor bkgRefresh = null;
-	private BooleanFieldEditor bkgScheduledRefresh = null;
-	private IntegerFieldEditor2 scheduledDelay = null;
+	//private BooleanFieldEditor bkgScheduledRefresh = null;
+	//private IntegerFieldEditor2 scheduledDelay = null;
 	private BooleanFieldEditor compressFolders = null;
 	private BooleanFieldEditor showSyncInLabels = null;
 	private BooleanFieldEditor promptWithChanges = null;
@@ -155,13 +155,13 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 		bkgRefresh = new BooleanFieldEditor(SYNCVIEW_BACKGROUND_SYNC, Policy.bind("SyncViewerPreferencePage.12"), SWT.NONE, refreshGroup); //$NON-NLS-1$
 		addField(bkgRefresh);
 		
-		bkgScheduledRefresh = new BooleanFieldEditor2(SYNCVIEW_SCHEDULED_SYNC, Policy.bind("SyncViewerPreferencePage.13"), SWT.NONE, refreshGroup); //$NON-NLS-1$
-		addField(bkgScheduledRefresh);
+		//bkgScheduledRefresh = new BooleanFieldEditor2(SYNCVIEW_SCHEDULED_SYNC, Policy.bind("SyncViewerPreferencePage.13"), SWT.NONE, refreshGroup); //$NON-NLS-1$
+		//addField(bkgScheduledRefresh);
 		
-		scheduledDelay = new IntegerFieldEditor2(SYNCVIEW_DELAY, Policy.bind("SyncViewerPreferencePage.14"), refreshGroup, 2); //$NON-NLS-1$
-		addField(scheduledDelay);
+		//scheduledDelay = new IntegerFieldEditor2(SYNCVIEW_DELAY, Policy.bind("SyncViewerPreferencePage.14"), refreshGroup, 2); //$NON-NLS-1$
+		//addField(scheduledDelay);
 				
-		updateLastRunTime(createLabel(refreshGroup, null, 0));
+		//updateLastRunTime(createLabel(refreshGroup, null, 0));
 		
 		Group promptGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.30")); //$NON-NLS-1$
 		
@@ -257,9 +257,9 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		if(event.getSource() == bkgScheduledRefresh || event.getSource() == scheduledDelay) {			
-			updateEnablements();	
-		}
+		//if(event.getSource() == bkgScheduledRefresh || event.getSource() == scheduledDelay) {			
+	//		updateEnablements();	
+	//	}
 		super.propertyChange(event);
 	}
 			
@@ -280,9 +280,9 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	}
 
 	protected void updateEnablements() {
-		boolean enabled = bkgScheduledRefresh.getBooleanValue();
-		scheduledDelay.setEnabled(enabled, refreshGroup);
-		scheduledDelay.refreshValidState();
+		//boolean enabled = bkgScheduledRefresh.getBooleanValue();
+		//scheduledDelay.setEnabled(enabled, refreshGroup);
+		//scheduledDelay.refreshValidState();
 	}
 	
 	/**

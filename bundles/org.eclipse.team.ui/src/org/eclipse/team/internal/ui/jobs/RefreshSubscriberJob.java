@@ -18,6 +18,7 @@ import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -74,6 +75,10 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	protected static class RefreshEvent implements IRefreshEvent {
 		int type; 
 		TeamSubscriberParticipant participant;
+		SyncInfo[] changes;
+		long startTime = 0;
+		long stopTime = 0;
+		IStatus status;
 		
 		RefreshEvent(int type, TeamSubscriberParticipant participant) {
 			this.type = type;
@@ -86,6 +91,50 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 
 		public TeamSubscriberParticipant getParticipant() {
 			return participant;
+		}
+
+		public SyncInfo[] getChanges() {
+			return changes;
+		}
+		
+		public void setChanges(SyncInfo[] changes) {
+			this.changes = changes;
+		}
+		
+		/**
+		 * @return Returns the startTime.
+		 */
+		public long getStartTime() {
+			return startTime;
+		}
+
+		/**
+		 * @param startTime The startTime to set.
+		 */
+		public void setStartTime(long startTime) {
+			this.startTime = startTime;
+		}
+
+		/**
+		 * @return Returns the stopTime.
+		 */
+		public long getStopTime() {
+			return stopTime;
+		}
+
+		/**
+		 * @param stopTime The stopTime to set.
+		 */
+		public void setStopTime(long stopTime) {
+			this.stopTime = stopTime;
+		}
+
+		public IStatus getStatus() {
+			return status;
+		}
+		
+		public void setStatus(IStatus status) {
+			this.status = status;
 		}
 	}
 	
@@ -110,9 +159,13 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	
 		
 	public RefreshSubscriberJob(String name, IResource[] resources, ITeamSubscriberSyncInfoSets input) {
+		this(name, input);		
+		this.resources = resources;
+	}
+	
+	public RefreshSubscriberJob(String name, ITeamSubscriberSyncInfoSets input) {
 		super(name);
 		
-		this.resources = resources;
 		this.input = input;
 		
 		setPriority(Job.DECORATE);
@@ -161,20 +214,25 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			}
 			
 			monitor.beginTask(null, 100);
+			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, input.getParticipant());
+			RefreshChangeListener changeListener = new RefreshChangeListener(input);
 			try {
 				// Only allow one refresh job at a time
 				// NOTE: It would be cleaner if this was done by a scheduling
 				// rule but at the time of writting, it is not possible due to
 				// the scheduling rule containment rules.
-				long lastTimeRun = System.currentTimeMillis();
+				event.setStartTime(System.currentTimeMillis());
 				if(monitor.isCanceled()) {
 					return Status.CANCEL_STATUS;
 				}
 				try {
-					// perform the refresh
-					notifyListeners(true, new RefreshEvent(IRefreshEvent.USER_REFRESH, input.getParticipant()));
-					subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
-					notifyListeners(false, new RefreshEvent(IRefreshEvent.USER_REFRESH, input.getParticipant()));
+					// Set-up change listener so that we can determine the changes found
+					// during this refresh.						
+					subscriber.addListener(changeListener);
+					// Pre-Notify
+					notifyListeners(true, event);
+					// Perform the refresh										
+					subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));					
 				} catch(TeamException e) {
 					status.merge(e.getStatus());
 				}
@@ -183,12 +241,24 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			} finally {
 				monitor.done();
 			}
-			return status.isOK() ? Status.OK_STATUS : (IStatus) status;
+			
+			// Post-Notify
+			event.setChanges(changeListener.getChanges());
+			event.setStopTime(System.currentTimeMillis());
+			event.setStatus(status.isOK() ? Status.OK_STATUS : (IStatus) status);
+			notifyListeners(false, event);
+			changeListener.clear();
+			
+			return event.getStatus();
 		}
 	}
 	
 	protected IResource[] getResources() {
-		return resources;
+		if(resources != null) {
+			return resources;
+		} else {
+			return input.getSubscriber().roots();
+		}
 	}
 	
 	protected TeamSubscriber getSubscriber() {
