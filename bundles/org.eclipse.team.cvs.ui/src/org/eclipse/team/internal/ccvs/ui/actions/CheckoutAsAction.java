@@ -21,26 +21,17 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.PromptingDialog;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.actions.NewProjectAction;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.dialogs.ProjectLocationSelectionDialog;
-import org.eclipse.ui.help.WorkbenchHelp;
-import org.eclipse.ui.internal.IHelpContextIds;
-import org.eclipse.ui.internal.WorkbenchPlugin;
-import org.eclipse.ui.internal.dialogs.NewWizard;
 
 /**
  * Add a remote resource to the workspace. Current implementation:
@@ -164,44 +155,9 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 	private IProject getNewProject(String suggestedName) {
 		NewProjectListener listener = new NewProjectListener();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(listener, IResourceChangeEvent.POST_CHANGE);
-		createProject(suggestedName);
+		(new NewProjectAction(PlatformUI.getWorkbench().getActiveWorkbenchWindow())).run();
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(listener);
 		return listener.getNewProject();
-	}
-	
-	/**
-	 * This code is was taken from org.eclipse.ui.actions.NewProjectAction.
-	 * It opens the NewWizard for creating projects in the same manner
-	 * as the new project wizard available from the Eclipse File menu.
-	 * 
-	 * The suggestedName is not currently used but is a desired capability.
-	 */
-	private void createProject(String suggestedName) {
-		// Create wizard selection wizard.
-		IWorkbench workbench = PlatformUI.getWorkbench();
-		NewWizard wizard = new NewWizard();
-		wizard.setProjectsOnly(true);
-		//ISelection selection = window.getSelectionService().getSelection();
-		IStructuredSelection selectionToPass = StructuredSelection.EMPTY;
-		//if (selection instanceof IStructuredSelection)
-		//	selectionToPass = (IStructuredSelection) selection;
-		wizard.init(workbench, selectionToPass);
-		IDialogSettings workbenchSettings = WorkbenchPlugin.getDefault().getDialogSettings();
-		IDialogSettings wizardSettings = workbenchSettings.getSection("NewWizardAction");//$NON-NLS-1$
-		if(wizardSettings==null)
-			wizardSettings = workbenchSettings.addNewSection("NewWizardAction");//$NON-NLS-1$
-		wizard.setDialogSettings(wizardSettings);
-		wizard.setForcePreviousAndNextButtons(true);
-	
-		// Create wizard dialog.
-		Shell parent = getShell();
-		WizardDialog dialog = new WizardDialog(parent, wizard);
-		dialog.create();
-		dialog.getShell().setSize( Math.max(500, dialog.getShell().getSize().x), 500 );
-		WorkbenchHelp.setHelp(dialog.getShell(), IHelpContextIds.NEW_PROJECT_WIZARD);
-	
-		// Open wizard.
-		dialog.open();
 	}
 	
 	class NewProjectListener implements IResourceChangeListener {
