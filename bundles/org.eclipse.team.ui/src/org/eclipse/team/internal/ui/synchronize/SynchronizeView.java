@@ -157,7 +157,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * @see org.eclipse.ui.part.PageBookView#createDefaultPage(org.eclipse.ui.part.PageBook)
 	 */
 	protected IPage createDefaultPage(PageBook book) {
-		SynchronizeOverviewPage overviewPage = new SynchronizeOverviewPage();
+		SynchronizeOverviewPage overviewPage = new SynchronizeOverviewPage(this);
 		this.fOverviewPage = new SynchronizeViewWorkbenchPart(overviewPage, getSite());
 		overviewPage.createControl(getPageBook());
 		initPage(overviewPage);
@@ -177,7 +177,6 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 							SynchronizeViewWorkbenchPart part = new SynchronizeViewWorkbenchPart(participant, getSite());
 							fPageToPart.put(participant, part);
 							fPartToPage.put(part, participant);
-							partActivated(part);
 						}
 					}
 				}
@@ -202,9 +201,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 							}
 							if (getParticipant() == null) {
 								ISynchronizeParticipant[] available = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-								if (available.length > 0) {
-									display(available[available.length - 1]);
-								}
+								displayOverviewPage();
 							}
 						}
 					}

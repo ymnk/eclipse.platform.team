@@ -12,6 +12,8 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -19,6 +21,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 
 
 public class ParticipantComposite extends Composite {
@@ -30,12 +33,15 @@ public class ParticipantComposite extends Composite {
 	private Image incomingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_INCOMING).createImage();
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
+
+	private ISynchronizeView view;
 	
-	public ParticipantComposite(Composite parent, ISynchronizeParticipant participant, int style) {
+	public ParticipantComposite(Composite parent, ISynchronizeParticipant participant, ISynchronizeView view, int style) {
 		super(parent, style);
 		this.participant = participant;		
 		this.background = new Color(parent.getDisplay(), new RGB(255, 255, 255));
 		this.participantImage = participant.getImageDescriptor().createImage();
+		this.view = view;
 		createComposite(this);
 	}
 	
@@ -113,7 +119,7 @@ public class ParticipantComposite extends Composite {
 				final GridLayout gridLayout_1 = new GridLayout();
 				gridLayout_1.numColumns = 2;
 				composite_1.setLayout(gridLayout_1);
-				composite.setBackground(getBackgroundColor());
+				composite_1.setBackground(getBackgroundColor());
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
 					label.setText("Last Sync");
@@ -121,7 +127,7 @@ public class ParticipantComposite extends Composite {
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
-					label.setText("Never");
+					label.setText("11/23/03 10:03:12");
 					label.setBackground(getBackgroundColor());
 				}
 				{
@@ -131,7 +137,7 @@ public class ParticipantComposite extends Composite {
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
-					label.setText("label");
+					label.setText("Every hour");
 					label.setBackground(getBackgroundColor());
 				}
 				{
@@ -141,7 +147,7 @@ public class ParticipantComposite extends Composite {
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
-					label.setText("label");
+					label.setText("Idle");
 					label.setBackground(getBackgroundColor());
 				}
 			}
@@ -194,6 +200,11 @@ public class ParticipantComposite extends Composite {
 				{
 					final Button button = new Button(composite_1, SWT.FLAT);
 					button.setText("Changes...");
+					button.addSelectionListener(new SelectionAdapter() {
+						public void widgetSelected(SelectionEvent e) {
+							view.display(participant);
+						}
+					});
 				}
 			}
 		}

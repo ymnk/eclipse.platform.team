@@ -22,8 +22,6 @@ import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
@@ -33,8 +31,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IDEInternalWorkbenchImages;
 import org.eclipse.ui.part.Page;
-
-import sun.security.action.GetBooleanAction;
 
 /**
  * Page that displays the overview information for Synchronize participants.
@@ -46,7 +42,12 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 	private Composite pageComposite;
 	private Map participantsToComposites = new HashMap();
 	private Color white;
+	private SynchronizeView view;
 	
+	public SynchronizeOverviewPage(SynchronizeView view) {
+		this.view = view;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.Page#createControl(org.eclipse.swt.widgets.Composite)
 	 */
@@ -78,7 +79,7 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			participantsToComposites.put(participant, new ParticipantComposite(parent, participant, SWT.NONE));
+			participantsToComposites.put(participant, new ParticipantComposite(parent, participant, view, SWT.NONE));
 		}
 	}
 
@@ -187,7 +188,7 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 					for (int i = 0; i < participants.length; i++) {
 						if (isAvailable()) {
 							ISynchronizeParticipant participant = participants[i];
-							participantsToComposites.put(participant, new ParticipantComposite(pageComposite, participant, SWT.NONE));
+							participantsToComposites.put(participant, new ParticipantComposite(pageComposite, participant, view, SWT.NONE));
 							pageComposite.redraw();
 						}
 					}
@@ -209,6 +210,7 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 							ISynchronizeParticipant console = consoles[i];
 							Composite composite = (Composite)participantsToComposites.get(console);
 							composite.dispose();
+							pageComposite.layout(true);
 							pageComposite.redraw();
 						}
 					}
