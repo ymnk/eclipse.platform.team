@@ -217,7 +217,6 @@ public class SubscriberEventHandler {
 			results.add(new Event(resource, Event.CHANGE, IResource.DEPTH_ZERO, info));
 		}
 	}
-	
 	/**
 	 * Called to initialize to calculate the synchronization information using the optimized subscriber method. For
 	 * subscribers that don't support the optimization, all resources in the subscriber are manually re-calculated. 

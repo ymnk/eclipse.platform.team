@@ -150,6 +150,8 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT, SyncViewerTableSorter.COL_NAME);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT_REVERSED, false);
 		store.setDefault(IPreferenceIds.TESTING_SYNCVIEW, false);
+		store.setDefault(IPreferenceIds.SYNCVIEW_BACKGROUND_SYNC, false);
+		store.setDefault(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE, "org.eclipse.team.internal.ui.sync.views.TeamSynchronizingPerspective");
 	}
 	
 	/**

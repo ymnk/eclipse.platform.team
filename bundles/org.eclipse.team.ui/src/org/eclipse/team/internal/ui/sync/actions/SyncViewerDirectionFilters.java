@@ -19,6 +19,8 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
@@ -178,8 +180,13 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 			} else {
 				outgoingMode.setEnabled(true);	
 			}
-			bothMode.setChecked(true);
-			incomingMode.setChecked(false);
+			if(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_USEBOTHMODE)) {
+				bothMode.setChecked(true);
+				incomingMode.setChecked(false);
+			} else {
+				incomingMode.setChecked(true);
+				bothMode.setChecked(false);
+			}			
 			outgoingMode.setChecked(false);
 			conflictsMode.setChecked(false);
 		}

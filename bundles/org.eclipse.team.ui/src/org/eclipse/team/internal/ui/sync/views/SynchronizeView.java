@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.compare.internal.ExceptionHandler;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.QualifiedName;
@@ -85,11 +86,14 @@ import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.part.IShowInSource;
 import org.eclipse.ui.part.ShowInContext;
@@ -229,10 +233,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			
 				RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
 				refreshJob.setSubscriberInput(input);
-				IStructuredSelection s = (IStructuredSelection)viewer.getSelection();
-				if(s.size() == 0) {
-					gotoDifference(INavigableControl.NEXT);
-				}
+				gotoDifference(INavigableControl.NEXT);
 			}
 		});
 		updateTitle();
@@ -746,6 +747,17 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	 * Makes this view visible in the active page.
 	 */
 	public static SynchronizeView showInActivePage(IWorkbenchPage activePage) {
+		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
+		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
+		
+		if(! TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE).equals(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE_NONE)) {			
+			try {
+				String pId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE);
+				activePage = workbench.showPerspective(pId, window);
+			} catch (WorkbenchException e) {
+					Utils.handleError(window.getShell(), e, "Error opening perspective", "Error opening perspective");
+			}
+		}
 		try {
 			if (activePage == null) {
 				activePage = TeamUIPlugin.getActivePage();
@@ -753,7 +765,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			}
 			return (SynchronizeView)activePage.showView(VIEW_ID);
 		} catch (PartInitException pe) {
-			TeamUIPlugin.log(new TeamException("error showing view", pe));
+			Utils.handleError(window.getShell(), pe, "Error opening view", "Error opening view");
 			return null;
 		}
 	}
