@@ -489,6 +489,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		session.open(Policy.subMonitorFor(monitor, 10));
 		try {
 			return Command.RTAG.execute(
+				session,
 				Command.NO_GLOBAL_OPTIONS,
 				localOptions,
 				new CVSTag(getRevision(), CVSTag.VERSION),

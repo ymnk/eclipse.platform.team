@@ -677,6 +677,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		session.open(Policy.subMonitorFor(monitor, 10));
 		try {
 			return Command.RTAG.execute(
+				session,
 				Command.NO_GLOBAL_OPTIONS,
 				localOptions,
 				folderInfo.getTag(),
