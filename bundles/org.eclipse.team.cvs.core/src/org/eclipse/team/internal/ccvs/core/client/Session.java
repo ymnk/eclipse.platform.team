@@ -146,6 +146,8 @@ public class Session {
 	 * A session will be opened for the provided root. If the root is null, no session is opened.
 	 * However, sessions will be open for nested calls to run and these sessions will not be closed
 	 * until the outer most run finishes.
+	 * 
+	 * @deprecated
 	 */
 	public static void run(final ICVSRepositoryLocation location, final ICVSFolder root, final boolean outputToConsole,
 		final ICVSRunnable runnable, final IProgressMonitor monitor) throws CVSException {

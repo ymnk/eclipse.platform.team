@@ -297,37 +297,43 @@ public class CVSTeamProvider extends RepositoryProvider {
 		progress.beginTask(null, files.size() * 10 + (folders.isEmpty() ? 0 : 10));
 		try {
 			if (!folders.isEmpty()) {
-				Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true, new ICVSRunnable() {
-					public void run(IProgressMonitor monitor) throws CVSException {
-						IStatus status = Command.ADD.execute(
-							Command.NO_GLOBAL_OPTIONS,
-							Command.NO_LOCAL_OPTIONS,
-							(ICVSResource[])folders.toArray(new ICVSResource[folders.size()]),
-							null,
-							monitor);
-						if (status.getCode() == CVSStatus.SERVER_ERROR) {
-							throw new CVSServerException(status);
-						}
+				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true);
+				session.open(Policy.subMonitorFor(progress, 2));
+				try {
+					IStatus status = Command.ADD.execute(
+						session,
+						Command.NO_GLOBAL_OPTIONS,
+						Command.NO_LOCAL_OPTIONS,
+						(ICVSResource[])folders.toArray(new ICVSResource[folders.size()]),
+						null,
+						Policy.subMonitorFor(progress, 8));
+					if (status.getCode() == CVSStatus.SERVER_ERROR) {
+						throw new CVSServerException(status);
 					}
-				}, Policy.subMonitorFor(progress, 10));
+				} finally {
+					session.close();
+				}
 			}
 			for (Iterator it = files.entrySet().iterator(); it.hasNext();) {
 				Map.Entry entry = (Map.Entry) it.next();
 				final KSubstOption ksubst = (KSubstOption) entry.getKey();
 				final Set set = (Set) entry.getValue();
-				Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true, new ICVSRunnable() {
-					public void run(IProgressMonitor monitor) throws CVSException {
-						IStatus status = Command.ADD.execute(
-							Command.NO_GLOBAL_OPTIONS,
-							new LocalOption[] { ksubst },
-							(ICVSResource[])set.toArray(new ICVSResource[set.size()]),
-							null,
-							monitor);
-						if (status.getCode() == CVSStatus.SERVER_ERROR) {
-							throw new CVSServerException(status);
-						}
+				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true);
+				session.open(Policy.subMonitorFor(progress, 2));
+				try {
+					IStatus status = Command.ADD.execute(
+						session,
+						Command.NO_GLOBAL_OPTIONS,
+						new LocalOption[] { ksubst },
+						(ICVSResource[])set.toArray(new ICVSResource[set.size()]),
+						null,
+						Policy.subMonitorFor(progress, 8));
+					if (status.getCode() == CVSStatus.SERVER_ERROR) {
+						throw new CVSServerException(status);
 					}
-				}, Policy.subMonitorFor(progress, 10));
+				} finally {
+					session.close();
+				}
 			}
 		} finally {
 			progress.done();
@@ -439,14 +445,14 @@ public class CVSTeamProvider extends RepositoryProvider {
 			// Remove the files remotely
 			IStatus status;
 			Session s = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot());
-			s.open(progress);
+			s.open(Policy.subMonitorFor(progress, 10));
 			try {
 				status = Command.REMOVE.execute(s,
 				Command.NO_GLOBAL_OPTIONS,
 				Command.NO_LOCAL_OPTIONS,
 				(String[])files.toArray(new String[files.size()]),
 				null,
-				Policy.subMonitorFor(progress, 70));
+				Policy.subMonitorFor(progress, 60));
 			} finally {
 				s.close();
 			}
@@ -526,9 +532,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 * @param format
 	 * @throws CVSException
 	 */
-	
 	private void newFileDiff(final ICVSResource resource, final PrintStream stream, final boolean doNotRecurse, final int format) throws CVSException {
-	
 		resource.accept(new ICVSResourceVisitor() {
 			public void visitFile(ICVSFile file) throws CVSException {
 				if (!(file.isIgnored() || file.isManaged()))  {
@@ -549,10 +553,10 @@ public class CVSTeamProvider extends RepositoryProvider {
 
 	private void addFileToDiff(ICVSFile file, PrintStream stream, int format) throws CVSException {
 		
-		String nullFilePrefix = "";
-		String newFilePrefix = "";
-		String positionInfo = "";
-		String linePrefix = "";
+		String nullFilePrefix = ""; //$NON-NLS-1$
+		String newFilePrefix = ""; //$NON-NLS-1$
+		String positionInfo = ""; //$NON-NLS-1$
+		String linePrefix = ""; //$NON-NLS-1$
 		
 		String pathString = file.getIResource().getProjectRelativePath().toString();
 
@@ -568,14 +572,14 @@ public class CVSTeamProvider extends RepositoryProvider {
 				case UNIFIED_FORMAT :
 					nullFilePrefix = "--- ";	//$NON-NLS-1$
 					newFilePrefix = "+++ "; 	//$NON-NLS-1$
-					positionInfo = "@@ -0,0 +1," + lines + " @@" ;	//$NON-NLS-1$
+					positionInfo = "@@ -0,0 +1," + lines + " @@" ;	//$NON-NLS-1$ //$NON-NLS-2$
 					linePrefix = "+"; //$NON-NLS-1$
 					break;
 
 				case CONTEXT_FORMAT :
 					nullFilePrefix = "*** ";	//$NON-NLS-1$
 					newFilePrefix = "--- ";		//$NON-NLS-1$
-					positionInfo = "--- 1," + lines + " ----";	//$NON-NLS-1$
+					positionInfo = "--- 1," + lines + " ----";	//$NON-NLS-1$ //$NON-NLS-2$
 					linePrefix = "+ ";	//$NON-NLS-1$
 					break;
 				
@@ -613,7 +617,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 				}
 			}
 		} catch (IOException e) {
-			throw new CVSException(Policy.bind("java.io.IOException", pathString));
+			throw CVSException.wrapException(file.getIResource(), Policy.bind("CVSTeamProvider.errorAddingFileToDiff", pathString), e); //$NON-NLS-1$
 		} finally  {
 			try {
 				fileReader.close();
@@ -1103,10 +1107,11 @@ public class CVSTeamProvider extends RepositoryProvider {
 			
 				/*** commit then admin the resources ***/
 				// compute the total work to be performed
-				int totalWork = filesToCommit.size();
+				int totalWork = filesToCommit.size() + 1;
 				for (Iterator it = filesToAdmin.values().iterator(); it.hasNext();) {
 					List list = (List) it.next();
 					totalWork += list.size();
+					totalWork += 1; // Add 1 for each connection that needs to be made
 				}
 				if (totalWork != 0) {
 					monitor.beginTask(Policy.bind("CVSTeamProvider.settingKSubst"), totalWork); //$NON-NLS-1$
@@ -1115,21 +1120,25 @@ public class CVSTeamProvider extends RepositoryProvider {
 						// NOTE: The files are committed as text with conversions even if the
 						//       resource sync info still says "binary".
 						if (filesToCommit.size() != 0) {
-							Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */,
-								new ICVSRunnable(								) {
-									public void run(IProgressMonitor monitor) throws CVSException {
-										String keywordChangeComment = comment;
-										if (keywordChangeComment == null || keywordChangeComment.length() == 0)
-											keywordChangeComment = Policy.bind("CVSTeamProvider.changingKeywordComment"); //$NON-NLS-1$
-										result[0] = Command.COMMIT.execute(
-											Command.NO_GLOBAL_OPTIONS,
-											new LocalOption[] { Commit.DO_NOT_RECURSE, Commit.FORCE,
-												Commit.makeArgumentOption(Command.MESSAGE_OPTION, keywordChangeComment) },
-											(ICVSResource[]) filesToCommit.toArray(new ICVSResource[filesToCommit.size()]),
-											filesToCommitAsText,
-											null, Policy.subMonitorFor(monitor, filesToCommit.size()));
-									}
-								}, Policy.subMonitorFor(monitor, filesToCommit.size()));
+							Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
+							session.open(Policy.subMonitorFor(monitor, 1));
+							try {
+								String keywordChangeComment = comment;
+								if (keywordChangeComment == null || keywordChangeComment.length() == 0)
+									keywordChangeComment = Policy.bind("CVSTeamProvider.changingKeywordComment"); //$NON-NLS-1$
+								result[0] = Command.COMMIT.execute(
+									session,
+									Command.NO_GLOBAL_OPTIONS,
+									new LocalOption[] { Commit.DO_NOT_RECURSE, Commit.FORCE,
+										Commit.makeArgumentOption(Command.MESSAGE_OPTION, keywordChangeComment) },
+									(ICVSResource[]) filesToCommit.toArray(new ICVSResource[filesToCommit.size()]),
+									filesToCommitAsText,
+									null, 
+									Policy.subMonitorFor(monitor, filesToCommit.size()));
+							} finally {
+								session.close();
+							}
+
 							// if errors were encountered, abort
 							if (! result[0].isOK()) return;
 						}
@@ -1145,16 +1154,19 @@ public class CVSTeamProvider extends RepositoryProvider {
 							final KSubstOption toKSubst = (KSubstOption) entry.getKey();
 							final List list = (List) entry.getValue();
 							// do it
-							Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */,
-								new ICVSRunnable(								) {
-									public void run(IProgressMonitor monitor) throws CVSException {
-										result[0] = Command.ADMIN.execute(Command.NO_GLOBAL_OPTIONS,
-											new LocalOption[] { toKSubst },
-											(ICVSResource[]) list.toArray(new ICVSResource[list.size()]),
-											new AdminKSubstListener(toKSubst),
-											Policy.subMonitorFor(monitor, list.size()));
-									}
-								}, Policy.subMonitorFor(monitor, list.size()));
+							Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
+							session.open(Policy.subMonitorFor(monitor, 1));
+							try {
+								result[0] = Command.ADMIN.execute(
+									session,
+									Command.NO_GLOBAL_OPTIONS,
+									new LocalOption[] { toKSubst },
+									(ICVSResource[]) list.toArray(new ICVSResource[list.size()]),
+									new AdminKSubstListener(toKSubst),
+									Policy.subMonitorFor(monitor, list.size()));
+							} finally {
+								session.close();
+							}
 							// if errors were encountered, abort
 							if (! result[0].isOK()) return;
 						}
@@ -1318,10 +1330,9 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 * This method captures the common behavior between the edit and unedit methods.
 	 */
 	private void notifyEditUnedit(final IResource[] resources, final boolean recurse, final boolean notifyServer, final ICVSResourceVisitor editUneditVisitor, IProgressMonitor monitor) throws CVSException {
-		final IProgressMonitor progress = Policy.monitorFor(monitor);
 		final CVSException[] exception = new CVSException[] { null };
 		IWorkspaceRunnable workspaceRunnable = new IWorkspaceRunnable() {
-			public void run(IProgressMonitor pm) throws CoreException {
+			public void run(IProgressMonitor monitor) throws CoreException {
 				final ICVSResource[] cvsResources = getCVSArguments(resources);
 				
 				// mark the files locally as being checked out
@@ -1336,27 +1347,33 @@ public class CVSTeamProvider extends RepositoryProvider {
 				
 				// send the noop command to the server in order to deliver the notifications
 				if (notifyServer) {
-					final boolean[] connected = new boolean[] { false };
+					monitor.beginTask(null, 100);
+					Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true);
 					try {
-						Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true, new ICVSRunnable() {
-							public void run(IProgressMonitor monitor) throws CVSException {
-								connected[0] = true;
-								Command.NOOP.execute(Command.NO_GLOBAL_OPTIONS, Command.NO_LOCAL_OPTIONS, 
-								cvsResources, null, monitor);
-							}
-						}, progress);
+						session.open(Policy.subMonitorFor(monitor, 10));
+					} catch (CVSException e1) {
+						// If the connection cannot be opened, just exit normally.
+						// The notifications will be sent when a connection can be made
+						return;
+					}
+					try {
+						Command.NOOP.execute(
+							session,
+							Command.NO_GLOBAL_OPTIONS, 
+							Command.NO_LOCAL_OPTIONS, 
+							cvsResources, 
+							null, 
+							Policy.subMonitorFor(monitor, 90));
 					} catch (CVSException e) {
-						// Only report the exception if we were able to connect.
-						// If we couldn't connect, the notification will be sent the next time we do.
-						if (connected[0]) exception[0] = e;
+						exception[0] = e;
 					} finally {
-						progress.done();
+						monitor.done();
 					}
 				}
 			}
 		};
 		try {
-			ResourcesPlugin.getWorkspace().run(workspaceRunnable, monitor);
+			ResourcesPlugin.getWorkspace().run(workspaceRunnable, Policy.monitorFor(monitor));
 		} catch (CoreException e) {
 			if (exception[0] == null) {
 				throw CVSException.wrapException(e);

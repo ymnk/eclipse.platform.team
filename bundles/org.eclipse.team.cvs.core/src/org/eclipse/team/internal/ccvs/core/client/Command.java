@@ -630,7 +630,7 @@ public abstract class Command extends Request {
 	 */
 	public static LocalOption makeArgumentOption(LocalOption option, String argument) {
 		if(argument == null) {
-			argument = "";
+			argument = ""; //$NON-NLS-1$
 		}
 		return new LocalOption(option.getOption(), argument);  //$NON-NLS-1$
 	}
@@ -724,6 +724,8 @@ public abstract class Command extends Request {
 	 * @param monitor the progress monitor
 	 * @return a status code indicating success or failure of the operation
 	 * @throws CVSException if a fatal error occurs (e.g. connection timeout)
+	 * 
+	 * @deprecated
 	 */
 	public final IStatus execute(GlobalOption[] globalOptions, LocalOption[] localOptions, ICVSResource[] arguments, 
 		ICommandOutputListener listener, IProgressMonitor pm) throws CVSException {
@@ -731,6 +733,29 @@ public abstract class Command extends Request {
 		Session openSession = getOpenSession(arguments);
 		String[] stringArguments = convertArgumentsForOpenSession(arguments, openSession);
 		return execute(openSession, globalOptions, localOptions, stringArguments, listener, pm);
+	}
+	
+	/**
+	 * Execute a CVS command on an array of ICVSResource. This method simply converts
+	 * the ICVSResource to String paths relative to the local root of the session and
+	 * invokes <code>execute(Session, GlobalOption[], LocalOption[], String[], ICommandOutputListener, IProgressMonitor)</code>.
+	 * </p>
+	 * @param session the open CVS session
+	 * @param globalOptions the array of global options, or NO_GLOBAL_OPTIONS
+	 * @param localOptions the array of local options, or NO_LOCAL_OPTIONS
+	 * @param arguments the array of ICVSResource to be operated on
+	 * @param listener the command output listener, or null to discard all messages
+	 * @param monitor the progress monitor
+	 * @return a status code indicating success or failure of the operation
+	 * @throws CVSException if a fatal error occurs (e.g. connection timeout)
+	 * 
+	 * @see Command#execute(Session, GlobalOption[], LocalOption[], String[], ICommandOutputListener, IProgressMonitor)
+	 */
+	public final IStatus execute(Session session, GlobalOption[] globalOptions, LocalOption[] localOptions, ICVSResource[] arguments, 
+		ICommandOutputListener listener, IProgressMonitor pm) throws CVSException {
+		
+		String[] stringArguments = convertArgumentsForOpenSession(arguments, session);
+		return execute(session, globalOptions, localOptions, stringArguments, listener, pm);
 	}
 	
 	protected Session getOpenSession(ICVSResource[] arguments) throws CVSException {
