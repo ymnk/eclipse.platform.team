@@ -546,7 +546,7 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 		for (int i = 0; i < children.length; i++) {
 			ICVSResource resource = children[i];
 			if (resource.isFolder()) {
-				Integer dc = getDirtyCount(parent);
+				Integer dc = getDirtyCount((IContainer)resource.getIResource());
 				if (dc.intValue() > 0) count++;
 			} else {
 				// Any non-existant managed files are dirty (outgoing deletion)

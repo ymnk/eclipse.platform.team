@@ -1126,42 +1126,42 @@ public class EclipseSynchronizer {
 		return SyncFileWriter.isEdited(resource);
 	}
 	
-	protected void setDirtyIndicator(IResource resource, Object indicator) throws CVSException {
+	protected void setDirtyIndicator(IResource resource, String indicator) throws CVSException {
 		if (resource.getType() == IResource.FILE) {
-			setDirtyIndicator((IFile)resource, indicator);
+			internalSetDirtyIndicator((IFile)resource, indicator);
 		} else {
-			setDirtyIndicator((IContainer)resource, indicator);
+			internalSetDirtyIndicator((IContainer)resource, indicator);
 		}
 	}
 	protected String getDirtyIndicator(IResource resource) throws CVSException {
 		if (resource.getType() == IResource.FILE) {
-			return getDirtyIndicator((IFile)resource);
+			return internalGetDirtyIndicator((IFile)resource);
 		} else {
-			return getDirtyIndicator((IContainer)resource);
+			return internalGetDirtyIndicator((IContainer)resource);
 		}
 	}
-	private void setDirtyIndicator(IFile file, String indicator) throws CVSException {
+	private void internalSetDirtyIndicator(IFile file, String indicator) throws CVSException {
 		try {
 			file.setSessionProperty(IS_DIRTY, indicator);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
 	}
-	private String getDirtyIndicator(IFile file) throws CVSException {
+	private String internalGetDirtyIndicator(IFile file) throws CVSException {
 		try {
 			return (String)file.getSessionProperty(IS_DIRTY);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
 	}
-	private void setDirtyIndicator(IContainer container, String indicator) throws CVSException {
+	private void internalSetDirtyIndicator(IContainer container, String indicator) throws CVSException {
 		try {
 			container.setPersistentProperty(IS_DIRTY, indicator);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
 	}
-	private String getDirtyIndicator(IContainer container) throws CVSException {
+	private String internalGetDirtyIndicator(IContainer container) throws CVSException {
 		try {
 			return container.getPersistentProperty(IS_DIRTY);
 		} catch (CoreException e) {
