@@ -19,22 +19,29 @@ import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
 
 /**
- * A dynamic collection of {@link SyncInfo} objects. This data structure is optimized 
- * for fast retrieval of out-of-sync resources . There are
- * generally two methods for obtaining instances of this collection:
+ * A potentially dynamic collection of {@link SyncInfo} objects that is optimized 
+ * for fast retrieval of out-of-sync resources. There are
+ * generally two ways in which a sync info sets are used, both of which 
+ * are implemented as subclasses of <code>SyncInfoSet</code>:
  * <ul>
- *   <li>Create a {@link SyncInfoCollector} to dynamically collect changes from a team
- *  subscriber and reference its sync info set.
- *   <li>Create a set with a pre-defined set of sync info objects.
+ *   <li>{@link MutableSyncInfoSet}: used to dynamically collect changes 
+ * from a team subscriber or some other
+ * source and maintain the set of out-of-sync resources for display in a view.
+ *   <li>{@link SelectionSyncInfoSet}: used to provide input to {@link TeamSubscriber} 
+ * specific operations that operate on a collection of {@link SyncInfo}.
  * </ul>
  * <p>
- * This set generates a {@link ISyncInfoSetChangeEvent} every time it is modified. 
+ * This class provides access to the sync set contents to clients and provides modification
+ * operations to subclasses. In addition, this class defines the protocol for registering 
+ * and deregistering change listeners but it is up to subclasses to record changes and 
+ * notify any listeners about changes.
+ * 
  * </p>
- * @see TeamSubscriberSyncInfoCollector
  * @see MutableSyncInfoSet
+ * @see SelectionSyncInfoSet
  * @since 3.0
  */
-public class SyncInfoSet {
+public abstract class SyncInfoSet {
 	// fields used to hold resources of interest
 	// {IPath -> SyncInfo}
 	protected Map resources = Collections.synchronizedMap(new HashMap());
@@ -57,7 +64,7 @@ public class SyncInfoSet {
 	 * @param infos a list of <code>SyncInfo</code> that are added to
 	 * the new set. 
 	 */
-	public SyncInfoSet(SyncInfo[] infos) {
+	protected SyncInfoSet(SyncInfo[] infos) {
 		this();
 		for (int i = 0; i < infos.length; i++) {
 			internalAdd(infos[i]);
@@ -340,18 +347,17 @@ public class SyncInfoSet {
 		return (IResource[]) children.toArray(new IResource[children.size()]);
 	}
 
-	protected Set listeners = Collections.synchronizedSet(new HashSet());
-
 	/**
-	 * Registers the given listener for sync info set notifications. Has
-	 * no effect if an identical listener is already registered.
+	 * Registers the given listener for sync info set notifications if the
+	 * <code>SyncInfoSet</code> implementation supports change notification.
+	 * If change notification is not supported, an <code>UnsupportedOperationException</code>
+	 * is thrown.
+	 * Has no effect if an identical listener is already registered.
 	 * 
 	 * @param listener listener to register
 	 */
 	public void addSyncSetChangedListener(ISyncSetChangedListener listener) {
-		synchronized(listeners) {
-			listeners.add(listener);
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -361,13 +367,11 @@ public class SyncInfoSet {
 	 * @param listener listener to deregister
 	 */
 	public void removeSyncSetChangedListener(ISyncSetChangedListener listener) {
-		synchronized(listeners) {
-			listeners.remove(listener);
-		}
+		// Do nothing
 	}
 	
 	/**
-	 * Reset the sync set so it is empty
+	 * Reset the sync set so it is empty.
 	 */
 	protected void clear() {
 		resources.clear();
@@ -383,10 +387,12 @@ public class SyncInfoSet {
 	}
 
 	/**
-	 * Run the given runnable, blocking other threads from modifying the 
-	 * set and postponing any changes to the end.
+	 * Run the given runnable. For mutable subclasses this operation
+	 * will block other threads from modifying the 
+	 * set and postpone any change notifications until after the runnable
+	 * has been executed.
 	 * @param runnable a runnable
-	 * @param progress a o\progress monitor or <code>null</code>
+	 * @param progress a progress monitor or <code>null</code>
 	 */
 	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) throws CoreException {
 		runnable.run(Policy.monitorFor(monitor));		

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers;
 
+import java.util.*;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.*;
@@ -21,6 +23,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 
 	private SyncSetChangedEvent changes = new SyncSetChangedEvent(this);
 	private ILock lock = Platform.getJobManager().newLock();
+	private Set listeners = Collections.synchronizedSet(new HashSet());
 	
 	public MutableSyncInfoSet() {
 	}
@@ -28,7 +31,31 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	public MutableSyncInfoSet(SyncInfo[] infos) {
 		super(infos);
 	}
-		
+	
+	/**
+	 * Registers the given listener for sync info set notifications. Has
+	 * no effect if an identical listener is already registered.
+	 * 
+	 * @param listener listener to register
+	 */
+	public void addSyncSetChangedListener(ISyncSetChangedListener listener) {
+		synchronized(listeners) {
+			listeners.add(listener);
+		}
+	}
+
+	/**
+	 * Deregisters the given listener for participant notifications. Has
+	 * no effect if listener is not already registered.
+	 * 
+	 * @param listener listener to deregister
+	 */
+	public void removeSyncSetChangedListener(ISyncSetChangedListener listener) {
+		synchronized(listeners) {
+			listeners.remove(listener);
+		}
+	}
+	
 	/**
 	 * Add the given <code>SyncInfo</code> to the set. An change event will
 	 * be generated unless the call to this method is nested in between calls

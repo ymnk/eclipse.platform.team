@@ -12,8 +12,7 @@ package org.eclipse.team.tests.ui.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.ui.*;
@@ -47,7 +46,7 @@ public class ContentProviderTestView extends ViewPart {
 		viewer = new TestTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setContentProvider(new SyncInfoSetContentProvider());
 		viewer.setLabelProvider(new SyncInfoLabelProvider());
-		setInput(new SyncInfoSet(new SyncInfo[0]));
+		setInput(new MutableSyncInfoSet(new SyncInfo[0]));
 	}
 
 	public void setInput(SyncInfoSet set) {

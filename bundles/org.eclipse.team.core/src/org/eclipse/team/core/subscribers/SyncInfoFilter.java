@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.internal.core.subscribers.*;
 
 /**
- * A <code>SyncInfoFilter</code> tests a <code>SyncInfo</code> for inclusion
+ * A <code>SyncInfoFilter</code> tests a <code>SyncInfo</code> for inclusion,
  * typically in a <code>SyncInfoSet</code>.
  * 
  * @see SyncInfo
@@ -26,7 +26,12 @@ import org.eclipse.team.internal.core.subscribers.*;
 public abstract class SyncInfoFilter {
 	
 	/**
-	 * Selects <code>SyncInfo</code> whose contents match.
+	 * Selects <code>SyncInfo</code> whose local and remote contents match.
+	 * This filter makes use of the <code>IStorage</code> provided by
+	 * an <code>ISubscriberResource</code> to obtain the remote contents.
+	 * This means that the comparison may contact the server unless the contents
+	 * were cached locally by a previous operation. The caching of remote
+	 * contents is subscriber specific. 
 	 */
 	public static class ContentComparisonSyncInfoFilter extends SyncInfoFilter {
 		ContentComparator criteria = new ContentComparator(false);
@@ -57,7 +62,7 @@ public abstract class SyncInfoFilter {
 	 * 
 	 * @param info the <code>SyncInfo</code> to be tested
 	 * @param monitor a progress monitor
-	 * @return
+	 * @return <code>true</code> if the <code>SyncInfo</code> matches the filter
 	 */
 	public abstract boolean select(SyncInfo info, IProgressMonitor monitor);
 	
