@@ -550,7 +550,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	}
 	
 	public static final int REQUIRED_FIELD = 1;
-	public static final int INVALID_FIELD_CONTENTS = 1;
+	public static final int INVALID_FIELD_CONTENTS = 2;
 	public static final IStatus validateUserName(String user) {
 		if (user.length() == 0) {
 			return new Status(IStatus.ERROR, CVSUIPlugin.ID, REQUIRED_FIELD, Policy.bind("ConfigurationWizardMainPage.1"), null); //$NON-NLS-1$
