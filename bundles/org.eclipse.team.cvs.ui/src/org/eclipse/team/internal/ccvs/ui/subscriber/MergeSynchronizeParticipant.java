@@ -11,13 +11,12 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.team.core.TeamException;
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.core.SaveContext;
-import org.eclipse.team.internal.core.SaveContextXMLWriter;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
@@ -27,6 +26,9 @@ import org.eclipse.ui.part.IPageBookViewPage;
 
 public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	
+	private final static String CTX_QUALIFIER = "qualifier";
+	private final static String CTX_LOCALNAME = "localname";
+	
 	public MergeSynchronizeParticipant() {
 		super();
 	}
@@ -35,7 +37,9 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 		super();
 		setSubscriber(subscriber);
 	}
-			
+	
+	
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.TeamSubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
 	 */
@@ -52,28 +56,29 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
 	 */
-	public void init(String instanceid) throws PartInitException {
-		SaveContext ctx; //$NON-NLS-1$
+	public void restoreState(ISaveContext context) throws PartInitException {
+		String qualifier = context.getAttribute(CTX_QUALIFIER);
+		String localname = context.getAttribute(CTX_LOCALNAME);
+		if(qualifier == null || localname == null) {
+			throw new PartInitException("Missing id initializing cvs merge participant");
+		}
 		try {
-			ctx = SaveContextXMLWriter.readXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(id.getLocalName()));
-			setSubscriber(CVSMergeSubscriber.restore(id, ctx));
-		} catch (TeamException e) {
-			TeamUIPlugin.log(e);
+			setSubscriber(CVSMergeSubscriber.restore(new QualifiedName(qualifier, localname), context));
+		} catch (CVSException e) {
+			throw new PartInitException("Unable to initialize cvs merge subscriber", e);
 		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#saveState(org.eclipse.team.core.ISaveContext)
 	 */
-	public void saveState(int instanceid) {
+	public void saveState(ISaveContext context) {
 		SubscriberInput input = getInput();
-		CVSMergeSubscriber s =(CVSMergeSubscriber)input.getSubscriber(); 
-		SaveContext ctx = s.saveState();
-		try {
-			SaveContextXMLWriter.writeXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(getId().getLocalName()), ctx); //$NON-NLS-1$		
-		} catch (TeamException e) {
-			TeamUIPlugin.log(e);
-		}
+		CVSMergeSubscriber s = (CVSMergeSubscriber)input.getSubscriber();
+		QualifiedName sId = s.getId();
+		context.addAttribute(CTX_QUALIFIER, sId.getQualifier());
+		context.addAttribute(CTX_LOCALNAME, sId.getLocalName());
+		s.saveState(context);
 	}
 		
 	/* (non-Javadoc)
@@ -82,11 +87,6 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	protected void dispose() {
 		super.dispose();
 		((CVSMergeSubscriber)getInput().getSubscriber()).cancel();
-		SaveContextXMLWriter.deleteXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(getId().getLocalName())); //$NON-NLS-1$
-	}
-	
-	private String getMetaFileName(String id) {
-		return "mergeSyncPartners" + id + ".xml"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 	
 	/* (non-Javadoc)
@@ -94,5 +94,12 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view) {		
 		return new MergeSynchronizePage(this, view, getInput());
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#getName()
+	 */
+	public String getName() {		
+		return ((CVSMergeSubscriber)getInput().getSubscriber()).getName();
 	}
 }

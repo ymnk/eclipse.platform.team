@@ -74,14 +74,12 @@ public interface ISynchronizeManager {
 	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage page);
 	
 	/**
-	 * Returns a registered synchronize participant with the given id and instance id.
-	 * If instance id is <code>null</code> the first registered participant with id
-	 * is returned.
+	 * Returns the registered synchronize participants with the given id.
 	 * 
-	 * @return a registered synchronize participant with the given id, or <code>null</code>
-	 * if one with that id is not registered.
+	 * @return the registered synchronize participants with the given id, or 
+	 * <code>null</code> if one with that id is not registered.
 	 */
-	public ISynchronizeParticipant find(String id, String instance_id);
+	public ISynchronizeParticipant[] find(String id);
 	
 	/**
 	 * Returns the participant descriptor for the given participant id or 

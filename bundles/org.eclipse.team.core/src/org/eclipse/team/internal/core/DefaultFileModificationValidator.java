@@ -22,9 +22,10 @@ public class DefaultFileModificationValidator implements IFileModificationValida
 	private static final Status OK = Team.OK_STATUS;
 
 	private IStatus getDefaultStatus(IFile file) {
-		return file.isReadOnly()
-				? new Status(Status.ERROR, TeamPlugin.ID, IResourceStatus.READ_ONLY_LOCAL, Policy.bind("FileModificationValidator.fileIsReadOnly", file.getFullPath().toString()), null) //$NON-NLS-1$
-				: OK;
+//		return file.isReadOnly()
+//				? new Status(Status.ERROR, TeamPlugin.ID, IResourceStatus.READ_ONLY_LOCAL, Policy.bind("FileModificationValidator.fileIsReadOnly", file.getFullPath().toString()), null) //$NON-NLS-1$
+//				: OK;
+		return OK;
 	}
 	
 	/**

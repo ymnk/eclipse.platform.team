@@ -14,10 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.ISafeRunnable;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 
@@ -271,24 +268,5 @@ abstract public class TeamSubscriber {
 	 */
 	public SyncInfo[] getAllOutOfSync(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
 		return null;
-	}
-	
-	/**
-	 * Return true if the receiver is equal to object.
-	 * @return true if object is the same class as the receiver and has the same ID
-	 */
-	public boolean equals(Object object) {
-		if (object instanceof TeamSubscriber) {
-			TeamSubscriber subscriber = (TeamSubscriber) object;
-			return getId().equals(subscriber.getId());
-		}
-		return super.equals(object);
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	public int hashCode() {
-		return getId().hashCode();
 	}
 }

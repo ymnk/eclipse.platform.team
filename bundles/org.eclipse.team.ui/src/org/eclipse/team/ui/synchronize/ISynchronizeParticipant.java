@@ -13,6 +13,7 @@ package org.eclipse.team.ui.synchronize;
 import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.team.core.ISaveContext;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -83,12 +84,12 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @exception PartInitException
 	 *                if this participant was not initialized successfully
 	 */
-	public void init(String id) throws PartInitException;
+	public void restoreState(ISaveContext context) throws PartInitException;
 
 	/**
 	 * Saves the participants object state.
 	 */
-	public void saveState(int instanceid);
+	public void saveState(ISaveContext context);
 
 	/**
 	 * Adds a listener for changes to properties of this synchronize

@@ -53,6 +53,7 @@ import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticip
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
@@ -697,6 +698,11 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 * @return Returns the cvsWorkspaceSynchronizeViewPage.
 	 */
 	public WorkspaceSynchronizeParticipant getCvsWorkspaceSynchronizeParticipant() {
-		return (WorkspaceSynchronizeParticipant)TeamUI.getSynchronizeManager().find(WorkspaceSynchronizeParticipant.ID, null);
+		ISynchronizeParticipant[] instances = TeamUI.getSynchronizeManager().find(WorkspaceSynchronizeParticipant.ID);
+		if(instances.length == 1) {
+			return (WorkspaceSynchronizeParticipant)instances[0];
+		} else {
+			return null;
+		}
 	}
 }

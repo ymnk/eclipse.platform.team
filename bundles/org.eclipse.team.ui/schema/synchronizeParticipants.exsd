@@ -6,9 +6,10 @@
          <meta.schema plugin="org.eclipse.team.ui" id="synchronizeParticipants" name="Synchronize View Participants"/>
       </appInfo>
       <documentation>
-         This extension point is used to a synchronize participant with the Synchronize View. A synchronize participant provides a logical connection between local resources and a remote location that is used to share those resources. The Synchronize View displays synchronize participants.
+         This extension point is used to register a synchronize participant with the Synchronize View. A synchronize participant provides a logical connection between local resources and a remote location that is used to share those resources. The Synchronize View displays synchronize participants.
 &lt;p&gt;
 Providers may provide an extension for this extension point, and an implementation of &lt;samp&gt;org.eclipse.team.ui.synchronize.ISynchronizeParticipant&lt;/samp&gt;.
+&lt;/p&gt;
       </documentation>
    </annotation>
 
@@ -50,6 +51,13 @@ Providers may provide an extension for this extension point, and an implementati
                </documentation>
             </annotation>
          </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  A unique name that will be used to identify this type of participant.
+               </documentation>
+            </annotation>
+         </attribute>
          <attribute name="class" type="string">
             <annotation>
                <documentation>
@@ -64,17 +72,10 @@ Providers may provide an extension for this extension point, and an implementati
                </documentation>
             </annotation>
          </attribute>
-         <attribute name="qualified_name" type="string">
+         <attribute name="name" type="string">
             <annotation>
                <documentation>
-                  A unique name that will be used to identify this type of participant.
-               </documentation>
-            </annotation>
-         </attribute>
-         <attribute name="local_name" type="string">
-            <annotation>
-               <documentation>
-                  A unique identifier
+                  The name of the participant. This will be shown in the UI.
                </documentation>
             </annotation>
          </attribute>
@@ -96,23 +97,20 @@ Providers may provide an extension for this extension point, and an implementati
       </appInfo>
       <documentation>
          &lt;extension
- point=&quot;org.eclipse.team.ui.synchronizeParticipants&quot;&gt;
-     &lt;participant
-         name=&quot;CVS Workspace&quot;
-            icon=&quot;icons/full/cview16/server.gif&quot;
-            class=&quot;org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant&quot;
-            type=&quot;static&quot;
-            qualified_name=&quot;org.eclipse.team.cvs.ui.cvsworkspace-participant&quot;
-            local_name=&quot;syncparticipant&quot;&gt;
-      &lt;/participant&gt;
-      &lt;participant
-            name=&quot;CVS Merge&quot;
-            icon=&quot;icons/full/obj16/prjversions_rep.gif&quot;
-            class=&quot;org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant&quot;
-            type=&quot;dynamic&quot;
-            qualified_name=&quot;org.eclipse.team.cvs.ui.cvsmerge-participant&quot;
-            local_name=&quot;unknown&quot;&gt;
-      &lt;/participant&gt;
+point=&quot;org.eclipse.team.ui.synchronizeParticipants&quot;&gt;
+&lt;participant
+name=&quot;CVS Workspace&quot;
+icon=&quot;icons/full/cview16/server.gif&quot;         class=&quot;org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant&quot;
+type=&quot;static&quot;
+id=&quot;org.eclipse.team.cvs.ui.cvsworkspace-participant&quot;&gt;
+&lt;/participant&gt;
+&lt;participant
+name=&quot;CVS Merge&quot;
+icon=&quot;icons/full/obj16/prjversions_rep.gif&quot;
+class=&quot;org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant&quot;
+type=&quot;dynamic&quot;
+id=&quot;org.eclipse.team.cvs.ui.cvsmerge-participant&quot;&gt;
+&lt;/participant&gt;
 &lt;/extension&gt;
       </documentation>
    </annotation>
@@ -123,7 +121,6 @@ Providers may provide an extension for this extension point, and an implementati
       </appInfo>
       <documentation>
          The value of the &lt;samp&gt;class&lt;/samp&gt; attribute must represent a class that implements &lt;samp&gt;org.eclipse.team.ui.synchronize.ISynchronizeView&lt;/samp&gt;.
-Refer to the
       </documentation>
    </annotation>
 
@@ -132,7 +129,7 @@ Refer to the
          <meta.section type="implementation"/>
       </appInfo>
       <documentation>
-         [Enter information about supplied implementation of this extension point.]
+         
       </documentation>
    </annotation>
 

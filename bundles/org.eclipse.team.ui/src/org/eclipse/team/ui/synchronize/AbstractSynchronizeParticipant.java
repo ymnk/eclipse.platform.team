@@ -30,7 +30,6 @@ import org.eclipse.team.ui.TeamUI;
  * @see ISynchronizeParticipant
  * @since 3.0
  */
-
 public abstract class AbstractSynchronizeParticipant implements ISynchronizeParticipant {
 	// property listeners
 	private ListenerList fListeners;
