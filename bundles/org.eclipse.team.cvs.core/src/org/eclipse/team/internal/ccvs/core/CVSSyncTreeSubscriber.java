@@ -190,6 +190,7 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	 */
 	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, IProgressMonitor monitor) throws TeamException {
 		try {
+			monitor = Policy.monitorFor(monitor);
 			monitor.beginTask(null, 100);
 			CVSSyncInfo info = new CVSSyncInfo(local, base, remote, this, Policy.subMonitorFor(monitor, 100));
 			

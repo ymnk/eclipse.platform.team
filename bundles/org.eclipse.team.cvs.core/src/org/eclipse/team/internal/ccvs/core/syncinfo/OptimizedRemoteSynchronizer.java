@@ -26,8 +26,8 @@ public class OptimizedRemoteSynchronizer extends RemoteTagSynchronizer {
 	/**
 	 * @param id
 	 */
-	public OptimizedRemoteSynchronizer(String id, boolean cacheContents) {
-		super(id, null /* use the tag in the local workspace resources */, cacheContents);
+	public OptimizedRemoteSynchronizer(String id) {
+		super(id, null /* use the tag in the local workspace resources */);
 	}
 
 	/* (non-Javadoc)

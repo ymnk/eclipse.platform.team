@@ -101,8 +101,8 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	private void initialize() {				
 		QualifiedName id = getId();
 		String syncKeyPrefix = id.getLocalName();
-		remoteSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + end.getName(), end, true);
-		baseSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + start.getName(), start, true);
+		remoteSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + end.getName(), end);
+		baseSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + start.getName(), start);
 		mergedSynchronizer = new RemoteSynchronizer(syncKeyPrefix + "0merged");
 		
 		try {

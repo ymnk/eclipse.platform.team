@@ -42,7 +42,7 @@ import org.eclipse.team.internal.core.Policy;
 public class RefreshSubscribersJob extends Job implements ITeamResourceChangeListener, IJobChangeListener {
 	
 	private final static boolean DEBUG = Policy.DEBUG_REFRESH_JOB;
-	private static long refreshInterval = 10000; //5 /* minutes */ * (60 * 1000); 
+	private static long refreshInterval = 20000; //5 /* minutes */ * (60 * 1000); 
 	
 	private Map subscribers = Collections.synchronizedMap(new  HashMap());
 	private List importantSubscribers = Collections.synchronizedList(new  ArrayList());
@@ -55,7 +55,7 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 		setPriority(Job.DECORATE);
 		if(! subscribers.isEmpty()) {
 			if(DEBUG) System.out.println("refreshJob: starting job in constructor");
-			schedule(refreshInterval);
+			startup();
 		}
 		
 		instance = this;
@@ -80,7 +80,7 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 		// will be used when it is rescheduled.
 		if(getState() == Job.WAITING) {
 			cancel();
-			schedule(refreshInterval);
+			startup();
 		}
 	}
 	
@@ -156,7 +156,7 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 				if(DEBUG) System.out.println("refreshJob: adding subscriber " + s.getName());
 				if(this.getState() == Job.NONE) {
 					if(DEBUG) System.out.println("refreshJob: starting job after adding " + s.getName());
-					schedule(refreshInterval);
+					startup();
 				}				
 			} else if(delta.getFlags() == TeamDelta.SUBSCRIBER_DELETED) {
 				// cancel current refresh just to make sure that the subscriber being deleted can
@@ -166,10 +166,14 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 				subscribers.remove(s.getId());
 				if(DEBUG) System.out.println("refreshJob: removing subscriber " + s.getName());
 				if(! subscribers.isEmpty()) {
-					schedule(refreshInterval);
+					startup();
 				}
 			}
 		}
+	}
+
+	private void startup() {
+		schedule(refreshInterval);
 	}
 
 	/**
@@ -179,7 +183,7 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 	public void done(Job job, IStatus result) {
 		if(job == this) {
 			if(DEBUG) System.out.println("refreshJob: restarting job");
-			schedule(refreshInterval);
+			startup();
 		}
 	}
 	public void aboutToRun(Job job) {

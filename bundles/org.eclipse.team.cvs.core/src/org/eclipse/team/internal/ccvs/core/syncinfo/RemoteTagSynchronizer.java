@@ -44,12 +44,10 @@ public class RemoteTagSynchronizer extends RemoteSynchronizer {
 
 	private static final byte[] NO_REMOTE = new byte[0];
 	private CVSTag tag;
-	private boolean cacheContents = false;
 	
-	public RemoteTagSynchronizer(String id, CVSTag tag, boolean cacheContents) {
+	public RemoteTagSynchronizer(String id, CVSTag tag) {
 		super(id);
 		this.tag = tag;
-		this.cacheContents = cacheContents;
 	}
 
 	public void collectChanges(IResource local, ICVSRemoteResource remote, int depth, IProgressMonitor monitor) throws TeamException {
