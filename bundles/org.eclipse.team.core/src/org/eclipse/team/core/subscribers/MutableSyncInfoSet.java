@@ -19,16 +19,14 @@ import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 public class MutableSyncInfoSet extends SyncInfoSet {
 
-	private SyncSetChangedEvent changes;
+	private SyncSetChangedEvent changes = new SyncSetChangedEvent(this);
 	private ILock lock = Platform.getJobManager().newLock();
 	
 	public MutableSyncInfoSet() {
-		resetChanges();
 	}
 	
 	public MutableSyncInfoSet(SyncInfo[] infos) {
 		super(infos);
-		resetChanges();
 	}
 		
 	/**

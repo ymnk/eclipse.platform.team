@@ -21,6 +21,7 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.*;
 
@@ -35,10 +36,10 @@ public class RefactorActionGroup extends ActionGroup {
 	private MoveResourceAction moveAction;
 	private RenameResourceAction renameAction;
 	private TextActionHandler textActionHandler;
-	private IWorkbenchPart part;
+	private ISynchronizeView view;
 
-	public RefactorActionGroup(IWorkbenchPart part) {
-		this.part = part;
+	public RefactorActionGroup(ISynchronizeView view) {
+		this.view = view;
 		makeActions();
 	}
 
@@ -77,7 +78,7 @@ public class RefactorActionGroup extends ActionGroup {
 
 	protected void makeActions() {
 		// Get the key binding service for registering actions with commands. 
-		final IWorkbenchPartSite site = part.getSite();
+		final IWorkbenchPartSite site = view.getSite();
 		final IKeyBindingService keyBindingService = site.getKeyBindingService();
 		
 		Shell shell = site.getShell();
@@ -106,7 +107,7 @@ public class RefactorActionGroup extends ActionGroup {
 	}
 
 	private IStructuredSelection getSelection() {
-		return (IStructuredSelection)part.getSite().getPage().getSelection();
+		return (IStructuredSelection)view.getSite().getPage().getSelection();
 	}
 
 	private boolean allResourcesAreOfType(IStructuredSelection selection, int resourceMask) {

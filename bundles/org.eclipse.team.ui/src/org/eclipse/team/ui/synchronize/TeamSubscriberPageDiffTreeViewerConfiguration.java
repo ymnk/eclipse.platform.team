@@ -43,7 +43,7 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 	protected void initializeActions(StructuredViewer treeViewer) {
 		super.initializeActions(treeViewer);
 		openWithActions = new OpenWithActionGroup(view, participant);
-		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
+		refactorActions = new RefactorActionGroup(view);
 		refreshSelectionAction = new TeamParticipantRefreshAction(treeViewer, participant, false /* refresh */);
 	}
 
