@@ -50,6 +50,17 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 	 * object has no children.
 	 */
 	public Object[] getChildren(Object o) {
+		if (CVSUIPlugin.getPlugin().getRepositoryManager().isDisplayingProjectVersions(repository)) {
+			return getProjectVersionChildren(o);
+		} else {
+			return getVersionTagChildren(o);
+		}
+	}
+
+	/*
+	 * Return the children as a list of versions whose children are projects
+	 */
+	private Object[] getVersionTagChildren(Object o) {
 		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, CVSTag.VERSION);
 		CVSTagElement[] versionElements = new CVSTagElement[tags.length];
 		for (int i = 0; i < tags.length; i++) {
@@ -57,14 +68,11 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 		}
 		return versionElements;
 	}
-
-	/**
-	 * Returns the children of this object.  When this object
-	 * is displayed in a tree, the returned objects will be this
-	 * element's children.  Returns an empty enumeration if this
-	 * object has no children.
+	
+	/*
+	 * Return the children as a list of projects whose children ar project versions
 	 */
-	private Object[] getFolderChildren(Object o) {
+	private Object[] getProjectVersionChildren(Object o) {
 		final Object[][] result = new Object[1][];
 		try {
 			CVSUIPlugin.runWithProgress(null, true /*cancelable*/, new IRunnableWithProgress() {

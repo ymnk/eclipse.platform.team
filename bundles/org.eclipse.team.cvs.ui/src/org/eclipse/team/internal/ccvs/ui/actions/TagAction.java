@@ -81,7 +81,7 @@ public class TagAction extends WorkspaceAction {
 		final RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 		
 		// Tag the local resources, divided by project/provider
-		final IRunnableWithProgress runnable = new IRunnableWithProgress() {
+		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				Hashtable table = getProviderMapping(resources);
 				Set keySet = table.keySet();
@@ -110,13 +110,6 @@ public class TagAction extends WorkspaceAction {
 
 				}	
 				previousTag = result[0];				
-			}
-		};
-		
-		// Run using the RepositoryManager so that only one update is issued to the repo view
-		run(new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				manager.run(runnable, monitor);
 			}
 		}, true /* cancelable */, this.PROGRESS_DIALOG); //$NON-NLS-1$
 	}

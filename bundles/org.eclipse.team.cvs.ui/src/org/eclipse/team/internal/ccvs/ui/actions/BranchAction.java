@@ -87,8 +87,8 @@ public class BranchAction extends WorkspaceAction {
 		
 		final RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 		
-		// Create a runnable that can perform the branch
-		final IRunnableWithProgress branchingRunnable = new IRunnableWithProgress() {
+		// perform the branch
+		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				
 				Hashtable table = getProviderMapping(resources);
@@ -110,8 +110,6 @@ public class BranchAction extends WorkspaceAction {
 							provider.makeBranch(providerResources, null, branchTag, update, subMonitor);										
 						}
 						if (rootVersionTag != null || update) {
-							// These changes to the repo model must be batched using RepositoryManager.run
-							// or the repo view will be updated multipel times
 							for (int i = 0; i < providerResources.length; i++) {
 								ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(providerResources[i]);
 								if (rootVersionTag != null) {
@@ -128,14 +126,7 @@ public class BranchAction extends WorkspaceAction {
 					}
 				}
 			}
-		};
-		
-		
-		run(new WorkspaceModifyOperation() {
-			public void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				manager.run(branchingRunnable, monitor);
-			}
-		}, true /* cancelable */, this.PROGRESS_DIALOG); //$NON-NLS-1$
+		}, true /* cancelable */, this.PROGRESS_DIALOG);
 	}
 	
 	/**

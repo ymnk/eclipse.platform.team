@@ -194,11 +194,12 @@ public class RepositoryManager {
 	 * Fetches tags from .project and .vcm_meta if they exist. Then fetches tags from the user defined auto-refresh file
 	 * list. The fetched tags are cached in the CVS ui plugin's tag cache.
 	 */
-	public void refreshDefinedTags(ICVSFolder project, boolean notify, IProgressMonitor monitor) throws TeamException {
+	public void refreshDefinedTags(ICVSFolder project, boolean replace, boolean notify, IProgressMonitor monitor) throws TeamException {
 		RepositoryRoot root = getRepositoryRootFor(project);
 		String remotePath = getRemotePathFor(project);
-		root.refreshDefinedTags(remotePath, monitor);
-		broadcastChange(root);
+		root.refreshDefinedTags(remotePath, replace, monitor);
+		if (notify)
+			broadcastChange(root);
 	}
 	
 	public void addBranchTags(ICVSRepositoryLocation location, CVSTag[] tags) {
@@ -322,8 +323,8 @@ public class RepositoryManager {
 					} finally {
 						dis.close();
 					}
-					// saveState();
-					// file.delete();
+					saveState();
+					file.delete();
 				} catch (IOException e) {
 					CVSUIPlugin.log(new Status(Status.ERROR, CVSUIPlugin.ID, TeamException.UNABLE, Policy.bind("RepositoryManager.ioException"), e)); //$NON-NLS-1$
 				} catch (TeamException e) {
@@ -598,21 +599,6 @@ public class RepositoryManager {
 		}
 		return result;
 	}
-
-	/**
-	 * Returns Branch and Version tags for the given files
-	 */	
-	public CVSTag[] getTags(ICVSFile file, IProgressMonitor monitor) throws TeamException {
-		Set tagSet = new HashSet();
-		ILogEntry[] entries = file.getLogEntries(monitor);
-		for (int j = 0; j < entries.length; j++) {
-			CVSTag[] tags = entries[j].getTags();
-			for (int k = 0; k < tags.length; k++) {
-				tagSet.add(tags[k]);
-			}
-		}
-		return (CVSTag[])tagSet.toArray(new CVSTag[0]);
-	}
 	
 	public ICVSRepositoryLocation getRepositoryLocationFor(ICVSResource resource) {
 		try {
@@ -691,5 +677,14 @@ public class RepositoryManager {
 	 * 	 * @param runnable	 * @param monitor	 */
 	public void run(IRunnableWithProgress runnable, IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		runnable.run(monitor);
+	}
+	
+	/**
+	 * Method isDisplayingProjectVersions.
+	 * @param repository
+	 * @return boolean
+	 */
+	public boolean isDisplayingProjectVersions(ICVSRepositoryLocation repository) {
+		return false;
 	}
 }

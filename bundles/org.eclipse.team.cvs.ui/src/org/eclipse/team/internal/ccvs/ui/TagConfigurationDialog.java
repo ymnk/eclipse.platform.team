@@ -638,7 +638,7 @@ public class TagConfigurationDialog extends Dialog {
 						CVSUIPlugin.runWithProgress(shell, true /*cancelable*/, new IRunnableWithProgress() {
 							public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 								try {
-									CVSUIPlugin.getPlugin().getRepositoryManager().refreshDefinedTags(folder, true, monitor);
+									CVSUIPlugin.getPlugin().getRepositoryManager().refreshDefinedTags(folder, false /* replace */, true, monitor);
 									runnable.run();
 								} catch (TeamException e) {
 									throw new InvocationTargetException(e);

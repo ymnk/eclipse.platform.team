@@ -22,9 +22,11 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
@@ -158,7 +160,7 @@ public class RepositoryRoot extends CVSModelElement implements IAdaptable {
 	public String[] getAutoRefreshFiles(String remotePath) {
 		String name = getCachePathFor(remotePath);
 		Set files = (Set)autoRefreshFiles.get(name);
-		if (files == null) {
+		if (files == null || files.isEmpty()) {
 			return DEFAULT_AUTO_REFRESH_FILES;
 		} else {
 			return (String[]) files.toArray(new String[files.size()]);
@@ -194,7 +196,7 @@ public class RepositoryRoot extends CVSModelElement implements IAdaptable {
 	/**
 	 * Fetches tags from auto-refresh files.
 	 */
-	public void refreshDefinedTags(String remotePath, IProgressMonitor monitor) throws TeamException {
+	public void refreshDefinedTags(String remotePath, boolean replace, IProgressMonitor monitor) throws TeamException {
 		String[] filesToRefresh = getAutoRefreshFiles(remotePath);
 		monitor.beginTask(null, filesToRefresh.length * 10); //$NON-NLS-1$
 		try {
@@ -204,25 +206,45 @@ public class RepositoryRoot extends CVSModelElement implements IAdaptable {
 				ICVSRemoteFile file = root.getRemoteFile(relativePath, CVSTag.DEFAULT);
 				tags.addAll(Arrays.asList(fetchTags(file, Policy.subMonitorFor(monitor, 5))));
 			}
+			clearTags(remotePath);
 			addTags(remotePath, (CVSTag[]) tags.toArray(new CVSTag[tags.size()]));
 		} finally {
 			monitor.done();
 		}
 	}
 	
+	/*
+	 * Method clearTags.
+	 */
+	private void clearTags(String remotePath) {
+		String name = getCachePathFor(remotePath);
+		knownTags.remove(name);
+	}
+	
 	/**
 	 * Returns Branch and Version tags for the given files
 	 */	
 	private CVSTag[] fetchTags(ICVSRemoteFile file, IProgressMonitor monitor) throws TeamException {
-		Set tagSet = new HashSet();
-		ILogEntry[] entries = file.getLogEntries(monitor);
-		for (int j = 0; j < entries.length; j++) {
-			CVSTag[] tags = entries[j].getTags();
-			for (int k = 0; k < tags.length; k++) {
-				tagSet.add(tags[k]);
+		try {
+			Set tagSet = new HashSet();
+			ILogEntry[] entries = file.getLogEntries(monitor);
+			for (int j = 0; j < entries.length; j++) {
+				CVSTag[] tags = entries[j].getTags();
+				for (int k = 0; k < tags.length; k++) {
+					tagSet.add(tags[k]);
+				}
 			}
+			return (CVSTag[])tagSet.toArray(new CVSTag[0]);
+		} catch (TeamException e) {
+			IStatus status = e.getStatus();
+			if (status.getCode() == CVSStatus.SERVER_ERROR && status.isMultiStatus()) {
+				IStatus[] children = status.getChildren();
+				if (children.length == 1 && children[0].getCode() == CVSStatus.DOES_NOT_EXIST) {
+					return new CVSTag[0];
+				}
+			}
+			throw e;
 		}
-		return (CVSTag[])tagSet.toArray(new CVSTag[0]);
 	}
 	
 	private String getCachePathFor(String remotePath) {

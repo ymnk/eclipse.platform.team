@@ -476,14 +476,21 @@
 				class="org.eclipse.team.internal.ccvs.ui.actions.ConfigureTagsFromRepoView"/>
       </objectContribution>
       <objectContribution
-            objectClass="org.eclipse.team.internal.ccvs.ui.model.BranchTag"
-            id="org.eclipse.team.ccvs.ui.BranchTagContributions">
+            objectClass="org.eclipse.team.internal.ccvs.ui.model.CVSTagElement"
+            id="org.eclipse.team.ccvs.ui.CVSTagContributions">
          <action
                label="%RemoveBranchTagAction.label"
                tooltip="%RemoveBranchTagAction.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.RemoveBranchTagAction"
                helpContextId="org.eclipse.team.cvs.ui.remove_branch_action_context"
                id="org.eclipse.team.ccvs.ui.removeBranchTag">
+         </action>
+         <action
+               label="%RefreshTagMembership.label"
+               tooltip="%RefreshTagMembership.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.AutoRefreshMembership"
+               helpContextId="org.eclipse.team.cvs.ui.refresh_tag_membership_action_context"
+               id="org.eclipse.team.ccvs.ui.refreshTagMembership">
          </action>
       </objectContribution>
       <objectContribution

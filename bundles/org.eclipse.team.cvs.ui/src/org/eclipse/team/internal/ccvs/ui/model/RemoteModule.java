@@ -62,7 +62,7 @@ public class RemoteModule extends CVSModelElement implements IAdaptable {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 					try {
-						manager.refreshDefinedTags(folder, false, monitor);
+						manager.refreshDefinedTags(folder, false /* replace */, false, monitor);
 					} catch(TeamException e) {
 						// continue
 					}
