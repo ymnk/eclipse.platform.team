@@ -19,13 +19,13 @@ import org.eclipse.team.internal.core.TeamPlugin;
 
 public class TeamProviderRegistry extends RegistryReader {
 	
-	private Map participants = new HashMap();
+	private final static String PT_TEAMPROVIDER = "teamProvider"; //$NON-NLS-1$
+	private Map providers = new HashMap();
 	private String extensionId;
-	private String descriptorClassName;
 	
-	public TeamProviderRegistry(String extensionId) {
+	public TeamProviderRegistry() {
 		super();
-		this.extensionId = extensionId;
+		this.extensionId = PT_TEAMPROVIDER;
 	}
 
 	/* (non-Javadoc)
@@ -37,7 +37,7 @@ public class TeamProviderRegistry extends RegistryReader {
 			TeamProviderDescriptor desc;
 			try {
 				desc = new TeamProviderDescriptor(element, descText);
-				participants.put(desc.getId(), desc);
+				providers.put(desc.getId(), desc);
 			} catch (CoreException e) {
 				TeamPlugin.log(e);
 			}
@@ -47,10 +47,10 @@ public class TeamProviderRegistry extends RegistryReader {
 	}
 	
 	public TeamProviderDescriptor[] getTeamProviderDescriptors() {
-		return (TeamProviderDescriptor[])participants.values().toArray(new TeamProviderDescriptor[participants.size()]);
+		return (TeamProviderDescriptor[])providers.values().toArray(new TeamProviderDescriptor[providers.size()]);
 	}
 	
 	public TeamProviderDescriptor find(String id) {
-		return (TeamProviderDescriptor)participants.get(id);
+		return (TeamProviderDescriptor)providers.get(id);
 	}
 }

@@ -10,8 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.core;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
+import java.util.*;
+
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.registry.TeamProviderDescriptor;
 import org.eclipse.team.internal.registry.TeamProviderRegistry;
 
 /**
@@ -36,47 +41,143 @@ import org.eclipse.team.internal.registry.TeamProviderRegistry;
  * @since 3.0
  */
 public abstract class TeamProvider {
-	// there will be a team provider listener
-	TeamProviderRegistry registry;
-	Map projectToTeamProviders;
 	
-	public static void map(IContainer container, String id) throws TeamException {
-		// is overlapping?
-		TeamProvider existingProvider = null;
-		if( (existing = maps.isOverlapping(container, id)) != null) {
-			throw new TeamException("Already mapped to " + id + " at " + existingProvider.getMappedContainer());
-		}		
-		// what kind of event is generated when one is mapped?
-	}
-	public static void unmap(IContainer container, TeamProvider teamProvider) {
-		// what kind of event is setn when unmapped?
-	}
-	public static TeamProvider[] getMappings(IContainer container) {
-		return null;
-	}
-	public static TeamProvider getMappedTo(IResource resource, String id) {
-				
-	}
-	abstract public String getID();
-	abstract public IContainer getMappedContainer();
-	abstract protected void configure(IContainer container);
-	abstract protected void deconfigure(IContainer container);
+	public final static QualifiedName PROVIDER_SESSION_PROPERTY = new QualifiedName("org.eclipse.team.core", "provider");
+	private static TeamProviderRegistry registry = new TeamProviderRegistry();
 	
-	//****************************************************************
-	//****************************************************************
-	
-	private static String isOverlapping(IContainer container, String id) {
-		Mapping[] mappings = maps.getProjectMappings(container, id);
-		if(mappings == null) {
-			return null;
+	//  {project -> list of Mapping}
+	private static Map mappings = new HashMap(5);
+
+	static class Mapping {
+		private TeamProviderDescriptor descriptor;
+		private TeamProvider provider;
+		private IContainer container;
+		
+		Mapping(TeamProviderDescriptor descriptor, IContainer container) {
+			this.descriptor = descriptor;
+			this.container = container;
 		}
-		for (int i = 0; i < mappings.length; i++) {
-			Mapping mapping = mappings[i];
-			String path = mapping.getContainer().getFullPath().toString();
-			if(path.substring(container.getFullPath().toString())) {
-				return mapping.getId();
+		public TeamProvider getProvider() throws CoreException {
+			if(provider == null) {
+				setProvider(descriptor.createProvider());
+				// this is where we would restore state and initialize the provider
+			}
+			return provider;
+		}
+		public void setProvider(TeamProvider provider) {
+			this.provider = provider;
+		}
+		public IContainer getContainer() {
+			return container;
+		}
+		public TeamProviderDescriptor getDescription() {
+			return descriptor;
+		}
+	}
+	
+	public static void map(IContainer container, TeamProvider teamProvider) throws TeamException {
+		// don't allow is overlapping team providers		
+		checkOverlapping(container);
+		
+		// extension point descriptor should exist
+		TeamProviderDescriptor descriptor = registry.find(teamProvider.getID());		
+		if(descriptor == null) {
+			throw new TeamException("Cannot map provider " + teamProvider.getID() + ". It's extension point description cannot be found.");
+		}
+		
+		// create the new mapping
+		Mapping newMapping = new Mapping(descriptor, container);
+		newMapping.setProvider(teamProvider);
+		IProject project = container.getProject();
+		List projectMaps = (List)mappings.get(project);
+		if(projectMaps == null) {
+			projectMaps = new ArrayList();
+			mappings.put(project, projectMaps);
+		}
+		projectMaps.add(newMapping);
+		
+		try {
+			// install session property
+			project.setPersistentProperty();
+		} catch (CoreException e) {
+			throw TeamException.asTeamException(e);
+		}
+		
+		// initialize provider
+		teamProvider.init(container);
+		
+		// TODO: what kind of event is generated when one is mapped?		
+	}
+	
+	public static void unmap(IContainer container, TeamProvider teamProvider) {
+		IProject project = container.getProject();
+		List projectMaps = (List)mappings.get(project);
+		if(projectMaps != null) {
+			projectMaps.remove(container);
+			if(projectMaps.isEmpty()) {
+				mappings.remove(project);
+			}
+		}
+		
+		try {
+			// install session property
+			project.setSessionProperty(PROVIDER_SESSION_PROPERTY, teamProvider.getID());
+		} catch (CoreException e) {
+			throw TeamException.asTeamException(e);
+		}
+		
+		// dispose of provider
+		teamProvider.dispose();
+		
+		// TODO: what kind of event is sent when unmapped?
+	}
+	
+	public static TeamProvider getMapping(IResource resource) {
+		List projectMappings = (List)mappings.get(resource.getProject());
+		String fullPath = resource.getFullPath().toString();
+		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
+			Mapping m = (Mapping) it.next();
+			if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+				try {
+					// lazy initialize of provider must be supported
+					return m.getProvider();
+				} catch (CoreException e) {
+					TeamPlugin.log(e);
+				}
 			}
 		}
 		return null;
-	}	
+	}
+	
+	public static boolean getMappedTo(IResource resource, String id) {
+		List projectMappings = (List)mappings.get(resource.getProject());
+		String fullPath = resource.getFullPath().toString();
+		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
+			Mapping m = (Mapping) it.next();
+			
+			// mapping can be initialize without having provider loaded yet!
+			if(m.getDescription().getId().equals(id) && fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static void checkOverlapping(IContainer container) throws TeamException {
+		List projectMappings = (List)mappings.get(container.getProject());
+		String fullPath = container.getFullPath().toString();
+		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
+			Mapping m = (Mapping) it.next();
+			if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+				throw new TeamException(container.getFullPath().toString() + " is already mapped to " + m.getDescription().getId());
+			}
+		}
+	}
+	
+	abstract public String getID();
+	abstract public IContainer getMappedContainer();	
+	abstract protected void init(IContainer container);
+	abstract protected void dispose();
+	abstract public void saveState();
+	abstract public void restoreState();
 }
