@@ -63,15 +63,6 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 */
 	public SyncInfoSetViewerInput(SyncInfoSet set) {
 		super(null /* no parent */, set, ResourcesPlugin.getWorkspace().getRoot());
-		prepareInput(null);
-	}
-
-	/**
-	 * Dispose of the builder
-	 */
-	public void dispose() {
-		resourceMap.clear();
-		getSyncInfoSet().removeSyncSetChangedListener(this);
 	}
 
 	/**
@@ -138,9 +129,19 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 *            the viewer
 	 */
 	public void setViewer(AbstractTreeViewer v) {
+		// This is where we should bootstrap the connecting to the sync set
 		this.viewer = v;
+		prepareInput(null);
 	}
 
+	/**
+	 * Dispose of the builder
+	 */
+	public void dispose() {
+		resourceMap.clear();
+		getSyncInfoSet().removeSyncSetChangedListener(this);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged()
