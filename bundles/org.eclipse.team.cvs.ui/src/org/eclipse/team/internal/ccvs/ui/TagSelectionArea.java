@@ -34,7 +34,8 @@ import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
- * A dialog area that displays a list of tags for selection.
+ * A dialog area that displays a list of tags for selection and supports
+ * filtering of the displayed tags.
  */
 public class TagSelectionArea extends DialogArea {
 
@@ -64,13 +65,9 @@ public class TagSelectionArea extends DialogArea {
     private TreeViewer tagTree;
     private final int includeFlags;
     private CVSTag selection;
-    
     private String helpContext;
-
     private Text filterText;
-
     private TagSource tagSource;
-
     private final Shell shell;
     
     public TagSelectionArea(Shell shell, TagSource tagSource, String message, int includeFlags, String helpContext) {
@@ -329,17 +326,7 @@ public class TagSelectionArea extends DialogArea {
 		try {
 			tagTree.getControl().setRedraw(false);
 			tagTree.refresh();
-			// TODO: Hack to instantiate the model before revealing the selection
-			Object[] expanded = tagTree.getExpandedElements();
-			tagTree.expandToLevel(2);
-			tagTree.collapseAll();
-			for (int i = 0; i < expanded.length; i++) {
-				Object object = expanded[i];
-				tagTree.expandToLevel(object, 1);
-			}
-			// Reveal the selection
-			tagTree.reveal(new TagElement(tag));
-			tagTree.setSelection(new StructuredSelection(new TagElement(tag)));
+			setSelection(tag);
 		} finally {
 			tagTree.getControl().setRedraw(true);
 		}
@@ -440,6 +427,5 @@ public class TagSelectionArea extends DialogArea {
     public void setEnabled(boolean enabled) {
         filterText.setEnabled(enabled);
         tagTree.getControl().setEnabled(enabled);
-        
     }
 }

@@ -44,16 +44,32 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 	private String helpContextId;
     private TagSelectionArea tagArea;
     private MultiFolderTagSource tagSource;
+    private String tagLabel;
 	
 	public TagSelectionWizardPage(String pageName, String title, ImageDescriptor titleImage, String description, int includeFlags) {
 		super(pageName, title, titleImage, description);
 		this.includeFlags = includeFlags;
 	}
 
+	/**
+	 * Set the help context for the tag selection page. 
+	 * This method must be invoked before <code>createControl</code>
+	 * @param helpContextId the help context id
+	 */
 	public void setHelpContxtId(String helpContextId) {
 		this.helpContextId = helpContextId;
 	}
 	
+	/**
+	 * Set the label to appear over the tag list/tree.
+	 * If not set, a default will be used.
+	 * 	 * This method must be invoked before <code>createControl</code>
+	 * @param tagLabel the label to appear over the tag list/tree
+	 */
+    public void setTagLabel(String tagLabel) {
+        this.tagLabel = tagLabel;
+    }
+    
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
@@ -87,7 +103,8 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 	}
 	
 	private void createTagArea() {
-		tagArea = new TagSelectionArea(getShell(), tagSource, "&Select tag:", includeFlags, null);
+	    if (tagLabel == null) tagLabel = "&Select tag:";
+		tagArea = new TagSelectionArea(getShell(), tagSource, tagLabel, includeFlags, null);
 		tagArea.createArea(composite);
 		tagArea.addPropertyChangeListener(new IPropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent event) {
