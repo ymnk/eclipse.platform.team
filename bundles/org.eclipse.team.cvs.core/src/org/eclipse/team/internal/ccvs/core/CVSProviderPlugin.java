@@ -97,7 +97,7 @@ public class CVSProviderPlugin extends Plugin {
 	 *
 	 * @see org.eclipse.core.resources.IProject#hasNature
 	 */
-	private static final String NATURE_ID = ID + ".cvsnature"; //$NON-NLS-1$
+	private static final String NATURE_ID = ID + ".cvsprovider"; //$NON-NLS-1$
 
 	/**
 	 * Constructor for CVSProviderPlugin.
