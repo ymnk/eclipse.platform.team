@@ -227,6 +227,16 @@ public class UpdateSyncAction extends MergeAction {
 			monitor.beginTask(null, work);
 
 			RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+			if (parentDeletionElements.size() > 0) {
+				// If a node has a parent that is an outgoing folder deletion, we have to 
+				// recreate that folder locally (it's sync info already exists locally). 
+				// We must do this for all outgoing folder deletions (recursively)
+				// in the case where there are multiple levels of outgoing folder deletions.
+				Iterator it = parentDeletionElements.iterator();
+				while (it.hasNext()) {
+					recreateLocallyDeletedFolder((IDiffElement)it.next());
+				}				
+			}
 			if (parentCreationElements.size() > 0) {
 				// If a node has a parent that is an incoming folder creation, we have to 
 				// create that folder locally and set its sync info before we can get the
@@ -238,16 +248,6 @@ public class UpdateSyncAction extends MergeAction {
 					makeInSync(element);
 					// Remove the folder from the update shallow list since we have it locally now
 					updateIgnoreLocalShallow.remove(element);
-				}				
-			}
-			if (parentDeletionElements.size() > 0) {
-				// If a node has a parent that is an outgoing folder deletion, we have to 
-				// recreate that folder locally (it's sync info already exists locally). 
-				// We must do this for all outgoing folder deletions (recursively)
-				// in the case where there are multiple levels of outgoing folder deletions.
-				Iterator it = parentDeletionElements.iterator();
-				while (it.hasNext()) {
-					recreateLocallyDeletedFolder((IDiffElement)it.next());
 				}				
 			}
 			if (parentConflictElements.size() > 0) {

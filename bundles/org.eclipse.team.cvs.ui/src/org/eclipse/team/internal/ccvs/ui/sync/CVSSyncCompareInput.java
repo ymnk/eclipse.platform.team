@@ -248,10 +248,12 @@ public class CVSSyncCompareInput extends SyncCompareInput {
 		return result[0];
 	}
 	
-	/*
+	/**
 	 * Adjust the sync info (to conflicting change) for locally deleted 
 	 * folders (i.e. outgoing folder deletions)
-	 * that have incomming or conflicting changes in one or more children
+	 * that have incoming or conflicting changes in one or more children.
+	 * 
+	 * @see MergeAction#removeNodes(ITeamNode[])
 	 */
 	protected IDiffElement collectResourceChanges(IDiffContainer parent, IRemoteSyncElement tree, IProgressMonitor pm) {
 		IDiffElement element = super.collectResourceChanges(parent, tree, pm);

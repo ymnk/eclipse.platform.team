@@ -214,14 +214,20 @@ public class ForceUpdateSyncAction extends MergeAction {
 							// Doesn't happen, these nodes don't appear in the tree.
 							break;
 						case Differencer.CHANGE:
-							// Depends on the flag.
-							if (onlyUpdateAutomergeable && (changed[i].getKind() & IRemoteSyncElement.AUTOMERGE_CONFLICT) != 0) {
-								updateShallow.add(resource);
-							} else {
-								updateIgnoreLocalShallow.add(resource);
-								if (!resource.exists()) {
-									makeIncoming.add(changed[i]);
+							if (resource.getType() == IResource.FILE) {
+								// Depends on the flag.
+								if (onlyUpdateAutomergeable && (changed[i].getKind() & IRemoteSyncElement.AUTOMERGE_CONFLICT) != 0) {
+									updateShallow.add(resource);
+								} else {
+									updateIgnoreLocalShallow.add(resource);
+									if (!resource.exists()) {
+										makeIncoming.add(changed[i]);
+									}
 								}
+							} else {
+								// Conflicting change on a folder only occurs if the folder has been deleted locally
+								// The folder should only be recreated if there were children in the changed set.
+								// Such folders would have been added to the parentDeletionElements set above
 							}
 							break;
 					}
@@ -234,16 +240,6 @@ public class ForceUpdateSyncAction extends MergeAction {
 			monitor.beginTask(null, work);
 			
 			RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
-			if (parentCreationElements.size() > 0) {
-				// If a node has a parent that is an incoming folder creation, we have to 
-				// create that folder locally and set its sync info before we can get the
-				// node itself. We must do this for all incoming folder creations (recursively)
-				// in the case where there are multiple levels of incoming folder creations.
-				Iterator it = parentCreationElements.iterator();
-				while (it.hasNext()) {
-					makeInSync((IDiffElement)it.next());
-				}				
-			}
 			if (parentDeletionElements.size() > 0) {
 				// If a node has a parent that is an outgoing folder deletion, we have to 
 				// recreate that folder locally (it's sync info already exists locally). 
@@ -252,6 +248,16 @@ public class ForceUpdateSyncAction extends MergeAction {
 				Iterator it = parentDeletionElements.iterator();
 				while (it.hasNext()) {
 					recreateLocallyDeletedFolder((IDiffElement)it.next());
+				}				
+			}
+			if (parentCreationElements.size() > 0) {
+				// If a node has a parent that is an incoming folder creation, we have to 
+				// create that folder locally and set its sync info before we can get the
+				// node itself. We must do this for all incoming folder creations (recursively)
+				// in the case where there are multiple levels of incoming folder creations.
+				Iterator it = parentCreationElements.iterator();
+				while (it.hasNext()) {
+					makeInSync((IDiffElement)it.next());
 				}				
 			}
 			if (parentConflictElements.size() > 0) {

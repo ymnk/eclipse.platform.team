@@ -6,11 +6,13 @@ package org.eclipse.team.internal.ccvs.ui.sync;
  */
  
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -125,9 +127,16 @@ abstract class MergeAction extends Action {
 	/**
 	 * The given nodes have been synchronized.  Remove them from
 	 * the sync set.
+	 * 
+	 * For folders that are outgoing deletions, we may need to leave the
+	 * folder as is or adjust the sync kind depending on the sync kind of 
+	 * the folder's children.
+	 * 
+	 * @see CVSSyncCompareInput#collectResourceChanges(IDiffContainer, IRemoteSyncElement, IProgressMonitor)
 	 */
 	private void removeNodes(final ITeamNode[] nodes) {
 		// Update the model
+		Set outgoingFolderDeletions = new HashSet();
 		for (int i = 0; i < nodes.length; i++) {
 			if (nodes[i].getClass() == UnchangedTeamContainer.class) {
 				// Unchanged containers get removed automatically when all
@@ -141,10 +150,11 @@ abstract class MergeAction extends Action {
 				ChangedTeamContainer container = (ChangedTeamContainer)nodes[i];
 				IDiffElement[] children = container.getChildren();
 				if (children.length > 0) {
-					IDiffContainer parent = container.getParent();
-					// Only convert to an UnchangedTeamContainer if the folder exists locally.
-					// Otherwise, leave it as is.
-					if (container.getResource().exists()) {
+					if (isLocallyDeletedFolder(container)) {
+						// For locally deleted folders, we postpone the handling until all other children are removed
+						outgoingFolderDeletions.add(container);
+					} else {
+						IDiffContainer parent = container.getParent();
 						UnchangedTeamContainer unchanged = new UnchangedTeamContainer(parent, container.getResource());
 						for (int j = 0; j < children.length; j++) {
 							unchanged.add(children[j]);
@@ -154,8 +164,17 @@ abstract class MergeAction extends Action {
 					continue;
 				}
 				// No children, it will get removed below.
+			} else if (nodes[i].getParent().getClass() == ChangedTeamContainer.class) {
+				// If the parent is a locally deleted folder, we may want to update it's sync state as well
+				if (isLocallyDeletedFolder(nodes[i].getParent())) {
+					outgoingFolderDeletions.add(nodes[i].getParent());
+				}
 			}
 			nodes[i].getParent().removeToRoot(nodes[i]);	
+		}
+		// Remove any locally deleted folders from the sync tree as appropriate
+		for (Iterator iter = outgoingFolderDeletions.iterator(); iter.hasNext();) {
+			removeLocallyDeletedFolder((ChangedTeamContainer)iter.next());
 		}
 	}
 
@@ -237,5 +256,74 @@ abstract class MergeAction extends Action {
 				((ChangedTeamContainer)element).makeInSync();
 			}
 		}
+	}
+	
+	/**
+	 * Adjust the sync kind of the locally deleted folder and remove
+	 * the folder if it doesn't contain any real changes
+	 */
+	private void removeLocallyDeletedFolder(ChangedTeamContainer container) {
+		if (hasRealIncomingChanges(container)) {
+			// Leave as a conflict
+			return;
+		}
+		IDiffContainer parent = container.getParent();
+		if (hasRealOutgoingChanges(container)) {
+			// Convert to an outgoing deletion
+			container.setKind(ITeamNode.OUTGOING | Differencer.DELETION);
+		} else {
+			// The folder is empty, remove it
+			if (parent != null) {
+				parent.removeToRoot(container);
+			}
+		}
+		// The parent may need adjusting as well
+		if (parent != null && isLocallyDeletedFolder(parent)) {
+			removeLocallyDeletedFolder((ChangedTeamContainer)parent);
+		}
+	}
+	
+	/**
+	 * A real incomming change is anything that is a conflict or incoming change
+	 * and which is not a locally deleted folder
+	 */
+	private boolean hasRealIncomingChanges(ChangedTeamContainer container) {
+		IDiffElement[] children = container.getChildren();
+		for (int i = 0; i < children.length; i++) {
+			IDiffElement element = children[i];
+			if ( ! isLocallyDeletedFolder(element)) {
+				int direction = element.getKind() & Differencer.DIRECTION_MASK;
+				if (direction == ITeamNode.CONFLICTING || direction == ITeamNode.INCOMING) {
+					return true;
+				}
+			}
+			if (element instanceof ChangedTeamContainer)  {
+				boolean hasIncomingChanges = hasRealIncomingChanges((ChangedTeamContainer)element);
+				if (hasIncomingChanges) return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * A real incomming change is anything that is a conflict or outgoing change
+	 * and which is not a locally deleted folder
+	 */
+	private boolean hasRealOutgoingChanges(ChangedTeamContainer container) {
+		IDiffElement[] children = container.getChildren();
+		for (int i = 0; i < children.length; i++) {
+			IDiffElement element = children[i];
+			if ( ! isLocallyDeletedFolder(element)) {
+				int direction = element.getKind() & Differencer.DIRECTION_MASK;
+				if (direction == ITeamNode.CONFLICTING || direction == ITeamNode.OUTGOING) {
+					return true;
+				}
+			}
+			if (element instanceof ChangedTeamContainer)  {
+				boolean hasIncomingChanges = hasRealOutgoingChanges((ChangedTeamContainer)element);
+				if (hasIncomingChanges) return true;
+			}
+		}
+		return false;
 	}
 }
