@@ -11,30 +11,21 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.*;
-import java.util.ArrayList;
 
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.util.*;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.TeamPlugin;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 
 /**
@@ -706,4 +697,22 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 			});
 		}
 	}
+	
+    /**
+     * Wait until the update handler is not processing any events.
+     * This method is for testing purposes only.
+     */
+    public void waitForUpdateHandler(IProgressMonitor monitor) {
+		monitor.worked(1);
+		// wait for the event handler to process changes.
+		while(updateHandler.getEventHandlerJob().getState() != Job.NONE) {
+			monitor.worked(1);
+			try {
+				Thread.sleep(10);		
+			} catch (InterruptedException e) {
+			}
+			Policy.checkCanceled(monitor);
+		}
+		monitor.worked(1);
+    }
 }

@@ -19,6 +19,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
@@ -192,6 +193,26 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 	 */
 	public ISelection getSelection(Object[] objects) {
 		if (modelProvider != null && modelProvider instanceof SynchronizeModelProvider) {
+		    ((SynchronizeModelProvider)modelProvider).waitForUpdateHandler(new IProgressMonitor() {
+				public void beginTask(String name, int totalWork) {
+				}
+				public void done() {
+				}
+				public void internalWorked(double work) {
+				}
+				public boolean isCanceled() {
+					return false;
+				}
+				public void setCanceled(boolean value) {
+				}
+				public void setTaskName(String name) {
+				}
+				public void subTask(String name) {
+				}
+				public void worked(int work) {
+					while (Display.getCurrent().readAndDispatch()) {}
+				}
+			});
 	 		Object[] viewerObjects = new Object[objects.length];
 			for (int i = 0; i < objects.length; i++) {
 				viewerObjects[i] = ((SynchronizeModelProvider)modelProvider).getMapping(objects[i]);
