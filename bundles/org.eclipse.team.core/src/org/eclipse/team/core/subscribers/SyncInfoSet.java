@@ -124,7 +124,7 @@ public abstract class SyncInfoSet {
 	 * @param resource the parent resource
 	 * @return the members of the parent in the set.
 	 */
-	public boolean hasMembers(IResource resource) {
+	public synchronized boolean hasMembers(IResource resource) {
 		if (resource.getType() == IResource.FILE) return false;
 		IContainer parent = (IContainer)resource;
 		if (parent.getType() == IResource.ROOT) return !resources.isEmpty();
@@ -219,7 +219,7 @@ public abstract class SyncInfoSet {
 	 * Return the number of out-of-sync resources contained in this set.
 	 * @return the size of the set.
 	 */
-	public int size() {
+	public synchronized int size() {
 		return resources.size();		
 	}
 
@@ -246,7 +246,7 @@ public abstract class SyncInfoSet {
 	 * Return whether the set is empty.
 	 * @return <code>true</code> if the set is empty
 	 */
-	public boolean isEmpty() {
+	public synchronized boolean isEmpty() {
 		return resources.isEmpty();
 	}
 
@@ -264,7 +264,7 @@ public abstract class SyncInfoSet {
 	 * Change the sync info for a resource to be the supplied sync info.
 	 * @param info the new <code>SyncInfo</code>
 	 */
-	protected void internalChange(SyncInfo info) {
+	protected synchronized void internalChange(SyncInfo info) {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		SyncInfo oldSyncInfo = (SyncInfo)resources.put(path, info); 
