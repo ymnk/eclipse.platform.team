@@ -28,6 +28,17 @@ import org.eclipse.ui.part.IPageBookViewPage;
 /**
  * A synchronize participant that displays synchronization information for local
  * resources that are managed via a {@link Subscriber}.
+ * 
+ * Participant:
+ * 1. manages subscriber collector
+ * 2. synchronize schedule
+ * 3. APIs for creating specific: sync page, sync wizard, sync advisor (control ui pieces)
+ * 4. allows refreshing the participant synchronization state
+ * 
+ * Push Down:
+ * 1. working set
+ * 2. modes
+ * 3. working set/filtered sync sets
  *
  * @since 3.0
  */
