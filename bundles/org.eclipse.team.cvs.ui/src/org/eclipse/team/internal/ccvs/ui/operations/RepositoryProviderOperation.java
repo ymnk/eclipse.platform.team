@@ -17,12 +17,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.internal.jobs.JobManager;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.WriteResourcesSchedulingRule;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
@@ -36,7 +39,7 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
  * Performs a cvs operation on multiple repository providers
  */
 public abstract class RepositoryProviderOperation extends CVSOperation {
-
+	
 	private IResource[] resources;
 
 	/**
@@ -60,7 +63,12 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 			CVSTeamProvider provider = (CVSTeamProvider)iterator.next();
 			List list = (List)table.get(provider);
 			IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);
-			execute(provider, providerResources, subMonitor);
+			try {
+				JobManager.getInstance().beginRule(getSchedulingRule(provider));
+				execute(provider, providerResources, subMonitor);
+			} finally {
+				JobManager.getInstance().endRule();
+			}
 		}
 
 	}
@@ -69,16 +77,16 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	 * Helper method. Return a Map mapping provider to a list of resources
 	 * shared with that provider.
 	 */
-	private Map getProviderMapping(IResource[] resources) {
+	private Map getProviderMapping(IResource[] localResources) {
 		Map result = new HashMap();
-		for (int i = 0; i < resources.length; i++) {
-			RepositoryProvider provider = RepositoryProvider.getProvider(resources[i].getProject(), CVSProviderPlugin.getTypeId());
+		for (int i = 0; i < localResources.length; i++) {
+			RepositoryProvider provider = RepositoryProvider.getProvider(localResources[i].getProject(), CVSProviderPlugin.getTypeId());
 			List list = (List)result.get(provider);
 			if (list == null) {
 				list = new ArrayList();
 				result.put(provider, list);
 			}
-			list.add(resources[i]);
+			list.add(localResources[i]);
 		}
 		return result;
 	}
@@ -107,12 +115,12 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	 * @throws CVSException
 	 * @throws InterruptedException
 	 */
-	protected abstract void execute(CVSTeamProvider provider, IResource[] resources, IProgressMonitor monitor) throws CVSException, InterruptedException;
+	protected abstract void execute(CVSTeamProvider provider, IResource[] localResources, IProgressMonitor monitor) throws CVSException, InterruptedException;
 
-	protected ICVSResource[] getCVSArguments(IResource[] resources) {
-		ICVSResource[] cvsResources = new ICVSResource[resources.length];
+	protected ICVSResource[] getCVSArguments(IResource[] localResources) {
+		ICVSResource[] cvsResources = new ICVSResource[localResources.length];
 		for (int i = 0; i < cvsResources.length; i++) {
-			cvsResources[i] = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
+			cvsResources[i] = CVSWorkspaceRoot.getCVSResourceFor(localResources[i]);
 		}
 		return cvsResources;
 	}
@@ -120,10 +128,10 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	/*
 	 * Get the arguments to be passed to a commit or update
 	 */
-	protected String[] getStringArguments(IResource[] resources) throws CVSException {
-		List arguments = new ArrayList(resources.length);
-		for (int i=0;i<resources.length;i++) {
-			IPath cvsPath = resources[i].getFullPath().removeFirstSegments(1);
+	protected String[] getStringArguments(IResource[] localResources) throws CVSException {
+		List arguments = new ArrayList(localResources.length);
+		for (int i=0;i<localResources.length;i++) {
+			IPath cvsPath = localResources[i].getFullPath().removeFirstSegments(1);
 			if (cvsPath.segmentCount() == 0) {
 				arguments.add(Session.CURRENT_LOCAL_FOLDER);
 			} else {
@@ -149,6 +157,16 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	protected ICVSFolder getLocalRoot(CVSTeamProvider provider) throws CVSException {
 		CVSWorkspaceRoot workspaceRoot = provider.getCVSWorkspaceRoot();
 		return workspaceRoot.getLocalRoot();
+	}
+	
+	/**
+	 * Return the scheduling rule to be used for the given provider. The default is
+	 * write access to both sync info and resources. Subclasses may override.
+	 * @param provider the repository provider
+	 * @return the scheduling rule to be used for this operation on the provider
+	 */
+	protected ISchedulingRule getSchedulingRule(RepositoryProvider provider) {
+		return new WriteResourcesSchedulingRule(provider);
 	}
 	
 }

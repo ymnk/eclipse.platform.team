@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.jobs.MultiRule;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.WriteResourcesSchedulingRule;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
@@ -168,11 +169,30 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 	}
 
 	private ISchedulingRule getSchedulingRule(IProject[] projects) {
-		if (projects.length == 1) {
-			return projects[0];
+		ISchedulingRule[] rules = getSchedulingRules(projects);
+		if (rules.length == 1) {
+			return rules[0];
 		} else {
-			return new MultiRule(projects);
+			return new MultiRule(rules);
 		}
+	}
+
+	/*
+	 * Use a provider scheduling rule for those projects that are mapped to
+	 * a provider.
+	 */
+	private ISchedulingRule[] getSchedulingRules(IProject[] projects) {
+		ISchedulingRule[] rules = new ISchedulingRule[projects.length];
+		for (int i = 0; i < projects.length; i++) {
+			IProject project = projects[i];
+			RepositoryProvider provider = RepositoryProvider.getProvider(project);
+			if (provider != null) {
+				rules[i] = new WriteResourcesSchedulingRule(provider);
+			} else {
+				rules[i] = project;
+			}
+		}
+		return rules;
 	}
 
 	private IStatus performCheckout(Session session, ICVSRemoteFolder resource, IProject[] targetProjects, boolean sendModuleName, IProgressMonitor pm) throws CVSException {
@@ -383,7 +403,6 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 	}
 
 	protected String getOverwritePromptMessage(ICVSRemoteFolder remoteFolder, IProject project) {
-		File localLocation  = getFileLocation(project);
 		if(project.exists()) {
 			return Policy.bind("CheckoutOperation.thisResourceExists", project.getName(), getRemoteModuleName(remoteFolder));//$NON-NLS-1$
 		} else {

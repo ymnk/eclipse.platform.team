@@ -16,8 +16,10 @@ import java.util.Set;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.WriteSyncSchedulingRule;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
@@ -57,7 +59,6 @@ public class TagOperation extends RepositoryProviderOperation implements ITagOpe
 	 */
 	protected String getErrorMessage(IStatus[] problems, int operationCount) {
 		// We accumulated 1 status per resource above.
-		MultiStatus combinedStatus;
 		if(operationCount == 1) {
 			return Policy.bind("TagAction.tagProblemsMessage"); //$NON-NLS-1$
 		} else {
@@ -124,4 +125,12 @@ public class TagOperation extends RepositoryProviderOperation implements ITagOpe
 	protected  String getTaskName() {
 		return Policy.bind("TagFromWorkspace.taskName"); //$NON-NLS-1$
 	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#getSchedulingRule(org.eclipse.team.core.RepositoryProvider)
+	 */
+	protected ISchedulingRule getSchedulingRule(RepositoryProvider provider) {
+		// The tag operation writes sync info
+		return new WriteSyncSchedulingRule(provider);
+	}
+
 }

@@ -19,12 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.internal.jobs.JobManager;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.team.core.ReadOnlySchedulingRule;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -232,19 +235,29 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 			for (int i = 0; i < resources.length; i++) {
 				IResource resource = resources[i];
 				
-				monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString())); //$NON-NLS-1$
-				
-				// build the remote tree only if an initial tree hasn't been provided
-				IRemoteResource	tree = buildRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));
-				
-				// update the known remote handles 
-				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
+				boolean lockObtained = false;
 				try {
-					sub.beginTask(null, 512);
-					//removeSyncBytes(resource, IResource.DEPTH_INFINITE);
-					collectChanges(resource, tree, depth, sub);
+					lockObtained = beginRefresh(resource);
+					if (lockObtained) {
+						monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString())); //$NON-NLS-1$
+						
+						// build the remote tree only if an initial tree hasn't been provided
+						IRemoteResource	tree = buildRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));
+						
+						// update the known remote handles 
+						IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
+						try {
+							sub.beginTask(null, 512);
+							//removeSyncBytes(resource, IResource.DEPTH_INFINITE);
+							collectChanges(resource, tree, depth, sub);
+						} finally {
+							sub.done();	 
+						}
+					}
 				} finally {
-					sub.done();	 
+					if (lockObtained) {
+						endRefresh();
+					}
 				}
 			}
 		} finally {
@@ -253,6 +266,29 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 		IResource[] changes = getChangedResources();
 		resetChanges();
 		return changes;
+	}
+
+	/*
+	 * Obtain a rea-only scheduling rule for the given resource.
+	 * Return true if the rule was obtained and false otherwise.
+	 * If false is returned, do not refresh the resource but continue
+	 * with the others.
+	 */
+	private boolean beginRefresh(IResource resource) {
+		RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
+		if (provider == null) return false;
+		JobManager.getInstance().beginRule(new ReadOnlySchedulingRule(provider));
+		// It's possible that the provider was unmapped before we obtained the rule
+		RepositoryProvider newProvider = RepositoryProvider.getProvider(resource.getProject());
+		if (newProvider != provider) {
+			JobManager.getInstance().endRule();
+			return false;
+		}
+		return true;
+	}
+
+	private void endRefresh() {
+		JobManager.getInstance().endRule();
 	}
 
 	/**
