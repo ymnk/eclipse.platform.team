@@ -193,6 +193,13 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	public void setReadOnly(boolean readOnly) throws CVSException {
 		getIFile().setReadOnly(readOnly);
 	}
+
+	/*
+	 * @see ICVSFile#isReadOnly()
+	 */
+	public boolean isReadOnly() throws CVSException {
+		return getIFile().isReadOnly();
+	}
 	
 	/*
 	 * Typecasting helper

@@ -139,11 +139,5 @@ public interface ICVSProvider {
 	 * Get the names of the registered connection methods.
 	 */
 	public String[] getSupportedConnectionMethods();
-		
-		
-	/**
-	 * Set the print stream to which command message and error output is sent
-	 */
-	public void setPrintStream(PrintStream out);
 }
 

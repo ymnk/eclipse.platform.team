@@ -129,7 +129,7 @@ public class Checkout extends Command {
 			}
 		}
 		
-		return super.execute(session, globalOptions, localOptions, arguments, listener, Policy.subMonitorFor(monitor, 90));
+		return super.doExecute(session, globalOptions, localOptions, arguments, listener, Policy.subMonitorFor(monitor, 90));
 	}
 	
 	/**

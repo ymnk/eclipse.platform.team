@@ -50,6 +50,11 @@ public interface ICVSFile extends ICVSResource {
 	void setReadOnly(boolean readOnly) throws CVSException;
 	
 	/**
+	 * Determines if a file is read only or not.
+	 */
+	boolean isReadOnly() throws CVSException;
+	
+	/**
 	 * Move the resource to another location. Does overwrite without
 	 * promting.
 	 */

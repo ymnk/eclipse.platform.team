@@ -75,7 +75,7 @@ public class RTag extends Command {
 			ICVSResource resource = resources[i];
 			arguments.add(resource.getRemoteLocation(null));
 		}
-		return execute(session, globalOptions, 
+		return super.execute(session, globalOptions, 
 			(LocalOption[]) modifiedLocalOptions.toArray(new LocalOption[modifiedLocalOptions.size()]), 
 			(String[]) arguments.toArray(new String[arguments.size()]), null, monitor);
 	}

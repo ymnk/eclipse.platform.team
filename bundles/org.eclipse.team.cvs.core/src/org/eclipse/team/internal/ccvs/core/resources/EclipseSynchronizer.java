@@ -478,7 +478,7 @@ public class EclipseSynchronizer {
 		}
 	}
 	
-	static private void flushAll(final IContainer root, final boolean purgeFromDisk) throws CVSException {
+	static public void flushAll(final IContainer root, final boolean purgeFromDisk) throws CVSException {
 		if (! (root.exists() || root.isPhantom())) return;
 		try {
 			// purge sync information from children

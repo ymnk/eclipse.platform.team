@@ -41,6 +41,6 @@ public class ExpandModules extends Command {
 	 * Convenient execute method
 	 */
 	public IStatus execute(Session session, String[] modules, IProgressMonitor monitor) throws CVSException {
-		return execute(session, NO_GLOBAL_OPTIONS, NO_LOCAL_OPTIONS, modules, null, monitor);
+		return super.execute(session, NO_GLOBAL_OPTIONS, NO_LOCAL_OPTIONS, modules, null, monitor);
 	}
 }

@@ -334,14 +334,14 @@ public abstract class Command {
 		final IStatus[] status = new IStatus[1];
 		ICVSRunnable job = new ICVSRunnable() {
 			public void run(IProgressMonitor monitor) throws CVSException {
-				status[0] = doExcecute(session, globalOptions, localOptions, arguments, listener, monitor);
+				status[0] = doExecute(session, globalOptions, localOptions, arguments, listener, monitor);
 			}
 		};
 		session.getLocalRoot().run(job, pm);
 		return status[0];
 	}
 	
-	protected IStatus doExcecute(Session session, GlobalOption[] globalOptions,
+	protected IStatus doExecute(Session session, GlobalOption[] globalOptions,
 		LocalOption[] localOptions, String[] arguments, ICommandOutputListener listener,
 		IProgressMonitor monitor) throws CVSException {
 			

@@ -324,6 +324,10 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	public void setReadOnly(boolean readOnly) throws CVSException {
  	}
 
+	public boolean isReadOnly() throws CVSException {
+		return true;
+	}
+	
 	/**
 	 * @see IManagedFile#getTimeStamp()
 	 */

@@ -19,7 +19,7 @@ import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.FileNameMatcher;
-import org.eclipse.team.internal.ccvs.core.util.SyncFileUtil;
+import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 import org.eclipse.team.internal.ccvs.core.util.Util;
 
 /**
@@ -116,7 +116,7 @@ abstract class EclipseResource implements ICVSResource {
 		
 		// initialize matcher with global ignores, basic CVS ignore patterns, and ignore patterns
 		// from the .cvsignore file.
-		FileNameMatcher matcher = new FileNameMatcher(SyncFileUtil.BASIC_IGNORE_PATTERNS);
+		FileNameMatcher matcher = new FileNameMatcher(SyncFileWriter.BASIC_IGNORE_PATTERNS);
 		String[] cvsIgnorePatterns;;
 		try {
 			cvsIgnorePatterns = EclipseSynchronizer.getInstance().getIgnored(resource);
