@@ -74,7 +74,6 @@ public class CompareWithRemoteAction extends CompareWithTagAction {
 	
 	protected boolean isEnabled() {
 		IResource[] resources = getSelectedResources();
-		// allow operation for homegeneous multiple selections
 		if(resources.length>0) {
 			for (int i = 0; i < resources.length; i++) {
 				IResource resource = resources[i];
