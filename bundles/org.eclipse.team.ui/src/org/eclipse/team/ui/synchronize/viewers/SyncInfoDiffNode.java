@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.presentation;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
@@ -18,8 +18,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
-import org.eclipse.team.internal.ui.synchronize.compare.RemoteResourceTypedElement;
+import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
+import org.eclipse.team.internal.ui.synchronize.RemoteResourceTypedElement;
 
 /**
  * A diff node used to display the synchronization state for resources described by
@@ -113,9 +113,7 @@ public class SyncInfoDiffNode extends AdaptableDiffNode {
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
 	public Object getAdapter(Class adapter) {
-		if(adapter == IResource.class) {
-			return getResource();
-		} else if(adapter == SyncInfo.class) {
+		if(adapter == SyncInfo.class) {
 			return getSyncInfo();
 		}
 		return super.getAdapter(adapter);

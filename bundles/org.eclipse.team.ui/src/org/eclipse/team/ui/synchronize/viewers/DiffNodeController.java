@@ -8,10 +8,11 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.presentation;
+package org.eclipse.team.ui.synchronize.viewers;
 
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 
 /**
@@ -22,6 +23,23 @@ import org.eclipse.jface.viewers.ViewerSorter;
  */
 public abstract class DiffNodeController {
 
+	protected class RootDiffNode extends UnchangedResourceDiffNode {
+		public RootDiffNode() {
+			super(null, ResourcesPlugin.getWorkspace().getRoot());
+		}
+		public void fireChanges() {
+			fireChange();
+		}
+		public boolean hasChildren() {
+			// This is required to allow the sync framework to be used in wizards
+			// where the input is not populated until after the compare input is
+			// created
+			// (i.e. the compare input will only create the diff viewer if the
+			// input has children
+			return true;
+		}
+	}
+	
 	/**
 	 * Called to initialize this controller and returns the input created by this controller. 
 	 * @param monitor
@@ -36,10 +54,9 @@ public abstract class DiffNodeController {
 	 */
 	public abstract AdaptableDiffNode getInput();
 	
-	public abstract void setViewer(AbstractTreeViewer viewer);
+	public abstract void setViewer(StructuredViewer viewer);
 
 	public abstract ViewerSorter getViewerSorter();
 
 	public abstract void dispose();
-
 }

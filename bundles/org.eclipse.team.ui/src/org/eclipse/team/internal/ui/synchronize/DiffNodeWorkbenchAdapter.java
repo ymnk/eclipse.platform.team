@@ -11,11 +11,8 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.presentation.AdaptableDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.AdaptableDiffNode;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class DiffNodeWorkbenchAdapter implements IWorkbenchAdapter {
@@ -34,17 +31,9 @@ public class DiffNodeWorkbenchAdapter implements IWorkbenchAdapter {
 	public ImageDescriptor getImageDescriptor(Object o) {
 		DiffNode node = getDiffNode(o);
 		if(node instanceof AdaptableDiffNode) {
-			ImageDescriptor imd = ((AdaptableDiffNode)node).getImageDescriptor(o);
-			if(imd != null) {
-				return imd;
-			}
+			return ((AdaptableDiffNode)node).getImageDescriptor(o);
 		}
-		IResource resource = (IResource)Utils.getAdapter(o, IResource.class);
-		if (resource == null) {
-			return null;
-		}
-		IWorkbenchAdapter adapter = (IWorkbenchAdapter)((IAdaptable) resource).getAdapter(IWorkbenchAdapter.class);
-		return adapter.getImageDescriptor(resource);
+		return null;
 	}
 
 	/* (non-Javadoc)

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.compare;
+package org.eclipse.team.internal.ui.synchronize;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

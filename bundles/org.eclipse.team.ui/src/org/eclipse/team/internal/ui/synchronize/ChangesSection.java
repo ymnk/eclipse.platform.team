@@ -107,8 +107,14 @@ public class ChangesSection extends Composite {
 		data.grabExcessHorizontalSpace = true;
 		data.grabExcessVerticalSpace = true;
 		changesSectionContainer.setLayoutData(data);
-		
-		changesViewer = page.createChangesViewer(changesSectionContainer);
+	}
+	
+	public Composite getComposite() {
+		return changesSectionContainer;
+	}
+	
+	public void setViewer(Viewer viewer) {
+		this.changesViewer = viewer;
 		calculateDescription();
 		page.getViewerConfiguration().addInputChangedListener(changedListener);
 		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().addSyncSetChangedListener(syncsetChangedListener);
@@ -200,10 +206,6 @@ public class ChangesSection extends Composite {
 			createDescriptionLabel(composite,Policy.bind("ChangesSection.noChanges", participant.getName()));	 //$NON-NLS-1$
 		}		
 		return composite;
-	}
-	
-	public Viewer getChangesViewer() {
-		return changesViewer;
 	}
 	
 	private Label createDescriptionLabel(Composite parent, String text) {

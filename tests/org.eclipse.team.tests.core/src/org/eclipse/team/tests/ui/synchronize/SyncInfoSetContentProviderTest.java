@@ -17,8 +17,8 @@ import junit.framework.Test;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.ui.synchronize.presentation.DiffNodeController;
-import org.eclipse.team.ui.synchronize.presentation.DiffNodeControllerCompressedFolders;
+import org.eclipse.team.ui.synchronize.viewers.DiffNodeController;
+import org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerCompressedFolders;
 
 /**
  * Tests for the SyncInfoSet content providers.

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.presentation;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.core.resources.IResource;
@@ -39,15 +39,5 @@ public class UnchangedResourceDiffNode extends AdaptableDiffNode implements IAda
 	 */
 	public String getName() {
 		return resource.getName();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
-	public Object getAdapter(Class adapter) {
-		if(adapter == IResource.class) {
-			return this.resource;
-		}
-		return super.getAdapter(adapter);
 	}
 }

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.presentation;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.*;
 
@@ -16,11 +16,11 @@ import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.ITeamStatus;
@@ -28,7 +28,6 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
 
 /**
  * An input that can be used with both {@link } and 
@@ -80,23 +79,6 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 			}
 		}
 	};
-
-	private class RootDiffNode extends UnchangedResourceDiffNode {
-		public RootDiffNode() {
-			super(null, ResourcesPlugin.getWorkspace().getRoot());
-		}
-		public void fireChanges() {
-			fireChange();
-		}
-		public boolean hasChildren() {
-			// This is required to allow the sync framework to be used in wizards
-			// where the input is not populated until after the compare input is
-			// created
-			// (i.e. the compare input will only create the diff viewer if the
-			// input has children
-			return true;
-		}
-	}
 	
 	/**
 	 * Create an input based on the provide sync set. The input is not initialized
@@ -130,8 +112,9 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		return viewer;
 	}
 
-	public void setViewer(AbstractTreeViewer viewer) {
-		this.viewer = viewer;
+	public void setViewer(StructuredViewer viewer) {
+		Assert.isTrue(viewer instanceof AbstractTreeViewer);
+		this.viewer = (AbstractTreeViewer)viewer;
 	}
 
 	public ViewerSorter getViewerSorter() {
@@ -215,7 +198,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		if (container == getRoot()) {
 			resource = ResourcesPlugin.getWorkspace().getRoot();
 		} else {
-			resource = (IResource)Utils.getAdapter(container, IResource.class);
+			resource = container.getResource();
 		}
 		if(resource != null) {
 			SyncInfoTree infoTree = getSyncInfoTree();
@@ -257,7 +240,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 				clearModelObjects((AdaptableDiffNode) element);
 			}
 		}
-		IResource resource = (IResource)Utils.getAdapter(node, IResource.class);
+		IResource resource = node.getResource();
 		if (resource != null) {
 			unassociateDiffNode(resource);
 		}
@@ -282,11 +265,9 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	}
 
 	protected void associateDiffNode(AdaptableDiffNode node) {
-		if(node instanceof IAdaptable) {
-			IResource resource = (IResource)((IAdaptable)node).getAdapter(IResource.class);
-			if(resource != null) {
-				resourceMap.put(resource, node);
-			}
+		IResource resource = node.getResource();
+		if(resource != null) {
+			resourceMap.put(resource, node);
 		}
 	}
 

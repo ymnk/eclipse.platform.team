@@ -26,7 +26,6 @@ import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffTreeViewer;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 
@@ -46,6 +45,7 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 	// the viewer type is switched.
 	private Composite composite = null;
 	private ChangesSection changesSection;
+	private Viewer changesViewer;
 	private boolean settingWorkingSet = false;
 	
 	private ISynchronizeView view;
@@ -89,23 +89,26 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 		composite.setLayoutData(data);
 		
 		// Create the changes section which, in turn, creates the changes viewer and its configuration
-		changesSection = new ChangesSection(composite, this);
+		this.changesSection = new ChangesSection(composite, this);
+		this.changesViewer = createChangesViewer(changesSection.getComposite());
+		changesSection.setViewer(changesViewer);
 		
 		// toolbar
-		Viewer viewer = getChangesViewer();
-		if(viewer instanceof INavigatable) {
-			gotoNext = new NavigateAction(view, (INavigatable)viewer, true /*next*/);		
-			gotoPrevious = new NavigateAction(view, (INavigatable)viewer, false /*previous*/);
-		}
+		INavigatable nav = new INavigatable() {
+			public boolean gotoDifference(boolean next) {
+				return configuration.navigate(next);
+			}
+		};
+		gotoNext = new NavigateAction(view, nav, true /*next*/);		
+		gotoPrevious = new NavigateAction(view, nav, false /*previous*/);
 		refreshAllAction = new TeamParticipantRefreshAction(getSite().getSelectionProvider(), getParticipant(), true /* refresh all */);
 		refreshAllAction.setWorkbenchSite(view.getSite());
 		collapseAll = new Action() {
 			public void run() {
-				Viewer viewer = getChangesViewer();
-				if (viewer == null || !(viewer instanceof AbstractTreeViewer)) return;
-				viewer.getControl().setRedraw(false);		
-				((AbstractTreeViewer)viewer).collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
-				viewer.getControl().setRedraw(true);
+				if (changesViewer == null || !(changesViewer instanceof AbstractTreeViewer)) return;
+				changesViewer.getControl().setRedraw(false);		
+				((AbstractTreeViewer)changesViewer).collapseToLevel(changesViewer.getInput(), TreeViewer.ALL_LEVELS);
+				changesViewer.getControl().setRedraw(true);
 			}
 		};
 		Utils.initAction(collapseAll, "action.collapseAll."); //$NON-NLS-1$
@@ -141,10 +144,6 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 		this.site = site;		
 	}
 	
-	protected Viewer getChangesViewer() {
-		return changesSection.getChangesViewer();
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPage#setFocus()
 	 */
@@ -157,6 +156,7 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 	 */
 	public void dispose() {
 		changesSection.dispose();
+		configuration.dispose();
 	}
 
 	/*
@@ -166,11 +166,11 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 	 */
 	public Object getAdapter(Class key) {
 		if (key.equals(ISelectionProvider.class))
-			return getChangesViewer();
+			return changesViewer;
 		if (key == IShowInSource.class) {
 			return new IShowInSource() {
 				public ShowInContext getShowInContext() {					
-					StructuredViewer v = (StructuredViewer)getChangesViewer();
+					StructuredViewer v = (StructuredViewer)changesViewer;
 					if (v == null) return null;
 					ISelection s = v.getSelection();
 					if (s instanceof IStructuredSelection) {
@@ -208,9 +208,11 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 			
 			// toolbar
 			manager.add(refreshAllAction);
-			manager.add(new Separator());		
-			manager.add(gotoNext);
-			manager.add(gotoPrevious);
+			manager.add(new Separator());	
+			if(gotoNext != null) {
+				manager.add(gotoNext);
+				manager.add(gotoPrevious);
+			}
 			manager.add(collapseAll);
 			manager.add(new Separator());
 
@@ -263,9 +265,8 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 			settingWorkingSet = false;
 		// Change to showing of sync state in text labels preference
 		} else if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
-			Viewer viewer = getChangesViewer();
-			if(viewer instanceof StructuredViewer) {
-				((StructuredViewer)viewer).refresh(true /* update labels */);
+			if(changesViewer instanceof StructuredViewer) {
+				((StructuredViewer)changesViewer).refresh(true /* update labels */);
 			}
 		}
 	}
@@ -284,15 +285,22 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 		return view;
 	}
 	
-	public Viewer createChangesViewer(Composite parent) {
+	private Viewer createChangesViewer(Composite parent) {
 		configuration = createSyncInfoSetCompareConfiguration();
-		Viewer viewer =  new SyncInfoDiffTreeViewer(parent, configuration);
+		TreeViewer viewer = new DiffTreeViewerConfiguration.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		viewer.getControl().setLayoutData(data);
+		configuration.initializeViewer(viewer);
 		getSite().setSelectionProvider(viewer);		
 		return viewer;
 	}
 
 	public DiffTreeViewerConfiguration getViewerConfiguration() {
 		return configuration;
+	}
+	
+	public Viewer getViewer() {
+		return changesViewer;
 	}
 	
 	protected SubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {

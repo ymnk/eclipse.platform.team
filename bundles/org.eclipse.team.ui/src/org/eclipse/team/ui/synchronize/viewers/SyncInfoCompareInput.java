@@ -22,9 +22,8 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
+import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.presentation.*;
 
 /**
  * A {@link SyncInfo} editor input used as input to a two-way or three-way 

@@ -17,8 +17,7 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.presentation.*;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.viewers.*;
 
 /**

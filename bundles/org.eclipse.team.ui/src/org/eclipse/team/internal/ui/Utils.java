@@ -30,6 +30,7 @@ import org.eclipse.team.core.synchronize.IRemoteResource;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.viewers.AdaptableDiffNode;
 import org.eclipse.ui.*;
 
 public class Utils {
@@ -391,9 +392,11 @@ public class Utils {
 			IResource resource = null;
 			if (element instanceof IResource) {
 				resource = (IResource)element;
+			} else if (element instanceof AdaptableDiffNode){
+				resource = ((AdaptableDiffNode) element).getResource();
 			} else {
-				resource = (IResource) getAdapter(element, IResource.class);
-			} 
+				resource = (IResource)getAdapter(element, IResource.class);
+			}
 			if (resource != null) {
 				resources.add(resource);
 			}

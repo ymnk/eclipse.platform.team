@@ -8,19 +8,17 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.presentation;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.*;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public class AdaptableDiffNode extends DiffNode implements IAdaptable {
+public abstract class AdaptableDiffNode extends DiffNode implements IAdaptable {
 
 	public static final String BUSY_PROPERTY = TeamUIPlugin.ID + ".busy"; //$NON-NLS-1$
 	public static final String PROPAGATED_CONFLICT_PROPERTY = TeamUIPlugin.ID + ".conflict"; //$NON-NLS-1$
@@ -62,13 +60,6 @@ public class AdaptableDiffNode extends DiffNode implements IAdaptable {
 		}
 	}
 	
-	/*
-	 * Added as part
-	 */
-	public ImageDescriptor getImageDescriptor(Object object) {
-		return null;
-	}
-	
 	/**
 	 * Return whether this node has the given property set.
 	 * @param propertyName the flag to test
@@ -105,6 +96,18 @@ public class AdaptableDiffNode extends DiffNode implements IAdaptable {
 			removeToRoot(propertyName);
 		}
 	}
+	
+	
+	public ImageDescriptor getImageDescriptor(Object object) {
+		IResource resource = getResource();
+		if(resource != null) {
+			IWorkbenchAdapter adapter = (IWorkbenchAdapter)((IAdaptable) resource).getAdapter(IWorkbenchAdapter.class);
+			return adapter.getImageDescriptor(resource);
+		}
+		return null;
+	}
+	
+	public abstract IResource getResource();
 
 	private void addToRoot(String flag) {
 		setProperty(flag, true);

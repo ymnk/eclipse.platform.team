@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.presentation;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.*;
 
@@ -19,7 +19,6 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.ISharedImages;
 
 public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHierarchical {
@@ -96,7 +95,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		if (container == getRoot()) {
 			resource = ResourcesPlugin.getWorkspace().getRoot();
 		} else {
-			resource = (IResource)Utils.getAdapter(container, IResource.class);
+			resource = container.getResource();
 		}
 		if(resource != null) {
 			if (resource.getType() == IResource.PROJECT) {

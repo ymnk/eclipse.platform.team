@@ -59,7 +59,7 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 ======================================================================
  PR LIST (16-01-2004)
 ======================================================================
-- progress monitoring in SyncSet.reset and such. there are many places where null progress monitors are passed along.
+x progress monitoring in SyncSet.reset and such. there are many places where null progress monitors are passed along.
 - showing sync view in commit dialog is complicated because there is no easy way of finding out exactly which resources will be committed at the
   point the commit comment dialog is shown. Need to provide new API on the commit dialog for this.
 - convert details dialogs that show sync view into wizards, this allows more room to browse the changes. almost like the refactoring. Preview >> button instead of Next >>.
@@ -88,9 +88,9 @@ x actions in sync view all assume that selection will have a resource (e.g refre
   [jm] I think that actions will have to know about DiffNodes and we need the helper to
   get the list of children nodes.
   [jm] added Utils.getResources(Iselection) does all the logic for retreiving resources
-- sorter is related to input so may need to change when input does
+x sorter is related to input so may need to change when input does
   - there does not appear to be a clean way to change the sorter and input without causing two refreshes
-- SyncInfoSet##getOutOfSyncDescendants(IResource) is speced to include the resource itself if it is out-of-sync
+x SyncInfoSet##getOutOfSyncDescendants(IResource) is speced to include the resource itself if it is out-of-sync
   - this is a bit confusing as the name implies otherwise
   - should either consider a name change or a spec change
   [jm] I never understood why is was spec'd like that :) You can decide...
@@ -155,7 +155,7 @@ viewer is created. But this should be solvable by ensuring that showInActivePers
 viewer creation in a sync exec.
 
 ==============================
-- initialize case doesn't work because main page is shown as empty but mode is correct
+x initialize case doesn't work because main page is shown as empty but mode is correct
 x how do we handle changes to sync: re-create new nodes or update the nodes with new sync kind?
 x new projects don't show up?
 - how does our APIs support moves/renames? Do we need another sync state?

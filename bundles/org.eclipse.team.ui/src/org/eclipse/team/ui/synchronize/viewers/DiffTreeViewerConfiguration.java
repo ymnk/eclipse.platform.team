@@ -10,26 +10,19 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
-import org.eclipse.compare.structuremergeviewer.*;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.util.*;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.events.MenuEvent;
-import org.eclipse.swt.events.MenuListener;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
-import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
-import org.eclipse.team.ui.synchronize.presentation.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.IWorkbenchPartSite;
-import org.eclipse.ui.internal.PluginAction;
-import org.eclipse.ui.model.BaseWorkbenchContentProvider;
+import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
 /**
  * A <code>DiffTreeViewerConfiguration</code> object controls various UI
@@ -63,15 +56,44 @@ import org.eclipse.ui.model.BaseWorkbenchContentProvider;
  * </p>
  * @since 3.0
  */
-public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
+public class DiffTreeViewerConfiguration extends StructuredViewerAdvisor implements IPropertyChangeListener {
 
-	private SyncInfoTree set;
-	private String menuID;
-	private AbstractTreeViewer viewer;
 	private ExpandAllAction expandAllAction;
-	private DiffNodeController diffNodeController;
-	private ListenerList listeners;
+	
+	public interface ITreeViewerAccessor {
+		public void openSelection();
 
+		public void createChildren(TreeItem item);
+	}
+	
+	public static class NavigableTreeViewer extends TreeViewer implements ITreeViewerAccessor {
+		public NavigableTreeViewer(Composite parent, int style) {
+			super(parent, style);
+		}
+
+		public void openSelection() {
+			fireOpen(new OpenEvent(this, getSelection()));
+		}
+
+		public void createChildren(TreeItem item) {	
+			super.createChildren(item);
+		}
+	}
+	
+	public static class NavigableCheckboxTreeViewer extends ContainerCheckedTreeViewer implements ITreeViewerAccessor {
+		public NavigableCheckboxTreeViewer(Composite parent, int style) {
+			super(parent, style);
+		}
+
+		public void openSelection() {
+			fireOpen(new OpenEvent(this, getSelection()));
+		}
+
+		public void createChildren(TreeItem item) {	
+			super.createChildren(item);
+		}
+	}
+	
 	/**
 	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given
 	 * sync set.
@@ -95,245 +117,41 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 *            the <code>SyncInfoSet</code> to be displayed in the
 	 *            resulting diff viewer
 	 */
-	public DiffTreeViewerConfiguration(String menuID, SyncInfoTree set) {
-		this.menuID = menuID;
-		this.set = set;
+	public DiffTreeViewerConfiguration(String menuId, SyncInfoTree set) {
+		super(menuId, set);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 	}
 	
-	public void addInputChangedListener(IInputChangedListener listener) {
-		if (listeners == null)
-			listeners= new ListenerList();
-		listeners.add(listener);
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#initializeViewer(org.eclipse.jface.viewers.StructuredViewer)
+	 */
+	public void initializeViewer(StructuredViewer viewer) {
+		super.initializeViewer(viewer);
+		Assert.isTrue(viewer instanceof AbstractTreeViewer);
 	}
 	
-	public void removeInputChangedListener(IInputChangedListener listener) {
-		if (listeners != null) {
-			listeners.remove(listener);
-			if (listeners.isEmpty())
-				listeners= null;
-		}
-	}
 	
-	protected void fireChanges() {
-		if (listeners != null) {
-			Object[] l= listeners.getListeners();
-			for (int i= 0; i < l.length; i++)
-				((IInputChangedListener) l[i]).inputChanged(diffNodeController.getInput());
-		}
-	}
-	
-	/**
-	 * Initialize the viewer with the elements of this configuration, including
-	 * content and label providers, sorter, input and menus. This method is
-	 * invoked from the constructor of <code>SyncInfoDiffTreeViewer</code> to
-	 * initialize the viewers. A configuration instance may only be used with
-	 * one viewer.
-	 * @param parent
-	 *            the parent composite
-	 * @param viewer
-	 *            the viewer being initialized
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#initializeListeners(org.eclipse.jface.viewers.StructuredViewer)
 	 */
-	public void initializeViewer(AbstractTreeViewer viewer) {
-		Assert.isTrue(this.viewer == null, "A DiffTreeViewerConfiguration can only be used with a single viewer."); //$NON-NLS-1$
-		this.viewer = viewer;
-
-		initializeListeners(viewer);
-		hookContextMenu(viewer);
-		initializeActions(viewer);
-		viewer.setLabelProvider(getLabelProvider());
-		viewer.setContentProvider(getContentProvider());
-		
-		// The input may of been set already. In that case, don't change it and
-		// simply assign it to the view.
-		if(diffNodeController == null) {
-			diffNodeController = getDiffNodeController();
-			diffNodeController.prepareInput(null);
-		}
-		setInput(viewer);
-	}
-
-	/**
-	 * @param viewer
-	 */
-	private void setInput(AbstractTreeViewer viewer) {
-		diffNodeController.setViewer(viewer);
-		viewer.setSorter(diffNodeController.getViewerSorter());
-		DiffNode input = diffNodeController.getInput();
-		input.addCompareInputChangeListener(new ICompareInputChangeListener() {
-			public void compareInputChanged(ICompareInput source) {
-				fireChanges();
-			}
-		});
-		viewer.setInput(diffNodeController.getInput());
-	}
-
-	/**
-	 * Creates the input for this view and initializes it. At the time this method
-	 * is called the viewer may not of been created yet. 
-	 * 
-	 * @param monitor shows progress while preparing the input
-	 * @return the input that can be shown in a viewer
-	 */
-	public Object prepareInput(IProgressMonitor monitor)throws TeamException {
-		if(diffNodeController != null) {
-			diffNodeController.dispose();
-		}
-		diffNodeController = getDiffNodeController();		
-		return diffNodeController.prepareInput(monitor);
-	}
-	
-	/**
-	 * Get the input that will be assigned to the viewer initialized by this
-	 * configuration. Subclass may override.
-	 * @return the viewer input
-	 */
-	protected DiffNodeController getDiffNodeController() {
-		if (getShowCompressedFolders()) {
-			return new DiffNodeControllerCompressedFolders(getSyncInfoTree());
-		}
-		return new DiffNodeControllerHierarchical(getSyncInfoTree());
-	}
-
-	/**
-	 * Get the label provider that will be assigned to the viewer initialized
-	 * by this configuration. Subclass may override but should either wrap the
-	 * default one provided by this method or subclass <code>TeamSubscriberParticipantLabelProvider</code>.
-	 * In the later case, the logical label provider should still be assigned
-	 * to the subclass of <code>TeamSubscriberParticipantLabelProvider</code>.
-	 * @param logicalProvider
-	 *            the label provider for the selected logical view
-	 * @return a label provider
-	 * @see SyncInfoLabelProvider
-	 */
-	protected ILabelProvider getLabelProvider() {
-		return new SyncInfoLabelProvider();
-	}
-
-	protected IStructuredContentProvider getContentProvider() {
-		return new BaseWorkbenchContentProvider();
-	}
-
-	/**
-	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code>
-	 * in order to initialize any listeners for the viewer.
-	 * @param viewer
-	 *            the viewer being initialize
-	 */
-	protected void initializeListeners(final StructuredViewer viewer) {
+	protected void initializeListeners(StructuredViewer viewer) {
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
-
 			public void doubleClick(DoubleClickEvent event) {
-				handleDoubleClick(viewer, event);
+				handleDoubleClick(getViewer(), event);
 			}
 		});
 	}
-
-	/**
-	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code>
-	 * in order to initialize any actions for the viewer. It is invoked before
-	 * the input is set on the viewer in order to allow actions to be
-	 * initialized before there is any reaction to the input being set (e.g.
-	 * selecting and opening the first element).
-	 * <p>
-	 * The default behavior is to add the up and down navigation nuttons to the
-	 * toolbar. Subclasses can override.
-	 * @param viewer
-	 *            the viewer being initialize
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#initializeActions(org.eclipse.jface.viewers.StructuredViewer)
 	 */
 	protected void initializeActions(StructuredViewer viewer) {
+		super.initializeActions(viewer);
 		expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
 		Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
 	}
-
-	/**
-	 * Return the <code>SyncInfoSet</code> being shown by the viewer
-	 * associated with this configuration.
-	 * @return a <code>SyncInfoSet</code>
-	 */
-	public SyncInfoTree getSyncInfoTree() {
-		return set;
-	}
-
-	/**
-	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code>
-	 * in order to configure the viewer to call <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
-	 * when a context menu is being displayed in the diff tree viewer.
-	 * @param viewer
-	 *            the viewer being initialized
-	 * @see fillContextMenu(StructuredViewer, IMenuManager)
-	 */
-	protected void hookContextMenu(final StructuredViewer viewer) {
-		final MenuManager menuMgr = new MenuManager(menuID); //$NON-NLS-1$
-		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener() {
-
-			public void menuAboutToShow(IMenuManager manager) {
-				fillContextMenu(viewer, manager);
-			}
-		});
-		Menu menu = menuMgr.createContextMenu(viewer.getControl());
-		menu.addMenuListener(new MenuListener() {
-
-			public void menuHidden(MenuEvent e) {
-			}
-
-			// Hack to allow action contributions to update their
-			// state before the menu is shown. This is required when
-			// the state of the selection changes and the contributions
-			// need to update enablement based on this.
-			public void menuShown(MenuEvent e) {
-				IContributionItem[] items = menuMgr.getItems();
-				for (int i = 0; i < items.length; i++) {
-					IContributionItem item = items[i];
-					if (item instanceof ActionContributionItem) {
-						IAction actionItem = ((ActionContributionItem) item).getAction();
-						if (actionItem instanceof PluginAction) {
-							((PluginAction) actionItem).selectionChanged(viewer.getSelection());
-						}
-					}
-				}
-			}
-		});
-		viewer.getControl().setMenu(menu);
-		if (allowParticipantMenuContributions()) {
-			IWorkbenchPartSite site = Utils.findSite(viewer.getControl());
-			if (site == null) {
-				site = Utils.findSite();
-			}
-			if (site != null) {
-				site.registerContextMenu(menuID, menuMgr, viewer);
-			}
-		}
-	}
-
-	/**
-	 * Callback that is invoked when a context menu is about to be shown in the
-	 * diff viewer.
-	 * @param viewer
-	 *            the viewer
-	 * @param manager
-	 *            the menu manager
-	 */
-	protected void fillContextMenu(final StructuredViewer viewer, IMenuManager manager) {
-		manager.add(expandAllAction);
-		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-	}
-
-	protected AbstractTreeViewer getViewer() {
-		return viewer;
-	}
-
-	/**
-	 * Cleanup listeners
-	 */
-	public void dispose() {
-		if(diffNodeController != null) {
-			diffNodeController.dispose();
-		}
-		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
-	}
-
+	
 	/**
 	 * Handles a double-click event from the viewer. Expands or collapses a
 	 * folder when double-clicked.
@@ -345,41 +163,34 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		Object element = selection.getFirstElement();
-		if (viewer instanceof TreeViewer) {
-			AbstractTreeViewer treeViewer = ((AbstractTreeViewer) viewer);
-			if (treeViewer.getExpandedState(element)) {
-				treeViewer.collapseToLevel(element, AbstractTreeViewer.ALL_LEVELS);
-			} else {
-				TreeViewerUtils.navigate((TreeViewer) viewer, true /* next */, false /* no-open */, true /* only-expand */);
-			}
+		AbstractTreeViewer treeViewer = (AbstractTreeViewer) getViewer();
+		if (treeViewer.getExpandedState(element)) {
+			treeViewer.collapseToLevel(element, AbstractTreeViewer.ALL_LEVELS);
+		} else {
+			DiffTreeViewerConfiguration.navigate((TreeViewer)getViewer(), true /* next */, false /* no-open */, true /* only-expand */);
 		}
 	}
 
-	/**
-	 * Return the menu id that is used to obtain context menu items from the
-	 * workbench.
-	 * @return the menuId.
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#getDiffNodeController()
 	 */
-	public String getMenuId() {
-		return menuID;
+	protected DiffNodeController getDiffNodeController() {
+		if(getShowCompressedFolders()) {
+			return new DiffNodeControllerCompressedFolders((SyncInfoTree)getSyncInfoSet());
+		}
+		return new DiffNodeControllerHierarchical((SyncInfoTree)getSyncInfoSet());
 	}
-
-	/**
-	 * Returns whether workbench menu items whould be included in the context
-	 * menu. By default, this returns <code>true</code> if there is a menu id
-	 * and <code>false</code> otherwise
-	 * @return whether to include workbench context menu items
-	 */
-	protected boolean allowParticipantMenuContributions() {
-		return getMenuId() != null;
+	
+	private boolean getShowCompressedFolders() {
+		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		if (viewer != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
+		if (getViewer() != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
 			try {
 				prepareInput(null);
 				setInput(getViewer());
@@ -388,15 +199,147 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 			}
 		}
 	}
-
-	private boolean getShowCompressedFolders() {
-		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#fillContextMenu(org.eclipse.jface.viewers.StructuredViewer, org.eclipse.jface.action.IMenuManager)
+	 */
+	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
+		manager.add(expandAllAction);
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#navigate(boolean)
+	 */
+	public boolean navigate(boolean next) {
+		return DiffTreeViewerConfiguration.navigate((TreeViewer)getViewer(), next, true, false);
+	}
+	/**
+	 * Selects the next (or previous) node of the current selection.
+	 * If there is no current selection the first (last) node in the tree is selected.
+	 * Wraps around at end or beginning.
+	 * Clients may override. 
+	 *
+	 * @param next if <code>true</code> the next node is selected, otherwise the previous node
+	 * @return <code>true</code> if at end (or beginning)
+	 */
+	public static boolean navigate(TreeViewer viewer, boolean next, boolean fireOpen, boolean expandOnly) {
+		Tree tree = viewer.getTree();
+		if (tree == null)
+			return false;
+		TreeItem item = null;
+		TreeItem children[] = tree.getSelection();
+		if (children != null && children.length > 0)
+			item = children[0];
+		if (item == null) {
+			children = tree.getItems();
+			if (children != null && children.length > 0) {
+				item = children[0];
+				if (item != null && item.getItemCount() <= 0) {
+					setSelection(viewer, item, fireOpen, expandOnly); // Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+					return false;
+				}
+			}
+		}
+		while (true) {
+			item = findNextPrev(viewer, item, next);
+			if (item == null)
+				break;
+			if (item.getItemCount() <= 0)
+				break;
+		}
+		if (item != null) {
+			setSelection(viewer, item, fireOpen, expandOnly); // Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+			return false;
+		}
+		return true;
 	}
 
-	protected void aSyncExec(Runnable r) {
-		final Control ctrl = viewer.getControl();
-		if (ctrl != null && !ctrl.isDisposed()) {
-			ctrl.getDisplay().asyncExec(r);
+	private static void setSelection(TreeViewer viewer, TreeItem ti, boolean fireOpen, boolean expandOnly) {
+		if (ti != null) {
+			Object data= ti.getData();
+			if (data != null) {
+				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+				ISelection selection = new StructuredSelection(data);
+				if (expandOnly) {
+					viewer.expandToLevel(data, 0);
+				} else {
+					viewer.setSelection(selection, true);
+					ISelection currentSelection = viewer.getSelection();
+					if (fireOpen && currentSelection != null && selection.equals(currentSelection)) {
+						if (viewer instanceof ITreeViewerAccessor) {
+							((ITreeViewerAccessor) viewer).openSelection();
+						}
+					}
+				}
+			}
 		}
+	}
+	
+	private static TreeItem findNextPrev(TreeViewer viewer, TreeItem item, boolean next) {
+		if (item == null || !(viewer instanceof ITreeViewerAccessor))
+			return null;
+		TreeItem children[] = null;
+		ITreeViewerAccessor treeAccessor = (ITreeViewerAccessor) viewer;
+		if (!next) {
+			TreeItem parent = item.getParentItem();
+			if (parent != null)
+				children = parent.getItems();
+			else
+				children = item.getParent().getItems();
+			if (children != null && children.length > 0) {
+				// goto previous child
+				int index = 0;
+				for (; index < children.length; index++)
+					if (children[index] == item)
+						break;
+				if (index > 0) {
+					item = children[index - 1];
+					while (true) {
+						treeAccessor.createChildren(item);
+						int n = item.getItemCount();
+						if (n <= 0)
+							break;
+						item.setExpanded(true);
+						item = item.getItems()[n - 1];
+					}
+					// previous
+					return item;
+				}
+			}
+			// go up
+			return parent;
+		} else {
+			item.setExpanded(true);
+			treeAccessor.createChildren(item);
+			if (item.getItemCount() > 0) {
+				// has children: go down
+				children = item.getItems();
+				return children[0];
+			}
+			while (item != null) {
+				children = null;
+				TreeItem parent = item.getParentItem();
+				if (parent != null)
+					children = parent.getItems();
+				else
+					children = item.getParent().getItems();
+				if (children != null && children.length > 0) {
+					// goto next child
+					int index = 0;
+					for (; index < children.length; index++)
+						if (children[index] == item)
+							break;
+					if (index < children.length - 1) {
+						// next
+						return children[index + 1];
+					}
+				}
+				// go up
+				item = parent;
+			}
+		}
+		return item;
 	}
 }

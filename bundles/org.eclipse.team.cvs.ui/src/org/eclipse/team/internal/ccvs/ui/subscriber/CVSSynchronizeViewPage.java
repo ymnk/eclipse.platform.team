@@ -43,7 +43,7 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 		}
 
 		public void run() {
-			StructuredViewer viewer = (StructuredViewer)getChangesViewer();
+			StructuredViewer viewer = (StructuredViewer)getViewer();
 			if (viewer != null) {
 				ISelection selection = new StructuredSelection(viewer.getInput());		
 				if (!selection.isEmpty()) {
@@ -109,8 +109,8 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 	public void propertyChange(PropertyChangeEvent event) {		
 		super.propertyChange(event);
 		String prop = event.getProperty();
-		if(prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getChangesViewer() != null && getSyncInfoSet() != null) {
-			((StructuredViewer)getChangesViewer()).refresh(true /* update labels */);
+		if(prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getViewer() != null && getSyncInfoSet() != null) {
+			((StructuredViewer)getViewer()).refresh(true /* update labels */);
 		}
 	}
 	

@@ -27,8 +27,8 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.presentation.AdaptableDiffNode;
-import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.AdaptableDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
 /**

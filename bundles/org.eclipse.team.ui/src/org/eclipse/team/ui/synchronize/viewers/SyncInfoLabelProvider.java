@@ -21,7 +21,6 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.presentation.AdaptableDiffNode;
 import org.eclipse.ui.internal.WorkbenchColors;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 

@@ -19,10 +19,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.presentation.*;
 
 /**
  * A <code>CompareEditorInput</code> whose diff viewer shows the resources contained
@@ -37,6 +38,7 @@ import org.eclipse.team.ui.synchronize.presentation.*;
 public class SyncInfoSetCompareInput extends CompareEditorInput {
 
 	private DiffTreeViewerConfiguration diffViewerConfiguration;
+	private Viewer diffViewer;
 	private NavigationAction nextAction;
 	private NavigationAction previousAction;
 
@@ -52,31 +54,30 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	}
 
 	public final Viewer createDiffViewer(Composite parent) {
-		final StructuredViewer viewer = internalCreateDiffViewer(parent, diffViewerConfiguration);
-		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
+		this.diffViewer = internalCreateDiffViewer(parent, getViewerConfiguration());
+		diffViewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
 		
 		/*
 		 * This viewer can participate in navigation support in compare editor inputs. Note that
 		 * it is currently accessing an internal compare interface that should be made public. See
 		 * the following bug report https://bugs.eclipse.org/bugs/show_bug.cgi?id=48795.
-		 */
-		if(viewer instanceof INavigatable) { 
-			INavigatable nav= new INavigatable() {
-				public boolean gotoDifference(boolean next) {
-					return ((INavigatable)viewer).gotoDifference(next);
-				}
-			};
-			viewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
-			
-			nextAction = new NavigationAction(true);
-			previousAction = new NavigationAction(false);
-			nextAction.setCompareEditorInput(this);
-			previousAction.setCompareEditorInput(this);
-		}
+		 */	
+		INavigatable nav= new INavigatable() {
+			public boolean gotoDifference(boolean next) {
+				return diffViewerConfiguration.navigate(next);
+			}
+		};
+		diffViewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
 		
-		initializeToolBar(viewer.getControl().getParent());
-		initializeDiffViewer(viewer);
-		return viewer;
+		nextAction = new NavigationAction(true);
+		previousAction = new NavigationAction(false);
+		nextAction.setCompareEditorInput(this);
+		previousAction.setCompareEditorInput(this);
+		
+		
+		initializeToolBar(diffViewer.getControl().getParent());
+		initializeDiffViewer(diffViewer);
+		return diffViewer;
 	}
 
 	/**
@@ -88,9 +89,21 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * @return the created diff viewer
 	 */
 	protected StructuredViewer internalCreateDiffViewer(Composite parent, DiffTreeViewerConfiguration diffViewerConfiguration) {
-		return new SyncInfoDiffTreeViewer(parent, diffViewerConfiguration);
+		TreeViewer viewer = new DiffTreeViewerConfiguration.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		viewer.getControl().setLayoutData(data);
+		diffViewerConfiguration.initializeViewer(viewer);
+		return viewer;
 	}
 
+	protected DiffTreeViewerConfiguration getViewerConfiguration() {
+		return diffViewerConfiguration;
+	}
+	
+	protected Viewer getViewer() {
+		return diffViewer;
+	}
+	
 	/**
 	 * Initialize the diff viewer created for this compare input. If a subclass
 	 * overrides the <code>createDiffViewer(Composite)</code> method, it should
@@ -98,20 +111,22 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * labelling in the compare input's contents viewers.
 	 * @param viewer the diff viewer created by the compare input
 	 */
-	protected void initializeDiffViewer(StructuredViewer viewer) {
-		viewer.addOpenListener(new IOpenListener() {
-			public void open(OpenEvent event) {
-				ISelection s = event.getSelection();
-				SyncInfoDiffNode node = getElement(s);
-				if(node != null) {
-					IResource resource = node.getResource();
-					int kind = node.getKind();
-					if(resource != null && resource.getType() == IResource.FILE) { 
-						Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
+	protected void initializeDiffViewer(Viewer viewer) {
+		if (viewer instanceof StructuredViewer) {
+			((StructuredViewer) viewer).addOpenListener(new IOpenListener() {
+				public void open(OpenEvent event) {
+					ISelection s = event.getSelection();
+					SyncInfoDiffNode node = getElement(s);
+					if (node != null) {
+						IResource resource = node.getResource();
+						int kind = node.getKind();
+						if (resource != null && resource.getType() == IResource.FILE) {
+							Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
+						}
 					}
 				}
-			}
-		});
+			});
+		}
 	}
 
 	public void contributeToToolBar(ToolBarManager tbm) {	
@@ -149,7 +164,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 */
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		try {
-			return diffViewerConfiguration.prepareInput(monitor);
+			return getViewerConfiguration().prepareInput(monitor);
 		} catch (TeamException e) {
 			throw new InvocationTargetException(e);
 		}

@@ -18,7 +18,7 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 
 public class ChangeLogDiffNode extends SyncInfoDiffNode {
 
