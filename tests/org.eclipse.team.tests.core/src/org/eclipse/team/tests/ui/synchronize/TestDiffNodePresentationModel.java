@@ -154,52 +154,55 @@ public class TestDiffNodePresentationModel extends TeamTest {
 		}
 	}
 	
-	public void testNestedCompressedFolder() throws CoreException {
-		IProject project = createProject(new String[] { "file.txt", "folder1/file2.txt", "folder1/folder2/file3.txt"});
-		adjustSet(
-			set,
-			project, 
-			new String[] { "file.txt" },
-			new int[] {SyncInfo.OUTGOING | SyncInfo.CHANGE});
+	public void testNestedFolder() throws CoreException {
+		IProject project = createProject(new String[]{"file.txt", "folder1/file2.txt", "folder1/folder2/file3.txt"});
+		adjustSet(set, project, 
+				new String[]{"file.txt"}, 
+				new int[]{SyncInfo.OUTGOING | SyncInfo.CHANGE});
 		assertProperVisibleItems();
-		
-		adjustSet(
-			set,
-			project,
-			new String[] { "folder1/file2.txt", "folder1/folder2/file3.txt" },
-			new int[] {
-				SyncInfo.OUTGOING | SyncInfo.CHANGE,
-				SyncInfo.OUTGOING | SyncInfo.CHANGE});
+		adjustSet(set, project, 
+				new String[]{"folder1/file2.txt", "folder1/folder2/file3.txt"}, 
+				new int[]{SyncInfo.OUTGOING | SyncInfo.CHANGE, SyncInfo.OUTGOING | SyncInfo.CHANGE});
 		assertProperVisibleItems();
-		
-		adjustSet(
-			set,
-			project,
-			new String[] { "folder1/file2.txt"},
-			new int[] {
-				SyncInfo.IN_SYNC,
-			});
-		assertProperVisibleItems();	
+		adjustSet(set, project, 
+				new String[]{"folder1/file2.txt"}, 
+				new int[]{SyncInfo.IN_SYNC,});
+		assertProperVisibleItems();
 	}
 
 	public void testParentRemovalWithChildRemaining() throws CoreException {
-		IProject project = createProject(new String[] { "file.txt", "folder1/file2.txt", "folder1/folder2/file3.txt"});
-		adjustSet(
-			set,
-			project, 
-			new String[] { "folder1/folder2/", "folder1/folder2/file3.txt" },
-			new int[] {
-				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
-				SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+		IProject project = createProject(new String[]{"file.txt", "folder1/file2.txt", "folder1/folder2/file3.txt"});
+		adjustSet(set, project, 
+				new String[]{"folder1/folder2/", "folder1/folder2/file3.txt"}, 
+				new int[]{SyncInfo.CONFLICTING | SyncInfo.CHANGE, SyncInfo.CONFLICTING | SyncInfo.CHANGE});
 		assertProperVisibleItems();
 		
-		adjustSet(
-			set,
-			project,
-			new String[] { "folder1/folder2/", "folder1/folder2/file3.txt" },
-			new int[] {
-				SyncInfo.IN_SYNC,
-				SyncInfo.OUTGOING | SyncInfo.CHANGE});
+		adjustSet(set, project, 
+				new String[]{"folder1/folder2/", "folder1/folder2/file3.txt"}, 
+				new int[]{SyncInfo.IN_SYNC, SyncInfo.OUTGOING | SyncInfo.CHANGE});
+		assertProperVisibleItems();
+	}
+	
+	public void testEmptyFolderChange() throws CoreException {
+		IProject project = createProject(new String[]{"file.txt", "folder1/file2.txt", "folder1/folder2/file3.txt", "folder3/"});
+		adjustSet(set, project, 
+				new String[]{"folder1/folder2/", "folder1/folder2/file3.txt"}, 
+				new int[]{SyncInfo.CONFLICTING | SyncInfo.CHANGE, SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+		assertProperVisibleItems();
+		
+		adjustSet(set, project, 
+				new String[]{"folder1/folder2/", "folder1/folder2/file3.txt"}, 
+				new int[]{SyncInfo.IN_SYNC, SyncInfo.OUTGOING | SyncInfo.CHANGE});
+		assertProperVisibleItems();
+		
+		adjustSet(set, project, 
+				new String[]{"folder1/folder2/file3.txt"}, 
+				new int[]{SyncInfo.IN_SYNC});
+		assertProperVisibleItems();
+		
+		adjustSet(set, project, 
+				new String[]{"folder3/"}, 
+				new int[]{SyncInfo.INCOMING | SyncInfo.ADDITION});
 		assertProperVisibleItems();
 	}
 }

@@ -123,7 +123,7 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 		// view menu
 		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), this, view, participant);		
 		showPreferences = new SyncViewerShowPreferencesAction(getShell());		
-		statusLine = new StatusLineContributionGroup(getShell(), getParticipant());
+		statusLine = new StatusLineContributionGroup(getShell(), getParticipant(), workingSetGroup);
 		
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
