@@ -71,10 +71,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	// Remembering the current input and the previous.
 	private SubscriberInput input = null;
 	
-	// A set of common actions. They are hooked to the active SubscriberInput and must 
-	// be reset when the input changes.
-	// private SyncViewerActions actions;
-	
 	private JobBusyCursor busyCursor;
 	private ISynchronizeView view;
 	private TeamSubscriberParticipant participant;
