@@ -13,6 +13,8 @@ package org.eclipse.team.core;
 /**
  * An ignore info specifies both the pattern and the enabled state
  * of a globally ignored pattern.
+ * 
+ * @since 2.0
  */
 public interface IIgnoreInfo {
 	/**

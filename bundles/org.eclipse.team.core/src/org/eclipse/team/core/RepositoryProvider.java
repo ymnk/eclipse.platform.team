@@ -35,7 +35,7 @@ import org.eclipse.team.internal.simpleAccess.SimpleAccessOperations;
  * instances is managed by the platform's 'nature' mechanism.
  * <p>
  * To create a repository provider and have it registered with the platform a client
- * must minimally (e.g. not including the user interface integration requirements):
+ * must minimally:
  * <ol>
  * 	<li>extend <code>RepositoryProvider<code>
  * 	<li>define a nature extension in <code>plugin.xml</code> that is
@@ -85,14 +85,11 @@ public abstract class RepositoryProvider implements IProjectNature {
 	
 	/**
 	 * Configures the nature for the given project. This is called by the platform when a nature is assigned
-	 * to a project. It  is not intended to be called by clients.
-	 * <p>
-	 * The default behavior for <code>RepositoryProvider</code> subclasses is to fail the configuration
-	 * if a provider is already associated with the given project. Subclasses cannot override this method
-	 * but must instead override <code>configureProject</code>.
+	 * to a project. It is not intended to be called by clients.
 	 * 
 	 * @throws CoreException if this method fails. If the configuration fails the nature will not be added 
 	 * to the project.
+	 * 
 	 * @see IProjectNature#configure
 	 */
 	final public void configure() throws CoreException {
@@ -174,13 +171,11 @@ public abstract class RepositoryProvider implements IProjectNature {
 	
 	/**
 	 * Returns the provider for a given IProject or <code>null</code> if a provider is not associated with 
-	 * the project or if the project is closed or does not exist.
-	 * <p>
-	 * To look for a specific repository provider type, then <code>getProvider(project, id)</code>
-	 * is a faster method. This method is should be called if the caller can work with any
-	 * type of repository provider.
+	 * the project or if the project is closed or does not exist. This method should be called if the caller 
+	 * is looking for <b>any</b> repository provider. Otherwise call <code>getProvider(project, id)</code>
+	 * yo look for a specific repository provider type.
 	 * </p>
-	 * 
+	 * @param project the project to query for a provider
 	 * @return the repository provider associated with the project
 	 */
 	final public static RepositoryProvider getProvider(IProject project) {
@@ -208,9 +203,11 @@ public abstract class RepositoryProvider implements IProjectNature {
 	}
 	
 	/**
-	 * Returns a provider of type the receiver if associated with the given project or <code>null</code>
-	 * if the project is not associated with a provider of that type.
+	 * Returns a provider of type with the given id if associated with the given project 
+	 * or <code>null</code> if the project is not associated with a provider of that type.
 	 * 
+	 * @param project the project to query for a provider
+	 * @param id the repository provider id
 	 * @return the repository provider
 	 */
 	final public static RepositoryProvider getProvider(IProject project, String id) {
@@ -228,7 +225,7 @@ public abstract class RepositoryProvider implements IProjectNature {
 	}
 	
 	/**
-	 * Utility for adding a nature to a project.
+	 * Utility method for adding a nature to a project.
 	 * 
 	 * @param proj the project to add the nature
 	 * @param natureId the id of the nature to assign to the project
@@ -253,7 +250,12 @@ public abstract class RepositoryProvider implements IProjectNature {
 	}
 	
 	/**
-	 * Utility for removing a project nature.
+	 * Utility method for removing a project nature from a project.
+	 * 
+	 * @param proj the project to remove the nature from
+	 * @param natureId the nature id to remove
+	 * @param monitor a progress monitor to indicate the duration of the operation, or
+	 * <code>null</code> if progress reporting is not required.
 	 */
 	final public static void removeNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
 		try {
