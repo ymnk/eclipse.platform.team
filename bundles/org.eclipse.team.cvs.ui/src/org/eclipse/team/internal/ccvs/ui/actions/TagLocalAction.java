@@ -14,6 +14,7 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.TagOperation;
 
@@ -43,5 +44,12 @@ public class TagLocalAction extends TagAction {
         if (mappings == null)
             mappings = getCVSResourceMappings();
 		return new TagOperation(getTargetPart(), mappings);
+	}
+	
+		/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getId()
+	 */
+	public String getId() {
+		return ICVSUIConstants.CMD_TAGASVERSION;
 	}
 }

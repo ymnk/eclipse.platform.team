@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 import java.lang.reflect.InvocationTargetException;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.client.Command;
+import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.operations.UpdateOperation;
 
 /**
@@ -38,5 +39,9 @@ public class UpdateSilentAction extends WorkspaceTraversalAction {
     
 	public void execute(IAction action) throws InterruptedException, InvocationTargetException {
 		new UpdateOperation(getTargetPart(), getCVSResourceMappings(), Command.NO_LOCAL_OPTIONS, null /* no tag */).run();
+	}
+	
+	public String getId() {
+		return ICVSUIConstants.CMD_UPDATE;
 	}
 }

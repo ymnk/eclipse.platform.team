@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.jface.action.IAction;
+import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.operations.BranchOperation;
 
 /**
@@ -27,6 +28,12 @@ public class BranchAction extends WorkspaceTraversalAction {
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
 		new BranchOperation(getTargetPart(), getCVSResourceMappings()).run();
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getId()
+	 */
+	public String getId() {
+		return ICVSUIConstants.CMD_BRANCH;
+	}
 }
 

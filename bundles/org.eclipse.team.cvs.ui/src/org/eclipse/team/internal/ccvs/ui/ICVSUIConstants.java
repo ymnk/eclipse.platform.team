@@ -91,6 +91,7 @@ public interface ICVSUIConstants {
 	public final String PREF_SHOW_COMPARE_REVISION_IN_DIALOG = "pref_show_compare_revision_in_dialog"; //$NON-NLS-1$
 	public final String PREF_SHOW_AUTHOR_IN_EDITOR = "pref_show_author_in_editor"; //$NON-NLS-1$
 	public final String PREF_COMMIT_SET_DEFAULT_ENABLEMENT = "pref_enable_commit_sets"; //$NON-NLS-1$
+	public final String PREF_AUTO_REFRESH_TAGS_IN_TAG_SELECTION_DIALOG = "pref_auto_refresh_tags_in_tag_selection_dialog"; //$NON-NLS-1$
 	
 	// console preferences
 	public final String PREF_CONSOLE_COMMAND_COLOR = "pref_console_command_color"; //$NON-NLS-1$
@@ -135,6 +136,8 @@ public interface ICVSUIConstants {
 	public final String PREF_CHANGE_PERSPECTIVE_ON_SHOW_ANNOTATIONS= "pref_change_perspective_on_show_annotations"; //$NON-NLS-1$
 	public final String PREF_DEFAULT_PERSPECTIVE_FOR_SHOW_ANNOTATIONS= "pref_default_perspective_for_show_annotations"; //$NON-NLS-1$
 	
+	public final String PREF_ALLOW_EMPTY_COMMIT_COMMENTS= "pref_allow_empty_commit_comment"; //$NON-NLS-1$
+	
 	// Wizard banners
 	public final String IMG_WIZBAN_SHARE = "wizban/newconnect_wizban.gif";	 //$NON-NLS-1$
 	public final String IMG_WIZBAN_MERGE = "wizban/mergestream_wizban.gif";	 //$NON-NLS-1$
@@ -166,5 +169,20 @@ public interface ICVSUIConstants {
 	public final int OPTION_AUTOMATIC = 3;	
 	
 	public final String OPTION_NO_PERSPECTIVE= "none"; //$NON-NLS-1$
+	
+	// Command Ids
+	public final String CMD_COMMIT = "org.eclipse.team.cvs.ui.commit"; //$NON-NLS-1$
+	public final String CMD_SYNCHRONIZE = "org.eclipse.team.ui.synchronizeLast"; //$NON-NLS-1$
+	public final String CMD_UPDATE = "org.eclipse.team.cvs.ui.update"; //$NON-NLS-1$
+	public final String CMD_CREATEPATCH = "org.eclipse.team.cvs.ui.GenerateDiff"; //$NON-NLS-1$
+	public final String CMD_TAGASVERSION = "org.eclipse.team.cvs.ui.tag"; //$NON-NLS-1$
+	public final String CMD_BRANCH = "org.eclipse.team.cvs.ui.branch"; //$NON-NLS-1$
+	public final String CMD_MERGE = "org.eclipse.team.cvs.ui.merge"; //$NON-NLS-1$
+	public final String CMD_UPDATESWITCH = "org.eclipse.team.cvs.ui.updateSwitch"; //$NON-NLS-1$
+	public final String CMD_SETFILETYPE = "org.eclipse.team.cvs.ui.setKeywordSubstitution"; //$NON-NLS-1$
+	public final String CMD_ANNOTATE = "org.eclipse.team.cvs.ui.showAnnotation"; //$NON-NLS-1$
+	public final String CMD_HISTORY = "org.eclipse.team.cvs.ui.showHistory"; //$NON-NLS-1$
+	public final String CMD_ADD = "org.eclipse.team.cvs.ui.add"; //$NON-NLS-1$
+	public final String CMD_IGNORE = "org.eclipse.team.cvs.ui.ignore"; //$NON-NLS-1$
 }
 

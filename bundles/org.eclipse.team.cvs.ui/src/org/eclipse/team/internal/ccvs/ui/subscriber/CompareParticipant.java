@@ -48,10 +48,11 @@ public class CompareParticipant extends CVSParticipant implements IPropertyChang
 					new CompareRevertAction(configuration));
 			
 			if (!configuration.getSite().isModal()) {
+				ShowAnnotationAction showAnnotationAction = new ShowAnnotationAction();
 				appendToGroup(
 						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 						NON_MODAL_CONTEXT_MENU_CONTRIBUTION_GROUP,
-						new CVSActionDelegateWrapper(new ShowAnnotationAction(), configuration));
+						new CVSActionDelegateWrapper(showAnnotationAction, configuration));
 				appendToGroup(
 						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 						NON_MODAL_CONTEXT_MENU_CONTRIBUTION_GROUP,
@@ -169,6 +170,7 @@ public class CompareParticipant extends CVSParticipant implements IPropertyChang
 	public void dispose() {
 		super.dispose();
 		CVSUIPlugin.getPlugin().getPluginPreferences().removePropertyChangeListener(this);
+		getCVSCompareSubscriber().dispose();
 	}
 
 	/* (non-Javadoc)

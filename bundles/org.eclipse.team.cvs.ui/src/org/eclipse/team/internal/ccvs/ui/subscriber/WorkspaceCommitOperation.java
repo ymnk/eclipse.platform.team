@@ -11,8 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
@@ -27,7 +26,6 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
-import org.eclipse.team.internal.ccvs.core.client.Commit;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -213,7 +211,7 @@ public class WorkspaceCommitOperation extends CVSSubscriberOperation {
 	private void commit(IResource[] commits, IProgressMonitor monitor) throws TeamException {
 		try {
 			new CommitOperation(getPart(), RepositoryProviderOperation.asResourceMappers(commits),
-					new Command.LocalOption[] { Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment) })
+					new Command.LocalOption[0], comment)
 						.run(monitor);
 		} catch (InvocationTargetException e) {
 			throw TeamException.asTeamException(e);

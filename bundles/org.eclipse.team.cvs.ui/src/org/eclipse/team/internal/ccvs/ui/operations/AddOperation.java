@@ -15,6 +15,7 @@ import java.util.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
+import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
@@ -30,15 +31,29 @@ import org.eclipse.ui.IWorkbenchPart;
  * Performs a "cvs add"
  */
 public class AddOperation extends RepositoryProviderOperation {
+		
+	private Map fModesForExtensions;
+	private Map fModesForFiles;
 	
 	public AddOperation(IWorkbenchPart part, ResourceMapping[] mappers) {
 		super(part, mappers);
+		fModesForExtensions= Collections.EMPTY_MAP;
+		fModesForFiles= Collections.EMPTY_MAP;
 	}
 
+    public void addModesForExtensions(Map modes) {
+		fModesForExtensions= modes;
+    }
+    
+    public void addModesForNames(Map modes) {
+        fModesForFiles= modes;
+	}
     /* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#execute(org.eclipse.team.internal.ccvs.core.CVSTeamProvider, org.eclipse.core.resources.IResource[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected void execute(CVSTeamProvider provider, IResource[] resources, boolean recurse, IProgressMonitor monitor) throws CVSException, InterruptedException {
+	    if (resources.length == 0)
+	        return;
 		add(provider, resources, recurse ? IResource.DEPTH_INFINITE : IResource.DEPTH_ONE, monitor);
 	}
 	
@@ -113,7 +128,7 @@ public class AddOperation extends RepositoryProviderOperation {
 							// added explicitly (is equal currentResource) or is not ignored
 							if (! isManaged(mResource) && (currentResource.equals(resource) || ! mResource.isIgnored())) {
 								if (resource.getType() == IResource.FILE) {
-									KSubstOption ksubst = KSubstOption.fromFile((IFile) resource);
+								    KSubstOption ksubst= getKSubstOption((IFile)resource);
 									Set set = (Set) files.get(ksubst);
 									if (set == null) {
 										set = new HashSet();
@@ -131,7 +146,8 @@ public class AddOperation extends RepositoryProviderOperation {
 							return false;
 						}
 					}
-				}, depth, false);
+
+ 				}, depth, false);
 				if (exception[0] != null) {
 					throw exception[0];
 				}
@@ -200,7 +216,7 @@ public class AddOperation extends RepositoryProviderOperation {
     /*
 	 * Consider a folder managed only if it's also a CVS folder
 	 */
-	private boolean isManaged(ICVSResource cvsResource) throws CVSException {
+	protected boolean isManaged(ICVSResource cvsResource) throws CVSException {
 		return cvsResource.isManaged() && (!cvsResource.isFolder() || ((ICVSFolder)cvsResource).isCVSFolder());
 	}
 
@@ -210,4 +226,20 @@ public class AddOperation extends RepositoryProviderOperation {
 	protected String getErrorMessage(IStatus[] failures, int totalOperations) {
 		return Policy.bind("AddAction.addFailed"); //$NON-NLS-1$
 	}
+	
+    protected KSubstOption getKSubstOption(IFile file) {
+        final String extension= file.getFileExtension();
+        final Integer mode;
+        if (extension == null) {
+            mode= (Integer)fModesForFiles.get(file.getName());
+        } else { 
+            mode= (Integer)fModesForExtensions.get(extension);
+        }
+        if (mode != null) {
+            return mode.intValue() == Team.BINARY ? Command.KSUBST_BINARY : KSubstOption.getDefaultTextMode();            
+        } else {
+            return KSubstOption.fromFile(file);
+        }
+    }
+
 }

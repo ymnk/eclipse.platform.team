@@ -10,21 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.operations;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
@@ -32,50 +27,9 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public class CommitOperation extends SingleCommandOperation {
 
-	public CommitOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options) {
+	public CommitOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, String comment) {
 		super(part, mappers, options);
-	}
-	
-	/**
-	 * Perform prompting for unadded resources and comment
-	 * @param monitor a progess monitor
-	 * @return <code>true</code> if execution should continue
-	 */
-	public boolean performPrompting(IProgressMonitor monitor) throws CVSException, InvocationTargetException, InterruptedException {
-		try {
-            monitor.beginTask(null, 20);
-            IResource[] resourcesToBeAdded = promptForResourcesToBeAdded(Policy.subMonitorFor(monitor, 10));
-            if (resourcesToBeAdded == null) return false;
-            String comment = promptForComment(getTraversalRoots());
-            if (comment == null) return false;
-            addLocalOption(Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment));
-            if (resourcesToBeAdded.length > 0) {
-            	new AddOperation(getPart(), RepositoryProviderOperation.asResourceMappers(resourcesToBeAdded))
-            		.run(Policy.subMonitorFor(monitor, 10));
-            }
-            //setResources(getSharedResources(getTraversalRoots()));
-            monitor.done();
-            return true;
-        } catch (CoreException e) {
-            throw CVSException.wrapException(e);
-        }
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void execute(IProgressMonitor monitor) throws CVSException, InterruptedException {
-		try {
-            // Ensure that a comment has been provided
-            if (!Command.MESSAGE_OPTION.isElementOf(getLocalOptions(true))) {
-            	String comment = promptForComment(getTraversalRoots());
-            	if (comment == null) return;
-            	addLocalOption(Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment));
-            }
-            super.execute(monitor);
-        } catch (CoreException e) {
-            throw CVSException.wrapException(e);
-        }
+		addLocalOption(Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment));
 	}
 	
 	/* (non-Javadoc)
@@ -88,6 +42,22 @@ public class CommitOperation extends SingleCommandOperation {
 				resources, 
 				null,
 				monitor);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#handleErrors(org.eclipse.core.runtime.IStatus[])
+	 */
+	protected void handleErrors(IStatus[] errors) throws CVSException {
+		// We are only concerned with server errors
+		List serverErrors = new ArrayList();
+		for (int i = 0; i < errors.length; i++) {
+			IStatus status = errors[i];
+			if (status.getCode() == CVSStatus.SERVER_ERROR) {
+				serverErrors.add(status);
+			}
+		}
+		if (serverErrors.isEmpty()) return;
+		super.handleErrors((IStatus[]) serverErrors.toArray(new IStatus[serverErrors.size()]));
 	}
 	
 	/* (non-Javadoc)
@@ -109,78 +79,6 @@ public class CommitOperation extends SingleCommandOperation {
 	 */
 	protected String getErrorMessage(IStatus[] failures, int totalOperations) {
 		return Policy.bind("CommitAction.commitFailed"); //$NON-NLS-1$
-	}
-	
-	private IResource[] getUnaddedResources(IResource[] resources, IProgressMonitor iProgressMonitor) throws CVSException {
-		final List unadded = new ArrayList();
-		final CVSException[] exception = new CVSException[] { null };
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			// visit each resource deeply
-			try {
-				resource.accept(new IResourceVisitor() {
-					public boolean visit(IResource resource) throws CoreException {
-						ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-						// skip ignored resources and their children
-						try {
-							if (cvsResource.isIgnored())
-								return false;
-							// visit the children of shared resources
-							if (cvsResource.isManaged())
-								return true;
-							if (cvsResource.isFolder() && ((ICVSFolder)cvsResource).isCVSFolder())
-								return true;
-						} catch (CVSException e) {
-							exception[0] = e;
-						}
-						// don't add folders to avoid comitting empty folders
-						if (resource.getType() == IResource.FOLDER)
-							return true;
-						// file is unshared so record it
-						unadded.add(resource);
-						// no need to go into children because add is deep
-						return false;
-					}
-				});
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
-			}
-			if (exception[0] != null) throw exception[0];
-		}
-		return (IResource[]) unadded.toArray(new IResource[unadded.size()]);
-	}
-	
-	protected IResource[] promptForResourcesToBeAdded(IProgressMonitor monitor) throws CVSException {
-		try {
-            IResource[] unadded = getUnaddedResources(getTraversalRoots(), monitor);
-            RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
-            return manager.promptForResourcesToBeAdded(getShell(), unadded);
-        } catch (CoreException e) {
-            throw CVSException.wrapException(e);
-        }
-	}
-	
-	protected String promptForComment(IResource[] resourcesToCommit) {
-		RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
-		return manager.promptForComment(getShell(), resourcesToCommit, null);
-	}
-	
-	/*
-	 * Return all resources in the provided collection that are shared with a repo
-	 * @param resources
-	 * @return IResource[]
-	 */
-	private IResource[] getSharedResources(IResource[] resources) throws CVSException {
-		List shared = new ArrayList();
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-			if (cvsResource.isManaged() 
-			  || (cvsResource.isFolder() && ((ICVSFolder)cvsResource).isCVSFolder())) {
-			  	shared.add(resource);
-			}
-		}
-		return (IResource[]) shared.toArray(new IResource[shared.size()]);
 	}
 	
 	/* (non-Javadoc)

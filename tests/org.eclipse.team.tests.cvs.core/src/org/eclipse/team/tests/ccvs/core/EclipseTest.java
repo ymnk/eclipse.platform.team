@@ -291,7 +291,7 @@ public class EclipseTest extends ResourceTest {
      * Commit the resources contained by the mappers.
      */
     protected void commit(ResourceMapping[] mappers, String message) throws CVSException {
-        executeHeadless(new CommitOperation(null, mappers, new Command.LocalOption[] { Commit.makeArgumentOption(Command.MESSAGE_OPTION, message) }));
+        executeHeadless(new CommitOperation(null, mappers, new Command.LocalOption[0], message));
     }
 
     /**
@@ -327,8 +327,8 @@ public class EclipseTest extends ResourceTest {
 	public void tagRemoteResource(ICVSRemoteResource resource, CVSTag tag, boolean force) throws TeamException  {
 		ITagOperation op = new TagInRepositoryOperation(null, new ICVSRemoteResource[] {resource});
 		runTag(op, tag, force);
-	
 	}
+    
 	private void runTag(ITagOperation op, CVSTag tag, boolean force) throws TeamException {
 		if (force) op.moveTag();
 		op.setTag(tag);
