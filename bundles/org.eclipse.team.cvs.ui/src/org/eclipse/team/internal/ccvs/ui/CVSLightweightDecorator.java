@@ -198,6 +198,10 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         return mappedProjectFound;
     }
 
+    private boolean isMappedToCVS(IResource resource) {
+        return getCVSProviderFor(resource.getProject()) != null;
+    }
+    
     private CVSDecoration decorate(ResourceMapping mapping) throws CoreException {
         CVSDecoration result = null;
         ResourceTraversal[] traversals = mapping.getTraversals(null, null);
@@ -206,7 +210,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
             IResource[] resources = traversal.getResources();
             for (int j = 0; j < resources.length; j++) {
                 IResource resource = resources[j];
-                if (resource != null) {
+                if (resource != null && isMappedToCVS(resource)) {
                     CVSDecoration resourceDecoration = decorate(resource, traversal.getDepth());
                     if (result == null) {
                         result = resourceDecoration;
