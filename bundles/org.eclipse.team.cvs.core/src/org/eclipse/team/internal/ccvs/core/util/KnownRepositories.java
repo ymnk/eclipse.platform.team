@@ -178,7 +178,7 @@ public class KnownRepositories {
 	 * 
 	 * Removes any cached information about the repository such as a remembered password.
 	 */
-	public void disposeRepository(ICVSRepositoryLocation repository) throws CVSException {
+	public void disposeRepository(ICVSRepositoryLocation repository) {
 		((CVSRepositoryLocation)repository).dispose();
 		removeFromRepositoriesCache(repository);
 	}

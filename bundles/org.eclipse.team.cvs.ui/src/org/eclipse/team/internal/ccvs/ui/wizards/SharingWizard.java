@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -29,8 +30,7 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.operations.ReconcileProjectOperation;
-import org.eclipse.team.internal.ccvs.ui.operations.ShareProjectOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.*;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
@@ -206,9 +206,43 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	 * @see org.eclipse.jface.wizard.IWizard#performCancel()
 	 */
 	public boolean performCancel() {
-		// TODO If on the last page, offer to disconnect
-		// TODO If we created the repo location, dispose of it
+		boolean disposeLocation = isNewLocation;
+		// If on the last page, offer to disconnect
+		if (getContainer().getCurrentPage() == syncPage) {
+			// Prompt to see if we should undo out work
+			if (promptToKeepMapping()) {
+				// If we didn't disconnect, don't dispose the repo
+				disposeLocation = false;
+			} else {
+				try {
+					getContainer().run(true, true, new IRunnableWithProgress() {
+						public void run(IProgressMonitor monitor)
+								throws InvocationTargetException,
+								InterruptedException {
+							new DisconnectOperation(null, new IProject[] { project }, true)
+								.run(monitor);
+						}
+					});
+				} catch (InvocationTargetException e) {
+					CVSUIPlugin.log(IStatus.ERROR, e.getMessage(), e.getTargetException());
+				} catch (InterruptedException e) {
+					// Ignore
+				}
+			}
+		}
+		// Dispose of the location if appropriate
+		if (disposeLocation) {
+			try {
+				CVSProviderPlugin.getPlugin().disposeRepository(getLocation());
+			} catch (TeamException e) {
+				CVSUIPlugin.log(e);
+			}
+		}
 		return super.performCancel();
+	}
+
+	private boolean promptToKeepMapping() {
+		return (MessageDialog.openQuestion(getShell(), "Keep Sharing?", "The project has been mapped to a remote module. Should this mapping be kept?"));
 	}
 
 	private void reconcileProject(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
