@@ -8,11 +8,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
+import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 
 /**
  * subscriber particpant that supports filtering using scopes.

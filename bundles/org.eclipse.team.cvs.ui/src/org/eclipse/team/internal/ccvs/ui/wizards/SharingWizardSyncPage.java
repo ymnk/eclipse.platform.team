@@ -40,6 +40,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ParticipantPageSaveablePart;
+import org.eclipse.team.ui.synchronize.ResourceScope;
 import org.eclipse.ui.part.PageBook;
 
 /**
@@ -140,7 +141,7 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 	}
 	
 	private ParticipantPageSaveablePart createCompareInput() {	
-		WorkspaceSynchronizeParticipant participant = new WorkspaceSynchronizeParticipant(new IResource[] { project });
+		WorkspaceSynchronizeParticipant participant = new WorkspaceSynchronizeParticipant(new ResourceScope(new IResource[] { project }));
 		configuration = participant.createPageConfiguration();
 		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] {SharingWizardPageActionGroup.ACTION_GROUP});
 		configuration.addActionContribution(new SharingWizardPageActionGroup());
