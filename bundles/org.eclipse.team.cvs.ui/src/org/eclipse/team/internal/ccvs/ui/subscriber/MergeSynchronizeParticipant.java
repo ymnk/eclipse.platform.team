@@ -15,18 +15,19 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
+import org.eclipse.ui.*;
 
-public class MergeSynchronizeParticipant extends SubscriberParticipant {
+public class MergeSynchronizeParticipant extends CVSParticipant {
 	
 	/**
 	 * The id of a workspace action group to which additions actions can 
@@ -41,6 +42,36 @@ public class MergeSynchronizeParticipant extends SubscriberParticipant {
 	private final static String CTX_START_TAG_TYPE = "start_tag_type"; //$NON-NLS-1$
 	private final static String CTX_END_TAG = "end_tag"; //$NON-NLS-1$
 	private final static String CTX_END_TAG_TYPE = "end_tag_type"; //$NON-NLS-1$
+	
+	/**
+	 * Actions for the merge particpant's toolbar
+	 */
+	public class MergeParticipantActionContribution extends CVSParticipantActionContribution {
+		private ActionDelegateWrapper updateAdapter;
+		public void initialize(ISynchronizePageConfiguration configuration) {
+			createRemoveAction(configuration);
+			MergeUpdateAction action = new MergeUpdateAction();
+			action.setPromptBeforeUpdate(true);
+			updateAdapter = new ActionDelegateWrapper(action, configuration.getSite().getPart());
+			Utils.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
+			((ISubscriberPageConfiguration)configuration).setMode(ISubscriberPageConfiguration.INCOMING_MODE);
+			super.initialize(configuration);
+		}
+		protected void modelChanged(ISynchronizeModelElement input) {
+			updateAdapter.setSelection(input);
+		}
+		public void setActionBars(IActionBars actionBars) {
+			if(actionBars != null) {
+				IToolBarManager toolbar = actionBars.getToolBarManager();
+				if(toolbar != null) {
+					if(toolbar.find(ACTION_GROUP) != null) {
+						toolbar.appendToGroup(ACTION_GROUP, updateAdapter);
+					}
+				}
+			}	
+			super.setActionBars(actionBars);
+		}
+	}
 	
 	public MergeSynchronizeParticipant() {
 		super();
@@ -167,11 +198,13 @@ public class MergeSynchronizeParticipant extends SubscriberParticipant {
 	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+		super.initializeConfiguration(configuration);
 		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] { 
 				ISynchronizePageConfiguration.SYNCHRONIZE_GROUP,  
 				ISynchronizePageConfiguration.NAVIGATE_GROUP, 
 				ISynchronizePageConfiguration.MODE_GROUP, 
 				ACTION_GROUP});
+		((ISubscriberPageConfiguration)configuration).setSupportedModes(ISubscriberPageConfiguration.INCOMING_MODE | ISubscriberPageConfiguration.CONFLICTING_MODE);
 		configuration.addActionContribution(new MergeParticipantActionContribution());
 	}
 }

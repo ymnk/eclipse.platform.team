@@ -12,15 +12,10 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.ICompareInputChangeListener;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
@@ -35,32 +30,6 @@ public abstract class CVSParticipantActionContribution implements IActionContrib
 	private ISynchronizePageConfiguration configuration;
 	private RemoveSynchronizeParticipantAction removeAction;
 	
-	private static class CVSLabelDecorator extends LabelProvider implements ILabelDecorator  {
-		public String decorateText(String input, Object element) {
-			String text = input;
-			if (element instanceof ISynchronizeModelElement) {
-				IResource resource =  ((ISynchronizeModelElement)element).getResource();
-				if(resource != null && resource.getType() != IResource.ROOT) {
-					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
-					CVSLightweightDecorator.decorateTextLabel(resource, decoration, false, true);
-					StringBuffer output = new StringBuffer(25);
-					if(decoration.prefix != null) {
-						output.append(decoration.prefix);
-					}
-					output.append(text);
-					if(decoration.suffix != null) {
-						output.append(decoration.suffix);
-					}
-					return output.toString();
-				}
-			}
-			return text;
-		}
-		public Image decorateImage(Image base, Object element) {
-			return base;
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
@@ -68,16 +37,10 @@ public abstract class CVSParticipantActionContribution implements IActionContrib
 		this.configuration = configuration;
 		// Listen for model changes
 		configuration.addPropertyChangeListener(this);
-		// Listen for decorator changed to refresh the viewer's labels.
-		CVSUIPlugin.addPropertyChangeListener(this);
 		Object o = configuration.getProperty(ISynchronizePageConfiguration.P_MODEL);
 		if (o != null) {
 			inputChanged(o);
 		}
-		ILabelProvider provider = (ILabelProvider)configuration.getProperty(ISynchronizePageConfiguration.P_LABEL_PROVIDER);
-		configuration.setProperty(
-				ISynchronizePageConfiguration.P_LABEL_PROVIDER,
-				new DecoratingColorLabelProvider(provider, new CVSLabelDecorator()));
 	}
 	
 	protected void createRemoveAction(ISynchronizePageConfiguration configuration) {
@@ -125,10 +88,6 @@ public abstract class CVSParticipantActionContribution implements IActionContrib
 			Object o = event.getNewValue();
 			inputChanged(o);
 		}
-		//TODO:
-//		if(property.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getViewer() != null && getSyncInfoSet() != null) {
-//			getViewer().refresh(true /* update labels */);
-//		}
 	}
 	
 	private void inputChanged(Object o) {
@@ -144,7 +103,10 @@ public abstract class CVSParticipantActionContribution implements IActionContrib
 	}
 
 	/**
-	 * @param input
+	 * Subclasses can implement this method to recieve notification
+	 * whenever the model changes (i.e. if the view input changes or the
+	 * nodes being displayed change).
+	 * @param input the view input
 	 */
 	protected abstract void modelChanged(ISynchronizeModelElement input);
 }

@@ -18,12 +18,26 @@ import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.*;
 
-public class CompareParticipant extends SubscriberParticipant {
+public class CompareParticipant extends CVSParticipant {
 	
+	/**
+	 * Toolbar actions for compare participants
+	 */
+	public class CompareParticipantActionContribution extends CVSParticipantActionContribution {
+		public void initialize(ISynchronizePageConfiguration configuration) {
+			createRemoveAction(configuration);
+			super.initialize(configuration);
+		}
+		protected void modelChanged(ISynchronizeModelElement input) {
+			// Nothing to do
+		}
+	}
+	
+	/**
+	 * TODO: Need to add content filtering back
+	 */
 	private SyncInfoFilter contentComparison = new SyncInfoFilter() {
 		private SyncInfoFilter contentCompare = new SyncInfoFilter.ContentComparisonSyncInfoFilter();
 		public boolean select(SyncInfo info, IProgressMonitor monitor) {
@@ -78,6 +92,7 @@ public class CompareParticipant extends SubscriberParticipant {
 	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+		super.initializeConfiguration(configuration);
 		configuration.addActionContribution(new CompareParticipantActionContribution());
 	}
 }

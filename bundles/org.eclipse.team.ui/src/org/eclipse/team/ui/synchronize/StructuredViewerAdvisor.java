@@ -87,6 +87,7 @@ public abstract class StructuredViewerAdvisor {
 	 */
 	public StructuredViewerAdvisor(ISynchronizePageConfiguration configuration) {
 		this.configuration = configuration;
+		configuration.setProperty(ISynchronizePageConfiguration.P_ADVISOR, this);
 	}
 		
 	/**

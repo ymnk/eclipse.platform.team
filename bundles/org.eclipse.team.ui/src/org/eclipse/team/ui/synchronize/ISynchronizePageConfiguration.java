@@ -17,9 +17,17 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 public interface ISynchronizePageConfiguration {
 
 	/**
-	 * The configuration property that 
-	 * represents the model being displayed by the page. The value 
-	 * is an instance of <code>ISynchronizeModelElement</code>.
+	 * Property constant for the page's viewer advisor which is 
+	 * an instance of <code>StructuredViewerAdvisor</code>.
+	 * The page's viewer can be obtained from the advisor.
+	 * This property can be queried by clients but should not be
+	 * set.
+	 */
+	public static final String P_ADVISOR = TeamUIPlugin.ID  + ".P_ADVISOR"; //$NON-NLS-1$
+
+	/**
+	 * Property constant for the page's viewer input which is 
+	 * an instance of <code>ISynchronizeModelElement</code>.
 	 * This property can be queried by clients but should not be
 	 * set.
 	 */
@@ -27,15 +35,16 @@ public interface ISynchronizePageConfiguration {
 	
 	/**
 	 * Property constant for the <code>SyncInfoSet</code> that was used 
-	 * to populate the model (P_MODEL).
+	 * to populate the model (P_MODEL). This property can be queried by 
+	 * clients but should not be set.
 	 */
 	public static final String P_SYNC_INFO_SET = TeamUIPlugin.ID  + ".P_SYNC_INFO_SET"; //$NON-NLS-1$
 	
 	/**
-	 * The configuration property that defines the label provider 
-	 * that is used by the page's viewer. Clients
-	 * who wish to add custom labels should obtain any 
-	 * previously registered provider using <code>getProperty(P_LABEL_PROVIDER)</code>
+	 * Property constant for the label provider that is used by the 
+	 * page's viewer. Clients who wish to add custom labels should 
+	 * obtain any previously registered provider using 
+	 * <code>getProperty(P_LABEL_PROVIDER)</code>
 	 * and wrap the returned provider (which is an instance of
 	 * <code>ILabelProvider</code>).
 	 * 
@@ -44,9 +53,11 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_LABEL_PROVIDER = TeamUIPlugin.ID  + ".P_LABEL_PROVIDER"; //$NON-NLS-1$
 	
 	/**
-	 * The configuration property that defines
-	 * the groups in the toolbar menu of the page. The value for this
-	 * property should be a string array.
+	 * Property constant that defines the groups in the toolbar 
+	 * menu of the page. The value for this
+	 * property should be a string array. If this property is
+	 * set to <code>null</code>, the <code>DEFAULT_TOOLBAR_MENU</code>
+	 * is used.
 	 */
 	public static final String P_TOOLBAR_MENU = TeamUIPlugin.ID + ".P_TOOLBAR_MENU"; //$NON-NLS-1$
 
