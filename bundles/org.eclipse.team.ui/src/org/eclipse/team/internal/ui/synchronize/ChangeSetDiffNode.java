@@ -77,4 +77,14 @@ public class ChangeSetDiffNode extends SynchronizeModelElement {
         }
         return super.equals(object);
     }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelElement#getAdapter(java.lang.Class)
+     */
+    public Object getAdapter(Class adapter) {
+        if (adapter.equals(ChangeSet.class)) {
+            return set;
+        }
+        return super.getAdapter(adapter);
+    }
 }

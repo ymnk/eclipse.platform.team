@@ -25,6 +25,7 @@ import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.synchronize.actions.ChangeSetActionGroup;
 import org.eclipse.team.ui.synchronize.*;
 
 /**

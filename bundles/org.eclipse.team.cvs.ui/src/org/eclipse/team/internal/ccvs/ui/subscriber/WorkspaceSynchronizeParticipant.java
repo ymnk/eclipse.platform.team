@@ -186,7 +186,13 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
         public SubscriberChangeSetCollector getActiveChangeSetManager() {
             return CVSUIPlugin.getPlugin().getChangeSetManager();
         }
-	    
+        
+        /* (non-Javadoc)
+         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#getActionGroup()
+         */
+        public SynchronizePageActionGroup getActionGroup() {
+            return new CVSChangeSetActionGroup();
+        }
 	}
 	
 	/**

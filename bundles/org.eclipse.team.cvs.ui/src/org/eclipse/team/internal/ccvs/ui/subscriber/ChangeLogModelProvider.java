@@ -45,6 +45,7 @@ import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.actions.ChangeSetActionGroup;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.progress.UIJob;
 

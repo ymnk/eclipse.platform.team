@@ -11,12 +11,16 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ChangeSet;
+import org.eclipse.team.core.subscribers.CheckedInChangeSet;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.*;
 import org.eclipse.team.core.variants.IResourceVariant;
@@ -28,11 +32,8 @@ import org.eclipse.team.ui.synchronize.*;
 
 class OpenChangeSetAction extends SynchronizeModelAction {
 
-    private final ChangeLogModelProvider provider;
-
-    protected OpenChangeSetAction(ChangeLogModelProvider provider, ISynchronizePageConfiguration configuration) {
+    protected OpenChangeSetAction(ISynchronizePageConfiguration configuration) {
         super(Policy.bind("OpenCommitSetAction.20"), configuration); //$NON-NLS-1$
-        this.provider = provider;
     }
     
     /* (non-Javadoc)
@@ -55,25 +56,36 @@ class OpenChangeSetAction extends SynchronizeModelAction {
                 })
         });
     }
-            
+    
+    private ChangeSet getChangeSet(IStructuredSelection selection) {
+        // First, check to see if a change set is selected directly
+        if (selection.size() == 1) {
+            Object o = selection.getFirstElement();
+            if (o instanceof IAdaptable) {
+                ChangeSet set = (ChangeSet)((IAdaptable)o).getAdapter(ChangeSet.class);
+                if (set != null)
+                    return set;
+            }
+        }
+        // Failing that, check to see if all the selected elements and their childen are in the same change set
+        return getChangeSet(selection.toArray());
+    }
+    
+    private ChangeSet getChangeSet(Object[] elements) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
     /* (non-Javadoc)
      * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#updateSelection(org.eclipse.jface.viewers.IStructuredSelection)
      */
     protected boolean updateSelection(IStructuredSelection selection) {
         boolean enabled = super.updateSelection(selection);
         if (enabled) {
-            // The selection only contains appropriate files
-            // only enable if there is only one item selected and 
-            // it is a file or a commit set
-            if (selection.size() == 1) {
-                Object o = selection.getFirstElement();
-                if (o instanceof ChangeSetDiffNode) return true;
-                if (o instanceof ISynchronizeModelElement) {
-                    ISynchronizeModelElement element = (ISynchronizeModelElement)o;
-                    IResource resource = element.getResource();
-                    return (resource != null && resource.getType() == IResource.FILE);
-                }
-            }
+            // The selection only contains appropriate files so
+            // only enable if the selection is contained within a single change set
+            ChangeSet set = getChangeSet(selection);
+            return set != null;
         }
         return false;
     }
@@ -121,16 +133,13 @@ class OpenChangeSetAction extends SynchronizeModelAction {
             
             private String getCompareTitle() {
                 IDiffElement[] elements = getSelectedDiffElements();
-                for (int i = 0; i < elements.length; i++) {
-                    IDiffElement element = elements[i];
-                    while (element != null) {
-                        if (element instanceof ChangeSetDiffNode) {
-                            return ((ChangeSetDiffNode)element).getShortName();
-                        }
-                        element = element.getParent();
-                    }
+                ChangeSet set = getChangeSet(elements);
+                if (set instanceof CheckedInChangeSet) {
+                    CheckedInChangeSet cics = (CheckedInChangeSet)set;
+                    String date = DateFormat.getDateTimeInstance().format(cics.getDate());
+                    return "[" + cics.getAuthor() + "] (" + date + ")";
                 }
-                return null;
+                return "CVS Change";
             }
 
             private ICVSRepositoryLocation getLocation(SyncInfo info) {

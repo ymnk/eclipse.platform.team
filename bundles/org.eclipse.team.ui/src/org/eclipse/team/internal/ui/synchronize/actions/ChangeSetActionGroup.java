@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -25,6 +25,8 @@ import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFil
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
+import org.eclipse.team.internal.ui.synchronize.ChangeSetModelProvider;
+import org.eclipse.team.internal.ui.synchronize.ChangeSetModelSorter;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
@@ -227,13 +229,8 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 		super.initialize(configuration);
 		
 		if (getChangeSetCapability().supportsCheckedInChangeSets()) {
-			sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0a"));	 //$NON-NLS-1$
-			appendToGroup(
-					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					ISynchronizePageConfiguration.SORT_GROUP, 
-					sortByComment);
 			initializeSortCriteria(configuration);
-		
+			sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0a"));	 //$NON-NLS-1$
 			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1a"), ChangeSetModelSorter.COMMENT)); //$NON-NLS-1$
 			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2a"), ChangeSetModelSorter.DATE)); //$NON-NLS-1$
 			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3a"), ChangeSetModelSorter.USER)); //$NON-NLS-1$
@@ -252,22 +249,32 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 			addToChangeSet.add(new Separator());
 			editChangeSet = new EditChangeSetAction(configuration);
 			makeDefault = new MakeDefaultChangeSetAction(configuration);
-			
-			appendToGroup(
-					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					CHANGE_SET_GROUP, 
-					addToChangeSet);
-			appendToGroup(
-					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					CHANGE_SET_GROUP, 
-					editChangeSet);
-			appendToGroup(
-					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					CHANGE_SET_GROUP, 
-					makeDefault);
 		}
 	}
 	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#fillContextMenu(org.eclipse.jface.action.IMenuManager)
+     */
+    public void fillContextMenu(IMenuManager menu) {
+        if (getChangeSetCapability().supportsCheckedInChangeSets() && getConfiguration().getMode() == ISynchronizePageConfiguration.INCOMING_MODE) {
+            appendToGroup(menu, ISynchronizePageConfiguration.SORT_GROUP, sortByComment);
+        }
+        if (getChangeSetCapability().supportsActiveChangeSets() && getConfiguration().getMode() == ISynchronizePageConfiguration.OUTGOING_MODE) {
+			appendToGroup(
+					menu, 
+					CHANGE_SET_GROUP, 
+					addToChangeSet);
+			appendToGroup(
+					menu, 
+					CHANGE_SET_GROUP, 
+					editChangeSet);
+			appendToGroup(
+					menu, 
+					CHANGE_SET_GROUP, 
+					makeDefault);
+        }
+    }
+    
     private void initializeSortCriteria(ISynchronizePageConfiguration configuration) {
 		try {
 			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
