@@ -27,7 +27,7 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 			String text = input;
 			if (element instanceof SyncInfoDiffNode) {
 				IResource resource =  ((SyncInfoDiffNode)element).getResource();
-				if(resource != null) {
+				if(resource != null && resource.getType() != IResource.ROOT) {
 					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
 					CVSLightweightDecorator.decorateTextLabel(resource, decoration, false, true);
 					StringBuffer output = new StringBuffer(25);

@@ -28,7 +28,7 @@ public class TreeViewerUtils {
 	 * @param next if <code>true</code> the next node is selected, otherwise the previous node
 	 * @return <code>true</code> if at end (or beginning)
 	 */
-	public static boolean navigate(TreeViewer viewer, boolean next, boolean fireOpen) {
+	public static boolean navigate(TreeViewer viewer, boolean next, boolean fireOpen, boolean expandOnly) {
 		
 		Tree tree = viewer.getTree();
 		if (tree == null) return false;
@@ -42,7 +42,7 @@ public class TreeViewerUtils {
 			if (children != null && children.length > 0) {
 				item= children[0];
 				if (item != null && item.getItemCount() <= 0) {
-					setSelection(viewer, item, fireOpen);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+					setSelection(viewer, item, fireOpen, expandOnly);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
 					return false;
 				}
 			}
@@ -57,23 +57,27 @@ public class TreeViewerUtils {
 		}
 		
 		if (item != null) {
-			setSelection(viewer, item, fireOpen);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+			setSelection(viewer, item, fireOpen, expandOnly);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
 			return false;
 		}
 		return true;
 	}
 
-	private static void setSelection(TreeViewer viewer, TreeItem ti, boolean fireOpen) {
+	private static void setSelection(TreeViewer viewer, TreeItem ti, boolean fireOpen, boolean expandOnly) {
 		if (ti != null) {
 			Object data= ti.getData();
 			if (data != null) {
 				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
-				ISelection selection= new StructuredSelection(data);
-				viewer.setSelection(selection, true);
-				ISelection currentSelection= viewer.getSelection();
-				if (fireOpen && currentSelection != null && selection.equals(currentSelection)) {
-					if(viewer instanceof ITreeViewerAccessor) {
-						((ITreeViewerAccessor)viewer).openSelection();
+				ISelection selection = new StructuredSelection(data);
+				if (expandOnly) {
+					viewer.expandToLevel(data, 0);
+				} else {
+					viewer.setSelection(selection, true);
+					ISelection currentSelection = viewer.getSelection();
+					if (fireOpen && currentSelection != null && selection.equals(currentSelection)) {
+						if (viewer instanceof ITreeViewerAccessor) {
+							((ITreeViewerAccessor) viewer).openSelection();
+						}
 					}
 				}
 			}

@@ -15,7 +15,7 @@
 
 x P3 schedule support by participant. 
 	this requires changing the refresh jobs to accept scheduling different jobs. Essentially being able to have an 
-	ordered queue of refreshes. Also, participant will need a schedule object to encapsulate the schedule logic.
+	ordered *queue of refreshes. Also, participant will need a schedule object to encapsulate the schedule logic.
 
 x P3 status message could be more precise instead of simply "Working". But to do this we need access to the job progress monitor 
   and it isn't available API from the UI. (removed status in sync view, progress will be shown in the progress shell).

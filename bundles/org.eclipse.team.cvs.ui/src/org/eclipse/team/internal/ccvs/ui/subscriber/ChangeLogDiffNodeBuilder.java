@@ -85,7 +85,7 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 			}
 			return null;
 		} catch (CVSException e) {
-			CVSUIPlugin.getPlugin().log(e);
+			CVSUIPlugin.log(e);
 			return null;
 		}
 	}

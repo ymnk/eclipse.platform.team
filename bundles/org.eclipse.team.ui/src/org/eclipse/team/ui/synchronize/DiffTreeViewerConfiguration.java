@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.team.ui.synchronize.actions.ExpandAllAction;
 import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
@@ -251,12 +252,12 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		Object element = selection.getFirstElement();
-		if(viewer instanceof AbstractTreeViewer) {
+		if(viewer instanceof TreeViewer) {
 			AbstractTreeViewer treeViewer = ((AbstractTreeViewer)viewer); 
 			if(treeViewer.getExpandedState(element)) {
 				treeViewer.collapseToLevel(element, AbstractTreeViewer.ALL_LEVELS);
 			} else {
-				treeViewer.expandToLevel(element, AbstractTreeViewer.ALL_LEVELS);
+				TreeViewerUtils.navigate((TreeViewer)viewer, true /*next*/, false /*don't fire open*/, true /*only expand*/);
 			}
 		}
 	}

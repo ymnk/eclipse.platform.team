@@ -10,6 +10,8 @@ TeamSubscriber
 
 SyncInfoSet/MutableSyncInfoSet (optimized collection of sync infos - immutable)
 
+SyncInfoFilter (filtering of sync sets used by actions and creation of sync sets)
+
 SyncInfoCollector (collects sync infos from subscriber, and optionally from workspace. Uses background thread to collect and calculate changes. Is updated automatically with changes)
 
 FilteredSyncInfoSet (filters a provided sync info set with a given filter and possible roots)
@@ -18,16 +20,13 @@ FilteredSyncInfoSet (filters a provided sync info set with a given filter and po
  ui
 ======================
 
+ISynchronizeManager (manages the lifesycle of synchronize participants)
+
 ISynchronizeView
 
 ISynchronizeParticipant (shows in the sync view, has a mode, working set, and creates a page with the UI pieces)
 
-
-
-
-Mode (DirectionFilterActionGroup)
-
-SyncInfoFilter
+Modes in sync view (DirectionFilterActionGroup)
 
 SyncInfoSetCompareConfiguration (encapsulates navigation, menus, content, label providers)this
                                 is used to configure a viewer in different ways based on it's use.
@@ -37,3 +36,34 @@ SyncInfoDiffTreeViewer/SyncInfoDiffCheckboxViewer (shows diff nodes)
 SyncInfoDiffNode -> DiffNode
 
 SyncInfoSetCompareInput
+
+
+
+DiffNode
+SyncInfoDiffNode
+SyncInfoDiffNodeRoot
+
+Viewer
+ContentProvider
+Sorter
+LabelProvider
+
+1. sync set is created
+2. decide how to model the sync set (hierachy, compressed, change log...) sorter...
+3. hook up chagnen listener
+4. ensure model doesn't change while building it?
+5. update model dynamically
+6. dispose of listener when input changes
+
+SuperCharged MVC
+================
+
+View (viewers) -> view configurators (menus, content provider, label provider, controller)
+
+Model (diff nodes) logical structure of sync info
+
+Controller (creates model, keeps it up-to-date, sorter)
+
+Data (sync info)
+
+
