@@ -24,12 +24,13 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.SaveContext;
 import org.eclipse.team.internal.core.SaveContextXMLWriter;
+import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
- * TeamProvider
+ * This is a temporary class that contains methods for SyncTreeSubscriber support. At
+ * some time it should be merged into the existing Team plugin class.
  */
 public abstract class TeamProvider {
 	
@@ -109,9 +110,12 @@ public abstract class TeamProvider {
 						String qualifier = context.getAttribute(SAVECTX_QUALIFIER);
 						String localName = context.getAttribute(SAVECTX_LOCALNAME);
 						ISyncTreeSubscriberFactory factory = create(qualifier);
+						if(factory == null) {
+							TeamPlugin.log(new TeamException("Error restoring subscribers. Cannot find factory with id: " + qualifier.toString()).getStatus());
+						}
 						SaveContext[] children = context.getChildren();
 						if(children.length == 1) {			
-							SyncTreeSubscriber s = factory.createSubscriber(new QualifiedName(qualifier, localName), children[0]);								
+							SyncTreeSubscriber s = factory.restoreSubscriber(new QualifiedName(qualifier, localName), children[0]);								
 							if(s != null) {
 								registerSubscriber(s);
 							}
@@ -129,27 +133,27 @@ public abstract class TeamProvider {
 		SaveContext root = new SaveContext();
 		root.setName(SAVECTX_SUBSCRIBERS);
 		List children = new ArrayList();
-	
-		for (Iterator it = subscribers.values().iterator(); it.hasNext();) {
-			SyncTreeSubscriber subscriber = (SyncTreeSubscriber) it.next();
-		
-			SaveContext child = new SaveContext();
-			subscriber.saveState(child);
-			if(child.getName() != null) { 
-				SaveContext item = new SaveContext();
-			
-				item.putChild(child);
-				item.setName(SAVECTX_SUBSCRIBER);
-				Map attributes = new HashMap();
-				attributes.put(SAVECTX_QUALIFIER, subscriber.getId().getQualifier());
-				attributes.put(SAVECTX_LOCALNAME, subscriber.getId().getLocalName());
-				item.setAttributes(attributes);
-			
-				children.add(item);
-			}
-		}
-		root.setChildren((SaveContext[])children.toArray(new SaveContext[children.size()]));
 		try {
+			for (Iterator it = subscribers.values().iterator(); it.hasNext();) {			
+				SyncTreeSubscriber subscriber = (SyncTreeSubscriber) it.next();			
+				String qualifier = subscriber.getId().getQualifier();
+				ISyncTreeSubscriberFactory factory = create(qualifier);
+				if(factory == null) {
+					TeamPlugin.log(new TeamException("Error saving subscribers. Cannot find factory with id: " + qualifier).getStatus());
+				}
+				SaveContext child = factory.saveSubscriber(subscriber);
+				if(child != null) { 
+					SaveContext item = new SaveContext();				
+					item.putChild(child);
+					item.setName(SAVECTX_SUBSCRIBER);
+					Map attributes = new HashMap();
+					attributes.put(SAVECTX_QUALIFIER, subscriber.getId().getQualifier());
+					attributes.put(SAVECTX_LOCALNAME, subscriber.getId().getLocalName());
+					item.setAttributes(attributes);				
+					children.add(item);
+				}
+			}
+			root.setChildren((SaveContext[])children.toArray(new SaveContext[children.size()]));
 			SaveContextXMLWriter.writeXMLPluginMetaFile(TeamPlugin.getPlugin(), "subscribers", root);
 		} catch (TeamException e) {
 			TeamPlugin.log(e.getStatus());

@@ -22,7 +22,11 @@ import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.Policy;
 
 /**
- * TimestampComparisonCriteria
+ * A content comparison criteria that knows how to compare the content of <code>IStorage</code> and
+ * <code>IRemoteResource</code> objects. The content comparison can be configured to ignore or
+ * consider whitespace.
+ * 
+ * @see org.eclipse.team.core.subscribers.ComparisonCriteria 
  */
 public class ContentComparisonCriteria extends ComparisonCriteria {
 

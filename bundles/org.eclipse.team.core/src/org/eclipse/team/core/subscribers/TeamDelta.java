@@ -80,4 +80,19 @@ public class TeamDelta {
 	public SyncTreeSubscriber getSubscriber() {
 		return subscriber;
 	}
+	
+	/**
+	 * Returns an array of deltas for the resources with TeamDelta.SYNC_CHANGED
+	 * as the change type.
+	 * @param resources the resources whose sync info has changed
+	 * @return
+	 */
+	public static TeamDelta[] asSyncChangedDeltas(SyncTreeSubscriber subscriber, IResource[] resources) {
+		TeamDelta[] deltas = new TeamDelta[resources.length];
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			deltas[i] = new TeamDelta(subscriber, TeamDelta.SYNC_CHANGED, resource);
+		}
+		return deltas;
+	}
 }

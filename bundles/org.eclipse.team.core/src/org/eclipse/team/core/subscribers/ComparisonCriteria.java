@@ -14,9 +14,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 
 /**
- * Utility methods for calculating sync state.
+ * A ComparisonCriteria used by a <code>SyncTreeSubscriber</code> to calculate the sync
+ * state of the workspace resources against the remote. Subscribers are free to use the criteria
+ * best suited for their environment. For example, an FTP subscriber could choose to use file
+ * size or file size as compasison criterias.
  * 
- * @see SyncInfo
+ * @see org.eclipse.team.core.subscribers.SyncInfo
+ * @see org.eclipse.team.core.subscribers.SyncTreeSubscriber
  */
 abstract public class ComparisonCriteria {
 	

@@ -19,12 +19,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.core.SaveContext;
 
 /**
- * An ISyncTreeSubscriber is connected to a remote location that has incoming changes
- * to be merged into a workspace. It maintains the synchronization state of workspace
- * resources.
+ * A SyncTreeSubscriber is connected to a remote location that has incoming changes
+ * to be merged into a workspace. It maintains the synchronization state of the incoming
+ * changes based on those in the workspace.
  * 
  * [Note: How can we allow the refresh() operation to optimize the sync calculation based
  * on the currently configured compare criteria?]
@@ -49,7 +48,7 @@ abstract public class SyncTreeSubscriber {
 	/**
 	 * Return the description of this subscription, in a format that is suitable for 
 	 * display to an end user. The description should contain enough details to
-	 * understand the connection type of this subscriber. For example, 
+	 * understand the connection type of this subscriber. 
 	 * 
 	 * @return String representing the description of this subscription. 
 	 */
@@ -221,25 +220,18 @@ abstract public class SyncTreeSubscriber {
 	/**
 	 * Cancels this subscription.
 	 * 
-	 * [Note: an event should be dispatched to notify that a subscriber is cancelled]  
 	 */	
 	abstract public void cancel();
 	
-	/* (non-Javadoc)
-	 * Method declared on IBaseLabelProvider.
-	 */
 	public void addListener(ITeamResourceChangeListener listener) {
 		listeners.add(listener);
 	}
 
-	/* (non-Javadoc)
-	 * Method declared on IBaseLabelProvider.
-	 */
 	public void removeListener(ITeamResourceChangeListener listener) {
 		listeners.remove(listener);
 	}
 	
-	/*
+	/**
 	 * Fires a team resource change event to all registered listeners
 	 * Only listeners registered at the time this method is called are notified.
 	 */
@@ -250,21 +242,6 @@ abstract public class SyncTreeSubscriber {
 		}
 	}
 
-	/**
-	 * Returns an array of deltas for the resources with TeamDelta.SYNC_CHANGED
-	 * as the change type.
-	 * @param resources the resources whose sync info has changed
-	 * @return
-	 */
-	protected TeamDelta[] asSyncChangedDeltas(IResource[] resources) {
-		TeamDelta[] deltas = new TeamDelta[resources.length];
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			deltas[i] = new TeamDelta(this, TeamDelta.SYNC_CHANGED, resource);
-		}
-		return deltas;
-	}
-	
 	/**
 	 * Return an array of all out-of-sync resources (getKind() != 0) that occur 
 	 * under the given resources to the specified depth. The purpose of this method is
@@ -283,12 +260,5 @@ abstract public class SyncTreeSubscriber {
 	 */
 	public SyncInfo[] getAllOutOfSync(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
 		return null;
-	}
-	
-	public void saveState(SaveContext state) {
-		// TODO: this could be added to the subscriber factory instead?
-	}
-	
-	public void restoreState(SaveContext state) {
 	}
 }

@@ -17,56 +17,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Something (as a mark of visible sign) left by a material thing
- * formely present but now lost or unknown.
+ * Something (as a mark of visible sign) left by a material thing formely present but now 
+ * lost or unknown.
+ * 
+ * TODO: API doc if this class is to remain. Ideally it should replaced by a core mechanism which
+ * allows persisting somewhat like IMemento. 
  */
 public class SaveContext {
 	
-	/*
-	 * The name of this configuration element
-	 */
 	private String name;
 	
-	/*
-	 * The value of this configuration element
-	 */
 	private String value;
 	
-	/*
-	 * The attributes of this element: {String:attribute name -> String:attr value}
-	 */
 	private Map attributes;
 	
-	/*
-	 * The child configuration items
-	 */
 	private List children = new ArrayList(2);
 	
 	public SaveContext() {}
 	
-	/**
-	 * Returns the named attribute of this configuration element, or
-	 * <code>null</code> if none. 
-	 * <p>
-	 * The names of configuration element attributes
-	 * are the same as the attribute names of the corresponding XML element.
-	 * For example, the configuration markup 
-	 * <pre>
-	 * &lt;bg pattern="stripes"/&gt;
-	 * </pre>
-	 * corresponds to a configuration element named <code>"bg"</code>
-	 * with an attribute named <code>"pattern"</code>
-	 * with attribute value <code>"stripes"</code>.
-	 * </p>
-	 * <p> Note that any translation specified in the plug-in manifest
-	 * file is automatically applied.
-	 * </p>
-	 *
-	 * @see IPluginDescriptor#getResourceString 
-	 *
-	 * @param name the name of the attribute
-	 * @return attribute value, or <code>null</code> if none
-	 */
 	public String getAttribute(String name) {
 		if(attributes == null) {
 			return null;
