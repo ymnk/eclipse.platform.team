@@ -263,4 +263,14 @@ public abstract class RepositoryProvider implements IProjectNature {
 	public void setProject(IProject project) {
 		this.project = project;
 	}
+
+	/**
+	 * Returns an object which can serialize and deserialize
+	 * references to projects.
+	 * Returns <code>null</code> if not supported.
+	 */	 
+	public ISerializedReferencing getSerializedReferencing() {
+		return null;
+	}
+		
 }
