@@ -116,6 +116,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         this.subProvierId = subProvierId;
         collector = getChangeSetCapability().createCheckedInChangeSetCollector(configuration);
         collector.setProvider(this);
+        collector.addListener(collectorListener);
     }
 
     /* (non-Javadoc)
@@ -287,6 +288,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
     }
     
     public void dispose() {
+        collector.removeListener(collectorListener);
         collector.dispose();
         super.dispose();
     }

@@ -298,9 +298,9 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 	    if (remoteResources.length > 0) {
 			RemoteLogOperation logOperation = new RemoteLogOperation(getConfiguration().getSite().getPart(), remoteResources, localTag, remoteTag, cache);
 			logOperation.execute(monitor);
-	    }
-	    
+	    }    
 	}
+	
 	private ICVSRemoteResource[] getRemotes(SyncInfo[] infos) {
 		List remotes = new ArrayList();
 		for (int i = 0; i < infos.length; i++) {
