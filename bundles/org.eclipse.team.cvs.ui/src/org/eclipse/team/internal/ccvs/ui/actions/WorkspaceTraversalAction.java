@@ -14,8 +14,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.IResourceMapper;
-import org.eclipse.core.resources.mapping.ITraversal;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -37,10 +37,10 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
     protected IResource[] getSelectedResourcesWithOverlap() {
         try {
             // Get all the traversals since enablement may be based on entire selection
-            ITraversal[] traversals = getSelectedTraversals(null);
+            ResourceTraversal[] traversals = getSelectedTraversals(null);
             Set resources = new HashSet();
             for (int i = 0; i < traversals.length; i++) {
-                ITraversal traversal = traversals[i];
+                ResourceTraversal traversal = traversals[i];
                 resources.addAll(Arrays.asList(traversal.getResources()));
             }
             return (IResource[]) resources.toArray(new IResource[resources.size()]);
@@ -57,7 +57,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
      * @return the selected mappings that contain resources 
      * within a CVS managed project
      */
-    protected IResourceMapper[] getCVSResourceMappings() {
+    protected ResourceMapping[] getCVSResourceMappings() {
         return getSelectedResourceMappers(CVSProviderPlugin.getTypeId());
     }
     
@@ -66,7 +66,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
      * @return the selected traversals that are on CVS resources
      * @throws InvocationTargetException 
      */
-    private /* temporarily */ ITraversal[] getSelectedTraversals() throws InvocationTargetException {
+    private /* temporarily */ ResourceTraversal[] getSelectedTraversals() throws InvocationTargetException {
         try {
             return getSelectedTraversals(CVSProviderPlugin.getTypeId());
         } catch (TeamException e) {

@@ -13,13 +13,12 @@ package org.eclipse.team.internal.ccvs.ui.tags;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 
 /**
  * A tag source provides access to a set of tags.
@@ -125,15 +124,15 @@ public abstract class TagSource {
      * @param mappers the mappers
      * @return a tag source 
      */
-    public static TagSource create(IResourceMapper[] mappers) {
+    public static TagSource create(ResourceMapping[] mappers) {
         return create(getCVSResources(getProjects(mappers)));
     }
     
-    private static IResource[] getProjects(IResourceMapper[] mappers) {
+    private static IResource[] getProjects(ResourceMapping[] mappers) {
         Set projects = new HashSet();
         for (int i = 0; i < mappers.length; i++) {
-            IResourceMapper mapper = mappers[i];
-            projects.addAll(Arrays.asList(TeamAction.getProjects(mapper)));
+            ResourceMapping mapper = mappers[i];
+            projects.addAll(Arrays.asList(mapper.getProjects()));
         }
         return (IResource[]) projects.toArray(new IResource[projects.size()]);
     }

@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
-import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.*;
@@ -32,7 +32,7 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public class CommitOperation extends SingleCommandOperation {
 
-	public CommitOperation(IWorkbenchPart part, IResourceMapper[] mappers, LocalOption[] options) {
+	public CommitOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options) {
 		super(part, mappers, options);
 	}
 	

@@ -154,20 +154,20 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
      * @param providerId the repository provider id
      * @return the resource mappings that contain resources associated with the given provider
 	 */
-    protected IResourceMapper[] getSelectedResourceMappers(String providerId) {
-        Object[] elements = getSelectedAdaptables(selection, IResourceMapper.class);
+    protected ResourceMapping[] getSelectedResourceMappers(String providerId) {
+        Object[] elements = getSelectedAdaptables(selection, ResourceMapping.class);
         ArrayList providerMappings = new ArrayList();
         for (int i = 0; i < elements.length; i++) {
-            IResourceMapper element = (IResourceMapper) elements[i];
+            ResourceMapping element = (ResourceMapping) elements[i];
             if (providerId == null || isMappedToProvider(element, providerId)) {
                 providerMappings.add(element);
             }
         }
-        return (IResourceMapper[]) providerMappings.toArray(new IResourceMapper[providerMappings.size()]);
+        return (ResourceMapping[]) providerMappings.toArray(new ResourceMapping[providerMappings.size()]);
     }
     
-    private boolean isMappedToProvider(IResourceMapper element, String providerId) {
-        IProject[] projects = getProjects(element);
+    private boolean isMappedToProvider(ResourceMapping element, String providerId) {
+        IProject[] projects = element.getProjects();
         for (int k = 0; k < projects.length; k++) {
             IProject project = projects[k];
             RepositoryProvider provider = RepositoryProvider.getProvider(project);
@@ -178,59 +178,41 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
         return false;
     }
 
-    public static IProject[] getProjects(IResourceMapper element) {
-        try {
-            IResourceTraversal[] traversals = element.getTraversals(null, null);
-            Set projects = new HashSet();
-            for (int i = 0; i < traversals.length; i++) {
-            	IResourceTraversal traversal = traversals[i];
-                projects.addAll(Arrays.asList(traversal.getProjects()));
-            }
-            return (IProject[]) projects.toArray(new IProject[projects.size()]);
-        } catch (CoreException e) {
-            TeamPlugin.log(e);
-            return new IProject[0];
-        }
-    }
-
     /**
 	 * Returns the selected resource based on the available traversals.
 	 * 
 	 * @return the selected resources based on the available traversals.
 	 */
-	public IResourceTraversal[] getSelectedTraversals(String providerId) throws TeamException {
+	public ResourceTraversal[] getSelectedTraversals(String providerId) throws TeamException {
 		try {
-			Object[] elements = getSelectedAdaptables(selection, IResourceMapper.class);
+			Object[] elements = getSelectedAdaptables(selection, ResourceMapping.class);
 			ArrayList providerTraversals = new ArrayList();
 			if(elements.length > 0) {
 				for (int i = 0; i < elements.length; i++) {
-					IResourceMapper element = (IResourceMapper) elements[i];
-					IResourceTraversal[] traversals = element.getTraversals(getModelContext(), null);
-					for (int j = 0; j < traversals.length; j++) {
-						IResourceTraversal traversal = traversals[j];
-						boolean addIt = true;
-						if(providerId != null) {
-							IProject[] projects = traversal.getProjects();
-							for (int k = 0; k < projects.length; k++) {
-								IProject project = projects[k];
-								RepositoryProvider provider = RepositoryProvider.getProvider(project);
-								addIt = (providerId != null && provider.getID().equals(providerId));
-							}				
-						}			
-						if(addIt)
-							providerTraversals.add(traversal);
-						}
-					}
+					ResourceMapping element = (ResourceMapping) elements[i];
+                    boolean addIt = true;
+                    if(providerId != null) {
+                        IProject[] projects = element.getProjects();
+                        for (int k = 0; k < projects.length; k++) {
+                            IProject project = projects[k];
+                            RepositoryProvider provider = RepositoryProvider.getProvider(project);
+                            addIt = (providerId != null && provider.getID().equals(providerId));
+                        }               
+                    }
+                    if(addIt) {
+    					ResourceTraversal[] traversals = element.getTraversals(getModelContext(), null);
+                        providerTraversals.addAll(Arrays.asList(traversals));
+                    }
 				}
-			
-			return (IResourceTraversal[]) providerTraversals.toArray(new IResourceTraversal[providerTraversals.size()]);
+            }
+			return (ResourceTraversal[]) providerTraversals.toArray(new ResourceTraversal[providerTraversals.size()]);
 		} catch (CoreException e) {
 			throw TeamException.asTeamException(e);
 		}
 	}
 	
-	protected IResourceMappingContext getModelContext() {
-		return new IResourceMappingContext() {
+	protected ResourceMappingContext getModelContext() {
+		return new ResourceMappingContext() {
 			public boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
 				return false;
 			}

@@ -14,8 +14,7 @@ package org.eclipse.team.internal.ccvs.ui.wizards;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.mapping.IResourceMapper;
-import org.eclipse.core.resources.mapping.ITraversal;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
@@ -31,11 +30,11 @@ import org.eclipse.ui.IWorkbenchPart;
 
 public class UpdateWizard extends Wizard {
 
-	private IResourceMapper[] mappers;
+	private ResourceMapping[] mappers;
 	private final IWorkbenchPart part;
 	private TagSelectionWizardPage tagSelectionPage;
 	
-	public UpdateWizard(IWorkbenchPart part, IResourceMapper[] mappers) {
+	public UpdateWizard(IWorkbenchPart part, ResourceMapping[] mappers) {
 		this.part = part;
 		this.mappers = mappers;
 		setWindowTitle(Policy.bind("UpdateWizard.title")); //$NON-NLS-1$
@@ -59,18 +58,14 @@ public class UpdateWizard extends Wizard {
     private CVSTag getInitialSelection() {
         try {
             for (int i = 0; i < mappers.length; i++) {
-                IResourceMapper mapper = mappers[i];
-                ITraversal[] traversals = mapper.getTraversals(null, null);
-                for (int j = 0; j < traversals.length; j++) {
-                    ITraversal traversal = traversals[j];
-                    IProject[] projects = traversal.getProjects();
-                    for (int k = 0; k < projects.length; k++) {
-                        IProject project = projects[k];
-                        ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(project);
-                        FolderSyncInfo info = folder.getFolderSyncInfo();
-                        if (info != null) {
-                            return info.getTag();
-                        }
+                ResourceMapping mapper = mappers[i];
+                IProject[] projects = mapper.getProjects();
+                for (int k = 0; k < projects.length; k++) {
+                    IProject project = projects[k];
+                    ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(project);
+                    FolderSyncInfo info = folder.getFolderSyncInfo();
+                    if (info != null) {
+                        return info.getTag();
                     }
                 }
             }

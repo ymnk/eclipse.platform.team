@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -56,7 +56,7 @@ public class UpdateOperation extends SingleCommandOperation {
      * then the tag will be omitted from the local options and the tags on the local resources
      * will be used.
      */
-    public UpdateOperation(IWorkbenchPart part, IResourceMapper[] mappings, LocalOption[] options, CVSTag tag) {
+    public UpdateOperation(IWorkbenchPart part, ResourceMapping[] mappings, LocalOption[] options, CVSTag tag) {
         super(part, mappings, options);
         this.tag = tag;
     }

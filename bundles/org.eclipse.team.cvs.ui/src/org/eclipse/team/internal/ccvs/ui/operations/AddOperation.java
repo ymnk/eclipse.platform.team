@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.operations;
 import java.util.*;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -31,7 +31,7 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public class AddOperation extends RepositoryProviderOperation {
 	
-	public AddOperation(IWorkbenchPart part, IResourceMapper[] mappers) {
+	public AddOperation(IWorkbenchPart part, ResourceMapping[] mappers) {
 		super(part, mappers);
 	}
 

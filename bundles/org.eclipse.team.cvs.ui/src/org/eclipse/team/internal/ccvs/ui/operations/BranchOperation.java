@@ -11,7 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.operations;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.team.core.TeamException;
@@ -39,7 +39,7 @@ public class BranchOperation extends RepositoryProviderOperation {
 	private CVSTag rootVersionTag;
 	private CVSTag branchTag;
 	
-	public BranchOperation(IWorkbenchPart part, IResourceMapper[] mappers) {
+	public BranchOperation(IWorkbenchPart part, ResourceMapping[] mappers) {
 		super(part, mappers);
 	}
 	

@@ -13,14 +13,11 @@ package org.eclipse.team.internal.ccvs.ui.operations;
 import java.util.*;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.*;
-import org.eclipse.core.resources.mapping.IResourceMapper;
-import org.eclipse.core.resources.mapping.IResourceTraversal;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -37,7 +34,7 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public abstract class RepositoryProviderOperation extends CVSOperation {
 
-    private IResourceMapper[] mappers;
+    private ResourceMapping[] mappers;
 	
     /**
      * Interface that is available to sublcasses which identifies
@@ -68,11 +65,21 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
         public TraversalMapEntry(RepositoryProvider provider) {
             this.provider = provider;
         }
+        /**
+         * Add the resources from the traversals to the entry
+         * @param traversals the traversals
+         */
+        public void add(ResourceTraversal[] traversals) {
+            for (int i = 0; i < traversals.length; i++) {
+                ResourceTraversal traversal = traversals[i];
+                add(traversal);
+            }
+        }
 	    /**
 	     * Add the resources from the traversal to the entry
 	     * @param traversal the traversal
 	     */
-	    public void add(IResourceTraversal traversal) {
+	    public void add(ResourceTraversal traversal) {
 	        IResource[] resources = traversal.getResources();
 	        for (int i = 0; i < resources.length; i++) {
                 IResource resource = resources[i];
@@ -141,59 +148,6 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	    }
 	}
 
-    /**
-     * Class used to wrap resources that are to be operated on directly
-     */
-    public static class SelectionResourceMapper implements IResourceMapper {
-        IStructuredSelection selection;
-        IResource[] resources;
-        public SelectionResourceMapper(IResource[] resources) {
-            this.resources = resources;
-        }
-        public Object getModelObject() {
-            if (selection == null) {
-                selection = new StructuredSelection(resources);
-            }
-            return selection;
-        }
-        public IResourceTraversal[] getTraversals(IResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
-            return asTraversals(resources);
-        }
-        public Object getAdapter(Class adapter) {
-            // Doesn't adapt to anything
-            return null;
-        }
-        
-    }
-    
-    /**
-     * Convert the given resources to an array of traversals that 
-     * traverse the resources deeply.
-     * @param resources the resources
-     * @return deep traversals for the resources
-     */
-    public static IResourceTraversal[] asTraversals(final IResource[] resources) {
-        return new IResourceTraversal[] { new IResourceTraversal() {
-            IProject[] projects;
-            public IProject[] getProjects() {
-                if (projects == null) {
-                    Set set = new HashSet();
-                    for (int i = 0; i < resources.length; i++) {
-                        IResource resource = resources[i];
-                        set.add(resource.getProject());
-                    }
-                    projects = (IProject[]) set.toArray(new IProject[set.size()]);
-                }
-                return projects;
-            }
-            public IResource[] getResources() {
-                return resources;
-            }
-            public int getDepth() {
-                return IResource.DEPTH_INFINITE;
-            }
-        } } ;
-    }
     
     /**
      * Convert the provided resources to one or more resource mappers
@@ -202,15 +156,15 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
      * @param resources the resources
      * @return a resource mappers that traverses the resources
      */
-    public static IResourceMapper[] asResourceMappers(final IResource[] resources) {
-        return new IResourceMapper[] { new SelectionResourceMapper(resources) };
+    public static ResourceMapping[] asResourceMappers(final IResource[] resources) {
+        return WorkspaceResourceMapper.asResourceMappers(resources, IResource.DEPTH_INFINITE);
     }
     
 	public RepositoryProviderOperation(IWorkbenchPart part, final IResource[] resources) {
 		this(part, asResourceMappers(resources));
 	}
 
-    public RepositoryProviderOperation(IWorkbenchPart part, IResourceMapper[] mappers) {
+    public RepositoryProviderOperation(IWorkbenchPart part, ResourceMapping[] mappers) {
         super(part);
         this.mappers = mappers;
     }
@@ -301,23 +255,23 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	 */
 	private Map getProviderTraversalMapping() throws CoreException {
 		Map result = new HashMap();
-        IResourceTraversal[] traversals = getTraversals();
-        for (int i = 0; i < traversals.length; i++) {
-            IResourceTraversal traversal = traversals[i];
-            IProject[] projects = traversal.getProjects();
-            for (int j = 0; j < projects.length; j++) {
-                IProject project = projects[j];
-    			RepositoryProvider provider = RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId());
+        for (int j = 0; j < mappers.length; j++) {
+            ResourceMapping mapper = mappers[j];
+            IProject[] projects = mapper.getProjects();
+            ResourceTraversal[] traversals = mapper.getTraversals(null, null);
+            for (int k = 0; k < projects.length; k++) {
+                IProject project = projects[k];
+                RepositoryProvider provider = RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId());
                 if (provider != null) {
-        			TraversalMapEntry entry = (TraversalMapEntry)result.get(provider);
-        			if (entry == null) {
-        				entry = new TraversalMapEntry(provider);
-        				result.put(provider, entry);
-        			}
-        			entry.add(traversal);
-                }  
+                    TraversalMapEntry entry = (TraversalMapEntry)result.get(provider);
+                    if (entry == null) {
+                        entry = new TraversalMapEntry(provider);
+                        result.put(provider, entry);
+                    }
+                    entry.add(traversals);
+                } 
             }
-		}
+        }
 		return result;
 	}
 
@@ -430,20 +384,20 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
      */
     protected IResource[] getTraversalRoots() throws CoreException {
         List result = new ArrayList();
-        IResourceTraversal[] traversals = getTraversals();
+        ResourceTraversal[] traversals = getTraversals();
         for (int i = 0; i < traversals.length; i++) {
-            IResourceTraversal traversal = traversals[i];
+            ResourceTraversal traversal = traversals[i];
             result.addAll(Arrays.asList(traversal.getResources()));
         }
         return (IResource[]) result.toArray(new IResource[result.size()]);
     }
     
-    public IResourceTraversal[] getTraversals() throws CoreException {
+    public ResourceTraversal[] getTraversals() throws CoreException {
         List traversals = new ArrayList();
         for (int i = 0; i < mappers.length; i++) {
-            IResourceMapper mapper = mappers[i];
+            ResourceMapping mapper = mappers[i];
             traversals.addAll(Arrays.asList(mapper.getTraversals(null, null)));
         }
-        return (IResourceTraversal[]) traversals.toArray(new IResourceTraversal[traversals.size()]);
+        return (ResourceTraversal[]) traversals.toArray(new ResourceTraversal[traversals.size()]);
     }
 }

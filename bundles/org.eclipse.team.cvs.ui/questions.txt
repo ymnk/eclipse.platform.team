@@ -2,8 +2,13 @@ Questions/comments related to resource traversals
 
 Questions:
 
-1) It would be helpful to have an IResourceMapping#getProjects() to make project containment detection easier.
-Should we add this?
+1) [DONE] It would be helpful to have an IResourceMapping#getProjects() to make project containment detection easier.
+Should we add this? We could also remove the getProjects() from the traversal.
+
+What about a visit on resource mapper that accepts a resource visitor
+
+I noticed that the ITraversalContext throws exceptions under some non-exceptional cases
+(e.g. a remote doesn't exist). Perhaps we should consider returning null here instead.
 
 2) Are heterogeneous selections supported?
    - case 1: Two model objects that map to different providers

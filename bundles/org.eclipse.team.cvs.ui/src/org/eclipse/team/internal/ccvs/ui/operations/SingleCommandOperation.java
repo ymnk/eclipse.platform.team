@@ -11,7 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.operations;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
@@ -24,7 +24,7 @@ public abstract class SingleCommandOperation extends RepositoryProviderOperation
 	
 	private LocalOption[] options = Command.NO_LOCAL_OPTIONS;
 	
-	public SingleCommandOperation(IWorkbenchPart part, IResourceMapper[] mappers, LocalOption[] options) {
+	public SingleCommandOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options) {
 		super(part, mappers);
 		if (options != null) {
 			this.options = options;

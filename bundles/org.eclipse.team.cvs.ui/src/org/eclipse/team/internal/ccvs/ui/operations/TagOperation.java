@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.*;
@@ -32,7 +32,7 @@ public class TagOperation extends RepositoryProviderOperation implements ITagOpe
 	private Set localOptions = new HashSet();
 	private CVSTag tag;
 
-	public TagOperation(IWorkbenchPart part, IResourceMapper[] mappers) {
+	public TagOperation(IWorkbenchPart part, ResourceMapping[] mappers) {
 		super(part, mappers);
 	}
 
