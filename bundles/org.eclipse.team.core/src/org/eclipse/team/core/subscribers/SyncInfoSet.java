@@ -414,7 +414,7 @@ public abstract class SyncInfoSet {
 	/**
 	 * Reset the sync set so it is empty.
 	 */
-	protected void clear() {
+	protected synchronized void clear() {
 		resources.clear();
 		parents.clear();
 		statistics.clear();
