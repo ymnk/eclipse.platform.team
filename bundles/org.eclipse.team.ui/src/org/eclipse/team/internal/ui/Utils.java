@@ -23,6 +23,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.TeamImages;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.ui.IWorkingSet;
 
 public class Utils {
 
@@ -290,5 +292,30 @@ public class Utils {
 			if (id != null)
 				a.setImageDescriptor(id);
 		}
+	}
+	
+	public static String modeToString(int mode) {
+		switch(mode) {
+			case TeamSubscriberParticipant.INCOMING_MODE:
+				return "Incoming";
+			case TeamSubscriberParticipant.OUTGOING_MODE:
+				return "Outgoing";
+			case TeamSubscriberParticipant.BOTH_MODE:
+				return "Incoming/Outgoing";
+			case TeamSubscriberParticipant.CONFLICTING_MODE:
+				return "Conflicting";
+		}
+		return "unknown mode";
+	}
+	
+	public static String workingSetToString(IWorkingSet set, int maxLength) {
+		String text = Policy.bind("StatisticsPanel.noWorkingSet"); //$NON-NLS-1$
+		if (set != null) {
+			text = set.getName();
+			if (text.length() > maxLength) {
+				text = text.substring(0, maxLength - 3) + "..."; //$NON-NLS-1$
+			}
+		}
+		return text;
 	}
 }

@@ -233,12 +233,12 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 
 	private void updateLastRunTime(Label label) {
 		String text;
-		long mills = TeamUIPlugin.getPlugin().getRefreshJob().getLastTimeRun();
+		long mills = 0;
 		if(mills == 0) {
 			String never = Policy.bind("SyncViewPreferencePage.lastRefreshRunNever"); //$NON-NLS-1$
 			text = Policy.bind("SyncViewPreferencePage.lastRefreshRun", never); //$NON-NLS-1$
 		} else {
-			Date lastTimeRun = new Date(TeamUIPlugin.getPlugin().getRefreshJob().getLastTimeRun());
+			Date lastTimeRun = new Date(mills);
 			String sLastTimeRun = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(lastTimeRun);
 			text = Policy.bind("SyncViewPreferencePage.lastRefreshRun", sLastTimeRun); //$NON-NLS-1$
 		}

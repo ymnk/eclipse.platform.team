@@ -13,6 +13,8 @@ package org.eclipse.team.internal.ui.synchronize;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.sets.*;
 import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 import org.eclipse.team.internal.ui.widgets.FormSection;
@@ -85,7 +87,7 @@ public class ChangesSection extends FormSection {
 		if(participant.getInput().getFilteredSyncSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
-					setDescription("There are no changes to see! Move on now...");
+					setDescription(getEmptyChangesText());
 				}
 			});
 		} else {
@@ -97,6 +99,20 @@ public class ChangesSection extends FormSection {
 					}
 				});
 			}
+		}
+	}
+	
+	private String getEmptyChangesText() {
+		SubscriberInput input = participant.getInput();
+		int changesInWorkspace = input.getSubscriberSyncSet().size();
+		int changesInWorkingSet = input.getWorkingSetSyncSet().size();
+		int changesInFilter = input.getFilteredSyncSet().size();		
+		if(changesInFilter == 0 && changesInWorkingSet != 0) {
+			return "The current mode '" + Utils.modeToString(participant.getMode()) + "' doesn't contain any changes. Switch to another mode.";
+		} else if(changesInFilter == 0 && changesInWorkingSet == 0 && changesInWorkspace != 0) {
+			return "The current working set '" + Utils.workingSetToString(participant.getWorkingSet(), 50) + "' is hiding changes in your workspace. Remove working set.";
+		} else {
+			return "No changes in workspace";
 		}
 	}
 	

@@ -83,7 +83,7 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 				// NOTE: It would be cleaner if this was done by a scheduling
 				// rule but at the time of writting, it is not possible due to
 				// the scheduling rule containment rules.
-				lastTimeRun = System.currentTimeMillis();
+				long lastTimeRun = System.currentTimeMillis();
 				if(monitor.isCanceled()) {
 					return Status.CANCEL_STATUS;
 				}
@@ -93,6 +93,7 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 						monitor.setTaskName(Policy.bind(Policy.bind("RefreshSubscriberInputJob.1"), input.getParticipant().getName(), new Integer(input.workingSetRoots().length).toString())); //$NON-NLS-1$
 						TeamSubscriber subscriber = input.getSubscriber();
 						subscriber.refresh(input.workingSetRoots(), IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+						input.getParticipant().setLastRefreshTime(lastTimeRun);
 					}
 				} catch(TeamException e) {
 					status.merge(e.getStatus());

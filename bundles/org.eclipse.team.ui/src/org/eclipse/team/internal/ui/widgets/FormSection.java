@@ -456,7 +456,7 @@ public abstract class FormSection implements IPropertyChangeListener {
 	public void setHeaderRightText(String newHeaderText) {
 		headerRightText = newHeaderText;
 		if (headerRightLabel != null)
-			headerRightLabel.setText(headerText);
+			headerRightLabel.setText(headerRightText);
 	}
 	public void setHeightHint(int newHeightHint) {
 		heightHint = newHeightHint;

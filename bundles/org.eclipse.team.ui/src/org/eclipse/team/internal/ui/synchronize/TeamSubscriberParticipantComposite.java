@@ -10,21 +10,60 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import java.text.DateFormat;
+import java.util.Date;
+
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.*;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.jobs.IJobListener;
+import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 
-public class TeamSubscriberParticipantComposite extends Composite {
+public class TeamSubscriberParticipantComposite extends Composite implements IPropertyChangeListener {
 	private TeamSubscriberParticipant participant;	
 	private Color background;
 	private ISynchronizeView view;
 	private IControlFactory factory;
+	
+	private Label lastSyncLabel;
+	private Label scheduleLabel;
+	private Label statusLabel;
+	private ListViewer rootsList;
+	
+	private IJobListener jobListener = new IJobListener() {
+		public void started(QualifiedName jobType) {
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					synchronized (this) {
+						statusLabel.setText("Working...");
+					}
+				}
+			});
+		}
+		public void finished(QualifiedName jobType) {
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					synchronized (this) {
+						statusLabel.setText("Idle");
+					}
+				}
+			});
+
+		}
+	};
 	
 	public TeamSubscriberParticipantComposite(Composite parent, IControlFactory factory, TeamSubscriberParticipant participant, ISynchronizeView view) {
 		super(parent, SWT.NONE);
@@ -32,6 +71,16 @@ public class TeamSubscriberParticipantComposite extends Composite {
 		this.participant = participant;		
 		this.view = view;
 		createComposite(this);
+		updateLastRefreshLabel();
+		updateStatusLabel();
+		participant.addPropertyChangeListener(this);
+		
+		JobStatusHandler.addJobListener(jobListener, SubscriberAction.SUBSCRIBER_JOB_TYPE);
+		if(JobStatusHandler.hasRunningJobs(SubscriberAction.SUBSCRIBER_JOB_TYPE)) {
+			statusLabel.setText("Working...");
+		} else {
+			statusLabel.setText("Idle");
+		}
 	}
 	
 	protected Composite createComposite(Composite area) {
@@ -41,48 +90,97 @@ public class TeamSubscriberParticipantComposite extends Composite {
 		area.setLayout(layout);
 		setBackground(factory.getBackgroundColor());
 		{
-			final Composite composite_1 = factory.createComposite(this, SWT.NONE);
+			final Composite composite_1 = factory.createComposite(area, SWT.NONE);
 			GridData gridData = new GridData(GridData.VERTICAL_ALIGN_FILL);
 			final GridLayout gridLayout_1 = new GridLayout();
 			gridLayout_1.numColumns = 2;
 			composite_1.setLayout(gridLayout_1);
+			composite_1.setLayoutData(gridData);
 			{
 				final Label label = factory.createLabel(composite_1, "Last Sync");
 				gridData = new GridData();
-				gridData.verticalAlignment = GridData.END;
 				label.setLayoutData(gridData);
 			}
 			{
-				final Label label = factory.createLabel(composite_1, "11/23/03 10:03:12");
+				lastSyncLabel = factory.createLabel(composite_1, "11/23/03 10:03:12");
 				gridData = new GridData();
-				gridData.verticalAlignment = GridData.END;
-				label.setLayoutData(gridData);
+				gridData.grabExcessHorizontalSpace = true;
+				lastSyncLabel.setLayoutData(gridData);
 			}
 			{
 				final Label label = factory.createLabel(composite_1, "Schedule");
 				gridData = new GridData();
-				gridData.verticalAlignment = GridData.END;
 				label.setLayoutData(gridData);
 			}
 			{
-				final Label label = factory.createLabel(composite_1, "Every Hour");
+				scheduleLabel = factory.createLabel(composite_1, "Every Hour");
 				gridData = new GridData();
-				gridData.verticalAlignment = GridData.END;
-				label.setLayoutData(gridData);
+				gridData.grabExcessHorizontalSpace = true;
+				scheduleLabel.setLayoutData(gridData);
 			}
 			{
 				final Label label = factory.createLabel(composite_1, "Status");
 				gridData = new GridData();
-				gridData.verticalAlignment = GridData.END;
 				label.setLayoutData(gridData);
 			}
 			{
-				final Label label = factory.createLabel(composite_1, "Idle");
+				statusLabel = factory.createLabel(composite_1, "Idle");
 				gridData = new GridData();
-				gridData.verticalAlignment = GridData.END;
-				label.setLayoutData(gridData);
+				gridData.grabExcessHorizontalSpace = true;
+				statusLabel.setLayoutData(gridData);
+			}
+			{
+				rootsList = new ListViewer(composite_1, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);				
+				gridData = new GridData(GridData.FILL_BOTH);
+				gridData.horizontalSpan = 2;
+				gridData.grabExcessHorizontalSpace = true;
+				rootsList.getList().setLayoutData(gridData);	
+				rootsList.setLabelProvider(new WorkbenchLabelProvider());
+				rootsList.setContentProvider(new ArrayContentProvider());
+				rootsList.setInput(participant.getInput().subscriberRoots());
 			}
 		}		
 		return area;
-	}	
+	}
+		
+	/* (non-Javadoc)
+	 * @see org.eclipse.swt.widgets.Widget#dispose()
+	 */
+	public void dispose() {
+		super.dispose();
+		participant.removePropertyChangeListener(this);
+		JobStatusHandler.removeJobListener(jobListener, SubscriberAction.SUBSCRIBER_JOB_TYPE);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {
+		String property = event.getProperty();
+		if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_LASTSYNC)) {
+			updateLastRefreshLabel();
+		} else if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_STATUS)) {
+			updateStatusLabel();
+		}
+	}
+	
+	private void updateStatusLabel() {
+		statusLabel.setText(participant.getStatusText());
+	}
+
+	private void updateLastRefreshLabel() {
+		long mills = participant.getLastRefreshTime();
+		final String text;
+		if(mills <= 0) {
+			text = Policy.bind("SyncViewPreferencePage.lastRefreshRunNever"); //$NON-NLS-1$
+		} else {
+			Date lastTimeRun = new Date(mills);
+			text = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(lastTimeRun);
+		}
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				lastSyncLabel.setText(text);
+			}
+		});
+	}
 }

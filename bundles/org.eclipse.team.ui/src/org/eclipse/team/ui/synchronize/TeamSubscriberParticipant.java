@@ -34,6 +34,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	private SubscriberInput input;
 	private int currentMode;
 	private int currentLayout;
+	private long lastRefreshTime = -1;
+	private String statusText = "Idle";
 	private IWorkingSet workingSet;
 	
 	/**
@@ -47,9 +49,29 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public static final String P_SYNCVIEWPAGE_WORKINGSET = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_WORKINGSET";	 //$NON-NLS-1$
 	
 	/**
+	 * Property constant indicating the status of a page has changed. 
+	 */
+	public static final String P_SYNCVIEWPAGE_STATUS = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_STATUS";	 //$NON-NLS-1$
+	
+	/**
+	 * Property constant indicating the last sync time of a page has changed. 
+	 */
+	public static final String P_SYNCVIEWPAGE_LASTSYNC = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_LASTSYNC";	 //$NON-NLS-1$
+	
+	/**
+	 * Property constant indicating the schedule of a page has changed. 
+	 */
+	public static final String P_SYNCVIEWPAGE_SCHEDULE = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_SCHEDULE";	 //$NON-NLS-1$
+	
+	/**
 	 * Property constant indicating the mode of a page has changed. 
 	 */
 	public static final String P_SYNCVIEWPAGE_MODE = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_MODE";	 //$NON-NLS-1$
+	
+	/**
+	 * Property constant indicating the mode of a page has changed. 
+	 */
+	public static final String P_SYNCVIEWPAGE_LAYOUT = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_LAYOUT";	 //$NON-NLS-1$
 	
 	/**
 	 * Modes are direction filters for the view
@@ -59,11 +81,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public final static int BOTH_MODE = 0x4;
 	public final static int CONFLICTING_MODE = 0x8;
 	public final static int ALL_MODES = INCOMING_MODE | OUTGOING_MODE | CONFLICTING_MODE | BOTH_MODE;
-	
-	/**
-	 * Property constant indicating the mode of a page has changed. 
-	 */
-	public static final String P_SYNCVIEWPAGE_LAYOUT = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_LAYOUT";	 //$NON-NLS-1$
 	
 	/**
 	 * View type constant (value 0) indicating that the synchronize view will be shown
@@ -107,6 +124,25 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public int getLayout() {
 		return currentLayout;
+	}
+	
+	public void setLastRefreshTime(long lastTimeRun) {
+		long oldRefreshTime = getLastRefreshTime();
+		lastRefreshTime = lastTimeRun;
+		firePropertyChange(this, P_SYNCVIEWPAGE_LASTSYNC, new Long(oldRefreshTime), new Long(lastRefreshTime));
+	}
+	
+	public long getLastRefreshTime() {
+		return lastRefreshTime;
+	}
+	
+	public void setStatusText(String text) {
+		statusText = text;
+		firePropertyChange(this, P_SYNCVIEWPAGE_STATUS, null, statusText);
+	}
+	
+	public String getStatusText() {
+		return statusText;
 	}
 	
 	public void setWorkingSet(IWorkingSet set) {

@@ -1,0 +1,10 @@
+- P3 schedule support by participant. 
+	this requires changing the refresh jobs to accept scheduling different jobs. Essentially being able to have an 
+	ordered queue of refreshes. Also, participant will need a schedule object to encapsulate the schedule logic.
+- P3 status message could be more precise instead of simply "Working". But to do this we need access to the job progress monitor 
+  and it isn't available API from the UI.
+- P1 end of refresh prompt should be a property change notice, and let the participant decide what to do!
+- P1 mode switching at the end of a refresh to ensure that changes are shown if available
+- P2 need an event for adding roots to a subscriber to update the list shown
+- P1 support  for table widget in changes page
+- remove duplicated tree/table viewers classes. the orignial ones simply have the INavigable behavior.

@@ -93,7 +93,6 @@ public class SyncChangesTableViewer extends SyncChangesStructuredViewer {
 	 * @see org.eclipse.team.ui.synchronize.SyncChangesViewer#dispose()
 	 */
 	public void dispose() {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
 	}	
 }

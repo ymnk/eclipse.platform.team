@@ -11,21 +11,17 @@
 package org.eclipse.team.internal.ui.jobs;
 
 import java.util.*;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
@@ -60,11 +56,6 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * The schedule delay used when rescheduling a completed job 
 	 */
 	/* internal use only */ static long scheduleDelay = 20000; 
-	
-	/**
-	 * Time the job was run last in milliseconds.
-	 */
-	protected long lastTimeRun = 0; 
 	
 	/**
 	 * The subscribers and roots to refresh. If these are changed when the job
@@ -171,7 +162,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 				// NOTE: It would be cleaner if this was done by a scheduling
 				// rule but at the time of writting, it is not possible due to
 				// the scheduling rule containment rules.
-				lastTimeRun = System.currentTimeMillis();
+				long lastTimeRun = System.currentTimeMillis();
 				if(monitor.isCanceled()) {
 					return Status.CANCEL_STATUS;
 				}
@@ -179,6 +170,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 					final ChangeListener listener = new ChangeListener(input);
 					subscriber.addListener(listener);
 					subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+					input.getParticipant().setLastRefreshTime(lastTimeRun);
 					subscriber.removeListener(listener);
 
 					TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
@@ -255,9 +247,5 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	
 	public boolean shouldReschedule() {
 		return reschedule;
-	}
-	
-	public long getLastTimeRun() {
-		return lastTimeRun;
-	}
+	}	
 }

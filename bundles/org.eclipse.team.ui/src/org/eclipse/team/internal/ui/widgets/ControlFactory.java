@@ -20,8 +20,8 @@ import org.eclipse.swt.custom.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.ui.*;
-import org.eclipse.team.ui.controls.*;
+import org.eclipse.team.ui.controls.IControlFactory;
+import org.eclipse.team.ui.controls.IHyperlinkListener;
 import org.eclipse.ui.actions.ActionFactory;
 
 public class ControlFactory implements IControlFactory {

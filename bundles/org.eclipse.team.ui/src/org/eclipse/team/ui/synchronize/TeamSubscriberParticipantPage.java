@@ -174,6 +174,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	public void dispose() {
 		busyCursor.dispose();
 		statusLine.dispose();
+		changesSection.dispose();
+		participantSection.dispose();
 	}
 	
 	/*
