@@ -19,12 +19,12 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.core.*;
 import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
 import org.eclipse.team.internal.core.registry.DeploymentProviderRegistry;
+import org.eclipse.team.internal.core.Policy;
 
 public class DeploymentProviderManager implements IDeploymentProviderManager, IResourceChangeListener  {
 	
 	// key for remembering if state has been loaded for a project
-	private static final QualifiedName WRITE_TIMESTAMP = new QualifiedName(TeamPlugin.ID, "writetime"); //$NON-NLS-1$
-	private final static QualifiedName STATE_LOADED_KEY = new QualifiedName("org.eclipse.team.core.deployment", "state_restored_key");
+	private final static QualifiedName STATE_LOADED_KEY = new QualifiedName("org.eclipse.team.core.deployment", "state_restored_key"); //$NON-NLS-1$ //$NON-NLS-2$
 	
 	// {project -> list of Mapping}
 	private Map mappings = new HashMap(5);
@@ -96,7 +96,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager, IR
 			// extension point descriptor must exist
 			DeploymentProviderDescriptor descriptor = registry.find(deploymentProvider.getID());		
 			if(descriptor == null) {
-				throw new TeamException("Cannot map provider " + deploymentProvider.getID() + ". It's extension point description cannot be found.");
+				throw new TeamException(Policy.bind("DeploymentProviderManager.10", deploymentProvider.getID())); //$NON-NLS-1$
 			}
 			
 			// create the new mapping
@@ -179,7 +179,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager, IR
 		// was loaded from a repository or modified manually
 		if (providers.length > 1 && !providers[0].isMultipleMappingsSupported()) {
 			// Log and ignore all but one of the mappings
-			TeamPlugin.log(IStatus.WARNING, "Resource {0} is mapped to multiple deployment providers of type {1}." +resource +id, null);
+			TeamPlugin.log(IStatus.WARNING, Policy.bind("DeploymentProviderManager.12", resource.getFullPath().toString(), id), null); //$NON-NLS-1$
 			return new DeploymentProvider[] { providers[0] };
 		}
 		return providers;
@@ -198,7 +198,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager, IR
 				String first = m.getContainer().getFullPath().toString();
 				if(fullPath.startsWith(first) || first.startsWith(fullPath)) {
 					if (m.getDescription().getId().equals(id)) {
-						throw new TeamException(container.getFullPath().toString() + " is already mapped to " + m.getDescription().getId());
+						throw new TeamException(Policy.bind("DeploymentProviderManager.13", container.getFullPath().toString(), m.getDescription().getId())); //$NON-NLS-1$
 					}
 				}
 			}
@@ -239,7 +239,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager, IR
 					internalMap(mapping.getContainer(), mapping);
 				}
 				
-				project.setSessionProperty(STATE_LOADED_KEY, "true");
+				project.setSessionProperty(STATE_LOADED_KEY, new Object());
 			} catch (TeamException e) {
 			} catch (CoreException e) {
 			}		
@@ -294,7 +294,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager, IR
 				}
 			}
 		} catch (IOException e) {
-			throw new TeamException("An I/O error occurred while persisting the deployment configurations for project {0}." + project.getName(), e);
+			throw new TeamException(Policy.bind("DeploymentProviderManager.15", project.getName()), e); //$NON-NLS-1$
 		} catch(CoreException ce) {
 			throw TeamException.asTeamException(ce);
 		}
@@ -342,11 +342,11 @@ public class DeploymentProviderManager implements IDeploymentProviderManager, IR
 				IPath location = new Path(memento2.getString(CTX_PATH));
 				
 				if(! project.exists(location)) {
-					TeamPlugin.log(IStatus.ERROR, "Previously deployed folder {0} in project {1} no longer exists." + location + project.getName(), null);
+					TeamPlugin.log(IStatus.ERROR, Policy.bind("DeploymentProviderManager.16", location.toString(), project.getName()), null); //$NON-NLS-1$
 				}
 				IResource resource = location.isEmpty() ? (IContainer)project : project.findMember(location);
 				if (resource.getType() == IResource.FILE) {
-					TeamPlugin.log(IStatus.ERROR, "Previously deployed resource {0} in project {1} is now a file and cannot be deployed." + location + project.getName(), null);
+					TeamPlugin.log(IStatus.ERROR, Policy.bind("DeploymentProviderManager.17", location.toString(), project.getName()), null); //$NON-NLS-1$
 				}
 				IContainer container = (IContainer)resource;
 				DeploymentProviderDescriptor desc = registry.find(id);				

@@ -58,7 +58,7 @@ public abstract class SynchronizationCacheRefreshOperation {
 				return new IResource[0];
 			}
 			
-			monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString()));
+			monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString())); //$NON-NLS-1$
 			
 			// build the remote tree only if an initial tree hasn't been provided
 			ISubscriberResource	tree = getRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));

@@ -108,7 +108,7 @@ public class RemoteContentsCacheEntry {
 	private void internalSetContents(InputStream stream, IProgressMonitor monitor) throws TeamException {
 		// if the state is DISPOSED then there is a problem
 		if (state == DISPOSED) {
-			throw new TeamException("Cache entry in {0} for {1} has been disposed" + cache.getName() + id);
+			throw new TeamException(Policy.bind("RemoteContentsCacheEntry.3", cache.getName(), id)); //$NON-NLS-1$
 		}
 		// Otherwise, the state is UNINITIALIZED or READY so we can proceed
 		registerHit();
