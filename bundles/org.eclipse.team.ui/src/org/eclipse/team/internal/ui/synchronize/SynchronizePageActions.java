@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.team.internal.ui.synchronize.actions.OpenWithActionGroup;
 import org.eclipse.team.internal.ui.synchronize.actions.RefactorActionGroup;
@@ -34,6 +35,11 @@ public class SynchronizePageActions implements IActionContribution {
 		if (ws instanceof IViewSite) {
 			openWithActions = new OpenWithActionGroup(site, configuration.getParticipant().getName());
 			refactorActions = new RefactorActionGroup(site);
+			configuration.setProperty(ISynchronizePageConfiguration.P_OPEN_ACTION, new Action() {
+				public void run() {
+					openWithActions.openInCompareEditor();
+				}
+			});
 		}
 	}
 	/* (non-Javadoc)

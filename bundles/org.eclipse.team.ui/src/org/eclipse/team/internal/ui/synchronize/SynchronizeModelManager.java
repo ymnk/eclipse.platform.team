@@ -186,29 +186,28 @@ public abstract class SynchronizeModelManager implements IActionContribution {
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
 	 */
 	public void setActionBars(IActionBars actionBars) {
-		// TODO: add to group
+		if (toggleModelProviderActions == null) return;
 		IToolBarManager toolbar = actionBars.getToolBarManager();
 		IMenuManager menu = actionBars.getMenuManager();
-		IContributionManager contribManager = null;
-		if(menu != null) {
+		if(menu != null && menu.find(ISynchronizePageConfiguration.LAYOUT_GROUP) != null) {
 			MenuManager layout = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$
-			menu.add(layout);	
-			contribManager = layout;
-		} else if(toolbar != null) {
-			contribManager = toolbar;
-		}
-		
-		if (toggleModelProviderActions != null && contribManager != null) {
-			if (toolbar != null) {
-				toolbar.add(new Separator());
-				for (Iterator iter = toggleModelProviderActions.iterator(); iter.hasNext();) {
-					contribManager.add((Action) iter.next());
-				}
-				toolbar.add(new Separator());
-			}
+			menu.appendToGroup(ISynchronizePageConfiguration.LAYOUT_GROUP, layout);	
+			appendToMenu(null, layout);
+		} else if(toolbar != null && toolbar.find(ISynchronizePageConfiguration.LAYOUT_GROUP) != null) {
+			appendToMenu(ISynchronizePageConfiguration.LAYOUT_GROUP, toolbar);
 		}
 	}
 	
+	private void appendToMenu(String groupId, IContributionManager menu) {
+		for (Iterator iter = toggleModelProviderActions.iterator(); iter.hasNext();) {
+			if (groupId == null) {
+				menu.add((Action) iter.next());
+			} else {
+				menu.appendToGroup(groupId, (Action) iter.next());
+			}
+		}
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
 	 */

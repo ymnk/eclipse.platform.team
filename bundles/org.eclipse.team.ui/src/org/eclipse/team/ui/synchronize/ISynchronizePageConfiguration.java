@@ -138,6 +138,12 @@ public interface ISynchronizePageConfiguration {
 	public static final String OBJECT_CONTRIBUTIONS_GROUP = IWorkbenchActionConstants.MB_ADDITIONS;
 
 	/**
+	 * The id of the layout group that determines whether the layout selection
+	 * actions appear in the view dropdown or toolbar.
+	 */
+	public static final String LAYOUT_GROUP = "layout"; //$NON-NLS-1$
+
+	/**
 	 * This is the default group ordering used for the context menu of a page.
 	 */
 	public static final String[] DEFAULT_CONTEXT_MENU = new String[] { FILE_GROUP,  EDIT_GROUP, SYNCHRONIZE_GROUP, NAVIGATE_GROUP, OBJECT_CONTRIBUTIONS_GROUP};
@@ -145,12 +151,12 @@ public interface ISynchronizePageConfiguration {
 	/**
 	 * This is the default group ordering used for the toobar of a page.
 	 */
-	public static final String[] DEFAULT_TOOLBAR_MENU = new String[] { SYNCHRONIZE_GROUP,  NAVIGATE_GROUP, MODE_GROUP };
+	public static final String[] DEFAULT_TOOLBAR_MENU = new String[] { SYNCHRONIZE_GROUP, NAVIGATE_GROUP, MODE_GROUP,  LAYOUT_GROUP };
 	
 	/**
 	 * This is the default group ordering used for the toobar of a page.
 	 */
-	public static final String[] DEFAULT_VIEW_MENU = new String[] { WORKING_SET_GROUP,  SYNCHRONIZE_GROUP, PREFERENCES_GROUP };
+	public static final String[] DEFAULT_VIEW_MENU = new String[] { WORKING_SET_GROUP, LAYOUT_GROUP, SYNCHRONIZE_GROUP, PREFERENCES_GROUP };
 
 	/**
 	 * Return the particpant associated with the page to shich this configuration

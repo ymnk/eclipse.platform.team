@@ -224,7 +224,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 			}
 			groups = (String[])o;
 			int start = 0;
-			if (groups.length > 0 && groups[1].equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
+			if (groups.length > 0 && groups[0].equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
 				// Special handling for working set group
 				workingSetGroup.fillActionBars(actionBars);
 				menu.add(new Separator());
@@ -235,7 +235,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 			}
 			for (int i = start; i < groups.length; i++) {
 				String group = groups[i];
-				manager.add(new Separator(group));
+				menu.add(new Separator(group));
 				
 			}
 			
