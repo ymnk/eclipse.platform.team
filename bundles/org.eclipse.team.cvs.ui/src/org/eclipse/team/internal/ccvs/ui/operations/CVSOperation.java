@@ -90,7 +90,7 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 	}
 	
 	protected void runAsJob() {
-		Job job = new Job(Policy.bind("CVSOperation.operationJobName", getTaskName())) {
+		Job job = new Job(getTaskName()) {
 			public IStatus run(IProgressMonitor monitor) {
 				try {
 					CVSOperation.this.run(monitor);

@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.operations;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,12 +21,15 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -61,6 +65,7 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 	 */
 	public CheckoutProjectOperation(Shell shell, ICVSRemoteFolder[] remoteFolders, String targetLocation) {
 		super(shell, remoteFolders);
+		setModifiesWorkspace(false);
 		this.targetLocation = targetLocation;
 	}
 
@@ -138,6 +143,40 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 		return new Path(targetLocation);
 	}
 	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#runAsJob()
+	 */
+	protected void runAsJob() {
+		ICVSRemoteFolder[] remotes = getRemoteFolders();
+		IProject[] projects = getTargetProjects(remotes);
+		
+		for (int i = 0; i < remotes.length; i++) {
+			final ICVSRemoteFolder remote = remotes[i];
+			final IProject project;
+			if(projects == null) {
+				project = null;
+			} else {
+				project = projects[i];
+			}			
+			Job job = new Job(Policy.bind("CheckoutSingleProjectNoLocalOperation.taskname", remote.getRepositoryRelativePath())) {
+				public IStatus run(IProgressMonitor monitor) {
+					try {
+						ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+							public void run(IProgressMonitor monitor)	throws CoreException {
+								checkout(remote, project, monitor);
+							}
+						}, monitor);
+						return Status.OK_STATUS;
+					} catch (CoreException e) {
+						return e.getStatus();
+					}
+				}
+			};
+			job.schedule();
+		}
+	}
+	
 	/**
 	 * Checkout the remote resources into the local workspace. Each resource will 
 	 * be checked out into the corresponding project. If the corresponding project is
@@ -156,13 +195,14 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 				IProject project = null;
 				if (projects != null) 
 					project = projects[i];
-				
 				checkout(resource, project, Policy.subMonitorFor(pm, 1000));
 			}
 		} finally {
 			pm.done();
 		}
 	}
+	
+	
 
 	protected String getRemoteModuleName(ICVSRemoteFolder resource) {
 		String moduleName;
@@ -211,6 +251,7 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 			}
 			localOptions.add(Update.makeTagOption(tag));
 		
+			
 			// Perform the checkout
 			IStatus status = Command.CHECKOUT.execute(session,
 				Command.NO_GLOBAL_OPTIONS,
