@@ -190,6 +190,8 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	 */
 	public boolean performFinish() {
 		final boolean[] result = new boolean[] { true };
+		final boolean[] showTagPage = new boolean[] { false };
+		final ICVSRemoteFolder remote = getRemoteFolder();
 		try {
 			final boolean[] doSync = new boolean[] { false };
 			getContainer().run(true /* fork */, true /* cancel */, new IRunnableWithProgress() {
@@ -199,12 +201,12 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 							// Autoconnect to the repository using CVS/ directories
 							result[0] = autoconnectCVSProject(monitor);
 						} else {
-							if (exists(getRemoteFolder(), monitor)) {
+							if (exists(remote, monitor)) {
 								if (isOnFinishPage()) {
 									result[0] = reconnectProject(monitor);
 								} else {
 									result[0] = false;
-									// TODO: show tag page
+									showTagPage[0] = true;
 								}
 							} else {
 								result[0] = shareProject(monitor);
@@ -221,11 +223,17 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 					}
 				}
 			});
-			if (doSync[0]) {
-				// Sync of the project
-				WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-				if(participant != null) {
-					participant.refresh(new IResource[] {project}, participant.getRefreshListeners().createSynchronizeViewListener(participant), Policy.bind("Participant.synchronizing"), null); //$NON-NLS-1$
+			if (showTagPage[0]) {
+				tagPage.setFolder(remote);
+				getContainer().showPage(tagPage);
+				tagPage.setErrorMessage("Module {0} exists on the server" + remote.getRepositoryRelativePath());
+			} else {
+				if (doSync[0]) {
+					// Sync of the project
+					WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
+					if(participant != null) {
+						participant.refresh(new IResource[] {project}, participant.getRefreshListeners().createSynchronizeViewListener(participant), Policy.bind("Participant.synchronizing"), null); //$NON-NLS-1$
+					}
 				}
 			}
 		} catch (InterruptedException e) {
