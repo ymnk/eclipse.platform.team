@@ -106,6 +106,7 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 		consoleManager = ConsolePlugin.getDefault().getConsoleManager();
 		CVSProviderPlugin.getPlugin().setConsoleListener(CVSOutputConsole.this);
 		CVSUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(CVSOutputConsole.this);
+		setAutoScroll(true);
 	}
 	
 	/* (non-Javadoc)
@@ -266,12 +267,7 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
     }
 
     private void showConsole() {
-		if(showOnMessage) {
-			if(!visible)
-				CVSConsoleFactory.showConsole();
-			else
-				consoleManager.showConsoleView(this);
-		}
+		show(false);
 	}
 	
 	/* (non-Javadoc)
@@ -459,4 +455,18 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 		RGB rgb = PreferenceConverter.getColor(CVSUIPlugin.getPlugin().getPreferenceStore(), preference);
 		return new Color(display, rgb);
 	}
+
+    /**
+     * Show the console.
+     * @param showNoMatterWhat ignore preferences if <code>true</code>
+     */
+    public void show(boolean showNoMatterWhat) {
+		if(showNoMatterWhat || showOnMessage) {
+			if(!visible)
+				CVSConsoleFactory.showConsole();
+			else
+				consoleManager.showConsoleView(this);
+		}
+        
+    }
 }
