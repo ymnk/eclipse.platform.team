@@ -17,10 +17,8 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamDelta;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.helpers.*;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
@@ -258,7 +256,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		return remoteSynchronizer.isRemoteKnown(resource);
 	}
 
-	public void setRemote(IProject project, IRemoteResource remote, IProgressMonitor monitor) throws TeamException {
+	public void setRemote(IProject project, ISubscriberResource remote, IProgressMonitor monitor) throws TeamException {
 		// TODO: This exposes internal behavior to much
 		IResource[] changedResources = 
 			((CVSSubscriberResourceTree)getRemoteResourceTree()).getRefreshOperation().collectChanges(project, remote, IResource.DEPTH_INFINITE, monitor);

@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
@@ -51,7 +52,7 @@ public class ReconcileProjectOperation extends CVSOperation {
 			ICVSRemoteFolder remote = CheckoutToRemoteFolderOperation.checkoutRemoteFolder(getShell(), folder, Policy.subMonitorFor(monitor, 100));
 			// TODO: make -in-sync should also be done by the subscriber
 			makeFoldersInSync(project, remote, Policy.subMonitorFor(monitor, 100));
-			CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().setRemote(project, remote,Policy.subMonitorFor(monitor, 100));
+			CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().setRemote(project, (ISubscriberResource)remote, Policy.subMonitorFor(monitor, 100));
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
 					CVSUIPlugin.showInSyncView(getShell(), null, null, 0 /* no mode in particular */);
