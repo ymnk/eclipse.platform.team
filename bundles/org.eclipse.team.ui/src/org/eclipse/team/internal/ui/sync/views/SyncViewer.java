@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ui.sync.views;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,11 +34,13 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -106,6 +109,35 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	 * must be reset when the input changes.
 	 */
 	private SyncViewerActions actions;
+	
+	/**
+	 * Subclass of TreeViewer which handles decorator events properly.
+	 * 
+	 * TODO: We should not need to create a subclass just for this!
+	 */
+	public class SyncTreeViewer extends TreeViewer {
+		public SyncTreeViewer(Composite parent, int style) {
+			super(parent, style);
+		}
+		protected void handleLabelProviderChanged(LabelProviderChangedEvent event) {
+			Object[] changed= event.getElements();
+			if (changed != null && input != null) {
+				ArrayList others= new ArrayList();
+				for (int i= 0; i < changed.length; i++) {
+					Object curr = changed[i];
+					if (curr instanceof IResource) {
+						curr = SyncSet.getModelObject(input.getSyncSet(), (IResource)curr);
+					}
+					others.add(curr);
+				}
+				if (others.isEmpty()) {
+					return;
+				}
+				event= new LabelProviderChangedEvent((IBaseLabelProvider) event.getSource(), others.toArray());
+			}
+			super.handleLabelProviderChanged(event);
+		}
+	}
 			
 	public SyncViewer() {
 	}
@@ -153,7 +185,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	}
 
 	private void createTreeViewerPartControl(Composite parent) {
-		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		viewer = new SyncTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setContentProvider(new SyncSetTreeContentProvider());
 		viewer.setLabelProvider(SyncViewerLabelProvider.getDecoratingLabelProvider());
 		viewer.setSorter(new SyncViewerSorter());
