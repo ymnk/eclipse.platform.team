@@ -238,8 +238,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 		super(configuration);
 		
 		configuration.addActionContribution(new NavigationActionGroup());
-		// Create the model manager. It hooks itself up
-		new HierarchicalModelManager(this, configuration);
 		
 		StructuredViewer viewer = TreeViewerAdvisor.createViewer(parent, configuration);
 		GridData data = new GridData(GridData.FILL_BOTH);
@@ -247,6 +245,14 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 		initializeViewer(viewer);		
 	}
 	
+	/**
+	 * Create the model manager to be used by this advisor
+	 * @param configuration
+	 */
+	protected SynchronizeModelManager createModelManager(ISynchronizePageConfiguration configuration) {
+		return new HierarchicalModelManager(this, configuration);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#navigate(boolean)
 	 */

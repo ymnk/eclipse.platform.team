@@ -25,7 +25,6 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
 import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
-
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
@@ -80,6 +79,7 @@ public abstract class StructuredViewerAdvisor {
 	// Special actions that could not be contributed using an ActionGroup
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
+	private SynchronizeModelManager modelManager;
 	
 	// Property change listener which reponds to:
 	//    - working set selection by the user
@@ -98,7 +98,7 @@ public abstract class StructuredViewerAdvisor {
 				}
 		}
 	};
-	
+
 	/**
 	 * Create an advisor that will allow viewer contributions with the given <code>targetID</code>. This
 	 * advisor will provide a presentation model based on the given sync info set. The model is disposed
@@ -112,8 +112,15 @@ public abstract class StructuredViewerAdvisor {
 	public StructuredViewerAdvisor(ISynchronizePageConfiguration configuration) {
 		this.configuration = configuration;
 		configuration.setProperty(SynchronizePageConfiguration.P_ADVISOR, this);
+		modelManager = createModelManager(configuration);
 	}
-		
+	
+	/**
+	 * Create the model manager to be used by this advisor
+	 * @param configuration
+	 */
+	protected abstract SynchronizeModelManager createModelManager(ISynchronizePageConfiguration configuration);
+	
 	/**
 	 * Install a viewer to be configured with this advisor. An advisor can only be installed with
 	 * one viewer at a time. When this method completes the viewer is considered initialized and
@@ -496,5 +503,13 @@ public abstract class StructuredViewerAdvisor {
 			id += particpant.getSecondaryId();
 		}
 		return id;
+	}
+	
+	/*
+	 * For use by test cases only
+	 * @return Returns the modelManager.
+	 */
+	public SynchronizeModelManager getModelManager() {
+		return modelManager;
 	}
 }

@@ -201,7 +201,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 			IPage page = ((SynchronizeView)view).getPage(participant);
 			if (page instanceof SubscriberParticipantPage) {
 				SubscriberParticipantPage subscriberPage = (SubscriberParticipantPage)page;
-				ISelection selection = subscriberPage.getViewerAdvisor().getSelection(new Object[] { resource });
+				ISelection selection = subscriberPage.getViewerAdvisor().getModelManager().getSelection(new Object[] { resource });
 				if (!selection.isEmpty() && selection instanceof StructuredSelection) {
 					StructuredSelection ss = (StructuredSelection)selection;
 					Object o = ss.getFirstElement();
