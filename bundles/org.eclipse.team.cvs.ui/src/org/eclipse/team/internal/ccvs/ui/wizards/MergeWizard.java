@@ -18,6 +18,7 @@ import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
+import org.eclipse.team.internal.ccvs.ui.tags.*;
 import org.eclipse.team.internal.ccvs.ui.tags.TagSelectionArea;
 import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 import org.eclipse.team.ui.TeamUI;
