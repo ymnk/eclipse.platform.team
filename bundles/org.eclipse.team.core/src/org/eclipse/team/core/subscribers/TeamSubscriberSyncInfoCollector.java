@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
+import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SubscriberEventHandler;
 import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
 
@@ -102,8 +103,10 @@ public final class TeamSubscriberSyncInfoCollector implements IResourceChangeLis
 	 * @throws TeamException
 	 */
 	public void reset(IProgressMonitor monitor) throws TeamException {
-		set.reset(monitor);
+		monitor.beginTask(null, 100);
+		set.reset(Policy.subMonitorFor(monitor, 100));
 		eventHandler.initialize(getRoots());
+		monitor.done();
 	}
 
 	/**
