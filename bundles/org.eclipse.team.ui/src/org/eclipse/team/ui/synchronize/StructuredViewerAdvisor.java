@@ -341,40 +341,45 @@ public abstract class StructuredViewerAdvisor {
 
 			// view menu
 			IMenuManager menu = actionBars.getMenuManager();
-			
-			// Populate the view dropdown menu with the configured groups
-			o = configuration.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
-			if (!(o instanceof String[])) {
-				o = ISynchronizePageConfiguration.DEFAULT_VIEW_MENU;
-			}
-			groups = (String[])o;
-			int start = 0;
-			if (workingSetGroup != null) {
-				if (groups.length > 0 && groups[0].equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
-					// Special handling for working set group
-					workingSetGroup.fillActionBars(actionBars);
-					menu.add(new Separator());
-					menu.add(new Separator());
-					menu.add(new Separator(getGroupId("others"))); //$NON-NLS-1$
-					menu.add(new Separator());
-					start = 1;
+			if (menu != null) {
+				// Populate the view dropdown menu with the configured groups
+				o = configuration	.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
+				if (!(o instanceof String[])) {
+					o = ISynchronizePageConfiguration.DEFAULT_VIEW_MENU;
+				}
+				groups = (String[]) o;
+				int start = 0;
+				if (workingSetGroup != null) {
+					if (groups.length > 0
+							&& groups[0]
+									.equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
+						// Special handling for working set group
+						workingSetGroup.fillActionBars(actionBars);
+						menu.add(new Separator());
+						menu.add(new Separator());
+						menu.add(new Separator(getGroupId("others"))); //$NON-NLS-1$
+						menu.add(new Separator());
+						start = 1;
+					}
+				}
+				for (int i = start; i < groups.length; i++) {
+					String group = groups[i];
+					// The groupIds must be converted to be unique since the
+					// view menu is shared
+					menu.add(new Separator(getGroupId(group)));
 				}
 			}
-			for (int i = start; i < groups.length; i++) {
-				String group = groups[i];
-				// The groupIds must be converted to be unique since the view menu is shared
-				menu.add(new Separator(getGroupId(group)));
-				
+			// status line
+			IStatusLineManager statusLineMgr = actionBars.getStatusLineManager();
+			if (statusLineMgr != null) {
+				statusLine.fillActionBars(actionBars);
 			}
 			
-			// status line
-			statusLine.fillActionBars(actionBars);
-			
 			getActionGroup().fillActionBars(actionBars);
-			updateActionBars((IStructuredSelection)getViewer().getSelection());
+			updateActionBars((IStructuredSelection) getViewer().getSelection());
 			Object input = viewer.getInput();
 			if (input instanceof ISynchronizeModelElement) {
-				getActionGroup().modelChanged((ISynchronizeModelElement)input);
+				getActionGroup().modelChanged((ISynchronizeModelElement) input);
 			}
 		}		
 	}

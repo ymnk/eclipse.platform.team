@@ -30,7 +30,6 @@ import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
-import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.progress.IProgressService;
 
 /**
@@ -52,15 +51,8 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 	private Shell shell;
 	private IWorkbenchWindow window;
 	private Viewer viewer;
-	private IPageBookViewPage page;
 
-	class CompareViewerPaneSite implements IPageSite {
-		public void registerContextMenu(String menuId, MenuManager menuManager, ISelectionProvider selectionProvider) {
-			// noop
-		}
-		public IActionBars getActionBars() {
-			return SynchronizeCompareInput.this.getActionBars(CompareViewerPane.getToolBarManager(viewer.getControl().getParent()));
-		}
+	class CompareViewerPaneSite implements ISynchronizePageSite {
 		public IWorkbenchPage getPage() {
 			return null;
 		}
@@ -79,6 +71,34 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 		}
 		public Object getAdapter(Class adapter) {
 			return Platform.getAdapterManager().getAdapter(this, adapter);
+		}
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#getWorkbenchSite()
+		 */
+		public IWorkbenchSite getWorkbenchSite() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#getPart()
+		 */
+		public IWorkbenchPart getPart() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#getKeyBindingService()
+		 */
+		public IKeyBindingService getKeyBindingService() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#setFocus()
+		 */
+		public void setFocus() {
+			// TODO Auto-generated method stub
+			
 		}	
 	}
 	
@@ -93,20 +113,22 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 		this.shell = shell;
 		this.window = window;
 		this.participant = participant;
-		ISynchronizePageConfiguration c = participant.createPageConfiguration();
-		IPageBookViewPage page = participant.createPage(c);
-		if(page instanceof ISynchronizePage) {
-			this.viewer = ((ISynchronizePage)page).getViewer();
-		} else {
-			// If we can't get access to a viewer, there isn't much more to do. Returning null will
-			// force the compare input to leave the diff viewer empty.
-			return;
-		}
 	}
 
 	public final Viewer createDiffViewer(Composite parent) {	
 		try {
-			page.init(new CompareViewerPaneSite());
+			ISynchronizePageConfiguration c = participant.createPageConfiguration();
+			IPageBookViewPage page = participant.createPage(c);
+			((ISynchronizePage)page).init(new CompareViewerPaneSite());
+			page.createControl(parent);
+			if(page instanceof ISynchronizePage) {
+				this.viewer = ((ISynchronizePage)page).getViewer();
+			} else {
+				// If we can't get access to a viewer, there isn't much more to do. Returning null will
+				// force the compare input to leave the diff viewer empty.
+				return null;
+			}
+			page.setActionBars(getActionBars(CompareViewerPane.getToolBarManager(parent)));
 		} catch (PartInitException e) {
 			Utils.handle(e);
 			return null;
@@ -136,7 +158,6 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 //		nextAction.setCompareEditorInput(this);
 //		previousAction.setCompareEditorInput(this);
 		
-	//nitializeToolBar(diffViewer.getControl().getParent());
 		initializeDiffViewer(viewer);
 		//diffViewerConfiguration.navigate(true);
 		return viewer;
@@ -313,6 +334,10 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		return viewer.getInput();
+		return new DiffNode(0) {
+			public boolean hasChildren() {
+				return true;
+			}
+		};
 	}
 }

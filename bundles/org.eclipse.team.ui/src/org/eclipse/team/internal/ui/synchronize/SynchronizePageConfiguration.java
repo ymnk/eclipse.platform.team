@@ -361,7 +361,7 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 	 */
 	public void addLabelDecorator(ILabelDecorator decorator) {
 		ILabelDecorator[] decorators = (ILabelDecorator[])getProperty(P_LABEL_DECORATORS);
-		if (decorator == null) {
+		if (decorators == null) {
 			decorators = new ILabelDecorator[0];
 		}
 		// Ensure we don't have it registered already
