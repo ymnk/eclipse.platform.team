@@ -115,7 +115,7 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 			collectMembers((IContainer) resource, monitor);
 		}
 	}
-	private void collect(IResource resource, IProgressMonitor monitor) throws TeamException {
+	protected void collect(IResource resource, IProgressMonitor monitor) throws TeamException {
 		SyncInfo info = getSubscriber().getSyncInfo(resource, monitor);	
 		if (info == null) {
 			info = getInSyncInfoFor(resource);
