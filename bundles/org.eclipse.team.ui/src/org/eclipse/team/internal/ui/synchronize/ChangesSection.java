@@ -21,19 +21,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.forms.HyperlinkGroup;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
@@ -49,8 +40,8 @@ import org.eclipse.ui.part.PageBook;
  */
 public class ChangesSection extends Composite {
 	
-	private SubscriberParticipant participant;
-	private SubscriberParticipantPage page;
+	private ISynchronizeParticipant participant;
+	private SyncInfoSetSynchronizePage page;
 	private FormToolkit forms;
 			
 	/**
@@ -128,11 +119,11 @@ public class ChangesSection extends Composite {
 	 * @param parent the parent control 
 	 * @param page the page showing this section
 	 */
-	public ChangesSection(Composite parent, SubscriberParticipantPage page, ISynchronizePageConfiguration configuration) {
+	public ChangesSection(Composite parent, SyncInfoSetSynchronizePage page, ISynchronizePageConfiguration configuration) {
 		super(parent, SWT.NONE);
 		this.page = page;
 		this.configuration = configuration;
-		this.participant = page.getParticipant();
+		this.participant = configuration.getParticipant();
 		
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
@@ -162,7 +153,7 @@ public class ChangesSection extends Composite {
 		this.changesViewer = viewer;
 		calculateDescription();
 		configuration.addActionContribution(changedListener);
-		participant.getSyncInfoSet().addSyncSetChangedListener(subscriberListener);
+		getParticpantSyncInfoSet().addSyncSetChangedListener(subscriberListener);
 		getSyncInfoTree().addSyncSetChangedListener(outputSetListener);
 	}
 	
@@ -213,7 +204,7 @@ public class ChangesSection extends Composite {
 	}
 	
 	private boolean isThreeWay() {
-		return page.getParticipant().getSubscriber().getResourceComparator().isThreeWay();
+		return page.isThreeWay();
 	}
 	
 	private Composite getEmptyChangesComposite(Composite parent) {
@@ -231,7 +222,7 @@ public class ChangesSection extends Composite {
 			return composite;
 		}
 		
-		SyncInfoSet workspace = participant.getSyncInfoSet();
+		SyncInfoSet workspace = getParticpantSyncInfoSet();
 		SyncInfoSet workingSet = getWorkingSetSyncInfoSet();
 		SyncInfoSet filteredSet = getSyncInfoTree();
 		
@@ -296,7 +287,7 @@ public class ChangesSection extends Composite {
 	public void dispose() {
 		super.dispose();
 		configuration.removeActionContribution(changedListener);
-		participant.getSyncInfoSet().removeSyncSetChangedListener(subscriberListener);
+		getParticpantSyncInfoSet().removeSyncSetChangedListener(subscriberListener);
 	}
 	
 	private Composite getErrorComposite(Composite parent) {
@@ -323,7 +314,7 @@ public class ChangesSection extends Composite {
 		link.setText(Policy.bind("ChangesSection.9")); //$NON-NLS-1$
 		link.addHyperlinkListener(new HyperlinkAdapter() {
 			public void linkActivated(HyperlinkEvent e) {
-				participant.reset();
+				page.reset();
 			}
 		});
 		link.setBackground(getBackgroundColor());
@@ -355,5 +346,9 @@ public class ChangesSection extends Composite {
 	
 	private SyncInfoSet getWorkingSetSyncInfoSet() {
 		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
+	}
+	
+	private SyncInfoSet getParticpantSyncInfoSet() {
+		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_PARTICIPANT_SYNC_INFO_SET);
 	}
 }

@@ -28,8 +28,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
-import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.ui.SaveablePartAdapter;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -231,8 +230,9 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 		fEditionPane.setText("Changes");
 		
 		IPageBookViewPage page = participant.createPage(pageConfiguration);
+		((SynchronizePageConfiguration)pageConfiguration).setSite(new CompareViewerPaneSite());
 		try {
-			((ISynchronizePage)page).init(new CompareViewerPaneSite());
+			((ISynchronizePage)page).init(pageConfiguration.getSite());
 		} catch (PartInitException e1) {
 		}
 

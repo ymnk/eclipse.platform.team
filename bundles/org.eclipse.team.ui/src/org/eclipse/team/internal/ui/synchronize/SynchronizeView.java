@@ -141,18 +141,13 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 */
 	protected PageRec doCreatePage(IWorkbenchPart dummyPart) {
 		SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)dummyPart;
-		ISynchronizeParticipant component = part.getParticipant();
-		IPageBookViewPage page = null;
-		if(component instanceof ISynchronizeParticipant) {
-			ISynchronizeParticipant participant = (ISynchronizeParticipant)component;			
-			participant.addPropertyChangeListener(this);
-			ISynchronizePageConfiguration configuration = participant.createPageConfiguration();
-			page = participant.createPage(configuration);
-		} else if(component instanceof IPageBookViewPage) {
-			page = (IPageBookViewPage)component;
-		}	
+		ISynchronizeParticipant participant = part.getParticipant();	
+		participant.addPropertyChangeListener(this);
+		ISynchronizePageConfiguration configuration = participant.createPageConfiguration();
+		IPageBookViewPage page = participant.createPage(configuration);
 		if(page != null) {
 			initPage(page);
+			initPage(configuration, page);
 			page.createControl(getPageBook());
 			PageRec rec = new PageRec(dummyPart, page);
 			return rec;
@@ -163,14 +158,13 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.PageBookView#initPage(org.eclipse.ui.part.IPageBookViewPage)
 	 */
-	protected void initPage(IPageBookViewPage page) {
-		// Give the page an IPageSite
-		super.initPage(page);
+	protected void initPage(ISynchronizePageConfiguration configuration, IPageBookViewPage page) {
 		// A page site does not provide everything the page may need
 		// Also provide the synchronize page site if the page is a synchronize view page
+		((SynchronizePageConfiguration)configuration).setSite(new WorkbenchPartSynchronizePageSite(this));
 		if (page instanceof ISynchronizePage) {
 			try {
-				((ISynchronizePage)page).init(new WorkbenchPartSynchronizePageSite(this));
+				((ISynchronizePage)page).init(configuration.getSite());
 			} catch (PartInitException e) {
 				TeamUIPlugin.log(IStatus.ERROR, e.getMessage(), e);
 			}

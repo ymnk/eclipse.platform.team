@@ -45,6 +45,12 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public static final String P_WORKING_SET_SYNC_INFO_SET = TeamUIPlugin.ID + ".P_WORKING_SET_SYNC_INFO_SET"; //$NON-NLS-1$
 
+	/**
+	 * Property that gives access to a set the
+	 * contains all out-of-sync resources for the particpant
+	 * before any filtering (working set or modes) is applied.
+	 */
+	public static final String P_PARTICIPANT_SYNC_INFO_SET = TeamUIPlugin.ID + ".P_PARTICIPANT_SYNC_INFO_SET"; //$NON-NLS-1$
 	
 	/**
 	 * Property constant for the list of label decorators 

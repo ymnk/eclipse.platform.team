@@ -79,6 +79,16 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		refreshSchedule = new SubscriberRefreshSchedule(this);
 	}
 	
+	/**
+	 * Initialize the particpant sync info set in the configuration.
+	 * Subclasses may override but must invoke the inherited method.
+	 * @param configuration the page configuration
+	 * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
+	 */
+	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+		configuration.setProperty(ISynchronizePageConfiguration.P_PARTICIPANT_SYNC_INFO_SET, collector.getSubscriberSyncInfoSet());
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
@@ -107,16 +117,6 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		return new SubscriberRefreshWizard(this);
 	}
 	
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPageConfiguration()
-	 */
-	public ISynchronizePageConfiguration createPageConfiguration() {
-		SubscriberPageConfiguration configuration = new SubscriberPageConfiguration(this, getSubscriberSyncInfoCollector());
-		initializeConfiguration(configuration);
-		return configuration;
-	}
-	
 	public void setRefreshSchedule(SubscriberRefreshSchedule schedule) {
 		this.refreshSchedule = schedule;
 		firePropertyChange(this, P_SYNCVIEWPAGE_SCHEDULE, null, schedule);
@@ -133,7 +133,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		return collector.getSubscriber().roots();
 	}
 	
-private void internalRefresh(IResource[] resources, final IRefreshSubscriberListener listener, String taskName, IWorkbenchSite site) {
+	private void internalRefresh(IResource[] resources, final IRefreshSubscriberListener listener, String taskName, IWorkbenchSite site) {
 		final Runnable[] gotoAction = new Runnable[] {null};
 		final RefreshSubscriberJob job = new RefreshSubscriberJob(taskName, resources, collector.getSubscriber());
 		job.setUser(true);

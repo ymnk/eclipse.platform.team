@@ -68,6 +68,7 @@ public class CVSParticipant extends SubscriberParticipant {
 	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+		super.initializeConfiguration(configuration);
 		// The decorator adds itself to the configuration
 		new CVSLabelDecorator(configuration);
 	}

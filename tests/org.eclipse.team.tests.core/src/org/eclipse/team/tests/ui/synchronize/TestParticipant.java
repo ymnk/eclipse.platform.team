@@ -11,35 +11,55 @@
 package org.eclipse.team.tests.ui.synchronize;
 
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 public class TestParticipant extends AbstractSynchronizeParticipant {
+	
+	public static final String ID = "org.eclipse.team.tests.ui.test-participant"; //$NON-NLS-1$
+	
+	private SyncInfoTree set = new SyncInfoTree();
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+		configuration.setProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET, set);
 		configuration.setMode(ISynchronizePageConfiguration.BOTH_MODE);
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPage(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public IPageBookViewPage createPage(ISynchronizePageConfiguration configuration) {
-		// TODO Auto-generated method stub
-		return null;
+		return new TestPage(configuration);
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createSynchronizeWizard()
 	 */
 	public IWizard createSynchronizeWizard() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#dispose()
 	 */
 	public void dispose() {
-		// TODO Auto-generated method stub
+		// Noop
+	}
+
+	/**
+	 * 
+	 */
+	public void reset() {
+		set.clear();
+	}
+
+	/**
+	 * @return
+	 */
+	public SyncInfoTree getSyncInfoSet() {
+		return set;
 	}
 }

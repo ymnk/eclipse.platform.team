@@ -32,8 +32,6 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 	private SyncViewerShowPreferencesAction showPreferences;
 	private Action refreshAllAction;
 	private Action refreshSelectionAction;
-	// TODO: This action could be in synchronize actions
-	private DirectionFilterActionGroup modes;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
@@ -79,8 +77,6 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 		}
 		
 		showPreferences = new SyncViewerShowPreferencesAction(site.getShell());
-		
-		modes = new DirectionFilterActionGroup(configuration);
 	}
 
 	/* (non-Javadoc)
@@ -99,11 +95,6 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 			// toolbar
 			IToolBarManager manager = actionBars.getToolBarManager();
 			appendToGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, refreshAllAction);
-			
-			IContributionItem group = findGroup(manager, ISynchronizePageConfiguration.MODE_GROUP);
-			if (modes != null  && group != null) {
-				modes.fillToolBar(group.getId(), manager);
-			}
 
 			// view menu
 			IMenuManager menu = actionBars.getMenuManager();
