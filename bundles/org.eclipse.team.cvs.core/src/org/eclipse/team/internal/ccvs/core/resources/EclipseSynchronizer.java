@@ -68,6 +68,7 @@ public class EclipseSynchronizer {
 	
 	private Set changedResources = new HashSet();
 	private Set changedFolders = new HashSet();
+	private Set unmodifiedResources = new HashSet();
 	
 	/*
 	 * Package private contructor to allow specialized subclass for handling folder deletions
@@ -277,7 +278,7 @@ public class EclipseSynchronizer {
 			// broadcast changes to unmanaged children - they are the only candidates for being ignored
 			List possibleIgnores = new ArrayList();
 			accumulateNonManagedChildren(folder, possibleIgnores);
-			CVSProviderPlugin.broadcastResourceStateChanges((IResource[])possibleIgnores.toArray(new IResource[possibleIgnores.size()]));
+			CVSProviderPlugin.broadcastSyncInfoChanges((IResource[])possibleIgnores.toArray(new IResource[possibleIgnores.size()]));
 		} finally {
 			endOperation(null);
 		}
@@ -347,12 +348,21 @@ public class EclipseSynchronizer {
 			IStatus status = STATUS_OK;
 			if (lock.getNestingCount() == 1) {
 				status = commitCache(monitor);
+				broadcastModificationStateChanges();
 			}
 			if (status != STATUS_OK) {
 				throw new CVSException(status);
 			}
 		} finally {
 			lock.release();
+		}
+	}
+
+	private void broadcastModificationStateChanges() {
+		// Provide notification for files whose modification state changed
+		if (!unmodifiedResources.isEmpty()) {
+			CVSProviderPlugin.broadcastModificationStateChanges((IResource[]) unmodifiedResources.toArray(new IResource[unmodifiedResources.size()]));
+			unmodifiedResources.clear();
 		}
 	}
 	
@@ -413,7 +423,7 @@ public class EclipseSynchronizer {
 				List changedPeers = new ArrayList();
 				changedPeers.add(root);
 				changedPeers.addAll(Arrays.asList(root.members()));
-				CVSProviderPlugin.broadcastResourceStateChanges((IResource[]) changedPeers.toArray(new IResource[changedPeers.size()]));
+				CVSProviderPlugin.broadcastSyncInfoChanges((IResource[]) changedPeers.toArray(new IResource[changedPeers.size()]));
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -558,7 +568,7 @@ public class EclipseSynchronizer {
 	 */
 	void broadcastResourceStateChanges(IResource[] resources) {
 		if (resources.length > 0) {
-			CVSProviderPlugin.broadcastResourceStateChanges(resources);
+			CVSProviderPlugin.broadcastSyncInfoChanges(resources);
 		}
 	}
 	
@@ -1114,5 +1124,17 @@ public class EclipseSynchronizer {
 	 */
 	public boolean isEdited(IFile resource) throws CVSException {
 		return SyncFileWriter.isEdited(resource);
+	}
+	
+	/**
+	 * Method clearModificationState.
+	 * @param iFile
+	 */
+	public void clearModificationState(final IResource resource) throws CVSException {
+		run(new ICVSRunnable() {
+			public void run(IProgressMonitor monitor) throws CVSException {
+				unmodifiedResources.add(resource);
+			}
+		}, null);	
 	}
 }

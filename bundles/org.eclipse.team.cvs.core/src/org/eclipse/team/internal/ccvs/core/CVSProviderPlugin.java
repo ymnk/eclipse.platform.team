@@ -51,6 +51,7 @@ import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.AddDeleteMoveListener;
+import org.eclipse.team.internal.ccvs.core.util.FileModificationListener;
 import org.eclipse.team.internal.ccvs.core.util.ProjectDescriptionManager;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileChangeListener;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -109,6 +110,7 @@ public class CVSProviderPlugin extends Plugin {
 	private IResourceChangeListener projectDescriptionListener;
 	private IResourceChangeListener metaFileSyncListener;
 	private AddDeleteMoveListener addDeleteMoveListener;
+	private FileModificationListener fileModificationListener;
 
 	private static final String REPOSITORIES_STATE_FILE = ".cvsProviderState"; //$NON-NLS-1$
 	// version numbers for the state file (a positive number indicates version 1)
@@ -268,9 +270,16 @@ public class CVSProviderPlugin extends Plugin {
 		projectDescriptionListener = new ProjectDescriptionManager();
 		metaFileSyncListener = new SyncFileChangeListener();
 		addDeleteMoveListener = new AddDeleteMoveListener();
-		workspace.addResourceChangeListener(projectDescriptionListener, IResourceChangeEvent.PRE_AUTO_BUILD);
-		workspace.addResourceChangeListener(metaFileSyncListener, IResourceChangeEvent.PRE_AUTO_BUILD);
+		fileModificationListener = new FileModificationListener();
+		// Group the two PRE_AUTO_BUILD listeners together for efficiency
+		workspace.addResourceChangeListener(new IResourceChangeListener() {
+			public void resourceChanged(IResourceChangeEvent event) {
+				projectDescriptionListener.resourceChanged(event);
+				metaFileSyncListener.resourceChanged(event);
+			}
+		}, IResourceChangeEvent.PRE_AUTO_BUILD);
 		workspace.addResourceChangeListener(addDeleteMoveListener, IResourceChangeEvent.POST_AUTO_BUILD);
+		workspace.addResourceChangeListener(fileModificationListener, IResourceChangeEvent.POST_CHANGE);
 		CVSProviderPlugin.addResourceStateChangeListener(addDeleteMoveListener);
 		
 		createCacheDirectory();
@@ -407,15 +416,12 @@ public class CVSProviderPlugin extends Plugin {
 		listeners.remove(listener);
 	}
 	
-	/*
-	 * @see ITeamManager#broadcastResourceStateChanges(IResource[])
-	 */
-	public static void broadcastResourceStateChanges(final IResource[] resources) {
+	public static void broadcastSyncInfoChanges(final IResource[] resources) {
 		for(Iterator it=listeners.iterator(); it.hasNext();) {
 			final IResourceStateChangeListener listener = (IResourceStateChangeListener)it.next();
 			ISafeRunnable code = new ISafeRunnable() {
 				public void run() throws Exception {
-					listener.resourceStateChanged(resources);
+					listener.resourceSyncInfoChanged(resources);
 				}
 				public void handleException(Throwable e) {
 					// don't log the exception....it is already being logged in Platform#run
@@ -425,6 +431,20 @@ public class CVSProviderPlugin extends Plugin {
 		}
 	}
 	
+	public static void broadcastModificationStateChanges(final IResource[] resources) {
+		for(Iterator it=listeners.iterator(); it.hasNext();) {
+			final IResourceStateChangeListener listener = (IResourceStateChangeListener)it.next();
+			ISafeRunnable code = new ISafeRunnable() {
+				public void run() throws Exception {
+					listener.resourceModificationStateChanged(resources);
+				}
+				public void handleException(Throwable e) {
+					// don't log the exception....it is already being logged in Platform#run
+				}
+			};
+			Platform.run(code);
+		}
+	}
 	protected static void broadcastProjectConfigured(final IProject project) {
 		for(Iterator it=listeners.iterator(); it.hasNext();) {
 			final IResourceStateChangeListener listener = (IResourceStateChangeListener)it.next();

@@ -352,6 +352,8 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 				newInfo.setDeleted(false);
 				setSyncInfo(newInfo);
 			}
+			// broadcast the modification state change
+			EclipseSynchronizer.getInstance().clearModificationState(getIFile());
 		}
 		setBaserevInfo(null);
 		
@@ -374,11 +376,21 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	}
 	
 	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#committed(org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo)
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#committed(String)
 	 */
-	public void committed(ResourceSyncInfo info) throws CVSException {
-		setSyncInfo(info);
+	public void checkedIn(String entryLine) throws CVSException {
+		ResourceSyncInfo newInfo = getSyncInfo();
+		if (newInfo==null) {
+			// cvs add of a file
+			newInfo = new ResourceSyncInfo(entryLine, null, null);
+		} else {
+			// commit of a changed file
+			newInfo = new ResourceSyncInfo(entryLine, newInfo.getPermissions(), getTimeStamp());
+		}
+		setSyncInfo(newInfo);
 		clearCachedBase();
+		// broadcast the modification state change
+		EclipseSynchronizer.getInstance().clearModificationState(getIFile());
 	}
 	
 	private void clearCachedBase() throws CVSException {

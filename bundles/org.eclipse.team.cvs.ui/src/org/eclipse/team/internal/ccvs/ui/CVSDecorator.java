@@ -152,7 +152,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 		decoratorUpdateThread = new Thread(new CVSDecorationRunnable(this), "CVS"); //$NON-NLS-1$
 		decoratorUpdateThread.start();
 		CVSProviderPlugin.addResourceStateChangeListener(this);
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.PRE_AUTO_BUILD);
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
 	}
 
 	public String decorateText(String text, Object o) {
@@ -260,7 +260,6 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 	 */
 	public void resourceChanged(IResourceChangeEvent event) {
 		try {
-			final List changedResources = new ArrayList();
 			event.getDelta().accept(new IResourceDeltaVisitor() {
 				public boolean visit(IResourceDelta delta) throws CoreException {
 					IResource resource = delta.getResource();
@@ -283,21 +282,14 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 						}
 					}
 					
-					switch (delta.getKind()) {
-						case IResourceDelta.REMOVED:
-							// remove the cached decoration for any removed resource
-							cache.remove(resource);
-							break;
-						case IResourceDelta.CHANGED:
-							// for changed resources we have to update the decoration
-							changedResources.add(resource);	
+					if (delta.getKind() == IResourceDelta.REMOVED) {
+						// remove the cached decoration for any removed resource
+						cache.remove(resource);
 					}
 					
 					return true;
 				}
-			});
-			resourceStateChanged((IResource[])changedResources.toArray(new IResource[changedResources.size()]));
-			changedResources.clear();	
+			});	
 		} catch (CoreException e) {
 			CVSProviderPlugin.log(e.getStatus());
 		}
@@ -527,6 +519,19 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 	/* package */ boolean isMemberDeconfiguredProject(IResource resource) {
 		if (deconfiguredProjects.isEmpty()) return false;
 		return deconfiguredProjects.contains(resource.getProject());
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceSyncInfoChanged(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceSyncInfoChanged(IResource[] changedResources) {
+		resourceStateChanged(changedResources);
+	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModificationStateChanged(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceModificationStateChanged(IResource[] changedResources) {
+		resourceStateChanged(changedResources);
 	}
 
 }

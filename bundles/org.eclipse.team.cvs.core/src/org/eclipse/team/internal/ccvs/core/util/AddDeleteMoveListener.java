@@ -254,7 +254,7 @@ public class AddDeleteMoveListener implements IResourceDeltaVisitor, IResourceCh
 	/*
 	 * @see IResourceStateChangeListener#resourceStateChanged(IResource[])
 	 */
-	public void resourceStateChanged(IResource[] changedResources) {
+	public void resourceSyncInfoChanged(IResource[] changedResources) {
 		createNecessaryMarkers(changedResources);
 	}
 			
@@ -459,5 +459,12 @@ public class AddDeleteMoveListener implements IResourceDeltaVisitor, IResourceCh
 		for (int i = 0; i < markers.length; i++) {
 			markers[i].delete();
 		}
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModificationStateChanged(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceModificationStateChanged(IResource[] changedResources) {
+		// Nothing to do here
 	}
 }
