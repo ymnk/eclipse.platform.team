@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ui.sync.views;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
@@ -58,15 +59,35 @@ public class SyncSetChangedEvent {
 	/**
 	 * @param parent
 	 */
-	public void removedRoot(IResource parent) {
-		if (addedRoots.contains(parent)) {
+	public void removedRoot(IResource root) {
+		if (addedRoots.contains(root)) {
 			// The root was added and removed which is a no-op
-			addedRoots.remove(parent);
+			addedRoots.remove(root);
 		} else {
-			// TODO: handle children in removedRoots
-			removedRoots.add(parent);
+			// check if the root is a child of an existing root
+			// (in which case it need not be added).
+			// Also, remove any exisiting roots that are children
+			// of the new root
+			for (Iterator iter = removedRoots.iterator(); iter.hasNext();) {
+				IResource element = (IResource) iter.next();
+				// check if the root is already in the list
+				if (root.equals(element)) return;
+				if (isParent(root, element)) {
+					// the root invalidates the current element
+					iter.remove();
+				} else if (isParent(element, root)) {
+					// the root is a child of an existing element
+					return;
+				}
+			}
+			removedRoots.add(root);
 		}
 	}
+	
+	private boolean isParent(IResource root, IResource element) {
+		return root.getFullPath().isPrefixOf(element.getFullPath());
+	}
+
 	/**
 	 * @param parent
 	 */
