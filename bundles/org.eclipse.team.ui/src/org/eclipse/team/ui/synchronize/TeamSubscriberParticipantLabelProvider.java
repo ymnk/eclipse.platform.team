@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2003 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Common Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
 import java.util.HashMap;
@@ -29,8 +39,10 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 /**
  * Provides basic labels for the subscriber participant synchronize view 
  * page. This class provides a facility for subclasses to define annotations
- * on the labels and icons of adaptable objects.
+ * on the labels and icons of adaptable objects by overriding
+ * <code>decorateText()</code> and <code>decorateImage</code>.
  * 
+ * @see TeamSubscriberParticipantPage#getLabelProvider()
  * @since 3.0
  */
 public class TeamSubscriberParticipantLabelProvider extends LabelProvider implements ITableLabelProvider {

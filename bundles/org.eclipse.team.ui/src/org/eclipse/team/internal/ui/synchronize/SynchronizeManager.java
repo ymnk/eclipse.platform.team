@@ -10,19 +10,49 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.util.ListenerList;
-import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.SaveContext;
-import org.eclipse.team.internal.core.SaveContextXMLWriter;
-import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.registry.*;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
+import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
 import org.eclipse.team.ui.ITeamUIConstants;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeManager;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.WorkbenchException;
+import org.eclipse.ui.XMLMemento;
 
 /**
  * Manages the registered synchronize participants. It handles notification
@@ -262,7 +292,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 			participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
 			
 			// Instantiate and register any dynamic participants saved from a previous session.
-			restoreDynamicParticipants();
+			restoreSavedParticipants();
 			
 			// Instantiate and register any static participant that has not already been created.			
 			initializeStaticParticipants();
@@ -276,7 +306,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		List participants = new ArrayList();
 		for (int i = 0; i < desc.length; i++) {
 			SynchronizeParticipantDescriptor descriptor = desc[i];
-			if(descriptor.isStatic()) {
+			if(descriptor.isStatic() && ! synchronizeParticipants.containsKey(descriptor.getId())) {
 				participants.add(createParticipant(null, descriptor));
 			}
 		}		
@@ -284,76 +314,79 @@ public class SynchronizeManager implements ISynchronizeManager {
 			addSynchronizeParticipants((ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]));
 		}
 	}
-
+	
 	/**
 	 * Restores participants that have been saved between sessions. 
 	 */
-	private void restoreDynamicParticipants() throws TeamException, CoreException {
-		ISaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME);
-		if(root != null && root.getName().equals(CTX_PARTICIPANTS)) {
-			List participants = new ArrayList();
-			ISaveContext[] contexts = root.getChildren();
-			for (int i = 0; i < contexts.length; i++) {
-				ISaveContext context = contexts[i];
-				if(context.getName().equals(CTX_PARTICIPANT)) {
-					String id = context.getAttribute(CTX_ID);
-					SynchronizeParticipantDescriptor desc = participantRegistry.find(id);				
-					if(desc != null) {
-						IConfigurationElement cfgElement = desc.getConfigurationElement();
-						participants.add(createParticipant(context, desc));
-					} else {
-						TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id), null)); //$NON-NLS-1$
-					}
-				}
+	private void restoreSavedParticipants() throws TeamException, CoreException {
+		File file = getStateFile();	
+		Reader reader;
+		try {
+			reader = new BufferedReader(new FileReader(file));
+		} catch (FileNotFoundException e) {
+			return;
+		}
+		List participants = new ArrayList();
+		IMemento memento = XMLMemento.createReadRoot(reader);
+		IMemento[] participantNodes = memento.getChildren(CTX_PARTICIPANT);
+		for (int i = 0; i < participantNodes.length; i++) {
+			IMemento memento2 = participantNodes[i];			
+			String id = memento2.getString(CTX_ID);
+			SynchronizeParticipantDescriptor desc = participantRegistry.find(id);				
+			if(desc != null) {
+				IConfigurationElement cfgElement = desc.getConfigurationElement();
+				participants.add(createParticipant(memento2.getChild(CTX_PARTICIPANT_DATA), desc));
+			} else {
+				TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id), null)); //$NON-NLS-1$
 			}
-			if(! participants.isEmpty()) {
-				addSynchronizeParticipants((ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]));
-			}
+		}
+		if(! participants.isEmpty()) {
+			addSynchronizeParticipants((ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]));
 		}
 	}
 	
 	/**
 	 * Creates a participant instance with the given id from the participant description
 	 */
-	private ISynchronizeParticipant createParticipant(ISaveContext context, SynchronizeParticipantDescriptor desc) throws CoreException {
+	private ISynchronizeParticipant createParticipant(IMemento memento, SynchronizeParticipantDescriptor desc) throws CoreException {
 		ISynchronizeParticipant participant = (ISynchronizeParticipant)TeamUIPlugin.createExtension(desc.getConfigurationElement(), SynchronizeParticipantDescriptor.ATT_CLASS);
 		participant.setInitializationData(desc.getConfigurationElement(), null, null);
-		participant.restoreState(context);
+		participant.restoreState(memento);
 		return participant;
 	}
-
+	
 	/**
 	 * Saves a file containing the list of participant ids that are registered with this
 	 * manager. Each participant is also given the chance to save it's state. 
 	 */
 	private void saveState() {
-		ISaveContext root = new SaveContext();
-		root.setName(CTX_PARTICIPANTS);
+		XMLMemento xmlMemento = XMLMemento.createWriteRoot(CTX_PARTICIPANTS);	
 		List children = new ArrayList();
-		try {
-			for (Iterator it = synchronizeParticipants.keySet().iterator(); it.hasNext();) {			
-				String id = (String) it.next();
-				SynchronizeParticipantDescriptor desc = participantRegistry.find(id);				
-				if(desc == null) {
-					TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id), null)); //$NON-NLS-1$
-				}
-				if(! desc.isStatic()) { 
-					List participants = (List)synchronizeParticipants.get(id);
-					for (Iterator it2 = participants.iterator(); it2.hasNext(); ) {
-						ISynchronizeParticipant participant = (ISynchronizeParticipant) it2.next();				
-						ISaveContext item = new SaveContext();
-						item.setName(CTX_PARTICIPANT);
-						item.addAttribute(CTX_ID, participant.getId());
-						participant.saveState(item);
-						children.add(item);
-					}
-				}
+		for (Iterator it = synchronizeParticipants.keySet().iterator(); it.hasNext();) {			
+			String id = (String) it.next();
+			List participants = (List)synchronizeParticipants.get(id);
+			for (Iterator it2 = participants.iterator(); it2.hasNext(); ) {
+				ISynchronizeParticipant participant = (ISynchronizeParticipant) it2.next();
+				IMemento participantNode = xmlMemento.createChild(CTX_PARTICIPANT);
+				participantNode.putString(CTX_ID, participant.getId());
+				participant.saveState(participantNode.createChild(CTX_PARTICIPANT_DATA));
 			}
-			root.setChildren((SaveContext[])children.toArray(new SaveContext[children.size()]));
-			SaveContextXMLWriter.writeXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME, (SaveContext)root);
-		} catch (TeamException e) {
-			TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.10"), e)); //$NON-NLS-1$
 		}
+		try {
+			Writer writer = new BufferedWriter(new FileWriter(getStateFile()));
+			try {
+				xmlMemento.save(writer);
+			} finally {
+				writer.close();
+			}
+		} catch (IOException e) {
+			TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.10"), e)); //$NON-NLS-1$
+		}					
+	}
+	
+	private File getStateFile() {
+		IPath pluginStateLocation = TeamUIPlugin.getPlugin().getStateLocation();
+		return pluginStateLocation.append(FILENAME).toFile(); //$NON-NLS-1$	
 	}
 	
 	/* (non-Javadoc)

@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -25,7 +25,7 @@ public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
 	 */
-	public void restoreState(ISaveContext context) throws PartInitException {
+	public void restoreState(IMemento memento) throws PartInitException {
 		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
 		setSubscriber(subscriber);
 	}
@@ -33,7 +33,7 @@ public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#saveState(org.eclipse.team.core.ISaveContext)
 	 */
-	public void saveState(ISaveContext context) {
+	public void saveState(IMemento memento) {
 		// no state to save
 	}
 	

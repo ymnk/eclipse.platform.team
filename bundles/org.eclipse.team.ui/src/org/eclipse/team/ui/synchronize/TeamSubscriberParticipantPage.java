@@ -1,79 +1,53 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2003 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Common Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.IOpenListener;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.OpenEvent;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.TableLayout;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
-import org.eclipse.team.internal.ui.synchronize.actions.ComparisonCriteriaActionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.INavigableControl;
-import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
-import org.eclipse.team.internal.ui.synchronize.actions.OpenWithActionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.RefactorActionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
-import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.SyncViewerShowPreferencesAction;
-import org.eclipse.team.internal.ui.synchronize.actions.ToggleViewLayoutAction;
-import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetTableContentProvider;
-import org.eclipse.team.internal.ui.synchronize.views.SyncTableViewer;
-import org.eclipse.team.internal.ui.synchronize.views.SyncTreeViewer;
-import org.eclipse.team.internal.ui.synchronize.views.SyncViewerSorter;
-import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
+import org.eclipse.team.internal.ui.synchronize.views.*;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.part.IPageBookViewPage;
-import org.eclipse.ui.part.IPageSite;
-import org.eclipse.ui.part.IShowInSource;
-import org.eclipse.ui.part.ShowInContext;
+import org.eclipse.ui.*;
+import org.eclipse.ui.part.*;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
+/**
+ * A synchronize view page that works with participants that are subclasses of 
+ * {@link TeamSubscriberParticipant}. It shows changes in the tree or table view
+ * and supports navigation, opening, and filtering changes.
+ * <p>
+ * Clients can subclass to extend the label decoration or add action bar 
+ * contributions. For more extensive modifications, clients should create
+ * their own custom control.
+ * </p> 
+ * @since 3.0
+ */
 public class TeamSubscriberParticipantPage implements IPageBookViewPage, IPropertyChangeListener {
 	// The viewer that is shown in the view. Currently this can be either a table or tree viewer.
 	private StructuredViewer viewer;
@@ -212,7 +186,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		}
 	}	
 
-	protected void setContextMenu(IMenuManager manager) {
+	private void setContextMenu(IMenuManager manager) {
 		openWithActions.fillContextMenu(manager);
 		refactorActions.fillContextMenu(manager);
 		manager.add(new Separator());
@@ -246,10 +220,10 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	/**
 	 * Adds the listeners to the viewer.
 	 */
-	protected void initializeListeners() {
+	private void initializeListeners() {
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
-				;
+				updateStatusLine((IStructuredSelection)event.getSelection());
 			}
 		});
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
@@ -264,7 +238,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		});
 	}	
 	
-	protected void createViewer(Composite parent) {				
+	private void createViewer(Composite parent) {				
 		//tbMgr.createControl(parent);
 		switch(layout) {
 			case TeamSubscriberParticipant.TREE_LAYOUT:
@@ -286,7 +260,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		return new TeamSubscriberParticipantLabelProvider();		
 	}
 	
-	protected void createTreeViewerPartControl(Composite parent) {
+	private void createTreeViewerPartControl(Composite parent) {
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer = new SyncTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setLabelProvider(getLabelProvider());
@@ -294,7 +268,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		((TreeViewer)viewer).getTree().setLayoutData(data);
 	}
 	
-	protected void createTableViewerPartControl(Composite parent) {
+	private void createTableViewerPartControl(Composite parent) {
 		// Create the table
 		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
 		table.setHeaderVisible(true);
@@ -322,7 +296,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	/**
 	 * Creates the columns for the sync viewer table.
 	 */
-	protected void createColumns(Table table, TableLayout layout, TableViewer viewer) {
+	private void createColumns(Table table, TableLayout layout, TableViewer viewer) {
 		SelectionListener headerListener = SyncViewerTableSorter.getColumnListener(viewer);
 		// revision
 		TableColumn col = new TableColumn(table, SWT.NONE);
@@ -339,7 +313,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		layout.addColumnData(new ColumnWeightData(50, true));
 	}
 	
-	protected void disposeChildren(Composite parent) {
+	private void disposeChildren(Composite parent) {
 		// Null out the control of the busy cursor while we are switching viewers
 		busyCursor.setControl(null);
 		Control[] children = parent.getChildren();
@@ -349,18 +323,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		}
 	}
 	
-	/**
-	 * Handles a selection changed event from the viewer. Updates the status line and the action 
-	 * bars, and links to editor (if option enabled).
-	 * 
-	 * @param event the selection event
-	 */
-	protected void handleSelectionChanged(SelectionChangedEvent event) {
-		final IStructuredSelection sel = (IStructuredSelection) event.getSelection();
-		updateStatusLine(sel);
-	}
-	
-	protected void handleOpen(OpenEvent event) {
+	private void handleOpen(OpenEvent event) {
 		openWithActions.openInCompareEditor();
 	}
 	/**
@@ -370,7 +333,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @param event the double-click event
 	 * @since 2.0
 	 */
-	protected void handleDoubleClick(DoubleClickEvent event) {
+	private void handleDoubleClick(DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		Object element = selection.getFirstElement();	
 		// Double-clicking should expand/collapse containers
@@ -439,9 +402,9 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 *
 	 * @param selection the current selection
 	 */
-	protected void updateStatusLine(IStructuredSelection selection) {
+	private void updateStatusLine(IStructuredSelection selection) {
 		String msg = getStatusLineMessage(selection);
-		//getSite().getActionBars().getStatusLineManager().setMessage(msg);
+		getSite().getActionBars().getStatusLineManager().setMessage(msg);
 	}
 	
 	/**
@@ -451,7 +414,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @return the status line message
 	 * @since 2.0
 	 */
-	protected String getStatusLineMessage(IStructuredSelection selection) {
+	private String getStatusLineMessage(IStructuredSelection selection) {
 		if (selection.size() == 1) {
 			IResource resource = getResource(selection.getFirstElement());
 			if (resource == null) {
@@ -515,7 +478,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		}		
 	}
 
-	protected void updateViewMenu(IActionBars actionBars) {
+	private void updateViewMenu(IActionBars actionBars) {
 		IMenuManager menu = actionBars.getMenuManager();
 		menu.removeAll();
 		MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		

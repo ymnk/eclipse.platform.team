@@ -15,7 +15,8 @@ with the Eclipse Synchronize View.</p>
   the common functionality for synchronize participants. The basic model for the 
   Synchronize View APIs is the following:</p>
 <ul>
-  <li>A ISynchronizeManager manages registered synchronize participants.</li>
+  <li>A ISynchronizeManager manages registered synchronize participants. There 
+    can be several instances of the same participant type.</li>
   <li>A ISynchronizeParticipant is a logical representation of a connection between 
     workspace resources and a remote location used to shared those resources.</li>
   <li>A ISynchronizeView is a page book view of participants.</li>
@@ -53,7 +54,7 @@ with the Eclipse Synchronize View.</p>
     implementations for init(QualifiedName), saveState(), and optionally createPage().</li>
   <li>To add actions to the context menu of the participant page you must create 
     a viewerContribution in your plugin.xml with the targetID field equal to that 
-    of the qualifier part of the participant's id. For example: 
+    of the qualifier part of the participant's type id. For example: 
     <pre>&lt;viewerContribution id=&quot;org.eclipse.myteamplugin.syncparticipant.actions&quot;      
  targetID=&quot;org.eclipse.myteamplugin.syncparticipant&quot;</pre>
   </li>

@@ -10,21 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.team.internal.ui.registry.ISynchronizeParticipantDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 
 /**
  * Manages synchronization view participants. Clients can programatically add 
- * or remove participants via this manager. Whereas static participants
- * defined in a plugin.xml file are added automatically by the manager.
+ * or remove participants via this manager.
  * <p>
  * Clients are not intended to implement this interface.
  * </p>
  * @see ISynchronizeParticipant
  * @since 3.0 
  */
-public interface ISynchronizeManager {
-	
+public interface ISynchronizeManager {	
 	/**
 	 * Registers the given listener for participant notifications. Has
 	 * no effect if an identical listener is already registered.
@@ -74,10 +71,11 @@ public interface ISynchronizeManager {
 	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage page);
 	
 	/**
-	 * Returns the registered synchronize participants with the given id.
+	 * Returns the registered synchronize participants with the given id. It is
+	 * possible to have multiple instances of the same participant type.
 	 * 
 	 * @return the registered synchronize participants with the given id, or 
-	 * <code>null</code> if one with that id is not registered.
+	 * <code>null</code> if none with that id is not registered.
 	 */
 	public ISynchronizeParticipant[] find(String id);
 	

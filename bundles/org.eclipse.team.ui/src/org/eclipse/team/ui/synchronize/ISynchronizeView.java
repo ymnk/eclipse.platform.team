@@ -29,7 +29,6 @@ import org.eclipse.ui.IViewPart;
  * @since 3.0
  */
 public interface ISynchronizeView extends IViewPart {
-
 	/**
 	 * The id for this view
 	 */

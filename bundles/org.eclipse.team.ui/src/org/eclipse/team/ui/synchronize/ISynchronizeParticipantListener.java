@@ -18,8 +18,7 @@ package org.eclipse.team.ui.synchronize;
  * </p>
  * @since 3.0
  */
-public interface ISynchronizeParticipantListener {
-	
+public interface ISynchronizeParticipantListener {	
 	/**
 	 * Notification the given participants have been added to the synchronize
 	 * manager.

@@ -10,15 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.ISafeRunnable;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.ListenerList;
-import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.*;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.TeamUI;
 
@@ -208,7 +206,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		configElement = config;
 
 		// Id
-		fId = config.getAttribute("id");
+		fId = config.getAttribute("id"); //$NON-NLS-1$
 
 		// Title.
 		fName = config.getAttribute("name"); //$NON-NLS-1$
@@ -220,6 +218,14 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		String strIcon = config.getAttribute("icon"); //$NON-NLS-1$
 		if (strIcon != null) {
 			fImageDescriptor = TeamImages.getImageDescriptorFromExtension(configElement.getDeclaringExtension(), strIcon);
+		}
+	}
+	
+	protected void setInitializationData(ISynchronizeParticipantDescriptor descriptor) throws CoreException {
+		if(descriptor instanceof SynchronizeParticipantDescriptor) {
+			setInitializationData(((SynchronizeParticipantDescriptor)descriptor).getConfigurationElement(), null, null);
+		} else {
+			throw new TeamException(Policy.bind("AbstractSynchronizeParticipant.4")); //$NON-NLS-1$
 		}
 	}
 
