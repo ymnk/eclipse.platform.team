@@ -8,40 +8,27 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.internal.core.subscribers;
 
 import java.io.*;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
- * A content comparison criteria that knows how to compare the content of
- * <code>IStorage</code> and <code>IRemoteResource</code> objects. The
- * content comparison can be configured to ignore or consider whitespace.
- * 
- * @see org.eclipse.team.core.subscribers.ComparisonCriteria
+ * This is an internal class that is usd by the <code>ContentComparisonSyncInfoFilter</code>
+ * to compare the comtents of the local and remote resources
  */
-public class ContentComparisonCriteria {
+public class ContentComparator {
 
 	private boolean ignoreWhitespace = false;
 
-	public ContentComparisonCriteria(boolean ignoreWhitespace) {
+	public ContentComparator(boolean ignoreWhitespace) {
 		this.ignoreWhitespace = ignoreWhitespace;
-	}
-
-	/**
-	 * Helper methods for comparisons that returns true if the resource
-	 * contents are the same.
-	 * 
-	 * If timestampDiff is true then the timestamps don't differ and there's no
-	 * point checking the contents.
-	 */
-	public boolean compare(Object e1, Object e2) {
-		return compare(e1, e2, new NullProgressMonitor());
 	}
 		
 	public boolean compare(Object e1, Object e2, IProgressMonitor monitor) {

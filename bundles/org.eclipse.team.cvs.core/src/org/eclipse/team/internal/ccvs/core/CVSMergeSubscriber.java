@@ -290,7 +290,8 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	private void compareWithRemote(IResource[] refreshed, IProgressMonitor monitor) throws CVSException, TeamException {
 		// For any remote changes, if the revision differs from the local, compare the contents.
 		if (refreshed.length == 0) return;
-		ContentComparisonCriteria content = new ContentComparisonCriteria(false);
+		SyncInfoFilter.ContentComparisonSyncInfoFilter contentFilter =
+			new SyncInfoFilter.ContentComparisonSyncInfoFilter();
 		monitor.beginTask(null, refreshed.length * 100);
 		for (int i = 0; i < refreshed.length; i++) {
 			IResource resource = refreshed[i];
@@ -302,7 +303,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 						&& localBytes != null
 						&& local.exists()
 						&& !ResourceSyncInfo.getRevision(remoteBytes).equals(ResourceSyncInfo.getRevision(localBytes))
-						&& content.compare(resource, getRemoteResource(resource), Policy.subMonitorFor(monitor, 100))) {
+						&& contentFilter.select(getSyncInfo(resource), Policy.subMonitorFor(monitor, 100))) {
 					// The contents are equals so mark the file as merged
 					internalMerged(resource);
 				}

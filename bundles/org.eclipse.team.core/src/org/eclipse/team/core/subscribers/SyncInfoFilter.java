@@ -12,10 +12,12 @@ package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.internal.core.subscribers.*;
 
 /**
  * A <code>SyncInfoFilter</code> tests a <code>SyncInfo</code> for inclusion
- * in a <code>SyncInfoSet</code>.
+ * typically in a <code>SyncInfoSet</code>.
+ * 
  */
 public abstract class SyncInfoFilter {
 	
@@ -23,7 +25,7 @@ public abstract class SyncInfoFilter {
 	 * Filter that selects those <code>SyncInfo</code> whose contents do not match.
 	 */
 	public static class ContentComparisonSyncInfoFilter extends SyncInfoFilter {
-		ContentComparisonCriteria criteria = new ContentComparisonCriteria(false);
+		ContentComparator criteria = new ContentComparator(false);
 		public boolean select(SyncInfo info, IProgressMonitor monitor) {
 			ISubscriberResource remote = info.getRemote();
 			IResource local = info.getLocal();

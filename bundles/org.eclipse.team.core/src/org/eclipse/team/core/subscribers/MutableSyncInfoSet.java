@@ -32,12 +32,13 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		IPath path = local.getFullPath();
 		SyncInfo info = (SyncInfo)resources.remove(path);
 		changes.removed(local);
-		statistics.remove(info);
+		if (info != null) {
+			statistics.remove(info);
+		}
 		if (local.getType() == IResource.FILE 
 				|| members(local).length == 0) {
 			removeFromParents(local, local);
 		}
-		
 	}
 	
 	public void removeAll(IResource[] resources) {

@@ -12,11 +12,10 @@ package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
-
-
 /**
- * A SyncInfoFilter can be used to control, at a fine grain, {@link SyncInfo} 
- * instances in a SyncInfoSet.
+ * A specialized <code>SyncInfoFilter</code> that does not require a progress monitor.
+ * This enables these filters to be used when determining menu enablement or other
+ * operations that must be short running.
  * 
  * @see SyncInfoSet
  * @since 3.0

@@ -115,7 +115,7 @@ public class SyncInfoSetCompareConfiguration {
 		initializeListeners(viewer);
 		initializeNavigator(viewer);
 		hookContextMenu(viewer);
-		createToolBarActions(parent);
+		initializeActions(viewer);
 		viewer.setInput(getInput());
 	}
 
@@ -181,6 +181,20 @@ public class SyncInfoSetCompareConfiguration {
 		});
 	}
 
+	/**
+	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
+	 * to initialize any actions for the viewer. It is invoked before the input is set on
+	 * the viewer in order to allow actions to be initialized before there is any reaction 
+	 * to the input being set (e.g. selecting and opening the first element).
+	 * <p>
+	 * The default behavior is to add the up and down navigation nuttons to the toolbar.
+	 * Subclasses can override.
+	 * @param viewer the viewer being initialize
+	 */
+	protected void initializeActions(StructuredViewer viewer) {
+		createToolBarActions(viewer.getControl().getParent());
+	}
+	
 	/**
 	 * Return the <code>SyncInfoSet</code> being shown by the viewer associated with
 	 * this configuration.

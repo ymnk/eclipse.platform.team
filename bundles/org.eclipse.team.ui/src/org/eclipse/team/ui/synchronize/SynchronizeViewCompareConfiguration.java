@@ -49,6 +49,7 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 	}
 	
 	protected void initializeActions(StructuredViewer treeViewer) {
+		super.initializeActions(treeViewer);
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
 		refreshSelectionAction = new TeamParticipantRefreshAction(treeViewer, participant, false /*refresh*/);

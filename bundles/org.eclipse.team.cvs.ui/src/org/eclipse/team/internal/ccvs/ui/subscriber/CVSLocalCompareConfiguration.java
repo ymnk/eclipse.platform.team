@@ -88,10 +88,10 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 	 */
 	public void initializeViewer(Composite parent, StructuredViewer viewer) {
 		super.initializeViewer(parent, viewer);
-		initializeActions(viewer);
 	}
 
-	private void initializeActions(StructuredViewer viewer) {
+	protected void initializeActions(StructuredViewer viewer) {
+		super.initializeActions(viewer);
 		refreshAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getTeamSubscriber()).getName(), collector, null /* no listener */, false);
 		
 	}
