@@ -56,7 +56,7 @@ public class RepositoryRoot extends PlatformObject {
         String fileName;
         public TagCacheEntry(RepositoryRoot repo, String remotePath) {
             this.repo = repo;
-            this.cache = new CacheableReference(createTagCacheSource(remotePath));;
+            this.cache = new CacheableReference(createTagCacheSource(remotePath));
             accessed();
         }
         public boolean isExpired() {
@@ -129,7 +129,7 @@ public class RepositoryRoot extends PlatformObject {
         }
         private CVSTag[] getTags() {
             try {
-                return (CVSTag[])getReference().getObject(ICacheableReference.DO_NOT_FETCH_IF_ABSENT, null);
+                return (CVSTag[])getReference().getObject(ICacheableReference.ONLY_LOAD_REPLICA_IF_ABSENT, null);
             } catch (CoreException e) {
                 CVSUIPlugin.log(e);
             } catch (ClassCastException e) {
@@ -145,7 +145,7 @@ public class RepositoryRoot extends PlatformObject {
             HashMap attributes = new HashMap();
             attributes.put(RepositoriesViewContentHandler.PATH_ATTRIBUTE, fileName);
 			attributes.put(RepositoriesViewContentHandler.LAST_ACCESS_TIME_ATTRIBUTE, Long.toString(lastAccessTime));
-			writer.startTag(RepositoriesViewContentHandler.TAG_REPLICA_TAG, attributes, true);
+			writer.startAndEndTag(RepositoriesViewContentHandler.TAG_REPLICA_TAG, attributes, true);
         }
 	}
 	
@@ -634,7 +634,7 @@ public class RepositoryRoot extends PlatformObject {
 		    entry.accessed();
 			CVSTag[] tags1;
             try {
-                tags1 = (CVSTag[]) entry.getReference().getObject(ICacheableReference.DO_NOT_FETCH_IF_ABSENT, null);
+                tags1 = (CVSTag[]) entry.getReference().getObject(ICacheableReference.ONLY_LOAD_REPLICA_IF_ABSENT, null);
             } catch (CoreException e) {
                 // Log and continue
                 CVSUIPlugin.log(e);

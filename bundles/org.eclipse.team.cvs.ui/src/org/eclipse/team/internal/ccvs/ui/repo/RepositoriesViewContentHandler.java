@@ -97,8 +97,10 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 			ignoreElements = false;
 		} else if (elementName.equals(MODULE_TAG)) {
 			if (! ignoreElements && currentRepositoryRoot != null) {
-				currentRepositoryRoot.addTags(currentRemotePath, 
-					(CVSTag[]) tags.toArray(new CVSTag[tags.size()]));
+			    if (!tags.isEmpty()) {
+					currentRepositoryRoot.addTags(currentRemotePath, 
+						(CVSTag[]) tags.toArray(new CVSTag[tags.size()]));
+			    }
 				if (lastAccessTime > 0)
 				    currentRepositoryRoot.setLastAccessedTime(currentRemotePath, lastAccessTime);
 				currentRepositoryRoot.setAutoRefreshFiles(currentRemotePath,

@@ -38,6 +38,12 @@ public interface ICacheableReference {
     public static final int ALWAYS_FETCH = 2;
     
     /**
+     * Flag indicating that the object should be loaded
+     * from a local replica if present.
+     */
+    public static final int ONLY_LOAD_REPLICA_IF_ABSENT = 4;
+    
+    /**
      * This contant provides the beginning flag that can be used by clients
      * to provide custom flags for fetching objects.
      */

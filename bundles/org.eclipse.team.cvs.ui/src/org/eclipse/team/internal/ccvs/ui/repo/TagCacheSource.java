@@ -73,4 +73,11 @@ public class TagCacheSource implements ICacheSource {
     public String getRemotePath() {
         return remoteFolderPath;
     }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.core.caches.ICacheSource#isLocalReplica()
+     */
+    public boolean isLocalReplica() {
+        return false;
+    }
 }

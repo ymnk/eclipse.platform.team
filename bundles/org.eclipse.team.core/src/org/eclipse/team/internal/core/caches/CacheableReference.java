@@ -64,6 +64,12 @@ public class CacheableReference implements ICacheableReference {
             // Let ALWAYS_FETCH override DO_NOT_FETCH_IF_ABSENT
             return null;
         }
+        if ((flags & ONLY_LOAD_REPLICA_IF_ABSENT) > 0 && !source.isLocalReplica()) {
+            // The source is not a local replica so don't load
+            return null;   
+        }
+        
+        // TODO: should serialize fetch to ensure it doesn't happen concurrently
         Object o = fetchObject(flags, Policy.monitorFor(monitor));
         setCachedObject(o);
         return o;

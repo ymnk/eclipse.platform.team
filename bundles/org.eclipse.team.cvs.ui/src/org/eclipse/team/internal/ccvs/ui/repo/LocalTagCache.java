@@ -97,4 +97,11 @@ public class LocalTagCache extends XMLLocalReplica {
     public void dispose() {
         getFile().delete();
     }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.core.caches.ICacheSource#isLocalReplica()
+     */
+    public boolean isLocalReplica() {
+        return true;
+    }
 }

@@ -40,13 +40,17 @@ public abstract class XMLLocalReplica extends LocalReplica {
         XMLMemento memento = XMLMemento.createWriteRoot(getType());
         save(o, memento, monitor);
         Writer writer = null;
+        File file = getFile();
+        File parentDir = file.getParentFile();
+        if (!parentDir.exists())
+            parentDir.mkdirs();
         try {
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(getFile())));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
             memento.save(writer);
         } catch (FileNotFoundException e) {
-            throw new TeamException("Could not create file " + getFile().getAbsolutePath(), e);
+            throw new TeamException("Could not create file " + file.getAbsolutePath(), e);
         } catch (IOException e) {
-            throw new TeamException("Could not write to file " + getFile().getAbsolutePath(), e);
+            throw new TeamException("Could not write to file " + file.getAbsolutePath(), e);
         } finally {
             if (writer != null) {
                 try {

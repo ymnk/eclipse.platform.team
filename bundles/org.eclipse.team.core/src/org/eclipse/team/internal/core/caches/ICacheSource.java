@@ -35,4 +35,10 @@ public interface ICacheSource {
      * @return a cachable object representing the data at he source location
      */
     Object fetch(int flags, IProgressMonitor monitor) throws CoreException;
+    
+    /**
+     * Return whether the cache source is a local replica of a remote source.
+     * @return whether the cache source is a local replica of a remote source
+     */
+    boolean isLocalReplica();
 }

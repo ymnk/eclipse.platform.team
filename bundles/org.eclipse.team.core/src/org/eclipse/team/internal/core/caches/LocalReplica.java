@@ -67,10 +67,10 @@ public abstract class LocalReplica implements ICacheSource {
                         throw (RuntimeException)e;
                     }
                     // Impossible but handle anyway.
-                    TeamPlugin.log(IStatus.WARNING, "Could no load local replica.", e); //$NON-NLS-1$
+                    TeamPlugin.log(IStatus.WARNING, "Could not load local replica.", e); //$NON-NLS-1$
                     return null;
                 }
-                TeamPlugin.log(IStatus.WARNING, "Could no load local replica. Fetching from the remote source.", e); //$NON-NLS-1$
+                TeamPlugin.log(IStatus.WARNING, "Could not load local replica. Fetching from the remote source.", e); //$NON-NLS-1$
                 return fetchRemote(flags, monitor);
             }
         }
