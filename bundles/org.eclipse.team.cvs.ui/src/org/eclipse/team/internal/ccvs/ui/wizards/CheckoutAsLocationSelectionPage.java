@@ -149,8 +149,8 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 
 		// project location entry field
 		locationPathField = new Text(projectGroup, SWT.BORDER);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		data.widthHint = SIZING_TEXT_FIELD_WIDTH;
+		GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+		//data.widthHint = SIZING_TEXT_FIELD_WIDTH;
 		locationPathField.setLayoutData(data);
 		locationPathField.setEnabled(enabled);
 

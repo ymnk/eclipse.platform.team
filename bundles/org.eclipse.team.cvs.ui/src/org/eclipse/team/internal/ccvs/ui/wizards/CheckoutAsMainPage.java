@@ -102,6 +102,11 @@ public class CheckoutAsMainPage extends CVSWizardPage {
 		}
 		createCheckoutAsProjectRadioArea(composite);
 		createCheckoutIntoRadioArea(composite);
+		if (allowProjectConfiguration) {
+			configuredProjectButton.setSelection(true);
+		} else {
+			simpleProjectButton.setSelection(true);
+		}
 	}
 
 	/*
@@ -111,6 +116,7 @@ public class CheckoutAsMainPage extends CVSWizardPage {
 		createLabel(composite, Policy.bind("CheckoutAsMainPage.multipleFolders", new Integer(folders.length).toString())); //$NON-NLS-1$
 		createCheckoutAsProjectRadioArea(composite);
 		createCheckoutIntoRadioArea(composite);
+		simpleProjectButton.setSelection(true);
 	}
 
 	/**
