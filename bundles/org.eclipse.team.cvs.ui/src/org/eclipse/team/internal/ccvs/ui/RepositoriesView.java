@@ -134,7 +134,7 @@ public class RepositoriesView extends ViewPart {
 		};
 		WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_REPOSITORY_LOCATION_ACTION);
 		
-		final Action newAnonAction = new Action(Policy.bind("RepositoriesView.newAnonCVS"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION)) { //$NON-NLS-1$
+/*		final Action newAnonAction = new Action(Policy.bind("RepositoriesView.newAnonCVS"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION)) { //$NON-NLS-1$
 			public void run() {
 				Properties p = new Properties();
 				p.setProperty("connection", "pserver"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -147,7 +147,7 @@ public class RepositoriesView extends ViewPart {
 			}
 		};
 		WorkbenchHelp.setHelp(newAnonAction, IHelpContextIds.NEW_DEV_ECLIPSE_REPOSITORY_LOCATION_ACTION);
-
+*/
 		// Properties
 		propertiesAction = new PropertyDialogAction(shell, viewer);
 		getViewSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.PROPERTIES, propertiesAction);		
@@ -192,7 +192,7 @@ public class RepositoriesView extends ViewPart {
 					manager.add(propertiesAction);
 				}
 				sub.add(newAction);
-				sub.add(newAnonAction);
+				//sub.add(newAnonAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
