@@ -451,4 +451,17 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 	public void setSupportedModes(int modes) {
 		setProperty(P_SUPPORTED_MODES, new Integer(modes));
 	}
+	
+	/**
+	 * @return Returns the page.
+	 */
+	public ISynchronizePage getPage() {
+		return page;
+	}
+	/**
+	 * @param page The page to set.
+	 */
+	public void setPage(ISynchronizePage page) {
+		this.page = page;
+	}
 }

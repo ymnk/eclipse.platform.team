@@ -55,11 +55,6 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 			super("", AS_RADIO_BUTTON); //$NON-NLS-1$
 			this.modeId = modeId;
 			Utils.initAction(this, prefix, Policy.getBundle());
-			Action a = new Action() {
-				public void run() {
-					DirectionFilterAction.this.run();
-				}
-			};
 		}
 		public void run() {
 			if(isChecked()) {
@@ -98,27 +93,58 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	private void createActions() {
 		// Create the actions
 		int supportedModes = configuration.getSupportedModes();
+		if (supportedModes == 0) return;
+		int currentMode = configuration.getMode();
+		if ((supportedModes & currentMode) == 0) {
+			currentMode = getSupportedMode(supportedModes);
+			if (currentMode == 0) return;
+			configuration.setMode(currentMode);
+		}
 		if((supportedModes & ISynchronizePageConfiguration.INCOMING_MODE) != 0) {
 			incomingMode = new DirectionFilterAction("action.directionFilterIncoming.", "org.eclipse.team.ui.syncview.incomingFilter",  ISynchronizePageConfiguration.INCOMING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(incomingMode);
+			incomingMode.setChecked(currentMode == ISynchronizePageConfiguration.INCOMING_MODE);
 		}
 		
 		if((supportedModes & ISynchronizePageConfiguration.OUTGOING_MODE) != 0) {
 			outgoingMode = new DirectionFilterAction("action.directionFilterOutgoing.", "org.eclipse.team.ui.syncview.outgoingFilter",  ISynchronizePageConfiguration.OUTGOING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(outgoingMode);
+			outgoingMode.setChecked(currentMode == ISynchronizePageConfiguration.OUTGOING_MODE);
 		}
 		
 		if((supportedModes & ISynchronizePageConfiguration.BOTH_MODE) != 0) {
 			bothMode = new DirectionFilterAction("action.directionFilterBoth.", "org.eclipse.team.ui.syncview.bothFilter", ISynchronizePageConfiguration.BOTH_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(bothMode);
+			bothMode.setChecked(currentMode == ISynchronizePageConfiguration.BOTH_MODE);
 		}
 		
 		if((supportedModes & ISynchronizePageConfiguration.CONFLICTING_MODE) != 0) {
 			conflictsMode = new DirectionFilterAction("action.directionFilterConflicts.", "org.eclipse.team.ui.syncview.conflictsFilter", ISynchronizePageConfiguration.CONFLICTING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(conflictsMode);
+			conflictsMode.setChecked(currentMode == ISynchronizePageConfiguration.CONFLICTING_MODE);
 		}
 	}
 	
+	/**
+	 * @param supportedModes
+	 * @return
+	 */
+	private int getSupportedMode(int supportedModes) {
+		if((supportedModes & ISynchronizePageConfiguration.INCOMING_MODE) != 0) {
+			return ISynchronizePageConfiguration.INCOMING_MODE;
+		}
+		if((supportedModes & ISynchronizePageConfiguration.OUTGOING_MODE) != 0) {
+			return ISynchronizePageConfiguration.OUTGOING_MODE;
+		}
+		if((supportedModes & ISynchronizePageConfiguration.BOTH_MODE) != 0) {
+			return ISynchronizePageConfiguration.BOTH_MODE;
+		}
+		if((supportedModes & ISynchronizePageConfiguration.CONFLICTING_MODE) != 0) {
+			return ISynchronizePageConfiguration.CONFLICTING_MODE;
+		}
+		return 0;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
 	 */

@@ -32,6 +32,7 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 	private SyncViewerShowPreferencesAction showPreferences;
 	private Action refreshAllAction;
 	private Action refreshSelectionAction;
+	// TODO: This action could be in synchronize actions
 	private DirectionFilterActionGroup modes;
 
 	/* (non-Javadoc)

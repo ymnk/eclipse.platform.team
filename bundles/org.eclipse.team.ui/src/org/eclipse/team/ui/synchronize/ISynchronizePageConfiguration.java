@@ -227,6 +227,21 @@ public interface ISynchronizePageConfiguration {
 	 * @return the page site
 	 */
 	public abstract ISynchronizePageSite getSite();
+	
+	/**
+	 * Return the page created from and associated with this
+	 * configuration.
+	 * @return Returns the page for this configuration
+	 */
+	public ISynchronizePage getPage();
+	
+	/**
+	 * Set the page for this configuration. This methpd should only
+	 * be called once by the {@link ISynchronzeParticipant} that created
+	 * the page.
+	 * @param page the configuration's page
+	 */
+	public void setPage(ISynchronizePage page);
 
 	/**
 	 * Add a property change listener to the configuration.

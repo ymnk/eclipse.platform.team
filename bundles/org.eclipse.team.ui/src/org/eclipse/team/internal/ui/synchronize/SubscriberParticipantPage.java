@@ -102,6 +102,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 */
 	public SubscriberParticipantPage(ISynchronizePageConfiguration configuration, SubscriberSyncInfoCollector subscriberCollector) {
 		this.configuration = configuration;
+		configuration.setPage(this);
 		this.participant = (SubscriberParticipant)configuration.getParticipant();
 		IDialogSettings viewsSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		
