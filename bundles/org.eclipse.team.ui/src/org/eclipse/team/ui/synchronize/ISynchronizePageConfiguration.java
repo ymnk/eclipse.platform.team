@@ -12,13 +12,11 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.jface.util.IPropertyChangeListener;
 
-public interface ISynchronizeConfiguration {
+public interface ISynchronizePageConfiguration {
 
 	public abstract ISynchronizeParticipant getParticipant();
 	
-	public abstract void initialize(StructuredViewerAdvisor advisor);
-	
-	public abstract void dispose();
+	public abstract ISynchronizePageSite getSite();
 
 	public abstract void addPropertyChangeListener(IPropertyChangeListener listener);
 
@@ -42,4 +40,13 @@ public interface ISynchronizeConfiguration {
 	 * @return the property with the given name, or <code>null</code> if not found
 	 */
 	public abstract Object getProperty(String key);
+
+	/**
+	 * Register the action contribution with the configuration. The
+	 * registered action contributions will have the opertunity to add
+	 * actions to the action bars and context menu of the synchronize
+	 * page created using the configuration.
+	 * @param contribution an action contribution
+	 */
+	public abstract void addActionContribution(IActionContribution contribution);
 }

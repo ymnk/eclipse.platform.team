@@ -38,15 +38,7 @@ import org.eclipse.ui.internal.PluginAction;
  * </p>
  * @since 3.0
  */
-public class SubscriberConfiguration implements ISynchronizeConfiguration {
-	
-	public interface IContextMenuListener {
-		// Contants used to identify customizable menu areas
-		public static final String FILE_MENU = "File"; //$NON-NLS-1$
-		public static final String EDIT_MENU = "Edit"; //$NON-NLS-1$
-		public static final String NAVIGATE_MENU = "Navigate"; //$NON-NLS-1$
-		public void fillContextMenu(IMenuManager manager);
-	}
+public class SubscriberConfiguration implements ISynchronizePageConfiguration {
 	
 	/**
 	 * Property constant indicating the mode of a page has changed. 
@@ -107,7 +99,7 @@ public class SubscriberConfiguration implements ISynchronizeConfiguration {
 	public void initialize(StructuredViewerAdvisor advisor) {
 		initializeCollector();
 		initializeActions(advisor);
-		addContextMenuListener(new IContextMenuListener() {
+		addContextMenuListener(new IActionContribution() {
 			public void fillContextMenu(IMenuManager manager) {
 				if (openWithActions != null) {
 					openWithActions.fillContextMenu(manager, FILE_MENU);
@@ -140,7 +132,7 @@ public class SubscriberConfiguration implements ISynchronizeConfiguration {
 	 * menu is shown for the viewer associated with this advisor.
 	 * @param listener a context menu listener
 	 */
-	public void addContextMenuListener(IContextMenuListener listener) {
+	public void addContextMenuListener(IActionContribution listener) {
 		if (contextMenuListeners == null) {
 			contextMenuListeners = new ListenerList();
 		}
@@ -152,7 +144,7 @@ public class SubscriberConfiguration implements ISynchronizeConfiguration {
 	 * Removing a listener that is not registered has no effect.
 	 * @param listener a context menu listener
 	 */
-	public void removeContextMenuListener(IContextMenuListener listener) {
+	public void removeContextMenuListener(IActionContribution listener) {
 		if (contextMenuListeners != null) {
 			contextMenuListeners.remove(listener);
 		}
@@ -341,14 +333,14 @@ public class SubscriberConfiguration implements ISynchronizeConfiguration {
 	 * @param manager the menu manager to which actions can be added.
 	 */
 	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
-		manager.add(new Separator(IContextMenuListener.FILE_MENU));
-		manager.add(new Separator(IContextMenuListener.EDIT_MENU));
-		manager.add(new Separator(IContextMenuListener.NAVIGATE_MENU));
+		manager.add(new Separator(IActionContribution.FILE_MENU));
+		manager.add(new Separator(IActionContribution.EDIT_MENU));
+		manager.add(new Separator(IActionContribution.NAVIGATE_MENU));
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 		if (contextMenuListeners != null) {
 			Object[] l= contextMenuListeners.getListeners();
 			for (int i= 0; i < l.length; i++) {
-				((IContextMenuListener) l[i]).fillContextMenu(manager);
+				((IActionContribution) l[i]).fillContextMenu(manager);
 			}
 		}
 	}

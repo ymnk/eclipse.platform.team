@@ -28,6 +28,13 @@ public class WorkbenchPartSynchronizePageSite implements ISynchronizePageSite {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#getPart()
+	 */
+	public IWorkbenchPart getPart() {
+		return part;
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#getShell()
 	 */
 	public Shell getShell() {
@@ -46,13 +53,6 @@ public class WorkbenchPartSynchronizePageSite implements ISynchronizePageSite {
 	 */
 	public void setSelectionProvider(ISelectionProvider provider) {
 		part.getSite().setSelectionProvider(provider);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#getType()
-	 */
-	public int getType() {
-		return VIEW;
 	}
 
 	/* (non-Javadoc)

@@ -85,6 +85,8 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 */
 	public ImageDescriptor getImageDescriptor();
 	
+	public ISynchronizePageConfiguration createPageConfiguration();
+	
 	/**
 	 * Creates and returns a new page for this synchronize participant. The
 	 * page is displayed for this synchronize participant in the given
@@ -94,7 +96,7 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @return a page book view page representation of this synchronize
 	 * participant
 	 */
-	public IPageBookViewPage createPage();
+	public IPageBookViewPage createPage(ISynchronizePageConfiguration configuration);
 	
 	/**
 	 * Creates and returns a wizard page used to globally synchronize this participant. Participants

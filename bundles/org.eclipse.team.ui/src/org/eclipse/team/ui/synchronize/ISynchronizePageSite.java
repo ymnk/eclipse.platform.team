@@ -12,12 +12,20 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IKeyBindingService;
-import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.*;
 
 /**
  * A site which provides access to the context in which this page
- * is being displayed
+ * is being displayed. Instances of this interface serve a similar purpose
+ * to <code>IWorkbenchSite</code> instances but is provided as a separate
+ * objects to allow clients to access the different site types 
+ * (view, editor, dialog) using a common interface. This interface also provides
+ * access to the part for the site because this is required by some UI
+ * components. Clients should not need to access the part.
+ * <p>
+ * Clients can determine the type of workbench site by doing <code>instanceof</code>
+ * checks on the object returned by <code>getWorkbenchSite</code>. Similar
+ * <code>instanceof</code> checks can be done with the part.
  * <p>
  * Clients are not intended to implement this interface
  * 
@@ -25,17 +33,12 @@ import org.eclipse.ui.IWorkbenchSite;
  */
 public interface ISynchronizePageSite {
 
-	int VIEW = 1;
-
-	/**
-	 * @return
-	 */
-	int getType();
-
 	/**
 	 * @return
 	 */
 	IWorkbenchSite getWorkbenchSite();
+	
+	IWorkbenchPart getPart();
 	
 	/**
 	 * @return

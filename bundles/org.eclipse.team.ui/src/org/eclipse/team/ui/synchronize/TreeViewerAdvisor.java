@@ -86,7 +86,7 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 		}
 	}
 	
-	private ExpandAllAction expandAllAction;
+	//private ExpandAllAction expandAllAction;
 
 	/**
 	 * Create an advisor that will allow viewer contributions with the given <code>targetID</code>. This

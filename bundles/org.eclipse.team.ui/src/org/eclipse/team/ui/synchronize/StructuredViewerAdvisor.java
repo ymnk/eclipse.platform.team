@@ -73,7 +73,7 @@ public abstract class StructuredViewerAdvisor {
 	
 	// Listeners for model changes
 	private ListenerList listeners;
-	private ISynchronizeConfiguration configuration;
+	private ISynchronizePageConfiguration configuration;
 	
 	/**
 	 * Action that allows changing the model providers supported by this advisor.
@@ -125,7 +125,7 @@ public abstract class StructuredViewerAdvisor {
 	 * case a site will be found using the default workbench page.
 	 * @param set the set of <code>SyncInfo</code> objects that are to be shown to the user.
 	 */
-	public StructuredViewerAdvisor(ISynchronizeConfiguration configuration, SyncInfoSet set) {
+	public StructuredViewerAdvisor(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
 		this.configuration = configuration;
 		this.set = set;
 	}
