@@ -20,7 +20,8 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
 
@@ -105,18 +106,6 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 		return modelProvider;
 	}
     
-	protected String getDefaultProviderId() {
-		String defaultLayout = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_LAYOUT);
-		if (defaultLayout.equals(IPreferenceIds.TREE_LAYOUT)) {
-		    return HierarchicalModelProvider.HierarchicalModelProviderDescriptor.ID;
-		}
-		if (defaultLayout.equals(IPreferenceIds.FLAT_LAYOUT)) {
-		    return FlatModelProvider.FlatModelProviderDescriptor.ID;
-		}
-		// Return compressed folder is the others were not a match
-        return CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID;
-	}
-	
 	/**
 	 * Return the id of the selected provider. By default, this is the 
 	 * id of the active provider. However, subclasses that use a composite
@@ -129,7 +118,7 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 	    if (provider != null) {
 	        return provider.getDescriptor().getId();
 	    }
-	    return getDefaultProviderId();
+	    return configuration.getProviderID();
 	}
 	
 	/**
@@ -220,7 +209,7 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 		// The input may of been set already. In that case, don't change it and
 		// simply assign it to the view.
 		if(modelProvider == null) {
-			String defaultProviderId = getDefaultProviderId(); /* use providers prefered */
+			String defaultProviderId = configuration.getProviderID(); /* use providers prefered */
 			IDialogSettings pageSettings = configuration.getSite().getPageSettings();
 			if(pageSettings != null && pageSettings.get(P_LAST_PROVIDER) != null) {
 				defaultProviderId = pageSettings.get(P_LAST_PROVIDER); 

@@ -17,19 +17,13 @@ import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.operation.IRunnableContext;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.ListenerList;
-import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.*;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
+import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.actions.DefaultSynchronizePageActions;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.ISynchronizePage;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionContext;
 
@@ -544,5 +538,29 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 	 */
 	public IRunnableContext getRunnableContext() {
 		return context;
+	}
+	
+	public String getProviderID() {
+	    String layout= (String)getProperty(P_LAYOUT);
+	    if (layout == null) {
+	        return getDefaultProviderID();
+	    }
+	    if (FLAT_LAYOUT.equals(layout))
+	        return FlatModelProvider.FlatModelProviderDescriptor.ID;
+	    if (TREE_LAYOUT.equals(layout))
+	        return HierarchicalModelProvider.HierarchicalModelProviderDescriptor.ID;
+	    return CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID;
+	}
+	    
+	private String getDefaultProviderID() {
+	    String defaultLayout = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_LAYOUT);
+	    if (defaultLayout.equals(IPreferenceIds.TREE_LAYOUT)) {
+	        return HierarchicalModelProvider.HierarchicalModelProviderDescriptor.ID;
+	    }
+	    if (defaultLayout.equals(IPreferenceIds.FLAT_LAYOUT)) {
+	        return FlatModelProvider.FlatModelProviderDescriptor.ID;
+	    }
+	    // Return compressed folder is the others were not a match
+        return CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID;
 	}
 }

@@ -72,7 +72,9 @@ public final class Team {
 	 */
 	public static int getType(IStorage storage) {
 		String extension = getFileExtension(storage.getName());
-		if (extension == null) return UNKNOWN;
+		if (extension == null) {
+		    return KnownModesForNames.getType(storage.getName());
+		}
 		SortedMap table = getFileTypeTable();
 		Integer integer = (Integer)table.get(extension);
 		if (integer == null) return UNKNOWN;
@@ -205,21 +207,43 @@ public final class Team {
 	}
 	
 	/**
-	 * Set the file type for the give extension to the given type.
+	 * Set the file type for the give extensions to the given types. This
+     * will replace the existing file types with this new list.
 	 *
 	 * Valid types are:
 	 * Team.TEXT
 	 * Team.BINARY
 	 * Team.UNKNOWN
 	 * 
-	 * @param extension  the file extension
-	 * @param type  the file type
+	 * @param extensions  the file extensions
+	 * @param types  the file types
 	 */
 	public static void setAllTypes(String[] extensions, int[] types) {
+	    internalAddAllTypes(extensions, types, true);
+	}
+	
+	/**
+	 * Add the file type for the given extensions to the given types. This
+     * will append to the existing file types.
+	 *
+	 * Valid types are:
+	 * Team.TEXT
+	 * Team.BINARY
+	 * Team.UNKNOWN
+	 * 
+	 * @param extensions  the file extensions
+	 * @param types  the file types
+	 */
+	public static void addAllTypes(String[] extensions, int[] types) {
+	    internalAddAllTypes(extensions, types, false);
+	}
+	
+	private static void internalAddAllTypes(String[] extensions, int[] types, boolean removeExisting) {
 		if (pluginTypes == null) {
 			loadTextState();
 		}
-		globalTypes = new TreeMap();
+		if (removeExisting)
+		    globalTypes = new TreeMap();
 		for (int i = 0; i < extensions.length; i++) {
 			globalTypes.put(extensions[i], new Integer(types[i]));
 		}
@@ -241,7 +265,6 @@ public final class Team {
 		}
 		TeamPlugin.getPlugin().getPluginPreferences().setValue(PREF_TEAM_TYPES, buf.toString());
 	}
-	
 	/**
 	 * Add patterns to the list of global ignores.
 	 */
@@ -337,7 +360,8 @@ public final class Team {
 	private static void loadTextState() {
 		globalTypes = new TreeMap();
 		boolean old = loadBackwardCompatibleTextState();
-		if (!old) loadTextPreferences();
+		if (!old) 
+		    loadTextPreferences();
 		pluginTypes = new TreeMap();
 		initializePluginPatterns(pluginTypes, globalTypes);
 		if (old) TeamPlugin.getPlugin().savePluginPreferences();
