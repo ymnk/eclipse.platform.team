@@ -57,6 +57,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -168,6 +169,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		Splitter vsplitter= new Splitter(composite,  SWT.VERTICAL);
 		GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL
 					| GridData.VERTICAL_ALIGN_FILL | GridData.GRAB_VERTICAL);
+		// Set the width to be extra wide to accomodate the two selection lists
 		data.widthHint = WIZARD_WIDTH;
 		vsplitter.setLayoutData(data);
 		
@@ -197,7 +199,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 						
 		initializeValues();
 		updateWidgetEnablements();
-		fileTree.getControl().setFocus();
+		//fileTree.getControl().setFocus();
 	}
 
 	protected CheckboxTableViewer createRevisionSelectionTable(CompareViewerPane composite, HistoryTableProvider tableProvider) {
@@ -297,14 +299,14 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	public void setInput(IContainer folder, ICVSFile[] files) {
 		if (folder.equals(this.folder)) return;
 		this.folder = folder;
-		setTreeInput(files);
+		setTreeInput(folder, files);
 		initializeValues();
 		updateWidgetEnablements();
 	}
 	
 	/*
 	 * Set the resource tree input to the files that were deleted	 */
-	private void setTreeInput(ICVSFile[] cvsFiles) {
+	private void setTreeInput(IContainer folder, ICVSFile[] cvsFiles) {
 		reset();
 		IResource[] files = new IResource[cvsFiles.length];
 		for (int i = 0; i < cvsFiles.length; i++) {
@@ -318,7 +320,9 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 			}
 		}
 		treeInput.setResources(files);
-		treeInput.setRoot(folder);
+		// kludge to avoid auto-selection of first element
+		// set the root to the folder's parent so the folder appears in the tree
+		treeInput.setRoot(folder.getParent());
 		refresh();
 	}
 
@@ -340,8 +344,8 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		if (folder == null) return;
 		
 		if (fileSelectionPane != null && !fileSelectionPane.isDisposed()) {
-			fileSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileSelectionPaneTitle", folder.getName()));
-			fileSelectionPane.setImage(CompareUI.getImage(folder));
+			fileSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileSelectionPaneTitle", folder.getProject().getName()));
+			fileSelectionPane.setImage(CompareUI.getImage(folder.getProject()));
 		}
 		
 		// Empty the file content viewer
@@ -351,8 +355,11 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		setErrorMessage(null);
 		
 		// refresh the tree
-		if (fileTree != null)
+		if (fileTree != null) {
+			// If the parent folder is in the tree, make sure it is expanded
+			fileTree.setExpandedState(folder, true);
 			fileTree.refresh();
+		}
 		if (revisionsTable != null)
 			revisionsTable.refresh();
 	}
@@ -532,7 +539,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	 */
 	private String getEditionLabel(IFile selectedFile, ILogEntry selected) {
 		return Policy.bind("RestoreFromRepositoryFileSelectionPage.fileContentPaneTitle",
-			new Object[] { selectedFile.getName(), selected.getRevision(), selectedFile.getFullPath().toString() });
+			new Object[] { selectedFile.getName(), selected.getRevision(), selectedFile.getFullPath().removeLastSegments(1).toString() });
 	}
 	
 	public boolean restoreSelectedFiles() {
