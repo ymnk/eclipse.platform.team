@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.eclipse.core.internal.settings.SettingsStore;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFileModificationValidator;
@@ -48,7 +49,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -129,11 +129,9 @@ public class CVSTeamProvider extends RepositoryProvider {
 	private static IFileModificationValidator fileModificationValidator;
 	
 	// property used to indicate whether new directories should be discovered for the project
-	private final static QualifiedName FETCH_ABSENT_DIRECTORIES_PROP_KEY = 
-		new QualifiedName("org.eclipse.team.cvs.core", "fetch_absent_directories");  //$NON-NLS-1$  //$NON-NLS-2$
+	private final static String FETCH_ABSENT_DIRECTORIES_SETTING = "fetch_absent_directories";  //$NON-NLS-1$
 	// property used to indicate whether the project is configured to use Watch/edit
-	private final static QualifiedName WATCH_EDIT_PROP_KEY = 
-		new QualifiedName("org.eclipse.team.cvs.core", "watch_edit");  //$NON-NLS-1$  //$NON-NLS-2$
+	private final static String WATCH_EDIT_SETTING = "watch_edit"; //$NON-NLS-1$
 
 	private static IFileModificationValidator getPluggedInValidator() {
 		IExtension[] extensions = Platform.getPluginRegistry().getExtensionPoint(CVSProviderPlugin.ID, CVSProviderPlugin.PT_FILE_MODIFICATION_VALIDATOR).getExtensions();
@@ -1418,9 +1416,9 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 */
 	public boolean getFetchAbsentDirectories() throws CVSException {
 		try {
-			String property = getProject().getPersistentProperty(FETCH_ABSENT_DIRECTORIES_PROP_KEY);
-			if (property == null) return CVSProviderPlugin.getPlugin().getFetchAbsentDirectories();
-			return Boolean.valueOf(property).booleanValue();
+			IProject project = getProject();
+			SettingsStore store = CVSProviderPlugin.getPlugin().getProjectSettings(getProject());
+			return store.getBoolean(FETCH_ABSENT_DIRECTORIES_SETTING);
 		} catch (CoreException e) {
 			throw new CVSException(new CVSStatus(IStatus.ERROR, Policy.bind("CVSTeamProvider.errorGettingFetchProperty", project.getName()), e)); //$NON-NLS-1$
 		}
@@ -1428,11 +1426,13 @@ public class CVSTeamProvider extends RepositoryProvider {
 	
 	/**
 	 * Sets the fetchAbsentDirectories.
-	 * @param etchAbsentDirectories The etchAbsentDirectories to set
+	 * @param fetchAbsentDirectories The fetchAbsentDirectories to set
 	 */
 	public void setFetchAbsentDirectories(boolean fetchAbsentDirectories) throws CVSException {
 		try {
-			getProject().setPersistentProperty(FETCH_ABSENT_DIRECTORIES_PROP_KEY, fetchAbsentDirectories ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+			IProject project = getProject();
+			SettingsStore store = CVSProviderPlugin.getPlugin().getProjectSettings(getProject());
+			store.setValue(FETCH_ABSENT_DIRECTORIES_SETTING, fetchAbsentDirectories);
 		} catch (CoreException e) {
 			throw new CVSException(new CVSStatus(IStatus.ERROR, Policy.bind("CVSTeamProvider.errorSettingFetchProperty", project.getName()), e)); //$NON-NLS-1$
 		}
@@ -1574,18 +1574,8 @@ public class CVSTeamProvider extends RepositoryProvider {
 	public boolean isWatchEditEnabled() throws CVSException {
 		try {
 			IProject project = getProject();
-			String property = (String)project.getSessionProperty(WATCH_EDIT_PROP_KEY);
-			if (property == null) {
-				property = project.getPersistentProperty(WATCH_EDIT_PROP_KEY);
-				if (property == null) {
-					// The persistant property for the project was never set (i.e. old project)
-					// Use the global preference to determinw if the project is using watch/edit
-					return CVSProviderPlugin.getPlugin().isWatchEditEnabled();
-				} else {
-					project.setSessionProperty(WATCH_EDIT_PROP_KEY, property);
-				}
-			}
-			return Boolean.valueOf(property).booleanValue();
+			SettingsStore store = CVSProviderPlugin.getPlugin().getProjectSettings(getProject());
+			return store.getBoolean(WATCH_EDIT_SETTING);
 		} catch (CoreException e) {
 			throw new CVSException(new CVSStatus(IStatus.ERROR, Policy.bind("CVSTeamProvider.errorGettingWatchEdit", project.getName()), e)); //$NON-NLS-1$
 		}
@@ -1594,8 +1584,8 @@ public class CVSTeamProvider extends RepositoryProvider {
 	public void setWatchEditEnabled(boolean enabled) throws CVSException {
 		try {
 			IProject project = getProject();
-			project.setPersistentProperty(WATCH_EDIT_PROP_KEY, enabled ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-			project.setSessionProperty(WATCH_EDIT_PROP_KEY, enabled ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+			SettingsStore store = CVSProviderPlugin.getPlugin().getProjectSettings(getProject());
+			store.setValue(WATCH_EDIT_SETTING, enabled);
 		} catch (CoreException e) {
 			throw new CVSException(new CVSStatus(IStatus.ERROR, Policy.bind("CVSTeamProvider.errorSettingWatchEdit", project.getName()), e)); //$NON-NLS-1$
 		}

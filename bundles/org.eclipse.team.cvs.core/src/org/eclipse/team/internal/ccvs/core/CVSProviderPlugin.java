@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.core.internal.settings.ExternalSettingsStore;
+import org.eclipse.core.internal.settings.ProjectSettingsStore;
 import org.eclipse.core.internal.settings.SettingsStore;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -39,7 +41,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IPluginDescriptor;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Preferences;
@@ -957,7 +958,7 @@ public class CVSProviderPlugin extends Plugin {
 
 	public SettingsStore getPluginSettings() {
 		if (settings == null) {
-			settings = new SettingsStore(getSettingsLocation().toFile());
+			settings = new ExternalSettingsStore(getSettingsLocation().toFile());
 			// populate the settings with any preferences
 			Preferences prefs = getPluginPreferences();
 			String[] names = prefs.propertyNames();
@@ -989,9 +990,11 @@ public class CVSProviderPlugin extends Plugin {
 	}
 	
 	public IPath getSettingsLocation() {
+		// TODO: Could just be the state location
 		return getStateLocation().append("settings");
 	}
 	
+	// TODO: Can't be in core.runtime because of reference to IProject
 	public SettingsStore getProjectSettings(IProject project) throws CoreException {
 		QualifiedName settingsPropertyName = new QualifiedName(ID, "settings");
 		Object cached = project.getSessionProperty(settingsPropertyName);
@@ -999,12 +1002,14 @@ public class CVSProviderPlugin extends Plugin {
 			return (SettingsStore)cached;
 		}
 		try {
-			final SettingsStore store = new SettingsStore(project.getFolder(new Path(".settings").append(ID)).getLocation().toFile());
+			final SettingsStore store = new ProjectSettingsStore(project, this);
 			store.load();
 			project.setSessionProperty(settingsPropertyName, store);
 			store.addPropertyChangeListener(new Preferences.IPropertyChangeListener() {
 				public void propertyChange(PropertyChangeEvent event) {
 					try {
+						// TODO: Could be a change caused by a load from a repo
+						// which doesn't require a store
 						store.store(ID);
 					} catch (IOException e) {
 						log(IStatus.ERROR, "Error storing plugin settings", e);
