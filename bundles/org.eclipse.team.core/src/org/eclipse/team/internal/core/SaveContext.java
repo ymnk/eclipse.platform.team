@@ -10,14 +10,17 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Something (as a mark of visible sign) left by a material thing
  * formely present but now lost or unknown.
  */
-public class VestigeConfigurationItem {
+public class SaveContext {
 	
 	/*
 	 * The name of this configuration element
@@ -37,9 +40,9 @@ public class VestigeConfigurationItem {
 	/*
 	 * The child configuration items
 	 */
-	private VestigeConfigurationItem[] children;
+	private List children = new ArrayList(2);
 	
-	public VestigeConfigurationItem() {}
+	public SaveContext() {}
 	
 	/**
 	 * Returns the named attribute of this configuration element, or
@@ -71,23 +74,50 @@ public class VestigeConfigurationItem {
 		return (String)attributes.get(name);
 	}
 	
-	/**
-	 * Returns the names of the attributes of this configuration element.
-	 * Returns an empty array if this configuration element has no attributes.
-	 * <p>
-	 * The names of configuration element attributes
-	 * are the same as the attribute names of the corresponding XML element.
-	 * For example, the configuration markup 
-	 * <pre>
-	 * &lt;bg color="blue" pattern="stripes"/&gt;
-	 * </pre>
-	 * corresponds to a configuration element named <code>"bg"</code>
-	 * with attributes named <code>"color"</code>
-	 * and <code>"pattern"</code>.
-	 * </p>
-	 *
-	 * @return the names of the attributes 
-	 */
+	public void putInteger(String key, int n) {
+		addAttribute(key, String.valueOf(n));
+	}
+	
+	public void putFloat(String key, float n) {
+		addAttribute(key, String.valueOf(n));
+	}
+		
+	public void putString(String key, String n) {
+		addAttribute(key, n);
+	}
+	
+	public void putBoolean(String key, boolean n) {
+		addAttribute(key, String.valueOf(n));		
+	}
+	
+	public int getInteger(String key) {
+		String f = getAttribute(key);
+		if(f != null) {
+			return new Integer(f).intValue();
+		}
+		return 0;
+	}
+	
+	public float getFloat(String key) {
+		String f = getAttribute(key);
+		if(f != null) {
+			return new Float(f).floatValue();
+		}
+		return 0;
+	}
+		
+	public String getString(String key) {
+		return getAttribute(key);
+	}
+	
+	public boolean getBoolean(String key) {
+		String bool = getAttribute(key);
+		if(bool != null) {
+			return bool.equals("true") ? true : false;		
+		}
+		return true;
+	}
+	
 	public String[] getAttributeNames() {
 		if(attributes == null) {
 			return new String[0];
@@ -95,64 +125,14 @@ public class VestigeConfigurationItem {
 		return (String[])attributes.keySet().toArray(new String[attributes.keySet().size()]);
 	}
 	
-	/**
-	 * Returns all configuration elements that are children of this
-	 * configuration element. 
-	 * Returns an empty array if this configuration element has no children.
-	 * <p>
-	 * Each child corresponds to a nested
-	 * XML element in the configuration markup.
-	 * For example, the configuration markup 
-	 * <pre>
-	 * &lt;view&gt;
-	 * &nbsp&nbsp&nbsp&nbsp&lt;verticalHint&gt;top&lt;/verticalHint&gt;
-	 * &nbsp&nbsp&nbsp&nbsp&lt;horizontalHint&gt;left&lt;/horizontalHint&gt;
-	 * &lt;/view&gt;
-	 * </pre>
-	 * corresponds to a configuration element, named <code>"view"</code>,
-	 * with two children.
-	 * </p>
-	 *
-	 * @return the child configuration elements
-	 */
-	public VestigeConfigurationItem[] getChildren() {
-		return children;
+	public SaveContext[] getChildren() {
+		return (SaveContext[]) children.toArray(new SaveContext[children.size()]);
 	}
-	
-	/**
-	 * Returns the name of this configuration element. 
-	 * The name of a configuration element is the same as
-	 * the XML tag of the corresponding XML element. 
-	 * For example, the configuration markup 
-	 * <pre>
-	 * &lt;wizard name="Create Project"/&gt; 
-	 * </pre>
-	 * corresponds to a configuration element named <code>"wizard"</code>.
-	 *
-	 * @return the name of this configuration element
-	 */
+
 	public String getName() {
 		return name;
 	}
 	
-	/**
-	 * Returns the text value of this configuration element.
-	 * For example, the configuration markup 
-	 * <pre>
-	 * &lt;script lang="javascript"&gt;.\scripts\cp.js&lt;/script&gt;
-	 * </pre>
-	 * corresponds to a configuration element <code>"script"</code>
-	 * with value <code>".\scripts\cp.js"</code>.
-	 * <p> Values may span multiple lines (i.e., contain carriage returns
-	 * and/or line feeds).
-	 * <p> Note that any translation specified in the plug-in manifest
-	 * file is automatically applied.
-	 * </p>
-	 *
-	 * @see IPluginDescriptor#getResourceString 
-	 *
-	 * @return the text value of this configuration element or <code>null</code>
-	 */
 	public String getValue() {
 		return value;
 	}
@@ -161,8 +141,12 @@ public class VestigeConfigurationItem {
 		attributes = map;
 	}
 
-	public void setChildren(VestigeConfigurationItem[] items) {
-		children = items;
+	public void setChildren(SaveContext[] items) {
+		children = new ArrayList(Arrays.asList(items));
+	}
+	
+	public void putChild(SaveContext child) {
+		children.add(child);
 	}
 
 	public void setName(String string) {
@@ -178,5 +162,9 @@ public class VestigeConfigurationItem {
 			attributes = new HashMap();
 		}
 		attributes.put(key, value);
+	}
+	
+	public String toString() {
+		return getName() + " ->" + attributes.toString();
 	}
 }

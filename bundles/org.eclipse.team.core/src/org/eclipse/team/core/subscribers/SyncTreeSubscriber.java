@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.core.VestigeConfigurationItem;
+import org.eclipse.team.internal.core.SaveContext;
 
 /**
  * An ISyncTreeSubscriber is connected to a remote location that has incoming changes
@@ -285,9 +285,10 @@ abstract public class SyncTreeSubscriber {
 		return null;
 	}
 	
-	public void saveState(VestigeConfigurationItem state) {
+	public void saveState(SaveContext state) {
+		// TODO: this could be added to the subscriber factory instead?
 	}
 	
-	public void restoreState(VestigeConfigurationItem state) {
+	public void restoreState(SaveContext state) {
 	}
 }

@@ -590,6 +590,7 @@ public final class Team {
 				}
 			}
 		}, IResourceChangeEvent.PRE_AUTO_BUILD);
+		TeamProvider.startup();
 	}
 	
 	/**

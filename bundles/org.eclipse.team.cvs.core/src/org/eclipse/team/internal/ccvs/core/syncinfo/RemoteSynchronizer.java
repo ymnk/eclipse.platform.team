@@ -53,7 +53,6 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 	private QualifiedName syncName;
 	private Set changedResources = new HashSet();
 	private CVSTag tag;
-	private ICVSRemoteResource initialRemoteTree;
 	
 	public RemoteSynchronizer(String id, CVSTag tag) {
 		syncName = new QualifiedName(SYNC_KEY_QUALIFIER, id);
@@ -61,11 +60,6 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 		this.tag = tag;
 	}
 	
-	public RemoteSynchronizer(String id, CVSTag tag, ICVSRemoteResource initialRemoteTree) {
-			this(id, tag);
-			this.initialRemoteTree = initialRemoteTree;
-		}
-
 	/**
 	 * Dispose of any cached remote sync info.
 	 */
@@ -291,12 +285,7 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 				IResource resource = resources[i];	
 				
 				// build the remote tree only if an initial tree hasn't been provided
-				ICVSRemoteResource tree = initialRemoteTree;
-				if(tree == null) {
-					tree = buildRemoteTree(resource, depth, Policy.subMonitorFor(monitor, 70));
-				} else {
-					initialRemoteTree = null;
-				}
+				ICVSRemoteResource	tree = buildRemoteTree(resource, depth, Policy.subMonitorFor(monitor, 70));
 				
 				// update the known remote handles 
 				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);

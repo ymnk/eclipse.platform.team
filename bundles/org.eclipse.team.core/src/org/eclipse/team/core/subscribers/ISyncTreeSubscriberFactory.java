@@ -12,6 +12,7 @@ package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.core.SaveContext;
 
 /**
  * A repository adapter factory is responsible for creating repository adapters.
@@ -19,10 +20,12 @@ import org.eclipse.team.core.TeamException;
  */
 public interface ISyncTreeSubscriberFactory {
 	
+	public String getID();
+	
 	/** 
 	 * Returns a team subscriber the given id.
 	 * @throw TeamException if this method fails. Reasons include:
 	 * the location is not valid
 	 */
-	public SyncTreeSubscriber createSubscriber(QualifiedName id) throws TeamException;
+	public SyncTreeSubscriber createSubscriber(QualifiedName id, SaveContext saveContext) throws TeamException;
 }

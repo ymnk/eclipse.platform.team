@@ -25,61 +25,35 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
-import org.eclipse.team.internal.core.VestigeConfigurationItem;
-import org.eclipse.team.internal.core.VestigeXMLWriter;
+import org.eclipse.team.internal.core.SaveContext;
+import org.eclipse.team.internal.core.SaveContextXMLWriter;
 
 /**
  * TeamProvider
  */
 public abstract class TeamProvider {
 	
+	private static String SUBSCRIBER_EXTENSION = "subscriber";
+	final static private String SAVECTX_SUBSCRIBERS = "subscribers"; 
+	final static private String SAVECTX_SUBSCRIBER = "subscriber";
+	final static private String SAVECTX_QUALIFIER = "qualifier";
+	final static private String SAVECTX_LOCALNAME = "localName";
+	
 	static private Map subscribers = new HashMap();
 	static private List listeners = new ArrayList(1);
+	static private Map factories = new HashMap();
 
 	static public SyncTreeSubscriber getSubscriber(QualifiedName id) throws TeamException {
-		// if it doesn't exist than try and instantiate
 		SyncTreeSubscriber s = (SyncTreeSubscriber)subscribers.get(id);
-		if(s == null) {
-			ISyncTreeSubscriberFactory factory = create(id);
-			if(factory != null) {
-				s = factory.createSubscriber(id);
-				if(s != null) {
-					registerSubscriber(s);
-				}
-			}
-		}
 		return s;
 	}
 			
 	static public void shutdown() {
-		VestigeConfigurationItem root = new VestigeConfigurationItem();
-		root.setName("subscribers");
-		List children = new ArrayList();
-		
-		for (Iterator it = subscribers.values().iterator(); it.hasNext();) {
-			SyncTreeSubscriber subscriber = (SyncTreeSubscriber) it.next();
-			
-			VestigeConfigurationItem child = new VestigeConfigurationItem();
-			subscriber.saveState(child);
-			if(child.getName() != null) { 
-				VestigeConfigurationItem item = new VestigeConfigurationItem();
-				
-				item.setChildren(new VestigeConfigurationItem[] {child});
-				item.setName("subscriber");
-				Map attributes = new HashMap();
-				attributes.put("qualifier", subscriber.getId().getQualifier());
-				attributes.put("localname", subscriber.getId().getLocalName());
-				item.setAttributes(attributes);
-				
-				children.add(item);
-			}
-		}
-		root.setChildren((VestigeConfigurationItem[])children.toArray(new VestigeConfigurationItem[children.size()]));
-		try {
-			VestigeXMLWriter.writeXMLPluginMetaFile(TeamPlugin.getPlugin(), "subscribers", root);
-		} catch (TeamException e) {
-			TeamPlugin.log(e.getStatus());
-		}
+		saveSubscribers();
+	}
+	
+	static public void startup() {
+		restoreSubscribers();
 	}
 	
 	static public SyncTreeSubscriber[] getSubscribers() {
@@ -91,6 +65,12 @@ public abstract class TeamProvider {
 		subscribers.put(subscriber.getId(), subscriber);
 		fireTeamResourceChange(new TeamDelta[] {
 				new TeamDelta(subscriber, TeamDelta.SUBSCRIBER_CREATED, null)});
+	}
+	
+	static public void deregisterSubscriber(SyncTreeSubscriber subscriber) {
+		subscribers.remove(subscriber.getId());
+		fireTeamResourceChange(new TeamDelta[] {
+				new TeamDelta(subscriber, TeamDelta.SUBSCRIBER_DELETED, null)});
 	}
 	
 	/* (non-Javadoc)
@@ -118,33 +98,92 @@ public abstract class TeamProvider {
 		}
 	}	
 	
-	private static ISyncTreeSubscriberFactory create(QualifiedName id) {
+	private static void restoreSubscribers() {
+		try {
+			SaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamPlugin.getPlugin(), "subscribers");
+			if(root != null && root.getName().equals(SAVECTX_SUBSCRIBERS)) {
+				SaveContext[] contexts = root.getChildren();
+				for (int i = 0; i < contexts.length; i++) {
+					SaveContext context = contexts[i];
+					if(context.getName().equals(SAVECTX_SUBSCRIBER)) {
+						String qualifier = context.getAttribute(SAVECTX_QUALIFIER);
+						String localName = context.getAttribute(SAVECTX_LOCALNAME);
+						ISyncTreeSubscriberFactory factory = create(qualifier);
+						SaveContext[] children = context.getChildren();
+						if(children.length == 1) {			
+							SyncTreeSubscriber s = factory.createSubscriber(new QualifiedName(qualifier, localName), children[0]);								
+							if(s != null) {
+								registerSubscriber(s);
+							}
+						}
+					}
+				}
+			
+			}
+		} catch (TeamException e) {
+			TeamPlugin.log(e.getStatus());
+		}
+	}
+
+	private static void saveSubscribers() {
+		SaveContext root = new SaveContext();
+		root.setName(SAVECTX_SUBSCRIBERS);
+		List children = new ArrayList();
+	
+		for (Iterator it = subscribers.values().iterator(); it.hasNext();) {
+			SyncTreeSubscriber subscriber = (SyncTreeSubscriber) it.next();
+		
+			SaveContext child = new SaveContext();
+			subscriber.saveState(child);
+			if(child.getName() != null) { 
+				SaveContext item = new SaveContext();
+			
+				item.putChild(child);
+				item.setName(SAVECTX_SUBSCRIBER);
+				Map attributes = new HashMap();
+				attributes.put(SAVECTX_QUALIFIER, subscriber.getId().getQualifier());
+				attributes.put(SAVECTX_LOCALNAME, subscriber.getId().getLocalName());
+				item.setAttributes(attributes);
+			
+				children.add(item);
+			}
+		}
+		root.setChildren((SaveContext[])children.toArray(new SaveContext[children.size()]));
+		try {
+			SaveContextXMLWriter.writeXMLPluginMetaFile(TeamPlugin.getPlugin(), "subscribers", root);
+		} catch (TeamException e) {
+			TeamPlugin.log(e.getStatus());
+		}
+	}
+	
+	private static ISyncTreeSubscriberFactory create(String id) {
+		ISyncTreeSubscriberFactory sFactory = (ISyncTreeSubscriberFactory)factories.get(id);
+		if(sFactory != null) {
+			return sFactory;
+		}
+		
 		TeamPlugin plugin = TeamPlugin.getPlugin();
 		if (plugin != null) {
-			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORY_EXTENSION);
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(SUBSCRIBER_EXTENSION);
 			if (extension != null) {
 				IExtension[] extensions =  extension.getExtensions();
 				for (int i = 0; i < extensions.length; i++) {
 					IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
 					for (int j = 0; j < configElements.length; j++) {
-						String extensionId = configElements[j].getAttribute("id"); //$NON-NLS-1$
-					
-						if (extensionId != null && extensionId.equals(id.getQualifier())) {
-							try {
-								ISyncTreeSubscriberFactory sFactory = null;
-								//Its ok not to have a typeClass extension.  In this case, a default instance will be created.
-								if(configElements[j].getAttribute("class") != null) { //$NON-NLS-1$
-									sFactory = (ISyncTreeSubscriberFactory) configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
-								}
-								return sFactory;
+						try {
+							//Its ok not to have a typeClass extension.  In this case, a default instance will be created.
+							if(configElements[j].getAttribute("class") != null) { //$NON-NLS-1$
+								sFactory = (ISyncTreeSubscriberFactory) configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
+							}
+							factories.put(sFactory.getID(), sFactory);
+							return sFactory;
 							} catch (CoreException e) {
 								TeamPlugin.log(e.getStatus());
 							} catch (ClassCastException e) {
 								String className = configElements[j].getAttribute("class"); //$NON-NLS-1$
 								TeamPlugin.log(IStatus.ERROR, Policy.bind("RepositoryProviderType.invalidClass", id.toString(), className), e); //$NON-NLS-1$
 							}
-							return null;
-						}
+						return null;
 					}
 				}
 			}		
