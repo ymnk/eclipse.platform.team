@@ -14,17 +14,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
@@ -43,8 +45,11 @@ import org.eclipse.ui.*;
  * @see SyncInfoDiffNode
  * @since 3.0
  */
-public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate, IEditorActionDelegate {
-		
+public abstract class SubscriberAction implements IObjectActionDelegate, IViewActionDelegate {
+	
+	private IStructuredSelection selection;
+	private IWorkbenchPart part;
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
 	 */
@@ -149,13 +154,6 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		}
 		return (SyncInfo[]) filtered.toArray(new SyncInfo[filtered.size()]);
 	}
-		
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IEditorActionDelegate#setActiveEditor(org.eclipse.jface.action.IAction, org.eclipse.ui.IEditorPart)
-	 */
-	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
-		setActivePart(action, targetEditor);
-	}
 	
 	private void markBusy(IDiffElement[] elements, boolean isBusy) {
 	}
@@ -179,7 +177,7 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 			};
 			return new JobRunnableContext(listener, getSite());
 		} else {
-			return new ProgressDialogRunnableContext(shell);
+			return new ProgressDialogRunnableContext(getShell());
 		}
 	}
 
@@ -242,10 +240,73 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 	
 	private IWorkbenchSite getSite() {
 		IWorkbenchSite site = null;
-		IWorkbenchPart part = getTargetPart();
 		if(part != null) {
 			site = part.getSite();
 		}
 		return site;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IObjectActionDelegate#setActivePart(org.eclipse.jface.action.IAction, org.eclipse.ui.IWorkbenchPart)
+	 */
+	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
+		this.part = targetPart;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IViewActionDelegate#init(org.eclipse.ui.IViewPart)
+	 */
+	public void init(IViewPart view) {
+		this.part = view;
+	}
+	
+	/*
+	 * Method declared on IActionDelegate.
+	 */
+	public void selectionChanged(IAction action, ISelection selection) {
+		if (selection instanceof IStructuredSelection) {
+			this.selection = (IStructuredSelection) selection;
+			if (action != null) {
+				setActionEnablement(action);
+			}
+		}
+	}
+	
+	/**
+	 * Method invoked from <code>selectionChanged(IAction, ISelection)</code> 
+	 * to set the enablement status of the action. The instance variable 
+	 * <code>selection</code> will contain the latest selection so the methods
+	 * <code>getSelectedResources()</code> and <code>getSelectedProjects()</code>
+	 * will provide the proper objects.
+	 * 
+	 * This method can be overridden by subclasses but should not be invoked by them.
+	 */
+	protected void setActionEnablement(IAction action) {
+		try {
+			action.setEnabled(isEnabled());
+		} catch (TeamException e) {
+			if (e.getStatus().getCode() == IResourceStatus.OUT_OF_SYNC_LOCAL) {
+				// Enable the action to allow the user to discover the problem
+				action.setEnabled(true);
+			} else {
+				action.setEnabled(false);
+				// We should not open a dialog when determining menu enablements so log it instead
+				TeamPlugin.log(e);
+			}
+		}
+	}
+	
+	protected Shell getShell() {
+		if(part != null) {
+			return part.getSite().getShell();
+		} else {
+			IWorkbench workbench = TeamUIPlugin.getPlugin().getWorkbench();
+			if (workbench == null) return null;
+			IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+			if (window == null) return null;
+			return window.getShell();
+		}
 	}
 }

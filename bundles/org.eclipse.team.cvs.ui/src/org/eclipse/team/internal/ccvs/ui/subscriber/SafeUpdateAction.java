@@ -284,7 +284,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 		final int[] result = new int[] {Dialog.CANCEL};
 		TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {
 			public void run() {
-				MessageDialog.openInformation(shell, 
+				MessageDialog.openInformation(getShell(), 
 								Policy.bind("SafeUpdateAction.warnFilesWithConflictsTitle"), //$NON-NLS-1$
 								Policy.bind("SafeUpdateAction.warnFilesWithConflictsDescription")); //$NON-NLS-1$
 			}

@@ -73,37 +73,6 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	}
 
 	public SyncInfoLabelProvider() {
-		/*JobStatusHandler.addJobListener(new IJobListener() {
-
-			public void started(QualifiedName jobType) {
-				working = true;
-				Display.getDefault().asyncExec(new Runnable() {
-
-					public void run() {
-						// TODO: What this is this supposed to be?
-						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelProvider.this));
-						}
-					}
-				});
-			}
-
-			public void finished(QualifiedName jobType) {
-				working = false;
-				Display.getDefault().asyncExec(new Runnable() {
-
-					public void run() {
-						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelProvider.this));
-						}
-					}
-				});
-			}
-		}, Subscriber.SUBSCRIBER_JOB_TYPE);
-		// The label provider may of been created after the subscriber job has
-		// been
-		// started.
-		this.working = JobStatusHandler.hasRunningJobs(Subscriber.SUBSCRIBER_JOB_TYPE);*/
 	}
 
 	/*

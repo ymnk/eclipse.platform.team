@@ -34,7 +34,7 @@ import org.eclipse.ui.model.BaseWorkbenchContentProvider;
  * A <code>DiffTreeViewerConfiguration</code> object controls various UI
  * aspects of sync info viewers like the context menu, toolbar, content
  * provider, and label provider. A configuration is created to display
- * {@link SyncInfo}objects contained in the provided {@link SyncInfoSet}.
+ * {@link SyncInfo} objects contained in the provided {@link SyncInfoSet}.
  * <p>
  * This configuration allows viewer contributions made in a plug-in manifest to
  * be scoped to a particular unique id. As a result the context menu for the

@@ -43,7 +43,7 @@ public class HeadlessCVSRunnableContext implements ITeamRunnableContext {
 		throws InvocationTargetException, InterruptedException {
 		
 		if (listener != null) {
-			new JobRunnableContext(listener).run("Headless Job", null, true, runnable);
+			new JobRunnableContext(listener, null).run("Headless Job", null, true, runnable);
 		} else {
 			runnable.run(new NullProgressMonitor());
 		}

@@ -43,10 +43,13 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 		}
 
 		public void run() {
-			ISelection selection = new StructuredSelection(getSyncInfoSet().getSyncInfos());
-			if (!selection.isEmpty()) {
-				delegate.selectionChanged(this, selection);
-				delegate.run(this);
+			StructuredViewer viewer = (StructuredViewer)getChangesViewer();
+			if (viewer != null) {
+				ISelection selection = new StructuredSelection(viewer.getInput());		
+				if (!selection.isEmpty()) {
+					delegate.selectionChanged(this, selection);
+					delegate.run(this);
+				}
 			}
 		}
 
@@ -83,7 +86,6 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 		super.setActionBars(actionBars);
 		IMenuManager mgr = actionBars.getMenuManager();
 		mgr.add(new Separator());
-		mgr.add(groupByComment);
 	}
 	
 	/*
@@ -100,8 +102,8 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 	 */
 	private void updateActionEnablement() {
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
-		if (viewer != null && getSyncInfoSet() != null) {
-			ISelection selection = new StructuredSelection(getSyncInfoSet().getSyncInfos());
+		if (viewer != null) {
+			ISelection selection = new StructuredSelection(viewer.getInput());
 			for (Iterator it = delegates.iterator(); it.hasNext(); ) {
 				CVSActionDelegate delegate = (CVSActionDelegate) it.next();
 				delegate.getDelegate().selectionChanged(delegate, selection);
