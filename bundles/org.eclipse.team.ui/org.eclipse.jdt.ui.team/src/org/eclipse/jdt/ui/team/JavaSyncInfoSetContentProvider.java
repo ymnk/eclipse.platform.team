@@ -17,7 +17,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.*;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
-import org.eclipse.team.ui.synchronize.content.SyncInfoSetTreeContentProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoSetTreeContentProvider;
 
 /**
  * Extend the SyncSetTreeContentProvider to show a Java model elements in the view.

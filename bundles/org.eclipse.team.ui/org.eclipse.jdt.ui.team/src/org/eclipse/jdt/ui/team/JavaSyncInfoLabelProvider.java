@@ -13,7 +13,7 @@ package org.eclipse.jdt.ui.team;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.ui.JavaElementLabelProvider;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoLabelProvider;
 
 /**
  * This delegates to the Java element label provider.

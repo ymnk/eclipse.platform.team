@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.team;
 
-import org.eclipse.team.ui.synchronize.content.*;
+import org.eclipse.team.ui.synchronize.views.*;
 
 /**
  * The Java logical view provider

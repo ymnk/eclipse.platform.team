@@ -11,7 +11,7 @@
 package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.team.ui.synchronize.content.ILogicalView;
+import org.eclipse.team.ui.synchronize.views.ILogicalView;
 
 /**
  * Action that selects an <code>ILogicalView</code>.

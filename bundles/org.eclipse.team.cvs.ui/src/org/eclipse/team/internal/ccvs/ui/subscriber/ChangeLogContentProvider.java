@@ -21,7 +21,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.content.SyncInfoSetTreeContentProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoSetTreeContentProvider;
 
 /**
  * Seeing change comments makes sense it two ways.

@@ -18,7 +18,7 @@ import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.content.*;
+import org.eclipse.team.ui.synchronize.views.*;
 
 /**
  * The contents provider compressed in-sync folder paths

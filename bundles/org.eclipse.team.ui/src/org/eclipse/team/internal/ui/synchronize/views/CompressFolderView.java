@@ -10,14 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.views;
 
-import org.eclipse.team.ui.synchronize.content.*;
+import org.eclipse.team.ui.synchronize.views.*;
 
 /**
  * This implementation compresses folder paths that do not contain out-of-sync resource.
  */
 public class CompressFolderView extends LogicalViewProvider {
 
-	public static final String ID = "org.eclipse.team.ui.compressed-folder-view";
+	public static final String ID = "org.eclipse.team.ui.compressed-folder-view"; //$NON-NLS-1$
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.content.ILogicalSyncInfoSetView#getContentProvider()

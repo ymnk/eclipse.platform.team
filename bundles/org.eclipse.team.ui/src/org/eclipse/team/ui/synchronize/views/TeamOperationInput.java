@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.content;
+package org.eclipse.team.ui.synchronize.views;
 
 import org.eclipse.core.resources.IResource;
 

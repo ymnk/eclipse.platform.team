@@ -15,8 +15,8 @@ import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.content.*;
-import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
+import org.eclipse.team.ui.synchronize.views.*;
+import org.eclipse.team.ui.synchronize.views.SyncInfoLabelProvider;
 
 public class CVSSynchronizeViewCompareConfiguration extends SynchronizeViewCompareConfiguration {
 

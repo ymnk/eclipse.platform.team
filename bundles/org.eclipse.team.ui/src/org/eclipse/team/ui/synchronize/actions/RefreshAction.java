@@ -20,7 +20,7 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
-import org.eclipse.team.ui.synchronize.content.SyncInfoSetContentProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoSetContentProvider;
 
 /**
  * A general refresh action that will refresh a subscriber in the background.

@@ -36,7 +36,7 @@ import org.eclipse.team.internal.ui.synchronize.views.*;
 import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.synchronize.actions.INavigableTree;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
-import org.eclipse.team.ui.synchronize.content.*;
+import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;

@@ -14,8 +14,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.content.*;
-import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
+import org.eclipse.team.ui.synchronize.views.*;
+import org.eclipse.team.ui.synchronize.views.SyncInfoLabelProvider;
 
 /**
  * Label provider for compressed folders

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.content;
+package org.eclipse.team.ui.synchronize.views;
 
 import java.util.HashSet;
 import java.util.Set;

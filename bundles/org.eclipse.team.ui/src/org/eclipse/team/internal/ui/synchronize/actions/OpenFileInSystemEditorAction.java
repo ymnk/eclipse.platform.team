@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.ui.synchronize.content.SyncInfoSetContentProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoSetContentProvider;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.actions.OpenFileAction;
 

@@ -18,7 +18,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration;
-import org.eclipse.team.ui.synchronize.content.ILogicalView;
+import org.eclipse.team.ui.synchronize.views.ILogicalView;
 import org.eclipse.ui.actions.ActionGroup;
 
 /**
