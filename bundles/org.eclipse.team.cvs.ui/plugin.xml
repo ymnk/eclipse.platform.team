@@ -441,6 +441,7 @@
                label="%CheckoutAction.label"
                tooltip="%CheckoutAction.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.CheckoutAction"
+               menubarPath="checkoutGroup"
                helpContextId="org.eclipse.team.cvs.ui.checkout_module_action_context"
                id="org.eclipse.team.ccvs.ui.checkout">
          </action>       
