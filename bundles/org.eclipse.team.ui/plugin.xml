@@ -25,6 +25,8 @@
       <import plugin="org.eclipse.ui"/>
       <import plugin="org.eclipse.compare"/>
       <import plugin="org.eclipse.ui.forms"/>
+      <import plugin="org.eclipse.jdt.core"/>
+      <import plugin="org.eclipse.jdt.ui"/>
    </requires>
 
 
@@ -285,6 +287,17 @@
    <extension
          point="org.eclipse.team.core.defaultFileModificationValidator">
       <validator class="org.eclipse.team.internal.ui.DefaultUIFileModificationValidator"/>
+   </extension>
+   
+   
+   <extension
+         id="org.eclipse.team.ui.modelElementAdapters"
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            class="org.eclipse.team.internal.ui.ModelElementlJavaFactory"
+            adaptableType="org.eclipse.jdt.core.IPackageFragment">
+            <adapter type="org.eclipse.team.core.traversals.IModelElement"/>
+       </factory>
    </extension>
 
 </plugin>

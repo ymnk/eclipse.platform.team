@@ -641,6 +641,31 @@
          </action>
       </objectContribution>
    </extension>
+   
+<!-- ************** Model Element Contributions ********************** -->   
+   <extension
+         point="org.eclipse.ui.popupMenus">
+   <objectContribution
+            objectClass="org.eclipse.core.resources.IResource"
+            adaptable="true"
+            id="org.eclipse.team.ccvs.ui.ModelElementContributions">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
+         </filter>
+         <action
+               label="Commit (Model Element)"
+               tooltip="Commit (Model Element)"
+               class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
+               menubarPath="team.main/group1"
+               id="org.eclipse.team.ccvs.ui.commit2">
+               <enablement>
+                 <adapt type="org.eclipse.team.core.traversals.IModelElement" />
+               </enablement>
+         </action>
+	</objectContribution>
+	</extension>
+   
 <!-- ************** Views ********************** -->
    <extension
          point="org.eclipse.ui.views">

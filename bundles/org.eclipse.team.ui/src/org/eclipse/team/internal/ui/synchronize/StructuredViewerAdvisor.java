@@ -148,6 +148,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 		modelManager = (SynchronizeModelManager)configuration.getProperty(SynchronizePageConfiguration.P_MODEL_MANAGER);
 		if(modelManager == null) {
 			modelManager = createModelManager(configuration);
+			configuration.setProperty(SynchronizePageConfiguration.P_MODEL_MANAGER, modelManager);
 		}
 		Assert.isNotNull(modelManager, "model manager must be set"); //$NON-NLS-1$
 		modelManager.setViewerAdvisor(this);
@@ -174,10 +175,10 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 		final DragSourceListener listener = new DragSourceListener() {
 
             public void dragStart(DragSourceEvent event) {
-                final IStructuredSelection selection= (IStructuredSelection)viewer.getSelection();
+				final IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
                 final Object [] array= selection.toArray();
                 event.doit= Utils.getResources(array).length > 0;
-            }
+			}
 
             public void dragSetData(DragSourceEvent event) {
                 
@@ -191,7 +192,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
             public void dragFinished(DragSourceEvent event) {}
 		};
 		
-		final int ops = DND.DROP_COPY;
+		final int ops = DND.DROP_COPY | DND.DROP_LINK;
 		viewer.addDragSupport(ops, new Transfer[] { ResourceTransfer.getInstance() }, listener);
 	
 		initializeListeners(viewer);

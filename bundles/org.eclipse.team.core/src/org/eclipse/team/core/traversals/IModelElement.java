@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.core.traversals;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -29,17 +28,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * @since 3.1
  */
 public interface IModelElement {
-
-	/**
-	 * Returns the project which contains this model element. This is a resource
-	 * handle operation; neither the element nor the resulting project need
-	 * exist. Model elements may not span multiple projects. In other words, all
-	 * physical resources that constitute a logical resource are located in the
-	 * same project.
-	 * 
-	 * @return the project handle
-	 */
-	public IProject getProject();
 
 	/**
 	 * Returns one or more traversals that can be used to access all the
