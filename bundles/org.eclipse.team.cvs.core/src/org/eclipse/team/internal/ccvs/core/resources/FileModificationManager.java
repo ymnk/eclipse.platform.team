@@ -128,16 +128,6 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 
 	
 	/**
-	 * Method syncInfoChanged.
-	 * @param resources
-	 */
-	public void syncInfoChanged(IResource[] resources) throws CVSException {
-		for (int i = 0; i < resources.length; i++) {
-			((EclipseResource)CVSWorkspaceRoot.getCVSResourceFor(resources[i])).syncInfoChanged();
-		}
-	}
-	
-	/**
 	 * Method updated flags the objetc as having been modfied by the updated
 	 * handler. This flag is read during the resource delta to determine whether
 	 * the modification made the file dirty or not.
@@ -172,7 +162,7 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 		try {
 			EclipseResource cvsResource = (EclipseResource)CVSWorkspaceRoot.getCVSResourceFor(resource);
 			cvsResource.handleModification(true /* addition */);
-				modifiedResources.add(resource);
+			modifiedResources.add(resource);
 		} catch (CVSException e) {
 			throw e.toCoreException();
 		}

@@ -10,9 +10,6 @@
  ******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.resources;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -42,10 +39,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	
 	// key used on a folder to indicate that the resource sync has been cahced for it's children
 	private static final QualifiedName RESOURCE_SYNC_CACHED_KEY = new QualifiedName(CVSProviderPlugin.ID, "resource-sync-cached"); //$NON-NLS-1$
-	private static final QualifiedName FOLDER_SYNC_RESTORED_KEY = new QualifiedName(CVSProviderPlugin.ID, "folder-sync-restored"); //$NON-NLS-1$
-	
 	private static final Object RESOURCE_SYNC_CACHED = new Object();
-	private static final Object FOLDER_SYNC_RESTORED = new Object();
 	
 	/*package*/ static final String[] NULL_IGNORES = new String[0];
 	private static final FolderSyncInfo NULL_FOLDER_SYNC_INFO = new FolderSyncInfo("", "", null, false); //$NON-NLS-1$ //$NON-NLS-2$
@@ -220,7 +214,11 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	}
 	private String internalGetDirtyIndicator(IFile file) throws CVSException {
 		try {
-			return (String)file.getSessionProperty(IS_DIRTY);
+			String di = (String)file.getSessionProperty(IS_DIRTY);
+			if(di == null) {
+				di = RECOMPUTE_INDICATOR;
+			}
+			return di;
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -238,15 +236,22 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 			
 			// if the session property is not available then restore from persisted sync info. At this
 			// time the sync info is not flushed because we don't want the workspace to generate
-			// a delta. Since the sync info is not flushed another session property is used to remember
-			// that the sync info was already converted to a session property and has become stale.			
-			if(di == null && container.getSessionProperty(FOLDER_SYNC_RESTORED_KEY) == null) {
+			// a delta.			
+			if(di == null) {
 				byte [] diBytes = ResourcesPlugin.getWorkspace().getSynchronizer().getSyncInfo(RESOURCE_SYNC_KEY, container);
 				if(diBytes != null) {
 					di = new String(diBytes);
-					setDirtyIndicator(container, di);
+					if(di.equals(NOT_DIRTY_INDICATOR)) {
+						di = NOT_DIRTY_INDICATOR;
+					} else if(di.equals(IS_DIRTY_INDICATOR)) {
+						di = IS_DIRTY_INDICATOR;
+					} else {
+						di = RECOMPUTE_INDICATOR;
+					}
+				} else {
+					di = RECOMPUTE_INDICATOR;
 				}
-				container.setSessionProperty(FOLDER_SYNC_RESTORED_KEY, FOLDER_SYNC_RESTORED);
+				setDirtyIndicator(container, di);
 			}
 			return di;
 		} catch (CoreException e) {
@@ -254,35 +259,6 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 		}
 	}
 		
-	/**
-	 * Return the dirty count for the given folder. For existing folders, the
-	 * dirty count may not have been calculated yet and this method will return
-	 * null in that case. For phantom folders, the dirty count is calculated if
-	 * it does not exist yet.
-	 */
-	/*package*/ int getCachedDirtyCount(IContainer container) throws CVSException {
-		if (!container.exists()) return -1;
-		try {
-			Integer dirtyCount = (Integer)container.getSessionProperty(DIRTY_COUNT);
-			if (dirtyCount == null) {
-				return -1;
-			} else {
-				return dirtyCount.intValue();
-			}
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-	
-	/*package*/ void setCachedDirtyCount(IContainer container, int count) throws CVSException {
-		if (!container.exists()) return;
-		try {
-			container.setSessionProperty(DIRTY_COUNT, new Integer(count));
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-	
 	/*
 	 * Flush all cached info for the container and it's ancestors
 	 */
@@ -290,67 +266,15 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 		if (resource.exists()) {
 			try {
 				if (resource.getType() == IResource.FILE) {
-					resource.setSessionProperty(IS_DIRTY, null);
+					resource.setSessionProperty(IS_DIRTY, RECOMPUTE_INDICATOR);
 					resource.setSessionProperty(CLEAN_UPDATE, null);
 				} else {
-					resource.setSessionProperty(DIRTY_COUNT, null);
-					resource.setSessionProperty(DELETED_CHILDREN, null);
-					resource.setSessionProperty(IS_DIRTY, null);
+					resource.setSessionProperty(IS_DIRTY, RECOMPUTE_INDICATOR);
 				}
 			} catch (CoreException e) {
 				throw CVSException.wrapException(e);
 			}
 		}
-	}
-	
-	/*
-	 * Add the deleted child and return true if it didn't exist before
-	 */
-	/*package*/ boolean addDeletedChild(IContainer container, IFile file) throws CVSException {
-		try {
-			Set deletedFiles = getDeletedChildren(container);
-			if (deletedFiles == null)
-				deletedFiles = new HashSet();
-			String fileName = file.getName();
-			if (deletedFiles.contains(fileName))
-				return false;
-			deletedFiles.add(fileName);
-			setDeletedChildren(container, deletedFiles);
-			return true;
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-
-	/*package*/ boolean removeDeletedChild(IContainer container, IFile file) throws CVSException {
-		try {
-			Set deletedFiles = getDeletedChildren(container);
-			if (deletedFiles == null || deletedFiles.isEmpty())
-				return false;
-			String fileName = file.getName();
-			if (!deletedFiles.contains(fileName))
-				return false;
-			deletedFiles.remove(fileName);
-			if (deletedFiles.isEmpty()) deletedFiles = null;
-			setDeletedChildren(container, deletedFiles);
-			return true;
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-	
-	protected void setDeletedChildren(IContainer parent, Set deletedFiles) throws CVSException {
-		if (!parent.exists()) return;
-		try {
-			parent.setSessionProperty(DELETED_CHILDREN, deletedFiles);
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-
-	private Set getDeletedChildren(IContainer parent) throws CoreException {
-		if (!parent.exists()) return null;
-		return (Set)parent.getSessionProperty(DELETED_CHILDREN);
 	}
 	
 	/**
@@ -439,11 +363,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 */
 	boolean isDirtyCacheFlushed(IContainer resource) throws CVSException {
 		if (resource.exists()) {
-			try {
-					return resource.getSessionProperty(IS_DIRTY) == null;					
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
-			}
+			return getDirtyIndicator(resource) == RECOMPUTE_INDICATOR;					
 		}
 		return false;
 	}

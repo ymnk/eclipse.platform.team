@@ -55,6 +55,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 public class EclipseSynchronizer {	
 	protected static final String IS_DIRTY_INDICATOR = SyncInfoCache.IS_DIRTY_INDICATOR;
 	protected static final String NOT_DIRTY_INDICATOR = SyncInfoCache.NOT_DIRTY_INDICATOR;
+	protected static final String RECOMPUTE_INDICATOR = SyncInfoCache.RECOMPUTE_INDICATOR; 
 		
 	// the cvs eclipse synchronizer is a singleton
 	private static EclipseSynchronizer instance;
@@ -471,7 +472,6 @@ public class EclipseSynchronizer {
 				changedPeers.addAll(Arrays.asList(root.members()));
 				IResource[] resources = (IResource[]) changedPeers.toArray(new IResource[changedPeers.size()]);
 				CVSProviderPlugin.broadcastSyncInfoChanges(resources);
-				CVSProviderPlugin.getPlugin().getFileModificationManager().syncInfoChanged(resources);
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -489,10 +489,7 @@ public class EclipseSynchronizer {
 			// Flush the dirty info for the resource and it's ancestors.
 			// Although we could be smarter, we need to do this because the
 			// deletion may fail.
-			String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(resource);
-			if (indicator != null) {
-				flushDirtyCacheWithAncestors(resource);
-			}
+			adjustDirtyStateRecursively(resource, RECOMPUTE_INDICATOR);
 			if (resource.getType() == IResource.FILE) {
 				byte[] syncBytes = getSyncBytes(resource);
 				if (syncBytes != null) {
@@ -515,12 +512,6 @@ public class EclipseSynchronizer {
 					// move the resource sync as well
 					byte[] syncBytes = getSyncBytes(resource);
 					synchronizerCache.setCachedSyncBytes(resource, syncBytes);
-					// todo
-					// Move the dirty count into phantom space
-					int dirtyCount = getDirtyCount(container);
-					if (dirtyCount != -1) {
-						synchronizerCache.setCachedDirtyCount(container, dirtyCount);
-					}
 				}
 			}
 		} finally {
@@ -864,6 +855,15 @@ public class EclipseSynchronizer {
 	void broadcastResourceStateChanges(IResource[] resources) {
 		if (resources.length > 0) {
 			CVSProviderPlugin.broadcastSyncInfoChanges(resources);
+			
+			for (int i = 0; i < resources.length; i++) {
+				IResource resource = resources[i];
+				try {
+					internalSetDirtyIndicator(resource, RECOMPUTE_INDICATOR);
+				} catch (CVSException e) {
+					CVSProviderPlugin.log(e);
+				}
+			}
 		}
 	}
 
@@ -1230,47 +1230,44 @@ public class EclipseSynchronizer {
 		return SyncFileWriter.isEdited(resource);
 	}
 	
-	protected void setDirtyIndicator(IResource resource, String indicator) throws CVSException {
-		if (Policy.DEBUG_DIRTY_CACHING) {
-			System.out.println("Dirty indicator for " //$NON-NLS-1$
-				+ resource.getFullPath()
-				+ " set to "  //$NON-NLS-1$
-				+ (indicator.equals(IS_DIRTY_INDICATOR) ? "DIRTY" : "NOT_DIRTY")); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		getSyncInfoCacheFor(resource).setDirtyIndicator(resource, indicator);
+	private void internalSetDirtyIndicator(IResource resource, String indicator) throws CVSException {		
+		adjustDirtyStateRecursively(resource, indicator);
 	}
 	
-	protected String getDirtyIndicator(IResource resource) throws CVSException {
-		return getSyncInfoCacheFor(resource).getDirtyIndicator(resource);
-	}
-	
-	/*
-	 * Return the dirty count for the given folder. For existing folders, the
-	 * dirty count may not have been calculated yet and this method will return
-	 * null in that case. For phantom folders, the dirty count is calculated if
-	 * it does not exist yet.
-	 */
-	protected int getDirtyCount(IContainer container) throws CVSException {
-		try {
-			beginOperation(null);
-			return getSyncInfoCacheFor(container).getCachedDirtyCount(container);
-		} finally {
-		  endOperation(null);
-	   }
-	}
-	protected void setDirtyCount(IContainer container, int count) throws CVSException {
-		try {
-			beginOperation(null);
-			if (Policy.DEBUG_DIRTY_CACHING) {
-				System.out.println("Dirty count for " //$NON-NLS-1$
-					+ container.getFullPath()
-					+ " set to "  //$NON-NLS-1$
-					+ count);
+	public void adjustDirtyStateRecursively(IResource resource, String indicator) throws CVSException {
+		if (resource.getType() == IResource.ROOT) return;
+			try {
+				beginOperation(null);
+				try {
+					if (Policy.DEBUG_DIRTY_CACHING) {
+						debug(resource, indicator, "adjusting dirty state");
+					}
+					getSyncInfoCacheFor(resource).setDirtyIndicator(resource, indicator);
+				} finally {
+					IContainer parent = resource.getParent();
+					String parentIndicator = getDirtyIndicator(parent);
+					if(indicator == RECOMPUTE_INDICATOR) {
+						adjustDirtyStateRecursively(parent, RECOMPUTE_INDICATOR);
+					} else if(indicator == IS_DIRTY_INDICATOR && parentIndicator == NOT_DIRTY_INDICATOR) {
+						adjustDirtyStateRecursively(parent, indicator);
+					} else if(indicator == NOT_DIRTY_INDICATOR && parentIndicator == IS_DIRTY_INDICATOR) {
+						adjustDirtyStateRecursively(parent, RECOMPUTE_INDICATOR);
+					} else {
+						// parents are already in the good state
+					}
+				}
+			} finally {
+				endOperation(null);
 			}
-			getSyncInfoCacheFor(container).setCachedDirtyCount(container, count);
+	}
+
+	protected String getDirtyIndicator(IResource resource) throws CVSException {
+		try {
+			beginOperation(null);
+			return getSyncInfoCacheFor(resource).getDirtyIndicator(resource);
 		} finally {
-		   endOperation(null);
-	   	}
+			endOperation(null);
+		}
 	}
 	
 	/*
@@ -1278,158 +1275,22 @@ public class EclipseSynchronizer {
 	 * property. Do nothing if the modified state is already what we want.
 	 * Return true if the modification state was changed.
 	 */
-	protected boolean setModified(IResource container, boolean modified) throws CVSException {
-		String indicator = modified ? IS_DIRTY_INDICATOR : NOT_DIRTY_INDICATOR;
+	protected void setDirtyIndicator(IResource resource, boolean modified) throws CVSException {
+		try {
+			beginOperation(null);
+			String indicator = modified ? IS_DIRTY_INDICATOR : NOT_DIRTY_INDICATOR;
 		
-		// DECORATOR this state change check is error prone. it is quite possible that
-		// another thread updated the dirty state (e.g. the decorator) and thus the returned
-		// value from this method will be wrong and lead the caller to make assumptions
-		// that can be wrong. That the state has not changed, but it has just too quickly.
-		
-		// if it's already set, no need to set the property or adjust the parents count
-		if (indicator.equals(getDirtyIndicator(container))) return false;
-		// set the dirty indicator and adjust the parent accordingly
-		setDirtyIndicator(container, indicator);
-		return true;
-	}
-	
-	/*
-	 * Adjust the modified count for the given container and return true if the
-	 * parent should be adjusted
-	 */
-	protected boolean adjustModifiedCount(IContainer container, boolean dirty) throws CVSException {
-		if (container.getType() == IResource.ROOT || !isValid(container)) return false;
-		int count = getDirtyCount(container);
-		boolean updateParent = false;
-		if (count == -1) {
-			// The number of dirty children has not been tallied for this parent.
-			// (i.e. no one has queried this folder yet)
-			if (dirty) {
-				// Make sure the parent and it's ansecestors
-				// are still marked as dirty (if they aren't already)
-				String indicator = getDirtyIndicator(container);
-				if (indicator == null) {
-					// The dirty state for the folder has never been cached
-					// or the cache was flushed due to an error of some sort.
-					// Let the next dirtyness query invoke the caching
-				} else if (indicator.equals(NOT_DIRTY_INDICATOR)) {
-					setModified(container, true);
-					updateParent = true;
-				}
-			} else {
-				// Let the initial query of dirtyness determine if the persistent
-				// property is still acurate.
-			}
-		} else {
-			if (dirty) {
-				count++;
-				if (count == 1) {
-					setModified(container, true);
-					updateParent = true;
-				}
-			} else {
-				Assert.isTrue(count > 0);
-				count--;
-				if (count == 0) {
-					setModified(container, false);
-					updateParent = true;
-				}
-			}
-			setDirtyCount(container, count);
-		}
-		return updateParent;
-	}
-	
-	/*
-	 * Add the deleted child and return true if it didn't exist before
-	 */
-	protected boolean addDeletedChild(IContainer container, IFile file) throws CVSException {
-		try {
-			beginOperation(null);
-			getSyncInfoCacheFor(container).addDeletedChild(container, file);
-			return true;
+			if (indicator == getDirtyIndicator(resource)) {
+				return;
+			} 
+			
+			// set the dirty indicator and adjust the parent accordingly			
+			adjustDirtyStateRecursively(resource, indicator);
 		} finally {
 			endOperation(null);
 		}
 	}
 	
-	protected boolean removeDeletedChild(IContainer container, IFile file) throws CVSException {
-		try {
-			beginOperation(null);
-			getSyncInfoCacheFor(container).removeDeletedChild(container, file);
-			return true;
-		} finally {
-			endOperation(null);
-		}
-	}
-
-	protected void setDeletedChildren(IContainer parent, Set deletedFiles) throws CVSException {
-		if (!parent.exists()) return;
-		sessionPropertyCache.setDeletedChildren(parent, deletedFiles);
-	}
-	
-	protected void flushDirtyCache(IResource resource, int depth) throws CVSException {
-		if (resource.getType() == IResource.ROOT) return;
-		if (!isValid(resource)) return;
-		try {
-			final CVSException[] exception = new CVSException[] { null };
-			beginOperation(null);
-			resource.accept(new IResourceVisitor() {
-				public boolean visit(IResource resource) throws CoreException {
-					try {
-						if (Policy.DEBUG_DIRTY_CACHING) {
-							System.out.println("Dirty cache flushed for " //$NON-NLS-1$
-								+ resource.getFullPath());
-						}
-						getSyncInfoCacheFor(resource).flushDirtyCache(resource);
-					} catch (CVSException e) {
-						exception[0] = e;
-					}
-					return true;
-				}
-			}, depth, true);
-			if (exception[0] != null) {
-				throw exception[0];
-			}
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		} finally {
-			endOperation(null);
-		}
-	}
-	
-	/*
-	 * Flush all cached info for the file and it's ancestors
-	 */
-	protected void flushDirtyCacheWithAncestors(IResource resource) throws CVSException {
-		if (resource.getType() == IResource.ROOT) return;
-		try {
-			beginOperation(null);
-			try {
-				if (Policy.DEBUG_DIRTY_CACHING) {
-					System.out.println("Dirty cache flushed for " //$NON-NLS-1$
-						+ resource.getFullPath());
-				}
-				getSyncInfoCacheFor(resource).flushDirtyCache(resource);
-			} finally {
-				IContainer parent = resource.getParent();
-				if(! alreadyflushed(parent)) {		
-					flushDirtyCacheWithAncestors(parent);
-			}
-			}
-		} finally {
-			endOperation(null);
-		}
-	}
-	
-	/**
-	 * @param parent
-	 * @return boolean
-	 */
-	private boolean alreadyflushed(IContainer resource) throws CVSException {
-		return getSyncInfoCacheFor(resource).isDirtyCacheFlushed(resource);
-	}
-
 	/**
 	 * Method updated flags the objetc as having been modfied by the updated
 	 * handler. This flag is read during the resource delta to determine whether
@@ -1487,7 +1348,18 @@ public class EclipseSynchronizer {
 	 */
 	public void createdByMove(IFile file) throws CVSException {
 		deleteResourceSync(file);
-		flushDirtyCache(file, IResource.DEPTH_ZERO);
+	}
+
+	static public void debug(IResource resource, String indicator, String string) {
+		String di = EclipseSynchronizer.IS_DIRTY_INDICATOR;
+		if(indicator == EclipseSynchronizer.IS_DIRTY_INDICATOR) {
+			di = "dirty";
+		} else if(indicator == EclipseSynchronizer.NOT_DIRTY_INDICATOR) {
+			di = "clean";
+		} else {
+			di = "needs recomputing";
+		} 
+		System.out.println("["+string + ":" + di + "]  "  + resource.getFullPath());
 	}
 	
 }
