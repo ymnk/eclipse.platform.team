@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.repo;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -46,6 +47,15 @@ public class CVSWorkingSetWizard extends Wizard {
 	 * @see org.eclipse.jface.wizard.IWizard#performFinish()
 	 */
 	public boolean performFinish() {
+		try {
+			RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+			CVSWorkingSet set = new CVSWorkingSet(folderSelectionPage.getWorkingSetName());
+			set.setFolders(folderSelectionPage.getSelectedFolders());
+			manager.addWorkingSet(set);
+			return true;
+		} catch (CVSException e) {
+			CVSUIPlugin.openError(getShell(), null, null, e, CVSUIPlugin.PERFORM_SYNC_EXEC);
+		}
 		return false;
 	}
 	

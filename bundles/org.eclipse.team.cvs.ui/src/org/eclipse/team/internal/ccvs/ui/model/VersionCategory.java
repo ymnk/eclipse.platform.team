@@ -10,6 +10,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
@@ -50,15 +51,15 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 		if (CVSUIPlugin.getPlugin().getRepositoryManager().isDisplayingProjectVersions(repository)) {
 			return getProjectVersionChildren(o, monitor);
 		} else {
-			return getVersionTagChildren(o);
+			return getVersionTagChildren(o, monitor);
 		}
 	}
 
 	/*
 	 * Return the children as a list of versions whose children are projects
 	 */
-	private Object[] getVersionTagChildren(Object o) {
-		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, CVSTag.VERSION);
+	private Object[] getVersionTagChildren(Object o, IProgressMonitor monitor) throws CVSException {
+		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getWorkingTags(repository, CVSTag.VERSION, monitor);
 		CVSTagElement[] versionElements = new CVSTagElement[tags.length];
 		for (int i = 0; i < tags.length; i++) {
 			versionElements[i] = new CVSTagElement(tags[i], repository);
@@ -71,8 +72,10 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 	 */
 	private Object[] getProjectVersionChildren(Object o, IProgressMonitor monitor) throws TeamException {
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
-		ICVSRemoteResource[] resources = repository.members(CVSTag.DEFAULT,
-			store.getBoolean(ICVSUIConstants.PREF_SHOW_MODULES), monitor);
+		ICVSRemoteResource[] resources = CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(
+			repository,
+			CVSTag.DEFAULT,
+			monitor);
 		Object[] modules = new Object[resources.length];
 		for (int i = 0; i < resources.length; i++) {
 			modules[i] = new RemoteModule((ICVSRemoteFolder)resources[i], VersionCategory.this);

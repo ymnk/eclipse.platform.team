@@ -20,32 +20,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.PlatformObject;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.XMLWriter;
-import org.eclipse.team.internal.ccvs.ui.model.BranchCategory;
-import org.eclipse.team.internal.ccvs.ui.model.CVSModelElement;
-import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
-import org.eclipse.team.internal.ccvs.ui.model.VersionCategory;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class RepositoryRoot extends PlatformObject {
 
 	public static final String[] DEFAULT_AUTO_REFRESH_FILES = { ".project", ".vcm_meta" };
+	private static final String DEFINED_MODULE_PREFIX = "module:";
 	
 	ICVSRepositoryLocation root;
 	String name;
@@ -53,6 +51,8 @@ public class RepositoryRoot extends PlatformObject {
 	Map knownTags = new HashMap();
 	// Map of String (remote folder path) -> Set (file paths that are project relative)
 	Map autoRefreshFiles = new HashMap();
+	// Map of String (module name) -> ICVSRemoteFolder (that is a defined module)
+	Map modulesCache;
 	
 	public RepositoryRoot(ICVSRepositoryLocation root) {
 		this.root = root;
@@ -66,6 +66,76 @@ public class RepositoryRoot extends PlatformObject {
 		return name;
 	}
 
+	/**
+	 * Method getRemoteFolder.
+	 * @param path
+	 * @param tag
+	 * @return ICVSRemoteFolder
+	 */
+	public ICVSRemoteFolder getRemoteFolder(String path, CVSTag tag, IProgressMonitor monitor) throws CVSException {
+		if (isDefinedModuleName(path)) {
+			return getDefinedModule(getDefinedModuleName(path), tag, monitor);
+		} else {
+			return root.getRemoteFolder(path, tag);
+		}
+	}
+
+	static boolean isDefinedModuleName(String path) {
+		return path.startsWith(DEFINED_MODULE_PREFIX);
+	}
+
+	static String getDefinedModuleName(String path) {
+		return path.substring(DEFINED_MODULE_PREFIX.length());
+	}
+	
+	static String asDefinedModulePath(String path) {
+		return DEFINED_MODULE_PREFIX + path;
+	}
+	
+	/**
+	 * Method getDefinedModule.
+	 * @param path
+	 * @param tag
+	 * @param monitor
+	 * @return ICVSRemoteFolder
+	 */
+	private ICVSRemoteFolder getDefinedModule(String path, CVSTag tag, IProgressMonitor monitor) throws CVSException {
+		if (modulesCache == null) {
+			ICVSRemoteResource[] folders = root.members(CVSTag.DEFAULT, true, monitor);
+			modulesCache = new HashMap();
+			for (int i = 0; i < folders.length; i++) {
+				ICVSRemoteResource resource = folders[i];
+				modulesCache.put(resource.getName(), resource);
+			}
+		}
+		ICVSRemoteFolder folder = (ICVSRemoteFolder)modulesCache.get(path);
+		if (folder != null) {
+			folder = (ICVSRemoteFolder)folder.forTag(tag);
+		}
+		return folder;
+	}
+	
+	public static String getRemotePathFor(ICVSResource resource) throws CVSException {
+		if (resource.isFolder()) {
+			if (resource instanceof ICVSRemoteFolder) {
+				ICVSRemoteFolder remoteFolder = (ICVSRemoteFolder) resource;
+				if (remoteFolder.isDefinedModule()) {
+					return asDefinedModulePath(remoteFolder.getName());
+				}
+			}
+			FolderSyncInfo info = ((ICVSFolder)resource).getFolderSyncInfo();
+			if (info == null)
+				throw new CVSException(Policy.bind("RepositoryRoot.folderInfoMissing", resource.getName()));
+			return info.getRepository();
+		} else {
+			FolderSyncInfo info = resource.getParent().getFolderSyncInfo();
+			if (info == null)
+				throw new CVSException(Policy.bind("RepositoryRoot.folderInfoMissing", resource.getParent().getName()));
+			String path = new Path(info.getRepository()).append(resource.getName()).toString();
+			return path;
+		}
+	}
+	
 	/**
 	 * Returns the root.
 	 * @return ICVSRepositoryLocation
@@ -248,7 +318,12 @@ public class RepositoryRoot extends PlatformObject {
 		for (int i = 0; i < paths.length; i++) {
 			String path = paths[i];
 			attributes.clear();
-			attributes.put(RepositoriesViewContentHandler.PATH_ATTRIBUTE, path);
+			String name = path;
+			if (isDefinedModuleName(path)) {
+				name = getDefinedModuleName(path);
+				attributes.put(RepositoriesViewContentHandler.TYPE_ATTRIBUTE, RepositoriesViewContentHandler.DEFINED_MODULE_TYPE);
+			}
+			attributes.put(RepositoriesViewContentHandler.PATH_ATTRIBUTE, name);
 			writer.startTag(RepositoriesViewContentHandler.MODULE_TAG, attributes, true);
 			Set tagSet = (Set)knownTags.get(path);
 			Iterator tagIt = tagSet.iterator();
@@ -272,8 +347,8 @@ public class RepositoryRoot extends PlatformObject {
 			writer.endTag(RepositoriesViewContentHandler.MODULE_TAG);
 		}
 		writer.endTag(RepositoriesViewContentHandler.REPOSITORY_TAG);
-
 	}
+	
 	/**
 	 * Method getKnownTags.
 	 * @param remotePath
@@ -297,6 +372,47 @@ public class RepositoryRoot extends PlatformObject {
 	public Object getAdapter(Class adapter) {
 		if (ICVSRepositoryLocation.class.equals(adapter)) return getRoot();
 		return super.getAdapter(adapter);
+	}
+
+	public ICVSRemoteResource[] filterResources(ICVSRemoteResource[] resource) {
+		List result = new ArrayList();
+		for (int i = 0; i < resource.length; i++) {
+			ICVSRemoteResource remoteResource = resource[i];
+			if (remoteResource instanceof ICVSRemoteFolder) {
+				ICVSRemoteFolder folder = (ICVSRemoteFolder) remoteResource;
+				if (tagIsKnown(remoteResource)) {
+					result.add(folder);
+				}
+			}
+		}
+		return (ICVSRemoteResource[]) result.toArray(new ICVSRemoteResource[result.size()]);
+	}
+	
+	/**
+	 * Method tagIsKnown.
+	 * @param remoteResource
+	 * @return boolean
+	 */
+	public boolean tagIsKnown(ICVSRemoteResource remoteResource) {
+		if (remoteResource instanceof ICVSRemoteFolder) {
+			ICVSRemoteFolder folder = (ICVSRemoteFolder) remoteResource;
+			String path = getCachePathFor(folder.getRepositoryRelativePath());
+			CVSTag[] tags = getKnownTags(path);
+			CVSTag tag = folder.getTag();
+			for (int i = 0; i < tags.length; i++) {
+				CVSTag knownTag = tags[i];
+				if (knownTag.equals(tag)) return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * This method is invoked whenever the refresh button in the
+	 * RepositoriesView is pressed.
+	 */
+	void clearCache() {
+		modulesCache = null;
 	}
 
 }

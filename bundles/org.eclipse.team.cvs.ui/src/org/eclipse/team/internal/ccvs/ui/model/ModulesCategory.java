@@ -87,4 +87,7 @@ public class ModulesCategory extends CVSModelElement implements IAdaptable {
 		return repository;
 	}
 
+	public String toString() {
+		return getRepository().toString() + " (modules)";
+	}
 }

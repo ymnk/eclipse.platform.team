@@ -30,7 +30,6 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
 import org.eclipse.team.internal.ccvs.ui.model.BranchCategory;
-import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
 
 /**
  * DefineTagAction remembers a tag by name
@@ -98,7 +97,7 @@ public class DefineBranchAction extends CVSAction {
 					}
 				});
 			}
-		}, false, this.PROGRESS_BUSYCURSOR); //$NON-NLS-1$
+		}, false, PROGRESS_BUSYCURSOR); //$NON-NLS-1$
 
 	}
 	/*

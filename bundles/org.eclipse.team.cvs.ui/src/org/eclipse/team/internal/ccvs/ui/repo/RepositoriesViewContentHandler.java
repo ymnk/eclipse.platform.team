@@ -28,6 +28,7 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	public static final String REPOSITORIES_VIEW_TAG = "repositories-view"; //$NON-NLS-1$
 
 	public static final String REPOSITORY_TAG = "repository"; //$NON-NLS-1$
+	public static final String WORKING_SET_TAG = "working-set"; //$NON-NLS-1$
 	public static final String MODULE_TAG = "module"; //$NON-NLS-1$
 	public static final String TAG_TAG = "tag"; //$NON-NLS-1$
 	public static final String AUTO_REFRESH_FILE_TAG = "auto-refresh-file"; //$NON-NLS-1$
@@ -40,6 +41,7 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	
 	public static final String[] TAG_TYPES = {"head", "branch", "version", "date"};
 	public static final String DEFAULT_TAG_TYPE = "version";
+	public static final String DEFINED_MODULE_TYPE = "defined";
 	
 	private RepositoryManager manager;
 	private StringBuffer buffer = new StringBuffer();
@@ -48,6 +50,7 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	private String currentRemotePath;
 	private List tags;
 	private List autoRefreshFiles;
+	private CVSWorkingSet currentWorkingSet;
 
 	public RepositoriesViewContentHandler(RepositoryManager manager) {
 		this.manager = manager;
@@ -72,13 +75,22 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 		if (localName.equals(REPOSITORIES_VIEW_TAG)) {
 			// all done
 		} else if (localName.equals(REPOSITORY_TAG)) {
-			manager.add(currentRepositoryRoot);
+			if (currentWorkingSet == null) {
+				manager.add(currentRepositoryRoot);
+			}
 			currentRepositoryRoot = null;
+		} else if (localName.equals(WORKING_SET_TAG)) {
+			manager.addWorkingSet(currentWorkingSet);
+			currentWorkingSet = null;
 		} else if (localName.equals(MODULE_TAG)) {
-			currentRepositoryRoot.addTags(currentRemotePath, 
-				(CVSTag[]) tags.toArray(new CVSTag[tags.size()]));
-			currentRepositoryRoot.setAutoRefreshFiles(currentRemotePath,
-				(String[]) autoRefreshFiles.toArray(new String[autoRefreshFiles.size()]));
+			if (currentWorkingSet != null) {
+				currentWorkingSet.addRemotePath(currentRepositoryRoot.getRoot(), currentRemotePath);
+			} else if (currentRepositoryRoot != null) {
+				currentRepositoryRoot.addTags(currentRemotePath, 
+					(CVSTag[]) tags.toArray(new CVSTag[tags.size()]));
+				currentRepositoryRoot.setAutoRefreshFiles(currentRemotePath,
+					(String[]) autoRefreshFiles.toArray(new String[autoRefreshFiles.size()]));
+			}
 		}
 		tagStack.pop();
 	}
@@ -111,15 +123,25 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 			if (name != null) {
 				currentRepositoryRoot.setName(name);
 			}
-		} else if (localName.equals(MODULE_TAG)) {
+		} else if (localName.equals(WORKING_SET_TAG)) {
+			String name = atts.getValue(NAME_ATTRIBUTE);
+			if (name == null) {
+				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", WORKING_SET_TAG, NAME_ATTRIBUTE));
+			}
+			startWorkingSet(name);
+		}  else if (localName.equals(MODULE_TAG)) {
 			String path = atts.getValue(PATH_ATTRIBUTE);
 			if (path == null) {
 				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", MODULE_TAG, PATH_ATTRIBUTE));
 			}
+			String type = atts.getValue(TYPE_ATTRIBUTE);
+			if (type != null && type.equals(DEFINED_MODULE_TYPE)) {
+				path = RepositoryRoot.asDefinedModulePath(path);
+			}
 			startModule(path);
 		} else if (localName.equals(TAG_TAG)) {
 			String type = atts.getValue(TYPE_ATTRIBUTE);
-			if (type != null) {
+			if (type == null) {
 				type = DEFAULT_TAG_TYPE;
 			}
 			String name = atts.getValue(NAME_ATTRIBUTE);
@@ -137,6 +159,14 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 		// empty buffer
 		buffer = new StringBuffer();
 		tagStack.push(localName);
+	}
+	
+	/**
+	 * Method startWorkingSet.
+	 * @param name
+	 */
+	private void startWorkingSet(String name) {
+		currentWorkingSet = new CVSWorkingSet(name);
 	}
 
 	private void startModule(String path) {

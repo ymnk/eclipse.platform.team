@@ -29,8 +29,6 @@ import org.apache.xerces.parsers.SAXParser;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -51,7 +49,6 @@ import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.IRepositoryListener;
@@ -74,7 +71,9 @@ public class RepositoryManager {
 	// new state file
 	private static final String REPOSITORIES_VIEW_FILE = "repositoriesView.xml"; //$NON-NLS-1$
 
-	Map repositoryRoots = new HashMap();
+	private Map repositoryRoots = new HashMap();
+	private Map workingSets = new HashMap();
+	private CVSWorkingSet currentWorkingSet;
 	
 	List listeners = new ArrayList();
 
@@ -90,8 +89,12 @@ public class RepositoryManager {
 		return CVSProviderPlugin.getPlugin().getKnownRepositories();
 	}
 	
-	public RepositoryRoot[] getKnownRepositoryRoots() {
-		ICVSRepositoryLocation[] locations = getKnownRepositoryLocations();
+	/**
+	 * Method getRepositoryRoots.
+	 * @param iCVSRepositoryLocations
+	 * @return RepositoryRoot[]
+	 */
+	private RepositoryRoot[] getRepositoryRoots(ICVSRepositoryLocation[] locations) {
 		List roots = new ArrayList();
 		for (int i = 0; i < locations.length; i++) {
 			try {
@@ -105,6 +108,11 @@ public class RepositoryManager {
 		}
 		return (RepositoryRoot[]) roots.toArray(new RepositoryRoot[roots.size()]);
 	}
+	
+	public RepositoryRoot[] getKnownRepositoryRoots() {
+		return getRepositoryRoots(getKnownRepositoryLocations());
+	}
+	
 	/**
 	 * Get the list of known branch tags for a given remote root.
 	 */
@@ -148,7 +156,7 @@ public class RepositoryManager {
 	
 	public CVSTag[] getKnownTags(ICVSFolder project) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(project);
-		String remotePath = getRemotePathFor(project);
+		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		return root.getKnownTags(remotePath);
 	}
 	
@@ -172,7 +180,7 @@ public class RepositoryManager {
 	}
 	
 	public ICVSRemoteResource[] getFoldersForTag(ICVSRepositoryLocation location, CVSTag tag, IProgressMonitor monitor) throws CVSException {
-		if (tag.getType() == tag.HEAD) {
+		if (tag.getType() == CVSTag.HEAD) {
 			IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 			return location.members(tag, store.getBoolean(ICVSUIConstants.PREF_SHOW_MODULES), monitor);
 		}
@@ -184,7 +192,7 @@ public class RepositoryManager {
 			String path = paths[i];
 			List tags = Arrays.asList(root.getKnownTags(path));
 			if (tags.contains(tag)) {
-				ICVSRemoteFolder remote = location.getRemoteFolder(path, tag);
+				ICVSRemoteFolder remote = root.getRemoteFolder(path, tag, monitor);
 				result.add(remote);
 			}
 		}
@@ -197,7 +205,7 @@ public class RepositoryManager {
 	 */
 	public void refreshDefinedTags(ICVSFolder project, boolean replace, boolean notify, IProgressMonitor monitor) throws TeamException {
 		RepositoryRoot root = getRepositoryRootFor(project);
-		String remotePath = getRemotePathFor(project);
+		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		root.refreshDefinedTags(remotePath, replace, monitor);
 		if (notify)
 			broadcastChange(root);
@@ -236,13 +244,13 @@ public class RepositoryManager {
 	public void addTags(ICVSResource resource, CVSTag[] tags) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(resource);
 		// XXX could be a file or folder
-		String remotePath = getRemotePathFor(resource);
+		String remotePath = RepositoryRoot.getRemotePathFor(resource);
 		root.addTags(remotePath, tags);
 	}
 	
 	public void addAutoRefreshFiles(ICVSFolder project, String[] relativeFilePaths) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(project);
-		String remotePath = getRemotePathFor(project);
+		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		Set set = new HashSet();
 		set.addAll(Arrays.asList(root.getAutoRefreshFiles(remotePath)));
 		set.addAll(Arrays.asList(relativeFilePaths));
@@ -251,7 +259,7 @@ public class RepositoryManager {
 	
 	public void removeAutoRefreshFiles(ICVSFolder project, String[] relativeFilePaths) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(project);
-		String remotePath = getRemotePathFor(project);
+		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		Set set = new HashSet();
 		set.addAll(Arrays.asList(root.getAutoRefreshFiles(remotePath)));
 		set.removeAll(Arrays.asList(relativeFilePaths));
@@ -260,7 +268,7 @@ public class RepositoryManager {
 	
 	public String[] getAutoRefreshFiles(ICVSFolder project) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(project);
-		String remotePath = getRemotePathFor(project);
+		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		return root.getAutoRefreshFiles(remotePath);
 	}
 	
@@ -278,7 +286,7 @@ public class RepositoryManager {
 	 */
 	public void removeTags(ICVSFolder project, CVSTag[] tags) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(project);
-		String remotePath = getRemotePathFor(project);
+		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		root.removeTags(remotePath, tags);
 	}
 	
@@ -362,11 +370,15 @@ public class RepositoryManager {
 		// Write the repositories
 		Collection repos = Arrays.asList(getKnownRepositoryLocations());
 		Iterator it = repos.iterator();
-		HashMap attributes = new HashMap();
 		while (it.hasNext()) {
 			CVSRepositoryLocation location = (CVSRepositoryLocation)it.next();
 			RepositoryRoot root = getRepositoryRootFor(location);
 			root.writeState(writer);
+		}
+		it = workingSets.values().iterator();
+		while (it.hasNext()) {
+			CVSWorkingSet workingSet = (CVSWorkingSet)it.next();
+			workingSet.writeState(writer);
 		}
 		writer.endTag(RepositoriesViewContentHandler.REPOSITORIES_VIEW_TAG);
 	}
@@ -640,21 +652,6 @@ public class RepositoryManager {
 		return root;
 	}
 	
-	private String getRemotePathFor(ICVSResource resource) throws CVSException {
-		if (resource.isFolder()) {
-			FolderSyncInfo info = ((ICVSFolder)resource).getFolderSyncInfo();
-			if (info == null)
-				throw new CVSException(Policy.bind("RepositoryManager.folderInfoMissing", resource.getName()));
-			return info.getRepository();
-		} else {
-			FolderSyncInfo info = resource.getParent().getFolderSyncInfo();
-			if (info == null)
-				throw new CVSException(Policy.bind("RepositoryManager.folderInfoMissing", resource.getParent().getName()));
-			String path = new Path(info.getRepository()).append(resource.getName()).toString();
-			return path;
-		}
-	}
-	
 	/**
 	 * Add the given repository root to the receiver. The provided instance of RepositoryRoot
 	 * is used to provide extra information about the repository location
@@ -688,4 +685,114 @@ public class RepositoryManager {
 	public boolean isDisplayingProjectVersions(ICVSRepositoryLocation repository) {
 		return false;
 	}
+	
+	/**
+	 * Method addWorkingSet.
+	 * @param set
+	 */
+	public void addWorkingSet(CVSWorkingSet set) {
+		workingSets.put(set.getName(), set);
+		setCurrentWorkingSet(set.getName());
+	}
+	
+	/**
+	 * Method removeWorkingSet.
+	 * @param set
+	 */
+	public void removeWorkingSet(CVSWorkingSet set) {
+		workingSets.remove(set.getName());
+		if (currentWorkingSet == set)
+			currentWorkingSet = null;
+	}
+	
+	/**
+	 * Method setCurrentWorkingSet.
+	 * @param string
+	 */
+	public void setCurrentWorkingSet(String string) {
+		setCurrentWorkingSet((CVSWorkingSet)workingSets.get(string));
+	}
+	/**
+	 * Returns the currentWorkingSet.
+	 * @return CVSWorkingSet
+	 */
+	public CVSWorkingSet getCurrentWorkingSet() {
+		return currentWorkingSet;
+	}
+
+	/**
+	 * Sets the currentWorkingSet.
+	 * @param currentWorkingSet The currentWorkingSet to set
+	 */
+	public void setCurrentWorkingSet(CVSWorkingSet currentWorkingSet) {
+		this.currentWorkingSet = currentWorkingSet;
+	}
+	
+	/**
+	 * Method getWorkingRepositoryRoots.
+	 * @return Object[]
+	 */
+	public RepositoryRoot[] getWorkingRepositoryRoots() {
+		if (currentWorkingSet == null) {
+			return getKnownRepositoryRoots();
+		} else {
+			return getRepositoryRoots(currentWorkingSet.getRepositoryLocations());
+		}
+	}
+	
+	/**
+	 * Method getWorkingFoldersForTag.
+	 * @param root
+	 * @param tag
+	 * @param monitor
+	 * @return Object[]
+	 */
+	public ICVSRemoteResource[] getWorkingFoldersForTag(ICVSRepositoryLocation root, CVSTag tag, IProgressMonitor monitor) throws CVSException {
+		if (currentWorkingSet == null) {
+			return getFoldersForTag(root, tag, monitor);
+		} else {
+			if (CVSTag.DEFAULT.equals(tag) || tag == null) {
+				return currentWorkingSet.getFoldersForTag(root, tag, monitor);
+			} else {
+				return getRepositoryRootFor(root).filterResources(currentWorkingSet.getFoldersForTag(root, tag, monitor));
+			}
+		}
+	}
+	
+	/**
+	 * Method getWorkingTags.
+	 * @param repository
+	 * @param i
+	 * @return CVSTag[]
+	 */
+	public CVSTag[] getWorkingTags(ICVSRepositoryLocation repository, int tagType, IProgressMonitor monitor) throws CVSException {
+		if (currentWorkingSet == null) {
+			return getKnownTags(repository, tagType);
+		} else {
+			Set tags = new HashSet();
+			ICVSRemoteFolder[] folders = currentWorkingSet.getFoldersForTag(repository, CVSTag.DEFAULT, monitor);
+			for (int i = 0; i < folders.length; i++) {
+				ICVSRemoteFolder folder = folders[i];
+				tags.addAll(Arrays.asList(getKnownTags(folder, tagType)));
+			}
+			return (CVSTag[]) tags.toArray(new CVSTag[tags.size()]);
+		}
+	}
+	
+	public String[] getWorkingSetNames() {
+		Set names = workingSets.keySet();
+		return (String[]) names.toArray(new String[names.size()]);
+	}
+	
+	/**
+	 * This method is invoked whenever the refresh button in the
+	 * RepositoriesView is pressed.
+	 */
+	void clearCaches() {
+		for (Iterator iter = repositoryRoots.values().iterator(); iter.hasNext();) {
+			RepositoryRoot root = (RepositoryRoot) iter.next();
+			root.clearCache();
+		}
+	}
+
 }

@@ -10,6 +10,10 @@
  ******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.model;
  
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -54,8 +58,16 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	 * Return children of the root with this tag.
 	 */
 	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
-		// Return the remote elements for the tag
-		return CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
+		// Get the folders for the repository
+		Object[] result = CVSUIPlugin.getPlugin().getRepositoryManager().getWorkingFoldersForTag(root, tag, monitor);
+		// Allow access to the module definitions for HEAD when there is no working set in place
+		if (CVSTag.DEFAULT.equals(tag) && CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() == null) {
+			List children = new ArrayList();
+			children.add(new ModulesCategory(root));
+			children.addAll(Arrays.asList(result));
+			result = (Object[]) children.toArray(new Object[children.size()]);
+		}
+		return result;
 	}
 	
 	public boolean isNeedsProgress() {
@@ -63,9 +75,9 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	}
 	public ImageDescriptor getImageDescriptor(Object object) {
 		if (!(object instanceof CVSTagElement)) return null;
-		if (tag.getType() == tag.BRANCH || tag.getType() == tag.HEAD) {
+		if (tag.getType() == CVSTag.BRANCH || tag.getType() == CVSTag.HEAD) {
 			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_TAG);
-		} else if (tag.getType() == tag.VERSION) {
+		} else if (tag.getType() == CVSTag.VERSION) {
 			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION);
 		} else {
 			// This could be a Date tag

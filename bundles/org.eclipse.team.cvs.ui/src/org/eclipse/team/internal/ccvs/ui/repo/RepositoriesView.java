@@ -81,7 +81,7 @@ public class RepositoriesView extends ViewPart {
 		public void repositoryAdded(final ICVSRepositoryLocation root) {
 			viewer.getControl().getDisplay().syncExec(new Runnable() {
 				public void run() {
-					viewer.refresh();
+					refreshViewer();
 					viewer.setSelection(new StructuredSelection(root));
 				}
 			});
@@ -105,12 +105,38 @@ public class RepositoriesView extends ViewPart {
 			Display display = viewer.getControl().getDisplay();
 			display.syncExec(new Runnable() {
 				public void run() {
-					viewer.refresh();
+					RepositoriesView.this.refreshViewer();
 				}
 			});
 		}
 	};
-
+	private Action newWorkingSetAction;
+	private Action deselectWorkingSetAction;
+	private Action editWorkingSetAction;
+	private Action deleteWorkingSetAction;
+	
+	public class ChangeWorkingSetAction extends Action {
+		String name;
+		public ChangeWorkingSetAction(String name, int index) {
+			super(index + " " + name);
+			this.name = name;
+		}
+		public void run() {
+			CVSUIPlugin.getPlugin().getRepositoryManager().setCurrentWorkingSet(name);
+			RepositoriesView.this.refreshAll();
+		}
+	}
+	
+	private void refreshAll() {
+		CVSUIPlugin.getPlugin().getRepositoryManager().clearCaches();
+		refreshViewer();
+	}
+	
+	private void refreshViewer() {
+		updateWorkingSetMenu();
+		viewer.refresh();
+	}
+	
 	/**
 	 * Contribute actions to the view
 	 */
@@ -122,7 +148,7 @@ public class RepositoriesView extends ViewPart {
 		CVSUIPlugin plugin = CVSUIPlugin.getPlugin();
 		refreshAction = new Action(Policy.bind("RepositoriesView.refresh"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_REFRESH_ENABLED)) { //$NON-NLS-1$
 			public void run() {
-				viewer.refresh();
+				refreshAll();
 			}
 		};
 		refreshAction.setToolTipText(Policy.bind("RepositoriesView.refreshTooltip")); //$NON-NLS-1$
@@ -154,11 +180,43 @@ public class RepositoriesView extends ViewPart {
 		WorkbenchHelp.setHelp(newAnonAction, IHelpContextIds.NEW_DEV_ECLIPSE_REPOSITORY_LOCATION_ACTION);
 
 		// New Working Set (popup)
-		final Action newWorkingSetAction = new Action(Policy.bind("RepositoriesView.newWorkingSet"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION)) { //$NON-NLS-1$
+		newWorkingSetAction = new Action(Policy.bind("RepositoriesView.newWorkingSet")) { //$NON-NLS-1$
 			public void run() {
 				CVSWorkingSetWizard wizard = new CVSWorkingSetWizard();
 				WizardDialog dialog = new WizardDialog(shell, wizard);
 				dialog.open();
+			}
+		};
+		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
+		
+		// Deselect Working Set (popup)
+		deselectWorkingSetAction = new Action(Policy.bind("RepositoriesView.deselectWorkingSet")) { //$NON-NLS-1$
+			public void run() {
+				String name = null;
+				CVSUIPlugin.getPlugin().getRepositoryManager().setCurrentWorkingSet(name);
+				refreshViewer();
+			}
+		};
+		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
+		
+		// Edit Working Set (popup)
+		editWorkingSetAction = new Action(Policy.bind("RepositoriesView.editWorkingSet")) { //$NON-NLS-1$
+			public void run() {
+				String name = null;
+				CVSWorkingSet set = CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet();
+			}
+		};
+		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
+		
+		// Delete Working Set (popup)
+		deleteWorkingSetAction = new Action(Policy.bind("RepositoriesView.deleteWorkingSet")) { //$NON-NLS-1$
+			public void run() {
+				// XXX should prompt
+				CVSWorkingSet set = CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet();
+				if (set != null) {
+					CVSUIPlugin.getPlugin().getRepositoryManager().removeWorkingSet(set);
+				}
+				refreshViewer();
 			}
 		};
 		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
@@ -208,7 +266,6 @@ public class RepositoriesView extends ViewPart {
 				}
 				sub.add(newAction);
 				sub.add(newAnonAction);
-				sub.add(newWorkingSetAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
@@ -230,29 +287,36 @@ public class RepositoriesView extends ViewPart {
 			}
 		});
 		
-		// Add module toggling to the local pull-down menu
+		updateWorkingSetMenu();
+		bars.updateActionBars();
+	}
+	
+	public void updateWorkingSetMenu() {
+		IActionBars bars = getViewSite().getActionBars();
 		IMenuManager mgr = bars.getMenuManager();
-		showFoldersAction = new Action(Policy.bind("RepositoriesView.Show_Folders_6")) { //$NON-NLS-1$
-			public void run() {
-				CVSUIPlugin.getPlugin().getPreferenceStore().setValue(ICVSUIConstants.PREF_SHOW_MODULES, false);
-				showModulesAction.setChecked(false);
-				viewer.refresh();
-			}
-		};
-		WorkbenchHelp.setHelp(showFoldersAction, IHelpContextIds.SHOW_REMOTE_FOLDERS_ACTION);
-		showModulesAction = new Action(Policy.bind("RepositoriesView.Show_Modules_7")) { //$NON-NLS-1$
-			public void run() {
-				CVSUIPlugin.getPlugin().getPreferenceStore().setValue(ICVSUIConstants.PREF_SHOW_MODULES, true);
-				showFoldersAction.setChecked(false);
-				viewer.refresh();
-			}
-		};
-		WorkbenchHelp.setHelp(showModulesAction, IHelpContextIds.SHOW_REMOTE_MODULES_ACTION);
-		boolean showModules = CVSUIPlugin.getPlugin().getPreferenceStore().getBoolean(ICVSUIConstants.PREF_SHOW_MODULES);
-		showFoldersAction.setChecked(!showModules);
-		showModulesAction.setChecked(showModules);
-		mgr.add(showFoldersAction);
-		mgr.add(showModulesAction);
+		
+		mgr.removeAll();
+		
+		mgr.add(newWorkingSetAction);
+		mgr.add(deselectWorkingSetAction);
+		deselectWorkingSetAction.setEnabled(CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() != null);
+		mgr.add(editWorkingSetAction);
+		editWorkingSetAction.setEnabled(CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() != null);
+		mgr.add(deleteWorkingSetAction);
+		deleteWorkingSetAction.setEnabled(CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() != null);
+
+		mgr.add(new Separator());
+		
+		RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+		String[] workingSets = manager.getWorkingSetNames();
+		CVSWorkingSet current = manager.getCurrentWorkingSet();
+		for (int i = 0; i < workingSets.length; i++) {
+			String name = workingSets[i];
+			ChangeWorkingSetAction action = new ChangeWorkingSetAction(name, i + 1);
+			mgr.add(action);
+			action.setChecked(current != null && current.getName().equals(name));
+		}
+		
 		bars.updateActionBars();
 	}
 	

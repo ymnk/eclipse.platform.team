@@ -21,7 +21,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
 import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
 
@@ -66,7 +65,7 @@ public class RemoveBranchTagAction extends CVSAction {
 					manager.removeBranchTag(tag.getRoot(), new CVSTag[] {tag.getTag()});
 				}
 			}
-		}, false, this.PROGRESS_BUSYCURSOR);
+		}, false, PROGRESS_BUSYCURSOR);
 	}
 	/*
 	 * @see TeamAction#isEnabled()

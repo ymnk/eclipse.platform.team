@@ -42,7 +42,6 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteModule;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -68,6 +67,7 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 	
 	private Text nameField;
 	private CheckboxTreeViewer tree;
+	private ICheckStateListener checkStateListener;
 
 	/**	 * @see org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage#CVSWizardPage(String, String, ImageDescriptor, String)	 */
 	public CVSWorkingSetFolderSelectionPage(String pageName, String title, ImageDescriptor titleImage, String description) {
@@ -95,11 +95,12 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 		createWrappingLabel(composite, Policy.bind("CVSWorkingSetFolderSelectionPage.treeLabel"), 0, 2); //$NON-NLS-1$
 		
 		tree = createFolderSelectionTree(composite, 2);
-		tree.addCheckStateListener(new ICheckStateListener() {
+		checkStateListener = new ICheckStateListener() {
 			public void checkStateChanged(CheckStateChangedEvent event) {
 				CVSWorkingSetFolderSelectionPage.this.handleChecked(event.getElement(), event.getChecked());
 			}
-		});
+		};
+		tree.addCheckStateListener(checkStateListener);
 		tree.addTreeListener(new ITreeViewerListener() {
 			public void treeCollapsed(TreeExpansionEvent event) {
 				// Ignore
@@ -144,18 +145,14 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 			} else {
 				repositoryLocationUnchecked(location);
 			}
-			return;
-		}
-		if (object instanceof ModulesCategory) {
+		} else if (object instanceof ModulesCategory) {
 			ModulesCategory category = (ModulesCategory) object;
 			if (checked) {
 				modulesCategoryChecked(category);
 			} else {
 				modulesCategoryUnchecked(category);
 			}
-			return;
-		}
-		if (object instanceof ICVSRemoteFolder) {
+		} else if (object instanceof ICVSRemoteFolder) {
 			ICVSRemoteFolder folder = (ICVSRemoteFolder) object;
 			if (checked) {
 				folderChecked(folder);
@@ -163,15 +160,7 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 				folderUnchecked(folder);
 			}
 		}
-	}
-	
-	private void folderUnchecked(ICVSRemoteFolder folder) {
-		checkedFolders.remove(folder);
-		repositoryLocationChecked(folder.getRepository());
-		if (folder instanceof RemoteModule) {
-			modulesCategoryChecked(getModuleCategory(folder.getRepository()));
-		}
-		
+		updateWidgetEnablements();
 	}
 	
 	public ModulesCategory getModuleCategory(ICVSRepositoryLocation location) {
@@ -183,13 +172,13 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 		}
 		return category;
 	}
-	
+
+	private void folderUnchecked(ICVSRemoteFolder folder) {
+		checkedFolders.remove(folder);
+	}
+		
 	private void folderChecked(ICVSRemoteFolder folder) {
 		checkedFolders.add(folder);
-		tree.setChecked(folder.getRepository(), true);
-		if (folder instanceof RemoteModule) {
-			tree.setChecked(getModuleCategory(folder.getRepository()), true);
-		}
 	}
 
 	private void repositoryLocationChecked(ICVSRepositoryLocation location) {
@@ -210,19 +199,12 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 	}
 	
 	private void repositoryLocationUnchecked(ICVSRepositoryLocation location) {
-		Object[] checkedElements = tree.getCheckedElements();
-		for (int i = 0; i < checkedElements.length; i++) {
-			Object object = checkedElements[i];
-			if (object instanceof ICVSRemoteFolder) {
-				ICVSRemoteFolder folder = (ICVSRemoteFolder) object;
-				if (folder.getRepository().equals(location)) {
-					tree.setChecked(object, false);
-				}
-			} else if (object instanceof ModulesCategory) {
-				if (((ModulesCategory)object).getRepository().equals(location)) {
-					tree.setChecked(object, false);
-				}
-			} 
+		for (Iterator iter = checkedFolders.iterator(); iter.hasNext();) {
+			ICVSRemoteFolder folder = (ICVSRemoteFolder) iter.next();
+			if (folder.getRepository().equals(location)) {
+				tree.setChecked(folder, false);
+				iter.remove();
+			}
 		}
 	}
 	
@@ -234,7 +216,7 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 			Object object = elements[i];
 			if (object instanceof ICVSRemoteFolder) {
 				ICVSRemoteFolder folder = (ICVSRemoteFolder) object;
-				if (folder.getRepository().equals(location) && (folder instanceof RemoteModule)) {
+				if (folder.getRepository().equals(location) && (folder.isDefinedModule())) {
 					stayChecked = true;
 				}
 			}
@@ -246,14 +228,11 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 	
 	private void modulesCategoryUnchecked(ModulesCategory category) {
 		ICVSRepositoryLocation location = category.getRepository();
-		Object[] checkedElements = tree.getCheckedElements();
-		for (int i = 0; i < checkedElements.length; i++) {
-			Object object = checkedElements[i];
-			if (object instanceof ICVSRemoteFolder) {
-				ICVSRemoteFolder folder = (ICVSRemoteFolder) object;
-				if (folder.getRepository().equals(location) && (folder instanceof RemoteModule)) {
-					tree.setChecked(object, false);
-				}
+		for (Iterator iter = checkedFolders.iterator(); iter.hasNext();) {
+			ICVSRemoteFolder folder = (ICVSRemoteFolder) iter.next();
+			if (folder.getRepository().equals(location) && folder.isDefinedModule()) {
+				tree.setChecked(folder, false);
+				iter.remove();
 			}
 		}
 	}
@@ -277,16 +256,47 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 	 * Method updateWidgetEnablement.
 	 */
 	private void updateWidgetEnablements() {
-		// Make sure the name is valid
-		if (isValidName(workingSetName)) {
-			setPageComplete(false);
-			setErrorMessage(Policy.bind("CVSWorkingSetFolderSelectionPage.invalidWorkingSetName", workingSetName)); //$NON-NLS-1$
+		// update the check state of repository locations and modules categories
+		tree.removeCheckStateListener(checkStateListener);
+		try {
+			updateCheckState();
+			// Make sure the name is valid
+			if (!isValidName(workingSetName)) {
+				setPageComplete(false);
+				setErrorMessage(Policy.bind("CVSWorkingSetFolderSelectionPage.invalidWorkingSetName", workingSetName)); //$NON-NLS-1$
+			} else {
+				setErrorMessage(null);
+			}
+			// The page is complete when a least one folder is checked
+			boolean complete = ! checkedFolders.isEmpty();
+			setPageComplete(complete);
+		} finally {
+			tree.addCheckStateListener(checkStateListener);
 		}
-		// The page is complete when a least one folder is checked
-		boolean complete = ! checkedFolders.isEmpty();
-		setPageComplete(complete);
 	}
-	
+
+	private void updateCheckState() {
+		ICVSRepositoryLocation[] locations = getRepositoryManager().getKnownRepositoryLocations();
+		Set checkedLocations = new HashSet();
+		Set checkedCategories = new HashSet();
+		for (Iterator iter = checkedFolders.iterator(); iter.hasNext();) {
+			ICVSRemoteFolder folder = (ICVSRemoteFolder) iter.next();
+			checkedLocations.add(folder.getRepository());
+			if (folder.isDefinedModule()) {
+				checkedCategories.add(getModuleCategory(folder.getRepository()));
+			}
+			tree.setChecked(folder, true);
+		}
+		for (int i = 0; i < locations.length; i++) {
+			ICVSRepositoryLocation location = locations[i];
+			tree.setChecked(location, checkedLocations.contains(location));
+		}
+		for (Iterator iter = modulesCategoryCache.values().iterator(); iter.hasNext();) {
+			ModulesCategory element = (ModulesCategory) iter.next();
+			tree.setChecked(element, checkedCategories.contains(element));
+		}
+	}
+		
 	/**
 	 * Method isValidName.
 	 * @param workingSetName
@@ -378,4 +388,16 @@ public class CVSWorkingSetFolderSelectionPage extends CVSWizardPage {
 		}
 		return (ICVSRepositoryLocation[]) locations.toArray(new ICVSRepositoryLocation[locations.size()]);
 	}
+	/**
+	 * Returns the workingSetName.
+	 * @return String
+	 */
+	public String getWorkingSetName() {
+		return workingSetName;
+	}
+	
+	public ICVSRemoteFolder[] getSelectedFolders() {
+		return (ICVSRemoteFolder[]) checkedFolders.toArray(new ICVSRemoteFolder[checkedFolders.size()]);
+	}
+
 }
