@@ -18,7 +18,7 @@ import junit.framework.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.tests.harness.EclipseWorkspaceTest;
+import org.eclipse.core.tests.resources.ResourceTest;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -34,7 +34,7 @@ import org.eclipse.team.internal.ccvs.ui.operations.*;
 import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.ui.IWorkbenchPart;
 
-public class EclipseTest extends EclipseWorkspaceTest {
+public class EclipseTest extends ResourceTest {
 
 	protected static IProgressMonitor DEFAULT_MONITOR = new NullProgressMonitor();
 	protected static final int RANDOM_CONTENT_SIZE = 3876;
@@ -895,6 +895,15 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		}
 	}
 	
+	protected static void indent(OutputStream output, int indent) {
+		for (int i = 0; i < indent; i++)
+			try {
+				output.write("  ".getBytes());
+			} catch (IOException e) {
+				// ignore
+			}
+	}
+	
 	/* (non-Javadoc)
 	 * @see junit.framework.TestCase#runBare()
 	 */
@@ -991,6 +1000,7 @@ public class EclipseTest extends EclipseWorkspaceTest {
             // Transfer the recorded debug info to stdout
             Policy.recorder.close();
             System.out.println(new String(os.toByteArray()));
+            throw e;
         } finally {
             Policy.recorder.close();
             Policy.recorder = null;

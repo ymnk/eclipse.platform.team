@@ -10,34 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.resources;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSStatus;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.Policy;
-import org.eclipse.team.internal.ccvs.core.client.Command;
-import org.eclipse.team.internal.ccvs.core.client.Session;
-import org.eclipse.team.internal.ccvs.core.client.Update;
-import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
-import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
-import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
-import org.eclipse.team.internal.ccvs.core.client.listeners.IStatusListener;
-import org.eclipse.team.internal.ccvs.core.client.listeners.IUpdateMessageListener;
-import org.eclipse.team.internal.ccvs.core.client.listeners.StatusListener;
-import org.eclipse.team.internal.ccvs.core.client.listeners.UpdateListener;
+import org.eclipse.core.runtime.*;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.client.*;
+import org.eclipse.team.internal.ccvs.core.client.Command.*;
+import org.eclipse.team.internal.ccvs.core.client.listeners.*;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.util.Util;
 
@@ -191,9 +170,12 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 	 */
 	public void directoryInformation(ICVSFolder commandRoot, String stringPath, boolean newDirectory) {
 		try {
-			IPath path = this.parentFolder.getRelativePathFromRootRelativePath(commandRoot, new Path(stringPath));
-			if (newDirectory && path.segmentCount() == 1) {
-				recordFolder(path.lastSegment());
+			IPath path = this.parentFolder.getRelativePathFromRootRelativePath(commandRoot, new Path(null, stringPath));
+			if (path.segmentCount() == 1) {
+			    String pathName = path.lastSegment();
+			    if (!pathName.equals(".")) { //$NON-NLS-1$
+			        recordFolder(path.lastSegment());
+			    }
 			}
 		} catch (CVSException e) {
 			exceptions.add(e);
@@ -205,7 +187,7 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 	 */
 	public void directoryDoesNotExist(ICVSFolder parent, String stringPath) {
 		try {
-			IPath path = this.parentFolder.getRelativePathFromRootRelativePath(parent, new Path(stringPath));
+			IPath path = this.parentFolder.getRelativePathFromRootRelativePath(parent, new Path(null, stringPath));
 			if (path.isEmpty()) {
 				parentDoesNotExist();
 			}
@@ -219,7 +201,7 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 	 */
 	public void fileInformation(int type, ICVSFolder parent, String filename) {
 		try {
-			IPath filePath = new Path(filename);
+			IPath filePath = new Path(null, filename);
 			filePath = this.parentFolder.getRelativePathFromRootRelativePath(parent, filePath);	
 			if( filePath.segmentCount() == 1 ) {
 				String properFilename = filePath.lastSegment();

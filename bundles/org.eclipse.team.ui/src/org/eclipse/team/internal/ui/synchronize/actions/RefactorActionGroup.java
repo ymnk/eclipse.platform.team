@@ -12,17 +12,26 @@ package org.eclipse.team.internal.ui.synchronize.actions;
 
 import java.util.Iterator;
 import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
-import org.eclipse.ui.*;
-import org.eclipse.ui.actions.*;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.actions.ActionGroup;
+import org.eclipse.ui.actions.DeleteResourceAction;
+import org.eclipse.ui.actions.MoveResourceAction;
+import org.eclipse.ui.actions.RenameResourceAction;
 
 /**
  * This action group is modeled after the class of the same name in 
@@ -49,14 +58,13 @@ public class RefactorActionGroup extends ActionGroup {
 		final IStructuredSelection selection= getSelection();
 		final boolean anyResourceSelected =	!selection.isEmpty() && allResourcesAreOfType(selection, IResource.PROJECT | IResource.FOLDER | IResource.FILE);
 
-		// Actions can work on non-resource selections
-		copyAction.selectionChanged(getObjectSelection());
-		menu.add(copyAction);
-		
-		if (anyResourceSelected) {		    
+		if (anyResourceSelected) {
+		    copyAction.selectionChanged(selection);
 			deleteAction.selectionChanged(selection);
 			moveAction.selectionChanged(selection);
 			renameAction.selectionChanged(selection);
+
+			menu.add(copyAction);
 			menu.add(deleteAction);
 			menu.add(moveAction);
 			menu.add(renameAction);
@@ -73,7 +81,7 @@ public class RefactorActionGroup extends ActionGroup {
 
     public void updateActionBars() {
         final IStructuredSelection structuredSelection= getSelection();
-    	copyAction.selectionChanged(getObjectSelection());
+    	copyAction.selectionChanged(structuredSelection);
     	deleteAction.selectionChanged(structuredSelection);
     	moveAction.selectionChanged(structuredSelection);
     	renameAction.selectionChanged(structuredSelection);
@@ -107,15 +115,6 @@ public class RefactorActionGroup extends ActionGroup {
             return new StructuredSelection();
 
     	return new StructuredSelection(Utils.getResources(((IStructuredSelection)selection).toArray()));
-	}
-    
-    private IStructuredSelection getObjectSelection() {
-        final ISelection selection= getContext().getSelection();
-
-        if (!(selection instanceof IStructuredSelection)) 
-            return new StructuredSelection();
-
-    	return (IStructuredSelection)selection;
 	}
 
 	private boolean allResourcesAreOfType(IStructuredSelection selection, int resourceMask) {

@@ -339,16 +339,4 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 		}
 		actions.add(action);
 	}
-	
-	/**
-	 * Return the configuration for the page to which the action group
-	 * is associated.
-	 * @return the configuration for the page to which the action group
-	 * is associated
-	 * 
-	 * @since 3.1
-	 */
-    public ISynchronizePageConfiguration getConfiguration() {
-        return configuration;
-    }
 }

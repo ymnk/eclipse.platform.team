@@ -10,26 +10,19 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import org.eclipse.jface.viewers.DecoratingLabelProvider;
-import org.eclipse.jface.viewers.IColorDecorator;
-import org.eclipse.jface.viewers.IColorProvider;
-import org.eclipse.jface.viewers.IFontDecorator;
-import org.eclipse.jface.viewers.IFontProvider;
-import org.eclipse.jface.viewers.ILabelDecorator;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.Image;
 
 /**
- * Decorating label provider that supports multiple decorators that are font and color decorators.
+ * Decorating label provider that supports multiple decorators and color providers.
  * 
  * @since 3.0
  */
 public class DecoratingColorLabelProvider extends DecoratingLabelProvider implements IColorProvider, IFontProvider {
 
-	static class MultiLabelDecorator extends LabelProvider implements ILabelDecorator, IFontDecorator, IColorDecorator {
+	static class MultiLabelDecorator extends LabelProvider implements ILabelDecorator {
 		private ILabelDecorator[] decorators;
 
 		public MultiLabelDecorator(ILabelDecorator[] decorators) {
@@ -63,7 +56,6 @@ public class DecoratingColorLabelProvider extends DecoratingLabelProvider implem
 			}
 			return text;
 		}
-		
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
 		 */
@@ -73,47 +65,7 @@ public class DecoratingColorLabelProvider extends DecoratingLabelProvider implem
 				d.dispose();
 			}
 		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.IFontDecorator#decorateFont(java.lang.Object)
-		 */
-		public Font decorateFont(Object element) {
-			for (int i = 0; i < decorators.length; i++) {
-				ILabelDecorator decorator = decorators[i];
-				if(decorator instanceof IFontDecorator) {
-					return ((IFontDecorator)decorator).decorateFont(element);
-				}
-			}
-			return null;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.IColorDecorator#decorateForeground(java.lang.Object)
-		 */
-		public Color decorateForeground(Object element) {
-			for (int i = 0; i < decorators.length; i++) {
-				ILabelDecorator decorator = decorators[i];
-				if(decorator instanceof IColorDecorator) {
-					return ((IColorDecorator)decorator).decorateForeground(element);
-				}
-			}
-			return null;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.IColorDecorator#decorateBackground(java.lang.Object)
-		 */
-		public Color decorateBackground(Object element) {
-			for (int i = 0; i < decorators.length; i++) {
-				ILabelDecorator decorator = decorators[i];
-				if(decorator instanceof IColorDecorator) {
-					return ((IColorDecorator)decorator).decorateBackground(element);
-				}
-			}
-			return null;
-		}
 	}
-		
 	public DecoratingColorLabelProvider(ILabelProvider provider, ILabelDecorator[] decorators) {
 		super(provider, new MultiLabelDecorator(decorators));
 	}

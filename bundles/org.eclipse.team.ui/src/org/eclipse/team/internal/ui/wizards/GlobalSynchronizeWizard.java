@@ -10,12 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.wizards;
 
-import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.internal.ui.ITeamUIImages;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 import org.eclipse.ui.IWorkbench;
@@ -26,8 +24,6 @@ import org.eclipse.ui.IWorkbench;
  * @since 3.0
  */
 public class GlobalSynchronizeWizard extends Wizard {
-    
-    private final static String DIALOG_SETTINGS_SECTION= "SynchronizeWizard";
 
 	protected IWorkbench workbench;
 	protected GlobalRefreshWizardSelectionPage mainPage;
@@ -38,14 +34,6 @@ public class GlobalSynchronizeWizard extends Wizard {
 		setDefaultPageImageDescriptor(TeamImages.getImageDescriptor(ITeamUIImages.IMG_WIZBAN_SHARE));
 		setForcePreviousAndNextButtons(true);
 		setNeedsProgressMonitor(false);
-		
-		final IDialogSettings pluginSettings= TeamUIPlugin.getPlugin().getDialogSettings();
-		IDialogSettings wizardSettings= pluginSettings.getSection(DIALOG_SETTINGS_SECTION);
-		if (wizardSettings == null) {
-		    pluginSettings.addNewSection(DIALOG_SETTINGS_SECTION);
-		    wizardSettings= pluginSettings.getSection(DIALOG_SETTINGS_SECTION);
-		}
-		setDialogSettings(wizardSettings);
 	}
 	
 	/*
@@ -80,12 +68,10 @@ public class GlobalSynchronizeWizard extends Wizard {
 			IWizard noPageWizard = mainPage.getSelectedWizard();
 			if (noPageWizard != null) {
 				if (noPageWizard.canFinish()) {
-				    mainPage.savePageSettings();
 					return noPageWizard.performFinish();
 				}
 			}
 		}
-		mainPage.savePageSettings();
 		return true;
 	}
 }

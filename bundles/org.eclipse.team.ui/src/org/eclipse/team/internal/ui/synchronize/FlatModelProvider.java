@@ -20,8 +20,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamImages;
@@ -207,16 +206,7 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 			}
 		} catch(NumberFormatException e) {
 			// ignore and use the defaults.
-		}
-		switch (sortCriteria) {
-        case FlatSorter.PATH:
-        case FlatSorter.NAME:
-        case FlatSorter.PARENT_NAME:
-            break;
-        default:
-            sortCriteria = FlatSorter.PATH;
-            break;
-        }
+		} 
     }
     
     /* (non-Javadoc)
@@ -272,15 +262,18 @@ public class FlatModelProvider extends SynchronizeModelProvider {
         return flatDescriptor;
     }
 
-	protected void addResource(SyncInfo info) {
-		// Add the node to the root
-        ISynchronizeModelElement node = getModelObject(info.getLocal());
-        if (node != null) {
-        	// Somehow the node exists. Remove it and read it to ensure
-        	// what is shown matches the contents of the sync set
-        	removeFromViewer(info.getLocal());
-        }
-		createModelObject(getModelRoot(), info);
+	protected void addResources(SyncInfo[] added) {
+		for (int i = 0; i < added.length; i++) {
+			SyncInfo info = added[i];
+			ISynchronizeModelElement node = getModelObject(info.getLocal());
+			if (node != null) {
+				// Somehow the node exists. Remove it and read it to ensure
+				// what is shown matches the contents of the sync set
+				removeFromViewer(info.getLocal());
+			}
+			// Add the node to the root
+			node = createModelObject(getModelRoot(), info);
+		}
 	}
 	
 	protected ISynchronizeModelElement createModelObject(ISynchronizeModelElement parent, SyncInfo info) {

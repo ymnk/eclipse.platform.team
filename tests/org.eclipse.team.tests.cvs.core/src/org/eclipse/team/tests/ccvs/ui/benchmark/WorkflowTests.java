@@ -11,9 +11,7 @@
 package org.eclipse.team.tests.ccvs.ui.benchmark;
 
 import java.io.File;
-
 import junit.framework.Test;
-
 import org.eclipse.core.resources.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 
@@ -53,27 +51,23 @@ public class WorkflowTests extends BenchmarkTest {
 	}
 
 	public void testBigWorkflow() throws Exception {
-		runWorkflowTests("testBig", BenchmarkTestSetup.BIG_ZIP_FILE);
+		runWorkflowTests("testBig", BenchmarkTestSetup.BIG_ZIP_FILE, "CVS Big Workflow", BenchmarkTestSetup.LOOP_COUNT, false);
 	}
 	
-	public void testSmallWorkflow() throws Exception {
-		runWorkflowTests("testSmall", BenchmarkTestSetup.SMALL_ZIP_FILE);
+	public void testBigWorkflowForSummary() throws Exception {
+		runWorkflowTests("testBigGlobal", BenchmarkTestSetup.BIG_ZIP_FILE, "CVS Workflow", BenchmarkTestSetup.LOOP_COUNT, true);
 	}
-
-	public void testTinyWorkflow() throws Exception {
-		runWorkflowTests("testTiny", BenchmarkTestSetup.TINY_ZIP_FILE);
-	}
-
+	
 	/**
 	 * Runs a series of incoming and outgoing workflow-related tests.
 	 */
-	protected void runWorkflowTests(String name, File initialContents) throws Exception {
-	    setupGroups(PERFORMANCE_GROUPS);
-	    for (int i = 0; i < BenchmarkTestSetup.LOOP_COUNT; i++) {
+	protected void runWorkflowTests(String name, File initialContents, String globalName, int loopCount, boolean global) throws Exception {
+	    setupGroups(PERFORMANCE_GROUPS, globalName, global);
+	    for (int i = 0; i < loopCount; i++) {
 			final SequenceGenerator gen = new SequenceGenerator();
 			IProject outProject = createAndImportProject(name, initialContents);
 			
-			// test project sharing
+			// test project sharing			
 			startGroup(SHARE_PROJECT);
 			shareProject(outProject);
 			endGroup();
@@ -170,6 +164,6 @@ public class WorkflowTests extends BenchmarkTest {
 			replace(new IResource[] { inProject }, null, true);
 			endGroup();
 	    }
-	    commitGroups();
+	    commitGroups(global);
 	}
 }

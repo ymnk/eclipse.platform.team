@@ -213,7 +213,7 @@ public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
 		}
 	}
 	
-	protected void addResource(SyncInfo info) {
+	private void addResource(SyncInfo info) {
 		IResource local = info.getLocal();
 		ISynchronizeModelElement existingNode = getModelObject(local);
 		if (existingNode == null) {
@@ -266,7 +266,7 @@ public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
 			IResource resource = resources[i];
 			if (!removedProjects.contains(resource.getProject())) {
 				if (resource.getType() == IResource.FILE) {
-					if (isCompressedParentEmpty(resource) && !isOutOfSync(resource.getParent())) {
+					if (isCompressedParentEmpty(resource)) {
 						// The parent compressed folder is also empty so remove it
 						removeFromViewer(resource.getParent());
 					} else {
@@ -277,14 +277,15 @@ public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
 					// but may still contain children
 					removeFromViewer(resource);
 					if (hasFileMembers((IContainer)resource)) {
-					    addResources(getFileMembers((IContainer)resource));
+						createModelObject(getModelObject(resource.getProject()), resource);
+						buildModelObjects(getModelObject(resource));
 					}
 				}
 			}
 		}
 	}
-
-    protected int getLogicalModelDepth(IResource resource) {
+	
+	protected int getLogicalModelDepth(IResource resource) {
 		if(resource.getType() == IResource.PROJECT) {
 			return IResource.DEPTH_INFINITE;
 		} else {
@@ -313,18 +314,5 @@ public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
 		}
 		// The parent does not contain any files
 		return false;
-	}
-	
-	private SyncInfo[] getFileMembers(IContainer parent) {
-		// Check if the sync set has any file children of the parent
-	    List result = new ArrayList();
-		IResource[] members = getSyncInfoTree().members(parent);
-		for (int i = 0; i < members.length; i++) {
-			IResource member = members[i];
-			if (member.getType() == IResource.FILE) {
-			    result.add(getSyncInfoTree().getSyncInfo(member));
-			}
-		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
 }

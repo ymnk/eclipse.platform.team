@@ -7,6 +7,7 @@
  * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Red Hat Incorporated - is/setExecutable() code
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.client;
 
@@ -578,7 +579,11 @@ public class Session {
 		String filename = file.getName();
 		connection.writeLine("Modified " + filename); //$NON-NLS-1$
 		// send the default permissions for now
-		connection.writeLine(ResourceSyncInfo.getDefaultPermissions());
+		if (file.isExecutable()) {
+			connection.writeLine(ResourceSyncInfo.getDefaultExecutablePermissions());
+		} else {
+			connection.writeLine(ResourceSyncInfo.getDefaultPermissions());
+		} 
 		sendFile(file, isBinary, sendBinary, monitor);
 	}
 	
@@ -738,15 +743,22 @@ public class Session {
 		// get the file size from the server
 		long size;
 		boolean compressed = false;
+		String sizeLine = null;
 		try {
-			String sizeLine = readLine();
+			sizeLine = readLine();
 			if (sizeLine.charAt(0) == 'z') {
 				compressed = true;
 				sizeLine = sizeLine.substring(1);
 			}
 			size = Long.parseLong(sizeLine, 10);
 		} catch (NumberFormatException e) {
-			throw new CVSException(Policy.bind("Session.badInt"), e); //$NON-NLS-1$
+		    // In some cases, the server will give us an error line here
+		    if (sizeLine != null && sizeLine.startsWith("E")) { //$NON-NLS-1$
+		        handleErrorLine(sizeLine.substring(1).trim(), org.eclipse.core.runtime.Status.OK_STATUS);
+		        return;
+		    } else {
+		        throw new CVSException(Policy.bind("Session.badInt"), e); //$NON-NLS-1$
+		    }
 		}
 		// create an input stream that spans the next 'size' bytes from the connection
 		InputStream in = new SizeConstrainedInputStream(connection.getInputStream(), size, true /*discardOnClose*/);
@@ -783,7 +795,7 @@ public class Session {
 		file.setContents(in, responseType, true, new NullProgressMonitor());
 	}
 
-	/**
+    /**
 	 * Stores the value of the last Mod-time response encountered.
 	 * Valid only for the duration of a single CVS command.
 	 */
@@ -823,7 +835,7 @@ public class Session {
 		this.validRequests = " " + validRequests + " "; //$NON-NLS-1$  //$NON-NLS-2$
 	}
 
-	boolean isOutputToConsole() {
+	public boolean isOutputToConsole() {
 		return outputToConsole;
 	}
 
@@ -949,11 +961,12 @@ public class Session {
 
     /**
      * Accumulate the added errors so they can be included in the status returned
-     * when the command execution is finished.
+     * when the command execution is finished. OK status are ignored.
      * @param status the status to be accumulated
      */
     public void addError(IStatus status) {
-        errors.add(status);
+        if (!status.isOK())
+            errors.add(status);
     }
     
     public boolean hasErrors() {
@@ -974,5 +987,25 @@ public class Session {
     
     public Command getCurrentCommand() {
         return currentCommand;
+    }
+
+	/**
+	 * Report the given error line to any listeners
+     * @param line the error line
+     * @param status the status that indicates any problems encountered parsing the line
+     */
+    public void handleErrorLine(String line, IStatus status) {
+        ConsoleListeners.getInstance().errorLineReceived(this, line, status);
+    }
+    
+    /**
+     * An error has occurred while processing responses from the 
+     * server. Place this error is the status that will be returned
+     * from the command and show the error in the console
+     * @param status the status that descibes the error
+     */
+    public void handleResponseError(IStatus status) {
+        addError(status);
+        handleErrorLine(Policy.bind("Session.0", status.getMessage()), status); //$NON-NLS-1$
     }
 }

@@ -26,6 +26,7 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 import org.eclipse.team.tests.ccvs.ui.SynchronizeViewTestAdapter;
+import org.eclipse.test.performance.*;
 import org.eclipse.test.performance.Performance;
 import org.eclipse.test.performance.PerformanceMeter;
 
@@ -78,23 +79,44 @@ public abstract class BenchmarkTest extends EclipseTest {
      * @param performance_groups
      */
 	protected void setupGroups(String[] performance_groups) {
+        setupGroups(performance_groups, null, false);
+    }
+	
+	protected void setupGroups(String[] performance_groups, String globalName, boolean global) {
         groups = new HashMap();
-	    Performance perf = Performance.getDefault();
-        for (int i = 0; i < performance_groups.length; i++) {
-            String suffix = performance_groups[i];
-		    PerformanceMeter meter = perf.createPerformanceMeter(perf.getDefaultScenarioId(this) + suffix);
-            groups.put(suffix, meter);
-        }
+		Performance perf = Performance.getDefault();
+		PerformanceMeter meter = null;
+		if (global) {
+			// Use one meter for all groups - provides a single timing result
+			meter = perf.createPerformanceMeter(perf.getDefaultScenarioId(this));
+			for (int i = 0; i < performance_groups.length; i++) {
+				String suffix = performance_groups[i];
+				groups.put(suffix, meter);
+			}
+			perf.tagAsGlobalSummary(meter, globalName, Dimension.CPU_TIME);
+		} else {
+			// Use a meter for each group, provides fine grain results
+			for (int i = 0; i < performance_groups.length; i++) {
+				String suffix = performance_groups[i];
+				meter = perf.createPerformanceMeter(perf.getDefaultScenarioId(this) + suffix);
+				groups.put(suffix, meter);
+				if (globalName != null) {
+					perf.tagAsSummary(meter, suffix, Dimension.CPU_TIME);
+				}
+			}
+		}
     }
     
     /**
-     * Commit the performance meters that were created by setupGroups and started and
-     * stoped using startGroup/endGroup
-     */
-    protected void commitGroups() {
+	 * Commit the performance meters that were created by setupGroups and
+	 * started and stoped using startGroup/endGroup
+	 */
+    protected void commitGroups(boolean global) {
         for (Iterator iter = groups.values().iterator(); iter.hasNext();) {
             PerformanceMeter meter = (PerformanceMeter) iter.next();
             meter.commit();
+            if(global)
+            	break;
         }
     }
     
