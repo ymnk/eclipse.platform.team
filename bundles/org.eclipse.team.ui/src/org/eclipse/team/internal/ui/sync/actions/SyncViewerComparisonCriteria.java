@@ -70,7 +70,7 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 	/**
 	 * @param action
 	 */
-	public void activate(ComparisonCriteriaAction activatedAction) {
+	public void activate(final ComparisonCriteriaAction activatedAction) {
 		for (int i = 0; i < actions.length; i++) {
 			ComparisonCriteriaAction action = actions[i];
 			action.setChecked(activatedAction == action);
@@ -81,7 +81,9 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 				try {
 					// when the comparison criteria changes, recalculate the entire sync set based on
 					// the new input.
-					getSubscriberContext().prepareInput(monitor);
+					SubscriberInput input = getSubscriberContext();
+					input.getSubscriber().setCurrentComparisonCriteria(activatedAction.getComparisonCriteria().getId());
+					input.prepareInput(monitor);
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
 				}

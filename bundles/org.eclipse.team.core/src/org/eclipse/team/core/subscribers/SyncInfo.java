@@ -280,8 +280,7 @@ public class SyncInfo implements IAdaptable {
 					} else {
 						if (criteria.compare(base, remote, progress))
 							description = OUTGOING | DELETION;
-						else
-						
+						else						
 							description = CONFLICTING | CHANGE;
 					}
 				} else {
@@ -301,7 +300,9 @@ public class SyncInfo implements IAdaptable {
 						} else if (!ay && am) {
 							description = OUTGOING | CHANGE;
 						} else {
-							description = CONFLICTING | CHANGE;
+							if(! criteria.compare(local, remote, Policy.subMonitorFor(progress, 30))) {
+								description = CONFLICTING | CHANGE;
+							}
 						}
 						progress.done();
 					}
