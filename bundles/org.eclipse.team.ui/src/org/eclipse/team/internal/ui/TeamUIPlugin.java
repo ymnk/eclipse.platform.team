@@ -130,6 +130,16 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		getPlugin().getLog().log(status);
 	}
 	
+	/**
+	 * Convenience method for logging a TeamException in such a way that the
+	 * stacktrace is logged as well.
+	 * @param e
+	 */
+	public static void log(TeamException e) {
+		IStatus status = e.getStatus();
+		log (new Status(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), e));
+	}
+	
 	public static void runWithProgress(Shell parent, boolean cancelable,
 		final IRunnableWithProgress runnable) throws InvocationTargetException, InterruptedException {
 		boolean createdShell = false;

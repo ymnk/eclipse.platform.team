@@ -61,7 +61,7 @@ abstract public class SyncTreeSubscriber {
 	 * @return <code>true</code> if this resource is supervised, and 
 	 *   <code>false</code> otherwise
 	 */
-	abstract public boolean isSupervised(IResource resource);
+	abstract public boolean isSupervised(IResource resource) throws TeamException;
 	
 	/**
 	 * Returns all non-transient member resources of the given resource.
@@ -246,5 +246,14 @@ abstract public class SyncTreeSubscriber {
 			final ITeamResourceChangeListener l = (ITeamResourceChangeListener) it.next();
 			l.teamResourceChanged(deltas);	
 		}
+	}
+
+	protected void fireSyncChanged(IResource[] changedResources) {
+		TeamDelta[] deltas = new TeamDelta[changedResources.length];
+		for (int i = 0; i < changedResources.length; i++) {
+			IResource resource = changedResources[i];
+			deltas[i] = new TeamDelta(this, TeamDelta.SYNC_CHANGED, resource);
+		}
+		fireTeamResourceChange(deltas);
 	}	
 }

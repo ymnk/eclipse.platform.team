@@ -57,12 +57,8 @@ public class CVSSyncInfo extends SyncInfo {
 			if(!local.exists()) {
 				if(remote != null) {
 					if (isCVSFolder) {
-						if (containsOutgoingDeletions(cvsFolder)) {
-							// say the folder is in_sync even though it doesn't exist locally
-							folderKind = SyncInfo.IN_SYNC;
-						} else {
-							folderKind = SyncInfo.INCOMING | SyncInfo.ADDITION;
-						}
+						// TODO: This assumes all CVS folders are in-sync even if they have been pruned!
+						folderKind = SyncInfo.IN_SYNC;
 					} else {
 						folderKind = SyncInfo.INCOMING | SyncInfo.ADDITION;
 					}

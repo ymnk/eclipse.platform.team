@@ -25,6 +25,7 @@ import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.internal.core.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**
  * This class translates resource deltas and subscriber events into the effects 
@@ -115,6 +116,8 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 		try {
 			syncSet.beginInput();
 			processDelta(event.getDelta());
+		} catch (TeamException e) {
+			TeamUIPlugin.log(e);
 		} finally {
 			getSyncSet().endInput();
 		}
@@ -125,7 +128,7 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 	 * 
 	 * @param delta
 	 */
-	private void processDelta(IResourceDelta delta) {
+	private void processDelta(IResourceDelta delta) throws TeamException {
 		IResource resource = delta.getResource();
 		int kind = delta.getKind();
 		

@@ -348,26 +348,6 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	public void setTitle(String title) {
 		super.setTitle(title);
 	}
-	
-	public void refreshViewer() {
-		// TODO: Should not be needed once proper eventing exists
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				viewer.getControl().setRedraw(false);
-				viewer.refresh();
-				viewer.getControl().setRedraw(true);
-			}
-		});				
-	}
-
-	public void redraw() {
-			 Display.getDefault().asyncExec(new Runnable() {
-				 public void run() {
-					viewer.getControl().redraw();
-				 }
-			 });
-		
-	}
 
 	public void run(IRunnableWithProgress runnable) {
 		try {
@@ -383,7 +363,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	 * Returns the runnableContext.
 	 * @return IRunnableContext
 	 */
-	public IRunnableContext getRunnableContext() {
+	private IRunnableContext getRunnableContext() {
 		return PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 	}
 	

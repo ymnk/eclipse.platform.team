@@ -54,4 +54,11 @@ public class SyncContainer implements IAdaptable {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	public int hashCode() {
+		return getContainer().hashCode();
+	}
+
 }

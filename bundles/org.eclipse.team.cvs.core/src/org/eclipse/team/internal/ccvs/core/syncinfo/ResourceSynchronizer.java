@@ -10,94 +10,42 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.syncinfo;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
-import org.eclipse.team.internal.ccvs.core.Policy;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 
 /**
  * A resource synchronizer is responsible for managing synchronization information for
  * CVS resources.
  */
 public abstract class ResourceSynchronizer {
-
-	// TODO: Initially we are using a single lock for all CVS sync operations.
-	// This may be overly restrictive so we may want to investigate using separate
-	// locks.
-	private static ReentrantLock lock = new ReentrantLock();
-
-	/**
-	 * Begins a batch of operations.
-	 * 
-	 * @param monitor the progress monitor, may be null
-	 */
-	public void beginOperation(IProgressMonitor monitor) throws CVSException {
-		lock.acquire();		
-	}
-
-	/**
-	 * Ends a batch of operations.  Pending changes are committed only when
-	 * the number of calls to endOperation() balances those to beginOperation().
-	 * <p>
-	 * Progress cancellation is ignored while writting the cache to disk. This
-	 * is to ensure cache to disk consistency.
-	 * </p>
-	 * 
-	 * @param monitor the progress monitor, may be null
-	 * @exception CVSException with a status with code <code>COMMITTING_SYNC_INFO_FAILED</code>
-	 * if all the CVS sync information could not be written to disk.
-	 */
-	public void endOperation(IProgressMonitor monitor) throws CVSException {		
-		lock.release();
-	}
-	
-	/**
-	 * Return true if the synchronizer is in the outer most operation of a set of nested
-	 * operations
-	 * @return
-	 */
-	protected boolean isOuterOperation() {
-		return lock.getNestingCount() == 1;
-	}
-	
-	/**
-	 * Register the given thread as a thread that should be restricted to having 
-	 * read-only access. If a thread is not registered, it is expected that they 
-	 * obtain the workspace lock before accessing any CVS sync information.
-	 * @param thread
-	 */
-	public void addReadOnlyThread(Thread thread) {
-		lock.addReadOnlyThread(thread);
-	}
-	
-	/**
-	 * If this method return false, the caller should not perform any workspace modification
-	 * operations. The danger of performing such an operation is deadlock.
-	 * 
-	 * @return boolean
-	 */
-	public boolean isWorkspaceModifiable() {
-		return !lock.isReadOnly();
-	}
-
-	/**
-	 * Obtain the CVS sync lock while running the given ICVSRunnable.
-	 * @param job
-	 * @param monitor
-	 * @throws CVSException
-	 */
-	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException {
-		monitor = Policy.monitorFor(monitor);
-		monitor.beginTask(null, 100);
-		try {
-			beginOperation(Policy.subMonitorFor(monitor, 5));
-			job.run(Policy.subMonitorFor(monitor, 60));
-		} finally {
-			endOperation(Policy.subMonitorFor(monitor, 35));
-			monitor.done();
-		}
-	}
 	
 	public abstract byte[] getSyncBytes(IResource resource) throws CVSException;
+	
+	/**
+	 * 
+	 * @param resource
+	 * @return
+	 * @throws TeamException
+	 */
+	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
+		byte[] remoteBytes = getSyncBytes(resource);
+		if (remoteBytes == null) {
+			// There is no remote handle for this resource
+			return null;
+		} else {
+			// TODO: This code assumes that the type of the remote resource
+			// matches that of the local resource. This may not be true.
+			// TODO: This is rather complicated. There must be a better way!
+			if (resource.getType() == IResource.FILE) {
+				return RemoteFile.fromBytes(resource, remoteBytes, getSyncBytes(resource.getParent()));
+			} else {
+				return RemoteFolder.fromBytes((IContainer)resource, remoteBytes);
+			}
+		}
+	}
 }

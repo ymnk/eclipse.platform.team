@@ -56,4 +56,11 @@ public class OptimizedRemoteSynchronizer extends RemoteSynchronizer {
 		
 	}
 
+	/**
+	 * @return
+	 */
+	public BaseSynchronizer getBaseSynchronizer() {
+		return baseSynchronizer;
+	}
+
 }

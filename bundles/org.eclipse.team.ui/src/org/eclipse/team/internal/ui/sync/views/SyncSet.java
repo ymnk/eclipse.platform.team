@@ -22,6 +22,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
 
@@ -243,37 +244,46 @@ public class SyncSet {
 	 * @param container
 	 * @return
 	 */
-	public Object[] members(IResource parent) {
+	public Object[] members(IResource resource) {
+		if (resource.getType() == IResource.FILE) return new Object[0];
+		IContainer parent = (IContainer)resource;
+		if (parent.getType() == IResource.ROOT) return getRoots(parent);
 		// TODO: must be optimized so that we don't traverse all the deep children to find
 		// the immediate ones.
-		List children = new ArrayList();
+		Set children = new HashSet();
 		IPath path = parent.getFullPath();
-		Set possibleChildren;
-		if(parent.getType() == IResource.ROOT) {
-			possibleChildren = parents.keySet();
-		} else {
-			possibleChildren = (Set)parents.get(path);
-		}
+		Set possibleChildren = (Set)parents.get(path);
 		if(possibleChildren != null) {
 			for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
 				Object next = it.next();
-				IResource element;
-				if(parent.getType() == IResource.ROOT) {
-					element = ((IWorkspaceRoot)parent).findMember((IPath)next);
-				} else {
-					element = (IResource)next;
-				}
-				
+				IResource element = (IResource)next;
 				IPath childPath = element.getFullPath();
+				Object modelObject = null;
 				if(childPath.segmentCount() == (path.segmentCount() +  1)) {
-					SyncInfo childInfo = getSyncInfo(element);
-					if (childInfo != null && isMember(childInfo)) {
-						children.add(childInfo);
-					} else if (element.getType() != IResource.FILE && hasMembers((IContainer)element)) {
-						children.add(new SyncContainer((IContainer)element));
-					}
-				}				
+					modelObject = getModelObject(this, element);
+
+				} else if (childPath.segmentCount() > path.segmentCount()) {
+					IContainer childFolder = parent.getFolder(new Path(childPath.segment(path.segmentCount())));
+					modelObject = getModelObject(this, childFolder);
+				}
+				if (modelObject != null) {
+					children.add(modelObject);
+				}
 			}
+		}
+		return (Object[]) children.toArray(new Object[children.size()]);
+	}
+
+	/**
+	 * @return
+	 */
+	private Object[] getRoots(IContainer root) {
+		Set possibleChildren = parents.keySet();
+		Set children = new HashSet();
+		for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
+			Object next = it.next();
+			IResource element = ((IWorkspaceRoot)root).findMember((IPath)next);
+			children.add(getModelObject(this, element.getProject()));
 		}
 		return (Object[]) children.toArray(new Object[children.size()]);
 	}

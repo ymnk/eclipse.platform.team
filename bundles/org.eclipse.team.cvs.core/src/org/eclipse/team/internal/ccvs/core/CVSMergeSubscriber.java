@@ -10,97 +10,52 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.ComparisonCriteria;
-import org.eclipse.team.core.sync.ContentComparisonCriteria;
-import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteSynchronizer;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 
 /**
  * CVSMergeSubscriber
  */
-public class CVSMergeSubscriber extends CVSWorkspaceSubscriber {
+public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 
 	private CVSTag start, end;
-	private IResource[] resources;
-	
-	private String REMOTE_ID = "remote-id";
-	private String BASE_ID = "base-id";
-	private QualifiedName END_KEY;
-	private QualifiedName START_KEY;
+	private IResource[] roots;
+	private RemoteSynchronizer remoteSynchronizer;
+	private RemoteSynchronizer baseSynchronizer;
 
-	public CVSMergeSubscriber(QualifiedName id, IResource[] resources, CVSTag start, CVSTag end) {		
-		this.id = id;
+	public CVSMergeSubscriber(QualifiedName id, IResource[] roots, CVSTag start, CVSTag end) {		
+		super(id, "CVS Merge: " + start.getName() + " - " + end.getName(), "CVS Merge");
 		this.start = start;
 		this.end = end;
-		this.resources = resources;
-		setName("CVS Merge: " + start.getName() + " - " + end.getName());
-		setDescription("CVS Merge");
-		initialize();		
+		this.roots = roots;
+		initializeSynchronizers();		
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber#initialize()
 	 */
-	protected void initialize() {				
-		// setup comparison criteria
-		ComparisonCriteria revisionNumberComparator = new CVSRevisionNumberCompareCriteria();
-		ComparisonCriteria contentsComparator = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, false /*consider whitespace */);
-		ComparisonCriteria contentsComparatorIgnoreWhitespace = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, true /* ignore whitespace */);
-		
-		comparisonCriterias.put(revisionNumberComparator.getId(), revisionNumberComparator);
-		comparisonCriterias.put(contentsComparator.getId(), contentsComparator);
-		comparisonCriterias.put(contentsComparatorIgnoreWhitespace.getId(), contentsComparatorIgnoreWhitespace);
-		
-		// default
-		defaultCriteria = contentsComparatorIgnoreWhitespace.getId();
-		
-		// setup sync tree partners
+	private void initializeSynchronizers() {				
 		QualifiedName id = getId();
-		END_KEY = new QualifiedName(id.getQualifier(), id.getLocalName() + REMOTE_ID);
-		START_KEY = new QualifiedName(id.getQualifier(), id.getLocalName() + BASE_ID);
-		
-		//		install sync info participant
-		getSynchronizer().add(getRemoteSyncName());
-		getSynchronizer().add(getBaseSyncName());
-	}
-	
-	
-	private QualifiedName getBaseSyncName() {
-		return START_KEY;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber#getRemoteSyncName()
-	 */
-	protected QualifiedName getRemoteSyncName() {
-		return END_KEY;
+		String syncKeyPrefix = id.getLocalName();
+		remoteSynchronizer = new RemoteSynchronizer(syncKeyPrefix + end.getName());
+		baseSynchronizer = new RemoteSynchronizer(syncKeyPrefix + start.getName());
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#cancel()
 	 */
 	public void cancel() {
-		// TODO Auto-generated method stub
+		remoteSynchronizer.dispose();
+		baseSynchronizer.dispose();
 		super.cancel();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
-	 */
-	public IRemoteResource getRemoteResource(IResource resource)	throws TeamException {
-		// TODO Auto-generated method stub
-		return super.getRemoteResource(resource);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource, org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
-		return new SyncInfo(resource, null, null, this, monitor);
 	}
 
 	/* (non-Javadoc)
@@ -111,22 +66,71 @@ public class CVSMergeSubscriber extends CVSWorkspaceSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#members(org.eclipse.core.resources.IResource)
-	 */
-	public IResource[] members(IResource resource) throws TeamException {
-		return new IResource[0];
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#refresh(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		int work = 100 * resources.length;
+		monitor.beginTask(null, work);
+		try {
+			for (int i = 0; i < resources.length; i++) {
+				IResource resource = resources[i];	
+				
+				// build the remote tree
+				// TODO: We should really only need to do the start tree once!
+				ICVSRemoteResource startTree = buildRemoteTree(resource, start, depth, Policy.subMonitorFor(monitor, 40));
+				ICVSRemoteResource endTree = buildRemoteTree(resource, end, depth, Policy.subMonitorFor(monitor, 40));
+				
+				// update the known remote handles 
+				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 20);
+				try {
+					sub.beginTask(null, 512);
+					Set allChanges = new HashSet();
+					
+					// TODO: We should really only need to do the start tree once!
+					baseSynchronizer.removeSyncBytes(resource, IResource.DEPTH_INFINITE);
+					baseSynchronizer.collectChanges(resource, startTree, depth, sub);
+					allChanges.addAll(Arrays.asList(baseSynchronizer.getChangedResources()));
+					
+					remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_INFINITE);
+					remoteSynchronizer.collectChanges(resource, endTree, depth, sub);
+					allChanges.addAll(Arrays.asList(remoteSynchronizer.getChangedResources()));
+
+					fireSyncChanged((IResource[]) allChanges.toArray(new IResource[allChanges.size()]));
+				} finally {
+					sub.done();
+					remoteSynchronizer.resetChanges();	 
+				}
+			}
+		} finally {
+			monitor.done();
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#roots()
 	 */
 	public IResource[] roots() throws TeamException {
-		return resources;
+		return roots;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizer()
+	 */
+	protected ResourceSynchronizer getRemoteSynchronizer() {
+		return remoteSynchronizer;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizer()
+	 */
+	protected ResourceSynchronizer getBaseSynchronizer() {
+		return baseSynchronizer;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#isSupervised(org.eclipse.core.resources.IResource)
+	 */
+	public boolean isSupervised(IResource resource) throws TeamException {
+		return getBaseSynchronizer().getSyncBytes(resource) != null || getRemoteSynchronizer().getSyncBytes(resource) != null; 
 	}
 }

@@ -30,11 +30,10 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -104,39 +103,6 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 			changedResources.add(resource);
 		}
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#beginOperation(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void beginOperation(IProgressMonitor monitor) throws CVSException {
-		super.beginOperation(monitor);
-		if (isOuterOperation()) {
-			changedResources.clear();
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#endOperation(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void endOperation(IProgressMonitor monitor) throws CVSException {
-		try {
-			if (isOuterOperation()) {
-				fireResourceChanges();
-			}
-		} finally {
-			super.endOperation(monitor);
-		}
-		
-	}
-
-	/**
-	 * 
-	 */
-	private void fireResourceChanges() {
-		IResource[] changed = (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
-		// TODO: fire changes to listeners
-		changedResources.clear();
-	}
 
 	/**
 	 * @param resource
@@ -169,15 +135,18 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 			remote != null ? remote.members(progress) : new IRemoteResource[0];
 		
 		IResource[] localChildren;			
-		try {	
-			if( local.getType() != IResource.FILE && local.exists() ) {
-				// TODO: This should be a list of all non-ignored resources including outgoing deletions
-				localChildren = ((IContainer)local).members(true /* include phantoms */);
-			} else {
-				localChildren = new IResource[0];
+		if( local.getType() != IResource.FILE && local.exists() ) {
+			// TODO: This should be a list of all non-ignored resources including outgoing deletions
+			ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)local);
+			ICVSResource[] cvsChildren = cvsFolder.members(ICVSFolder.MANAGED_MEMBERS | ICVSFolder.UNMANAGED_MEMBERS);
+			List resourceChildren = new ArrayList();
+			for (int i = 0; i < cvsChildren.length; i++) {
+				ICVSResource cvsResource = cvsChildren[i];
+				resourceChildren.add(cvsResource.getIResource());
 			}
-		} catch(CoreException e) {
-			throw new TeamException(e.getStatus());
+			localChildren = (IResource[]) resourceChildren.toArray(new IResource[resourceChildren.size()]);
+		} else {
+			localChildren = new IResource[0];
 		}
 		
 		if (remoteChildren.length > 0 || localChildren.length > 0) {
@@ -254,40 +223,6 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 	 * @param resource
 	 * @return
 	 * @throws TeamException
-	 * @throws CoreException
-	 */
-	public IResource[] members(IResource resource) throws TeamException, CoreException {
-		if(resource.getType() == IResource.FILE) {
-			return new IResource[0];
-		}	
-		
-		// TODO: will have to filter and return only the CVS phantoms.
-		IResource[] members = ((IContainer)resource).members(true /* include phantoms */);
-		List filteredMembers = new ArrayList(members.length);
-		for (int i = 0; i < members.length; i++) {
-			IResource r = members[i];
-			
-			// TODO: consider that there may be several sync states on this resource. There
-			// should instead be a method to check for the existance of a set of sync types on
-			// a resource.
-			if(r.isPhantom() && getSyncBytes(r) == null) {
-				continue;
-			}
-			
-			// TODO: would be nice if we didn't need a CVS resource handle for this.
-			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(r);
-			if( !cvsThing.isIgnored()) {
-				filteredMembers.add(r);
-			}
-		}
-		return (IResource[]) filteredMembers.toArray(new IResource[filteredMembers.size()]);
-	}
-	
-	/**
-	 * 
-	 * @param resource
-	 * @return
-	 * @throws TeamException
 	 */
 	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
 		byte[] remoteBytes = getSyncBytes(resource);
@@ -295,14 +230,7 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 			// The remote is known to not exist or there is no base
 			return null;
 		} else {
-			// TODO: This code assumes that the type of the remote resource
-			// matches that of the local resource. This may not be true.
-			// TODO: This is rather complicated. There must be a better way!
-			if (resource.getType() == IResource.FILE) {
-				return RemoteFile.fromBytes(resource, remoteBytes, getSyncBytes(resource.getParent()));
-			} else {
-				return RemoteFolder.fromBytes((IContainer)resource, remoteBytes);
-			}
+			return super.getRemoteResource(resource);
 		}
 	}
 	
@@ -314,4 +242,16 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 		Assert.isNotNull(remoteBytes);
 		return Util.equals(remoteBytes, NO_REMOTE);
 	}
+	
+	/**
+	 * @return
+	 */
+	public IResource[] getChangedResources() {
+		return (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
+	}
+	
+	public void resetChanges() {
+		changedResources.clear();
+	}
+
 }

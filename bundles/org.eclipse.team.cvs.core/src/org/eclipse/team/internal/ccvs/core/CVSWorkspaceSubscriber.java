@@ -11,10 +11,9 @@
 package org.eclipse.team.internal.ccvs.core;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -23,91 +22,41 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.ComparisonCriteria;
-import org.eclipse.team.core.sync.ContentComparisonCriteria;
-import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.core.sync.SyncInfo;
-import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
-import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteSynchronizer;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 
 /**
  * CVSWorkspaceSubscriber
  */
-public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResourceStateChangeListener {
-
-	private static final byte[] NO_REMOTE = new byte[0];
+public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IResourceStateChangeListener {
 	
-	// describes this subscriber
-	protected QualifiedName id;
-	private String name;
-	private String description;
-	
-	// options this subscriber supports for determining the sync state of resources
-	protected Map comparisonCriterias = new HashMap();
-	protected String defaultCriteria;
-	
-	private RemoteSynchronizer remoteSynchronizer;
+	private OptimizedRemoteSynchronizer remoteSynchronizer;
 	
 	// qualified name for remote sync info
 	private static final String REMOTE_RESOURCE_KEY = "remote-resource-key";
 	
-	CVSWorkspaceSubscriber() {
-	}
-	
 	CVSWorkspaceSubscriber(QualifiedName id, String name, String description) {
-		this.id = id;
-		this.name = name;
-		this.description = description;
+		super(id, name, description);
 		
 		// install sync info participant
 		remoteSynchronizer = new OptimizedRemoteSynchronizer(REMOTE_RESOURCE_KEY);
 		
-		// setup comparison criteria
-		ComparisonCriteria revisionNumberComparator = new CVSRevisionNumberCompareCriteria();
-		ComparisonCriteria contentsComparator = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, false /*consider whitespace */);
-		ComparisonCriteria contentsComparatorIgnoreWhitespace = new ContentComparisonCriteria(new ComparisonCriteria[] {revisionNumberComparator}, true /* ignore whitespace */);
-		
-		comparisonCriterias.put(revisionNumberComparator.getId(), revisionNumberComparator);
-		comparisonCriterias.put(contentsComparator.getId(), contentsComparator);
-		comparisonCriterias.put(contentsComparatorIgnoreWhitespace.getId(), contentsComparatorIgnoreWhitespace);
-		
-		// default
-		defaultCriteria = revisionNumberComparator.getId();
-		
 		// TODO: temporary proxy for CVS events
 		CVSProviderPlugin.addResourceStateChangeListener(this); 
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getId()
-	 */
-	public QualifiedName getId() {
-		return id;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getName()
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getDescription()
-	 */
-	public String getDescription() {
-		return description;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#isSupervised(org.eclipse.core.resources.IResource)
 	 */
-	public boolean isSupervised(IResource resource) {
+	public boolean isSupervised(IResource resource) throws TeamException {
 		RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
-		return provider != null;
+		if (provider == null) return false;
+		// TODO: what happens for resources that don't exist?
+		// TODO: is it proper to use ignored here?
+		ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(resource);
+		return (!cvsThing.isIgnored());
 	}
 
 	/* 
@@ -138,110 +87,79 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	 */
 	public IResource[] members(IResource resource) throws TeamException {
 		try {
-			return remoteSynchronizer.members(resource);
+			return doMembers(resource);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
+	/**
+	 * 
+	 * @param resource
+	 * @return
+	 * @throws TeamException
+	 * @throws CoreException
 	 */
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
-		return remoteSynchronizer.getRemoteResource(resource);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
-	 */
-	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {	
-		IRemoteResource remoteResource = getRemoteResource(resource);
+	private IResource[] doMembers(IResource resource) throws TeamException, CoreException {
 		if(resource.getType() == IResource.FILE) {
-			return new CVSSyncInfo(resource, CVSWorkspaceRoot.getBaseFor(resource), remoteResource, this, monitor);
-		} else {
-			// In CVS, folders do not have a base. Hence, the remotge is used as the base.
-			return new CVSSyncInfo(resource, remoteResource, remoteResource, this, monitor);
+			return new IResource[0];
+		}	
+		
+		// TODO: will have to filter and return only the CVS phantoms.
+		IResource[] members = ((IContainer)resource).members(true /* include phantoms */);
+		List filteredMembers = new ArrayList(members.length);
+		for (int i = 0; i < members.length; i++) {
+			IResource member = members[i];
+			
+			// TODO: consider that there may be several sync states on this resource. There
+			// should instead be a method to check for the existance of a set of sync types on
+			// a resource.
+			if(member.isPhantom() && remoteSynchronizer.getSyncBytes(member) == null) {
+				continue;
+			}
+			
+			// TODO: would be nice if we didn't need a CVS resource handle for this.
+			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(member);
+			if( !cvsThing.isIgnored()) {
+				filteredMembers.add(member);
+			}
 		}
+		return (IResource[]) filteredMembers.toArray(new IResource[filteredMembers.size()]);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#refresh(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		ICVSRemoteResource[] trees = new ICVSRemoteResource[resources.length];
 		int work = 100 * resources.length;
 		monitor.beginTask(null, work);
 		try {
-			for (int i = 0; i < trees.length; i++) {
+			for (int i = 0; i < resources.length; i++) {
 				IResource resource = resources[i];	
 				
 				// build the remote tree
-				// TODO: we are currently ignoring the depth parameter because the build remote tree is
-				// by default deep!
-				trees[i] = CVSWorkspaceRoot.getRemoteTree(
+				ICVSRemoteResource tree = buildRemoteTree(
 								resource, 
 								null /* build tree based on tags found in the local sync info */ , 
+								depth,
 								Policy.subMonitorFor(monitor, 70));
 				
 				// update the known remote handles 
 				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
 				try {
 					sub.beginTask(null, 512);
-					remoteSynchronizer.collectChanges(resource, trees[i], depth, sub);
+					remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_INFINITE);
+					remoteSynchronizer.collectChanges(resource, tree, depth, sub);
+					IResource[] changes = remoteSynchronizer.getChangedResources();
+					fireSyncChanged(changes);
 				} finally {
-					sub.done();			 
+					sub.done();
+					remoteSynchronizer.resetChanges();	 
 				}
 			}
 		} finally {
 			monitor.done();
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getComparisonCriterias()
-	 */
-	public ComparisonCriteria[] getComparisonCriterias() {
-		return (ComparisonCriteria[]) comparisonCriterias.values().toArray(new ComparisonCriteria[comparisonCriterias.size()]);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getCurrentComparisonCriteria()
-	 */
-	public ComparisonCriteria getCurrentComparisonCriteria() {		
-		return (ComparisonCriteria)comparisonCriterias.get(defaultCriteria);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#setCurrentComparisonCriteria(java.lang.String)
-	 */
-	public void setCurrentComparisonCriteria(String id) throws TeamException {
-		if(! comparisonCriterias.containsKey(id)) {
-			throw new CVSException(id + " is not a valid comparison criteria");
-		}
-		this.defaultCriteria = id;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#isThreeWay()
-	 */
-	public boolean isThreeWay() {
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#isCancellable()
-	 */
-	public boolean isCancellable() {
-		// this is the default subscriber for all shared CVS things in the workspace. You can't
-		// cancel it. Instead users will disconnect resources from CVS control.
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#cancel()
-	 */
-	public void cancel() {
-		// noop
 	}
 	
 	/* (non-Javadoc)
@@ -266,12 +184,7 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 			}
 		}		
 		
-		TeamDelta[] deltas = new TeamDelta[changedResources.length];
-		for (int i = 0; i < changedResources.length; i++) {
-			IResource resource = changedResources[i];
-			deltas[i] = new TeamDelta(this, TeamDelta.SYNC_CHANGED, resource);
-		}
-		fireTeamResourceChange(deltas); 
+		fireSyncChanged(changedResources); 
 	}
 
 	/* (non-Javadoc)
@@ -306,18 +219,18 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 		TeamDelta delta = new TeamDelta(this, TeamDelta.PROVIDER_DECONFIGURED, project);
 		fireTeamResourceChange(new TeamDelta[] {delta});
 	}
-	
-	/**
-	 * @param string
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizer()
 	 */
-	protected void setDescription(String string) {
-		description = string;
+	protected ResourceSynchronizer getRemoteSynchronizer() {
+		return remoteSynchronizer;
 	}
 
-	/**
-	 * @param string
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizer()
 	 */
-	protected void setName(String string) {
-		name = string;
+	protected ResourceSynchronizer getBaseSynchronizer() {
+		return remoteSynchronizer.getBaseSynchronizer();
 	}
 }

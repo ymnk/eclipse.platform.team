@@ -65,7 +65,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 								SubscriberInput input = (SubscriberInput)context.getInput();
 								IResource[] resources = input.getSubscriber().roots();
 								input.getSubscriber().refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
-								view.refreshViewer();
 							} catch (TeamException e) {
 								throw new InvocationTargetException(e);
 							} finally {
