@@ -15,7 +15,9 @@ import java.util.ArrayList;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
@@ -64,6 +66,21 @@ public class RemoveSynchronizeParticipantAction extends Action {
 	private void removeCurrent() {
 		final ISynchronizeParticipant participant = view.getParticipant();
 		if (participant != null) {
+			if (participant.isPinned()) {
+				final boolean[] bail = new boolean[] { false };
+				Display.getDefault().syncExec(new Runnable() {
+					public void run() {
+						bail[0] = !MessageDialog.openQuestion(
+								view.getSite().getShell(), 
+								"Remove Pinned Synchronization?", 
+								"The current synchronization is pinned. Are you sure you want to remove it?");
+
+					}
+				});
+				if (bail[0]) {
+					return;
+				}
+			}
 			TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[]{participant});
 		}
 	}

@@ -557,7 +557,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/**
 	 * Restores participants that have been saved between sessions.
 	 */
-	private void restoreSavedParticipants() throws TeamException, CoreException {
+	private void restoreSavedParticipants() throws CoreException {
 		File file = getStateFile();
 		Reader reader;
 		try {
@@ -565,21 +565,21 @@ public class SynchronizeManager implements ISynchronizeManager {
 		} catch (FileNotFoundException e) {
 			return;
 		}
-		List participants = new ArrayList();
 		IMemento memento = XMLMemento.createReadRoot(reader);
 		IMemento[] participantNodes = memento.getChildren(CTX_PARTICIPANT);
 		for (int i = 0; i < participantNodes.length; i++) {
 			IMemento memento2 = participantNodes[i];
 			String id = memento2.getString(CTX_ID);
 			String secondayId = memento2.getString(CTX_SECONDARY_ID);
-			String displayName = memento2.getString(CTX_PARTICIPANT_DISPLAY_NAME);
-			SynchronizeParticipantDescriptor desc = participantRegistry.find(id);
-			if (desc != null) {
-				IConfigurationElement cfgElement = desc.getConfigurationElement();
-				String key = Utils.getKey(id, secondayId);
-				participantReferences.put(key, new ParticipantInstance(desc, secondayId, displayName, memento2.getChild(CTX_PARTICIPANT_DATA)));
-			} else {
-				TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id), null)); //$NON-NLS-1$
+			if (secondayId != null) {
+				String displayName = memento2.getString(CTX_PARTICIPANT_DISPLAY_NAME);
+				SynchronizeParticipantDescriptor desc = participantRegistry.find(id);
+				if (desc != null) {
+					String key = Utils.getKey(id, secondayId);
+					participantReferences.put(key, new ParticipantInstance(desc, secondayId, displayName, memento2.getChild(CTX_PARTICIPANT_DATA)));
+				} else {
+					TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id), null)); //$NON-NLS-1$
+				}
 			}
 		}
 	}
