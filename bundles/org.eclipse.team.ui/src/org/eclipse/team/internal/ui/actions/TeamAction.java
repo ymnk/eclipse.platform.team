@@ -154,7 +154,7 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
      * @param providerId the repository provider id
      * @return the resource mappings that contain resources associated with the given provider
 	 */
-    protected ResourceMapping[] getSelectedResourceMappers(String providerId) {
+    protected ResourceMapping[] getSelectedResourceMappings(String providerId) {
         Object[] elements = getSelectedAdaptables(selection, ResourceMapping.class);
         ArrayList providerMappings = new ArrayList();
         for (int i = 0; i < elements.length; i++) {

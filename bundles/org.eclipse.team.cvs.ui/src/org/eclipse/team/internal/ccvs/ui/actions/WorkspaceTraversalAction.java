@@ -58,7 +58,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
      * within a CVS managed project
      */
     protected ResourceMapping[] getCVSResourceMappings() {
-        return getSelectedResourceMappers(CVSProviderPlugin.getTypeId());
+        return getSelectedResourceMappings(CVSProviderPlugin.getTypeId());
     }
     
     /**

@@ -10,28 +10,23 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.actions;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
-import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.TagOperation;
-import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
-import org.eclipse.team.internal.ui.dialogs.PromptingDialog;
 
 public class TagLocalAction extends TagAction {
 
-	IResource[] resources;
+    ResourceMapping[] mappings;
 	
 	protected boolean performPrompting()  {
 		// Prompt for any uncommitted changes
-		PromptingDialog prompt = new PromptingDialog(getShell(), getSelectedResources(),
-			getPromptCondition(), Policy.bind("TagAction.uncommittedChangesTitle"));//$NON-NLS-1$
-		try {
-			 resources = prompt.promptForMultiple();
-		} catch(InterruptedException e) {
-			return false;
-		}
-		if(resources.length == 0) {
+        mappings = getCVSResourceMappings();
+        MappingSelectionDialog dialog = new MappingSelectionDialog(getShell(), "Tag Uncommitted Changes?", mappings, getResourceFilter());
+		mappings = dialog.promtpToSelectMappings();
+		if(mappings.length == 0) {
 			// nothing to do
 			return false;						
 		}
@@ -39,22 +34,14 @@ public class TagLocalAction extends TagAction {
 		return true;
 	}
 
-	protected ITagOperation createTagOperation() {
-		return new TagOperation(getTargetPart(), getCVSResourceMappings());
-	}
-    
-	/**
-	 * Note: This method is designed to be overridden by test cases.
-	 */
-	protected IPromptCondition getPromptCondition() {
-		return new IPromptCondition() {
-			public boolean needsPrompt(IResource resource) {
-				return CVSLightweightDecorator.isDirty(resource);
-			}
-			public String promptMessage(IResource resource) {
-				return Policy.bind("TagAction.uncommittedChanges", resource.getName());//$NON-NLS-1$
-			}
-		};
-	}
+    private FastSyncInfoFilter getResourceFilter() {
+        // Return a filter that selects outgoing changes
+        return new SyncInfoDirectionFilter(new int[] { SyncInfo.OUTGOING, SyncInfo.CONFLICTING });
+    }
 
+    protected ITagOperation createTagOperation() {
+        if (mappings == null)
+            mappings = getCVSResourceMappings();
+		return new TagOperation(getTargetPart(), mappings);
+	}
 }

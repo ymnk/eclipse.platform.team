@@ -35,6 +35,12 @@ Pending Items:
     - also the TagAction hierarchy is smelly due to shared code between local and remote tagging
  
  - Synchronize view actions?
+ 
+ - ResourceMappingScope: resources determined by traversing subscriber. Subcriber changes may adjust the roots of the scope.
+   A trickir problem is that, if we keep a participant around, model changes may occur. This is a problem as there is no generic
+   model change mechanism.
+   
+   The roots of the scope are the resources of the traversals. There may be duplication when all the resources ae combined.
 
 Summary of changes:
 
