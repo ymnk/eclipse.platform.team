@@ -64,6 +64,17 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		return null;
 	}
 
+	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
+		if (!isSupervised(resource)) return null;
+		if(resource.getType() == IResource.FILE) {
+			return super.getSyncInfo(resource, monitor);
+		} else {
+			// In CVS, folders do not have a base. Hence, the remote is used as the base.
+			ISubscriberResource remoteResource = getRemoteResource(resource);
+			return getSyncInfo(resource, remoteResource, remoteResource, monitor);
+		}
+	}
+	
 	/**
 	 * Method that creates an instance of SyncInfo for the provider local, base and remote.
 	 * Can be overiden by subclasses.

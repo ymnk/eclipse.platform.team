@@ -111,13 +111,8 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
 		if (!isSupervised(resource)) return null;
 		ISubscriberResource remoteResource = getRemoteResource(resource);
-		if(resource.getType() == IResource.FILE) {
-			ISubscriberResource baseResource = getBaseResource(resource);
-			return getSyncInfo(resource, baseResource, remoteResource, monitor);
-		} else {
-			// In CVS, folders do not have a base. Hence, the remote is used as the base.
-			return getSyncInfo(resource, remoteResource, remoteResource, monitor);
-		}
+		ISubscriberResource baseResource = getBaseResource(resource);
+		return getSyncInfo(resource, baseResource, remoteResource, monitor);
 	}
 
 	/**
