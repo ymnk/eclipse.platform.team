@@ -12,8 +12,12 @@ package org.eclipse.team.internal.ccvs.ui.model;
  
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
@@ -94,5 +98,49 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	public Object getParent(Object o) {
 		if (!(o instanceof CVSTagElement)) return null;
 		return ((CVSTagElement)o).root;
+	}
+
+	public boolean isDeferred() {
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.model.CVSModelElement#getChildrenDeferred(org.eclipse.team.internal.ccvs.ui.model.RemoteContentProvider, java.lang.Object, org.eclipse.ui.IWorkingSet)
+	 */
+	public void getChildrenDeferred(
+		final RemoteContentProvider provider,
+		final Object parent,
+		final IWorkingSet set) {
+
+		// Creat ea job
+		Job job = new Job() {
+			public IStatus run(IProgressMonitor monitor) {
+				ICVSRemoteResource[] children;
+				try {
+					children = CVSUIPlugin
+						.getPlugin()
+						.getRepositoryManager()
+						.getFoldersForTag(
+						root,
+						tag,
+						monitor);
+				} catch (CVSException e) {
+					// TODO: Not quite right
+					return e.getStatus();
+				}
+				if (set != null) {
+					children =
+						CVSUIPlugin
+							.getPlugin()
+							.getRepositoryManager()
+							.filterResources(
+							set,
+							children);
+				}
+				provider.addChildren(parent, children);
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
 	}
 }

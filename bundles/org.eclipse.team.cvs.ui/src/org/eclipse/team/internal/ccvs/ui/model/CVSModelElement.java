@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.ui.IWorkingSet;
@@ -121,6 +122,16 @@ public abstract class CVSModelElement implements IWorkbenchAdapter {
 	 */
 	public void setRunnableContext(IRunnableContext runnableContext) {
 		this.runnableContext = runnableContext;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isDeferred() {
+		return false;
+	}
+	public void getChildrenDeferred(RemoteContentProvider provider, Object parentElement, IWorkingSet workingSet) {
+		// do nothing
 	}
 
 }

@@ -10,6 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.model;
  
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
@@ -27,6 +33,7 @@ import org.eclipse.ui.model.WorkbenchContentProvider;
 public class RemoteContentProvider extends WorkbenchContentProvider {
 	
 	IWorkingSet workingSet;
+	Map cache = new HashMap();
 	
 	/* (non-Javadoc)
 	 * Method declared on WorkbenchContentProvider.
@@ -65,10 +72,16 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
 	 */
 	public Object[] getChildren(Object parentElement) {
-		if (workingSet != null) {
-			// Filter the children of the tag elements
-			IWorkbenchAdapter adapter = getAdapter(parentElement);
-			if (adapter instanceof CVSModelElement) {
+		IWorkbenchAdapter adapter = getAdapter(parentElement);
+		if (adapter instanceof CVSModelElement) {
+			CVSModelElement element = (CVSModelElement)adapter;
+			if (element.isDeferred()) {
+				List result = (List)cache.get(parentElement);
+				if (result != null) return (Object[]) result.toArray(new Object[result.size()]);
+				// otherwise, start the deferred fetch
+				element.getChildrenDeferred(this, parentElement, workingSet);
+				return new Object[0];
+			} else {
 				return ((CVSModelElement)adapter).getChildren(parentElement, workingSet);
 			}
 		}
@@ -91,4 +104,25 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 		return workingSet;
 	}
 
+	/**
+	 * @param parent
+	 * @param children
+	 */
+	protected void addChildren(Object parent, ICVSRemoteResource[] children) {
+		List cachedChildren = (List)cache.get(parent);
+		if (cachedChildren == null) {
+			cachedChildren = new ArrayList();
+			cache.put(parent, cachedChildren);
+		}
+		cachedChildren.addAll(Arrays.asList(children));
+		viewer.getControl().getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				viewer.refresh();
+			}
+		});
+	}
+
+	public void clearCache() {
+		cache.clear();
+	}
 }
