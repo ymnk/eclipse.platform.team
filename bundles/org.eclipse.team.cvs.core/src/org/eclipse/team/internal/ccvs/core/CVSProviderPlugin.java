@@ -22,6 +22,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProvider;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
+import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 import org.eclipse.team.internal.ccvs.core.util.OrphanedFolderListener;
 import org.eclipse.team.internal.ccvs.core.util.ProjectDescriptionManager;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -152,6 +153,7 @@ public class CVSProviderPlugin extends Plugin {
 		Policy.localize("org.eclipse.team.internal.ccvs.core.messages"); //$NON-NLS-1$
 
 		CVSProvider.startup();
+		EclipseSynchronizer.startup();
 		ProjectDescriptionManager.initializeChangeListener();
 		new OrphanedFolderListener().register();
 	}
@@ -162,7 +164,9 @@ public class CVSProviderPlugin extends Plugin {
 	public void shutdown() throws CoreException {
 		super.shutdown();
 		CVSProvider.shutdown();
+		EclipseSynchronizer.shutdown();
 	}
+	
 		
 	/*
 	 * Add a resource change listener to the workspace in order to respond to 

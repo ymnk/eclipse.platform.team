@@ -75,23 +75,10 @@ public class EclipseSynchronizer {
 	
 	private static final boolean DEBUG = false;
 	
-	private EclipseSynchronizer() {
-		getSynchronizer().add(RESOURCE_SYNC_KEY);
-		getSynchronizer().add(RESOURCE_SYNC_LOADED_KEY);
-		getSynchronizer().add(FOLDER_SYNC_KEY);
-		getSynchronizer().add(IGNORE_SYNC_KEY);
-		try {
-			flushAll(ResourcesPlugin.getWorkspace().getRoot(), false /*don't purge from disk*/);
-		} catch(CVSException e) {
-			// severe problem, it would mean that we are working with stale sync info
-			CVSProviderPlugin.log(e.getStatus());
-		}
+	private EclipseSynchronizer() {		
 	}
 	
-	public static EclipseSynchronizer getInstance() {
-		if (instance == null) {
-			instance = new EclipseSynchronizer();						
-		}
+	public static EclipseSynchronizer getInstance() {		
 		return instance;
 	}
 
@@ -179,6 +166,7 @@ public class EclipseSynchronizer {
 	
 	public void setIgnored(IResource resource, String pattern) throws CVSException {
 		SyncFileWriter.addCvsIgnoreEntry(CVSWorkspaceRoot.getCVSResourceFor(resource), pattern);
+		TeamPlugin.getManager().broadcastResourceStateChanges(new IResource[] {resource});
 	}
 		
 	public IResource[] members(IContainer folder) throws CVSException {
@@ -197,6 +185,29 @@ public class EclipseSynchronizer {
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
+	}
+	
+	static public void startup() {
+		Assert.isTrue(instance==null);
+		instance = new EclipseSynchronizer();	
+		getSynchronizer().add(RESOURCE_SYNC_KEY);
+		getSynchronizer().add(RESOURCE_SYNC_LOADED_KEY);
+		getSynchronizer().add(FOLDER_SYNC_KEY);
+		getSynchronizer().add(IGNORE_SYNC_KEY);
+		try {
+			flushAll(ResourcesPlugin.getWorkspace().getRoot(), false /*don't purge from disk*/);
+		} catch(CVSException e) {
+			//	// severe problem, it would mean that we are working with stale sync info
+			CVSProviderPlugin.log(e.getStatus());
+		}					
+	}
+	
+	static public void shutdown() {
+		// so that the workspace won't persist cached sync info
+		getSynchronizer().remove(RESOURCE_SYNC_KEY);
+		getSynchronizer().remove(RESOURCE_SYNC_LOADED_KEY);
+		getSynchronizer().remove(FOLDER_SYNC_KEY);
+		getSynchronizer().remove(IGNORE_SYNC_KEY);
 	}
 	
 	public void beginOperation(IProgressMonitor monitor) throws CVSException {
@@ -467,7 +478,7 @@ public class EclipseSynchronizer {
 		}
 	}
 	
-	private void flushAll(final IContainer root, final boolean purgeFromDisk) throws CVSException {
+	static private void flushAll(final IContainer root, final boolean purgeFromDisk) throws CVSException {
 		if (! (root.exists() || root.isPhantom())) return;
 		try {
 			// purge sync information from children

@@ -190,9 +190,9 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 			try {		
 				// Auto-add parents if they are not already managed
 				IContainer parent = resources[i].getParent();
-				// XXX Need to consider workspace root
 				ICVSFolder cvsParent = CVSWorkspaceRoot.getCVSFolderFor(parent);
-				while (parent.getType()!=IResource.PROJECT && !cvsParent.isManaged()) {
+				while (parent.getType()!=IResource.PROJECT && 
+						parent.getType()!=IResource.ROOT && !cvsParent.isManaged()) {
 					folders.add(parent.getProjectRelativePath().toString());
 					parent = parent.getParent();
 				}

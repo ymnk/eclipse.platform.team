@@ -11,6 +11,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.core.TeamException;
@@ -164,6 +165,17 @@ public class CVSProviderTest extends EclipseTest {
 		// get the remote conetns
 		getProvider(copy).get(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 		assertEquals(project, copy);
+	}
+	
+	public void testAdd() throws TeamException, CoreException, IOException {		
+		// Create a project
+		IProject project = createProject("testAdd", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt" });
+		addResources(project, new String[] { "added.txt", "folder2/", "folder2/added.txt" }, false);
+
+		// get the remote conetns
+		getProvider(project).add(new IResource[] {project}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		getProvider(project).checkin(new IResource[] {project}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		assertLocalStateEqualsRemote(project);
 	}
 
 }

@@ -236,6 +236,8 @@ abstract class EclipseResource implements ICVSResource {
 	 * @see ICVSResource#unmanage()
 	 */
 	public void unmanage() throws CVSException {
-		EclipseSynchronizer.getInstance().deleteResourceSync(resource, new NullProgressMonitor());
+		if(isManaged()) {
+			EclipseSynchronizer.getInstance().deleteResourceSync(resource, new NullProgressMonitor());
+		}
 	}
 }
