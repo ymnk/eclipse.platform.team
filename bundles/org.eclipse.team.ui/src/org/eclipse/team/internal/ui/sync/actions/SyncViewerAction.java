@@ -34,18 +34,4 @@ public abstract class SyncViewerAction extends Action {
 	public Shell getShell() {
 		return viewPart.getSite().getShell();
 	}
-	
-	/**
-	 * @return
-	 */
-	public ISelection getSelection() {
-		return selection;
-	}
-	
-	/**
-	 * @param selection
-	 */
-	public void selectionChanged(ISelection selection) {
-		this.selection = selection;
-	}
 }

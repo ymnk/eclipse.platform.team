@@ -21,9 +21,11 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
+import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.ui.ISharedImages;
@@ -57,13 +59,13 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	
 	// other view actions
 	private Action collapseAll;
-	private RefreshAction refreshAction;
+	private Action refreshAction;
 	private Action toggleViewerType;
 	private Action open;
 	
-	class RefreshAction extends SyncViewerAction {
+	class RefreshAction extends Action {
 		public RefreshAction() {
-			super (getSyncView(), "Refresh with Repository");
+			setText("Refresh with Repository");
 			setToolTipText("Refresh the selected resources with the repository");
 			setImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_REFRESH_ENABLED));
 			setDisabledImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_REFRESH_DISABLED));
@@ -76,14 +78,23 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 					try {
 						monitor.beginTask(null, 100);
 						ActionContext context = getContext();
+						getResources(context.getSelection());
 						SubscriberInput input = (SubscriberInput)context.getInput();
-						IResource[] resources = input.roots();
+						IResource[] resources = getResources(context.getSelection());
+						if (resources.length == 0) {
+							// If no resources are selected, refresh all the subscriber roots
+							resources = input.roots();
+						}
 						input.getSubscriber().refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
 					} catch (TeamException e) {
 						throw new InvocationTargetException(e);
 					} finally {
 						monitor.done();
 					}
+				}
+				private IResource[] getResources(ISelection selection) {
+					return (IResource[])TeamAction.getSelectedAdaptables(selection, IResource.class);
+					
 				}
 			});
 		}
@@ -148,9 +159,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		comparisonCriteria.updateActionBars();
 		subscriberInputs.updateActionBars();
 		subscriberActions.updateActionBars();
-		
-		
-		refreshAction.selectionChanged(getContext().getSelection());
 	}
 
 	public SyncViewerActions(SyncViewer viewer) {

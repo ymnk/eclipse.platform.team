@@ -63,6 +63,7 @@ import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.core.sync.TeamProvider;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
@@ -605,11 +606,6 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	 * @return
 	 */
 	private IResource getResource(Object object) {
-		if (object instanceof IResource) {
-			return (IResource)object;
-		} else if (object instanceof IAdaptable) {
-			return (IResource)((IAdaptable)object).getAdapter(IResource.class);
-		}
-		return null;
+		return (IResource)TeamAction.getAdapter(object, IResource.class);
 	}
 }
