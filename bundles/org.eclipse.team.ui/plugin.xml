@@ -20,11 +20,12 @@
       <import plugin="org.eclipse.ui.workbench.texteditor" optional="true"/>
       <import plugin="org.eclipse.ui.editors" optional="true"/>
       <import plugin="org.eclipse.core.resources"/>
-      <import plugin="org.eclipse.core.runtime.compatibility"/> 
+      <import plugin="org.eclipse.core.runtime.compatibility" optional="true"/>
       <import plugin="org.eclipse.team.core"/>
       <import plugin="org.eclipse.ui"/>
       <import plugin="org.eclipse.compare"/>
    </requires>
+
 
    <extension-point id="configurationWizards" name="%configurationWizards" schema="schema/configurationWizards.exsd"/>
    <extension-point id="synchronizeParticipants" name="%synchronizeParticipants" schema="schema/synchronizeParticipants.exsd"/>
@@ -54,8 +55,8 @@
    <extension
          point="org.eclipse.ui.popupMenus">
       <objectContribution
-            objectClass="org.eclipse.core.resources.IResource"
             adaptable="true"
+            objectClass="org.eclipse.core.resources.IResource"
             id="org.eclipse.team.ui.ResourceContributions">
          <menu
                label="%TeamGroupMenu.label"
@@ -100,13 +101,13 @@
          </menu>
       </objectContribution>
       <objectContribution
-            objectClass="org.eclipse.core.resources.IProject"
             adaptable="true"
+            objectClass="org.eclipse.core.resources.IProject"
             id="org.eclipse.team.ui.ProjectContributions">
          <action
                label="%ConfigureProject.label"
-               tooltip="%ConfigureProject.tooltip"
                class="org.eclipse.team.internal.ui.actions.ConfigureProjectAction"
+               tooltip="%ConfigureProject.tooltip"
                menubarPath="team.main/projectGroup"
                enablesFor="1"
                id="org.eclipse.team.ui.ConfigureProject">
@@ -123,8 +124,8 @@
       <view
             name="%SyncView.name"
             icon="icons/full/cview16/synch_synch.gif"
-            fastViewWidthRatio="0.25"
             category="org.eclipse.team.ui"
+            fastViewWidthRatio="0.25"
             class="org.eclipse.team.internal.ui.synchronize.SynchronizeView"
             id="org.eclipse.team.sync.views.SynchronizeView">
       </view>
@@ -134,7 +135,7 @@
          point="org.eclipse.ui.perspectives">
       <perspective
             name="%Synchronizing.perspective"
-             icon="icons/full/cview16/synch_synch.gif"
+            icon="icons/full/cview16/synch_synch.gif"
             class="org.eclipse.team.internal.ui.synchronize.TeamSynchronizingPerspective"
             id="org.eclipse.team.ui.TeamSynchronizingPerspective">
       </perspective>
@@ -144,9 +145,9 @@
       <perspectiveExtension
             targetID="org.eclipse.ui.resourcePerspective">
          <perspectiveShortcut
-            id="org.eclipse.team.ui.TeamSynchronizingPerspective">
+               id="org.eclipse.team.ui.TeamSynchronizingPerspective">
          </perspectiveShortcut>
-      </perspectiveExtension>	
+      </perspectiveExtension>
    </extension>
 <!-- ****************** Import Wizards ********************* -->
    <extension
@@ -207,17 +208,6 @@
             description="%ActionSet.description"
             visible="false"
             id="org.eclipse.team.ui.actionSet">
-<!--         <action
-               definitionId="org.eclipse.team.ui.syncview.syncAll"
-               label="%Command.syncAll.name"
-               style="pulldown"
-               icon="icons/full/cview16/synch_synch.gif"
-               tooltip="%Command.syncAll.description"
-               class="org.eclipse.team.internal.ui.sync.actions.SyncAllAction"
-               toolbarPath="Normal/CVS"
-               id="org.eclipse.team.internal.ui.sync.actions.SyncAllAction">
-         </action>
- -->
       </actionSet>
    </extension>
 

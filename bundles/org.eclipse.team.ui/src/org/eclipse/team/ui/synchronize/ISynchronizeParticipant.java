@@ -13,6 +13,7 @@ package org.eclipse.team.ui.synchronize;
 import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -66,6 +67,15 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * participant
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view);
+	
+	/**
+	 * Creates and returns a new composite that describes this participant
+	 * and will be shown on the participant overview page in the synchronize
+	 * view.
+	 * @param view the synchronize view showing this participant
+	 * @return a composite showing the overview details about this participant.
+	 */
+	public Composite createOverviewPage(Composite parent, ISynchronizeView view);
 	
 	/**
 	 * Initializes this participant with the given participant state.  

@@ -19,6 +19,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.widgets.*;
 import org.eclipse.team.internal.ui.widgets.FormSection;
 import org.eclipse.team.internal.ui.widgets.FormWidgetFactory;
 import org.eclipse.team.ui.ISharedImages;
@@ -87,10 +88,14 @@ public class ParticipantComposite extends Composite {
 				super.reflow();
 				setRedraw(false);
 				getParent().setRedraw(false);
+				getParent().getParent().setRedraw(false);
+				getParent().getParent().getParent().setRedraw(false);
 				layout(true);
 				getParent().layout(true);
 				setRedraw(true);
 				getParent().setRedraw(true);
+				getParent().getParent().setRedraw(true);
+				getParent().getParent().getParent().setRedraw(true);
 			}
 		};
 		dropDownSection.setCollapsable(true);
@@ -110,6 +115,112 @@ public class ParticipantComposite extends Composite {
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
 		area.setLayout(layout);
+		FormWidgetFactory factory = new FormWidgetFactory(getDisplay());
+		factory.setBackgroundColor(getBackgroundColor());
+		{
+			final GridData gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
+			area.setLayoutData(gridData);
+		}
+		{
+			final Composite composite = new Composite(area, SWT.NONE);
+			composite.setBackground(getBackgroundColor());
+			composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+			final GridLayout gridLayout = new GridLayout();
+			gridLayout.numColumns = 3;
+			composite.setLayout(gridLayout);
+			{
+				final Label label = new Label(composite, SWT.NONE);
+				final GridData gridData = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
+				//gridData.verticalSpan = 5;
+				label.setLayoutData(gridData);
+				label.setImage(participantImage);
+				label.setBackground(getBackgroundColor());
+			}
+			{
+				final Label label = new Label(composite, SWT.WRAP);
+				final GridData gridData_1 = new GridData();
+				//gridData_1.
+				label.setLayoutData(gridData_1);
+				label.setFont(JFaceResources.getHeaderFont());
+				label.setText(participant.getName());
+				label.setBackground(getBackgroundColor());
+			}
+			{
+				final Label label = new Label(composite, SWT.NONE);
+				final GridData gridData_1 = new GridData();				
+				gridData_1.horizontalAlignment = GridData.END;
+				//gridData_1.verticalSpan = 3;
+				label.setLayoutData(gridData_1);
+				label.setText("Goto page");
+				label.setBackground(getBackgroundColor());
+				factory.turnIntoHyperlink(label, new IHyperlinkListener() {
+					/* (non-Javadoc)
+					 * @see org.eclipse.team.internal.ui.widgets.IHyperlinkListener#linkActivated(org.eclipse.swt.widgets.Control)
+					 */
+					public void linkActivated(Control linkLabel) {
+						view.display(participant);
+					}
+
+					/* (non-Javadoc)
+					 * @see org.eclipse.team.internal.ui.widgets.IHyperlinkListener#linkEntered(org.eclipse.swt.widgets.Control)
+					 */
+					public void linkEntered(Control linkLabel) {
+						// TODO Auto-generated method stub
+
+					}
+
+					/* (non-Javadoc)
+					 * @see org.eclipse.team.internal.ui.widgets.IHyperlinkListener#linkExited(org.eclipse.swt.widgets.Control)
+					 */
+					public void linkExited(Control linkLabel) {
+						// TODO Auto-generated method stub
+
+					}
+				});
+			}
+			
+			{
+				final Composite composite_1 = new Composite(composite, SWT.NONE);
+				final GridData gridData = new GridData(GridData.FILL_BOTH);
+				gridData.horizontalSpan = 3;
+				composite_1.setLayoutData(gridData);
+				final GridLayout gridLayout_1 = new GridLayout();
+				gridLayout_1.marginWidth = 0;
+				gridLayout_1.marginHeight = 0;
+				composite_1.setLayout(gridLayout_1);
+				composite_1.setBackground(getBackgroundColor());			
+				participant.createOverviewPage(composite_1, view);
+			}
+			
+			{
+				final Composite composite_1 = new Composite(composite, SWT.NONE);
+				final GridData gridData = new GridData(GridData.HORIZONTAL_ALIGN_END);
+				gridData.horizontalSpan = 3;
+				composite_1.setLayoutData(gridData);
+				final GridLayout gridLayout_1 = new GridLayout();
+				gridLayout_1.marginWidth = 0;
+				gridLayout_1.marginHeight = 0;
+				composite_1.setLayout(gridLayout_1);
+				composite_1.setBackground(getBackgroundColor());
+				{
+					final Button button = new Button(composite_1, SWT.FLAT);
+					button.setText("Setup...");
+					GridData gd = new GridData();
+					gd.horizontalAlignment = GridData.END;
+					button.setLayoutData(gd);
+				}
+			}
+		}
+		return area;
+	}
+	
+	protected Composite createComposite2(Composite area) {
+		GridLayout layout = new GridLayout();
+		layout.marginHeight = 0;
+		layout.marginWidth = 0;
+		area.setLayout(layout);
+		FormWidgetFactory factory = new FormWidgetFactory(getDisplay());
+		factory.setBackgroundColor(getBackgroundColor());
 		{
 		final GridData gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
 		area.setLayoutData(gridData);
@@ -152,29 +263,42 @@ public class ParticipantComposite extends Composite {
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
-					final GridData gridData_1 = new GridData(GridData.FILL_BOTH);
+					final GridData gridData_1 = new GridData();
 					gridData_1.horizontalSpan = 2;
 					gridData_1.verticalSpan = 3;
 					label.setLayoutData(gridData_1);
-					label.setText("This synchronizes all shared projects with their associated remote repositories.");
+					label.setText("Goto page");
 					label.setBackground(getBackgroundColor());
+					factory.turnIntoHyperlink(label, new IHyperlinkListener() {
+						/* (non-Javadoc)
+						 * @see org.eclipse.team.internal.ui.widgets.IHyperlinkListener#linkActivated(org.eclipse.swt.widgets.Control)
+						 */
+						public void linkActivated(Control linkLabel) {
+							view.display(participant);
+						}
+
+						/* (non-Javadoc)
+						 * @see org.eclipse.team.internal.ui.widgets.IHyperlinkListener#linkEntered(org.eclipse.swt.widgets.Control)
+						 */
+						public void linkEntered(Control linkLabel) {
+							// TODO Auto-generated method stub
+
+						}
+
+						/* (non-Javadoc)
+						 * @see org.eclipse.team.internal.ui.widgets.IHyperlinkListener#linkExited(org.eclipse.swt.widgets.Control)
+						 */
+						public void linkExited(Control linkLabel) {
+							// TODO Auto-generated method stub
+
+						}
+					});
 				}
-				{
-//					final Label label = new Label(composite_1, SWT.NONE);
-//					label.setText("Resources:");
-//					label.setBackground(getBackgroundColor());
-					FormWidgetFactory factory = new FormWidgetFactory(getDisplay());
-					factory.setBackgroundColor(getBackgroundColor());
+				{										
 					Control control = dropDownSection.createControl(composite_1, factory);
-		control.setBackground(new Color(composite_1.getDisplay(), new RGB(0,0,0)));
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
-		gd.horizontalSpan = 2;
-		control.setLayoutData(gd);
-				}
-				{
-//					final Combo combo = new Combo(composite_1, SWT.READ_ONLY);
-//					combo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//					combo.setBackground(getBackgroundColor());
+					GridData gd = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
+					gd.horizontalSpan = 2;
+					control.setLayoutData(gd);
 				}
 			}
 			{

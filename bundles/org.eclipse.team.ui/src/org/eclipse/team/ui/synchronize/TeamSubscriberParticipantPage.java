@@ -21,8 +21,8 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
-import org.eclipse.swt.events.MenuListener;
-import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
@@ -30,9 +30,12 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
+import org.eclipse.team.internal.ui.synchronize.DropDownParticipantSection;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.internal.ui.widgets.FormSection;
+import org.eclipse.team.internal.ui.widgets.FormWidgetFactory;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.*;
@@ -58,6 +61,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
 	private Composite composite = null;
+	private DropDownParticipantSection participantSection;
+	private FormSection changesSection;
 	private boolean settingWorkingSet = false;
 	
 	// Viewer type constants
@@ -123,8 +128,43 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		
 		// Create the busy cursor with no control to start with (createViewer will set it)
 		busyCursor = new JobBusyCursor(parent.getParent().getParent(), SubscriberAction.SUBSCRIBER_JOB_TYPE);
+		participantSection = new DropDownParticipantSection(parent, getParticipant(), getSynchronizeView());		
+		changesSection = new FormSection() {			
+			/* (non-Javadoc)
+			 * @see org.eclipse.team.internal.ui.widgets.FormSection#getHeaderText()
+			 */
+			public String getHeaderText() {
+				return "Changes";
+			}
+		
+			/* (non-Javadoc)
+			 * @see org.eclipse.team.internal.ui.widgets.FormSection#createClient(org.eclipse.swt.widgets.Composite, org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
+			 */
+			public Composite createClient(Composite parent, FormWidgetFactory factory) {
+				Composite top = factory.createComposite(parent);
+				GridLayout layout = new GridLayout();
+				layout.marginHeight = 0;
+				layout.marginWidth = 0;
+				top.setBackground(new Color(parent.getDisplay(), new RGB(123,111,111)));
+				top.setLayout(layout);
+				createChangesSection(top);
+				return top;				
+			}
+			protected void reflow() {
+				super.reflow();
+				composite.setRedraw(false);
+				composite.getParent().setRedraw(false);
+				composite.layout(true);
+				composite.getParent().layout(true);
+				composite.setRedraw(true);
+				composite.getParent().setRedraw(true);
+			}
+		};
+		changesSection.setCollapsable(true);
+		changesSection.setCollapsed(false);
+		
 		createViewer(composite);
-				
+		
 		// create actions
 		openWithActions = new OpenWithActionGroup(this);
 		refactorActions = new RefactorActionGroup(view);
@@ -266,6 +306,20 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	
 	private void createViewer(Composite parent) {				
 		//tbMgr.createControl(parent);
+		FormWidgetFactory factory = new FormWidgetFactory(parent.getDisplay());
+		factory.setBackgroundColor(new Color(parent.getDisplay(), new RGB(255, 255, 255)));
+		// overview section
+		Control control = participantSection.createControl(parent, factory);
+		GridData gd = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
+		control.setLayoutData(gd);
+		// changes section
+		control = changesSection.createControl(parent, factory);
+		gd = new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);
+		gd.grabExcessVerticalSpace = true;
+		control.setLayoutData(gd);
+	}
+	
+	private void createChangesSection(Composite parent) {
 		switch(layout) {
 			case TeamSubscriberParticipant.TREE_LAYOUT:
 				createTreeViewerPartControl(parent); 
@@ -285,15 +339,16 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		return new TeamSubscriberParticipantLabelProvider();		
 	}
 	
-	private void createTreeViewerPartControl(Composite parent) {
+	private Control createTreeViewerPartControl(Composite parent) {
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer = new SyncTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
 		((TreeViewer)viewer).getTree().setLayoutData(data);
+		return viewer.getControl();
 	}
 	
-	private void createTableViewerPartControl(Composite parent) {
+	private Control createTableViewerPartControl(Composite parent) {
 		// Create the table
 		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
 		table.setHeaderVisible(true);
@@ -316,6 +371,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		viewer.setContentProvider(new SyncSetTableContentProvider());
 		viewer.setLabelProvider(getLabelProvider());		
 		viewer.setSorter(new SyncViewerTableSorter());
+		return viewer.getControl();
 	}
 	
 	/**

@@ -29,6 +29,7 @@ import org.eclipse.ui.texteditor.IUpdate;
 public class SynchronizePageDropDownAction extends Action implements IMenuCreator, ISynchronizeParticipantListener, IUpdate {
 
 		private ISynchronizeView fView;
+		private Action overviewPageAction;
 		private Menu fMenu;
 	
 		/* (non-Javadoc)
@@ -44,6 +45,12 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			Utils.initAction(this, "action.refreshSubscriber."); //$NON-NLS-1$
 			setMenuCreator(this);
 			TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(this);
+			overviewPageAction = new Action("Overview Page") {
+				public void run() {
+					fView.displayOverviewPage();
+				}
+			};
+			
 			update();
 		}
 
@@ -84,11 +91,8 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			}
 			// Add Overview Page
 			addMenuSeparator();
-			addActionToMenu(fMenu, new Action("Overview Page") {
-				public void run() {
-					fView.displayOverviewPage();
-				}
-			});
+			addActionToMenu(fMenu, overviewPageAction);
+			overviewPageAction.setChecked(current == null);
 			return fMenu;
 		}
 	

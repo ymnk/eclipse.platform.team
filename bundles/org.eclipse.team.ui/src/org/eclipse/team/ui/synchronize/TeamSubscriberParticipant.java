@@ -11,6 +11,9 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -159,6 +162,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		}
 	}
 	
+	
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#init(org.eclipse.ui.IMemento)
 	 */
@@ -196,5 +201,13 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		}
 		settings.putString(P_SYNCVIEWPAGE_LAYOUT, Integer.toString(getLayout()));
 		settings.putString(P_SYNCVIEWPAGE_MODE, Integer.toString(getMode()));
+	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createOverviewPage(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.ISynchronizeView)
+	 */
+	public Composite createOverviewPage(Composite parent, ISynchronizeView view) {
+		Label l = new Label(parent, SWT.NONE);
+		l.setText("This is a test");
+		return null;
 	}
 }
