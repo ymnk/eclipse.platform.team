@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -73,11 +74,14 @@ public class CVSSynchronizeParticipant extends TeamSubscriberParticipant impleme
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(SyncSetChangedEvent event) {
-		IStructuredContentProvider cp = (IStructuredContentProvider)getPage().getViewer().getContentProvider(); 
-		StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
-		for (Iterator it = delegates.iterator(); it.hasNext(); ) {
-			CVSActionDelegate delegate = (CVSActionDelegate) it.next();
-			delegate.getDelegate().selectionChanged(delegate, selection);
+		StructuredViewer viewer = getPage().getViewer();
+		if(viewer != null) {
+			IStructuredContentProvider cp = (IStructuredContentProvider)viewer.getContentProvider(); 
+			StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
+			for (Iterator it = delegates.iterator(); it.hasNext(); ) {
+				CVSActionDelegate delegate = (CVSActionDelegate) it.next();
+				delegate.getDelegate().selectionChanged(delegate, selection);
+			}
 		}
 	}
 }

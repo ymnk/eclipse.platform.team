@@ -19,6 +19,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.sync.pages.TextToolbarManager;
 import org.eclipse.team.internal.ui.sync.sets.*;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionBars;
@@ -125,9 +126,17 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
 	 */
 	public void fillToolBar(IToolBarManager toolBar) {
+		boolean custom = false;
+		if(toolBar instanceof TextToolbarManager) {
+			custom = true;
+		}
 		for (Iterator it = actions.iterator(); it.hasNext();) {
 			DirectionFilterAction action = (DirectionFilterAction) it.next();
-			toolBar.add(action);
+			if(custom) {
+				((TextToolbarManager)toolBar).add(action, 150);
+			} else {
+				toolBar.add(action);
+			}
 		}
 	}
 	
@@ -183,18 +192,22 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 		bothMode.setText(new Integer(input.getWorkingSetSyncSet().size()).toString());
 		if(input.getWorkingSet() != null) {
 			if(conflictsMode != null)
-				conflictsMode.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetConflicting).toString(), new Integer(workspaceConflicting).toString())); //$NON-NLS-1$
+				conflictsMode.setText(padString(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetConflicting).toString(), new Integer(workspaceConflicting).toString()))); //$NON-NLS-1$
 			if(incomingMode != null)
-				incomingMode.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString())); //$NON-NLS-1$
+				incomingMode.setText(padString(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString()))); //$NON-NLS-1$
 			if(outgoingMode != null)
-				outgoingMode.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetOutgoing).toString(), new Integer(workspaceOutgoing).toString())); //$NON-NLS-1$
+				outgoingMode.setText(padString(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetOutgoing).toString(), new Integer(workspaceOutgoing).toString()))); //$NON-NLS-1$
 		} else {
 			if(conflictsMode != null)
-				conflictsMode.setText(new Integer(workspaceConflicting).toString()); //$NON-NLS-1$
+				conflictsMode.setText(padString(new Integer(workspaceConflicting).toString())); //$NON-NLS-1$
 			if(incomingMode != null)
-				incomingMode.setText(new Integer(workspaceIncoming).toString()); //$NON-NLS-1$
+				incomingMode.setText(padString(new Integer(workspaceIncoming).toString())); //$NON-NLS-1$
 			if(outgoingMode != null)
-				outgoingMode.setText(new Integer(workspaceOutgoing).toString()); //$NON-NLS-1$
+				outgoingMode.setText(padString(new Integer(workspaceOutgoing).toString())); //$NON-NLS-1$
 		}								
+	}
+	
+	private String padString(String s) {		
+		return s;		
 	}
 }

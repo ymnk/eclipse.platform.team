@@ -116,10 +116,10 @@ public class WorkingSetDropDownAction extends Action implements IMenuCreator, IP
 	}
 	
 	private void updateWorkingSet(IWorkingSet set) {
-		if (set != null) {	
-			setText(set.getName());
-		} else if (set == null) {
-			setText(Policy.bind("action.workingSets.none"));
-		}
+//		if (set != null) {	
+//			setText(set.getName());
+//		} else if (set == null) {
+//			setText(Policy.bind("action.workingSets.none"));
+//		}
 	}
 }

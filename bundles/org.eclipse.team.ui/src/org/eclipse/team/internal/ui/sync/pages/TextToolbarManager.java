@@ -25,4 +25,11 @@ public class TextToolbarManager extends ToolBarManager {
 	public void add(IAction action) {		
 		super.add(new ToolItemActionContributionItem(action));
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.action.IContributionManager#add(org.eclipse.jface.action.IAction)
+	 */
+	public void add(IAction action, int preferedSize) {		
+		super.add(new ToolItemActionContributionItem(action, preferedSize));
+	}
 }

@@ -43,6 +43,8 @@ public class ToolItemActionContributionItem  extends ContributionItem {
 	 */
 	private Widget parentWidget = null;
 	
+	private int preferedSize = -1;
+	
 	/**
 	 * Listener for action property change notifications.
 	 */
@@ -182,6 +184,16 @@ public ToolItemActionContributionItem(IAction action) {
 	super(action.getId());
 	this.action = action;
 }
+
+/**
+ * @param action2
+ * @param preferedSize
+ */
+public ToolItemActionContributionItem(IAction action, int preferedSize) {
+	this(action);
+	this.preferedSize = preferedSize;
+}
+
 /**
  * Handles a property change event on the action (forwarded by nested listener).
  */
@@ -336,6 +348,10 @@ public void fill(ToolBar parent, int index) {
 		ti.addListener(SWT.Selection, getToolItemListener());
 		ti.addListener(SWT.Dispose, getToolItemListener());
 
+		if(preferedSize != -1) {
+			ti.setWidth(preferedSize);
+		}
+		
 		widget = ti;
 		parentWidget = parent;
 		
@@ -593,7 +609,6 @@ public void update(String propertyName) {
 					
 		if (widget instanceof ToolItem) {
 			ToolItem ti = (ToolItem) widget;
-
 			if(textChanged)
 				ti.setText(action.getText());
 			
@@ -609,7 +624,7 @@ public void update(String propertyName) {
 				if (ti.getEnabled() != shouldBeEnabled)
 					ti.setEnabled(shouldBeEnabled);
 			}
-				
+			if(preferedSize > 0) ti.setWidth(preferedSize);	
 			if (checkChanged) {
 				boolean bv = action.isChecked();
 				
