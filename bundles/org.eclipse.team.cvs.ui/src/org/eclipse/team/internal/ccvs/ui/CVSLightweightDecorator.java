@@ -28,6 +28,8 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -52,10 +54,11 @@ import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.TeamUI;
 
 public class CVSLightweightDecorator
 	extends LabelProvider
-	implements ILightweightLabelDecorator, IResourceStateChangeListener {
+	implements ILightweightLabelDecorator, IResourceStateChangeListener, IPropertyChangeListener {
 
 	// Images cached for better performance
 	private static ImageDescriptor dirty;
@@ -66,7 +69,7 @@ public class CVSLightweightDecorator
 	private static ImageDescriptor newResource;
 	private static ImageDescriptor edited;
 
-	private static ExceptionCollector exceptions;
+	private static ExceptionCollector exceptions = new ExceptionCollector(Policy.bind("CVSDecorator.exceptionMessage"), CVSUIPlugin.ID, IStatus.ERROR, CVSUIPlugin.getPlugin().getLog()); //$NON-NLS-1$;
 
 	/*
 	 * Define a cached image descriptor which only creates the image data once
@@ -85,6 +88,30 @@ public class CVSLightweightDecorator
 		}
 	}
 
+	public static class Decoration implements IDecoration {
+		public String prefix, suffix;
+		public ImageDescriptor overlay;
+		
+		/**
+		 * @see org.eclipse.jface.viewers.IDecoration#addPrefix(java.lang.String)
+		 */
+		public void addPrefix(String prefix) {
+			this.prefix = prefix;
+		}
+		/**
+		 * @see org.eclipse.jface.viewers.IDecoration#addSuffix(java.lang.String)
+		 */
+		public void addSuffix(String suffix) {
+			this.suffix = suffix;
+		}
+		/**
+		 * @see org.eclipse.jface.viewers.IDecoration#addOverlay(org.eclipse.jface.resource.ImageDescriptor)
+		 */
+		public void addOverlay(ImageDescriptor overlay) {
+			this.overlay = overlay;
+		}
+	}
+	
 	static {
 		dirty = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
 		checkedIn = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
@@ -97,8 +124,9 @@ public class CVSLightweightDecorator
 
 	public CVSLightweightDecorator() {
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this);
+		TeamUI.addPropertyChangeListener(this);
+		CVSUIPlugin.addPropertyChangeListener(this);
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
-		exceptions = new ExceptionCollector(Policy.bind("CVSDecorator.exceptionMessage"), CVSUIPlugin.ID, IStatus.ERROR, CVSUIPlugin.getPlugin().getLog()); //$NON-NLS-1$
 	}
 
 	public static boolean isDirty(final ICVSResource cvsResource) {
@@ -183,10 +211,8 @@ public class CVSLightweightDecorator
 		}
 
 		// determine a if resource has outgoing changes (e.g. is dirty).
-		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 		boolean isDirty = false;
-		boolean computeDeepDirtyCheck =
-			store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
+		boolean computeDeepDirtyCheck = isDeepDirtyCalculationEnabled();
 		int type = resource.getType();
 		if (type == IResource.FILE || computeDeepDirtyCheck) {
 			isDirty = CVSLightweightDecorator.isDirty(resource);
@@ -200,7 +226,12 @@ public class CVSLightweightDecorator
 		}
 	}
 
-//todo the showRevisions flag is temp, a better solution is DecoratorStrategy classes which have most the code below
+	private boolean isDeepDirtyCalculationEnabled() {
+		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
+		return store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
+	}
+
+	//todo the showRevisions flag is temp, a better solution is DecoratorStrategy classes which have most the code below
 	public static void decorateTextLabel(IResource resource, IDecoration decoration, boolean isDirty, boolean showRevisions) {
 		try {
 			Map bindings = new HashMap(3);
@@ -209,7 +240,7 @@ public class CVSLightweightDecorator
 
 			// if the resource does not have a location then return. This can happen if the resource
 			// has been deleted after we where asked to decorate it.
-			if(resource.getLocation() == null) {
+			if(!resource.isAccessible() || resource.getLocation() == null) {
 				return;
 			}
 
@@ -486,7 +517,7 @@ public class CVSLightweightDecorator
 		//System.out.println(">> State Change Event");
 		Set resourcesToUpdate = new HashSet();
 
-		boolean showingDeepDirtyIndicators = CVSUIPlugin.getPlugin().getPreferenceStore().getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
+		boolean showingDeepDirtyIndicators = isDeepDirtyCalculationEnabled();
 
 		for (int i = 0; i < changedResources.length; i++) {
 			IResource resource = changedResources[i];
@@ -526,12 +557,15 @@ public class CVSLightweightDecorator
 			}
 		});
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
 	 */
 	public void dispose() {
 		super.dispose();
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(false /* disabled */);
+		TeamUI.removePropertyChangeListener(this);
+		CVSUIPlugin.removePropertyChangeListener(this);
 	}
 	
 	/**
@@ -539,5 +573,17 @@ public class CVSLightweightDecorator
 	 */
 	private static void handleException(Exception e) {
 		exceptions.handleException(e);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {
+		String prop = event.getProperty();
+		if(prop.equals(TeamUI.GLOBAL_IGNORES_CHANGED)) {
+			refresh();
+		} else if(prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED)) {
+			refresh();
+		}		
 	}
 }

@@ -53,6 +53,7 @@ public interface ICVSUIConstants {
 	
 	// wizards
 	public final String IMG_NEWLOCATION = "wizards/newlocation_wiz.gif"; //$NON-NLS-1$
+	public final String IMG_CVSLOGO = "wizards/newconnect_wiz.gif"; //$NON-NLS-1$
 	
 	// preferences
 	public final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
@@ -97,8 +98,6 @@ public interface ICVSUIConstants {
 	public final String PREF_ADDED_FLAG = "pref_added_flag"; //$NON-NLS-1$
 	
 	public final String PREF_CALCULATE_DIRTY = "pref_calculate_dirty";	 //$NON-NLS-1$
-	
-	public final String PREF_SHOW_SYNCINFO_AS_TEXT = "pref_show_syncinfo_as_text"; //$NON-NLS-1$
 
 	// watch/edit preferences
 	public final String PREF_CHECKOUT_READ_ONLY = "pref_checkout_read_only"; //$NON-NLS-1$
@@ -136,11 +135,6 @@ public interface ICVSUIConstants {
 	// preference options
 	public final int OPTION_NEVER = 1; //$NON-NLS-1$
 	public final int OPTION_PROMPT = 2; //$NON-NLS-1$
-	public final int OPTION_AUTOMATIC = 3;
-	
-	// work in progress preferences
-	public final String BACKGROUND_REPOVIEW = PREFIX + "background_repoview"; //$NON-NLS-1$
-	public final String BACKGROUND_OPERATIONS = PREFIX + "background_operations"; //$NON-NLS-1$
-	public final String USE_NEW_SYNCVIEW = PREFIX + "old_sync_view"; //$NON-NLS-1$
+	public final int OPTION_AUTOMATIC = 3;	
 }
 
