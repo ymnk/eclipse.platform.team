@@ -98,4 +98,8 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 - several places require a resource
   - e.g. conflict propogation requires a resource but shouldn't (modified to work without a resource)
   - conflicts do not propogate in comment view
+- the test cases starve the subscriber event handler such that an event has additions and removals for the same resources
+  - this causes failures in the diff tree builders
+  - although less likely in UI, can still happen
+  - need tests for these scenarios to ensure generated event is correct after addition and removal
   

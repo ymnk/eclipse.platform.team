@@ -40,10 +40,24 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	}
 
 	public void added(SyncInfo info) {
-		addedResources.add(info);
+		if (removedResources.contains(info.getLocal())) {
+			// A removal followed by an addition is treated as a change
+			removedResources.remove(info.getLocal());
+			changed(info);
+		} else {
+			addedResources.add(info);
+		}
 	}
 	
-	public void removed(IResource resource) {
+	public void removed(IResource resource, SyncInfo info) {
+		if (changedResources.contains(info)) {
+			// No use in reporting the change since it has subsequently been removed
+			changedResources.remove(info);
+		} else if (addedResources.contains(info)) {
+			// An addition followed by a removal can be dropped 
+			addedResources.remove(info);
+			return;
+		}
 		removedResources.add(resource);
 	}
 	
@@ -55,6 +69,8 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		if (addedRoots.contains(root)) {
 			// The root was added and removed which is a no-op
 			addedRoots.remove(root);
+		} else if (isDescendantOfAddedRoot(root)) {
+			// Nothing needs to be done since no listeners ever knew about the root
 		} else {
 			// check if the root is a child of an existing root
 			// (in which case it need not be added).
@@ -82,21 +98,27 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 
 	public void addedRoot(IResource parent) {
 		if (removedRoots.contains(parent)) {
-			// The root was re-added which is a no-op
-			// TODO: This is actually a change which needs to be handled somehow. But how?
-			removedRoots.remove(parent);
+			// The root was re-added. Just removing the removedRoot
+			// may not give the proper event.
+			// Since we can't be sure, just force a reset.
+			reset();
 		} else {
-			// do not add the root if it is the child of another added root
-			for (Iterator iter = addedRoots.iterator(); iter.hasNext();) {
-				IResource root = (IResource) iter.next();
-				if (isParent(root, parent)) {
-					// There is a higher added root already in the list
-					return;
-				}
+			// only add the root if their isn't a higher root in the list already
+			if (!isDescendantOfAddedRoot(parent)) {
+				addedRoots.add(parent);
 			}
-			addedRoots.add(parent);
 		}
-		
+	}
+	
+	private boolean isDescendantOfAddedRoot(IResource resource) {
+		for (Iterator iter = addedRoots.iterator(); iter.hasNext();) {
+			IResource root = (IResource) iter.next();
+			if (isParent(root, resource)) {
+				// There is a higher added root already in the list
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public SyncInfo[] getAddedResources() {

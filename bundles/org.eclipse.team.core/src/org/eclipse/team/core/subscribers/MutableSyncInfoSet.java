@@ -31,7 +31,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	public synchronized void remove(IResource local) {
 		IPath path = local.getFullPath();
 		SyncInfo info = (SyncInfo)resources.remove(path);
-		changes.removed(local);
+		changes.removed(local, info);
 		if (info != null) {
 			statistics.remove(info);
 		}
