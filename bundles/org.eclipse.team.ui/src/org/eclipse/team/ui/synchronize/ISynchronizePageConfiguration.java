@@ -60,6 +60,16 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_LABEL_DECORATORS = TeamUIPlugin.ID  + ".P_LABEL_DECORATORS"; //$NON-NLS-1$
 
 	/**
+	 * Property constant for the persisted settings node 
+	 * (instance of <code>IDialogSettings</code>) that
+	 * the container of the page has provider. If this
+	 * value is <code>null</code> then no settings
+	 * persistance is desired and the page should
+	 * use appropriate defaults.
+	 */
+	public static final String P_PAGE_SETTINGS = TeamUIPlugin.ID  + ".P_PAGE_SETTINGS"; //$NON-NLS-1$
+
+	/**
 	 * Property constant that defines the groups in the toolbar 
 	 * menu of the page. The value for this
 	 * property should be a string array. If this property is

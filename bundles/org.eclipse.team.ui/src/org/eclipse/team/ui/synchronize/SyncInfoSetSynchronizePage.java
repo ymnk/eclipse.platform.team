@@ -14,12 +14,14 @@ package org.eclipse.team.ui.synchronize;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangesSection;
 import org.eclipse.team.internal.ui.synchronize.actions.DirectionFilterActionGroup;
@@ -76,6 +78,29 @@ public abstract class SyncInfoSetSynchronizePage extends Page implements ISynchr
 		this.configuration = configuration;
 		configuration.setPage(this);
 		configuration.addActionContribution(new SyncInfoSetActions());
+		
+		IDialogSettings settings = getSettings();
+		if (settings != null) {
+			try {
+				int mode = settings.getInt(ISynchronizePageConfiguration.P_MODE);
+				if (mode != 0) {
+					configuration.setMode(mode);
+				}
+			} catch (NumberFormatException e) {
+				// The mode settings does not exist.
+				// Leave the mode as is (assuming the 
+				// participant initialized it to an
+				// appropriate value
+			}
+			String workingSetName = settings.get(ISynchronizePageConfiguration.P_WORKING_SET);
+			if (workingSetName != null) {
+				IWorkingSetManager manager = TeamUIPlugin.getPlugin().getWorkbench().getWorkingSetManager();
+				IWorkingSet set = manager.getWorkingSet(workingSetName);
+				configuration.setWorkingSet(set);
+			} else {
+				configuration.setWorkingSet(null);
+			}
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -172,12 +197,24 @@ public abstract class SyncInfoSetSynchronizePage extends Page implements ISynchr
 	private boolean internalSetMode(int oldMode, int mode) {
 		if(oldMode == mode) return false;
 		updateMode(mode);
+		IDialogSettings settings = getSettings();
+		if (settings != null) {
+			settings.put(ISynchronizePageConfiguration.P_MODE, mode);
+		}
 		return true;
 	}
 
 	private boolean internalSetWorkingSet(IWorkingSet oldSet, IWorkingSet workingSet) {
 		if (workingSet == null || !workingSet.equals(oldSet)) {
 			updateWorkingSet(workingSet);
+			IDialogSettings settings = getSettings();
+			if (settings != null) {
+				String name = null;
+				if (workingSet != null) {
+					name = workingSet.getName();
+				}
+				settings.put(ISynchronizePageConfiguration.P_WORKING_SET, name);
+			}
 			return true;
 		}
 		return false;
@@ -233,6 +270,16 @@ public abstract class SyncInfoSetSynchronizePage extends Page implements ISynchr
 		return configuration;
 	}
 
+	/**
+	 * Return the settings for the page from the configuration
+	 * os <code>null</code> if settings can not be persisted
+	 * for the page
+	 * @return the persisted page settings
+	 */
+	protected IDialogSettings getSettings() {
+		return (IDialogSettings)configuration.getProperty(ISynchronizePageConfiguration.P_PAGE_SETTINGS);
+	}
+	
 	/**
 	 * Return whether the types of comparisons performed to determine
 	 * the page contents are two-way or three-way.

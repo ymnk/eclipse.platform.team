@@ -12,16 +12,14 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.subscribers.WorkingSetFilteredSyncInfoCollector;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.actions.SubscriberActionContribution;
-import org.eclipse.team.ui.synchronize.SyncInfoSetSynchronizePage;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.SyncInfoSetSynchronizePage;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IWorkingSet;
 
@@ -37,22 +35,7 @@ import org.eclipse.ui.IWorkingSet;
  * @since 3.0
  */
 public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage implements IAdaptable {
-	
-	/** 
-	 * Settings constant for section name (value <code>SubscriberParticipantPage</code>).
-	 */
-	private static final String STORE_SECTION_POSTFIX = "SubscriberParticipantPage"; //$NON-NLS-1$
-	/** 
-	 * Settings constant for working set (value <code>SubscriberParticipantPage</code>).
-	 */
-	private static final String STORE_WORKING_SET = "SubscriberParticipantPage.STORE_WORKING_SET"; //$NON-NLS-1$
-	/** 
-	 * Settings constant for working set (value <code>SubscriberParticipantPage</code>).
-	 */
-	private static final String STORE_MODE = "SubscriberParticipantPage.STORE_MODE"; //$NON-NLS-1$
-	
-	private IDialogSettings settings;
-	
+		
 	private SubscriberParticipant participant;
 	
 	private final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
@@ -71,14 +54,6 @@ public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage 
 	public SubscriberParticipantPage(ISynchronizePageConfiguration configuration, SubscriberSyncInfoCollector subscriberCollector) {
 		super(configuration);
 		this.participant = (SubscriberParticipant)configuration.getParticipant();
-		IDialogSettings viewsSettings = TeamUIPlugin.getPlugin().getDialogSettings();
-		
-		String key = Utils.getKey(participant.getId(), participant.getSecondaryId());
-		settings = viewsSettings.getSection(key + STORE_SECTION_POSTFIX);
-		if (settings == null) {
-			settings = viewsSettings.addNewSection(key + STORE_SECTION_POSTFIX);
-		}
-		
 		configuration.addActionContribution(new SubscriberActionContribution());
 		initializeCollector(configuration, subscriberCollector);
 	}
@@ -131,6 +106,8 @@ public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage 
 	private void initializeCollector(ISynchronizePageConfiguration configuration, SubscriberSyncInfoCollector subscriberCollector) {
 		SubscriberParticipant participant = getParticipant();
 		collector = new WorkingSetFilteredSyncInfoCollector(subscriberCollector, participant.getSubscriber().roots());
+		updateMode(configuration.getMode());
+		updateWorkingSet(configuration.getWorkingSet());
 		collector.reset();
 		configuration.setProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET, collector.getSyncInfoTree());
 		configuration.setProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET, collector.getWorkingSetSyncInfoSet());
