@@ -23,11 +23,6 @@ import org.eclipse.team.ui.synchronize.SubscriberParticipant;
  * @since 3.0
  */
 public class SubscriberRefreshWizard extends Wizard {
-	
-	public final static int SCOPE_WORKING_SET = 1;
-	public final static int SCOPE_SELECTED_RESOURCES = 2;
-	public final static int SCOPE_ENCLOSING_PROJECT = 3;
-	public final static int SCOPE_PARTICIPANT_ROOTS = 4;
 
 	private SubscriberParticipant participant;
 	private GlobalRefreshResourceSelectionPage selectionPage;
@@ -38,10 +33,6 @@ public class SubscriberRefreshWizard extends Wizard {
 		setWindowTitle(Policy.bind("SubscriberRefreshWizard.0") + participant.getName()); //$NON-NLS-1$
 		setDefaultPageImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_WIZBAN_SHARE));
 		setNeedsProgressMonitor(false);
-	}
-	
-	public void setScopeHint(int scopeHint) {
-		this.scopeHint = scopeHint;
 	}
 	
 	/* (non-Javadoc)

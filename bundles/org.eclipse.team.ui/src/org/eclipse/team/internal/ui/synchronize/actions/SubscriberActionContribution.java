@@ -20,7 +20,6 @@ import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.SubscriberRefreshWizard;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IWorkingSet;
 
 /**
  * Provides the actions to be associated with a synchronize page
@@ -45,12 +44,7 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 			refreshAllAction = new Action() {
 				public void run() {
 					// Prime the refresh wizard with an appropriate initial selection
-					final SubscriberRefreshWizard wizard = new SubscriberRefreshWizard(participant);
-					IWorkingSet set = (IWorkingSet)configuration.getProperty(ISynchronizePageConfiguration.P_WORKING_SET);
-					if(set != null) {
-						int scopeHint = SubscriberRefreshWizard.SCOPE_WORKING_SET;
-						wizard.setScopeHint(scopeHint);
-					}					
+					final SubscriberRefreshWizard wizard = new SubscriberRefreshWizard(participant);				
 					WizardDialog dialog = new WizardDialog(site.getShell(), wizard);
 					dialog.open();
 				}

@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.*;
 import java.util.List;
+
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.Dialog;
@@ -27,12 +28,10 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.*;
 import org.eclipse.ui.dialogs.IWorkingSetSelectionDialog;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
-import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
@@ -48,10 +47,7 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
  */
 public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	
-	private SubscriberParticipant participant;
-	
-	// The scope hint for initial selection
-	private int scopeHint;
+	private boolean scopeCheckingElement = false;
 	
 	// Set of scope hint to determine the initial selection
 	private Button participantScope;
@@ -66,20 +62,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	// Working set label and holder
 	private Text workingSetLabel;
 	private IWorkingSet workingSet;
-	private List participantRoots;
-	
-	/**
-	 * Content provider that accepts a <code>SubscriberParticipant</code> as input and
-	 * returns the participants root resources.
-	 */
-	class MyContentProvider extends BaseWorkbenchContentProvider {
-		public Object[] getChildren(Object element) {
-			if(element instanceof SubscriberParticipant) {
-				return ((SubscriberParticipant)element).getResources();
-			}
-			return super.getChildren(element);
-		}
-	}
+	private List resources;
 	
 	/**
 	 * Label decorator that will display the full path for participant roots that are folders. This
@@ -90,7 +73,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 		public String getText(Object element) {
 			if(element instanceof IContainer) {
 				IContainer c = (IContainer)element;
-				if(c.getType() != IResource.PROJECT && participantRoots.contains(c)) {
+				if(c.getType() != IResource.PROJECT && resources.contains(c)) {
 					return c.getFullPath().toString();
 				}
 			}
@@ -105,20 +88,13 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	 * Create a new page for the given participant. The scope hint will determine the initial selection.
 	 * 
 	 * @param participant the participant to synchronize
-	 * @param scopeHint a hint about the initial selection, can be one of:
-	 * 	SubscriberRefreshWizard#SCOPE_WORKING_SET
-	 * 	SubscriberRefreshWizard#SCOPE_SELECTED_RESOURCES 
-	 * 	SubscriberRefreshWizard#SCOPE_ENCLOSING_PROJECT
-	 *		SubscriberRefreshWizard#SCOPE_PARTICIPANT_ROOTS
 	 */
-	public GlobalRefreshResourceSelectionPage(SubscriberParticipant participant, int scopeHint) {
+	public GlobalRefreshResourceSelectionPage(IResource[] resources) {
 		super(Policy.bind("GlobalRefreshResourceSelectionPage.1")); //$NON-NLS-1$
-		this.scopeHint = scopeHint;
 		// Caching the roots so that the decorator doesn't have to recompute all the time.
-		this.participantRoots = Arrays.asList(participant.getResources());
+		this.resources = Arrays.asList(resources);
 		setDescription(Policy.bind("GlobalRefreshResourceSelectionPage.2")); //$NON-NLS-1$
 		setTitle(Policy.bind("GlobalRefreshResourceSelectionPage.3")); //$NON-NLS-1$
-		this.participant = participant;
 	}
 	
 	/* (non-Javadoc)
@@ -133,7 +109,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 		top.setLayoutData(data);
 		setControl(top);
 		
-		if (participant.getResources().length == 0) {
+		if (resources.isEmpty()) {
 			Label l = new Label(top, SWT.NULL);
 			l.setText(Policy.bind("GlobalRefreshResourceSelectionPage.4")); //$NON-NLS-1$
 			setPageComplete(false);
@@ -147,7 +123,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			//data.widthHint = 200;
 			data.heightHint = 100;
 			fViewer.getControl().setLayoutData(data);
-			fViewer.setContentProvider(new MyContentProvider());
+			fViewer.setContentProvider(new ArrayContentProvider());
 			fViewer.setLabelProvider( new DecoratingLabelProvider(
 					new MyLabelProvider(),
 					PlatformUI.getWorkbench().getDecoratorManager().getLabelDecorator()));
@@ -157,7 +133,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 				}
 			});
 			fViewer.setSorter(new ResourceSorter(ResourceSorter.NAME));
-			fViewer.setInput(participant);
+			fViewer.setInput(resources);
 						
 			// Scopes
 			Group scopeGroup = new Group(top, SWT.NULL);
@@ -238,6 +214,12 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	 */
 	protected void updateOKStatus() {	
 		if(fViewer != null) {
+			if(! scopeCheckingElement) {
+				if(! selectedResourcesScope.getSelection()) {
+					selectedResourcesScope.setSelection(true);
+					updateSelectedResourcesScope();
+				}
+			}
 			setPageComplete(areAnyElementsChecked() != null);
 		} else {
 			setPageComplete(false);
@@ -276,34 +258,11 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	}
 	
 	private void initializeScopingHint() {
-		switch(scopeHint) {
-			case SubscriberRefreshWizard.SCOPE_PARTICIPANT_ROOTS:
-				participantScope.setSelection(true); 
-				updateParticipantScope();
-				break;
-			case SubscriberRefreshWizard.SCOPE_WORKING_SET:
-				workingSetScope.setSelection(true); 
-				updateWorkingSetScope();
-				break;
-			default:
-				if(workingSet != null) {
-					workingSetScope.setSelection(true);
-					updateWorkingSetScope();
-				} else if(getResourcesFromSelection().length == 0) {
-					participantScope.setSelection(true);
-					updateParticipantScope();
-				} else {
-					selectedResourcesScope.setSelection(true);
-					updateSelectedResourcesScope();
-				}
-		}
+		participantScope.setSelection(true);
+		updateParticipantScope();
 	}
 	
 	private void intializeSelectionInViewer(IResource[] resources) {
-		if(resources.length > 0) {
-//			fViewer.setExpandedElements(resources);
-			fViewer.setSelection(new StructuredSelection(Arrays.asList(resources)), true);
-		}
 	}
 	
 	private void updateEnclosingProjectScope() {
@@ -313,25 +272,23 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			for (int i = 0; i < selectedResources.length; i++) {
 				projects.add(selectedResources[i].getProject());
 			}
+			scopeCheckingElement = true;
 			fViewer.setCheckedElements(projects.toArray());
+			scopeCheckingElement = false;
 			setPageComplete(projects.size() > 0);
 		}
 	}
 	
 	private void updateParticipantScope() {
 		if(participantScope.getSelection()) {
-			fViewer.setCheckedElements(participant.getResources());
-			setPageComplete(true);
+			scopeCheckingElement = true;
+			fViewer.setCheckedElements(resources.toArray());
+			scopeCheckingElement = false;
 		}
 	}
 	
 	private void updateSelectedResourcesScope() {
-		if(selectedResourcesScope.getSelection()) {
-			IResource[] resources = getResourcesFromSelection();
-			fViewer.setCheckedElements(resources);
-			setPageComplete(resources.length > 0);
-			intializeSelectionInViewer(resources);
-		}
+		setPageComplete(getCheckedResources().length > 0);
 	}
 	
 	private void selectWorkingSetAction() {
@@ -359,12 +316,16 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 				List resources = IDE.computeSelectedResources(new StructuredSelection(workingSet.getElements()));
 				if(! resources.isEmpty()) {
 					IResource[] resources2 = (IResource[])resources.toArray(new IResource[resources.size()]);
+					scopeCheckingElement = true;
 					fViewer.setCheckedElements(resources2);
+					scopeCheckingElement = false;
 					intializeSelectionInViewer(resources2);
 					setPageComplete(true);
 				}
 		} else {
+			scopeCheckingElement = true;
 			fViewer.setCheckedElements(new Object[0]);
+			scopeCheckingElement = false;
 			setPageComplete(false);
 		}
 	}
