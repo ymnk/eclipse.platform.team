@@ -75,7 +75,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	public Object prepareInput(IProgressMonitor monitor) throws TeamException {
 		subscriber.refresh(subscriber.roots(), IResource.DEPTH_INFINITE, monitor);
 		collector.waitForCollector(monitor);
-		return getInput();
+		return prepareInput(monitor);
 	}
 	
 	/* (non-Javadoc)

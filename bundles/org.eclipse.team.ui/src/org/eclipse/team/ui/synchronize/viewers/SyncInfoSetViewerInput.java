@@ -11,8 +11,6 @@
 package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.*;
-
-import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -43,20 +41,19 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * @since 3.0
  */
 public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInfoSetChangeListener {
-	
+
 	// During updates we keep track of the parent elements that need their
 	// labels updated. This is required to support displaying information in a 
 	// parent label that is dependant on the state of its children. For example,
 	// showing conflict markers on folders if it contains child conflicts.
 	private Set parentsToUpdate = new HashSet();
-	
 	// Map from resources to model objects. This allows effecient lookup
 	// of model objects based on changes occuring to resources.
 	private Map resourceMap = Collections.synchronizedMap(new HashMap());
-
 	// The viewer this input is being displayed in
 	private AbstractTreeViewer viewer;
-
+	// Flasg to indicate if tree control should be updated while
+	// building the model.
 	private boolean refreshViewer;
 
 	/**
@@ -65,9 +62,8 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * 
 	 * @param set the sync set used as the basis for the model created by this input.
 	 */
-	public SyncInfoSetViewerInput(AbstractTreeViewer viewer, SyncInfoSet set) {
+	public SyncInfoSetViewerInput(SyncInfoSet set) {
 		super(null /* no parent */, set, ResourcesPlugin.getWorkspace().getRoot());
-		this.viewer = viewer;
 	}
 
 	/**
@@ -77,7 +73,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 *            the resource
 	 * @return the <code>SyncInfoDiffNode</code> for the given resource
 	 */
-	public DiffNode getModelObject(IResource resource) {
+	protected DiffNode getModelObject(IResource resource) {
 		return (DiffNode) resourceMap.get(resource);
 	}
 
@@ -89,11 +85,15 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	public AbstractTreeViewer getTreeViewer() {
 		return viewer;
 	}
-	
+
+	public void setViewer(AbstractTreeViewer viewer) {
+		this.viewer = viewer;
+	}
+
 	public ViewerSorter getViewerSorter() {
 		return new SyncInfoDiffNodeSorter();
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.compare.structuremergeviewer.DiffContainer#hasChildren()
@@ -128,7 +128,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 		resourceMap.clear();
 		getSyncInfoSet().removeSyncSetChangedListener(this);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged()
@@ -140,21 +140,22 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			final Control ctrl = viewer.getControl();
 			if (ctrl != null && !ctrl.isDisposed()) {
 				ctrl.getDisplay().syncExec(new Runnable() {
+
 					public void run() {
 						if (!ctrl.isDisposed()) {
-							BusyIndicator.showWhile(ctrl.getDisplay(),
-								new Runnable() {
-									public void run() {
-										handleChanges(event);
-									}
-								});
+							BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
+
+								public void run() {
+									handleChanges(event);
+								}
+							});
 						}
 					}
 				});
 			}
 		}
 	}
-	
+
 	/**
 	 * For each node create children based on the contents of
 	 * @param node
@@ -192,7 +193,6 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 		}
 		return new IDiffElement[0];
 	}
-	
 
 	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
 		SyncInfoSet set = parent instanceof SyncInfoDiffNode ? ((SyncInfoDiffNode) parent).getSyncInfoSet() : getSyncInfoSet();
@@ -240,11 +240,11 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 		}
 		return result;
 	}
-	
+
 	protected void associateDiffNode(IResource childResource, SyncInfoDiffNode childNode) {
 		resourceMap.put(childResource, childNode);
 	}
-	
+
 	protected void unassociateDiffNode(IResource childResource) {
 		resourceMap.remove(childResource);
 	}
@@ -341,35 +341,27 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			removeFromViewer(removedRoots[i]);
 		}
 	}
-	
-
-
-	
 
 	protected void reset() {
 		try {
 			refreshViewer = false;
 			resourceMap.clear();
 			clearModelObjects(this);
-			
 			// remove all from tree viewer
 			IDiffElement[] elements = getChildren();
 			for (int i = 0; i < elements.length; i++) {
 				viewer.remove(elements[i]);
 			}
-			
 			associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), this);
 			buildModelObjects(this);
 		} finally {
 			refreshViewer = true;
 		}
 		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+
 			public void run() {
 				if (viewer != null && !viewer.getControl().isDisposed()) {
 					viewer.refresh();
-					if (viewer instanceof INavigatable) {
-						((INavigatable) viewer).gotoDifference(true);
-					}
 				}
 			}
 		});
@@ -382,7 +374,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			updateParentLabels(diffNode);
 		}
 	}
-	
+
 	/**
 	 * Remove any traces of the resource and any of it's descendants in the
 	 * hiearchy defined by the content provider from the content provider and
@@ -398,7 +390,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			updateParentLabels(node);
 		}
 	}
-	
+
 	protected void addToViewer(SyncInfoDiffNode node) {
 		associateDiffNode(node.getResource(), node);
 		if (canUpdateViewer()) {
@@ -407,7 +399,6 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			updateParentLabels(node);
 		}
 	}
-	
 
 	/**
 	 * @param tree

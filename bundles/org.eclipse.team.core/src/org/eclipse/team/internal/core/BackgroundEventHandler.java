@@ -142,6 +142,7 @@ public abstract class BackgroundEventHandler {
 				jobDone(event);
 			}
 		});
+		eventHandlerJob.setSystem(true);
 		eventHandlerJob.setPriority(Job.SHORT);
 	}
 

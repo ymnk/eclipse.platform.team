@@ -66,7 +66,7 @@ public final class SyncInfoDiffTreeViewer extends TreeViewer implements INavigat
 	 * @see org.eclipse.compare.internal.INavigatable#gotoDifference(boolean)
 	 */
 	public boolean gotoDifference(boolean next) {
-		return TreeViewerUtils.navigate(this, next, true /*don't fire open event*/, false /*set selection*/);
+		return TreeViewerUtils.navigate(this, next, true /*fire open event*/, false /*set selection*/);
 	}
 
 	/* (non-Javadoc)

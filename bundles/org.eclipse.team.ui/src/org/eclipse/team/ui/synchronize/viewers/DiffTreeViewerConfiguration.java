@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -18,6 +19,7 @@ import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
@@ -118,28 +120,39 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		initializeActions(viewer);
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setContentProvider(getContentProvider());
+		
+		// The input may of been set already. In that case, don't change it and
+		// simply assign it to the view.
+		if(viewerInput == null) {
+			viewerInput = (SyncInfoSetViewerInput)getInput();
+			viewerInput.prepareInput(null);
+		}
 		setInput(viewer);
 	}
 
 	/**
-	 * Set the input of the viewer to a <code>SyncInfoDiffNodeRoot</code>.
-	 * This will also set the sorter of the viewer to the one provided by the
-	 * input.
 	 * @param viewer
-	 *            the viewer
 	 */
-	protected void setInput(StructuredViewer viewer) {
+	private void setInput(AbstractTreeViewer viewer) {
+		viewerInput.setViewer(viewer);
+		viewer.setSorter(viewerInput.getViewerSorter());
+		viewer.setInput(viewerInput);
+	}
+
+	/**
+	 * Creates the input for this view and initializes it. At the time this method
+	 * is called the viewer may not of been created yet. 
+	 * 
+	 * @param monitor shows progress while preparing the input
+	 * @return the input that can be shown in a viewer
+	 */
+	public Object prepareInput(IProgressMonitor monitor)throws TeamException {
 		if(viewerInput != null) {
 			viewerInput.dispose();
 		}
-		viewerInput = (SyncInfoSetViewerInput) getInput();
-		// TODO: must prevent sorter change from causing a refresh
-		// viewer.setInput(null); /* prevent a refresh when the sorter changes
-		// */
-		viewer.setSorter(viewerInput.getViewerSorter());
-		viewer.setInput(viewerInput);
-		
-		viewerInput.prepareInput(null);
+		viewerInput = (SyncInfoSetViewerInput) getInput();		
+		viewerInput.prepareInput(monitor);
+		return viewerInput;
 	}
 
 	/**
@@ -149,9 +162,9 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 */
 	protected Object getInput() {
 		if (getShowCompressedFolders()) {
-			return new CompressedFolderViewerInput(getViewer(), getSyncSet());
+			return new CompressedFolderViewerInput(getSyncSet());
 		}
-		return new SyncInfoSetViewerInput(getViewer(), getSyncSet());
+		return new SyncInfoSetViewerInput(getSyncSet());
 	}
 
 	/**
@@ -339,7 +352,12 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		if (viewer != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			setInput(viewer);
+			try {
+				prepareInput(null);
+				setInput(getViewer());
+			} catch (TeamException e) {
+				TeamUIPlugin.log(e);
+			}
 		}
 	}
 

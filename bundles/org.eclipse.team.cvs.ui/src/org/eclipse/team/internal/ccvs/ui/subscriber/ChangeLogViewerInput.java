@@ -148,7 +148,7 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 		}
 		public IStatus run(IProgressMonitor monitor) {
 			if (set != null && !shutdown) {
-				final SyncInfoDiffNode[] nodes = calculateRoots(getRoot().getSyncInfoSet(), monitor);				
+				final SyncInfoDiffNode[] nodes = calculateRoots(getSyncInfoSet(), monitor);				
 				UIJob updateUI = new UIJob("updating change log viewers") {
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						AbstractTreeViewer tree = getTreeViewer();	
@@ -157,7 +157,7 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 						}
 						for (int i = 0; i < nodes.length; i++) {
 							addToViewer(nodes[i]);
-							buildTree(nodes[i]);				
+							buildModelObjects(nodes[i]);				
 						}
 						return Status.OK_STATUS;
 					}
@@ -173,19 +173,23 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 		super(set);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#buildTree(org.eclipse.compare.structuremergeviewer.DiffNode)
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput#buildModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
 	 */
-	protected IDiffElement[] buildTree(DiffNode node) {
+	protected IDiffElement[] buildModelObjects(DiffNode node) {
 		if(node == this) {
 			UIJob job = new UIJob("") {
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					AbstractTreeViewer tree = getTreeViewer();			
-					if (tree != null) {
+					if (tree != null && !tree.getControl().isDisposed()) {
 						if(pendingItem == null) {
 							pendingItem = new PendingUpdateAdapter();
 						}
-						removeAllFromTree();
+						IDiffElement[] elements = getChildren();
+						for (int i = 0; i < elements.length; i++) {
+							tree.remove(elements[i]);
+						}
 						tree.add(ChangeLogViewerInput.this, pendingItem);
 					}
 					return Status.OK_STATUS;
@@ -206,7 +210,7 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 			fetchLogEntriesJob.setSyncInfoSet(getSyncInfoSet());
 			fetchLogEntriesJob.schedule();						
 		} else {
-			return super.buildTree(node);
+			return super.buildModelObjects(node);
 		}
 		return new IDiffElement[0];
 	}

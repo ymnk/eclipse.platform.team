@@ -51,7 +51,7 @@ public class ContentProviderTestView extends ViewPart {
 	}
 
 	public void setInput(SyncInfoSet set) {
-		CompressedFolderViewerInput root = new CompressedFolderViewerInput(getViewer(), set);
+		CompressedFolderViewerInput root = new CompressedFolderViewerInput(set);
 		viewer.setSorter(root.getViewerSorter());
 		viewer.setInput(root);
 	}

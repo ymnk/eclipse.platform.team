@@ -72,3 +72,6 @@ Data (sync info, sync info set)
 
 1. when does the viewer model get created, it is implementation dependant
 2. what is creating the viewer model takes a while.
+
+How is progress shown?
+======================

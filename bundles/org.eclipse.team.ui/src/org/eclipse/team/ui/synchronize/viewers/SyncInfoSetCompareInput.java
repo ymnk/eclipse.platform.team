@@ -20,6 +20,7 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
 
 /**
@@ -144,6 +145,10 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		return diffViewerConfiguration.getViewer().getInput();
+		try {
+			return diffViewerConfiguration.prepareInput(monitor);
+		} catch (TeamException e) {
+			throw new InvocationTargetException(e);
+		}
 	}	
 }

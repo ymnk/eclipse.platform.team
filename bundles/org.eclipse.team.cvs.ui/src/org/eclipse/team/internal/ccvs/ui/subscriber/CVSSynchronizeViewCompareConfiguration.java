@@ -70,18 +70,6 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	public void setGroupIncomingByComment(boolean enabled) {
 		this.isGroupIncomingByComment = enabled;
 		if(getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
-			setInput(getViewer());
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#getInput()
-	 */
-	protected Object getInput() {
-		if(isGroupIncomingByComment() && getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
-			return new ChangeLogViewerInput(getSyncSet());
-		} else {
-			return super.getInput();
 		}
 	}
 	
@@ -97,7 +85,6 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 			   oldMode == TeamSubscriberParticipant.INCOMING_MODE) {
 				aSyncExec(new Runnable() {
 					public void run() {
-						setInput(getViewer());
 					}
 				});				
 			}
