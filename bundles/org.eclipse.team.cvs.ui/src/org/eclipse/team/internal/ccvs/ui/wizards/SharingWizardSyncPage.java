@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -57,14 +58,14 @@ public class SharingWizardSyncPage extends CVSWizardPage {
 		// set F1 help
 		//WorkbenchHelp.setHelp(composite, IHelpContextIds.SHARE_WITH_EXISTING_TAG_SELETION_DIALOG);
 		
-		createCompareInput();
-		Control c = input.createContents(parent);
+		input = createCompareInput();
+		Control c = input.createContents(composite);
 		c.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		Dialog.applyDialogFont(parent);	
 	}
 	
-	private void createCompareInput() {
+	private SynchronizeCompareInput createCompareInput() {
 		infos = new SyncInfoTree();
 		WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
 		collector = new FilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), infos, new SyncInfoFilter() {
@@ -73,9 +74,10 @@ public class SharingWizardSyncPage extends CVSWizardPage {
 				return project.getFullPath().isPrefixOf(info.getLocal().getFullPath());
 			}
 		});
+		collector.start(new NullProgressMonitor());
 		TreeViewerAdvisor advisor = new TreeViewerAdvisor(participant.getId(), null, infos);
 		CompareConfiguration cc = new CompareConfiguration();
-		input = new SynchronizeCompareInput(cc, advisor) {
+		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
 			public String getTitle() {
 				return "Sharing";
 			}
@@ -89,5 +91,21 @@ public class SharingWizardSyncPage extends CVSWizardPage {
 		} catch (InvocationTargetException e) {
 			Utils.handle(e);
 		}
+		return input;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.IDialogPage#dispose()
+	 */
+	public void dispose() {
+		collector.dispose();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.wizard.WizardPage#setPreviousPage(org.eclipse.jface.wizard.IWizardPage)
+	 */
+	public void setPreviousPage(IWizardPage page) {
+		// There's no going back from this page
+		super.setPreviousPage(null);
 	}
 }
