@@ -32,6 +32,7 @@ import org.eclipse.team.internal.ui.dialogs.DialogArea;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
+import org.eclipse.ui.part.PageBook;
 
 /**
  * A dialog area that displays a list of tags for selection and supports
@@ -39,6 +40,9 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
  */
 public class TagSelectionArea extends DialogArea {
 
+	private static final int DEFAULT_WIDTH_HINT = 300;
+	private static final int DEFAULT_HEIGHT_HINT = 400;
+	
     /*
      * Property constant which identifies the selected tag or
      * null if no tag is selected
@@ -62,7 +66,6 @@ public class TagSelectionArea extends DialogArea {
 	public static final int INCLUDE_ALL_TAGS = TagSourceWorkbenchAdapter.INCLUDE_ALL_TAGS;
 	
     private String message;
-    private TreeViewer tagTree;
     private final int includeFlags;
     private CVSTag selection;
     private String helpContext;
@@ -89,6 +92,11 @@ public class TagSelectionArea extends DialogArea {
                 tagSource.removeListener(listener);
         }
     };
+
+    private PageBook switcher;
+    private TreeViewer tagTree;
+    private TableViewer tagTable;
+    private boolean treeVisible = true;
     
     public TagSelectionArea(Shell shell, TagSource tagSource, String message, int includeFlags, String helpContext) {
         this.shell = shell;
@@ -112,22 +120,27 @@ public class TagSelectionArea extends DialogArea {
 		}
 		
 		// Create the tree area and refresh buttons with the possibility to add stuff in between
-		createTagTree(outer);	
+		createTagDisplayArea(outer);	
 		createCustomArea(outer);
 		createRefreshButtons(outer);
 		
         Dialog.applyDialogFont(parent);
-        handleSelectionChange();
+        updateTagDisplay(true);
     }
 
-    private void createTagTree(Composite parent) {
+    private void createTagDisplayArea(Composite parent) {
         Composite inner = createGrabbingComposite(parent, 1);
         createFilterInput(inner);    
 		if (message != null) {
 		    createWrappingLabel(inner, message, 1);
 		}
-		tagTree = createTree(inner);
-		createTreeMenu();
+		switcher = new PageBook(inner, SWT.NONE);
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		gridData.heightHint = 0;
+		gridData.widthHint = 0;
+        switcher.setLayoutData(gridData);
+		tagTree = createTree(switcher);
+		tagTable = createTable(switcher);
     }
 
     private void createFilterInput(Composite inner) {
@@ -135,13 +148,13 @@ public class TagSelectionArea extends DialogArea {
         filterText = createText(inner, 1);
         filterText.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
-                handleFilterChange();
+                updateTagDisplay(false);
             }
         });
         filterText.addKeyListener(new KeyListener() {
             public void keyPressed(KeyEvent e) {
         		if (e.keyCode == SWT.ARROW_DOWN && e.stateMask == 0) {			
-        			tagTree.getControl().setFocus();
+        			tagTable.getControl().setFocus();
         		}
             }
             public void keyReleased(KeyEvent e) {
@@ -150,37 +163,65 @@ public class TagSelectionArea extends DialogArea {
         });
     }
 
-    protected void handleFilterChange() {
-        Object input = tagTree.getInput();
-        if (input instanceof FilteredTagList) {
-            String filter = filterText.getText();
-            if (filter == null || filter.length() == 0) {
-                tagTree.setInput(createUnfilteredInput());
-            } else {
-                FilteredTagList list = (FilteredTagList)input;
-                list.setPattern(filter);
-                tagTree.refresh();
-                selectTopElement();
+    /**
+     * Update the tag display to show the tags that match the
+     * include flags and the filter entered by the user.
+     */
+    protected void updateTagDisplay(boolean firstTime) {
+        String filter = getFilterString();
+        if ((filter != null && filter.length() > 0) || isTableOnly()) {
+            // Show the table and filter it accordingly
+            try {
+	            switcher.setRedraw(false);
+	            treeVisible = false;
+	            switcher.showPage(tagTable.getControl());
+	            FilteredTagList list = (FilteredTagList)tagTable.getInput();
+	            list.setPattern(filter);
+	            tagTable.refresh();
+	            if (filter == null || filter.length() == 0) {
+	                setSelection(selection);
+	            } else {
+	                selectTopElement();
+	            }
+            } finally {
+                switcher.setRedraw(true);
             }
         } else {
-            String filter = filterText.getText();
-            if (filter != null && filter.length() > 0) {
-                FilteredTagList list = createFilteredInput();
-                list.setPattern(filter);
-                tagTree.setInput(list);
-                selectTopElement();
+            // Show the tree
+            if (!isTreeVisible() || firstTime) {
+                try {
+                    switcher.setRedraw(false);
+                    treeVisible = true;
+	                switcher.showPage(tagTree.getControl());
+	                tagTree.refresh();
+	                setSelection(selection);
+                } finally {
+                    switcher.setRedraw(true);
+                }
             }
         }
     }
     
+    /**
+     * Return whether only a table should be used
+     * @return whether only a table should be used
+     */
+    protected boolean isTableOnly() {
+        return (includeFlags == INCLUDE_VERSIONS) || (includeFlags == INCLUDE_BRANCHES);
+    }
+
+    private String getFilterString() {
+        return filterText.getText();
+    }
+
     /*
-     * Select the top element in the tree
+     * Select the top element in the tag table
      */
     private void selectTopElement() {
-        TreeItem[] items = tagTree.getTree().getItems();
-        if (items.length > 0) {
-            tagTree.getTree().setSelection(new TreeItem[] { items[0] });
-            tagTree.setSelection(tagTree.getSelection());
+        if (tagTable.getTable().getItemCount() > 1) {
+            TableItem item = tagTable.getTable().getItem(0);
+            tagTable.getTable().setSelection(new TableItem[] { item });
+            tagTable.setSelection(tagTable.getSelection());
         }   
     }
 
@@ -217,7 +258,7 @@ public class TagSelectionArea extends DialogArea {
 	    tagRefreshArea.createArea(parent);
     }
 
-    protected void createTreeMenu() {
+    protected void createTreeMenu(TreeViewer tagTree) {
         if ((includeFlags & TagSourceWorkbenchAdapter.INCLUDE_DATES) != 0) {
 	        // Create the popup menu
 			MenuManager menuMgr = new MenuManager();
@@ -246,26 +287,8 @@ public class TagSelectionArea extends DialogArea {
 		Tree tree = new Tree(parent, SWT.MULTI | SWT.BORDER);
 		GridData data = new GridData(GridData.FILL_BOTH);
         tree.setLayoutData(data);
-		data.heightHint = 0; // It will expand to the size of the wizard page!
-		data.widthHint = 0;
 		TreeViewer result = new TreeViewer(tree);
-		result.setContentProvider(new WorkbenchContentProvider());
-		result.setLabelProvider(new WorkbenchLabelProvider());
-		result.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {				
-				handleSelectionChange();
-			}
-		});
-		// select and close on double click
-		// To do: use defaultselection instead of double click
-		result.getTree().addMouseListener(new MouseAdapter() {
-			public void mouseDoubleClick(MouseEvent e) {
-			    CVSTag tag = internalGetSelectedTag();
-			    if (tag != null) {
-			        firePropertyChangeChange(OPEN_SELECTED_TAG, null, tag);
-			    }
-			}
-		});
+		initialize(result);
 		result.getControl().addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent event) {
 				handleKeyPressed(event);
@@ -274,12 +297,49 @@ public class TagSelectionArea extends DialogArea {
 				handleKeyReleased(event);
 			}
 		});
-		result.setSorter(new ProjectElementSorter());
 		result.setInput(createUnfilteredInput());
+		createTreeMenu(result);
 		return result;
 	}
-    
-	private Object createUnfilteredInput() {
+
+    protected TableViewer createTable(Composite parent) {
+		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		table.setLayoutData(data);
+		TableLayout layout = new TableLayout();
+		layout.addColumnData(new ColumnWeightData(100, true));
+		table.setLayout(layout);
+		TableColumn col = new TableColumn(table, SWT.NONE);
+		col.setResizable(true);
+		TableViewer viewer = new TableViewer(table);
+		initialize(viewer);
+		viewer.setInput(createFilteredInput());
+		return viewer;
+
+	}
+
+    private void initialize(StructuredViewer viewer) {
+        viewer.setContentProvider(new WorkbenchContentProvider());
+		viewer.setLabelProvider(new WorkbenchLabelProvider());
+		viewer.setSorter(new ProjectElementSorter());
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {				
+				handleSelectionChange();
+			}
+		});
+		// select and close on double click
+		// To do: use defaultselection instead of double click
+		viewer.getControl().addMouseListener(new MouseAdapter() {
+			public void mouseDoubleClick(MouseEvent e) {
+			    CVSTag tag = internalGetSelectedTag();
+			    if (tag != null) {
+			        firePropertyChangeChange(OPEN_SELECTED_TAG, null, tag);
+			    }
+			}
+		});
+    }
+
+    private Object createUnfilteredInput() {
         return TagSourceWorkbenchAdapter.createInput(tagSource, includeFlags);
     }
 
@@ -358,14 +418,14 @@ public class TagSelectionArea extends DialogArea {
 				}
 			});			
 		}
-
 	}
 
 	protected void handleKeyReleased(KeyEvent event) {
 	}
 	
 	/**
-	 * Updates the dialog enablement.
+	 * handle a selection change event from the visible tag display
+	 * (which could be either the table or the tree).
 	 */
 	protected void handleSelectionChange() {
 	    CVSTag newSelection = internalGetSelectedTag();
@@ -379,14 +439,23 @@ public class TagSelectionArea extends DialogArea {
 	}
 	
 	private CVSTag internalGetSelectedTag() {
-		IStructuredSelection selection = (IStructuredSelection)tagTree.getSelection();
+	    IStructuredSelection selection;
+	    if (isTreeVisible()) {
+	        selection = (IStructuredSelection)tagTree.getSelection();
+	    } else {
+	        selection = (IStructuredSelection)tagTable.getSelection();
+	    }
 		Object o = selection.getFirstElement();
 		if (o instanceof TagElement)
 		    return ((TagElement)o).getTag();
 		return null;
 	}
 	
-	private ICVSRepositoryLocation getLocation(){
+    private boolean isTreeVisible() {
+        return treeVisible;
+    }
+
+    private ICVSRepositoryLocation getLocation(){
 		return tagSource.getLocation();
 	}
     public CVSTag getSelection() {
@@ -403,8 +472,7 @@ public class TagSelectionArea extends DialogArea {
         if (filterText != null)
             filterText.setFocus();
         // Refresh in case tags were added since the last time the area had focus
-        if (tagTree != null)
-            tagTree.refresh();
+        refresh();
     }
 
     /**
@@ -412,22 +480,33 @@ public class TagSelectionArea extends DialogArea {
      * @param selectedTag the tag to be selected
      */
     public void setSelection(CVSTag selectedTag) {
-		if (tagTree != null && !tagTree.getControl().isDisposed()) {
-			// TODO: Hack to instantiate the model before revealing the selection
-			tagTree.expandToLevel(2);
-			tagTree.collapseAll();
-			// Reveal the selection
-			tagTree.reveal(new TagElement(selectedTag));
-			tagTree.setSelection(new StructuredSelection(new TagElement(selectedTag)));
-		}
+        if (isTreeVisible())
+			if (tagTree != null && !tagTree.getControl().isDisposed()) {
+				// TODO: Hack to instantiate the model before revealing the selection
+				tagTree.expandToLevel(2);
+				tagTree.collapseAll();
+				// Reveal the selection
+				tagTree.reveal(new TagElement(selectedTag));
+				tagTree.setSelection(new StructuredSelection(new TagElement(selectedTag)));
+			}
+		else
+		    if (tagTable != null && !tagTable.getControl().isDisposed()) {
+		        tagTable.setSelection(new StructuredSelection(new TagElement(selectedTag)));
+		    }
     }
 
     /**
      * Refresh the state of the tag selection area
      */
     public void refresh() {
-        if (tagTree != null && !tagTree.getControl().isDisposed()) {
-            tagTree.refresh();
+        if (isTreeVisible()) {
+            if (tagTree != null && !tagTree.getControl().isDisposed()) {
+                tagTree.refresh();
+            }
+        } else {
+	        if (tagTable != null && !tagTable.getControl().isDisposed()) {
+	            tagTable.refresh();
+	        }
         }
     }
 
@@ -438,6 +517,7 @@ public class TagSelectionArea extends DialogArea {
     public void setEnabled(boolean enabled) {
         filterText.setEnabled(enabled);
         tagTree.getControl().setEnabled(enabled);
+        tagTable.getControl().setEnabled(enabled);
     }
     
     /**
@@ -459,6 +539,16 @@ public class TagSelectionArea extends DialogArea {
         this.tagSource = tagSource;
         this.tagSource.addListener(listener);
         tagRefreshArea.setTagSource(this.tagSource);
-        refresh();
+        setTreeAndtableInput();
+    }
+
+    private void setTreeAndtableInput() {
+        if (tagTree != null) {
+            tagTree.setInput(createUnfilteredInput());
+        }
+        if (tagTable != null) {
+            tagTable.setInput(createFilteredInput());
+        }
+        
     }
 }

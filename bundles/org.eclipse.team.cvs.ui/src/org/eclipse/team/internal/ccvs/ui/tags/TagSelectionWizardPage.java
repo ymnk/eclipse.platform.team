@@ -98,7 +98,7 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 		}
 		
 		createTagArea();
-		
+		updateEnablement();
 		Dialog.applyDialogFont(parent);	
 	}
 	
