@@ -13,17 +13,13 @@ package org.eclipse.team.internal.ccvs.ui;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.help.WorkbenchHelp;
 
 /**
@@ -86,45 +82,67 @@ public class UserValidationDialog extends Dialog {
 			passwordField.setFocus();
 		}
 	}
+	
 	/**
 	 * @see Dialog#createDialogArea
 	 */
 	protected Control createDialogArea(Composite parent) {
-		Composite main = new Composite(parent, SWT.NONE);
+		Composite top = new Composite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		
+		top.setLayout(layout);
+		top.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+	
+		Composite imageComposite = new Composite(top, SWT.NONE);
+		layout = new GridLayout();
+		imageComposite.setLayout(layout);
+		imageComposite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+
+		Composite main = new Composite(top, SWT.NONE);
+		layout = new GridLayout();
 		layout.numColumns = 3;
+		layout.marginHeight = 0;
+		layout.marginHeight = 0;
 		main.setLayout(layout);
 		main.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-	
+		
+		Label imageLabel = new Label(imageComposite, SWT.NONE);
+		imageLabel.setImage(getImage(DLG_IMG_INFO));
+		GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+		imageLabel.setLayoutData(data);
+		
 		if (message != null) {
 			Label messageLabel = new Label(main, SWT.WRAP);
 			messageLabel.setText(message);
-			messageLabel.setForeground(messageLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
-			GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+			data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
 			data.horizontalSpan = 3;
-			data.widthHint = 400;
+			data.widthHint = 300;
 			messageLabel.setLayoutData(data);
 		}
-
 		if (domain != null) {
+			Label d = new Label(main, SWT.WRAP);
+			d.setText(Policy.bind("UserValidationDialog.5")); //$NON-NLS-1$
+			data = new GridData();
+			d.setLayoutData(data);
 			Label label = new Label(main, SWT.WRAP);
 			if (isUsernameMutable) {
 				label.setText(Policy.bind("UserValidationDialog.labelUser", domain)); //$NON-NLS-1$
 			} else {
 				label.setText(Policy.bind("UserValidationDialog.labelPassword", new Object[]{defaultUsername, domain})); //$NON-NLS-1$
 			}
-			GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
-			data.horizontalSpan = 3;
-			data.widthHint = 400;
+			data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+			data.horizontalSpan = 2;
+			data.widthHint = 300;
 			label.setLayoutData(data);
 		}
 		createUsernameFields(main);
 		createPasswordFields(main);
-	
+		
 		if(showAllowCachingButton) {
 			allowCachingButton = new Button(main, SWT.CHECK);
-			allowCachingButton.setText("Remember this logon information and enter it automatically the next time it is needed.");
-			GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+			allowCachingButton.setText(Policy.bind("UserValidationDialog.6")); //$NON-NLS-1$
+			data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
 			data.horizontalSpan = 3;
 			allowCachingButton.setLayoutData(data);
 			allowCachingButton.addSelectionListener(new SelectionAdapter() {
@@ -132,12 +150,40 @@ public class UserValidationDialog extends Dialog {
 					allowCaching = allowCachingButton.getSelection();
 				}
 			});
+			Composite warningComposite = new Composite(main, SWT.NONE);
+			layout = new GridLayout();
+			layout.numColumns = 2;
+			layout.marginHeight = 0;
+			layout.marginHeight = 0;
+			warningComposite.setLayout(layout);
+			data = new GridData(GridData.FILL_HORIZONTAL);
+			data.horizontalSpan = 3;
+			warningComposite.setLayoutData(data);
+			Label warningLabel = new Label(warningComposite, SWT.NONE);
+			warningLabel.setImage(getImage(DLG_IMG_MESSAGE_WARNING));
+			warningLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+			Label warningText = new Label(warningComposite, SWT.WRAP);
+			warningText.setText(Policy.bind("UserValidationDialog.7")); //$NON-NLS-1$
+			data = new GridData(GridData.FILL_HORIZONTAL);
+			data.widthHint = 300;
+			warningText.setLayoutData(data);
 		}
 		
         Dialog.applyDialogFont(parent);
         
 		return main;
 	}
+	/**
+	 * Create a spacer.
+	 */
+	protected void createSpacer(Composite top, int columnSpan, int vertSpan) {
+		Label l = new Label(top, SWT.NONE);
+		GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+		data.horizontalSpan = columnSpan;
+		data.verticalSpan = vertSpan;
+		l.setLayoutData(data);
+	}
+	
 	/**
 	 * Creates the three widgets that represent the password entry area.
 	 * 
@@ -166,6 +212,7 @@ public class UserValidationDialog extends Dialog {
 		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.ENTRY_FIELD_WIDTH);
 		usernameField.setLayoutData(data);
 	}
+	
 	/**
 	 * Returns the password entered by the user, or null
 	 * if the user canceled.
@@ -175,6 +222,7 @@ public class UserValidationDialog extends Dialog {
 	public String getPassword() {
 		return password;
 	}
+	
 	/**
 	 * Returns the username entered by the user, or null
 	 * if the user canceled.
@@ -185,6 +233,11 @@ public class UserValidationDialog extends Dialog {
 		return username;
 	}
 	
+	/**
+	 * Returns <code>true</code> if the save password checkbox was selected.
+	 * @return <code>true</code> if the save password checkbox was selected and <code>false</code>
+	 * otherwise.
+	 */
 	public boolean getAllowCaching() {
 		return allowCaching;
 	}

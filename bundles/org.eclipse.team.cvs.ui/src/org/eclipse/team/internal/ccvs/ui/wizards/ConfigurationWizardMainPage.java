@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.ui.wizards;
 
 import java.util.*;
 import java.util.List;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.*;
@@ -198,18 +197,6 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 		portText = createTextField(portGroup);
 		portText.addListener(SWT.Modify, listener);
 		
-		allowCachingButton = new Button(composite, SWT.CHECK);
-		allowCachingButton.setText("Remember this logon information and enter it automatically the next time it is needed.");
-		data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
-		data.horizontalSpan = 3;
-		allowCachingButton.setLayoutData(data);
-		allowCachingButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				allowCaching = allowCachingButton.getSelection();
-			}
-		});
-		
-		
 		// create a composite to ensure the validate button is in its own tab group
 		if (showValidate) {
 			Composite validateButtonTabGroup = new Composite(composite, SWT.NONE);
@@ -226,6 +213,35 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 				}
 			});
 		}
+		
+		allowCachingButton = new Button(composite, SWT.CHECK);
+		allowCachingButton.setText(Policy.bind("UserValidationDialog.6")); //$NON-NLS-1$
+		data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+		data.horizontalSpan = 3;
+		allowCachingButton.setLayoutData(data);
+		allowCachingButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				allowCaching = allowCachingButton.getSelection();
+			}
+		});
+	
+		Composite warningComposite = new Composite(composite, SWT.NONE);
+		layout = new GridLayout();
+		layout.numColumns = 2;
+		layout.marginHeight = 0;
+		layout.marginHeight = 0;
+		warningComposite.setLayout(layout);
+		data = new GridData(GridData.FILL_HORIZONTAL);
+		data.horizontalSpan = 3;
+		warningComposite.setLayoutData(data);
+		Label warningLabel = new Label(warningComposite, SWT.NONE);
+		warningLabel.setImage(Dialog.getImage(Dialog.DLG_IMG_MESSAGE_WARNING));
+		warningLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING | GridData.HORIZONTAL_ALIGN_BEGINNING));
+		Label warningText = new Label(warningComposite, SWT.WRAP);
+		warningText.setText(Policy.bind("UserValidationDialog.7")); //$NON-NLS-1$
+		data = new GridData(GridData.FILL_HORIZONTAL);
+		data.widthHint = 300;
+		warningText.setLayoutData(data);
 		
 		initializeValues();
 		updateWidgetEnablements();

@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui;
  
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -49,9 +49,8 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		}
 	};
 		
-	
 	public void init(IWorkbench workbench) {
-		setDescription("Password Management"); //$NON-NLS-1$
+		setDescription(Policy.bind("PasswordManagementPreferencePage.2")); //$NON-NLS-1$
 	}
 	
 	/**
@@ -71,12 +70,6 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		data.verticalAlignment = GridData.FILL;
 		data.horizontalAlignment = GridData.FILL;
 		parent.setLayoutData(data);
-	
-		Label l1 = new Label(parent, SWT.NULL);
-		l1.setText("The following CVS repository locations have saved passwords:");
-		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
-		data.horizontalSpan = 2;
-		l1.setLayoutData(data);
 		
 		viewer = new TableViewer(parent, SWT.MULTI | SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		Table table = viewer.getTable();
@@ -95,15 +88,15 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		table.setLayoutData(gd);
 		table.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event e) {
-				//handleSelection();
+				handleSelection();
 			}
 		});
 		// Create the table columns
 		new TableColumn(table, SWT.NULL);
 		new TableColumn(table, SWT.NULL);
 		TableColumn[] columns = table.getColumns();
-		columns[0].setText("Location"); //$NON-NLS-1$
-		columns[1].setText("Username"); //$NON-NLS-1$
+		columns[0].setText(Policy.bind("PasswordManagementPreferencePage.3"));  //$NON-NLS-1$
+		columns[1].setText(Policy.bind("PasswordManagementPreferencePage.4"));  //$NON-NLS-1$
 		
 		viewer.setColumnProperties(new String[] {"location", "username"}); //$NON-NLS-1$ //$NON-NLS-2$
 		viewer.setLabelProvider(new TableLabelProvider());
@@ -137,7 +130,7 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		buttons.setLayout(layout);
 		
 		removeButton = new Button(buttons, SWT.PUSH);
-		removeButton.setText("Remove"); 
+		removeButton.setText(Policy.bind("PasswordManagementPreferencePage.5"));  //$NON-NLS-1$
 		data = new GridData();
 		data.horizontalAlignment = GridData.FILL;
 		data.heightHint = convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT);
@@ -147,11 +140,11 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		removeButton.setEnabled(false);
 		removeButton.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event e) {
-				removeIgnore();
+				remove();
 			}
 		});
 		removeAllButton = new Button(buttons, SWT.PUSH);
-		removeAllButton.setText("Remove All"); 
+		removeAllButton.setText(Policy.bind("PasswordManagementPreferencePage.6"));  //$NON-NLS-1$
 		data = new GridData();
 		data.horizontalAlignment = GridData.FILL;
 		data.heightHint = convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT);
@@ -161,18 +154,15 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		removeAllButton.setEnabled(true);
 		removeAllButton.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event e) {
-				removeAllIgnore();
+				removeAll();
 			}
 		});
 		Dialog.applyDialogFont(ancestor);
 		viewer.setInput(KnownRepositories.getInstance());
+		handleSelection();
 		return parent;
 	}
-	/**
-	 * Do anything necessary because the OK button has been pressed.
-	 *
-	 * @return whether it is okay to close the preference page
-	 */
+	
 	public boolean performOk() {
 		return true;
 	}
@@ -181,9 +171,17 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 		super.performDefaults();
 	}
 	
-	private void removeIgnore() {
+	private void remove() {
+		IStructuredSelection s = (IStructuredSelection)viewer.getSelection();
+		for (Iterator it = s.iterator(); it.hasNext();) {
+			ICVSRepositoryLocation location = (ICVSRepositoryLocation) it.next();
+			location.flushUserInfo();
+		}
+		viewer.refresh();
+		handleSelection();
 	}
-	private void removeAllIgnore() {
+	
+	private void removeAll() {
 		ICVSRepositoryLocation[] locations = KnownRepositories.getInstance().getRepositories();
 		List repos = new ArrayList();
 		for (int i = 0; i < locations.length; i++) {
@@ -191,13 +189,16 @@ public class PasswordManagementPreferencePage extends PreferencePage implements 
 			if(l.getUserInfoCached()) 
 				l.flushUserInfo();
 		}
-		viewer.setInput(KnownRepositories.getInstance());
+		viewer.refresh();
+		handleSelection();
 	}
+	
 	private void handleSelection() {
 		if (viewer.getTable().getSelectionCount() > 0) {
 			removeButton.setEnabled(true);
 		} else {
 			removeButton.setEnabled(false);
 		}
+		removeAllButton.setEnabled(viewer.getTable().getItemCount() > 0);
 	}
 }
