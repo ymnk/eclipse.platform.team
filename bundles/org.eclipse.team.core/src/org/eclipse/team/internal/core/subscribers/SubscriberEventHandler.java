@@ -21,6 +21,12 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.core.*;
 
 /**
+ * @author JLemieux
+ *
+ * To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Generation - Code and Comments
+ */
+/**
  * This handler collects changes and removals to resources and calculates their
  * synchronization state in a background job. The result is fed input the SyncSetInput.
  * 
@@ -112,9 +118,6 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		reset(syncSetInput.getSubscriber().roots(), SubscriberEvent.INITIALIZE);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.core.BackgroundEventHandler#queueEvent(org.eclipse.team.internal.core.BackgroundEventHandler.Event)
-	 */
 	protected synchronized void queueEvent(Event event) {
 		// Only post events if the handler is started
 		if (started) {
@@ -125,7 +128,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * Schedule the job or process the events now.
 	 */
 	public void schedule() {
-		JobStatusHandler.schedule(getEventHandlerJob(), Subscriber.SUBSCRIBER_JOB_TYPE);
+		getEventHandlerJob().schedule();
 	}
 	
 	/**
@@ -315,10 +318,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 			queueEvent(new SubscriberEvent(resources[i], type, IResource.DEPTH_INFINITE));
 		}
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#processEvent(org.eclipse.team.core.subscribers.BackgroundEventHandler.Event, org.eclipse.core.runtime.IProgressMonitor)
-	 */
+
 	protected void processEvent(Event event, IProgressMonitor monitor) {
 		// Cancellation is dangerous because this will leave the sync info in a bad state.
 		// Purposely not checking -				 	

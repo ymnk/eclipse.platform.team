@@ -14,8 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.core.*;
+import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
@@ -40,7 +39,7 @@ public class RefreshAction extends Action {
 		if (listener != null) {
 			RefreshSubscriberJob.addRefreshListener(listener);
 		}
-		JobStatusHandler.schedule(job, Subscriber.SUBSCRIBER_JOB_TYPE);
+		job.schedule();
 	}
 	
 	public RefreshAction(ISelectionProvider page, String description, SubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener, boolean refreshAll) {

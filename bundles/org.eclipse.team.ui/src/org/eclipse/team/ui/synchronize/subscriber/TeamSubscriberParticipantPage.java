@@ -20,9 +20,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.ChangesSection;
 import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
@@ -49,7 +47,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private ChangesSection changesSection;
 	private boolean settingWorkingSet = false;
 	
-	private JobBusyCursor busyCursor;
 	private ISynchronizeView view;
 	private TeamSubscriberParticipant participant;
 	private IPageSite site;
@@ -89,9 +86,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.grabExcessVerticalSpace = true;
 		composite.setLayoutData(data);
-		
-		// Create the busy cursor with no control to start with (createViewer will set it)
-		busyCursor = new JobBusyCursor(parent.getParent().getParent(), Subscriber.SUBSCRIBER_JOB_TYPE);
 		
 		// Create the changes section which, in turn, creates the changes viewer and its configuration
 		changesSection = new ChangesSection(composite, this);
@@ -160,7 +154,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
 	 */
 	public void dispose() {
-		busyCursor.dispose();
 		changesSection.dispose();
 	}
 

@@ -16,92 +16,36 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRunnable;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.SubProgressMonitor;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.action.*;
+import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.text.Document;
-import org.eclipse.jface.text.ITextOperationTarget;
-import org.eclipse.jface.text.TextViewer;
-import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.TableLayout;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.text.*;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.BusyIndicator;
-import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.custom.*;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.ILogEntry;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
-import org.eclipse.team.internal.ccvs.ui.actions.MoveRemoteTagAction;
-import org.eclipse.team.internal.ccvs.ui.actions.OpenLogEntryAction;
-import org.eclipse.team.internal.core.JobStatusHandler;
-import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
+import org.eclipse.team.internal.ccvs.ui.actions.*;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoCompareInput;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IActionDelegate;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IFileEditorInput;
-import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IPartListener2;
-import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchPartReference;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.*;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.part.ResourceTransfer;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 /**
@@ -141,7 +85,6 @@ public class HistoryView extends ViewPart {
 	private IPreferenceStore settings;
 	
 	private FetchLogEntriesJob fetchLogEntriesJob;
-	private JobBusyCursor jobBusyCursor;
 	
 	private boolean shutdown = false;
 	
@@ -443,9 +386,6 @@ public class HistoryView extends ViewPart {
 		// set F1 help
 		WorkbenchHelp.setHelp(sashForm, IHelpContextIds.RESOURCE_HISTORY_VIEW);
 		initDragAndDrop();
-		
-		//	Create the busy cursor with no control to start with (createViewer will set it)
-		 jobBusyCursor = new JobBusyCursor(parent, HISTORY_VIEW_JOB_TYPE);
 		 
 		// add listener for editor page activation - this is to support editor linking
 		getSite().getPage().addPartListener(partListener);	
@@ -488,7 +428,7 @@ public class HistoryView extends ViewPart {
 					}
 				}
 				fetchLogEntriesJob.setRemoteFile(remoteFile);
-				JobStatusHandler.schedule(fetchLogEntriesJob, HISTORY_VIEW_JOB_TYPE);
+				schedule(fetchLogEntriesJob);
 				return new Object[0];
 			}
 			public void dispose() {
@@ -599,7 +539,6 @@ public class HistoryView extends ViewPart {
 		
 		getSite().getPage().removePartListener(partListener);
 		getSite().getPage().removePartListener(partListener2);
-		jobBusyCursor.dispose();
 	}	
 	/**
 	 * Returns the table viewer contained in this view.
@@ -901,5 +840,18 @@ public class HistoryView extends ViewPart {
 	 */
 	private boolean isLinkingEnabled() {
 		return linkingEnabled;
+	}
+	
+	
+	private void schedule(Job job) {
+		IViewSite site = getViewSite();
+		if(site != null) {
+			IWorkbenchSiteProgressService siteProgress = (IWorkbenchSiteProgressService)getViewSite().getAdapter(IWorkbenchSiteProgressService.class);
+			if(siteProgress != null) {
+				siteProgress.schedule(job);
+				return;
+			}
+		}
+		job.schedule();
 	}
 }

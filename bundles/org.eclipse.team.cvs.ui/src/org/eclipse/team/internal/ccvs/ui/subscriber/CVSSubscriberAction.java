@@ -15,8 +15,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.ISchedulingRule;
-import org.eclipse.core.runtime.jobs.MultiRule;
+import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -195,7 +194,11 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 */
 	private ICVSRunnableContext getCVSRunnableContext() {
 		if (canRunAsJob() && areJobsEnabled()) {
-			return new CVSSubscriberNonblockingContext();
+			return new CVSNonblockingRunnableContext() {
+				protected void schedule(Job job) {
+					CVSSubscriberAction.this.schedule(job);
+				}
+			};
 		} else {
 			return new CVSBlockingRunnableContext(shell);
 		}

@@ -10,34 +10,17 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.DecoratingLabelProvider;
-import org.eclipse.jface.viewers.IColorProvider;
-import org.eclipse.jface.viewers.ILabelDecorator;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.LabelProviderChangedEvent;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
-import org.eclipse.team.internal.core.IJobListener;
-import org.eclipse.team.internal.core.JobStatusHandler;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.OverlayIcon;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.internal.WorkbenchColors;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
@@ -88,7 +71,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	}
 
 	public SyncInfoLabelProvider() {
-		JobStatusHandler.addJobListener(new IJobListener() {
+		/*JobStatusHandler.addJobListener(new IJobListener() {
 
 			public void started(QualifiedName jobType) {
 				working = true;
@@ -118,7 +101,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 		// The label provider may of been created after the subscriber job has
 		// been
 		// started.
-		this.working = JobStatusHandler.hasRunningJobs(Subscriber.SUBSCRIBER_JOB_TYPE);
+		this.working = JobStatusHandler.hasRunningJobs(Subscriber.SUBSCRIBER_JOB_TYPE);*/
 	}
 
 	/*

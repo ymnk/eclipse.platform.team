@@ -41,12 +41,12 @@ SyncInfoSetCompareInput
 
 DiffNode
 SyncInfoDiffNode
-SyncInfoDiffNodeRoot
 
 Viewer
 ContentProvider
 Sorter
 LabelProvider
+ViewerInput
 
 1. sync set is created
 2. decide how to model the sync set (hierachy, compressed, change log...) sorter...
@@ -71,7 +71,7 @@ Viewer Input (creates viewer model, keeps it up-to-date, sorter)
 Data (sync info, sync info set)
 
 1. when does the viewer model get created, it is implementation dependant
-2. what is creating the viewer model takes a while.
+2. why is creating the viewer model takes a while.
 
 How is progress shown?
 ======================
