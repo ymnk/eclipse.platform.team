@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import org.eclipse.compare.*;
 import org.eclipse.compare.internal.CompareEditor;
@@ -15,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
@@ -340,14 +342,24 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 							// when calling getContents on a diff node.
 							IProgressService manager = PlatformUI.getWorkbench().getProgressService();
 							try {
-								node.cacheContents(new NullProgressMonitor());
-								hookContentChangeListener(node);
-							} catch (TeamException e) {
+								manager.busyCursorWhile(new IRunnableWithProgress() {
+									public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+										try {	
+											node.cacheContents(new NullProgressMonitor());
+											hookContentChangeListener(node);
+										} catch (TeamException e) {
+											Utils.handle(e);
+										} finally {
+											// Update the labels even if the content wasn't fetched correctly. This is
+											// required because the selection would still of changed.
+											Utils.updateLabels(node.getSyncInfo(), cc);
+										}
+									}
+								});
+							} catch (InvocationTargetException e) {
 								Utils.handle(e);
-							} finally {
-								// Update the labels even if the content wasn't fetched correctly. This is
-								// required because the selection would still of changed.
-								Utils.updateLabels(node.getSyncInfo(), cc);
+							} catch (InterruptedException e) {
+								return;
 							}
 						}
 					}

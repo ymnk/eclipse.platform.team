@@ -17,7 +17,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
@@ -27,15 +26,12 @@ import org.eclipse.team.ui.synchronize.subscribers.*;
 public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubscriberListener {
 
 	private SubscriberParticipant participant;
-	private boolean rememberInSyncView;
-	private String targetId;
-	private SyncInfoTree syncInfoSet;
+	private ISynchronizePageConfiguration configuration;
 	private Shell shell;
 
-	public RefreshUserNotificationPolicyInModalDialog(Shell shell, String targetId, SubscriberParticipant participant, SyncInfoTree syncInfoSet) {
-		this.targetId = targetId;
+	public RefreshUserNotificationPolicyInModalDialog(Shell shell, ISynchronizePageConfiguration configuration, SubscriberParticipant participant) {
+		this.configuration  = configuration;
 		this.participant = participant;
-		this.syncInfoSet = syncInfoSet;
 		this.shell = shell;
 	}
 
@@ -55,7 +51,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 			public void run() {
 				try {
 					// If there are no changes
-					if (!areChanges()) {
+					if (event.getStatus().getCode() == IRefreshEvent.STATUS_NO_CHANGES) {
 						MessageDialog.openInformation(shell, Policy.bind("OpenComparedDialog.noChangeTitle"), Policy.bind("OpenComparedDialog.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
 						return;
 					}
@@ -71,10 +67,6 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 				}
 			}
 		};
-	}
-
-	private boolean areChanges() {
-		return ! syncInfoSet.isEmpty();
 	}
 
 	protected boolean isSingleFileCompare(IResource[] resources) {
@@ -94,7 +86,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 
 	protected void compareAndOpenDialog(final IRefreshEvent event, final SubscriberParticipant participant) {
 		CompareConfiguration cc = new CompareConfiguration();
-		ParticipantPageSaveablePart input = new ParticipantPageSaveablePart(Utils.getShell(null), cc, participant.createPageConfiguration(), participant);
+		ParticipantPageSaveablePart input = new ParticipantPageSaveablePart(Utils.getShell(null), cc, configuration, participant);
 		ParticipantPageDialog dialog = new ParticipantPageDialog(shell, input, participant);
 		dialog.setBlockOnOpen(true);
 		dialog.open();

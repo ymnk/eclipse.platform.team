@@ -13,3 +13,13 @@ Goals of the API:
   - synchronize input (displays a participant page in the compare infrastructure)
   - sync info compare input (display sync info in compare editor)
   - can they display the sync info using the default model providers?
+  
+  
+  
+  NOTES:
+  - working set in compare with latest to scope the changes shown
+  x navigate actions in dialogs
+  x progress fetching contents in dialog part
+  - progress in dialog/wizards
+  x fix-up actions enabled in dialogs/wizards
+  x SubscriberPageConfiguration never created? I would expect SubscriberParticipant to create one.

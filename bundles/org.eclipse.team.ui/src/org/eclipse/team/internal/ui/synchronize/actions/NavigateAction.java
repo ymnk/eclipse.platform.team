@@ -67,7 +67,12 @@ public class NavigateAction extends Action {
 	}
 	
 	public void run() {
-		navigate();
+		IWorkbenchSite ws = site.getWorkbenchSite();
+		if (ws instanceof IWorkbenchPartSite) {
+			navigate();
+		} else {
+			navigator.gotoDifference(next);
+		}
 	}
 	
 	private void navigate() {

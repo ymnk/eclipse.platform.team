@@ -204,8 +204,8 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @param taskName
 	 * @param site
 	 */
-	public final void refreshInDialog(Shell shell, IResource[] resources, String taskName, String targetId, SyncInfoTree syncInfoSet, IWorkbenchSite site) {
-		IRefreshSubscriberListener listener =  new RefreshUserNotificationPolicyInModalDialog(shell, targetId, this, syncInfoSet);
+	public final void refreshInDialog(Shell shell, IResource[] resources, String taskName, ISynchronizePageConfiguration configuration, IWorkbenchSite site) {
+		IRefreshSubscriberListener listener =  new RefreshUserNotificationPolicyInModalDialog(shell, configuration, this);
 		internalRefresh(resources, listener, taskName, site);
 	}
 	
