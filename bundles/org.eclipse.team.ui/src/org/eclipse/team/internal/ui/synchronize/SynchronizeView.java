@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.synchronize;
 import java.util.*;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -22,12 +23,10 @@ import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.actions.PinParticipantAction;
-import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
+import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
@@ -60,6 +59,16 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * Action to remove the selected participant
 	 */
 	private PinParticipantAction fPinAction;
+	
+	/**
+	 * Action to remove the currently shown partipant
+	 */
+	private RemoveSynchronizeParticipantAction fRemoveCurrentAction;
+	
+	/**
+	 * Action to remove all non-pinned participants
+	 */
+	private RemoveSynchronizeParticipantAction fRemoveAllAction;
 	
 	/**
 	 * Preference key to save
@@ -270,12 +279,20 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void createActions() {
 		fPageDropDown = new SynchronizePageDropDownAction(this);
 		fPinAction = new PinParticipantAction();
+		fRemoveCurrentAction = new RemoveSynchronizeParticipantAction(this, false);
+		fRemoveAllAction = new RemoveSynchronizeParticipantAction(this, true);
 		updateActionEnablements();
 	}
 
 	private void updateActionEnablements() {
 		if (fPinAction != null) {
 			fPinAction.setParticipant(activeParticipantRef);
+		}
+		if (fRemoveAllAction != null) {
+			fRemoveAllAction.setEnabled(getParticipant() != null);
+		}
+		if (fRemoveCurrentAction != null) {
+			fRemoveCurrentAction.setEnabled(getParticipant() != null);
 		}
 	}
 
@@ -284,9 +301,13 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * 
 	 * @param mgr toolbar manager
 	 */
-	protected void configureToolBar(IToolBarManager mgr) {
+	protected void configureToolBar(IActionBars bars) {
+		IToolBarManager mgr = bars.getToolBarManager();
 		mgr.add(fPageDropDown);
 		mgr.add(fPinAction);
+		IMenuManager menu = bars.getMenuManager();
+		menu.add(fRemoveCurrentAction);
+		menu.add(fRemoveAllAction);
 	}
 
 	/* (non-Javadoc)
@@ -335,8 +356,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
 		createActions();
-		IToolBarManager tbm= getViewSite().getActionBars().getToolBarManager();
-		configureToolBar(tbm);
+		configureToolBar(getViewSite().getActionBars());
 		updateForExistingParticipants();
 		getViewSite().getActionBars().updateActionBars();
 		updateTitle();
