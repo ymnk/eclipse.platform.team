@@ -8,10 +8,17 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.internal.ui.synchronize;
 
+import java.util.Iterator;
+
+import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.NavigationAction;
+import org.eclipse.jface.action.*;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 
 /**
@@ -19,27 +26,22 @@ import org.eclipse.team.ui.synchronize.actions.INavigableControl;
  */
 public class SyncInfoDiffTreeNavigator {
 	
-	public interface INavigationTarget {
-
-		/**
-		 * @param selection
-		 * @param b
-		 */
-		void setSelection(TreeItem ti, boolean fireOpen);
-
-		/**
-		 * @return
-		 */
-		Tree getTree();
-
-		/**
-		 * @param item
-		 */
-		void createChildren(TreeItem item);
-		
-	}
-	INavigationTarget viewer;
+	private Action expandAll;
+	private NavigationAction nextAction;
+	private NavigationAction previousAction;
 	
+	public interface INavigationTarget {
+		void setSelection(TreeItem ti, boolean fireOpen);
+		Tree getTree();
+		void createChildren(TreeItem item);
+	}
+	
+	INavigationTarget target;
+	
+	public SyncInfoDiffTreeNavigator(INavigationTarget target) {
+		this.target = target;
+	}
+
 	/**
 	 * Selects the next (or previous) node of the current selection.
 	 * If there is no current selection the first (last) node in the tree is selected.
@@ -50,7 +52,7 @@ public class SyncInfoDiffTreeNavigator {
 	 */
 	public boolean gotoDifference(int direction) {	
 		boolean next = direction == INavigableControl.NEXT ? true : false;
-		return internalNavigate(next, false);
+		return navigate(next, false);
 	}
 	
 	/**
@@ -62,7 +64,7 @@ public class SyncInfoDiffTreeNavigator {
 	 * @param next if <code>true</code> the next node is selected, otherwise the previous node
 	 * @return <code>true</code> if at end (or beginning)
 	 */
-	private boolean internalNavigate(boolean next, boolean fireOpen) {
+	public boolean navigate(boolean next, boolean fireOpen) {
 		
 		Tree tree = getTarget().getTree();
 		if (tree == null) return false;
@@ -180,10 +182,65 @@ public class SyncInfoDiffTreeNavigator {
 		return item;
 	}
 	
-	/**
-	 * @return Returns the viewer.
-	 */
 	public INavigationTarget getTarget() {
-		return viewer;
+		return target;
+	}
+	
+	public void createToolItems(IToolBarManager tbm) {
+		nextAction= new NavigationAction(true);
+		tbm.appendToGroup("navigation", nextAction); //$NON-NLS-1$
+
+		previousAction= new NavigationAction(false);
+		tbm.appendToGroup("navigation", previousAction); //$NON-NLS-1$		
+	}
+	
+	public void updateCompareEditorInput(CompareEditorInput input) {
+		nextAction.setCompareEditorInput(input);
+		previousAction.setCompareEditorInput(input);
+	}
+	
+	public void createActions(final StructuredViewer viewer) {
+		expandAll = new Action() {
+			public void run() {
+				expandAllFromSelection(viewer);
+			}
+		};
+		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
+	}
+	
+	public void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
+		AbstractTreeViewer tree = getAbstractTreeViewer(viewer);
+		if (tree != null) {
+			manager.add(expandAll);
+		}
+	}
+	
+	protected void expandAllFromSelection(StructuredViewer viewer) {
+		AbstractTreeViewer tree = getAbstractTreeViewer(viewer);
+		if (tree == null) return;
+		ISelection selection = tree.getSelection();
+		if(! selection.isEmpty()) {
+			Iterator elements = ((IStructuredSelection)selection).iterator();
+			while (elements.hasNext()) {
+				Object next = elements.next();
+				tree.expandToLevel(next, AbstractTreeViewer.ALL_LEVELS);
+			}
+		}
+	}
+	
+	private AbstractTreeViewer getAbstractTreeViewer(StructuredViewer viewer) {
+		if (viewer instanceof AbstractTreeViewer) {
+			return (AbstractTreeViewer)viewer;
+		}
+		return null;
+	}
+	
+	public void reveal(StructuredViewer viewer, Object element) {
+		AbstractTreeViewer tree = getAbstractTreeViewer(viewer);
+		if (tree == null)return;
+		// Double-clicking should expand/collapse containers
+		if(tree.isExpandable(element)) {
+			tree.setExpandedState(element, ! tree.getExpandedState(element));
+		}
 	}
 }

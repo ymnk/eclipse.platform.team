@@ -8,23 +8,24 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.action.*;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
 /**
  * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer for the synchroniza view
  */
-public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffViewerConfiguration {
+public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffTreeViewerConfiguration {
 
 	private ISynchronizeView view;
 	private TeamSubscriberParticipant participant;
@@ -32,7 +33,6 @@ public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffViewerC
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
 	private RefreshAction refreshSelectionAction;
-	private Action expandAll;
 	
 	public SyncInfoDiffViewerSyncViewConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
 		super(participant.getId(), participant.getSyncInfoSetCollector().getSyncInfoSet());
@@ -42,28 +42,21 @@ public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffViewerC
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffViewerConfiguration#createDiffTreeViewer(org.eclipse.swt.widgets.Composite)
 	 */
-	public SyncInfoDiffTreeViewer createDiffTreeViewer(Composite parent) {
-		SyncInfoDiffTreeViewer treeViewer = super.createDiffTreeViewer(parent);
+	public StructuredViewer createViewer(Composite parent) {
+		final StructuredViewer treeViewer = super.createViewer(parent);
 
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
 		refreshSelectionAction = new RefreshAction(view.getSite().getPage(), participant, false /*refresh*/);
-		expandAll = new Action() {
-			public void run() {
-				expandAllFromSelection();
-			}
-		};
-		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
-		setAcceptParticipantMenuContributions(true);
 		return treeViewer;
 	}
 	
-	protected void fillContextMenu(IMenuManager manager) {
+	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
 		openWithActions.fillContextMenu(manager);
 		refactorActions.fillContextMenu(manager);
 		manager.add(refreshSelectionAction);
 		manager.add(new Separator());
-		manager.add(expandAll);
+		getNavigator().fillContextMenu(viewer, manager);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
@@ -72,7 +65,7 @@ public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffViewerC
 	 * 
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewer#handleDoubleClick(org.eclipse.jface.viewers.DoubleClickEvent)
 	 */
-	protected void handleDoubleClick(DoubleClickEvent event) {
+	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		DiffNode node = (DiffNode) selection.getFirstElement();
 		if (node != null && node instanceof SyncInfoDiffNode) {
@@ -84,21 +77,21 @@ public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffViewerC
 			}
 		}
 		// Double-clicking should expand/collapse containers
-		super.handleDoubleClick(event);
+		super.handleDoubleClick(viewer, event);
 	}
 	
-	protected void initializeListeners() {
-		getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
+	protected void initializeListeners(StructuredViewer viewer) {
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				updateStatusLine((IStructuredSelection) event.getSelection());
 			}
 		});
-		getViewer().addOpenListener(new IOpenListener() {
+		viewer.addOpenListener(new IOpenListener() {
 			public void open(OpenEvent event) {
 				handleOpen();
 			}
 		});
-		super.initializeListeners();
+		super.initializeListeners(viewer);
 	}
 	
 	protected void handleOpen() {

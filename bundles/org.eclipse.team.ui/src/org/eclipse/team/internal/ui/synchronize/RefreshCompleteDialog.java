@@ -51,11 +51,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		setImageKey(DLG_IMG_INFO);
 		
 		this.set = new SyncInfoSetCollector(participant.getSyncInfoCollector().getSyncInfoSet(), getResources(), null);
-		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), participant.getId(), set.getSyncInfoSet()) {
-			protected boolean allowParticipantMenuContributions() {
-				return true;
-			}
-		}; 
+		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
+				new SyncInfoDiffTreeViewerConfiguration(participant.getId(), set.getSyncInfoSet())); 
 		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$

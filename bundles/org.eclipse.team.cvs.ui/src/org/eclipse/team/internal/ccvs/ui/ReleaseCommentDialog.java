@@ -29,8 +29,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoFilter;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.help.WorkbenchHelp;
 
 /**
@@ -90,7 +89,8 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		
 		TeamSubscriberParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
 		SyncInfoFilter.SyncInfoDirectionFilter filter = new SyncInfoFilter.SyncInfoDirectionFilter(SyncInfo.OUTGOING);
-		compareEditorInput = new SyncInfoSetCompareInput(cc, null, participant.getSyncInfoCollector().getSyncInfoSet());
+		compareEditorInput = new SyncInfoSetCompareInput(cc, 
+				new SyncInfoDiffTreeViewerConfiguration(null, participant.getSyncInfoCollector().getSyncInfoSet()));
 		
 		// set F1 help
 		WorkbenchHelp.setHelp(composite, IHelpContextIds.RELEASE_COMMENT_DIALOG);	

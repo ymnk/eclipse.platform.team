@@ -57,7 +57,7 @@ public class TeamException extends CoreException {
 		super(status);	
 	}
 
-	public TeamException(String message, Exception e) {
+	public TeamException(String message, Throwable e) {
 		super(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, e));
 	}
 	

@@ -18,13 +18,15 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
+import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
-public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableControl, SyncInfoDiffTreeNavigator.INavigationTarget {
+// TODO: This is an internal superclass
+public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer implements INavigableControl, SyncInfoDiffTreeNavigator.INavigationTarget {
 
 	private SyncInfoDiffTreeViewerConfiguration configuration;
 	
 	/**
-	 * Create a <code>SyncInfoDiffTreeViewer</code> that uses trhe default configuration for
+	 * Create a <code>SyncInfoDiffCheckboxTreeViewer</code> that uses trhe default configuration for
 	 * the given menuId and <code>SyncInfoSet</code>.
 	 * @param parent the parent composite
 	 * @param menuId the menuId used to determine which objectContributions appear in the popup menu
@@ -36,7 +38,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 		return configuration.createViewer(parent);
 	}
 	
-	public SyncInfoDiffTreeViewer(Composite parent, SyncInfoDiffTreeViewerConfiguration configuration) {
+	public SyncInfoDiffCheckboxTreeViewer(Composite parent, SyncInfoDiffTreeViewerConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		this.configuration = configuration;
 	}
@@ -106,5 +108,5 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 	public SyncInfoDiffTreeViewerConfiguration getConfiguration() {
 		return configuration;
 	}
-
+	
 }
