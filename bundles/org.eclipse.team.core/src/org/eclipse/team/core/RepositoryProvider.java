@@ -166,7 +166,7 @@ public abstract class RepositoryProvider implements IProjectNature {
 				// The reason could be that the provider's plugin is no longer available.
 				// Better log it just in case this is unexpected.
 				TeamPlugin.log(new Status(IStatus.ERROR, TeamPlugin.ID, 0, 
-					Policy.bind("RepositoryProvider.couldNotInstantiateProvider", id), null)); 
+					Policy.bind("RepositoryProvider.couldNotInstantiateProvider", project.getName(), id), null)); 
 			} else {
 				provider.deconfigure();
 			}

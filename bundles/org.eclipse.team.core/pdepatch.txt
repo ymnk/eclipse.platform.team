@@ -1,0 +1,85 @@
+Index: plugin.xml
+===================================================================
+RCS file: /home/eclipse/org.eclipse.pde.core/plugin.xml,v
+retrieving revision 1.11
+diff -u -r1.11 plugin.xml
+--- plugin.xml	1 Jun 2002 03:10:34 -0000	1.11
++++ plugin.xml	14 Jun 2002 15:31:28 -0000
+@@ -30,5 +30,13 @@
+             class="org.eclipse.pde.internal.core.EclipseHomeInitializer">
+       </classpathVariableInitializer>
+    </extension>
++   
++   <!-- *************** Repository Mapping Notification **************** -->
++   <extension
++         point="org.eclipse.team.core.repositoryMappingNotification">
++      <repository
++            class="org.eclipse.pde.internal.core.RepositoryMappingListener">
++      </repository>
++   </extension>
+ 
+ </plugin>
+Index: src/org/eclipse/pde/internal/core/RepositoryMappingListener.java
+===================================================================
+RCS file: src/org/eclipse/pde/internal/core/RepositoryMappingListener.java
+diff -N src/org/eclipse/pde/internal/core/RepositoryMappingListener.java
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ src/org/eclipse/pde/internal/core/RepositoryMappingListener.java	14 Jun 2002 15:31:29 -0000
+@@ -0,0 +1,57 @@
++/*******************************************************************************
++ * Copyright (c) 2002 IBM Corporation and others.
++ * All rights reserved.   This program and the accompanying materials
++ * are made available under the terms of the Common Public License v0.5
++ * which accompanies this distribution, and is available at
++ * http://www.eclipse.org/legal/cpl-v05.html
++ * 
++ * Contributors:
++ * IBM - Initial API and implementation
++ ******************************************************************************/
++package org.eclipse.pde.internal.core;
++
++import org.eclipse.core.resources.IProject;
++import org.eclipse.core.runtime.CoreException;
++import org.eclipse.team.core.IRepositoryMappingListener;
++
++public class RepositoryMappingListener implements IRepositoryMappingListener {
++
++	/**
++	 * Constructor for RepositoryMappingListener.
++	 */
++	public RepositoryMappingListener() {
++		super();
++	}
++
++	/**
++	 * @see org.eclipse.team.core.IRepositoryMappingListener#repositoryProviderMapped(IProject)
++	 */
++	public void repositoryProviderMapped(IProject project) {
++		// The project has been mapped to a repository provider.
++		// Ensure that it is not a binary project anymore.
++		if (WorkspaceModelManager.isPluginProject(project)) {
++			try {
++				String binary =
++					project.getPersistentProperty(
++						PDECore.EXTERNAL_PROJECT_PROPERTY);
++				if (binary != null) {
++					// The project contents has been replaced by
++					// core - this is not a binary project any more
++					project.setPersistentProperty(
++						PDECore.EXTERNAL_PROJECT_PROPERTY,
++						null);
++					// Not sure of what action to take to ensure the decorator gets refreshed
++				}
++			} catch (CoreException e) {
++				PDECore.logException(e);
++			}
++		}
++	}
++
++	/**
++	 * @see org.eclipse.team.core.IRepositoryMappingListener#repositoryProviderUnmapped(IProject)
++	 */
++	public void repositoryProviderUnmapped(IProject project) {
++	}
++
++}
