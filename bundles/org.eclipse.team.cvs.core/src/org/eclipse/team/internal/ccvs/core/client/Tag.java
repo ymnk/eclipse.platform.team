@@ -15,7 +15,16 @@ public class Tag extends Command {
 	/*** Local options: specific to tag ***/
 	public static final LocalOption CREATE_BRANCH = new LocalOption("-b", null);	 //$NON-NLS-1$	
 
-	protected Tag() { }
+	// handle added and removed resources in a special way
+	private boolean customBehaviorEnabled;
+	
+	protected Tag(boolean customBehaviorEnabled) {
+		this.customBehaviorEnabled = customBehaviorEnabled;
+	}
+	
+	protected Tag() {
+		this(false);
+	}
 	
 	protected String getCommandId() {
 		return "tag"; //$NON-NLS-1$
@@ -35,6 +44,10 @@ public class Tag extends Command {
 		throws CVSException {			
 
 		// Send all folders that are already managed to the server
-		new FileStructureVisitor(session, false, false, monitor).visit(resources);
+		if (customBehaviorEnabled) {
+			new TagFileSender(session, monitor).visit(resources);
+		} else {
+			new FileStructureVisitor(session, false, false, monitor).visit(resources);
+		}
 	}
 }
