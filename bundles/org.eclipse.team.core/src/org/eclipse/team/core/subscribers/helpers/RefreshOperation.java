@@ -140,7 +140,13 @@ public abstract class RefreshOperation {
 		// {IResource -> IRemoteResource}
 		Map mergedResources = new HashMap();
 		
-		IRemoteResource[] remoteChildren = getRemoteChildren(remote, progress);
+		IRemoteResource[] remoteChildren;
+		if (remote == null) {
+			remoteChildren = new IRemoteResource[0];
+		} else {
+			remoteChildren = getRemoteChildren(remote, progress);
+		}
+		
 		
 		IResource[] localChildren = getLocalChildren(local);		
 
