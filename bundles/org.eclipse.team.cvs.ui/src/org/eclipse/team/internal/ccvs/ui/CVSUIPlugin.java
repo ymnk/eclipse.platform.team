@@ -48,7 +48,10 @@ import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.sync.pages.SubscriberSynchronizeViewPage;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.SubscriberPage;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
@@ -347,6 +350,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL_ENABLED, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION, baseURL);
+		createImageDescriptor(ICVSUIConstants.IMG_CVSLOGO, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_TAG, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_MODULE, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_CLEAR, baseURL);
@@ -648,6 +652,10 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		Console.startup();
 		// Commented out until we have fully ported the CVS console to the new API
 		//ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] {new CVSOutputConsole()});
+		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
+		   new SubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+		   				      "CVS Workspace", 
+		   					  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO))});
 	}
 	
 	public static IWorkingSet getWorkingSet(IResource[] resources, String name) {

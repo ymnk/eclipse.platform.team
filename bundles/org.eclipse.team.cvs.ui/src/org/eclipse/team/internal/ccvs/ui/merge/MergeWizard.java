@@ -68,7 +68,7 @@ public class MergeWizard extends Wizard {
 		ISynchronizeView view = TeamUI.showSyncViewInActivePage(null);
 		if(view != null) {
 			view.setWorkingSet(null); /* show all resources in the merge */
-			view.display(s);
+			view.selectSubscriber(s);
 			view.refreshWithRemote(s, resources);
 		} else {
 			CVSUIPlugin.openError(getShell(), Policy.bind("error"), Policy.bind("Error.unableToShowSyncView"), null); //$NON-NLS-1$ //$NON-NLS-2$

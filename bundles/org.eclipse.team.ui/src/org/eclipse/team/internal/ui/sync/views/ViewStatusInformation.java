@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ui.sync.views;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.ui.IWorkingSet;
 
-class ViewStatusInformation {
+public class ViewStatusInformation {
 
 	private String subscriberName;
 	private String workingSetName;
@@ -22,7 +22,7 @@ class ViewStatusInformation {
 	private long numInWorkspace = 0;
 	private SubscriberInput input;
 	
-	ViewStatusInformation(SubscriberInput input) {
+	public ViewStatusInformation(SubscriberInput input) {
 		this.subscriberName = input.getSubscriber().getName();
 		this.input = input;
 		IWorkingSet set = input.getWorkingSet();

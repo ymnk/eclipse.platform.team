@@ -54,6 +54,8 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	private Map fPartToPage;
 	
 	// actions
+	private SynchronizePageDropDownAction fPageDropDown;
+	
 	private boolean isAvailable() {
 		return getPageBook() != null && !getPageBook().isDisposed();
 	}
@@ -98,11 +100,11 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	 * Updates the view title based on the active console
 	 */
 	protected void updateTitle() {
-		ISynchronizeViewPage console = getSynchronizeTarget();
-		if (console == null) {
+		ISynchronizeViewPage page = getSynchronizeTarget();
+		if (page == null) {
 			setTitle("Synchronize View");
 		} else {
-			setTitle("Synch");
+			setTitle("Synchronize View - " + page.getName());
 		}
 	}
 
@@ -242,14 +244,14 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 
 	protected void createActions() {
 		//fPinAction = new PinConsoleAction(this);
-		//fDisplayConsoleAction = new ConsoleDropDownAction(this);
+		fPageDropDown = new SynchronizePageDropDownAction(this);
 	}
 
 	protected void configureToolBar(IToolBarManager mgr) {
 //		mgr.add(new Separator(IConsoleConstants.LAUNCH_GROUP));
 //		mgr.add(new Separator(IConsoleConstants.OUTPUT_GROUP));
 //		mgr.add(fPinAction);
-//		mgr.add(fDisplayConsoleAction);
+		mgr.add(fPageDropDown);
 	}
 
 	/* (non-Javadoc)
