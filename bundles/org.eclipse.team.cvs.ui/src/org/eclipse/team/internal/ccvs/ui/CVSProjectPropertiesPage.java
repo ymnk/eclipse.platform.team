@@ -348,7 +348,7 @@ public class CVSProjectPropertiesPage extends PropertyPage {
 			CVSTag tag = local.getFolderSyncInfo().getTag();
 			String tagName;
 			if (tag == null) {
-				tagName = CVSTag.DEFAULT.getName();
+				tagName = Policy.bind("CVSFilePropertiesPage.none");
 			} else {
 				tagName = tag.getName();
 			}
