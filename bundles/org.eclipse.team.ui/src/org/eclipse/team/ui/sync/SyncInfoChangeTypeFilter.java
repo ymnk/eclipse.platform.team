@@ -24,6 +24,10 @@ public class SyncInfoChangeTypeFilter extends SyncInfoFilter {
 		this.changeFilters = changeFilters;
 	}
 	
+	public SyncInfoChangeTypeFilter(int change) {
+		this(new int[] { change });
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
 	 */

@@ -37,6 +37,7 @@ import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.sync.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.PseudoConflictFilter;
 import org.eclipse.team.ui.sync.SyncInfoChangeTypeFilter;
 import org.eclipse.team.ui.sync.SyncInfoDirectionFilter;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
@@ -336,7 +337,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			input.setFilter(new AndSyncInfoFilter(
 			new SyncInfoFilter[] {
 				new SyncInfoDirectionFilter(directionsFilters.getDirectionFilters()), 
-				new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters())
+				new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters()),
+				new PseudoConflictFilter()
 			}), new NullProgressMonitor());
 			} catch (TeamException e) {
 				

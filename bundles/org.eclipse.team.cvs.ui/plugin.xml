@@ -558,7 +558,7 @@
           <action
                label="%CVSWorkspaceSubscriber.update.label"
                tooltip="%CVSWorkspaceSubscriber.update.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateAction"
+               class="org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceUpdateAction"
                helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_update_action"
                id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.update">
          </action>
@@ -583,7 +583,7 @@
           <action
                label="%CVSWorkspaceSubscriber.merge.label"
                tooltip="%CVSWorkspaceSubscriber.merge.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateMergeAction"
+               class="org.eclipse.team.internal.ccvs.ui.subscriber.MergeUpdateAction"
                helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_merge_action"
                id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.merge">
          </action>

@@ -11,35 +11,23 @@
 package org.eclipse.team.ui.sync;
 
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteSyncElement;
 
 /**
- * Filter the SyncInfo by a set of directions (incoming, outgoing, conflict)
+ * Selects SyncInfo that match any of the child filters.
  */
-public class SyncInfoDirectionFilter extends SyncInfoFilter {
-
-	int[] directionFilters = new int[] {IRemoteSyncElement.OUTGOING, IRemoteSyncElement.INCOMING, IRemoteSyncElement.CONFLICTING};
-
-	public SyncInfoDirectionFilter(int[] directionFilters) {
-		this.directionFilters = directionFilters;
+public class OrSyncInfoFilter extends CompoundSyncInfoFilter {
+	public OrSyncInfoFilter(SyncInfoFilter[] filters) {
+		super(filters);
 	}
-	
-	/**
-	 * @param i
-	 */
-	public SyncInfoDirectionFilter(int direction) {
-		this(new int[] { direction });
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
 	 */
 	public boolean select(SyncInfo info) {
-		int syncKind = info.getKind();
-		for (int i = 0; i < directionFilters.length; i++) {
-			int filter = directionFilters[i];
-			if ((syncKind & SyncInfo.DIRECTION_MASK) == filter)
+		for (int i = 0; i < filters.length; i++) {
+			SyncInfoFilter filter = filters[i];
+			if (filter.select(info)) {
 				return true;
+			}
 		}
 		return false;
 	}

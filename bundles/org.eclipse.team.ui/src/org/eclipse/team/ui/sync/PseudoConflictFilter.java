@@ -13,27 +13,15 @@ package org.eclipse.team.ui.sync;
 import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
- * A SyncInfoFilter is used by a SyncSetInput to detemine which resources
- * should be part of the sync set.
+ * This filter selects only those SyncInfo that are not Pseudo-conflicts
  */
-public class SyncInfoFilter {
-	
-	public static SyncInfoFilter getDirectionAndChangeFilter(int direction, int change) {
-		return new AndSyncInfoFilter(new SyncInfoFilter[] {
-			new SyncInfoDirectionFilter(direction),
-			new SyncInfoChangeTypeFilter(change)
-		});	
-	}
-	
-	/**
-	 * Return true if the provided SyncInfo matches the filter.
-	 * The default behavior it to include resources whose syncKind
-	 * is non-zero.
-	 * 
-	 * @param info
-	 * @return
+public class PseudoConflictFilter extends SyncInfoFilter {
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.SyncInfoFilter#select(org.eclipse.team.core.subscribers.SyncInfo)
 	 */
 	public boolean select(SyncInfo info) {
-		return info.getKind() != 0;
+		return info.getKind() != 0 && (info.getKind() & SyncInfo.PSEUDO_CONFLICT) == 0;
 	}
+
 }

@@ -46,7 +46,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitAction;
-import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateAction;
+import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceUpdateAction;
 import org.eclipse.team.internal.ui.sync.views.SyncResource;
 import org.eclipse.team.internal.ui.sync.views.SyncSet;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
@@ -397,7 +397,7 @@ public class CVSSubscriberTest extends EclipseTest {
 	 * @param syncResources
 	 */
 	private void updateResources(SyncResource[] syncResources) throws CVSException {
-		new SubscriberUpdateAction().run(new SyncResourceSet(syncResources), DEFAULT_MONITOR);	
+		new WorkspaceUpdateAction().run(new SyncResourceSet(syncResources), DEFAULT_MONITOR);	
 	}
 
 	/**

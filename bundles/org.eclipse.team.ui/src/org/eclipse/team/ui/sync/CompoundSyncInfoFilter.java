@@ -10,26 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
-import org.eclipse.team.core.subscribers.SyncInfo;
-
-/**
- * Selects SyncInfo which match all child filters
- */
-public class AndSyncInfoFilter extends CompoundSyncInfoFilter {
-	public AndSyncInfoFilter(SyncInfoFilter[] filters) {
-		super(filters);
+public abstract class CompoundSyncInfoFilter extends SyncInfoFilter {
+	protected SyncInfoFilter[] filters;
+	public CompoundSyncInfoFilter(SyncInfoFilter[] filters) {
+		this.filters = filters;
 	}
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
-	 */
-	public boolean select(SyncInfo info) {
-		for (int i = 0; i < filters.length; i++) {
-			SyncInfoFilter filter = filters[i];
-			if (!filter.select(info)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 }

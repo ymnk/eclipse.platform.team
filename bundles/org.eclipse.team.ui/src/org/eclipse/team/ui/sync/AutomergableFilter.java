@@ -11,36 +11,16 @@
 package org.eclipse.team.ui.sync;
 
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteSyncElement;
 
 /**
- * Filter the SyncInfo by a set of directions (incoming, outgoing, conflict)
+ * Selects SyncInfo that are automergable
  */
-public class SyncInfoDirectionFilter extends SyncInfoFilter {
-
-	int[] directionFilters = new int[] {IRemoteSyncElement.OUTGOING, IRemoteSyncElement.INCOMING, IRemoteSyncElement.CONFLICTING};
-
-	public SyncInfoDirectionFilter(int[] directionFilters) {
-		this.directionFilters = directionFilters;
-	}
-	
-	/**
-	 * @param i
-	 */
-	public SyncInfoDirectionFilter(int direction) {
-		this(new int[] { direction });
-	}
+public class AutomergableFilter extends SyncInfoFilter {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
 	 */
 	public boolean select(SyncInfo info) {
-		int syncKind = info.getKind();
-		for (int i = 0; i < directionFilters.length; i++) {
-			int filter = directionFilters[i];
-			if ((syncKind & SyncInfo.DIRECTION_MASK) == filter)
-				return true;
-		}
-		return false;
+		return (info.getKind() & SyncInfo.AUTOMERGE_CONFLICT) != 0;
 	}
 }

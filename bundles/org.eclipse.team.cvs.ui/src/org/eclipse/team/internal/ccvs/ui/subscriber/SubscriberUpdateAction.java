@@ -20,17 +20,7 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
@@ -44,64 +34,15 @@ import org.eclipse.team.internal.ui.sync.views.SyncResource;
 import org.eclipse.team.ui.sync.SyncResourceSet;
 
 /**
- * This action performs the update for the CVS workspace subscriber
+ * This action performs an update for any CVSSyncTreeSubscriber.
+ * Warning: This action will operate on any out-of-sync resource.
+ * For non-automergable conflicts and outgoing changes, this action
+ * will repace the local resource with the remote resources (deleting
+ * the local if there is no remote). It is up to the subclass to 
+ * ensure that only suitable nodes are in the sync set.
  */
-public class SubscriberUpdateAction extends CVSSubscriberAction {
-
-	// used to indicate how conflicts are to be updated
-	private boolean onlyUpdateAutomergeable;
-
-	public static class ConfirmDialog extends MessageDialog {
-
-		private boolean autoMerge = true;
-		private Button radio1;
-		private Button radio2;
+public abstract class SubscriberUpdateAction extends CVSSubscriberAction {
 	
-		public ConfirmDialog(Shell parentShell) {
-			super(
-				parentShell, 
-				Policy.bind("UpdateSyncAction.Conflicting_changes_found_1"),  //$NON-NLS-1$
-				null,	// accept the default window icon
-				Policy.bind("UpdateSyncAction.You_have_local_changes_you_are_about_to_overwrite_2"), //$NON-NLS-1$
-				MessageDialog.QUESTION, 
-				new String[] {IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL},
-				0); 	// yes is the default
-		}
-	
-		protected Control createCustomArea(Composite parent) {
-			Composite composite = new Composite(parent, SWT.NONE);
-			composite.setLayout(new GridLayout());
-			radio1 = new Button(composite, SWT.RADIO);
-			radio1.addSelectionListener(selectionListener);
-		
-			radio1.setText(Policy.bind("UpdateSyncAction.Only_update_resources_that_can_be_automatically_merged_3")); //$NON-NLS-1$
-
-			radio2 = new Button(composite, SWT.RADIO);
-			radio2.addSelectionListener(selectionListener);
-
-			radio2.setText(Policy.bind("UpdateSyncAction.Update_all_resources,_overwriting_local_changes_with_remote_contents_4")); //$NON-NLS-1$
-		
-			// set initial state
-			radio1.setSelection(autoMerge);
-			radio2.setSelection(!autoMerge);
-		
-			return composite;
-		}
-	
-		private SelectionListener selectionListener = new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				Button button = (Button)e.widget;
-				if (button.getSelection()) {
-					autoMerge = (button == radio1);
-				}
-			}
-		};
-	
-		public boolean getAutomerge() {
-			return autoMerge;
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getFilteredSyncResourceSet(org.eclipse.team.internal.ui.sync.views.SyncResource[])
 	 */
@@ -111,26 +52,16 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 		return syncSet;
 	}
 	
-	private boolean performPrompting(SyncResourceSet syncSet) {
-		// If there are conflicts or outgoing changes in the syncSet, we need to warn the user.
-		onlyUpdateAutomergeable = false;
-		if (syncSet.hasConflicts() || syncSet.hasOutgoingChanges()) {
-			if (syncSet.hasAutoMergeableConflicts()) {
-				switch (promptForMergeableConflicts()) {
-					case 0: // cancel
-						return false;
-					case 1: // only update auto-mergeable conflicts
-						onlyUpdateAutomergeable = true;
-						syncSet.removeNonMergeableNodes();
-						break;
-					case 2: // update all conflicts
-						onlyUpdateAutomergeable = false;
-						break;
-				}				
-			} else {
-				if (! promptForConflicts()) return false;				
-			}
-		}
+	/**
+	 * Perform appropriate prompting given the elements in the sync set. 
+	 * Elements can be removed from the sync set based on user input.
+	 * Returning false will cancel the operation. By default, no
+	 * prompting is performed and true is returned.
+	 *  
+	 * @param syncSet
+	 * @return
+	 */
+	protected boolean performPrompting(SyncResourceSet syncSet) {
 		return true;
 	}
 	
@@ -263,18 +194,13 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 
 	/**
 	 * Method which indicates whether a shallow update will work for the given
-	 * node which is an outgoing or conflicting change. The default is to return true 
-	 * for conflicting changes that are automergable if the user has chosen the 
-	 * appropriate operation.
+	 * node which is a conflicting change. The default is to return false. 
 	 * 
 	 * @param changedNode
 	 * @return
 	 */
 	protected boolean supportsShallowUpdateFor(SyncResource changedNode) {
-		return (changedNode.getChangeDirection() == SyncInfo.CONFLICTING
-			&& ((changedNode.getKind() & SyncInfo.CHANGE_MASK) == SyncInfo.CHANGE)
-		 	&& onlyUpdateAutomergeable 
-		 	&& (changedNode.getKind() & SyncInfo.AUTOMERGE_CONFLICT) != 0);
+		return false;
 	}
 
 	/**
@@ -319,6 +245,7 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 	}
 
 	protected void runUpdateShallow(SyncResource[] nodes, RepositoryManager manager, IProgressMonitor monitor) throws TeamException {
+		// TODO: Should use custom update which skips non-automergable conflicts
 		manager.update(getIResourcesFrom(nodes), new Command.LocalOption[] { Command.DO_NOT_RECURSE }, false, monitor);
 	}
 	
@@ -328,26 +255,6 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 			resources.add(nodes[i].getResource());
 		}
 		return (IResource[]) resources.toArray(new IResource[resources.size()]);
-	}
-
-	/**
-	 * Prompt for mergeable conflicts.
-	 * Note: This method is designed to be overridden by test cases.
-	 * @return 0 to cancel, 1 to only update mergeable conflicts, 2 to overwrite if unmergeable
-	 */
-	protected int promptForMergeableConflicts() {
-		final boolean doAutomerge[] = new boolean[] {false};
-		final int[] result = new int[] {Dialog.CANCEL};
-		final Shell shell = getShell();
-		shell.getDisplay().syncExec(new Runnable() {
-			public void run() {
-				ConfirmDialog dialog = new ConfirmDialog(shell);
-				result[0] = dialog.open();
-				doAutomerge[0] = dialog.getAutomerge();
-			}
-		});
-		if (result[0] == Dialog.CANCEL) return 0;
-		return doAutomerge[0] ? 1 : 2;
 	}
 
 	/**

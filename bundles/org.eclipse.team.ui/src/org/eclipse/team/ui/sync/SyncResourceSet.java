@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
@@ -37,12 +39,7 @@ public class SyncResourceSet {
 	 * false otherwise.
 	 */
 	public boolean hasConflicts() {
-		for (Iterator it = set.iterator(); it.hasNext();) {
-			if (((SyncResource)it.next()).getChangeDirection() == SyncInfo.CONFLICTING) {
-				return true;
-			}
-		}
-		return false;
+		return hasNodes(new SyncInfoDirectionFilter(SyncInfo.CONFLICTING));
 	}
 	
 	/**
@@ -50,12 +47,7 @@ public class SyncResourceSet {
 	 * Note that conflicts are not considered to be incoming changes.
 	 */
 	public boolean hasIncomingChanges() {
-		for (Iterator it = set.iterator(); it.hasNext();) {
-			if (((SyncResource)it.next()).getChangeDirection() == SyncInfo.INCOMING) {
-				return true;
-			}
-		}
-		return false;
+		return hasNodes(new SyncInfoDirectionFilter(SyncInfo.INCOMING));
 	}
 
 	/**
@@ -63,12 +55,7 @@ public class SyncResourceSet {
 	 * Note that conflicts are not considered to be outgoing changes.
 	 */
 	public boolean hasOutgoingChanges() {
-		for (Iterator it = set.iterator(); it.hasNext();) {
-			if (((SyncResource)it.next()).getChangeDirection() == SyncInfo.OUTGOING) {
-				return true;
-			}
-		}
-		return false;
+		return hasNodes(new SyncInfoDirectionFilter(SyncInfo.OUTGOING));
 	}
 	
 	/**
@@ -88,34 +75,19 @@ public class SyncResourceSet {
 	 * Removes all conflicting nodes from this set.
 	 */
 	public void removeConflictingNodes() {
-		for (Iterator it = set.iterator(); it.hasNext();) {
-			SyncResource node = (SyncResource)it.next();
-			if (node.getChangeDirection() == SyncInfo.CONFLICTING) {
-				it.remove();
-			}
-		}
+		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.CONFLICTING));
 	}
 	/**
 	 * Removes all outgoing nodes from this set.
 	 */
 	public void removeOutgoingNodes() {
-		for (Iterator it = set.iterator(); it.hasNext();) {
-			SyncResource node = (SyncResource)it.next();
-			if (node.getChangeDirection() == SyncInfo.OUTGOING) {
-				it.remove();
-			}
-		}
+		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.OUTGOING));
 	}
 	/**
 	 * Removes all incoming nodes from this set.
 	 */
 	public void removeIncomingNodes() {
-		for (Iterator it = set.iterator(); it.hasNext();) {
-			SyncResource node = (SyncResource)it.next();
-			if (node.getChangeDirection() == SyncInfo.INCOMING) {
-				it.remove();
-			}
-		}
+		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.INCOMING));
 	}
 	
 	/**
@@ -132,6 +104,61 @@ public class SyncResourceSet {
 		}
 	}
 
+	/**
+	 * Indicate whether the set has nodes matching the given filter
+	 */
+	public boolean hasNodes(SyncInfoFilter filter) {
+		for (Iterator it = set.iterator(); it.hasNext();) {
+			SyncResource node = (SyncResource)it.next();
+			SyncInfo info = node.getSyncInfo();
+			if (info != null && filter.select(info)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Removes all nodes from this set that do not match the given filter
+	 */
+	public void selectNodes(SyncInfoFilter filter) {
+		for (Iterator it = set.iterator(); it.hasNext();) {
+			SyncResource node = (SyncResource)it.next();
+			SyncInfo info = node.getSyncInfo();
+			if (info == null || !filter.select(info)) {
+				it.remove();
+			}
+		}
+	}
+	
+	/**
+	 * Removes all nodes from this set that match the given filter
+	 */
+	public void rejectNodes(SyncInfoFilter filter) {
+		for (Iterator it = set.iterator(); it.hasNext();) {
+			SyncResource node = (SyncResource)it.next();
+			SyncInfo info = node.getSyncInfo();
+			if (info != null && filter.select(info)) {
+				it.remove();
+			}
+		}
+	}
+	
+	/**
+	 * Return all nodes in this set that match the given filter
+	 */
+	public SyncResource[] getNodes(SyncInfoFilter filter) {
+		List result = new ArrayList();
+		for (Iterator it = set.iterator(); it.hasNext();) {
+			SyncResource node = (SyncResource)it.next();
+			SyncInfo info = node.getSyncInfo();
+			if (info != null && filter.select(info)) {
+				result.add(node);
+			}
+		}
+		return (SyncResource[]) result.toArray(new SyncResource[result.size()]);
+	}
+	
 	/**
 	 * 
 	 */
@@ -157,6 +184,7 @@ public class SyncResourceSet {
 	public boolean isEmpty() {
 		return set.isEmpty();
 	}
+	
 	/**
 	 * @param resources
 	 */
@@ -166,6 +194,7 @@ public class SyncResourceSet {
 			removeResource(resource);
 		}
 	}
+	
 	/**
 	 * @param resource
 	 */
@@ -178,6 +207,12 @@ public class SyncResourceSet {
 				return;
 			}
 		}
+	}
+	/**
+	 * @return
+	 */
+	public int size() {
+		return set.size();
 	}
 	
 }
