@@ -97,6 +97,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+		if (viewer == null) return;
 		final Control ctrl = viewer.getControl();
 		if (ctrl != null && !ctrl.isDisposed()) {
 			ctrl.getDisplay().asyncExec(new Runnable() {

@@ -291,11 +291,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
 	 */
 	public String getLabel(Object o) {
-		IResource resource = getResource();
-		if (resource == null) {
-			return toString();
-		}
-		return resource.getName();
+		return getName();
 	}
 
 	/* (non-Javadoc)
@@ -303,5 +299,15 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 */
 	public Object getParent(Object o) {
 		return getParent();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()
+	 */
+	public String getName() {
+		if (getResource() != null) {
+			return resource.getName();
+		}
+		return super.getName();
 	}
 }

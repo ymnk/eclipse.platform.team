@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder;
@@ -18,7 +17,7 @@ import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder;
 public class ChangeLogDiffNodeRoot extends SyncInfoDiffNodeRoot {
 
 	public ChangeLogDiffNodeRoot(SyncInfoSet set) {
-		super(set, ResourcesPlugin.getWorkspace().getRoot());
+		super(set);
 	}
 	
 	/* (non-Javadoc)

@@ -13,28 +13,22 @@ package org.eclipse.team.ui.synchronize.views;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
  * This class sorts <code>SyncInfoDiffNode</code> instances.
  * It is not thread safe so it should not be reused between views.
  */
-public class SyncViewerSorter extends ResourceSorter {
+public class SyncInfoDiffNodeSorter extends ResourceSorter {
 			
-	private boolean compareFullPaths = false;
-
-	public SyncViewerSorter(int criteria) {
-		super(criteria);
+	public SyncInfoDiffNodeSorter() {
+		super(ResourceSorter.NAME);
 	}
 
 	/* (non-Javadoc)
 	 * Method declared on ViewerSorter.
 	 */
 	public int compare(Viewer viewer, Object o1, Object o2) {
-		if(o1 instanceof SyncInfoDiffNode || o2 instanceof SyncInfoDiffNode) {
-			compareFullPaths = isResourcePath(o1) || isResourcePath(o2);
-		}
 		IResource resource1 = getResource(o1);
 		IResource resource2 = getResource(o2);
 		int result;
@@ -43,26 +37,7 @@ public class SyncViewerSorter extends ResourceSorter {
 		} else {
 			result = super.compare(viewer, o1, o2);
 		}
-		compareFullPaths = false;
 		return result;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.views.navigator.ResourceSorter#compareNames(org.eclipse.core.resources.IResource, org.eclipse.core.resources.IResource)
-	 */
-	protected int compareNames(IResource resource1, IResource resource2) {
-		if(compareFullPaths) {
-			return collator.compare(resource1.getFullPath().toString(), resource2.getFullPath().toString());
-		} else {
-			return collator.compare(resource1.getName(), resource2.getName());
-		}
-	}
-	
-	protected boolean isResourcePath(Object o1) {
-		if (o1 instanceof SyncInfoDiffNode) {
-			return ((SyncInfoDiffNode)o1).isResourcePath();
-		}
-		return false;
 	}
 
 	protected IResource getResource(Object obj) {

@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -28,7 +27,6 @@ import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
-import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
  * Configures the following behavior of a SyncInfoDiffTreeViewer:
@@ -77,8 +75,8 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @param parent the parent composite
 	 * @param viewer the viewer being initialized
 	 */
-	public void initializeViewer(Composite parent, final StructuredViewer viewer) {
-		Assert.isTrue(this.viewer == null, "A SyncInfoSetCompareConfiguration can only be used with a single viewer."); //$NON-NLS-1$
+	public void initializeViewer(Composite parent, StructuredViewer viewer) {
+		Assert.isTrue(this.viewer == null, "A DiffTreeViewerConfiguration can only be used with a single viewer."); //$NON-NLS-1$
 		this.viewer = viewer;
 				
 		GridData data = new GridData(GridData.FILL_BOTH);
@@ -89,22 +87,34 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		initializeActions(viewer);
 		
 		viewer.setLabelProvider(getLabelProvider());
-		viewer.setSorter(getViewSorter());
 		viewer.setContentProvider(getContentProvider());
-		viewer.setInput(getInput());
+		setInput(viewer);
 	}
 
 	
+	/**
+	 * Set the input of the viewer to a <code>SyncInfoDiffNodeRoot</code>. This will also set the
+	 * sorter of the viewer to the one provided by the input.
+	 * @param viewer the viewer
+	 */
+	protected void setInput(StructuredViewer viewer) {
+		SyncInfoDiffNodeRoot input = getInput();
+		// TODO: must prevent sorter change from causing a refresh
+		// viewer.setInput(null); /* prevent a refresh when the sorter changes */
+		viewer.setSorter(input.getSorter());
+		viewer.setInput(input);
+	}
+
 	/**
 	 * Get the input that will be assigned to the viewer initialized by this configuration.
 	 * Subclass may override.
 	 * @return the viewer input
 	 */
-	protected SyncInfoDiffNode getInput() {
+	protected SyncInfoDiffNodeRoot getInput() {
 		if (getShowCompressedFolders()) {
-			return new CompressedFolderDiffNodeRoot(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
+			return new CompressedFolderDiffNodeRoot(getSyncSet());
 		}
-		return new SyncInfoDiffNodeRoot(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
+		return new SyncInfoDiffNodeRoot(getSyncSet());
 	}
 
 	/**
@@ -125,10 +135,6 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		return new SyncInfoSetContentProvider();
 	}
 		
-	protected ViewerSorter getViewSorter() {
-		return new SyncViewerSorter(ResourceSorter.NAME);
-	}
-	
 	/**
 	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
 	 * to initialize any listeners for the viewer.
@@ -279,7 +285,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 */
 	public void propertyChange(PropertyChangeEvent event) {	
 		if (viewer != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			viewer.setInput(getInput());
+			setInput(viewer);
 		}
 	}
 		

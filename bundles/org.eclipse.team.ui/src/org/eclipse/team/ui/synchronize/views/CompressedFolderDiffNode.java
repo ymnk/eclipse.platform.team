@@ -40,12 +40,7 @@ public class CompressedFolderDiffNode extends SyncInfoDiffNode {
 			IResource child = children[i];
 			SyncInfo info = getSyncInfoSet().getSyncInfo(child);
 			if (info != null) {
-				if (child.getType() == IResource.FOLDER) {
-					// for folders, add all out-of-sync children
-					// NOTE: the method getOutOfSyncDescendants includes the out-of-sync parent
-					result.addAll(Arrays.asList(getSyncInfoSet().getOutOfSyncDescendants(child)));
-				} else {
-					// for files, just add the info
+				if (child.getType() == IResource.FILE) {
 					result.add(info);
 				}
 			}
@@ -63,7 +58,7 @@ public class CompressedFolderDiffNode extends SyncInfoDiffNode {
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()
 	 */
-	public String getLabel(Object o) {
+	public String getName() {
 		IResource resource = getResource();
 		return resource.getProjectRelativePath().toString();
 	}

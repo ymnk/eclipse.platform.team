@@ -16,6 +16,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 public class TreeViewerUtils {
 	
@@ -190,7 +191,11 @@ public class TreeViewerUtils {
 	
 	public static  IResource getResource(Object obj) {
 		SyncInfo info = getSyncInfo(obj);
-		if (info != null) {
+		if (info == null) {
+			if (obj instanceof SyncInfoDiffNode) {
+				return ((SyncInfoDiffNode)obj).getResource();
+			} 
+		} else {
 			return info.getLocal();
 		}
 		return null;

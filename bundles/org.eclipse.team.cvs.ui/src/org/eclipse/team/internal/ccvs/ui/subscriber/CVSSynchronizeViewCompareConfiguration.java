@@ -76,7 +76,7 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#getInput()
 	 */
-	protected SyncInfoDiffNode getInput() {
+	protected SyncInfoDiffNodeRoot getInput() {
 		if(isGroupIncomingByComment() && getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
 			return new ChangeLogDiffNodeRoot(getSyncSet());
 		} else {

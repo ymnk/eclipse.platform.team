@@ -16,8 +16,8 @@ import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 
 public class CompressedFolderDiffNodeRoot extends SyncInfoDiffNodeRoot {
 
-	public CompressedFolderDiffNodeRoot(SyncInfoSet set, IResource resource) {
-		super(set, resource);
+	public CompressedFolderDiffNodeRoot(SyncInfoSet set) {
+		super(set);
 	}
 	
 	/* (non-Javadoc)
@@ -25,5 +25,19 @@ public class CompressedFolderDiffNodeRoot extends SyncInfoDiffNodeRoot {
 	 */
 	protected SyncInfoDiffNodeBuilder createBuilder() {
 		return new CompressedFolderDiffNodeBuilder(this);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot#getSorter()
+	 */
+	public SyncInfoDiffNodeSorter getSorter() {
+		return new SyncInfoDiffNodeSorter() {
+			protected int compareNames(IResource resource1, IResource resource2) {
+				if (resource1.getType() == IResource.FOLDER && resource2.getType() == IResource.FOLDER) {
+					return collator.compare(resource1.getParent().toString(), resource2.getProjectRelativePath().toString());
+				}
+				return super.compareNames(resource1, resource2);
+			}
+		};
 	}
 }

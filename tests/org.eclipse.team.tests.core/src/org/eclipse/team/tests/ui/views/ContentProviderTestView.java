@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.tests.ui.views;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.views.CompressedFolderContentProvider;
-import org.eclipse.team.ui.synchronize.views.SyncInfoLabelProvider;
+import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.ViewPart;
 
@@ -48,13 +45,15 @@ public class ContentProviderTestView extends ViewPart {
 
 	public void createPartControl(Composite parent) {
 		viewer = new TestTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		viewer.setContentProvider(new CompressedFolderContentProvider());
+		viewer.setContentProvider(new SyncInfoSetContentProvider());
 		viewer.setLabelProvider(new SyncInfoLabelProvider());
 		setInput(new SyncInfoSet(new SyncInfo[0]));
 	}
 
 	public void setInput(SyncInfoSet set) {
-		viewer.setInput(new SyncInfoDiffNode(set, ResourcesPlugin.getWorkspace().getRoot()));
+		CompressedFolderDiffNodeRoot root = new CompressedFolderDiffNodeRoot(set);
+		viewer.setSorter(root.getSorter());
+		viewer.setInput(root);
 	}
 
 	public void setFocus() {

@@ -133,7 +133,7 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 			SyncInfoDiffNode node = new SyncInfoDiffNode(set, resource);
 			assertTrue(
 					"Item for " + resource.getFullPath() + " is missing", 
-					viewer.hasItemFor(new SyncInfoDiffNode(set, resource)));
+					viewer.hasItemFor(node));
 			if (resource.getType() == IResource.PROJECT) continue;
 			IContainer parent = resource.getParent();
 			if (parent.getType() == IResource.PROJECT) continue;

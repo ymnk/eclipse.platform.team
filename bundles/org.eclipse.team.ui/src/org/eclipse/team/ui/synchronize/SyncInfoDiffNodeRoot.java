@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder;
+import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeSorter;
 
 /**
  * @author Administrator
@@ -29,8 +30,8 @@ public class SyncInfoDiffNodeRoot extends SyncInfoDiffNode {
 	 * @param set
 	 * @param resource
 	 */
-	public SyncInfoDiffNodeRoot(SyncInfoSet set, IResource resource) {
-		super(null, set, resource);
+	public SyncInfoDiffNodeRoot(SyncInfoSet set) {
+		super(null, set, ResourcesPlugin.getWorkspace().getRoot());
 		builder = createBuilder();
 		builder.buildTree();
 	}
@@ -54,5 +55,9 @@ public class SyncInfoDiffNodeRoot extends SyncInfoDiffNode {
 	 */
 	public void setViewer(AbstractTreeViewer viewer) {
 		builder.setViewer(viewer);
+	}
+
+	public SyncInfoDiffNodeSorter getSorter() {
+		return new SyncInfoDiffNodeSorter();
 	}
 }

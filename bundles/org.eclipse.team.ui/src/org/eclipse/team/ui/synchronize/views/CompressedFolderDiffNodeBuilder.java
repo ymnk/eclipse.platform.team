@@ -57,6 +57,8 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	}
 
 	private IDiffElement[] getProjectChildren(DiffNode parent, IProject project) {
+		// The out-of-sync elements could possibly include the project so the code 
+		// below is written to ignore the project
 		SyncInfo[] outOfSync = getRoot().getSyncInfoSet().getOutOfSyncDescendants(project);
 		Set result = new HashSet();
 		Set resourcesToShow = new HashSet();
@@ -68,7 +70,7 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 			} else {
 				if (local.getType() == IResource.FILE) {
 					resourcesToShow.add(local.getParent());
-				} else {
+				} else if (local.getType() == IResource.FOLDER){
 					resourcesToShow.add(local);
 				}
 			}
