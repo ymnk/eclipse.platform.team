@@ -414,8 +414,8 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         }
         if (provider == null) {
             provider = createProvider(set, tree);
+	        provider.prepareInput(null);
         }
-        provider.prepareInput(null);
     }
     
     private ISynchronizeModelProvider createProvider(ChangeSet set, SyncInfoTree tree) {

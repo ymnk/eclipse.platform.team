@@ -676,12 +676,13 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * @param node the model element to remove
 	 */
 	protected void removeFromViewer(ISynchronizeModelElement node) {
-		propogateConflictState(node, true /* clear the conflict */);
-		clearModelObjects(node);
+		ISynchronizeModelElement rootToClear = getRootToClear(node);
+		propogateConflictState(rootToClear, true /* clear the conflict */);
+		clearModelObjects(rootToClear);
 		if (Utils.canUpdateViewer(getViewer())) {
-			doRemove(node);
+			doRemove(rootToClear);
 		}
-		updateHandler.nodeRemoved(node, this);
+		updateHandler.nodeRemoved(rootToClear, this);
 	}
 	
 	/**
