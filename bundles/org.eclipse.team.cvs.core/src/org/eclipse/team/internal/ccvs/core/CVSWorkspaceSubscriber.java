@@ -19,7 +19,6 @@ import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -80,7 +79,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		// TODO: hack for clearing the remote state when anything to the resource
 		// sync is changed. Should be able to set the *right* remote/base based on
 		// the sync being set.
-		// TODO: This will throw exceptions if performed during the POST_CHANGE delta phase!!!
+		// IMPORTANT NOTE: This will throw exceptions if performed during the POST_CHANGE delta phase!!!
 		for (int i = 0; i < changedResources.length; i++) {
 			IResource resource = changedResources[i];
 			try {
@@ -107,7 +106,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModified(org.eclipse.core.resources.IResource[])
 	 */
 	public void resourceModified(IResource[] changedResources) {
-		// TODO: This is only ever called from a delta POST_CHANGE
+		// This is only ever called from a delta POST_CHANGE
 		// which causes problems since the workspace tree is closed
 		// for modification and we flush the sync info in resourceSyncInfoChanged
 		
@@ -158,26 +157,21 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		final List result = new ArrayList();
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
-			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
 			final IProgressMonitor infinite = Policy.infiniteSubMonitorFor(monitor, 100);
 			try {
-				// We need to do a scheduling rule on the project because
-				// the EclipseSynchronizer currently obtains rules which causes
-				// many workers to be created (see bug 41979).
-				Platform.getJobManager().beginRule(resource);
 				infinite.beginTask(null, 512);
 				resource.accept(new IResourceVisitor() {
-					public boolean visit(IResource resource) throws CoreException {
+					public boolean visit(IResource innerResource) throws CoreException {
 						try {
-							if (isOutOfSync(resource, infinite)) {
-								SyncInfo info = getSyncInfo(resource, infinite);
+							if (isOutOfSync(innerResource, infinite)) {
+								SyncInfo info = getSyncInfo(innerResource, infinite);
 								if (info != null && info.getKind() != 0) {
 									result.add(info);
 								}
 							}
 							return true;
 						} catch (TeamException e) {
-							// TODO: This is probably not the right thing to do here
+							// TODO:See bug 42795
 							throw new CoreException(e.getStatus());
 						}
 					}
@@ -185,7 +179,6 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 			} catch (CoreException e) {
 				throw CVSException.wrapException(e);
 			} finally {
-				Platform.getJobManager().endRule();
 				infinite.done();
 			}
 		}
@@ -193,7 +186,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
 	
-	private boolean isOutOfSync(IResource resource, IProgressMonitor monitor) throws CVSException {
+	/* internal use only */ boolean isOutOfSync(IResource resource, IProgressMonitor monitor) throws CVSException {
 		return (hasIncomingChange(resource) || hasOutgoingChange(CVSWorkspaceRoot.getCVSResourceFor(resource), monitor));
 	}
 	
@@ -201,18 +194,17 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		if (resource.isFolder()) {
 			// A folder is an outgoing change if it is not a CVS folder and not ignored
 			ICVSFolder folder = (ICVSFolder)resource;
-			// TODO: The parent caches the dirty state so we only need to check
-			// the file if the parent is dirty.
-			// TODO: Unfortunately, the modified check on the parent still loads
-			// the CVS folder information so not much is gained
+			// OPTIMIZE: The following checks load the CVS folder information
 			if (folder.getParent().isModified(monitor)) {
 				return !folder.isCVSFolder() && !folder.isIgnored();
 			}
 		} else {
 			// A file is an outgoing change if it is modified
 			ICVSFile file = (ICVSFile)resource;
-			// TODO: The parent chaches the dirty state so we only need to check
+			// The parent caches the dirty state so we only need to check
 			// the file if the parent is dirty
+			// OPTIMIZE: Unfortunately, the modified check on the parent still loads
+			// the CVS folder information so not much is gained
 			if (file.getParent().isModified(monitor)) {
 				return file.isModified(monitor);
 			}
