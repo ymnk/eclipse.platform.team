@@ -94,7 +94,7 @@ public class CompareRevertAction extends CVSSubscriberAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getJobName(org.eclipse.team.core.subscribers.SyncInfoSet)
 	 */
 	protected String getJobName(SyncInfoSet syncSet) {
-		return "Reverting {0} resources" + new Integer(syncSet.size()).toString();
+		return Policy.bind("CompareRevertAction.0", new Integer(syncSet.size()).toString()); //$NON-NLS-1$
 
 	}
 }

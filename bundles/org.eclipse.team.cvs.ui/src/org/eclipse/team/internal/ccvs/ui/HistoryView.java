@@ -592,7 +592,7 @@ public class HistoryView extends ViewPart {
 				try {
 					fetchLogEntriesJob.join();
 				} catch (InterruptedException e) {
-					CVSUIPlugin.log(new CVSException(Policy.bind("HistoryView.errorFetchingEntries", ""), e)); //$NON-NLS-1$
+					CVSUIPlugin.log(new CVSException(Policy.bind("HistoryView.errorFetchingEntries", ""), e)); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			}
 		}

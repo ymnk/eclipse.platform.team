@@ -19,6 +19,7 @@ import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.utils.SessionSynchronizationCache;
 import org.eclipse.team.core.subscribers.utils.SynchronizationCache;
+import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * This subscriber is used when comparing the local workspace with its
@@ -34,7 +35,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ITeam
 	private IResource[] resources;
 
 	public CVSCompareSubscriber(IResource[] resources, CVSTag tag) {
-		super(getUniqueId(), "CVS Compare with {0}" + tag.getName(), "Shows the differences between a tag and the workspace.");
+		super(getUniqueId(), Policy.bind("CVSCompareSubscriber.2", tag.getName()), Policy.bind("CVSCompareSubscriber.3")); //$NON-NLS-1$ //$NON-NLS-2$
 		this.resources = resources;
 		this.tag = tag;
 		initialize();

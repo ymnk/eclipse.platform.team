@@ -35,7 +35,7 @@ public class CVSSynchronizationCache extends SynchronizationSyncBytesCache {
 		if (resource.getType() == IResource.FILE && getSyncBytes(resource) != null && !parentHasSyncBytes(resource)) {
 			// Log a warning if there is no sync bytes available for the resource's
 			// parent but there is valid sync bytes for the child
-			CVSProviderPlugin.log(new TeamException(Policy.bind("ResourceSynchronizer.missingParentBytesOnSet", getSyncName().toString(), resource.getFullPath().toString())));
+			CVSProviderPlugin.log(new TeamException(Policy.bind("ResourceSynchronizer.missingParentBytesOnSet", getSyncName().toString(), resource.getFullPath().toString()))); //$NON-NLS-1$
 		}
 		return changed;
 	}

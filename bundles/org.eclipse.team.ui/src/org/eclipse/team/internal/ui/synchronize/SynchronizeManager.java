@@ -130,7 +130,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 					participant.init(savedState);
 				} catch (PartInitException e2) {
 					participant = null;					
-					throw new TeamException(Policy.bind("SynchronizeManager.11"), e2);					
+					throw new TeamException(Policy.bind("SynchronizeManager.11"), e2);					 //$NON-NLS-1$
 				} catch (CoreException e) {
 					participant = null;
 					throw TeamException.asTeamException(e);

@@ -31,6 +31,7 @@ import org.eclipse.team.core.subscribers.FastSyncInfoFilter;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.help.WorkbenchHelp;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 
 /**
  * Prompts the user for a multi-line comment for releasing to CVS.
@@ -42,8 +43,8 @@ public class ReleaseCommentDialog extends DetailsDialog {
 	private IDialogSettings settings;
 	private IResource[] resourcesToCommit;
 	private CompareEditorInput compareEditorInput;
-	private static final String HEIGHT_KEY = "width-key";
-	private static final String WIDTH_KEY = "height-key";
+	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
+	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
 	
 	/**
 	 * ReleaseCommentDialog constructor.
@@ -51,7 +52,7 @@ public class ReleaseCommentDialog extends DetailsDialog {
 	 * @param parentShell  the parent of this dialog
 	 */
 	public ReleaseCommentDialog(Shell parentShell, IResource[] resourcesToCommit) {
-		super(parentShell, Policy.bind("ReleaseCommentDialog.title"));
+		super(parentShell, Policy.bind("ReleaseCommentDialog.title")); //$NON-NLS-1$
 		this.resourcesToCommit = resourcesToCommit;
 		int shellStyle = getShellStyle();
 		setShellStyle(shellStyle | SWT.RESIZE | SWT.MAX);
@@ -141,7 +142,7 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		data.heightHint = 350;
 		result.setLayoutData(data);
 		Label l = new Label(result, SWT.WRAP);
-		l.setText("Review resources that will be committed:");
+		l.setText(Policy.bind("ReleaseCommentDialog.6")); //$NON-NLS-1$
 		Control c = compareEditorInput.createContents(result);
 		data = new GridData(GridData.FILL_BOTH);
 		c.setLayoutData(data);

@@ -48,7 +48,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	}
 	
 	public CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, TeamSubscriberSyncInfoCollector collector) {
-		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet());
+		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet()); //$NON-NLS-1$
 		this.subscriber = subscriber;
 		this.collector = collector;
 		this.filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null, new SyncInfoFilter.ContentComparisonSyncInfoFilter());

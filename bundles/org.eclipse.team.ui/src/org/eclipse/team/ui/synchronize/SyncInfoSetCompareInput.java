@@ -108,8 +108,8 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 
 	public void contributeToToolBar(ToolBarManager tbm) {	
 		if(nextAction != null && previousAction != null) { 
-			tbm.appendToGroup("navigation", nextAction);
-			tbm.appendToGroup("navigation", previousAction);
+			tbm.appendToGroup("navigation", nextAction); //$NON-NLS-1$
+			tbm.appendToGroup("navigation", previousAction); //$NON-NLS-1$
 		}
 	}
 	

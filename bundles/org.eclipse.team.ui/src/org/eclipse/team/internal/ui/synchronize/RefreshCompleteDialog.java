@@ -27,6 +27,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.internal.ui.Policy;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
@@ -37,12 +38,12 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private IRefreshEvent event;
 	private final static int RESOURCE_LIST_SIZE = 10;
 	private IDialogSettings settings;
-	private static final String HEIGHT_KEY = "width-key";
-	private static final String WIDTH_KEY = "height-key";
+	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
+	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
 	private TeamSubscriberParticipant participant;
 	
 	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event, TeamSubscriberParticipant participant) {
-		super(parentShell, "Synchronization Complete - " + participant.getName());
+		super(parentShell, Policy.bind("RefreshCompleteDialog.4", participant.getName())); //$NON-NLS-1$
 		this.participant = participant;
 		int shellStyle = getShellStyle();
 		setShellStyle(shellStyle | SWT.RESIZE | SWT.MAX);
@@ -97,26 +98,26 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		IResource[] resources = event.getResources();
 		
 		if(changes.length != 0) {
-			text.append(Integer.toString(changes.length)  + " changes found ");
+			text.append(Policy.bind("RefreshCompleteDialog.5", Integer.toString(changes.length))); //$NON-NLS-1$
 		} else {
-			text.append("No changes found ");
+			text.append(Policy.bind("RefreshCompleteDialog.6")); //$NON-NLS-1$
 		}
-		text.append("refreshing " + Integer.toString(resources.length) + " resource(s).");		
+		text.append(Policy.bind("RefreshCompleteDialog.7", Integer.toString(resources.length)));		 //$NON-NLS-1$ //$NON-NLS-2$
 		createLabel(parent, text.toString(), 2);
 		
 		StringBuffer resourcesLabel = new StringBuffer();
 		StringBuffer resourcesFullListLabel = new StringBuffer();
 		for (int i = 0; i < resources.length; i++) {
 			if(i < RESOURCE_LIST_SIZE) {
-				String EOL = i < RESOURCE_LIST_SIZE - 1 ? "\n" : "...";
+				String EOL = i < RESOURCE_LIST_SIZE - 1 ? "\n" : "..."; //$NON-NLS-1$ //$NON-NLS-2$
 				resourcesLabel.append(resources[i].getFullPath() + EOL);
 			}
-			resourcesFullListLabel.append(resources[i].getFullPath() + "\n");
+			resourcesFullListLabel.append(resources[i].getFullPath() + "\n"); //$NON-NLS-1$
 		}
 		Label l = createLabel(parent, resourcesLabel.toString(), 2);
 		l.setToolTipText(resourcesFullListLabel.toString());
 		
-		createLabel(parent, "", 2);
+		createLabel(parent, "", 2); //$NON-NLS-1$
 		promptWhenNoChanges = new Button(parent, SWT.CHECK);
 		GridData data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
 		data.horizontalSpan = 2;
@@ -129,15 +130,15 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		promptWithChanges.setLayoutData(data);
 
 		if(event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
-			promptWhenNoChanges.setText(Policy.bind("SyncViewerPreferencePage.16"));
+			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.13"))); //$NON-NLS-1$
 			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES));
-			promptWithChanges.setText(Policy.bind("SyncViewerPreferencePage.17"));
+			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.14"))); //$NON-NLS-1$
 			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES));
 			
 		} else {
-			promptWhenNoChanges.setText(Policy.bind("SyncViewerPreferencePage.31"));
+			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.15"))); //$NON-NLS-1$
 			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES));
-			promptWithChanges.setText(Policy.bind("SyncViewerPreferencePage.32"));
+			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.16"))); //$NON-NLS-1$
 			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES));
 		}
 				

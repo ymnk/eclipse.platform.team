@@ -160,7 +160,7 @@ public class ChangesSection extends Composite {
 			warning.setImage(TeamUIPlugin.getPlugin().getImage(ISharedImages.IMG_WARNING));
 			
 			Hyperlink link = new Hyperlink(composite, SWT.WRAP);
-			link.setText(Policy.bind("ChangesSection.filterChange", Utils.modeToString(newMode)));
+			link.setText(Policy.bind("ChangesSection.filterChange", Utils.modeToString(newMode))); //$NON-NLS-1$
 			link.addHyperlinkListener(new HyperlinkAdapter() {
 				public void linkActivated(HyperlinkEvent e) {
 					participant.setMode(newMode);
@@ -174,7 +174,7 @@ public class ChangesSection extends Composite {
 			warning.setImage(TeamUIPlugin.getPlugin().getImage(ISharedImages.IMG_WARNING));
 			
 			Hyperlink link = new Hyperlink(composite, SWT.WRAP);
-			link.setText(Policy.bind("ChangesSection.workingSetRemove"));
+			link.setText(Policy.bind("ChangesSection.workingSetRemove")); //$NON-NLS-1$
 			link.addHyperlinkListener(new HyperlinkAdapter() {
 				public void linkActivated(HyperlinkEvent e) {
 					participant.setWorkingSet(null);
@@ -182,9 +182,9 @@ public class ChangesSection extends Composite {
 			});
 			link.setBackground(composite.getDisplay().getSystemColor(SWT.COLOR_WHITE));
 			link.setUnderlined(true);
-			createDescriptionLabel(composite,Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)));	
+			createDescriptionLabel(composite,Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)));	 //$NON-NLS-1$
 		} else {
-			createDescriptionLabel(composite,Policy.bind("ChangesSection.noChanges", participant.getName()));	
+			createDescriptionLabel(composite,Policy.bind("ChangesSection.noChanges", participant.getName()));	 //$NON-NLS-1$
 		}		
 		return composite;
 	}

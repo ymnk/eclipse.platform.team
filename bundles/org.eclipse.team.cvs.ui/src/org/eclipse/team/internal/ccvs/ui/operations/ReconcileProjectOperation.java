@@ -89,7 +89,7 @@ public class ReconcileProjectOperation extends CVSOperation {
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
 	 */
 	protected String getTaskName() {
-		return "Reconciling project {0} with remote folder {1}" + project.getName() + folder.getRepositoryRelativePath();
+		return Policy.bind("ReconcileProjectOperation.0", project.getName(), folder.getRepositoryRelativePath()); //$NON-NLS-1$
 	}
 
 }

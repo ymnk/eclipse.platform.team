@@ -236,11 +236,11 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 	}
 	
 	private void debug(SyncInfo lastSyncState, SyncInfo info) {
-		String last = "[none]";
+		String last = "[none]"; //$NON-NLS-1$
 		if(lastSyncState != null) {
 			last = lastSyncState.toString();
 		}
-		System.out.println("+ CVSQuickDiff: was " + last + " is " + info.toString());
+		System.out.println("+ CVSQuickDiff: was " + last + " is " + info.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	private SyncInfo getSyncState(IResource resource) throws TeamException {
@@ -292,7 +292,7 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 			} else {
 				// the remote is null, so ensure that the document is null
 				fReference = new Document();
-				fReference.set("");
+				fReference.set(""); //$NON-NLS-1$
 			}
 		}
 		
@@ -327,13 +327,13 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 			}
 			document.set(caw.toString());
 		} catch (IOException x) {
-			throw new CVSException(Policy.bind("RemoteRevisionQuickDiffProvider.readingFile"), x);
+			throw new CVSException(Policy.bind("RemoteRevisionQuickDiffProvider.readingFile"), x); //$NON-NLS-1$
 		} finally {
 			if (in != null) {
 				try {
 					in.close();
 				} catch (IOException x) {
-					throw new CVSException(Policy.bind("RemoteRevisionQuickDiffProvider.closingFile"), x);
+					throw new CVSException(Policy.bind("RemoteRevisionQuickDiffProvider.closingFile"), x); //$NON-NLS-1$
 				}
 			}
 		}
@@ -380,7 +380,7 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 			} catch (InterruptedException e) {				
 			}
 		}
-		Job updateJob = new Job(Policy.bind("RemoteRevisionQuickDiffProvider.fetchingFile")) {
+		Job updateJob = new Job(Policy.bind("RemoteRevisionQuickDiffProvider.fetchingFile")) { //$NON-NLS-1$
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
 					readDocument(monitor);

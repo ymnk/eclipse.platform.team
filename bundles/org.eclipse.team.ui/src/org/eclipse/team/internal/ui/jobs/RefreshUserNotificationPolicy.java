@@ -9,6 +9,7 @@ import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
+import org.eclipse.team.internal.ui.Policy;
 
 public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener {
 
@@ -81,7 +82,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 	}
 
 	private void notifyIfNeededNonModal(final IRefreshEvent event) {
-		String message = "Refresh of '" + event.getSubscriber().getDescription() + "' Complete.";
+		String message = Policy.bind("RefreshUserNotificationPolicy.0", event.getSubscriber().getDescription()); //$NON-NLS-1$
 		PlatformUI.getWorkbench().getProgressService().requestInUI(new UIJob(message) {
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 				RefreshCompleteDialog d = new RefreshCompleteDialog(new Shell(TeamUIPlugin.getStandardDisplay()), event, participant);

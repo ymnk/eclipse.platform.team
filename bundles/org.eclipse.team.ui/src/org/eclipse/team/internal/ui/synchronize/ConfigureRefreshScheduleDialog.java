@@ -11,6 +11,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.RefreshSchedule;
+import org.eclipse.team.internal.ui.Policy;
 
 
 public class ConfigureRefreshScheduleDialog extends DetailsDialog {
@@ -22,7 +23,7 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 	private Combo hoursOrSeconds;
 
 	public ConfigureRefreshScheduleDialog(Shell parentShell, RefreshSchedule schedule) {
-		super(parentShell, "Configure Refresh Schedule - " + schedule.getParticipant().getName());
+		super(parentShell, Policy.bind("ConfigureRefreshScheduleDialog.0", schedule.getParticipant().getName())); //$NON-NLS-1$
 		this.schedule = schedule;
 	}
 	
@@ -64,14 +65,14 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			gridData.horizontalSpan = 2;
 			gridData.widthHint = 250;
 			label.setLayoutData(gridData);
-			label.setText("You can allow '" + schedule.getParticipant().getName() + "' to periodically refresh it's synchronization state in the background.\n\nThe last refresh occured at: " + RefreshSchedule.refreshEventAsString(schedule.getLastRefreshEvent()));			
+			label.setText(Policy.bind("ConfigureRefreshScheduleDialog.1", schedule.getParticipant().getName(), RefreshSchedule.refreshEventAsString(schedule.getLastRefreshEvent())));			 //$NON-NLS-1$
 		}
 		{
 			userRefreshOnly = new Button(area, SWT.RADIO);
 			final GridData gridData = new GridData();
 			gridData.horizontalSpan = 2;
 			userRefreshOnly.setLayoutData(gridData);
-			userRefreshOnly.setText("Don't schedule the refresh operation to run periodically.");
+			userRefreshOnly.setText(Policy.bind("ConfigureRefreshScheduleDialog.2")); //$NON-NLS-1$
 			userRefreshOnly.addSelectionListener(new SelectionListener() {
 				public void widgetSelected(SelectionEvent e) {
 					updateEnablements();
@@ -85,7 +86,7 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			final GridData gridData = new GridData();
 			gridData.horizontalSpan = 2;
 			enableBackgroundRefresh.setLayoutData(gridData);
-			enableBackgroundRefresh.setText("Using the following schedule:");
+			enableBackgroundRefresh.setText(Policy.bind("ConfigureRefreshScheduleDialog.3")); //$NON-NLS-1$
 			enableBackgroundRefresh.addSelectionListener(new SelectionListener() {
 				public void widgetSelected(SelectionEvent e) {
 					updateEnablements();
@@ -104,7 +105,7 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			composite.setLayout(gridLayout_1);
 			{
 				final Label label = new Label(composite, SWT.NONE);
-				label.setText("Every:");
+				label.setText(Policy.bind("ConfigureRefreshScheduleDialog.4")); //$NON-NLS-1$
 			}
 			{
 				time = new Text(composite, SWT.BORDER | SWT.RIGHT);
@@ -119,7 +120,7 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			}
 			{
 				hoursOrSeconds = new Combo(composite, SWT.READ_ONLY);
-				hoursOrSeconds.setItems(new String[] { "hour(s)", "minutes(s)" });
+				hoursOrSeconds.setItems(new String[] { Policy.bind("ConfigureRefreshScheduleDialog.5"), Policy.bind("ConfigureRefreshScheduleDialog.6") }); //$NON-NLS-1$ //$NON-NLS-2$
 				final GridData gridData_1 = new GridData();
 				gridData_1.widthHint = 75;
 				hoursOrSeconds.setLayoutData(gridData_1);
@@ -165,14 +166,14 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			long number = Long.parseLong(time.getText());
 			if(number <= 0) {
 				setPageComplete(false);
-				setErrorMessage("Number must be a positive number greater than 0");
+				setErrorMessage(Policy.bind("ConfigureRefreshScheduleDialog.7")); //$NON-NLS-1$
 			} else {
 				setPageComplete(true);
 				setErrorMessage(null);
 			}
 		} catch (NumberFormatException e) {
 			setPageComplete(false);
-			setErrorMessage("Number must be a positive number greater than 0");
+			setErrorMessage(Policy.bind("ConfigureRefreshScheduleDialog.8")); //$NON-NLS-1$
 		}	
 		
 		time.setEnabled(enableBackgroundRefresh.getSelection());

@@ -20,7 +20,7 @@ import org.eclipse.team.internal.ui.synchronize.views.ILogicalView;
 
 public class LogicalViewRegistry extends RegistryReader {
 
-	private static final String TAG_LOGICAL_VIEW = "logicalView";
+	private static final String TAG_LOGICAL_VIEW = "logicalView"; //$NON-NLS-1$
 	private Map views = new HashMap();
 
 	/* (non-Javadoc)

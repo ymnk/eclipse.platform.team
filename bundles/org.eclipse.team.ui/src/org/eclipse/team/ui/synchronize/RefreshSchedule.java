@@ -97,7 +97,7 @@ public class RefreshSchedule {
 			return;
 		}
 		if(job == null) {
-			job = new RefreshSubscriberJob("Refreshing '" + participant.getName() + "'. " + getRefreshIntervalAsString(), participant.getTeamSubscriberSyncInfoCollector()); //$NON-NLS-1$
+			job = new RefreshSubscriberJob(Policy.bind("RefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getTeamSubscriberSyncInfoCollector()); //$NON-NLS-1$
 		}
 		job.setRestartOnCancel(true);
 		job.setReschedule(true);
@@ -129,7 +129,7 @@ public class RefreshSchedule {
 			String enabled = memento.getString(CTX_REFRESHSCHEDULE_ENABLED);
 			int interval = memento.getInteger(CTX_REFRESHSCHEDULE_INTERVAL).intValue();
 			schedule.setRefreshInterval(interval);
-			schedule.setEnabled("true".equals(enabled) ? true : false);
+			schedule.setEnabled("true".equals(enabled) ? true : false); //$NON-NLS-1$
 		}
 		// Use the defaults if a schedule hasn't been saved or can't be found.
 		return schedule;
@@ -150,16 +150,16 @@ public class RefreshSchedule {
 		}
 		SyncInfo[] changes = event.getChanges();
 		if (changes.length != 0) {
-			text.append(" (" + Integer.toString(changes.length) + " changes found)");
+			text.append(Policy.bind("RefreshSchedule.6", Integer.toString(changes.length))); //$NON-NLS-1$
 		} else {
-			text.append(" (No changes found)");
+			text.append(Policy.bind("RefreshSchedule.7")); //$NON-NLS-1$
 		}
 		return text.toString();
 	} 
 	
 	public String getScheduleAsString() {
 		if(! isEnabled()) {
-			return "Not Scheduled";
+			return Policy.bind("RefreshSchedule.8"); //$NON-NLS-1$
 		}		
 		return getRefreshIntervalAsString();
 	}
@@ -169,8 +169,6 @@ public class RefreshSchedule {
 	}
 	
 	private String getRefreshIntervalAsString() {
-		StringBuffer text = new StringBuffer();				
-		text.append("Every ");
 		boolean hours = false;
 		long seconds = getRefreshInterval();
 		if(seconds <= 60) {
@@ -181,12 +179,12 @@ public class RefreshSchedule {
 			minutes = minutes / 60;
 			hours = true;
 		}		
-		text.append(Long.toString(minutes) + " ");
+		String unit;
 		if(minutes >= 1) {
-			text.append(hours ? "hours" : "minutes");
+			unit = (hours ? Policy.bind("RefreshSchedule.9") : Policy.bind("RefreshSchedule.10")); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
-			text.append(hours ? "hour" : "minute");
+			unit = (hours ? Policy.bind("RefreshSchedule.11") : Policy.bind("RefreshSchedule.12")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		return text.toString();
+		return Policy.bind("RefreshSchedule.13", Long.toString(minutes), unit); //$NON-NLS-1$
 	}
 }

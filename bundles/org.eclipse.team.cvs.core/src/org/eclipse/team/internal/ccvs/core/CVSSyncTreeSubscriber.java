@@ -233,7 +233,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 					FolderSyncInfo info = local.getFolderSyncInfo();
 					if (info == null) {
 						CVSProviderPlugin.log(new CVSException( 
-								Policy.bind("ResourceSynchronizer.missingParentBytesOnGet", getSyncName(cache).toString(), resource.getFullPath().toString())));
+								Policy.bind("ResourceSynchronizer.missingParentBytesOnGet", getSyncName(cache).toString(), resource.getFullPath().toString()))); //$NON-NLS-1$
 						// Assume there is no remote and the problem is a programming error
 						return null;
 					} else {
