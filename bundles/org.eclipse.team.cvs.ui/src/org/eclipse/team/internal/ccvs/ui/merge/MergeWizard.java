@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.merge;
 
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
@@ -28,18 +27,12 @@ public class MergeWizard extends Wizard {
 	IResource[] resources;
 
 	public void addPages() {
-		// when merging multiple resources, use the tags found on the first selected
-		// resource. This makes sense because you would typically merge resources that
-		// have a common context and are versioned and branched together.
-		IProject projectForTagRetrieval = resources[0].getProject();
-				
+	    TagSource tagSource = TagSource.create(resources);
 		setWindowTitle(Policy.bind("MergeWizard.title")); //$NON-NLS-1$
 		ImageDescriptor mergeImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_MERGE);
-		startPage = new MergeWizardStartPage("startPage", Policy.bind("MergeWizard.start"), mergeImage); //$NON-NLS-1$ //$NON-NLS-2$
-		startPage.setProject(projectForTagRetrieval);
+		startPage = new MergeWizardStartPage("startPage", Policy.bind("MergeWizard.start"), mergeImage, tagSource); //$NON-NLS-1$ //$NON-NLS-2$
 		addPage(startPage);
-		endPage = new MergeWizardEndPage("endPage", Policy.bind("MergeWizard.end"), mergeImage, startPage); //$NON-NLS-1$ //$NON-NLS-2$
-		endPage.setProject(projectForTagRetrieval);
+		endPage = new MergeWizardEndPage("endPage", Policy.bind("MergeWizard.end"), mergeImage, startPage, tagSource); //$NON-NLS-1$ //$NON-NLS-2$
 		addPage(endPage);
 	}
 

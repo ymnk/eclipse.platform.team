@@ -70,7 +70,22 @@ public class ProjectElement implements IAdaptable, IWorkbenchAdapter {
 			return super.compare(viewer, e1, e2);
 		}
 	}
-		
+	
+    /**
+     * Create a viewer input for the tag source
+     * @param tagSource the tag source
+     * @param includeFlags the types of tags to include
+     * @return a tree viewer input
+     */
+    public static Object createInput(TagSource tagSource, int includeFlags) {
+        if (includeFlags == INCLUDE_VERSIONS) {
+            // Versions only is requested by the merge start page.
+            // Only need to show version tags
+            return new TagRootElement(null, tagSource, CVSTag.VERSION);
+        }
+        return new ProjectElement(tagSource, includeFlags);
+    }
+    
 	public ProjectElement(TagSource tagSource, int includeFlags) {
 		this.includeFlags = includeFlags;
 		if (this.includeFlags == 0) this.includeFlags = INCLUDE_ALL_TAGS;

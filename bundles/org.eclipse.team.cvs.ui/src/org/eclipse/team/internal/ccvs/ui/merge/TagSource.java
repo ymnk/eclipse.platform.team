@@ -12,9 +12,11 @@ package org.eclipse.team.internal.ccvs.ui.merge;
 
 import java.util.*;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 
 /**
  * A tag source provides access to a set of tags.
@@ -44,7 +46,25 @@ public abstract class TagSource {
         return new SingleFolderTagSource(getFirstFolder(resources));
     }
     
-	private static ICVSFolder getFirstFolder(ICVSResource[] resources) {
+    /**
+     * Create a tag source for a list of resources
+     * @param resources one or more resources
+     * @return a tag source
+     */
+    public static TagSource create(IResource[] resources) {
+        return create(getCVSResources(resources));
+    }
+    
+    private static ICVSResource[] getCVSResources(IResource[] resources) {
+        List cvsResources = new ArrayList();
+        for (int i = 0; i < resources.length; i++) {
+            IResource resource = resources[i];
+            cvsResources.add(CVSWorkspaceRoot.getCVSResourceFor(resource));
+        }
+        return (ICVSResource[]) cvsResources.toArray(new ICVSResource[cvsResources.size()]);
+    }
+
+    private static ICVSFolder getFirstFolder(ICVSResource[] resources) {
 		if (resources[0].isFolder()) {
 			return (ICVSFolder)resources[0];
 		} else {

@@ -11,43 +11,21 @@
 package org.eclipse.team.internal.ccvs.ui.merge;
 
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.TableLayout;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerSorter;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridData;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
-import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.TagConfigurationDialog;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
 import org.eclipse.ui.help.WorkbenchHelp;
-import org.eclipse.ui.model.WorkbenchContentProvider;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class MergeWizardStartPage extends CVSWizardPage {
-	TableViewer table;
-	CVSTag result;
-	IProject project;
-	
-	private static final int TABLE_HEIGHT_HINT = 350;
-	private static final int TABLE_WIDTH_HINT = 100;
+    
+	private CVSTag result;
+    private final TagSource tagSource;
+    private TagSelectionArea tagArea;
 	
 	/**
 	 * MergeWizardStartPage constructor.
@@ -55,25 +33,14 @@ public class MergeWizardStartPage extends CVSWizardPage {
 	 * @param pageName  the name of the page
 	 * @param title  the title of the page
 	 * @param titleImage  the image for the page
+	 * @param tagSource
 	 */
-	public MergeWizardStartPage(String pageName, String title, ImageDescriptor titleImage) {
+	public MergeWizardStartPage(String pageName, String title, ImageDescriptor titleImage, TagSource tagSource) {
 		super(pageName, title, titleImage);
+        this.tagSource = tagSource;
 		setDescription(Policy.bind("MergeWizardStartPage.description")); //$NON-NLS-1$
 	}
-	protected TableViewer createTable(Composite parent) {
-		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
-		GridData data = new GridData(GridData.FILL_BOTH);
-		data.heightHint = TABLE_HEIGHT_HINT;
-		data.widthHint = TABLE_WIDTH_HINT;
-		table.setLayoutData(data);
-		TableLayout layout = new TableLayout();
-		layout.addColumnData(new ColumnWeightData(100, true));
-		table.setLayout(layout);
-		TableColumn col = new TableColumn(table, SWT.NONE);
-		col.setResizable(true);
 	
-		return new TableViewer(table);
-	}
 	/*
 	 * @see IDialogPage#createControl(Composite)
 	 */
@@ -82,80 +49,31 @@ public class MergeWizardStartPage extends CVSWizardPage {
 		// set F1 help
 		WorkbenchHelp.setHelp(composite, IHelpContextIds.MERGE_START_PAGE);
 		
-		table = createTable(composite);
-		table.setContentProvider(new WorkbenchContentProvider());
-		table.setLabelProvider(new WorkbenchLabelProvider());
-		table.setSorter(new ViewerSorter() {
-			public int compare(Viewer v, Object o1, Object o2) {
-				int result = super.compare(v, o1, o2);
-				if (o1 instanceof TagElement && o2 instanceof TagElement) {
-					return -result;
-				}
-				return result;
-			}
-		});
-		table.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				IStructuredSelection selection = (IStructuredSelection)table.getSelection();
-				if(!selection.isEmpty()) {
-					TagElement element = (TagElement)((IStructuredSelection)table.getSelection()).getFirstElement();
-					if(element!=null) {
-						result = element.getTag();
-						setPageComplete(true);
-					}
-				}
-			}
-		});
-		table.addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				getContainer().showPage(getNextPage());
-			}
-		});
+		tagArea = new TagSelectionArea(getShell(), tagSource, "&Select start tag:", TagSelectionArea.INCLUDE_VERSIONS, null);
+		tagArea.createArea(composite);
+		tagArea.addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getProperty().equals(TagSelectionArea.SELECTED_TAG)) {
+                    result = tagArea.getSelection();
+                    setPageComplete(result != null);
+                } else if (event.getProperty().equals(TagSelectionArea.OPEN_SELECTED_TAG)) {
+                    getContainer().showPage(getNextPage());
+                }
 
-		Runnable afterRefresh = new Runnable() {
-			public void run() {
-				getShell().getDisplay().syncExec(new Runnable() {
-					public void run() {
-						table.refresh();
-						setPageComplete(! table.getSelection().isEmpty());
-					}
-				});
-			}
-		};
-		
-		Runnable afterConfigure = new Runnable() {
-			public void run() {
-				getShell().getDisplay().syncExec(new Runnable() {
-					public void run() {
-						initialize();
-					}
-				});
-			}
-		};
+            }
+        });
 
 		setControl(composite);
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, TagSource.create(new ICVSFolder[] {CVSWorkspaceRoot.getCVSFolderFor(project)}), 
-														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
-														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
-														  afterRefresh, afterConfigure);
 		Dialog.applyDialogFont(parent);
-		initialize();
 		setPageComplete(false);
-	}
-	private void initialize() {
-		ICVSFolder cvsProject = CVSWorkspaceRoot.getCVSFolderFor(project);
-		table.setInput(new TagRootElement(null, new SingleFolderTagSource(cvsProject), CVSTag.VERSION));
-	}
-	public void setProject(IProject project) {
-		this.project = project;
 	}
 	public CVSTag getTag() {
 		return result;
 	}
 	public void setVisible(boolean visible) {
 		super.setVisible(visible);
-		if (visible) {
-			table.getControl().setFocus();
+		if (visible && tagArea != null) {
+			tagArea.setFocus();
 		}
 	}
 }

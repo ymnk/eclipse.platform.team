@@ -104,20 +104,32 @@ public class TagSelectionArea extends DialogArea {
 
     private void createTagTree(Composite parent) {
         Composite inner = createGrabbingComposite(parent, 1);
-        if (isFilteringEnabled()) {
-            createWrappingLabel(inner, "Filter &tag list (? = any character, * = any Strung):", 1);
-            filterText = createText(inner, 1);
-            filterText.addModifyListener(new ModifyListener() {
-                public void modifyText(ModifyEvent e) {
-                    handleFilterChange();
-                }
-            });
-        }
+        createFilterInput(inner);    
 		if (message != null) {
 		    createWrappingLabel(inner, message, 1);
 		}
 		tagTree = createTree(inner);
 		createTreeMenu();
+    }
+
+    private void createFilterInput(Composite inner) {
+        createWrappingLabel(inner, "Filter &tag list (? = any character, * = any Strung):", 1);
+        filterText = createText(inner, 1);
+        filterText.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent e) {
+                handleFilterChange();
+            }
+        });
+        filterText.addKeyListener(new KeyListener() {
+            public void keyPressed(KeyEvent e) {
+        		if (e.keyCode == SWT.ARROW_DOWN && e.stateMask == 0) {			
+        			tagTree.getControl().setFocus();
+        		}
+            }
+            public void keyReleased(KeyEvent e) {
+                // Ignore
+            }
+        });
     }
 
     protected void handleFilterChange() {
@@ -130,6 +142,7 @@ public class TagSelectionArea extends DialogArea {
                 FilteredTagList list = (FilteredTagList)input;
                 list.setPattern(filter);
                 tagTree.refresh();
+                selectTopElement();
             }
         } else {
             String filter = filterText.getText();
@@ -137,16 +150,28 @@ public class TagSelectionArea extends DialogArea {
                 FilteredTagList list = createFilteredInput();
                 list.setPattern(filter);
                 tagTree.setInput(list);
+                selectTopElement();
             }
         }
     }
     
+    /*
+     * Select the top element in the tree
+     */
+    private void selectTopElement() {
+        TreeItem[] items = tagTree.getTree().getItems();
+        if (items.length > 0) {
+            tagTree.getTree().setSelection(new TreeItem[] { items[0] });
+            tagTree.setSelection(tagTree.getSelection());
+        }   
+    }
+
     private FilteredTagList createFilteredInput() {
         return new FilteredTagList(tagSource, convertIncludeFlaqsToTagTypes());
     }
 
     private int[] convertIncludeFlaqsToTagTypes() {
-        if ((includeFlags & (INCLUDE_BRANCHES + INCLUDE_VERSIONS)) > 0) {
+        if ((includeFlags & INCLUDE_BRANCHES) > 0 && (includeFlags & INCLUDE_VERSIONS) > 0) {
             return new int [] { CVSTag.VERSION, CVSTag.BRANCH };
         } else if ((includeFlags & (INCLUDE_BRANCHES)) > 0) {
             return new int [] { CVSTag.BRANCH };
@@ -165,15 +190,6 @@ public class TagSelectionArea extends DialogArea {
 		data.widthHint= 0;
 		text.setLayoutData(data);
         return text;
-    }
-
-    /**
-     * Return whether filtering tags shown in the tag tree is supported.
-     * The default is to support filtering (<code>true</code>)
-     * @return whether filtering tags shown in the tag tree is supported
-     */
-    protected boolean isFilteringEnabled() {
-        return true;
     }
 
     protected void createRefreshButtons(Composite parent) {
@@ -219,7 +235,10 @@ public class TagSelectionArea extends DialogArea {
 	
     protected TreeViewer createTree(Composite parent) {
 		Tree tree = new Tree(parent, SWT.MULTI | SWT.BORDER);
-		tree.setLayoutData(new GridData(GridData.FILL_BOTH));	
+		GridData data = new GridData(GridData.FILL_BOTH);
+        tree.setLayoutData(data);
+		data.heightHint = 0; // It will expand to the size of the wizard page!
+		data.widthHint = 0;
 		TreeViewer result = new TreeViewer(tree);
 		result.setContentProvider(new WorkbenchContentProvider());
 		result.setLabelProvider(new WorkbenchLabelProvider());
@@ -251,8 +270,8 @@ public class TagSelectionArea extends DialogArea {
 		return result;
 	}
     
-	private ProjectElement createUnfilteredInput() {
-        return new ProjectElement(tagSource, includeFlags);
+	private Object createUnfilteredInput() {
+        return ProjectElement.createInput(tagSource, includeFlags);
     }
 
     public void handleKeyPressed(KeyEvent event) {
@@ -376,5 +395,16 @@ public class TagSelectionArea extends DialogArea {
     }
     public Shell getShell() {
         return shell;
+    }
+
+    /**
+     * Set the focus to the filter text widget
+     */
+    public void setFocus() {
+        if (filterText != null)
+            filterText.setFocus();
+        // Refresh in case tags were added since the last time the area had focus
+        if (tagTree != null)
+            tagTree.refresh();
     }
 }
