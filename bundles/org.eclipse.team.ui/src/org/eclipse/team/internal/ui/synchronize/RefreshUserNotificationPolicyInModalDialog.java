@@ -97,7 +97,8 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 
 	protected void compareAndOpenDialog(final IRefreshEvent event, final SubscriberParticipant participant) {
 		CompareConfiguration cc = new CompareConfiguration();
-		SynchronizeDialog dialog = new SynchronizeDialog(shell, participant.getName(), cc, participant);
+		SynchronizeInput input = new SynchronizeInput(Utils.getShell(null), cc, participant);
+		SynchronizeDialog dialog = new SynchronizeDialog(shell, participant.getName(), input);
 		dialog.setSynchronizeParticipant(participant);
 		dialog.setBlockOnOpen(true);
 		dialog.open();

@@ -15,6 +15,7 @@ import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
@@ -27,13 +28,14 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 import org.eclipse.ui.progress.IProgressService;
 
-public class SynchronizeInput implements IContentChangeListener {
+public class SynchronizeInput implements IContentChangeListener, ICompareContainer {
 
 	private CompareConfiguration cc;
 	private ISynchronizeParticipant participant;
@@ -102,7 +104,7 @@ public class SynchronizeInput implements IContentChangeListener {
 		};
 	}
 	
-	public Control createControl(Composite parent2) {
+	public Control createContents(Composite parent2) {
 		Composite parent = new Composite(parent2, SWT.NULL);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
@@ -282,6 +284,10 @@ public class SynchronizeInput implements IContentChangeListener {
 		}
 	}
 
+	public Viewer getViewer() {
+		return viewer;
+	}
+	
 	private static void commit(IProgressMonitor pm, DiffNode node) throws CoreException {
 		ITypedElement left = node.getLeft();
 		if (left instanceof LocalResourceTypedElement)
@@ -315,8 +321,7 @@ public class SynchronizeInput implements IContentChangeListener {
 	
 	/**
 	 * Returns <code>true</code> if there are unsaved changes.
-	 * The value returned is the value of the <code>DIRTY_STATE</code> property of this input object.
-	 
+	 * The value returned is the value of the <code>DIRTY_STATE</code> property of this input object. 
 	 * Returns <code>true</code> if this input has unsaved changes,
 	 * that is if <code>setDirty(true)</code> has been called.
 	 * Subclasses don't have to override if the functionality provided by <doce>setDirty</code>
@@ -379,5 +384,26 @@ public class SynchronizeInput implements IContentChangeListener {
 			public void updateActionBars() {
 			}
 		};
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.synchronize.ICompareContainer#getTitleImage()
+	 */
+	public ImageDescriptor getImageDescriptor() {
+		return participant.getImageDescriptor();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.synchronize.ICompareContainer#getTitle()
+	 */
+	public String getTitle() {
+		return participant.getName();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.synchronize.ICompareContainer#getCompareConfiguration()
+	 */
+	public CompareConfiguration getCompareConfiguration() {
+		return cc;
 	}
 }

@@ -33,10 +33,11 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
 import org.eclipse.team.internal.ccvs.ui.operations.UpdateOperation;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.ICompareContainer;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.help.WorkbenchHelp;
 
-public class CVSCompareRevisionsInput extends CompareEditorInput {
+public class CVSCompareRevisionsInput extends CompareEditorInput implements ICompareContainer {
 	IFile resource;
 	ILogEntry[] editions;
 	TableViewer viewer;

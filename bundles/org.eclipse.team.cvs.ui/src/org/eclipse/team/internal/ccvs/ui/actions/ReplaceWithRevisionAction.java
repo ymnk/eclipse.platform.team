@@ -29,6 +29,7 @@ import org.eclipse.team.ui.synchronize.SynchronizeDialog;
 public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 	
 	protected static final int REPLACE_ID = 10;
+	private CVSCompareRevisionsInput input;
 	
 	protected class ReplaceCompareDialog extends SynchronizeDialog {
 		private Button replaceButton;
@@ -47,7 +48,7 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 		protected void createButtonsForButtonBar(Composite parent) {
 			replaceButton = createButton(parent, REPLACE_ID, Policy.bind("ReplaceWithRevisionAction.0"), true); //$NON-NLS-1$
 			replaceButton.setEnabled(false);
-			((CVSCompareRevisionsInput)getCompareEditorInput()).getViewer().addSelectionChangedListener(
+			input.getViewer().addSelectionChangedListener(
 				new ISelectionChangedListener() {
 					public void selectionChanged(SelectionChangedEvent e) {
 						ISelection s= e.getSelection();
@@ -64,7 +65,6 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 		 */
 		protected void buttonPressed(int buttonId) {
 			if(buttonId == REPLACE_ID) {
-				CVSCompareRevisionsInput input = (CVSCompareRevisionsInput)getCompareEditorInput();
 				try {
 					input.replaceLocalWithCurrentlySelectedRevision();
 				} catch (CoreException e) {
@@ -80,6 +80,7 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CompareWithRevisionAction#createCompareDialog(org.eclipse.swt.widgets.Shell, org.eclipse.team.internal.ccvs.ui.CVSCompareRevisionsInput)
 	 */
 	protected SynchronizeDialog createCompareDialog(Shell shell, CVSCompareRevisionsInput input) {
+		this.input = input;
 		return new ReplaceCompareDialog(shell, Policy.bind("ReplaceWithRevisionAction.1"), input); //$NON-NLS-1$
 	}
 }
