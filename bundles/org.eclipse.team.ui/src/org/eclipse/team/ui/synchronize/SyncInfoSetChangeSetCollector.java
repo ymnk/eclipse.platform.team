@@ -67,7 +67,7 @@ public abstract class SyncInfoSetChangeSetCollector extends ChangeSetCollector {
         private void handleChangeEvent(SyncInfoSet set) {
             if (set.isEmpty()) {
                 ChangeSet changeSet = getChangeSet(set);
-                if (changeSet != null && changeSet instanceof CheckedInChangeSet) {
+                if (changeSet != null) {
                     remove(changeSet);
                 }
             }
@@ -105,7 +105,7 @@ public abstract class SyncInfoSetChangeSetCollector extends ChangeSetCollector {
     /* (non-Javadoc)
      * @see org.eclipse.team.core.subscribers.ChangeSetCollector#add(org.eclipse.team.core.subscribers.ChangeSet)
      */
-    public void add(CheckedInChangeSet set) {
+    public void add(ChangeSet set) {
         super.add(set);
     }
 

@@ -80,10 +80,11 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 	// Job that builds the layout in the background.
 	private boolean shutdown = false;
 	private FetchLogEntriesJob fetchLogEntriesJob;
-	
-	private DefaultCheckedInChangeSet defaultSet;
 
-	
+    private static final String DEFAULT_INCOMING_SET_NAME = "Unassigned Remote Changes";
+
+    private static final String DEFAULT_OUTGOING_SET_NAME = "Unassigned Local Changes";
+
 	/* *****************************************************************************
 	 * Special sync info that has its kind already calculated.
 	 */
@@ -142,14 +143,14 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 
 	    private Date date = new Date();
 	    
-        public DefaultCheckedInChangeSet() {
-            setName("[Unassigned]");
+        public DefaultCheckedInChangeSet(String name) {
+            setName(name);
         }
         /* (non-Javadoc)
          * @see org.eclipse.team.core.subscribers.CheckedInChangeSet#getAuthor()
          */
         public String getAuthor() {
-            return "";
+            return ""; //$NON-NLS-1$
         }
 
         /* (non-Javadoc)
@@ -163,7 +164,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
          * @see org.eclipse.team.core.subscribers.ChangeSet#getComment()
          */
         public String getComment() {
-            return "Unassigned";
+            return getName();
         }
 	    
 	}
@@ -215,14 +216,20 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
         for (int i = 0; i < infos.length; i++) {
             SyncInfo info = infos[i];
             if (isOutgoingChange(info)) {
-                addToDefaultSet(info);
+                addLocalChange(info);
             }
         }
     }
 
+    private void addLocalChange(SyncInfo info) {
+        addToDefaultSet(DEFAULT_OUTGOING_SET_NAME, info);
+    }
+
     private boolean isOutgoingChange(SyncInfo info) {
         try {
-            SyncInfo threeWayInfo = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().getSyncInfo(info.getLocal());
+            SyncInfo threeWayInfo = info;
+            if (!threeWayInfo.getComparator().isThreeWay())
+                threeWayInfo = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().getSyncInfo(info.getLocal());
             if (threeWayInfo == null) return false;
             int direction = threeWayInfo.getKind() & SyncInfo.DIRECTION_MASK;
             return (direction == SyncInfo.OUTGOING || direction == SyncInfo.CONFLICTING);
@@ -607,35 +614,36 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 	        IResourceVariant base = info.getBase();
 	        IResourceVariant remote = info.getRemote();
 	        if ((base == null && remote != null) || (remote == null && base != null) || !base.equals(remote)) {
-		        ChangeSet set = getChangeSetFor(logEntry);
-		        if (set == null) {
-		            set = createChangeSetFor(logEntry);
-		        	add(set);
-		        }
-		        set.add(info);
+	            synchronized(this) {
+			        ChangeSet set = getChangeSetFor(logEntry);
+			        if (set == null) {
+			            set = createChangeSetFor(logEntry);
+			        	add(set);
+			        }
+			        set.add(info);
+	            }
 	        }
         } else {
             // The info was not retrieved for the remote change for some reason.
             // Add the node to the root
-            addToDefaultSet(info);
+            addToDefaultSet(DEFAULT_INCOMING_SET_NAME, info);
         }
     }
     
-    private void addToDefaultSet(SyncInfo info) {
-        ChangeSet set = getDefaultChangeSet();
-        if (set == null) {
-            set = createDefaultChangeSet();
-        	add(set);
+    private void addToDefaultSet(String name, SyncInfo info) {
+        ChangeSet set;
+        synchronized(this) {
+	        set = getChangeSetFor(name);
+	        if (set == null) {
+	            set = createDefaultChangeSet(name);
+	        	add(set);
+	        }
+	        set.add(info);
         }
-        set.add(info);
-    }
-
-    private ChangeSet getDefaultChangeSet() {
-        return defaultSet;
     }
     
-    private ChangeSet createDefaultChangeSet() {
-        return new DefaultCheckedInChangeSet();
+    private ChangeSet createDefaultChangeSet(String name) {
+        return new DefaultCheckedInChangeSet(name);
     }
 
     private ChangeSet createChangeSetFor(ILogEntry logEntry) {
@@ -655,6 +663,17 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
         return null;
     }
 
+    private ChangeSet getChangeSetFor(String name) {
+        ChangeSet[] sets = getSets();
+        for (int i = 0; i < sets.length; i++) {
+            ChangeSet set = sets[i];
+            if (set.getName().equals(name)) {
+                return set;
+            }
+        }
+        return null;
+    }
+    
     private boolean requiresCustomSyncInfo(SyncInfo info, ICVSRemoteResource remoteResource, ILogEntry logEntry) {
 		// Only interested in non-deletions
 		if (logEntry.isDeletion() || !(info instanceof CVSSyncInfo)) return false;
@@ -664,16 +683,6 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 		if (remote == null) return true;
 		return !remote.equals(remoteResource);
 	}
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.subscribers.ChangeSetCollector#remove(org.eclipse.team.core.subscribers.ChangeSet)
-     */
-    public void remove(ChangeSet set) {
-        super.remove(set);
-        if (set == defaultSet) {
-            defaultSet = null;
-        }
-    }
     
     /* (non-Javadoc)
      * @see org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector#waitUntilDone(org.eclipse.core.runtime.IProgressMonitor)
