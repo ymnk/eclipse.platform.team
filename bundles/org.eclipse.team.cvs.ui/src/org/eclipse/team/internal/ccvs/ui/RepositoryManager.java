@@ -135,7 +135,7 @@ public class RepositoryManager {
 			for (int i = 0; i < paths.length; i++) {
 				String path = paths[i];
 				CVSTag[] tags = root.getKnownTags(path);
-				for (int j = 0; i < tags.length; i++) {
+				for (int j = 0; j < tags.length; j++) {
 					CVSTag tag = tags[j];
 					if (tag.getType() == tagType)
 						result.add(tag);

@@ -46,6 +46,12 @@ public class RemoteFolderElement extends RemoteResourceElement {
 	public String getLabel(Object o) {
 		if (!(o instanceof ICVSRemoteFolder)) return null;
 		ICVSRemoteFolder folder = (ICVSRemoteFolder)o;
+		CVSTag tag = folder.getTag();
+		if (tag != null && tag.getType() == CVSTag.VERSION) {
+			if (folder.getRemoteParent() == null) {
+				return Policy.bind("RemoteFolderElement.nameAndTag", folder.getName(), tag.getName()); //$NON-NLS-1$
+			}
+		}
 		return folder.getName();
 	}
 	public ImageDescriptor getImageDescriptor(Object object) {

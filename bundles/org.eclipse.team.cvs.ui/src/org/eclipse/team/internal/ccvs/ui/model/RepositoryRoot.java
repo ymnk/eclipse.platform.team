@@ -267,12 +267,14 @@ public class RepositoryRoot extends CVSModelElement implements IAdaptable {
 				writer.startAndEndTag(RepositoriesViewContentHandler.TAG_TAG, attributes, true);
 			}
 			Set refreshSet = (Set)autoRefreshFiles.get(path);
-			Iterator filenameIt = refreshSet.iterator();
-			while (filenameIt.hasNext()) {
-				String filename = (String)filenameIt.next();
-				attributes.clear();
-				attributes.put(RepositoriesViewContentHandler.PATH_ATTRIBUTE, filename);
-				writer.startAndEndTag(RepositoriesViewContentHandler.AUTO_REFRESH_FILE_TAG, attributes, true);
+			if (refreshSet != null) {
+				Iterator filenameIt = refreshSet.iterator();
+				while (filenameIt.hasNext()) {
+					String filename = (String)filenameIt.next();
+					attributes.clear();
+					attributes.put(RepositoriesViewContentHandler.PATH_ATTRIBUTE, filename);
+					writer.startAndEndTag(RepositoriesViewContentHandler.AUTO_REFRESH_FILE_TAG, attributes, true);
+				}
 			}
 			writer.endTag(RepositoriesViewContentHandler.MODULE_TAG);
 		}
