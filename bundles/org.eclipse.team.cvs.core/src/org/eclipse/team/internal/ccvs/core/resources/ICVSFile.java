@@ -40,7 +40,7 @@ public interface ICVSFile extends ICVSResource {
 	/**
 	 * Sets the file's read-only permission.
 	 */
-	void setReadOnly() throws CVSException;
+	void setReadOnly(boolean readOnly) throws CVSException;
 	
 	/**
 	 * Move the resource to another location. Does overwrite without

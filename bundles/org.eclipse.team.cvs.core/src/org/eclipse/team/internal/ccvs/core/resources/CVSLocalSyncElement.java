@@ -29,12 +29,11 @@ public class CVSLocalSyncElement extends LocalSyncElement {
 
 		this.local = local;
 		this.base = base;
-		
-		File file = new File(local.getLocation().toOSString());
+				
 		if(local.getType() != IResource.FILE) {
-			this.cvsResource = new LocalFolder(file);
+			this.cvsResource = new EclipseFolder(local);
 		} else {
-			this.cvsResource = new LocalFile(file);
+			this.cvsResource = new EclipseFile(local);
 		}
 	}
 
