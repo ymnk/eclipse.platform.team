@@ -1,9 +1,13 @@
-/*
- * Created on Jun 16, 2003
- *
- * To change the template for this generated file go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
- */
+/*******************************************************************************
+ * Copyright (c) 2000, 2003 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Common Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.actions;
 
 import org.eclipse.core.resources.IResource;
@@ -68,7 +72,9 @@ class RefreshAction extends Action {
 		Job job = new Job() {
 			public IStatus run(IProgressMonitor monitor) {
 				try {
+					System.out.println("starting refresh of: " + subscriber.getName());
 					subscriber.refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+					System.out.println("finished refresh of: " + subscriber.getName());
 				} catch (TeamException e) {
 					return e.getStatus();
 				}				

@@ -21,6 +21,10 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.jobs.IJobChangeListener;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -46,6 +50,7 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -56,6 +61,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
+import org.eclipse.team.core.subscribers.RefreshSubscribersJob;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -64,11 +70,13 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
+import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -77,7 +85,7 @@ import org.eclipse.ui.part.IShowInSource;
 import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.part.ViewPart;
 
-public class SyncViewer extends ViewPart implements ITeamResourceChangeListener, ISyncSetChangedListener {
+public class SyncViewer extends ViewPart implements ITeamResourceChangeListener, ISyncSetChangedListener, IJobChangeListener {
 	
 	/*
 	 * This view's id. The same value as in the plugin.xml.
@@ -117,6 +125,13 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 */
 	private SyncViewerActions actions;
 	
+	/*
+	 * View image
+	 */
+	private Image refreshingImg;
+	private Image initialImg; 
+	private Image viewImage;
+	
 	/**
 	 * Subclass of TreeViewer which handles decorator events properly.
 	 * 
@@ -149,12 +164,17 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	public SyncViewer() {
 	}
 
+	public Image getTitleImage() {
+		return viewImage;
+	}
+
 	/**
 	 * This is a callback that will allow us
 	 * to create the viewer and initialize it.
 	 */
 	public void createPartControl(Composite parent) {
 		TeamProvider.addListener(this);
+		Platform.getJobManager().addJobChangeListener(this);
 		initializeActions();
 		createViewer(parent, TABLE_VIEW);
 		contributeToActionBars();
@@ -165,6 +185,14 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 			TeamSubscriber subscriber = subscribers[i];
 			addSubscriber(subscriber);
 		}
+		
+		// initialize images
+		initialImg = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_SYNC_VIEW).createImage();
+		refreshingImg = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_SYNC_MODE_CATCHUP).createImage();
+		TeamUIPlugin.disposeOnShutdown(initialImg);
+		TeamUIPlugin.disposeOnShutdown(refreshingImg);
+		viewImage= initialImg;
+		
 		updateTitle();
 	}
 
@@ -669,5 +697,31 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 */
 	public void syncSetChanged(SyncSetChangedEvent event) {
 		updateTitle();
+	}
+
+	public void aboutToRun(Job job) {
+	}
+
+	public void awake(Job job) {
+	}
+
+	public void done(Job job, IStatus result) {
+		if(job instanceof RefreshSubscribersJob) {
+			viewImage = initialImg;
+			firePropertyChange(IWorkbenchPart.PROP_TITLE);
+		}
+	}
+
+	public void running(Job job) {
+		if(job instanceof RefreshSubscribersJob) {
+			viewImage = refreshingImg;
+			firePropertyChange(IWorkbenchPart.PROP_TITLE);
+		}
+	}
+
+	public void scheduled(Job job) {	
+	}
+
+	public void sleeping(Job job) {
 	}
 }
