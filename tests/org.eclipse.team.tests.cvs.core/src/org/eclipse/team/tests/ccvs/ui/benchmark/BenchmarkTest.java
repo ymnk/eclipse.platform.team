@@ -29,6 +29,9 @@ import org.eclipse.team.tests.ccvs.ui.SynchronizeViewTestAdapter;
 import org.eclipse.test.performance.*;
 import org.eclipse.test.performance.Performance;
 import org.eclipse.test.performance.PerformanceMeter;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.WorkbenchException;
+import org.eclipse.ui.internal.CloseAllPerspectivesAction;
 
 /**
  * Benchmark test superclass
@@ -185,7 +188,7 @@ public abstract class BenchmarkTest extends EclipseTest {
      */
     protected void syncCommitResources(IResource[] resources, String comment) throws TeamException, CoreException {
        startTask("Synchronize outgoing changes");
-       syncResources(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), resources);
+       syncResources(getSyncInfoSource().createWorkspaceSubscriber(), resources);
        endTask();
        // TODO: Commit all outgoing changes that are children of the given resource
        // by extracting them from the subscriber sync set
@@ -200,13 +203,20 @@ public abstract class BenchmarkTest extends EclipseTest {
      */
     protected void syncUpdateResources(IResource[] resources) throws TeamException {
         startTask("Synchronize incoming changes");
-        syncResources(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), resources);
+        syncResources(getSyncInfoSource().createWorkspaceSubscriber(), resources);
         endTask();
         // TODO: Update all incoming changes that are children of the given resource
         // by extracting them from the subscriber sync set
         startTask("Update incoming changes");
         updateResources(resources, false);
         endTask();
+    }
+    
+    protected void openEmptyPerspective() throws WorkbenchException {
+        // First close any open perspectives
+        new CloseAllPerspectivesAction(PlatformUI.getWorkbench().getActiveWorkbenchWindow());
+        // Now open our empty perspective
+        PlatformUI.getWorkbench().showPerspective("org.eclipse.team.tests.cvs.ui.perspective1", PlatformUI.getWorkbench().getActiveWorkbenchWindow());
     }
 
     /**
