@@ -52,6 +52,9 @@ import org.eclipse.team.ui.sync.UnchangedTeamContainer;
 /**
  * UpdateSyncAction is run on a set of sync nodes when the "Update" menu item is performed
  * in the Synchronize view.
+ * 
+ * This class is also used as the super class of the merge update actions for regular and forced
+ * update.
  */
 public class UpdateSyncAction extends MergeAction {
 	public static class ConfirmDialog extends MessageDialog {
@@ -167,6 +170,7 @@ public class UpdateSyncAction extends MergeAction {
 				}
 			}
 			ITeamNode changedNode = changed[i];
+			IResource resource = changedNode.getResource();
 			int kind = changedNode.getKind();
 			switch (kind & Differencer.DIRECTION_MASK) {
 				case ITeamNode.INCOMING:
@@ -187,8 +191,10 @@ public class UpdateSyncAction extends MergeAction {
 							deletions.add(changedNode);
 							break;
 						case Differencer.DELETION:
-							makeIncoming.add(changedNode);
-							updateDeep.add(changedNode);
+							if (resource.getType() == IResource.FILE) {
+								makeIncoming.add(changedNode);
+								updateDeep.add(changedNode);
+							}
 							break;
 						case Differencer.CHANGE:
 							updateIgnoreLocalShallow.add(changedNode);
@@ -210,11 +216,17 @@ public class UpdateSyncAction extends MergeAction {
 							// Doesn't happen, these nodes don't appear in the tree.
 							break;
 						case Differencer.CHANGE:
-							// Depends on the flag.
-							if (onlyUpdateAutomergeable && (changedNode.getKind() & IRemoteSyncElement.AUTOMERGE_CONFLICT) != 0) {
-								updateShallow.add(changedNode);
+							if (resource.getType() == IResource.FILE) {
+								// Depends on the flag.
+								if (onlyUpdateAutomergeable && (changedNode.getKind() & IRemoteSyncElement.AUTOMERGE_CONFLICT) != 0) {
+									updateShallow.add(changedNode);
+								} else {
+									updateIgnoreLocalShallow.add(changedNode);
+								}
 							} else {
-								updateIgnoreLocalShallow.add(changedNode);
+								// Conflicting change on a folder only occurs if the folder has been deleted locally
+								// The folder should only be recreated if there were children in the changed set.
+								// Such folders would have been added to the parentDeletionElements set above
 							}
 							break;
 					}

@@ -263,12 +263,12 @@ abstract class MergeAction extends Action {
 	 * the folder if it doesn't contain any real changes
 	 */
 	private void removeLocallyDeletedFolder(ChangedTeamContainer container) {
-		if (hasRealChanges(container, ITeamNode.CONFLICTING | ITeamNode.INCOMING)) {
+		if (hasRealChanges(container, new int[] { ITeamNode.CONFLICTING, ITeamNode.INCOMING })) {
 			// Leave as a conflict
 			return;
 		}
 		IDiffContainer parent = container.getParent();
-		if (hasRealChanges(container, ITeamNode.OUTGOING)) {
+		if (hasRealChanges(container, new int[] { ITeamNode.OUTGOING })) {
 			// Convert to an outgoing deletion
 			container.setKind(ITeamNode.OUTGOING | Differencer.DELETION);
 		} else {
@@ -284,25 +284,30 @@ abstract class MergeAction extends Action {
 	}
 	
 	/**
-	 * Determine whether the folder has real changes of the given direction in it.
-	 * A real change in the given direction is anything that is not a locally deleted folder
+	 * Look for real changes of the given type. Real changes are those that
+	 * are not locally deleted folders that are persisted as phantoms
+	 * to report local file deletions to the server.
 	 */
-	protected boolean hasRealChanges(ChangedTeamContainer container, int changeDirectionFlags) {
-		IDiffElement[] children = container.getChildren();
-		for (int i = 0; i < children.length; i++) {
-			if (hasRealChanges(children[i], changeDirectionFlags)) {
-				return true;
+	protected boolean hasRealChanges(IDiffElement node, int[] changeDirections) {
+		// For regular nodes (i.e. not local folder deletions), check the sync kind of the node
+		if ( ! isLocallyDeletedFolder(node)) {
+			int direction = node.getKind() & Differencer.DIRECTION_MASK;
+			for (int i = 0; i < changeDirections.length; i++) {
+				if (direction == changeDirections[i]) {
+					return true;
+				}
 			}
 		}
-		return false;
-	}
-	
-	protected boolean hasRealChanges(IDiffElement node, int changeDirectionFlags) {
-		if (isLocallyDeletedFolder(node)) {
-			return hasRealChanges((ChangedTeamContainer)node, changeDirectionFlags);
-		} else {
-			int direction = node.getKind() & Differencer.DIRECTION_MASK;
-			return ((direction & changeDirectionFlags) != 0);
+		// For folders, check their children (if we didn't get a match above)
+		if (node.getType() == node.FOLDER_TYPE) {
+			IDiffElement[] children = ((IDiffContainer)node).getChildren();
+			for (int i = 0; i < children.length; i++) {
+				if (hasRealChanges(children[i], changeDirections)) {
+					return true;
+				}
+			}
 		}
+		// If no matches occured above, we don't have any "real" changes in the given directions
+		return false;
 	}
 }
