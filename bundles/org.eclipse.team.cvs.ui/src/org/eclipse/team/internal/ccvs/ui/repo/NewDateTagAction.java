@@ -15,9 +15,9 @@ import java.util.Date;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.util.CVSDateFormatter;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.DateTagDialog;
 
@@ -32,13 +32,18 @@ public class NewDateTagAction extends CVSRepoViewAction {
 	protected void execute(IAction action) throws InvocationTargetException, InterruptedException {
 		ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
 		if (locations.length != 1) return;
-		DateTagDialog dialog = new DateTagDialog(getShell());
+		CVSTag tag = getDateTag(getShell(), locations[0]);
+		CVSUIPlugin.getPlugin().getRepositoryManager().addDateTag(locations[0], tag);
+	}
+
+	public static CVSTag getDateTag(Shell shell, ICVSRepositoryLocation location) {
+		DateTagDialog dialog = new DateTagDialog(shell);
 		if (dialog.open() == Window.OK) {
-			Date date = dialog.getDate();
-			String dateString = CVSDateFormatter.dateToServerStamp(date);
-			CVSTag tag = new CVSTag(dateString, CVSTag.DATE);
-			CVSUIPlugin.getPlugin().getRepositoryManager().addDateTag(locations[0], tag);
+			Date date = dialog.getDate();		
+			CVSTag tag = new CVSTag(date);			
+			return tag;
 		}
+		return null;
 	}
 
 	/* (non-Javadoc)
@@ -49,5 +54,4 @@ public class NewDateTagAction extends CVSRepoViewAction {
 		if (locations.length != 1) return false;
 		return true;
 	}
-
 }

@@ -63,7 +63,7 @@ public class DateTagDialog extends Dialog {
 			//or any year written in
 			String days[] = new String[31];
 			for (int i = 0; i < 31; i++) {
-				days[i] = String.valueOf(i);
+				days[i] = String.valueOf(i+1);
 			}
 
 			String months[] = new String[12];
@@ -106,7 +106,7 @@ public class DateTagDialog extends Dialog {
 					Integer.parseInt(String.valueOf(fromYearCombo.getText())),
 					fromMonthCombo.getSelectionIndex(),
 					Integer.parseInt(String.valueOf(fromDayCombo.getText())),
-					00, 00, 00);
+					0,0,0);
 		}
 	}
 	public class TimeArea extends DialogArea {
@@ -158,7 +158,7 @@ public class DateTagDialog extends Dialog {
 		}
 		
 		public void initializeValues(Calendar calendar) {
-			hourCombo.select(calendar.get(Calendar.HOUR));
+			hourCombo.select(calendar.get(Calendar.HOUR_OF_DAY));//24 hour clock
 			minuteCombo.select(calendar.get(Calendar.MINUTE));
 			secondCombo.select(calendar.get(Calendar.SECOND));
 			
@@ -175,7 +175,7 @@ public class DateTagDialog extends Dialog {
 		}
 		public void adjustCalendar(Calendar calendar) {
 			if (includeTime.getSelection()) {
-				calendar.set(Calendar.HOUR, hourCombo.getSelectionIndex());
+				calendar.set(Calendar.HOUR_OF_DAY, hourCombo.getSelectionIndex());//24 hour clock
 				calendar.set(Calendar.MINUTE, minuteCombo.getSelectionIndex());
 				calendar.set(Calendar.SECOND, secondCombo.getSelectionIndex());
 				if (utcTime.getSelection()) {

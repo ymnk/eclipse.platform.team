@@ -23,6 +23,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
+import org.eclipse.team.internal.ccvs.core.util.CVSDateFormatter;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -71,13 +72,18 @@ public class CVSTagElement extends CVSModelElement implements IDeferredWorkbench
 				ICVSUIConstants.IMG_PROJECT_VERSION);
 		} else {
 			// This could be a Date tag
-			return null;
+			return CVSUIPlugin.getPlugin().getImageDescriptor(
+					ICVSUIConstants.IMG_DATE);
 		}
 	}
 	public String getLabel(Object o) {
 		if (!(o instanceof CVSTagElement))
 			return null;
-		return ((CVSTagElement) o).tag.getName();
+		CVSTag aTag = ((CVSTagElement) o).tag;
+		if(aTag.getType() == CVSTag.DATE){
+			return CVSDateFormatter.repoViewTimeStamp(aTag.asDate());
+		}
+		return aTag.getName();
 	}
 	
 	public String toString() {

@@ -121,7 +121,7 @@ public class RepositoryManager {
 			String[] paths = root.getKnownRemotePaths();
 			for (int i = 0; i < paths.length; i++) {
 				String path = paths[i];
-				CVSTag[] tags = root.getKnownTags(path);
+				CVSTag[] tags = root.getAllKnownTags(path);
 				for (int j = 0; j < tags.length; j++) {
 					CVSTag tag = tags[j];
 					if (tag.getType() == tagType)
@@ -157,7 +157,7 @@ public class RepositoryManager {
 	public CVSTag[] getKnownTags(ICVSFolder project) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(project);
 		String remotePath = RepositoryRoot.getRemotePathFor(project);
-		return root.getKnownTags(remotePath);
+		return root.getAllKnownTags(remotePath);
 	}
 	
 	/*
@@ -170,7 +170,7 @@ public class RepositoryManager {
 		for (int i = 0; i < paths.length; i++) {
 			String path = paths[i];
 			Set result = new HashSet();
-			result.addAll(Arrays.asList(root.getKnownTags(path)));
+			result.addAll(Arrays.asList(root.getAllKnownTags(path)));
 			knownTags.put(path, result);
 		}
 		return knownTags;
@@ -204,7 +204,7 @@ public class RepositoryManager {
 			String[] paths = root.getKnownRemotePaths();
 			for (int i = 0; i < paths.length; i++) {
 				String path = paths[i];
-				List tags = Arrays.asList(root.getKnownTags(path));
+				List tags = Arrays.asList(root.getAllKnownTags(path));
 				if (tags.contains(tag)) {
 					ICVSRemoteFolder remote = root.getRemoteFolder(path, tag, Policy.subMonitorFor(monitor, 100));
 					result.add(remote);
@@ -261,8 +261,8 @@ public class RepositoryManager {
 		root.addTags(remotePath, tags);
 		broadcastRepositoryChange(root);
 	}
-	
 	public void addDateTag(ICVSRepositoryLocation location, CVSTag tag) {
+		if(tag == null) return;
 		RepositoryRoot root = getRepositoryRootFor(location);
 		root.addDateTag(tag);
 		broadcastRepositoryChange(root);

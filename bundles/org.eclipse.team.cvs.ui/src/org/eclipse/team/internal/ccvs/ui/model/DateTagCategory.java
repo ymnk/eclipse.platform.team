@@ -38,8 +38,7 @@ public class DateTagCategory extends TagCategory {
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getImageDescriptor(java.lang.Object)
 	 */
 	public ImageDescriptor getImageDescriptor(Object object) {
-		// TODO Auto-generated method stub
-		return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_TAG);
+		return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_DATES_CATEGORY);
 	}
 
 	/* (non-Javadoc)
@@ -47,6 +46,16 @@ public class DateTagCategory extends TagCategory {
 	 */
 	public String getLabel(Object o) {
 		return "Dates";
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.model.TagCategory#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
+		if (adapter.equals(ICVSRepositoryLocation.class)) {
+			return getRepository(null);
+		}
+		return super.getAdapter(adapter);
 	}
 
 }

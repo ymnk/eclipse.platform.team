@@ -50,8 +50,9 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.core.util.*;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
+import org.eclipse.team.internal.ccvs.core.util.CVSDateFormatter;
+import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -266,7 +267,11 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 
 			CVSTag tag = getTagToShow(resource);
 			if (tag != null) {
-				bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, tag.getName());
+				String name = tag.getName();
+				if(tag.getType() == CVSTag.DATE){
+					name = CVSDateFormatter.decoratorTimeStamp(tag.asDate());
+				}
+				bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, name);
 			}
 
 			if (type != IResource.FILE) {
