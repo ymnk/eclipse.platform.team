@@ -204,7 +204,7 @@ class OpenChangeSetAction extends SynchronizeModelAction {
     private ICVSRemoteFile getImmediatePredecessor(IResourceVariant remote) throws TeamException {
         CVSChangeSetCollector changeSetCollector = getChangeSetCollector();
         if (changeSetCollector != null) {
-	        LogEntryCache logs = changeSetCollector.getLogs();
+	        LogEntryCache logs = changeSetCollector.getLogEntryHandler().getLogEntryCache();
 	        if (logs != null)
 	            return logs.getImmediatePredecessor((ICVSRemoteFile)remote);
         }
