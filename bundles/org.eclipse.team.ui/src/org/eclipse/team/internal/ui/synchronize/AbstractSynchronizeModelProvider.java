@@ -292,9 +292,14 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 			public void run() {
 				StructuredViewer viewer = getViewer();
 				if (viewer != null && !viewer.getControl().isDisposed()) {
-					viewer.refresh();
-					//	restore expansion state
-					restoreViewerState();
+					try {
+						viewer.getControl().setRedraw(false);
+						viewer.refresh();
+						//	restore expansion state
+						restoreViewerState();
+					} finally {
+						viewer.getControl().setRedraw(true);
+					}
 				}
 			}
 		}, getViewer());
