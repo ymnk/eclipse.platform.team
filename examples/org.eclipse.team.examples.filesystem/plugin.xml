@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
+<!-- =================================================================================== -->
+<!-- Team Examples Plug-in Manifest 					                                 -->
+<!-- =================================================================================== -->
 <plugin
    id="org.eclipse.team.examples.filesystem"
    name="%pluginName"
@@ -7,35 +10,56 @@
    provider-name="%providerName"
    class="org.eclipse.team.examples.filesystem.FileSystemPlugin">
 
-   <runtime>
-      <library name="teamfilesystem.jar">
-         <export name="*"/>
-         <packages prefixes="org.eclipse.team.examples.filesystem"/>
-      </library>
-   </runtime>
-   <requires>
-      <import plugin="org.eclipse.core.runtime.compatibility"/> 
-      <import plugin="org.eclipse.ui.ide" optional="true"/>
-      <import plugin="org.eclipse.ui.views" optional="true"/>
-      <import plugin="org.eclipse.jface.text" optional="true"/>
-      <import plugin="org.eclipse.ui.workbench.texteditor" optional="true"/>
-      <import plugin="org.eclipse.ui.editors" optional="true"/>
-      <import plugin="org.eclipse.core.resources"/>
-      <import plugin="org.eclipse.team.core"/>
-      <import plugin="org.eclipse.team.ui"/>
-      <import plugin="org.eclipse.ui"/>
-   </requires>
+<!-- =================================================================================== -->
+<!-- Libraries						 					                                 -->
+<!-- =================================================================================== -->
 
+<runtime>
+	<library name="teamfilesystem.jar">
+    	<export name="*"/>
+       	<packages prefixes="org.eclipse.team.examples.filesystem"/>
+	</library>
+</runtime>
+   
+<!-- =================================================================================== -->
+<!-- Imports						 					                                 -->
+<!-- =================================================================================== -->
+   
+<requires>
+	<import plugin="org.eclipse.core.runtime.compatibility"/> 
+	<import plugin="org.eclipse.ui.ide" optional="true"/>
+	<import plugin="org.eclipse.ui.views" optional="true"/>
+	<import plugin="org.eclipse.jface.text" optional="true"/>
+	<import plugin="org.eclipse.ui.workbench.texteditor" optional="true"/>
+	<import plugin="org.eclipse.ui.editors" optional="true"/>
+	<import plugin="org.eclipse.core.resources"/>
+	<import plugin="org.eclipse.team.core"/>
+	<import plugin="org.eclipse.team.ui"/>
+	<import plugin="org.eclipse.ui"/>
+</requires>
 
-<!-- *************** Repository Provider **************** -->
-   <extension
-         point="org.eclipse.team.core.repository">
-      <repository
-            class="org.eclipse.team.examples.filesystem.FileSystemProvider"
-            id="org.eclipse.team.examples.filesystem.FileSystemProvider">
-      </repository>
-   </extension>
-<!-- *************** POPUP MENUS **************** -->
+<!-- =================================================================================== -->
+<!-- Repository Providers																 -->
+<!-- =================================================================================== -->
+
+<extension point="org.eclipse.team.core.repository">
+	<repository
+    	class="org.eclipse.team.examples.filesystem.FileSystemProvider"
+		id="org.eclipse.team.examples.filesystem.FileSystemProvider">
+	</repository>
+</extension>
+
+<extension point="org.eclipse.team.core.repository">
+	<repository
+		class="org.eclipse.team.examples.pessimistic.PessimisticFilesystemProvider"
+		id="org.eclipse.team.examples.pessimistic.pessimisticnature">
+	</repository>
+</extension>
+      
+<!-- =================================================================================== -->
+<!-- Menus for File System Example														 -->
+<!-- =================================================================================== -->
+
    <extension
          point="org.eclipse.ui.popupMenus">
       <objectContribution
@@ -85,7 +109,11 @@
          </action>
       </objectContribution>
    </extension>
-<!-- *************** CONFIGURATION WIZARD **************** -->
+
+<!-- =================================================================================== -->
+<!-- Sharing Wizards 														 			 -->
+<!-- =================================================================================== -->
+
    <extension
          point="org.eclipse.team.ui.configurationWizards">
       <wizard
@@ -99,7 +127,21 @@
          </description>
       </wizard>
    </extension>
-<!-- *************** PROPERTY PAGES **************** -->
+   
+      <extension
+         point="org.eclipse.team.ui.configurationWizards">
+      <wizard
+            name="Pessimistic Simple Provider (non-versioning)"
+            icon="icons/full/wizards/fsicon_wiz.gif"
+            class="org.eclipse.team.examples.pessimistic.ui.ConfigurationWizard"
+            id="org.eclipse.team.examples.pessimistic.ui.ConfigurationWizard">
+      </wizard>
+   </extension>
+   
+<!-- =================================================================================== -->
+<!-- Property Pages																		 -->
+<!-- =================================================================================== -->
+
    <extension
          point="org.eclipse.ui.propertyPages">
       <page
@@ -115,4 +157,133 @@
       </page>
    </extension>
 
+<!-- =================================================================================== -->
+<!-- Preference Pages																	 -->
+<!-- =================================================================================== -->
+
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            name="Pessimistic Filesystem Provider"
+            category="org.eclipse.team.ui.TeamPreferences"
+            class="org.eclipse.team.examples.pessimistic.ui.PessimisticPreferencesPage"
+            id="org.eclipse.team.examples.pessimistic.PessimisticPreferences">
+      </page>
+   </extension>
+
+<!-- =================================================================================== -->
+<!-- Decorators																		 -->
+<!-- =================================================================================== -->
+
+   <extension
+         point="org.eclipse.ui.decorators">
+      <decorator
+            objectClass="org.eclipse.core.resources.IResource"
+            adaptable="true"
+            label="Pessimistic Filesystem Provider Decorator"
+            state="true"
+            class="org.eclipse.team.examples.pessimistic.ui.PessimisticDecorator"
+            id="org.eclipse.team.pessimistic.ui.decorator">
+         <description>
+            Provides simple checked-in, checked-out decorations on files.
+         </description>
+      </decorator>
+   </extension>
+
+<!-- =================================================================================== -->
+<!-- Menus for Pessimistic Provider														 -->
+<!-- =================================================================================== -->
+
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IResource"
+            adaptable="true"
+            id="org.eclipse.team.cvs.ui.filesystem.ResourceContributions">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.examples.pessimistic.pessimisticnature">
+         </filter>
+         <action
+               label="Checkout"
+               tooltip="Check resources out of the repository"
+               class="org.eclipse.team.examples.pessimistic.ui.CheckOutAction"
+               menubarPath="team.main/group1"
+               id="org.eclipse.team.examples.pessimistic.checkout">
+         </action>
+         <action
+               label="Checkin"
+               tooltip="Check resources into the repository"
+               class="org.eclipse.team.examples.pessimistic.ui.CheckInAction"
+               menubarPath="team.main/group1"
+               id="org.eclipse.team.examples.pessimistic.checkin">
+         </action>
+         <action
+               label="Uncheckout"
+               tooltip="Revert checked out status of resources"
+               class="org.eclipse.team.examples.pessimistic.ui.UncheckOutAction"
+               menubarPath="team.main/group1"
+               id="org.eclipse.team.examples.pessimistic.uncheckout">
+         </action>
+      </objectContribution>
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IFile"
+            adaptable="true"
+            id="org.eclipse.team.cvs.ui.filesystem.ResourceContributions">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.examples.pessimistic.pessimisticnature">
+         </filter>            
+         <action
+               label="Add to control"
+               class="org.eclipse.team.examples.pessimistic.ui.AddToControlAction"
+               menubarPath="team.main/group2"
+               id="org.eclipse.team.examples.pessimistic.addToControl">
+         </action>
+         <action
+               label="Remove from control"
+               class="org.eclipse.team.examples.pessimistic.ui.RemoveFromControlAction"
+               menubarPath="team.main/group2"
+               id="org.eclipse.team.examples.pessimistic.removeFromControl">
+         </action>
+      </objectContribution>              
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IFolder"
+            adaptable="true"
+            id="org.eclipse.team.cvs.ui.filesystem.ResourceContributions">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.examples.pessimistic.pessimisticnature">
+         </filter>            
+         <action
+               label="Add to control"
+               class="org.eclipse.team.examples.pessimistic.ui.AddToControlAction"
+               menubarPath="team.main/group2"
+               id="org.eclipse.team.examples.pessimistic.addToControl">
+         </action>
+         <action
+               label="Remove from control"
+               class="org.eclipse.team.examples.pessimistic.ui.RemoveFromControlAction"
+               menubarPath="team.main/group2"
+               id="org.eclipse.team.examples.pessimistic.removeFromControl">
+         </action>
+      </objectContribution>              
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IProject"
+            adaptable="true"
+            id="org.eclipse.team.cvs.ui.filesystem.ResourceContributions">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.examples.pessimistic.pessimisticnature">
+         </filter>
+         <action
+               label="Stop sharing"
+               tooltip="Stop sharing the project using the pessimistic file provider"
+               class="org.eclipse.team.examples.pessimistic.ui.DisconnectAction"
+               menubarPath="team.main/projectGroup"
+               id="org.eclipse.team.examples.pessimistic.disconnect">
+         </action>
+      </objectContribution>
+   </extension>
+   
 </plugin>
