@@ -26,6 +26,8 @@ import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGr
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.*;
+import org.eclipse.ui.actions.ActionContext;
+import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.part.*;
 
 /**
@@ -147,7 +149,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		composite.dispose();
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 		participant.removePropertyChangeListener(this);
-		((IActionContribution)configuration).dispose();
+		((SynchronizePageActionGroup)configuration).dispose();
 	}
 
 	/*
@@ -236,7 +238,8 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 			// status line
 			statusLine.fillActionBars(actionBars);
 			
-			((IActionContribution)configuration).fillActionBars(actionBars);
+			getActionGroup().fillActionBars(actionBars);
+			updateActionBars((IStructuredSelection)getViewer().getSelection());
 		}		
 	}
 
@@ -272,7 +275,12 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		viewer.getControl().setLayoutData(data);
 		viewerAdvisor = new TreeViewerAdvisor(configuration);
 		viewerAdvisor.initializeViewer(viewer);
-		getSynchronizePageSite().setSelectionProvider(viewer);		
+		getSynchronizePageSite().setSelectionProvider(viewer);
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				updateActionBars((IStructuredSelection)event.getSelection());
+			}
+		});
 		return viewer;
 	}
 	
@@ -282,5 +290,17 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	
 	public Viewer getViewer() {
 		return changesViewer;
+	}
+	
+	protected void updateActionBars(IStructuredSelection selection) {
+		ActionGroup group = getActionGroup();
+		if (group != null) {
+			group.setContext(new ActionContext(selection));
+			group.updateActionBars();
+		}
+	}
+
+	private ActionGroup getActionGroup() {
+		return (SynchronizePageActionGroup)configuration;
 	}
 }

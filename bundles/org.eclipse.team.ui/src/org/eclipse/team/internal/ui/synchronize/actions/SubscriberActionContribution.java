@@ -25,7 +25,7 @@ import org.eclipse.ui.IWorkingSet;
 /**
  * Provides the actions to be associated with a synchronize page
  */
-public final class SubscriberActionContribution implements IActionContribution {
+public final class SubscriberActionContribution extends SynchronizePageActionGroup {
 	
 	// the changes viewer are contributed via the viewer and not the page.
 	private Action configureSchedule;
@@ -33,13 +33,12 @@ public final class SubscriberActionContribution implements IActionContribution {
 	private Action refreshAllAction;
 	private Action refreshSelectionAction;
 	private DirectionFilterActionGroup modes;
-	private ISynchronizePageConfiguration configuration;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(final ISynchronizePageConfiguration configuration) {
-		this.configuration = configuration;
+		super.initialize(configuration);
 		final SubscriberParticipant participant = (SubscriberParticipant)configuration.getParticipant();
 		final ISynchronizePageSite site = configuration.getSite();
 		// toolbar
@@ -87,10 +86,7 @@ public final class SubscriberActionContribution implements IActionContribution {
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
 	 */
 	public void fillContextMenu(IMenuManager manager) {
-		IContributionItem group = configuration.findGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP);
-		if (refreshSelectionAction != null && group != null) {
-			manager.appendToGroup(group.getId(), refreshSelectionAction);
-		}	
+		appendToGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, refreshSelectionAction);	
 	}
 
 	/* (non-Javadoc)
@@ -101,33 +97,17 @@ public final class SubscriberActionContribution implements IActionContribution {
 			
 			// toolbar
 			IToolBarManager manager = actionBars.getToolBarManager();
-			IContributionItem group = configuration.findGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP);
-			if(refreshAllAction != null && group != null) {
-				manager.appendToGroup(group.getId(), refreshAllAction);
-			}
+			appendToGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, refreshAllAction);
 			
-			group = configuration.findGroup(manager, ISynchronizePageConfiguration.MODE_GROUP);
+			IContributionItem group = findGroup(manager, ISynchronizePageConfiguration.MODE_GROUP);
 			if (modes != null  && group != null) {
 				modes.fillToolBar(group.getId(), manager);
 			}
 
 			// view menu
 			IMenuManager menu = actionBars.getMenuManager();
-			group = configuration.findGroup(menu, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP);
-			if (configureSchedule != null && group != null) {
-				menu.appendToGroup(group.getId(), configureSchedule);
-			}
-			group = configuration.findGroup(menu, ISynchronizePageConfiguration.PREFERENCES_GROUP);
-			if (showPreferences != null && group != null) {
-				menu.appendToGroup(group.getId(), showPreferences);
-			}
+			appendToGroup(menu, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, configureSchedule);
+			appendToGroup(menu, ISynchronizePageConfiguration.PREFERENCES_GROUP, showPreferences);
 		}		
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
-	 */
-	public void dispose() {
-		configuration.removeActionContribution(this);
 	}
 }

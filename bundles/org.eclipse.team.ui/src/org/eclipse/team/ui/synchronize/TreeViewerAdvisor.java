@@ -38,7 +38,7 @@ import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
  * <p>
  * @since 3.0
  */
-public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActionContribution{
+public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	
 	private ExpandAllAction expandAllAction;
 	private Action collapseAll;
@@ -46,7 +46,48 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 	private NavigateAction gotoPrevious;
 	private HierarchicalModelManager modelManager;
 	
-	/**
+	class NavigationActionGroup extends SynchronizePageActionGroup {
+		public void initialize(ISynchronizePageConfiguration configuration) {
+			super.initialize(configuration);
+			final StructuredViewer viewer = getViewer();
+			if (viewer instanceof AbstractTreeViewer) {
+				
+				expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
+				Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
+				
+				collapseAll = new Action() {
+					public void run() {
+						if (viewer == null || viewer.getControl().isDisposed() || !(viewer instanceof AbstractTreeViewer)) return;
+						viewer.getControl().setRedraw(false);		
+						((AbstractTreeViewer)viewer).collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
+						viewer.getControl().setRedraw(true);
+					}
+				};
+				Utils.initAction(collapseAll, "action.collapseAll."); //$NON-NLS-1$
+				
+				INavigatable nav = new INavigatable() {
+					public boolean gotoDifference(boolean next) {
+						return TreeViewerAdvisor.this.navigate(next);
+					}
+				};
+				ISynchronizeParticipant participant = configuration.getParticipant();
+				ISynchronizePageSite site = configuration.getSite();
+				gotoNext = new NavigateAction(site, participant.getName(), nav, true /*next*/);		
+				gotoPrevious = new NavigateAction(site, participant.getName(), nav, false /*previous*/);
+			}
+		}
+		public void fillContextMenu(IMenuManager manager) {
+			appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAllAction);
+		}
+		public void fillActionBars(IActionBars actionBars) {
+			IToolBarManager manager = actionBars.getToolBarManager();
+			appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, gotoNext);
+			appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, gotoPrevious);
+			appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, collapseAll);
+		}
+	}
+	
+ 	/**
 	 * Interface used to implement navigation for tree viewers. This interface is used by
 	 * {@link TreeViewerAdvisor#navigate(TreeViewer, boolean, boolean, boolean) to open 
 	 * selections and navigate.
@@ -104,7 +145,7 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 	 */
 	public TreeViewerAdvisor(ISynchronizePageConfiguration configuration) {
 		super(configuration);
-		configuration.addActionContribution(this);
+		configuration.addActionContribution(new NavigationActionGroup());
 		modelManager = new HierarchicalModelManager(this, configuration);
 	}
 	
@@ -308,73 +349,5 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 			return false;
 		}
 		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-	 */
-	public void initialize(ISynchronizePageConfiguration configuration) {
-		final StructuredViewer viewer = getViewer();
-		if (viewer instanceof AbstractTreeViewer) {
-			
-			expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
-			Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
-			
-			collapseAll = new Action() {
-				public void run() {
-					if (viewer == null || viewer.getControl().isDisposed() || !(viewer instanceof AbstractTreeViewer)) return;
-					viewer.getControl().setRedraw(false);		
-					((AbstractTreeViewer)viewer).collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
-					viewer.getControl().setRedraw(true);
-				}
-			};
-			Utils.initAction(collapseAll, "action.collapseAll."); //$NON-NLS-1$
-			
-			INavigatable nav = new INavigatable() {
-				public boolean gotoDifference(boolean next) {
-					return TreeViewerAdvisor.this.navigate(next);
-				}
-			};
-			ISynchronizeParticipant participant = configuration.getParticipant();
-			ISynchronizePageSite site = configuration.getSite();
-			gotoNext = new NavigateAction(site, participant.getName(), nav, true /*next*/);		
-			gotoPrevious = new NavigateAction(site, participant.getName(), nav, false /*previous*/);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
-	 */
-	public void fillContextMenu(IMenuManager manager) {
-		IContributionItem group = getConfiguration().findGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP);
-		if (expandAllAction != null  && group != null) {
-			manager.appendToGroup(group.getId(), expandAllAction);
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
-	 */
-	public void fillActionBars(IActionBars actionBars) {
-		if(actionBars != null) {
-			IToolBarManager manager = actionBars.getToolBarManager();
-			ISynchronizePageConfiguration configuration = getConfiguration();
-			IContributionItem group = configuration.findGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP);
-			if (group != null) {
-				if(gotoNext != null) {
-					manager.appendToGroup(group.getId(), gotoNext);
-					manager.appendToGroup(group.getId(), gotoPrevious);
-				}
-				manager.appendToGroup(group.getId(), collapseAll);
-			}
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
-	 */
-	public void dispose() {
-		super.dispose();
-		getConfiguration().removeActionContribution(this);
 	}
 }

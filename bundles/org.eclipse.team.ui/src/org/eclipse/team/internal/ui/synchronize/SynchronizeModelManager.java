@@ -18,14 +18,12 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.IActionContribution;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.IActionBars;
 
 /**
  * Manages the models that can be displayed by a synchronize page
  */
-public abstract class SynchronizeModelManager implements IActionContribution {
+public abstract class SynchronizeModelManager extends SynchronizePageActionGroup {
 	
 	private ISynchronizeModelProvider modelProvider;
 	private List toggleModelProviderActions;
@@ -157,6 +155,7 @@ public abstract class SynchronizeModelManager implements IActionContribution {
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(ISynchronizePageConfiguration configuration) {
+		super.initialize(configuration);
 		ISynchronizeModelProviderDescriptor[] providers = getSupportedModelProviders();
 		// We only need switching of layouts if there is more than one model provider
 		if (providers.length > 1) {
@@ -189,13 +188,13 @@ public abstract class SynchronizeModelManager implements IActionContribution {
 		if (toggleModelProviderActions == null) return;
 		IToolBarManager toolbar = actionBars.getToolBarManager();
 		IMenuManager menu = actionBars.getMenuManager();
-		IContributionItem group = configuration.findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);
+		IContributionItem group = findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);
 		if(menu != null && group != null) {
 			MenuManager layout = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$
 			menu.appendToGroup(group.getId(), layout);	
 			appendToMenu(null, layout);
 		} else if(toolbar != null) {
-			group = configuration.findGroup(toolbar, ISynchronizePageConfiguration.LAYOUT_GROUP);
+			group = findGroup(toolbar, ISynchronizePageConfiguration.LAYOUT_GROUP);
 			if (group != null) {
 				appendToMenu(group.getId(), toolbar);
 			}
@@ -211,13 +210,6 @@ public abstract class SynchronizeModelManager implements IActionContribution {
 			}
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
-	 */
-	public void fillContextMenu(IMenuManager manager) {
-		// No context menu entries
-	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
@@ -226,7 +218,7 @@ public abstract class SynchronizeModelManager implements IActionContribution {
 		if(modelProvider != null) {
 			modelProvider.dispose();
 		}
-		configuration.removeActionContribution(this);
+		super.dispose();
 	}
 	
 	/**

@@ -12,7 +12,6 @@ package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.ICompareInputChangeListener;
-import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -23,16 +22,15 @@ import org.eclipse.ui.IViewPart;
 /**
  * Actions common to CVS, FTP and WebDAV particpants
  */
-public abstract class AbstractActionContribution implements IActionContribution, IPropertyChangeListener {
+public abstract class AbstractParticipantActionContribution extends SynchronizePageActionGroup implements IPropertyChangeListener {
 
-	private ISynchronizePageConfiguration configuration;
 	private RemoveSynchronizeParticipantAction removeAction;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(ISynchronizePageConfiguration configuration) {
-		this.configuration = configuration;
+		super.initialize(configuration);
 		// Listen for model changes
 		configuration.addPropertyChangeListener(this);
 		Object o = configuration.getProperty(ISynchronizePageConfiguration.P_MODEL);
@@ -46,20 +44,6 @@ public abstract class AbstractActionContribution implements IActionContribution,
 			ISynchronizeParticipant p = configuration.getParticipant();
 			removeAction = new RemoveSynchronizeParticipantAction(p);
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
-	 */
-	public void dispose() {
-		configuration.removePropertyChangeListener(this);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
-	 */
-	public void fillContextMenu(IMenuManager manager) {
-		// Do nothing
 	}
 	
 	/* (non-Javadoc)

@@ -19,18 +19,17 @@ import org.eclipse.ui.*;
 /**
  * General synchronize page actions
  */
-public class SynchronizePageActions implements IActionContribution {
+public class SynchronizePageActions extends SynchronizePageActionGroup {
 	
 	// Actions
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
-	private ISynchronizePageConfiguration configuration;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(ISynchronizePageConfiguration configuration) {
-		this.configuration = configuration;
+		super.initialize(configuration);
 		ISynchronizePageSite site = configuration.getSite();
 		IWorkbenchSite ws = site.getWorkbenchSite();
 		if (ws instanceof IViewSite) {
@@ -43,30 +42,18 @@ public class SynchronizePageActions implements IActionContribution {
 			});
 		}
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
 	 */
 	public void fillContextMenu(IMenuManager manager) {
-		IContributionItem group = configuration.findGroup(manager, ISynchronizePageConfiguration.FILE_GROUP);
+		IContributionItem group = findGroup(manager, ISynchronizePageConfiguration.FILE_GROUP);
 		if (openWithActions != null && group != null) {
 			openWithActions.fillContextMenu(manager, group.getId());
 		}
-		group = configuration.findGroup(manager, ISynchronizePageConfiguration.EDIT_GROUP);
+		group = findGroup(manager, ISynchronizePageConfiguration.EDIT_GROUP);
 		if (refactorActions != null && group != null) {
 			refactorActions.fillContextMenu(manager, group.getId());
 		}
-	}
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
-	 */
-	public void fillActionBars(IActionBars actionBars) {
-		// Nothing to do
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
-	 */
-	public void dispose() {
-		configuration.removeActionContribution(this);
 	}
 }

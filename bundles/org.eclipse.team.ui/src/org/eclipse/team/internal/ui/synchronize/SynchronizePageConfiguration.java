@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.jface.action.*;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.util.*;
 import org.eclipse.jface.viewers.ILabelDecorator;
@@ -23,9 +22,11 @@ import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
 
 /**
- * Concrete implementation of the ISynchronizePageConfiguration.
+ * Concrete implementation of the ISynchronizePageConfiguration. It 
+ * extends SynchronizePageActionGroup in order to delegate action group
+ * operations.
  */
-public abstract class SynchronizePageConfiguration implements ISynchronizePageConfiguration, IActionContribution {
+public abstract class SynchronizePageConfiguration extends SynchronizePageActionGroup implements ISynchronizePageConfiguration {
 
 	/**
 	 * The hidden configuration property that opens the current selection in the
@@ -34,7 +35,6 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 */
 	public static final String P_OPEN_ACTION = TeamUIPlugin.ID + ".P_OPEN_ACTION"; //$NON-NLS-1$
 
-	
 	private ISynchronizeParticipant participant;
 	private ISynchronizePageSite site;
 	private ListenerList propertyChangeListeners = new ListenerList();
@@ -117,7 +117,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#addActionContribution(org.eclipse.team.ui.synchronize.IActionContribution)
 	 */
-	public void addActionContribution(IActionContribution contribution) {
+	public void addActionContribution(SynchronizePageActionGroup contribution) {
 		synchronized(actionContributions) {
 			actionContributions.add(contribution);
 		}
@@ -129,7 +129,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#removeActionContribution(org.eclipse.team.ui.synchronize.IActionContribution)
 	 */
-	public void removeActionContribution(IActionContribution contribution) {
+	public void removeActionContribution(SynchronizePageActionGroup contribution) {
 		synchronized(actionContributions) {
 			actionContributions.remove(contribution);
 		}
@@ -158,9 +158,10 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(final ISynchronizePageConfiguration configuration) {
+		super.initialize(configuration);
 		final Object[] listeners = actionContributions.getListeners();
 		for (int i= 0; i < listeners.length; i++) {
-			final IActionContribution contribution = (IActionContribution)listeners[i];
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
 			Platform.run(new ISafeRunnable() {
 				public void handleException(Throwable exception) {
 					// Logged by Platform
@@ -181,7 +182,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	public void fillContextMenu(final IMenuManager manager) {
 		final Object[] listeners = actionContributions.getListeners();
 		for (int i= 0; i < listeners.length; i++) {
-			final IActionContribution contribution = (IActionContribution)listeners[i];
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
 			Platform.run(new ISafeRunnable() {
 				public void handleException(Throwable exception) {
 					// Logged by Platform
@@ -203,7 +204,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 		}
 		final Object[] listeners = actionContributions.getListeners();
 		for (int i= 0; i < listeners.length; i++) {
-			final IActionContribution contribution = (IActionContribution)listeners[i];
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
 			Platform.run(new ISafeRunnable() {
 				public void handleException(Throwable exception) {
 					// Logged by Platform
@@ -219,15 +220,34 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
 	 */
 	public void dispose() {
+		super.dispose();
 		final Object[] listeners = actionContributions.getListeners();
 		for (int i= 0; i < listeners.length; i++) {
-			final IActionContribution contribution = (IActionContribution)listeners[i];
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
 			Platform.run(new ISafeRunnable() {
 				public void handleException(Throwable exception) {
 					// Logged by Platform
 				}
 				public void run() throws Exception {
 					contribution.dispose();
+				}
+			});
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#updateActionBars()
+	 */
+	public void updateActionBars() {
+		final Object[] listeners = actionContributions.getListeners();
+		for (int i= 0; i < listeners.length; i++) {
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Logged by Platform
+				}
+				public void run() throws Exception {
+					contribution.updateActionBars();
 				}
 			});
 		}
@@ -278,13 +298,11 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 * @return
 	 */
 	public String getGroupId(String group) {
-		return getParticipant().getId() + group;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#findGroup(org.eclipse.jface.action.IContributionManager, java.lang.String)
-	 */
-	public IContributionItem findGroup(IContributionManager menu, String groupId) {
-		return menu.find(getGroupId(groupId));
+		String id = getParticipant().getId();
+		if (getParticipant().getSecondaryId() != null) {
+			id += ".";
+			id += getParticipant().getSecondaryId();
+		}
+		return id + "." + group;
 	}
 }

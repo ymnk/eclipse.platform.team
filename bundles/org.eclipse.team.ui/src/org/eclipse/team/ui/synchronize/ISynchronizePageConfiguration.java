@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.jface.action.IContributionItem;
-import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -234,20 +232,20 @@ public interface ISynchronizePageConfiguration {
 	public abstract Object getProperty(String key);
 
 	/**
-	 * Register the action contribution with the configuration. The
-	 * registered action contributions will have the opertunity to add
+	 * Register the action group with the configuration. The
+	 * registered action groups will have the oportunity to add
 	 * actions to the action bars and context menu of the synchronize
 	 * page created using the configuration.
-	 * @param contribution an action contribution
+	 * @param group a synchronize page action group
 	 */
-	public abstract void addActionContribution(IActionContribution contribution);
+	public abstract void addActionContribution(SynchronizePageActionGroup group);
 
 	/**
-	 * Remove a previously registered action contribution. Removing
-	 * a contribution that is not registered has no effect.
-	 * @param contribution an action contributio
+	 * Remove a previously registered action group. Removing
+	 * a group that is not registered has no effect.
+	 * @param group a synchronize page action group
 	 */
-	public abstract void removeActionContribution(IActionContribution contribution);
+	public abstract void removeActionContribution(SynchronizePageActionGroup group);
 	
 	public void addLabelDecorator(ILabelDecorator decorator);
 	
@@ -269,6 +267,4 @@ public interface ISynchronizePageConfiguration {
 	 * group list
 	 */
 	public void addMenuGroup(String menuPropertyId, String groupId);
-	
-	public IContributionItem findGroup(IContributionManager menu, String groupId);
 }

@@ -16,7 +16,7 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.internal.ui.synchronize.actions.AbstractActionContribution;
+import org.eclipse.team.internal.ui.synchronize.actions.AbstractParticipantActionContribution;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
@@ -35,12 +35,11 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 	/**
 	 * CVS workspace action contribution
 	 */
-	public class WorkspaceActionContribution extends AbstractActionContribution {
+	public class WorkspaceActionContribution extends AbstractParticipantActionContribution {
 		private ActionDelegateWrapper commitToolbar;
 		private ActionDelegateWrapper updateToolbar;
-		private ISynchronizePageConfiguration configuration;
 		public void initialize(ISynchronizePageConfiguration configuration) {
-			this.configuration = configuration;
+			initialize(configuration);
 			commitToolbar = new ActionDelegateWrapper(new SubscriberCommitAction(), configuration.getSite().getPart());
 			WorkspaceUpdateAction action = new WorkspaceUpdateAction();
 			action.setPromptBeforeUpdate(true);
@@ -51,11 +50,8 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 		}
 		public void fillActionBars(IActionBars actionBars) {
 			IToolBarManager toolbar = actionBars.getToolBarManager();
-			IContributionItem group = configuration.findGroup(toolbar, ACTION_GROUP);
-			if (toolbar != null && group != null) {
-				toolbar.appendToGroup(group.getId(), updateToolbar);
-				toolbar.appendToGroup(group.getId(), commitToolbar);
-			}
+			appendToGroup(toolbar, ACTION_GROUP, updateToolbar);
+			appendToGroup(toolbar, ACTION_GROUP, commitToolbar);
 			super.fillActionBars(actionBars);
 		}
 		protected void modelChanged(ISynchronizeModelElement element) {
