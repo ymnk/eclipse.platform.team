@@ -34,10 +34,18 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 		}
 	}
 	
-	public synchronized void remove(IResource local) {
-		internalRemove(local);
+	/**
+	 * Remove the given local resource from the set
+	 * @param resource the local resource to remove
+	 */
+	public synchronized void remove(IResource resource) {
+		internalRemove(resource);
 	}
 	
+	/**
+	 * Remove all the given resources from the set.
+	 * @param resources the resources to be removed
+	 */
 	public void removeAll(IResource[] resources) {
 		for (int i = 0; i < resources.length; i++) {
 			remove(resources[i]);			
@@ -64,22 +72,8 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	}
 	
 	/**
-	 * Removes all nodes from this set that are not auto-mergeable conflicts
-	 */
-	public void removeNonMergeableNodes() {
-		SyncInfo[] infos = getSyncInfos();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			if ((info.getKind() & SyncInfo.MANUAL_CONFLICT) != 0) {
-				remove(info.getLocal());
-			} else if ((info.getKind() & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
-				remove(info.getLocal());
-			}
-		}
-	}
-	
-	/**
-	 * Indicate whether the set has nodes matching the given filter
+	 * Indicate whether the set has nodes matching the given filter.
+	 * @param filter a sync info filter
 	 */
 	public boolean hasNodes(FastSyncInfoFilter filter) {
 		SyncInfo[] infos = getSyncInfos();
@@ -94,6 +88,8 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	
 	/**
 	 * Removes all nodes from this set that do not match the given filter
+	 * leaving only those that do match the filter.
+	 * @param filter a sync info filter
 	 */
 	public void selectNodes(FastSyncInfoFilter filter) {
 		SyncInfo[] infos = getSyncInfos();
@@ -107,6 +103,8 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	
 	/**
 	 * Removes all nodes from this set that match the given filter
+	 * leaving those that do not match the filter.
+	 * @param filter a sync info filter
 	 */
 	public void rejectNodes(FastSyncInfoFilter filter) {
 		SyncInfo[] infos = getSyncInfos();
@@ -119,7 +117,8 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	}
 	
 	/**
-	 * Return all nodes in this set that match the given filter
+	 * Return all nodes in this set that match the given filter.
+	 * @param filter a sync info filter
 	 */
 	public SyncInfo[] getNodes(FastSyncInfoFilter filter) {
 		List result = new ArrayList();
@@ -134,7 +133,7 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	}
 
 	/**
-	 * Returns true if this sync set has incoming changes.
+	 * Returns <code>true</code> if this sync set has incoming changes.
 	 * Note that conflicts are not considered to be incoming changes.
 	 */
 	public boolean hasIncomingChanges() {
@@ -142,24 +141,10 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	}
 
 	/**
-	 * Returns true if this sync set has outgoing changes.
+	 * Returns <code>true</code> if this sync set has outgoing changes.
 	 * Note that conflicts are not considered to be outgoing changes.
 	 */
 	public boolean hasOutgoingChanges() {
 		return countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK) > 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalAddedSubtreeRoot(org.eclipse.core.resources.IResource)
-	 */
-	protected void internalAddedSubtreeRoot(IResource parent) {
-		// Do nothing
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalRemovedSubtreeRoot(org.eclipse.core.resources.IResource)
-	 */
-	protected void internalRemovedSubtreeRoot(IResource parent) {
-		// Do nothing
 	}
 }
