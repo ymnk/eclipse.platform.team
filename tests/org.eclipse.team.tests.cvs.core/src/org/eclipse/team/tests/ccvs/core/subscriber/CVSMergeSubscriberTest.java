@@ -28,7 +28,7 @@ import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
-import org.eclipse.team.ui.sync.SyncInfoSet;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 
 
 /**
@@ -84,7 +84,6 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 
 	private CVSMergeSubscriber createMergeSubscriber(IProject project, CVSTag root, CVSTag branch) {
 		CVSMergeSubscriber subscriber = new CVSMergeSubscriber(new IResource[] { project }, root, branch);
-		TeamSubscriber.getSubscriberManager().registerSubscriber(subscriber);
 		return subscriber;
 	}
 	

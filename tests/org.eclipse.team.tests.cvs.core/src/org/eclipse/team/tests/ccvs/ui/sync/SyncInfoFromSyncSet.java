@@ -19,10 +19,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.sets.SyncSet;
-import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSynchronizeParticipant;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 
 /**
  * SyncInfoSource that obtains SyncInfo from the SynchronizeView's SyncSet.
@@ -62,20 +65,16 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 		return info;
 	}
 	
-	private SubscriberInput getInput(TeamSubscriber subscriber) throws AssertionFailedError {
+	private SubscriberInput getInput(TeamSubscriber subscriber) {
 		// show the sync view
-		SynchronizeView syncView = (SynchronizeView)SynchronizeView.showInActivePage(null, true);
-		SubscriberInput input = syncView.getInput();
-		if (subscriber != input.getSubscriber()) {
-			// ensure that the CVS subscriber is active
-			syncView.activateSubscriber(subscriber);
-			input = syncView.getInput();
+		ISynchronizeView syncView = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
+		ISynchronizeParticipant participant = syncView.getParticipant();
+		if(participant instanceof CVSSynchronizeParticipant) {
+			SubscriberInput input = ((CVSSynchronizeParticipant)participant).getSubscriberInput();
+			waitForEventNotification(input);
+			return input;
 		}
-		if (subscriber != input.getSubscriber()) {
-			throw new AssertionFailedError();
-		}
-		waitForEventNotification(input);
-		return input;
+		return null;
 	}
 
 	/* (non-Javadoc)

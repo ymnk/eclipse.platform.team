@@ -13,7 +13,6 @@ package org.eclipse.team.tests.ccvs.ui.sync;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.CVSMergeSubscriberTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.CVSSyncSubscriberTest;
@@ -21,8 +20,6 @@ import org.eclipse.team.tests.ccvs.core.subscriber.CVSWorkspaceSubscriberTest;
 import org.eclipse.team.tests.ccvs.ui.CVSUITestCase;
 
 public class AllTestsSynchronizeView extends EclipseTest {
-
-	private SynchronizeView syncView;
 
 	public AllTestsSynchronizeView() {
 		super();
