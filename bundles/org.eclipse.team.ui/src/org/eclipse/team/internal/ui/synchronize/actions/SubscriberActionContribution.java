@@ -32,6 +32,7 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 	private Action configureSchedule;
 	private SyncViewerShowPreferencesAction showPreferences;
 	private Action refreshSelectionAction;
+	private RemoveFromViewAction removeFromViewAction;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
@@ -64,6 +65,7 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 		}
 		
 		showPreferences = new SyncViewerShowPreferencesAction(site.getShell());
+		removeFromViewAction = new RemoveFromViewAction(configuration);
 	}
 
 	/* (non-Javadoc)
@@ -73,9 +75,11 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 		if (findGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP) != null
 			&& findGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP) != null) {
 			// Place synchronize with navigato to save space
-			appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, refreshSelectionAction);	
+			appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, refreshSelectionAction);
+			appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, removeFromViewAction);
 		} else {
 			appendToGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, refreshSelectionAction);
+			appendToGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, removeFromViewAction);
 		}
 	}
 

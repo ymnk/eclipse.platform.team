@@ -128,4 +128,12 @@ public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage 
 	public void reset() {
 		getParticipant().reset();
 	}
+	
+	/*
+	 * Provide internal access to the collector
+	 * @return Returns the collector.
+	 */
+	public WorkingSetFilteredSyncInfoCollector getCollector() {
+		return collector;
+	}
 }
