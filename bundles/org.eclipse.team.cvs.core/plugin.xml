@@ -1,133 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin
-   id="org.eclipse.team.cvs.core"
-   name="%pluginName"
-   version="2.0.0"
-   provider-name="%providerName"
-   class="org.eclipse.team.internal.ccvs.core.CVSProviderPlugin">
+	name="%pluginName"
+	id="org.eclipse.team.cvs.core"
+	version="2.0.0"
+    provider-name="%providerName"
+	class="org.eclipse.team.internal.ccvs.core.CVSProviderPlugin">
 
-   <runtime>
-      <library name="cvs.jar">
-         <export name="*"/>
-      </library>
-   </runtime>
-   <requires>
-      <import plugin="org.eclipse.core.resources"/>
-      <import plugin="org.eclipse.team.core"/>
-      <import plugin="org.apache.xerces"/>
-   </requires>
+	<requires>
+		<import plugin="org.eclipse.core.resources"/>
+		<import plugin="org.eclipse.team.core"/>
+		<import plugin="org.apache.xerces"/>
+	</requires>
 
+	<runtime>
+		<library name="cvs.jar">
+			<export name="*"/>
+		</library>
+	</runtime>
 
-<!-- *************** Extension Points **************** -->
-   <extension-point id="authenticator" name="Authenticator"/>
-   <extension-point id="connectionmethods" name="ConnectionMethods"/>
+	<!-- *************** Extension Points **************** -->
+	<extension-point name="Authenticator" id="authenticator"/>
+	<extension-point name="ConnectionMethods" id="connectionmethods"/>
 
-<!-- *************** Connection Methods **************** -->
-   <extension
-         id="pserver"
-         point="org.eclipse.team.cvs.core.connectionmethods">
-      <adapter>
-         <run
-               class="org.eclipse.team.internal.ccvs.core.connection.PServerConnectionMethod">
-            <parameter
-                  name="trace"
-                  value="false">
-            </parameter>
-         </run>
-      </adapter>
-   </extension>
-   <extension
-         id="ext"
-         point="org.eclipse.team.cvs.core.connectionmethods">
-      <adapter>
-         <run
-               class="org.eclipse.team.internal.ccvs.core.connection.ExtConnectionMethod">
-            <parameter
-                  name="trace"
-                  value="false">
-            </parameter>
-         </run>
-      </adapter>
-   </extension>
-<!-- *************** Project Nature **************** -->
-   <extension
-         id="cvsnature"
-         name="%cvsNature"
-         point="org.eclipse.core.resources.natures">
-      <runtime>
-         <run
-               class="org.eclipse.team.internal.ccvs.core.CVSTeamProvider">
-         </run>
-      </runtime>
-      <one-of-nature
-            id="org.eclipse.team.repository-provider">
-      </one-of-nature>
-   </extension>
-<!-- *************** Repository Provider **************** -->
-   <extension
+	<!-- *************** Connection Methods **************** -->
+	<extension id="pserver" point="org.eclipse.team.cvs.core.connectionmethods">
+		<adapter>
+			<run class="org.eclipse.team.internal.ccvs.core.connection.PServerConnectionMethod">
+				<parameter name="trace" value="false" /> 
+			</run>
+		</adapter>
+	</extension>
+	
+	<extension id="ext" point="org.eclipse.team.cvs.core.connectionmethods">
+		<adapter>
+			<run class="org.eclipse.team.internal.ccvs.core.connection.ExtConnectionMethod">
+				<parameter name="trace" value="false" /> 
+			</run>
+		</adapter>
+	</extension>
+
+	<!-- *************** Repository Provider **************** -->
+	<extension
          point="org.eclipse.team.core.repository">
       <repository
             class="org.eclipse.team.internal.ccvs.core.CVSTeamProvider"
             id="org.eclipse.team.cvs.core.cvsnature">
       </repository>
-   </extension>
-<!-- *************** Resource patterns ignored by CVS **************** -->
-   <extension
-         point="org.eclipse.team.core.ignore">
-      <ignore
-            selected="true"
-            pattern=".#*">
-      </ignore>
-   </extension>
-<!-- *************** Markers **************** -->
-   <extension
-         id="cvsmarker"
-         point="org.eclipse.core.resources.markers">
-   </extension>
-   <extension
-         id="vcmmeta"
-         name="%vcmMetaMarker"
-         point="org.eclipse.core.resources.markers">
-      <super
-            type="org.eclipse.core.resources.problemmarker">
-      </super>
-      <super
-            type="org.eclipse.team.cvs.core.cvsmarker">
-      </super>
-      <persistent
-            value="true">
-      </persistent>
-   </extension>
-   <extension
-         id="cvsremove"
-         name="CVS Remove"
-         point="org.eclipse.core.resources.markers">
-      <super
-            type="org.eclipse.core.resources.problemmarker">
-      </super>
-      <super
-            type="org.eclipse.team.cvs.core.cvsmarker">
-      </super>
-      <attribute
-            name="name">
-      </attribute>
-      <persistent
-            value="true">
-      </persistent>
-   </extension>
-   <extension
-         id="cvsadd"
-         name="CVS Add"
-         point="org.eclipse.core.resources.markers">
-      <super
-            type="org.eclipse.core.resources.problemmarker">
-      </super>
-      <super
-            type="org.eclipse.team.cvs.core.cvsmarker">
-      </super>
-      <persistent
-            value="true">
-      </persistent>
-   </extension>
+	</extension>
+   
+	<!-- *************** Project Nature **************** -->
+	<extension point="org.eclipse.core.resources.natures" id="cvsnature" name="%cvsNature">
+		<runtime>
+			<run class="org.eclipse.team.internal.ccvs.core.CVSTeamProvider"/>
+		</runtime>
+		<one-of-nature id="org.eclipse.team.repository-provider"/>
+	</extension>
+ 
+ 	<!-- *************** Resource patterns ignored by CVS **************** -->
+ 	<extension point="org.eclipse.team.core.ignore">
+		<ignore pattern = ".#*" selected = "true"/>
+	</extension>
+ 
+  	<!-- *************** Markers **************** -->
+	<extension id="cvsmarker" point="org.eclipse.core.resources.markers"/>
+	<extension id="vcmmeta" point="org.eclipse.core.resources.markers" name="%vcmMetaMarker">
+		<super type="org.eclipse.core.resources.problemmarker"/>
+		<super type="org.eclipse.team.cvs.core.cvsmarker"/>
+		<persistent value="true"/>
+	</extension>
+	<extension id="cvsremove" point="org.eclipse.core.resources.markers" name="CVS Remove">
+		<super type="org.eclipse.core.resources.problemmarker"/>
+		<super type="org.eclipse.team.cvs.core.cvsmarker"/>
+		<attribute name="name"/>
+		<persistent value="true"/>
+	</extension>
+	<extension id="cvsadd" point="org.eclipse.core.resources.markers" name="CVS Add">
+		<super type="org.eclipse.core.resources.problemmarker"/>
+		<super type="org.eclipse.team.cvs.core.cvsmarker"/>
+		<persistent value="true"/>
+	</extension>
+	
+	<!-- ************ File Types *************** -->
+	<extension point="org.eclipse.team.core.fileTypes">
+		<fileTypes extension="cvsignore" type="text"/>
+	</extension>
 
 </plugin>
