@@ -71,7 +71,7 @@ public class UploadAction extends TargetAction {
 					while (iterator.hasNext()) {					
 						IProgressMonitor subMonitor = new InfiniteSubProgressMonitor(monitor, 1024);
 						final TargetProvider provider = (TargetProvider)iterator.next();
-						monitor.setTaskName(Policy.bind("UploadAction.working", provider.getURL().toExternalForm()));  //$NON-NLS-1$
+						subMonitor.setTaskName(Policy.bind("UploadAction.working", provider.getURL().toExternalForm()));  //$NON-NLS-1$
 						
 						IResource[] providerResources = (IResource[])((List)table.get(provider)).toArray(new IResource[0]);
 						IResource[] outgoingChanges = findResourcesWithOutgoingChanges(providerResources);

@@ -68,8 +68,6 @@ public class ConfigureTargetWizard extends Wizard implements IConfigurationWizar
 	public static final String MAPPING_PAGE_NAME = "mapping-page"; //$NON-NLS-1$
 	
 	protected SiteSelectionPage siteSelectionPage = null;
-	protected IWizardPage firstTargetPage = null;
-	
 	/**
 	 * @see ConfigureProjectWizard#getExtensionPoint()
 	 */
@@ -108,7 +106,6 @@ public class ConfigureTargetWizard extends Wizard implements IConfigurationWizar
 	public void addPages() {
 		Site[] sites = TargetManager.getSites();
 		AdaptableList wizards = getAvailableWizards();
-		setWindowTitle(getWizardWindowTitle());
 		
 		if(sites.length > 0 && project != null) {
 			TargetProvider provider = null;

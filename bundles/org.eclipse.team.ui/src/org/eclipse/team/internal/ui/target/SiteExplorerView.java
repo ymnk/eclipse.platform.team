@@ -269,31 +269,29 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 		});
 		
 		Table table = new Table(sash, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+		TableLayout layout = new TableLayout();
+		table.setLayout(layout);
+		table.setHeaderVisible(true);
 		
 		TableColumn tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.Name_1")); //$NON-NLS-1$
 		tableColumn.addSelectionListener(getColumnListener());
+		layout.addColumnData(new ColumnWeightData(30, true));
 
 		tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.Size_2")); //$NON-NLS-1$
 		tableColumn.setAlignment(SWT.RIGHT);
 		tableColumn.addSelectionListener(getColumnListener());
+		layout.addColumnData(new ColumnWeightData(10, true));
 
 		tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.Modified_3")); //$NON-NLS-1$
 		tableColumn.addSelectionListener(getColumnListener());
+		layout.addColumnData(new ColumnWeightData(30, true));
 
 		tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.URL_4")); //$NON-NLS-1$
-
-		TableLayout layout = new TableLayout();
 		layout.addColumnData(new ColumnWeightData(30, true));
-		layout.addColumnData(new ColumnWeightData(10, true));
-		layout.addColumnData(new ColumnWeightData(30, true));
-		layout.addColumnData(new ColumnWeightData(30, true));
-
-		table.setLayout(layout);
-		table.setHeaderVisible(true);
 
 		folderContentsTable = new TableViewer(table);
 		folderContentsTable.setContentProvider(new SiteLazyContentProvider());
