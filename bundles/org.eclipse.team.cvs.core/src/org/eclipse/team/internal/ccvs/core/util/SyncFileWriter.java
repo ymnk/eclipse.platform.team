@@ -115,13 +115,15 @@ public class SyncFileWriter implements IResourceChangeListener {
 								whenWeWrote = null;
 							}
 							if(whenWeWrote==null || whenWeWrote.longValue() != modStamp) {
-								if(isCVSMetaFile) {
-									changedContainers.add(parent.getParent());
-								} else {
-									changedContainers.add(parent);
-								}
 								if(Policy.DEBUG_METAFILE_CHANGES) {
 									System.out.println("CVS metaFile changed by 3rd party: " + resource.getFullPath()); //$NON-NLS-1$
+								}
+								IResource changedContainer = parent;
+								if(isCVSMetaFile) {
+									changedContainer = parent.getParent();
+								}
+								if(!changedContainers.contains(changedContainer)) {
+									changedContainers.add(changedContainer);									
 								}
 							}
 						}
