@@ -127,9 +127,6 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	// Remembering the current input and the previous.
 	private SubscriberInput input = null;
 	
-	// Stats about the current subscriber. This is used for status line and/or title updating
-	private ViewStatusInformation statusInformation;
-	
 	// A set of common actions. They are hooked to the active SubscriberInput and must 
 	// be reset when the input changes.
 	private SyncViewerActions actions;
@@ -187,6 +184,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		setViewImage(initialImg);
 		
 		updateTitle();
+		updateTooltip();
 		
 		initializeJobListener();
 		actions.setContext(null);
@@ -482,45 +480,33 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			initializeSubscriberInput(newInput);
 		}
 	}
-	/*
-	 * Synchronize - (showing N of M changes) - {Subscriber name}
-	 */
+
 	protected void updateTitle() {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				SubscriberInput input = getInput();
-				if(input != null) {	
+				if(input != null && statsPanel != null) {	
 					statsPanel.update(new ViewStatusInformation(input));
 				}
-//						
-//						TeamSubscriber subscriber = input.getSubscriber();
-//						String changesText;
-//						if(input.getWorkingSet() != null) {
-//							changesText = Policy.bind("LiveSyncView.titleChangeNumbers",  //$NON-NLS-1$
-//															new Long(statusInformation.getNumShowing()).toString(),
-//															new Long(statusInformation.getNumInWorkingSet()).toString(), 
-//															new Long(statusInformation.getNumInWorkspace() - statusInformation.getNumInWorkingSet()).toString());
-//						} else {
-//							changesText = Policy.bind("LiveSyncView.titleChangeNumbersNoWorkingSet",  //$NON-NLS-1$
-//																					new Long(statusInformation.getNumShowing()).toString(),
-//																					new Long(statusInformation.getNumInWorkingSet()).toString());
-//						}
-//					 	String title = Policy.bind("LiveSyncView.titleWithSubscriber", new String[] {Policy.bind("LiveSyncView.title"), changesText, subscriber.getName()});  //$NON-NLS-1$ //$NON-NLS-2$
-//					 	setTitle(title);
-//					 	StringBuffer b = new StringBuffer(title + "\n"); //$NON-NLS-1$
-//					 	b.append(input.getSubscriberSyncSet().getStatistics().toString());
-//					 	setTitleToolTip(b.toString());					 	
-//					}
-//				} else {
-//					setTitle(Policy.bind("LiveSyncView.title")); //$NON-NLS-1$
-//					setTitleToolTip(""); //$NON-NLS-1$
-//				}
-			}
+			}					 	
 		});
 	}
-	
-	
-	
+
+	protected void updateTooltip() {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				SubscriberInput input = getInput();
+				if(input != null) {	
+					if(input.getWorkingSet() != null) {
+						String tooltip = Policy.bind("LiveSyncView.titleTooltip", input.getWorkingSet().getName());
+						setTitleToolTip(tooltip);					 	
+					} else {
+						setTitleToolTip("");
+					}
+				}
+			}					 	
+		});
+	}
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
@@ -855,7 +841,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 
 	public void workingSetChanged(IWorkingSet set) {
 		input.setWorkingSet(set);
-		updateTitle();
+		updateTooltip();
 	}
 	/**
 	 * Updates the filter applied to the active subscriber input and ensures that selection and expansions 

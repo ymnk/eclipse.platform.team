@@ -10,12 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.team.internal.ui.sync.sets.*;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
 
 /**
  * This class provides the contents for a AbstractTreeViewer using a SyncSet as the model
@@ -83,7 +87,8 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 					parent = getModelParent(resource);				
 				}
 				Object element = getModelObject(resource);				
-				tree.add(parent, element);		
+				tree.add(parent, element);
+				updateParentLabels(resource);		
 			}
 		} else {
 			super.handleResourceAdditions(event);
@@ -101,6 +106,7 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 			Object[] modelRoots = new Object[roots.length];
 			for (int i = 0; i < modelRoots.length; i++) {
 				modelRoots[i] = getModelObject(roots[i]);
+				updateParentLabels(roots[i]);
 			}
 			tree.remove(modelRoots);
 		} else {

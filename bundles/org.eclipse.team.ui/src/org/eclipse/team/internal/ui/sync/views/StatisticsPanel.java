@@ -36,7 +36,6 @@ import org.eclipse.team.ui.ISharedImages;
  */
 public class StatisticsPanel extends Composite {
 			
-	private StatisticsCounterBar bar;
 	private ViewStatusInformation stats;
 	
 	private Text nOutgoing;
@@ -54,9 +53,8 @@ public class StatisticsPanel extends Composite {
 		gridLayout.numColumns= 9;
 		gridLayout.makeColumnsEqualWidth= false;
 		gridLayout.marginWidth= 3;
-		gridLayout.marginHeight= 3;
+		gridLayout.marginHeight= 1;
 		setLayout(gridLayout);
-		bar = new StatisticsCounterBar(this, 9);
 		
 		nConflicting = createLabel(Policy.bind("StatisticsPanel.conflicting"), iConflicting, "0/0");
 		nIncoming = createLabel(Policy.bind("StatisticsPanel.incoming"), iIncoming, "0/0");
@@ -70,6 +68,15 @@ public class StatisticsPanel extends Composite {
 		
 		addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent e) {
+// Need code to get rid of the direction text if the control is resized too much				
+//				System.out.println("Client Area: " + nOutgoing.getClientArea().width);
+//				System.out.println("Bounds Area: " + nOutgoing.getBorderWidth());
+//				System.out.println("Border Area: " + nOutgoing.getBounds().width);
+//				GC gc = new GC(StatisticsPanel.this);
+//				gc.setFont(nOutgoing.getFont());
+//				FontMetrics fontMetrics = gc.getFontMetrics();
+//				int pixelWidth = fontMetrics.getAverageCharWidth() * nOutgoing.getCharCount();
+//				System.out.println("Char width: " + pixelWidth);
 				redraw();
 			}
 		});	
@@ -133,9 +140,15 @@ public class StatisticsPanel extends Composite {
 			nIncoming.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString()));
 			nOutgoing.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetOutgoing).toString(), new Integer(workspaceOutgoing).toString()));
 														
-			bar.update(workspaceConflicting, workspaceOutgoing, workspaceIncoming);
-			
 			redraw();						
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.swt.widgets.Widget#dispose()
+	 */
+	public void dispose() {
+		super.dispose();
+		disposeIcons();
 	}
 }
