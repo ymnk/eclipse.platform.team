@@ -560,6 +560,20 @@ public class CVSWorkspaceRoot {
 		return null;
 	}
 	
+	public static ICVSRemoteResource getBaseFor(ICVSResource resource) throws CVSException {
+			if (resource.isFolder()) {
+				ICVSFolder folder = (ICVSFolder)resource;
+				FolderSyncInfo syncInfo = folder.getFolderSyncInfo();
+				if (syncInfo != null) {
+					return new RemoteFolder(null, CVSProviderPlugin.getPlugin().getRepository(syncInfo.getRoot()), syncInfo.getRepository(), syncInfo.getTag());
+				}
+			} else {
+				if (resource.isManaged())
+					return RemoteFile.getBase((RemoteFolder)getRemoteResourceFor(resource.getParent()), (ICVSFile)resource);
+			}
+			return null;
+		}
+	
 	/*
 	 * Helper method that uses the parent of a local resource that has no base to ensure that the resource
 	 * wasn't added remotely by a third party

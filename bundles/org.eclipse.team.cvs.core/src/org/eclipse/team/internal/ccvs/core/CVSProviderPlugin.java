@@ -46,6 +46,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.TeamProvider;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
@@ -127,6 +128,8 @@ public class CVSProviderPlugin extends Plugin {
 	private Map repositories = new HashMap();
 	private List repositoryListeners = new ArrayList();
 	private static List decoratorEnablementListeners = new ArrayList();
+	
+	private CVSWorkspaceSubscriber cvsWorkspaceSubscriber;
 	
 	/**
 	 * The identifier for the CVS nature
@@ -305,6 +308,9 @@ public class CVSProviderPlugin extends Plugin {
 		CVSProviderPlugin.addResourceStateChangeListener(addDeleteMoveListener);
 		
 		createCacheDirectory();
+		
+		cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber(ID, "CVS", "Synchronizes the CVS managed resources in your workspace with their associated remote location");
+		TeamProvider.registerSubscriber(cvsWorkspaceSubscriber);
 	}
 	
 	/**
