@@ -184,7 +184,7 @@ public class TagAsVersionDialog extends DetailsDialog {
 		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, tagSource, 
 														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
 														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
-														  afterRefresh, afterConfigure);
+														  afterRefresh/* TODO, afterConfigure*/);
 		
 		existingVersionTable.setInput(new TagRootElement(null, tagSource, CVSTag.VERSION));
 		Dialog.applyDialogFont(parent);

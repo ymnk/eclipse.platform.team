@@ -32,10 +32,10 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.merge.*;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement.ProjectElementSorter;
-import org.eclipse.team.internal.ccvs.ui.model.*;
+import org.eclipse.team.internal.ccvs.ui.model.CVSFileElement;
+import org.eclipse.team.internal.ccvs.ui.model.RemoteContentProvider;
 import org.eclipse.team.internal.ccvs.ui.repo.NewDateTagAction;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
@@ -701,107 +701,24 @@ public class TagConfigurationDialog extends Dialog {
 			CVSUIPlugin.openError(getShell(), null, null, e);
 		}
 	}
-	
-	/*
-	 * Returns a button that implements the standard refresh tags operation. The runnable is run immediatly after 
-	 * the tags are fetched from the server. A client should refresh their widgets that show tags because they
-	 * may of changed. 
-	 */
-	private static Button createTagRefreshButton(final Shell shell, Composite composite, String title, final TagSource tagSource, final Runnable runnable) {
-		Button refreshButton = new Button(composite, SWT.PUSH);
-		refreshButton.setText (title);
-		refreshButton.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					try {
-						PlatformUI.getWorkbench().getProgressService().run(true, true, new IRunnableWithProgress() {
-							public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-								try {
-								    tagSource.refresh(monitor);
-									Display.getDefault().asyncExec(runnable);
-								} catch (TeamException e) {
-									throw new InvocationTargetException(e);
-								}
-							}
-						});
-					} catch (InterruptedException e) {
-						// operation cancelled
-					} catch (InvocationTargetException e) {
-						CVSUIPlugin.openError(shell, Policy.bind("TagConfigurationDialog.14"), null, e); //$NON-NLS-1$
-					}
-				}
-			});
-		updateEnablementOnRefreshButton(refreshButton, tagSource);
-		return refreshButton;		
+	 
+	 public static void createTagDefinitionButtons(final Shell shell, Composite composite, final TagSource tagSource, int hHint, int wHint, final Runnable afterRefresh) {
+	    final TagSource.ITagSourceChangeListener listener = new TagSource.ITagSourceChangeListener() {
+            public void tagsChanged(TagSource source) {
+                shell.getDisplay().asyncExec(afterRefresh);
+            }
+        };
+	    tagSource.addListener(listener);
+	    composite.addDisposeListener(new DisposeListener() {
+            public void widgetDisposed(DisposeEvent e) {
+                tagSource.removeListener(listener);
+            }
+        });
+	    TagRefreshButtonArea area = new TagRefreshButtonArea(shell, tagSource);
+	    area.createArea(composite);
 	 }
 	 
-	 public static Control createTagDefinitionButtons(final Shell shell, Composite composite, final TagSource tagSource, int hHint, int wHint, final Runnable afterRefresh, final Runnable afterConfigure) {
-	 	Composite buttonComp = new Composite(composite, SWT.NONE);
-		GridData data = new GridData ();
-		data.horizontalAlignment = GridData.END;		
-		buttonComp.setLayoutData(data);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		buttonComp.setLayout (layout);
-	 	
-	 	final Button refreshButton = TagConfigurationDialog.createTagRefreshButton(shell, buttonComp, Policy.bind("TagConfigurationDialog.20"), tagSource, afterRefresh); //$NON-NLS-1$
-		data = new GridData();
-		if(hHint!=0 && wHint!=0) {
-			data.heightHint = hHint;
-			//don't crop labels with large font
-			//int widthHint = wHint;
-			//data.widthHint = Math.max(widthHint, refreshButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-		}
-		data.horizontalAlignment = GridData.END;
-		data.horizontalSpan = 1;
-		refreshButton.setLayoutData (data);		
-
-		Button addButton = new Button(buttonComp, SWT.PUSH);
-		addButton.setText (Policy.bind("TagConfigurationDialog.21")); //$NON-NLS-1$
-		data = new GridData ();
-		if(hHint!=0 && wHint!=0) {
-			data.heightHint = hHint;
-			//don't crop labels with large font
-			//int widthHint = wHint;
-			//data.widthHint = Math.max(widthHint, addButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-		}
-		data.horizontalAlignment = GridData.END;
-		data.horizontalSpan = 1;
-		addButton.setLayoutData (data);
-		addButton.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					TagConfigurationDialog d = new TagConfigurationDialog(shell, tagSource);
-					d.open();
-					updateEnablementOnRefreshButton(refreshButton, tagSource);
-					afterConfigure.run();
-				}
-			});		
-		
-		WorkbenchHelp.setHelp(refreshButton, IHelpContextIds.TAG_CONFIGURATION_REFRESHACTION);
-		WorkbenchHelp.setHelp(addButton, IHelpContextIds.TAG_CONFIGURATION_OVERVIEW);
-		
-		Dialog.applyDialogFont(buttonComp);
-		
-		return buttonComp;
-	 }
-	 
-	 private static void updateEnablementOnRefreshButton(Button refreshButton, TagSource tagSource) {
-	 	try {
-			ICVSFolder folder = getSingleFolder(tagSource, true);
-			if (folder != null) {
-	            String[] files = CVSUIPlugin.getPlugin().getRepositoryManager().getAutoRefreshFiles(folder);
-				refreshButton.setEnabled(files.length != 0);
-			} else {
-			    refreshButton.setEnabled(false);
-			}
-		} catch (CVSException e) {
-			refreshButton.setEnabled(false);
-			CVSUIPlugin.log(e);
-		}
-	 }
-	 
-    protected static ICVSFolder getSingleFolder(TagSource tagSource, boolean bestEffort) {
+    protected ICVSFolder getSingleFolder(TagSource tagSource, boolean bestEffort) {
         if (!bestEffort && tagSource instanceof MultiFolderTagSource)
             return null;
         if (tagSource instanceof SingleFolderTagSource)

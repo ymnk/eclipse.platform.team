@@ -62,6 +62,7 @@ public class SingleFolderTagSource extends TagSource implements IWorkbenchAdapte
      */
     public void refresh(IProgressMonitor monitor) throws TeamException {
         CVSUIPlugin.getPlugin().getRepositoryManager().refreshDefinedTags(getFolder(), false /* replace */, true /* notify */, monitor);
+        fireChange();
     }
 
     /* (non-Javadoc)
@@ -105,6 +106,7 @@ public class SingleFolderTagSource extends TagSource implements IWorkbenchAdapte
         } catch (InterruptedException e) {
             // Ignore
         }
+        fireChange();
     }
 
     /* (non-Javadoc)

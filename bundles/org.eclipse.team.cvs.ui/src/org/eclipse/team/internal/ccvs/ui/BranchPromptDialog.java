@@ -173,7 +173,7 @@ public class BranchPromptDialog extends DetailsDialog {
 		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, tagSource, 
 														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
 														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
-														  refresh, refresh);
+														  refresh);
 		Dialog.applyDialogFont(parent);
 		return composite;
 	}

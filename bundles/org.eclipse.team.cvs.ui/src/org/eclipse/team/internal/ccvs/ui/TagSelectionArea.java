@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.List;
 
 import org.eclipse.jface.action.*;
-import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
@@ -69,6 +68,26 @@ public class TagSelectionArea extends DialogArea {
     private Text filterText;
     private TagSource tagSource;
     private final Shell shell;
+    private TagRefreshButtonArea tagRefreshArea;
+    private final TagSource.ITagSourceChangeListener listener = new TagSource.ITagSourceChangeListener() {
+        public void tagsChanged(TagSource source) {
+			Shell shell = getShell();
+			if (!shell.isDisposed() && tagTree != null && !tagTree.getControl().isDisposed()) {
+	            shell.getDisplay().syncExec(new Runnable() {
+					public void run() {
+					    if (tagTree != null && !tagTree.getControl().isDisposed())
+					        tagTree.refresh();
+					}
+				});
+			}
+        }
+    };
+    private final DisposeListener disposeListener = new DisposeListener() {
+        public void widgetDisposed(DisposeEvent e) {
+            if (tagSource != null)
+                tagSource.removeListener(listener);
+        }
+    };
     
     public TagSelectionArea(Shell shell, TagSource tagSource, String message, int includeFlags, String helpContext) {
         this.shell = shell;
@@ -76,6 +95,7 @@ public class TagSelectionArea extends DialogArea {
         this.includeFlags = includeFlags;
         this.helpContext = helpContext;
         this.tagSource = tagSource;
+        setSelection(null);
     }
 
     /* (non-Javadoc)
@@ -190,19 +210,10 @@ public class TagSelectionArea extends DialogArea {
     }
 
     protected void createRefreshButtons(Composite parent) {
-		Runnable refresh = new Runnable() {
-			public void run() {
-				getShell().getDisplay().syncExec(new Runnable() {
-					public void run() {
-						tagTree.refresh();
-					}
-				});
-			}
-		};
-        TagConfigurationDialog.createTagDefinitionButtons(getShell(), parent, tagSource, 
-														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
-														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
-														  refresh, refresh);
+	    tagSource.addListener(listener);
+        parent.addDisposeListener(disposeListener);
+	    tagRefreshArea = new TagRefreshButtonArea(shell, tagSource);
+	    tagRefreshArea.createArea(parent);
     }
 
     protected void createTreeMenu() {
@@ -416,7 +427,6 @@ public class TagSelectionArea extends DialogArea {
     public void refresh() {
         if (tagTree != null && !tagTree.getControl().isDisposed()) {
             tagTree.refresh();
-            // TODO: How can we update the enablement of the refresh button?
         }
     }
 
@@ -427,5 +437,27 @@ public class TagSelectionArea extends DialogArea {
     public void setEnabled(boolean enabled) {
         filterText.setEnabled(enabled);
         tagTree.getControl().setEnabled(enabled);
+    }
+    
+    /**
+     * Get the tag source for the tags being displayed
+     * @return the tag source for the tags being displayed
+     */
+    public TagSource getTagSource() {
+        return tagSource;
+    }
+    
+    /**
+     * Set the tag source from which the displayed tags are determined
+     * @param tagSource the source of the tags being displayed
+     */
+    public void setTagSource(TagSource tagSource) {
+        if (this.tagSource != null) {
+            this.tagSource.removeListener(listener);
+        }
+        this.tagSource = tagSource;
+        this.tagSource.addListener(listener);
+        tagRefreshArea.setTagSource(this.tagSource);
+        refresh();
     }
 }

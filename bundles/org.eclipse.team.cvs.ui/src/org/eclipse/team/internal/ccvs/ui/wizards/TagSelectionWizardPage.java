@@ -17,10 +17,10 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.ui.*;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.merge.MultiFolderTagSource;
+import org.eclipse.team.internal.ccvs.ui.TagSelectionArea;
+import org.eclipse.team.internal.ccvs.ui.merge.TagSource;
 import org.eclipse.ui.help.WorkbenchHelp;
 
 /**
@@ -43,11 +43,12 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 	private boolean useResourceTag = false;
 	private String helpContextId;
     private TagSelectionArea tagArea;
-    private MultiFolderTagSource tagSource;
     private String tagLabel;
+    private TagSource tagSource;
 	
-	public TagSelectionWizardPage(String pageName, String title, ImageDescriptor titleImage, String description, int includeFlags) {
+	public TagSelectionWizardPage(String pageName, String title, ImageDescriptor titleImage, String description, TagSource tagSource, int includeFlags) {
 		super(pageName, title, titleImage, description);
+        this.tagSource = tagSource;
 		this.includeFlags = includeFlags;
 	}
 
@@ -118,23 +119,19 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 
             }
         });
-		setInput();
+		refreshTagArea();
     }
 
-    private void setInput() {
+    private void refreshTagArea() {
         if (tagArea != null) {
             tagArea.refresh();
             tagArea.setSelection(selectedTag);
         }
 	}
 	
-	private void updateEnablement() {
+	protected void updateEnablement() {
 		tagArea.setEnabled(!useResourceTag);
 		setPageComplete(useResourceTag || selectedTag != null);
-	}
-	
-	public void setFolder(ICVSFolder remote) {
-		setFolders(new ICVSFolder[] { remote });
 	}
 	
 	public CVSTag getSelectedTag() {
@@ -145,23 +142,6 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 	
 	protected void gotoNextPage() {
 		TagSelectionWizardPage.this.getContainer().showPage(getNextPage());
-	}
-
-	public void setFolders(ICVSFolder[] remoteFolders) {
-	    if (tagSource == null) {
-	        tagSource = new MultiFolderTagSource(remoteFolders);
-	    } else {
-	        tagSource.setFolders(remoteFolders);
-	    }
-		try {
-			selectedTag = remoteFolders[0].getFolderSyncInfo().getTag();
-		} catch (CVSException e) {
-			CVSUIPlugin.log(e);
-		}
-		if (selectedTag == null) {
-			selectedTag = CVSTag.DEFAULT;
-		}
-		setInput();
 	}
 	
 	public void setAllowNoTag(boolean b) {
@@ -174,4 +154,27 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 			tagArea.setFocus();
 		}
 	}
+
+    /**
+     * Set the tag source used by this wizard page
+     * @param source the tag source
+     */
+    public void setTagSource(TagSource source) {
+        this.tagSource = source;
+        tagArea.setTagSource(tagSource);
+        setSelection(null);
+        refreshTagArea();
+    }
+
+    /**
+     * Set the selection of the page to the given tag
+     * @param selectedTag
+     */
+    public void setSelection(CVSTag selectedTag) {
+		if (selectedTag == null && (includeFlags & TagSelectionArea.INCLUDE_HEAD_TAG) > 0) {
+			this.selectedTag = CVSTag.DEFAULT;
+		} else {
+		    this.selectedTag = selectedTag;
+		}
+    }
 }
