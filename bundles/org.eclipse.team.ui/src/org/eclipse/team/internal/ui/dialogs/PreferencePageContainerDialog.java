@@ -10,11 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.dialogs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.preference.IPersistentPreferenceStore;
 import org.eclipse.jface.preference.IPreferencePageContainer;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -43,6 +46,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 public class PreferencePageContainerDialog extends Dialog implements IPreferencePageContainer {
@@ -120,14 +124,15 @@ public class PreferencePageContainerDialog extends Dialog implements IPreference
 	protected void okPressed() {
 		final List changedProperties = new ArrayList(5);
 		getPreferenceStore().addPropertyChangeListener( new IPropertyChangeListener() {
-			/**
-			 * @see IPropertyChangeListener#propertyChange(PropertyChangeEvent)
-			 */
 			public void propertyChange(PropertyChangeEvent event) {
 				changedProperties.add(event.getProperty());
 			}
 		});
+			
 		page.performOk();
+		
+		handleSave();
+		
 		super.okPressed();
 	}
 	
@@ -382,5 +387,35 @@ public class PreferencePageContainerDialog extends Dialog implements IPreference
 	protected void createButtonsForButtonBar(Composite parent) {
 		fOkButton= createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
 		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
+	}
+	
+	/**
+	 * Save the values specified in the pages.
+	 * <p>
+	 * The default implementation of this framework method saves all
+	 * pages of type <code>PreferencePage</code> (if their store needs saving
+	 * and is a <code>PreferenceStore</code>).
+	 * </p>
+	 * <p>
+	 * Subclasses may override.
+	 * </p>
+	 */
+	protected void handleSave() {
+		if (page instanceof PreferencePage) {
+			// Save now in case tbe workbench does not shutdown cleanly
+			IPreferenceStore store =
+				((PreferencePage) page).getPreferenceStore();
+			if (store != null
+				&& store.needsSaving()
+				&& store instanceof IPersistentPreferenceStore) {
+				try {
+					((IPersistentPreferenceStore) store).save();
+				} catch (IOException e) {
+					MessageDialog.openError(
+						getShell(), Policy.bind("saving"),
+						Policy.bind("saving", page.getTitle(), e.getMessage())); 
+				}
+			}
+		}
 	}
 }
