@@ -32,6 +32,7 @@ public class HierarchicalModelManager extends SynchronizeModelManager {
 	 */
 	protected ISynchronizeModelProviderDescriptor[] getSupportedModelProviders() {
 		return new ISynchronizeModelProviderDescriptor[] {
+		        new FlatModelProvider.FlatModelProviderDescriptor(),
 				new HierarchicalModelProvider.HierarchicalModelProviderDescriptor(),
 				new CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor() };
 	}
@@ -47,7 +48,9 @@ public class HierarchicalModelManager extends SynchronizeModelManager {
 				id = HierarchicalModelProvider.HierarchicalModelProviderDescriptor.ID;
 			}
 		}
-		if(id.endsWith(CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID)) {
+		if (id.endsWith(FlatModelProvider.FlatModelProviderDescriptor.ID)) {
+		    return new FlatModelProvider(getConfiguration(), getSyncInfoSet());
+		} else if(id.endsWith(CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID)) {
 			return new CompressedFoldersModelProvider(getConfiguration(), getSyncInfoSet());
 		} else {
 			return new HierarchicalModelProvider(getConfiguration(), getSyncInfoSet());
