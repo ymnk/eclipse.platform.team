@@ -143,6 +143,16 @@ public class SyncInfo implements IAdaptable {
 	}
 	
 	/**
+	 * Creates an in-sync info for the given resource
+	 * TODO: Is this safe to do?
+	 * @param resource
+	 */
+	public SyncInfo(IResource resource) {
+		this.local = resource;
+		this.syncKind = 0;
+	}
+
+	/**
 	 * Returns the state of the local resource. Note that the
 	 * resource may or may not exist.
 	 *

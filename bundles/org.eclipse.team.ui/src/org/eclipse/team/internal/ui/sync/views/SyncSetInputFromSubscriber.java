@@ -104,10 +104,21 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 		}
 	}
 	private void collect(IResource resource, IProgressMonitor monitor) throws TeamException {
-		SyncInfo info = getSubscriber().getSyncInfo(resource, monitor);		
-		collect(resource, info);
+		SyncInfo info = getSubscriber().getSyncInfo(resource, monitor);	
+		if (info == null) {
+			info = getInSyncInfoFor(resource);
+		}	
+		collect(info);
 	}
 	
+	/**
+	 * @param resource
+	 * @return
+	 */
+	private SyncInfo getInSyncInfoFor(IResource resource) {
+		return new SyncInfo(resource);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
 	 */
