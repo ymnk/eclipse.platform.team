@@ -16,7 +16,6 @@ import java.util.*;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jface.action.IAction;
@@ -26,7 +25,6 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
-import org.eclipse.team.ui.synchronize.viewers.IBusyWorkbenchAdapter;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
@@ -46,16 +44,13 @@ import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
  */
 public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate, IEditorActionDelegate {
 		
-	private IDiffElement[] filteredDiffElements = null;
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
 	 */
 	public final void run(IAction action) {
-		//		TODO: Saving can change the sync state! How should this be handled?
-		//		 boolean result = saveIfNecessary();
-		//		 if (!result) return null;
-		SyncInfoSet syncSet = new SyncInfoSet(getFilteredSyncInfos());
+		// TODO: We used to prompt for unsaved changes to any editor. We don't anymore. Would
+		// it be better to prompt for unsaved changes to editors affected by this action?
+		SyncInfoSet syncSet = makeSyncInfoSetFromSelection(getFilteredSyncInfos());
 		if (syncSet == null || syncSet.isEmpty()) return;
 		try {
 			getRunnableContext().run(getJobName(syncSet), getSchedulingRule(syncSet), true, getRunnable(syncSet));
@@ -82,6 +77,15 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 	 * @throws TeamException if something went wrong running the action
 	 */
 	protected abstract void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
+	
+	/**
+	 * Subsclasses may override to perform custom processing on the selection before
+	 * the action is run. This can be used to prompt the user for more information.
+	 * @param infos the 
+	 */
+	protected SyncInfoSet makeSyncInfoSetFromSelection(SyncInfo[] infos) {
+		return new SyncInfoSet(infos);		
+	}
 	
 	protected void handle(Exception e) {
 		Utils.handle(e);
@@ -123,21 +127,18 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 	 * @return the list of selected diff elements for which this action is enabled.
 	 */
 	protected IDiffElement[] getFilteredDiffElements() {
-		if (filteredDiffElements == null) {
-			IDiffElement[] elements = getDiffElements();
-			List filtered = new ArrayList();
-			for (int i = 0; i < elements.length; i++) {
-				IDiffElement e = elements[i];
-				if (e instanceof SyncInfoDiffNode) {
-					SyncInfo info = ((SyncInfoDiffNode) e).getSyncInfo();
-					if (info != null && getSyncInfoFilter().select(info)) {
-						filtered.add(e);
-					}
+		IDiffElement[] elements = getDiffElements();
+		List filtered = new ArrayList();
+		for (int i = 0; i < elements.length; i++) {
+			IDiffElement e = elements[i];
+			if (e instanceof SyncInfoDiffNode) {
+				SyncInfo info = ((SyncInfoDiffNode) e).getSyncInfo();
+				if (info != null && getSyncInfoFilter().select(info)) {
+					filtered.add(e);
 				}
 			}
-			filteredDiffElements = (IDiffElement[]) filtered.toArray(new IDiffElement[filtered.size()]);
 		}
-		return filteredDiffElements;
+		return (IDiffElement[]) filtered.toArray(new IDiffElement[filtered.size()]);
 	}
 	
 	/**
@@ -164,7 +165,7 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 	}
 	
 	public void markBusy(IDiffElement[] elements, boolean isBusy) {
-		for (int i = 0; i < elements.length; i++) {
+		/*for (int i = 0; i < elements.length; i++) {
 			IDiffElement e = elements[i];
 			if(e instanceof IAdaptable) {
 				IBusyWorkbenchAdapter busyAdapter = (IBusyWorkbenchAdapter) ((IAdaptable)e).getAdapter(IBusyWorkbenchAdapter.class);
@@ -172,7 +173,7 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 					busyAdapter.setBusy(e, isBusy);		
 				}
 			}
-		}
+		}*/
 	}
 	
 	public static void schedule(Job job, IWorkbenchSite site) {
@@ -192,15 +193,18 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 	private ITeamRunnableContext getRunnableContext() {
 		if (canRunAsJob()) {
 			// mark resources that will be affected by job
-			markBusy(getFilteredDiffElements(), true);
+			final IDiffElement[] affectedElements = getFilteredDiffElements();
+			markBusy(affectedElements, true);
+			
 			// register to unmark when job is finished
 			IJobChangeListener listener = new JobChangeAdapter() {
 				public void done(IJobChangeEvent event) {
-					markBusy(getFilteredDiffElements(), false);
+					markBusy(affectedElements, false);
 				}
-			};					
+			};
+			
+			// Schedule via the view
 			return new JobRunnableContext(listener) {
-				// schedule via view
 				protected void schedule(Job job) {
 					IWorkbenchSite site = null;
 					IWorkbenchPart part = getTargetPart();
@@ -242,7 +246,7 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		}
 	}
 
-	public IRunnableWithProgress getRunnable(final SyncInfoSet syncSet) {
+	protected IRunnableWithProgress getRunnable(final SyncInfoSet syncSet) {
 		return new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {

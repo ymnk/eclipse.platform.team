@@ -471,12 +471,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			labelUpdates.add(node);
 			IDiffContainer parent = node.getParent();
 			while (parent != null) {
-				if(parent instanceof IBusyWorkbenchAdapter) {
-					IBusyWorkbenchAdapter busy = (IBusyWorkbenchAdapter)parent;
-					if(busy.isBusy(busy) != isBusy) {
-						labelUpdates.add(parent);
-					}
-				}
+				labelUpdates.add(parent);
 				parent = parent.getParent();
 			}
 			
