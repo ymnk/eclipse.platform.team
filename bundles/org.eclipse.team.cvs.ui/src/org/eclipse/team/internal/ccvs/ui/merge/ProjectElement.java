@@ -18,11 +18,10 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class ProjectElement implements IAdaptable, IWorkbenchAdapter {
-	ICVSFolder project;
+
 	TagRootElement branches;
 	TagRootElement versions;
 	TagRootElement dates;
@@ -72,28 +71,27 @@ public class ProjectElement implements IAdaptable, IWorkbenchAdapter {
 		}
 	}
 		
-	public ProjectElement(ICVSFolder project, int includeFlags) {
-		this.project = project;
+	public ProjectElement(TagSource tagSource, int includeFlags) {
 		this.includeFlags = includeFlags;
 		if (this.includeFlags == 0) this.includeFlags = INCLUDE_ALL_TAGS;
 		if ((includeFlags & INCLUDE_BRANCHES) > 0) {	
-			branches = new TagRootElement(project, CVSTag.BRANCH);
+            branches = new TagRootElement(tagSource, CVSTag.BRANCH);
 		}
 		if ((includeFlags & INCLUDE_VERSIONS) > 0) {
-			versions = new TagRootElement(project, CVSTag.VERSION);
+			versions = new TagRootElement(tagSource, CVSTag.VERSION);
 		}
 		if ((includeFlags & INCLUDE_DATES) > 0) {
-			dates = new TagRootElement(project, CVSTag.DATE);
+			dates = new TagRootElement(tagSource, CVSTag.DATE);
 		}
 	}
 	
 	public Object[] getChildren(Object o) {
 		ArrayList children = new ArrayList(4);
 		if ((includeFlags & INCLUDE_HEAD_TAG) > 0) {
-			children.add(new TagElement(CVSTag.DEFAULT));
+			children.add(new TagElement(this, CVSTag.DEFAULT));
 		}
 		if ((includeFlags & INCLUDE_BASE_TAG) > 0) {
-			children.add(new TagElement(CVSTag.BASE));
+			children.add(new TagElement(this, CVSTag.BASE));
 		}
 		if ((includeFlags & INCLUDE_BRANCHES) > 0) {
 			children.add(branches);

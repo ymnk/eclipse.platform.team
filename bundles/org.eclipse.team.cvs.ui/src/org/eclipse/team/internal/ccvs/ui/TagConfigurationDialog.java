@@ -59,6 +59,7 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
+import org.eclipse.team.internal.ccvs.ui.merge.*;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
 import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement.ProjectElementSorter;
@@ -303,7 +304,7 @@ public class TagConfigurationDialog extends Dialog {
 		data.horizontalAlignment = GridData.FILL;
 		data.grabExcessHorizontalSpace = true;
 		cvsDefinedTagsTree.getTree().setLayoutData(data);
-		cvsDefinedTagsRootElement = new ProjectElement(roots[0], ProjectElement.INCLUDE_BRANCHES | ProjectElement.INCLUDE_VERSIONS |ProjectElement.INCLUDE_DATES);
+		cvsDefinedTagsRootElement = new ProjectElement(new MultiFolderTagSource(roots), ProjectElement.INCLUDE_BRANCHES | ProjectElement.INCLUDE_VERSIONS |ProjectElement.INCLUDE_DATES);
 		cvsDefinedTagsRootElement.getBranches().add(CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(root, CVSTag.BRANCH));
 		cvsDefinedTagsRootElement.getVersions().add(CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(root, CVSTag.VERSION));
 		cvsDefinedTagsRootElement.getDates().add(CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(root, CVSTag.DATE));

@@ -25,6 +25,7 @@ import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
+import org.eclipse.team.internal.ccvs.ui.merge.*;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
 import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement.ProjectElementSorter;
@@ -68,6 +69,10 @@ public class TagSelectionArea extends DialogArea {
     
     private ICVSFolder[] folders;
     private String helpContext;
+
+    private Text filterText;
+
+    private TagSource tagSource;
     
     public TagSelectionArea(Dialog parentDialog, IDialogSettings settings, ICVSFolder[] folders, String message, int includeFlags, String helpContext) {
         super(parentDialog, settings);
@@ -75,6 +80,7 @@ public class TagSelectionArea extends DialogArea {
         this.message = message;
         this.includeFlags = includeFlags;
         this.helpContext = helpContext;
+        this.tagSource = new MultiFolderTagSource(folders);
     }
 
     /* (non-Javadoc)
@@ -100,11 +106,76 @@ public class TagSelectionArea extends DialogArea {
 
     private void createTagTree(Composite parent) {
         Composite inner = createGrabbingComposite(parent, 1);
+        if (isFilteringEnabled()) {
+            createWrappingLabel(inner, "Filter displayed tags (? = any character, * = any Strung):", 1);
+            filterText = createText(inner, 1);
+            filterText.addModifyListener(new ModifyListener() {
+                public void modifyText(ModifyEvent e) {
+                    handleFilterChange();
+                }
+            });
+        }
 		if (message != null) {
 		    createWrappingLabel(inner, message, 1);
 		}
 		tagTree = createTree(inner);
 		createTreeMenu();
+    }
+
+    protected void handleFilterChange() {
+        Object input = tagTree.getInput();
+        if (input instanceof FilteredTagList) {
+            String filter = filterText.getText();
+            if (filter == null || filter.length() == 0) {
+                tagTree.setInput(createUnfilteredInput());
+            } else {
+                FilteredTagList list = (FilteredTagList)input;
+                list.setPattern(filter);
+                tagTree.refresh();
+            }
+        } else {
+            String filter = filterText.getText();
+            if (filter != null && filter.length() > 0) {
+                FilteredTagList list = createFilteredInput();
+                list.setPattern(filter);
+                tagTree.setInput(list);
+            }
+        }
+    }
+    
+    private FilteredTagList createFilteredInput() {
+        return new FilteredTagList(tagSource, convertIncludeFlaqsToTagTypes());
+    }
+
+    private int[] convertIncludeFlaqsToTagTypes() {
+        if ((includeFlags & (INCLUDE_BRANCHES + INCLUDE_VERSIONS)) > 0) {
+            return new int [] { CVSTag.VERSION, CVSTag.BRANCH };
+        } else if ((includeFlags & (INCLUDE_BRANCHES)) > 0) {
+            return new int [] { CVSTag.BRANCH };
+        } else if ((includeFlags & (INCLUDE_VERSIONS)) > 0) {
+            return new int [] { CVSTag.VERSION };
+        }
+        return new int[] { };
+    }
+
+    private Text createText(Composite parent, int horizontalSpan) {
+        Text text = new Text(parent, SWT.BORDER);
+		GridData data = new GridData();
+		data.horizontalSpan = horizontalSpan;
+		data.horizontalAlignment = GridData.FILL;
+		data.grabExcessHorizontalSpace = true;
+		data.widthHint= 0;
+		text.setLayoutData(data);
+        return text;
+    }
+
+    /**
+     * Return whether filtering tags shown in the tag tree is supported.
+     * The default is to support filtering (<code>true</code>)
+     * @return whether filtering tags shown in the tag tree is supported
+     */
+    protected boolean isFilteringEnabled() {
+        return true;
     }
 
     protected void createRefreshButtons(Composite parent) {
@@ -178,11 +249,15 @@ public class TagSelectionArea extends DialogArea {
 			}
 		});
 		result.setSorter(new ProjectElementSorter());
-		result.setInput(new ProjectElement(folders[0], includeFlags));
+		result.setInput(createUnfilteredInput());
 		return result;
 	}
     
-	public void handleKeyPressed(KeyEvent event) {
+	private ProjectElement createUnfilteredInput() {
+        return new ProjectElement(tagSource, includeFlags);
+    }
+
+    public void handleKeyPressed(KeyEvent event) {
 		if (event.character == SWT.DEL && event.stateMask == 0) {			
 			deleteDateTag();
 		}

@@ -38,6 +38,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.ui.merge.*;
 import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
 import org.eclipse.team.internal.ccvs.ui.merge.TagRootElement;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
@@ -202,7 +203,7 @@ public class TagAsVersionDialog extends DetailsDialog {
 			public void run() {
 				getShell().getDisplay().syncExec(new Runnable() {
 					public void run() {
-						existingVersionTable.setInput(new TagRootElement(folder, CVSTag.VERSION));
+						existingVersionTable.setInput(new TagRootElement(new SingleFolderTagSource(folder), CVSTag.VERSION));
 					}
 				});
 			}
@@ -213,7 +214,7 @@ public class TagAsVersionDialog extends DetailsDialog {
 														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
 														  afterRefresh, afterConfigure);
 		
-		existingVersionTable.setInput(new TagRootElement(folder, CVSTag.VERSION));
+		existingVersionTable.setInput(new TagRootElement(new SingleFolderTagSource(folder), CVSTag.VERSION));
 		Dialog.applyDialogFont(parent);
 		return composite;
 	}

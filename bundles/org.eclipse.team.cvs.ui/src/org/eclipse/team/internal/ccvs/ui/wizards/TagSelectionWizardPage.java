@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.merge.*;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
 import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement.ProjectElementSorter;
@@ -104,7 +105,7 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 				&& remoteFolders.length > 0 
 				&& tagTree != null 
 				&& !tagTree.getControl().isDisposed()) {
-			tagTree.setInput(new ProjectElement(remoteFolders[0], includeFlags));
+			tagTree.setInput(new ProjectElement(new MultiFolderTagSource(remoteFolders), includeFlags));
 			try {
 				selectedTag = remoteFolders[0].getFolderSyncInfo().getTag();
 			} catch (CVSException e) {

@@ -144,7 +144,7 @@ public class MergeWizardStartPage extends CVSWizardPage {
 	}
 	private void initialize() {
 		ICVSFolder cvsProject = CVSWorkspaceRoot.getCVSFolderFor(project);
-		table.setInput(new TagRootElement(cvsProject, CVSTag.VERSION));
+		table.setInput(new TagRootElement(new SingleFolderTagSource(cvsProject), CVSTag.VERSION));
 	}
 	public void setProject(IProject project) {
 		this.project = project;

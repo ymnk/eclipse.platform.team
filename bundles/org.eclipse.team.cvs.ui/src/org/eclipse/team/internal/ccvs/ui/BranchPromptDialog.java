@@ -30,6 +30,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
+import org.eclipse.team.internal.ccvs.ui.merge.SingleFolderTagSource;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositorySorter;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
@@ -168,7 +169,7 @@ public class BranchPromptDialog extends DetailsDialog {
 		label.setLayoutData(data);
 		
 		tagTree = createTree(composite);
-		tagTree.setInput(new ProjectElement(folder, ProjectElement.INCLUDE_BRANCHES | ProjectElement.INCLUDE_VERSIONS));
+		tagTree.setInput(new ProjectElement(new SingleFolderTagSource(folder), ProjectElement.INCLUDE_BRANCHES | ProjectElement.INCLUDE_VERSIONS));
 		Runnable refresh = new Runnable() {
 			public void run() {
 				getShell().getDisplay().syncExec(new Runnable() {

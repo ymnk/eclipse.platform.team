@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.merge;
 
-
 import java.util.Date;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -21,8 +20,18 @@ import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class TagElement implements IWorkbenchAdapter, IAdaptable {
+    Object parent;
 	CVSTag tag;
+	
+	/**
+	 * @deprecated
+	 * @param tag
+	 */
 	public TagElement(CVSTag tag) {
+		this(null, tag);
+	}
+	public TagElement(Object parent, CVSTag tag) {
+	    this.parent = parent;
 		this.tag = tag;
 	}
 	public Object[] getChildren(Object o) {
@@ -51,7 +60,7 @@ public class TagElement implements IWorkbenchAdapter, IAdaptable {
 		return tag.getName();
 	}
 	public Object getParent(Object o) {
-		return null;
+		return parent;
 	}
 	public CVSTag getTag() {
 		return tag;

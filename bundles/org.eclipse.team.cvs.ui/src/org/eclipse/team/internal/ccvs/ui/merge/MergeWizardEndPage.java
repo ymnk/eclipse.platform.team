@@ -94,7 +94,7 @@ public class MergeWizardEndPage extends CVSWizardPage {
 			}
 		});
 		setControl(composite);
-		tree.setInput(new ProjectElement(CVSWorkspaceRoot.getCVSFolderFor(project), ProjectElement.INCLUDE_ALL_TAGS));
+		tree.setInput(new ProjectElement(new SingleFolderTagSource(CVSWorkspaceRoot.getCVSFolderFor(project)), ProjectElement.INCLUDE_ALL_TAGS));
 		setPageComplete(false);
 	}
 	protected TreeViewer createTree(Composite parent) {
