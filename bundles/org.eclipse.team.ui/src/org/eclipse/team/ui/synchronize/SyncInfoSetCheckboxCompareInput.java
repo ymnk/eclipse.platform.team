@@ -74,7 +74,10 @@ public class SyncInfoSetCheckboxCompareInput extends SyncInfoSetCompareInput {
 					SyncInfoDiffNode node = (SyncInfoDiffNode) element;
 					SyncInfo syncInfo = node.getSyncInfo();
 					if (syncInfo != null && syncInfo.getKind() != 0) {
-						result.add(node.getResource());
+						IResource resource = node.getResource();
+						if (resource != null) {
+							result.add(resource);
+						}
 					}
 				}
 			}

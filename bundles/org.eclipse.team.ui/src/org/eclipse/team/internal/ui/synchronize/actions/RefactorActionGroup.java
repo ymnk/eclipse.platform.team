@@ -10,9 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.actions;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
@@ -22,18 +20,9 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.ui.synchronize.views.SyncInfoSetContentProvider;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IKeyBindingService;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchPartSite;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.actions.ActionGroup;
-import org.eclipse.ui.actions.DeleteResourceAction;
-import org.eclipse.ui.actions.MoveResourceAction;
-import org.eclipse.ui.actions.RenameResourceAction;
-import org.eclipse.ui.actions.TextActionHandler;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
+import org.eclipse.ui.*;
+import org.eclipse.ui.actions.*;
 
 /**
  * This action group is modeled after the class of the same name in 
@@ -80,7 +69,7 @@ public class RefactorActionGroup extends ActionGroup {
 		List resources = new ArrayList();
 		Iterator it = selection.iterator();
 		while(it.hasNext()) {
-			IResource resource = SyncInfoSetContentProvider.getResource(it.next());
+			IResource resource = TreeViewerUtils.getResource(it.next());
 			if(resource != null) {
 				resources.add(resource);
 			}
@@ -140,7 +129,7 @@ public class RefactorActionGroup extends ActionGroup {
 				resource = (IResource)adaptable.getAdapter(IResource.class);
 			}
 			if(resource == null) {
-				resource = SyncInfoSetContentProvider.getResource(next);
+				resource = TreeViewerUtils.getResource(next);
 			}
 			if (resource == null || (resource.getType() & resourceMask) == 0) {
 				return false;

@@ -12,6 +12,7 @@ package org.eclipse.team.ui.synchronize.views;
 
 import java.util.*;
 
+import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.SyncInfo;
@@ -25,8 +26,8 @@ import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
  */
 public class CompressedFolderDiffNode extends SyncInfoDiffNode {
 
-	public CompressedFolderDiffNode(SyncInfoSet input, IResource resource) {
-		super(input, resource);
+	public CompressedFolderDiffNode(IDiffContainer parent, SyncInfoSet input, IResource resource) {
+		super(parent, input, resource);
 	}
 	
 	/* (non-Javadoc)

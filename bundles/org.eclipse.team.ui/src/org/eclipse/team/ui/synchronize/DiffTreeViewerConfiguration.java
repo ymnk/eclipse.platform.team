@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import java.util.ArrayList;
-
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -104,7 +101,10 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @return the viewer input
 	 */
 	protected SyncInfoDiffNode getInput() {
-		return new SyncInfoDiffNode(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
+		if (getShowCompressedFolders()) {
+			return new CompressedFolderDiffNodeRoot(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
+		}
+		return new SyncInfoDiffNodeRoot(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
 	}
 
 	/**
@@ -122,10 +122,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	}
 	
 	protected IStructuredContentProvider getContentProvider() {
-		if(getShowCompressedFolders()) {
-			return new CompressedFolderContentProvider();
-		}
-		return new SyncInfoSetTreeContentProvider();
+		return new SyncInfoSetContentProvider();
 	}
 		
 	protected ViewerSorter getViewSorter() {
@@ -260,33 +257,6 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	}
 	
 	/**
-	 * Callback that is used to convert resource label change events into 
-	 * label change events on the model objects (namely <code>SyncInfoDiffNode</code>
-	 * instances. Any provided objects that cannot be converted to resources are 
-	 * returned as-is in the resulting array.
-	 * @param viewer the viewer
-	 * @param changed the changed objects
-	 * @return the changed objects converted to diff model objects if possible
-	 */
-	protected Object[] asModelObjects(StructuredViewer viewer, Object[] changed) {
-		if (changed != null && viewer.getInput() != null) {
-			ArrayList others= new ArrayList();
-			for (int i= 0; i < changed.length; i++) {
-				Object curr = changed[i];
-				if (curr instanceof IResource) {
-					IContentProvider provider = viewer.getContentProvider();
-					if (provider != null && provider instanceof SyncInfoSetContentProvider) {
-						curr = ((SyncInfoSetContentProvider)provider).getModelObject((IResource)curr);
-					}
-				}
-				others.add(curr);
-			}
-			return others.toArray();
-		}
-		return null;
-	}
-	
-	/**
 	 * Return the menu id that is used to obtain context menu items from the workbench.
 	 * @return the menuId.
 	 */
@@ -309,7 +279,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 */
 	public void propertyChange(PropertyChangeEvent event) {	
 		if (viewer != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			viewer.setContentProvider(getContentProvider());
+			viewer.setInput(getInput());
 		}
 	}
 		

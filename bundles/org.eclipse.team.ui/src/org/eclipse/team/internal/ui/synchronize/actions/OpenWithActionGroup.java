@@ -15,8 +15,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.views.SyncInfoSetContentProvider;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.OpenWithMenu;
 import org.eclipse.ui.views.navigator.ResourceNavigatorMessages;
@@ -60,7 +60,7 @@ public class OpenWithActionGroup extends ActionGroup {
 		if (selection == null || selection.size() != 1)
 			return;
 		Object element = selection.getFirstElement();
-		IResource resource = getResource(element);
+		IResource resource = TreeViewerUtils.getResource(element);
 		if (!(resource instanceof IFile)) {
 			return;
 		}
@@ -89,10 +89,6 @@ public class OpenWithActionGroup extends ActionGroup {
 			openFileAction.selectionChanged(selection);
 			openFileAction.run();
 		}
-	}
-	
-	private IResource getResource(Object obj) {
-		return SyncInfoSetContentProvider.getResource(obj);
 	}
 
 	public void openInCompareEditor() {

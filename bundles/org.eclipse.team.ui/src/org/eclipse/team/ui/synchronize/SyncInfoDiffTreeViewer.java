@@ -29,17 +29,6 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, 
 		configuration.initializeViewer(parent, this);
 	}
 
-	protected void handleLabelProviderChanged(LabelProviderChangedEvent event) {
-		Object[] changed = configuration.asModelObjects(this, event.getElements());
-		if (changed != null) {
-			if (changed.length == 0) {
-				return;
-			}
-			event= new LabelProviderChangedEvent((IBaseLabelProvider) event.getSource(), changed);
-		}
-		super.handleLabelProviderChanged(event);
-	}
-
 	/**
 	 * Cleanup listeners and call super for content provider and label provider disposal.
 	 */	

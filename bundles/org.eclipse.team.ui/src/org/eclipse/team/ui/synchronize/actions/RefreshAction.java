@@ -20,8 +20,8 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
-import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.views.SyncInfoSetContentProvider;
+import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 
 /**
  * A general refresh action that will refresh a subscriber in the background.
@@ -73,7 +73,7 @@ public class RefreshAction extends Action {
 		List resources = new ArrayList();
 		Iterator it = selection.iterator();
 		while(it.hasNext()) {
-			IResource resource = SyncInfoSetContentProvider.getResource(it.next());
+			IResource resource = TreeViewerUtils.getResource(it.next());
 			if(resource != null) {
 				resources.add(resource);
 			}

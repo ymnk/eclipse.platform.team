@@ -12,7 +12,7 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.core.resources.IContainer;
+import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -29,6 +29,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	private IResource resource;
 	private SyncInfoSet input;
 	private SyncInfo info;
+	private DiffNode parent;
 		
 	/**
 	 * Create an ITypedElement for the given local resource. The returned ITypedElement
@@ -54,13 +55,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 */
 	private static ITypedElement createTypeElement(ISubscriberResource remoteResource) {
 		return new RemoteResourceTypedElement(remoteResource);
-	}
-	
-	/**
-	 * Creates a new diff node.
-	 */	
-	private SyncInfoDiffNode(ITypedElement base, ITypedElement local, ITypedElement remote, int syncKind) {
-		super(syncKind, base, local, remote);
 	}
 
 	private static ITypedElement createRemoteTypeElement(SyncInfoSet set, IResource resource) {
@@ -105,12 +99,19 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	}
 	
 	/**
+	 * Creates a new diff node.
+	 */	
+	private SyncInfoDiffNode(IDiffContainer parent, ITypedElement base, ITypedElement local, ITypedElement remote, int syncKind) {
+		super(parent, syncKind, base, local, remote);
+	}
+	
+	/**
 	 * Construct a <code>SyncInfoDiffNode</code> for a resource for use in a diff tree viewer.
 	 * @param set The set associated with the diff tree veiwer
 	 * @param resource The resource for the node
 	 */
-	public SyncInfoDiffNode(SyncInfoSet set, IResource resource) {
-		this(createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
+	public SyncInfoDiffNode(IDiffContainer parent, SyncInfoSet set, IResource resource) {
+		this(parent, createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
 		this.input = set;	
 		this.resource = resource;
 		this.info = null;
@@ -123,12 +124,12 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @param info The <code>SyncInfo</code> for a resource
 	 */
 	public SyncInfoDiffNode(SyncInfo info) {
-		this(createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
+		this(null, createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
 		this.info = info;
 		this.input = null;	
 		this.resource = info.getLocal();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
@@ -159,7 +160,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * that are descendants of this node in the diff viewer.
 	 */
 	public SyncInfo[] getDescendantSyncInfos() {
-		if(input != null) {
+		if(input != null && getResource() != null) {
 			return input.getOutOfSyncDescendants(resource);
 		} else if(info != null) {
 			return new SyncInfo[] {info};
@@ -173,9 +174,11 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @return true has the same subsriber and resource
 	 */
 	public boolean equals(Object object) {
-		if (object instanceof SyncInfoDiffNode) {
-			SyncInfoDiffNode syncViewNode = (SyncInfoDiffNode) object;
-			return getResource().equals(syncViewNode.getResource());
+		if (object == this) {
+			return true;
+		}
+		if (!object.getClass().equals(this.getClass())) {
+			return false;
 		}
 		return super.equals(object);
 	}
@@ -184,7 +187,11 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		return getResource().hashCode();
+		IResource resource = getResource();
+		if (resource == null) {
+			return super.hashCode();
+		}
+		return resource.hashCode();
 	}
 
 	/**
@@ -198,7 +205,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "SyncInfoDiffNode for " + getResource().getFullPath().toString(); //$NON-NLS-1$
+		return getName();
 	}
 	
 	/**
@@ -230,19 +237,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 		return input;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.structuremergeviewer.IDiffContainer#hasChildren()
-	 */
-	public boolean hasChildren() {
-		if(input != null) {		
-			if(getResource().getType() == IResource.ROOT) return true;
-			SyncInfo[] info = input.getOutOfSyncDescendants(getResource());
-			if(info != null && info.length > 0)
-				return true;
-		}
-		return false;
-	}
-	
 	/**
 	 * Indicates whether the diff node represents a resource path or a single level.
 	 * This is used by the <code>SyncViewerSorter</code> to determine whether to compare
@@ -260,7 +254,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	public boolean hasDecendantConflicts() {
 		// If this node has no resource, we can't tell
 		// The subclass which created the node with no resource should have overridden this method
-		if (resource == null || resource.getType() == IResource.FILE) return false;
+		if (resource != null && resource.getType() == IResource.FILE) return false;
 		// If the set has no conflicts then the node doesn't either
 		if (getSyncInfoSet().countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK) == 0) {
 			return false;
@@ -279,15 +273,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
 	 */
 	public Object[] getChildren(Object o) {
-		if(input != null) {
-			IResource[] children = input.members(getResource());
-			SyncInfoDiffNode[] nodes = new SyncInfoDiffNode[children.length];
-			for (int i = 0; i < children.length; i++) {
-				nodes[i] = new SyncInfoDiffNode(getSyncInfoSet(), children[i]);				
-			}
-			return nodes;
-		}
-		return new SyncInfo[0];
+		return getChildren();
 	}
 
 	/* (non-Javadoc)
@@ -295,6 +281,9 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 */
 	public ImageDescriptor getImageDescriptor(Object object) {
 		IResource resource = getResource();
+		if (resource == null) {
+			return null;
+		}
 		IWorkbenchAdapter adapter = (IWorkbenchAdapter)((IAdaptable) resource).getAdapter(IWorkbenchAdapter.class);
 		return adapter.getImageDescriptor(resource);
 	}
@@ -303,17 +292,17 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
 	 */
 	public String getLabel(Object o) {
-		return getResource().getName();
+		IResource resource = getResource();
+		if (resource == null) {
+			return toString();
+		}
+		return resource.getName();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getParent(java.lang.Object)
 	 */
 	public Object getParent(Object o) {
-		IContainer parent = getResource().getParent();
-		if(parent != null) {
-			return new SyncInfoDiffNode(getSyncInfoSet(), parent);
-		}
-		return null;
+		return getParent();
 	}
 }

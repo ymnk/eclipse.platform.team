@@ -10,14 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.actions;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.ui.synchronize.views.SyncInfoSetContentProvider;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.actions.OpenFileAction;
 
@@ -35,7 +32,7 @@ public class OpenFileInSystemEditorAction extends OpenFileAction {
 		IStructuredSelection selection = getStructuredSelection();
 		for (Iterator e = selection.iterator(); e.hasNext();) {
 			Object next = e.next();
-			IResource resource = SyncInfoSetContentProvider.getResource(next);
+			IResource resource = TreeViewerUtils.getResource(next);
 			if(resource != null) {
 				resources.add(resource);
 			}
