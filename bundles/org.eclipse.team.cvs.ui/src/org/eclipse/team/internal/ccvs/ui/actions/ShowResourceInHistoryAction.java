@@ -51,22 +51,4 @@ public class ShowResourceInHistoryAction extends TeamAction {
 		if (cvsResource.getSyncInfo().isAdded()) return false;
 		return true;
 	}
-	/** (Non-javadoc)
-	 * Method declared on IActionDelegate.
-	 */
-	public void selectionChanged(IAction action, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
-			this.selection = (IStructuredSelection) selection;
-			//this action can be invoked by double-click, in which case
-			//there is no target action
-			if (action != null) {
-				try {
-					action.setEnabled(isEnabled());
-				} catch (TeamException e) {
-					action.setEnabled(false);
-					handle(e, null, null);
-				}
-			}
-		}
-	}
 }

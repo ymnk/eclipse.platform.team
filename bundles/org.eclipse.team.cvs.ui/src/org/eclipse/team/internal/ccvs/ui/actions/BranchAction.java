@@ -134,13 +134,8 @@ public class BranchAction extends CVSAction {
 	/*
 	 * @see TeamAction#isEnabled()
 	 */
-	protected boolean isEnabled() {
-		try {
-			return isSelectionNonOverlapping();
-		} catch(TeamException e) {
-			CVSUIPlugin.log(e.getStatus());
-			return false;
-		}
+	protected boolean isEnabled() throws TeamException {
+		return isSelectionNonOverlapping();
 	}
 	
 	/**

@@ -19,7 +19,8 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 
-public class IgnoreAction extends TeamAction {
+public class IgnoreAction extends CVSAction {
+	
 	protected boolean isEnabled() throws TeamException {
 		IResource[] resources = getSelectedResources();
 		if (resources.length == 0) return false;
@@ -32,7 +33,8 @@ public class IgnoreAction extends TeamAction {
 		}
 		return true;
 	}
-	public void run(final IAction action) {
+	
+	protected void execute(final IAction action) {
 		run(new WorkspaceModifyOperation() {
 			public void execute(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
 				IResource[] resources = getSelectedResources();
@@ -49,7 +51,8 @@ public class IgnoreAction extends TeamAction {
 					// fix the action enablement
 					if (action != null) action.setEnabled(isEnabled());
 				} catch (TeamException e) {
-					ErrorDialog.openError(getShell(), null, null, e.getStatus());
+					//ErrorDialog.openError(getShell(), null, null, e.getStatus());
+					handle(e, null, null);
 					return;
 				}
 			}

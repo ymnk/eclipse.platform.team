@@ -46,13 +46,8 @@ public class CompareWithTagAction extends CVSAction {
 		CompareUI.openCompareEditor(new CVSLocalCompareEditorInput(resources, tag));
 	}
 	
-	protected boolean isEnabled() {
-		try {
-			return isSelectionNonOverlapping();
-		} catch(TeamException e) {
-			CVSUIPlugin.log(e.getStatus());
-			return false;
-		}
+	protected boolean isEnabled() throws TeamException {
+		return isSelectionNonOverlapping();
 	}
 
 	/*

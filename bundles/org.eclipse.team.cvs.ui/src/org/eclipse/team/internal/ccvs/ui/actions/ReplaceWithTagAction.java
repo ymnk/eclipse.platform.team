@@ -119,13 +119,8 @@ public class ReplaceWithTagAction extends CVSAction {
 		}, Policy.bind("ReplaceWithTagAction.replace"), this.PROGRESS_DIALOG); //$NON-NLS-1$
 	}
 	
-	protected boolean isEnabled() {		
-		try {
-			return isSelectionNonOverlapping();
-		} catch(TeamException e) {
-			CVSUIPlugin.log(e.getStatus());
-			return false;
-		}
+	protected boolean isEnabled() throws TeamException {		
+		return isSelectionNonOverlapping();
 	}
 	
 	protected boolean equalTags(CVSTag tag1, CVSTag tag2) {
