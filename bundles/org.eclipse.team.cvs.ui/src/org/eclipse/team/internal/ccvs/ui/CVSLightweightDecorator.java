@@ -42,12 +42,26 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	
 	private static String DECORATOR_FORMAT = "yyyy/MM/dd HH:mm:ss"; //$NON-NLS-1$
 	private static SimpleDateFormat decorateFormatter = new SimpleDateFormat(DECORATOR_FORMAT, Locale.getDefault());
+	
+	private static String[] fonts = new String[]  {
+			CVSDecoratorConfiguration.IGNORED_FONT,
+			CVSDecoratorConfiguration.OUTGOING_CHANGE_FONT};
+	
+	private static String[] colors = new String[] {
+			 CVSDecoratorConfiguration.OUTGOING_CHANGE_BACKGROUND_COLOR,
+			 CVSDecoratorConfiguration.OUTGOING_CHANGE_FOREGROUND_COLOR,
+			 CVSDecoratorConfiguration.IGNORED_BACKGROUND_COLOR,
+			 CVSDecoratorConfiguration.IGNORED_FOREGROUND_COLOR};
 
 	public CVSLightweightDecorator() {
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this);
 		TeamUI.addPropertyChangeListener(this);
 		CVSUIPlugin.addPropertyChangeListener(this);
-		ensureFontAndColorsCreated(new String[] {CVSDecoratorConfiguration.IGNORED_FONT}, new String[0]);
+		
+		// This is an optimization to ensure that while decorating our fonts and colors are
+		// pre-created and decoration can occur without having to syncExec.
+		ensureFontAndColorsCreated(fonts, colors);
+		
 		PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().addPropertyChangeListener(this);
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
 	}
@@ -408,7 +422,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		if (isEventOfInterest(event)) {
-			ensureFontAndColorsCreated(new String[] {CVSDecoratorConfiguration.IGNORED_FONT}, new String[0]);
+			ensureFontAndColorsCreated(fonts, colors);
 		    refresh();
 		}	
 	}

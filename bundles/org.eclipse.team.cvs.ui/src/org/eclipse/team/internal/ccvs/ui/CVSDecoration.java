@@ -137,8 +137,8 @@ public class CVSDecoration {
 		prefs.setValue(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION, store.getBoolean(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION));
 		prefs.setValue(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION, store.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION));
 		prefs.setValue(ICVSUIConstants.PREF_CALCULATE_DIRTY, store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY));
-		prefs.setValue(ICVSUIConstants.PREF_DIRTY_FLAG, store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY));
-		prefs.setValue(ICVSUIConstants.PREF_ADDED_FLAG, store.getBoolean(ICVSUIConstants.PREF_ADDED_FLAG));
+		prefs.setValue(ICVSUIConstants.PREF_DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
+		prefs.setValue(ICVSUIConstants.PREF_ADDED_FLAG, store.getString(ICVSUIConstants.PREF_ADDED_FLAG));
 		
 		initialize(resourceName, prefs, store.getString(ICVSUIConstants.PREF_FILETEXT_DECORATION), store.getString(ICVSUIConstants.PREF_FOLDERTEXT_DECORATION), store.getString(ICVSUIConstants.PREF_PROJECTTEXT_DECORATION));
 	}

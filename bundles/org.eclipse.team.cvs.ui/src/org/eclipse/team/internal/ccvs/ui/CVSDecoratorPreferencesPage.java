@@ -22,6 +22,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
@@ -37,6 +38,7 @@ import org.eclipse.team.internal.ui.OverlayIcon;
 import org.eclipse.ui.*;
 import org.eclipse.ui.dialogs.ListSelectionDialog;
 import org.eclipse.ui.help.WorkbenchHelp;
+import org.eclipse.ui.ide.IDE.SharedImages;
 
 public class CVSDecoratorPreferencesPage extends PreferencePage implements IWorkbenchPreferencePage {
 
@@ -54,11 +56,27 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 	
 	private Button showDirty;
 	
-	//	 Cache for folder images that have been overlayed with sample CVS icons
+	//	Cache for folder images that have been overlayed with sample CVS icons
 	private Map fgImageCache;
 
+	// Tree that provides a preview of the decorations
 	private TreeViewer previewTree;
 	
+	/**
+	 * Update the preview tree when a theme changes.
+	 */
+	private IPropertyChangeListener themeListener = new IPropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent event) {
+			previewTree.refresh(true /* update labels */);
+		}
+	};
+	
+	/**
+	 * Label provider creates a dummy CVSDecoration using the preferences set
+	 * in this page. The decoration properties are assigned to the different named
+	 * resources in the preview tree so that most of the decoration options
+	 * are shown
+	 */
 	private class PreviewLabelProvider extends LabelProvider implements IFontProvider, IColorProvider {
 		
 		public Color getBackground(Object element) {
@@ -91,29 +109,29 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		
 		public CVSDecoration getDecoration(Object element) {
 			CVSDecoration decoration = buildDecoration((String)element);
-			if(element.equals("ignored.txt")) {
+			if(element.equals("ignored.txt")) { //$NON-NLS-1$
 				decoration.setResourceType(IResource.FILE);
 				decoration.setIgnored(true);
-			} else if(element.equals("Project")) {
+			} else if(element.equals("Project")) { //$NON-NLS-1$
 				decoration.setResourceType(IResource.PROJECT);
 				decoration.setHasRemote(true);
-			} else if(element.equals("Folder")) {
+			} else if(element.equals("Folder")) { //$NON-NLS-1$
 				decoration.setHasRemote(true);
 				decoration.setResourceType(IResource.FOLDER);
 				decoration.setDirty(true);
 				decoration.setHasRemote(true);
-			} else if(element.equals("dirty.cpp")){
+			} else if(element.equals("dirty.cpp")){ //$NON-NLS-1$
 				decoration.setResourceType(IResource.FILE);
 				decoration.setDirty(true);
 				decoration.setHasRemote(true);
-			} else if(element.equals("added.java")){
+			} else if(element.equals("added.java")){ //$NON-NLS-1$
 				decoration.setResourceType(IResource.FILE);
 				decoration.setAdded(true);
 				decoration.setHasRemote(false);
-			} else if(element.equals("todo.txt")){
+			} else if(element.equals("todo.txt")){ //$NON-NLS-1$
 				decoration.setResourceType(IResource.FILE);
 				decoration.setNewResource(true);
-			} else if(element.equals("bugs.txt")){
+			} else if(element.equals("bugs.txt")){ //$NON-NLS-1$
 				decoration.setResourceType(IResource.FILE);
 				decoration.setDirty(false);
 				decoration.setHasRemote(true);
@@ -124,10 +142,10 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		
 		public Image getImage(Object element) {
 			Image baseImage;
-			if(element.equals("Project")) {
+			if(element.equals("Project")) { //$NON-NLS-1$
 				baseImage= PlatformUI.getWorkbench().
-				getSharedImages().getImage(ISharedImages.IMG_OBJ_PROJECT);
-			} else if(element.equals("Folder")) {
+				getSharedImages().getImage(SharedImages.IMG_OBJ_PROJECT);
+			} else if(element.equals("Folder")) { //$NON-NLS-1$
 				baseImage= PlatformUI.getWorkbench().
 				getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER);
 			} else {
@@ -152,19 +170,23 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 			return image;
 		}
 	};
+	
+	/**
+	 * Provides a fixed mock resource tree for showing the preview.
+	 */
 	private IContentProvider previewContentProvider = new ITreeContentProvider() {
 		public Object[] getChildren(Object parentElement) {
 			if(parentElement == ResourcesPlugin.getWorkspace().getRoot()) {
 				return new String[] {
-						"Project"};
-			} else if(parentElement.equals("Project")) {
+						"Project"}; //$NON-NLS-1$
+			} else if(parentElement.equals("Project")) { //$NON-NLS-1$
 				return new String[] {
-						"ignored.txt",
-						"dirty.cpp",
-						"added.java",
-						"todo.txt",
-						"bugs.txt",
-						"Folder"
+						"ignored.txt", //$NON-NLS-1$
+						"dirty.cpp", //$NON-NLS-1$
+						"added.java", //$NON-NLS-1$
+						"todo.txt", //$NON-NLS-1$
+						"bugs.txt", //$NON-NLS-1$
+						"Folder" //$NON-NLS-1$
 				};
 			} else {
 				return new Object[0];
@@ -176,7 +198,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		}
 
 		public boolean hasChildren(Object element) {
-			if(element.equals("Project") || element == ResourcesPlugin.getWorkspace().getRoot()) 
+			if(element.equals("Project") || element == ResourcesPlugin.getWorkspace().getRoot())  //$NON-NLS-1$
 				return true;
 			else
 				return false;
@@ -272,7 +294,13 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		previewTree.setInput(ResourcesPlugin.getWorkspace().getRoot());
 		previewTree.expandAll();
 		
+		PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(themeListener);
+		
 		return tabFolder;
+	}
+	
+	public void dispose() {
+		PlatformUI.getWorkbench().getThemeManager().removePropertyChangeListener(themeListener);
 	}
 	
 	private Control createTextDecoratorPage(Composite parent) {
@@ -283,7 +311,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		top.setLayoutData(data);
 		
 		Group fileTextGroup = new Group(top, SWT.SHADOW_IN);
-		fileTextGroup.setText("Text");
+		fileTextGroup.setText(Policy.bind("CVSDecoratorPreferencePage.1")); //$NON-NLS-1$
 		layout = new GridLayout();
 		layout.numColumns = 3;
 		fileTextGroup.setLayout(layout);
@@ -317,12 +345,12 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		});
 		createLabel(fileTextGroup, "", 1); // spacer //$NON-NLS-1$
 
-//		 **********
-		// PREVIEW
+		// **********
+		// ICONS
 		// **********
 		
 		Group iconGroup = new Group(top, SWT.SHADOW_IN);
-		iconGroup.setText("Icons");
+		iconGroup.setText(Policy.bind("Icon_Overlays_24")); //$NON-NLS-1$
 		layout = new GridLayout();
 		layout.numColumns = 3;
 		iconGroup.setLayout(layout);
@@ -336,7 +364,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		// **********
 		
 		Group previewGroup = new Group(top, SWT.SHADOW_IN);
-		previewGroup.setText("Preview");
+		previewGroup.setText(Policy.bind("Example__1")); //$NON-NLS-1$
 		layout = new GridLayout();
 		previewGroup.setLayout(layout);
 		data = new GridData(GridData.FILL, GridData.FILL, true, true);
