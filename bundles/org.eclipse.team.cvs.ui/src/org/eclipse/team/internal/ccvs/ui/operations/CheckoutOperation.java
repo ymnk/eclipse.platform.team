@@ -297,12 +297,11 @@ public abstract class CheckoutOperation extends CVSOperation {
 		for (int i=0;i<projects.length;i++) {
 			IProject project = projects[i];
 			if (needsPromptForOverwrite(project) && !promptToOverwrite(project)) {
-				return new CVSStatus(IStatus.INFO, "Checkout of project cancelled by user: " + project.getName());
+				return new CVSStatus(IStatus.INFO, Policy.bind("CheckoutOperation.checkoutCancelled", project.getName())); //$NON-NLS-1$
 			}
 		}
 		// Create the projects and remove any previous content
-		monitor.beginTask(Policy.bind("CVSProvider.Scrubbing_projects_1"), projects.length * 100); //$NON-NLS-1$
-		monitor.subTask(Policy.bind("CVSProvider.Scrubbing_local_project_1")); //$NON-NLS-1$	
+		monitor.beginTask(null, projects.length * 100); //$NON-NLS-1$
 		for (int i=0;i<projects.length;i++) {
 			IProject project = projects[i];
 			createAndOpenProject(project, Policy.subMonitorFor(monitor, 10));
@@ -321,6 +320,7 @@ public abstract class CheckoutOperation extends CVSOperation {
 			// We do not want to delete the .project to avoid core exceptions
 			IResource[] children = project.members(IContainer.INCLUDE_TEAM_PRIVATE_MEMBERS);
 			monitor.beginTask(null, children.length * 100);
+			monitor.subTask(Policy.bind("CheckoutOperation.scrubbingProject", project.getName())); //$NON-NLS-1$	
 			try {
 				for (int j = 0; j < children.length; j++) {
 					if ( ! children[j].getName().equals(".project")) {//$NON-NLS-1$
@@ -366,15 +366,15 @@ public abstract class CheckoutOperation extends CVSOperation {
 	 * @return
 	 */
 	private boolean promptToOverwrite(IProject project) {
-		return promptToOverwrite("Confirm overwrite", getOverwritePromptMessage(project));
+		return promptToOverwrite(Policy.bind("CheckoutOperation.confirmOverwrite"), getOverwritePromptMessage(project)); //$NON-NLS-1$
 	}
 
 	protected String getOverwritePromptMessage(IProject project) {
 		File localLocation  = getFileLocation(project);
 		if(project.exists()) {
-			return Policy.bind("AddToWorkspaceAction.thisResourceExists", project.getName());//$NON-NLS-1$
+			return Policy.bind("CheckoutOperation.thisResourceExists", project.getName());//$NON-NLS-1$
 		} else {
-			return Policy.bind("AddToWorkspaceAction.thisExternalFileExists", project.getName());//$NON-NLS-1$
+			return Policy.bind("CheckoutOperation.thisExternalFileExists", project.getName());//$NON-NLS-1$
 		}
 	}
 	
@@ -382,12 +382,13 @@ public abstract class CheckoutOperation extends CVSOperation {
 	 * Bring the provied projects into the workspace
 	 */
 	private static void refreshProjects(IProject[] projects, IProgressMonitor monitor) throws CVSException {
-		monitor.beginTask(Policy.bind("CVSProvider.Creating_projects_2"), projects.length * 100); //$NON-NLS-1$
+		monitor.beginTask(null, projects.length * 100);
 		try {
 			for (int i = 0; i < projects.length; i++) {
 				IProject project = projects[i];
 				// Register the project with Team
 				try {
+					monitor.subTask(Policy.bind("CheckoutOperation.refreshingProject", project.getName())); //$NON-NLS-1$
 					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 				} catch (TeamException e) {
 					throw CVSException.wrapException(e);

@@ -58,7 +58,7 @@ public class CheckoutSingleProjectOperation extends CheckoutOperation {
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
 	 */
 	protected String getTaskName() {
-		return Policy.bind("CheckoutAsAction.taskname", getRemoteFolderName(), targetProject.getName()); //$NON-NLS-1$
+		return Policy.bind("CheckoutSingleProjectOperation.taskname", getRemoteFolderName(), targetProject.getName()); //$NON-NLS-1$
 	}
 	
 	/* (non-Javadoc)

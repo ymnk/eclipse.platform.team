@@ -40,7 +40,7 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 
 	private List errors = new ArrayList(); // of IStatus
 
-	protected static final IStatus OK = new CVSStatus(IStatus.OK, Policy.bind("ok"));
+	protected static final IStatus OK = new CVSStatus(IStatus.OK, Policy.bind("ok")); // $NON-NLS-1$
 	
 	private IRunnableContext runnableContext;
 	private Shell shell;

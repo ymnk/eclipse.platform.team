@@ -48,7 +48,7 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 	private Button browseButton;
 	private Text locationPathField;
 	private Label locationLabel;
-	private boolean useDefaults;
+	private boolean useDefaults = true;
 	private ICVSRemoteFolder[] remoteFolders;
 	private String targetLocation;
 	private IProject singleProject;
@@ -91,6 +91,9 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 	}
 	
 	private IProject getSingleProject() {
+		if (singleProject == null) {
+			setProjectName(remoteFolders[0].getName());
+		}
 		return singleProject;
 	}
 	
@@ -152,6 +155,7 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 		locationPathField.setEnabled(enabled);
 
 		// browse button
+		// TODO: Browse button does not appear
 		this.browseButton = new Button(projectGroup, SWT.PUSH);
 		this.browseButton.setText(Policy.bind("CheckoutAsLocationSelectionPage.browseLabel")); //$NON-NLS-1$
 		this.browseButton.addSelectionListener(new SelectionAdapter() {

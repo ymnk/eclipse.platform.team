@@ -54,7 +54,7 @@ public class CheckoutAsMainPage extends CVSWizardPage {
 	 * @param description
 	 */
 	public CheckoutAsMainPage(ImageDescriptor titleImage, ICVSRemoteFolder[] folders, boolean allowProjectConfiguration) {
-		super(NAME, Policy.bind("CheckoutAsMainPage.title"), titleImage, Policy.bind("CheckoutAsMainPage.description"));
+		super(NAME, Policy.bind("CheckoutAsMainPage.title"), titleImage, Policy.bind("CheckoutAsMainPage.description")); //$NON-NLS-1$
 		this.folders = folders;
 		this.allowProjectConfiguration = allowProjectConfiguration;
 	}
@@ -108,7 +108,7 @@ public class CheckoutAsMainPage extends CVSWizardPage {
 	 * Create the page contents for a multiple folder checkout
 	 */
 	private void createMultipleFoldersArea(Composite composite) {
-		createLabel(composite, Policy.bind("CheckoutAsMainPage.multipleFolders")); //$NON-NLS-1$
+		createLabel(composite, Policy.bind("CheckoutAsMainPage.multipleFolders", new Integer(folders.length).toString())); //$NON-NLS-1$
 		createCheckoutAsProjectRadioArea(composite);
 		createCheckoutIntoRadioArea(composite);
 	}
