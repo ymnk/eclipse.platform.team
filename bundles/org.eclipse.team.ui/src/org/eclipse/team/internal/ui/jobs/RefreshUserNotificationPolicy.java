@@ -50,9 +50,14 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 			}
 		}
 		
+		// Change to incoming mode if changes are found.
+		if(infos.length > 0) {
+			event.getParticipant().setMode(TeamSubscriberParticipant.INCOMING_MODE);
+		}
+		// Prompt user if preferences are set for this type of refresh.
 		if(shouldPrompt) {
 			notifyIfNeededModal(event);
-		}
+		}		
 	}
 	
 	private void notifyIfNeededModal(final IRefreshEvent event) {

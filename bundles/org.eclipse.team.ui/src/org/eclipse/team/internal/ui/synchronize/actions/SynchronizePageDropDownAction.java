@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.SynchronizeView;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
@@ -89,10 +90,12 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 				action.setChecked(page.equals(current));
 				addActionToMenu(fMenu, action);
 			}
-			// Add Overview Page
-			addMenuSeparator();
-			addActionToMenu(fMenu, overviewPageAction);
-			overviewPageAction.setChecked(current == null);
+			if(SynchronizeView.INCLUDE_OVERVIEWPAGE) {
+				// 	Add Overview Page
+				addMenuSeparator();
+				addActionToMenu(fMenu, overviewPageAction);
+				overviewPageAction.setChecked(current == null);
+			}
 			return fMenu;
 		}
 	

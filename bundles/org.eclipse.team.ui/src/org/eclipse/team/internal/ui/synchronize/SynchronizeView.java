@@ -47,6 +47,8 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	
 	private SynchronizePageDropDownAction fPageDropDown;
 	private SynchronizeViewWorkbenchPart fOverviewPage;
+
+	public static final boolean INCLUDE_OVERVIEWPAGE = false;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
@@ -157,11 +159,18 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * @see org.eclipse.ui.part.PageBookView#createDefaultPage(org.eclipse.ui.part.PageBook)
 	 */
 	protected IPage createDefaultPage(PageBook book) {
-		SynchronizeOverviewPage overviewPage = new SynchronizeOverviewPage(this);
-		this.fOverviewPage = new SynchronizeViewWorkbenchPart(overviewPage, getSite());
-		overviewPage.createControl(getPageBook());
-		initPage(overviewPage);
-		return overviewPage;
+		if(INCLUDE_OVERVIEWPAGE) {
+			SynchronizeOverviewPage overviewPage = new SynchronizeOverviewPage(this);
+			this.fOverviewPage = new SynchronizeViewWorkbenchPart(overviewPage, getSite());
+			overviewPage.createControl(getPageBook());
+			initPage(overviewPage);
+			return overviewPage;
+		} else {
+			MessagePage page = new MessagePage();
+			page.createControl(getPageBook());
+			initPage(page);
+			return page;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -201,7 +210,13 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 							}
 							if (getParticipant() == null) {
 								ISynchronizeParticipant[] available = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-								displayOverviewPage();
+								if(INCLUDE_OVERVIEWPAGE) {
+									displayOverviewPage();
+								} else {
+									if (available.length > 0) {
+										display(available[available.length - 1]);
+									}
+								}
 							}
 						}
 					}

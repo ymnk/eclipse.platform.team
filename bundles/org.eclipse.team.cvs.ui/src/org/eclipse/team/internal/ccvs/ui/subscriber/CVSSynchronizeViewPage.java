@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
@@ -26,8 +27,50 @@ import org.eclipse.ui.IActionDelegate;
 
 public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncSetChangedListener {
 
+	private static class CVSLabelProvider extends LabelProvider implements IColorProvider {
+		private ILabelProvider oldLabelProvider;
+		public CVSLabelProvider(ILabelProvider oldLabelProvider) {
+			this.oldLabelProvider = oldLabelProvider;
+		}
+		public Image getImage(Object element) {
+			return oldLabelProvider.getImage(element);
+		}
+		public String getText(Object element) {
+			String text = oldLabelProvider.getText(element);
+			if (element instanceof SyncInfoDiffNode) {
+				SyncInfo info =  ((SyncInfoDiffNode)element).getSyncInfo();
+				if(info != null) {
+					IResource resource = info.getLocal();
+					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
+					CVSLightweightDecorator.decorateTextLabel((IResource) resource, decoration, false, true);
+					StringBuffer output = new StringBuffer(25);
+					if(decoration.prefix != null) {
+						output.append(decoration.prefix);
+					}
+					output.append(text);
+					if(decoration.suffix != null) {
+						output.append(decoration.suffix);
+					}
+					return output.toString();
+				}
+			}
+			return text;
+		}
+		public Color getForeground(Object element) {
+			if(oldLabelProvider instanceof IColorProvider) {
+				return ((IColorProvider)oldLabelProvider).getForeground(element);
+			}
+			return null;
+		}
+		public Color getBackground(Object element) {
+			if(oldLabelProvider instanceof IColorProvider) {
+				return ((IColorProvider)oldLabelProvider).getBackground(element);
+			}
+			return null;
+		}
+	}
+	
 	private List delegates = new ArrayList(2);
-	private ILabelProvider oldLabelProvider;
 
 	protected class CVSActionDelegate extends Action {
 		private IActionDelegate delegate;
@@ -87,40 +130,6 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		delegates.add(delagate);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#getLabelProvider()
-	 */
-	protected ILabelProvider getLabelProvider(final ILabelProvider proxy) {
-		return new LabelProvider() {
-			public Image getImage(Object element) {
-				return proxy.getImage(element);
-			}
-			public String getText(Object element) {
-				String text = proxy.getText(element);
-				if (element instanceof SyncInfoDiffNode) {
-					SyncInfo info =  ((SyncInfoDiffNode)element).getSyncInfo();
-					if(info != null) {
-						IResource resource = info.getLocal();
-						CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
-						CVSLightweightDecorator.decorateTextLabel((IResource) resource, decoration, false, true);
-						StringBuffer output = new StringBuffer(25);
-						if(decoration.prefix != null) {
-							output.append(decoration.prefix);
-						}
-						output.append(text);
-						if(decoration.suffix != null) {
-							output.append(decoration.suffix);
-						}
-						return output.toString();
-					}
-				}
-				return text;
-			}
-		};
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
@@ -149,7 +158,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		// want all outgoing/repository icons in this view. Instead, we add 
 		// CVS specific information that is useful in the synchronizing context.
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
-		oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
-		viewer.setLabelProvider(getLabelProvider(oldLabelProvider));		
+		ILabelProvider oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
+		viewer.setLabelProvider(new CVSLabelProvider(oldLabelProvider));		
 	}
 }
