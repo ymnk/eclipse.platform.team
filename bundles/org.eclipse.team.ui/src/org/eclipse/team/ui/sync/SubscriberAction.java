@@ -16,9 +16,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 
 /**
@@ -26,6 +28,8 @@ import org.eclipse.team.internal.ui.actions.TeamAction;
  * It is not necessary that subscriber actions be subclasses of this class.
  */
 public abstract class SubscriberAction extends TeamAction {
+	
+	public static final QualifiedName SUBSCRIBER_JOB_TYPE = new QualifiedName(TeamUIPlugin.ID, "subcriber_job"); //$NON-NLS-1$
 	
 	/**
 	 * This method returns all instances of SynchronizeViewNode that are in the current

@@ -25,6 +25,8 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.jobs.ViewFeedbackManager;
+import org.eclipse.team.ui.sync.SubscriberAction;
 
 /**
  * This handler collects changes and removals to resources and calculates their
@@ -117,7 +119,7 @@ public class SubscriberEventHandler {
 	 * Schedule the job or process the events now.
 	 */
 	public void schedule() {
-		eventHandlerJob.schedule();
+		ViewFeedbackManager.getInstance().schedule(eventHandlerJob, SubscriberAction.SUBSCRIBER_JOB_TYPE);
 	}
 	/**
 	 * Initialize all resources for the subscriber associated with the set. This will basically recalculate
@@ -202,7 +204,6 @@ public class SubscriberEventHandler {
 			}
 		});
 		eventHandlerJob.setPriority(Job.SHORT);
-		eventHandlerJob.setSystem(true);
 	}
 	
 	/**
