@@ -19,6 +19,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.team.core.TeamException;
@@ -126,7 +127,8 @@ public class RestoreFromRepositoryAction extends CVSAction {
 		ICVSFile[] files = fetchDeletedFiles(resource);
 		if (files == null) return;
 		if (files.length == 0) {
-			// XXX message for no files
+			MessageDialog.openInformation(getShell(), Policy.bind("RestoreFromRepositoryAction.noFilesTitle"), Policy.bind("RestoreFromRepositoryAction.noFilesMessage", resource.getName()));
+			return;
 		}
 		RestoreFromRepositoryWizard wizard = new RestoreFromRepositoryWizard(resource, files);
 		WizardDialog dialog = new ResizableWizardDialog(shell, wizard);

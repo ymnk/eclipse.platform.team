@@ -54,6 +54,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
@@ -112,7 +113,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	private Map entriesCache = new HashMap();
 	private Map filesToRestore = new HashMap();
 
-	private static final int SELECTION_TABLE_WIDTH = 300;
+	private static final int SELECTION_TABLE_WIDTH = 400;
 	
 	class HistoryInput implements ITypedElement, IStreamContentAccessor, IModificationDate {
 		IFile file;
@@ -170,38 +171,35 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		
 		// Top left and top right panes: the left for the files, the right for the log entries
 		Splitter hsplitter= new Splitter(vsplitter,  SWT.HORIZONTAL);
-		
+
+		// Top left: file selection pane
 		fileSelectionPane = new CompareViewerPane(hsplitter, SWT.BORDER | SWT.FLAT);
-		GridData gd= new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);
-		fileSelectionPane.setLayoutData(gd);
+		GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);
+		fileSelectionPane.setLayoutData(data);
 		fileTree = createFileSelectionTree(fileSelectionPane);
-		fileSelectionPane.setContent(fileTree.getControl());
 		
+		// Top right: Revision selection pane
 		revisionSelectionPane = new CompareViewerPane(hsplitter, SWT.BORDER | SWT.FLAT);
-		gd= new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);;
-		revisionSelectionPane.setLayoutData(gd);
-		revisionsTable = createRevisionSelectionTable();
-		revisionSelectionPane.setContent(revisionsTable.getControl());
+		data = new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);;
+		revisionSelectionPane.setLayoutData(data);
+		historyTableProvider = new HistoryTableProvider();
+		revisionsTable = createRevisionSelectionTable(revisionSelectionPane, historyTableProvider);
 		revisionSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.emptyRevisionPane"));
 		
-		// Bottom pane is the file content viewer
+		// Bottom: File content viewer
 		fileContentPane = new CompareViewerSwitchingPane(vsplitter, SWT.BORDER | SWT.FLAT) {
 			protected Viewer getViewer(Viewer oldViewer, Object input) {
 				return CompareUIPlugin.findContentViewer(oldViewer, input, this, null);	
 			}
 		};
-		
-		// Weights between top and bottom are 50/50 so top is not too small in wizard
-		vsplitter.setWeights(new int[] { 50, 50 });
 						
 		initializeValues();
 		updateWidgetEnablements();
 		fileTree.getControl().setFocus();
 	}
 
-	protected CheckboxTableViewer createRevisionSelectionTable() {
-		historyTableProvider = new HistoryTableProvider();
-		CheckboxTableViewer table = historyTableProvider.createCheckBoxTable(revisionSelectionPane, SELECTION_TABLE_WIDTH);
+	protected CheckboxTableViewer createRevisionSelectionTable(CompareViewerPane composite, HistoryTableProvider tableProvider) {
+		CheckboxTableViewer table = tableProvider.createCheckBoxTable(composite, SELECTION_TABLE_WIDTH);
 		table.setContentProvider(new IStructuredContentProvider() {
 			public Object[] getElements(Object inputElement) {
 				ILogEntry[] entries = getSelectedEntries();
@@ -228,10 +226,11 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 				handleRevisionChecked(event);
 			}
 		});
+		composite.setContent(table.getControl());
 		return table;
 	}
 	
-	protected TreeViewer createFileSelectionTree(Composite composite) {
+	protected TreeViewer createFileSelectionTree(CompareViewerPane composite) {
 		TreeViewer tree = new TreeViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		tree.setUseHashlookup(true);
 		tree.setContentProvider(treeInput.getTreeContentProvider());
@@ -254,13 +253,13 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		GridData data = new GridData(GridData.FILL_BOTH | GridData.GRAB_VERTICAL);
 		data.heightHint = LIST_HEIGHT_HINT;
 		data.widthHint = SELECTION_TABLE_WIDTH;
-		data.horizontalSpan = 1;
-		tree.getControl().setLayoutData(data);
+		tree.getTree().setLayoutData(data);
 		tree.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				handleFileSelection(event);
 			}
 		});
+		composite.setContent(tree.getControl());
 		return tree;
 	}
 	
