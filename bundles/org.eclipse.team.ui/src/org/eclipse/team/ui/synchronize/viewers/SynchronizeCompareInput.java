@@ -16,6 +16,7 @@ import org.eclipse.compare.*;
 import org.eclipse.compare.internal.CompareEditor;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.Separator;
@@ -207,7 +208,7 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 	 */
 	public void saveChanges(IProgressMonitor pm) throws CoreException {
 		super.saveChanges(pm);
-		SynchronizeModelElement root = diffViewerConfiguration.getModelProvider().getModelRoot();
+		SynchronizeModelElement root = (SynchronizeModelElement)diffViewerConfiguration.getViewer().getInput();
 		if (root != null) {
 			try {
 				commit(pm, root);
@@ -227,9 +228,9 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 			 ((LocalResourceTypedElement) right).commit(pm);
 		
 		//node.getC
-		DiffNode[] children = (DiffNode[])node.getChildren();
+		IDiffElement[] children = (IDiffElement[])node.getChildren();
 		for (int i = 0; i < children.length; i++) {
-			commit(pm, children[i]);			
+			commit(pm, (DiffNode)children[i]);			
 		}
 	}
 

@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.*;
+import org.eclipse.compare.internal.CompareEditor;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -170,6 +171,9 @@ public class CVSCompareRevisionsInput extends CompareEditorInput {
 		table.setData(CompareUI.COMPARE_VIEWER_TITLE, Policy.bind("CVSCompareRevisionsInput.structureCompare")); //$NON-NLS-1$
 	
 		viewer.setContentProvider(new VersionCompareContentProvider());
+
+		//	 buffered merge mode, don't ask for save when switching nodes
+		getCompareConfiguration().setProperty(CompareEditor.CONFIRM_SAVE_PROPERTY, new Boolean(false));
 
 		MenuManager mm = new MenuManager();
 		mm.setRemoveAllWhenShown(true);

@@ -119,6 +119,8 @@ public abstract class StructuredViewerAdvisor {
 			modelProvider.prepareInput(null);
 		}
 		setInput(viewer);
+		
+		navigate(true);
 	}
 	
 	/**

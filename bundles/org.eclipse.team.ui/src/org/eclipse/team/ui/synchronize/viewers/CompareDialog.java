@@ -18,9 +18,11 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.util.Assert;
+import org.eclipse.jface.util.*;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
@@ -28,30 +30,38 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 
 
-public class CompareDialog extends ResizableDialog {
+public class CompareDialog extends ResizableDialog implements IPropertyChangeListener {
 		
 	private CompareEditorInput fCompareEditorInput;
 	private ISynchronizeParticipant participant;
+	private Button saveButton;
 
 	public CompareDialog(Shell shell, CompareEditorInput input) {
 		super(shell, null);
 		Assert.isNotNull(input);
 		fCompareEditorInput= input;
+		fCompareEditorInput.addPropertyChangeListener(this);
 	}
 	
 	public void setSynchronizeParticipant(ISynchronizeParticipant participant) {
 		this.participant = participant;
 	}
 		
+	public void propertyChange(PropertyChangeEvent event) {
+		if (saveButton != null && fCompareEditorInput != null)
+			saveButton.setEnabled(fCompareEditorInput.isSaveNeeded());
+	}
+	
 	/* (non-Javadoc)
 	 * Method declared on Dialog.
 	 */
 	protected void createButtonsForButtonBar(Composite parent) {
 		if(participant != null) {
-			Button b = createButton(parent, IDialogConstants.OPEN_ID, "Remember", false);
+			Button b = createButton(parent, IDialogConstants.OPEN_ID, "Add to Synchronize View", false);
 			b.setToolTipText("Remembering this comparison will add it to the Synchronize View.");
 		}
-		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
+		saveButton = createButton(parent, IDialogConstants.OK_ID, "Save", true);
+		saveButton.setEnabled(false);
 		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
 	}
 	
@@ -84,39 +94,34 @@ public class CompareDialog extends ResizableDialog {
 			view.display(participant);
 			okPressed();
 			return;
-		}
-		super.buttonPressed(buttonId);
-	}
-	
-	/* (non-Javadoc)
-	 * Method declared on Window.
-	 */
-	public int open() {
-		
-		int rc= super.open();
-		
-		if (rc == IDialogConstants.OK_ID && fCompareEditorInput.isSaveNeeded()) {
-						
+		} else	if (buttonId == IDialogConstants.OK_ID && fCompareEditorInput.isSaveNeeded()) {				
 			final WorkspaceModifyOperation operation= new WorkspaceModifyOperation() {
 				public void execute(IProgressMonitor pm) throws CoreException {
 					fCompareEditorInput.saveChanges(pm);
 				}
-			};
-								
-			try {
-				PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
-					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-						operation.run(monitor);
+			};								
+				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+					public void run() {
+						BusyIndicator.showWhile(null, new Runnable() {
+							public void run() {
+								try {
+								PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
+									public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+										operation.run(monitor);
+									}
+								});		
+							} catch (InterruptedException x) {
+								// NeedWork
+							} catch (OperationCanceledException x) {
+								// NeedWork
+							} catch (InvocationTargetException x) {
+								Utils.handle(x);
+							}
+							}
+						});
 					}
-				});		
-			} catch (InterruptedException x) {
-				// NeedWork
-			} catch (OperationCanceledException x) {
-				// NeedWork
-			} catch (InvocationTargetException x) {
-				Utils.handle(x);
-			}
-		}	
-		return rc;
+				});
+		}
+		super.buttonPressed(buttonId);
 	}
 }
