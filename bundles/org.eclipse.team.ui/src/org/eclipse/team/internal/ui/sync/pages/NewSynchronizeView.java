@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ui.sync.pages;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -22,14 +21,12 @@ import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.sync.INewSynchronizeView;
 import org.eclipse.team.ui.sync.ISynchronizeManager;
 import org.eclipse.team.ui.sync.ISynchronizePageListener;
 import org.eclipse.team.ui.sync.ISynchronizeViewPage;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.part.IPage;
 import org.eclipse.ui.part.IPageBookViewPage;
 import org.eclipse.ui.part.MessagePage;
@@ -319,53 +316,5 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 		consolesAdded(consoles);
 		// add as a listener
 		manager.addSynchronizePageListener(this);		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeView#refreshWithRemote(org.eclipse.team.core.subscribers.TeamSubscriber, org.eclipse.core.resources.IResource[])
-	 */
-	public void refreshWithRemote(TeamSubscriber subscriber, IResource[] resources) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeView#refreshWithRemote(org.eclipse.team.core.subscribers.TeamSubscriber)
-	 */
-	public void refreshWithRemote(TeamSubscriber subscriber) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeView#refreshWithRemote()
-	 */
-	public void refreshWithRemote() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeView#getCurrentViewType()
-	 */
-	public int getCurrentViewType() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeView#setWorkingSet(org.eclipse.ui.IWorkingSet)
-	 */
-	public void setWorkingSet(IWorkingSet workingSet) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeView#setMode(int)
-	 */
-	public void setMode(int mode) {
-		// TODO Auto-generated method stub
-		
 	}	
 }

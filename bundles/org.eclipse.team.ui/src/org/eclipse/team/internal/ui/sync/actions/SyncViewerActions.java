@@ -97,8 +97,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		expandAll = new ExpandAllAction(this);
 		
 		
-		toggleLayoutFlatAction = new ToggleViewAction(getSyncView(), SynchronizeView.TABLE_VIEW);
-		toggleLayoutHierarchicalAction = new ToggleViewAction(getSyncView(), SynchronizeView.TREE_VIEW);
+		toggleLayoutFlatAction = new ToggleViewLayoutAction(getSyncView(), SynchronizeView.TABLE_VIEW);
+		toggleLayoutHierarchicalAction = new ToggleViewLayoutAction(getSyncView(), SynchronizeView.TREE_VIEW);
 		
 		collapseAll = new Action() {
 			public void run() {

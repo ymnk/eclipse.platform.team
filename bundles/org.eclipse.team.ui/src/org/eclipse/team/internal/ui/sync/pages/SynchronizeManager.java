@@ -16,10 +16,26 @@ import java.util.List;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.util.ListenerList;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.sync.INewSynchronizeView;
 import org.eclipse.team.ui.sync.ISynchronizeManager;
 import org.eclipse.team.ui.sync.ISynchronizePageListener;
 import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.WorkbenchException;
 
+/**
+ * @author JLemieux
+ *
+ * To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Generation - Code and Comments
+ */
 public class SynchronizeManager implements ISynchronizeManager {
 	/**
 	 * Synchronize View page listeners
@@ -156,5 +172,29 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 */
 	private void fireUpdate(ISynchronizeViewPage[] consoles, int type) {
 		new SynchronizeViewPageNotifier().notify(consoles, type);
+	}
+
+	public INewSynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage activePage) {
+		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
+		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
+		
+		if(! TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE).equals(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE_NONE)) {			
+			try {
+				String pId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE);
+				activePage = workbench.showPerspective(pId, window);
+			} catch (WorkbenchException e) {
+				Utils.handleError(window.getShell(), e, Policy.bind("SynchronizeView.14"), e.getMessage()); //$NON-NLS-1$
+			}
+		}
+		try {
+			if (activePage == null) {
+				activePage = TeamUIPlugin.getActivePage();
+				if (activePage == null) return null;
+			}
+			return (INewSynchronizeView)activePage.showView(INewSynchronizeView.VIEW_ID);
+		} catch (PartInitException pe) {
+			Utils.handleError(window.getShell(), pe, Policy.bind("SynchronizeView.16"), pe.getMessage()); //$NON-NLS-1$
+			return null;
+		}
 	}
 }

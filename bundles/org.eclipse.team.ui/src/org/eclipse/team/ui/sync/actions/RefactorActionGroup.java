@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.actions;
+package org.eclipse.team.ui.sync.actions;
 
 import java.util.Iterator;
 
@@ -17,15 +17,15 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.DeleteResourceAction;
 import org.eclipse.ui.actions.MoveResourceAction;
 import org.eclipse.ui.actions.RenameResourceAction;
@@ -36,28 +36,17 @@ import org.eclipse.ui.actions.TextActionHandler;
  * the org.eclipse.ui.workbench plugin. We couldn't reuse that class
  * because of a hard dependency on the navigator.
  */
-public class RefactorActionGroup extends SyncViewerActionGroup {
+public class RefactorActionGroup extends ActionGroup {
 
-	private Clipboard clipboard;
-
-	private CopyAction copyAction;
 	private DeleteResourceAction deleteAction;
-	private PasteAction pasteAction;
 	private MoveResourceAction moveAction;
 	private RenameResourceAction renameAction;
 	private TextActionHandler textActionHandler;
+	private IWorkbenchPart part;
 
-	protected RefactorActionGroup(SynchronizeView syncView) {
-		super(syncView);
+	public RefactorActionGroup(IWorkbenchPart part) {
+		this.part = part;
 		makeActions();
-	}
-
-	public void dispose() {
-		if (clipboard != null) {
-			clipboard.dispose();
-			clipboard = null;
-		}
-		super.dispose();
 	}
 
 	public void fillContextMenu(IMenuManager parentMenu) {
@@ -70,10 +59,6 @@ public class RefactorActionGroup extends SyncViewerActionGroup {
 					IResource.PROJECT | IResource.FOLDER | IResource.FILE);
 
 		MenuManager menu = new MenuManager(Policy.bind("RefactorActionGroup.0")); //$NON-NLS-1$
-		copyAction.selectionChanged(selection);
-		menu.add(copyAction);
-		pasteAction.selectionChanged(selection);
-		menu.add(pasteAction);
 
 		if (anyResourceSelected) {
 			deleteAction.selectionChanged(selection);
@@ -88,30 +73,17 @@ public class RefactorActionGroup extends SyncViewerActionGroup {
 
 	public void fillActionBars(IActionBars actionBars) {
 		textActionHandler = new TextActionHandler(actionBars); // hooks handlers
-		textActionHandler.setCopyAction(copyAction);
-		textActionHandler.setPasteAction(pasteAction);
 		textActionHandler.setDeleteAction(deleteAction);
 		renameAction.setTextActionHandler(textActionHandler);		
 	}
 
 	protected void makeActions() {
 		// Get the key binding service for registering actions with commands. 
-		final IWorkbenchPartSite site = getSyncView().getSite();
+		final IWorkbenchPartSite site = part.getSite();
 		final IKeyBindingService keyBindingService = site.getKeyBindingService();
 		
 		Shell shell = site.getShell();
-		clipboard = new Clipboard(shell.getDisplay());
-		
-		pasteAction = new PasteAction(shell, clipboard);
 		ISharedImages images = PlatformUI.getWorkbench().getSharedImages();
-		pasteAction.setDisabledImageDescriptor(images.getImageDescriptor(ISharedImages.IMG_TOOL_PASTE_DISABLED));
-		pasteAction.setImageDescriptor(images.getImageDescriptor(ISharedImages.IMG_TOOL_PASTE));
-		pasteAction.setHoverImageDescriptor(images.getImageDescriptor(ISharedImages.IMG_TOOL_PASTE_HOVER));
-				
-		copyAction = new CopyAction(shell, clipboard, pasteAction);
-		copyAction.setDisabledImageDescriptor(images.getImageDescriptor(ISharedImages.IMG_TOOL_COPY_DISABLED));
-		copyAction.setImageDescriptor(images.getImageDescriptor(ISharedImages.IMG_TOOL_COPY));
-		copyAction.setHoverImageDescriptor(images.getImageDescriptor(ISharedImages.IMG_TOOL_COPY_HOVER));
 		
 		moveAction = new MoveResourceAction(shell);
 		renameAction = new RenameResourceAction(shell);
@@ -130,15 +102,13 @@ public class RefactorActionGroup extends SyncViewerActionGroup {
 
 	public void updateActionBars() {
 		IStructuredSelection selection = getSelection();
-		copyAction.selectionChanged(selection);
-		pasteAction.selectionChanged(selection);
 		deleteAction.selectionChanged(selection);
 		moveAction.selectionChanged(selection);
 		renameAction.selectionChanged(selection);
 	}
 
 	private IStructuredSelection getSelection() {
-		return (IStructuredSelection)getSyncView().getSelection();
+		return (IStructuredSelection)part.getSite().getPage().getSelection();
 	}
 
 	private boolean allResourcesAreOfType(IStructuredSelection selection, int resourceMask) {

@@ -205,20 +205,12 @@
             id="org.eclipse.team.ui.sync.SyncView">
       </view>
       <view
-            name="%SyncView.name"
-            icon="icons/full/cview16/synch_synch.gif"
-            fastViewWidthRatio="0.25"
-            category="org.eclipse.team.ui"
-            class="org.eclipse.team.internal.ui.sync.views.SynchronizeView"
-            id="org.eclipse.team.sync.views.SynchronizeView">
-      </view>
-      <view
-            name="Newer Sync View"
+            name="Synchronize View"
             icon="icons/full/cview16/synch_synch.gif"
             fastViewWidthRatio="0.25"
             category="org.eclipse.team.ui"
             class="org.eclipse.team.internal.ui.sync.pages.NewSynchronizeView"
-            id="org.eclipse.team.sync.views.SynchronizeView2">
+            id="org.eclipse.team.sync.views.SynchronizeView">
       </view>
    </extension>
 <!-- **************** Synchronizing Perspective ******************* -->

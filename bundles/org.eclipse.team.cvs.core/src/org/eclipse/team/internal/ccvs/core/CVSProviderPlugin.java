@@ -43,7 +43,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.sync.RemoteContentsCache;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
@@ -138,7 +137,6 @@ public class CVSProviderPlugin extends Plugin {
 					CVS_WORKSPACE_SUBSCRIBER_ID, 
 					Policy.bind("CVSProviderPlugin.20"),   //$NON-NLS-1$
 					Policy.bind("CVSProviderPlugin.21")); //$NON-NLS-1$
-			TeamSubscriber.getSubscriberManager().registerSubscriber(cvsWorkspaceSubscriber);
 		}
 		return cvsWorkspaceSubscriber;
 	}

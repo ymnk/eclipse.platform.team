@@ -4,17 +4,40 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.action.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.TableLayout;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
@@ -26,12 +49,35 @@ import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
-import org.eclipse.team.internal.ui.sync.views.*;
+import org.eclipse.team.internal.ui.sync.views.StatisticsPanel;
+import org.eclipse.team.internal.ui.sync.views.SyncSetContentProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncSetTableContentProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncTableViewer;
+import org.eclipse.team.internal.ui.sync.views.SyncTreeViewer;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerLabelProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerSorter;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerTableSorter;
+import org.eclipse.team.internal.ui.sync.views.ViewStatusInformation;
 import org.eclipse.team.ui.sync.INewSynchronizeView;
 import org.eclipse.team.ui.sync.SubscriberPage;
-import org.eclipse.team.ui.sync.actions.*;
-import org.eclipse.ui.*;
-import org.eclipse.ui.actions.ActionContext;
+import org.eclipse.team.ui.sync.actions.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.DirectionFilterActionGroup;
+import org.eclipse.team.ui.sync.actions.INavigableControl;
+import org.eclipse.team.ui.sync.actions.NavigateAction;
+import org.eclipse.team.ui.sync.actions.OpenWithActionGroup;
+import org.eclipse.team.ui.sync.actions.PseudoConflictFilter;
+import org.eclipse.team.ui.sync.actions.RefactorActionGroup;
+import org.eclipse.team.ui.sync.actions.SubscriberAction;
+import org.eclipse.team.ui.sync.actions.SyncInfoChangeTypeFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.SyncViewerShowPreferencesAction;
+import org.eclipse.team.ui.sync.actions.ToggleViewLayoutAction;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.actions.WorkingSetFilterActionGroup;
 import org.eclipse.ui.part.IPageBookViewPage;
 import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.part.IShowInSource;
@@ -62,12 +108,21 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	private SubscriberPage page;
 	private IPageSite site;
 	
+	public final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
+	public final static int[] OUTGOING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING};
+	public final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
+	public final static int[] CONFLICTING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING};
+	
 	// Actions
 	private OpenWithActionGroup openWithActions;
 	private NavigateAction gotoNext;
 	private NavigateAction gotoPrevious;
 	private Action toggleLayoutTree;
 	private Action toggleLayoutTable;
+	private RefactorActionGroup refactorActions;
+	private SyncViewerShowPreferencesAction showPreferences;
+	private DirectionFilterActionGroup modesGroup;
+	private WorkingSetFilterActionGroup workingSetGroup;
 	
 	/**
 	 * Constructs a new SynchronizeView.
@@ -101,11 +156,16 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		
 		// create actions
 		openWithActions = new OpenWithActionGroup(view);
+		refactorActions = new RefactorActionGroup(view);
 		gotoNext = new NavigateAction(view, this, INavigableControl.NEXT);		
 		gotoPrevious = new NavigateAction(view, this, INavigableControl.PREVIOUS);
+		modesGroup = new DirectionFilterActionGroup(view, page);
 		
-		toggleLayoutTable = new ToggleViewAction(page, SubscriberPage.TABLE_LAYOUT);
-		toggleLayoutTree = new ToggleViewAction(page, SubscriberPage.TREE_LAYOUT);
+		toggleLayoutTable = new ToggleViewLayoutAction(page, SubscriberPage.TABLE_LAYOUT);
+		toggleLayoutTree = new ToggleViewLayoutAction(page, SubscriberPage.TREE_LAYOUT);
+		
+		showPreferences = new SyncViewerShowPreferencesAction(view.getSite().getShell());
+		workingSetGroup = new WorkingSetFilterActionGroup(getSite().getShell(), this);
 		
 		initializeSubscriberInput(input);
 	}
@@ -152,8 +212,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	}	
 
 	protected void setContextMenu(IMenuManager manager) {
-		openWithActions.setContext(new ActionContext(viewer.getSelection()));
 		openWithActions.fillContextMenu(manager);
+		refactorActions.fillContextMenu(manager);
 		manager.add(new Separator("SubscriberActionsGroup1")); //$NON-NLS-1$
 		manager.add(new Separator("SubscriberActionsGroup2")); //$NON-NLS-1$
 		manager.add(new Separator("SubscriberActionsGroup3")); //$NON-NLS-1$
@@ -477,34 +537,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	}
 	
 	/**
-	 * Makes this view visible in the active page.
-	 */
-	public static SynchronizeView showInActivePage(IWorkbenchPage activePage, boolean allowSwitchingPerspectives) {
-//		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
-//		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
-//		
-//		if(allowSwitchingPerspectives && ! TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE).equals(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE_NONE)) {			
-//			try {
-//				String pId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE);
-//				activePage = workbench.showPerspective(pId, window);
-//			} catch (WorkbenchException e) {
-//				Utils.handleError(window.getShell(), e, Policy.bind("SynchronizeView.14"), e.getMessage()); //$NON-NLS-1$
-//			}
-//		}
-//		try {
-//			if (activePage == null) {
-//				activePage = TeamUIPlugin.getActivePage();
-//				if (activePage == null) return null;
-//			}
-//			//return (SynchronizeView)activePage.showView(VIEW_ID);
-//		} catch (PartInitException pe) {
-//			Utils.handleError(window.getShell(), pe, Policy.bind("SynchronizeView.16"), pe.getMessage()); //$NON-NLS-1$
-//			return null;
-//		}
-		return null;
-	}
-	
-	/**
 	 * Update the title when either the subscriber or filter sync set changes.
 	 */
 	public void syncSetChanged(SyncSetChangedEvent event) {
@@ -611,15 +643,23 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPage#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(IActionBars actionBars) {
+	public void setActionBars(IActionBars actionBars) {		
 		IToolBarManager manager = actionBars.getToolBarManager();
 		manager.add(gotoNext);
 		manager.add(gotoPrevious);
+		modesGroup.fillActionBars(actionBars);
+		
+		// drop down menu
 		IMenuManager menu = actionBars.getMenuManager();
-		MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$
+		workingSetGroup.fillActionBars(actionBars);
+		MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
 		layoutMenu.add(toggleLayoutTable);
 		layoutMenu.add(toggleLayoutTree);
 		menu.add(layoutMenu);
+		menu.add(new Separator());
+		menu.add(showPreferences);
+		
+		// allow overrides
 		page.setActionsBars(actionBars);
 	}
 
@@ -628,10 +668,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	 */
 	public IPageSite getSite() {
 		return this.site;
-	}
-
-	public int getMode() {
-		return 0;
 	}
 
 	public int getLayout() {
@@ -644,6 +680,47 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	public void propertyChange(PropertyChangeEvent event) {
 		if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_LAYOUT)) {
 			switchViewerType(((Integer)event.getNewValue()).intValue());
+		} else if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_MODE)) {
+			updateMode(((Integer)event.getNewValue()).intValue());
+		} else if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_WORKINGSET)) {
+			updateWorkingSet((IWorkingSet)event.getNewValue());
+		} else if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
+			Object newValue = event.getNewValue();
+			if (newValue instanceof IWorkingSet) {	
+				updateWorkingSet((IWorkingSet)newValue);
+			} else if (newValue == null) {
+				updateWorkingSet(null);
+			}
+		}
+	}
+
+	private void updateWorkingSet(IWorkingSet set) {
+		input.setWorkingSet(set);
+		updateTooltip();
+	}
+
+	private void updateMode(int mode) {
+		int[] modeFilter = BOTH_MODE_FILTER;
+		switch(mode) {
+			case SubscriberPage.INCOMING_MODE:
+				modeFilter = INCOMING_MODE_FILTER; break;
+			case SubscriberPage.OUTGOING_MODE:
+				modeFilter = OUTGOING_MODE_FILTER; break;
+			case SubscriberPage.BOTH_MODE:
+				modeFilter = BOTH_MODE_FILTER; break;
+			case SubscriberPage.CONFLICTING_MODE:
+				modeFilter = CONFLICTING_MODE_FILTER; break;
+		}
+		try {
+			input.setFilter(
+					new AndSyncInfoFilter(
+						new SyncInfoFilter[] {
+						   new SyncInfoDirectionFilter(modeFilter), 
+						   new SyncInfoChangeTypeFilter(new int[] {SyncInfo.ADDITION, SyncInfo.DELETION, SyncInfo.CHANGE}),
+						   new PseudoConflictFilter()
+			}), new NullProgressMonitor());
+		} catch (TeamException e) {
+			Utils.handleError(getSite().getShell(), e, Policy.bind("SynchronizeView.16"), e.getMessage()); //$NON-NLS-1$
 		}
 	}
 }

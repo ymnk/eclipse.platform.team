@@ -8,30 +8,22 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.actions;
+package org.eclipse.team.ui.sync.actions;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.sync.ISynchronizeViewPage;
 
-class CancelSubscription extends Action {
-	private TeamSubscriber subscriber;
-	private SynchronizeView view;
-	
-	public CancelSubscription(SynchronizeView view, TeamSubscriber s) {
-		this.subscriber = s;
-		this.view = view;
-		Utils.initAction(this, "action.cancelSubscriber."); //$NON-NLS-1$
-		// don't enable until necessary
-		setEnabled(false);
+public class RemoveSynchronizeViewPageAction extends Action {
+	private ISynchronizeViewPage page;
+
+	public RemoveSynchronizeViewPageAction(ISynchronizeViewPage page) {
+		this.page = page;
+		Utils.initAction(this, "action.removePage."); //$NON-NLS-1$
 	}
 	
 	public void run() {
-		view.removeSubscriber(subscriber);
-	}
-
-	public void setSubscriber(TeamSubscriber subscriber) {
-		this.subscriber = subscriber;
+		TeamUI.getSynchronizeManager().removeSynchronizePages(new ISynchronizeViewPage[] {page});
 	}
 }

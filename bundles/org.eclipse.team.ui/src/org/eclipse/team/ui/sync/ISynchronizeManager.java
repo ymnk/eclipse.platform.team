@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
+import org.eclipse.ui.IWorkbenchPage;
+
 /**
  * Manages synchronization pages.
  * <p>
@@ -58,4 +60,6 @@ public interface ISynchronizeManager {
 	 * @return a collection of consoles registered with the console manager
 	 */
 	public ISynchronizeViewPage[] getSynchronizePages();
+	
+	public INewSynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage page);
 }

@@ -17,7 +17,6 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.OpenFileAction;
 import org.eclipse.ui.actions.OpenWithMenu;
@@ -43,12 +42,7 @@ public class OpenWithActionGroup extends ActionGroup {
 	}
 
 	public void fillContextMenu(IMenuManager menu) {
-		ActionContext context = getContext();
-		IStructuredSelection selection = null;
-		if (context != null) {
-			selection = (IStructuredSelection) context.getSelection();	
-		}	
-		fillOpenWithMenu(menu, selection);
+		fillOpenWithMenu(menu, (IStructuredSelection)part.getSite().getPage().getSelection());
 	}
 
 	/**

@@ -23,6 +23,12 @@ import org.eclipse.ui.IViewPart;
  */
 public interface INewSynchronizeView extends IViewPart {
 
+	/**
+	 * The id for this view
+	 */
+	public static final String VIEW_ID = "org.eclipse.team.sync.views.SynchronizeView";
+	
+	
 	public void display(ISynchronizeViewPage page);
 	
 	public ISynchronizeViewPage getActivePage();

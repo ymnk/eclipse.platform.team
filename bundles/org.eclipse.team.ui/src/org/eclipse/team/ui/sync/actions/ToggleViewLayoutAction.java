@@ -15,18 +15,17 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.team.ui.sync.SubscriberPage;
 
-public class ToggleViewAction extends Action implements IPropertyChangeListener {	
+public class ToggleViewLayoutAction extends Action implements IPropertyChangeListener {	
 	private int layout;
 	private SubscriberPage page;
 	
-	public ToggleViewAction(SubscriberPage page, int layout) {
+	public ToggleViewLayoutAction(SubscriberPage page, int layout) {
 		super(null, SWT.RADIO);
 		this.page = page;
 		this.layout = layout;
-		if(layout == SynchronizeView.TABLE_VIEW) {
+		if(layout == SubscriberPage.TABLE_LAYOUT) {
 			Utils.initAction(this, "action.toggleViewFlat."); //$NON-NLS-1$	
 		} else {
 			Utils.initAction(this, "action.toggleViewHierarchical."); //$NON-NLS-1$
@@ -46,7 +45,6 @@ public class ToggleViewAction extends Action implements IPropertyChangeListener 
 		if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_LAYOUT)) {
 			Integer newLayout = (Integer)event.getNewValue();
 			setChecked(newLayout.intValue() == layout);
-		}
-		
+		}		
 	}
 }
