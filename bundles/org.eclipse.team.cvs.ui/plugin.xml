@@ -1026,9 +1026,11 @@
          </action>
          <action
                helpContextId="org.eclipse.team.cvs.ui.team_commit_action_context"
+               allowLabelUpdate="true"
+               retarget="true"
                label="%CommitAction.label"
-               definitionId="org.eclipse.team.cvs.ui.commit"
                class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
+               definitionId="org.eclipse.team.cvs.ui.commit"
                tooltip="%CommitAction.tooltip"
                menubarPath="cvs.main/group1"
                id="org.eclipse.team.cvs.ui.commit">

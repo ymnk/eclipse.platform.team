@@ -19,6 +19,8 @@ import java.util.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -34,6 +36,7 @@ import org.eclipse.team.core.subscribers.SubscriberChangeSetCollector;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.ui.actions.CommitAction;
 import org.eclipse.team.internal.ccvs.ui.console.CVSOutputConsole;
 import org.eclipse.team.internal.ccvs.ui.model.CVSAdapterFactory;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
@@ -44,6 +47,8 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 import org.eclipse.ui.*;
+import org.eclipse.ui.internal.Workbench;
+import org.eclipse.ui.internal.WorkbenchWindow;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -697,7 +702,32 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			PlatformUI.getWorkbench().getDecoratorManager().setEnabled(CVSLightweightDecorator.ID, true);
 			store.setValue(ICVSUIConstants.PREF_FIRST_STARTUP, false);
 		}
+		
+		// register default global action handlers
+		((Workbench)PlatformUI.getWorkbench()).addWindowListener(new IWindowListener() {
 
+			public void windowActivated(IWorkbenchWindow window) {
+			}
+
+			public void windowDeactivated(IWorkbenchWindow window) {
+			}
+
+			public void windowClosed(IWorkbenchWindow window) {
+			}
+
+			public void windowOpened(IWorkbenchWindow window) {
+				final CommitAction commit = new CommitAction();
+				commit.init(window);
+				IAction commitAction = new Action("Commit Global") {
+					public void run() {
+						commit.run(this);
+					}
+				};
+				commitAction.setId("org.eclipse.team.cvs.ui.commit");
+				commitAction.setActionDefinitionId("org.eclipse.team.cvs.ui.commit");
+				((WorkbenchWindow)window).registerGlobalAction(commitAction);
+			}
+		});
 	}
 	
 	public static IWorkingSet getWorkingSet(IResource[] resources, String name) {
