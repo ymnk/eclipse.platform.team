@@ -214,5 +214,18 @@ public class SyncResourceSet {
 	public int size() {
 		return set.size();
 	}
+	/**
+	 * @param file
+	 * @return
+	 */
+	public SyncResource getNodeFor(IResource resource) {
+		for (Iterator it = set.iterator(); it.hasNext();) {
+			SyncResource node = (SyncResource)it.next();
+			if (node.getResource().equals(resource)) {
+				return node;
+			}
+		}
+		return null;
+	}
 	
 }

@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
@@ -34,6 +36,7 @@ import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.operations.UpdateOnlyMergableOperation;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.sync.views.SyncResource;
 import org.eclipse.team.ui.sync.AndSyncInfoFilter;
@@ -48,6 +51,8 @@ import org.eclipse.team.ui.sync.SyncResourceSet;
  */
 public class MergeUpdateAction extends SubscriberUpdateAction {
 
+	private List skippedFiles = new ArrayList();
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncResourceSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -58,6 +63,7 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 			SyncInfoFilter failFilter = getKnownFailureCases();
 			SyncResource[] willFail = syncSet.getNodes(failFilter);
 			syncSet.rejectNodes(failFilter);
+			skippedFiles.clear();
 			
 			monitor.beginTask(null, (syncSet.size() + willFail.length) * 100);
 			
@@ -66,14 +72,32 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 			super.run(syncSet, Policy.subMonitorFor(monitor, syncSet.size() * 100));
 			
 			// It is possible that some of the conflicting changes were not auto-mergable
-			// TODO: find the merges that failed and add them to the willFail set
-			if (willFail.length == 0) return;
-			SyncResourceSet failedSet = new SyncResourceSet(willFail);
-			promptForMergeableConflicts(failedSet);
+			SyncResourceSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
+			if (failedSet.isEmpty()) return;
+			promptForOverwrite(failedSet);
 			runOverwrite(failedSet.getSyncResources(), Policy.subMonitorFor(monitor, willFail.length * 100));
 		} finally {
 			monitor.done();
 		}
+	}
+
+	/**
+	 * @param syncSet
+	 * @param willFail
+	 * @param files
+	 * @return
+	 */
+	private SyncResourceSet createFailedSet(SyncResourceSet syncSet, SyncResource[] willFail, IFile[] files) {
+		List result = new ArrayList();
+		for (int i = 0; i < files.length; i++) {
+			IFile file = files[i];
+			SyncResource resource = syncSet.getNodeFor(file);
+			if (resource != null) result.add(resource);
+		}
+		for (int i = 0; i < willFail.length; i++) {
+			result.add(willFail[i]);
+		}
+		return new SyncResourceSet((SyncResource[]) result.toArray(new SyncResource[result.size()]));
 	}
 
 	/*
@@ -155,10 +179,10 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 			}
 		}
 		if (!additions.isEmpty()) {
-			mergeWithLocal((SyncResource[]) additions.toArray(new SyncResource[additions.size()]), manager, false /* include start tag */, true /* backups */, monitor);
+			mergeWithLocal((SyncResource[]) additions.toArray(new SyncResource[additions.size()]), manager, false /* include start tag */, monitor);
 		}
 		if (!changes.isEmpty()) {
-			mergeWithLocal((SyncResource[]) changes.toArray(new SyncResource[changes.size()]), manager, true /* include start tag */, true /* backups */, monitor);
+			mergeWithLocal((SyncResource[]) changes.toArray(new SyncResource[changes.size()]), manager, true /* include start tag */, monitor);
 		}
 	}
 	
@@ -166,7 +190,7 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 	 * Use "cvs update -j start -j end ..." to merge changes. This method will result in 
 	 * an error for addition conflicts.
 	 */
-	protected void mergeWithLocal(SyncResource[] nodes, RepositoryManager manager, boolean includeStartTag, boolean createBackup, IProgressMonitor monitor) throws TeamException {
+	protected void mergeWithLocal(SyncResource[] nodes, RepositoryManager manager, boolean includeStartTag, IProgressMonitor monitor) throws TeamException {
 		SyncTreeSubscriber subscriber = getSubscriber();
 		if (!(subscriber instanceof CVSMergeSubscriber)) {
 			throw new CVSException("Invalid subscriber: " + subscriber.getId());
@@ -187,9 +211,21 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 		}
 
 		// run a join update using the start and end tags and the join points
-		manager.update(getIResourcesFrom(nodes), options, createBackup, monitor);
+		try {
+			UpdateOnlyMergableOperation operation = new UpdateOnlyMergableOperation(getShell(), getIResourcesFrom(nodes), options);
+			operation.run(monitor);
+			addSkippedFiles(operation.getSkippedFiles());
+		} catch (InvocationTargetException e) {
+			throw CVSException.wrapException(e);
+		} catch (InterruptedException e) {
+			Policy.cancelOperation();
+		}
 	}
 
+	private void addSkippedFiles(IFile[] files) {
+		skippedFiles.add(Arrays.asList(files));
+	}
+	
 	/* (non-Javadoc)
 	 * 
 	 * Return true for all conflicting changes since the server does not report
@@ -208,7 +244,7 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 	 * 
 	 * @return 0 to cancel, 1 to only update mergeable conflicts, 2 to overwrite if unmergeable
 	 */
-	protected boolean promptForMergeableConflicts(final SyncResourceSet syncSet) {
+	protected boolean promptForOverwrite(final SyncResourceSet syncSet) {
 		final int[] result = new int[] {Dialog.CANCEL};
 		final Shell shell = getShell();
 		shell.getDisplay().syncExec(new Runnable() {
