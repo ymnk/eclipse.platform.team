@@ -123,7 +123,7 @@ public abstract class ChangeSetCapability {
      * @return whether checked-in change sets should be enabled for the given state 
      * in the configuration
      */
-    public final boolean enableCheckedInChangeSetsFor(ISynchronizePageConfiguration configuration) {
+    public boolean enableCheckedInChangeSetsFor(ISynchronizePageConfiguration configuration) {
         return supportsCheckedInChangeSets() && 
         	(configuration.getMode() == ISynchronizePageConfiguration.INCOMING_MODE ||
         	        configuration.getComparisonType() == ISynchronizePageConfiguration.TWO_WAY);
@@ -136,7 +136,7 @@ public abstract class ChangeSetCapability {
      * @return whether active change sets should be enabled for the given state 
      * in the configuration
      */
-    public final boolean enableActiveChangeSetsFor(ISynchronizePageConfiguration configuration) {
+    public boolean enableActiveChangeSetsFor(ISynchronizePageConfiguration configuration) {
         return supportsActiveChangeSets() && 
         	configuration.getMode() == ISynchronizePageConfiguration.OUTGOING_MODE;
     }

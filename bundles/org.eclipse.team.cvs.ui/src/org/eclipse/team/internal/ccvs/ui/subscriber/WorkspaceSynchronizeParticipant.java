@@ -126,14 +126,6 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 	}
 	
 	public class WorkspaceChangeSetCapability extends CVSChangeSetCapability {
-
-        /* (non-Javadoc)
-         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#supportsActiveChangeSets()
-         */
-        public boolean supportsActiveChangeSets() {
-            return true;
-        }
-
         /* (non-Javadoc)
          * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#createChangeSet(org.eclipse.team.core.synchronize.SyncInfo[])
          */

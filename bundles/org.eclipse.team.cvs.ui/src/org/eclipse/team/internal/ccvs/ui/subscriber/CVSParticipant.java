@@ -155,8 +155,16 @@ public class CVSParticipant extends SubscriberParticipant {
      */
     public ChangeSetCapability getChangeSetCapability() {
         if (capability == null) {
-            capability = new CVSChangeSetCapability();
+            capability = createChangeSetCapability();
         }
         return capability;
+    }
+
+    /**
+     * Create the change set capability for this particpant.
+     * @return the created capability
+     */
+    protected CVSChangeSetCapability createChangeSetCapability() {
+        return new CVSChangeSetCapability();
     }
 }

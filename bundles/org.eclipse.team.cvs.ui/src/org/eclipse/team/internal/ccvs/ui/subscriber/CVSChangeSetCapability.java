@@ -28,7 +28,7 @@ public class CVSChangeSetCapability extends ChangeSetCapability {
      * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#supportsActiveChangeSets()
      */
     public boolean supportsActiveChangeSets() {
-        return false;
+        return getActiveChangeSetManager() != null;
     }
 
     /* (non-Javadoc)
