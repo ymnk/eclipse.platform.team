@@ -1022,7 +1022,7 @@
                helpContextId="org.eclipse.team.cvs.ui.team_update_action_context"
                label="%UpdateAction.label"
                tooltip="%UpdateAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.UpdateSilentAction"
+               class="org.eclipse.team.internal.ccvs.ui.commands.WorkbenchWindowCommandDelegate"
                definitionId="org.eclipse.team.cvs.ui.update"
                menubarPath="cvs.main/group1"
                id="org.eclipse.team.cvs.ui.update">
@@ -1032,7 +1032,7 @@
                allowLabelUpdate="false"
                retarget="false"
                label="%CommitAction.label"
-               class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
+               class="org.eclipse.team.internal.ccvs.ui.commands.WorkbenchWindowCommandDelegate"
                definitionId="org.eclipse.team.cvs.ui.commit"
                tooltip="%CommitAction.tooltip"
                menubarPath="cvs.main/group1"
