@@ -37,7 +37,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		super(id, name, description);
 		
 		// install sync info participant
-		baseSynchronizer = new BaseSynchronizer();
+		baseSynchronizer = new CVSBaseResourceTree();
 		remoteSynchronizer = new RemoteTagSynchronizer(
 				baseSynchronizer.getSynchronizationCache(), 
 				new SynchronizationSyncBytesCache(new QualifiedName(CVSRemoteSynchronizer.SYNC_KEY_QUALIFIER, REMOTE_RESOURCE_KEY)),
@@ -88,7 +88,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 						if (remoteSynchronizer.isRemoteKnown(resource)) {
 							// The remote is known not to exist. If the local resource is
 							// managed then this information is stale
-							if (getBaseSynchronizer().hasRemote(resource)) {
+							if (getBaseResourceTree().hasRemote(resource)) {
 								if (canModifyWorkspace) {
 									remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_ZERO);
 								} else {
@@ -108,7 +108,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 					}
 				} else if (resource.getType() == IResource.FOLDER) {
 					// If the base has sync info for the folder, purge the remote bytes
-					if (getBaseSynchronizer().hasRemote(resource) && canModifyWorkspace) {
+					if (getBaseResourceTree().hasRemote(resource) && canModifyWorkspace) {
 						remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_ZERO);
 					}
 				}
@@ -172,14 +172,14 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizer()
 	 */
-	protected SubscriberResourceTree getRemoteSynchronizer() {
+	protected SubscriberResourceTree getRemoteResourceTree() {
 		return remoteSynchronizer;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizer()
 	 */
-	protected SubscriberResourceTree getBaseSynchronizer() {
+	protected SubscriberResourceTree getBaseResourceTree() {
 		return baseSynchronizer;
 	}
 	

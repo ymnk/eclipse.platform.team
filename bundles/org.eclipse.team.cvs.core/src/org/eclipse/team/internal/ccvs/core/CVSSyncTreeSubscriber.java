@@ -131,11 +131,11 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		} 
 	}
 	protected IResource[] refreshBase(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getBaseSynchronizer().refresh(new IResource[] {resource}, depth, getCacheFileContentsHint(), monitor);
+		return getBaseResourceTree().refresh(new IResource[] {resource}, depth, getCacheFileContentsHint(), monitor);
 	}
 
 	protected IResource[] refreshRemote(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getRemoteSynchronizer().refresh(new IResource[] {resource}, depth,  getCacheFileContentsHint(), monitor);
+		return getRemoteResourceTree().refresh(new IResource[] {resource}, depth,  getCacheFileContentsHint(), monitor);
 	}
 
 	private boolean getCacheFileContentsHint() {
@@ -154,7 +154,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(resource);
 			if (cvsThing.isIgnored()) {
 				// An ignored resource could have an incoming addition (conflict)
-				return getRemoteSynchronizer().hasRemote(resource);
+				return getRemoteResourceTree().hasRemote(resource);
 			}
 			return true;
 		} catch (TeamException e) {

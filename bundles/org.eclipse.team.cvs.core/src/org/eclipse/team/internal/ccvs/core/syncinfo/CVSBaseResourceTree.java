@@ -21,12 +21,12 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
  * A base sychronizer provides access to the base sync bytes for the 
  * resources in the local workspace
  */
-public class BaseSynchronizer extends SyncBytesSubscriberResourceTree {
+public class CVSBaseResourceTree extends SyncBytesSubscriberResourceTree {
 
 	/**
 	 * Create a synchronizer that uses the CVS local workspace synchronization information
 	 */
-	public BaseSynchronizer() {
+	public CVSBaseResourceTree() {
 		super(new CVSBaseSynchronizationCache());
 	}
 

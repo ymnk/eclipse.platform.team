@@ -138,14 +138,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizer()
 	 */
-	protected SubscriberResourceTree getRemoteSynchronizer() {
+	protected SubscriberResourceTree getRemoteResourceTree() {
 		return remoteSynchronizer;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizer()
 	 */
-	protected SubscriberResourceTree getBaseSynchronizer() {
+	protected SubscriberResourceTree getBaseResourceTree() {
 		return baseSynchronizer;
 	}
 
@@ -153,7 +153,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	 * @see org.eclipse.team.core.sync.TeamSubscriber#isSupervised(org.eclipse.core.resources.IResource)
 	 */
 	public boolean isSupervised(IResource resource) throws TeamException {
-		return getBaseSynchronizer().hasRemote(resource) || getRemoteSynchronizer().hasRemote(resource); 
+		return getBaseResourceTree().hasRemote(resource) || getRemoteResourceTree().hasRemote(resource); 
 	}
 
 	public CVSTag getStartTag() {

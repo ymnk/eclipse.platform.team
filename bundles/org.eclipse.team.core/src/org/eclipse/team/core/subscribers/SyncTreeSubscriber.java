@@ -87,22 +87,22 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 	}
 
 	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
-		return getRemoteSynchronizer().getRemoteResource(resource);
+		return getRemoteResourceTree().getRemoteResource(resource);
 	}
 
 	public ISubscriberResource getBaseResource(IResource resource) throws TeamException {
-		return getBaseSynchronizer().getRemoteResource(resource);
+		return getBaseResourceTree().getRemoteResource(resource);
 	}
 
 	/**
 	 * Return the synchronizer that provides the remote resources
 	 */
-	protected abstract SubscriberResourceTree getRemoteSynchronizer();
+	protected abstract SubscriberResourceTree getRemoteResourceTree();
 
 	/**
 	 * Return the synchronizer that provides the base resources
 	 */
-	protected abstract SubscriberResourceTree getBaseSynchronizer();
+	protected abstract SubscriberResourceTree getBaseResourceTree();
 
 	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
 		if (!isSupervised(resource)) return null;
@@ -160,7 +160,7 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 				// TODO: consider that there may be several sync states on this resource. There
 				// should instead be a method to check for the existance of a set of sync types on
 				// a resource.
-				if(member.isPhantom() && !getRemoteSynchronizer().hasRemote(member)) {
+				if(member.isPhantom() && !getRemoteResourceTree().hasRemote(member)) {
 					continue;
 				}
 				
