@@ -25,6 +25,7 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.*;
+import org.eclipse.ui.PlatformUI;
 
 public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubscriberListener {
 
@@ -95,16 +96,10 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 	}
 
 	protected void compareAndOpenDialog(final IRefreshEvent event, final SubscriberParticipant participant) {
-		TreeViewerAdvisor advisor = new TreeViewerAdvisor(targetId, null, syncInfoSet);
 		CompareConfiguration cc = new CompareConfiguration();
-		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
+		SynchronizeCompareInput input = new SynchronizeCompareInput(Utils.getShell(null), PlatformUI.getWorkbench().getActiveWorkbenchWindow(), cc, participant) {
 			public String getTitle() {
-				int numChanges = participant.getSubscriberSyncInfoCollector().getSyncInfoTree().size();
-				if (numChanges > 1) {
-					return Policy.bind("OpenComparedDialog.diffViewTitleMany", Integer.toString(numChanges)); //$NON-NLS-1$
-				} else {
-					return Policy.bind("OpenComparedDialog.diffViewTitleOne", Integer.toString(numChanges)); //$NON-NLS-1$
-				}
+				return "Changes";
 			}
 		};
 		try {

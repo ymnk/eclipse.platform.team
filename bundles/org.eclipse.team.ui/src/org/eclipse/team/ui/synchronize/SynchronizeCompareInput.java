@@ -11,10 +11,8 @@
 package org.eclipse.team.ui.synchronize;
 
 import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.compare.*;
 import org.eclipse.compare.internal.CompareEditor;
-import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
@@ -22,17 +20,17 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.*;
+import org.eclipse.ui.part.IPageBookViewPage;
+import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.progress.IProgressService;
 
 /**
@@ -47,27 +45,73 @@ import org.eclipse.ui.progress.IProgressService;
  */
 public class SynchronizeCompareInput extends CompareEditorInput implements IContentChangeListener {
 
-	private TreeViewerAdvisor diffViewerConfiguration;
-	private Viewer diffViewer;
-	private NavigationAction nextAction;
-	private NavigationAction previousAction;
-	
+	private ISynchronizeParticipant participant;
+	//private NavigationAction nextAction;
+	//private NavigationAction previousAction;
 	private boolean buffered = false;
+	private Shell shell;
+	private IWorkbenchWindow window;
+	private Viewer viewer;
+	private IPageBookViewPage page;
 
+	class CompareViewerPaneSite implements IPageSite {
+		public void registerContextMenu(String menuId, MenuManager menuManager, ISelectionProvider selectionProvider) {
+			// noop
+		}
+		public IActionBars getActionBars() {
+			return SynchronizeCompareInput.this.getActionBars(CompareViewerPane.getToolBarManager(viewer.getControl().getParent()));
+		}
+		public IWorkbenchPage getPage() {
+			return null;
+		}
+		public ISelectionProvider getSelectionProvider() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		public Shell getShell() {
+			return shell;
+		}
+		public IWorkbenchWindow getWorkbenchWindow() {
+			return window;
+		}
+		public void setSelectionProvider(ISelectionProvider provider) {
+			// noop
+		}
+		public Object getAdapter(Class adapter) {
+			return Platform.getAdapterManager().getAdapter(this, adapter);
+		}	
+	}
+	
 	/**
 	 * Create a <code>SynchronizeCompareInput</code> whose diff viewer is configured
 	 * using the provided <code>SyncInfoSetCompareConfiguration</code>.
 	 * @param configuration the compare configuration 
 	 * @param diffViewerConfiguration the diff viewer configuration 
 	 */
-	public SynchronizeCompareInput(CompareConfiguration configuration, TreeViewerAdvisor diffViewerConfiguration) {
+	public SynchronizeCompareInput(Shell shell, IWorkbenchWindow window, CompareConfiguration configuration, ISynchronizeParticipant participant) {
 		super(configuration);
-		this.diffViewerConfiguration = diffViewerConfiguration;
+		this.shell = shell;
+		this.window = window;
+		this.participant = participant;
+		ISynchronizePageConfiguration c = participant.createPageConfiguration();
+		IPageBookViewPage page = participant.createPage(c);
+		if(page instanceof ISynchronizePage) {
+			this.viewer = ((ISynchronizePage)page).getViewer();
+		} else {
+			// If we can't get access to a viewer, there isn't much more to do. Returning null will
+			// force the compare input to leave the diff viewer empty.
+			return;
+		}
 	}
 
-	public final Viewer createDiffViewer(Composite parent) {
-		this.diffViewer = internalCreateDiffViewer(parent, getViewerConfiguration());
-		diffViewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
+	public final Viewer createDiffViewer(Composite parent) {	
+		try {
+			page.init(new CompareViewerPaneSite());
+		} catch (PartInitException e) {
+			Utils.handle(e);
+			return null;
+		}
+		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
 		
 		// buffered merge mode, don't ask for save when switching nodes since contents will be buffered in diff nodes
 		// and saved when the input is saved.
@@ -80,46 +124,22 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 		 * it is currently accessing an internal compare interface that should be made public. See
 		 * the following bug report https://bugs.eclipse.org/bugs/show_bug.cgi?id=48795.
 		 */	
-		INavigatable nav= new INavigatable() {
-			public boolean gotoDifference(boolean next) {
-				return diffViewerConfiguration.navigate(next);
-			}
-		};
-		diffViewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
+//		INavigatable nav= new INavigatable() {
+//			public boolean gotoDifference(boolean next) {
+//				return diffViewerConfiguration.navigate(next);
+//			}
+//		};
+//		diffViewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
+//		
+//		nextAction = new NavigationAction(true);
+//		previousAction = new NavigationAction(false);
+//		nextAction.setCompareEditorInput(this);
+//		previousAction.setCompareEditorInput(this);
 		
-		nextAction = new NavigationAction(true);
-		previousAction = new NavigationAction(false);
-		nextAction.setCompareEditorInput(this);
-		previousAction.setCompareEditorInput(this);
-		
-		initializeToolBar(diffViewer.getControl().getParent());
-		initializeDiffViewer(diffViewer);
-		diffViewerConfiguration.navigate(true);
-		return diffViewer;
-	}
-
-	/**
-	 * Create the diff viewer for this compare input. This method simply creates the widget.
-	 * Any initialization is performed in the <code>initializeDiffViewer(StructuredViewer)</code>
-	 * method. The default diff viewer is a <code>SyncInfoDiffTreeViewer</code>. Subclass may override.
-	 * @param parent the parent <code>Composite</code> of the diff viewer to be created
-	 * @param diffViewerConfiguration the configuration for the diff viewer
-	 * @return the created diff viewer
-	 */
-	protected StructuredViewer internalCreateDiffViewer(Composite parent, TreeViewerAdvisor diffViewerConfiguration) {
-		TreeViewer viewer = new TreeViewerAdvisor.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		GridData data = new GridData(GridData.FILL_BOTH);
-		viewer.getControl().setLayoutData(data);
-		diffViewerConfiguration.initializeViewer(viewer);
+	//nitializeToolBar(diffViewer.getControl().getParent());
+		initializeDiffViewer(viewer);
+		//diffViewerConfiguration.navigate(true);
 		return viewer;
-	}
-
-	protected TreeViewerAdvisor getViewerConfiguration() {
-		return diffViewerConfiguration;
-	}
-	
-	protected Viewer getViewer() {
-		return diffViewer;
 	}
 	
 	/**
@@ -171,10 +191,10 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 	}
 	
 	public void contributeToToolBar(ToolBarManager tbm) {	
-		if(nextAction != null && previousAction != null) { 
-			tbm.appendToGroup("navigation", nextAction); //$NON-NLS-1$
-			tbm.appendToGroup("navigation", previousAction); //$NON-NLS-1$
-		}
+//		if(nextAction != null && previousAction != null) { 
+//			tbm.appendToGroup("navigation", nextAction); //$NON-NLS-1$
+//			tbm.appendToGroup("navigation", previousAction); //$NON-NLS-1$
+//		}
 	}
 	
 	private void initializeToolBar(Composite parent) {
@@ -184,7 +204,7 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 			tbm.add(new Separator("navigation")); //$NON-NLS-1$
 			contributeToToolBar(tbm);
 			IActionBars bars = getActionBars(tbm);
-			getViewerConfiguration().fillActionBars(bars);
+//			getViewerConfiguration().fillActionBars(bars);
 			tbm.update(true);
 		}
 	}
@@ -200,13 +220,6 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 			}
 		}
 		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		return getViewerConfiguration().prepareInput(monitor);
 	}	
 	
 	/*
@@ -215,7 +228,7 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 	 */
 	public void saveChanges(IProgressMonitor pm) throws CoreException {
 		super.saveChanges(pm);
-		ISynchronizeModelElement root = (ISynchronizeModelElement)diffViewerConfiguration.getViewer().getInput();
+		ISynchronizeModelElement root = (ISynchronizeModelElement)viewer.getInput();
 		if (root != null && root instanceof DiffNode) {
 			try {
 				commit(pm, (DiffNode)root);
@@ -294,5 +307,12 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 			public void updateActionBars() {
 			}
 		};
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+		return viewer.getInput();
 	}
 }

@@ -110,6 +110,7 @@ public final class RefreshSubscriberJob extends WorkspaceJob {
 		this.subscriber = subscriber;
 		setPriority(Job.DECORATE);
 		setRefreshInterval(3600 /* 1 hour */);
+		setUser(true);
 		
 		// Handle restarting of job if it is configured as a scheduled refresh job.
 		addJobChangeListener(new JobChangeAdapter() {
@@ -143,7 +144,7 @@ public final class RefreshSubscriberJob extends WorkspaceJob {
 			collector.setProgressGroup(group, 20);
 			setProperty(new QualifiedName("org.eclipse.ui.workbench.progress", "keep"), Boolean.TRUE);
 		}
-		setUser(getCollector() != null);
+		//setUser(getCollector() != null);
 		return shouldRun; 
 	}
 

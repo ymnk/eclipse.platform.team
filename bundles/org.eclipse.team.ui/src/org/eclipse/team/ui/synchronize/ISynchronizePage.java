@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.PartInitException;
 
 /**
@@ -23,9 +24,7 @@ import org.eclipse.ui.PartInitException;
  * The page is given this context in addition to the 
  * {@link org.eclipse.ui.part.IPageSite}
  * provided when the page is used in a view. However, the page site
- * may not be provided when the page appears in an editor or dialog
- * while the <code>ISynchronizePageSite</code> is still provided in these
- * cases.
+ * may not be provided when the page appears in an editor or dialog.
  */
 public interface ISynchronizePage {
 	
@@ -38,4 +37,10 @@ public interface ISynchronizePage {
 	 * @throws PartInitException
 	 */
 	public void init(ISynchronizePageSite site) throws PartInitException;
+	
+	/**
+	 * Returns the viewer associated with this page or <code>null</code> if the page
+	 * doesn't have a viewer.
+	 */
+	public Viewer getViewer();
 }
