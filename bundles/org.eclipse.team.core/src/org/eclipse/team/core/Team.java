@@ -225,16 +225,14 @@ public final class Team {
 	}
 	
 	/**
-	 * @deprecated Use RepositoryProvider.unmap(IProject)
+	 * Utility method for removing a project nature from a project.
+	 * 
+	 * @param proj the project to remove the nature from
+	 * @param natureId the nature id to remove
+	 * @param monitor a progress monitor to indicate the duration of the operation, or
+	 * <code>null</code> if progress reporting is not required.
 	 */
-	public static void removeNatureFromProject(IProject proj, String natureID, IProgressMonitor monitor) throws TeamException {
-		if(!RepositoryProvider.getProvider(proj).getID().equals(natureID))
-			throw new TeamException(Policy.bind("manager.errorRemovingNature", proj.getName(), natureID)); //$NON-NLS-1$
-
-		RepositoryProvider.unmap(proj);
-	}
-
-	public static void reallyRemoveNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
+	public static void removeNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
 		try {
 			IProjectDescription description = proj.getDescription();
 			String[] prevNatures= description.getNatureIds();
@@ -245,12 +243,30 @@ public final class Team {
 		} catch(CoreException e) {
 			throw wrapException(Policy.bind("manager.errorRemovingNature", proj.getName(), natureId), e); //$NON-NLS-1$
 		}
-	}	
+	}
+	
 	/**
-	 * @deprecated Use RepositoryProvider.map(IProject, String)
+	 * Utility method for adding a nature to a project.
+	 * 
+	 * @param proj the project to add the nature
+	 * @param natureId the id of the nature to assign to the project
+	 * @param monitor a progress monitor to indicate the duration of the operation, or
+	 * <code>null</code> if progress reporting is not required.
+	 * 
+	 * @exception TeamException if a problem occured setting the nature
 	 */
 	public static void addNatureToProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
-		RepositoryProvider.map(proj, natureId);
+		try {
+			IProjectDescription description = proj.getDescription();
+			String[] prevNatures= description.getNatureIds();
+			String[] newNatures= new String[prevNatures.length + 1];
+			System.arraycopy(prevNatures, 0, newNatures, 0, prevNatures.length);
+			newNatures[prevNatures.length]= natureId;
+			description.setNatureIds(newNatures);
+			proj.setDescription(description, monitor);
+		} catch(CoreException e) {
+			throw wrapException(Policy.bind("manager.errorSettingNature", proj.getName(), natureId), e); //$NON-NLS-1$
+		}
 	}
 	
 	/*
