@@ -27,6 +27,21 @@ Clients implementing synchronize participants should subclass this
   may be displayed simultaneously in multiple synchronize views, in different 
   workbench windows.</p>
 <p>The class <b>TeamSubscriberParticipant</b> provides an implementation of a 
-  synchronize participant that enables synchronization for a <b>TeamSubscriber</b>.</p>
+  synchronize participant that enables synchronization for a <b>TeamSubscriber</b>. 
+  For providers that implement a <strong>TeamSubscriber</strong> this is the easiest 
+  method of integrating into the Synchronize View. The steps would be:</p>
+<ul>
+  <li>Implement a concrete subclass of <strong>TeamSubscriber</strong>.</li>
+  <li>Subclass <strong>TeamSubscriberParticipant</strong> and provide concrete 
+    implementations for init(QualifiedName) and saveState().</li>
+  <li>Add actions to the context menu of the participant by creating a viewerContribution 
+    in your plugin.xml with the targetID field equal to that of your participants 
+    qualifier part of their id. For example: 
+    <pre>&lt;viewerContribution id=&quot;org.eclipse.myteamplugin.syncparticipant.actions&quot;      
+ targetID=&quot;org.eclipse.myteamplugin.syncparticipant&quot;&gt;</pre>
+  </li>
+  <li>Add actions to the view's action bar by appending them via the TeamSubscriberParticipant#setActionBars 
+    method.</li>
+</ul>
 </body>
 </html>

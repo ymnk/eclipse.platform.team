@@ -29,17 +29,17 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 	private Action commitToolbar;
 	private Action updateToolbar;
 	
-	public final static QualifiedName ID = new QualifiedName("org.eclipse.team.cvs.ui.cvsworkspace-participant", "syncparticipant");
+	public final static QualifiedName ID = new QualifiedName("org.eclipse.team.cvs.ui.cvsworkspace-participant", "syncparticipant"); //$NON-NLS-1$ //$NON-NLS-2$
 	
 	protected void setSubscriber(TeamSubscriber subscriber) {
 		super.setSubscriber(subscriber);
 		modes = new DirectionFilterActionGroup(this, ALL_MODES);
 		
-		commitToolbar = new CVSActionDelegate(new SubscriberCommitAction(), this);
-		updateToolbar = new CVSActionDelegate(new WorkspaceUpdateAction(), this);
+		commitToolbar = new CVSActionDelegate(new SubscriberCommitAction());
+		updateToolbar = new CVSActionDelegate(new WorkspaceUpdateAction());
 		
-		Utilities.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle());
-		Utilities.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle());
+		Utilities.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle()); //$NON-NLS-1$
+		Utilities.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
 	}
 	
 	/* (non-Javadoc)

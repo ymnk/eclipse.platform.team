@@ -11,11 +11,15 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.jface.action.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
-import org.eclipse.team.internal.ccvs.ui.*;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.core.SaveContext;
 import org.eclipse.team.internal.core.SaveContextXMLWriter;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -55,7 +59,7 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	private void makeActions() {
 		removeAction = new RemoveSynchronizeParticipantAction(this);
 		modes = new DirectionFilterActionGroup(this, INCOMING_MODE | CONFLICTING_MODE);
-		updateAdapter = new CVSActionDelegate(new MergeUpdateAction(), this);
+		updateAdapter = new CVSActionDelegate(new MergeUpdateAction());
 		Utilities.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle());
 		setMode(INCOMING_MODE);
 	}
@@ -108,10 +112,11 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	 */
 	protected void dispose() {
 		super.dispose();
+		((CVSMergeSubscriber)getInput().getSubscriber()).cancel();
 		SaveContextXMLWriter.deleteXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(getId().getLocalName())); //$NON-NLS-1$
 	}
 	
 	private String getMetaFileName(String id) {
-		return "mergeSyncPartners" + id + ".xml";
+		return "mergeSyncPartners" + id + ".xml"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 }

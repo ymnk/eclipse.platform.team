@@ -83,6 +83,30 @@ public class CVSLightweightDecorator
 		}
 	}
 
+	public static class Decoration implements IDecoration {
+		public String prefix, suffix;
+		public ImageDescriptor overlay;
+		
+		/**
+		 * @see org.eclipse.jface.viewers.IDecoration#addPrefix(java.lang.String)
+		 */
+		public void addPrefix(String prefix) {
+			this.prefix = prefix;
+		}
+		/**
+		 * @see org.eclipse.jface.viewers.IDecoration#addSuffix(java.lang.String)
+		 */
+		public void addSuffix(String suffix) {
+			this.suffix = suffix;
+		}
+		/**
+		 * @see org.eclipse.jface.viewers.IDecoration#addOverlay(org.eclipse.jface.resource.ImageDescriptor)
+		 */
+		public void addOverlay(ImageDescriptor overlay) {
+			this.overlay = overlay;
+		}
+	}
+	
 	static {
 		dirty = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
 		checkedIn = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));

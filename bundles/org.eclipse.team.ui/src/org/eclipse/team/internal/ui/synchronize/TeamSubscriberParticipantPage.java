@@ -59,7 +59,6 @@ import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetTableContentProvider;
 import org.eclipse.team.internal.ui.synchronize.views.SyncTableViewer;
 import org.eclipse.team.internal.ui.synchronize.views.SyncTreeViewer;
-import org.eclipse.team.internal.ui.synchronize.views.SyncViewerLabelProvider;
 import org.eclipse.team.internal.ui.synchronize.views.SyncViewerSorter;
 import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
@@ -286,7 +285,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	protected void createTreeViewerPartControl(Composite parent) {
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer = new SyncTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		viewer.setLabelProvider(new SyncViewerLabelProvider());
+		viewer.setLabelProvider(participant.getLabelProvider());
 		viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
 		((TreeViewer)viewer).getTree().setLayoutData(data);
 	}
@@ -312,7 +311,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		// Set the table contents
 		viewer = tableViewer;
 		viewer.setContentProvider(new SyncSetTableContentProvider());
-		viewer.setLabelProvider(new SyncViewerLabelProvider());		
+		viewer.setLabelProvider(participant.getLabelProvider());		
 		viewer.setSorter(new SyncViewerTableSorter());
 	}
 	

@@ -1,4 +1,4 @@
-package org.eclipse.team.internal.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,13 +18,20 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
+import org.eclipse.team.internal.ui.synchronize.views.CompressedFolder;
+import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
+import org.eclipse.team.internal.ui.synchronize.views.SynchronizeViewNode;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
- * The SyncViewerLabelProvider can be used in either a tree or table.
+ * Provides basic labels for the subscriber participant synchronize view 
+ * page. This class provides a facility for subclasses to define annotations
+ * on the labels and icons of adaptable objects.
+ * 
+ * @since 3.0
  */
-public class SyncViewerLabelProvider extends LabelProvider implements ITableLabelProvider {
+public class TeamSubscriberParticipantLabelProvider extends LabelProvider implements ITableLabelProvider {
 	
 	//column constants
 	private static final int COL_RESOURCE = 0;
@@ -47,7 +54,15 @@ public class SyncViewerLabelProvider extends LabelProvider implements ITableLabe
 		return compressedFolderImage;
 	}
 
-	public SyncViewerLabelProvider() {
+	public TeamSubscriberParticipantLabelProvider() {
+	}
+	
+	protected String decorateText(String input, Object resource) {
+		return input;
+	}
+	
+	protected Image decorateImage(Image base, Object resource) {
+		return base;
 	}
 	
 	public String getText(Object element) {
@@ -58,7 +73,7 @@ public class SyncViewerLabelProvider extends LabelProvider implements ITableLabe
 		} else {
 			name = workbenchLabelProvider.getText(resource);		
 		}			
-		return name;
+		return decorateText(name, resource);
 	}
 	
 	/**
@@ -69,25 +84,28 @@ public class SyncViewerLabelProvider extends LabelProvider implements ITableLabe
 	 */
 	public Image getImage(Object element) {
 		Image decoratedImage = null;
-		IResource resource = SyncSetContentProvider.getResource(element);
-		
+		IResource resource = SyncSetContentProvider.getResource(element);		
 		if (element instanceof CompressedFolder) {
 			decoratedImage = compareConfig.getImage(getCompressedFolderImage(), IRemoteSyncElement.IN_SYNC);
-		} else {			
-			int kind = SyncSetContentProvider.getSyncKind(element);
-			switch (kind & IRemoteSyncElement.DIRECTION_MASK) {
-				case IRemoteSyncElement.OUTGOING:
-					kind = (kind &~ IRemoteSyncElement.OUTGOING) | IRemoteSyncElement.INCOMING;
-					break;
-				case IRemoteSyncElement.INCOMING:
-					kind = (kind &~ IRemoteSyncElement.INCOMING) | IRemoteSyncElement.OUTGOING;
-					break;
-			}	
+		} else {						
 			Image image = workbenchLabelProvider.getImage(resource);
-			decoratedImage = compareConfig.getImage(image, kind);
-		}
-		
-		return propagateConflicts(decoratedImage, element, resource);
+			decoratedImage = getCompareImage(image, element);			
+		}		
+		decoratedImage = propagateConflicts(decoratedImage, element, resource);
+		return decorateImage(decoratedImage, element);
+	}
+	
+	private Image getCompareImage(Image base, Object element) {
+		int kind = SyncSetContentProvider.getSyncKind(element);
+		switch (kind & SyncInfo.DIRECTION_MASK) {
+			case SyncInfo.OUTGOING:
+				kind = (kind &~ SyncInfo.OUTGOING) | SyncInfo.INCOMING;
+				break;
+			case IRemoteSyncElement.INCOMING:
+				kind = (kind &~ SyncInfo.INCOMING) | SyncInfo.OUTGOING;
+				break;
+		}	
+		return compareConfig.getImage(base, kind);
 	}
 	
 	private Image propagateConflicts(Image base, Object element, IResource resource) {

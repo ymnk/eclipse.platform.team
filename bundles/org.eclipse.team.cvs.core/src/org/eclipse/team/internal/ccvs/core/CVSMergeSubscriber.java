@@ -58,8 +58,8 @@ import org.eclipse.team.internal.core.SaveContext;
  */
 public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResourceChangeListener, ITeamResourceChangeListener {
 
-	private final static String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant"; //$NON-NLS-1$
-	public static final String UNIQUE_ID_PREFIX = "merge-"; //$NON-NLS-1$
+	public static final String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant"; //$NON-NLS-1$
+	private static final String UNIQUE_ID_PREFIX = "merge-"; //$NON-NLS-1$
 	
 	private CVSTag start, end;
 	private List roots;
@@ -85,7 +85,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 
 	private static QualifiedName getUniqueId() {
 		String uniqueId = Long.toString(System.currentTimeMillis());
-		return new QualifiedName(QUALIFIED_NAME, "CVS" + UNIQUE_ID_PREFIX + uniqueId);
+		return new QualifiedName(QUALIFIED_NAME, "CVS" + UNIQUE_ID_PREFIX + uniqueId); //$NON-NLS-1$
 	}
 	
 	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		

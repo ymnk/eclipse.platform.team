@@ -14,14 +14,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -30,17 +34,15 @@ public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipan
 	private List delegates = new ArrayList(2); 
 	
 	protected class CVSActionDelegate extends Action {
-		private TeamSubscriberParticipant participant;
 		private IActionDelegate delegate;
 		
-		public CVSActionDelegate(IActionDelegate delegate, TeamSubscriberParticipant participant) {
+		public CVSActionDelegate(IActionDelegate delegate) {
 			this.delegate = delegate;
-			this.participant = participant;
 			addDelegate(this);			
 		}
 		
 		public void run() {
-			IStructuredContentProvider cp = (IStructuredContentProvider)participant.getPage().getViewer().getContentProvider(); 
+			IStructuredContentProvider cp = (IStructuredContentProvider)getPage().getViewer().getContentProvider(); 
 			StructuredSelection selection = new StructuredSelection(cp.getElements(CVSSynchronizeParticipant.this.getInput()));
 			if(! selection.isEmpty()) {
 				delegate.selectionChanged(this, selection);
@@ -113,5 +115,22 @@ public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipan
 	 */
 	public SubscriberInput getSubscriberInput() {
 		return getInput();
+	}
+		
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipant#getLabelProvider()
+	 */
+	public ILabelProvider getLabelProvider() {
+		return new TeamSubscriberParticipantLabelProvider() {
+			protected String decorateText(String input, Object resource) {
+				if(resource instanceof IResource) {
+					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
+					CVSLightweightDecorator.decorateTextLabel((IResource)resource, decoration, false, true);
+					return decoration.prefix + input + decoration.suffix;
+				} else {
+					return input;
+				}
+			}
+		};
 	}
 }

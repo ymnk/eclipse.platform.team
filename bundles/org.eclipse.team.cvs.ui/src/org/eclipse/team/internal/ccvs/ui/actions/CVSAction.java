@@ -48,7 +48,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
+import org.eclipse.team.internal.ui.synchronize.views.SynchronizeViewNode;
 import org.eclipse.ui.PlatformUI;
 
 /**
@@ -79,7 +79,7 @@ abstract public class CVSAction extends TeamAction {
 			handle(e);
 		}
 	}
-
+	
 	/**
 	 * This method gets invoked before the <code>CVSAction#execute(IAction)</code>
 	 * method. It can preform any prechecking and initialization required before 
@@ -96,12 +96,12 @@ abstract public class CVSAction extends TeamAction {
 		}
 		return true;
 	}
-
+	
 	/**
 	 * Actions must override to do their work.
 	 */
 	abstract protected void execute(IAction action) throws InvocationTargetException, InterruptedException;
-
+	
 	/**
 	 * This method gets invoked after <code>CVSAction#execute(IAction)</code>
 	 * if no exception occured. Sunclasses may override but should invoke this
@@ -145,7 +145,7 @@ abstract public class CVSAction extends TeamAction {
 	protected String getWarningTitle() {
 		return Policy.bind("CVSAction.warningTitle"); //$NON-NLS-1$
 	}
-
+	
 	/**
 	 * Return the message to be used for the parent MultiStatus when 
 	 * mulitple errors occur during an action.
@@ -201,7 +201,7 @@ abstract public class CVSAction extends TeamAction {
 			handle(exception, getErrorTitle(), null);
 			return;
 		}
-
+		
 		// For now, display both the exception and the problem status
 		// Later, we can determine how to display both together
 		if (exception != null) {
@@ -223,7 +223,7 @@ abstract public class CVSAction extends TeamAction {
 		}
 		CVSUIPlugin.openError(getShell(), title, message, new CVSException(statusToDisplay));
 	}
-
+	
 	/**
 	 * Convenience method for running an operation with the appropriate progress.
 	 * Any exceptions are propogated so they can be handled by the
@@ -246,31 +246,31 @@ abstract public class CVSAction extends TeamAction {
 		switch (progressKind) {
 			case PROGRESS_WORKBENCH_WINDOW :
 				try {
-					PlatformUI.getWorkbench().getActiveWorkbenchWindow().run(true, true, runnable);
-				} catch (InterruptedException e1) {
-					exceptions[0] = null;
-					e1.printStackTrace();
+				PlatformUI.getWorkbench().getActiveWorkbenchWindow().run(true, true, runnable);
+			} catch (InterruptedException e1) {
+				exceptions[0] = null;
+				e1.printStackTrace();
+			} catch (InvocationTargetException e) {
+				exceptions[0] = e;
+			}
+			break;
+		case PROGRESS_BUSYCURSOR :
+			BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
+			public void run() {
+				try {
+					innerRunnable.run(new NullProgressMonitor());
 				} catch (InvocationTargetException e) {
 					exceptions[0] = e;
+				} catch (InterruptedException e) {
+					exceptions[0] = e;
 				}
-				break;
-			case PROGRESS_BUSYCURSOR :
-				BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
-					public void run() {
-						try {
-							innerRunnable.run(new NullProgressMonitor());
-						} catch (InvocationTargetException e) {
-							exceptions[0] = e;
-						} catch (InterruptedException e) {
-							exceptions[0] = e;
-						}
-					}
-				});
-				break;
-			case PROGRESS_DIALOG :
-			default :
-				new ProgressMonitorDialog(getShell()).run(cancelable, true, innerRunnable);	
-				break;
+			}
+		});
+			break;
+		case PROGRESS_DIALOG :
+		default :
+			new ProgressMonitorDialog(getShell()).run(cancelable, true, innerRunnable);	
+			break;
 		}
 		if (exceptions[0] != null) {
 			if (exceptions[0] instanceof InvocationTargetException)
@@ -289,6 +289,8 @@ abstract public class CVSAction extends TeamAction {
 		return false;
 	}
 	
+	
+	
 	/**
 	 * Returns the selected CVS resources
 	 */
@@ -298,11 +300,7 @@ abstract public class CVSAction extends TeamAction {
 			resources = new ArrayList();
 			Iterator elements = ((IStructuredSelection) selection).iterator();
 			while (elements.hasNext()) {
-				Object next = elements.next();
-				if(next instanceof ITeamSubscriberParticipantNode) {
-					resources.add(((ITeamSubscriberParticipantNode)next).getSyncInfo().getRemote());
-					continue;
-				}
+				Object next = elements.next();				
 				if (next instanceof ICVSResource) {
 					resources.add(next);
 					continue;
@@ -322,7 +320,7 @@ abstract public class CVSAction extends TeamAction {
 		}
 		return new ICVSResource[0];
 	}
-
+	
 	/**
 	 * Get selected CVS remote folders
 	 */
@@ -352,7 +350,7 @@ abstract public class CVSAction extends TeamAction {
 		}
 		return new ICVSRemoteFolder[0];
 	}
-
+	
 	/**
 	 * Returns the selected remote resources
 	 */
@@ -388,7 +386,7 @@ abstract public class CVSAction extends TeamAction {
 		}
 		return new ICVSRemoteResource[0];
 	}
-		
+	
 	/**
 	 * A helper prompt condition for prompting for CVS dirty state.
 	 */
@@ -403,7 +401,7 @@ abstract public class CVSAction extends TeamAction {
 			}
 		};
 	}
-		
+	
 	/**
 	 * Checks if a the resources' parent's tags are different then the given tag. 
 	 * Prompts the user that they are adding mixed tags and returns <code>true</code> if 
@@ -435,7 +433,7 @@ abstract public class CVSAction extends TeamAction {
 									MessageDialog.QUESTION, 
 									new String[] {IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL}, 
 									0);
-									
+							
 							result[0] = dialog.open() == 0;
 							if(result[0] && dialog.isDontShowAgain()) {
 								store.setValue(ICVSUIConstants.PREF_PROMPT_ON_MIXED_TAGS, false);
@@ -480,5 +478,25 @@ abstract public class CVSAction extends TeamAction {
 	protected RepositoryManager getRepositoryManager() {
 		return CVSUIPlugin.getPlugin().getRepositoryManager();
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.actions.TeamAction#getSelectedResources()
+	 */
+	protected IResource[] getSelectedResources() {
+		if(selection.isEmpty()) return new IResource[0];
+		Iterator it = selection.iterator();
+		List resources = new ArrayList();
+		while(it.hasNext()) {
+			Object element = it.next();
+			if(element instanceof SynchronizeViewNode) {
+				resources.add(((SynchronizeViewNode)element).getResource());
+			} else {
+				Object adapter = getAdapter(element, IResource.class);
+				if (adapter instanceof IResource) {
+					resources.add(adapter);
+				}
+			}
+		}
+		return (IResource[]) resources.toArray(new IResource[resources.size()]);
+	}	
 }

@@ -285,7 +285,7 @@
                tooltip="%GenerateDiff.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.GenerateDiffFileAction"
                menubarPath="team.main/group1"
-               helpContextId="org.eclipse.team.cvs.ui.team_create_patch_action_context"
+               helpContextId="org.eclipse.team.cvs.ui.team_create__action_context"
                id="org.eclipse.team.ccvs.ui.GenerateDiff">
          </action>
          <action
@@ -626,7 +626,47 @@
 				class="org.eclipse.team.internal.ccvs.ui.subscriber.OverrideAndUpdateAction"
 				helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_overupdate_action"
 				id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.overupdate">
-			</action>  			
+			</action>
+         <action
+               label="%ShowHistoryAction.label"
+               tooltip="%ShowHistoryAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction"
+               menubarPath="SubscriberActionsGroup3"
+               helpContextId="org.eclipse.team.cvs.ui.show_in_history_action_context"
+               id="org.eclipse.team.ccvs.ui.showHistory">
+         </action>
+         <action
+               label="%ShowAnnotationAction.label"
+               tooltip="%ShowAnnotationAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction"
+               menubarPath="SubscriberActionsGroup3"
+               helpContextId="org.eclipse.team.cvs.ui.get_annotate_action_context"
+               id="org.eclipse.team.ccvs.ui.showAnnotation">
+         </action>			  			
+         <action
+               label="%BranchAction.label"
+               tooltip="%BranchAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.BranchAction"
+               menubarPath="SubscriberActionsGroup3"
+               helpContextId="org.eclipse.team.cvs.ui.team_branch_action_context"
+               id="org.eclipse.team.ccvs.ui.branch">
+         </action>
+         <action
+               label="%GenerateDiff.label"
+               tooltip="%GenerateDiff.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.GenerateDiffFileAction"
+               menubarPath="SubscriberActionsGroup3"
+               helpContextId="org.eclipse.team.cvs.ui.team_create_patch_action_context"
+               id="org.eclipse.team.ccvs.ui.GenerateDiff">
+         </action>     
+         <action
+               label="%IgnoreAction.label"
+               tooltip="%IgnoreAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction"
+               menubarPath="SubscriberActionsGroup3"
+               helpContextId="org.eclipse.team.cvs.ui.team_ignore_action_context"
+               id="org.eclipse.team.ccvs.ui.ignore">
+         </action>         
 		</viewerContribution>
         
 		<viewerContribution

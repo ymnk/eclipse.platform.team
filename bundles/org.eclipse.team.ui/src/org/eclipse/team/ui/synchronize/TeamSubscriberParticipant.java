@@ -3,13 +3,14 @@ package org.eclipse.team.ui.synchronize;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
+import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantPage;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantPage;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -74,10 +75,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		return page;
 	}
 	
-	public TeamSubscriberParticipantPage getPage() {
-		return page;
-	}
-	
 	public void setMode(int mode) {
 		int oldMode = getMode();
 		currentMode = mode;
@@ -116,6 +113,10 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public void setActionsBars(IActionBars actionBars, IToolBarManager detailsToolbar) {		
 	}
 	
+	public ILabelProvider getLabelProvider() {
+		return new TeamSubscriberParticipantLabelProvider();
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeViewPage#dispose()
 	 */
@@ -148,4 +149,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		this.input = new SubscriberInput(subscriber);
 		this.currentMode = BOTH_MODE;
 	}
+
+	protected TeamSubscriberParticipantPage getPage() {
+		return page;
+	}	
 }
