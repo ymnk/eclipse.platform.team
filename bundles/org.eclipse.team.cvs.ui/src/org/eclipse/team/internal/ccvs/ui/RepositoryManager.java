@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
@@ -108,6 +109,10 @@ public class RepositoryManager {
 		}
 		result.addAll(set);
 		return (CVSTag[])result.toArray(new CVSTag[0]);
+	}
+	
+	public Map getKnownProjectsAndVersions(ICVSRepositoryLocation location) {
+		return (Hashtable)versionTags.get(location);
 	}
 		
 	/*
