@@ -33,12 +33,6 @@ import org.eclipse.team.ui.sync.SubscriberAction;
 import org.eclipse.team.ui.sync.SyncResourceSet;
 import org.eclipse.ui.PlatformUI;
 
-/**
- * @author Administrator
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 public abstract class CVSSubscriberAction extends SubscriberAction {
 	
 	protected boolean isOutOfSync(SyncResource resource) {
@@ -57,9 +51,6 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		}
 	}
 	
-	/**
-	 * @param element
-	 */
 	protected void makeInSync(SyncResource element) throws TeamException {
 		if (isOutOfSync(element)) {
 			SyncResource parent = element.getParent();
@@ -88,9 +79,6 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		monitor.done();
 	}
 	
-	/**
-	 * @param resource
-	 */
 	private void makeOutgoing(SyncResource resource, IProgressMonitor monitor) throws TeamException {
 		SyncInfo info = resource.getSyncInfo();
 		if (info == null) return;
@@ -161,33 +149,20 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		};
 	}
 
-	/**
-	 * @param syncSet
-	 * @param monitor
-	 */
 	protected abstract void run(SyncResourceSet syncSet, IProgressMonitor monitor) throws CVSException;
 
-	/**
-	 * Returns the runnableContext.
-	 * @return IRunnableContext
-	 */
 	protected IRunnableContext getRunnableContext() {
 		return PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 	}
 	
 	/**
 	 * Filter the sync resource set using action specific criteria or input from the user.
-	 * @param selectedResources
-	 * @return
 	 */
 	protected SyncResourceSet getFilteredSyncResourceSet(SyncResource[] selectedResources) {
 		// If there are conflicts or outgoing changes in the syncSet, we need to warn the user.
 		return new SyncResourceSet(selectedResources);
 	}
 	
-	/**
-	 * @param nodes
-	 */
 	protected void pruneEmptyParents(SyncResource[] nodes) throws CVSException {
 		// TODO: A more explicit tie in to the pruning mechanism would be prefereable.
 		// i.e. I don't like referencing the option and visitor directly

@@ -60,7 +60,7 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup implements
 			this.viewTitle = viewTitle;
 		}
 		public void run() {
-			updateFilter();
+			updateFilter(this);
 		}
 		public int getFilter() {
 			return syncMode;
@@ -124,7 +124,9 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup implements
 				filters[i++] = action.getFilter();
 			}
 		}
-		return filters;
+		int[] enabledFilters = new int[i];
+		System.arraycopy(filters, 0, enabledFilters, 0, i);
+		return enabledFilters;
 	}
 
 	boolean isSet(int[] filters, int afilter) {
@@ -134,8 +136,15 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup implements
 		return false;
 	}
 
-	void updateFilter() {		
-		getRefreshGroup().refreshFilters();
+	void updateFilter(DirectionFilterAction action) {
+		int[] filters = getDirectionFilter();
+		
+		// don't allow all filters to be unchecked
+		if(filters.length == 0) {
+			action.setChecked(true);
+		} else  {
+			getRefreshGroup().refreshFilters();
+		}		
 	}
 	
 	public void updateCheckedState(int[] newFilter) {
