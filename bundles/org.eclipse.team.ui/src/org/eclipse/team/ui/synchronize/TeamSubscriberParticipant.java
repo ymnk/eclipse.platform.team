@@ -11,14 +11,15 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -29,9 +30,12 @@ import org.eclipse.ui.part.IPageBookViewPage;
  *
  * @since 3.0
  */
-public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
+public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
 	
-	private SubscriberInputSyncInfoSet syncInfoSet;
+	private SyncInfoCollector collector;
+	
+	private SyncInfoSetCollector filteredSyncSet;
+	
 	private RefreshSchedule refreshSchedule;
 	
 	private int currentMode;
@@ -72,6 +76,11 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public final static int CONFLICTING_MODE = 0x8;
 	public final static int ALL_MODES = INCOMING_MODE | OUTGOING_MODE | CONFLICTING_MODE | BOTH_MODE;
 	
+	public final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
+	public final static int[] OUTGOING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING};
+	public final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
+	public final static int[] CONFLICTING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING};
+	
 	public TeamSubscriberParticipant() {
 		super();
 		refreshSchedule = new RefreshSchedule(this);
@@ -86,8 +95,10 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public void setMode(int mode) {
 		int oldMode = getMode();
+		if(oldMode == mode) return;
 		currentMode = mode;
 		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_SELECTED_MODE, mode);
+		updateMode(mode);
 		firePropertyChange(this, P_SYNCVIEWPAGE_MODE, new Integer(oldMode), new Integer(mode));
 	}
 	
@@ -105,11 +116,10 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public void setWorkingSet(IWorkingSet set) {
-		SubscriberInput input = getInput();
-		IWorkingSet oldSet = null;
-		if(input != null) {
-			oldSet = input.getWorkingSet();
-			input.setWorkingSet(set);
+		IWorkingSet oldSet = workingSet;
+		if(filteredSyncSet != null) {
+			IResource[] resources = set != null ? Utils.getResources(set.getElements()) : new IResource[0];
+			filteredSyncSet.setWorkingSet(resources);
 			workingSet = null;
 		} else {
 			workingSet = set;
@@ -118,18 +128,12 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public IWorkingSet getWorkingSet() {
-		SubscriberInput input = getInput();
-		if(input != null) {
-			return input.getWorkingSet();
-		} else {
-			return workingSet;
-		}
+		return workingSet;
 	}
 	
 	public void refreshWithRemote(IResource[] resources) {
 		if((resources == null || resources.length == 0)) {
-			SubscriberInput input = getInput();
-			RefreshAction.run(input.workingSetRoots(), this);
+			RefreshAction.run(filteredSyncSet.getWorkingSet(), this);
 		} else {
 			RefreshAction.run(resources, this);
 		}
@@ -139,45 +143,75 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeViewPage#dispose()
 	 */
 	public void dispose() {
-		refreshSchedule.dispose();
-		
-		SubscriberInput input = getInput();
-		removePropertyChangeListener(input);
-		input.dispose();
+		refreshSchedule.dispose();				
+		TeamUI.removePropertyChangeListener(this);
+		filteredSyncSet.dispose();
+		collector.dispose();
 	}
 	
-	/**
-	 * @return
-	 */
-	private SubscriberInput getInput() {
-		SubscriberInput input = syncInfoSet.getInput();
-		return input;
-	}
-
-	public void setFilter(SyncInfoFilter filter, IProgressMonitor monitor) throws TeamException {
-		
+	public final SyncInfoSetCollector getSyncInfoSetCollector() {
+		return filteredSyncSet; 
 	}
 	
-	public ISyncInfoSet createNewFilteredSyncSet(IResource[] resources, SyncInfoFilter filter) {
-		return syncInfoSet.getInput().createNewFilteredSyncSet(resources, filter);
-	}
-	
-	public final ISyncInfoSet getSyncInfoSet() {
-		return syncInfoSet; 
+	public final SyncInfoCollector getSyncInfoCollector() {
+		return collector;
 	}
 	
 	protected void setSubscriber(TeamSubscriber subscriber) {
-		this.syncInfoSet = new SubscriberInputSyncInfoSet(new SubscriberInput(this, subscriber));
-		addPropertyChangeListener(getInput());
+		collector = new SyncInfoCollector(subscriber, true);
+		filteredSyncSet = new SyncInfoSetCollector(collector.getSyncInfoSet(), null /* no initial roots */, null /* no initial filter */);
+
+		// listen for global ignore changes
+		TeamUI.addPropertyChangeListener(this);
+		
 		if(workingSet != null) {
 			setWorkingSet(workingSet);
 		}
+		updateMode(getMode());
 	}
 	
 	protected TeamSubscriber getSubscriber() {
-		return getInput().getSubscriber();
+		return collector.getSubscriber();
 	}
 		
+	/* (non-Javadoc)
+	 * @see IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {
+		if (event.getProperty().equals(TeamUI.GLOBAL_IGNORES_CHANGED)) {
+			try {
+				collector.reset(null);
+			} catch (TeamException e) {
+				TeamUIPlugin.log(e);
+			}
+		}	
+	}
+	
+	private void updateMode(int mode) {
+		if(filteredSyncSet != null) {	
+		
+		int[] modeFilter = BOTH_MODE_FILTER;
+		switch(mode) {
+		case TeamSubscriberParticipant.INCOMING_MODE:
+			modeFilter = INCOMING_MODE_FILTER; break;
+		case TeamSubscriberParticipant.OUTGOING_MODE:
+			modeFilter = OUTGOING_MODE_FILTER; break;
+		case TeamSubscriberParticipant.BOTH_MODE:
+			modeFilter = BOTH_MODE_FILTER; break;
+		case TeamSubscriberParticipant.CONFLICTING_MODE:
+			modeFilter = CONFLICTING_MODE_FILTER; break;
+		}
+
+			getSyncInfoSetCollector().setFilter(
+					new SyncInfoFilter.AndSyncInfoFilter(
+							new SyncInfoFilter[] {
+									new SyncInfoFilter.SyncInfoDirectionFilter(modeFilter), 
+									new SyncInfoFilter.SyncInfoChangeTypeFilter(new int[] {SyncInfo.ADDITION, SyncInfo.DELETION, SyncInfo.CHANGE}),
+									new SyncInfoFilter.PseudoConflictFilter()
+							}), new NullProgressMonitor());
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#init(org.eclipse.ui.IMemento)
 	 */

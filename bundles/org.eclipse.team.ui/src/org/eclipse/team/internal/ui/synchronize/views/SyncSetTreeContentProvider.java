@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ui.synchronize.views;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
 
 /**

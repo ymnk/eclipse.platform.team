@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ui.synchronize.compare.RemoteResourceTypedEleme
 public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	
 	private IResource resource;
-	private ISyncInfoSet input;
+	private SyncInfoSet input;
 	private SyncInfo info;
 		
 	/**
@@ -66,7 +66,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	 * @param input The SubscriberInput for the node.
 	 * @param resource The resource for the node
 	 */
-	public SyncInfoDiffNode(ISyncInfoSet input, IResource resource) {
+	public SyncInfoDiffNode(SyncInfoSet input, IResource resource) {
 		this(createBaseTypeElement(input, resource), createLocalTypeElement(input, resource), createRemoteTypeElement(input, resource), getSyncKind(input, resource));
 		this.input = input;	
 		this.resource = resource;
@@ -85,15 +85,15 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 		this.resource = info.getLocal();
 	}
 
-	private static ITypedElement createRemoteTypeElement(ISyncInfoSet set, IResource resource) {
+	private static ITypedElement createRemoteTypeElement(SyncInfoSet set, IResource resource) {
 		return createRemoteTypeElement(set.getSyncInfo(resource));
 	}
 
-	private static ITypedElement createLocalTypeElement(ISyncInfoSet set, IResource resource) {
+	private static ITypedElement createLocalTypeElement(SyncInfoSet set, IResource resource) {
 		return createLocalTypeElement(set.getSyncInfo(resource));
 	}
 
-	private static ITypedElement createBaseTypeElement(ISyncInfoSet set, IResource resource) {
+	private static ITypedElement createBaseTypeElement(SyncInfoSet set, IResource resource) {
 		return createBaseTypeElement(set.getSyncInfo(resource));
 	}
 
@@ -134,13 +134,13 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	public SyncInfo getSyncInfo() {
 		if(info != null) {
 			return info;
-		} else if(input != null) {
+		} else if(input != null && resource != null) {
 			return input.getSyncInfo(resource);
 		}
 		return null;
 	}
 	
-	protected static int getSyncKind(ISyncInfoSet set, IResource resource) {
+	protected static int getSyncKind(SyncInfoSet set, IResource resource) {
 		SyncInfo info = set.getSyncInfo(resource);
 		if(info != null) {
 			return info.getKind();
@@ -154,6 +154,8 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	public SyncInfo[] getChildSyncInfos() {
 		if(input != null) {
 			return input.getOutOfSyncDescendants(resource);
+		} else if(info != null) {
+			return new SyncInfo[] {info};
 		}
 		return new SyncInfo[0];
 	}
@@ -213,7 +215,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 		}
 	}
 	
-	public ISyncInfoSet getSyncInfoSet() {
+	public SyncInfoSet getSyncInfoSet() {
 		return input;
 	}
 	

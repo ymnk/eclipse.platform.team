@@ -22,8 +22,6 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.*;
@@ -119,7 +117,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		Utils.initAction(configureSchedule, "action.configureSchedulel."); //$NON-NLS-1$
 		
 		// view menu
-		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(getInput());		
+		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(getParticipant().getSyncInfoCollector());		
 		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), this, view, participant);		
 		showPreferences = new SyncViewerShowPreferencesAction(getShell());		
 		statusLine = new StatusLineContributionGroup(getShell(), getParticipant());
@@ -157,13 +155,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	public void dispose() {
 		busyCursor.dispose();
 		changesSection.dispose();
-	}
-	
-	/*
-	 * Return the current input for the view.
-	 */
-	private SubscriberInput getInput() {
-		return ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();
 	}
 
 	/*
@@ -276,7 +267,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	}
 	
 	public Viewer createChangesViewer(Composite parent) {
-		Viewer viewer =  new SyncInfoDiffViewerForSynchronizeView(parent, getSynchronizeView(), getParticipant(), getInput().getSyncInfoSet());
+		Viewer viewer =  new SyncInfoDiffViewerForSynchronizeView(parent, getSynchronizeView(), getParticipant(), getParticipant().getSyncInfoSetCollector().getSyncInfoSet());
 		getSite().setSelectionProvider(viewer);		
 		return viewer;
 	}

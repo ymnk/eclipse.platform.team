@@ -14,7 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.ISyncInfoSet;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
 
 /**
@@ -22,7 +22,7 @@ import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
  */
 public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	
-	private SyncSet set;
+	private SyncInfoSet set;
 	
 	// List that accumulate changes
 	// SyncInfo
@@ -36,20 +36,20 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	
 	private boolean reset = false;
 	
-	public SyncSetChangedEvent(SyncSet set) {
+	public SyncSetChangedEvent(SyncInfoSet set) {
 		super();
 		this.set = set;
 	}
 
-	/* package */ void added(SyncInfo info) {
+	public void added(SyncInfo info) {
 		addedResources.add(info);
 	}
 	
-	/* package */ void removed(IResource resource) {
+	public void removed(IResource resource) {
 		removedResources.add(resource);
 	}
 	
-	/* package */ void changed(SyncInfo info) {
+	public void changed(SyncInfo info) {
 		changedResources.add(info);
 	}
 	
@@ -113,7 +113,7 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		return (IResource[]) removedRoots.toArray(new IResource[removedRoots.size()]);
 	}
 		
-	public ISyncInfoSet getSet() {
+	public SyncInfoSet getSet() {
 		return set;
 	}
 

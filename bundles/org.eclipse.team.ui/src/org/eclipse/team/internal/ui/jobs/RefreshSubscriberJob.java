@@ -22,8 +22,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.SyncInfoCollector;
 
 /**
  * Job to refresh a subscriber with its remote state.
@@ -60,30 +59,25 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * is running the job is cancelled.
 	 */
 	private IResource[] resources;
-	private SubscriberInput input;
+	private SyncInfoCollector collector;
 	
 	/**
-	 * User notification logic
-	 */
-	private static RefreshUserNotificationPolicy userNotificationPolicy = new RefreshUserNotificationPolicy();
-	
-	/**
-	 * Refresh started/completed listeners
+	 * Refresh started/completed listener for every refresh
 	 */
 	private static List listeners = new ArrayList(1);
 	
 	protected static class RefreshEvent implements IRefreshEvent {
 		int type; 
-		TeamSubscriberParticipant participant;
+		TeamSubscriber subscriber;
 		SyncInfo[] changes;
 		long startTime = 0;
 		long stopTime = 0;
 		IStatus status;
 		IResource[] resources;
 		
-		RefreshEvent(int type, IResource[] resources, TeamSubscriberParticipant participant) {
+		RefreshEvent(int type, IResource[] resources, TeamSubscriber subscriber) {
 			this.type = type;
-			this.participant = participant;
+			this.subscriber = subscriber;
 			this.resources = resources;
 		}
 		
@@ -91,8 +85,8 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			return type;
 		}
 
-		public TeamSubscriberParticipant getParticipant() {
-			return participant;
+		public TeamSubscriber getSubscriber() {
+			return subscriber;
 		}
 
 		public SyncInfo[] getChanges() {
@@ -164,15 +158,15 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 	
 		
-	public RefreshSubscriberJob(String name, IResource[] resources, SubscriberInput input) {
-		this(name, input);		
+	public RefreshSubscriberJob(String name, IResource[] resources, SyncInfoCollector collector) {
+		this(name, collector);		
 		this.resources = resources;
 	}
 	
-	public RefreshSubscriberJob(String name, SubscriberInput input) {
+	public RefreshSubscriberJob(String name, SyncInfoCollector collector) {
 		super(name);
 		
-		this.input = input;
+		this.collector = collector;
 		
 		setPriority(Job.DECORATE);
 		setRefreshInterval(3600 /* 1 hour */);
@@ -187,13 +181,11 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 					restartOnCancel = true;
 				}
 			}
-		});
-		
-		addRefreshListener(userNotificationPolicy);
+		});		
 	}
 	
 	public boolean shouldRun() {
-		return input != null && getSubscriber() != null;
+		return collector != null && getSubscriber() != null;
 	}
 	
 	public boolean belongsTo(Object family) {		
@@ -221,8 +213,8 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			}
 			
 			monitor.beginTask(null, 100);
-			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, roots, input.getParticipant());
-			RefreshChangeListener changeListener = new RefreshChangeListener(input);
+			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, roots, collector.getSubscriber());
+			RefreshChangeListener changeListener = new RefreshChangeListener(collector);
 			try {
 				// Only allow one refresh job at a time
 				// NOTE: It would be cleaner if this was done by a scheduling
@@ -264,12 +256,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		if(resources != null) {
 			return resources;
 		} else {
-			return input.getSubscriber().roots();
+			return collector.getSubscriber().roots();
 		}
 	}
 	
 	protected TeamSubscriber getSubscriber() {
-		return input.getSubscriber();
+		return collector.getSubscriber();
 	}
 	
 	public long getScheduleDelay() {

@@ -17,8 +17,7 @@ x P1 make changes section only be a pagebook. this would easily allow adding any
 - compareeditorinput fetcheds remote content outside of a progress monitor
 
 x decorations for SyncInfoDiffElements (of which type.. project persistent property setting?)
-
-- labels for compare editors (text merge viewers and title for diff viewer)
+x labels for compare editors (text merge viewers and title for diff viewer)
 
 x generic navigate support for SyncInfoDiffTreeViewer, PRd compare for API support
 
@@ -30,7 +29,7 @@ x INavigable in compare needs to be made API.
 
 - details dialog needs to create composites once then display them. Or only create once!!!!
 
-- sync set filtering creation must be more precise. For example you should be able to specify a root and a direction.
+x sync set filtering creation must be more precise. For example you should be able to specify a root and a direction.
 
 x cvs update/commit action in sync view toolbar are not updating their state anymore :(
 
@@ -38,7 +37,7 @@ x P3 mode switching at the end of a refresh to ensure that changes are shown if 
 
 x P2 need an event for adding roots to a subscriber to update the list shown
 
-- memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
+x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 
 - overiding outgoing/incoming doesn't show the changes in the commit dialog because the filter is only configured to show in one direction.
 
@@ -47,8 +46,15 @@ x P2 need an event for adding roots to a subscriber to update the list shown
   2. added a new content provider
   3. adding custom label decorations
   4. actions/menus
-
-today:
-x stats
-x smart mode switching at the end of an operation that affects the sync view
-x remove use of automatic working set
+  5. fetching sync info set without instantiating a participant
+  6. fetch and wait for the event collector to finish processing the changes
+  
+  
+  
+  To be PRd:
+  - progress monitoring in SyncSet.reset and such. there are many places where null progress monitors are passed along.
+  - showing sync view in commit dialog is complicated because there is no easy way of finding out exactly which resources will be committed at the
+  point the commit comment dialog is shown. Need to provide new API on the commit dialog for this.
+  - convert details dialogs that show sync view into wizards, this allows more room to browse the changes. almost like the refactoring. Preview >> button instead of Next >>.
+  - can you have non-diff nodes in the sync view?
+  - workbenchadapter for SyncInfoSet, SyncInfo objects?

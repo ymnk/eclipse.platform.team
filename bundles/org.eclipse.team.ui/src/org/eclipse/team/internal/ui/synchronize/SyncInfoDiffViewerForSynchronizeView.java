@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
@@ -33,8 +34,8 @@ public class SyncInfoDiffViewerForSynchronizeView extends SyncInfoDiffTreeViewer
 	private Action expandAll;
 	private ISynchronizeView view;
 
-	public SyncInfoDiffViewerForSynchronizeView(Composite parent, ISynchronizeView view, TeamSubscriberParticipant participant, ISyncInfoSet set) {
-		super(parent, participant, set);
+	public SyncInfoDiffViewerForSynchronizeView(Composite parent, ISynchronizeView view, TeamSubscriberParticipant participant, SyncInfoSet set) {
+		super(parent, participant.getId(), set);
 		this.view = view;
 		this.participant = participant;
 
@@ -124,9 +125,11 @@ public class SyncInfoDiffViewerForSynchronizeView extends SyncInfoDiffTreeViewer
 	 */
 	protected void handleDoubleClick(DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-		SyncInfoDiffNode node = (SyncInfoDiffNode) selection.getFirstElement();
-		if (node != null) {
-			if (node.getResource().getType() == IResource.FILE) {
+		DiffNode node = (DiffNode) selection.getFirstElement();
+		if (node != null && node instanceof SyncInfoDiffNode) {
+			SyncInfoDiffNode syncNode = (SyncInfoDiffNode)node; 
+			SyncInfo info = syncNode.getSyncInfo();
+			if (syncNode != null && syncNode.getResource().getType() == IResource.FILE) {
 				openWithActions.openInCompareEditor();
 				return;
 			}

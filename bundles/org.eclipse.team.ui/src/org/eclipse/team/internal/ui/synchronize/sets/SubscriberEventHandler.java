@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.BackgroundEventHandler;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.BackgroundEventHandler.Event;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;

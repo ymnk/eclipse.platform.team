@@ -18,7 +18,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.forms.parts.*;
@@ -94,11 +93,12 @@ public class ChangesSection extends Composite {
 
 		calculateDescription();
 		
-		getInput().registerListeners(changedListener);
+		participant.getSyncInfoSetCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
+		participant.getSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
 	}
 	
 	private void calculateDescription() {
-		if(getInput().getSyncInfoSet().size() == 0) {
+		if(participant.getSyncInfoSetCollector().getSyncInfoSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
 						filteredContainer = getEmptyChangesComposite(changesSectionContainer);
@@ -128,14 +128,16 @@ public class ChangesSection extends Composite {
 		data.grabExcessVerticalSpace = true;
 		composite.setLayoutData(data);
 		
-		SubscriberInput input = getInput();
-		int changesInWorkspace = input.getSubscriberSyncSet().size();
-		int changesInWorkingSet = input.getWorkingSetSyncSet().size();
-		int changesInFilter = input.getSyncInfoSet().size();
+		SyncInfoSet workspace = participant.getSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet workingSet = participant.getSyncInfoSetCollector().getWorkingSetSyncInfoSet();
+		SyncInfoSet filteredSet = participant.getSyncInfoSetCollector().getSyncInfoSet();
 		
-		SyncInfoStatistics stats = input.getWorkingSetSyncSet().getStatistics();
-		long outgoingChanges = stats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
-		long incomingChanges = stats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);		
+		int changesInWorkspace = workspace.size();
+		int changesInWorkingSet =workingSet.size();
+		int changesInFilter = filteredSet.size();
+		
+		long outgoingChanges = workingSet.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
+		long incomingChanges = workingSet.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);		
 		
 		if(changesInFilter == 0 && changesInWorkingSet != 0) {
 			int mode = participant.getMode();
@@ -177,7 +179,7 @@ public class ChangesSection extends Composite {
 			link.setUnderlined(true);
 			createDescriptionLabel(composite,Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)));	
 		} else {
-			createDescriptionLabel(composite,Policy.bind("ChangesSection.noChanges"));	
+			createDescriptionLabel(composite,Policy.bind("ChangesSection.noChanges", participant.getName()));	
 		}		
 		return composite;
 	}
@@ -199,10 +201,7 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
-		getInput().deregisterListeners(changedListener);
-	}
-	
-	private SubscriberInput getInput() {
-		return ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();
+		participant.getSyncInfoSetCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
+		participant.getSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
 	}
 }

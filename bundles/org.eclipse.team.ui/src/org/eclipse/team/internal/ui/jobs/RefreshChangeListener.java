@@ -3,14 +3,15 @@ package org.eclipse.team.internal.ui.jobs;
 import java.util.*;
 
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
+import org.eclipse.team.ui.synchronize.SyncInfoCollector;
 
 class RefreshChangeListener implements ITeamResourceChangeListener {
 	private List changes = new ArrayList();
-	private SubscriberInput input;
+	private SyncInfoCollector collector;
 
-	RefreshChangeListener(SubscriberInput input) {
-		this.input = input;
+	RefreshChangeListener(SyncInfoCollector collector) {
+		this.collector = collector;
 	}
 	public void teamResourceChanged(TeamDelta[] deltas) {
 		for (int i = 0; i < deltas.length; i++) {
@@ -21,18 +22,12 @@ class RefreshChangeListener implements ITeamResourceChangeListener {
 		}
 	}
 	public SyncInfo[] getChanges() {
-		try {
-			// wait for inputs to stop processing changes
-			if (input instanceof SubscriberInput) {
-				((SubscriberInput) input).getEventHandler().getEventHandlerJob().join();
-			}
-		} catch (InterruptedException e) {
-			// continue
-		}
+		collector.waitForCollector();
 		List changedSyncInfos = new ArrayList();
+		SyncInfoSet set = collector.getSyncInfoSet();
 		for (Iterator it = changes.iterator(); it.hasNext();) {
 			TeamDelta delta = (TeamDelta) it.next();
-			SyncInfo info = input.getSubscriberSyncSet().getSyncInfo(delta.getResource());
+			SyncInfo info = set.getSyncInfo(delta.getResource());
 			if (info != null) {
 				int direction = info.getKind() & SyncInfo.DIRECTION_MASK;
 				if (direction == SyncInfo.INCOMING || direction == SyncInfo.CONFLICTING) {

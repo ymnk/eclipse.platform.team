@@ -36,7 +36,7 @@ public class MergeSynchronizePage extends CVSSynchronizeViewPage {
 		getParticipant().setMode(TeamSubscriberParticipant.INCOMING_MODE);
 		
 		// force enablement to be update on action delegates
-		syncSetChanged(null);
+		// syncSetChanged(null);
 	}
 	
 	/* (non-Javadoc)

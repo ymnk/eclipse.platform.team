@@ -63,8 +63,10 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 			// checkMode() is called because programatic checking of radio buttons doesn't 
 			// consider radio buttons, hence breaks the radio-button behavior. As a workaround
 			// we have to manually check/uncheck the set instead.
-			checkMode(modeId);
-			page.setMode(modeId);
+			//checkMode(modeId);
+			if(isChecked()) {
+				page.setMode(modeId);
+			}
 		}
 		public int getModeId() {
 			return modeId;

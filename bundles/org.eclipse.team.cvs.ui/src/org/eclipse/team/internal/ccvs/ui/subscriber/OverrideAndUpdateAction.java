@@ -21,8 +21,9 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.OverrideAndUpdateOperation;
+import org.eclipse.team.ui.synchronize.MutableSyncInfoSet;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.SyncInfoDirectionFilter;
 
 /**
@@ -49,7 +50,7 @@ public class OverrideAndUpdateAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	protected void run(MutableSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		try {
 			if(promptForOverwrite(syncSet)) {
 				SyncInfo[] conflicts = syncSet.getNodes(getConflictingAdditionFilter());

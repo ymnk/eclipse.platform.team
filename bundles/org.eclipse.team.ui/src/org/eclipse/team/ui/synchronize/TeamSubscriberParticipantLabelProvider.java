@@ -25,8 +25,6 @@ import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.IJobListener;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.internal.ui.synchronize.views.CompressedFolder;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.ISharedImages;
@@ -98,11 +96,11 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 		this.working = JobStatusHandler.hasRunningJobs(SubscriberAction.SUBSCRIBER_JOB_TYPE);
 	}
 	
-	protected String decorateText(String input, Object resource) {
+	protected String decorateText(String input, Object element) {
 		return input;
 	}
 	
-	protected Image decorateImage(Image base, Object resource) {
+	protected Image decorateImage(Image base, Object element) {
 		return base;
 	}
 	
@@ -121,7 +119,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 				name = Policy.bind("TeamSubscriberSyncPage.labelWithSyncKind", name, syncKindString); //$NON-NLS-1$
 			}
 		}
-		return decorateText(name, resource);
+		return decorateText(name, element);
 	}
 	
 	/**
@@ -135,7 +133,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 		IResource resource = SyncSetContentProvider.getResource(element);		
 		if (element instanceof CompressedFolder) {
 			decoratedImage = compareConfig.getImage(getCompressedFolderImage(), IRemoteSyncElement.IN_SYNC);
-		} else {						
+		} else if(element instanceof SyncInfoDiffNode){						
 			Image image = workbenchLabelProvider.getImage(resource);
 			decoratedImage = getCompareImage(image, element);			
 		}		
@@ -162,12 +160,8 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 			int kind = SyncSetContentProvider.getSyncKind(element);
 			if((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
 				SyncInfo[] infos = ((SyncInfoDiffNode)element).getChildSyncInfos();
-				SyncSet set = new SyncSet();
-				for (int i = 0; i < infos.length; i++) {
-					set.add(infos[i]);
-				}
-				SyncInfoStatistics stats = set.getStatistics();
-				long count = stats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
+				SyncInfoSet set = new SyncInfoSet(infos);
+				long count = set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
 				if(count > 0) {
 					ImageDescriptor overlay = new OverlayIcon(
 	   					base, 

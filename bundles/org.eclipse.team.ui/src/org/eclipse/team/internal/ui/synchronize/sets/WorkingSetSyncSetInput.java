@@ -14,27 +14,28 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.ui.IWorkingSet;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 
 public class WorkingSetSyncSetInput extends SyncSetInputFromSyncSet {
 
 	private SyncInfoWorkingSetFilter workingSetFilter = new SyncInfoWorkingSetFilter();
 	
-	public WorkingSetSyncSetInput(SyncSet set) {
+	public WorkingSetSyncSetInput(SyncInfoSet set) {
 		super(set);
 		setFilter(workingSetFilter);
 	}
 	
-	public void setWorkingSet(IWorkingSet workSet) {
-		workingSetFilter.setWorkingSet(workSet);
+	public void setWorkingSet(IResource[] resources) {
+		workingSetFilter.setWorkingSet(resources);
 		try {
+			// TODO::
 			reset(new NullProgressMonitor());
 		} catch (TeamException e) {
 			// TODO: ??
 		}
 	}
 	
-	public IWorkingSet getWorkingSet() {
+	public IResource[] getWorkingSet() {
 		return workingSetFilter.getWorkingSet();
 	}
 	

@@ -19,29 +19,31 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 
 public class SyncInfoSetCompareInput extends CompareEditorInput {
-	// TODO: when are these objects disposed, and how to hook in to the dispose to free listeners?
-	private ISyncInfoSet syncInfoSet;
-	private TeamSubscriberParticipant participant;
+	private SyncInfoSet syncInfoSet;
+	private String menuId;
 
-	public SyncInfoSetCompareInput(CompareConfiguration configuration, TeamSubscriberParticipant participant, IResource[] resources, SyncInfoFilter filter) {
+	public SyncInfoSetCompareInput(CompareConfiguration configuration, String menuId, SyncInfoSet syncInfoSet) {
 		super(configuration);
-		this.participant = participant;
-		this.syncInfoSet = participant.createNewFilteredSyncSet(resources, filter);
+		this.menuId = menuId;
+		this.syncInfoSet = syncInfoSet;
 	}
 
 	public Viewer createDiffViewer(Composite parent) {
-		SyncInfoDiffTreeViewer v = new SyncInfoDiffTreeViewer(parent, participant, syncInfoSet);
+		SyncInfoDiffTreeViewer v = new SyncInfoDiffTreeViewer(parent, menuId, syncInfoSet);
 		v.updateCompareEditorInput(this);
 		v.addOpenListener(new IOpenListener() {
 			public void open(OpenEvent event) {
 				ISelection s = event.getSelection();
 				SyncInfoDiffNode node = getElement(s);
-				if(node != null && node.getResource().getType() == IResource.FILE) {
-					Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
+				if(node != null) {
+					SyncInfo info = node.getSyncInfo();
+					if(info != null && info.getLocal().getType() == IResource.FILE) { 
+						Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
+					}
 				}
 			}
 		});
@@ -67,10 +69,6 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	}
 	
 	protected boolean allowParticipantMenuContributions() {
-		return false;
-	}
-	
-	public void dispose() {
-		syncInfoSet.dispose();
+		return menuId != null;
 	}
 }

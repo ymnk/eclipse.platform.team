@@ -26,27 +26,31 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.internal.ui.jobs.IRefreshEvent;
-import org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput;
+import org.eclipse.team.ui.synchronize.*;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
 	private Button promptWhenNoChanges;
 	private Button promptWithChanges;
 	private SyncInfoSetCompareInput compareEditorInput;
+	private SyncInfoSetCollector set;
 	private IRefreshEvent event;
 	private final static int RESOURCE_LIST_SIZE = 10;
 	private IDialogSettings settings;
 	private static final String HEIGHT_KEY = "width-key";
 	private static final String WIDTH_KEY = "height-key";
+	private TeamSubscriberParticipant participant;
 	
-	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event) {
-		super(parentShell, "Synchronization Complete - " + event.getParticipant().getName());
+	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event, TeamSubscriberParticipant participant) {
+		super(parentShell, "Synchronization Complete - " + participant.getName());
+		this.participant = participant;
 		int shellStyle = getShellStyle();
 		setShellStyle(shellStyle | SWT.RESIZE | SWT.MAX);
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
-			
-		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), event.getParticipant(), getResources(), null /* no filter */) {
+		
+		this.set = new SyncInfoSetCollector(participant.getSyncInfoCollector().getSyncInfoSet(), getResources(), null);
+		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), participant.getId(), set.getSyncInfoSet()) {
 			protected boolean allowParticipantMenuContributions() {
 				return true;
 			}
@@ -80,7 +84,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 * @see org.eclipse.jface.window.Window#close()
 	 */
 	public boolean close() {
-		compareEditorInput.dispose();
+		set.dispose();
 		Rectangle bounds = getShell().getBounds();
 		settings.put(HEIGHT_KEY, bounds.height);
 		settings.put(WIDTH_KEY, bounds.width);

@@ -1,0 +1,27 @@
+
+SyncInfo
+- represents relative sync of local and remote gives access to resources
+
+TeamSubscriber
+- creates sync infos
+
+SyncInfoSet (optimized collection of sync infos - immutable)
+MutableSyncInfoSet
+
+SyncInfoCollector (collects sync infos from subscriber, and optionally from workspace. Uses background thread to collect and calculate changes. Is updated automatically with changes)
+
+FilteredSyncInfoSet (filters a provided sync info set with a given filter and possible roots)
+
+SynchronizeParticipant (shows in the sync view, has a mode, working set, and creates a page with the UI pieces)
+
+Mode
+
+WorkingSet
+
+SyncInfoFilter
+
+SyncInfoDiffTreeViewer
+
+SyncInfoDiffNode -> DiffNode + ICompareInput
+
+SyncInfoSetCompareInput

@@ -20,10 +20,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -31,8 +28,9 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.sync.ToolTipMessageDialog;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.synchronize.MutableSyncInfoSet;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.SyncInfoDirectionFilter;
 
 public class SubscriberCommitAction extends CVSSubscriberAction {
@@ -49,8 +47,8 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getFilteredSyncInfoSet(org.eclipse.team.internal.ui.sync.views.SyncInfo[])
 	 */
-	protected SyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
-		SyncInfoSet syncSet = super.getFilteredSyncInfoSet(selectedResources);
+	protected MutableSyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
+		MutableSyncInfoSet syncSet = super.getFilteredSyncInfoSet(selectedResources);
 		if (!promptForConflictHandling(syncSet)) return null;
 		try {
 			if (!promptForUnaddedHandling(syncSet)) return null;
@@ -60,7 +58,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return syncSet;
 	}
 	
-	protected boolean promptForConflictHandling(SyncInfoSet syncSet) {
+	protected boolean promptForConflictHandling(MutableSyncInfoSet syncSet) {
 		// If there is a conflict in the syncSet, remove from sync set.
 		if (syncSet.hasConflicts() || syncSet.hasIncomingChanges()) {
 			syncSet.removeConflictingNodes();
@@ -69,7 +67,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return true;
 	}
 
-	private boolean promptForUnaddedHandling(SyncInfoSet syncSet) throws CVSException {
+	private boolean promptForUnaddedHandling(MutableSyncInfoSet syncSet) throws CVSException {
 		if (syncSet.isEmpty()) return false;
 		
 		// accumulate any resources that are not under version control
@@ -98,7 +96,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 				if (!included)
 					resourcesToRemove.add(unaddedResource);
 			}
-			syncSet.removeResources((IResource[]) resourcesToRemove.toArray(new IResource[resourcesToRemove.size()]));
+			syncSet.removeAll((IResource[]) resourcesToRemove.toArray(new IResource[resourcesToRemove.size()]));
 		}
 		return true;
 	}
@@ -139,9 +137,9 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	public void run(MutableSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		
-		final SyncInfo[] changed = syncSet.getSyncInfos();
+		final SyncInfo[] changed = syncSet.members();
 		if (changed.length == 0) return;
 		
 		// A list of files to be committed

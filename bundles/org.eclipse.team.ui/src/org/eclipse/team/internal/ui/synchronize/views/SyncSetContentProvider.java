@@ -19,7 +19,6 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.ui.synchronize.*;
 
 /**
@@ -32,14 +31,14 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	// parents who need a label update accumulated while handling sync set changes
 	private Set parentsToUpdate = new HashSet();
 	
-	protected SyncSet getSyncSet() {
+	protected SyncInfoSet getSyncSet() {
 		if(viewer == null || viewer.getControl().isDisposed()) {
 			return null;	
 		}
 		if(viewer.getInput() instanceof SyncInfoDiffNode) {
-			return (SyncSet)((SyncInfoDiffNode)viewer.getInput()).getSyncInfoSet();
+			return (SyncInfoSet)((SyncInfoDiffNode)viewer.getInput()).getSyncInfoSet();
 		}
-		return (SyncSet)viewer.getInput();
+		return (SyncInfoSet)viewer.getInput();
 	}
 	
 	/* (non-Javadoc)
@@ -48,25 +47,25 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	public void inputChanged(Viewer v, Object oldInput, Object newInput) {
 		
 		this.viewer = v;
-		SyncSet oldSyncSet = null;
-		SyncSet newSyncSet = null;
+		SyncInfoSet oldSyncSet = null;
+		SyncInfoSet newSyncSet = null;
 		
 		if(newInput instanceof SyncInfoDiffNode && oldInput != null) {
 			return;
 		}
 		
-		if (oldInput instanceof SyncSet) {
-			oldSyncSet = (SyncSet) oldInput;
+		if (oldInput instanceof SyncInfoSet) {
+			oldSyncSet = (SyncInfoSet) oldInput;
 		}
-		if (newInput instanceof SyncSet) {
-			newSyncSet = (SyncSet) newInput;
+		if (newInput instanceof SyncInfoSet) {
+			newSyncSet = (SyncInfoSet) newInput;
 		}
 		if (oldSyncSet != newSyncSet) {
 			if (oldSyncSet != null) {
-				((SyncSet)oldSyncSet).removeSyncSetChangedListener(this);
+				((SyncInfoSet)oldSyncSet).removeSyncSetChangedListener(this);
 			}
 			if (newSyncSet != null) {
-				((SyncSet)newSyncSet).addSyncSetChangedListener(this);
+				((SyncInfoSet)newSyncSet).addSyncSetChangedListener(this);
 			}
 		}
 	}
@@ -80,7 +79,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
 	public void dispose() {
-		SyncSet input = getSyncSet();
+		SyncInfoSet input = getSyncSet();
 		if (input != null) {
 			input.removeSyncSetChangedListener(this);
 		}

@@ -17,11 +17,9 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.actions.ActionGroup;
 
 public class StatusLineContributionGroup extends ActionGroup implements ISyncSetChangedListener {
@@ -38,17 +36,17 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private SubscriberInput input;
+	private SyncInfoCollector collector;
 	private TeamSubscriberParticipant participant;
 
 	public StatusLineContributionGroup(final Shell shell, TeamSubscriberParticipant participant) {
 		super();
 		this.participant = participant;
-		this.input = ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();
+		this.collector = participant.getSyncInfoCollector();
 		this.incoming = createStatusLineContribution(INCOMING_ID, TeamSubscriberParticipant.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
 		this.outgoing = createStatusLineContribution(OUTGOING_ID, TeamSubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
 		this.conflicting = createStatusLineContribution(CONFLICTING_ID, TeamSubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
-		input.registerListeners(this);
+		collector.getSyncInfoSet().addSyncSetChangedListener(this);
 	}
 
 	private StatusLineCLabelContribution createStatusLineContribution(String id, final int mode, String label, Image image) {
@@ -64,7 +62,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	}
 
 	public void dispose() {
-		input.deregisterListeners(this);
+		collector.getSyncInfoSet().removeSyncSetChangedListener(this);
 		incomingImage.dispose();
 		outgoingImage.dispose();
 		conflictingImage.dispose();
@@ -76,30 +74,14 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(ISyncInfoSetChangeEvent event) {
-		if (input != null) {
-			SyncInfoStatistics workspaceSetStats = input.getSubscriberSyncSet().getStatistics();
-			SyncInfoStatistics workingSetSetStats = input.getWorkingSetSyncSet().getStatistics();
-
-			final int workspaceConflicting = (int) workspaceSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
-			final int workspaceOutgoing = (int) workspaceSetStats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
-			final int workspaceIncoming = (int) workspaceSetStats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
-			final int workingSetConflicting = (int) workingSetSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
-			final int workingSetOutgoing = (int) workingSetSetStats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
-			final int workingSetIncoming = (int) workingSetSetStats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
+		if (collector != null) {
+			SyncInfoSet set = collector.getSyncInfoSet();
+			final int workspaceConflicting = (int) set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
+			final int workspaceOutgoing = (int) set.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
+			final int workspaceIncoming = (int) set.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
 
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
-					IWorkingSet set = input.getParticipant().getWorkingSet();
-					if (set != null) {
-						conflicting.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetConflicting).toString(), new Integer(workspaceConflicting).toString())); //$NON-NLS-1$
-						incoming.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString())); //$NON-NLS-1$
-						outgoing.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetOutgoing).toString(), new Integer(workspaceOutgoing).toString())); //$NON-NLS-1$
-
-						conflicting.setTooltip(Policy.bind("StatisticsPanel.numbersWorkingSetTooltip", Policy.bind("StatisticsPanel.conflicting"), set.getName())); //$NON-NLS-1$ //$NON-NLS-2$
-						outgoing.setTooltip(Policy.bind("StatisticsPanel.numbersWorkingSetTooltip", Policy.bind("StatisticsPanel.outgoing"), set.getName())); //$NON-NLS-1$ //$NON-NLS-2$
-						incoming.setTooltip(Policy.bind("StatisticsPanel.numbersWorkingSetTooltip", Policy.bind("StatisticsPanel.incoming"), set.getName())); //$NON-NLS-1$ //$NON-NLS-2$
-
-					} else {
 						conflicting.setText(new Integer(workspaceConflicting).toString()); //$NON-NLS-1$
 						incoming.setText(new Integer(workspaceIncoming).toString()); //$NON-NLS-1$
 						outgoing.setText(new Integer(workspaceOutgoing).toString()); //$NON-NLS-1$
@@ -107,7 +89,6 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 						conflicting.setTooltip(Policy.bind("StatisticsPanel.numbersTooltip", Policy.bind("StatisticsPanel.conflicting"))); //$NON-NLS-1$ //$NON-NLS-2$
 						outgoing.setTooltip(Policy.bind("StatisticsPanel.numbersTooltip", Policy.bind("StatisticsPanel.outgoing"))); //$NON-NLS-1$ //$NON-NLS-2$
 						incoming.setTooltip(Policy.bind("StatisticsPanel.numbersTooltip", Policy.bind("StatisticsPanel.incoming"))); //$NON-NLS-1$ //$NON-NLS-2$
-					}
 				}
 			});
 		}

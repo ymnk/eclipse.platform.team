@@ -22,16 +22,15 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.UpdateOnlyMergableOperation;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.ui.synchronize.MutableSyncInfoSet;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.*;
 
 /**
@@ -48,7 +47,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	public void run(MutableSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		try {
 			
 			// First, remove any known failure cases
@@ -65,12 +64,12 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 			
 			// It is possible that some of the conflicting changes were not auto-mergable.
 			// Accumulate all resources that have not been updated so far
-			final SyncInfoSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
+			final MutableSyncInfoSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
 			
 			// Remove all these from the original sync set
 			syncSet.rejectNodes(new SyncInfoFilter() {
 				public boolean select(SyncInfo info) {
-					return failedSet.getNodeFor(info.getLocal()) != null;
+					return failedSet.getSyncInfo(info.getLocal()) != null;
 				}
 			});
 						
@@ -106,7 +105,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	 * @param monitor
 	 */
 	protected void safeUpdate(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
-		SyncInfo[] changed = syncSet.getSyncInfos();
+		SyncInfo[] changed = syncSet.members();
 		if (changed.length == 0) return;
 		
 		// The list of sync resources to be updated using "cvs update"
@@ -265,17 +264,17 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	/*
 	 * Return the complete set of selected resources that failed to update safely
 	 */
-	private SyncInfoSet createFailedSet(SyncInfoSet syncSet, SyncInfo[] willFail, IFile[] files) {
+	private MutableSyncInfoSet createFailedSet(SyncInfoSet syncSet, SyncInfo[] willFail, IFile[] files) {
 		List result = new ArrayList();
 		for (int i = 0; i < files.length; i++) {
 			IFile file = files[i];
-			SyncInfo resource = syncSet.getNodeFor(file);
+			SyncInfo resource = syncSet.getSyncInfo(file);
 			if (resource != null) result.add(resource);
 		}
 		for (int i = 0; i < willFail.length; i++) {
 			result.add(willFail[i]);
 		}
-		return new SyncInfoSet((SyncInfo[]) result.toArray(new SyncInfo[result.size()]));
+		return new MutableSyncInfoSet((SyncInfo[]) result.toArray(new SyncInfo[result.size()]));
 	}
 	
 	/**
@@ -344,5 +343,4 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	protected String getJobName(SyncInfoSet syncSet) {
 		return Policy.bind("UpdateAction.jobName", new Integer(syncSet.size()).toString()); //$NON-NLS-1$
 	}
-
 }

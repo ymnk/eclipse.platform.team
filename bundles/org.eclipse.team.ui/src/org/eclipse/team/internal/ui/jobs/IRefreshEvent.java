@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ui.jobs;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 
 public interface IRefreshEvent {	
 	public static final int SCHEDULED_REFRESH = 1; 
@@ -22,7 +22,7 @@ public interface IRefreshEvent {
 	
 	public int getRefreshType();
 	
-	public TeamSubscriberParticipant getParticipant();
+	public TeamSubscriber getSubscriber();
 	
 	public SyncInfo[] getChanges();
 	

@@ -14,14 +14,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.ui.synchronize.MutableSyncInfoSet;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.SyncInfoDirectionFilter;
 
 /**
@@ -40,8 +39,8 @@ public class SubscriberConfirmMergedAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws CVSException {
-		SyncInfo[] syncResources = syncSet.getSyncInfos();
+	protected void run(MutableSyncInfoSet syncSet, IProgressMonitor monitor) throws CVSException {
+		SyncInfo[] syncResources = syncSet.members();
 		monitor.beginTask(null, 100 * syncResources.length);
 		try {
 			for (int i = 0; i < syncResources.length; i++) {

@@ -24,8 +24,8 @@ import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.OrSyncInfoFilter;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.SyncInfoDirectionFilter;
 
@@ -143,7 +143,7 @@ public class MergeUpdateAction extends SafeUpdateAction {
 	 * incoming-deletion
 	 */
 	protected void overwriteUpdate(SyncInfoSet set, IProgressMonitor monitor) throws TeamException {
-		SyncInfo[] nodes = set.getSyncInfos();
+		SyncInfo[] nodes = set.members();
 		monitor.beginTask(null, 1000 * nodes.length);
 		try {
 			for (int i = 0; i < nodes.length; i++) {

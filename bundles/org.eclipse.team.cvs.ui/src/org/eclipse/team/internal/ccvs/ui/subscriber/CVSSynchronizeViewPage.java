@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -46,9 +47,22 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 					}
 					return output.toString();
 				}
+			} else if(element instanceof ChangeLogDiffNode) {
+				return ((ChangeLogDiffNode)element).getComment();
 			}
 			return text;
 		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantLabelProvider#decorateImage(org.eclipse.swt.graphics.Image, java.lang.Object)
+		 */
+		protected Image decorateImage(Image base, Object element) {
+			if(element instanceof ChangeLogDiffNode) {
+				return getCompressedFolderImage();
+			}
+			return super.decorateImage(base, element);
+		}
+
 	}
 	
 	private List delegates = new ArrayList(2);
@@ -140,10 +154,11 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		// CVS specific information that is useful in the synchronizing context.
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		ILabelProvider oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
-		viewer.setLabelProvider(new CVSLabelProvider(oldLabelProvider));		
+		viewer.setLabelProvider(new CVSLabelProvider(oldLabelProvider));
+		viewer.setContentProvider(new ChangeLogContentProvider());
 	}
 	
-	private ISyncInfoSet getSyncInfoSet() {
-		return getParticipant().getSyncInfoSet();
+	private SyncInfoSet getSyncInfoSet() {
+		return getParticipant().getSyncInfoSetCollector().getSyncInfoSet();
 	}
 }

@@ -11,9 +11,12 @@
 package org.eclipse.team.internal.ui;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.*;
@@ -376,4 +379,20 @@ public class Utils {
 		}
 		return text;
 	}		
+	
+	public static IResource[] getResources(Object[] elements) {
+		List resources = new ArrayList();
+		for (int i = 0; i < elements.length; i++) {
+			Object element = elements[i];
+			if(element instanceof IResource) {
+				resources.add(element);
+			} else if(element instanceof IAdaptable) {
+				IResource resource = (IResource)((IAdaptable)element).getAdapter(IResource.class);
+				if(resource != null) {
+					resources.add(resource);
+				}
+			}
+		}
+		return (IResource[]) resources.toArray(new IResource[resources.size()]);
+	}
 }

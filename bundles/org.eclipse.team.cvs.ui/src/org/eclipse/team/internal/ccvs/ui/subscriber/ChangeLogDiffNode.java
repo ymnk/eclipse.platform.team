@@ -8,26 +8,24 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.sets;
+package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.team.ui.synchronize.ISyncInfoSet;
+import org.eclipse.compare.structuremergeviewer.DiffNode;
+import org.eclipse.team.core.subscribers.SyncInfo;
 
-public class SubscriberInputSyncInfoSet extends SyncInfoSetDelegator {
+public class ChangeLogDiffNode extends DiffNode {
 
-	private SubscriberInput input;
+	private String comment;
 
-	public SubscriberInputSyncInfoSet(SubscriberInput input) {
-		this.input = input;
-	}
-
-	protected ISyncInfoSet getSyncInfoSet() {
-		return input.getSyncInfoSet();
+	public ChangeLogDiffNode(String comment) {
+		super(SyncInfo.IN_SYNC);
+		this.comment = comment;
 	}
 
 	/**
-	 * @return Returns the input.
+	 * @return Returns the comment.
 	 */
-	public SubscriberInput getInput() {
-		return input;
+	public String getComment() {
+		return comment;
 	}
 }

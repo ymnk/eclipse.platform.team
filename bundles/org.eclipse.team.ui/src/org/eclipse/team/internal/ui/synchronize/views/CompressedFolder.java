@@ -14,7 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.ISyncInfoSet;
+import org.eclipse.team.ui.synchronize.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**
@@ -22,7 +22,7 @@ import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
  */
 public class CompressedFolder extends SyncInfoDiffNode {
 
-	public CompressedFolder(ISyncInfoSet input, IResource resource) {
+	public CompressedFolder(SyncInfoSet input, IResource resource) {
 		super(input, resource);
 	}
 	

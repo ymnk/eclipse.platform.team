@@ -7,8 +7,6 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.*;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
 import org.eclipse.ui.IMemento;
 
 public class RefreshSchedule {
@@ -36,7 +34,7 @@ public class RefreshSchedule {
 		public void refreshStarted(IRefreshEvent event) {
 		}
 		public void refreshDone(final IRefreshEvent event) {
-			if (event.getParticipant() == participant) {
+			if (event.getSubscriber() == participant.getSubscriber()) {
 				lastRefreshEvent = event;
 			}
 		}
@@ -91,13 +89,12 @@ public class RefreshSchedule {
 	}
 	
 	protected void startJob() {
-		ISyncInfoSet set = participant.getSyncInfoSet();
+		SyncInfoSet set = participant.getSyncInfoSetCollector().getSyncInfoSet();
 		if(set == null) { 
 			return;
 		}
 		if(job == null) {
-			SubscriberInput input = ((SubscriberInputSyncInfoSet)set).getInput();
-			job = new RefreshSubscriberJob("Refreshing '" + participant.getName() + "'. " + getRefreshIntervalAsString(), input); //$NON-NLS-1$
+			job = new RefreshSubscriberJob("Refreshing '" + participant.getName() + "'. " + getRefreshIntervalAsString(), participant.getSyncInfoCollector()); //$NON-NLS-1$
 		}
 		job.setRestartOnCancel(true);
 		job.setReschedule(true);

@@ -19,7 +19,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
  * included in {@link ISyncInfoSet} collections that doesn't maintain SyncInfo objects
  * for in-sync resources.
  *  
- * @see ISyncInfoSet#addSyncSetChangedListener(ISyncSetChangedListener)
+ * @see SyncInfoSet#addSyncSetChangedListener(ISyncSetChangedListener)
  * @see ISyncSetChangedListener
  * @since 3.0
  */
@@ -71,7 +71,7 @@ public interface ISyncInfoSetChangeEvent {
 	 * 
 	 * @return the {@link ISyncInfoSet} that generated these events.
 	 */
-	public ISyncInfoSet getSet();
+	public SyncInfoSet getSet();
 	
 	/**
 	 * Returns <code>true</code> if the associated set has been reset and <code>false</code>

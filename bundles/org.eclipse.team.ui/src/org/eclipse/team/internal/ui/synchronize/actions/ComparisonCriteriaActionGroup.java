@@ -21,9 +21,9 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ComparisonCriteria;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.SyncInfoCollector;
 
 /**
  * This action group allows the user to choose one or more comparison critera
@@ -33,7 +33,7 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 	
 	private ComparisonCriteria[] criteria;
 	private ComparisonCriteriaAction[] actions;
-	private SubscriberInput input;
+	private SyncInfoCollector collector;
 	private Menu fMenu;
 	
 	/**
@@ -53,8 +53,8 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 		}
 	}
 	
-	public ComparisonCriteriaActionGroup(SubscriberInput input) {
-		this.input = input;
+	public ComparisonCriteriaActionGroup(SyncInfoCollector collector) {
+		this.collector = collector;
 		setMenuCreator(this);
 		Utils.initAction(this, "action.comparisonCriteria."); //$NON-NLS-1$
 		initializeActions();
@@ -70,8 +70,8 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 				try {
 					// when the comparison criteria changes, recalculate the entire sync set based on
 					// the new input.
-					input.getSubscriber().setCurrentComparisonCriteria(activatedAction.getComparisonCriteria().getId());
-					input.reset();
+					collector.getSubscriber().setCurrentComparisonCriteria(activatedAction.getComparisonCriteria().getId());
+					collector.reset(null);
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
 				}
@@ -80,12 +80,12 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 	}
 	
 	public void initializeActions() {
-		this.criteria = input.getSubscriber().getComparisonCriterias();
+		this.criteria = collector.getSubscriber().getComparisonCriterias();
 		this.actions = new ComparisonCriteriaAction[criteria.length];
 		for (int i = 0; i < criteria.length; i++) {
 			ComparisonCriteria c = criteria[i];
 			actions[i] = new ComparisonCriteriaAction(c);
-			actions[i].setChecked(c == input.getSubscriber().getCurrentComparisonCriteria());
+			actions[i].setChecked(c == collector.getSubscriber().getCurrentComparisonCriteria());
 		}
 	}
 	
@@ -121,7 +121,7 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 			fMenu.dispose();
 		}		
 		fMenu= new Menu(parent);
-		ComparisonCriteria currentComparisonCriteria = input.getSubscriber().getCurrentComparisonCriteria();
+		ComparisonCriteria currentComparisonCriteria = collector.getSubscriber().getCurrentComparisonCriteria();
 		for (int i = 0; i < actions.length; i++) {
 			ComparisonCriteriaAction action = actions[i];			
 			action.setChecked(action.getComparisonCriteria() == currentComparisonCriteria);
@@ -138,7 +138,7 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 	}
 	
 	public void addActionsToMenuMgr(IMenuManager menu) {
-		ComparisonCriteria currentComparisonCriteria = input.getSubscriber().getCurrentComparisonCriteria();
+		ComparisonCriteria currentComparisonCriteria = collector.getSubscriber().getCurrentComparisonCriteria();
 		for (int i = 0; i < actions.length; i++) {
 			ComparisonCriteriaAction action = actions[i];			
 			action.setChecked(action.getComparisonCriteria() == currentComparisonCriteria);

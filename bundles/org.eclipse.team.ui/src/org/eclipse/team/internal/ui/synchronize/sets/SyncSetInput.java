@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.ui.synchronize.MutableSyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 
 /**
@@ -21,10 +22,10 @@ import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
  */
 public abstract class SyncSetInput {
 	
-	private SyncSet syncSet = new SyncSet();
+	private MutableSyncInfoSet syncSet = new MutableSyncInfoSet();
 	private SyncInfoFilter filter = new SyncInfoFilter();
 	
-	public SyncSet getSyncSet() {
+	public MutableSyncInfoSet getSyncSet() {
 		return syncSet;
 	}
 	
@@ -46,7 +47,7 @@ public abstract class SyncSetInput {
 	public void reset(IProgressMonitor monitor) throws TeamException {
 		try {
 			syncSet.beginInput();
-			syncSet.reset();
+			syncSet.clear();
 			fetchInput(monitor);
 		} finally {
 			getSyncSet().endInput();

@@ -35,13 +35,17 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
 
 public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableControl {
 
-	private TeamSubscriberParticipant participant;
-	private ISyncInfoSet set;
+	private SyncInfoSet set;
+	
+	// Actions
 	private Action expandAll;
 	private NavigationAction nextAction;
 	private NavigationAction previousAction;
+	
 	private boolean acceptParticipantMenuContributions = false;
-	private MenuManager menuMgr = null; 
+	
+	private MenuManager menuMgr = null;
+	private String menuId;
 		
 	/**
 	 * Change the tree layout between using compressed folders and regular folders
@@ -55,9 +59,9 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 		}
 	};	
 	
-	public SyncInfoDiffTreeViewer(Composite parent, TeamSubscriberParticipant participant, ISyncInfoSet set) {
+	public SyncInfoDiffTreeViewer(Composite parent, String menuId, SyncInfoSet set) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		this.participant = participant;
+		this.menuId = menuId;
 		this.set = set;
 		GridData data = new GridData(GridData.FILL_BOTH);
 		setSorter(new SyncViewerSorter(ResourceSorter.NAME));
@@ -101,7 +105,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 				site = Utils.findSite();
 			}
 			if(site != null) {
-				site.registerContextMenu(participant.getId(), menuMgr, this);
+				site.registerContextMenu(menuId, menuMgr, this);
 			}
 		}
 	}
@@ -126,7 +130,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 		tbm.appendToGroup("navigation", previousAction); //$NON-NLS-1$		
 	}
 	
-	protected ISyncInfoSet getSyncSet() {
+	protected SyncInfoSet getSyncSet() {
 		return set;
 	}
 
@@ -217,7 +221,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 	}
 	
 	protected void hookContextMenu() {
-		menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
+		menuMgr = new MenuManager(menuId); //$NON-NLS-1$
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
@@ -253,7 +257,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 				site = Utils.findSite();
 			}
 			if(site != null) {
-				site.registerContextMenu(participant.getId(), menuMgr, this);
+				site.registerContextMenu(menuId, menuMgr, this);
 			}
 		}
 	}
