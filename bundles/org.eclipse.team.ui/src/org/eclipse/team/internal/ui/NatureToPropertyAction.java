@@ -37,10 +37,7 @@ public class NatureToPropertyAction extends TeamAction {
 				try {
 					IProject[] projects = getSelectedProjects();
 					for (int i = 0; i < projects.length; i++) {
-						IProject project = projects[i];
-						RepositoryProvider provider = RepositoryProvider.getProvider(project);
-						String providerId = provider.getID();
-						TeamPlugin.convertNatureToProperty(project, providerId);
+						TeamPlugin.convertNatureToProperty(projects[i]);
 					}
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
