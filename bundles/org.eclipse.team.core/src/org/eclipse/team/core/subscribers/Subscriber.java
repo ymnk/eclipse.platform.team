@@ -248,7 +248,7 @@ abstract public class Subscriber {
 	 * Listener notification makes use of an ISafeRunnable to ensure that
 	 * client exceptions do not effect the notification to other clients.
 	 */
-	protected void fireTeamResourceChange(final SubscriberChangeEvent[] deltas) {
+	protected void fireTeamResourceChange(final ISubscriberChangeEvent[] deltas) {
 		ISubscriberChangeListener[] allListeners;
 		// Copy the listener list so we're not calling client code while synchronized
 		synchronized (listeners) {
@@ -263,7 +263,7 @@ abstract public class Subscriber {
 					// Platform#run
 				}
 				public void run() throws Exception {
-					listener.teamResourceChanged(deltas);
+					listener.subscriberResourceChanged(deltas);
 				}
 			});
 		}

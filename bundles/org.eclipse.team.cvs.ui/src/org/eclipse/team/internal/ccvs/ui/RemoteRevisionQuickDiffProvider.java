@@ -10,38 +10,22 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui;
 
-import java.io.BufferedReader;
-import java.io.CharArrayWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
-import org.eclipse.team.core.subscribers.ISubscriberChangeListener;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
+import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.editors.text.IStorageDocumentProvider;
-import org.eclipse.ui.texteditor.IDocumentProvider;
-import org.eclipse.ui.texteditor.IElementStateListener;
-import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.*;
 import org.eclipse.ui.texteditor.quickdiff.IQuickDiffProviderImplementation;
 
 /**
@@ -97,7 +81,7 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 	 * Updates the document if a sync changes occurs to the associated CVS file.
 	 */
 	private ISubscriberChangeListener teamChangeListener = new ISubscriberChangeListener() {
-		public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
+		public void subscriberResourceChanged(ISubscriberChangeEvent[] deltas) {
 			if(initialized()) {
 				for (int i = 0; i < deltas.length; i++) {
 					ISubscriberChangeEvent delta = deltas[i];

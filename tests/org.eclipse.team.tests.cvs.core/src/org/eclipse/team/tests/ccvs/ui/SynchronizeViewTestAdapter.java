@@ -123,6 +123,6 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	public void reset(Subscriber subscriber) throws TeamException {
 		super.reset(subscriber);
-		getCollector(subscriber).reset(DEFAULT_MONITOR);
+		getCollector(subscriber).reset();
 	}
 }

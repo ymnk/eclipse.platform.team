@@ -39,6 +39,6 @@ public interface ISubscriberChangeListener extends EventListener{
 	 * a hint to listeners that they should query the provider to determine the
 	 * resources new sync info.]
 	 */
-	public void teamResourceChanged(SubscriberChangeEvent[] deltas);
+	public void subscriberResourceChanged(ISubscriberChangeEvent[] deltas);
 }
 

@@ -50,7 +50,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
 		
-		this.set = new FilteredSyncInfoCollector(participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet(), getResources(), null);
+		this.set = new FilteredSyncInfoCollector(participant.getTeamSubscriberSyncInfoCollector(), getResources(), null);
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
 				new DiffTreeViewerConfiguration(participant.getId(), set.getSyncInfoSet())); 
 		

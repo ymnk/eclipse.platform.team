@@ -199,7 +199,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 
 	protected ISubscriberChangeListener registerSubscriberListener(Subscriber subscriber) throws TeamException {
 		listener = new ISubscriberChangeListener() {
-			public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
+			public void subscriberResourceChanged(ISubscriberChangeEvent[] deltas) {
 				accumulatedTeamDeltas.addAll(Arrays.asList(deltas));
 			}
 		};

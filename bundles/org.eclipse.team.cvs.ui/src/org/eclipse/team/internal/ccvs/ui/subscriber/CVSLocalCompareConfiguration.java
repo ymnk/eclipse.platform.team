@@ -43,20 +43,22 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	public static CVSLocalCompareConfiguration create(IResource[] resources, CVSTag tag) {
 		CVSCompareSubscriber subscriber = new CVSCompareSubscriber(resources, tag);
 		SubscriberSyncInfoCollector collector = new SubscriberSyncInfoCollector(subscriber);
-		return new CVSLocalCompareConfiguration(subscriber, collector);
-	}
-	
-	public CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, SubscriberSyncInfoCollector collector) {
-		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet()); //$NON-NLS-1$
-		this.subscriber = subscriber;
-		this.collector = collector;
-		this.filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null, new SyncInfoFilter() {
+		FilteredSyncInfoCollector filtered = new FilteredSyncInfoCollector(collector, null, new SyncInfoFilter() {
 			private SyncInfoFilter contentCompare = new SyncInfoFilter.ContentComparisonSyncInfoFilter();
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
 				// Want to select infos whose contents do not match
 				return !contentCompare.select(info, monitor);
 			}
 		});
+		collector.start();
+		return new CVSLocalCompareConfiguration(subscriber, collector, filtered);
+	}
+	
+	private CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, SubscriberSyncInfoCollector collector, FilteredSyncInfoCollector filtered) {
+		super("org.eclipse.team.cvs.ui.compare-participant", filtered.getSyncInfoSet()); //$NON-NLS-1$
+		this.subscriber = subscriber;
+		this.collector = collector;
+		this.filteredSyncSet = filtered;
 	}
 	
 	/* (non-Javadoc)
@@ -100,8 +102,8 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 
 	protected void initializeActions(StructuredViewer viewer) {
 		super.initializeActions(viewer);
-		refreshAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getTeamSubscriber()).getName(), collector, null /* no listener */, false);
-		refreshAllAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getTeamSubscriber()).getName(), collector, null /* no listener */, true);
+		refreshAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getSubscriber()).getName(), collector, null /* no listener */, false);
+		refreshAllAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getSubscriber()).getName(), collector, null /* no listener */, true);
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#getSyncSet()

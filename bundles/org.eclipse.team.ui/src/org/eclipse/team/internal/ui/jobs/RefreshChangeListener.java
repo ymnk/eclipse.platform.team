@@ -12,7 +12,7 @@ class RefreshChangeListener implements ISubscriberChangeListener {
 	RefreshChangeListener(SubscriberSyncInfoCollector collector) {
 		this.collector = collector;
 	}
-	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
+	public void subscriberResourceChanged(ISubscriberChangeEvent[] deltas) {
 		for (int i = 0; i < deltas.length; i++) {
 			ISubscriberChangeEvent delta = deltas[i];
 			if (delta.getFlags() == ISubscriberChangeEvent.SYNC_CHANGED) {

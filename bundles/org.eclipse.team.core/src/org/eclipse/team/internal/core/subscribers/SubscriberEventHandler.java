@@ -32,7 +32,7 @@ import org.eclipse.team.internal.core.Policy;
 public class SubscriberEventHandler extends BackgroundEventHandler {
 	// The set that receives notification when the resource synchronization state
 	// has been calculated by the job.
-	private SyncSetInputFromSubscriber set;
+	private SyncSetInputFromSubscriber syncSetInput;
 
 	// Changes accumulated by the event handler
 	private List resultCache = new ArrayList();
@@ -83,10 +83,17 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		super(
 			Policy.bind("SubscriberEventHandler.jobName", set.getSubscriber().getDescription()), //$NON-NLS-1$
 			Policy.bind("SubscriberEventHandler.errors", set.getSubscriber().getDescription())); //$NON-NLS-1$
-		this.set = set;
-		reset(set.getSubscriber().roots(), SubscriberEvent.INITIALIZE);
+		this.syncSetInput = set;
 	}
 	
+	/**
+	 * Start the event handler by queuing events to prime the sync set input with the out-of-sync 
+	 * resources of the subscriber.
+	 */
+	public void start() {
+		reset(syncSetInput.getSubscriber().roots(), SubscriberEvent.INITIALIZE);
+	}
+
 	/**
 	 * Schedule the job or process the events now.
 	 */
@@ -100,10 +107,11 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * @param resource
 	 * @param depth
 	 */
-	public void initialize(IResource[] roots) {
+	public void reset(IResource[] roots) {
 		if (roots == null) {
-			roots = set.getSubscriber().roots();
+			roots = syncSetInput.getSubscriber().roots();
 		}
+		reset(syncSetInput);
 		reset(roots, SubscriberEvent.CHANGE);
 	}
 	
@@ -141,7 +149,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		if (resource.getType() != IResource.FILE
 			&& depth != IResource.DEPTH_ZERO) {
 			IResource[] members =
-				set.getSubscriber().members(resource);
+				syncSetInput.getSubscriber().members(resource);
 			for (int i = 0; i < members.length; i++) {
 				collect(
 					members[i],
@@ -154,7 +162,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		}
 
 		monitor.subTask(Policy.bind("SubscriberEventHandler.2", resource.getFullPath().toString())); //$NON-NLS-1$
-		SyncInfo info = set.getSubscriber().getSyncInfo(resource);
+		SyncInfo info = syncSetInput.getSubscriber().getSyncInfo(resource);
 		// resource is no longer under the subscriber control
 		if (info == null) {
 			results.add(
@@ -184,7 +192,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		monitor.beginTask(null, 100);
 		try {
 			SyncInfo[] infos =
-				set.getSubscriber().getAllOutOfSync(resources, depth, Policy.subMonitorFor(monitor, 50));
+				syncSetInput.getSubscriber().getAllOutOfSync(resources, depth, Policy.subMonitorFor(monitor, 50));
 	
 			// The subscriber hasn't cached out-of-sync resources. We will have to
 			// traverse all resources and calculate their state. 
@@ -222,19 +230,19 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 */
 	private void dispatchEvents(SubscriberEvent[] events, IProgressMonitor monitor) {
 		// this will batch the following set changes until endInput is called.
-		set.getSyncSet().beginInput();
+		syncSetInput.getSyncSet().beginInput();
 		for (int i = 0; i < events.length; i++) {
 			SubscriberEvent event = events[i];
 			switch (event.getType()) {
 				case SubscriberEvent.CHANGE :
-					set.collect(event.getResult(), monitor);
+					syncSetInput.collect(event.getResult(), monitor);
 					break;
 				case SubscriberEvent.REMOVAL :
-					set.getSyncSet().remove(event.getResource(), event.getDepth());
+					syncSetInput.getSyncSet().remove(event.getResource(), event.getDepth());
 					break;
 			}
 		}
-		set.getSyncSet().endInput(monitor);
+		syncSetInput.getSyncSet().endInput(monitor);
 	}
 	
 	/**
@@ -248,6 +256,16 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		for (int i = 0; i < resources.length; i++) {
 			queueEvent(new SubscriberEvent(resources[i], type, IResource.DEPTH_INFINITE));
 		}
+	}
+	
+	public void reset(SyncSetInput syncSetInput) {
+		try {
+			syncSetInput.reset(null);
+		} catch (TeamException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// TODO
 	}
 	
 	/* (non-Javadoc)

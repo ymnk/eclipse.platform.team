@@ -13,9 +13,7 @@ package org.eclipse.team.core.subscribers;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SubscriberEventHandler;
 import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
 
@@ -39,7 +37,8 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 
 	/**
 	 * Create a collector on the subscriber that collects out-of-sync resources
-	 * for all roots of the subscriber.
+	 * for all roots of the subscriber. The <code>start()</code> method must be called after creation
+	 * to rpime the collector's sync set.
 	 * @param subscriber the Subscriber
 	 */
 	public SubscriberSyncInfoCollector(Subscriber subscriber) {
@@ -50,7 +49,8 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * Create a collector that collects out-of-sync resources that are children of
 	 * the given roots. If the roots are <code>null</code>, then all out-of-sync resources
 	 * from the subscriber are collected. An empty array of roots will cause no resources
-	 * to be collected.
+	 * to be collected. The <code>start()</code> method must be called after creation
+	 * to rpime the collector's sync set.
 	 * @param subscriber the Subscriber
 	 * @param roots the roots of the out-of-sync resources to be collected
 	 */
@@ -58,11 +58,17 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 		this.roots = roots;
 		this.subscriber = subscriber;
 		Assert.isNotNull(subscriber);
-		set = new SyncSetInputFromSubscriber(subscriber);
-		eventHandler = new SubscriberEventHandler(set);
-
+	}
+	
+	/**
+	 * Start the collector. 
+	 */
+	public void start() {
+		this.set = new SyncSetInputFromSubscriber(subscriber);
+		this.eventHandler = new SubscriberEventHandler(set);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
 		subscriber.addListener(this);
+		eventHandler.start();
 	}
 	
 	/**
@@ -97,17 +103,11 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	/**
 	 * Clears this collector's <code>SyncInfoSet</code> and causes it to be recreated from the
 	 * associated <code>Subscriber</code>. The reset may occur in the background. If the
-	 * caller wishes to wait for the reset to complete, they should call \
+	 * caller wishes to wait for the reset to complete, they should call 
 	 * {@link waitForCollector(IProgressMonitor)}.
-	 * @param monitor a progress monitor
-	 * @throws TeamException
 	 */
-	public void reset(IProgressMonitor monitor) throws TeamException {
-		monitor.beginTask(null, 100);
-		set.reset(Policy.subMonitorFor(monitor, 100));
-		// TODO: This is a problem
-		eventHandler.initialize(getRoots());
-		monitor.done();
+	public void reset() {	
+		eventHandler.reset(getRoots());
 	}
 
 	/**
@@ -115,7 +115,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * 
 	 * @return the <code>Subscriber</code> associated with this collector.
 	 */
-	public Subscriber getTeamSubscriber() {
+	public Subscriber getSubscriber() {
 		return subscriber;
 	}
 
@@ -126,10 +126,8 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 */
 	public void dispose() {
 		eventHandler.shutdown();
-
 		set.disconnect();
-
-		getTeamSubscriber().removeListener(this);		
+		getSubscriber().removeListener(this);		
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 	}
 
@@ -228,7 +226,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 */
 	public IResource[] getRoots() {
 		if (roots == null) {
-			return getTeamSubscriber().roots();
+			return getSubscriber().roots();
 		} else {
 			return roots;
 		}
@@ -258,7 +256,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * 
 	 * @see org.eclipse.team.core.sync.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.sync.TeamDelta[])
 	 */
-	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
+	public void subscriberResourceChanged(ISubscriberChangeEvent[] deltas) {
 		for (int i = 0; i < deltas.length; i++) {
 			switch (deltas[i].getFlags()) {
 				case ISubscriberChangeEvent.SYNC_CHANGED :

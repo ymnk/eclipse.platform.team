@@ -15,12 +15,9 @@ import java.util.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
-import org.eclipse.team.core.subscribers.ISubscriberChangeListener;
-import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.subscribers.caches.SessionSynchronizationCache;
 import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
-import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * This subscriber is used when comparing the local workspace with its
@@ -104,7 +101,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.subscribers.TeamDelta[])
 	 */
-	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {
+	public void subscriberResourceChanged(ISubscriberChangeEvent[] deltas) {
 		List outgoingDeltas = new ArrayList(deltas.length);
 		for (int i = 0; i < deltas.length; i++) {
 			ISubscriberChangeEvent delta = deltas[i];

@@ -22,6 +22,8 @@ import org.eclipse.team.internal.core.subscribers.WorkingSetSyncSetInput;
  * the provided filters. The <code>SyncInfo</code> are filtered by a <code>SyncInfoFilter</code>
  * and a working set defined by an array of <code>IResource</code> which define the roots of all
  * resources that can potentially appear in the output set.
+ * <p>
+ * This class is not intended to be subclassed by clients
  * 
  * @see SyncInfoSet
  * @see SyncInfoFilter
@@ -44,8 +46,8 @@ public final class FilteredSyncInfoCollector {
 	 * @param workingSet the working set resource filter or <code>null</code> if there is no working set filter
 	 * @param filter the <code>SyncInfoFilter</code> or <code>null</code> if no filtering is desired
 	 */
-	public FilteredSyncInfoCollector(SyncInfoSet source, IResource[] workingSet, SyncInfoFilter filter) {
-		this.source = source;
+	public FilteredSyncInfoCollector(SubscriberSyncInfoCollector subscriberCollector, IResource[] workingSet, SyncInfoFilter filter) {
+		this.source = subscriberCollector.getSyncInfoSet();
 		
 		// TODO: optimize and don't use working set if no roots are passed in
 		workingSetInput = new WorkingSetSyncSetInput(source);

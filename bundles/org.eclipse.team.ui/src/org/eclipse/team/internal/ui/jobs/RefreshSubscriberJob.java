@@ -213,7 +213,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			}
 			
 			monitor.beginTask(null, 100);
-			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, roots, collector.getTeamSubscriber());
+			RefreshEvent event = new RefreshEvent(reschedule ? IRefreshEvent.SCHEDULED_REFRESH : IRefreshEvent.USER_REFRESH, roots, collector.getSubscriber());
 			RefreshChangeListener changeListener = new RefreshChangeListener(collector);
 			try {
 				// Only allow one refresh job at a time
@@ -256,12 +256,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		if(resources != null) {
 			return resources;
 		} else {
-			return collector.getTeamSubscriber().roots();
+			return collector.getSubscriber().roots();
 		}
 	}
 	
 	protected Subscriber getSubscriber() {
-		return collector.getTeamSubscriber();
+		return collector.getSubscriber();
 	}
 	
 	public long getScheduleDelay() {

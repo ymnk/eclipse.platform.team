@@ -17,13 +17,13 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSynchronizationCache;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Util;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
 
 /**
  * A CVSMergeSubscriber is responsible for maintaining the remote trees for a merge into
@@ -204,14 +204,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	 * (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.subscribers.TeamDelta[])
 	 */
-	public void teamResourceChanged(SubscriberChangeEvent[] deltas) {		
+	public void subscriberResourceChanged(ISubscriberChangeEvent[] deltas) {		
 		for (int i = 0; i < deltas.length; i++) {
-			SubscriberChangeEvent delta = deltas[i];
+			ISubscriberChangeEvent delta = deltas[i];
 			switch(delta.getFlags()) {
 				case ISubscriberChangeEvent.ROOT_REMOVED:
 					IResource resource = delta.getResource();
 					if(roots.remove(resource))	{
-						fireTeamResourceChange(new SubscriberChangeEvent[] {delta});
+						fireTeamResourceChange(new ISubscriberChangeEvent[] {delta});
 					}						
 					break;
 			}

@@ -14,7 +14,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.TeamParticipantRefreshAction;
@@ -169,7 +168,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	protected void setSubscriber(Subscriber subscriber) {
 		collector = new SubscriberSyncInfoCollector(subscriber);
-		filteredSyncSet = new FilteredSyncInfoCollector(collector.getSyncInfoSet(), null /* no initial roots */, null /* no initial filter */);
+		filteredSyncSet = new FilteredSyncInfoCollector(collector, null /* no initial roots */, null /* no initial filter */);
 
 		// listen for global ignore changes
 		TeamUI.addPropertyChangeListener(this);
@@ -178,6 +177,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			setWorkingSet(workingSet);
 		}
 		updateMode(getMode());
+		
+		collector.start();
+		
 		// start the refresh how that a subscriber has been added
 		TeamSubscriberRefreshSchedule schedule = getRefreshSchedule();
 		if(schedule.isEnabled()) {
@@ -190,7 +192,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @return a <code>TamSubscriber</code>
 	 */
 	public Subscriber getSubscriber() {
-		return collector.getTeamSubscriber();
+		return collector.getSubscriber();
 	}
 		
 	/* (non-Javadoc)
@@ -198,11 +200,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		if (event.getProperty().equals(TeamUI.GLOBAL_IGNORES_CHANGED)) {
-			try {
-				collector.reset(null);
-			} catch (TeamException e) {
-				TeamUIPlugin.log(e);
-			}
+			collector.reset();
 		}	
 	}
 	
