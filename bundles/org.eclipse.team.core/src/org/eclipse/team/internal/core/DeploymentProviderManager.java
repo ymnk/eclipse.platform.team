@@ -293,4 +293,24 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			}
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.IDeploymentProviderManager#getDeploymentProviderRoots(java.lang.String)
+	 */
+	public IResource[] getDeploymentProviderRoots(String id) {
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		List roots = new ArrayList();
+		for (int i = 0; i < projects.length; i++) {
+			IProject project = projects[i];
+			List mappings = getMappings(project);
+			for (Iterator iter = mappings.iterator(); iter.hasNext();) {
+				Mapping mapping = (Mapping) iter.next();
+				if (id == null || mapping.getDescription().getId().equals(id)) {
+					roots.add(mapping.getContainer());
+				}
+			}
+		}
+		return (IResource[]) roots.toArray(new IResource[roots.size()]);
+	}
+
 }

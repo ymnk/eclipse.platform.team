@@ -65,4 +65,15 @@ public interface IDeploymentProviderManager {
 	 * the given id, and <code>false</code> otherwise.
 	 */
 	public boolean getMappedTo(IResource resource, String id);
+	
+	/**
+	 * Return an array of all the resource roots that are mapped
+	 * to a deployment providers with the given
+	 * id. If id is <code>null</code>, the roots of all deployment providers
+	 * are returned.
+	 * @param id a deployment provider id or <code>null</code>
+	 * @return all roots that are mapped to deployment providers with
+	 * the given id
+	 */
+	public IResource[] getDeploymentProviderRoots(String id);
 }
