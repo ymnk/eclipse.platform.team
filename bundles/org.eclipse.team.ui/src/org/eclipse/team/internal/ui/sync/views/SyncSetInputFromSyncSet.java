@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
@@ -76,9 +77,10 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 			if (event.isReset()) {
 				syncSet.reset();
 			}
-			syncSetChanged(event.getChangedResources());
-			syncSetChanged(event.getRemovedResources());
+			syncSetChanged(event.getChangedResources());			
 			syncSetChanged(event.getAddedResources());
+			
+			remove(event.getRemovedResources());
 		} finally {
 			getSyncSet().endInput();
 		}
@@ -87,6 +89,12 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 	private void syncSetChanged(SyncInfo[] infos) {
 		for (int i = 0; i < infos.length; i++) {
 			collect(infos[i]);
+		}
+	}
+	
+	private void remove(IResource[] resources) {
+		for (int i = 0; i < resources.length; i++) {
+			remove(resources[i]);
 		}
 	}
 }

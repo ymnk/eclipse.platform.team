@@ -31,7 +31,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -73,7 +73,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		}
 	}
 	
-	private SyncTreeSubscriber getSubscriber() throws TeamException {
+	private TeamSubscriber getSubscriber() throws TeamException {
 		return getWorkspaceSubscriber();
 	}
 	

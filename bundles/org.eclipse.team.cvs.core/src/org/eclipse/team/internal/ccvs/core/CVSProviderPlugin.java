@@ -156,10 +156,11 @@ public class CVSProviderPlugin extends Plugin {
 	/**
 	 * Convenience method for logging CVSExceptiuons to the plugin log
 	 */
-	public static void log(TeamException e) {
+	public static void log(CoreException e) {
 		// For now, we'll log the status. However we should do more
 		log(e.getStatus());
 	}
+	
 	public static void log(IStatus status) {
 		// For now, we'll log the status. However we should do more
 		getPlugin().getLog().log(status);

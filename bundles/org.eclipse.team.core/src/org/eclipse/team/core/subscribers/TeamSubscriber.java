@@ -21,14 +21,14 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 
 /**
- * A SyncTreeSubscriber is connected to a remote location that has incoming changes
+ * A TeamSubscriber is connected to a remote location that has incoming changes
  * to be merged into a workspace. It maintains the synchronization state of the incoming
  * changes based on those in the workspace.
  * 
  * [Note: How can we allow the refresh() operation to optimize the sync calculation based
  * on the currently configured compare criteria?]
-  */
-abstract public class SyncTreeSubscriber {
+ */
+abstract public class TeamSubscriber {
 	
 	private List listeners = new ArrayList(1);
 	
@@ -77,8 +77,7 @@ abstract public class SyncTreeSubscriber {
 	 * <p>
 	 * [Issue1 : Is there any filtering on the members? Just the ones
 	 *  that changed in some way, or *every member*?
-	 * ]
-	 * </p>
+	 * ]</p>
 	 *
 	 * @param resource the resource
 	 * @return a list of member resources
@@ -219,14 +218,28 @@ abstract public class SyncTreeSubscriber {
 
 	/**
 	 * Cancels this subscription.
-	 * 
 	 */	
 	abstract public void cancel();
 	
+	/**
+	 * Adds a listener to this team subscriber. 
+	 * Has no effect if an identical listener is already registered.
+	 * <p>
+	 * Team resource change listeners are informed about state changes 
+	 * that affect the resources supervised by this subscriber.</p>
+	 * 
+	 * @param listener a team resource change listener
+	 */
 	public void addListener(ITeamResourceChangeListener listener) {
 		listeners.add(listener);
 	}
 
+	/**
+	 * Removes a listener previously registered with this team subscriber.
+	 * Has no affect if an identical listener is not registered.
+	 * 
+	 * @param listener a team resource change listener
+	 */	
 	public void removeListener(ITeamResourceChangeListener listener) {
 		listeners.remove(listener);
 	}
@@ -252,7 +265,8 @@ abstract public class SyncTreeSubscriber {
 	 * supervised by the subscriber. A return of <code>null</code> indicates that the
 	 * subscriber does not support this operation in an optimized fashion. In this case,
 	 * the caller can determine the out-of-sync resources by traversing the resource
-	 * structure form the roots of the subscriber (@see <code>getRoots()</code>).
+	 * structure form the roots of the subscriber (@see <code>getRoots()</code>).</p>
+	 * 
 	 * @param resources
 	 * @param depth
 	 * @param monitor

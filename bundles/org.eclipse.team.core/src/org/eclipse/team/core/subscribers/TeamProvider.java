@@ -29,7 +29,7 @@ import org.eclipse.team.internal.core.SaveContextXMLWriter;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
- * This is a temporary class that contains methods for SyncTreeSubscriber support. At
+ * This is a temporary class that contains methods for TeamSubscriber support. At
  * some time it should be merged into the existing Team plugin class.
  */
 public abstract class TeamProvider {
@@ -44,8 +44,8 @@ public abstract class TeamProvider {
 	static private List listeners = new ArrayList(1);
 	static private Map factories = new HashMap();
 
-	static public SyncTreeSubscriber getSubscriber(QualifiedName id) throws TeamException {
-		SyncTreeSubscriber s = (SyncTreeSubscriber)subscribers.get(id);
+	static public TeamSubscriber getSubscriber(QualifiedName id) throws TeamException {
+		TeamSubscriber s = (TeamSubscriber)subscribers.get(id);
 		return s;
 	}
 			
@@ -57,18 +57,18 @@ public abstract class TeamProvider {
 		restoreSubscribers();
 	}
 	
-	static public SyncTreeSubscriber[] getSubscribers() {
-		return (SyncTreeSubscriber[])subscribers.values().toArray(
-						new SyncTreeSubscriber[subscribers.size()]);
+	static public TeamSubscriber[] getSubscribers() {
+		return (TeamSubscriber[])subscribers.values().toArray(
+						new TeamSubscriber[subscribers.size()]);
 	}
 	
-	static public void registerSubscriber(SyncTreeSubscriber subscriber) {
+	static public void registerSubscriber(TeamSubscriber subscriber) {
 		subscribers.put(subscriber.getId(), subscriber);
 		fireTeamResourceChange(new TeamDelta[] {
 				new TeamDelta(subscriber, TeamDelta.SUBSCRIBER_CREATED, null)});
 	}
 	
-	static public void deregisterSubscriber(SyncTreeSubscriber subscriber) {
+	static public void deregisterSubscriber(TeamSubscriber subscriber) {
 		subscribers.remove(subscriber.getId());
 		fireTeamResourceChange(new TeamDelta[] {
 				new TeamDelta(subscriber, TeamDelta.SUBSCRIBER_DELETED, null)});
@@ -109,13 +109,13 @@ public abstract class TeamProvider {
 					if(context.getName().equals(SAVECTX_SUBSCRIBER)) {
 						String qualifier = context.getAttribute(SAVECTX_QUALIFIER);
 						String localName = context.getAttribute(SAVECTX_LOCALNAME);
-						ISyncTreeSubscriberFactory factory = create(qualifier);
+						TeamSubscriberFactory factory = create(qualifier);
 						if(factory == null) {
 							TeamPlugin.log(new TeamException("Error restoring subscribers. Cannot find factory with id: " + qualifier.toString()).getStatus());
 						}
 						SaveContext[] children = context.getChildren();
 						if(children.length == 1) {			
-							SyncTreeSubscriber s = factory.restoreSubscriber(new QualifiedName(qualifier, localName), children[0]);								
+							TeamSubscriber s = factory.restoreSubscriber(new QualifiedName(qualifier, localName), children[0]);								
 							if(s != null) {
 								registerSubscriber(s);
 							}
@@ -135,9 +135,9 @@ public abstract class TeamProvider {
 		List children = new ArrayList();
 		try {
 			for (Iterator it = subscribers.values().iterator(); it.hasNext();) {			
-				SyncTreeSubscriber subscriber = (SyncTreeSubscriber) it.next();			
+				TeamSubscriber subscriber = (TeamSubscriber) it.next();			
 				String qualifier = subscriber.getId().getQualifier();
-				ISyncTreeSubscriberFactory factory = create(qualifier);
+				TeamSubscriberFactory factory = create(qualifier);
 				if(factory == null) {
 					TeamPlugin.log(new TeamException("Error saving subscribers. Cannot find factory with id: " + qualifier).getStatus());
 				}
@@ -160,8 +160,8 @@ public abstract class TeamProvider {
 		}
 	}
 	
-	private static ISyncTreeSubscriberFactory create(String id) {
-		ISyncTreeSubscriberFactory sFactory = (ISyncTreeSubscriberFactory)factories.get(id);
+	private static TeamSubscriberFactory create(String id) {
+		TeamSubscriberFactory sFactory = (TeamSubscriberFactory)factories.get(id);
 		if(sFactory != null) {
 			return sFactory;
 		}
@@ -177,7 +177,7 @@ public abstract class TeamProvider {
 						try {
 							//Its ok not to have a typeClass extension.  In this case, a default instance will be created.
 							if(configElements[j].getAttribute("class") != null) { //$NON-NLS-1$
-								sFactory = (ISyncTreeSubscriberFactory) configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
+								sFactory = (TeamSubscriberFactory) configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
 							}
 							factories.put(sFactory.getID(), sFactory);
 							return sFactory;

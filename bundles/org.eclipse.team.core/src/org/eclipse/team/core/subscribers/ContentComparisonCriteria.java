@@ -142,7 +142,7 @@ public class ContentComparisonCriteria extends ComparisonCriteria {
 				}
 				return null;
 			} catch (CoreException e) {
-				throw new TeamException(e);
+				throw TeamException.asTeamException(e);
 			}
 		}
 }

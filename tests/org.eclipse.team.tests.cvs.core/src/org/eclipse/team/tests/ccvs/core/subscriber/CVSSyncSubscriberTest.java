@@ -25,7 +25,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.core.sync.RemoteSyncElement;
@@ -50,8 +50,8 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		super(name);
 	}
 
-	protected SyncTreeSubscriber getWorkspaceSubscriber() throws TeamException {
-		SyncTreeSubscriber subscriber = TeamProvider.getSubscriber(CVSProviderPlugin.CVS_WORKSPACE_SUBSCRIBER_ID);
+	protected TeamSubscriber getWorkspaceSubscriber() throws TeamException {
+		TeamSubscriber subscriber = TeamProvider.getSubscriber(CVSProviderPlugin.CVS_WORKSPACE_SUBSCRIBER_ID);
 		if (subscriber == null) fail("The CVS sync subsciber is not registered");
 		return subscriber;
 	}
@@ -59,7 +59,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 	/*
 	 * Refresh the subscriber for the given resource
 	 */
-	protected void refresh(SyncTreeSubscriber subscriber, IResource resource) throws TeamException {
+	protected void refresh(TeamSubscriber subscriber, IResource resource) throws TeamException {
 		subscriber.refresh(new IResource[] { resource}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 	}
 	
@@ -67,7 +67,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 	 * Assert that the specified resources in the subscriber have the specified sync kind
 	 * Ignore conflict types if they are not specified in the assert statement
 	 */
-	protected void assertSyncEquals(String message, SyncTreeSubscriber subscriber, IContainer root, String[] resourcePaths, boolean refresh, int[] syncKinds) throws CoreException, TeamException {
+	protected void assertSyncEquals(String message, TeamSubscriber subscriber, IContainer root, String[] resourcePaths, boolean refresh, int[] syncKinds) throws CoreException, TeamException {
 		assertTrue(resourcePaths.length == syncKinds.length);
 		if (refresh) refresh(subscriber, root);
 		IResource[] resources = getResources(root, resourcePaths);
@@ -77,7 +77,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		
 	}
 	
-	protected void assertSyncEquals(String message, SyncTreeSubscriber subscriber, IResource resource, int syncKind) throws TeamException {
+	protected void assertSyncEquals(String message, TeamSubscriber subscriber, IResource resource, int syncKind) throws TeamException {
 		int conflictTypeMask = 0x0F; // ignore manual and auto merge sync types for now.
 		SyncInfo info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
 		int kind;
@@ -190,12 +190,12 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		return (IResource[]) affected.toArray(new IResource[affected.size()]);
 	}
 	
-	protected TeamDelta[] deregisterSubscriberListener(SyncTreeSubscriber subscriber) throws TeamException {
+	protected TeamDelta[] deregisterSubscriberListener(TeamSubscriber subscriber) throws TeamException {
 		subscriber.removeListener(listener);
 		return (TeamDelta[]) accumulatedTeamDeltas.toArray(new TeamDelta[accumulatedTeamDeltas.size()]);
 	}
 
-	protected ITeamResourceChangeListener registerSubscriberListener(SyncTreeSubscriber subscriber) throws TeamException {
+	protected ITeamResourceChangeListener registerSubscriberListener(TeamSubscriber subscriber) throws TeamException {
 		listener = new ITeamResourceChangeListener() {
 			public void teamResourceChanged(TeamDelta[] deltas) {
 				accumulatedTeamDeltas.addAll(Arrays.asList(deltas));
@@ -209,7 +209,7 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 	/**
 	 * @param resources
 	 */
-	protected SyncResource[] createSyncResources(SyncTreeSubscriber subscriber, IResource[] resources) throws TeamException {
+	protected SyncResource[] createSyncResources(TeamSubscriber subscriber, IResource[] resources) throws TeamException {
 		// TODO: SyncResources needs a SyncSet which contains the SyncInfo
 		// but SyncSet is not API
 		SyncSet syncSet = new SyncSet();

@@ -15,7 +15,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.sync.ILocalSyncElement;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.client.Update;
@@ -32,7 +32,7 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
  */
 public class CVSSyncInfo extends SyncInfo {
 
-	public CVSSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, SyncTreeSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
+	public CVSSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
 		super(local, base, remote, subscriber, monitor);
 	}
 

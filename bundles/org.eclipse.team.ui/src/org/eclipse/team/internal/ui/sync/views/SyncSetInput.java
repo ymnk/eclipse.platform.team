@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
@@ -77,10 +78,18 @@ public abstract class SyncSetInput {
 				syncSet.add(info);
 			}
 		} else if (wasOutOfSync) {
-			syncSet.remove(info);
+			syncSet.remove(info.getLocal());
 		}
 	}
 
+	protected void remove(IResource resource)  {
+		SyncInfo oldInfo = syncSet.getSyncInfo(resource);
+		boolean wasOutOfSync = oldInfo != null;
+		if (oldInfo != null) {
+			syncSet.remove(resource);
+		}
+	}
+	
 	/**
 	 * @return
 	 */

@@ -59,11 +59,11 @@ public class TeamDelta {
 	 */	
 	public static final int SUBSCRIBER_DELETED = 0x10;
 
-	private SyncTreeSubscriber subscriber; 
+	private TeamSubscriber subscriber; 
 	private int flags;
 	private IResource resource; 
 	
-	public TeamDelta(SyncTreeSubscriber subscriber, int flags, IResource resource) {
+	public TeamDelta(TeamSubscriber subscriber, int flags, IResource resource) {
 		this.subscriber = subscriber;
 		this.flags = flags;
 		this.resource = resource;
@@ -77,7 +77,7 @@ public class TeamDelta {
 		return resource;
 	}
 
-	public SyncTreeSubscriber getSubscriber() {
+	public TeamSubscriber getSubscriber() {
 		return subscriber;
 	}
 	
@@ -87,7 +87,7 @@ public class TeamDelta {
 	 * @param resources the resources whose sync info has changed
 	 * @return
 	 */
-	public static TeamDelta[] asSyncChangedDeltas(SyncTreeSubscriber subscriber, IResource[] resources) {
+	public static TeamDelta[] asSyncChangedDeltas(TeamSubscriber subscriber, IResource[] resources) {
 		TeamDelta[] deltas = new TeamDelta[resources.length];
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];

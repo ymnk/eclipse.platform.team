@@ -24,7 +24,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
@@ -191,7 +191,7 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 	 * an error for addition conflicts.
 	 */
 	protected void mergeWithLocal(SyncResource[] nodes, RepositoryManager manager, boolean includeStartTag, IProgressMonitor monitor) throws TeamException {
-		SyncTreeSubscriber subscriber = getSubscriber();
+		TeamSubscriber subscriber = getSubscriber();
 		if (!(subscriber instanceof CVSMergeSubscriber)) {
 			throw new CVSException("Invalid subscriber: " + subscriber.getId());
 		}
@@ -303,8 +303,6 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 			}
 		} catch(CoreException e) {
 			throw new CVSException(Policy.bind("UpdateMergeActionProblems_merging_remote_resources_into_workspace_1"), e); //$NON-NLS-1$
-		} catch(TeamException e) {
-			throw new CVSException(Policy.bind("UpdateMergeActionProblems_merging_remote_resources_into_workspace_2"), e); //$NON-NLS-1$
 		}
 	}
 	

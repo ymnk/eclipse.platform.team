@@ -13,14 +13,14 @@ package org.eclipse.team.internal.ui.sync.views;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
 import org.eclipse.ui.IWorkingSet;
 
 /**
  * SubscriberInput encapsulates the UI model for synchronization changes associated
- * with a SyncTreeSubscriber. 
+ * with a TeamSubscriber. 
  */
 public class SubscriberInput {
 
@@ -40,9 +40,9 @@ public class SubscriberInput {
 	/*
 	 * The subscriber 
 	 */
-	private SyncTreeSubscriber subscriber;
+	private TeamSubscriber subscriber;
 	
-	SubscriberInput(SyncTreeSubscriber subscriber) {
+	SubscriberInput(TeamSubscriber subscriber) {
 		this.subscriber = subscriber;
 		subscriberInput = new SyncSetInputFromSubscriberWorkingSet();
 		filteredInput = new SyncSetInputFromSyncSet(); 
@@ -62,7 +62,7 @@ public class SubscriberInput {
 		}
 	}
 	
-	public SyncTreeSubscriber getSubscriber() {
+	public TeamSubscriber getSubscriber() {
 		return subscriber;
 	}
 	

@@ -25,9 +25,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
  * 
  * @since 2.0
  */
-public class TeamException extends Exception {
-
-	protected IStatus status = null;
+public class TeamException extends CoreException {
 	
 	// The operation completed successfully.
 	public static final int OK = 0;
@@ -53,54 +51,31 @@ public class TeamException extends Exception {
 	// The operation cannot be performed due to a conflict with other work.
 	public static final int CONFLICT = -7;
 
-	/**
-	 * Single status constructor for a <code>TeamProviderException</code>.
-	 * @param status
-	 */
 	public TeamException(IStatus status) {
-		super(status.getMessage());	
-		this.status = status;
+		super(status);	
 	}
 
-	/**
-	 * Answer the single status resulting from the attempted API call.
-	 * 
-	 * @return IStatus the single status of the result, or <code>null</code> if this is a multi-status
-	 * response.
-	 */
-	public IStatus getStatus() {
-		return status;
-	}
-	
-	/**
-	 * Method TeamException.
-	 * @param message
-	 * @param e
-	 */
 	public TeamException(String message, Exception e) {
-		super(e.getMessage());
-		this.status = new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, e);
+		super(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, e));
 	}
 	
-	/**
-	 * @see java.lang.Throwable#Throwable(String)
-	 */
 	public TeamException(String message) {
-		super(message);
-		this.status = new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null);
+		this(message, null);
 	}
 	
-	public TeamException(CoreException e) {
-		super(e.getMessage());
+	protected TeamException(CoreException e) {		
+		super(asStatus(e));
+	}
+
+	private static Status asStatus(CoreException e) {
 		IStatus status = e.getStatus();
-		// If the exception is not a multi-status, wrap the exception to keep the original stack trace.
-		// If the exception is a multi-status, the interesting stack traces should be in the childen already
-		// TODO: The problem here is that, if the CoreException wraps another exception
-		// (e.g. IOException) this wrapped exception will end up 2 deep and the logging
-		// may not suck it out.
-		if ( ! status.isMultiStatus()) {
-			status = new Status(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), e);
+		return new Status(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), e);
+	}
+
+	public static TeamException asTeamException(CoreException e) {
+		if (e instanceof TeamException) { 
+			return (TeamException)e;
 		}
-		this.status = status;
+		return new TeamException(e);
 	}
 }

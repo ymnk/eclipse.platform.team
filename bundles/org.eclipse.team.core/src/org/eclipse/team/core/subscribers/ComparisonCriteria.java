@@ -14,21 +14,33 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 
 /**
- * A ComparisonCriteria used by a <code>SyncTreeSubscriber</code> to calculate the sync
- * state of the workspace resources against the remote. Subscribers are free to use the criteria
+ * A ComparisonCriteria used by a <code>TeamSubscriber</code> to calculate the sync
+ * state of the workspace resources. Subscribers are free to use the criteria
  * best suited for their environment. For example, an FTP subscriber could choose to use file
  * size or file size as compasison criterias.
+ * <p>
+ * Aggregate criterias can be created for cases where a criteria is based on the result
+ * of another criteria.</p>
  * 
  * @see org.eclipse.team.core.subscribers.SyncInfo
- * @see org.eclipse.team.core.subscribers.SyncTreeSubscriber
+ * @see org.eclipse.team.core.subscribers.TeamSubscriber
  */
 abstract public class ComparisonCriteria {
 	
 	private ComparisonCriteria[] preConditions;
 	
+	/**
+	 * Default no-args contructor to be called if the comparison criteria does not
+	 * depend on other criterias. 
+	 */
 	public ComparisonCriteria() {
 	}
-	
+
+	/**
+	 * Constructor used to create a criteria whose comparison is based on the compare
+	 * result of other criterias. 
+	 * @param preConditions array of preconditions
+	 */	
 	public ComparisonCriteria(ComparisonCriteria[] preConditions) {
 		this.preConditions = preConditions;
 	}
@@ -44,6 +56,16 @@ abstract public class ComparisonCriteria {
 	 */
 	abstract public String getId();
 
+	/**
+	 * Returns <code>true</code> if e1 and e2 are equal based on this criteria and <code>false</code>
+	 * otherwise. Since comparison could be long running the caller should provide a progress monitor.
+	 *  
+	 * @param e1 object to be compared
+	 * @param e2 object to be compared
+	 * @param monitor
+	 * @return
+	 * @throws TeamException
+	 */
 	abstract public boolean compare(Object e1, Object e2, IProgressMonitor monitor) throws TeamException;
 	
 	/**

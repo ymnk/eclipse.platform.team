@@ -60,7 +60,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.internal.core.Assert;
@@ -156,9 +156,9 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		contributeToActionBars();
 		this.composite = parent;
 		
-		SyncTreeSubscriber[] subscribers = TeamProvider.getSubscribers();
+		TeamSubscriber[] subscribers = TeamProvider.getSubscribers();
 		for (int i = 0; i < subscribers.length; i++) {
-			SyncTreeSubscriber subscriber = subscribers[i];
+			TeamSubscriber subscriber = subscribers[i];
 			addSubscriber(subscriber);
 		}
 		updateTitle();
@@ -392,7 +392,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	public void updateTitle() {
 		SubscriberInput input = getInput();
 		if(input != null) {
-			SyncTreeSubscriber subscriber = input.getSubscriber();
+			TeamSubscriber subscriber = input.getSubscriber();
 		 	setTitle(Policy.bind("LiveSyncView.titleWithSubscriber", subscriber.getName()));
 		 	IWorkingSet ws = input.getWorkingSet();
 		 	if(ws != null) {
@@ -532,16 +532,16 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		for (int i = 0; i < deltas.length; i++) {
 			TeamDelta delta = deltas[i];
 			if(delta.getFlags() == TeamDelta.SUBSCRIBER_CREATED) {
-				SyncTreeSubscriber s = delta.getSubscriber();
+				TeamSubscriber s = delta.getSubscriber();
 				addSubscriber(s);
 			} else if(delta.getFlags() == TeamDelta.SUBSCRIBER_DELETED) {
-				SyncTreeSubscriber s = delta.getSubscriber();
+				TeamSubscriber s = delta.getSubscriber();
 				removeSubscriber(s);
 			}
 		}
 	}
 
-	private void addSubscriber(SyncTreeSubscriber s) {
+	private void addSubscriber(TeamSubscriber s) {
 		SubscriberInput si = new SubscriberInput(s);
 		subscriberInputs.put(s.getId(), si);
 		ActionContext context = new ActionContext(null);
@@ -550,7 +550,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		initializeSubscriberInput(si);
 	}
 	
-	private void removeSubscriber(SyncTreeSubscriber s) {
+	private void removeSubscriber(TeamSubscriber s) {
 		// notify that context is changing
 		SubscriberInput si = (SubscriberInput)subscriberInputs.get(s.getId());
 		ActionContext context = new ActionContext(null);

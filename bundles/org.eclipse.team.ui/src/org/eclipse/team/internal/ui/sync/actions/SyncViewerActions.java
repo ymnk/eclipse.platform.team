@@ -28,7 +28,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
 import org.eclipse.team.internal.ui.actions.TeamAction;
@@ -129,7 +129,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			input.getSubscriber().cancel();
 		}
 		public void updateTitle(SubscriberInput input) {
-			SyncTreeSubscriber subscriber = input.getSubscriber();
+			TeamSubscriber subscriber = input.getSubscriber();
 			if(subscriber.isCancellable()) {
 				setText("Cancel [" + subscriber.getName() +"]");
 			} else {

@@ -488,8 +488,6 @@ public class CVSWorkspaceRoot {
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
-		} catch (TeamException e) {
-			throw CVSException.wrapException(e);
 		} finally {
 			monitor.done();
 		}

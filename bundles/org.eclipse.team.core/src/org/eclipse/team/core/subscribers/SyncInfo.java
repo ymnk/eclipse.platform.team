@@ -128,14 +128,14 @@ public class SyncInfo implements IAdaptable {
 	 private IResource local;
 	 private IRemoteResource base;
 	 private IRemoteResource remote;
-	 private SyncTreeSubscriber subscriber;
+	 private TeamSubscriber subscriber;
 	 
 	 private int syncKind;
 	
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, SyncTreeSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
+	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
@@ -143,16 +143,6 @@ public class SyncInfo implements IAdaptable {
 		this.syncKind = calculateKind(monitor);
 	}
 	
-	/**
-	 * Creates an in-sync info for the given resource
-	 * TODO: Is this safe to do?
-	 * @param resource
-	 */
-	public SyncInfo(IResource resource) {
-		this.local = resource;
-		this.syncKind = 0;
-	}
-
 	/**
 	 * Returns the state of the local resource. Note that the
 	 * resource may or may not exist.
@@ -197,7 +187,7 @@ public class SyncInfo implements IAdaptable {
 	 * Returns the subscriber that created and maintains this sync info
 	 * object. 
 	 */
-	public SyncTreeSubscriber getSubscriber() {
+	public TeamSubscriber getSubscriber() {
 		return subscriber;
 	}
 	
@@ -279,10 +269,7 @@ public class SyncInfo implements IAdaptable {
 		if (subscriber.isThreeWay()) {
 			if (base == null) {
 				if (remote == null) {
-					if (!localExists) {
-						// TODO: Although we used to think this was an error, it may be valid now
-						// given that a sync change may have occured and someone wants to know the 
-						// current sync state
+					if (!localExists) {						
 						description = IN_SYNC;
 					} else {
 						description = OUTGOING | ADDITION;

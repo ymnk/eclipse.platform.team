@@ -20,7 +20,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -78,7 +78,7 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 	/**
 	 * @param syncResources
 	 */
-	private void mergeResources(SyncTreeSubscriber subscriber, SyncResource[] syncResources) throws CVSException {
+	private void mergeResources(TeamSubscriber subscriber, SyncResource[] syncResources) throws CVSException {
 		MergeUpdateAction action = new MergeUpdateAction() {
 			protected boolean promptForOverwrite(SyncResourceSet syncSet) {
 				// Agree to overwrite any conflicting resources

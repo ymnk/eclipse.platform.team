@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.internal.resources.SaveContext;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -29,7 +28,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ComparisonCriteria;
 import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -39,7 +38,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
  * This class provides common funtionality for three way sychronizing
  * for CVS.
  */
-public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
+public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	
 	private QualifiedName id;
 	private String name;
@@ -106,7 +105,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#members(org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#members(org.eclipse.core.resources.IResource)
 	 */
 	public IResource[] members(IResource resource) throws TeamException {
 		if(resource.getType() == IResource.FILE) {
@@ -139,10 +138,9 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#roots()
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#roots()
 	 */
 	public IResource[] roots() throws TeamException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -249,21 +247,21 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#isThreeWay()
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#isThreeWay()
 	 */
 	public boolean isThreeWay() {
 		return true;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#isCancellable()
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#isCancellable()
 	 */
 	public boolean isCancellable() {
 		return false;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#cancel()
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#cancel()
 	 */
 	public void cancel() {
 		// noop

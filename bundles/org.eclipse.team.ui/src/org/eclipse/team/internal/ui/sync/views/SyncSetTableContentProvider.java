@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.team.core.subscribers.SyncInfo;
 
@@ -53,8 +54,8 @@ public class SyncSetTableContentProvider extends SyncSetContentProvider {
 	protected void handleResourceRemovals(SyncSetChangedEvent event) {
 		TableViewer table = getTableViewer();
 		if (table != null) {
-			SyncInfo[] infos = event.getRemovedResources();
-			table.remove(getModelObjects(infos));
+			IResource[] resources = event.getRemovedResources();
+			table.remove(getModelObjects(resources));
 		} else {
 			super.handleResourceRemovals(event);
 		}

@@ -145,25 +145,14 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		}
 	}
 
-	/**
-	 * 
-	 */
 	public StructuredViewer getViewer() {
 		return (StructuredViewer)viewer;
 	}
 	
-	/**
-	 * @param info
-	 * @return
-	 */
 	protected Object getModelObject(IResource resource) {
 		return SyncSet.getModelObject(getSyncSet(), resource);
 	}
 	
-	/**
-	 * @param info
-	 * @return
-	 */
 	protected Object getModelObject(SyncInfo info) {
 		return getModelObject(info.getLocal());
 	}
@@ -174,5 +163,13 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			resources[i] = getModelObject(infos[i]);
 		}
 		return resources;
+	}
+	
+	protected Object[] getModelObjects(IResource[] resources) {
+		Object[] result = new Object[resources.length];
+		for (int i = 0; i < resources.length; i++) {
+			result[i] = getModelObject(resources[i]);
+		}
+		return result;
 	}
 }

@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -33,9 +33,9 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  */
 public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResourceChangeListener, ITeamResourceChangeListener {
 
-	private SyncTreeSubscriber subscriber;
+	private TeamSubscriber subscriber;
 
-	private void connect(SyncTreeSubscriber s) {
+	private void connect(TeamSubscriber s) {
 		if (this.subscriber != null) return;
 		this.subscriber = s;
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
@@ -52,7 +52,7 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 	/**
 	 * @return
 	 */
-	public SyncTreeSubscriber getSubscriber() {
+	public TeamSubscriber getSubscriber() {
 		return subscriber;
 	}
 
@@ -63,7 +63,7 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 	 * 
 	 * @param subscriber
 	 */
-	public void setSubscriber(SyncTreeSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
+	public void setSubscriber(TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
 		if (subscriber != null) disconnect();
 		connect(subscriber);
 		reset(monitor);
@@ -116,21 +116,14 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 		}
 	}
 	protected void collect(IResource resource, IProgressMonitor monitor) throws TeamException {
-		SyncInfo info = getSubscriber().getSyncInfo(resource, monitor);	
+		SyncInfo info = getSubscriber().getSyncInfo(resource, monitor);
+		// resource is no longer under the subscriber control
 		if (info == null) {
-			info = getInSyncInfoFor(resource);
+			remove(resource);
 		}	
 		collect(info);
 	}
 	
-	/**
-	 * @param resource
-	 * @return
-	 */
-	private SyncInfo getInSyncInfoFor(IResource resource) {
-		return new SyncInfo(resource);
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
 	 */

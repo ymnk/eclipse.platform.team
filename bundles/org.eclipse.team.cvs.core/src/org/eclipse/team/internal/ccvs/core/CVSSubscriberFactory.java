@@ -12,14 +12,14 @@ package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ISyncTreeSubscriberFactory;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriberFactory;
 import org.eclipse.team.internal.core.SaveContext;
 
 /**
  * CVSSubscriberFactory
  */
-public class CVSSubscriberFactory implements ISyncTreeSubscriberFactory {
+public class CVSSubscriberFactory extends TeamSubscriberFactory {
 
 	final static public String ID = "org.eclipse.team.cvs.subscribers";
 
@@ -33,7 +33,7 @@ public class CVSSubscriberFactory implements ISyncTreeSubscriberFactory {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ISyncTreeSubscriberFactory#createSubscriber(org.eclipse.core.runtime.QualifiedName, org.eclipse.team.internal.core.SaveContext)
 	 */
-	public SyncTreeSubscriber restoreSubscriber(QualifiedName id, SaveContext saveContext) throws TeamException {
+	public TeamSubscriber restoreSubscriber(QualifiedName id, SaveContext saveContext) throws TeamException {
 		if(isMergeSubscriber(id)) {
 			return CVSMergeSubscriber.restore(id, saveContext);
 		}
@@ -42,9 +42,9 @@ public class CVSSubscriberFactory implements ISyncTreeSubscriberFactory {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.ISyncTreeSubscriberFactory#saveSubscriber(org.eclipse.team.core.subscribers.SyncTreeSubscriber)
+	 * @see org.eclipse.team.core.subscribers.ISyncTreeSubscriberFactory#saveSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
 	 */
-	public SaveContext saveSubscriber(SyncTreeSubscriber subscriber) throws TeamException {
+	public SaveContext saveSubscriber(TeamSubscriber subscriber) throws TeamException {
 		if(isMergeSubscriber(subscriber.getId())) {
 			return ((CVSMergeSubscriber)subscriber).saveState();
 		} else {

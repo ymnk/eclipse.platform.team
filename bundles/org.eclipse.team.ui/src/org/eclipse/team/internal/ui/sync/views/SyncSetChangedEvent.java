@@ -48,8 +48,8 @@ public class SyncSetChangedEvent {
 		addedResources.add(info);
 	}
 	
-	/* package */ void removed(SyncInfo info) {
-		removedResources.add(info);
+	/* package */ void removed(IResource resource) {
+		removedResources.add(resource);
 	}
 	
 	/* package */ void changed(SyncInfo info) {
@@ -125,8 +125,8 @@ public class SyncSetChangedEvent {
 	/**
 	 * @return
 	 */
-	public SyncInfo[] getRemovedResources() {
-		return (SyncInfo[]) removedResources.toArray(new SyncInfo[removedResources.size()]);
+	public IResource[] getRemovedResources() {
+		return (IResource[]) removedResources.toArray(new IResource[removedResources.size()]);
 	}
 
 	/**

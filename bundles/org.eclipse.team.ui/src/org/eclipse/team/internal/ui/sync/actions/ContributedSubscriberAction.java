@@ -71,7 +71,7 @@ public class ContributedSubscriberAction extends SyncViewerAction {
 			try {
 				return element.createExecutableExtension(classAttribute);
 			} catch (CoreException e) {
-				throw new TeamException(e);
+				throw TeamException.asTeamException(e);
 			}
 		} else {
 			final Object[] ret = new Object[1];
@@ -81,7 +81,7 @@ public class ContributedSubscriberAction extends SyncViewerAction {
 					try {
 						ret[0] = element.createExecutableExtension(classAttribute);
 					} catch (CoreException e) {
-						exc[0] = new TeamException(e);
+						exc[0] = TeamException.asTeamException(e);
 					}
 				}
 			});

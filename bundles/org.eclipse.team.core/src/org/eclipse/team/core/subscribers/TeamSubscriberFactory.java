@@ -24,13 +24,13 @@ import org.eclipse.team.internal.core.SaveContext;
  *     <subscriber class="org.eclipse.team.internal.webdav.DavSubscriberFactory"/>
  *</extension>
  *
- * @see org.eclipse.team.core.subscribers.SyncTreeSubscriber 
+ * @see org.eclipse.team.core.subscribers.TeamSubscriber 
  */
-public interface ISyncTreeSubscriberFactory {
+abstract public class TeamSubscriberFactory {
 	
 	/**
 	 * A subscriber factory id identifies the factory type and the type of it's subscribers. Subscribers
-	 * created via a specific factory should return a qualified name from SyncTreeSubscriber#getID() that
+	 * created via a specific factory should return a qualified name from TeamSubscriber#getID() that
 	 * matches the id of their factory.
 	 * <p>
 	 * For example, a WebDav subscriber factory would have "org.eclipse.team.webdav.subscriber" as 
@@ -38,7 +38,7 @@ public interface ISyncTreeSubscriberFactory {
 	 * 
 	 * @return the factory's id 
 	 */
-	public String getID();
+	abstract  public String getID();
 	
 	/** 
 	 * Called to save the state of the given subscriber. The saved state should contain enough
@@ -51,7 +51,7 @@ public interface ISyncTreeSubscriberFactory {
 	 * @return a save context containing the state of this subscriber 
 	 * @throws TeamException if there was a problem creating the save context. 
 	 */
-	public SaveContext saveSubscriber(SyncTreeSubscriber subscriber) throws TeamException;
+	abstract  public SaveContext saveSubscriber(TeamSubscriber subscriber) throws TeamException;
 	
 	/** 
 	 * Called to restore a subscriber with <code>id</code> from a given <code>SaveContext</code>. This is
@@ -60,5 +60,5 @@ public interface ISyncTreeSubscriberFactory {
 	 * @return a subscriber instance 
 	 * @throws TeamException if there was a problem restoring from the save context.
 	 */
-	public SyncTreeSubscriber restoreSubscriber(QualifiedName id, SaveContext saveContext) throws TeamException;
+	abstract  public TeamSubscriber restoreSubscriber(QualifiedName id, SaveContext saveContext) throws TeamException;
 }

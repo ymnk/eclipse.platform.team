@@ -15,7 +15,7 @@ import java.util.List;
 
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.views.SyncResource;
 
@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ui.sync.views.SyncResource;
  */
 public abstract class SubscriberAction extends TeamAction {
 	
-	SyncTreeSubscriber subscriber;
+	TeamSubscriber subscriber;
 	
 	/**
 	 * This method returns all instances of SyncResource that are in the current
@@ -89,7 +89,7 @@ public abstract class SubscriberAction extends TeamAction {
 	/**
 	 * @return
 	 */
-	public SyncTreeSubscriber getSubscriber() {
+	public TeamSubscriber getSubscriber() {
 		return subscriber;
 	}
 
@@ -97,7 +97,7 @@ public abstract class SubscriberAction extends TeamAction {
 	 * Sets 
 	 * @param context
 	 */
-	public void setSubscriber(SyncTreeSubscriber subscriber) {
+	public void setSubscriber(TeamSubscriber subscriber) {
 		this.subscriber = subscriber;
 	}
 }

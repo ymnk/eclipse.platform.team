@@ -85,7 +85,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#cancel()
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#cancel()
 	 */
 	public void cancel() {
 		super.cancel();
@@ -95,14 +95,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#isCancellable()
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#isCancellable()
 	 */
 	public boolean isCancellable() {
 		return true;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#roots()
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#roots()
 	 */
 	public IResource[] roots() throws TeamException {
 		return roots;
@@ -123,14 +123,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#isSupervised(org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#isSupervised(org.eclipse.core.resources.IResource)
 	 */
 	public boolean isSupervised(IResource resource) throws TeamException {
 		return getBaseSynchronizer().getSyncBytes(resource) != null || getRemoteSynchronizer().getSyncBytes(resource) != null; 
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.SyncTreeSubscriber#saveState(org.eclipse.team.internal.core.SaveContext)
+	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#saveState(org.eclipse.team.internal.core.SaveContext)
 	 */
 	public SaveContext saveState() {
 		// start and end tags

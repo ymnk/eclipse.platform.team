@@ -203,11 +203,10 @@ public class SyncSet {
 		return count.intValue();
 	}
 
-	protected void remove(SyncInfo info) {
-		IResource local = info.getLocal();
+	protected void remove(IResource local) {
 		IPath path = local.getFullPath();
 		resources.remove(path);
-		changes.removed(info);
+		changes.removed(local);
 		removeFromParents(local, local);
 	}
 	
@@ -364,7 +363,7 @@ public class SyncSet {
 	protected void removeAll(Set allChildren) {
 		IResource [] removed = (IResource[]) allChildren.toArray(new IResource[allChildren.size()]);
 		for (int i = 0; i < removed.length; i++) {
-			remove(getSyncInfo(removed[i]));
+			remove(removed[i]);
 		}
 	}
 
