@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
@@ -247,10 +248,22 @@ public class SyncSet {
 		// the immediate ones.
 		List children = new ArrayList();
 		IPath path = parent.getFullPath();
-		Set possibleChildren = (Set)parents.get(path);
+		Set possibleChildren;
+		if(parent.getType() == IResource.ROOT) {
+			possibleChildren = parents.keySet();
+		} else {
+			possibleChildren = (Set)parents.get(path);
+		}
 		if(possibleChildren != null) {
 			for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
-				IResource element = (IResource) it.next();
+				Object next = it.next();
+				IResource element;
+				if(parent.getType() == IResource.ROOT) {
+					element = ((IWorkspaceRoot)parent).findMember((IPath)next);
+				} else {
+					element = (IResource)next;
+				}
+				
 				IPath childPath = element.getFullPath();
 				if(childPath.segmentCount() == (path.segmentCount() +  1)) {
 					SyncInfo childInfo = getSyncInfo(element);

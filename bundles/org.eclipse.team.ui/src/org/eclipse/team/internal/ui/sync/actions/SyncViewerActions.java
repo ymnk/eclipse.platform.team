@@ -127,6 +127,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(toggleViewerType);
 		
 		actionBarMenu = actionBars.getMenuManager();
+		actionBarMenu.removeAll();
+		actionBarMenu.add(new Separator());
 	}
 
 	/* (non-Javadoc)
@@ -199,11 +201,13 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		refreshAction.setEnabled(input != null);
 		if(input == null) {
 			actionBarMenu.removeAll();
+			actionBarMenu.add(new Separator());
 		} else {
 			actionBarMenu.removeAll();
 			comparisonCriteria.fillContextMenu(actionBarMenu);
 			actionBarMenu.add(new Separator());
 			changeFilters.fillContextMenu(actionBarMenu);
+			getSyncView().redraw();
 		}
 	}
 	/* (non-Javadoc)
@@ -215,5 +219,4 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		comparisonCriteria.setContext(context);
 		super.setContext(context);
 	}
-
 }

@@ -60,9 +60,7 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 			this.viewTitle = viewTitle;
 		}
 		public void run() {
-			if(! isChecked()) {
-				setSyncMode(getSyncMode(), getViewTitle());
-			}
+			setSyncMode(getSyncMode(), getViewTitle());
 		}
 		public int[] getDirectionFilters() {
 			return directionFilters;
@@ -97,7 +95,7 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 		incomingMode.setChecked(currentSyncMode == SYNC_INCOMING);
 		incomingMode.setDisabledImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_SYNC_MODE_CATCHUP_DISABLED));
 		incomingMode.setHoverImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_SYNC_MODE_CATCHUP));
-		
+			
 		DirectionFilterAction outgoingMode = new DirectionFilterAction(
 			Policy.bind("SyncView.outgoingModeAction"), //$NON-NLS-1$
 			TeamImages.getImageDescriptor(UIConstants.IMG_SYNC_MODE_RELEASE_ENABLED),
@@ -143,10 +141,13 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 	 * Activates the given sync mode.
 	 */
 	void setSyncMode(int mode, String title) {
+		boolean changed = currentSyncMode != mode;
 		currentSyncMode = mode;
 		activateCurrentMode();
-		getSyncView().setTitle(title);
-		getRefreshGroup().refreshFilters();
+		if(changed) {
+			getSyncView().setTitle(title);  
+			getRefreshGroup().refreshFilters();
+		}
 	}
 
 	/*

@@ -111,6 +111,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		}
 		hookContextMenu();
 		hookOpen();
+		
 		if(input != null) {
 			viewer.setInput(input.getSyncSet());
 		}
@@ -173,7 +174,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		// tags
 		col = new TableColumn(table, SWT.NONE);
 		col.setResizable(true);
-		col.setText("Parent"); //$NON-NLS-1$
+		col.setText("In Folder"); //$NON-NLS-1$
 		//col.addSelectionListener(headerListener);
 		layout.addColumnData(new ColumnWeightData(50, true));
 	}
@@ -335,6 +336,15 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 				viewer.getControl().setRedraw(true);
 			}
 		});				
+	}
+
+	public void redraw() {
+			 Display.getDefault().asyncExec(new Runnable() {
+				 public void run() {
+					viewer.getControl().redraw();
+				 }
+			 });
+		
 	}
 
 	public void run(IRunnableWithProgress runnable) {

@@ -33,6 +33,7 @@ public class FilterSyncViewerAction extends SyncViewerAction {
 	public void run() {
 		int[] filter = promptForFilter();
 		if (filter == null) return;
+		filters.refreshFilters();
 	}
 
 	/**

@@ -48,7 +48,6 @@ public class SyncViewerChangeFilters extends SyncViewerActionGroup {
 			this.changeFilter = changeFilter;
 		}
 		public void run() {
-			getRefreshGroup().refreshFilters();
 		}
 		/**
 		 * @return
@@ -217,5 +216,9 @@ public class SyncViewerChangeFilters extends SyncViewerActionGroup {
 	
 	public SyncViewerActions getRefreshGroup() {
 		return refreshGroup;
+	}
+
+	public void refreshFilters() {
+		getRefreshGroup().refreshFilters();
 	}
 }
