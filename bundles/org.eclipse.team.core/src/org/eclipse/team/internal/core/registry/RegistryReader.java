@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.registry;
+package org.eclipse.team.internal.core.registry;
 
 import java.util.Hashtable;
 

@@ -14,8 +14,8 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 
 public interface IDeploymentProviderManager {
-	public abstract void map(IContainer container, DeploymentProvider teamProvider) throws TeamException;
-	public abstract void unmap(IContainer container, DeploymentProvider teamProvider) throws TeamException;
-	public abstract DeploymentProvider getMapping(IResource resource);
-	public abstract boolean getMappedTo(IResource resource, String id);
+	public void map(IContainer container, DeploymentProvider teamProvider) throws TeamException;
+	public void unmap(IContainer container, DeploymentProvider teamProvider) throws TeamException;
+	public DeploymentProvider getMapping(IResource resource);
+	public boolean getMappedTo(IResource resource, String id);
 }

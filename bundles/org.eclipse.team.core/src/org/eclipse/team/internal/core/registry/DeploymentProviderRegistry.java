@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.registry;
+package org.eclipse.team.internal.core.registry;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +17,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.team.internal.core.TeamPlugin;
 
-public class TeamProviderRegistry extends RegistryReader {
+public class DeploymentProviderRegistry extends RegistryReader {
 	
-	private final static String PT_TEAMPROVIDER = "teamProvider"; //$NON-NLS-1$
+	private final static String PT_TEAMPROVIDER = "deployment"; //$NON-NLS-1$
 	private Map providers = new HashMap();
 	private String extensionId;
 	
-	public TeamProviderRegistry() {
+	public DeploymentProviderRegistry() {
 		super();
 		this.extensionId = PT_TEAMPROVIDER;
 	}
@@ -34,9 +34,9 @@ public class TeamProviderRegistry extends RegistryReader {
 	protected boolean readElement(IConfigurationElement element) {
 		if (element.getName().equals(extensionId)) {
 			String descText = getDescription(element);
-			TeamProviderDescriptor desc;
+			DeploymentProviderDescriptor desc;
 			try {
-				desc = new TeamProviderDescriptor(element, descText);
+				desc = new DeploymentProviderDescriptor(element, descText);
 				providers.put(desc.getId(), desc);
 			} catch (CoreException e) {
 				TeamPlugin.log(e);
@@ -46,11 +46,11 @@ public class TeamProviderRegistry extends RegistryReader {
 		return false;
 	}
 	
-	public TeamProviderDescriptor[] getTeamProviderDescriptors() {
-		return (TeamProviderDescriptor[])providers.values().toArray(new TeamProviderDescriptor[providers.size()]);
+	public DeploymentProviderDescriptor[] getTeamProviderDescriptors() {
+		return (DeploymentProviderDescriptor[])providers.values().toArray(new DeploymentProviderDescriptor[providers.size()]);
 	}
 	
-	public TeamProviderDescriptor find(String id) {
-		return (TeamProviderDescriptor)providers.get(id);
+	public DeploymentProviderDescriptor find(String id) {
+		return (DeploymentProviderDescriptor)providers.get(id);
 	}
 }

@@ -34,6 +34,33 @@
             id="org.eclipse.team.examples.filesystem.FileSystemProvider">
       </repository>
    </extension>
+   
+<!-- *************** Deployment Provider **************** -->
+   <extension
+         point="org.eclipse.team.core.deployment">
+      <deployment
+            class="org.eclipse.team.examples.filesystem.deployment.FileSystemDeploymentProvider"
+            id="org.eclipse.team.examples.filesystem.FileSystemDeploymentProvider"
+            name="%nonVersioningProvider">
+      </deployment>
+   </extension>
+
+<!-- *************** Deployment ObjectContributions **************** -->   
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IContainer"
+            adaptable="true"
+            id="org.eclipse.team.examples.filesystem.ResourceContributions">
+         <action
+               label="Deploy to File System"
+               tooltip="Deployment Actions"
+               class="org.eclipse.team.examples.filesystem.deployment.DeployAction"
+               id="org.eclipse.team.examples.filesystem.deploy">
+         </action>
+      </objectContribution>
+   </extension>
+  
 <!-- *************** POPUP MENUS **************** -->
    <extension
          point="org.eclipse.ui.popupMenus">
@@ -81,7 +108,7 @@
                class="org.eclipse.team.examples.filesystem.ui.DisconnectAction"
                menubarPath="team.main/group2"
                id="org.eclipse.team.examples.filesystem.unmanage">
-         </action>
+         </action>         
       </objectContribution>
    </extension>
 <!-- *************** CONFIGURATION WIZARD **************** -->
@@ -113,5 +140,4 @@
          </filter>
       </page>
    </extension>
-
 </plugin>

@@ -8,12 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.registry;
+package org.eclipse.team.internal.core.registry;
 
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.DeploymentProvider;
 
-public class TeamProviderDescriptor {
+public class DeploymentProviderDescriptor {
 		
 	public  static final String ATT_ID = "id"; //$NON-NLS-1$
 	public  static final String ATT_NAME = "name"; //$NON-NLS-1$
@@ -29,7 +29,7 @@ public class TeamProviderDescriptor {
 	/**
 	 * Create a new ViewDescriptor for an extension.
 	 */
-	public TeamProviderDescriptor(IConfigurationElement e, String desc) throws CoreException {
+	public DeploymentProviderDescriptor(IConfigurationElement e, String desc) throws CoreException {
 		configElement = e;
 		description = desc;
 		loadFromExtension();

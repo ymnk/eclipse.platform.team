@@ -15,20 +15,23 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.*;
-import org.eclipse.team.internal.registry.TeamProviderDescriptor;
-import org.eclipse.team.internal.registry.TeamProviderRegistry;
+import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
+import org.eclipse.team.internal.core.registry.DeploymentProviderRegistry;
 
 public class DeploymentProviderManager implements IDeploymentProviderManager  {
-	public final static QualifiedName PROVIDER_SESSION_PROPERTY = new QualifiedName("org.eclipse.team.core", "provider");
-	private TeamProviderRegistry registry = new TeamProviderRegistry();
+	
+	// key for remembering if state has been loaded for a project
+	private final static QualifiedName STATE_LOADED_KEY = new QualifiedName("org.eclipse.team.core.deployment", "state_restored_key");
 	
 	//  {project -> list of Mapping}
 	private Map mappings = new HashMap(5);
+
+//	registry for deployment provider extensions
+	private DeploymentProviderRegistry registry;
 	
-	//	save context constants
+	
+	//	persistence constants
 	private final static String CTX_PROVIDERS = "deploymentProviders"; //$NON-NLS-1$
 	private final static String CTX_PROVIDER = "provider"; //$NON-NLS-1$
 	private final static String CTX_ID = "id"; //$NON-NLS-1$
@@ -37,12 +40,12 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	private final static String FILENAME = ".deployments"; //$NON-NLS-1$
 	
 	static class Mapping {
-		private TeamProviderDescriptor descriptor;
+		private DeploymentProviderDescriptor descriptor;
 		private DeploymentProvider provider;
 		private IContainer container;
 		private IMemento savedState;
 		
-		Mapping(TeamProviderDescriptor descriptor, IContainer container) {
+		Mapping(DeploymentProviderDescriptor descriptor, IContainer container) {
 			this.descriptor = descriptor;
 			this.container = container;
 		}
@@ -50,6 +53,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			if(provider == null) {
 				try {
 					this.provider = descriptor.createProvider();
+					this.provider.setContainer(container);
 					this.provider.restoreState(savedState);
 					this.savedState = null;
 				} catch (CoreException e) {
@@ -65,12 +69,16 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		public IContainer getContainer() {
 			return container;
 		}
-		public TeamProviderDescriptor getDescription() {
+		public DeploymentProviderDescriptor getDescription() {
 			return descriptor;
 		}
 		public void setProviderState(IMemento savedState) {
 			this.savedState = savedState;
 		}
+	}
+	
+	public DeploymentProviderManager() {
+		registry = new DeploymentProviderRegistry();
 	}
 	
 	public void map(IContainer container, DeploymentProvider teamProvider) throws TeamException {
@@ -79,7 +87,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		checkOverlapping(container);
 		
 		// extension point descriptor must exist
-		TeamProviderDescriptor descriptor = registry.find(teamProvider.getID());		
+		DeploymentProviderDescriptor descriptor = registry.find(teamProvider.getID());		
 		if(descriptor == null) {
 			throw new TeamException("Cannot map provider " + teamProvider.getID() + ". It's extension point description cannot be found.");
 		}
@@ -87,7 +95,8 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		// create the new mapping
 		Mapping m = map(container, descriptor);
 		m.setProvider(teamProvider);
-		
+		teamProvider.setContainer(container);
+		teamProvider.init();
 		//try {
 		// install session property
 		//project.setPersistentProperty();
@@ -105,7 +114,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	public void unmap(IContainer container, DeploymentProvider teamProvider) throws TeamException {
 		// TODO: make concurrent safe!!
 		IProject project = container.getProject();
-		List projectMaps = (List)mappings.get(project);
+		List projectMaps = getMappings(container);
 		if(projectMaps != null) {
 			projectMaps.remove(container);
 			if(projectMaps.isEmpty()) {
@@ -113,22 +122,22 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			}
 		}
 		
-		try {
+		//try {
 			// install session property
-			project.setSessionProperty(PROVIDER_SESSION_PROPERTY, teamProvider.getID());
-		} catch (CoreException e) {
-			throw TeamException.asTeamException(e);
-		}
+	//		project.setSessionProperty(PROVIDER_SESSION_PROPERTY, teamProvider.getID());
+		//} catch (CoreException e) {
+			//throw TeamException.asTeamException(e);
+		//}
 		
 		// dispose of provider
-		// teamProvider.dispose();
+		teamProvider.dispose();
 		saveState(container.getProject());
 		
 		// TODO: what kind of event is sent when unmapped?
 	}
 	
 	public DeploymentProvider getMapping(IResource resource) {
-		List projectMappings = (List)mappings.get(resource.getProject());
+		List projectMappings = getMappings(resource.getParent());
 		String fullPath = resource.getFullPath().toString();
 		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
 			Mapping m = (Mapping) it.next();
@@ -145,7 +154,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	}
 	
 	public boolean getMappedTo(IResource resource, String id) {
-		List projectMappings = (List)mappings.get(resource.getProject());
+		List projectMappings = getMappings(resource.getParent());
 		String fullPath = resource.getFullPath().toString();
 		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
 			Mapping m = (Mapping) it.next();
@@ -159,7 +168,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	}
 	
 	private void checkOverlapping(IContainer container) throws TeamException {
-		List projectMappings = (List)mappings.get(container.getProject());
+		List projectMappings = getMappings(container);
 		String fullPath = container.getFullPath().toString();
 		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
 			Mapping m = (Mapping) it.next();
@@ -169,7 +178,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		}
 	}
 	
-	private Mapping map(IContainer container, TeamProviderDescriptor description) {
+	private Mapping map(IContainer container, DeploymentProviderDescriptor description) {
 		Mapping newMapping = new Mapping(description, container);
 		IProject project = container.getProject();
 		List projectMaps = (List)mappings.get(project);
@@ -181,6 +190,21 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		return newMapping;
 	}
 	
+	private List getMappings(IContainer container) {
+		IProject project = container.getProject();
+		List m = (List)mappings.get(project);
+		try {
+			if(project.getSessionProperty(STATE_LOADED_KEY) != null) {
+				return m;
+			}
+			restoreState(project);
+			project.setSessionProperty(STATE_LOADED_KEY, "true");
+		} catch (TeamException e) {
+		} catch (CoreException e) {
+		}		
+		return (List)mappings.get(project);
+	}
+	
 	/**
 	 * Saves a file containing the list of participant ids that are registered with this
 	 * manager. Each participant is also given the chance to save it's state. 
@@ -188,7 +212,6 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	private void saveState(IProject project) throws TeamException {
 		// TODO: have to handle the whole overwritten - editing crap with this file!!
 		XMLMemento xmlMemento = XMLMemento.createWriteRoot(CTX_PROVIDERS);	
-		List children = new ArrayList();
 		List providers = (List)mappings.get(project);
 		for (Iterator it2 = providers.iterator(); it2.hasNext(); ) {
 			Mapping mapping = (Mapping) it2.next();
@@ -198,16 +221,23 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			mapping.getProvider().saveState(node.createChild(CTX_PROVIDER_DATA));
 		}
 		try {
-			IFile settingsFile = project.getFile(FILENAME);
-			if(! settingsFile.exists()) {
-				settingsFile.create(new ByteArrayInputStream(new byte[0]), true, null);
-			}
-			Writer writer = new BufferedWriter(new FileWriter(settingsFile.getLocation().toFile()));
-			try {
-				xmlMemento.save(writer);
-			} finally {
-				writer.close();
-				settingsFile.refreshLocal(IResource.DEPTH_ZERO, null);
+			if(! providers.isEmpty()) {
+				IFile settingsFile = project.getFile(FILENAME);
+				if(! settingsFile.exists()) {
+					settingsFile.create(new ByteArrayInputStream(new byte[0]), true, null);
+				}
+				Writer writer = new BufferedWriter(new FileWriter(settingsFile.getLocation().toFile()));
+				try {
+					xmlMemento.save(writer);
+				} finally {
+					writer.close();
+					settingsFile.refreshLocal(IResource.DEPTH_ZERO, null);
+				}
+			} else {
+				IFile settingsFile = project.getFile(FILENAME);
+				if(settingsFile.exists()) {
+					settingsFile.delete(true /* force */, true /* keep history */, null);
+				}
 			}
 		} catch (IOException e) {
 			//TeamPlugin.log(e); //$NON-NLS-1$
@@ -238,7 +268,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 				TeamPlugin.log(IStatus.ERROR, "resource no longer exists", null);
 			}
 			IContainer container = location.isEmpty() ? (IContainer)project : project.getFolder(location);			
-			TeamProviderDescriptor desc = registry.find(id);				
+			DeploymentProviderDescriptor desc = registry.find(id);				
 			if(desc != null) {
 				Mapping m = map(container, desc);
 				m.setProviderState(memento2);				

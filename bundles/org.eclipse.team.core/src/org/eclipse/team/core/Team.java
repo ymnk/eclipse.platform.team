@@ -21,13 +21,15 @@ import org.eclipse.team.internal.core.*;
  * The Team class provides a global point of reference for the global ignore set
  * and the text/binary registry.
  * 
+ * WVCM: how does the IProjectSetSerializer fit into the 3.0 team api?
+ * 
  * @since 2.0
  */
 public final class Team {
 	
-	public static final String PREF_TEAM_IGNORES = "ignore_files"; //$NON-NLS-1$
-	public static final String PREF_TEAM_TYPES = "file_types"; //$NON-NLS-1$
-	public static final String PREF_TEAM_SEPARATOR = "\n"; //$NON-NLS-1$
+	private static final String PREF_TEAM_IGNORES = "ignore_files"; //$NON-NLS-1$
+	private static final String PREF_TEAM_TYPES = "file_types"; //$NON-NLS-1$
+	private static final String PREF_TEAM_SEPARATOR = "\n"; //$NON-NLS-1$
 	public static final Status OK_STATUS = new Status(Status.OK, TeamPlugin.ID, Status.OK, Policy.bind("ok"), null); //$NON-NLS-1$
 	
 	// File type constants
@@ -42,6 +44,9 @@ public final class Team {
 	private static SortedMap globalIgnore, pluginIgnore;
 	private static StringMatcher[] ignoreMatchers;
 
+	// Deployment provider manager
+	private static IDeploymentProviderManager deploymentManager;
+	
 	private static class FileTypeInfo implements IFileTypeInfo {
 		private String extension;
 		private int type;
@@ -566,5 +571,17 @@ public final class Team {
 		SortedMap pTypes = new TreeMap();
 		initializePluginPatterns(pTypes, gTypes);
 		return getFileTypeInfo(gTypes);
+	}
+	
+	/**
+	 * Returns the deployment manager. 
+	 * @return the deployment manager
+	 * @since 3.0
+	 */
+	public static IDeploymentProviderManager getDeploymentManager() {
+		if(deploymentManager == null) {
+			deploymentManager = new DeploymentProviderManager();
+		}
+		return deploymentManager;
 	}
 }

@@ -12,6 +12,7 @@ package org.eclipse.team.core;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.runtime.*;
+import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
 
 /**
  * A deployment provider allows synchronization of workspace resources with a remote location. At a minimum
@@ -35,18 +36,40 @@ import org.eclipse.core.runtime.*;
  * @since 3.0
  */
 public abstract class DeploymentProvider implements IExecutableExtension {
-	abstract public String getID();
 	
-	abstract public IContainer getMappedContainer();	
-	abstract protected void init(IContainer container);
-	abstract protected void dispose();
+	private String id;
+	private IContainer container;
+	private String name;
+	
+	public String getID() {
+		return id;
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+	
+	public IContainer getMappedContainer() {
+		return this.container;
+	}
+	
+	abstract public void init();
+	
+	abstract public void dispose();
+	
+	public void setContainer(IContainer container) {
+		this.container = container;
+	}
 	
 	abstract public void saveState(IMemento memento);
+	
 	abstract public void restoreState(IMemento memento);
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {		
-	}
+	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+		this.id = config.getAttribute(DeploymentProviderDescriptor.ATT_ID);
+		this.name = config.getAttribute(DeploymentProviderDescriptor.ATT_NAME);
+	}	
 }
