@@ -1,8 +1,9 @@
 package org.eclipse.team.internal.ui.sync.pages;
 
+import java.util.Iterator;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -66,17 +67,19 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	private Action toggleLayoutTable;
 	private RefactorActionGroup refactorActions;
 	private SyncViewerShowPreferencesAction showPreferences;
-	private DirectionFilterActionGroup modesGroup;
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private RefreshAction refreshAction;
+	private ComparisonCriteriaActionGroup comparisonCriteria;
+	private Action collapseAll;
+	private Action expandAll;
 	
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public SubscriberSynchronizeViewPage(SubscriberPage page, INewSynchronizeView view) {
+	public SubscriberSynchronizeViewPage(SubscriberPage page, INewSynchronizeView view, SubscriberInput input) {
 		this.page = page;
 		this.view = view;
-		this.input = new SubscriberInput(page.getSubscriber());
+		this.input = input;
 		layout = getStore().getInt(IPreferenceIds.SYNCVIEW_VIEW_TYPE);
 		if (layout != SubscriberPage.TREE_LAYOUT) {
 			layout = SubscriberPage.TABLE_LAYOUT;
@@ -97,15 +100,13 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		// Create the busy cursor with no control to start with (createViewer will set it)
 		busyCursor = new JobBusyCursor(null /* control */, SubscriberAction.SUBSCRIBER_JOB_TYPE);
 		createViewer(composite);
-		updateStatusPanel();
-		updateTooltip();
-		
+				
 		// create actions
 		openWithActions = new OpenWithActionGroup(view);
 		refactorActions = new RefactorActionGroup(view);
 		gotoNext = new NavigateAction(view, this, INavigableControl.NEXT);		
 		gotoPrevious = new NavigateAction(view, this, INavigableControl.PREVIOUS);
-		modesGroup = new DirectionFilterActionGroup(view, page);
+		comparisonCriteria = new ComparisonCriteriaActionGroup(input);
 		
 		toggleLayoutTable = new ToggleViewLayoutAction(page, SubscriberPage.TABLE_LAYOUT);
 		toggleLayoutTree = new ToggleViewLayoutAction(page, SubscriberPage.TREE_LAYOUT);
@@ -113,36 +114,42 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		showPreferences = new SyncViewerShowPreferencesAction(view.getSite().getShell());
 		workingSetGroup = new WorkingSetFilterActionGroup(getSite().getShell(), this, view, page);
 		
-		refreshAction = new RefreshAction(getSite().getPage(), input, true /* refresh all */);		
+		refreshAction = new RefreshAction(getSite().getPage(), input, true /* refresh all */);	
 		
-		initializeSubscriberInput(input);
+		collapseAll = new Action() {
+			public void run() {
+				collapseAll();
+			}
+		};
+		Utils.initAction(collapseAll, "action.collapseAll."); //$NON-NLS-1$
+		
+		expandAll = new Action() {
+			public void run() {
+				Viewer viewer = getViewer();
+				ISelection selection = viewer.getSelection();
+				if(viewer instanceof AbstractTreeViewer && ! selection.isEmpty()) {
+					Iterator elements = ((IStructuredSelection)selection).iterator();
+					while (elements.hasNext()) {
+						Object next = elements.next();
+						((AbstractTreeViewer) viewer).expandToLevel(next, AbstractTreeViewer.ALL_LEVELS);
+					}
+				}
+			}
+		};
+		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
+		
+		updateStatusPanel();
+	
+		input.registerListeners(this);
+		page.addPropertyChangeListener(this);
+		updateMode(page.getMode());		
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IViewPart#init(org.eclipse.ui.IViewSite, org.eclipse.ui.IMemento)
 	 */
 	public void init(IPageSite site) throws PartInitException {
-		this.site = site;
-		page.addPropertyChangeListener(this);
-		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
-		if(getStore().getBoolean(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC) && refreshJob.getState() == Job.NONE) {
-			refreshJob.setReschedule(true);
-			// start once the UI has started and stabilized
-			refreshJob.schedule(20000 /* 20 seconds */);
-		}
-	}
-	
-	/*
-	 * This method is synchronized to ensure that all internal state is not corrupted
-	 */
-	public void initializeSubscriberInput(final SubscriberInput input) {
-		// listen to sync set changes in order to update state relating to the
-		// size of the sync sets and update the title
-		input.registerListeners(this);
-		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
-		refreshJob.addSubscriberInput(input);
-		updateStatusPanel();
-		page.setMode(TeamUIPlugin.getPlugin().getPreferenceStore().getInt(IPreferenceIds.SYNCVIEW_SELECTED_MODE));
+		this.site = site;		
 	}
 	
 	private void hookContextMenu() {
@@ -163,6 +170,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	protected void setContextMenu(IMenuManager manager) {
 		openWithActions.fillContextMenu(manager);
 		refactorActions.fillContextMenu(manager);
+		manager.add(new Separator());
+		manager.add(expandAll);
 		manager.add(new Separator("SubscriberActionsGroup1")); //$NON-NLS-1$
 		manager.add(new Separator("SubscriberActionsGroup2")); //$NON-NLS-1$
 		manager.add(new Separator("SubscriberActionsGroup3")); //$NON-NLS-1$
@@ -314,7 +323,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	}
 	
 	protected void handleOpen(OpenEvent event) {
-		// actions.open();
+		openWithActions.openInCompareEditor();
 	}
 	/**
 	 * Handles a double-click event from the viewer.
@@ -325,16 +334,14 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	 */
 	protected void handleDoubleClick(DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-		Object element = selection.getFirstElement();
-		
+		Object element = selection.getFirstElement();	
 		// Double-clicking should expand/collapse containers
 		if (viewer instanceof TreeViewer) {
 			TreeViewer tree = (TreeViewer)viewer;
 			if (tree.isExpandable(element)) {
 				tree.setExpandedState(element, !tree.getExpandedState(element));
 			}
-		}
-		
+		}		
 	}
 	
 	protected void updateStatusPanel() {
@@ -347,22 +354,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 			}					 	
 		});
 	}
-	
-	protected void updateTooltip() {
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				//				 SubscriberInput input = getInput();
-				//				 if(input != null) {	
-				//					 if(input.getWorkingSet() != null) {
-				//						 String tooltip = Policy.bind("LiveSyncView.titleTooltip", input.getWorkingSet().getName()); //$NON-NLS-1$
-				//						 setTitleToolTip(tooltip);					 	
-				//					 } else {
-				//						 setTitleToolTip(""); //$NON-NLS-1$
-				//					 }
-				//				 }
-			}					 	
-		});
-	}
+		
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPage#setFocus()
 	 */
@@ -483,7 +475,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	
 	public void workingSetChanged(IWorkingSet set) {
 		input.setWorkingSet(set);
-		updateTooltip();
 	}
 	
 	/* (non-Javadoc)
@@ -498,10 +489,12 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	 */
 	public void setActionBars(final IActionBars actionBars) {		
 		IToolBarManager manager = actionBars.getToolBarManager();
+		manager.add(comparisonCriteria);
 		manager.add(refreshAction);
+		manager.add(new Separator(SubscriberPage.MB_MODESGROUP));		
 		manager.add(gotoNext);
 		manager.add(gotoPrevious);
-		modesGroup.fillActionBars(actionBars);
+		manager.add(collapseAll);
 		
 		// drop down menu
 		IMenuManager menu = actionBars.getMenuManager();
@@ -550,7 +543,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 
 	private void updateWorkingSet(IWorkingSet set) {
 		input.setWorkingSet(set);
-		updateTooltip();
 	}
 
 	private void updateMode(int mode) {
@@ -577,4 +569,11 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 			Utils.handleError(getSite().getShell(), e, Policy.bind("SynchronizeView.16"), e.getMessage()); //$NON-NLS-1$
 		}
 	}
+	
+	/**
+	 * @return Returns the refreshAction.
+	 */
+	public RefreshAction getRefreshAction() {
+		return refreshAction;
+	}	
 }

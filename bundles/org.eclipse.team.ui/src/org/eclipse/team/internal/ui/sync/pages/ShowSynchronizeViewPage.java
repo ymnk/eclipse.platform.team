@@ -23,7 +23,6 @@ public class ShowSynchronizeViewPage extends Action {
 	 */
 	public void run() {
 		if (!fPage.equals(fView.getActivePage())) {
-			// only change if required (and un-pin the console if pinned)
 			fView.display(fPage);
 		}
 	}

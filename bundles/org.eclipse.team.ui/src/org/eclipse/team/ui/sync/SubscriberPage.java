@@ -1,20 +1,24 @@
 package org.eclipse.team.ui.sync;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.sync.pages.SubscriberSynchronizeViewPage;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
+import org.eclipse.team.ui.sync.actions.RefreshAction;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 public class SubscriberPage extends AbstractSynchronizeViewPage {
 	
-	protected TeamSubscriber subscriber;
-	protected SubscriberSynchronizeViewPage page;
-	protected int currentMode;
+	private SubscriberInput input;
+	private SubscriberSynchronizeViewPage page;
+	private int currentMode;
 	
 	/**
 	 * Property constant indicating the mode of a page has changed. 
@@ -29,10 +33,11 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 	/**
 	 * Modes are direction filters for the view
 	 */
-	public final static int INCOMING_MODE = 1;
-	public final static int OUTGOING_MODE = 2;
-	public final static int BOTH_MODE = 3;
-	public final static int CONFLICTING_MODE = 4;
+	public final static int INCOMING_MODE = 0x1;
+	public final static int OUTGOING_MODE = 0x2;
+	public final static int BOTH_MODE = 0x4;
+	public final static int CONFLICTING_MODE = 0x8;
+	public final static int ALL_MODES = INCOMING_MODE | OUTGOING_MODE | CONFLICTING_MODE | BOTH_MODE;
 	
 	/**
 	 * Property constant indicating the mode of a page has changed. 
@@ -51,16 +56,23 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 	 */
 	public static final int TABLE_LAYOUT = 1;
 	
+	public static final String MB_MODESGROUP = TeamUIPlugin.ID + ".modes";
+	
 	public SubscriberPage(TeamSubscriber subscriber, String name, ImageDescriptor imageDescriptor) {
 		super(name, imageDescriptor);
-		this.subscriber = subscriber;
+		this.input = new SubscriberInput(subscriber);
+		this.currentMode = BOTH_MODE;
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
 	public IPageBookViewPage createPage(INewSynchronizeView view) {
-		this.page = new SubscriberSynchronizeViewPage(this, view);
+		this.page = new SubscriberSynchronizeViewPage(this, view, input);
+		return page;
+	}
+	
+	public SubscriberSynchronizeViewPage getPage() {
 		return page;
 	}
 	
@@ -91,8 +103,16 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 		firePropertyChange(this, P_SYNCVIEWPAGE_WORKINGSET, null, set);
 	}
 	
-	public TeamSubscriber getSubscriber() {
-		return subscriber;
+	public IWorkingSet getWorkingSet() {
+		return getInput().getWorkingSet();
+	}
+	
+	public void refreshWithRemote(IResource[] resources) {
+		if(resources == null || resources.length == 0) {
+			//page.getRefreshAction().run();
+		} else {
+			RefreshAction.run(resources, input.getSubscriber());
+		}
 	}
 	
 	public void setActionsBars(IActionBars actionBars) {		
@@ -103,6 +123,10 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 	 */
 	protected void dispose() {
 		super.dispose();
+		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
+		refreshJob.removeSubscriberInput(input);
+		
+		input.dispose();
 	}
 	
 	/* (non-Javadoc)
@@ -110,5 +134,12 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 	 */
 	protected void init() {
 		super.init();
+		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
+		refreshJob.addSubscriberInput(input);
+		
+		if(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC) && refreshJob.getState() == Job.NONE) {
+			refreshJob.setReschedule(true);
+			refreshJob.schedule(20000 /* 20 seconds */);
+		}
 	}
 }

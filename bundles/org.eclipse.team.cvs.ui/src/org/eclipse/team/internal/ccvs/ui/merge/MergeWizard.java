@@ -71,9 +71,8 @@ public class MergeWizard extends Wizard {
 		
 		INewSynchronizeView view = manager.showSynchronizeViewInActivePage(null);
 		if(view != null) {
-			//view.setWorkingSet(null); /* show all resources in the merge */
 			view.display(page);
-			//view.refreshWithRemote(s, resources);
+			page.refreshWithRemote(null /* all roots */);
 		} else {
 			CVSUIPlugin.openError(getShell(), Policy.bind("error"), Policy.bind("Error.unableToShowSyncView"), null); //$NON-NLS-1$ //$NON-NLS-2$
 			return false;

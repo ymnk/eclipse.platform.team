@@ -10,19 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync.actions;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
 import org.eclipse.team.ui.sync.SubscriberPage;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IKeyBindingService;
+import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionGroup;
 
 /**
@@ -31,7 +27,7 @@ import org.eclipse.ui.actions.ActionGroup;
  * button is active at a time
  */
 public class DirectionFilterActionGroup extends ActionGroup implements IPropertyChangeListener {
-
+	
 	// An array of the selection actions for the modes (indexed by mode constant)	
 	private List actions = new ArrayList(3);
 	
@@ -39,12 +35,13 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	private DirectionFilterAction outgoingMode;
 	private DirectionFilterAction bothMode;
 	private DirectionFilterAction conflictsMode;
-	private INewSynchronizeView view;
 	private SubscriberPage page;
+	
+	private int supportedModes;
 	
 	class DirectionFilterAction extends Action {
 		private int modeId;
-
+		
 		public DirectionFilterAction(String prefix,String commandId, int modeId) {
 			super("", AS_RADIO_BUTTON); //$NON-NLS-1$
 			this.modeId = modeId;
@@ -54,8 +51,8 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 					DirectionFilterAction.this.run();
 				}
 			};
-			IKeyBindingService kbs = view.getSite().getKeyBindingService();
-			Utils.registerAction(kbs, a, commandId);	//$NON-NLS-1$
+			//IKeyBindingService kbs = site.getKeyBindingService();
+			//Utils.registerAction(kbs, a, commandId);	//$NON-NLS-1$
 		}
 		public void run() {
 			// checkMode() is called because programatic checking of radio buttons doesn't 
@@ -69,9 +66,9 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 		}
 	}
 	
-	public DirectionFilterActionGroup(INewSynchronizeView view, SubscriberPage page) {		
+	public DirectionFilterActionGroup(SubscriberPage page, int supportedModes) {		
+		this.supportedModes = supportedModes;
 		this.page = page;
-		this.view = view;
 		createActions();
 		page.addPropertyChangeListener(this);
 		checkMode(page.getMode());
@@ -82,31 +79,43 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 */
 	private void createActions() {
 		// Create the actions
-		incomingMode = new DirectionFilterAction("action.directionFilterIncoming.", "org.eclipse.team.ui.syncview.incomingFilter",  SubscriberPage.INCOMING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
-		actions.add(incomingMode);
-					
-		outgoingMode = new DirectionFilterAction("action.directionFilterOutgoing.", "org.eclipse.team.ui.syncview.outgoingFilter",  SubscriberPage.OUTGOING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
-		actions.add(outgoingMode);
-
-		bothMode = new DirectionFilterAction("action.directionFilterBoth.", "org.eclipse.team.ui.syncview.bothFilter", SubscriberPage.BOTH_MODE); //$NON-NLS-1$ //$NON-NLS-2$
-		actions.add(bothMode);
-
-		conflictsMode = new DirectionFilterAction("action.directionFilterConflicts.", "org.eclipse.team.ui.syncview.conflictsFilter", SubscriberPage.CONFLICTING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
-		actions.add(conflictsMode);				
+		if((supportedModes & SubscriberPage.INCOMING_MODE) != 0) {
+			incomingMode = new DirectionFilterAction("action.directionFilterIncoming.", "org.eclipse.team.ui.syncview.incomingFilter",  SubscriberPage.INCOMING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+			actions.add(incomingMode);
+		}
+		
+		if((supportedModes & SubscriberPage.OUTGOING_MODE) != 0) {
+			outgoingMode = new DirectionFilterAction("action.directionFilterOutgoing.", "org.eclipse.team.ui.syncview.outgoingFilter",  SubscriberPage.OUTGOING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+			actions.add(outgoingMode);
+		}
+		
+		if((supportedModes & SubscriberPage.BOTH_MODE) != 0) {
+			bothMode = new DirectionFilterAction("action.directionFilterBoth.", "org.eclipse.team.ui.syncview.bothFilter", SubscriberPage.BOTH_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+			actions.add(bothMode);
+		}
+		
+		if((supportedModes & SubscriberPage.CONFLICTING_MODE) != 0) {
+			conflictsMode = new DirectionFilterAction("action.directionFilterConflicts.", "org.eclipse.team.ui.syncview.conflictsFilter", SubscriberPage.CONFLICTING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+			actions.add(conflictsMode);
+		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void fillActionBars(IActionBars actionBars) {
+	public void fillActionBars(IActionBars actionBars, String group) {
 		super.fillActionBars(actionBars);
 		IToolBarManager toolBar = actionBars.getToolBarManager();
 		for (Iterator it = actions.iterator(); it.hasNext();) {
 			DirectionFilterAction action = (DirectionFilterAction) it.next();
-			toolBar.add(action);
+			if(group != null) {
+				toolBar.appendToGroup(group, action);
+			} else {
+				toolBar.add(action);
+			}
 		}
 	}
-
+	
 	private void checkMode(int mode) {
 		for (Iterator it = actions.iterator(); it.hasNext();) {
 			DirectionFilterAction action = (DirectionFilterAction)it.next();

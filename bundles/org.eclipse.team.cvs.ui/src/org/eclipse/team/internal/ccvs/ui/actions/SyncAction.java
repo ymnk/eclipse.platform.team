@@ -41,9 +41,9 @@ public class SyncAction extends WorkspaceAction {
 			INewSynchronizeView view = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
 			if(view != null) {
 				CVSSubscriberPage cvsPage = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeViewPage();
-				//view.setWorkingSet(workingSet);
+				cvsPage.setWorkingSet(workingSet);
 				view.display(cvsPage);
-				//view.refreshWithRemote(cvsWorkspaceSubscriber, resources);
+				cvsPage.refreshWithRemote(resources);
 			} else {
 				CVSUIPlugin.openError(getShell(), Policy.bind("error"), Policy.bind("Error.unableToShowSyncView"), null); //$NON-NLS-1$ //$NON-NLS-2$
 			}

@@ -10,20 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.pages;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.IMenuCreator;
+import org.eclipse.jface.action.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
-import org.eclipse.team.ui.sync.ISynchronizePageListener;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.Utilities;
+import org.eclipse.team.ui.sync.*;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.texteditor.IUpdate;
 
@@ -44,7 +38,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			fView= view;
 			Utils.initAction(this, "action.refreshSubscriber."); //$NON-NLS-1$
 			IKeyBindingService kbs = view.getSite().getKeyBindingService();
-			Utils.registerAction(kbs, this, "org.eclipse.team.ui.syncview.syncAll"); //$NON-NLS-1$
+			Utilities.registerAction(kbs, this, "org.eclipse.team.ui.syncview.syncAll"); //$NON-NLS-1$
 			setMenuCreator(this);
 			TeamUI.getSynchronizeManager().addSynchronizePageListener(this);
 			update();
