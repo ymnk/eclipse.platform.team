@@ -94,9 +94,9 @@ public class RemoveFromViewAction extends SynchronizeModelAction {
 		} else {
 			MessageDialogWithToggle dialog = MessageDialogWithToggle.openOkCancelConfirm(
 					getConfiguration().getSite().getShell(),
-					"Confirm Remove",
-					"The selected resources will be removed from the view. A resource will reappear if it is modified or if its synchronization state changes",
-					"Don't show me this again",
+					Policy.bind("RemoveFromView.warningTitle"), //$NON-NLS-1$
+					Policy.bind("RemoveFromView.warningMessage"), //$NON-NLS-1$
+					Policy.bind("RemoveFromView.warningDontShow"), //$NON-NLS-1$
 					false,
 					null,
 					null);

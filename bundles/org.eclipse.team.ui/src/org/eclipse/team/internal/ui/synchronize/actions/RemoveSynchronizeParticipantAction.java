@@ -94,8 +94,7 @@ public class RemoveSynchronizeParticipantAction extends Action {
 			ISynchronizeParticipant p;
 			try {
 				p = reference.getParticipant();
-
-				if (p.isPinned())
+				if (! p.isPinned())
 					removals.add(p);
 			} catch (TeamException e) {
 				// keep going

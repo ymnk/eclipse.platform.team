@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.internal.ui.Policy;
 
 /**
  * A synchronize scope whose roots are the workspace.
@@ -30,7 +31,7 @@ public class WorkspaceScope extends AbstractSynchronizeScope  {
 	 * @see org.eclipse.team.internal.ui.synchronize.ScopableSubscriberParticipant.ISynchronizeScope#getName()
 	 */
 	public String getName() {
-		return "Workspace";
+		return Policy.bind("WorkspaceScope.0"); //$NON-NLS-1$
 	}
 	
 	/* (non-Javadoc)

@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
@@ -33,7 +34,7 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 	 * @see org.eclipse.jface.wizard.Wizard#getWindowTitle()
 	 */
 	public String getWindowTitle() {
-		return "Create a " +  getName() + " Synchronize Participant";
+		return Policy.bind("GlobalRefreshSubscriberPage.0"); //$NON-NLS-1$
 	}
 	
 	/* (non-Javadoc)
@@ -41,8 +42,8 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 	 */
 	public void addPages() {
 		selectionPage = new GlobalRefreshResourceSelectionPage(getRootResources());
-		selectionPage.setTitle("Create");
-		selectionPage.setMessage("Select the resources that will be synchronized by the newly created synchronize participant.");
+		selectionPage.setTitle(Policy.bind("GlobalRefreshSubscriberPage.1", getName())); //$NON-NLS-1$
+		selectionPage.setMessage(Policy.bind("GlobalRefreshSubscriberPage.2")); //$NON-NLS-1$
 		addPage(selectionPage);
 	}
 

@@ -164,11 +164,11 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			ISynchronizeParticipant current = fView.getParticipant();
 			String text = null;
 			if(current != null) {
-				text = "Synchronize " + current.getName();
+				text = Policy.bind("GlobalRefreshAction.4", current.getName()); //$NON-NLS-1$
 				setToolTipText(text);
 				setText(text);
 			} else {
-				text = "Synchronize";
+				text = Policy.bind("GlobalRefreshAction.4"); //$NON-NLS-1$
 				setToolTipText(text);
 				setText(text);
 			}

@@ -10,21 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.viewers.CheckStateChangedEvent;
-import org.eclipse.jface.viewers.DecoratingLabelProvider;
-import org.eclipse.jface.viewers.ICheckStateListener;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -32,23 +24,11 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.ISynchronizeScope;
-import org.eclipse.team.ui.synchronize.ResourceScope;
-import org.eclipse.team.ui.synchronize.WorkingSetScope;
-import org.eclipse.team.ui.synchronize.WorkspaceScope;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.IWorkingSetManager;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.*;
 import org.eclipse.ui.dialogs.IWorkingSetSelectionDialog;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
@@ -80,7 +60,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	
 	// Working set label and holder
 	private Text workingSetLabel;
-	private IWorkingSet workingSet;
+	private IWorkingSet[] workingSets;
 	private List resources;
 	
 	/**
@@ -235,7 +215,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			selectGroup.setLayoutData(data);
 			
 			Button selectAll = new Button(selectGroup, SWT.NULL);
-			selectAll.setText("&Select All");
+			selectAll.setText(Policy.bind("GlobalRefreshResourceSelectionPage.12")); //$NON-NLS-1$
 			selectAll.addSelectionListener(new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {	
 					participantScope.setSelection(true);
@@ -250,7 +230,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			selectAll.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
 			
 			Button deSelectAll = new Button(selectGroup, SWT.NULL);
-			deSelectAll.setText("&Deselect All");
+			deSelectAll.setText(Policy.bind("GlobalRefreshResourceSelectionPage.13")); //$NON-NLS-1$
 			deSelectAll.addSelectionListener(new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {
 					fViewer.setCheckedElements(new Object[0]);
@@ -319,7 +299,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	
 	public ISynchronizeScope getSynchronizeScope() {
 		if (workingSetScope.getSelection()) {
-			return new WorkingSetScope(new IWorkingSet[] { workingSet });
+			return new WorkingSetScope(workingSets);
 		}
 		if (participantScope.getSelection()) {
 			return new WorkspaceScope();
@@ -349,11 +329,11 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	
 	private void selectWorkingSetAction() {
 		IWorkingSetManager manager = PlatformUI.getWorkbench().getWorkingSetManager();
-		IWorkingSetSelectionDialog dialog = manager.createWorkingSetSelectionDialog(getShell(), false);
+		IWorkingSetSelectionDialog dialog = manager.createWorkingSetSelectionDialog(getShell(), true);
 		dialog.open();
 		IWorkingSet[] sets = dialog.getSelection();
 		if(sets != null) {
-			workingSet = sets[0];
+			workingSets = sets;
 		} else {
 			// dialog cancelled
 			return;
@@ -367,16 +347,19 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	}
 	
 	private void updateWorkingSetScope() {
-		if(workingSet != null) {
-				List resources = IDE.computeSelectedResources(new StructuredSelection(workingSet.getElements()));
+		if(workingSets != null) {
+			for (int i = 0; i < workingSets.length; i++) {
+				IWorkingSet set = workingSets[i];
+				List resources = IDE.computeSelectedResources(new StructuredSelection(set.getElements()));
 				if(! resources.isEmpty()) {
 					IResource[] resources2 = (IResource[])resources.toArray(new IResource[resources.size()]);
 					scopeCheckingElement = true;
 					fViewer.setCheckedElements(resources2);
 					scopeCheckingElement = false;
 					intializeSelectionInViewer(resources2);
-					setPageComplete(true);
 				}
+			}
+			setPageComplete(true);
 		} else {
 			scopeCheckingElement = true;
 			fViewer.setCheckedElements(new Object[0]);
@@ -415,10 +398,16 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	}
 	
 	private void updateWorkingSetLabel() {
-		if (workingSet == null) {
+		if (workingSets == null) {
 			workingSetLabel.setText(Policy.bind("StatisticsPanel.noWorkingSet")); //$NON-NLS-1$
 		} else {
-			workingSetLabel.setText(workingSet.getName());
+			StringBuffer buffer = new StringBuffer();
+			for (int i = 0; i < workingSets.length; i++) {
+				IWorkingSet set = workingSets[i];
+				if(i != 0) buffer.append(" ,"); //$NON-NLS-1$
+				buffer.append(set.getName());
+			}
+			workingSetLabel.setText(buffer.toString());
 		}
 	}
 }

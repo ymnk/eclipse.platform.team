@@ -18,6 +18,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkingSet;
@@ -66,7 +67,7 @@ public class WorkingSetScope extends AbstractSynchronizeScope implements IProper
 	 */
 	public String getName() {
 		if (sets.length == 0) {
-			return "Workspace";
+			return Policy.bind("WorkingSetScope.0"); //$NON-NLS-1$
 		}
 		StringBuffer name = new StringBuffer();
 		for (int i = 0; i < sets.length; i++) {
@@ -91,7 +92,7 @@ public class WorkingSetScope extends AbstractSynchronizeScope implements IProper
 			IWorkingSet set = sets[i];
 			IResource[] resources = Utils.getResources(set.getElements());
 			addNonOverlapping(roots, resources);
-		}
+	}
 		return (IResource[]) roots.toArray(new IResource[roots.size()]);
 	}
 	
@@ -131,12 +132,12 @@ public class WorkingSetScope extends AbstractSynchronizeScope implements IProper
 			IWorkingSet newSet = (IWorkingSet)event.getNewValue();
 			for (int i = 0; i < sets.length; i++) {
 				IWorkingSet set = sets[i];
-				if (newSet == set) {
-					fireRootsChanges();
+			if (newSet == set) {
+				fireRootsChanges();
 					return;
-				}
 			}
 		}
+	}
 	}
 	
 	/* (non-Javadoc)
@@ -173,9 +174,8 @@ public class WorkingSetScope extends AbstractSynchronizeScope implements IProper
 				IWorkingSet set = PlatformUI.getWorkbench().getWorkingSetManager().getWorkingSet(setName);
 				if (set != null) {
 					sets.add(set);
-				}
-			}
-			this.sets = (IWorkingSet[]) sets.toArray(new IWorkingSet[sets.size()]);
 		}
 	}
+			this.sets = (IWorkingSet[]) sets.toArray(new IWorkingSet[sets.size()]);
+}	}
 }

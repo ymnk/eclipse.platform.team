@@ -69,7 +69,7 @@ public class SyncAction extends WorkspaceAction {
 						shell.getDisplay().syncExec(new Runnable() {
 							public void run() {
 								if (info.getKind() == SyncInfo.IN_SYNC) {
-									MessageDialog.openInformation(shell, "No Changes", "There are no changes between the workspace resource and the remote.");
+									MessageDialog.openInformation(shell, Policy.bind("SyncAction.noChangesTitle"), Policy.bind("SyncAction.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
 								} else {
 									SyncInfoCompareInput input = new SyncInfoCompareInput(subscriber.getName(), info);
 									CompareUI.openCompareEditor(input);
