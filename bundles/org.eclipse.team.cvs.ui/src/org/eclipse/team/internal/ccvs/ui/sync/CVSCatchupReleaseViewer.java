@@ -246,6 +246,8 @@ public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 				manager.add(forceUpdateMergeAction);
 				manager.add(updateWithJoinAction);
 				break;
+			case SyncView.SYNC_COMPARE:
+				break;
 		}
 	}
 	

@@ -60,6 +60,8 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 	private TypedBufferedContent commonByteContents;
 	private TypedBufferedContent remoteByteContents;
 	
+	boolean modified = false;
+	
 	/**
 	 * Creates a new file node.
 	 */	
@@ -166,7 +168,11 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 	 * @see ITypedInput#getName
 	 */
 	public String getName() {
-		return mergeResource.getName();
+		if(modified) {
+			return mergeResource.getName() + " (merged)";
+		} else {
+			return mergeResource.getName();
+		}
 	}
 
 	/*
@@ -230,14 +236,17 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		// don't allow editing of outgoing deletion content. To revert from the deletion the
 		// user should use the appropriate sync view action.
 		boolean outgoingDeletion = getChangeDirection() == IRemoteSyncElement.OUTGOING && getChangeType() ==  IRemoteSyncElement.DELETION;
-
+		final String name = getName();
 		return new TypedBufferedContent(this, !outgoingDeletion) {
 			protected InputStream createStream() throws CoreException {
 				return mergeResource.getLocalStream();
 			}
 			public void setContent(byte[] contents) {
-				super.setContent(contents);
-				merged();
+				try {
+					saveChanges(new ByteArrayInputStream(contents));
+				} catch(CoreException e) {
+					ErrorDialog.openError(WorkbenchPlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getShell(), Policy.bind("TeamFile.saveChanges", name), null, e.getStatus()); //$NON-NLS-1$
+				}
 				fireContentChanged();
 			}
 			public ITypedElement replace(ITypedElement child, ITypedElement other) {
@@ -249,33 +258,25 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 	/**
 	 * The local resource has beed modified (i.e. merged).
 	 */
-	private void merged() {
-		mergeResource.confirmMerge();
-		try {
-			// persist changes to disk (e.g. there is no buffering in the sync view).
-			saveChanges(localByteContents.getContents());
-			
-			// calculate the new sync state based on the type of change that was merged. This
-			// logic cannot be in the IRemoteSyncElement because there is no way to update the
-			// base before calling getSyncKind() again.
-			if(getChangeDirection()==INCOMING) {
-				switch(getChangeType()) {
-					case Differencer.ADDITION:
-					case Differencer.CHANGE:
-						setKind(OUTGOING | Differencer.CHANGE);	
-						break;
-					case Differencer.DELETION:
-						setKind(CONFLICTING | Differencer.CHANGE);
-				}						
-			} else {
-				setKind(OUTGOING | (getKind() & Differencer.CHANGE_TYPE_MASK));
-			}
-			
-			// update the UI with the sync state change.
-			fireThreeWayInputChange();
-		} catch (CoreException e) {
-			ErrorDialog.openError(WorkbenchPlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getShell(), Policy.bind("TeamFile.saveChanges", getName()), null, e.getStatus()); //$NON-NLS-1$
+	public void merged() {
+		// calculate the new sync state based on the type of change that was merged. This
+		// logic cannot be in the IRemoteSyncElement because there is no way to update the
+		// base before calling getSyncKind() again.
+		if(getChangeDirection()==INCOMING) {
+			switch(getChangeType()) {
+				case Differencer.ADDITION:
+				case Differencer.CHANGE:
+					setKind(OUTGOING | Differencer.CHANGE);	
+					break;
+				case Differencer.DELETION:
+					setKind(CONFLICTING | Differencer.CHANGE);
+			}						
+		} else {
+			setKind(OUTGOING | (getKind() & Differencer.CHANGE_TYPE_MASK));
 		}
+		
+		// update the UI with the sync state change.
+		fireThreeWayInputChange();
 	}
 		
 	/**
@@ -288,7 +289,7 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 					IFile file = (IFile) getResource();
 					if (is != null) {
 						if (!file.exists()) {
-							createParents(getParent(), (IFolder)getResource().getParent());
+							createParents(getParent(), getResource().getParent());
 							file.create(is, false, monitor);
 						} else {
 							file.setContents(is, false, true, monitor);
@@ -296,6 +297,7 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 					} else {
 						file.delete(false, true, monitor);
 					}
+					modified = true;
 				} catch (CoreException e) {
 					throw new InvocationTargetException(e);
 				}
@@ -303,10 +305,10 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		});
 	}
 
-	private void createParents(IDiffContainer parentNode, IFolder parentFolder) throws CoreException {
+	private void createParents(IDiffContainer parentNode, IContainer parentFolder) throws CoreException {
 		if(!parentFolder.exists() && parentFolder.getType() != IResource.PROJECT) {
-			createParents(parentNode.getParent(), (IFolder)parentFolder.getParent());
-			parentFolder.create(false /* force */, true, null);
+			createParents(parentNode.getParent(), parentFolder.getParent());
+			((IFolder)parentFolder).create(false /* force */, true, null);
 			if(parentNode instanceof ChangedTeamContainer) {
 				((ChangedTeamContainer)parentNode).setKind(IRemoteSyncElement.IN_SYNC);
 			}

@@ -7,10 +7,16 @@ package org.eclipse.team.ui.sync;
  
 import java.util.Iterator;
 
+import org.eclipse.compare.BufferedContent;
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.IEditableContent;
+import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.structuremergeviewer.DiffContainer;
+import org.eclipse.compare.structuremergeviewer.DiffElement;
 import org.eclipse.compare.structuremergeviewer.DiffTreeViewer;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
@@ -151,7 +157,9 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 	private Action ignoreWhiteSpace;
 	
 	// Property constant for diff mode kind
-	static final String PROP_KIND = "team.ui.PropKind"; //$NON-NLS-1$
+	static final String PROP_KIND = "team.ui.PropKind";
+
+	private Action copyAllRightToLeft; //$NON-NLS-1$
 
 
 	/**
@@ -187,6 +195,7 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 	protected void fillContextMenu(IMenuManager manager) {
 		manager.add(expandAll);
 		manager.add(removeFromTree);
+		manager.add(copyAllRightToLeft); 
 		if (showInNavigator != null) {
 			manager.add(showInNavigator);
 		}
@@ -270,6 +279,29 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 			}
 		};
 		
+		copyAllRightToLeft = new Action("Copy All Right to Left", null) { //$NON-NLS-1$
+			public void run() {
+				ISelection s = getSelection();
+				if (!(s instanceof IStructuredSelection) || s.isEmpty()) {
+					return;
+				}
+				for (Iterator it = ((IStructuredSelection)s).iterator(); it.hasNext();) {
+					Object element = it.next();
+					if(element instanceof DiffElement) {
+						copyAllRightToLeft((DiffElement)element);
+					}						
+				}
+				refresh();				
+			}
+			public boolean isEnabled() {
+				ISelection s = getSelection();
+				if (!(s instanceof IStructuredSelection) || s.isEmpty()) {
+					return false;
+				}
+				return ((IStructuredSelection)s).size() == 1;
+			}
+		};
+		
 		// Show in navigator
 		if (diffModel.getViewSite() != null) {
 			showInNavigator = new ShowInNavigatorAction(diffModel.getViewSite(), Policy.bind("CatchupReleaseViewer.showInNavigator")); //$NON-NLS-1$
@@ -311,6 +343,34 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 		showOutgoing.setChecked(true);
 		showOnlyConflicts.setChecked(false);
 		setFilters(CategoryFilter.SHOW_INCOMING| CategoryFilter.SHOW_CONFLICTS | CategoryFilter.SHOW_OUTGOING);
+	}
+	
+	protected void copyAllRightToLeft(IDiffElement element) {
+		if(element instanceof DiffContainer) {
+			DiffContainer container = (DiffContainer)element;
+			IDiffElement[] children = container.getChildren();
+			for (int i = 0; i < children.length; i++) {
+				copyAllRightToLeft(children[i]);
+			}
+		} else if(element instanceof TeamFile) {
+			TeamFile file = (TeamFile)element;
+			if(file.getKind() != IRemoteSyncElement.IN_SYNC) {
+				if(file.getRight() == null || file.getLeft() == null) {
+					file.copy(false /* right to left */);
+				} else {
+					ITypedElement te = file.getLeft();
+					ITypedElement rte = file.getRight();
+					if(te instanceof IEditableContent) {
+						IEditableContent editable = (IEditableContent)te;
+						if(editable.isEditable()) {
+							if(rte instanceof BufferedContent) {
+								editable.setContent(((BufferedContent)rte).getContent());
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	/*

@@ -29,7 +29,7 @@ public class CVSLocalCompareEditorInput extends CVSSyncCompareInput {
 	
 	public Viewer createDiffViewer(Composite parent) {
 		Viewer viewer = super.createDiffViewer(parent);
-		getViewer().syncModeChanged(SyncView.SYNC_MERGE);
+		getViewer().syncModeChanged(SyncView.SYNC_COMPARE);
 		return viewer;
 	}
 	
