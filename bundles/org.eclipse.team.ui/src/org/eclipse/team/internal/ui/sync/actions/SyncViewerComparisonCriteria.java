@@ -10,12 +10,17 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.actions;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ComparisonCriteria;
+import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 
 /**
@@ -46,12 +51,11 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 		}
 	}
 	
-	public SyncViewerComparisonCriteria(SyncViewer syncView, ComparisonCriteria[] criteria) {
+	public SyncViewerComparisonCriteria(SyncViewer syncView) {
 		super(syncView);
-		this.criteria = criteria;
-		initializeActions();
+		setContext(null);
 	}
-
+	
 	/**
 	 * @param action
 	 */
@@ -60,30 +64,43 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 			ComparisonCriteriaAction action = actions[i];
 			action.setChecked(activatedAction == action);
 		}
-		getSyncView().activateComparisonCriteria(activatedAction.getComparisonCriteria());
+		final SyncViewer view = getSyncView();
+		view.run(new IRunnableWithProgress() {
+			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+				try {
+					// when the comparison criteria changes, recalculate the entire sync set based on
+					// the new input.
+					view.getInput().prepareInput(monitor);
+				} catch (TeamException e) {
+					throw new InvocationTargetException(e);
+				}
+			}
+		});
 	}
 
-	/**
-	 * 
-	 */
-	private void initializeActions() {
-		actions = new ComparisonCriteriaAction[criteria.length];
-		for (int i = 0; i < criteria.length; i++) {
-			ComparisonCriteria c = criteria[i];
-			actions[i] = new ComparisonCriteriaAction(c);
-			actions[i].setChecked(c == getSyncView().getSubscriber().getCurrentComparisonCriteria());
+	public void initializeActions() {
+		SubscriberInput input = getSubscriberContext(); 
+		if(input != null) {
+			actions = new ComparisonCriteriaAction[criteria.length];
+			for (int i = 0; i < criteria.length; i++) {
+				ComparisonCriteria c = criteria[i];
+				actions[i] = new ComparisonCriteriaAction(c);
+				actions[i].setChecked(c == getSyncView().getInput().getSubscriber().getCurrentComparisonCriteria());
+			}
+		} else {
+			// there aren't any comparison criterias to show!
+			actions = null;
 		}
 	}
 
-	/**
-	 * 
-	 */
 	private ComparisonCriteria[] getActiveComparisonCriteria() {
 		List result = new ArrayList();
-		for (int i = 0; i < actions.length; i++) {
-			ComparisonCriteriaAction action = actions[i];
-			if (action.isChecked()) {
-				result.add(action.getComparisonCriteria());
+		if(getSyncView().getInput() != null) {
+			for (int i = 0; i < actions.length; i++) {
+				ComparisonCriteriaAction action = actions[i];
+				if (action.isChecked()) {
+					result.add(action.getComparisonCriteria());
+				}
 			}
 		}
 		return (ComparisonCriteria[]) result.toArray(new ComparisonCriteria[result.size()]);
@@ -94,10 +111,11 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 	 */
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
-		for (int i = 0; i < actions.length; i++) {
-			ComparisonCriteriaAction action = actions[i];
-			menu.add(action);
+		if(getSyncView().getInput() != null) {
+			for (int i = 0; i < actions.length; i++) {
+				ComparisonCriteriaAction action = actions[i];
+				menu.add(action);
+			}
 		}
 	}
-
 }

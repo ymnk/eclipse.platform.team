@@ -53,7 +53,7 @@ public class SubscriberInput {
 		monitor.beginTask(null, 100);
 		try {			
 			subscriberInput.setSubscriber(getSubscriber(), Policy.subMonitorFor(monitor, 70));						
-			filteredInput.setInputSyncSet(subscriberInput.getSyncSet(), Policy.subMonitorFor(monitor, 20));
+			filteredInput.setInputSyncSet(subscriberInput.getSyncSet(), Policy.subMonitorFor(monitor, 30));
 		} finally {
 			monitor.done();
 		}
@@ -63,11 +63,16 @@ public class SubscriberInput {
 		return subscriber;
 	}
 	
-	public SyncSetInputFromSyncSet getInput() {
-		return filteredInput;
+	public SyncSet getSyncSet() {
+		return filteredInput.getSyncSet();
 	}
 	
 	public void setFilter(SyncSetFilter filter, IProgressMonitor monitor) throws TeamException {
 		filteredInput.setFilter(filter, monitor);
+	}
+
+	public void dispose() {
+		subscriberInput.disconnect();
+		filteredInput.disconnect();		
 	}
 }

@@ -11,13 +11,11 @@
 package org.eclipse.team.internal.ui.sync.views;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -25,40 +23,23 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.DecoratingLabelProvider;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.IOpenListener;
-import org.eclipse.jface.viewers.OpenEvent;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.TableLayout;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.ComparisonCriteria;
+import org.eclipse.team.core.sync.ITeamResourceChangeListener;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
+import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.core.sync.TeamProvider;
-import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.*;
+import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.part.ViewPart;
 
-public class SyncViewer extends ViewPart {
+public class SyncViewer extends ViewPart implements ITeamResourceChangeListener {
 	
 	/*
 	 * The viewer thst is shown in the view. Currently this can be
@@ -83,7 +64,7 @@ public class SyncViewer extends ViewPart {
 	 * Array of SubscriberInput objects. There is one of these for each subscriber
 	 * registered with the sync view. 
 	 */
-	private List subscriberInputs = new ArrayList(1);
+	private Map subscriberInputs = new HashMap(1);
 	private SubscriberInput input = null;
 	
 	/*
@@ -100,11 +81,16 @@ public class SyncViewer extends ViewPart {
 	 * to create the viewer and initialize it.
 	 */
 	public void createPartControl(Composite parent) {
+		TeamProvider.addListener(this);
 		initializeActions();
-		initializeSyncSet();
 		createViewer(parent, TABLE_VIEW);
 		contributeToActionBars();
 		this.composite = parent;
+		
+		SyncTreeSubscriber[] subscribers = TeamProvider.getSubscribers();
+		if(subscribers.length > 0) {
+			initializeSubscriberInput(new SubscriberInput(subscribers[0]));
+		}
 	}
 
 	public void switchViewerType(int viewerType) {
@@ -142,7 +128,6 @@ public class SyncViewer extends ViewPart {
 		viewer.setContentProvider(new SyncSetTreeContentProvider());
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setSorter(new SyncViewerSorter());
-		//viewer.setInput(filteredInput.getSyncSet());
 	}
 	
 	private void createTableViewerPartControl(Composite parent) {
@@ -168,7 +153,6 @@ public class SyncViewer extends ViewPart {
 		viewer.setContentProvider(new SyncSetTableContentProvider());
 		viewer.setLabelProvider(new SyncViewerLabelProvider());
 		viewer.setSorter(new SyncViewerSorter());
-		//viewer.setInput(filteredInput.getSyncSet());
 	}
 	
 	/**
@@ -222,12 +206,19 @@ public class SyncViewer extends ViewPart {
 		actions.restore(memento);
 	}
 
-	private void initializeSubscriberInput(SubscriberInput input) {
+	private void initializeSubscriberInput(final SubscriberInput input) {
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
-					actions.
+					ActionContext context = new ActionContext(null);
+					context.setInput(input);
+					actions.setContext(context);
 					input.prepareInput(monitor);
+					Display.getDefault().asyncExec(new Runnable() {
+								public void run() {
+									viewer.setInput(input.getSyncSet());
+								}
+							});
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
 				}
@@ -235,36 +226,6 @@ public class SyncViewer extends ViewPart {
 		});
 	}
 	
-	private void resetFilters() {
-		run(new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				try {
-					resetFilters(monitor);
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				}
-			}
-		});
-	}
-
-	private void resetFilters(IProgressMonitor monitor) throws TeamException {
-		filteredInput.setFilter(new AndSyncSetFilter(
-			new SyncSetFilter[] {
-				new SyncSetDirectionFilter(getDirectionFilters()), 
-				new SyncSetChangeFilter(getChangeFilters())
-			}), 
-			monitor);
-	}
-	
-	private int[] getDirectionFilters() {
-		return actions.getDirectionFilters();
-	}
-
-	private int[] getChangeFilters() {
-		return actions.getChangeFilters();
-	}
-	
-		
 	private void hookOpen() {
 		viewer.addOpenListener(new IOpenListener() {
 			public void open(OpenEvent event) {
@@ -347,69 +308,21 @@ public class SyncViewer extends ViewPart {
 	 */
 	public void dispose() {
 		super.dispose();
-		subscriberInput.disconnect();
-		filteredInput.disconnect();
+		TeamProvider.removeListener(this);
+		for (Iterator it = subscriberInputs.values().iterator(); it.hasNext();) {
+			SubscriberInput input = (SubscriberInput) it.next();
+			input.dispose();
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.WorkbenchPart#setTitle(java.lang.String)
 	 */
 	public void setTitle(String title) {
-		super.setTitle(getSubscriber().getName() + ": " + title);
-	}
-
-	/**
-	 * The sync mode has changed. Update as appropriate.
-	 * @param mode
-	 */
-	public void updateFilters() {
-		resetFilters();
-	}
-
-	public SyncTreeSubscriber getSubscriber() {
-		if (subscriber == null) {
-			// TODO: hack for taking the first subscriber only. This will have to change
-			// to allow more than one subscriber.
-			this.subscriber = TeamProvider.getSubscriber();
-		}
-		return subscriber;
-	}
-	/**
-	 * 
-	 */
-	public ComparisonCriteria[] getAllComparisonCritera() {
-		return getSubscriber().getComparisonCriterias();
-	}
-
-	/**
-	 * @param criteria
-	 */
-	public void activateComparisonCriteria(ComparisonCriteria criteria) {
-		try {
-			subscriber.setCurrentComparisonCriteria(criteria.getId());
-			resetSubscriberInput();
-		} catch (TeamException e) {
-			handle(getSite().getShell(), e, null, null);
-		}
+		super.setTitle(title);
 	}
 	
-	public void resetSubscriberInput() {
-		run(new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				try {
-					resetSubscriberInput(monitor);
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				}
-			}
-		});
-	}
-	
-	public void refreshViewerInput(IProgressMonitor monitor) {
-		try {
-			resetSubscriberInput(monitor);
-		} catch (TeamException e) {
-		}
+	public void refreshViewer() {
 		// TODO: Should not be needed once proper eventing exists
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
@@ -428,10 +341,6 @@ public class SyncViewer extends ViewPart {
 		} catch (InterruptedException e) {
 			// Nothing to be done
 		}
-	}
-	
-	private void resetSubscriberInput(IProgressMonitor monitor) throws TeamException {
-		subscriberInput.reset(monitor);
 	}
 	
 	/**
@@ -456,5 +365,30 @@ public class SyncViewer extends ViewPart {
 	public void saveState(IMemento memento) {
 		super.saveState(memento);
 		actions.save(memento);
+	}
+	
+	/*
+	 * Return the current input for the view.
+	 */
+	public SubscriberInput getInput() {
+		return input;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.sync.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.sync.TeamDelta[])
+	 */
+	public void teamResourceChanged(TeamDelta[] deltas) {
+		QualifiedName lastId = null;
+		for (int i = 0; i < deltas.length; i++) {
+			TeamDelta delta = deltas[i];
+			if(delta.getFlags() == TeamDelta.SUBSCRIBER_CREATED) {
+				SyncTreeSubscriber s = delta.getSubscriber();
+				subscriberInputs.put(s.getId(), new SubscriberInput(s));
+				lastId = s.getId();
+			}
+		}
+		if(! subscriberInputs.isEmpty()) {
+			initializeSubscriberInput((SubscriberInput)subscriberInputs.get(lastId));
+		}
 	}
 }

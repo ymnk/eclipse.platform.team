@@ -38,6 +38,7 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 	
 	// An array of the selection actions for the modes (indexed by mode constant)
 	private DirectionFilterAction[] actions;
+	private SyncViewerActions refreshGroup;
 	
 	// the currently active mode
 	private int currentSyncMode = SYNC_BOTH;
@@ -59,7 +60,9 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 			this.viewTitle = viewTitle;
 		}
 		public void run() {
-			SyncViewerDirectionFilters.this.setSyncMode(this);
+			if(! isChecked()) {
+				setSyncMode(getSyncMode(), getViewTitle());
+			}
 		}
 		public int[] getDirectionFilters() {
 			return directionFilters;
@@ -73,15 +76,16 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 
 	}
 	
-	protected SyncViewerDirectionFilters(SyncViewer viewer) {
+	protected SyncViewerDirectionFilters(SyncViewer viewer, SyncViewerActions refreshGroup) {
 		super(viewer);
-		initializeActions();
+		this.refreshGroup = refreshGroup;
+		createActions();
 	}
 	
 	/**
 	 * Sets up the sync modes and the actions for switching between them.
 	 */
-	private void initializeActions() {
+	private void createActions() {
 		// Create the actions
 		DirectionFilterAction incomingMode = new DirectionFilterAction(
 			Policy.bind("SyncView.incomingModeAction"), //$NON-NLS-1$
@@ -138,17 +142,11 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 	/**
 	 * Activates the given sync mode.
 	 */
-	void setSyncMode(DirectionFilterAction selectedAction) {
-		int mode = selectedAction.getSyncMode();
-		if (mode == currentSyncMode) {
-			// make sure the action is still checked
-			selectedAction.setChecked(true);
-			return;
-		} 
+	void setSyncMode(int mode, String title) {
 		currentSyncMode = mode;
 		activateCurrentMode();
-		getSyncView().setTitle(selectedAction.getViewTitle());
-		getSyncView().updateFilters();
+		getSyncView().setTitle(title);
+		getRefreshGroup().refreshFilters();
 	}
 
 	/*
@@ -172,9 +170,6 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 		}
 	}
 
-	/**
-	 * @return
-	 */
 	public int[] getDirectionFilters() {
 		return actions[currentSyncMode].getDirectionFilters();
 	}
@@ -199,4 +194,7 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 		memento.putInteger(MEMENTO_KEY, currentSyncMode);
 	}
 
+	public SyncViewerActions getRefreshGroup() {
+		return refreshGroup;
+	}
 }

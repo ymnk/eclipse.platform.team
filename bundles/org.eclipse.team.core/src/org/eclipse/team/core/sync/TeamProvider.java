@@ -10,15 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.core.sync;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtension;
-import org.eclipse.core.runtime.IExtensionPoint;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
@@ -29,6 +23,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
 public class TeamProvider {
 	
 	static private Map subscribers = new HashMap();
+	static private List listeners = new ArrayList(1);
 
 	static public SyncTreeSubscriber getSubscriber(QualifiedName id) throws TeamException {
 		// if it doesn't exist than try and instantiate
@@ -52,7 +47,34 @@ public class TeamProvider {
 	
 	static public void registerSubscriber(SyncTreeSubscriber subscriber) {
 		subscribers.put(subscriber.getId(), subscriber);
+		fireTeamResourceChange(new TeamDelta[] {
+				new TeamDelta(subscriber, TeamDelta.SUBSCRIBER_CREATED, null)});
 	}
+	
+	/* (non-Javadoc)
+	 * Method declared on IBaseLabelProvider.
+	 */
+	static public void addListener(ITeamResourceChangeListener listener) {
+		listeners.add(listener);
+	}
+
+	/* (non-Javadoc)
+	 * Method declared on IBaseLabelProvider.
+	 */
+	static public void removeListener(ITeamResourceChangeListener listener) {
+		listeners.remove(listener);
+	}
+	
+	/*
+	 * Fires a team resource change event to all registered listeners
+	 * Only listeners registered at the time this method is called are notified.
+	 */
+	static protected void fireTeamResourceChange(final TeamDelta[] deltas) {
+		for (Iterator it = listeners.iterator(); it.hasNext();) {
+			final ITeamResourceChangeListener l = (ITeamResourceChangeListener) it.next();
+			l.teamResourceChanged(deltas);	
+		}
+	}	
 	
 	private static ISyncTreeSubscriberFactory create(QualifiedName id) {
 			TeamPlugin plugin = TeamPlugin.getPlugin();

@@ -8,11 +8,11 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.views;
+package org.eclipse.team.internal.ui.sync.actions;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.team.internal.ui.sync.actions.SyncViewerAction;
-import org.eclipse.team.internal.ui.sync.actions.SyncViewerChangeFilters;
+import org.eclipse.team.internal.ui.sync.views.ChangeFiltersContentProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.dialogs.ListSelectionDialog;
 
 /**
@@ -22,10 +22,6 @@ public class FilterSyncViewerAction extends SyncViewerAction {
 
 	SyncViewerChangeFilters filters;
 	
-	/**
-	 * @param viewer
-	 * @param label
-	 */
 	public FilterSyncViewerAction(SyncViewer viewer, SyncViewerChangeFilters filters) {
 		super(viewer, "Filter...");
 		this.filters = filters;
@@ -37,7 +33,6 @@ public class FilterSyncViewerAction extends SyncViewerAction {
 	public void run() {
 		int[] filter = promptForFilter();
 		if (filter == null) return;
-		getSyncView().updateFilters();
 	}
 
 	/**
@@ -64,5 +59,4 @@ public class FilterSyncViewerAction extends SyncViewerAction {
 		}
 		return changeFilters;
 	}
-
 }

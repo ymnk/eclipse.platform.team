@@ -14,7 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -23,22 +22,18 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
-import org.eclipse.team.internal.ui.sync.views.AndSyncSetFilter;
-import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.views.SyncSetChangeFilter;
-import org.eclipse.team.internal.ui.sync.views.SyncSetDirectionFilter;
-import org.eclipse.team.internal.ui.sync.views.SyncSetFilter;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
+import org.eclipse.team.internal.ui.sync.views.*;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.actions.ActionContext;
 
 /**
  * This class managers the actions associated with the SyncViewer class.
  */
 public class SyncViewerActions extends SyncViewerActionGroup {
-	
+		
 	// action groups for view filtering
 	private SyncViewerDirectionFilters directionsFilters;
 	private SyncViewerChangeFilters changeFilters;
@@ -63,9 +58,11 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 						public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 							try {
 								monitor.beginTask(null, 100);
-								IResource[] resources = getSyncView().getSubscriber().roots();
-								getSyncView().getSubscriber().refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 80));
-								view.refreshViewerInput(Policy.subMonitorFor(monitor, 20));
+								ActionContext context = getContext();
+								SubscriberInput input = (SubscriberInput)context.getInput();
+								IResource[] resources = input.getSubscriber().roots();
+								input.getSubscriber().refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+								view.refreshViewer();
 							} catch (TeamException e) {
 								throw new InvocationTargetException(e);
 							} finally {
@@ -95,24 +92,24 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		}
 	}
 		
-	/**
-	 * @param viewer
-	 */
 	public SyncViewerActions(SyncViewer viewer) {
 		super(viewer);
-		initializeActions();
+		createActions();
 	}
 	
-	private void initializeActions() {
+	private void createActions() {
 		// initialize action groups
 		SyncViewer syncView = getSyncView();
-		directionsFilters = new SyncViewerDirectionFilters(syncView);
-		changeFilters = new SyncViewerChangeFilters(syncView);
-		comparisonCriteria = new SyncViewerComparisonCriteria(syncView, syncView.getAllComparisonCritera());
+		directionsFilters = new SyncViewerDirectionFilters(syncView, this);
+		changeFilters = new SyncViewerChangeFilters(syncView, this);
+		comparisonCriteria = new SyncViewerComparisonCriteria(syncView);
+		
 		// initialize other actions
 		refreshAction = new RefreshAction();
+		refreshAction.setEnabled(false);
+		
 		toggleViewerType = new ToggleViewAction(SyncViewer.TABLE_VIEW);
-		open = new OpenInCompareAction(getSyncView());
+		open = new OpenInCompareAction(syncView);
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
@@ -148,21 +145,26 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(new Separator("Additions"));
 	}
 
-	public int[] getDirectionFilters() {
-		return directionsFilters.getDirectionFilters();
-	}
-
-	public int[] getChangeFilters() {
-		return changeFilters.getChangeFilters();
-	}
-
-	public void registerInput(SubscriberInput input) throws TeamException{
-		this.input = input;
-		input.setFilter(new AndSyncSetFilter(
-				new SyncSetFilter[] {
-					new SyncSetDirectionFilter(directionsFilters.getDirectionFilters()), 
-					new SyncSetChangeFilter(changeFilters.getChangeFilters())
-			}), new NullProgressMonitor());	
+	public void refreshFilters() {
+		final SubscriberInput input = getSubscriberContext();
+		if(input != null) {
+			getSyncView().run(new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					try {
+						monitor.beginTask(null, 100);
+						input.setFilter(new AndSyncSetFilter(
+						new SyncSetFilter[] {
+							new SyncSetDirectionFilter(directionsFilters.getDirectionFilters()), 
+							new SyncSetChangeFilter(changeFilters.getChangeFilters())
+						}), monitor);
+					} catch (TeamException e) {
+						throw new InvocationTargetException(e);
+					} finally {
+						monitor.done();
+					}
+					}
+				});
+		}
 	}
 	
 	public void open() {
@@ -189,5 +191,12 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		directionsFilters.save(memento);
 		comparisonCriteria.save(memento);
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.sync.actions.SyncViewerActionGroup#initializeActions()
+	 */
+	protected void initializeActions() {
+		SubscriberInput input = getSubscriberContext();
+		refreshAction.setEnabled(input != null);
+	}
 }

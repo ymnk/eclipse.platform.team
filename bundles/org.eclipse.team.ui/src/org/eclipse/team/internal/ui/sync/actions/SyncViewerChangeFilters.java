@@ -19,22 +19,23 @@ import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.ui.sync.views.ChangeFiltersContentProvider;
-import org.eclipse.team.internal.ui.sync.views.FilterSyncViewerAction;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.IMemento;
 
 /**
  * This class provides a set of actions that support sync set filtering by 
- * change type.
+ * change type. Changing the change type only requires setting a new
+ * filter on the sync set.
  */
 public class SyncViewerChangeFilters extends SyncViewerActionGroup {
 	
 	private static final String MEMENTO_KEY_PREFIX = "SyncViewerChangeFilters";
 	
-	// array of actions for filtering bt change type (additions, deletions and changes)
+	// array of actions for filtering by change type (additions, deletions and changes)
 	private ChangeFilterAction[] actions;
 	
 	private FilterSyncViewerAction filterAction;
+	private SyncViewerActions refreshGroup;
 	
 	/**
 	 * Action for filtering by change type.
@@ -47,7 +48,7 @@ public class SyncViewerChangeFilters extends SyncViewerActionGroup {
 			this.changeFilter = changeFilter;
 		}
 		public void run() {
-			SyncViewerChangeFilters.this.updateSyncView();
+			getRefreshGroup().refreshFilters();
 		}
 		/**
 		 * @return
@@ -57,15 +58,13 @@ public class SyncViewerChangeFilters extends SyncViewerActionGroup {
 		}
 	}
 	
-	protected SyncViewerChangeFilters(SyncViewer viewer) {
+	protected SyncViewerChangeFilters(SyncViewer viewer, SyncViewerActions refreshGroup) {
 		super(viewer);
-		initializeActions();
+		this.refreshGroup = refreshGroup;
+		createActions();
 	}
 	
-	/**
-	 * 
-	 */
-	private void initializeActions() {
+	private void createActions() {
 		ChangeFilterAction additions = new ChangeFilterAction("Show Additions", SyncInfo.ADDITION);
 		additions.setChecked(true);
 		ChangeFilterAction deletions = new ChangeFilterAction("Show Deletions", SyncInfo.DELETION);
@@ -75,14 +74,6 @@ public class SyncViewerChangeFilters extends SyncViewerActionGroup {
 		actions = new ChangeFilterAction[] { additions, deletions, changes };
 		
 		filterAction = new FilterSyncViewerAction(getSyncView(), this);
-	}
-
-	/**
-	 * Forward the selected change filters to the sync view.
-	 * @param changeType
-	 */
-	protected void updateSyncView() {
-		getSyncView().updateFilters();
 	}
 
 	/**
@@ -222,5 +213,9 @@ public class SyncViewerChangeFilters extends SyncViewerActionGroup {
 				memento.putInteger(MEMENTO_KEY_PREFIX + "." + count++, i);
 			}
 		}
+	}
+	
+	public SyncViewerActions getRefreshGroup() {
+		return refreshGroup;
 	}
 }

@@ -50,14 +50,14 @@
             id="org.eclipse.team.cvs.core.cvsnature">
       </repository>
 	</extension>
-	
+	<!--
 	<extension
          point="org.eclipse.team.core.subscriber">
       <repository
             class="org.eclipse.team.internal.ccvs.core.CVSSubscriberFactory"
             id="org.eclipse.team.cvs.core">
       </repository>
-	</extension>
+	</extension> -->
 	
  
  	<!-- *************** Resource patterns ignored by CVS **************** -->

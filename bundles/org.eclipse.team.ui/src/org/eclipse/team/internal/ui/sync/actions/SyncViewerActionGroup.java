@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.actions;
 
+import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.IMemento;
+import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
 
 /**
@@ -47,4 +49,19 @@ public abstract class SyncViewerActionGroup extends ActionGroup {
 	public void restore(IMemento memento) {
 	}
 
+	public void setContext(ActionContext context) {
+		super.setContext(context);
+		initializeActions();
+	}
+
+	protected void initializeActions() {
+	}
+
+	protected SubscriberInput getSubscriberContext() {
+		ActionContext input = getContext();
+		if(input != null) {
+			return (SubscriberInput)input.getInput();
+		}
+		return null;
+	}
 }
