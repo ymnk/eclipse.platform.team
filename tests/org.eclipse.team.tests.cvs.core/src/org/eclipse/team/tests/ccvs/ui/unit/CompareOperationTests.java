@@ -20,6 +20,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.ui.operations.RemoteCompareOperation;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 
 public class CompareOperationTests extends CVSOperationTest {
@@ -57,7 +58,7 @@ public class CompareOperationTests extends CVSOperationTest {
 
 		// Run the compare operation
 		ICVSRemoteFolder remoteResource = (ICVSRemoteFolder)CVSWorkspaceRoot.getRemoteResourceFor(project);
-		RemoteCompareOperation op = new RemoteCompareOperation(null, remoteResource, v1, CVSTag.DEFAULT);
+		RemoteCompareOperation op = new RemoteCompareOperation(null, new ICVSRemoteFolder[] { remoteResource }, v1, CVSTag.DEFAULT);
 		run(op);
 
 	}
