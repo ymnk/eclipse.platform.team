@@ -151,15 +151,22 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 			modelProvider.dispose();
 		}
 		modelProvider = createModelProvider(id);		
-		IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-		if(pageSettings != null) {
-			pageSettings.put(P_LAST_PROVIDER, modelProvider.getDescriptor().getId());
-		}
+		saveProviderSettings(id);
 		modelProvider.prepareInput(monitor);
 		setInput();
 	}
 	
 	/**
+     * Save the settings for the currently active provider
+     */
+    protected void saveProviderSettings(String id) {
+        IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+		if(pageSettings != null) {
+			pageSettings.put(P_LAST_PROVIDER, id);
+		}
+    }
+
+    /**
 	 * Set the input of the viewer to the root model element.
 	 */
 	protected void setInput() {

@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -24,6 +25,8 @@ import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
  * Manager for hierarchical models
  */
 public class ChangeLogModelManager extends HierarchicalModelManager implements IPropertyChangeListener {
+    
+    private static final String P_COMMIT_SET_ENABLED = CVSUIPlugin.ID + ".P_COMMIT_SET_ENABLED"; //$NON-NLS-1$
     
     public static final String COMMIT_SET_GROUP = "CommitSet"; //$NON-NLS-1$
     
@@ -109,4 +112,28 @@ public class ChangeLogModelManager extends HierarchicalModelManager implements I
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 	}
+	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelManager#saveProviderSettings(java.lang.String)
+     */
+    protected void saveProviderSettings(String id) {
+        super.saveProviderSettings(id);
+        IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+		if(pageSettings != null) {
+			pageSettings.put(P_COMMIT_SET_ENABLED, enabled);
+		}
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelManager#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
+     */
+    public void initialize(ISynchronizePageConfiguration configuration) {
+        // Load our setting before invoking super since the inherited
+        // initialize will create the provider
+        IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+		if(pageSettings != null) {
+		    enabled = pageSettings.getBoolean(P_COMMIT_SET_ENABLED);
+		}
+        super.initialize(configuration);
+    }
 }
