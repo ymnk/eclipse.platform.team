@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize;
 
 import java.util.*;
 
@@ -27,8 +27,9 @@ import org.eclipse.team.internal.ui.jobs.IJobListener;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
+import org.eclipse.team.internal.ui.synchronize.views.CompressedFolder;
+import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.internal.WorkbenchColors;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
@@ -73,6 +74,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 				Display.getDefault().asyncExec(new Runnable() {
 							public void run() {
 								synchronized (this) {
+									System.out.println(">> Fire started work: ");
 									fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
 								}
 							}
@@ -83,11 +85,11 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 				Display.getDefault().asyncExec(new Runnable() {
 							public void run() {
 								synchronized (this) {
+									System.out.println(">> Fire stopped work: ");
 									fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
 								}
 							}
 						});
-
 			}
 		}, SubscriberAction.SUBSCRIBER_JOB_TYPE);
 		
@@ -238,8 +240,10 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	 */
 	public Color getForeground(Object element) {	
 		if (working)  {
+			System.out.println("Working: " + element.toString());
 			return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
 		} else  {
+			System.out.println("Not Working: " + element.toString());
 			return null;
 		}
 	}

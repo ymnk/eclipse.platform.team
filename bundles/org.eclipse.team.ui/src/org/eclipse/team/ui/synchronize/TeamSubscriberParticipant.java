@@ -108,7 +108,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		IWorkingSet oldSet = null;
 		if(input != null) {
 			oldSet = input.getWorkingSet();
-			input.setWorkingSet(set);
+			((SubscriberInput)input).setWorkingSet(set);
 			workingSet = null;
 		} else {
 			workingSet = set;

@@ -14,6 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.ui.synchronize.ISyncInfoSet;
 import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
 
 /**
@@ -112,7 +113,7 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		return (IResource[]) removedRoots.toArray(new IResource[removedRoots.size()]);
 	}
 		
-	public SyncSet getSet() {
+	public ISyncInfoSet getSet() {
 		return set;
 	}
 

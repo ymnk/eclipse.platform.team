@@ -17,9 +17,9 @@ import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.FontMetrics;
-import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
@@ -36,18 +36,56 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private CompareEditorInput compareEditorInput;
 	private IRefreshEvent event;
 	private final static int RESOURCE_LIST_SIZE = 10;
+	private IDialogSettings settings;
+	private static final String HEIGHT_KEY = "width-key";
+	private static final String WIDTH_KEY = "height-key";
 	
 	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event) {
 		super(parentShell, "Synchronization Complete - " + event.getParticipant().getName());
+		int shellStyle = getShellStyle();
+		setShellStyle(shellStyle | SWT.RESIZE | SWT.MAX);
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
+		
+		// create the compare input for the details area
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), null /* no filter */,  event.getParticipant().getInput()) {
 			protected boolean allowParticipantMenuContributions() {
 				return true;
 			}
 		}; 
+		
+		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
+		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$
+		if (settings == null) {
+			this.settings = workbenchSettings.addNewSection("RefreshCompleteDialog");//$NON-NLS-1$
+		}	
 	}
 
+	/**
+	 * @see Window#getInitialSize()
+	 */
+	protected Point getInitialSize() {
+		int width, height;
+		try {
+			height = settings.getInt(HEIGHT_KEY);
+			width = settings.getInt(WIDTH_KEY);
+		} catch(NumberFormatException e) {
+			return super.getInitialSize();
+		}
+		Point p = super.getInitialSize();
+		return new Point(width, p.y);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.window.Window#close()
+	 */
+	public boolean close() {
+		Rectangle bounds = getShell().getBounds();
+		settings.put(HEIGHT_KEY, bounds.height);
+		settings.put(WIDTH_KEY, bounds.width);
+		return super.close();
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#createMainDialogArea(org.eclipse.swt.widgets.Composite)
 	 */

@@ -11,12 +11,25 @@
 package org.eclipse.team.ui.synchronize;
 
 /**
- * This interface is used to receive SyncSetChangedEvents from a sync set.
+ * Classes which implement this interface provide methods that deal with the
+ * events that are generated as a {@link ISyncInfoSet} changes.
+ * <p>
+ * After creating an instance of a class that implements this interface it can
+ * be added to a sync info set using the <code>addSyncSetChangedListener</code>
+ * method and removed using the <code>removeSyncSetChangedListener</code>
+ * method.
+ * </p>
+ * 
+ * @see ISyncInfoSetChangeEvent
+ * @since 3.0
  */
 public interface ISyncSetChangedListener {
-	
+
 	/**
-	 * The sync set has changed and the event contains the details.
+	 * Sent when a {@link ISyncInfoSet} changes. For example, when a resource's 
+	 * synchronization state changes.
+	 * 
+	 * @param event an event containing information about the change.
 	 */
 	public void syncSetChanged(ISyncInfoSetChangeEvent event);
 }

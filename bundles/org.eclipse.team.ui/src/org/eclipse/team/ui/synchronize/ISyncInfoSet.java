@@ -14,6 +14,14 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
 
+/**
+ * A dynamic collection of {@link SyncInfo} objects. 
+ * 
+ * This set is optimized for fast retrieval of out-of-sync resources.
+ * 
+ * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipant#getInput()
+ * @since 3.0
+ */
 public interface ISyncInfoSet {
 	/**
 	 * Add a change listener

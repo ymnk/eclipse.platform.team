@@ -10,18 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import javax.naming.ldap.ControlFactory;
-
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.forms.parts.*;
 import org.eclipse.ui.part.PageBook;
 
 /**
@@ -35,8 +35,6 @@ public class ChangesSection extends Composite {
 	private TeamSubscriberParticipant participant;
 	private Composite parent;
 	private TeamSubscriberParticipantPage page;
-	
-	private static final String COLOR_WHITE = "changes_section.white";
 			
 	/**
 	 * Page book either shows the diff tree viewer if there are changes or
@@ -78,11 +76,6 @@ public class ChangesSection extends Composite {
 		this.participant = page.getParticipant();
 		this.parent = parent;
 		
-		factory = new ControlFactory(parent.getDisplay());
-		factory.registerColor(COLOR_WHITE, 255,255,255);
-		factory.setBackgroundColor(factory.getColor(COLOR_WHITE));
-		setBackground(factory.getBackgroundColor());
-		
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
@@ -108,7 +101,7 @@ public class ChangesSection extends Composite {
 		if(participant.getInput().getFilteredSyncSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
-						filteredContainer = getEmptyChangesComposite(changesSectionContainer, factory);
+						filteredContainer = getEmptyChangesComposite(changesSectionContainer);
 						changesSectionContainer.showPage(filteredContainer);
 				}
 			});
@@ -125,8 +118,9 @@ public class ChangesSection extends Composite {
 		}
 	}
 	
-	private Composite getEmptyChangesComposite(Composite parent, IControlFactory factory) {
-		Composite composite = factory.createComposite(parent);
+	private Composite getEmptyChangesComposite(Composite parent) {
+		Composite composite = new Composite(parent, SWT.NONE);
+		composite.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_WHITE));
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 2;
 		composite.setLayout(layout);
@@ -154,46 +148,53 @@ public class ChangesSection extends Composite {
 			} else {
 				text.append(Policy.bind("ChangesSection.filterHidesSingular", Long.toString(numChanges), Utils.modeToString(newMode))); //$NON-NLS-1$
 			}
+			
 			Label warning = new Label(composite, SWT.NONE);
 			warning.setImage(TeamUIPlugin.getPlugin().getImage(ISharedImages.IMG_WARNING));
-			createHyperlink(factory, composite, Policy.bind("ChangesSection.filterChange", Utils.modeToString(newMode)), new HyperlinkAdapter() { //$NON-NLS-1$
-				public void linkActivated(Control linkLabel) {
+			
+			Hyperlink link = new Hyperlink(composite, SWT.WRAP);
+			link.setText(Policy.bind("ChangesSection.filterChange", Utils.modeToString(newMode)));
+			link.addHyperlinkListener(new HyperlinkAdapter() {
+				public void linkActivated(HyperlinkEvent e) {
 					participant.setMode(newMode);
 				}
 			});
-			Label description = factory.createLabel(composite, text.toString(), SWT.WRAP);
-			data = new GridData(GridData.FILL_HORIZONTAL);
-			data.horizontalSpan = 2;
-			data.widthHint = 100;
-			description.setLayoutData(data);	
+			link.setBackground(composite.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+			link.setUnderlined(true);
+			createDescriptionLabel(composite, text.toString());
 		} else if(changesInFilter == 0 && changesInWorkingSet == 0 && changesInWorkspace != 0) {
 			Label warning = new Label(composite, SWT.NONE);
 			warning.setImage(TeamUIPlugin.getPlugin().getImage(ISharedImages.IMG_WARNING));
-			createHyperlink(factory, composite, Policy.bind("ChangesSection.workingSetRemove"), new HyperlinkAdapter() { //$NON-NLS-1$
-				public void linkActivated(Control linkLabel) {
+			
+			Hyperlink link = new Hyperlink(composite, SWT.WRAP);
+			link.setText(Policy.bind("ChangesSection.workingSetRemove"));
+			link.addHyperlinkListener(new HyperlinkAdapter() {
+				public void linkActivated(HyperlinkEvent e) {
 					participant.setWorkingSet(null);
 				}
 			});
-			Label description = factory.createLabel(composite, Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)), SWT.WRAP);
-			data = new GridData(GridData.FILL_HORIZONTAL);
-			data.horizontalSpan = 2;
-			data.widthHint = 100;
-			description.setLayoutData(data);	
+			link.setBackground(composite.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+			link.setUnderlined(true);
+			createDescriptionLabel(composite,Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)));	
 		} else {
-			factory.createLabel(composite, Policy.bind("ChangesSection.noChanges"), SWT.WRAP);
+			createDescriptionLabel(composite,Policy.bind("ChangesSection.noChanges"));	
 		}		
 		return composite;
 	}
 	
-	private void createHyperlink(IControlFactory factory, Composite composite, String text, HyperlinkAdapter adapter) {
-		final Label label = factory.createLabel(composite, text, SWT.WRAP);
-		GridData data = new GridData();
-		label.setLayoutData(data);
-		factory.turnIntoHyperlink(label, adapter);
-	}
-
 	public Viewer getChangesViewer() {
 		return changesViewer;
+	}
+	
+	private Label createDescriptionLabel(Composite parent, String text) {
+		Label description = new Label(parent, SWT.WRAP);
+		GridData data = new GridData(GridData.FILL_HORIZONTAL);
+		data.horizontalSpan = 2;
+		data.widthHint = 100;
+		description.setLayoutData(data);
+		description.setText(text);
+		description.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+		return description;
 	}
 	
 	public void dispose() {

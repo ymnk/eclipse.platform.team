@@ -16,8 +16,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -26,16 +24,13 @@ import org.eclipse.ui.IActionDelegate;
 
 public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncSetChangedListener {
 
-	private static class CVSLabelProvider extends LabelProvider implements IColorProvider {
+	private static class CVSLabelProvider extends TeamSubscriberParticipantLabelProvider {
 		private ILabelProvider oldLabelProvider;
 		public CVSLabelProvider(ILabelProvider oldLabelProvider) {
 			this.oldLabelProvider = oldLabelProvider;
 		}
-		public Image getImage(Object element) {
-			return oldLabelProvider.getImage(element);
-		}
-		public String getText(Object element) {
-			String text = oldLabelProvider.getText(element);
+		protected String decorateText(String input, Object element) {
+			String text = input;
 			if (element instanceof SyncInfoDiffNode) {
 				IResource resource =  ((SyncInfoDiffNode)element).getResource();
 				if(resource != null) {
@@ -53,18 +48,6 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 				}
 			}
 			return text;
-		}
-		public Color getForeground(Object element) {
-			if(oldLabelProvider instanceof IColorProvider) {
-				return ((IColorProvider)oldLabelProvider).getForeground(element);
-			}
-			return null;
-		}
-		public Color getBackground(Object element) {
-			if(oldLabelProvider instanceof IColorProvider) {
-				return ((IColorProvider)oldLabelProvider).getBackground(element);
-			}
-			return null;
 		}
 	}
 	

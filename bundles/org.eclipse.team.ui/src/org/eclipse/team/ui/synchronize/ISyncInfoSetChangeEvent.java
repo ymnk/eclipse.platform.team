@@ -12,18 +12,73 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 
+/**
+ * An event generated when a {@link ISyncInfoSet} collection is changed. The
+ * mix of return types, SyncInfo and IResource, is a result of an optimization 
+ * included in {@link ISyncInfoSet} collections that doesn't maintain SyncInfo objects
+ * for in-sync resources.
+ *  
+ * @see ISyncInfoSet#addSyncSetChangedListener(ISyncSetChangedListener)
+ * @see ISyncSetChangedListener
+ * @since 3.0
+ */
 public interface ISyncInfoSetChangeEvent {
-	public abstract void removedRoot(IResource root);
-	public abstract void addedRoot(IResource parent);
-	public abstract SyncInfo[] getAddedResources();
-	public abstract IResource[] getAddedRoots();
-	public abstract SyncInfo[] getChangedResources();
-	public abstract IResource[] getRemovedResources();
-	public abstract IResource[] getRemovedRoots();
-	public abstract SyncSet getSet();
-	public abstract void reset();
-	public abstract boolean isReset();
-	public abstract boolean isEmpty();
+	/**
+	 * Returns newly added out-of-sync <code>SyncInfo</code> elements. 
+	 * 
+	 * @return newly added <code>SyncInfo</code> elements or an empty list if this event 
+	 * doesn't contain added resources.
+	 */
+	public SyncInfo[] getAddedResources();
+	
+	/**
+	 * Returns parent resources of all newly added elements. 
+	 * 
+	 * @return parents of all newly added elements.  or an empty list if this event 
+	 * doesn't contain added resources.
+	 */
+	public IResource[] getAddedRoots();
+	
+	/**
+	 * Returns changed <code>SyncInfo</code> elements. The returned elements
+	 * are still out-of-sync.
+	 * 
+	 * @return changed <code>SyncInfo</code> elements or an empty list if this event 
+	 * doesn't contain changes resources.
+	 */
+	public SyncInfo[] getChangedResources();
+	
+	/**
+	 * Returns removed <code>SyncInfo</code> elements. The returned elements
+	 * are all  in-sync resources.
+	 * 
+	 * @return removed <code>SyncInfo</code> elements or an empty list if this event 
+	 * doesn't contain removed resources.
+	 */
+	public IResource[] getRemovedResources();
+	
+	/**
+	 * Returns parent resources of all newly removed elements. 
+	 * 
+	 * @return parents of all newly removed elements.  or an empty list if this event 
+	 * doesn't contain added resources.
+	 */
+	public IResource[] getRemovedRoots();
+	
+	/**
+	 * Returns the {@link ISyncInfoSet} that generated these events.
+	 * 
+	 * @return the {@link ISyncInfoSet} that generated these events.
+	 */
+	public ISyncInfoSet getSet();
+	
+	/**
+	 * Returns <code>true</code> if the associated set has been reset and <code>false</code>
+	 * otherwise. A sync info set is reset when changes in the set are all recalculated.
+	 * 
+	 * @return <code>true</code> if the associated set has been reset and <code>false</code>
+	 * otherwise.
+	 */
+	public boolean isReset();
 }
