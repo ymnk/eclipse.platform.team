@@ -102,7 +102,7 @@ public class EclipseSynchronizer {
 	 */
 	public void setFolderSync(IContainer folder, FolderSyncInfo info) throws CVSException {
 		Assert.isNotNull(info); // enforce the use of deleteFolderSync
-		if (folder.getType() == IResource.ROOT || ! folder.exists()) {
+		if (folder.getType() == IResource.ROOT) {
 			throw new CVSException(IStatus.ERROR, CVSException.UNABLE,
 				Policy.bind("EclipseSynchronizer.ErrorSettingFolderSync", folder.getFullPath().toString())); //$NON-NLS-1$
 		}
@@ -124,7 +124,7 @@ public class EclipseSynchronizer {
 	 * @see #setFolderSync, #deleteFolderSync
 	 */
 	public FolderSyncInfo getFolderSync(IContainer folder) throws CVSException {
-		if (folder.getType() == IResource.ROOT || ! folder.exists()) return null;
+		if (folder.getType() == IResource.ROOT) return null;
 		try {
 			beginOperation(null);
 			// cache folder sync and return it
@@ -142,7 +142,7 @@ public class EclipseSynchronizer {
 	 * @see #getFolderSync, #setFolderSync
 	 */
 	public void deleteFolderSync(IContainer folder) throws CVSException {
-		if (folder.getType() == IResource.ROOT || ! folder.exists()) return;
+		if (folder.getType() == IResource.ROOT) return;
 		try {
 			beginOperation(null);
 			// delete folder sync
@@ -178,7 +178,7 @@ public class EclipseSynchronizer {
 	public void setResourceSync(IResource resource, ResourceSyncInfo info) throws CVSException {
 		Assert.isNotNull(info); // enforce the use of deleteResourceSync
 		IContainer parent = resource.getParent();
-		if (parent == null || ! parent.exists() || parent.getType() == IResource.ROOT) {
+		if (parent == null || parent.getType() == IResource.ROOT) {
 			throw new CVSException(IStatus.ERROR, CVSException.UNABLE,
 				Policy.bind("EclipseSynchronizer.ErrorSettingResourceSync", resource.getFullPath().toString())); //$NON-NLS-1$
 		}
@@ -202,7 +202,7 @@ public class EclipseSynchronizer {
 	 */
 	public ResourceSyncInfo getResourceSync(IResource resource) throws CVSException {
 		IContainer parent = resource.getParent();
-		if (parent == null || ! parent.exists() || parent.getType() == IResource.ROOT) return null;
+		if (parent == null || parent.getType() == IResource.ROOT) return null;
 		try {
 			beginOperation(null);
 			// cache resource sync for siblings, then return for self
@@ -221,7 +221,7 @@ public class EclipseSynchronizer {
 	 */
 	public void deleteResourceSync(IResource resource) throws CVSException {
 		IContainer parent = resource.getParent();
-		if (parent == null || ! parent.exists() || parent.getType() == IResource.ROOT) return;
+		if (parent == null || parent.getType() == IResource.ROOT) return;
 		try {
 			beginOperation(null);
 			// cache resource sync for siblings, delete for self, then notify
@@ -298,7 +298,6 @@ public class EclipseSynchronizer {
 	 * @return the array of members
 	 */
 	public IResource[] members(IContainer folder) throws CVSException {
-		if (! folder.exists()) return new IResource[0];
 		try {				
 			beginOperation(null);
 			if (folder.getType() == IResource.ROOT) return folder.members();
@@ -315,7 +314,8 @@ public class EclipseSynchronizer {
 					childResources.add(folder.getFile(path));
 				}
 			}
-			childResources.addAll(Arrays.asList(folder.members()));
+			if (folder.exists())
+				childResources.addAll(Arrays.asList(folder.members()));
 			return (IResource[])childResources.toArray(new IResource[childResources.size()]);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -433,24 +433,34 @@ public class EclipseSynchronizer {
 	 * The folder is about to be deleted (including its CVS subfolder).
 	 * Take any appropriate action to remember the CVS information.
 	 */
-	public void prepareForDeletion(IContainer container) throws CVSException {
+	public void prepareForDeletion(IResource resource) throws CVSException {
 		try {
 			beginOperation(null);
-			purgeFastCache();
-			if (container.getType() == IResource.PROJECT) {
-				synchronizerCache.flush((IProject)container);
-			} else {
-				// Move the folder sync info into phantom space
-				FolderSyncInfo info = getFolderSync(container);
-				if (info == null) return;
-				synchronizerCache.setCachedFolderSync(container, info);
-				synchronizerCache.setCachedResourceSyncForChildren(container, sessionPropertyCache.getCachedResourceSyncForChildren(container));
-				changedFolders.add(container);
-				// todo
-				// Move the dirty count into phantom space
-				int dirtyCount = getDirtyCount(container);
-				if (dirtyCount != -1) {
-					synchronizerCache.setCachedDirtyCount(container, dirtyCount);
+			// Flush the dirty info for the resource and it's ancestors.
+			// Although we could be smarter, we need to do this because the
+			// deletion may fail.
+			String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(resource);
+			if (indicator != null) {
+				flushDirtyCacheWithAncestors(resource);
+			}
+			if (resource.getType() != IResource.FILE) {
+				IContainer container = (IContainer)resource;
+				purgeFastCache();
+				if (container.getType() == IResource.PROJECT) {
+					synchronizerCache.flush((IProject)container);
+				} else {
+					// Move the folder sync info into phantom space
+					FolderSyncInfo info = getFolderSync(container);
+					if (info == null) return;
+					synchronizerCache.setCachedFolderSync(container, info);
+					synchronizerCache.setCachedResourceSyncForChildren(container, sessionPropertyCache.getCachedResourceSyncForChildren(container));
+					changedFolders.add(container);
+					// todo
+					// Move the dirty count into phantom space
+					int dirtyCount = getDirtyCount(container);
+					if (dirtyCount != -1) {
+						synchronizerCache.setCachedDirtyCount(container, dirtyCount);
+					}
 				}
 			}
 		} finally {
@@ -625,8 +635,10 @@ public class EclipseSynchronizer {
 		try {
 			beginOperation(null);
 			if (cacheDirty) {
-				byte[][] newInfos = null;
-				if (!cachedResourceSyncInfos.isEmpty()) {
+				byte[][] newInfos;
+				if (cachedResourceSyncInfos.isEmpty()) {
+					newInfos = LowLevelSyncInfoCache.EMPTY_RESOURCE_SYNC_INFOS;
+				} else {
 					newInfos = new byte[cachedResourceSyncInfos.size()][];
 					int i = 0;
 					for (Iterator iter = cachedResourceSyncInfos.values().iterator(); iter.hasNext();) {
@@ -1109,6 +1121,7 @@ public class EclipseSynchronizer {
 	
 	protected void flushDirtyCache(IResource resource, int depth) throws CVSException {
 		if (resource.getType() == IResource.ROOT) return;
+		if (!resource.exists() && !resource.isPhantom()) return;
 		try {
 			final CVSException[] exception = new CVSException[] { null };
 			beginOperation(null);
@@ -1127,6 +1140,23 @@ public class EclipseSynchronizer {
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
+		} finally {
+			endOperation(null);
+		}
+	}
+	
+	/*
+	 * Flush all cached info for the file and it's ancestors
+	 */
+	protected void flushDirtyCacheWithAncestors(IResource resource) throws CVSException {
+		if (resource.getType() == IResource.ROOT) return;
+		try {
+			beginOperation(null);
+			try {
+				getLowLevelCacheFor(resource).flushDirtyCache(resource);
+			} finally {
+				flushDirtyCacheWithAncestors(resource.getParent());
+			}
 		} finally {
 			endOperation(null);
 		}

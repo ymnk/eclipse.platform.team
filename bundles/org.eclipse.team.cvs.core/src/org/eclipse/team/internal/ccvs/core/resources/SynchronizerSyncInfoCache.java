@@ -38,6 +38,11 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  */
 /*package*/ class SynchronizerSyncInfoCache extends LowLevelSyncInfoCache {
 
+	public SynchronizerSyncInfoCache() {
+		getWorkspaceSynchronizer().add(FOLDER_SYNC_KEY);
+		getWorkspaceSynchronizer().add(RESOURCE_SYNC_KEY);
+		getWorkspaceSynchronizer().add(DIRTY_COUNT);
+	}
 	/**
 	 * Return the Eclipse Workspace Synchronizer (from org.eclipse.core.resources)
 	 */

@@ -361,17 +361,19 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	public ICVSResource[] fetchChildren(IProgressMonitor monitor) throws CVSException {
 		return members(FILE_MEMBERS | FOLDER_MEMBERS);
 	}
+
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#delete()
 	 */
 	public void delete() throws CVSException {
 		if (!exists()) return;
 		if (isCVSFolder()) {
+			// 
 			EclipseSynchronizer.getInstance().prepareForDeletion((IContainer)getIResource());
 		}
 		super.delete();
 	}
-	
+		
 	/**
 	 * Method adjustParentCount.
 	 * @param file
@@ -435,7 +437,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 					//indicator = determineDirtyCount(indicator, shared);
 				}
 			}
-			return indicator == EclipseSynchronizer.IS_DIRTY_INDICATOR;
+			return EclipseSynchronizer.IS_DIRTY_INDICATOR.equals(indicator);
 		} else {
 			return isModified(count, shared);
 		}
@@ -489,16 +491,6 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	
 	private boolean isModified(int count, boolean shared) {
 		return count > 0 || !shared;
-	}
-	
-	/*
-	 * @see org.eclipse.team.internal.ccvs.core.resources.EclipseResource#prepareToBeDeleted()
-	 */
-	protected void prepareToBeDeleted() throws CVSException {
-		if (isCVSFolder()) {
-			EclipseSynchronizer.getInstance().prepareForDeletion((IContainer)getIResource());
-		}
-		super.prepareToBeDeleted();
 	}
 	
 	public void syncInfoChanged() throws CVSException {

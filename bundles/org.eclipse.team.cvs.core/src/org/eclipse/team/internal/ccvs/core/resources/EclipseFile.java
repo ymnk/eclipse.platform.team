@@ -473,7 +473,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 				((EclipseFolder)getParent()).adjustModifiedCount(false);
 			}
 			// make sure the file is no longer marked
-			flushModificationCache();
+			EclipseSynchronizer.getInstance().flushDirtyCache(getIResource(), IResource.DEPTH_ZERO);
 			return;
 		}
 		setModified(isModified(getSyncInfo()));

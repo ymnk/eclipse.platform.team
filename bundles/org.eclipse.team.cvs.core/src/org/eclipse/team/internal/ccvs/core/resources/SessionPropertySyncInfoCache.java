@@ -39,7 +39,6 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	
 	/*package*/ static final String[] NULL_IGNORES = new String[0];
 	private static final FolderSyncInfo NULL_FOLDER_SYNC_INFO = new FolderSyncInfo("", "", null, false); //$NON-NLS-1$ //$NON-NLS-2$
-	private static final byte[][] EMPTY_RESOURCE_SYNC_INFOS = new byte[0][0];
 	
 	private Set changedResourceSync = new HashSet();
 	private Set changedFolderSync = new HashSet();
@@ -76,6 +75,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * @return the folder sync info for the folder, or null if none.
 	 */
 	/*package*/ FolderSyncInfo cacheFolderSync(IContainer container) throws CVSException {
+		if (!container.exists()) return null;
 		try {
 			// don't try to load if the information is already cached
 			FolderSyncInfo info = (FolderSyncInfo)container.getSessionProperty(FOLDER_SYNC_KEY);
@@ -104,6 +104,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * @param container the container
 	 */
 	/*package*/ void cacheResourceSyncForChildren(IContainer container) throws CVSException {
+		if (!container.exists()) return;
 		try {
 			// don't try to load if the information is already cached
 			byte[][] infos = (byte[][])container.getSessionProperty(RESOURCE_SYNC_KEY);
@@ -219,6 +220,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * @param info the new folder sync info
 	 */
 	/*package*/ void setCachedFolderSync(IContainer container, FolderSyncInfo info) throws CVSException {
+		if (!container.exists()) return;
 		try {
 			if (info == null) info = NULL_FOLDER_SYNC_INFO;
 			container.setSessionProperty(FOLDER_SYNC_KEY, info);
@@ -238,6 +240,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * @see #cacheResourceSyncForChildren
 	 */
 	/*package*/ void setCachedResourceSyncForChildren(IContainer container, byte[][] infos) throws CVSException {
+		if (!container.exists()) return;
 		try {
 			if (infos == null)
 				infos = EMPTY_RESOURCE_SYNC_INFOS;
