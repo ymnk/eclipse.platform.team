@@ -161,6 +161,7 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 		IPreferenceStore store = getPreferenceStore();
 		store.setDefault(IPreferenceIds.SYNCVIEW_BACKGROUND_SYNC, true);
 		store.setDefault(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC, false);
+		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL, false);
 		store.setDefault(IPreferenceIds.SYNCVIEW_DELAY, 60 /* minutes */);
 		store.setDefault(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS, true);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT, SyncViewerTableSorter.COL_NAME);

@@ -13,7 +13,9 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
+import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.OverlayIcon;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
@@ -72,7 +74,14 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 			name = resource.getProjectRelativePath().toString();
 		} else {
 			name = workbenchLabelProvider.getText(resource);		
-		}			
+		}
+		if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
+			SyncInfo info = SyncSetContentProvider.getSyncInfo(element);
+			if (info != null && info.getKind() != SyncInfo.IN_SYNC) {
+				String syncKindString = SyncInfo.kindToString(info.getKind());
+				name = Policy.bind("TeamSubscriberSyncPage.labelWithSyncKind", name, syncKindString); //$NON-NLS-1$
+			}
+		}
 		return decorateText(name, resource);
 	}
 	

@@ -16,11 +16,13 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
@@ -59,6 +61,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	public CVSSynchronizeViewPage(TeamSubscriberParticipant page, ISynchronizeView view, SubscriberInput input) {
 		super(page, view, input);
 		getInput().getFilteredSyncSet().addSyncSetChangedListener(this);
+		CVSUIPlugin.addPropertyChangeListener(this);
 	}
 
 	/*
@@ -69,6 +72,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	public void dispose() {
 		super.dispose();
 		getInput().getFilteredSyncSet().removeSyncSetChangedListener(this);
+		CVSUIPlugin.removePropertyChangeListener(this);
 	}
 
 	/*
@@ -111,4 +115,14 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		};
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {		
+		super.propertyChange(event);
+		String prop = event.getProperty();
+		if(prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED)) {
+			getViewer().refresh(true /* update labels */);
+		}
+	}
 }

@@ -186,6 +186,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
 				
 		participant.addPropertyChangeListener(this);
+		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 		updateMode(participant.getMode());		
 	}
 	
@@ -326,14 +327,14 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		// revision
 		TableColumn col = new TableColumn(table, SWT.NONE);
 		col.setResizable(true);
-		col.setText("Resource");
+		col.setText(Policy.bind("TeamSubscriberParticipantPage.7")); //$NON-NLS-1$
 		col.addSelectionListener(headerListener);
 		layout.addColumnData(new ColumnWeightData(30, true));
 		
 		// tags
 		col = new TableColumn(table, SWT.NONE);
 		col.setResizable(true);
-		col.setText("In Folder");
+		col.setText(Policy.bind("TeamSubscriberParticipantPage.8")); //$NON-NLS-1$
 		col.addSelectionListener(headerListener);
 		layout.addColumnData(new ColumnWeightData(50, true));
 	}
@@ -558,6 +559,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 				workingSetGroup.setWorkingSet(null);
 			}
 			settingWorkingSet = false;
+		} else if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
+			getViewer().refresh(true /* update labels */);
 		}
 	}
 
