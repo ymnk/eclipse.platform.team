@@ -20,7 +20,8 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.uijobs.*;
+import org.eclipse.team.internal.ccvs.ui.jobs.BatchSimilarSchedulingRule;
+import org.eclipse.team.internal.ccvs.ui.jobs.IDeferredWorkbenchAdapter;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 

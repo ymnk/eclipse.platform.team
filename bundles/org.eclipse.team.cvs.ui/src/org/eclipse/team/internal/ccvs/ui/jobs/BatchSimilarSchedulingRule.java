@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.uijobs;
+package org.eclipse.team.internal.ccvs.ui.jobs;
 
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 

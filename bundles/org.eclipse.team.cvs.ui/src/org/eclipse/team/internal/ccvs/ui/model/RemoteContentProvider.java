@@ -14,7 +14,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
-import org.eclipse.team.internal.uijobs.*;
+import org.eclipse.team.internal.ccvs.ui.jobs.*;
 import org.eclipse.ui.IWorkingSet;
 
 /**

@@ -21,8 +21,8 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.uijobs.IDeferredWorkbenchAdapter;
-import org.eclipse.team.internal.uijobs.BatchSimilarSchedulingRule;
+import org.eclipse.team.internal.ccvs.ui.jobs.IDeferredWorkbenchAdapter;
+import org.eclipse.team.internal.ccvs.ui.jobs.BatchSimilarSchedulingRule;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class CVSTagElement extends CVSModelElement implements IAdaptable, IDeferredWorkbenchAdapter {
