@@ -68,7 +68,8 @@ public class SynchronizeViewDefaultPage extends Page {
 	 * @see org.eclipse.ui.part.MessagePage#setFocus()
 	 */
 	public void setFocus() {
-		composite.setFocus();
+		if(composite != null && ! composite.isDisposed())
+			composite.setFocus();
 	}
 	
 	/* (non-Javadoc)

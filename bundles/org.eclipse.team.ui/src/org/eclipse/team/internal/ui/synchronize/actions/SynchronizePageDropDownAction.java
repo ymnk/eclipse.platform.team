@@ -20,6 +20,7 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.wizards.GlobalSynchronizeWizard;
 import org.eclipse.team.ui.*;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.texteditor.IUpdate;
 
 public class SynchronizePageDropDownAction extends Action implements IMenuCreator, ISynchronizeParticipantListener, IUpdate {
@@ -34,6 +35,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		public void update() {
 			ISynchronizeParticipantReference[] refs = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 			updateTooltipText();
+			IActionBars bars = fView.getViewSite().getActionBars();
 		}
 		
 		protected ISynchronizeParticipantReference[] getParticipants() {
@@ -88,23 +90,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			fMenu= new Menu(parent);
 			final ISynchronizeParticipantReference[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 			addParticipantsToMenu(fMenu, participants);
-			if(participants.length > 0) {
-				addMenuSeparator();
-				addActionToMenu(fMenu, new Action("Clear Un-pinned Participants") {
-				public void run() {
-					for (int i = 0; i < participants.length; i++) {
-						ISynchronizeParticipantReference reference = participants[i];
-						try {
-							ISynchronizeParticipant participant = reference.getParticipant();
-							if(! participant.isPinned())
-								TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
-						} catch (TeamException e) {
-							continue;
-						}
-					}
-				}});
-				addMenuSeparator();
-			}
+			if(participants.length > 0) 	addMenuSeparator();
 			addActionToMenu(fMenu, synchronizeAction);
 			TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(this);	
 			return fMenu;
@@ -176,10 +162,15 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		
 		private void updateTooltipText() {
 			ISynchronizeParticipant current = fView.getParticipant();
+			String text = null;
 			if(current != null) {
-				setToolTipText("Synchronize " + current.getName());
+				text = "Synchronize " + current.getName();
+				setToolTipText(text);
+				setText(text);
 			} else {
-				setToolTipText("Synchronize");
+				text = "Synchronize";
+				setToolTipText(text);
+				setText(text);
 			}
 		}
 }

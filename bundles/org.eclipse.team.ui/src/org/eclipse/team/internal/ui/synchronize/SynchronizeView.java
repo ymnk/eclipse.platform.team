@@ -206,7 +206,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * @see org.eclipse.ui.part.PageBookView#createDefaultPage(org.eclipse.ui.part.PageBook)
 	 */
 	protected IPage createDefaultPage(PageBook book) {
-		Page page = new SynchronizeViewDefaultPage();
+		Page page = new MessagePage();
 		page.createControl(getPageBook());
 		initPage(page);
 		return page;
