@@ -46,14 +46,19 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
         }
 	}
 	
+	private ToggleCommitSetAction toggleCommitSetAction;
+	
 	private class CommitSetActionContribution extends SynchronizePageActionGroup {
-		public void initialize(ISynchronizePageConfiguration configuration) {
+
+        public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
 			
-			appendToGroup(
+			toggleCommitSetAction = new ToggleCommitSetAction();
+            appendToGroup(
 					ISynchronizePageConfiguration.P_TOOLBAR_MENU, 
 					CHANGE_SET_GROUP,
-					new ToggleCommitSetAction());
+					toggleCommitSetAction);
+            updateEnablement();
 		}
 	}
 	
@@ -65,7 +70,29 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
 		if (configuration.getParticipant().getChangeSetCapability().supportsActiveChangeSets()) {
 		    configuration.addLabelDecorator(new ChangeSetLabelDecorator(configuration));
 		}
+		configuration.addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getProperty().equals(ISynchronizePageConfiguration.P_MODE)) {
+                    updateEnablement();
+                }
+            }
+
+        });
 	}
+	
+    private void updateEnablement() {
+        if (toggleCommitSetAction != null) {
+            boolean enabled = false;
+            int mode = getConfiguration().getMode();
+            if (mode == ISynchronizePageConfiguration.INCOMING_MODE) {
+                enabled = getConfiguration().getParticipant().getChangeSetCapability().supportsCheckedInChangeSets();
+            } else if (mode == ISynchronizePageConfiguration.OUTGOING_MODE) {
+                enabled = getConfiguration().getParticipant().getChangeSetCapability().supportsActiveChangeSets();
+            }
+            toggleCommitSetAction.setEnabled(enabled);
+        }
+        
+    }
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelManager#dispose()
