@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -34,7 +37,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
@@ -55,6 +60,12 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  * A synchronizer is responsible for managing synchronization information for local
  * CVS resources.
  * 
+ * This class is thread safe but only allows one thread to modify the cache at a time. It
+ * doesn't support fine grain locking on a resource basis. Lock ordering between the workspace
+ * lock and the synchronizer lock is guaranteed to be deterministic. That is, the workspace
+ * lock is *always* acquired before the synchronizer lock. This protects against possible
+ * deadlock cases where the synchronizer lock is acquired before a workspace lock.
+ * 
  * Special processing has been added for linked folders and their childen so
  * that their CVS meta files are never read or written.
  * 
@@ -71,12 +82,52 @@ public class EclipseSynchronizer {
 	
 	// track resources that have changed in a given operation
 	private ILock lock = Platform.getJobManager().newLock();
+	private final Hashtable lockJobs = new Hashtable(5);
 	
 	private Set changedResources = new HashSet();
 	private Set changedFolders = new HashSet();
 	
 	private SessionPropertySyncInfoCache sessionPropertyCache = new SessionPropertySyncInfoCache();
 	private SynchronizerSyncInfoCache synchronizerCache = new SynchronizerSyncInfoCache();
+	private boolean DEBUG = true;
+	
+	class ResourceLockingJob extends Job {
+		// the operation depth within this thread
+		int depth;
+		private boolean running = false;
+		
+		ResourceLockingJob() {
+			super(""); //$NON-NLS-1$
+			setSystem(true);
+			setPriority(INTERACTIVE);
+			depth = 1;
+		}
+		int decrement() {
+			return --depth;
+		}
+		void increment() {
+			depth++;
+		}
+		/**
+		 * Block the calling thread until the job starts running
+		 */
+		synchronized void joinRun() {
+			while (!running) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+				}
+			}
+		}
+		public IStatus run(IProgressMonitor monitor) {
+			synchronized (this) {
+				running = true;
+				notifyAll();
+			}
+			return Job.ASYNC_FINISH;
+		}
+	}
+
 	
 	/*
 	 * Package private contructor to allow specialized subclass for handling folder deletions
@@ -123,7 +174,7 @@ public class EclipseSynchronizer {
 				Policy.bind("EclipseSynchronizer.ErrorSettingFolderSync", folder.getFullPath().toString())); //$NON-NLS-1$
 		}
 		try {
-			beginOperation(null);
+			beginOperation(folder, null);
 			// get the old info
 			FolderSyncInfo oldInfo = getFolderSync(folder);
 			// set folder sync and notify
@@ -148,7 +199,7 @@ public class EclipseSynchronizer {
 	public FolderSyncInfo getFolderSync(IContainer folder) throws CVSException {
 		if (folder.getType() == IResource.ROOT || !isValid(folder)) return null;
 		try {
-			beginOperation(null);
+			beginOperation(folder, null);
 			cacheFolderSync(folder);
 			return getSyncInfoCacheFor(folder).getCachedFolderSync(folder);
 		} finally {
@@ -166,7 +217,7 @@ public class EclipseSynchronizer {
 	public void deleteFolderSync(IContainer folder) throws CVSException {
 		if (folder.getType() == IResource.ROOT || !isValid(folder)) return;
 		try {
-			beginOperation(null);
+			beginOperation(folder, null);
 			// iterate over all children with sync info and prepare notifications
 			// this is done first since deleting the folder sync may remove a phantom
 			cacheResourceSyncForChildren(folder);
@@ -203,7 +254,7 @@ public class EclipseSynchronizer {
 				Policy.bind("EclipseSynchronizer.ErrorSettingResourceSync", resource.getFullPath().toString())); //$NON-NLS-1$
 		}
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			// cache resource sync for siblings, set for self, then notify
 			cacheResourceSyncForChildren(parent);
 			setCachedResourceSync(resource, info);
@@ -237,7 +288,7 @@ public class EclipseSynchronizer {
 		IContainer parent = resource.getParent();
 		if (parent == null || parent.getType() == IResource.ROOT || !isValid(parent)) return null;
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			// cache resource sync for siblings, then return for self
 			try {
 				cacheResourceSyncForChildren(parent);
@@ -272,7 +323,7 @@ public class EclipseSynchronizer {
 				Policy.bind("EclipseSynchronizer.ErrorSettingResourceSync", resource.getFullPath().toString())); //$NON-NLS-1$
 		}
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			// cache resource sync for siblings, set for self, then notify
 			cacheResourceSyncForChildren(parent);
 			setCachedSyncBytes(resource, syncBytes);
@@ -292,7 +343,7 @@ public class EclipseSynchronizer {
 		IContainer parent = resource.getParent();
 		if (parent == null || parent.getType() == IResource.ROOT || !isValid(parent)) return;
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			// cache resource sync for siblings, delete for self, then notify
 			cacheResourceSyncForChildren(parent);
 			if (getCachedSyncBytes(resource) != null) { // avoid redundant notifications
@@ -327,7 +378,7 @@ public class EclipseSynchronizer {
 			return false;
 		} 
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			FileNameMatcher matcher = cacheFolderIgnores(resource.getParent());
 			return matcher.match(resource.getName());
 		} finally {
@@ -347,7 +398,7 @@ public class EclipseSynchronizer {
 				Policy.bind("EclipseSynchronizer.ErrorSettingIgnorePattern", folder.getFullPath().toString())); //$NON-NLS-1$
 		}
 		try {
-			beginOperation(null);
+			beginOperation(folder, null);
 			String[] ignores = SyncFileWriter.readCVSIgnoreEntries(folder);
 			if (ignores != null) {
 				// verify that the pattern has not already been added
@@ -383,7 +434,7 @@ public class EclipseSynchronizer {
 	public IResource[] members(IContainer folder) throws CVSException {
 		if (! isValid(folder)) return new IResource[0];
 		try {				
-			beginOperation(null);
+			beginOperation(folder, null);
 			if (folder.getType() != IResource.ROOT) {
 				// ensure that the sync info is cached so any required phantoms are created
 				cacheResourceSyncForChildren(folder);
@@ -401,7 +452,28 @@ public class EclipseSynchronizer {
 	 * 
 	 * @param monitor the progress monitor, may be null
 	 */
-	public void beginOperation(IProgressMonitor monitor) throws CVSException {
+	public void beginOperation(IResource resource, IProgressMonitor monitor) throws CVSException {
+		
+		ResourceLockingJob running = (ResourceLockingJob) lockJobs.get(Thread.currentThread());
+		if (running == null) {
+			if(DEBUG) {
+				System.out.println("[" + Thread.currentThread() + "] CVS operation waiting to be executed locking " + resource.getFullPath().toString()); //$NON-NLS-1$ //$NON-NLS-2$
+			}		
+			//create an implicit job for this thread
+			running = new ResourceLockingJob();
+			lockJobs.put(Thread.currentThread(), running);
+			//run the implicit job if there is no real job running
+			running.setRule(ResourcesPlugin.getWorkspace().newSchedulingRule(resource));
+			running.schedule();			
+			//this will block until this thread can acquire the resource lock
+			running.joinRun();
+			if(DEBUG) {
+				System.out.println("[" + Thread.currentThread() + "] CVS operation started"); //$NON-NLS-1$ //$NON-NLS-2$
+			}			
+		} else {
+			running.increment();
+		}
+		
 		lock.acquire();
 
 		if (lock.getDepth() == 1) {
@@ -421,7 +493,7 @@ public class EclipseSynchronizer {
 	 * @exception CVSException with a status with code <code>COMMITTING_SYNC_INFO_FAILED</code>
 	 * if all the CVS sync information could not be written to disk.
 	 */
-	public void endOperation(IProgressMonitor monitor) throws CVSException {		
+	public void endOperation(IProgressMonitor monitor) throws CVSException {								
 		try {
 			IStatus status = SyncInfoCache.STATUS_OK;
 			if (lock.getDepth() == 1) {
@@ -432,6 +504,12 @@ public class EclipseSynchronizer {
 			}
 		} finally {
 			lock.release();
+			
+			ResourceLockingJob running = (ResourceLockingJob) lockJobs.get(Thread.currentThread());
+			if (running.decrement() == 0) {
+				running.done(Status.OK_STATUS);
+				lockJobs.remove(Thread.currentThread());
+			}		
 		}
 	}
 	
@@ -459,7 +537,7 @@ public class EclipseSynchronizer {
 		monitor = Policy.monitorFor(monitor);
 		monitor.beginTask(null, 10);
 		try {
-			beginOperation(Policy.subMonitorFor(monitor, 1));
+			beginOperation(root, Policy.subMonitorFor(monitor, 1));
 			
 			IStatus status = commitCache(Policy.subMonitorFor(monitor, 7));
 			
@@ -528,7 +606,7 @@ public class EclipseSynchronizer {
 	public void prepareForDeletion(IResource resource) throws CVSException {
 		if (!resource.exists()) return;
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			// Flush the dirty info for the resource and it's ancestors.
 			// Although we could be smarter, we need to do this because the
 			// deletion may fail.
@@ -573,7 +651,7 @@ public class EclipseSynchronizer {
 	protected void handleDeleted(IResource resource) throws CVSException {
 		if (resource.exists()) return;
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			adjustDirtyStateRecursively(resource, RECOMPUTE_INDICATOR);
 		} finally {
 			endOperation(null);
@@ -635,7 +713,7 @@ public class EclipseSynchronizer {
 	private void created(IFolder folder) throws CVSException {
 		try {
 			// set the dirty count using what was cached in the phantom it
-			beginOperation(null);
+			beginOperation(folder, null);
 			FolderSyncInfo folderInfo = synchronizerCache.getCachedFolderSync(folder);
 			byte[] syncBytes = synchronizerCache.getCachedSyncBytes(folder);
 			if (folderInfo != null && syncBytes != null) {
@@ -687,7 +765,7 @@ public class EclipseSynchronizer {
 	private void created(IFile file) throws CVSException {
 		try {
 			// set the dirty count using what was cached in the phantom it
-			beginOperation(null);
+			beginOperation(file, null);
 			byte[] syncBytes = synchronizerCache.getCachedSyncBytes(file);
 			if (syncBytes == null) return;
 			byte[] newBytes = getSyncBytes(file);
@@ -800,10 +878,6 @@ public class EclipseSynchronizer {
 	 */
 	private IStatus commitCache(IProgressMonitor monitor) {
 		if (changedFolders.isEmpty() && changedResources.isEmpty()) {
-			return SyncInfoCache.STATUS_OK;
-		}
-		if (!isWorkspaceModifiable()) {
-			// if the workspace is closed for modification, we'll wait until the next commit
 			return SyncInfoCache.STATUS_OK;
 		}
 		List errors = new ArrayList();
@@ -1245,7 +1319,7 @@ public class EclipseSynchronizer {
 		for (int i = 0; i < folders.length; i++) {
 			IContainer parent = folders[i];
 			try {
-				beginOperation(null);
+				beginOperation(parent, null);
 				cacheResourceSyncForChildren(parent);
 				cacheFolderSync(parent);
 				cacheFolderIgnores(parent);
@@ -1296,7 +1370,8 @@ public class EclipseSynchronizer {
 		monitor = Policy.monitorFor(monitor);
 		monitor.beginTask(null, 100);
 		try {
-			beginOperation(Policy.subMonitorFor(monitor, 5));
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			beginOperation(root, Policy.subMonitorFor(monitor, 5));
 			job.run(Policy.subMonitorFor(monitor, 60));
 		} finally {
 			endOperation(Policy.subMonitorFor(monitor, 35));
@@ -1317,7 +1392,7 @@ public class EclipseSynchronizer {
 	private void adjustDirtyStateRecursively(IResource resource, String indicator) throws CVSException {
 		if (resource.getType() == IResource.ROOT) return;
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			
 			if (indicator == getDirtyIndicator(resource)) {
 				return;
@@ -1348,7 +1423,7 @@ public class EclipseSynchronizer {
 
 	protected String getDirtyIndicator(IResource resource) throws CVSException {
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			return getSyncInfoCacheFor(resource).getDirtyIndicator(resource);
 		} finally {
 			endOperation(null);
@@ -1362,7 +1437,7 @@ public class EclipseSynchronizer {
 	 */
 	protected void setDirtyIndicator(IResource resource, boolean modified) throws CVSException {
 		try {
-			beginOperation(null);
+			beginOperation(resource, null);
 			String indicator = modified ? IS_DIRTY_INDICATOR : NOT_DIRTY_INDICATOR;
 			// set the dirty indicator and adjust the parent accordingly			
 			adjustDirtyStateRecursively(resource, indicator);
@@ -1449,25 +1524,5 @@ public class EclipseSynchronizer {
 		} else {
 			return ICVSFile.UNKNOWN;
 		}
-	}
-	
-	/**
-	 * If this method return false, the caller should not perform any workspace modification
-	 * operations. The danger of performing such an operation is deadlock.
-	 * 
-	 * @return boolean
-	 */
-	protected boolean isWorkspaceModifiable() {
-		return true; //!lock.isReadOnly();
-	}
-	
-	/**
-	 * Register the given thread as a thread that should be resitricted to having read-only access.
-	 * If a thread is not registered, it is expected that they obtain the workspace lock before
-	 * accessing any CVS sync information.
-	 * @param thread
-	 */
-	public void addReadOnlyThread(Thread thread) {
-		//lock.addReadOnlyThread(thread);
 	}
 }

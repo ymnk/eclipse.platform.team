@@ -157,11 +157,6 @@ public class CVSLightweightDecorator
 	 */
 	public void decorate(Object element, IDecoration decoration) {
 		
-		// Make sure that the decorator thread only has read access to the CVS sync info.
-		// This will register the thread on each decoration but it's the only way we
-		// know of to ensure the proper thread is registered.
-		EclipseSynchronizer.getInstance().addReadOnlyThread(Thread.currentThread());
-		
 		IResource resource = getResource(element);
 		if (resource == null || resource.getType() == IResource.ROOT)
 			return;
