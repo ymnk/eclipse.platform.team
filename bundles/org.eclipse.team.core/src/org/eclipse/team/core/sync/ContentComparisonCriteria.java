@@ -46,7 +46,7 @@ public class ContentComparisonCriteria extends ComparisonCriteria {
 	 * If timestampDiff is true then the timestamps don't differ and there's no point checking the
 	 * contents.
 	 */
-	public boolean compare(Object e1, Object e2, IProgressMonitor monitor) {
+	public boolean compare(Object e1, Object e2, IProgressMonitor monitor) throws TeamException {
 		try {
 			monitor.beginTask(null, 100);
 			if(checkPreConditions(e1, e2, Policy.subMonitorFor(monitor, 10))) {
@@ -118,7 +118,7 @@ public class ContentComparisonCriteria extends ComparisonCriteria {
 		return Character.isWhitespace((char)c);
 	}
 
-	private InputStream getContents(Object resource, IProgressMonitor monitor) {
+	private InputStream getContents(Object resource, IProgressMonitor monitor) throws TeamException {
 			try {
 				if (resource instanceof IStorage) {
 					return new BufferedInputStream(((IStorage) resource).getContents());
@@ -130,9 +130,7 @@ public class ContentComparisonCriteria extends ComparisonCriteria {
 				}
 				return null;
 			} catch (CoreException e) {
-				return null;
-			} catch (TeamException e) {
-				return null;
+				throw new TeamException(e);
 			}
 		}
 }

@@ -11,6 +11,7 @@
 package org.eclipse.team.core.sync;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.TeamException;
 
 /**
  * Utility methods for calculating sync state.
@@ -39,7 +40,7 @@ abstract public class ComparisonCriteria {
 	 */
 	abstract public String getId();
 
-	abstract public boolean compare(Object e1, Object e2, IProgressMonitor monitor);
+	abstract public boolean compare(Object e1, Object e2, IProgressMonitor monitor) throws TeamException;
 	
 	/**
 	 * @return
@@ -48,7 +49,7 @@ abstract public class ComparisonCriteria {
 		return preConditions;
 	}
 
-	protected boolean checkPreConditions(Object e1, Object e2, IProgressMonitor monitor) {
+	protected boolean checkPreConditions(Object e1, Object e2, IProgressMonitor monitor) throws TeamException {
 		for (int i = 0; i < preConditions.length; i++) {
 			ComparisonCriteria cc = preConditions[i];
 			if(cc.compare(e1, e2, monitor)) {

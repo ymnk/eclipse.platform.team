@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.core;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.internal.core.TeamPlugin;
@@ -87,5 +88,16 @@ public class TeamException extends Exception {
 	public TeamException(String message) {
 		super(message);
 		this.status = new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null);
+	}
+	
+	public TeamException(CoreException e) {
+		super(e.getMessage());
+		IStatus status = e.getStatus();
+		// If the exception is not a multi-status, wrap the exception to keep the original stack trace.
+		// If the exception is a multi-status, the interesting stack traces should be in the childen already
+		if ( ! status.isMultiStatus()) {
+			status = new Status(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), e);
+		}
+		this.status = status;
 	}
 }

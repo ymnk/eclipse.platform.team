@@ -13,8 +13,6 @@ package org.eclipse.team.core.sync;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.team.core.sync.ISyncTreeSubscriber;
-
 /**
  * TeamProvider
  */
@@ -22,16 +20,16 @@ public class TeamProvider {
 	
 	static private Map subscribers = new HashMap();
 
-	static public ISyncTreeSubscriber getSubscriber(String id) {
-		return (ISyncTreeSubscriber)subscribers.get(id); 
+	static public SyncTreeSubscriber getSubscriber(String id) {
+		return (SyncTreeSubscriber)subscribers.get(id); 
 	}
 	
-	static public ISyncTreeSubscriber[] getSubscribers() {
-		return (ISyncTreeSubscriber[])subscribers.values().toArray(
-						new ISyncTreeSubscriber[subscribers.size()]);
+	static public SyncTreeSubscriber[] getSubscribers() {
+		return (SyncTreeSubscriber[])subscribers.values().toArray(
+						new SyncTreeSubscriber[subscribers.size()]);
 	}
 	
-	static public void registerSubscriber(ISyncTreeSubscriber subscriber) {
+	static public void registerSubscriber(SyncTreeSubscriber subscriber) {
 		subscribers.put(subscriber.getId(), subscriber);
 	}
 }

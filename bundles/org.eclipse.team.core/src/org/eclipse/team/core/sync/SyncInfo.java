@@ -8,6 +8,7 @@ package org.eclipse.team.core.sync;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
 
@@ -126,21 +127,21 @@ public class SyncInfo implements IAdaptable {
 	 private IResource local;
 	 private IRemoteResource base;
 	 private IRemoteResource remote;
-	 private ISyncTreeSubscriber subscriber;
+	 private SyncTreeSubscriber subscriber;
 	 
 	 private int syncKind;
 	
 	/**
 	 * Construct a sync info object.
 	 */
-	private SyncInfo(int syncKind, IResource local, IRemoteResource base, IRemoteResource remote, ISyncTreeSubscriber subscriber) {
+	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, SyncTreeSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
 		this.subscriber = subscriber;
-		this.syncKind = syncKind;
+		this.syncKind = calculateKind(monitor);
 	}
-		
+	
 	/**
 	 * Returns the state of the local resource. Note that the
 	 * resource may or may not exist.
@@ -185,7 +186,7 @@ public class SyncInfo implements IAdaptable {
 	 * Returns the subscriber that created and maintains this sync info
 	 * object. 
 	 */
-	public ISyncTreeSubscriber getSubscriber() {
+	public SyncTreeSubscriber getSubscriber() {
 		return subscriber;
 	}
 	
@@ -197,22 +198,44 @@ public class SyncInfo implements IAdaptable {
 		return syncKind;
 	}
 	
-	/**
-	 * Computes the nature of synchronization of the local and remote resources based on the 
-	 * default comparison criteria in the subscriber.
-	 * <p>
-	 * This operation is long running.
-	 * </p>
-	 */
-	static public SyncInfo computeSyncKind(IResource local, IRemoteResource base, IRemoteResource remote, ISyncTreeSubscriber subscriber, IProgressMonitor progress) {
+	static public boolean isInSync(int kind) {
+		return kind == IN_SYNC;
+	}
+	
+	static public int getDirection(int kind) {
+		return kind & DIRECTION_MASK;
+	}
 		
+	static public int getChange(int kind) {
+		return kind & CHANGE_MASK;
+	}
+	
+	public boolean equals(Object other) {
+		if(other == this) return true;
+		if(other instanceof SyncInfo) {
+			return getLocal().equals(((SyncInfo)other).getLocal());
+		}
+		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
+		if (adapter == IResource.class) {
+			return getLocal();
+		}
+		return null;
+	}
+	
+	protected int calculateKind(IProgressMonitor progress) throws TeamException {
 		progress = Policy.monitorFor(progress);
 		int description = IN_SYNC;
-	
+		
 		ComparisonCriteria criteria = subscriber.getCurrentComparisonCriteria();
 		
 		boolean localExists = local.exists();
-	
+		
 		if (subscriber.isThreeWay()) {
 			if (base == null) {
 				if (remote == null) {
@@ -244,6 +267,7 @@ public class SyncInfo implements IAdaptable {
 						if (criteria.compare(base, remote, progress))
 							description = OUTGOING | DELETION;
 						else
+						
 							description = CONFLICTING | CHANGE;
 					}
 				} else {
@@ -286,36 +310,6 @@ public class SyncInfo implements IAdaptable {
 				}
 			}
 		}
-		return new SyncInfo(description, local, base, remote, subscriber);
-	}
-
-	static public boolean isInSync(int kind) {
-		return kind == IN_SYNC;
-	}
-	
-	static public int getDirection(int kind) {
-		return kind & DIRECTION_MASK;
-	}
-		
-	static public int getChange(int kind) {
-		return kind & CHANGE_MASK;
-	}
-	
-	public boolean equals(Object other) {
-		if(other == this) return true;
-		if(other instanceof SyncInfo) {
-			return getLocal().equals(((SyncInfo)other).getLocal());
-		}
-		return false;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
-	public Object getAdapter(Class adapter) {
-		if (adapter == IResource.class) {
-			return getLocal();
-		}
-		return null;
+		return description;
 	}
 }

@@ -39,6 +39,6 @@ public interface ITeamResourceChangeListener extends EventListener{
 	 * a hint to listeners that they should query the provider to determine the
 	 * resources new sync info.]
 	 */
-	public void teamResourceChanged(ITeamDelta[] deltas);
+	public void teamResourceChanged(TeamDelta[] deltas);
 }
 

@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.core.sync;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
@@ -22,12 +26,14 @@ import org.eclipse.team.core.TeamException;
  * [Note: How can we allow the refresh() operation to optimize the sync calculation based
  * on the currently configured compare criteria?]
   */
-public interface ISyncTreeSubscriber {
+abstract public class SyncTreeSubscriber {
+	
+	private List listeners = new ArrayList(1);
 	
 	/**
 	 * Return the unique id that identified this subscriber.
 	 */
-	public String getId();
+	abstract public String getId();
 	
 	/**
 	 * Return the name of this subscription, in a format that is suitable for 
@@ -35,7 +41,7 @@ public interface ISyncTreeSubscriber {
 	 * 
 	 * @return String representing the name of this subscription. 
 	 */
-	public String getName();
+	abstract public String getName();
 	
 	/**
 	 * Return the description of this subscription, in a format that is suitable for 
@@ -44,7 +50,7 @@ public interface ISyncTreeSubscriber {
 	 * 
 	 * @return String representing the description of this subscription. 
 	 */
-	public String getDescription();
+	abstract public String getDescription();
 	
 	/**
 	 * Returns <code>true</code> if this resource is supervised by this subscriber. 
@@ -54,7 +60,7 @@ public interface ISyncTreeSubscriber {
 	 * @return <code>true</code> if this resource is supervised, and 
 	 *   <code>false</code> otherwise
 	 */
-	public boolean isSupervised(IResource resource);
+	abstract public boolean isSupervised(IResource resource);
 	
 	/**
 	 * Returns all non-transient member resources of the given resource.
@@ -76,7 +82,7 @@ public interface ISyncTreeSubscriber {
 	 * @return a list of member resources
 	 * @exception CoreException if this request fails. Reasons include:
 	 */
-	public IResource[] members(IResource resource) throws TeamException;
+	abstract  public IResource[] members(IResource resource) throws TeamException;
 	
 	/**
 	 * Returns the list of  root resources this subscriber considers for synchronization.
@@ -86,7 +92,7 @@ public interface ISyncTreeSubscriber {
 	 * @return a list of resources
 	 * @throws TeamException
 	 */
-	public IResource[] roots() throws TeamException;
+	abstract public IResource[] roots() throws TeamException;
 	
 	/**
 	 * Returns a handle to the remote resource corresponding to the given
@@ -103,7 +109,7 @@ public interface ISyncTreeSubscriber {
 	 * <li>???</li>
 	 * </ul>
 	 */	
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException;
+	abstract public IRemoteResource getRemoteResource(IResource resource) throws TeamException;
 	
 	/**
 	 * Returns synchronization info for the given resource, or
@@ -122,17 +128,7 @@ public interface ISyncTreeSubscriber {
 	 * @param resource the resource of interest
 	 * @return sync info
 	 */
-	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor); 
-	
-	/**
-	 * Return <code>true
-	 * 
-	 * @param resources
-	 * @param depth
-	 * @param monitor
-	 * @return
-	 * @throws TeamException
-	 */
+	abstract public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException; 
 	
 	/** 
 	 * Refreshes the resource hierarchy from the given resources and their 
@@ -185,24 +181,24 @@ public interface ISyncTreeSubscriber {
 	 * <li> The server could not be contacted.</li>
 	 * </ul>
 	 */
-	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException;
+	abstract public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException;
 	
 	/**
 	 * Returns the list of available comparison criteria supported by this subscriber.
 	 */
-	public ComparisonCriteria[] getComparisonCriterias();
+	abstract public ComparisonCriteria[] getComparisonCriterias();
 	
 	/**
 	 * Returns the comparison criteria that will be used by the sync info created by
 	 * this subscriber.
 	 */
-	public ComparisonCriteria getCurrentComparisonCriteria();
+	abstract public ComparisonCriteria getCurrentComparisonCriteria();
 	
 	/**
 	 * Set the current comparison criteria to the one defined by the given id. An exception is
 	 * thrown if the id is not suported by this subscriber.
 	 */
-	public void setCurrentComparisonCriteria(String id) throws TeamException;
+	abstract public void setCurrentComparisonCriteria(String id) throws TeamException;
 
 	/**
 	 * Answers <code>true</code> if the base tree is maintained by this subscriber. If the base
@@ -210,19 +206,44 @@ public interface ISyncTreeSubscriber {
 	 * comparisons. Instead comparisons are made between the local and remote only without
 	 * consideration for the base.
 	 */
-	public boolean isThreeWay();
+	abstract public boolean isThreeWay();
 	
 	/**
 	 * Returns if this subscription can be cancelled. This allows short-lived subscriptions to
 	 * be terminated at the users request. For example, this could be used to finish a merge
 	 * subscription once all changes have been merged. 
 	 */
-	public boolean isCancellable();
+	abstract public boolean isCancellable();
 
 	/**
 	 * Cancels this subscription.
 	 * 
 	 * [Note: an event should be dispatched to notify that a subscriber is cancelled]  
 	 */	
-	public void cancel();
+	abstract public void cancel();
+	
+	/* (non-Javadoc)
+	 * Method declared on IBaseLabelProvider.
+	 */
+	public void addListener(ITeamResourceChangeListener listener) {
+		listeners.add(listener);
+	}
+
+	/* (non-Javadoc)
+	 * Method declared on IBaseLabelProvider.
+	 */
+	public void removeListener(ITeamResourceChangeListener listener) {
+		listeners.remove(listener);
+	}
+	
+	/*
+	 * Fires a team resource change event to all registered listeners
+	 * Only listeners registered at the time this method is called are notified.
+	 */
+	protected void fireTeamResourceChange(final TeamDelta[] deltas) {
+		for (Iterator it = listeners.iterator(); it.hasNext();) {
+			final ITeamResourceChangeListener l = (ITeamResourceChangeListener) it.next();
+			l.teamResourceChanged(deltas);	
+		}
+	}	
 }

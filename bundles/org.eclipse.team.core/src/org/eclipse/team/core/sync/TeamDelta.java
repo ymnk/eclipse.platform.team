@@ -11,7 +11,6 @@
 package org.eclipse.team.core.sync;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.sync.ISyncTreeSubscriber;
 
 /**
  * A team delta represents changes in the team state of a resource.
@@ -19,7 +18,7 @@ import org.eclipse.team.core.sync.ISyncTreeSubscriber;
  * @see IResource
  * @see ITeamProvider
  */
-public interface ITeamDelta {
+public class TeamDelta {
 	
 	/*====================================================================
 	 * Constants defining the kinds of team changes to resources:
@@ -60,12 +59,25 @@ public interface ITeamDelta {
 	 */	
 	public static final int SUBSCRIBER_DELETED = 0x10;
 
+	private SyncTreeSubscriber subscriber; 
+	private int flags;
+	private IResource resource; 
+	
+	public TeamDelta(SyncTreeSubscriber subscriber, int flags, IResource resource) {
+		this.subscriber = subscriber;
+		this.flags = flags;
+		this.resource = resource;
+	}
 
-	public int getFlags();
-	
-	public IResource getResource();
-	
-	public ISyncTreeSubscriber getSubscriber();
-	
-	public TeamProvider getTeamProvider();
+	public int getFlags() {
+		return flags;
+	}
+
+	public IResource getResource() {
+		return resource;
+	}
+
+	public SyncTreeSubscriber getSubscriber() {
+		return subscriber;
+	}
 }

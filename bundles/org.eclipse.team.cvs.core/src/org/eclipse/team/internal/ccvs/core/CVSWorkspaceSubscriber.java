@@ -33,8 +33,9 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ComparisonCriteria;
 import org.eclipse.team.core.sync.ContentComparisonCriteria;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.core.sync.ISyncTreeSubscriber;
 import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.sync.SyncTreeSubscriber;
+import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 import org.eclipse.team.internal.core.Assert;
@@ -42,7 +43,7 @@ import org.eclipse.team.internal.core.Assert;
 /**
  * CVSWorkspaceSubscriber
  */
-public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
+public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResourceStateChangeListener {
 
 	// describes this subscriber
 	private String id;
@@ -74,7 +75,10 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 		comparisonCriterias.put(contentsComparatorIgnoreWhitespace.getId(), contentsComparatorIgnoreWhitespace);
 		
 		// default
-		defaultCriteria = revisionNumberComparator.getId(); 
+		defaultCriteria = revisionNumberComparator.getId();
+		
+		// TODO: temporary proxy for CVS events
+		CVSProviderPlugin.addResourceStateChangeListener(this); 
 	}
 	
 	/* (non-Javadoc)
@@ -150,6 +154,9 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 			if(remoteBytes != null) {
 				return RemoteResource.fromBytes(resource, remoteBytes);
 			} else {
+				if(resource.getType() != IResource.FILE && !resource.exists()) {
+					return null;
+				}
 				// return the base handle taken from the Entries file
 				 return CVSWorkspaceRoot.getBaseFor(resource);				
 			}
@@ -161,12 +168,12 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
 	 */
-	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) {		
-		try {
-			return SyncInfo.computeSyncKind(resource, CVSWorkspaceRoot.getBaseFor(resource), getRemoteResource(resource), this, monitor);
-		}  catch (TeamException e) {
-			// log this error?
-			return null;
+	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {	
+		IRemoteResource remoteResource = getRemoteResource(resource);
+		if(resource.getType() == IResource.FILE) {
+			return new CVSSyncInfo(resource, CVSWorkspaceRoot.getBaseFor(resource), remoteResource, this, monitor);
+		} else {
+			return new CVSSyncInfo(resource, remoteResource, remoteResource, this, monitor);
 		}
 	}
 
@@ -214,6 +221,9 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 			if(remoteChild != null) {
 				byte[] remoteBytes = ((RemoteResource)remoteChild).getSyncBytes();
 				try {
+					
+					// TODO: when does sync information get updated? For example, on commit. And
+					// when does it get cleared.
 					getSynchronizer().setSyncInfo(getRemoteSyncName(), localChild, remoteBytes);
 				} catch (CoreException e) {
 					CVSException.wrapException(e);
@@ -284,9 +294,11 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 			// should instead me a method to check for the existance of a set of sync types on
 			// a resource.
 			if(! r.exists()) {
-				if(getSynchronizer().getSyncInfo(getRemoteSyncName(), r) == null) {
-					continue;
-				}
+					if(CVSWorkspaceRoot.getCVSResourceFor(r).getSyncInfo() == null) { 
+						if(getSynchronizer().getSyncInfo(getRemoteSyncName(), r) == null) {
+							continue;
+						}
+					}
 			}
 			
 			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(r);
@@ -391,5 +403,53 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 		} else {
 			return ((IContainer) parent).getFile(new Path(childName));
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceSyncInfoChanged(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceSyncInfoChanged(IResource[] changedResources) {
+		
+		// TODO: hack for clearing the remote state when anything to the resource
+		// sync is changed. Should be able to set the *right* remote/base based on
+		// the sync being set.
+		for (int i = 0; i < changedResources.length; i++) {
+			IResource resource = changedResources[i];
+			try {
+				getSynchronizer().flushSyncInfo(getRemoteSyncName(), resource, IResource.DEPTH_ZERO);
+			} catch (CoreException e) {
+				CVSProviderPlugin.log(CVSException.wrapException(e));
+			}
+		}		
+		
+		TeamDelta[] deltas = new TeamDelta[changedResources.length];
+		for (int i = 0; i < changedResources.length; i++) {
+			IResource resource = changedResources[i];
+			deltas[i] = new TeamDelta(this, TeamDelta.SYNC_CHANGED, resource);
+		}
+		fireTeamResourceChange(deltas); 
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModified(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceModified(IResource[] changedResources) {
+		resourceSyncInfoChanged(changedResources);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectConfigured(org.eclipse.core.resources.IProject)
+	 */
+	public void projectConfigured(IProject project) {
+		TeamDelta delta = new TeamDelta(this, TeamDelta.PROVIDER_CONFIGURED, project);
+		fireTeamResourceChange(new TeamDelta[] {delta});
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectDeconfigured(org.eclipse.core.resources.IProject)
+	 */
+	public void projectDeconfigured(IProject project) {
+		TeamDelta delta = new TeamDelta(this, TeamDelta.PROVIDER_DECONFIGURED, project);
+		fireTeamResourceChange(new TeamDelta[] {delta});
 	}
 }
