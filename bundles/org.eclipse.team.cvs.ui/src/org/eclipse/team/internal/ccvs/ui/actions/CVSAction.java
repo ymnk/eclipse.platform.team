@@ -18,6 +18,9 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -30,8 +33,8 @@ import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
-import org.eclipse.ui.IEditorActionDelegate;
-import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.*;
+import org.eclipse.ui.actions.RetargetAction;
 import org.eclipse.ui.ide.IDE;
 
 /**
@@ -42,6 +45,41 @@ import org.eclipse.ui.ide.IDE;
 abstract public class CVSAction extends TeamAction implements IEditorActionDelegate {
 	
 	private List accumulatedStatus = new ArrayList();
+	private RetargetAction retargetAction;
+	private IAction action;
+	
+	public CVSAction() {
+		super();
+		retargetAction = new RetargetAction(getId(), "");
+		retargetAction
+        .addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getProperty().equals(IAction.ENABLED)) {
+                    Object val = event.getNewValue();
+                    if (val instanceof Boolean && action != null) {
+                        action.setEnabled(((Boolean) val).booleanValue());
+                    }
+                } else if (event.getProperty().equals(
+                        IAction.CHECKED)) {
+                    Object val = event.getNewValue();
+                    if (val instanceof Boolean && action != null) {
+                        action.setChecked(((Boolean) val).booleanValue());
+                    }
+                } else if (event.getProperty().equals(IAction.TEXT)) {
+                    Object val = event.getNewValue();
+                    if (val instanceof String && action != null) {
+                        action.setText((String) val);
+                    }
+                } else if (event.getProperty().equals(
+                        IAction.TOOL_TIP_TEXT)) {
+                    Object val = event.getNewValue();
+                    if (val instanceof String && action != null) {
+                        action.setToolTipText((String) val);
+                    }
+                }
+            }
+        });
+	}
 	
 	/**
 	 * Common run method for all CVS actions.
@@ -49,7 +87,13 @@ abstract public class CVSAction extends TeamAction implements IEditorActionDeleg
 	final public void run(IAction action) {
 		try {
 			if (!beginExecution(action)) return;
-			execute(action);
+			
+			// If the action has been replaced by another handler, then
+			// call that one instead.
+			if(retargetAction.getActionHandler() != null)
+				retargetAction.run();
+			else
+				execute(action);
 			endExecution();
 		} catch (InvocationTargetException e) {
 			// Handle the exception and any accumulated errors
@@ -61,6 +105,44 @@ abstract public class CVSAction extends TeamAction implements IEditorActionDeleg
 			// Handle the exception and any accumulated errors
 			handle(e);
 		}
+	}
+	
+	/**
+	 * Return the command and retarget action id for this action. This is used to
+	 *match retargetable actions and allow keybindings.
+	 *
+	 * @return the id for this action
+	 * @since 3.1
+	 */
+	public String getId() {
+		return ""; //$NON-NLS-1$
+	}
+	
+	public void init(IWorkbenchWindow window) {
+		super.init(window);
+		 window.getPartService().addPartListener(retargetAction);
+         IWorkbenchPart activePart = window.getPartService().getActivePart();
+         if (activePart != null)
+         	retargetAction.partActivated(activePart);
+	}
+	
+	protected boolean isEnabled() throws TeamException {
+		if(retargetAction.getActionHandler() != null)
+			return retargetAction.isEnabled();
+		// don't know so let subclasses decide
+		return false;
+	}
+	
+	public void dispose() {
+		super.dispose();
+        getWindow().getPartService().removePartListener(retargetAction);
+        retargetAction.dispose();
+        retargetAction = null;
+	}
+	
+	public void selectionChanged(IAction action, ISelection selection) {
+		super.selectionChanged(action, selection);
+		this.action = action;
 	}
 
 	/**

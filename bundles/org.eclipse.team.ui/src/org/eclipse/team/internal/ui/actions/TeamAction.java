@@ -350,7 +350,12 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	}
 	
 	public void init(IWorkbenchWindow window) {
+		this.window = window;
 		window.getSelectionService().addPostSelectionListener(selectionListener);
+	}
+	
+	public IWorkbenchWindow getWindow() {
+		return window;
 	}
 	
 	public void dispose() {

@@ -332,26 +332,29 @@
                id="org.eclipse.team.ccvs.ui.GenerateDiff">
          </action>
          <action
-               label="%UpdateAction.label"
                helpContextId="org.eclipse.team.cvs.ui.team_update_action_context"
-               tooltip="%UpdateAction.tooltip"
+               label="%UpdateAction.label"
+               definitionId="org.eclipse.team.cvs.ui.update"
                class="org.eclipse.team.internal.ccvs.ui.actions.UpdateSilentAction"
+               tooltip="%UpdateAction.tooltip"
                menubarPath="team.main/group1"
                id="org.eclipse.team.ccvs.ui.update">
          </action>
          <action
-               label="%CommitAction.label"
                helpContextId="org.eclipse.team.cvs.ui.team_commit_action_context"
-               tooltip="%CommitAction.tooltip"
+               label="%CommitAction.label"
+               definitionId="org.eclipse.team.cvs.ui.commit"
                class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
+               tooltip="%CommitAction.tooltip"
                menubarPath="team.main/group1"
                id="org.eclipse.team.ccvs.ui.commit">
          </action>
          <action
-               label="%Synchronize.label"
                helpContextId="org.eclipse.team.cvs.ui.team_synchronize_action_context"
-               tooltip="%Synchronize.tooltip"
+               label="%Synchronize.label"
+               definitionId="org.eclipse.team.ui.synchronizeLast"
                class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
+               tooltip="%Synchronize.tooltip"
                menubarPath="team.main/group1"
                id="org.eclipse.team.ccvs.ui.sync">
          </action>
@@ -1026,8 +1029,8 @@
          </action>
          <action
                helpContextId="org.eclipse.team.cvs.ui.team_commit_action_context"
-               allowLabelUpdate="true"
-               retarget="true"
+               allowLabelUpdate="false"
+               retarget="false"
                label="%CommitAction.label"
                class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
                definitionId="org.eclipse.team.cvs.ui.commit"
@@ -1038,11 +1041,11 @@
          <action
                helpContextId="org.eclipse.team.cvs.ui.team_synchronize_action_context"
                label="%Synchronize.label"
-               tooltip="%Synchronize.tooltip"
+               definitionId="org.eclipse.team.sync.views.SynchronizeView"
                class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
-               definitionId="org.eclipse.team.cvs.ui.sync"
+               tooltip="%Synchronize.tooltip"
                menubarPath="cvs.main/group1"
-               id="org.eclipse.team.cvs.ui.sync">
+               id="org.eclipse.team.ui.synchronizeLast">
          </action>
       </actionSet>
    </extension>
@@ -1115,15 +1118,10 @@
             name="%CommitAction.name"
             id="org.eclipse.team.cvs.ui.commit"/>
       <command
-            category="org.eclipse.team.cvs.ui.actionSet"
-            description="%Synchronize.tooltip"
-            name="%Synchronize.name"
-            id="org.eclipse.team.cvs.ui.sync"/>
-      <command
             description="%UpdateAction.tooltip"
             category="org.eclipse.team.cvs.ui.actionSet"
             name="%UpdateAction.name"
-            id="org.eclipse.team.cvs.ui.command3"/>
+            id="org.eclipse.team.cvs.ui.update"/>
       <command
             description="%GenerateDiff.tooltip"
             category="org.eclipse.team.cvs.ui.actionSet"

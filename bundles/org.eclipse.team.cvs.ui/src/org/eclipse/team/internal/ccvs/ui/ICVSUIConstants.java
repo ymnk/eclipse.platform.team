@@ -166,5 +166,63 @@ public interface ICVSUIConstants {
 	public final int OPTION_AUTOMATIC = 3;	
 	
 	public final String OPTION_NO_PERSPECTIVE= "none"; //$NON-NLS-1$
+	
+	
+	// Command Ids
+	public final String CMD_COMMIT = "org.eclipse.team.cvs.ui.commit"; //$NON-NLS-1$
+	public final String CMD_SYNCHRONIZE = "org.eclipse.team.ui.synchronizeLast"; //$NON-NLS-1$
+	public final String CMD_UPDATE = "org.eclipse.team.cvs.ui.update"; //$NON-NLS-1$
+   /*
+	<command
+         description="%GenerateDiff.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%GenerateDiff.name"
+         id="org.eclipse.team.cvs.ui.GenerateDiff"/>
+   <command
+         description="%TagAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%TagAction.name"
+         id="org.eclipse.team.cvs.ui.tag"/>
+   <command
+         description="%BranchAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%BranchAction.name"
+         id="org.eclipse.team.cvs.ui.branch"/>
+   <command
+         description="%MergeAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%MergeAction.name"
+         id="org.eclipse.team.cvs.ui.merge"/>
+   <command
+         description="%UpdateActionSwitch.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%UpdateActionSwitch.name"
+         id="org.eclipse.team.cvs.ui.updateSwitch"/>
+   <command
+         description="%SetKeywordSubstitutionAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%SetKeywordSubstitutionAction.name"
+         id="org.eclipse.team.cvs.ui.setKeywordSubstitution"/>
+   <command
+         description="%ShowAnnotationAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%ShowAnnotationAction.name"
+         id="org.eclipse.team.cvs.ui.showAnnotation"/>
+   <command
+         description="%ShowHistoryAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%ShowHistoryAction.name"
+         id="org.eclipse.team.cvs.ui.showHistory"/>
+   <command
+         description="%AddAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%AddAction.name"
+         id="org.eclipse.team.cvs.ui.add"/>
+   <command
+         description="%IgnoreAction.tooltip"
+         category="org.eclipse.team.cvs.ui.actionSet"
+         name="%IgnoreAction.name"
+         id="org.eclipse.team.cvs.ui.ignore"/>
+         */
 }
 
