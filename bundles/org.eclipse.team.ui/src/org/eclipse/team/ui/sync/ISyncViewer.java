@@ -12,6 +12,7 @@ package org.eclipse.team.ui.sync;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.ui.IWorkingSet;
 
 public interface ISyncViewer {
 
@@ -57,4 +58,9 @@ public interface ISyncViewer {
 	 * Returns the current view configuration.
 	 */
 	public int getCurrentViewType();
+
+	/**
+	 * Sets the working set used by the view to the given working set
+	 */
+	public void setWorkingSet(IWorkingSet workingSet);
 }

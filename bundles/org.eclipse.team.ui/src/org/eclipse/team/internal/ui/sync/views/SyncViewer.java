@@ -459,7 +459,8 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
 					ActionContext context = new ActionContext(null);
-					context.setInput(input);					
+					context.setInput(input);	
+					input.setWorkingSet(getWorkingSet());				
 					input.prepareInput(monitor);
 					// important to set the context after the input has been initialized. There
 					// are some actions that depend on the sync set to be initialized.
@@ -485,7 +486,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 		});
 		updateTitle();
 	}
-	
+
 	/*
 	 * Live Synchronize - {showing N of M changes} {Subscriber name}
 	 */
@@ -879,5 +880,16 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	
 	public SyncSetContentProvider getContentProvider() {
 		return (SyncSetContentProvider)getViewer().getContentProvider();
+	}
+
+	protected IWorkingSet getWorkingSet() {
+		return actions.getWorkingSet();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.ISyncViewer#setWorkingSet(org.eclipse.ui.IWorkingSet)
+	 */
+	public void setWorkingSet(IWorkingSet workingSet) {
+		actions.setWorkingSet(workingSet);
 	}
 }

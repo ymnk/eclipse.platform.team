@@ -36,6 +36,7 @@ import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.WorkingSetFilterActionGroup;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
@@ -156,11 +157,11 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 					Object newValue = event.getNewValue();
 					
 					if (newValue instanceof IWorkingSet) {	
-						setWorkingSet((IWorkingSet) newValue);
+						changeWorkingSet((IWorkingSet) newValue);
 					}
 					else 
 					if (newValue == null) {
-						setWorkingSet(null);
+						changeWorkingSet(null);
 					}
 				}
 			}
@@ -299,7 +300,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	/*
 	 * Get the selected working set from the subscriber input
 	 */
-	private IWorkingSet getWorkingSet() {
+	public IWorkingSet getWorkingSet() {
 		SubscriberInput input = getSubscriberContext();
 		// There's no subscriber input so use the last selected workingSet
 		if (input == null) return workingSet;
@@ -309,7 +310,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		return set;
 	}
 	
-	protected void setWorkingSet(IWorkingSet set) {
+	protected void changeWorkingSet(IWorkingSet set) {
 		// Keep track of the last working set selected
 		if (set != null) workingSet = set;
 		final SubscriberInput input = getSubscriberContext();
@@ -334,5 +335,10 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		if (set == null && set2 == null) return true;
 		if (set == null || set2 == null) return false;
 		return set.equals(set2);
+	}
+
+	public void setWorkingSet(IWorkingSet workingSet) {
+		PlatformUI.getWorkbench().getWorkingSetManager().addRecentWorkingSet(workingSet);
+		workingSetGroup.setWorkingSet(workingSet);
 	}
 }
