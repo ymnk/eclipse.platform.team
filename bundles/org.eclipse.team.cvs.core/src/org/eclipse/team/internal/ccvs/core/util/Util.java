@@ -317,9 +317,5 @@ public class Util {
 			if (oldBytes[i] != syncBytes[i]) return false;
 		}
 		return true;
-	}
-	
-	public static boolean isSet(int flags, int bits) {
-		return (flags & bits) != 0;
 	}	
 }

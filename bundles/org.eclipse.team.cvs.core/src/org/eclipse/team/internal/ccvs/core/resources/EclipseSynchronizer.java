@@ -1483,5 +1483,4 @@ public class EclipseSynchronizer {
 		deleteResourceSync(file);
 		flushDirtyCache(file, IResource.DEPTH_ZERO);
 	}
-	
 }
