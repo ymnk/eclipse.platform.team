@@ -36,7 +36,7 @@ import org.eclipse.ui.part.*;
  * <p>
  * Clients can subclass to extend the label decoration or add action bar 
  * contributions. For more extensive modifications, clients should create
- * their own custom control.
+ * their own custom page.
  * </p> 
  * @since 3.0
  */

@@ -20,7 +20,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.util.*;
+import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
@@ -47,7 +47,7 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  * @see DiffTreeViewer
  * @see Differencer
  */
-public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter, IBusyWorkbenchAdapter {
+public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
 	
 	private SyncInfoTree syncSet;
 	private IResource resource;
@@ -182,8 +182,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	public Object getAdapter(Class adapter) {
 		if(adapter == IWorkbenchAdapter.class) {
 			return this;
-		} else if(adapter == IBusyWorkbenchAdapter.class) {
-			return this;
 		}
 		return null;
 	}
@@ -267,71 +265,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 			return syncSet.getSyncInfo(resource);
 		}
 		return null;
-	}
-	
-	/** Track nodes that are being worked on **/
-	
-	public boolean isBusy(Object element) {
-		return nodeIsBusy || ! workingChildren.isEmpty();
-	}
-	
-	public void setBusy(Object element, boolean isBusy) {
-		this.nodeIsBusy = isBusy;
-		IDiffContainer parent = getParent();
-		while (parent != null) {
-			if(parent instanceof SyncInfoDiffNode) {
-				((SyncInfoDiffNode)parent).updateWorkingChild(this);
-			}
-			parent = parent.getParent();
-		}
-		fireChange(P_BUSY_ELEMENT);
-	}
-		
-	public void updateWorkingChild(SyncInfoDiffNode node) {
-		if(node.isBusy(node)) {
-			workingChildren.add(node);
-		} else {
-			workingChildren.remove(node);
-		}
-	}
-	
-	/**
-	 * Registers a listener for changes of this <code>ICompareInput</code>.
-	 * Has no effect if an identical listener is already registered.
-	 *
-	 * @param listener the listener to add
-	 */
-	public void addPropertyChangeListener(IPropertyChangeListener listener) {
-		if (listeners == null)
-			listeners= new ListenerList();
-		listeners.add(listener);
-	}
-	
-	/**
-	 * Unregisters a <code>ICompareInput</code> listener.
-	 * Has no effect if listener is not registered.
-	 *
-	 * @param listener the listener to remove
-	 */
-	public void removePropertyInputChangeListener(IPropertyChangeListener listener) {
-		if (listeners != null) {
-			listeners.remove(listener);
-			if (listeners.isEmpty())
-				listeners= null;
-		}
-	}
-	
-	/**
-	 * Sends out notification that a change has occured on the <code>ICompareInput</code>.
-	 */
-	protected void fireChange(String property) {
-		if (listeners != null) {
-			Object[] l= listeners.getListeners();
-			for (int i= 0; i < l.length; i++) {
-				PropertyChangeEvent event = new PropertyChangeEvent(this, property, null, null);
-				((IPropertyChangeListener) l[i]).propertyChange(event);
-			}
-		}
 	}
 
 	/** WorkbenchAdapter methods **/
