@@ -69,6 +69,9 @@ import org.eclipse.ui.part.ViewPart;
  * Is a view that allows browsing remote target sites. It is modeled after
  * a file explorer: a tree of folders is show with a table of the folder's
  * contents.
+ * <p>
+ * Progress is shown in the main workbench window's status line progress 
+ * monitor.</p>
  * 
  * @see Site
  * @see IRemoteTargetResource
@@ -109,8 +112,8 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 				
 		// column headings:	"Name" "Size" "Modified"
 		private int[][] SORT_ORDERS_BY_COLUMN = {
-			{NAME, SIZE, MODIFIED},	/* name */ 
-			{SIZE, NAME, MODIFIED},	/* size */
+			{NAME},	/* name */ 
+			{SIZE, NAME},	/* size */
 			{MODIFIED, NAME, SIZE},	/* modified */
 		};
 		
@@ -155,7 +158,7 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 		}
 		
 		protected int compareNames(IRemoteTargetResource resource1, IRemoteTargetResource resource2) {
-			return collator.compare(resource1.getName(), resource2.getName());
+			return resource1.getName().compareTo(resource2.getName());
 		}
 		
 		/**
@@ -238,8 +241,8 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 		
 		folderTree.setSorter(new ViewerSorter() {
 			public int compare(Viewer viewer, Object e1, Object e2) {
-				String name1 = "";
-				String name2 = "";
+				String name1 = ""; //$NON-NLS-1$
+				String name2 = ""; //$NON-NLS-1$
 				if(e1 instanceof RemoteResourceElement) {
 					name1 = ((RemoteResourceElement)e1).getRemoteResource().getName();
 				} else if(e1 instanceof SiteElement) {
@@ -266,31 +269,29 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 		});
 		
 		Table table = new Table(sash, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+		TableLayout layout = new TableLayout();
+		table.setLayout(layout);
+		table.setHeaderVisible(true);
 		
 		TableColumn tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.Name_1")); //$NON-NLS-1$
 		tableColumn.addSelectionListener(getColumnListener());
+		layout.addColumnData(new ColumnWeightData(30, true));
 
 		tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.Size_2")); //$NON-NLS-1$
 		tableColumn.setAlignment(SWT.RIGHT);
 		tableColumn.addSelectionListener(getColumnListener());
+		layout.addColumnData(new ColumnWeightData(10, true));
 
 		tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.Modified_3")); //$NON-NLS-1$
 		tableColumn.addSelectionListener(getColumnListener());
+		layout.addColumnData(new ColumnWeightData(30, true));
 
 		tableColumn = new TableColumn(table, SWT.NULL);
 		tableColumn.setText(Policy.bind("SiteExplorerView.URL_4")); //$NON-NLS-1$
-
-		TableLayout layout = new TableLayout();
 		layout.addColumnData(new ColumnWeightData(30, true));
-		layout.addColumnData(new ColumnWeightData(10, true));
-		layout.addColumnData(new ColumnWeightData(30, true));
-		layout.addColumnData(new ColumnWeightData(30, true));
-
-		table.setLayout(layout);
-		table.setHeaderVisible(true);
 
 		folderContentsTable = new TableViewer(table);
 		folderContentsTable.setContentProvider(new SiteLazyContentProvider());
@@ -328,8 +329,10 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 		sash.setWeights(new int[] {33, 67});
 		
 		TargetManager.addSiteListener(this);
-		initializeTreeInput();
+		
+		root = new SiteRootsElement(getViewSite().getWorkbenchWindow());
 		initalizeActions();
+		folderTree.setInput(root);
 	}
 
 	private Shell getShell() {
@@ -399,18 +402,21 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 					Object currentSelection = selection.getFirstElement();
 					
 					RemoteResourceElement selectedFolder;
-					if(selection.isEmpty()) {
+					if(!selection.isEmpty()) {
 						selectedFolder = getSelectedRemoteFolder(selection)[0];
 					} else {
 						selectedFolder = (RemoteResourceElement)folderContentsTable.getInput();
 					}
 										
-					IRemoteTargetResource newFolder = CreateNewFolderAction.createDir(shell, selectedFolder.getRemoteResource(), Policy.bind("CreateNewFolderAction.newFolderName"));
+					IRemoteTargetResource newFolder = CreateNewFolderAction.createDir(shell, selectedFolder.getRemoteResource(), Policy.bind("CreateNewFolderAction.newFolderName")); //$NON-NLS-1$
 					if (newFolder == null)
 						return;
-					selectedFolder.setCachedChildren(null);
-					RemoteResourceElement newFolderUIElement = new RemoteResourceElement(newFolder);
 
+					// force a refresh
+					selectedFolder.setCachedChildren(null);
+					
+					// select the newly added folder
+					RemoteResourceElement newFolderUIElement = new RemoteResourceElement(newFolder);
 					folderTree.refresh(currentSelection);
 					expandInTreeCurrentSelection(new StructuredSelection(currentSelection), false);
 					folderTree.setSelection(new StructuredSelection(newFolderUIElement));
@@ -459,13 +465,20 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 	}
 	
 	/**
+	 * Add the new site to the viewer and make it the current selection.
+	 * 
 	 * @see ISiteListener#siteAdded(Site)
 	 */
 	public void siteAdded(Site site) {
-		initializeTreeInput();
+		SiteElement element = new SiteElement(site, getViewSite().getWorkbenchWindow());
+		folderTree.add(root, element);
+		folderTree.setSelection(new StructuredSelection(element));
 	}
 
 	/**
+	 * Remote the site from the viewer and select the next site in the
+	 * tree.
+	 * 
 	 * @see ISiteListener#siteRemoved(Site)
 	 */
 	public void siteRemoved(Site site) {
@@ -482,11 +495,6 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 		}
 	}
 
-	private void initializeTreeInput() {
-		root = new SiteRootsElement(TargetManager.getSites());
-		folderTree.setInput(root);
-	}
-	
 	/**
 	 * Adds the listener that sets the sorter.
 	 */
@@ -510,13 +518,16 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 			 */
 			public void widgetSelected(SelectionEvent e) {
 				// column selected - need to sort
+				// only allow sorting on name for now
 				int column = folderContentsTable.getTable().indexOf((TableColumn) e.widget);
-				FolderListingSorter oldSorter = (FolderListingSorter)folderContentsTable.getSorter();
-				if (oldSorter != null && column == oldSorter.getColumnNumber()) {
-					oldSorter.setReversed(!oldSorter.isReversed());
-					folderContentsTable.refresh();
-				} else {
-					folderContentsTable.setSorter(new FolderListingSorter(column));
+				if(column == FolderListingSorter.NAME) {
+					FolderListingSorter oldSorter = (FolderListingSorter)folderContentsTable.getSorter();
+					if (oldSorter != null && column == oldSorter.getColumnNumber()) {
+						oldSorter.setReversed(!oldSorter.isReversed());
+						folderContentsTable.refresh();
+					} else {
+						folderContentsTable.setSorter(new FolderListingSorter(column));
+					}
 				}
 			}
 		};
