@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.actions;
  
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
@@ -22,11 +20,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSResource;
  * 
  * @since 3.0
  */
-public class CompareWithRemoteAction extends WorkspaceAction {
-	
-	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		new SyncAction().execute(action);
-	}
+public class CompareWithRemoteAction extends SyncAction {
 	
 	/*
 	 * Update the text label for the action based on the tags in the selection.
