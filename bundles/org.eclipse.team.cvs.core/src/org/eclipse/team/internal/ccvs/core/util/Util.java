@@ -248,7 +248,7 @@ public class Util {
 			start = string.indexOf(delimiter, start);
 			if (start == -1) return null;
 		}
-		int end = string.indexOf(delimiter, start);
+		int end = string.indexOf(delimiter, start + 1);
 		if (end == -1 || includeRest) return string.substring(start + 1);
 		return string.substring(start + 1, end);
 	}

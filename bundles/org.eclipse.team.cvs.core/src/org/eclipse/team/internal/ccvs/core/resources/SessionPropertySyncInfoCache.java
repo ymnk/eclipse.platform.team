@@ -142,6 +142,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 			if (container.getType() != IResource.ROOT) {
 				container.setSessionProperty(IGNORE_SYNC_KEY, null);
 				container.setSessionProperty(FOLDER_SYNC_KEY, null);
+				container.setSessionProperty(RESOURCE_SYNC_CACHED_KEY, null);
 			}
 			IResource[] members = container.members();
 			for (int i = 0; i < members.length; i++) {
