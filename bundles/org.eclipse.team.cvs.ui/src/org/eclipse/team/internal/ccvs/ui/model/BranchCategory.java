@@ -47,7 +47,7 @@ public class BranchCategory extends CVSModelElement implements IAdaptable {
 	 * object has no children.
 	 */
 	public Object[] getChildren(Object o) {
-		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownBranchTags(repository);
+		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, CVSTag.BRANCH);
 		CVSTagElement[] branchElements = new CVSTagElement[tags.length];
 		for (int i = 0; i < tags.length; i++) {
 			branchElements[i] = new CVSTagElement(tags[i], repository);

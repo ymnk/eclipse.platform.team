@@ -85,10 +85,12 @@ public class BranchAction extends WorkspaceAction {
 			}
 		}
 		
-		// Perform the branch
-		run(new WorkspaceModifyOperation() {
-			public void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+		final RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+		
+		// Create a runnable that can perform the branch
+		final IRunnableWithProgress branchingRunnable = new IRunnableWithProgress() {
+			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+				
 				Hashtable table = getProviderMapping(resources);
 				Set keySet = table.keySet();
 				monitor.beginTask(null, keySet.size() * 1000);
@@ -108,13 +110,15 @@ public class BranchAction extends WorkspaceAction {
 							provider.makeBranch(providerResources, null, branchTag, update, subMonitor);										
 						}
 						if (rootVersionTag != null || update) {
+							// These changes to the repo model must be batched using RepositoryManager.run
+							// or the repo view will be updated multipel times
 							for (int i = 0; i < providerResources.length; i++) {
 								ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(providerResources[i]);
 								if (rootVersionTag != null) {
-									manager.addVersionTags(cvsResource, new CVSTag[] { rootVersionTag });
+									manager.addTags(cvsResource, new CVSTag[] { rootVersionTag });
 								}
 								if (update) {
-									manager.addBranchTags(cvsResource, new CVSTag[] { branchTag });
+									manager.addTags(cvsResource, new CVSTag[] { branchTag });
 								}
 							}
 						}
@@ -123,6 +127,13 @@ public class BranchAction extends WorkspaceAction {
 						addStatus(e.getStatus());
 					}
 				}
+			}
+		};
+		
+		
+		run(new WorkspaceModifyOperation() {
+			public void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+				manager.run(branchingRunnable, monitor);
 			}
 		}, true /* cancelable */, this.PROGRESS_DIALOG); //$NON-NLS-1$
 	}

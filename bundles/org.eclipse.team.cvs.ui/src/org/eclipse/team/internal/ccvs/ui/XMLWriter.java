@@ -41,10 +41,13 @@ public void printTabulation() {
 	for (int i = 0; i < tab; i++)
 		super.print('\t');
 }
-public void printTag(String name, HashMap parameters) {
+private void printTag(String name, HashMap parameters) {
 	printTag(name, parameters, true, true);
 }
-public void printTag(String name, HashMap parameters, boolean tab, boolean newLine) {
+private void printTag(String name, HashMap parameters, boolean tab, boolean newLine) {
+	printTag(name, parameters, tab, newLine, false);
+}
+private void printTag(String name, HashMap parameters, boolean tab, boolean newLine, boolean end) {
 	StringBuffer sb = new StringBuffer();
 	sb.append("<"); //$NON-NLS-1$
 	sb.append(name);
@@ -57,6 +60,8 @@ public void printTag(String name, HashMap parameters, boolean tab, boolean newLi
 			sb.append(getEscaped(String.valueOf(parameters.get(key))));
 			sb.append("\""); //$NON-NLS-1$
 		}
+	if (end)
+		sb.append('/');
 	sb.append(">"); //$NON-NLS-1$
 	if (tab)
 		printTabulation();
@@ -71,6 +76,9 @@ public void startTag(String name, HashMap parameters) {
 public void startTag(String name, HashMap parameters, boolean newLine) {
 	printTag(name, parameters, true, newLine);
 	tab++;
+}
+public void startAndEndTag(String name, HashMap parameters, boolean newLine) {
+	printTag(name, parameters, true, true, true);
 }
 private static void appendEscapedChar(StringBuffer buffer, char c) {
 	String replacement = getReplacement(c);

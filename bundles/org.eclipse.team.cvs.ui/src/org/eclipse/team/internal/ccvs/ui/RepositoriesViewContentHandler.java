@@ -10,8 +10,15 @@
  ******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.ui.model.RepositoryRoot;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -32,10 +39,20 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	public static final String REPOSITORY_PROGRAM_NAME_ATTRIBUTE = "program-name"; //$NON-NLS-1$
 	
 	public static final String[] TAG_TYPES = {"head", "branch", "version", "date"};
+	public static final String DEFAULT_TAG_TYPE = "version";
 	
-	StringBuffer buffer = new StringBuffer();
-	Stack tagStack = new Stack();
+	private RepositoryManager manager;
+	private StringBuffer buffer = new StringBuffer();
+	private Stack tagStack = new Stack();
+	private RepositoryRoot currentRepositoryRoot;
+	private String currentRemotePath;
+	private List tags;
+	private List autoRefreshFiles;
 
+	public RepositoriesViewContentHandler(RepositoryManager manager) {
+		this.manager = manager;
+	}
+	
 	/**
 	 * @see ContentHandler#characters(char[], int, int)
 	 */
@@ -46,17 +63,22 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	/**
 	 * @see ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public void endElement(String namespaceURI, String localName, String qName)
-		throws SAXException {
+	public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+			
+		if (!localName.equals(tagStack.peek())) {
+			throw new SAXException(Policy.bind("RepositoriesViewContentHandler.unmatchedTag", localName)); //$NON-NLS-1$
+		}
+		
 		if (localName.equals(REPOSITORIES_VIEW_TAG)) {
 			// all done
 		} else if (localName.equals(REPOSITORY_TAG)) {
-			// finished with this repository
-		} else if (localName.equals(TAG_TAG)) {
-			// finished with this tag
-		}
-		if (!localName.equals(tagStack.peek())) {
-			throw new SAXException(Policy.bind("RepositoriesViewContentHandler.unmatchedTag", localName)); //$NON-NLS-1$
+			manager.add(currentRepositoryRoot);
+			currentRepositoryRoot = null;
+		} else if (localName.equals(MODULE_TAG)) {
+			currentRepositoryRoot.addTags(currentRemotePath, 
+				(CVSTag[]) tags.toArray(new CVSTag[tags.size()]));
+			currentRepositoryRoot.setAutoRefreshFiles(currentRemotePath,
+				(String[]) autoRefreshFiles.toArray(new String[autoRefreshFiles.size()]));
 		}
 		tagStack.pop();
 	}
@@ -78,20 +100,61 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 			if (id == null) {
 				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", REPOSITORY_TAG, ID_ATTRIBUTE));
 			}
+			ICVSRepositoryLocation root;
+			try {
+				root = CVSProviderPlugin.getPlugin().getRepository(id);
+			} catch (CVSException e) {
+				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.errorCreatingRoot", id), e);
+			}
+			currentRepositoryRoot = new RepositoryRoot(root);
 			String name = atts.getValue(NAME_ATTRIBUTE);
 			if (name != null) {
+				currentRepositoryRoot.setName(name);
 			}
+		} else if (localName.equals(MODULE_TAG)) {
+			String path = atts.getValue(PATH_ATTRIBUTE);
+			if (path == null) {
+				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", MODULE_TAG, PATH_ATTRIBUTE));
+			}
+			startModule(path);
 		} else if (localName.equals(TAG_TAG)) {
 			String type = atts.getValue(TYPE_ATTRIBUTE);
 			if (type != null) {
+				type = DEFAULT_TAG_TYPE;
 			}
 			String name = atts.getValue(NAME_ATTRIBUTE);
-			if (name != null) {
+			if (name == null) {
+				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", TAG_TAG, NAME_ATTRIBUTE));
 			}
+			tags.add(new CVSTag(name, getCVSTagType(type)));
+		} else if (localName.equals(AUTO_REFRESH_FILE_TAG)) {
+			String path = atts.getValue(PATH_ATTRIBUTE);
+			if (path == null) {
+				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", AUTO_REFRESH_FILE_TAG, PATH_ATTRIBUTE));
+			}
+			autoRefreshFiles.add(path);
 		}
 		// empty buffer
 		buffer = new StringBuffer();
 		tagStack.push(localName);
+	}
+
+	private void startModule(String path) {
+		currentRemotePath = path;
+		tags = new ArrayList();
+		autoRefreshFiles = new ArrayList();
+	}
+	
+	/**
+	 * Method getCVSTagType.
+	 * @param type
+	 */
+	public int getCVSTagType(String type) {
+		for (int i = 0; i < TAG_TYPES.length; i++) {
+			if (TAG_TYPES[i].equals(type))
+				return i;
+		}
+		return CVSTag.VERSION;
 	}
 	
 }

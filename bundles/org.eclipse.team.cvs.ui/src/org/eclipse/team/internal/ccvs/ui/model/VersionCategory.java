@@ -50,7 +50,7 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 	 * object has no children.
 	 */
 	public Object[] getChildren(Object o) {
-		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownVersionTags(repository);
+		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, CVSTag.VERSION);
 		CVSTagElement[] versionElements = new CVSTagElement[tags.length];
 		for (int i = 0; i < tags.length; i++) {
 			versionElements[i] = new CVSTagElement(tags[i], repository);

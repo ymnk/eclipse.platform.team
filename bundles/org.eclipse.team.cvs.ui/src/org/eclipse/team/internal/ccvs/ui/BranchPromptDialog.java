@@ -233,34 +233,7 @@ public class BranchPromptDialog extends DetailsDialog {
 		}
 		setPageComplete(message == null);
 		setErrorMessage(message);
-	}	
-
-	/**
-	 * Answers if the given tag name already exists
-	 */
-	protected boolean doesTagNameExists(String name) {
-		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownVersionTags(folder);
-		for (int i = 0; i < tags.length; i++) {
-			if(tags[i].getName().equals(name)) {
-				return true;
-			}
-		}
-		return false;
 	}
-	
-	/**
-	 * Answers if the given branch name already exists
-	 */
-	protected boolean doesBranchNameExists(String name) {
-		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownBranchTags(folder);
-		for (int i = 0; i < tags.length; i++) {
-			if(tags[i].getName().equals(name)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	
 	/**
 	 * Returns the branch tag name

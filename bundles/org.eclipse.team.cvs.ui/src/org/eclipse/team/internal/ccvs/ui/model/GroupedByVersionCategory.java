@@ -47,6 +47,8 @@ public class GroupedByVersionCategory extends CVSModelElement implements IAdapta
 	 * is displayed in a tree, the returned objects will be this
 	 * element's children.  Returns an empty enumeration if this
 	 * object has no children.
+	 * 
+	 * XXX This method looks wrong to me somehow
 	 */
 	public Object[] getChildren(Object o) {
 		//String -> CTags[]
