@@ -216,11 +216,14 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			Button selectAll = new Button(selectGroup, SWT.NULL);
 			selectAll.setText("&Select All");
 			selectAll.addSelectionListener(new SelectionAdapter() {
-				public void widgetSelected(SelectionEvent e) {
+				public void widgetSelected(SelectionEvent e) {	
 					participantScope.setSelection(true);
 					selectedResourcesScope.setSelection(false);
 					workingSetScope.setSelection(false);
 					updateParticipantScope();
+					scopeCheckingElement = true;
+					updateOKStatus();
+					scopeCheckingElement = false;
 				}
 			});
 			selectAll.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
@@ -230,6 +233,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			deSelectAll.addSelectionListener(new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {
 					fViewer.setCheckedElements(new Object[0]);
+					updateOKStatus();
 				}
 			});
 			deSelectAll.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
