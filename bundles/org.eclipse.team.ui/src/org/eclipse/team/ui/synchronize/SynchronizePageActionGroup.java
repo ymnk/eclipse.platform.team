@@ -70,7 +70,12 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	 * @return the group for the given id or <code>null</code>
 	 */
 	protected IContributionItem findGroup(IContributionManager menu, String groupId) {
-		return menu.find(((SynchronizePageConfiguration)configuration).getGroupId(groupId));
+		IContributionItem item = menu.find(((SynchronizePageConfiguration)configuration).getGroupId(groupId));
+		if (item == null) {
+			// Context menus do not change the id
+			item = menu.find(groupId);
+		}
+		return item;
 	}
 	
 	/**

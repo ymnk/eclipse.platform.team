@@ -334,6 +334,7 @@ public abstract class StructuredViewerAdvisor {
 			String[] groups = (String[])o;
 			for (int i = 0; i < groups.length; i++) {
 				String group = groups[i];
+				// The groupIds must be converted to be unique since the toolbar is shared
 				manager.add(new Separator(getGroupId(group)));
 			}
 
@@ -353,13 +354,14 @@ public abstract class StructuredViewerAdvisor {
 					workingSetGroup.fillActionBars(actionBars);
 					menu.add(new Separator());
 					menu.add(new Separator());
-					menu.add(new Separator("others")); //$NON-NLS-1$
+					menu.add(new Separator(getGroupId("others"))); //$NON-NLS-1$
 					menu.add(new Separator());
 					start = 1;
 				}
 			}
 			for (int i = start; i < groups.length; i++) {
 				String group = groups[i];
+				// The groupIds must be converted to be unique since the view menu is shared
 				menu.add(new Separator(getGroupId(group)));
 				
 			}
@@ -457,7 +459,8 @@ public abstract class StructuredViewerAdvisor {
 		String[] groups = (String[])o;
 		for (int i = 0; i < groups.length; i++) {
 			String group = groups[i];
-			manager.add(new Separator(getGroupId(group)));
+			// There is no need to adjust the group ids in a contetx menu (see setActionBars)
+			manager.add(new Separator(group));
 		}
 		getActionGroup().setContext(new ActionContext(viewer.getSelection()));
 		getActionGroup().fillContextMenu(manager);
