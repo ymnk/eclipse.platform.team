@@ -12,16 +12,22 @@ package org.eclipse.team.internal.ccvs.core;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ISynchronizer;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ComparisonCriteria;
@@ -30,6 +36,8 @@ import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.sync.ISyncTreeSubscriber;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
+import org.eclipse.team.internal.core.Assert;
 
 /**
  * CVSWorkspaceSubscriber
@@ -45,10 +53,16 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 	private Map comparisonCriterias = new HashMap();
 	private String defaultCriteria;
 	
+	// qualified name for remote sync info
+	private QualifiedName REMOTE_RESOURCE_KEY = new QualifiedName("org.eclipse.team.cvs", "remote-resource-key");
+	
 	CVSWorkspaceSubscriber(String id, String name, String description) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
+		
+		// install sync info participant
+		getSynchronizer().add(getRemoteSyncName());
 		
 		// setup comparison criteria
 		ComparisonCriteria revisionNumberComparator = new CVSRevisionNumberCompareCriteria();
@@ -130,16 +144,18 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
 	 */
 	public IRemoteResource getRemoteResource(IResource resource)	throws TeamException {
-		
-		// TODO: will have to use the remote element from the core synchronizer tree.
-		ICVSRemoteResource base = CVSWorkspaceRoot.getRemoteResourceFor(resource);
-		//		IRemoteResource remote = getRemoteResource(child);
-		//		if(remote == null) {
-		//			remote = base;
-		//		}
-		//return new RemoteR(true /*three way*/, parent, child, base, remote);
-		
-		return base;
+		ISynchronizer s = getSynchronizer();
+		try {
+			byte[] remoteBytes = s.getSyncInfo(getRemoteSyncName(), resource);
+			if(remoteBytes != null) {
+				return RemoteResource.fromBytes(resource, remoteBytes);
+			} else {
+				// return the base handle taken from the Entries file
+				 return CVSWorkspaceRoot.getBaseFor(resource);				
+			}
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -147,7 +163,7 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 	 */
 	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) {		
 		try {
-			return SyncInfo.computeSyncKind(resource, CVSWorkspaceRoot.getRemoteResourceFor(resource), getRemoteResource(resource), this, monitor);
+			return SyncInfo.computeSyncKind(resource, CVSWorkspaceRoot.getBaseFor(resource), getRemoteResource(resource), this, monitor);
 		}  catch (TeamException e) {
 			// log this error?
 			return null;
@@ -157,9 +173,53 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#refresh(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public IStatus refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		// TODO Auto-generated method stub
-		return null;
+	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		ICVSRemoteResource[] trees = new ICVSRemoteResource[resources.length];
+		int work = 100 * resources.length;
+		monitor.beginTask(null, work);
+		try {
+			for (int i = 0; i < trees.length; i++) {
+				IResource resource = resources[i];	
+				
+				// build the remote tree
+				// TODO: we are currently ignoring the depth parameter because the build remote tree is
+				// by default deep!
+				trees[i] = CVSWorkspaceRoot.getRemoteTree(
+																	resource, 
+																	null /* build tree based on tags found in the local sync info */ , 
+																	Policy.subMonitorFor(monitor, 70));
+				
+				// update the known remote handles 
+				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
+				try {
+					sub.beginTask(null, 512);
+					collectChanges(resource, trees[i], sub);
+				} finally {
+					sub.done();			 
+				}
+			}
+		} finally {
+			monitor.done();
+		}
+	}
+
+	/**
+	 * @param resource
+	 */
+	private void collectChanges(IResource local, ICVSRemoteResource remote, IProgressMonitor monitor) throws TeamException {
+		Map children = mergedMembers(local, remote, monitor);	
+		for (Iterator it = children.keySet().iterator(); it.hasNext();) {
+			IResource localChild = (IResource) it.next();
+			IRemoteResource remoteChild = (IRemoteResource)children.get(localChild);
+			if(remoteChild != null) {
+				byte[] remoteBytes = ((RemoteResource)remoteChild).getSyncBytes();
+				try {
+					getSynchronizer().setSyncInfo(getRemoteSyncName(), localChild, remoteBytes);
+				} catch (CoreException e) {
+					CVSException.wrapException(e);
+				}
+			}
+		}
 	}
 
 	/* (non-Javadoc)
@@ -219,11 +279,117 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 		List filteredMembers = new ArrayList(members.length);
 		for (int i = 0; i < members.length; i++) {
 			IResource r = members[i];
+			
+			// TODO: consider that there may be several sync states on this resource. There
+			// should instead me a method to check for the existance of a set of sync types on
+			// a resource.
+			if(! r.exists()) {
+				if(getSynchronizer().getSyncInfo(getRemoteSyncName(), r) == null) {
+					continue;
+				}
+			}
+			
 			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(r);
 			if( !cvsThing.isIgnored()) {
 				filteredMembers.add(r);
 			}
 		}
 		return (IResource[]) filteredMembers.toArray(new IResource[filteredMembers.size()]);
+	}
+	
+	protected QualifiedName getRemoteSyncName() {
+		return REMOTE_RESOURCE_KEY;
+	}
+	
+	protected ISynchronizer getSynchronizer() {
+		return ResourcesPlugin.getWorkspace().getSynchronizer();
+	}
+	
+	protected Map mergedMembers(IResource local, IRemoteResource remote, IProgressMonitor progress) throws TeamException {
+	
+		// {IResource -> IRemoteResource}
+		Map mergedResources = new HashMap();
+		
+		IRemoteResource[] remoteChildren =
+			remote != null ? remote.members(progress) : new IRemoteResource[0];
+		
+		IResource[] localChildren;			
+		try {	
+			if( local.getType() != IResource.FILE && local.exists() ) {
+				localChildren = ((IContainer)local).members();
+			} else {
+				localChildren = new IResource[0];
+			}
+		} catch(CoreException e) {
+			throw new TeamException(e.getStatus());
+		}
+		
+		if (remoteChildren.length > 0 || localChildren.length > 0) {
+			List syncChildren = new ArrayList(10);
+			Set allSet = new HashSet(20);
+			Map localSet = null;
+			Map remoteSet = null;
+
+			if (localChildren.length > 0) {
+				localSet = new HashMap(10);
+				for (int i = 0; i < localChildren.length; i++) {
+					IResource localChild = localChildren[i];
+					String name = localChild.getName();
+					localSet.put(name, localChild);
+					allSet.add(name);
+				}
+			}
+
+			if (remoteChildren.length > 0) {
+				remoteSet = new HashMap(10);
+				for (int i = 0; i < remoteChildren.length; i++) {
+					IRemoteResource remoteChild = remoteChildren[i];
+					String name = remoteChild.getName();
+					remoteSet.put(name, remoteChild);
+					allSet.add(name);
+				}
+			}
+		
+			Iterator e = allSet.iterator();
+			while (e.hasNext()) {
+				String keyChildName = (String) e.next();
+
+				if (progress != null) {
+					if (progress.isCanceled()) {
+						throw new OperationCanceledException();
+					}
+					// XXX show some progress?
+				}
+
+				IResource localChild =
+					localSet != null ? (IResource) localSet.get(keyChildName) : null;
+
+				IRemoteResource remoteChild =
+					remoteSet != null ? (IRemoteResource) remoteSet.get(keyChildName) : null;
+				
+				if (localChild == null) {
+					// there has to be a remote resource available if we got this far
+					Assert.isTrue(remoteChild != null);
+					boolean isContainer = remoteChild.isContainer();				
+					localChild = getResourceChild(local /* parent */, keyChildName, isContainer);
+				}
+				mergedResources.put(localChild, remoteChild);				
+			}
+		}
+		return mergedResources;
+	}
+	
+	/*
+	 * Returns a handle to a non-existing resource.
+	 */
+	private IResource getResourceChild(IResource parent, String childName, boolean isContainer) {
+		if (parent.getType() == IResource.FILE) {
+			return null;
+		}
+		if (isContainer) {
+			return ((IContainer) parent).getFolder(new Path(childName));
+		} else {
+			return ((IContainer) parent).getFile(new Path(childName));
+		}
 	}
 }

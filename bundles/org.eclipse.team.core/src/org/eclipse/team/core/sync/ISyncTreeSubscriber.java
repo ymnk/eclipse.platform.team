@@ -12,7 +12,6 @@ package org.eclipse.team.core.sync;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.TeamException;
 
 /**
@@ -186,7 +185,7 @@ public interface ISyncTreeSubscriber {
 	 * <li> The server could not be contacted.</li>
 	 * </ul>
 	 */
-	public IStatus refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException;
+	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException;
 	
 	/**
 	 * Returns the list of available comparison criteria supported by this subscriber.

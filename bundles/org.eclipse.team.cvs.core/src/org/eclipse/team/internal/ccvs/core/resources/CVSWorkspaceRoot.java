@@ -573,7 +573,12 @@ public class CVSWorkspaceRoot {
 			}
 			return null;
 		}
-	
+		
+	public static ICVSRemoteResource getBaseFor(IResource resource) throws CVSException {
+		ICVSResource managed = getCVSResourceFor(resource);
+		return getBaseFor(managed);
+	}
+		
 	/*
 	 * Helper method that uses the parent of a local resource that has no base to ensure that the resource
 	 * wasn't added remotely by a third party
