@@ -10,13 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.views;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 public class TreeViewerUtils {
 	/**
@@ -166,29 +162,5 @@ public class TreeViewerUtils {
 		}
 		
 		return item;
-	}
-	
-	/**
-	 * Returns the implementation of SyncInfo for the given
-	 * object.  Returns <code>null</code> if the adapter is not defined or the
-	 * object is not adaptable.
-	 */
-	public static SyncInfo getSyncInfo(Object o) {
-		if (!(o instanceof IAdaptable)) {
-			return null;
-		}
-		return (SyncInfo) ((IAdaptable) o).getAdapter(SyncInfo.class);
-	}
-	
-	public static  IResource getResource(Object obj) {
-		SyncInfo info = getSyncInfo(obj);
-		if (info == null) {
-			if (obj instanceof SyncInfoDiffNode) {
-				return ((SyncInfoDiffNode)obj).getResource();
-			} 
-		} else {
-			return info.getLocal();
-		}
-		return null;
 	}
 }

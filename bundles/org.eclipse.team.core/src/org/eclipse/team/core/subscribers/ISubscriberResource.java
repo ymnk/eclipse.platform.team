@@ -60,7 +60,7 @@ public interface ISubscriberResource {
 	 * @return a String that identifies the version of the subscriber resource
 	 * @throws TeamException
 	 */
-	public String getContentIdentifier() throws TeamException;
+	public String getContentIdentifier();
 	
 	/**
 	 * Returns whether the subscriber resource is equal to the provided object.

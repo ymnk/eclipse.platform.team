@@ -20,7 +20,6 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 
 /**
@@ -97,8 +96,9 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 				ISelection s = event.getSelection();
 				SyncInfoDiffNode node = getElement(s);
 				if(node != null) {
-					SyncInfo info = node.getSyncInfo();
-					if(info != null && info.getLocal().getType() == IResource.FILE) { 
+					IResource resource = node.getResource();
+					int kind = node.getKind();
+					if(resource != null && resource.getType() == IResource.FILE) { 
 						Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
 					}
 				}

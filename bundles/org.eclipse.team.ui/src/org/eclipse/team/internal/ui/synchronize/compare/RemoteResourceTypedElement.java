@@ -44,6 +44,10 @@ public class RemoteResourceTypedElement extends BufferedContent implements IType
 		return remote.getName();
 	}
 
+	public String getContentIdentifier() {
+		return remote.getContentIdentifier();
+	}
+	
 	public String getType() {
 		if (remote.isContainer()) {
 			return ITypedElement.FOLDER_TYPE;

@@ -85,11 +85,12 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 ======================================================================
  PR LIST (30-01-2004) MV
 ======================================================================
-- actions in sync view all assume that selection will have a resource (e.g refresh action). 
+x actions in sync view all assume that selection will have a resource (e.g refresh action). 
   - how would a refresh know what to select if a change comment node was selected, for example
   - could first attempt to obtain resource and, if that fails, visit children to obtain resources
   [jm] I think that actions will have to know about DiffNodes and we need the helper to
   get the list of children nodes.
+  [jm] added Utils.getResources(Iselection) does all the logic for retreiving resources
 - sorter is related to input so may need to change when input does
   - there does not appear to be a clean way to change the sorter and input without causing two refreshes
 - SyncInfoSet##getOutOfSyncDescendants(IResource) is speced to include the resource itself if it is out-of-sync
@@ -117,3 +118,5 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 - there are several places in SyncInfoSet and in the DiffNodes where we must use the workspace root
 as the input resource to imply get all members? Maybe this should be cleaned up a bit.
 - SyncInfoSet must be cleaned up a lot, the API is vague and method names are not clear.
+x SyncInfoDiffNode doesn't have to return a resource or a syncinfo. By definition a diff node already has API
+for returning a sync kind getKind() and access to all three resources getRight(), getLeft(), getAncestor().

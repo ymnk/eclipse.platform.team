@@ -20,6 +20,7 @@ import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
 import org.eclipse.team.ui.ISharedImages;
@@ -47,6 +48,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 
 	public SyncInfoCompareInput(SyncInfo sync) {
 		super(new CompareConfiguration());
+		Assert.isNotNull(sync);
 		this.sync = sync;
 		this.node = new SyncInfoDiffNode(sync);
 		initializeContentChangeListeners();
@@ -90,7 +92,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		// update the title now that the remote revision number as been fetched
 		// from the server
 		setTitle(getTitle());
-		Utils.updateLabels(sync, getCompareConfiguration());
+		Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
 		try {
 			node.cacheContents(monitor);
 		} catch (TeamException e) {

@@ -588,7 +588,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.IRemoteResource#getContentIdentifier()
 	 */
-	public String getContentIdentifier() throws TeamException {
+	public String getContentIdentifier() {
 		return null;
 	}
 

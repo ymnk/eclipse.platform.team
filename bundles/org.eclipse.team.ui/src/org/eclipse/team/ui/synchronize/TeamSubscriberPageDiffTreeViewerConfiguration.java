@@ -15,37 +15,36 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 
 /**
- * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer for the synchroniza view
+ * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer
+ * for the synchroniza view
  */
 public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewerConfiguration {
 
 	private ISynchronizeView view;
 	private TeamSubscriberParticipant participant;
-	
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
 	private TeamParticipantRefreshAction refreshSelectionAction;
-	
+
 	public TeamSubscriberPageDiffTreeViewerConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
 		super(participant.getId(), participant.getFilteredSyncInfoCollector().getSyncInfoSet());
 		this.view = view;
 		this.participant = participant;
 	}
-	
+
 	protected TeamSubscriberParticipant getParticipant() {
 		return participant;
 	}
-	
+
 	protected void initializeActions(StructuredViewer treeViewer) {
 		super.initializeActions(treeViewer);
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
-		refreshSelectionAction = new TeamParticipantRefreshAction(treeViewer, participant, false /*refresh*/);
+		refreshSelectionAction = new TeamParticipantRefreshAction(treeViewer, participant, false /* refresh */);
 	}
 
 	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
@@ -55,20 +54,18 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 		manager.add(new Separator());
 		super.fillContextMenu(viewer, manager);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewer#handleDoubleClick(org.eclipse.jface.viewers.DoubleClickEvent)
 	 */
 	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		DiffNode node = (DiffNode) selection.getFirstElement();
 		if (node != null && node instanceof SyncInfoDiffNode) {
-			SyncInfoDiffNode syncNode = (SyncInfoDiffNode)node; 
-			if (syncNode != null 
-					&& syncNode.getResource() != null 
-					&& syncNode.getResource().getType() == IResource.FILE) {
+			SyncInfoDiffNode syncNode = (SyncInfoDiffNode) node;
+			IResource resource = syncNode.getResource();
+			if (syncNode != null && resource != null && resource.getType() == IResource.FILE) {
 				openWithActions.openInCompareEditor();
 				return;
 			}
@@ -76,28 +73,29 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 		// Double-clicking should expand/collapse containers
 		super.handleDoubleClick(viewer, event);
 	}
-	
+
 	protected void initializeListeners(StructuredViewer viewer) {
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
 			public void selectionChanged(SelectionChangedEvent event) {
 				updateStatusLine((IStructuredSelection) event.getSelection());
 			}
 		});
 		viewer.addOpenListener(new IOpenListener() {
+
 			public void open(OpenEvent event) {
 				handleOpen();
 			}
 		});
 		super.initializeListeners(viewer);
 	}
-	
+
 	protected void handleOpen() {
 		openWithActions.openInCompareEditor();
 	}
-	
+
 	/**
 	 * Updates the message shown in the status line.
-	 * 
 	 * @param selection
 	 *            the current selection
 	 */
@@ -108,7 +106,6 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 
 	/**
 	 * Returns the message to show in the status line.
-	 * 
 	 * @param selection
 	 *            the current selection
 	 * @return the status line message
@@ -118,11 +115,12 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 		if (selection.size() == 1) {
 			Object first = selection.getFirstElement();
 			if (first instanceof SyncInfoDiffNode) {
-				SyncInfo info = ((SyncInfoDiffNode) first).getSyncInfo();
-				if (info == null) {
-					return Policy.bind("SynchronizeView.12"); //$NON-NLS-1$
+				SyncInfoDiffNode node = (SyncInfoDiffNode) first;
+				IResource resource = node.getResource();
+				if (resource == null) {
+					return node.getName();
 				} else {
-					return info.getLocal().getFullPath().makeRelative().toString();
+					return resource.getFullPath().makeRelative().toString();
 				}
 			}
 		}

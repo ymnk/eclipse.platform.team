@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.actions;
 
-import java.util.*;
+import java.util.Iterator;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
@@ -20,7 +20,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.*;
 
@@ -66,15 +66,7 @@ public class RefactorActionGroup extends ActionGroup {
 	}
 
 	private IStructuredSelection convertSelection(IStructuredSelection selection) {
-		List resources = new ArrayList();
-		Iterator it = selection.iterator();
-		while(it.hasNext()) {
-			IResource resource = TreeViewerUtils.getResource(it.next());
-			if(resource != null) {
-				resources.add(resource);
-			}
-		}
-		return new StructuredSelection(resources);
+		return new StructuredSelection(Utils.getResources(selection.toArray()));
 	}
 
 	public void fillActionBars(IActionBars actionBars) {
@@ -129,7 +121,10 @@ public class RefactorActionGroup extends ActionGroup {
 				resource = (IResource)adaptable.getAdapter(IResource.class);
 			}
 			if(resource == null) {
-				resource = TreeViewerUtils.getResource(next);
+				IResource[] r = Utils.getResources(new Object[] {next});
+				if(r.length == 1) {
+					resource = r[0];
+				}
 			}
 			if (resource == null || (resource.getType() & resourceMask) == 0) {
 				return false;

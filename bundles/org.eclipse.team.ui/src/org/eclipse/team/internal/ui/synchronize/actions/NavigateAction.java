@@ -19,6 +19,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.actions.ActionFactory;
@@ -107,7 +108,10 @@ public class NavigateAction extends Action {
 		IStructuredSelection selection = (IStructuredSelection)view.getSite().getPage().getSelection();
 		if(selection == null) return null;
 		Object obj = selection.getFirstElement();
-		SyncInfo info = OpenInCompareAction.getSyncInfo(obj);
-		return info;
+		if (obj instanceof SyncInfoDiffNode) {
+			return ((SyncInfoDiffNode) obj).getSyncInfo();
+		} else {
+			return null;
+		}
 	}
 }

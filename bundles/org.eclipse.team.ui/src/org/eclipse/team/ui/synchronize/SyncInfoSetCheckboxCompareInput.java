@@ -72,8 +72,8 @@ public class SyncInfoSetCheckboxCompareInput extends SyncInfoSetCompareInput {
 				if (element instanceof SyncInfoDiffNode) {
 					// Only include out-of-sync resources that are checked
 					SyncInfoDiffNode node = (SyncInfoDiffNode) element;
-					SyncInfo syncInfo = node.getSyncInfo();
-					if (syncInfo != null && syncInfo.getKind() != 0) {
+					int kind = node.getKind();
+					if (kind != SyncInfo.IN_SYNC) {
 						IResource resource = node.getResource();
 						if (resource != null) {
 							result.add(resource);

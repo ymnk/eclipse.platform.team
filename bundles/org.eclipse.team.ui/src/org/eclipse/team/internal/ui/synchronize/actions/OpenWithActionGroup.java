@@ -15,7 +15,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.OpenWithMenu;
@@ -60,11 +60,15 @@ public class OpenWithActionGroup extends ActionGroup {
 		if (selection == null || selection.size() != 1)
 			return;
 		Object element = selection.getFirstElement();
-		IResource resource = TreeViewerUtils.getResource(element);
-		if (!(resource instanceof IFile)) {
+		IResource resources[] = Utils.getResources(new Object[] {element});
+		IResource resource = null;		
+		if(resources.length == 0) {
 			return;
 		}
-				
+		resource = resources[0];
+		
+		if(resource.getType() != IResource.FILE) return;
+		
 		menu.add(openInCompareAction);
 		
 		if(!((resource.exists()))) {

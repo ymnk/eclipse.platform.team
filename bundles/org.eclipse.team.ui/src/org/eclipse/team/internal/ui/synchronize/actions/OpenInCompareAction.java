@@ -18,10 +18,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.*;
 
 /**
@@ -44,9 +41,11 @@ public class OpenInCompareAction extends Action {
 	public void run() {
 		ISelection selection = view.getSite().getPage().getSelection();
 		Object obj = ((IStructuredSelection)selection).getFirstElement();
-		SyncInfo info = getSyncInfo(obj);
-		if(info != null) {
-			openCompareEditor(view, participant, info, true /* keep focus */);
+		if (obj instanceof SyncInfoDiffNode) {
+			SyncInfo info = ((SyncInfoDiffNode) obj).getSyncInfo();
+			if (info != null) {
+				openCompareEditor(view, participant, info, true /* keep focus */);
+			}
 		}
 	}
 	
@@ -149,9 +148,5 @@ public class OpenInCompareAction extends Action {
 			}
 		}
 		return null;
-	}
-	
-	public static SyncInfo getSyncInfo(Object obj) {
-		return (SyncInfo)TeamAction.getAdapter(obj, SyncInfo.class);
 	}
 }
