@@ -16,12 +16,6 @@ import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder;
 import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeSorter;
 
-/**
- * @author Administrator
- *
- * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
- */
 public class SyncInfoDiffNodeRoot extends SyncInfoDiffNode {
 
 	SyncInfoDiffNodeBuilder builder;

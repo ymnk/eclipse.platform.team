@@ -17,8 +17,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
@@ -291,5 +290,12 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		
 	private boolean getShowCompressedFolders() {
 		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
+	}
+	
+	protected void aSyncExec(Runnable r) {
+		final Control ctrl = viewer.getControl();
+		if (ctrl != null && !ctrl.isDisposed()) {
+			ctrl.getDisplay().asyncExec(r);
+		}
 	}
 }

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.compare;
+package org.eclipse.team.ui.synchronize;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -21,9 +21,25 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
+/**
+ * A {@link SyncInfo} editor input used as input to a two-way or three-way 
+ * compare viewer. It defines methods for accessing the three sides for the 
+ * compare, and a name and image which is used when displaying the three way input
+ * in an editor. This input can alternatly be used to show compare results in 
+ * a dialog by calling {@link CompareUI#openCompareDialog()}.
+ * <p>
+ * Supports saving the local resource if changed in the editor.
+ * </p>
+ * <p>
+ * Use {@link SyncInfoCompareInput} to display more than one <code>SyncInfo</code>
+ * in an compare viewer. 
+ * </p>
+ * @see SyncInfoDiffNode
+ * @since 3.0
+ */
 public class SyncInfoCompareInput extends CompareEditorInput {
 
 	private SyncInfo sync;
@@ -141,9 +157,6 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		}
 	}
 
-	/*
-	 * Recursively walks the diff tree and commits all changes.
-	 */
 	private static void commit(IProgressMonitor pm, DiffNode node) throws CoreException {
 		ITypedElement left = node.getLeft();
 		if (left instanceof LocalResourceTypedElement)

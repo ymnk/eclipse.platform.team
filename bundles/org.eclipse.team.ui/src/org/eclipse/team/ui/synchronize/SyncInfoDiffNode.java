@@ -27,7 +27,7 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
 	
 	private IResource resource;
-	private SyncInfoSet input;
+	private SyncInfoSet syncSet;
 	private SyncInfo info;
 		
 	/**
@@ -111,7 +111,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 */
 	public SyncInfoDiffNode(IDiffContainer parent, SyncInfoSet set, IResource resource) {
 		this(parent, createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
-		this.input = set;	
+		this.syncSet = set;	
 		this.resource = resource;
 		this.info = null;
 	}
@@ -125,7 +125,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	public SyncInfoDiffNode(SyncInfo info) {
 		this(null, createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
 		this.info = info;
-		this.input = null;	
+		this.syncSet = null;	
 		this.resource = info.getLocal();
 	}
 
@@ -229,7 +229,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @return a <code>SyncInfoSet</code>
 	 */
 	public SyncInfoSet getSyncInfoSet() {
-		return input;
+		return syncSet;
 	}
 	
 	/**

@@ -87,19 +87,29 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 - actions in sync view all assume that selection will have a resource (e.g refresh action). 
   - how would a refresh know what to select if a change comment node was selected, for example
   - could first attempt to obtain resource and, if that fails, visit children to obtain resources
+  [jm] I think that actions will have to know about DiffNodes and we need the helper to
+  get the list of children nodes.
 - sorter is related to input so may need to change when input does
   - there does not appear to be a clean way to change the sorter and input without causing two refreshes
 - SyncInfoSet##getOutOfSyncDescendants(IResource) is speced to include the resource itself if it is out-of-sync
   - this is a bit confusing as the name implies otherwise
   - should either consider a name change or a soec change
+  [jm] I never understood why is was spec'd like that :) You can decide...
 - compare input requires root node to have children or diff viewer is not added
   - this is problematic when creating a wizard page that is dynamically populated
   - not sure if there's problems caused by returning true when there are no children
+  [jm] I think this it's fine to have root nodes return true to hasChildren. I don't like
+  compares subtle way of determining is the diff viewer should be shown, but in our case a
+  root node can safely always have children.
 - several places require a resource
   - e.g. conflict propogation requires a resource but shouldn't (modified to work without a resource)
   - conflicts do not propogate in comment view
+  [jm] we have to change this assumption everywhere! Actions, label decorators... and such. 
+- there are times when the sync set changes but the input hasn't yet and the given input
+  doesn't handle outgoing changes. For example, when changing from incoming to outgoing with
+  the change log root, the change log root gets a reset from the sync set then the input
+  is changed. this can cause an NPE. Must look into the ordering here.
 - the test cases starve the subscriber event handler such that an event has additions and removals for the same resources
   - this causes failures in the diff tree builders
   - although less likely in UI, can still happen
   - need tests for these scenarios to ensure generated event is correct after addition and removal
-  
