@@ -61,7 +61,18 @@ Pending Items:
    
    - In order to filter a sync page by mappers, the sync scope needs to be pushed down into the collectors and scope methods 
      need to be added to provide access to the traversal depth
-
+     
+ - Transitive adapters
+   - [PATCH READY] transitivity from IResource to ResourceMapping in adapter manager
+     - is this need if UI does special handing?
+   - [PATCH READY] add ResourceMapping support to objectContribution handling
+   - repository persistant property filtering for ResourceMappings (PropertyTester)
+   	  - remove WorkbenchResourceMapping action filter!
+   
+ - Add to version control, ignore on Project
+     
+ - Performance!!!
+     
 Summary of changes:
 
  - actions that support resource mappers are subclasses of WorkspaceTraversalAction
