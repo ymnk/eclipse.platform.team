@@ -624,7 +624,6 @@ public void update(String propertyName) {
 				if (ti.getEnabled() != shouldBeEnabled)
 					ti.setEnabled(shouldBeEnabled);
 			}
-			if(preferedSize > 0) ti.setWidth(preferedSize);	
 			if (checkChanged) {
 				boolean bv = action.isChecked();
 				

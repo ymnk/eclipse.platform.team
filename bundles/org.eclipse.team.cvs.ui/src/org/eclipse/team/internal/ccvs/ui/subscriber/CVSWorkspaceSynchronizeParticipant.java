@@ -43,13 +43,12 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 	public void setActionsBars(IActionBars actionBars, IToolBarManager detailsToolbar) {
 		if(actionBars != null) {
 			IToolBarManager toolbar = actionBars.getToolBarManager();
-			toolbar.add(new Separator());		
-			toolbar.add(new Separator());
-			actionBars.getToolBarManager().add(updateAdapter);
-			actionBars.getToolBarManager().add(commitAdapter);
 		}
 		if(detailsToolbar != null) {
 			modes.fillToolBar(detailsToolbar);
+			detailsToolbar.add(new Separator());		
+			detailsToolbar.add(updateAdapter);
+			detailsToolbar.add(commitAdapter);
 		}
 	}
 

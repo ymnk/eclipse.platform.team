@@ -27,6 +27,7 @@ import org.eclipse.team.ui.sync.actions.*;
 import org.eclipse.team.ui.sync.actions.workingsets.WorkingSetDropDownAction;
 import org.eclipse.team.ui.sync.actions.workingsets.WorkingSetFilterActionGroup;
 import org.eclipse.ui.*;
+import org.eclipse.ui.internal.util.StatusLineContributionItem;
 import org.eclipse.ui.part.*;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
@@ -38,6 +39,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 	// the viewer type is switched.
 	private Composite composite = null;
 	private TextToolbarManager tbMgr;
+	private StatusLineManager slMgr;
 	
 	// Viewer type constants
 	private int layout;
@@ -238,7 +240,24 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 			case TeamSubscriberParticipant.TABLE_LAYOUT:
 				createTableViewerPartControl(parent); 
 				break;
-		}
+		}		
+		StatusLineContributionItem item1 = new StatusLineContributionItem("1", 20) {
+					public void run() {}};
+		StatusLineContributionItem item2 = new StatusLineContributionItem("2", 2) {
+					public void run() {}};
+		StatusLineContributionItem item3 = new StatusLineContributionItem("3", 2) {
+					public void run() {}};
+		StatusLineContributionItem item4 = new StatusLineContributionItem("4", 2) {
+							public void run() {}};
+		IStatusLineManager mgr = view.getViewSite().getActionBars().getStatusLineManager();
+		item1.setText("1.2");
+		item2.setText("1/3");
+		item3.setText("5/6");
+		item4.setText("Working Set: <None>");
+		mgr.add(item1);
+		mgr.add(item2);
+		mgr.add(item3);
+		mgr.add(item4);
 		viewer.setInput(input);
 		viewer.getControl().setFocus();
 		initializeListeners();

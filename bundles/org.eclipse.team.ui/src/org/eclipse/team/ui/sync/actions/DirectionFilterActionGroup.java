@@ -77,7 +77,7 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 		page.addPropertyChangeListener(this);
 		page.getInput().registerListeners(this);
 		checkMode(page.getMode());
-		updateStats();
+		//updateStats();
 	}
 	
 	/**
@@ -173,7 +173,7 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(SyncSetChangedEvent event) {
-		updateStats();		
+		//updateStats();		
 	}
 	
 	private void updateStats() {
