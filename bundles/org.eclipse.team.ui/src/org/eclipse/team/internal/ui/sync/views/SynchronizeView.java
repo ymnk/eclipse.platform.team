@@ -29,7 +29,6 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
@@ -236,6 +235,9 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		});
 		updateTitle();
 	}
+	/**
+	 * Toggles between labe/tree/table viewers. 
+	 */
 	public void switchViewerType(int viewerType) {
 		if(viewer == null || viewerType != currentViewType) {
 			if (composite == null || composite.isDisposed()) return;
@@ -329,8 +331,6 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		viewImage = image;
 		fireSafePropertyChange(IWorkbenchPart.PROP_TITLE);
 	}
-
-
 	
 	protected void createViewer(Composite parent) {		
 		if(input == null) {
@@ -457,11 +457,8 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		};
 		initializeSubscriberInput(input);
 	}
-	
-	
-
 	/*
-	 * Live Synchronize - {showing N of M changes} {Subscriber name}
+	 * Synchronize - (showing N of M changes) - {Subscriber name}
 	 */
 	protected void updateTitle() {
 		Display.getDefault().asyncExec(new Runnable() {
@@ -478,29 +475,17 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 							changesText = Policy.bind("LiveSyncView.titleChangeNumbers",  //$NON-NLS-1$
 															new Long(statusInformation.getNumShowing()).toString(),
 															new Long(statusInformation.getNumInWorkingSet()).toString(), 
-															new Long(statusInformation.getNumInWorkspace()).toString());
+															new Long(statusInformation.getNumInWorkspace() - statusInformation.getNumInWorkingSet()).toString());
 						} else {
 							changesText = Policy.bind("LiveSyncView.titleChangeNumbersNoWorkingSet",  //$NON-NLS-1$
 																					new Long(statusInformation.getNumShowing()).toString(),
 																					new Long(statusInformation.getNumInWorkingSet()).toString());
 						}
-					 	setTitle(
-					 		Policy.bind("LiveSyncView.titleWithSubscriber", new String[] { //$NON-NLS-1$
-					 				Policy.bind("LiveSyncView.title"),  //$NON-NLS-1$
-					 				changesText,
-					 				subscriber.getName()}));
-					 	IWorkingSet ws = input.getWorkingSet();
-					 	if(ws != null) {
-					 		StringBuffer s = new StringBuffer(Policy.bind("LiveSyncView.titleTooltip", subscriber.getDescription(), ws.getName())); //$NON-NLS-1$
-					 		IResource[] roots = input.workingSetRoots();
-					 		for (int i = 0; i < roots.length; i++) {
-								IResource resource = roots[i];
-								s.append(resource.getFullPath().toString() + "\n"); //$NON-NLS-1$
-							}
-					 		setTitleToolTip(s.toString());
-					 	} else {
-						 	setTitleToolTip(subscriber.getDescription());
-					 	}
+					 	String title = Policy.bind("LiveSyncView.titleWithSubscriber", new String[] {Policy.bind("LiveSyncView.title"), changesText, subscriber.getName()});  //$NON-NLS-1$ //$NON-NLS-2$
+					 	setTitle(title);
+					 	StringBuffer b = new StringBuffer(title + "\n"); //$NON-NLS-1$
+					 	b.append(input.getSubscriberSyncSet().getStatistics().toString());
+					 	setTitleToolTip(b.toString());					 	
 					}
 				} else {
 					setTitle(Policy.bind("LiveSyncView.title")); //$NON-NLS-1$
@@ -509,7 +494,9 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			}
 		});
 	}
-
+	
+	
+	
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
@@ -553,27 +540,13 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 
 	public void run(IRunnableWithProgress runnable) {
 		try {
-			getRunnableContext().run(true, true, runnable);
+			PlatformUI.getWorkbench().getActiveWorkbenchWindow().run(true, true, runnable);
 		} catch (InvocationTargetException e) {
 			handle(getSite().getShell(), e, null, null);
 		} catch (InterruptedException e) {
 			// Nothing to be done
 		}
 	}
-	
-	/**
-	 * Returns the runnableContext.
-	 * @return IRunnableContext
-	 */
-	private IRunnableContext getRunnableContext() {
-		return PlatformUI.getWorkbench().getActiveWorkbenchWindow();									
-	}
-	
-	private boolean hasRunnableContext() {
-		return getRunnableContext() != null;
-	}
-	
-
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IViewPart#saveState(org.eclipse.ui.IMemento)
@@ -722,13 +695,13 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		if (selection.size() == 1) {
 			IResource resource = getResource(selection.getFirstElement());
 			if (resource == null) {
-				return "One item selected";
+				return Policy.bind("SynchronizeView.12"); //$NON-NLS-1$
 			} else {
 				return resource.getFullPath().makeRelative().toString();
 			}
 		}
 		if (selection.size() > 1) {
-			return selection.size() + " items selected";
+			return selection.size() + Policy.bind("SynchronizeView.13"); //$NON-NLS-1$
 		}
 		return ""; //$NON-NLS-1$
 	}
@@ -753,7 +726,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 				String pId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE);
 				activePage = workbench.showPerspective(pId, window);
 			} catch (WorkbenchException e) {
-					Utils.handleError(window.getShell(), e, "Error opening perspective", "Error opening perspective");
+					Utils.handleError(window.getShell(), e, Policy.bind("SynchronizeView.14"), e.getMessage()); //$NON-NLS-1$
 			}
 		}
 		try {
@@ -763,7 +736,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			}
 			return (SynchronizeView)activePage.showView(VIEW_ID);
 		} catch (PartInitException pe) {
-			Utils.handleError(window.getShell(), pe, "Error opening view", "Error opening view");
+			Utils.handleError(window.getShell(), pe, Policy.bind("SynchronizeView.16"), pe.getMessage()); //$NON-NLS-1$
 			return null;
 		}
 	}

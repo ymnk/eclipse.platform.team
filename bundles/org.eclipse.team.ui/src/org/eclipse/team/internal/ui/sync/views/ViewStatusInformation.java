@@ -27,7 +27,7 @@ class ViewStatusInformation {
 		if(set != null) {
 			this.workingSetName = set.getName();
 		} else {
-			this.workingSetName = "";
+			this.workingSetName = ""; //$NON-NLS-1$
 		}
 		this.numShowing = input.getFilteredSyncSet().size();
 		this.numInWorkingSet = input.getWorkingSetSyncSet().size();

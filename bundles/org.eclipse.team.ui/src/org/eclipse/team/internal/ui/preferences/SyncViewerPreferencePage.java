@@ -22,7 +22,10 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.internal.ui.IPreferenceIds;
@@ -44,6 +47,8 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	private IntegerFieldEditor2 scheduledDelay = null;
 	private BooleanFieldEditor compressFolders = null;
 	private BooleanFieldEditor useBothMode = null;
+
+	private Group refreshGroup;
 	
 	private static class PerspectiveDescriptorComparator implements Comparator {
 		/*
@@ -60,6 +65,13 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	}
 	
 	class IntegerFieldEditor2 extends IntegerFieldEditor {
+			/* (non-Javadoc)
+			 * @see org.eclipse.jface.preference.FieldEditor#createControl(org.eclipse.swt.widgets.Composite)
+			 */
+			protected void createControl(Composite parent) {
+				super.createControl(parent);
+			}
+
 			public IntegerFieldEditor2(String name, String labelText, Composite parent, int size) {
 				super(name, labelText, parent, size);
 			}
@@ -112,7 +124,6 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	public SyncViewerPreferencePage() {
 		super(GRID);
 		setTitle("Synchronize view preferences");
-		setDescription("Preferences for the Synchronize view");
 		setPreferenceStore(TeamUIPlugin.getPlugin().getPreferenceStore());
 	}
 
@@ -129,27 +140,31 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	 */
 	public void createFieldEditors() {
 		
-		bkgRefresh = new BooleanFieldEditor(SYNCVIEW_BACKGROUND_SYNC, "Refresh with the remote resources in the background", SWT.NONE, getFieldEditorParent());
-		addField(bkgRefresh);
-		
-		bkgScheduledRefresh = new BooleanFieldEditor(SYNCVIEW_SCHEDULED_SYNC, "Enable a background task to refresh with remote resources", SWT.NONE, getFieldEditorParent());
-		addField(bkgScheduledRefresh);
-		
-		scheduledDelay = new IntegerFieldEditor2(SYNCVIEW_DELAY, "How often should the background refresh run? (in minutes)", getFieldEditorParent(), 2);
-		addField(scheduledDelay);
-		
-		updateLastRunTime(new Label(getFieldEditorParent(), SWT.NONE));
-		
-		compressFolders = new BooleanFieldEditor(SYNCVIEW_COMPRESS_FOLDERS, "Compress in-sync folder paths when using the tree view", SWT.NONE, getFieldEditorParent());
+		GridData data;
+		Group displayGroup = createGroup(getFieldEditorParent(), "Display"); 		
+
+		compressFolders = new BooleanFieldEditor(SYNCVIEW_COMPRESS_FOLDERS, "Compress in-sync folder paths when using the tree view", SWT.NONE, displayGroup);
 		addField(compressFolders);
 		
-		useBothMode = new BooleanFieldEditor(SYNCVIEW_USEBOTHMODE, "Use incoming/outgoing mode when synchronizing", SWT.NONE, getFieldEditorParent());
+		useBothMode = new BooleanFieldEditor(SYNCVIEW_USEBOTHMODE, "Use incoming/outgoing mode when synchronizing", SWT.NONE, displayGroup);
 		addField(useBothMode);
+
+		refreshGroup = createGroup(getFieldEditorParent(), "Refreshing with Remote");
 		
-		Label perspectiveSwitchDescription = new Label(getFieldEditorParent(), SWT.WRAP);
-		perspectiveSwitchDescription.setText(Policy.bind("SynchronizationViewPreference.defaultPerspectiveDescription")); //$NON-NLS-1$
+		bkgRefresh = new BooleanFieldEditor(SYNCVIEW_BACKGROUND_SYNC, "Refresh with the remote resources in the background", SWT.NONE, refreshGroup);
+		addField(bkgRefresh);
 		
-		new Label(getFieldEditorParent(), SWT.NONE);
+		bkgScheduledRefresh = new BooleanFieldEditor(SYNCVIEW_SCHEDULED_SYNC, "Enable a background task to refresh with remote resources", SWT.NONE, refreshGroup);
+		addField(bkgScheduledRefresh);
+		
+		scheduledDelay = new IntegerFieldEditor2(SYNCVIEW_DELAY, "How often should the background refresh run? (in minutes)", refreshGroup, 2);
+		addField(scheduledDelay);
+				
+		updateLastRunTime(createLabel(refreshGroup, null, 0));
+									
+		Group perspectiveGroup = createGroup(getFieldEditorParent(), "Perspective Switching");
+		
+		createLabel(perspectiveGroup, Policy.bind("SynchronizationViewPreference.defaultPerspectiveDescription"), 1); //$NON-NLS-1$
 		
 		handleDeletedPerspectives();
 		String[][] perspectiveNamesAndIds = getPerspectiveNamesAndIds();
@@ -157,11 +172,52 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 			SYNCVIEW_DEFAULT_PERSPECTIVE,
 			Policy.bind("SynchronizationViewPreference.defaultPerspectiveLabel"), //$NON-NLS-1$
 			perspectiveNamesAndIds,
-			getFieldEditorParent());
+			perspectiveGroup);
 		addField(comboEditor);
-	
+
+		updateLayout(displayGroup);
+		updateLayout(perspectiveGroup);
+		updateLayout(refreshGroup);
+		getFieldEditorParent().layout(true);	
 	}
 	
+	private Label createLabel(Composite parent, String title, int spacer) {
+		GridData data;
+		Label l = new Label(parent, SWT.WRAP);
+		data = new GridData();
+		data.horizontalSpan = 2;
+		if(spacer != 0) {
+			data.verticalSpan = spacer;
+		}
+		data.horizontalAlignment = GridData.FILL;		
+		l.setLayoutData(data);
+		if(title != null) {
+			l.setText(title); //$NON-NLS-1$
+		}
+		return l;
+	}
+
+	private Group createGroup(Composite parent, String title) {
+		Group display = new Group(parent, SWT.NONE);
+		updateLayout(display);
+		GridData data = new GridData();
+		data.horizontalSpan = 2;
+		data.horizontalAlignment = GridData.FILL;
+		display.setLayoutData(data);						
+		display.setText(title);
+		return display;
+	}
+	
+	private void updateLayout(Composite composite) {
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		layout.marginWidth = 5;
+		layout.marginHeight =5;
+		layout.horizontalSpacing = 5;
+		layout.verticalSpacing = 5;
+		composite.setLayout(layout);
+	}
+
 	private void updateLastRunTime(Label label) {
 		String text;
 		long mills = TeamUIPlugin.getPlugin().getRefreshJob().getLastTimeRun();
@@ -210,7 +266,7 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 
 	protected void updateEnablements() {
 		boolean enabled = bkgScheduledRefresh.getBooleanValue();
-		scheduledDelay.setEnabled(enabled, getFieldEditorParent());
+		scheduledDelay.setEnabled(enabled, refreshGroup);
 		scheduledDelay.refreshValidState();
 	}
 	
