@@ -307,9 +307,17 @@ public class EclipseTest extends ResourceTest {
 	 * Commit the resources from an existing container to the CVS repository
 	 */
 	public void tagProject(IProject project, CVSTag tag, boolean force) throws TeamException {
-		ITagOperation op = new TagOperation((IWorkbenchPart)null, RepositoryProviderOperation.asResourceMappers(new IResource[] {project}));
-		runTag(op, tag, force);
+		ResourceMapping[] mappings = RepositoryProviderOperation.asResourceMappers(new IResource[] {project});
+        tag(mappings, tag, force);
 	}
+
+    /**
+     * Tag the resources contained in the given mappings
+     */
+    protected void tag(ResourceMapping[] mappings, CVSTag tag, boolean force) throws TeamException {
+        ITagOperation op = new TagOperation((IWorkbenchPart)null, mappings);
+        runTag(op, tag, force);
+    }
 	
 	public void tagRemoteResource(ICVSRemoteResource resource, CVSTag tag, boolean force) throws TeamException  {
 		ITagOperation op = new TagInRepositoryOperation(null, new ICVSRemoteResource[] {resource});
