@@ -72,6 +72,27 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	}
 	
 	/*
+	 * @see ICVSFile#getAppendingOutputStream()
+	 */
+	public OutputStream getAppendingOutputStream() throws CVSException {
+		return new ByteArrayOutputStream() {
+			public void close() throws IOException {
+				try {
+					IFile file = getIFile();
+					if(resource.exists()) {
+						file.appendContents(new ByteArrayInputStream(toByteArray()), true /*force*/, true /*keep history*/, null);
+					} else {
+						file.create(new ByteArrayInputStream(toByteArray()), true /*force*/, null);
+					}
+					super.close();
+				} catch(CoreException e) {
+					throw new IOException("Error setting file contents: " + e.getMessage());
+				}
+			}
+		};
+	}
+	
+	/*
 	 * @see ICVSFile#getTimeStamp()
 	 */
 	public String getTimeStamp() {						
@@ -180,5 +201,5 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	 */
 	private IFile getIFile() {
 		return (IFile)resource;
-	}
+	}	
 }

@@ -28,58 +28,7 @@ public class Util {
 	
 	// private static final String newLine = System.getProperty("line.separator");
 	
-	/**
-	 * Looks for search in original. If it findes search it puts excange
-	 * in the result. Otherwise it copies original in the result.
-	 */
-	public static byte[] replace(final byte[] original,final byte[] search,final byte[] excange) {
 		
-		final int tmpMulti;
-		final byte[] tmpResult;
-		final byte[] result;
-
-		int size=0;
-		boolean replaced;
-		
-		// create an array, that can hold the result for sure
-		tmpMulti = (int) Math.ceil((double)excange.length/(double)search.length);
-
-		Assert.isTrue((long)tmpMulti * (long)original.length < Integer.MAX_VALUE);
-		tmpResult = new byte[tmpMulti * original.length];
-		
-		int i=0;
-		while (i < original.length) {
-			replaced = false;
-			for (int j = 0; j < search.length; j++) {
-				
-				if ((i+j >= original.length) || (original[i+j] != search[j])) {
-					// Send another letter to the result
-					// array
-					break;
-				}
-				
-				if (j == search.length-1) {
-					// We have found the search and going to 
-					// put excange intead of it
-					System.arraycopy(excange,0,tmpResult,size,excange.length);
-					size += excange.length;
-					i += search.length;
-					replaced = true;
-				}
-			}
-			
-			if (!replaced) {
-				tmpResult[size] = original[i];
-				i++;
-				size++;
-			}
-		}
-		
-		result = new byte[size];
-		System.arraycopy(tmpResult,0,result,0,size);
-		return result;
-	}
-	
 	/**
 	 * @see Util#getOptions(String[],String,boolean)
 	 */
@@ -222,29 +171,8 @@ public class Util {
 	 *         when you insert ":pserver:nkrambro:password@fiji:/home/nkrambro/repo"
 	 */	
 	// FIXME: This is only used for tests ... move it	
-	public static String getPassword(String root) {
-		return passwordHandle(root,false);
-	}
 	
 	// FIXME: This is only used for tests ... move it	
-	public static String mergeRoot(String rootWithoutPwd, String password) {
-		
-		StringBuffer result = new StringBuffer();
-
-		Assert.isTrue(rootWithoutPwd.indexOf(AT) != -1);
-		Assert.isTrue(rootWithoutPwd.indexOf(COLON) != -1);
-		
-		if (password == null) {
-			return rootWithoutPwd;
-		}
-		
-		result.append(rootWithoutPwd.substring(0,rootWithoutPwd.indexOf(AT)));
-		result.append(COLON);
-		result.append(password);
-		result.append(rootWithoutPwd.substring(rootWithoutPwd.indexOf(AT)));
-		
-		return result.toString();
-	}
 	
 	/**
 	 * Get the extention of the path of resource

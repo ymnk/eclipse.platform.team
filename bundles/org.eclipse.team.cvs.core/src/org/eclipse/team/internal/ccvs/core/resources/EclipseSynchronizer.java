@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ISynchronizer;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -28,14 +27,25 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTag;
+import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 
 /**
  * A synchronizer is responsible for managing synchronization information for local
  * CVS resources.
+ * 
+ * [Notes:
+ *  1. how can we expire cache elements and purge to safe memory?
+ *  2. how can we safeguard against overwritting meta files changes made outside of Eclipse? I'm
+ *     not sure we should force setting file contents in EclipseFile handles?
+ *  3. how can we group operations?
+ *  4. how do we reload
+ * ]
  * 
  * @see ResourceSyncInfo
  * @see FolderSyncInfo
@@ -53,6 +63,13 @@ public class EclipseSynchronizer {
 		getSynchronizer().add(FOLDER_SYNC_KEY);
 	}
 	
+	public static EclipseSynchronizer getInstance() {
+		if (instance == null) {						
+			instance = new EclipseSynchronizer();			
+		}
+		return instance;
+	}
+
 	/**
 	 * Associates the provided folder sync information with the given folder. The folder
 	 * must exist on the file system.
@@ -84,8 +101,12 @@ public class EclipseSynchronizer {
 		beginOperation();		
 		FolderSyncInfo info = getCachedFolderSync(folder);
 		if (info == null) {
-			info = readFolderConfig(folder);
-			setCachedFolderSync(folder, info);
+			info = SyncFileWriter.readFolderConfig(CVSWorkspaceRoot.getCVSFolderFor(folder));
+			if(info!=null) {
+				setCachedFolderSync(folder, info);
+				// read the child meta-files also
+				getMetaResourceSyncForFolder(folder, null);
+			}
 		}
 		endOperation();
 		return info;
@@ -124,35 +145,13 @@ public class EclipseSynchronizer {
 		if(resource.getType()==IResource.ROOT) return null;
 		beginOperation();
 		ResourceSyncInfo info = getCachedResourceSync(resource);
-		if (info == null) {
-			IContainer parent = resource.getParent();
-			if (parent != null) {
-				ResourceSyncInfo[] infos = readEntriesFile(resource.getParent());
-				if (infos != null) {
-					for (int i = 0; i < infos.length; i++) {
-						ResourceSyncInfo syncInfo = infos[i];
-						IResource peer;
-						if (resource.getName().equals(syncInfo.getName())) {
-							info = syncInfo;
-							peer = resource;
-						} else {
-							IPath path = new Path(syncInfo.getName());
-							if (syncInfo.isDirectory()) {
-								peer = parent.getFolder(path);
-							} else {
-								peer = parent.getFile(path);
-							}
-						}
-						// may create a phantom if the sibling resource does not exist.
-						setCachedResourceSync(peer, syncInfo);
-					}
-				}
-			}
+		if(info==null) {
+			info = getMetaResourceSyncForFolder(resource.getParent(), resource);
 		}
 		endOperation();
 		return info;
 	}
-	
+
 	/**
 	 * Removes the folder's and all children's folder sync information. This will essentially remove
 	 * all CVS knowledge from these resources.
@@ -178,7 +177,6 @@ public class EclipseSynchronizer {
 	 * Answers if the following resource is ignored
 	 */
 	public boolean isIgnored(IResource resource) {
-		// FIX ME!
 		return false;
 	}
 	
@@ -186,7 +184,6 @@ public class EclipseSynchronizer {
 	 * Adds a pattern or file name to be ignored in the current files directory.
 	 */
 	public void setIgnored(IResource resource, String pattern) throws CVSException {
-		// FIX ME!
 	}
 	
 	/**
@@ -201,11 +198,16 @@ public class EclipseSynchronizer {
 	 */
 	public IResource[] members(IContainer folder) throws CVSException {
 		try {
+			// initialize cache if needed, this will create phantoms
+			FolderSyncInfo info = getCachedFolderSync(folder);
+			if(info==null) {
+				getMetaResourceSyncForFolder(folder, null);
+			}
 			IResource[] children = folder.members(true);
 			List list = new ArrayList(children.length);
 			for (int i = 0; i < children.length; ++i) {
 				IResource child = children[i];
-				if (! child.isPhantom() || getCachedResourceSync(child) != null) {
+				if (!child.isPhantom() || getCachedResourceSync(child) != null) {
 					list.add(child);
 				}
 			}
@@ -229,20 +231,22 @@ public class EclipseSynchronizer {
 				while (it.hasNext()) {
 					IContainer folder = (IContainer) it.next();
 					FolderSyncInfo info = getCachedFolderSync(folder);
+					ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor(folder);
 					if (info != null) {
-						writeFolderConfig(folder, info);
+						SyncFileWriter.writeFolderConfig(cvsFolder, info);
 					} else {
-						deleteFolderConfig(folder);
+						SyncFileWriter.deleteFolderSync(cvsFolder);
 					}
 				}
 				it = changedResources.iterator();
 				while (it.hasNext()) {
 					IResource resource = (IResource) it.next();
 					ResourceSyncInfo info = getCachedResourceSync(resource);
+					ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
 					if (info != null) {
-						writeResourceSync(resource, info);
+						SyncFileWriter.writeResourceSync(cvsResource, info);
 					} else {
-						deleteResourceSync(resource);
+						SyncFileWriter.deleteSync(cvsResource);
 					}
 				}
 				
@@ -257,7 +261,7 @@ public class EclipseSynchronizer {
 		}
 	}
 	
-	private ISynchronizer getSynchronizer() {
+	private static ISynchronizer getSynchronizer() {
 		return ResourcesPlugin.getWorkspace().getSynchronizer();
 	}
 	
@@ -332,58 +336,36 @@ public class EclipseSynchronizer {
 		} catch(IOException e) {
 			throw CVSException.wrapException(e);
 		}
-	}
+	}	
 	
-	private FolderSyncInfo readFolderConfig(IContainer folder) throws CVSException {
-		//return SyncFileUtil.readFolderConfig(folder.getLocation().toFile());
-		return null;
-	}
-	
-	private void writeFolderConfig(IContainer folder, FolderSyncInfo info) throws CVSException {
-		/*
-		SyncFileUtil.writeFolderConfig(folder.getLocation().toFile(), info);
-		try { 
-			folder.refreshLocal(IResource.DEPTH_INFINITE, null);
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
+	/*
+	 * Reads and caches the ResourceSyncInfos for this folder. If target is non-null, then 
+	 * returns the ResourceSync for this resource is it is found.
+	 */
+	private ResourceSyncInfo getMetaResourceSyncForFolder(IContainer folder, IResource target) throws CVSException {
+		ResourceSyncInfo info = null;
+		if (folder!=null) {
+			ResourceSyncInfo[] infos = SyncFileWriter.readEntriesFile(CVSWorkspaceRoot.getCVSFolderFor(folder));
+			if (infos != null) {
+				for (int i = 0; i < infos.length; i++) {
+					ResourceSyncInfo syncInfo = infos[i];
+					IResource peer;
+					if (target!=null && target.getName().equals(syncInfo.getName())) {
+						info = syncInfo;
+						peer = target;
+					} else {
+						IPath path = new Path(syncInfo.getName());
+						if (syncInfo.isDirectory()) {
+							peer = folder.getFolder(path);
+						} else {
+							peer = folder.getFile(path);
+						}
+					}
+					// may create a phantom if the sibling resource does not exist.
+					setCachedResourceSync(peer, syncInfo);
+				}
+			}
 		}
-		*/
-	}
-	
-	private void deleteFolderConfig(IContainer folder) throws CVSException {
-		//SyncFileUtil.deleteSync(folder.getLocation().toFile());
-	}
-	
-	private ResourceSyncInfo[] readEntriesFile(IContainer folder) throws CVSException {
-		//return SyncFileUtil.readEntriesFile(folder.getLocation().toFile());
-		return null;
-	}
-	
-	private void writeResourceSync(IResource resource, ResourceSyncInfo info) throws CVSException {
-		/*
-		SyncFileUtil.writeResourceSync(resource.getLocation().toFile(), info);
-		try { 
-			resource.getParent().refreshLocal(IResource.DEPTH_INFINITE, null);
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}*/
-	}
-	
-	private void deleteResourceSync(IResource resource) throws CVSException {
-		/*
-		SyncFileUtil.deleteSync(resource.getLocation().toFile());
-		try { 
-			resource.getParent().refreshLocal(IResource.DEPTH_INFINITE, null);
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-		*/
-	}
-	
-	public static EclipseSynchronizer getInstance() {
-		if (instance == null) {
-			instance = new EclipseSynchronizer();			
-		}
-		return instance;
+		return info;
 	}
 }

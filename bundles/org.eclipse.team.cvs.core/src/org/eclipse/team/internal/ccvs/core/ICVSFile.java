@@ -37,6 +37,12 @@ public interface ICVSFile extends ICVSResource {
 	 * It is the responsibility of the caller to close the stream when finished.
  	 */
 	OutputStream getOutputStream() throws CVSException;
+	
+	/**
+	 * Gets an appending output stream for writing to the file.
+	 * It is the responsibility of the caller to close the stream when finished.
+ 	 */
+	OutputStream getAppendingOutputStream() throws CVSException;
 
 	/**
 	 * Sets the file's read-only permission.
