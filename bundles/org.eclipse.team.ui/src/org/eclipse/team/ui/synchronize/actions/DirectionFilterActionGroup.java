@@ -10,17 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.actions;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.actions.TextToolbarManager;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
+import org.eclipse.team.ui.Utilities;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionGroup;
@@ -28,9 +27,15 @@ import org.eclipse.ui.actions.ActionGroup;
 /**
  * This ActionGroup provides filtering of a sync set by change direction.
  * The actions are presented to the user as toolbar buttons where only one
- * button is active at a time
+ * button is active at a time.
+ * <p>
+ * When a modes changes a property change event is fired from the participant 
+ * with a value of <code>TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE</code>.
+ * 
+ * @see TeamSubscriberParticipant
+ * @since 3.0 
  */
-public class DirectionFilterActionGroup extends ActionGroup implements IPropertyChangeListener, ISyncSetChangedListener {
+public class DirectionFilterActionGroup extends ActionGroup implements IPropertyChangeListener {
 	
 	// An array of the selection actions for the modes (indexed by mode constant)	
 	private List actions = new ArrayList(3);
@@ -49,14 +54,12 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 		public DirectionFilterAction(String prefix,String commandId, int modeId) {
 			super("", AS_RADIO_BUTTON); //$NON-NLS-1$
 			this.modeId = modeId;
-			Utils.initAction(this, prefix);
+			Utilities.initAction(this, prefix, Policy.getBundle());
 			Action a = new Action() {
 				public void run() {
 					DirectionFilterAction.this.run();
 				}
 			};
-			//IKeyBindingService kbs = site.getKeyBindingService();
-			//Utils.registerAction(kbs, a, commandId);	//$NON-NLS-1$
 		}
 		public void run() {
 			// checkMode() is called because programatic checking of radio buttons doesn't 
@@ -70,14 +73,26 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 		}
 	}
 	
-	public DirectionFilterActionGroup(TeamSubscriberParticipant page, int supportedModes) {		
+	/**
+	 * Creates a direction filter group with the given supported modes. The
+	 * possible values for modes are defined by the {@link TeamSubscriberParticipant}
+	 * class.
+	 * 
+	 * @see TeamSubscriberParticipant#BOTH_MODE
+	 * @see TeamSubscriberParticipant#OUTGOING_MODE
+	 * @see TeamSubscriberParticipant#INCOMING_MODE
+	 * @see TeamSubscriberParticipant#CONFLICTING_MODE
+	 * @see TeamSubscriberParticipant#ALL_MODES
+	 * 
+	 * @param participant the participant showing this group 
+	 * @param supportedModes the modes to be shown
+	 */
+	public DirectionFilterActionGroup(TeamSubscriberParticipant participant, int supportedModes) {		
 		this.supportedModes = supportedModes;
-		this.page = page;
+		this.page = participant;
 		createActions();
-		page.addPropertyChangeListener(this);
-		page.getInput().registerListeners(this);
-		checkMode(page.getMode());
-		//updateStats();
+		participant.addPropertyChangeListener(this);
+		checkMode(participant.getMode());
 	}
 	
 	/**
@@ -126,17 +141,9 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
 	 */
 	public void fillToolBar(IToolBarManager toolBar) {
-		boolean custom = false;
-		if(toolBar instanceof TextToolbarManager) {
-			custom = true;
-		}
 		for (Iterator it = actions.iterator(); it.hasNext();) {
 			DirectionFilterAction action = (DirectionFilterAction) it.next();
-			if(custom) {
-				((TextToolbarManager)toolBar).add(action, 150);
-			} else {
 				toolBar.add(action);
-			}
 		}
 	}
 	
@@ -167,47 +174,5 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	public void dispose() {
 		// TODO Auto-generated method stub
 		super.dispose();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
-	 */
-	public void syncSetChanged(SyncSetChangedEvent event) {
-		//updateStats();		
-	}
-	
-	private void updateStats() {
-		SubscriberInput input = page.getInput();
-		SyncInfoStatistics workspaceSetStats = input.getSubscriberSyncSet().getStatistics();
-		SyncInfoStatistics workingSetSetStats = input.getWorkingSetSyncSet().getStatistics();
-		
-		int workspaceConflicting = (int)workspaceSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
-		int workspaceOutgoing = (int)workspaceSetStats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
-		int workspaceIncoming = (int)workspaceSetStats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
-		int workingSetConflicting = (int)workingSetSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
-		int workingSetOutgoing = (int)workingSetSetStats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
-		int workingSetIncoming = (int)workingSetSetStats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
-		
-		if(bothMode != null)
-		bothMode.setText(new Integer(input.getWorkingSetSyncSet().size()).toString());
-		if(input.getWorkingSet() != null) {
-			if(conflictsMode != null)
-				conflictsMode.setText(padString(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetConflicting).toString(), new Integer(workspaceConflicting).toString()))); //$NON-NLS-1$
-			if(incomingMode != null)
-				incomingMode.setText(padString(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString()))); //$NON-NLS-1$
-			if(outgoingMode != null)
-				outgoingMode.setText(padString(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetOutgoing).toString(), new Integer(workspaceOutgoing).toString()))); //$NON-NLS-1$
-		} else {
-			if(conflictsMode != null)
-				conflictsMode.setText(padString(new Integer(workspaceConflicting).toString())); //$NON-NLS-1$
-			if(incomingMode != null)
-				incomingMode.setText(padString(new Integer(workspaceIncoming).toString())); //$NON-NLS-1$
-			if(outgoingMode != null)
-				outgoingMode.setText(padString(new Integer(workspaceOutgoing).toString())); //$NON-NLS-1$
-		}								
-	}
-	
-	private String padString(String s) {		
-		return s;		
 	}
 }

@@ -26,7 +26,7 @@ public class StatusLineCLabelContribution extends ContributionItem {
 	private int charWidth;
 	private CLabel label;
 	private Image image;
-	private String text = "";
+	private String text = ""; //$NON-NLS-1$
 	private int widthHint = -1;
 	
 	public StatusLineCLabelContribution(String id) {

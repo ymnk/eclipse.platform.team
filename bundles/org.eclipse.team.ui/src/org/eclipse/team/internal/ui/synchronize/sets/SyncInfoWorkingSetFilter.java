@@ -124,5 +124,4 @@ public class SyncInfoWorkingSetFilter extends SyncInfoFilter {
 	public void setWorkingSet(IWorkingSet workingSet) {
 		this.workingSet = workingSet;
 	}
-
 }

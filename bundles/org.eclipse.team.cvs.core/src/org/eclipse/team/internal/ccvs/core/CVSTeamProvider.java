@@ -76,6 +76,7 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.MoveDeleteHook;
 import org.eclipse.team.internal.ccvs.core.util.PrepareForReplaceVisitor;
 import org.eclipse.team.internal.ccvs.core.util.ReplaceWithBaseVisitor;
+import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 import org.eclipse.team.internal.core.streams.CRLFtoLFInputStream;
 import org.eclipse.team.internal.core.streams.LFtoCRLFInputStream;
@@ -174,7 +175,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 	}
 	
 	public void deconfigured() {
-		CVSProviderPlugin.broadcastProjectDeconfigured(getProject());
+		ResourceStateChangeListeners.getListener().projectDeconfigured(getProject());
 	}
 	/**
 	 * @see IProjectNature#getProject()
@@ -648,7 +649,11 @@ public class CVSTeamProvider extends RepositoryProvider {
 		Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
 		session.open(Policy.subMonitorFor(progress,10), false /* read-only */);
 		try {
-			new PrepareForReplaceVisitor().visitResources(getProject(), resources, "CVSTeamProvider.scrubbingResource", depth, Policy.subMonitorFor(progress, 20)); //$NON-NLS-1$
+				ICVSResource[] cvsResources = new ICVSResource[resources.length];
+				for (int i = 0; i < cvsResources.length; i++) {
+					cvsResources[i] = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
+				}
+			new PrepareForReplaceVisitor().visitResources(getProject(), cvsResources, "CVSTeamProvider.scrubbingResource", depth, Policy.subMonitorFor(progress, 20)); //$NON-NLS-1$
 			
 			List options = new ArrayList();
 			options.add(Update.IGNORE_LOCAL_CHANGES);
@@ -1030,7 +1035,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 	}
 	
 	public void configureProject() throws CoreException {
-		CVSProviderPlugin.broadcastProjectConfigured(getProject());
+		ResourceStateChangeListeners.getListener().projectConfigured(getProject());
 	}
 	/**
 	 * Sets the keyword substitution mode for the specified resources.
@@ -1360,13 +1365,13 @@ public class CVSTeamProvider extends RepositoryProvider {
 					monitor.beginTask(null, 100);
 					Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true);
 					try {
-						session.open(Policy.subMonitorFor(monitor, 10), true /* open for modification */);
-					} catch (CVSException e1) {
-						// If the connection cannot be opened, just exit normally.
-						// The notifications will be sent when a connection can be made
-						return;
-					}
-					try {
+						try {
+							session.open(Policy.subMonitorFor(monitor, 10), true /* open for modification */);
+						} catch (CVSException e1) {
+							// If the connection cannot be opened, just exit normally.
+							// The notifications will be sent when a connection can be made
+							return;
+						}
 						Command.NOOP.execute(
 							session,
 							Command.NO_GLOBAL_OPTIONS, 
@@ -1377,6 +1382,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 					} catch (CVSException e) {
 						exception[0] = e;
 					} finally {
+						session.close();
 						monitor.done();
 					}
 				}

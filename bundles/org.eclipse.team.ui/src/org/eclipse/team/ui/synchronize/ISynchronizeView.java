@@ -14,11 +14,18 @@ import org.eclipse.ui.IViewPart;
 
 /**
  * A view that displays synchronization participants that are registered with the
- * synchronize manager.
+ * synchronize manager. This is essentially a generic container that allows
+ * multiple {@link ISynchronizeParticipant} implementations to share the same
+ * view. The only behavior provided by the view is a mechanism for switching 
+ * between participants.
+ * <p> 
+ * Clients should not add viewActions to this view because they will be global
+ * to all participants. Instead, add participant specific actions.
+ * </p>
  * <p>
  * Clients are not intended to implement this interface.
  * </p>
- * 
+ * @see ISynchronizeManager
  * @since 3.0
  */
 public interface ISynchronizeView extends IViewPart {

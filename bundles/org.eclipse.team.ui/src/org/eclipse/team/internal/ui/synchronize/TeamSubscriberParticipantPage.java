@@ -43,11 +43,19 @@ import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
+import org.eclipse.team.internal.ui.synchronize.actions.ComparisonCriteriaActionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.INavigableControl;
+import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
+import org.eclipse.team.internal.ui.synchronize.actions.OpenWithActionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.RefactorActionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.SyncViewerShowPreferencesAction;
+import org.eclipse.team.internal.ui.synchronize.actions.ToggleViewLayoutAction;
 import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetTableContentProvider;
 import org.eclipse.team.internal.ui.synchronize.views.SyncTableViewer;
 import org.eclipse.team.internal.ui.synchronize.views.SyncTreeViewer;
@@ -56,21 +64,10 @@ import org.eclipse.team.internal.ui.synchronize.views.SyncViewerSorter;
 import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
-import org.eclipse.team.ui.synchronize.actions.AndSyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.ComparisonCriteriaActionGroup;
-import org.eclipse.team.ui.synchronize.actions.INavigableControl;
-import org.eclipse.team.ui.synchronize.actions.NavigateAction;
-import org.eclipse.team.ui.synchronize.actions.OpenWithActionGroup;
-import org.eclipse.team.ui.synchronize.actions.PseudoConflictFilter;
-import org.eclipse.team.ui.synchronize.actions.RefactorActionGroup;
-import org.eclipse.team.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoChangeTypeFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoDirectionFilter;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncViewerShowPreferencesAction;
-import org.eclipse.team.ui.synchronize.actions.ToggleViewLayoutAction;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -220,6 +217,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		refactorActions.fillContextMenu(manager);
 		manager.add(new Separator());
 		manager.add(expandAll);
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
 	/**
@@ -465,12 +463,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		return ""; //$NON-NLS-1$
 	}
 	
-	/**
-	 * @param object
-	 * @return
-	 */
 	private IResource getResource(Object object) {
-		return (IResource)TeamAction.getAdapter(object, IResource.class);
+		return SyncSetContentProvider.getResource(object);
 	}
 
 	public void selectAll() {
@@ -576,11 +570,11 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		}
 		try {
 			input.setFilter(
-					new AndSyncInfoFilter(
+					new SyncInfoFilter.AndSyncInfoFilter(
 						new SyncInfoFilter[] {
-						   new SyncInfoDirectionFilter(modeFilter), 
-						   new SyncInfoChangeTypeFilter(new int[] {SyncInfo.ADDITION, SyncInfo.DELETION, SyncInfo.CHANGE}),
-						   new PseudoConflictFilter()
+						   new SyncInfoFilter.SyncInfoDirectionFilter(modeFilter), 
+						   new SyncInfoFilter.SyncInfoChangeTypeFilter(new int[] {SyncInfo.ADDITION, SyncInfo.DELETION, SyncInfo.CHANGE}),
+						   new SyncInfoFilter.PseudoConflictFilter()
 			}), new NullProgressMonitor());
 		} catch (TeamException e) {
 			Utils.handleError(getSite().getShell(), e, Policy.bind("SynchronizeView.16"), e.getMessage()); //$NON-NLS-1$

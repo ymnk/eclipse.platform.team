@@ -8,17 +8,21 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.actions;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.ISharedImages;
@@ -59,16 +63,29 @@ public class RefactorActionGroup extends ActionGroup {
 					IResource.PROJECT | IResource.FOLDER | IResource.FILE);
 
 		MenuManager menu = new MenuManager(Policy.bind("RefactorActionGroup.0")); //$NON-NLS-1$
-
+		IStructuredSelection convertedSelection = convertSelection(selection);
+		
 		if (anyResourceSelected) {
-			deleteAction.selectionChanged(selection);
+			deleteAction.selectionChanged(convertedSelection);
 			menu.add(deleteAction);
-			moveAction.selectionChanged(selection);
+			moveAction.selectionChanged(convertedSelection);
 			menu.add(moveAction);
-			renameAction.selectionChanged(selection);
+			renameAction.selectionChanged(convertedSelection);
 			menu.add(renameAction);
 		}
 		parentMenu.add(menu);
+	}
+
+	private IStructuredSelection convertSelection(IStructuredSelection selection) {
+		List resources = new ArrayList();
+		Iterator it = selection.iterator();
+		while(it.hasNext()) {
+			IResource resource = SyncSetContentProvider.getResource(it.next());
+			if(resource != null) {
+				resources.add(resource);
+			}
+		}
+		return new StructuredSelection(resources);
 	}
 
 	public void fillActionBars(IActionBars actionBars) {
@@ -121,6 +138,9 @@ public class RefactorActionGroup extends ActionGroup {
 			} else if (next instanceof IAdaptable) {
 				IAdaptable adaptable = (IAdaptable)next;
 				resource = (IResource)adaptable.getAdapter(IResource.class);
+			}
+			if(resource == null) {
+				resource = SyncSetContentProvider.getResource(next);
 			}
 			if (resource == null || (resource.getType() & resourceMask) == 0) {
 				return false;

@@ -24,7 +24,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.actions.INavigableControl;
+import org.eclipse.team.internal.ui.synchronize.actions.INavigableControl;
 
 /**
  * Subclass of TreeViewer which handles decorator events properly. We should not need to create 

@@ -19,20 +19,28 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.SyncInfoDirectionFilter;
 
+/**
+ * Convenience class for manipulating and searching sets of {@link SyncInfo} 
+ * instances.
+ * 
+ * @see SyncInfoFilter
+ * @since 3.0
+ */
 public class SyncInfoSet {
-
+	
 	Set set = new HashSet();
 	
-	public SyncInfoSet(SyncInfo[] resources) {
-		set.addAll(Arrays.asList(resources));
+	public SyncInfoSet(SyncInfo[] infos) {
+		set.addAll(Arrays.asList(infos));
 	}
 	/**
 	 * Returns true if there are any conflicting nodes in the set, and
 	 * false otherwise.
 	 */
 	public boolean hasConflicts() {
-		return hasNodes(new SyncInfoDirectionFilter(SyncInfo.CONFLICTING));
+		return hasNodes(new SyncInfoFilter.SyncInfoDirectionFilter(SyncInfo.CONFLICTING));
 	}
 	
 	/**
@@ -42,7 +50,7 @@ public class SyncInfoSet {
 	public boolean hasIncomingChanges() {
 		return hasNodes(new SyncInfoDirectionFilter(SyncInfo.INCOMING));
 	}
-
+	
 	/**
 	 * Returns true if this sync set has outgoing changes.
 	 * Note that conflicts are not considered to be outgoing changes.
@@ -55,7 +63,7 @@ public class SyncInfoSet {
 	 * Returns true if this sync set has auto-mergeable conflicts.
 	 */
 	public boolean hasAutoMergeableConflicts() {
-		return hasNodes(new AutomergableFilter());
+		return hasNodes(new SyncInfoFilter.AutomergableFilter());
 	}
 	
 	/**
@@ -90,7 +98,7 @@ public class SyncInfoSet {
 			}
 		}
 	}
-
+	
 	/**
 	 * Indicate whether the set has nodes matching the given filter
 	 */
@@ -168,22 +176,11 @@ public class SyncInfoSet {
 			removeResource(resource);
 		}
 	}	
-
-	private void removeResource(IResource resource) {
-		for (Iterator it = set.iterator(); it.hasNext();) {
-			SyncInfo node = (SyncInfo)it.next();
-			if (node.getLocal().equals(resource)) {
-				it.remove();
-				// short-circuit the operation once a match is found
-				return;
-			}
-		}
-	}
-
+	
 	public int size() {
 		return set.size();
 	}
-
+	
 	public SyncInfo getNodeFor(IResource resource) {
 		for (Iterator it = set.iterator(); it.hasNext();) {
 			SyncInfo node = (SyncInfo)it.next();
@@ -201,6 +198,17 @@ public class SyncInfoSet {
 			this.set.add(resource);
 		}
 		
+	}
+	
+	private void removeResource(IResource resource) {
+		for (Iterator it = set.iterator(); it.hasNext();) {
+			SyncInfo node = (SyncInfo)it.next();
+			if (node.getLocal().equals(resource)) {
+				it.remove();
+				// short-circuit the operation once a match is found
+				return;
+			}
+		}
 	}
 }
 

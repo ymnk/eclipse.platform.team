@@ -8,12 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.actions;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
 public interface INavigableControl {
 
 	/**
-	 * Direction to naviate
+	 * Direction to navigate
 	 */
 	final public static int NEXT = 1;
 	final public static int PREVIOUS = 2;
@@ -22,18 +22,4 @@ public interface INavigableControl {
 	 * Returns true if at end or beginning.
 	 */
 	boolean gotoDifference(int direction);
-	
-	/**
-	 * Preserve the selection for the given direction
-	 * filter.
-	 * @param the direction to preserve
-	 */
-	void preserveState(int direction);
-	
-	/**
-	 * Restore the selection and expansion for the 
-	 * given direction.
-	 * @param direction the direction to restore
-	 */
-	void restoreState(int direction);
 }

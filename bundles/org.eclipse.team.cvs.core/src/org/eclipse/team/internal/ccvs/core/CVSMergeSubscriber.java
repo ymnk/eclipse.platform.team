@@ -58,7 +58,7 @@ import org.eclipse.team.internal.core.SaveContext;
  */
 public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResourceChangeListener, ITeamResourceChangeListener {
 
-	private final static String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant";
+	private final static String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant"; //$NON-NLS-1$
 	public static final String UNIQUE_ID_PREFIX = "merge-"; //$NON-NLS-1$
 	
 	private CVSTag start, end;

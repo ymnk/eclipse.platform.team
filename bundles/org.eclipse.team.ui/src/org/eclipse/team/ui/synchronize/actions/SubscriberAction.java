@@ -23,12 +23,18 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
-import org.eclipse.team.ui.synchronize.ISynchronizeViewNode;
+import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
 import org.eclipse.ui.IViewActionDelegate;
 
 /**
- * This is the abstract superclass for actions associated with a subscriber. 
- * It is not necessary that subscriber actions be subclasses of this class.
+ * This is an abstract superclass for actions associated with a 
+ * {@link TeamSubscriberParticipant}. It provides helper methods to
+ * access and filter selections that contain {@link ITeamSubscriberParticipantNode} 
+ * instances.
+ * <p>
+ * It is optional for TeamSubscriberParticipant actions to subclass.
+ * </p>
+ * @since 3.0
  */
 public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate {
 	
@@ -60,8 +66,8 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		Set result = new HashSet();
 		for (int i = 0; i < selected.length; i++) {
 			Object object = selected[i];
-			if (object instanceof ISynchronizeViewNode) {
-				ISynchronizeViewNode syncResource = (ISynchronizeViewNode) object;
+			if (object instanceof ITeamSubscriberParticipantNode) {
+				ITeamSubscriberParticipantNode syncResource = (ITeamSubscriberParticipantNode) object;
 				SyncInfo[] infos = syncResource.getChildSyncInfos();
 				result.addAll(Arrays.asList(infos));
 			}
@@ -92,9 +98,6 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		return info != null && getSyncInfoFilter().select(info);
 	}
 
-	/**
-	 * @return
-	 */
 	protected SyncInfoFilter getSyncInfoFilter() {
 		return new SyncInfoFilter();
 	}
@@ -108,9 +111,6 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		List filtered = new ArrayList();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
-//			if(subscriber == null) {
-//				subscriber = info.getSubscriber();
-//}
 			if (select(info))
 				filtered.add(info);
 		}

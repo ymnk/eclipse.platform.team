@@ -34,8 +34,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.TeamPlugin;
-import org.eclipse.team.internal.core.target.TargetManager;
-import org.eclipse.team.internal.core.target.TargetProvider;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.ui.IObjectActionDelegate;
@@ -46,6 +44,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionDelegate;
 
 /**
@@ -68,6 +67,7 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	// pass one of these values to the run method.
 	public final static int PROGRESS_DIALOG = 1;
 	public final static int PROGRESS_BUSYCURSOR = 2;
+	public final static int PROGRESS_WORKBENCH_WINDOW = 3;
 
 	private IWorkbenchPart targetPart;
 
@@ -186,6 +186,16 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	final protected void run(final IRunnableWithProgress runnable, final String problemMessage, int progressKind) {
 		final Exception[] exceptions = new Exception[] {null};
 		switch (progressKind) {
+			case PROGRESS_WORKBENCH_WINDOW :
+				try {
+					PlatformUI.getWorkbench().getActiveWorkbenchWindow().run(true, true, runnable);
+				} catch (InterruptedException e1) {
+					exceptions[0] = null;
+					e1.printStackTrace();
+				} catch (InvocationTargetException e) {
+					exceptions[0] = e;
+				}
+				break;
 			case PROGRESS_BUSYCURSOR :
 				BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
 					public void run() {
@@ -300,37 +310,6 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 		Hashtable result = new Hashtable();
 		for (int i = 0; i < resources.length; i++) {
 			RepositoryProvider provider = RepositoryProvider.getProvider(resources[i].getProject());
-			List list = (List)result.get(provider);
-			if (list == null) {
-				list = new ArrayList();
-				result.put(provider, list);
-			}
-			list.add(resources[i]);
-		}
-		return result;
-	}
-	
-	/**
-	 * Convenience method that maps the selected resources to their target providers.
-	 * The returned Hashtable has keys which are TargetProviders, and values
-	 * which are Lists of IResources that are shared with that provider.
-	 * 
-	 * @return a hashtable mapping providers to their selected resources
-	 */
-	protected Hashtable getTargetProviderMapping() throws TeamException {
-		return getTargetProviderMapping(getSelectedResources());
-	}
-	/**
-	 * Convenience method that maps the given resources to their target providers.
-	 * The returned Hashtable has keys which are TargetProviders, and values
-	 * which are Lists of IResources that are shared with that provider.
-	 * 
-	 * @return a hashtable mapping providers to their resources
-	 */
-	protected Hashtable getTargetProviderMapping(IResource[] resources) throws TeamException {
-		Hashtable result = new Hashtable();
-		for (int i = 0; i < resources.length; i++) {
-			TargetProvider provider = TargetManager.getProvider(resources[i].getProject());
 			List list = (List)result.get(provider);
 			if (list == null) {
 				list = new ArrayList();

@@ -7,13 +7,19 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
+import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantPage;
-import org.eclipse.team.ui.synchronize.actions.RefreshAction;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.part.IPageBookViewPage;
 
+/**
+ * A synchronize participant that displays synchronization information for local
+ * resources that is managed via a {@link TeamSubscriber}.
+ *
+ * @since 3.0
+ */
 public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 	
 	private SubscriberInput input;
@@ -56,15 +62,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 */
 	public static final int TABLE_LAYOUT = 1;
 	
-	public static final String MB_MODESGROUP = TeamUIPlugin.ID + ".modes";
-	
 	public TeamSubscriberParticipant() {
 		super();
-	}
-	
-	protected void setSubscriber(TeamSubscriber subscriber) {
-		this.input = new SubscriberInput(subscriber);
-		this.currentMode = BOTH_MODE;
 	}
 	
 	/* (non-Javadoc)
@@ -77,10 +76,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public TeamSubscriberParticipantPage getPage() {
 		return page;
-	}
-	
-	public SubscriberInput getInput() {
-		return input;
 	}
 	
 	public void setMode(int mode) {
@@ -143,5 +138,14 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			refreshJob.setReschedule(true);
 			refreshJob.schedule(20000 /* 20 seconds */);
 		}
+	}
+	
+	protected SubscriberInput getInput() {
+		return input;
+	}
+	
+	protected void setSubscriber(TeamSubscriber subscriber) {
+		this.input = new SubscriberInput(subscriber);
+		this.currentMode = BOTH_MODE;
 	}
 }

@@ -25,9 +25,9 @@ import org.eclipse.ui.actions.ActionGroup;
 
 public class StatusLineContributionGroup extends ActionGroup implements ISyncSetChangedListener {
 	
-	private static final String INCOMING_ID = "org.eclipse.team.iu.statusline.incoming";
-	private static final String OUTGOING_ID = "org.eclipse.team.iu.statusline.outgoing";
-	private static final String CONFLICTING_ID = "org.eclipse.team.iu.statusline.conflicting";
+	private static final String INCOMING_ID = "org.eclipse.team.iu.statusline.incoming"; //$NON-NLS-1$
+	private static final String OUTGOING_ID = "org.eclipse.team.iu.statusline.outgoing"; //$NON-NLS-1$
+	private static final String CONFLICTING_ID = "org.eclipse.team.iu.statusline.conflicting"; //$NON-NLS-1$
 	
 	private StatusLineCLabelContribution incoming;
 	private StatusLineCLabelContribution outgoing;
@@ -36,16 +36,16 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	
 	public StatusLineContributionGroup(SubscriberInput input) {
 		super();
-		this.incoming = createStatusLineContribution(INCOMING_ID, "0", TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_INCOMING).createImage());
-		this.outgoing = createStatusLineContribution(OUTGOING_ID, "0", TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage());
-		this.conflicting = createStatusLineContribution(CONFLICTING_ID, "0", TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage());
+		this.incoming = createStatusLineContribution(INCOMING_ID, "0", TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_INCOMING).createImage()); //$NON-NLS-1$
+		this.outgoing = createStatusLineContribution(OUTGOING_ID, "0", TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage()); //$NON-NLS-1$
+		this.conflicting = createStatusLineContribution(CONFLICTING_ID, "0", TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage()); //$NON-NLS-1$
 		this.input = input;
 		input.registerListeners(this);
 	}
 	
 	private StatusLineCLabelContribution createStatusLineContribution(String id, String label, Image image) {
 		StatusLineCLabelContribution item = new StatusLineCLabelContribution(id, 15);
-		item.setText(Policy.bind("StatisticsPanel.outgoing"));
+		item.setText(Policy.bind("StatisticsPanel.outgoing")); //$NON-NLS-1$
 		if(image != null) {
 			item.setImage(image);
 			TeamUIPlugin.disposeOnShutdown(image);

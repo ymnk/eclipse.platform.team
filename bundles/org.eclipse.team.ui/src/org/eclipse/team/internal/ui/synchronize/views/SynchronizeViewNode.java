@@ -26,7 +26,7 @@ import org.eclipse.ui.IActionFilter;
  * <p>
  * @see org.eclipse.team.ui.sync.ISynchronizeViewNode
  */
-public class SynchronizeViewNode implements IAdaptable, IActionFilter, ISynchronizeViewNode {
+public class SynchronizeViewNode implements IAdaptable, IActionFilter, ITeamSubscriberParticipantNode {
 
 	private IResource resource;
 	private SubscriberInput input;
@@ -60,9 +60,6 @@ public class SynchronizeViewNode implements IAdaptable, IActionFilter, ISynchron
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
 	public Object getAdapter(Class adapter) {
-		if(adapter == IResource.class) {
-			return getResource();
-		}
 		if (adapter == SyncInfo.class) {
 			return getSyncInfo();
 		} 

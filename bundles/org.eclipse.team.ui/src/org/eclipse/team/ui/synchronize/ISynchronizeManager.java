@@ -14,10 +14,13 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.ui.IWorkbenchPage;
 
 /**
- * Manages synchronization view participants.
+ * Manages synchronization view participants. Clients can programatically add 
+ * or remove participants via this manager. Whereas static participants
+ * defined in a plugin.xml file are added automatically by the manager.
  * <p>
  * Clients are not intended to implement this interface.
  * </p>
+ * @see ISynchronizeParticipant
  * @since 3.0 
  */
 public interface ISynchronizeManager {

@@ -8,26 +8,26 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.actions;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.internal.ui.actions.TeamAction;
+import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.actions.ActionGroup;
-import org.eclipse.ui.actions.OpenFileAction;
 import org.eclipse.ui.actions.OpenWithMenu;
 import org.eclipse.ui.views.navigator.ResourceNavigatorMessages;
 
 /**
- * This is the action group for the open actions.
+ * This is the action group for the open actions. It contains open
+ * actions for 
  */
 public class OpenWithActionGroup extends ActionGroup {
 
-	private OpenFileAction openFileAction;
+	private OpenFileInSystemEditorAction openFileAction;
 	private OpenInCompareAction openInCompareAction;
 	private IViewPart part;
 
@@ -37,7 +37,7 @@ public class OpenWithActionGroup extends ActionGroup {
 	}
 
 	protected void makeActions() {
-		openFileAction = new OpenFileAction(part.getSite().getPage());
+		openFileAction = new OpenFileInSystemEditorAction(part.getSite().getPage());
 		openInCompareAction = new OpenInCompareAction(part);		
 	}
 
@@ -89,7 +89,7 @@ public class OpenWithActionGroup extends ActionGroup {
 	}
 	
 	private IResource getResource(Object obj) {
-		return (IResource)TeamAction.getAdapter(obj, IResource.class);
+		return SyncSetContentProvider.getResource(obj);
 	}
 
 	public void openInCompareEditor() {

@@ -193,4 +193,8 @@ public class Policy {
 			return "..." + stringPath.substring(index); //$NON-NLS-1$
 		}
 	}
+
+	public static ResourceBundle getBundle() {
+		return bundle;
+	}
 }

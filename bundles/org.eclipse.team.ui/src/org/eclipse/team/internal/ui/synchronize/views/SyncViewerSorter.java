@@ -12,7 +12,6 @@ package org.eclipse.team.internal.ui.synchronize.views;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
@@ -50,6 +49,6 @@ public class SyncViewerSorter extends ResourceSorter {
 	}
 	
 	protected IResource getResource(Object obj) {
-		return (IResource)TeamAction.getAdapter(obj, IResource.class);
+		return SyncSetContentProvider.getResource(obj);
 	}
 }

@@ -20,7 +20,6 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
@@ -30,7 +29,7 @@ import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
  * This class provides the contents for a StructuredViewer using a SyncSet as the model
  */
 public abstract class SyncSetContentProvider implements IStructuredContentProvider, ISyncSetChangedListener {
-
+	
 	protected Viewer viewer;
 	
 	protected SyncSet getSyncSet() {
@@ -52,7 +51,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
 	public void inputChanged(Viewer v, Object oldInput, Object newInput) {
-
+		
 		this.viewer = v;
 		SubscriberInput oldSubscriberInput = null;
 		SubscriberInput newSubscriberInput = null;
@@ -72,7 +71,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			}
 		}
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 	 */
@@ -87,7 +86,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			input.getFilteredSyncSet().removeSyncSetChangedListener(this);
 		}
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
@@ -102,7 +101,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			});
 		}
 	}
-
+	
 	/**
 	 * Update the viewer with the sync-set changes, aditions and removals
 	 * in the given event. This method is invoked from within the UI thread.
@@ -120,7 +119,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		}
 		viewer.getControl().setRedraw(true);
 	}
-
+	
 	/**
 	 * Update the viewer for the sync set changes in the provided event.
 	 * This method is invoked by <code>handleSyncSetChanges</code>.
@@ -137,7 +136,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			updateParentLabels(local);
 		}
 	}
-
+	
 	/**
 	 * Update the viewer for the sync set removals in the provided event.
 	 * This method is invoked by <code>handleSyncSetChanges</code>.
@@ -153,7 +152,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			updateParentLabels(resource);
 		}
 	}
-
+	
 	/**
 	 * Update the viewer for the sync set additions in the provided event.
 	 * This method is invoked by <code>handleSyncSetChanges</code>.
@@ -169,37 +168,9 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			updateParentLabels(resource);
 		}
 	}
-
+	
 	public StructuredViewer getViewer() {
 		return (StructuredViewer)viewer;
-	}
-	
-	/**
-	 * Return the IResource for the given model object that was returned by 
-	 * SyncSet#members(IResource). Return <code>null</code> if the given
-	 * object does not have a corresponding IResource.
-	 * 
-	 * @param element
-	 * @return
-	 */
-	public IResource getResource(Object obj) {
-		return (IResource)TeamAction.getAdapter(obj, IResource.class);
-	}
-	
-	/**
-	 * Return the sync kind for the given model object that was returned by 
-	 * SyncSet#members(IResource). If syncSet is null, then the 
-	 * sync kind for SyncContainers will always be 0.
-	 * 
-	 * @param element
-	 * @return
-	 */
-	public int getSyncKind(SyncSet syncSet, Object element) {
-		SyncInfo info = getSyncInfo(element);
-		if (info != null) {
-			return info.getKind();
-		}
-		return 0;
 	}
 	
 	/**
@@ -224,14 +195,47 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @param element
 	 * @return
 	 */
-	public SyncInfo getSyncInfo(Object element) {
+	public static SyncInfo getSyncInfo(Object element) {
 		if (element instanceof SyncInfo) {
 			return ((SyncInfo) element);
 		}  else if (element instanceof SynchronizeViewNode) {
 			SynchronizeViewNode syncResource = (SynchronizeViewNode)element;
 			return syncResource.getSyncInfo();
 		}
+		throw new NullPointerException();
+	}
+	
+	/**
+	 * Return the IResource for the given model object that was returned by 
+	 * SyncSet#members(IResource). Return <code>null</code> if the given
+	 * object does not have a corresponding IResource.
+	 * 
+	 * @param element
+	 * @return
+	 */
+	public static IResource getResource(Object obj) {
+		if (obj instanceof SyncInfo) {
+			return ((SyncInfo) obj).getLocal();
+		}  else if (obj instanceof SynchronizeViewNode) {
+			return ((SynchronizeViewNode)obj).getResource();
+		}
 		return null;
+	}
+	
+	/**
+	 * Return the sync kind for the given model object that was returned by 
+	 * SyncSet#members(IResource). If syncSet is null, then the 
+	 * sync kind for SyncContainers will always be 0.
+	 * 
+	 * @param element
+	 * @return
+	 */
+	public static int getSyncKind(Object element) {
+		SyncInfo info = getSyncInfo(element);
+		if (info != null) {
+			return info.getKind();
+		}
+		return SyncInfo.IN_SYNC;
 	}
 	
 	/**
@@ -248,7 +252,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		IContainer parent = resource.getParent();
 		return getModelObject(parent);
 	}
-
+	
 	/**
 	 * Return the model object for the given IResource.
 	 * @param resource
@@ -282,8 +286,8 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			parent = parent.getParent();
 		}
 		getViewer().update(
-			(SynchronizeViewNode[])parents.toArray(new SynchronizeViewNode[parents.size()]),
-			null 
-		);		
+				(SynchronizeViewNode[])parents.toArray(new SynchronizeViewNode[parents.size()]),
+				null 
+				);		
 	}
 }

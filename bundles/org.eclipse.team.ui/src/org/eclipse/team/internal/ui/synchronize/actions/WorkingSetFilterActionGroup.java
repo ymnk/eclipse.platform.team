@@ -39,8 +39,6 @@ import org.eclipse.ui.internal.WorkingSetComparator;
 public class WorkingSetFilterActionGroup extends ActionGroup {
 	public static final String CHANGE_WORKING_SET = "changeWorkingSet"; //$NON-NLS-1$
 	
-	private static final String SEPARATOR_ID = "workingSetGroupSeparator"; //$NON-NLS-1$
-
 	private IWorkingSet workingSet = null;
 	
 	private ClearWorkingSetAction clearWorkingSetAction;

@@ -8,9 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.actions;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -21,11 +24,15 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.actions.TeamAction;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
+import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.IWorkbenchPage;
 
 public class RefreshAction extends Action {
@@ -52,11 +59,19 @@ public class RefreshAction extends Action {
 		}					
 	}
 	
-	private IResource[] getResources(ISelection selection) {
+	private IResource[] getResources(IStructuredSelection selection) {
 		if(selection == null) {
 			return new IResource[0];
 		}
-		return (IResource[])TeamAction.getSelectedAdaptables(selection, IResource.class);					
+		List resources = new ArrayList();
+		Iterator it = selection.iterator();
+		while(it.hasNext()) {
+			IResource resource = SyncSetContentProvider.getResource(it.next());
+			if(resource != null) {
+				resources.add(resource);
+			}
+		}
+		return (IResource[]) resources.toArray(new IResource[resources.size()]);					
 	}
 	
 	public static void run(IResource[] resources, TeamSubscriber subscriber) {

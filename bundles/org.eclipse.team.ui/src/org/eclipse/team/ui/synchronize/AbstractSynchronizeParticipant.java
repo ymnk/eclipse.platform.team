@@ -23,8 +23,16 @@ import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.TeamUI;
 
-public abstract class AbstractSynchronizeParticipant implements ISynchronizeParticipant {
+/**
+ * AbstractSynchronizeParticipant is the abstract base class for all
+ * synchronize view participants. It provides default lifecycle support
+ * for participants.
+ * 
+ * @see ISynchronizeParticipant
+ * @since 3.0
+ */
 
+public abstract class AbstractSynchronizeParticipant implements ISynchronizeParticipant {
 	// property listeners
 	private ListenerList fListeners;
 
@@ -130,19 +138,6 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		return fName;
 	}
 
-	/**
-	 * Sets the name of this console to the specified value and notifies
-	 * property listeners of the change.
-	 * 
-	 * @param name
-	 *            the new name
-	 */
-	protected void setName(String name) {
-		String old = fName;
-		fName = name;
-		firePropertyChange(this, IBasicPropertyConstants.P_TEXT, old, name);
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -152,19 +147,6 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		return fImageDescriptor;
 	}
 
-	/**
-	 * Sets the image descriptor for this console to the specified value and
-	 * notifies property listeners of the change.
-	 * 
-	 * @param imageDescriptor
-	 *            the new image descriptor
-	 */
-	protected void setImageDescriptor(ImageDescriptor imageDescriptor) {
-		ImageDescriptor old = fImageDescriptor;
-		fImageDescriptor = imageDescriptor;
-		firePropertyChange(this, IBasicPropertyConstants.P_IMAGE, old, imageDescriptor);
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -172,10 +154,6 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 */
 	public QualifiedName getId() {
 		return fId;
-	}
-
-	protected void setId(QualifiedName id) {
-		this.fId = id;
 	}
 
 	/*
@@ -221,20 +199,6 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		notifier.notify(new PropertyChangeEvent(source, property, oldValue, newValue));
 	}
 
-	/**
-	 * Called when this console is added to the console manager. Default
-	 * implementation does nothing. Subclasses may override.
-	 */
-	protected void init() {
-	}
-
-	/**
-	 * Called when this console is removed from the console manager. Default
-	 * implementation does nothing. Subclasses may override.
-	 */
-	protected void dispose() {
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -259,5 +223,49 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		if (strIcon != null) {
 			fImageDescriptor = TeamImages.getImageDescriptorFromExtension(configElement.getDeclaringExtension(), strIcon);
 		}
+	}
+
+	/**
+	 * Sets the name of this console to the specified value and notifies
+	 * property listeners of the change.
+	 * 
+	 * @param name
+	 *            the new name
+	 */
+	protected void setName(String name) {
+		String old = fName;
+		fName = name;
+		firePropertyChange(this, IBasicPropertyConstants.P_TEXT, old, name);
+	}
+
+	/**
+	 * Called when this console is added to the console manager. Default
+	 * implementation does nothing. Subclasses may override.
+	 */
+	protected void init() {
+	}
+
+	/**
+	 * Called when this console is removed from the console manager. Default
+	 * implementation does nothing. Subclasses may override.
+	 */
+	protected void dispose() {
+	}
+	
+	protected void setId(QualifiedName id) {
+		this.fId = id;
+	}
+	
+	/**
+	 * Sets the image descriptor for this console to the specified value and
+	 * notifies property listeners of the change.
+	 * 
+	 * @param imageDescriptor
+	 *            the new image descriptor
+	 */
+	protected void setImageDescriptor(ImageDescriptor imageDescriptor) {
+		ImageDescriptor old = fImageDescriptor;
+		fImageDescriptor = imageDescriptor;
+		firePropertyChange(this, IBasicPropertyConstants.P_IMAGE, old, imageDescriptor);
 	}
 }
