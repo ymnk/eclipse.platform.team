@@ -43,7 +43,6 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
-import org.eclipse.team.internal.ccvs.core.util.AddDeleteMoveListener;
 import org.eclipse.team.internal.ccvs.ui.model.CVSAdapterFactory;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
@@ -55,7 +54,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 /**
  * UI Plugin for CVS provider-specific workbench functionality.
  */
-public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeListener {
+public class CVSUIPlugin extends AbstractUIPlugin {
 	/**
 	 * The id of the CVS plug-in
 	 */
@@ -99,7 +98,6 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 	public CVSUIPlugin(IPluginDescriptor descriptor) {
 		super(descriptor);
 		plugin = this;
-		getPreferenceStore().addPropertyChangeListener(this);
 	}
 
 	/**
@@ -173,7 +171,7 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 							}
 						} catch (CoreException coreEx) {
 							// Throw the original exception to the caller
-							log(coreEx.getStatus());
+							log(coreEx);
 							throw e;
 						}
 						firstTime = false;
@@ -324,7 +322,7 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 			try {
 				repositoryManager.startup();
 			} catch (TeamException e) {
-				CVSUIPlugin.log(e.getStatus());
+				CVSUIPlugin.log(e);
 			}
 		}
 		return repositoryManager;
@@ -382,8 +380,15 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 		getPlugin().getLog().log(status);
 	}
 
-	public static void log(TeamException e) {
-		getPlugin().getLog().log(new Status(e.getStatus().getSeverity(), CVSUIPlugin.ID, 0, Policy.bind("simpleInternal"), e));; //$NON-NLS-1$
+	public static void log(CoreException e) {
+		log(e.getStatus().getSeverity(), Policy.bind("simpleInternal"), e); //$NON-NLS-1$
+	}
+	
+	/**
+	 * Log the given exception along with the provided message and severity indicator
+	 */
+	public static void log(int severity, String message, Throwable e) {
+		log(new Status(severity, ID, 0, message, e));
 	}
 
 	// flags to tailor error reporting
@@ -456,7 +461,7 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 		if (status.isOK()) return status;
 		
 		// Log if the user requested it
-		if (log) CVSUIPlugin.log(status);
+		if (log) CVSUIPlugin.log(status.getSeverity(), status.getMessage(), exception);
 		
 		// Create a runnable that will display the error status
 		final String displayTitle = title;
@@ -555,7 +560,6 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 		store.setDefault(ICVSUIConstants.PREF_PRUNE_EMPTY_DIRECTORIES, CVSProviderPlugin.DEFAULT_PRUNE);
 		store.setDefault(ICVSUIConstants.PREF_TIMEOUT, CVSProviderPlugin.DEFAULT_TIMEOUT);
 		store.setDefault(ICVSUIConstants.PREF_CONSIDER_CONTENTS, false);
-		store.setDefault(ICVSUIConstants.PREF_SHOW_MARKERS, true);
 		store.setDefault(ICVSUIConstants.PREF_COMPRESSION_LEVEL, CVSProviderPlugin.DEFAULT_COMPRESSION_LEVEL);
 		store.setDefault(ICVSUIConstants.PREF_TEXT_KSUBST, CVSProviderPlugin.DEFAULT_TEXT_KSUBST_OPTION.toMode());
 		store.setDefault(ICVSUIConstants.PREF_REPLACE_UNMANAGED, true);
@@ -598,7 +602,6 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 		CVSProviderPlugin.getPlugin().setCvsRshParameters(store.getString(ICVSUIConstants.PREF_CVS_RSH_PARAMETERS));
 		CVSProviderPlugin.getPlugin().setCvsServer(store.getString(ICVSUIConstants.PREF_CVS_SERVER));
 		CVSProviderPlugin.getPlugin().setQuietness(CVSPreferencesPage.getQuietnessOptionFor(store.getInt(ICVSUIConstants.PREF_QUIETNESS)));
-		CVSProviderPlugin.getPlugin().setShowTasksOnAddAndDelete(store.getBoolean(ICVSUIConstants.PREF_SHOW_MARKERS));
 		CVSProviderPlugin.getPlugin().setCompressionLevel(store.getInt(ICVSUIConstants.PREF_COMPRESSION_LEVEL));
 		CVSProviderPlugin.getPlugin().setReplaceUnmanaged(store.getBoolean(ICVSUIConstants.PREF_REPLACE_UNMANAGED));
 		CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(KSubstOption.fromMode(store.getString(ICVSUIConstants.PREF_TEXT_KSUBST)));
@@ -644,22 +647,4 @@ public class CVSUIPlugin extends AbstractUIPlugin implements IPropertyChangeList
 		Console.shutdown();
 	}
 	
-	/**
-	 * @see IPropertyChangeListener#propertyChange(PropertyChangeEvent)
-	 */
-	public void propertyChange(PropertyChangeEvent event) {
-		try {
-			String property = event.getProperty();
-			if (property.equals(ICVSUIConstants.PREF_SHOW_MARKERS)) {
-				boolean b = getPreferenceStore().getBoolean(ICVSUIConstants.PREF_SHOW_MARKERS);
-				if (b) {
-					AddDeleteMoveListener.refreshAllMarkers();
-				} else {
-					AddDeleteMoveListener.clearAllCVSMarkers();
-				}
-			}
-		} catch (CoreException e) {
-			log(e.getStatus());
-		}
-	}
 }

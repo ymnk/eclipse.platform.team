@@ -9,7 +9,8 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.model;
- 
+
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -29,7 +30,7 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	CVSTag tag;
 	ICVSRepositoryLocation root;
-	
+
 	/**
 	 * Create a branch tag
 	 */
@@ -41,39 +42,43 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 		return root;
 	}
 	public Object getAdapter(Class adapter) {
-		if (adapter == IWorkbenchAdapter.class) return this;
+		if (adapter == IWorkbenchAdapter.class)
+			return this;
 		return null;
 	}
 	public CVSTag getTag() {
 		return tag;
 	}
 	public boolean equals(Object o) {
-		if (!(o instanceof CVSTagElement)) return false;
-		CVSTagElement t = (CVSTagElement)o;
-		if (!tag.equals(t.tag)) return false;
+		if (!(o instanceof CVSTagElement))
+			return false;
+		CVSTagElement t = (CVSTagElement) o;
+		if (!tag.equals(t.tag))
+			return false;
 		return root.equals(t.root);
 	}
 	public int hashCode() {
 		return root.hashCode() ^ tag.hashCode();
 	}
-	
+
 	/**
 	 * @see org.eclipse.team.internal.ccvs.ui.model.CVSModelElement#internalGetChildren(java.lang.Object, org.eclipse.ui.IWorkingSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public Object[] internalGetChildren(Object o, IWorkingSet set, IProgressMonitor monitor) throws TeamException {
 		ICVSRemoteResource[] children = CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
-		if (set != null)	
+		if (set != null)
 			children = CVSUIPlugin.getPlugin().getRepositoryManager().filterResources(set, children);
 		return children;
 	}
-	
+
 	/**
 	 * Return children of the root with this tag.
 	 */
-	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
+	public Object[] internalGetChildren(Object o, IProgressMonitor monitor)
+		throws TeamException {
 		return internalGetChildren(o, null, monitor);
 	}
-	
+
 	/**
 	 * @see org.eclipse.team.internal.ccvs.ui.model.CVSModelElement#isRemoteElement()
 	 */
@@ -81,23 +86,28 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 		return true;
 	}
 	public ImageDescriptor getImageDescriptor(Object object) {
-		if (!(object instanceof CVSTagElement)) return null;
+		if (!(object instanceof CVSTagElement))
+			return null;
 		if (tag.getType() == CVSTag.BRANCH || tag.getType() == CVSTag.HEAD) {
-			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_TAG);
+			return CVSUIPlugin.getPlugin().getImageDescriptor(
+				ICVSUIConstants.IMG_TAG);
 		} else if (tag.getType() == CVSTag.VERSION) {
-			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION);
+			return CVSUIPlugin.getPlugin().getImageDescriptor(
+				ICVSUIConstants.IMG_PROJECT_VERSION);
 		} else {
 			// This could be a Date tag
 			return null;
 		}
 	}
 	public String getLabel(Object o) {
-		if (!(o instanceof CVSTagElement)) return null;
-		return ((CVSTagElement)o).tag.getName();
+		if (!(o instanceof CVSTagElement))
+			return null;
+		return ((CVSTagElement) o).tag.getName();
 	}
 	public Object getParent(Object o) {
-		if (!(o instanceof CVSTagElement)) return null;
-		return ((CVSTagElement)o).root;
+		if (!(o instanceof CVSTagElement))
+			return null;
+		return ((CVSTagElement) o).root;
 	}
 
 	public boolean isDeferred() {
@@ -107,40 +117,29 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.model.CVSModelElement#getChildrenDeferred(org.eclipse.team.internal.ccvs.ui.model.RemoteContentProvider, java.lang.Object, org.eclipse.ui.IWorkingSet)
 	 */
-	public void getChildrenDeferred(
-		final RemoteContentProvider provider,
-		final Object parent,
-		final IWorkingSet set) {
-
-		// Creat ea job
+	public void getChildrenDeferred(final RemoteContentProvider provider, final Object parent, final IWorkingSet set) {
+		final String familyName = "org.eclipse.team.cvs.ui";
+		Platform.getJobManager().cancel(familyName);
+		// Create a job
 		Job job = new Job() {
 			public IStatus run(IProgressMonitor monitor) {
-				ICVSRemoteResource[] children;
+				ICVSRemoteResource[] children = new ICVSRemoteResource[0];
 				try {
-					children = CVSUIPlugin
-						.getPlugin()
-						.getRepositoryManager()
-						.getFoldersForTag(
-						root,
-						tag,
-						monitor);
-				} catch (CVSException e) {
-					// TODO: Not quite right
-					return e.getStatus();
+					children = (ICVSRemoteResource[])internalGetChildren(root, set, monitor);
+				} catch (TeamException e) {
+					// Concurrency: what to do about an exception?
 				}
-				if (set != null) {
-					children =
-						CVSUIPlugin
-							.getPlugin()
-							.getRepositoryManager()
-							.filterResources(
-							set,
-							children);
-				}
-				provider.addChildren(parent, children);
+				provider.addChildren(parent, children, monitor);
 				return Status.OK_STATUS;
 			}
-		};
+			
+			/* (non-Javadoc)
+			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.String)
+			 */
+			public boolean isMatching(String family) {
+				return family.equals(familyName);
+			}
+		};		
 		job.schedule();
 	}
 }

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.repo;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -114,7 +115,6 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 		drillPart = new DrillDownAdapter(viewer);
 		
 		contributeActions();
-
 		initializeListeners();
 
 		// F1 Help
@@ -376,7 +376,11 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 	
 	public void collapseAll() {
 		if (viewer == null) return;
-		viewer.getControl().setRedraw(false);		
+		viewer.getControl().setRedraw(false);
+		
+		final String familyName = "org.eclipse.team.cvs.ui";
+		Platform.getJobManager().cancel(familyName);		
+		
 		viewer.collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
 		viewer.getControl().setRedraw(true);
 	}
