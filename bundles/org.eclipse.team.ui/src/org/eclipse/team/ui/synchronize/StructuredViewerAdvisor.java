@@ -111,7 +111,7 @@ public abstract class StructuredViewerAdvisor {
 	 */
 	public StructuredViewerAdvisor(ISynchronizePageConfiguration configuration) {
 		this.configuration = configuration;
-		configuration.setProperty(ISynchronizePageConfiguration.P_ADVISOR, this);
+		configuration.setProperty(SynchronizePageConfiguration.P_ADVISOR, this);
 	}
 		
 	/**
@@ -271,11 +271,12 @@ public abstract class StructuredViewerAdvisor {
 	 * @see SynchronizeModelElementLabelProvider
 	 */
 	protected ILabelProvider getLabelProvider() {
-		Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_LABEL_PROVIDER);
-		if (o instanceof ILabelProvider) {
-			return (ILabelProvider)o;
+		ILabelProvider provider = new SynchronizeModelElementLabelProvider();
+		ILabelDecorator[] decorators = (ILabelDecorator[])getConfiguration().getProperty(ISynchronizePageConfiguration.P_LABEL_DECORATORS);
+		if (decorators == null) {
+			return provider;
 		}
-		return new SynchronizeModelElementLabelProvider();
+		return new DecoratingColorLabelProvider(provider, decorators);
 	}
 
 	/**

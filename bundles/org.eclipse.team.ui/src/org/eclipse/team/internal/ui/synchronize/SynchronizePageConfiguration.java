@@ -38,7 +38,15 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 	 */
 	public static final String P_MODEL = TeamUIPlugin.ID  + ".P_MODEL"; //$NON-NLS-1$
 	
-	
+	/**
+	 * Property constant for the page's viewer advisor which is 
+	 * an instance of <code>StructuredViewerAdvisor</code>.
+	 * The page's viewer can be obtained from the advisor.
+	 * This property can be queried by clients but should not be
+	 * set.
+	 */
+	public static final String P_ADVISOR = TeamUIPlugin.ID  + ".P_ADVISOR"; //$NON-NLS-1$
+
 	/**
 	 * The hidden configuration property that opens the current selection in the
 	 * page. The registered <code>IAction</code> is invoked on a single or
@@ -63,7 +71,6 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 		setProperty(P_CONTEXT_MENU, DEFAULT_CONTEXT_MENU);
 		setProperty(P_TOOLBAR_MENU, DEFAULT_TOOLBAR_MENU);
 		setProperty(P_VIEW_MENU, DEFAULT_VIEW_MENU);
-		setProperty(P_LABEL_PROVIDER, new SynchronizeModelElementLabelProvider());
 		addActionContribution(new DefaultSynchronizePageActions());
 	}
 	
@@ -353,7 +360,21 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#addLabelDecorator(org.eclipse.jface.viewers.ILabelDecorator)
 	 */
 	public void addLabelDecorator(ILabelDecorator decorator) {
-		// TODO Auto-generated method stub
+		ILabelDecorator[] decorators = (ILabelDecorator[])getProperty(P_LABEL_DECORATORS);
+		if (decorator == null) {
+			decorators = new ILabelDecorator[0];
+		}
+		// Ensure we don't have it registered already
+		for (int i = 0; i < decorators.length; i++) {
+			ILabelDecorator d = decorators[i];
+			if (d == decorator) {
+				return;
+			}
+		}
+		ILabelDecorator[] newDecorators = new ILabelDecorator[decorators.length + 1];
+		System.arraycopy(decorators, 0, newDecorators, 0, decorators.length);
+		newDecorators[decorators.length] = decorator;
+		setProperty(P_LABEL_DECORATORS, newDecorators);
 	}
 
 	/**

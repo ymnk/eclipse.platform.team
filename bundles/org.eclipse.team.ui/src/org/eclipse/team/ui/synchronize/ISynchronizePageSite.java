@@ -34,34 +34,50 @@ import org.eclipse.ui.*;
 public interface ISynchronizePageSite {
 
 	/**
-	 * @return
+	 * Return the workbench site for the page
+	 * or <code>null</code> if a workbench site is not available (e.g. if
+	 * the page is being shown in a dialog). 
+	 * @return the workbench site for the page or <code>null</code>
 	 */
 	IWorkbenchSite getWorkbenchSite();
 	
+	/**
+	 * Return the workbench part for the page
+	 * or <code>null</code> if a workbench part is not available (e.g. if
+	 * the page is being shown in a dialog). 
+	 * @return the workbench part for the page or <code>null</code>
+	 */
 	IWorkbenchPart getPart();
 	
 	/**
-	 * @return
+	 * Returns the shell for this site.
+	 * @return the shell for this site
 	 */
 	Shell getShell();
 
 	/**
-	 * @return
+	 * Get the selection provider that gives access to the selection
+	 * of the synchronize page associated with this page site.
+	 * @return the selection provider for the page
 	 */
 	ISelectionProvider getSelectionProvider();
 
 	/**
-	 * @param viewer
+	 * Sets the selection provider for this workbench site.
+	 * @param provider the selection provider, or <code>null</code> to clear it
 	 */
 	void setSelectionProvider(ISelectionProvider provider);
 
 	/**
-	 * @return
+	 * Get the keybinding service for the site or <code>null</code>
+	 * if one is not available.
+	 * @return the keybinding service for the site or <code>null</code>
+	 * if one is not available
 	 */
 	IKeyBindingService getKeyBindingService();
 
 	/**
-	 * 
+	 * Give the page focus.
 	 */
 	void setFocus();
 

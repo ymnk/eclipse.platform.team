@@ -15,7 +15,38 @@ import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.ui.actions.ActionGroup;
 
 /**
- * 
+ * Used to add one or more actions to the context menu, toolbar or view menu 
+ * of an {@link ISynchronizePage}. An action group is added to a synchronize
+ * page by adding the group to the {@link ISynchronizePageConfiguration} after
+ * configuration has been created by the page but before the page is created. 
+ * <p>
+ * The life cycle of an action group is:
+ * <ul>
+ * <li>the <code>initialize(ISynchronizePageConfiguration}</code> method is
+ * invoked before the methods to populate menus. This is done to give clients 
+ * a change to create and initialize the actions of the action group.
+ * <li>The <code>fillActionBars(IActionBars)</code> method is invoked
+ * to populate the page's action bars (view menu and toolbar). It is
+ * possible for the action bars to be missing one or more components
+ * so clients are expected to check for <code>null</code> when accessing
+ * the menus from the action bars.
+ * <li>The <code>fillContextMenu(IMenuManager)</code> method is invoked each time
+ * the context menu is shown. Before this method is called, the 
+ * action group will be provided with an <code>ActionContext</code>
+ * containing the view selection. Clients can access the context using
+ * <code>getContext()</code>.
+ * <li>The <code>updateActionBars()</code> method is invoked whenever the
+ * page's selection changes. Before this method is called, the 
+ * action group will be provided with an <code>ActionContext</code>
+ * containing the view selection. Clients can access the context using
+ * <code>getContext()</code>.
+ * <li>The <code>modelChanged(ISynchronizeModelElement)</code> method is
+ * invoked whenever the model being displayed is changed. This gives clients
+ * a chance to adjust the input to actions that operate on all visible elements.
+ * <li>The <code>dispose()</code> method is called when the page is disposed.
+ * </ul>
+ * <p>
+ * TODO: Describe menu configuration and adding actions to groups
  * @since 3.0
  */
 public abstract class SynchronizePageActionGroup extends ActionGroup {

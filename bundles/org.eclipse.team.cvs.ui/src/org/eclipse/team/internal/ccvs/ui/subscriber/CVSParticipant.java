@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -25,10 +24,9 @@ import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
  */
 public class CVSParticipant extends SubscriberParticipant {
 	
-	private static class CVSLabelDecorator extends LabelProvider implements ILabelDecorator, IPropertyChangeListener  {
-		ISynchronizePageConfiguration configuration;
+	private static class CVSLabelDecorator extends AbstractSynchronizeLabelDecorator implements IPropertyChangeListener  {
 		public CVSLabelDecorator(ISynchronizePageConfiguration configuration) {
-			this.configuration = configuration;
+			super(configuration);
 			// Listen for decorator changed to refresh the viewer's labels.
 			CVSUIPlugin.addPropertyChangeListener(this);
 		}
@@ -58,13 +56,7 @@ public class CVSParticipant extends SubscriberParticipant {
 		public void propertyChange(PropertyChangeEvent event) {
 			String property = event.getProperty();
 			if(property.equals(CVSUIPlugin.P_DECORATORS_CHANGED)) {
-				StructuredViewerAdvisor advisor 
-					= (StructuredViewerAdvisor)configuration
-						.getProperty(ISynchronizePageConfiguration.P_ADVISOR);
-				if (advisor == null) return;
-				StructuredViewer viewer = advisor.getViewer();
-				if (viewer == null) return;
-				viewer.refresh(true /* update labels */);
+				refreshLabels();
 			}
 		}
 		public void dispose() {
@@ -76,10 +68,7 @@ public class CVSParticipant extends SubscriberParticipant {
 	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
-		ILabelProvider provider = (ILabelProvider)configuration.getProperty(ISynchronizePageConfiguration.P_LABEL_PROVIDER);
-		configuration.setProperty(
-				ISynchronizePageConfiguration.P_LABEL_PROVIDER,
-				new DecoratingColorLabelProvider(provider, 
-						new CVSLabelDecorator(configuration)));
+		// The decorator adds itself to the configuration
+		new CVSLabelDecorator(configuration);
 	}
 }

@@ -15,35 +15,34 @@ import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
+/**
+ * Configures the model, actions and label decorations of an 
+ * {@link ISynchronizePage}. Clients can
+ * <ul> 
+ * <li>set properties to affect the page contents and react to property changes
+ * <li>add and configure the actions available to the user (context menu,
+ * toolbar and view menu)
+ * </ul>
+ * 
+ * This interface is not intended to be implemented by clients.
+ * 
+ * @since 3.0
+ */
 public interface ISynchronizePageConfiguration {
-
-	/**
-	 * Property constant for the page's viewer advisor which is 
-	 * an instance of <code>StructuredViewerAdvisor</code>.
-	 * The page's viewer can be obtained from the advisor.
-	 * This property can be queried by clients but should not be
-	 * set.
-	 */
-	public static final String P_ADVISOR = TeamUIPlugin.ID  + ".P_ADVISOR"; //$NON-NLS-1$
-
-	/**
-	 * Property constant for the <code>SyncInfoSet</code> that was used 
-	 * to populate the model (P_MODEL). This property can be queried by 
-	 * clients but should not be set.
-	 */
-	public static final String P_SYNC_INFO_SET = TeamUIPlugin.ID  + ".P_SYNC_INFO_SET"; //$NON-NLS-1$
 	
 	/**
-	 * Property constant for the label provider that is used by the 
-	 * page's viewer. Clients who wish to add custom labels should 
-	 * obtain any previously registered provider using 
-	 * <code>getProperty(P_LABEL_PROVIDER)</code>
-	 * and wrap the returned provider (which is an instance of
-	 * <code>ILabelProvider</code>).
-	 * 
-	 * TODO: Should this be a decorator?
+	 * Property constant for the <code>SyncInfoSet</code> that is being 
+	 * displayed by the page.
 	 */
-	public static final String P_LABEL_PROVIDER = TeamUIPlugin.ID  + ".P_LABEL_PROVIDER"; //$NON-NLS-1$
+	public static final String P_SYNC_INFO_SET = TeamUIPlugin.ID  + ".P_SYNC_INFO_SET"; //$NON-NLS-1$
+		
+	/**
+	 * Property constant for the list of label decorators 
+	 * (instance of <code>ILabelDecorator[]</code>) that will be 
+	 * applied to the text and image from the label provider.
+	 */
+	public static final String P_LABEL_DECORATORS = TeamUIPlugin.ID  + ".P_LABEL_DECORATORS"; //$NON-NLS-1$
+
 	
 	/**
 	 * Property constant that defines the groups in the toolbar 

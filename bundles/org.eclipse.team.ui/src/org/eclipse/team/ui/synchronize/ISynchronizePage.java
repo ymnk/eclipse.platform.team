@@ -23,7 +23,9 @@ import org.eclipse.ui.PartInitException;
  * The page is given this context in addition to the 
  * {@link org.eclipse.ui.part.IPageSite}
  * provided when the page is used in a view. However, the page site
- * may not be provided when the page appears in an editor or dialog.
+ * may not be provided when the page appears in an editor or dialog
+ * while the <code>ISynchronizePageSite</code> is still provided in these
+ * cases.
  */
 public interface ISynchronizePage {
 	
