@@ -22,7 +22,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.CVSProvider;
-import org.eclipse.team.internal.ccvs.core.Client;
+import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.resources.CVSEntryLineTag;
 import org.eclipse.team.internal.ccvs.core.resources.FolderSyncInfo;
@@ -108,7 +108,7 @@ public class ConfigurationWizard extends ConnectionWizard implements IConfigurat
 							}
 							
 							// Associate project with provider
-							ICVSFolder folder = (ICVSFolder)Client.getManagedResource(project);
+							ICVSFolder folder = (ICVSFolder)Session.getManagedResource(project);
 							FolderSyncInfo info = folder.getFolderSyncInfo();
 							CVSTag tag = null;
 							if (info != null) {
@@ -146,7 +146,7 @@ public class ConfigurationWizard extends ConnectionWizard implements IConfigurat
 							if (validate) {
 								// Do the validation right now
 								try {
-									location.validateConnection();
+									location.validateConnection(new NullProgressMonitor()); // FIXME
 								} catch (TeamException e) {
 									if (created)
 										CVSProviderPlugin.getProvider().disposeRepository(location);
@@ -221,7 +221,7 @@ public class ConfigurationWizard extends ConnectionWizard implements IConfigurat
 		// Determine if there is an existing CVS/ directory from which configuration
 		// information can be retrieved.
 		try {
-			ICVSFolder folder = (ICVSFolder)Client.getManagedResource(project);
+			ICVSFolder folder = (ICVSFolder)Session.getManagedResource(project);
 			FolderSyncInfo info = folder.getFolderSyncInfo();
 			if (info == null) return;
 			ICVSRepositoryLocation location = CVSProviderPlugin.getProvider().getRepository(info.getRoot());
