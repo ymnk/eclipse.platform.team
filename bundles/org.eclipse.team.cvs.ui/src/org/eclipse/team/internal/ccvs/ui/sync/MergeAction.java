@@ -263,14 +263,18 @@ abstract class MergeAction extends Action {
 	 * the folder if it doesn't contain any real changes
 	 */
 	private void removeLocallyDeletedFolder(ChangedTeamContainer container) {
-		if (hasRealChanges(container, new int[] { ITeamNode.CONFLICTING, ITeamNode.INCOMING })) {
+		boolean hasIncoming = hasRealChanges(container, new int[] { ITeamNode.INCOMING });
+		boolean hasOutgoing = hasRealChanges(container, new int[] { ITeamNode.OUTGOING });
+		boolean hasConflicting = hasRealChanges(container, new int[] { ITeamNode.CONFLICTING });
+		IDiffContainer parent = container.getParent();
+		if (hasConflicting || (hasOutgoing && hasIncoming)) {
 			// Leave as a conflict
 			return;
-		}
-		IDiffContainer parent = container.getParent();
-		if (hasRealChanges(container, new int[] { ITeamNode.OUTGOING })) {
+		} else if (hasOutgoing) {
 			// Convert to an outgoing deletion
 			container.setKind(ITeamNode.OUTGOING | Differencer.DELETION);
+		} else if (hasIncoming) {
+			container.setKind(ITeamNode.INCOMING | Differencer.ADDITION);
 		} else {
 			// The folder is empty, remove it
 			if (parent != null) {

@@ -225,23 +225,24 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 		// The parent must be managed
 		if (! local.getParent().isCVSFolder())
 			return;
-			
+		
+		// If the folder already has CVS info, check that the remote and local match
+		if(local.isManaged() && local.isCVSFolder()) {
+			// Verify that the root and repository are the same
+			FolderSyncInfo remoteInfo = remote.getFolderSyncInfo();
+			FolderSyncInfo localInfo = local.getFolderSyncInfo();
+			if ( ! localInfo.getRoot().equals(remoteInfo.getRoot())) {
+				throw new CVSException(Policy.bind("CVSRemoteSyncElement.rootDiffers", new Object[] {local.getName(), remoteInfo.getRoot(), localInfo.getRoot()}));//$NON-NLS-1$
+			} else if ( ! localInfo.getRepository().equals(remoteInfo.getRepository())) {
+				throw new CVSException(Policy.bind("CVSRemoteSyncElement.repositoryDiffers", new Object[] {local.getName(), remoteInfo.getRepository(), localInfo.getRepository()}));//$NON-NLS-1$
+			}
+			// The folders are in sync so just return
+			return;
+		}
+		
+		// Ensure that the folder exists locally
 		if (! local.exists()) {
 			local.mkdir();
-		} else {
-			// If the folder already has CVS info, check that the remote and local match
-			if(local.isManaged() && local.isCVSFolder()) {
-				// Verify that the root and repository are the same
-				FolderSyncInfo remoteInfo = remote.getFolderSyncInfo();
-				FolderSyncInfo localInfo = local.getFolderSyncInfo();
-				if ( ! localInfo.getRoot().equals(remoteInfo.getRoot())) {
-					throw new CVSException(Policy.bind("CVSRemoteSyncElement.rootDiffers", new Object[] {local.getName(), remoteInfo.getRoot(), localInfo.getRoot()}));//$NON-NLS-1$
-				} else if ( ! localInfo.getRepository().equals(remoteInfo.getRepository())) {
-					throw new CVSException(Policy.bind("CVSRemoteSyncElement.repositoryDiffers", new Object[] {local.getName(), remoteInfo.getRepository(), localInfo.getRepository()}));//$NON-NLS-1$
-				}
-				// The folders are in sync so just return
-				return;
-			}
 		}
 		
 		// Since the parent is managed, this will also set the resource sync info. It is

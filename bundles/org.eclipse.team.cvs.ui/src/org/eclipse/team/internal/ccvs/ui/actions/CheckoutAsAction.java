@@ -50,13 +50,16 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 		
 		// Fetch the members of the folder to see if they contain a .project file.
 		final boolean[] hasProjectMetaFile = new boolean[] { false };
+		final boolean[] errorOccured = new boolean[] { false };
 		run(new WorkspaceModifyOperation() {
 			public void execute(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
 				try {
 					folders[0].members(monitor);
 				} catch (TeamException e) {
+					errorOccured[0] = true;
 					throw new InvocationTargetException(e);
 				}
+				// Check for the existance of the .project file
 				try {
 					folders[0].getFile(".project");
 					hasProjectMetaFile[0] = true;
@@ -64,8 +67,19 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 					// We couldn't retrieve the meta file so assume it doesn't exist
 					hasProjectMetaFile[0] = false;
 				}
+				// If the above failed, look for the old .vcm_meta file
+				if (! hasProjectMetaFile[0]) {
+					try {
+						folders[0].getFile(".vcm_meta");
+						hasProjectMetaFile[0] = true;
+					} catch (TeamException e) {
+						// We couldn't retrieve the meta file so assume it doesn't exist
+						hasProjectMetaFile[0] = false;
+					}
+				}
 			}
 		}, Policy.bind("CheckoutAsAction.checkoutFailed"), this.PROGRESS_DIALOG); //$NON-NLS-1$
+		if (errorOccured[0]) return;
 		
 		// Prompt outside a workspace runnable so that the project creation delta can be heard
 		IProject newProject = null;
