@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Preferences;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
@@ -48,7 +49,7 @@ public class CVSDecoration {
 	private Font font;
 	// Type of the resource being decorated (e.g. IResource.PROJECT,
 	// IResource.FILE, IResource.FOLDER)
-	private int resourceType;
+	private int resourceType = IResource.FILE;
 	// Properties
 	private boolean watchEditEnabled = false;
 	private boolean isDirty = false;
@@ -64,14 +65,7 @@ public class CVSDecoration {
 	private String repository;
 	private ICVSRepositoryLocation location;
 	private String keywordSubstitution;
-	// Preferences
-	// Image states to show
-	private boolean[] preferences;
-	private int PREF_SHOW_DIRTY_IMAGE_DECORATION = 0;
-	private int PREF_SHOW_ADDED_IMAGE_DECORATION = 1;
-	private int PREF_SHOW_HASREMOTE_IMAGE_DECORATION = 2;
-	private int PREF_SHOW_NEWRESOURCE_IMAGE_DECORATION = 3;
-	private int PREF_CALCULATE_DIRTY = 4;
+
 	// Text states to show
 	private String fileFormatter;
 	private String folderFormatter;
@@ -79,6 +73,7 @@ public class CVSDecoration {
 	private String dirtyTextIndicator;
 	private String addedTextIndicator;
 	private String resourceName;
+	
 	// Color indicators
 	// Font indicators
 	//	Images cached for better performance
@@ -89,6 +84,8 @@ public class CVSDecoration {
 	private static ImageDescriptor merged;
 	private static ImageDescriptor newResource;
 	private static ImageDescriptor edited;
+	
+	private Preferences preferences;
 
 	/*
 	 * Define a cached image descriptor which only creates the image data once
@@ -127,27 +124,31 @@ public class CVSDecoration {
 	 *  
 	 * @param resourceType
 	 */
-	public CVSDecoration(String resourceName, int resourceType) {
+	public CVSDecoration(String resourceName) {
 		// 	TODO: for efficiency don't look up a pref until its needed
 		IPreferenceStore store = getStore();
-		initialize(resourceName, resourceType, new boolean[]{store.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION),// dirty image
-				store.getBoolean(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION), // added image
-				store.getBoolean(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION), // has remote
-				store.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION), // new resource
-				store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY) // calculate deep dirty
-				}, store.getString(ICVSUIConstants.PREF_FILETEXT_DECORATION), store.getString(ICVSUIConstants.PREF_FOLDERTEXT_DECORATION), store.getString(ICVSUIConstants.PREF_PROJECTTEXT_DECORATION));
+		Preferences prefs = new Preferences();
+		
+		prefs.setValue(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION, store.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION));
+		prefs.setValue(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION, store.getBoolean(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION));
+		prefs.setValue(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION, store.getBoolean(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION));
+		prefs.setValue(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION, store.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION));
+		prefs.setValue(ICVSUIConstants.PREF_CALCULATE_DIRTY, store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY));
+		prefs.setValue(ICVSUIConstants.PREF_DIRTY_FLAG, store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY));
+		prefs.setValue(ICVSUIConstants.PREF_ADDED_FLAG, store.getBoolean(ICVSUIConstants.PREF_ADDED_FLAG));
+		
+		initialize(resourceName, prefs, store.getString(ICVSUIConstants.PREF_FILETEXT_DECORATION), store.getString(ICVSUIConstants.PREF_FOLDERTEXT_DECORATION), store.getString(ICVSUIConstants.PREF_PROJECTTEXT_DECORATION));
 	}
 
-	public CVSDecoration(String resourceName, int resourceType, boolean[] preferences, String fileFormater, String folderFormatter, String projectFormatter) {
-		initialize(resourceName, resourceType, preferences, fileFormater, folderFormatter, projectFormatter);
+	public CVSDecoration(String resourceName, Preferences preferences, String fileFormater, String folderFormatter, String projectFormatter) {
+		initialize(resourceName, preferences, fileFormater, folderFormatter, projectFormatter);
 	}
 
 	private IPreferenceStore getStore() {
 		return CVSUIPlugin.getPlugin().getPreferenceStore();
 	}
 
-	private void initialize(String resourceName, int resourceType, boolean[] preferences, String fileFormater, String folderFormatter, String projectFormatter) {
-		this.resourceType = resourceType;
+	private void initialize(String resourceName, Preferences preferences, String fileFormater, String folderFormatter, String projectFormatter) {
 		this.resourceName = resourceName;
 		this.preferences = preferences;
 		this.fileFormatter = fileFormater;
@@ -202,6 +203,10 @@ public class CVSDecoration {
 	public String getSuffix() {
 		return suffix;
 	}
+	
+	public void setResourceType(int type) {
+		this.resourceType = type;
+	}
 
 	public void apply(IDecoration decoration) {
 		compute();
@@ -217,18 +222,18 @@ public class CVSDecoration {
 			decoration.addOverlay(getOverlay());
 		Color bc = getBackgroundColor();
 		if(bc != null)
-			decoration.setBackgroundColor(getBackgroundColor());
+			decoration.setBackgroundColor(bc);
 		Color fc = getForegroundColor();
 		if(fc != null)
-			decoration.setForegroundColor(getForegroundColor());
+			decoration.setForegroundColor(fc);
 		Font f = getFont();
 		if(f != null)
-			decoration.setFont(getFont());
+			decoration.setFont(f);
 	}
 
 	public void compute() {
 		computeText();
-		computeImage();
+		overlay = computeImage();
 		computeColorsAndFonts();
 	}
 
@@ -236,10 +241,10 @@ public class CVSDecoration {
 		Map bindings = new HashMap();
 		IPreferenceStore store = getStore();
 		if (isDirty()) {
-			bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
+			bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, preferences.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
 		}
 		if (isAdded()) {
-			bindings.put(CVSDecoratorConfiguration.ADDED_FLAG, store.getString(ICVSUIConstants.PREF_ADDED_FLAG));
+			bindings.put(CVSDecoratorConfiguration.ADDED_FLAG, preferences.getString(ICVSUIConstants.PREF_ADDED_FLAG));
 		}
 		bindings.put(CVSDecoratorConfiguration.FILE_REVISION, getRevision());
 		bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, getTag());
@@ -257,15 +262,15 @@ public class CVSDecoration {
 
 	private ImageDescriptor computeImage() {
 		// show newResource icon
-		if (preferences[PREF_SHOW_NEWRESOURCE_IMAGE_DECORATION] && isNewResource()) {
+		if (preferences.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION) && isNewResource()) {
 			return newResource;
 		}
 		// show dirty icon
-		if (preferences[PREF_SHOW_DIRTY_IMAGE_DECORATION] && isDirty()) {
+		if (preferences.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION) && isDirty()) {
 			return dirty;
 		}
 		// show added
-		if (preferences[PREF_SHOW_ADDED_IMAGE_DECORATION] && isAdded()) {
+		if (preferences.getBoolean(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION) && isAdded()) {
 			return added;
 		}
 		// show watch edit
@@ -273,7 +278,7 @@ public class CVSDecoration {
 			return edited;
 		}
 		// show checked in
-		if (preferences[PREF_SHOW_ADDED_IMAGE_DECORATION] && isHasRemote()) {
+		if (preferences.getBoolean(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION) && isHasRemote()) {
 			if (resourceType != IResource.FILE && isVirtualFolder()) {
 				return noRemoteDir;
 			}

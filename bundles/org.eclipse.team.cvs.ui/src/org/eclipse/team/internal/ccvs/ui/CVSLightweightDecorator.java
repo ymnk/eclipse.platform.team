@@ -16,11 +16,9 @@ import java.util.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -28,66 +26,53 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.core.util.*;
+import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
+import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 import org.eclipse.team.internal.core.ExceptionCollector;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.themes.ITheme;
 
 public class CVSLightweightDecorator extends LabelProvider implements ILightweightLabelDecorator, IResourceStateChangeListener, IPropertyChangeListener {
 
 	// Decorator id as defined in the decorator extension point
 	public final static String ID = "org.eclipse.team.cvs.ui.decorator"; //$NON-NLS-1$
-	
-	// Images cached for better performance
-	private static ImageDescriptor dirty;
-	private static ImageDescriptor checkedIn;
-	private static ImageDescriptor noRemoteDir;
-	private static ImageDescriptor added;
-	private static ImageDescriptor merged;
-	private static ImageDescriptor newResource;
-	private static ImageDescriptor edited;
 
 	private static ExceptionCollector exceptions = new ExceptionCollector(Policy.bind("CVSDecorator.exceptionMessage"), CVSUIPlugin.ID, IStatus.ERROR, CVSUIPlugin.getPlugin().getLog()); //$NON-NLS-1$;
 	
 	private static String DECORATOR_FORMAT = "yyyy/MM/dd HH:mm:ss"; //$NON-NLS-1$
 	private static SimpleDateFormat decorateFormatter = new SimpleDateFormat(DECORATOR_FORMAT, Locale.getDefault());
 
-	/*
-	 * Define a cached image descriptor which only creates the image data once
-	 */
-	public static class CachedImageDescriptor extends ImageDescriptor {
-		ImageDescriptor descriptor;
-		ImageData data;
-		public CachedImageDescriptor(ImageDescriptor descriptor) {
-			Assert.isNotNull(descriptor);
-			this.descriptor = descriptor;
-		}
-		public ImageData getImageData() {
-			if (data == null) {
-				data = descriptor.getImageData();
-			}
-			return data;
-		}
-	}
-	
-	static {
-		dirty = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
-		checkedIn = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
-		added = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
-		merged = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_MERGED));
-		newResource = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_QUESTIONABLE));
-		edited = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_EDITED));
-		noRemoteDir = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NO_REMOTEDIR));
-	}
-
 	public CVSLightweightDecorator() {
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this);
 		TeamUI.addPropertyChangeListener(this);
 		CVSUIPlugin.addPropertyChangeListener(this);
+		ensureFontAndColorsCreated(new String[] {CVSDecoratorConfiguration.IGNORED_FONT}, new String[0]);
 		PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().addPropertyChangeListener(this);
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
+	}
+	
+	/**
+	 * This method will ensure that the fonts and colors used by the decorator
+	 * are cached in the registries. This avoids having to syncExec when
+	 * decorating since we ensure that the fonts and colors are pre-created.
+	 * 
+	 * @param fonts fonts ids to cache
+	 * @param colors color ids to cache
+	 */
+	private void ensureFontAndColorsCreated(final String[] fonts, final String[] colors) {
+		CVSUIPlugin.getStandardDisplay().syncExec(new Runnable() {
+			public void run() {
+				ITheme theme  = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+				for (int i = 0; i < colors.length; i++) {
+					theme.getColorRegistry().get(colors[i]);
+					
+				}
+				for (int i = 0; i < fonts.length; i++) {
+					theme.getFontRegistry().get(fonts[i]);
+				}
+			}
+		});
 	}
 
 	public static boolean isDirty(final ICVSResource cvsResource) throws CVSException {
@@ -173,7 +158,9 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	public static CVSDecoration decorate(IResource resource) throws CVSException {
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 		ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-		CVSDecoration cvsDecoration = new CVSDecoration(resource.getName(), resource.getType());
+		CVSDecoration cvsDecoration = new CVSDecoration(resource.getName());
+		cvsDecoration.setResourceType(resource.getType());
+		
 		if (cvsResource.isIgnored()) {
 			cvsDecoration.setIgnored(true);
 		}
@@ -239,8 +226,9 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 			cvsDecoration.setRevision(fileInfo.getRevision());
 			ICVSFile cvsFile = CVSWorkspaceRoot.getCVSFileFor((IFile) resource);
 			cvsDecoration.setNeedsMerge(fileInfo.isNeedsMerge(file.getTimeStamp()));
-			cvsDecoration.setKeywordSubstitution(fileInfo.getKeywordMode().getShortDisplayText());
+			option = fileInfo.getKeywordMode();
 		}
+		cvsDecoration.setKeywordSubstitution(option.getShortDisplayText());
 	}
 
 	/**
@@ -420,6 +408,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		if (isEventOfInterest(event)) {
+			ensureFontAndColorsCreated(new String[] {CVSDecoratorConfiguration.IGNORED_FONT}, new String[0]);
 		    refresh();
 		}	
 	}
@@ -431,6 +420,9 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         	|| prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED)
 			|| prop.equals(CVSDecoratorConfiguration.OUTGOING_CHANGE_BACKGROUND_COLOR)
 			|| prop.equals(CVSDecoratorConfiguration.OUTGOING_CHANGE_FOREGROUND_COLOR)
-			|| prop.equals(CVSDecoratorConfiguration.OUTGOING_CHANGE_FONT);
+			|| prop.equals(CVSDecoratorConfiguration.OUTGOING_CHANGE_FONT)
+			|| prop.equals(CVSDecoratorConfiguration.IGNORED_FOREGROUND_COLOR)
+			|| prop.equals(CVSDecoratorConfiguration.IGNORED_BACKGROUND_COLOR)
+			|| prop.equals(CVSDecoratorConfiguration.IGNORED_FONT);
     }
 }
