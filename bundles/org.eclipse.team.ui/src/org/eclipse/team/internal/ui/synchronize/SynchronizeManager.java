@@ -194,9 +194,6 @@ public class SynchronizeManager implements ISynchronizeManager {
 		 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference#getDisplayName()
 		 */
 		public String getDisplayName() {
-			if(descriptor.isStatic()) {
-				return descriptor.getName();
-			}
 			return displayName != null ? displayName : descriptor.getName();
 		}
 		
@@ -304,9 +301,9 @@ public class SynchronizeManager implements ISynchronizeManager {
 			throw new PartInitException(Policy.bind("SynchronizeManager.19", type)); //$NON-NLS-1$
 		// ensure that multiple instances are allowed if a secondary id is given
 		if (secondaryId != null) {
-		    if (!desc.isMultipleInstances()) {
-				throw new PartInitException(Policy.bind("SynchronizeManager.20", type)); //$NON-NLS-1$
-		    }
+//		    if (!desc.isMultipleInstances()) {
+//				throw new PartInitException(Policy.bind("SynchronizeManager.20", type)); //$NON-NLS-1$
+//		    }
 		}
 		String key = Utils.getKey(type, secondaryId);
 		ParticipantInstance ref = (ParticipantInstance) participantReferences.get(key);
