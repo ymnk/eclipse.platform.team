@@ -365,9 +365,12 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
 					ActionContext context = new ActionContext(null);
-					context.setInput(input);
-					actions.setContext(context);
+					context.setInput(input);					
 					input.prepareInput(monitor);
+					// important to set the context after the input has been initialized. There
+					// are some actions that depend on the sync set to be initialized.
+					actions.setContext(context);
+					
 					Display.getDefault().asyncExec(new Runnable() {
 								public void run() {
 									viewer.setInput(input.getSyncSet());

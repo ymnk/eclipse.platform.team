@@ -336,7 +336,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		try {
 			input.setFilter(new AndSyncInfoFilter(
 			new SyncInfoFilter[] {
-				new SyncInfoDirectionFilter(directionsFilters.getDirectionFilters()), 
+				new SyncInfoDirectionFilter(directionsFilters.getDirectionFilter()), 
 				new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters()),
 				new PseudoConflictFilter()
 			}), new NullProgressMonitor());

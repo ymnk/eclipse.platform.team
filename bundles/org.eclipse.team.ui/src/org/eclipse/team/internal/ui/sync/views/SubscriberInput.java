@@ -79,24 +79,19 @@ public class SubscriberInput {
 		filteredInput.disconnect();		
 	}
 
-	/**
-	 * @return
-	 */
 	public IWorkingSet getWorkingSet() {
 		return subscriberInput.getWorkingSet();
 	}
 
-	/**
-	 * @param set
-	 */
 	public void setWorkingSet(IWorkingSet set) {
 		subscriberInput.setWorkingSet(set);
 	}
 
-	/**
-	 * @return
-	 */
 	public IResource[] roots() throws TeamException {
 		return subscriberInput.getRoots();
+	}
+	
+	public SyncSet getSubscriberInputSyncSet() {
+		return subscriberInput.getSyncSet();
 	}
 }

@@ -105,8 +105,13 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	 * @see org.eclipse.team.internal.ui.sync.actions.SyncViewerActionGroup#addContext(org.eclipse.ui.actions.ActionContext)
 	 */
 	public void addContext(ActionContext context) {
+		boolean enableFirstContext = actions.isEmpty();
 		SubscriberInput input = (SubscriberInput)context.getInput();
-		actions.put(input.getSubscriber().getId(), new SwitchSubscriberAction(input));		
+		SwitchSubscriberAction action =  new SwitchSubscriberAction(input);
+		actions.put(input.getSubscriber().getId(), action);
+		if(enableFirstContext) {
+				activate(action);
+		}			
 	}
 	
 	/* 

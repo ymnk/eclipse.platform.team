@@ -11,28 +11,24 @@
 package org.eclipse.team.ui.sync;
 
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteSyncElement;
 
 /**
  * Filter the SyncInfo by a set of directions (incoming, outgoing, conflict)
  */
 public class SyncInfoDirectionFilter extends SyncInfoFilter {
 
-	int[] directionFilters = new int[] {IRemoteSyncElement.OUTGOING, IRemoteSyncElement.INCOMING, IRemoteSyncElement.CONFLICTING};
+	int[] directionFilters = new int[] {SyncInfo.OUTGOING, SyncInfo.INCOMING, SyncInfo.CONFLICTING};
 
 	public SyncInfoDirectionFilter(int[] directionFilters) {
 		this.directionFilters = directionFilters;
 	}
 	
-	/**
-	 * @param i
-	 */
 	public SyncInfoDirectionFilter(int direction) {
 		this(new int[] { direction });
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
+	 * @see SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
 	 */
 	public boolean select(SyncInfo info) {
 		int syncKind = info.getKind();

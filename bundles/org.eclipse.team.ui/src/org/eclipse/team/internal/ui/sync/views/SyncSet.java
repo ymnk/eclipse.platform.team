@@ -42,6 +42,9 @@ public class SyncSet {
 	// fields used for change notification
 	protected SyncSetChangedEvent changes;
 	protected Set listeners = new HashSet();
+	
+	//	{int sync kind -> int number of infos with that sync kind in this sync set}
+	protected Map stats = new HashMap();
 
 	public SyncSet() {
 		resetChanges();
@@ -146,6 +149,7 @@ public class SyncSet {
 	
 	protected void resetChanges() {
 		changes = new SyncSetChangedEvent(this);
+		stats.clear();
 	}
 
 	protected void fireChanges() {
@@ -189,12 +193,40 @@ public class SyncSet {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		resources.put(path, info);
+		updateStats(true, info);
+	}
+
+	private void updateStats(boolean add, SyncInfo info) {
+		Integer direction = new Integer(SyncInfo.getDirection(info.getKind()));
+		Integer count = (Integer)stats.get(direction);
+		int increment = (add ? 1 : -1);
+		if(count == null) {
+				// initialize the count
+				count =  new Integer(0);
+		}
+
+		count = new Integer(count.intValue() + increment);
+
+		if(count.intValue() <= 0) {
+			stats.remove(direction);
+		} else {
+			stats.put(direction, count);
+		}
+	}
+
+	public int getCount(int directionFlag) {
+		Integer count = (Integer)stats.get(new Integer(directionFlag));
+		if(count == null) {
+			return 0;
+		}
+		return count.intValue();
 	}
 
 	protected void remove(SyncInfo info) {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		resources.remove(path);
+		updateStats(false, info);
 		changes.removed(info);
 		removeFromParents(local, local);
 	}
@@ -209,6 +241,7 @@ public class SyncSet {
 	 */
 	public void reset() {
 		resources.clear();
+		stats.clear();
 		parents.clear();
 		changes.reset();
 	}
