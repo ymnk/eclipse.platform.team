@@ -22,6 +22,7 @@ import org.eclipse.team.internal.ccvs.core.resources.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.Policy;
+import org.eclipse.team.internal.core.subscribers.caches.SyncTreeSubscriber;
 
 /**
  * CVSSyncInfo
@@ -39,7 +40,7 @@ public class CVSSyncInfo extends SyncInfo {
 	private Subscriber subscriber;
 
 	public CVSSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, Subscriber subscriber) throws TeamException {
-		super(local, base, remote, subscriber.getResourceComparator());
+		super(local, base, remote, ((SyncTreeSubscriber)subscriber).getResourceComparator());
 		this.subscriber = subscriber;
 	}
 

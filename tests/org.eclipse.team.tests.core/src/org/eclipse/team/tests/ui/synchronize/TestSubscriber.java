@@ -29,7 +29,7 @@ public class TestSubscriber extends Subscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDescription()
 	 */
-	public String getDescription() {
+	public String getName() {
 		return "Test Subscriber";
 	}
 	/* (non-Javadoc)

@@ -16,8 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.core.synchronize.SyncInfo;
 
 /**
  * A Subscriber provides synchronization between local resources and a
@@ -36,18 +35,15 @@ import org.eclipse.team.internal.core.TeamPlugin;
  */
 abstract public class Subscriber {
 
-	public static final QualifiedName SUBSCRIBER_JOB_TYPE = new QualifiedName(TeamPlugin.ID, "subcriber_job"); //$NON-NLS-1$
-
 	private List listeners = new ArrayList(1);
 
 	/**
-	 * Return the description of this subscription, in a format that is
-	 * suitable for display to an end user. The description should contain
-	 * enough details to understand the connection type of this subscriber.
+	 * Return the name of this subscription, in a format that is
+	 * suitable for display to an end user.
 	 * 
-	 * @return String representing the description of this subscription.
+	 * @return String representing the name of this subscription.
 	 */
-	abstract public String getDescription();
+	abstract public String getName();
 
 	/**
 	 * Returns <code>true</code> if this resource is supervised by this
@@ -122,8 +118,6 @@ abstract public class Subscriber {
 	 * <ul>
 	 * <li>if they do not exist either in the workspace or in the
 	 * corresponding remote location</li>
-	 * <li>if the given resource is marked as derived (see
-	 * IResource#isDerived())</li>
 	 * <li>if the given resource is not managed by this subscriber</li>
 	 * <li>if the given resource is a closed project (they are ineligible for
 	 * synchronization)</li>
@@ -172,12 +166,6 @@ abstract public class Subscriber {
 	 *                         </ul>
 	 */
 	abstract public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException;
-
-	/**
-	 * Returns the comparison criteria that will be used by the sync info
-	 * created by this subscriber.
-	 */
-	abstract public IRemoteResourceComparator getResourceComparator();
 
 	/**
 	 * Adds a listener to this team subscriber. Has no effect if an identical

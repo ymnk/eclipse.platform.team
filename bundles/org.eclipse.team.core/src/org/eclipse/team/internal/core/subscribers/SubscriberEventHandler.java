@@ -97,8 +97,8 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 */
 	public SubscriberEventHandler(Subscriber subscriber) {
 		super(
-			Policy.bind("SubscriberEventHandler.jobName", subscriber.getDescription()), //$NON-NLS-1$
-			Policy.bind("SubscriberEventHandler.errors", subscriber.getDescription())); //$NON-NLS-1$
+			Policy.bind("SubscriberEventHandler.jobName", subscriber.getName()), //$NON-NLS-1$
+			Policy.bind("SubscriberEventHandler.errors", subscriber.getName())); //$NON-NLS-1$
 		this.syncSetInput = new SyncSetInputFromSubscriber(subscriber, this);
 	}
 	

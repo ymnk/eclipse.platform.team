@@ -1,0 +1,48 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="IBM">
+   <title>Package-level Javadoc</title>
+</head>
+<body>
+Application programming interfaces for generating and refreshing synchronization 
+state. 
+<h2>
+Package Specification</h2>
+<p>This package specifies the API for Team subscribers. A Subscriber provides 
+  access to the synchronization state between the local workspace resources and 
+  a remote location, whether it be a code repository or some other type of server 
+  (e.g. FTP). A subscriber is typically associated with only a subset of the resources 
+  in the local workspace, referred to as the set of resources the subscriber supervises. 
+  The supervised local resources have a corresponding remote state which describes 
+  the state of the remote resources that correspond to the local resources.</p>
+<p>A Subscriber provides:</p>
+<ul>
+  <li>a set of root resources that define the subset of resources in the workspace 
+    that the subscriber supervises (some children of the roots may not be supervised, 
+    as indicated by the isSupervised method).</li>
+  <li>access to the synchronization state (using SyncInfo) between the resources 
+    it supervises and their corresponding remote resources.</li>
+  <li> the ability to refresh the the remote state</li>
+  <li>change notification to registered listeners (of type ISubscriberChangeListener) 
+    when the remote state changes or when roots are added or removed.</li>
+</ul>
+<h3>Implementing a Subscriber </h3>
+<p>The subsciber maintains the synchronization state between its locla resources 
+  and their corresponding remotes.</p>
+<p>fetch the remote states (during a refresh)</p>
+<p>cache them locally (including state for files that do not exists locally)</p>
+<p>notify listeners of changes</p>
+<p>provide access to the cached state via members and getSyncInfo</p>
+<h3>Additional Classes</h3>
+<p>The SubscriberSyncInfoCollector is used to collect the SyncInfo for out-of-sync 
+  resources from a subscriber into a SyncInfoTree that can be used to, for example, 
+  display the out-of-sync resources of a subscriber to the user. The collector 
+  supports filtering by working set and SyncInfoFilter (e.g. to select groupings 
+  such as incoming-changes or conflicts). Even when filtered, the collector still 
+  maintains a set of all out-of-sync resources from the subscriber in order to 
+  provide statistics on the number of pre and post filtered out-of-sync resources.</p>
+<p>FilteredSyncInfoCollector: should be generalized</p>
+</body>
+</html>
