@@ -15,6 +15,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.ui.CVSCompareRevisionsInput;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.viewers.SynchronizeDialog;
 
@@ -34,13 +35,17 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 		
 		public ReplaceCompareDialog(Shell shell, String title, CVSCompareRevisionsInput input) {
 			super(shell, title, input);
+			
+			// Don't allow editing of the merge viewers in the replace
+			input.getCompareConfiguration().setLeftEditable(false);
+			input.getCompareConfiguration().setRightEditable(false);
 		}
 		
 		/**
 		 * Add the replace button to the dialog.
 		 */
 		protected void createButtonsForButtonBar(Composite parent) {
-			replaceButton = createButton(parent, REPLACE_ID, "&Replace", false);
+			replaceButton = createButton(parent, REPLACE_ID, Policy.bind("ReplaceWithRevisionAction.0"), false); //$NON-NLS-1$
 			replaceButton.setEnabled(false);
 			((CVSCompareRevisionsInput)getCompareEditorInput()).getViewer().addSelectionChangedListener(
 				new ISelectionChangedListener() {
@@ -50,7 +55,7 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 					}
 				}
 			);
-			super.createButtonsForButtonBar(parent);
+			// Don't call super because we don't want the OK button to appear
 		}
 		
 		/**
@@ -74,6 +79,6 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CompareWithRevisionAction#createCompareDialog(org.eclipse.swt.widgets.Shell, org.eclipse.team.internal.ccvs.ui.CVSCompareRevisionsInput)
 	 */
 	protected SynchronizeDialog createCompareDialog(Shell shell, CVSCompareRevisionsInput input) {
-		return new ReplaceCompareDialog(shell, "Replace With Revision", input);
+		return new ReplaceCompareDialog(shell, Policy.bind("ReplaceWithRevisionAction.1"), input); //$NON-NLS-1$
 	}
 }
