@@ -194,10 +194,13 @@ public class ForceUpdateSyncAction extends MergeAction {
 				case ITeamNode.CONFLICTING:
 					switch (kind & Differencer.CHANGE_TYPE_MASK) {
 						case Differencer.ADDITION:
-							// To do: conflicting addition: must make incoming first
-							makeIncoming.add(changed[i]);
-							deletions.add(changed[i]);
-							updateIgnoreLocalShallow.add(resource);
+							if(changed[i] instanceof IDiffContainer) {
+								parentConflictElements.add(changed[i]);
+							} else {
+								makeIncoming.add(changed[i]);
+								deletions.add(changed[i]);
+								updateIgnoreLocalShallow.add(changed[i]);
+							}
 							break;
 						case Differencer.DELETION:
 							// Doesn't happen, these nodes don't appear in the tree.
@@ -322,6 +325,7 @@ public class ForceUpdateSyncAction extends MergeAction {
 				CVSRemoteSyncElement syncElement = (CVSRemoteSyncElement)((ChangedTeamContainer)next).getMergeResource().getSyncElement();
 				// Create the sync info
 				syncElement.makeInSync(new NullProgressMonitor());
+				((ChangedTeamContainer)next).setKind(IRemoteSyncElement.IN_SYNC);
 			}
 		}
 	}
@@ -337,6 +341,7 @@ public class ForceUpdateSyncAction extends MergeAction {
 	
 	/**
 	 * Prompt for mergeable conflicts.
+	 * Note: This method is designed to be overridden by test cases.
 	 * @return 0 to cancel, 1 to only update mergeable conflicts, 2 to overwrite if unmergeable
 	 */
 	protected int promptForMergeableConflicts() {
@@ -356,6 +361,7 @@ public class ForceUpdateSyncAction extends MergeAction {
 	
 	/**
 	 * Prompt for non-automergeable conflicts.
+	 * Note: This method is designed to be overridden by test cases.
 	 * @return false to cancel, true to overwrite local changes
 	 */
 	protected boolean promptForConflicts() {

@@ -225,11 +225,11 @@ public abstract class RemoteSyncElement extends LocalSyncElement implements IRem
 					Assert.isTrue(false);
 					// shouldn't happen
 				} else {
-					description= ADDITION;
+					description= DELETION;
 				}
 			} else {
 				if (!localExists) {
-					description= DELETION;
+					description= ADDITION;
 				} else {
 					if (! compare(granularity, !isDirty, local, remote, Policy.subMonitorFor(progress, 30)))
 						description= CHANGE;

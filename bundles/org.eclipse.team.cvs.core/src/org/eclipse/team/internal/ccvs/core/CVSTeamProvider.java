@@ -406,17 +406,26 @@ public class CVSTeamProvider extends RepositoryProvider {
 	}
 	
 	/** 
-	 * Diff the resources against the repository and write the
-	 * output to the provided PrintStream in a form that is usable
-	 * as a patch
+	 * Diff the resources against the repository and write the output to the provided 
+	 * PrintStream in a form that is usable as a patch. The patch is rooted at the
+	 * project.
 	 */
-	public void diff(IResource[] resources, LocalOption[] options, PrintStream stream,
+	public void diff(IResource resource, LocalOption[] options, PrintStream stream,
 		IProgressMonitor progress) throws TeamException {
 		
-		// Build the arguments list
-		String[] arguments = getValidArguments(resources, options);
+		// Determine the command root and arguments arguments list
+		ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+		ICVSFolder commandRoot;
+		String[] arguments;
+		if (cvsResource.isFolder()) {
+			commandRoot = (ICVSFolder)cvsResource;
+			arguments = new String[] {Session.CURRENT_LOCAL_FOLDER};
+		} else {
+			commandRoot = cvsResource.getParent();
+			arguments = new String[] {cvsResource.getName()};
+		}
 
-		Session s = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot());
+		Session s = new Session(workspaceRoot.getRemoteLocation(), commandRoot);
 		progress.beginTask(null, 100);
 		try {
 			s.open(Policy.subMonitorFor(progress, 20));
@@ -716,7 +725,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 *    CVSStatus.SERVER_ERROR - The server reported an error
 	 *    any other code - warning messages received from the server
 	 */
-	public IStatus tag(IResource[] resources, int depth, CVSTag tag, IProgressMonitor progress) throws TeamException {
+	public IStatus tag(IResource[] resources, int depth, CVSTag tag, IProgressMonitor progress) {
 						
 		// Build the local options
 		List localOptions = new ArrayList();
@@ -725,28 +734,29 @@ public class CVSTeamProvider extends RepositoryProvider {
 			localOptions.add(Tag.DO_NOT_RECURSE);
 		LocalOption[] commandOptions = (LocalOption[])localOptions.toArray(new LocalOption[localOptions.size()]);
 				
-		// Build the arguments list
-		String[] arguments = getValidArguments(resources, commandOptions);
-
 		IStatus status;
-		Session s = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot());
-		progress.beginTask(null, 100);
 		try {
-			// Opening the session takes 20% of the time
-			s.open(Policy.subMonitorFor(progress, 20));
-			status = Command.TAG.execute(s,
-				Command.NO_GLOBAL_OPTIONS,
-				commandOptions,
-				tag,
-				arguments,
-				null,
-				Policy.subMonitorFor(progress, 80));
-		} finally {
-			s.close();
-			progress.done();
-		}
-		if (status.getCode() == CVSStatus.SERVER_ERROR) {
-			throw new CVSServerException(status);
+			// Build the arguments list
+			String[] arguments = getValidArguments(resources, commandOptions);
+
+			Session s = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot());
+			progress.beginTask(null, 100);
+			try {
+				// Opening the session takes 20% of the time
+				s.open(Policy.subMonitorFor(progress, 20));
+				status = Command.TAG.execute(s,
+					Command.NO_GLOBAL_OPTIONS,
+					commandOptions,
+					tag,
+					arguments,
+					null,
+					Policy.subMonitorFor(progress, 80));
+			} finally {
+				s.close();
+				progress.done();
+			}
+		} catch(CVSException e) {
+			status = e.getStatus();
 		}
 		return status;
 	}

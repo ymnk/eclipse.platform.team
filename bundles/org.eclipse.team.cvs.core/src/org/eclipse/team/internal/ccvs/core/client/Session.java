@@ -41,6 +41,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
+import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.Connection;
@@ -86,6 +87,9 @@ public class Session {
 	private static final boolean IS_CRLF_PLATFORM = Arrays.equals(
 		System.getProperty("line.separator").getBytes(), new byte[] { '\r', '\n' }); //$NON-NLS-1$
 
+	private static Map currentOpenSessions = null;
+	private static final int MAX_SESSIONS_OPEN = 10;
+	
 	private CVSRepositoryLocation location;
 	private ICVSFolder localRoot;
 	private boolean outputToConsole;
@@ -125,6 +129,109 @@ public class Session {
 		this.location = (CVSRepositoryLocation) location;
 		this.localRoot = localRoot;
 		this.outputToConsole = outputToConsole;
+	}
+	
+	/**
+	 * Execute the given runnable in a context that has access to an open session
+	 * 
+	 * A session will be opened for the provided root. If the root is null, no session is opened.
+	 * However, sessions will be open for nested calls to run and these sessions will not be closed
+	 * until the outer most run finishes.
+	 */
+	public static void run(ICVSRepositoryLocation location, ICVSFolder root, boolean outputToConsole,
+		ICVSRunnable runnable, IProgressMonitor monitor) throws CVSException {
+		
+		// Determine if we are nested or not
+		boolean isOuterRun = false;
+		if (currentOpenSessions == null) {
+			// Initialize the variable to be a map
+			currentOpenSessions = new HashMap();
+			isOuterRun = true;
+		}
+		
+		try {
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(null, 100);
+			if (root == null) {
+				// We don't have a root, so just run the runnable
+				// (assuming that nested runs will create sessions)
+				runnable.run(Policy.subMonitorFor(monitor, 90));
+			} else {
+				// Open a session on the root as far up the chain as possible
+				ICVSFolder actualRoot = root;
+				while (actualRoot.isManaged()) {
+					actualRoot = actualRoot.getParent();
+				}
+				// Look for the root in the current open sessions
+				Session session = (Session)currentOpenSessions.get(actualRoot);
+				if (session == null) {
+					// Make sure we don't exceed our maximum
+					if (currentOpenSessions.size() == MAX_SESSIONS_OPEN) {
+						// Pick one at random and close it
+						Object key = currentOpenSessions.keySet().iterator().next();
+						try {
+							((Session)currentOpenSessions.get(key)).close();
+						} catch (CVSException e) {
+							CVSProviderPlugin.log(e.getStatus());
+						} finally {
+							currentOpenSessions.remove(key);
+						}
+					}
+					// If it's not there, open a session for the given root and remember it
+					session = new Session(location, actualRoot, outputToConsole);
+					session.open(Policy.subMonitorFor(monitor, 10));
+					currentOpenSessions.put(actualRoot, session);
+				}
+				
+				try {
+					root.run(runnable, Policy.subMonitorFor(monitor, 100));
+				} catch (CVSException e) {
+					// The run didn't succeed so close the session and forget it ever existed
+					try {
+						// The session may have been close by a nested run
+						if (currentOpenSessions.get(actualRoot) != null) session.close();
+					} finally {
+						currentOpenSessions.remove(actualRoot);
+						throw e;
+					}
+				}
+			}
+		} finally {
+			monitor.done();
+			if (isOuterRun) {
+				// Close all open sessions
+				try {
+					Iterator iter = currentOpenSessions.keySet().iterator();
+					while (iter.hasNext()) {
+						Session session = (Session)currentOpenSessions.get(iter.next());
+						try {
+							session.close();
+						} catch (CVSException e) {
+							CVSProviderPlugin.log(e.getStatus());
+						}
+					}
+				} finally {
+					currentOpenSessions = null;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Answer the currently open session
+	 */
+	protected static Session getOpenSession(ICVSResource resource) {
+		ICVSFolder root;
+		if (resource.isFolder()) {
+			root = (ICVSFolder)resource;
+		} else {
+			root = resource.getParent();
+		}
+		while (root.isManaged()) {
+			root = root.getParent();
+		}
+		// Look for the root in the current open sessions
+		return (Session)currentOpenSessions.get(root);
 	}
 	
 	/** 
@@ -182,18 +289,29 @@ public class Session {
 			connection = location.openConnection(Policy.subMonitorFor(monitor, 50));
 			hasBeenConnected = true;
 			
-			// If we're connected to a CVSNT server, accept MT. Otherwise don't
-			if (isCVSNT()) {
-				Request.registerResponseHandler(new MTHandler());
-			} else {
-				Request.removeResponseHandler("MT"); //$NON-NLS-1$
+			ResponseHandler mtHandler = Request.getResponseHandler("MT"); //$NON-NLS-1$
+			// accept MT messages for all non-standard server
+			boolean useMT = ! (location.getServerPlatform() == location.CVS_SERVER);
+			try {
+				// If we're connected to a CVSNT server or we don't know the platform, 
+				// accept MT. Otherwise don't.
+				// We only want to disable MT messages for this particular session
+				// since there may be multiple sessions open.
+				if ( ! useMT) {
+					Request.removeResponseHandler("MT"); //$NON-NLS-1$
+				}
+				
+				// tell the server the names of the responses we can handle
+				connection.writeLine("Valid-responses " + Request.makeResponseList()); //$NON-NLS-1$
+			} finally {
+				// Re-register the MT handler since there may be more than one session open
+				if ( ! useMT) {
+					Request.registerResponseHandler(mtHandler);
+				}
 			}
-			
-			// tell the server the names of the responses we can handle
-			connection.writeLine("Valid-responses " + Request.makeResponseList()); //$NON-NLS-1$
 	
 			// ask for the set of valid requests
-			Request.VALID_REQUESTS.execute(this, Policy.subMonitorFor(monitor, 50));
+			Request.VALID_REQUESTS.execute(this, Policy.subMonitorFor(monitor, 40));
 			
 			// set the root directory on the server for this connection
 			connection.writeLine("Root " + getRepositoryRoot()); //$NON-NLS-1$
@@ -210,6 +328,11 @@ public class Session {
 				connection.writeLine("gzip-file-contents " + Integer.toString(compressionLevel)); //$NON-NLS-1$
 			} else {
 				compressionLevel = 0;
+			}
+			
+			// get the server platform if it is unknown
+			if (location.getServerPlatform() == location.UNDETERMINED_PLATFORM) {
+				Command.VERSION.execute(this, location, Policy.subMonitorFor(monitor, 10));
 			}
 		} catch (CVSException e) {
 			// If there is a failure opening, make sure we're closed
@@ -257,7 +380,11 @@ public class Session {
 	}
 	
 	public boolean isCVSNT() {
-		return location.getRootDirectory().indexOf(':') == 1;
+		if (location.getServerPlatform() == location.UNDETERMINED_PLATFORM) {
+			return location.getRootDirectory().indexOf(':') == 1;
+		} else {
+			return location.getServerPlatform() == location.CVSNT_SERVER;
+		}
 	}
 
 	/**

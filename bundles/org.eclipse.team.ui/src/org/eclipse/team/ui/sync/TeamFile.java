@@ -5,17 +5,21 @@ package org.eclipse.team.ui.sync;
  * All Rights Reserved.
  */
  
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.structuremergeviewer.DiffContainer;
 import org.eclipse.compare.structuremergeviewer.DiffElement;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.ICompareInputChangeListener;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -28,6 +32,7 @@ import org.eclipse.jface.util.Assert;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.TeamUIPlugin;
@@ -45,9 +50,12 @@ import org.eclipse.ui.internal.WorkbenchPlugin;
  * and the ancestor is the common file.
  */
 public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
+	
 	private MergeResource mergeResource;
+	
 	private Shell shell;
 	private ListenerList listeners;
+	
 	private TypedBufferedContent localByteContents;
 	private TypedBufferedContent commonByteContents;
 	private TypedBufferedContent remoteByteContents;
@@ -71,23 +79,14 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 				return mergeResource.getLatestRevision();
 			}
 		};
-		// don't allow editing of outgoing deletion content. To revert from the deletion the
-		// user should use the appropriate sync view action.
-		boolean outgoingDeletion = getChangeDirection() == IRemoteSyncElement.OUTGOING && getChangeType() ==  IRemoteSyncElement.DELETION;
-		localByteContents = new TypedBufferedContent(this, !outgoingDeletion) {
-			protected InputStream createStream() throws CoreException {
-				return mergeResource.getLocalStream();
-			}
-			public void setContent(byte[] contents) {
-				super.setContent(contents);
-				merged();
-				fireContentChanged();
-			}
-			public ITypedElement replace(ITypedElement child, ITypedElement other) {
-				return null;
-			}
-		};
+		
+		if(getResource().exists()) {
+			localByteContents = getLocalTypedContent();
+		} else {
+			localByteContents = null;
+		}
 	}
+	
 	public void addCompareInputChangeListener(ICompareInputChangeListener l) {
 		if (listeners == null) {
 			listeners = new ListenerList();
@@ -95,13 +94,28 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		listeners.add(l);
 	}
 	
+	/*
+	 * @see ICompareInput#copy(boolean)
+	 */
 	public void copy(boolean leftToRight) {
-		if (!leftToRight) {
-			// Catchup to all on the server
-			localByteContents.setContent(remoteByteContents.getContent());
-			merged();
+		if (leftToRight) return;
+		ITypedElement right = getRight();
+		ITypedElement left = getLeft();
+		try {
+			if (left == null) {
+				// Addition
+				saveChanges(new ByteArrayInputStream(new byte[0]));
+				localByteContents = getLocalTypedContent();
+			} else {
+				// deletion
+				saveChanges(null);
+				localByteContents = null;
+			}
+		} catch(CoreException e) {
+			TeamPlugin.log(e.getStatus());
 		}
 	}
+		
 	public boolean equals(Object other) {
 		if (other != null && other.getClass() == getClass()) {
 			TeamFile file = (TeamFile) other;
@@ -109,17 +123,7 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		}
 		return super.equals(other);
 	}
-	private void fireThreeWayInputChange() {
-		if (listeners != null) {
-			Object[] listenerArray = listeners.getListeners();
-			// Iterate backwards so that the model gets updated last
-			// it might want to remove the node completely, which might
-			// upset other listeners.
-			for (int i = listenerArray.length; --i >= 0;)
-				 ((ICompareInputChangeListener) listenerArray[i]).compareInputChanged(this);
-		}
-	}
-	
+		
 	/*
 	 * @see ICompareInput#getAncestor
 	 */
@@ -143,6 +147,7 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 	public int getChangeType() {
 		return getKind() & Differencer.CHANGE_TYPE_MASK;
 	}
+	
 	/*
 	 * @see ITypedInput#getType
 	 */
@@ -157,28 +162,13 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		return localByteContents;
 	}
 	
-	/**
-	 * Returns the team resource managed by this object.
-	 * Guaranteed to be non-null.
-	 */
-	public MergeResource getMergeResource() {
-		return mergeResource;
-	}
-	
 	/*
 	 * @see ITypedInput#getName
 	 */
 	public String getName() {
 		return mergeResource.getName();
 	}
-	/**
-	 * Returns the core resource managed by this object.
-	 * Guaranteed to be non-null.
-	 */
-	public IResource getResource() {
-		return mergeResource.getResource();
-	}
-	
+
 	/*
 	 * @see ICompareInput#getRight
 	 */
@@ -189,6 +179,7 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 			return null;
 		}
 	}
+
 	/*
 	 * @see ITypedInput#getType
 	 */
@@ -197,10 +188,62 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 	}
 	
 	/*
+	 * @see ICompareInput#removeCompareInputChangeListener(ICompareInputChangeListener)
+	 */
+	public void removeCompareInputChangeListener(ICompareInputChangeListener listener) {
+		if (listeners != null) {
+			listeners.remove(listener);
+		}
+	}
+	
+	/*
 	 * @see Object
 	 */
 	public int hashCode() {
 		return mergeResource.hashCode();
+	}
+
+	/**
+	 * Returns the team resource managed by this object.
+	 * Guaranteed to be non-null.
+	 */
+	public MergeResource getMergeResource() {
+		return mergeResource;
+	}
+
+	/**
+	 * Returns the core resource managed by this object.
+	 * Guaranteed to be non-null.
+	 */
+	public IResource getResource() {
+		return mergeResource.getResource();
+	}
+	
+	/**
+	 * For debugging purposes only.
+	 */
+	public String toString() {
+		return "TeamFile(" + mergeResource.getName() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+	
+	protected TypedBufferedContent getLocalTypedContent() {
+		// don't allow editing of outgoing deletion content. To revert from the deletion the
+		// user should use the appropriate sync view action.
+		boolean outgoingDeletion = getChangeDirection() == IRemoteSyncElement.OUTGOING && getChangeType() ==  IRemoteSyncElement.DELETION;
+
+		return new TypedBufferedContent(this, !outgoingDeletion) {
+			protected InputStream createStream() throws CoreException {
+				return mergeResource.getLocalStream();
+			}
+			public void setContent(byte[] contents) {
+				super.setContent(contents);
+				merged();
+				fireContentChanged();
+			}
+			public ITypedElement replace(ITypedElement child, ITypedElement other) {
+				return null;
+			}
+		};
 	}
 	
 	/**
@@ -210,7 +253,7 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		mergeResource.confirmMerge();
 		try {
 			// persist changes to disk (e.g. there is no buffering in the sync view).
-			saveChanges();
+			saveChanges(localByteContents.getContents());
 			
 			// calculate the new sync state based on the type of change that was merged. This
 			// logic cannot be in the IRemoteSyncElement because there is no way to update the
@@ -234,27 +277,21 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 			ErrorDialog.openError(WorkbenchPlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getShell(), Policy.bind("TeamFile.saveChanges", getName()), null, e.getStatus()); //$NON-NLS-1$
 		}
 	}
-	
-	public void removeCompareInputChangeListener(ICompareInputChangeListener listener) {
-		if (listeners != null) {
-			listeners.remove(listener);
-		}
-	}
-	
+		
 	/**
 	 * Saves cached copy to disk and clears dirty flag.
 	 */
-	private void saveChanges() throws CoreException {
+	private void saveChanges(final InputStream is) throws CoreException {
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
-					InputStream stream = localByteContents.getContents();
 					IFile file = (IFile) getResource();
-					if (stream != null) {
+					if (is != null) {
 						if (!file.exists()) {
-							file.create(stream, false, monitor);
+							createParents(getParent(), (IFolder)getResource().getParent());
+							file.create(is, false, monitor);
 						} else {
-							file.setContents(stream, false, true, monitor);
+							file.setContents(is, false, true, monitor);
 						}
 					} else {
 						file.delete(false, true, monitor);
@@ -265,11 +302,15 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 			}
 		});
 	}
-	/**
-	 * For debugging purposes only.
-	 */
-	public String toString() {
-		return "TeamFile(" + mergeResource.getName() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+
+	private void createParents(IDiffContainer parentNode, IFolder parentFolder) throws CoreException {
+		if(!parentFolder.exists() && parentFolder.getType() != IResource.PROJECT) {
+			createParents(parentNode.getParent(), (IFolder)parentFolder.getParent());
+			parentFolder.create(false /* force */, true, null);
+			if(parentNode instanceof ChangedTeamContainer) {
+				((ChangedTeamContainer)parentNode).setKind(IRemoteSyncElement.IN_SYNC);
+			}
+		}
 	}
 	
 	private void run(IRunnableWithProgress runnable) throws CoreException {
@@ -283,6 +324,17 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 			}
 		} catch (InterruptedException e) {
 			// Ignore
+		}
+	}
+	
+	private void fireThreeWayInputChange() {
+		if (listeners != null) {
+			Object[] listenerArray = listeners.getListeners();
+			// Iterate backwards so that the model gets updated last
+			// it might want to remove the node completely, which might
+			// upset other listeners.
+			for (int i = listenerArray.length; --i >= 0;)
+				 ((ICompareInputChangeListener) listenerArray[i]).compareInputChanged(this);
 		}
 	}
 }

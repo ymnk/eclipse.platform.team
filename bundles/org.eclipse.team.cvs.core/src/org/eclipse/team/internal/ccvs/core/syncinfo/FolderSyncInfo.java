@@ -121,6 +121,14 @@ public class FolderSyncInfo {
 	 * Returns:
 	 * 	/home/users/repo/folder1/folder2
 	 * 
+	 * Note: CVS supports repository root directories that end in a slash (/).
+	 * For these directories, the remote location must contain two slashes (//)
+	 * between the root directory and the rest of the path. For example:
+	 * 	root = :pserver:user@host:/home/user/repo/
+	 * 	repository = folder1/folder2
+	 * must return:
+	 * 	/home/users/repo//folder1/folder2
+	 * 
 	 * @return the full path of this folder on the server.
 	 * @throws a CVSException if the root or repository is malformed.
 	 */
@@ -129,7 +137,15 @@ public class FolderSyncInfo {
 		String result;
 		
 		try {
-			result = getRoot().substring(getRoot().indexOf("@")+1); //$NON-NLS-1$
+			String root = getRoot();
+			int index = root.indexOf('@');
+			if (index == -1) {
+				// If the username is mising, we have to find the third ':' instead.
+				index = root.indexOf(':');
+				index = root.indexOf(':', index + 1);
+				index = root.indexOf(':', index + 1);
+			} 
+			result = getRoot().substring(index+1);
 			result = result.substring(result.indexOf(":")+1); //$NON-NLS-1$
 			result = result + "/" + getRepository(); //$NON-NLS-1$
 		} catch (IndexOutOfBoundsException e) {

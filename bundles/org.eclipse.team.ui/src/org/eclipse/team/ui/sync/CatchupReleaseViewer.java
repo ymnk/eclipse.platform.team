@@ -146,6 +146,7 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 	private FilterAction showOnlyConflicts;
 	private Action refresh;
 	private Action expandAll;
+	private Action removeFromTree;
 	private ShowInNavigatorAction showInNavigator;
 	private Action ignoreWhiteSpace;
 	
@@ -185,6 +186,7 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 	 */
 	protected void fillContextMenu(IMenuManager manager) {
 		manager.add(expandAll);
+		manager.add(removeFromTree);
 		if (showInNavigator != null) {
 			manager.add(showInNavigator);
 		}
@@ -247,6 +249,24 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 		expandAll = new Action(Policy.bind("CatchupReleaseViewer.expand"), null) { //$NON-NLS-1$
 			public void run() {
 				expandSelection();
+			}
+		};
+		
+		removeFromTree = new Action("Remove From View", null) { //$NON-NLS-1$
+			public void run() {
+				ISelection s = getSelection();
+				if (!(s instanceof IStructuredSelection) || s.isEmpty()) {
+					return;
+				}
+				// mark all selected nodes as in sync
+				for (Iterator it = ((IStructuredSelection)s).iterator(); it.hasNext();) {
+					Object element = it.next();
+					if(element instanceof TeamFile) {
+						TeamFile f = (TeamFile)element;
+						f.setKind(IRemoteSyncElement.IN_SYNC);					
+					}
+				}
+				refresh();				
 			}
 		};
 		
