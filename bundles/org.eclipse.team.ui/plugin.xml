@@ -295,7 +295,12 @@
          point="org.eclipse.core.runtime.adapters">
       <factory
             class="org.eclipse.team.internal.ui.ModelElementlJavaFactory"
-            adaptableType="org.eclipse.jdt.core.IPackageFragment">
+            adaptableType="org.eclipse.jdt.core.IJavaElement">
+            <adapter type="org.eclipse.team.core.traversals.IModelElement"/>
+       </factory>
+       <factory
+            class="org.eclipse.team.internal.ui.ModelElementlJavaFactory"
+            adaptableType="org.eclipse.core.resources.IResource">
             <adapter type="org.eclipse.team.core.traversals.IModelElement"/>
        </factory>
    </extension>

@@ -169,9 +169,9 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	 * 
 	 * @return the selected resources based on the available traversals.
 	 */
-	protected ITraversal[] getSelectedTraversals(String providerId) throws TeamException {
+	public ITraversal[] getSelectedTraversals(String providerId) throws TeamException {
 		try {
-			Object[] elements = getSelectedResources(IModelElement.class);
+			Object[] elements = getSelectedAdaptables(selection, IModelElement.class);
 			ArrayList providerTraversals = new ArrayList();
 			if(elements.length > 0) {
 				for (int i = 0; i < elements.length; i++) {
@@ -179,15 +179,17 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 					ITraversal[] traversals = element.getTraversals(getModelContext(), null);
 					for (int j = 0; j < traversals.length; j++) {
 						ITraversal traversal = traversals[j];
-						RepositoryProvider provider = RepositoryProvider.getProvider(traversal.getProject());
-						if (providerId != null && provider.getID().equals(providerId)) {
+						boolean addIt = true;
+						if(providerId != null) {
+							RepositoryProvider provider = RepositoryProvider.getProvider(traversal.getProject());
+							addIt = (providerId != null && provider.getID().equals(providerId));
+						}			
+						if(addIt)
 							providerTraversals.add(traversal);
-						} else {
-							throw new TeamException("Cannot operate on resources from different repository provider.");
 						}
 					}
 				}
-			}
+			
 			return (ITraversal[]) providerTraversals.toArray(new ITraversal[providerTraversals.size()]);
 		} catch (CoreException e) {
 			throw TeamException.asTeamException(e);

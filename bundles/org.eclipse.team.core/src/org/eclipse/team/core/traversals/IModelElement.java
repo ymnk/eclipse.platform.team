@@ -11,6 +11,7 @@
 package org.eclipse.team.core.traversals;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -27,7 +28,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * @see IResource
  * @since 3.1
  */
-public interface IModelElement {
+public interface IModelElement extends IAdaptable {
 
 	/**
 	 * Returns one or more traversals that can be used to access all the
