@@ -11,8 +11,7 @@
 package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSyncSet;
 import org.eclipse.team.internal.core.subscribers.WorkingSetSyncSetInput;
@@ -50,9 +49,9 @@ public final class FilteredSyncInfoCollector {
 		this.source = subscriberCollector.getSyncInfoSet();
 		
 		// TODO: optimize and don't use working set if no roots are passed in
-		workingSetInput = new WorkingSetSyncSetInput(source);
+		workingSetInput = new WorkingSetSyncSetInput(source, subscriberCollector.getEventHandler());
 		workingSetInput.setWorkingSet(workingSet);		
-		filteredInput = new SyncSetInputFromSyncSet(workingSetInput.getSyncSet());
+		filteredInput = new SyncSetInputFromSyncSet(workingSetInput.getSyncSet(), subscriberCollector.getEventHandler());
 		if(filter == null) {
 			filter = new SyncInfoFilter() {
 				public boolean select(SyncInfo info, IProgressMonitor monitor) {
@@ -102,9 +101,9 @@ public final class FilteredSyncInfoCollector {
 	public void setWorkingSet(IResource[] resources) {
 		workingSetInput.setWorkingSet(resources);
 		try {
-			workingSetInput.reset(null /* TODO */);
-		} catch (TeamException e) {
-			// TODO 
+			workingSetInput.reset();
+		} catch (CoreException e) {
+			// TODO Should happen but code smells bad
 		}
 	}
 	
@@ -124,8 +123,9 @@ public final class FilteredSyncInfoCollector {
 	public void setFilter(SyncInfoFilter filter, IProgressMonitor monitor) {
 		filteredInput.setFilter(filter);
 		try {
-			filteredInput.reset(monitor);
-		} catch (TeamException e) {
+			filteredInput.reset();
+		} catch (CoreException e) {
+//			 TODO Should happen but code smells bad
 		}
 	}
 	

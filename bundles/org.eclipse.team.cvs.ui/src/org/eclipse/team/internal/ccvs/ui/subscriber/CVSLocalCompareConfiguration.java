@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
@@ -96,7 +97,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.StructuredViewer)
 	 */
-	public void initializeViewer(Composite parent, StructuredViewer viewer) {
+	public void initializeViewer(Composite parent, AbstractTreeViewer viewer) {
 		super.initializeViewer(parent, viewer);
 	}
 

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core.subscribers;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
@@ -22,7 +24,8 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  {
 
 	private Subscriber subscriber;
 
-	public SyncSetInputFromSubscriber(Subscriber subscriber) {
+	public SyncSetInputFromSubscriber(Subscriber subscriber, SubscriberEventHandler handler) {
+		super(handler);
 		this.subscriber = subscriber;
 	}
 		
@@ -40,5 +43,15 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  {
 		// don't calculate changes. The SubscriberEventHandler will fetch the
 		// input in a job and update this sync set when the changes are 
 		// calculated. 
+	}
+
+	/**
+	 * Handle an error that occurred while populating the receiver's set.
+	 * This error should be propogated to any set listeners.
+	 * @param e the error
+	 * @param resource the resource
+	 */
+	public void handleError(CoreException e, IResource resource, IProgressMonitor monitor) {
+		getSyncSet().handleErrorEvent(new SubscriberErrorEvent(e, resource), monitor);
 	}
 }

@@ -26,6 +26,7 @@ import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
+import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 /**
  * A <code>DiffTreeViewerConfiguration</code> object controls various UI
@@ -63,8 +64,9 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 
 	private SyncInfoSet set;
 	private String menuID;
-	private StructuredViewer viewer;
+	private AbstractTreeViewer viewer;
 	private ExpandAllAction expandAllAction;
+	private SyncInfoSetViewerInput viewerInput;
 
 	/**
 	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given
@@ -106,7 +108,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @param viewer
 	 *            the viewer being initialized
 	 */
-	public void initializeViewer(Composite parent, StructuredViewer viewer) {
+	public void initializeViewer(Composite parent, AbstractTreeViewer viewer) {
 		Assert.isTrue(this.viewer == null, "A DiffTreeViewerConfiguration can only be used with a single viewer."); //$NON-NLS-1$
 		this.viewer = viewer;
 		GridData data = new GridData(GridData.FILL_BOTH);
@@ -127,12 +129,17 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 *            the viewer
 	 */
 	protected void setInput(StructuredViewer viewer) {
-		SyncInfoSetViewerInput input = (SyncInfoSetViewerInput) getInput();
+		if(viewerInput != null) {
+			viewerInput.dispose();
+		}
+		viewerInput = (SyncInfoSetViewerInput) getInput();
 		// TODO: must prevent sorter change from causing a refresh
 		// viewer.setInput(null); /* prevent a refresh when the sorter changes
 		// */
-		viewer.setSorter(input.getViewerSorter());
-		viewer.setInput(input);
+		viewer.setSorter(viewerInput.getViewerSorter());
+		viewer.setInput(viewerInput);
+		
+		viewerInput.prepareInput(null);
 	}
 
 	/**
@@ -142,9 +149,9 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 */
 	protected Object getInput() {
 		if (getShowCompressedFolders()) {
-			return new CompressedFolderViewerInput(getSyncSet());
+			return new CompressedFolderViewerInput(getViewer(), getSyncSet());
 		}
-		return new SyncInfoSetViewerInput(getSyncSet());
+		return new SyncInfoSetViewerInput(getViewer(), getSyncSet());
 	}
 
 	/**
@@ -163,7 +170,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	}
 
 	protected IStructuredContentProvider getContentProvider() {
-		return new SyncInfoSetContentProvider();
+		return new BaseWorkbenchContentProvider();
 	}
 
 	/**
@@ -272,7 +279,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
-	protected StructuredViewer getViewer() {
+	protected AbstractTreeViewer getViewer() {
 		return viewer;
 	}
 
@@ -280,6 +287,9 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * Cleanup listeners
 	 */
 	public void dispose() {
+		if(viewerInput != null) {
+			viewerInput.dispose();
+		}
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 	}
 

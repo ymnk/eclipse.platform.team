@@ -21,10 +21,14 @@ import org.eclipse.team.internal.core.Policy;
  */
 public abstract class SyncSetInput {
 	
-	private MutableSyncInfoSet syncSet = new MutableSyncInfoSet();
+	private SubscriberSyncInfoSet syncSet;
 	private SyncInfoFilter filter = new FastSyncInfoFilter();
 	
-	public MutableSyncInfoSet getSyncSet() {
+	public SyncSetInput(SubscriberEventHandler handler) {
+		syncSet = new SubscriberSyncInfoSet(handler);
+	}
+	
+	public SubscriberSyncInfoSet getSyncSet() {
 		return syncSet;
 	}
 	
@@ -89,4 +93,5 @@ public abstract class SyncSetInput {
 	public void setFilter(SyncInfoFilter filter) {
 		this.filter = filter;
 	}
+
 }

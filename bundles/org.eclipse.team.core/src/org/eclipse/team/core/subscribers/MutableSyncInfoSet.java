@@ -269,10 +269,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		// Ensure that the list of listeners is not changed while events are fired.
 		// Copy the listeners so that addition/removal is not blocked by event listeners
 		if(event.isEmpty() && ! event.isReset()) return;
-		ISyncInfoSetChangeListener[] allListeners;
-		synchronized(listeners) {
-			allListeners = (ISyncInfoSetChangeListener[]) listeners.toArray(new ISyncInfoSetChangeListener[listeners.size()]);
-		}
+		ISyncInfoSetChangeListener[] allListeners = getListeners();
 		// Fire the events using an ISafeRunnable
 		monitor.beginTask(null, 100 * allListeners.length);
 		for (int i = 0; i < allListeners.length; i++) {
@@ -290,6 +287,18 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		monitor.done();
 	}
 	
+	/**
+	 * Return a copy of all the listeners registered with this set
+	 * @return the listeners
+	 */
+	protected ISyncInfoSetChangeListener[] getListeners() {
+		ISyncInfoSetChangeListener[] allListeners;
+		synchronized(listeners) {
+			allListeners = (ISyncInfoSetChangeListener[]) listeners.toArray(new ISyncInfoSetChangeListener[listeners.size()]);
+		}
+		return allListeners;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#run(org.eclipse.core.resources.IWorkspaceRunnable, org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -504,4 +513,5 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		}
 		return super.getSyncInfos(resource, depth);
 	}
+	
 }

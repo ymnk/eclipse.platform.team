@@ -16,6 +16,7 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
+import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 /**
  * A potentially dynamic collection of {@link SyncInfo} objects that provides
@@ -307,10 +308,49 @@ public abstract class SyncInfoSet {
 	 * will block other threads from modifying the 
 	 * set and postpone any change notifications until after the runnable
 	 * has been executed. Mutable subclasses must override.
+	 * <p>
+	 * The given runnable may be run in the same thread as the caller or
+	 * more be run asynchronously in another thread at the discretion of the
+	 * subclass implementation. However, it is gaurenteed that two invocations
+	 * of <code>run</code> performed in the same thread will be executed in the 
+	 * same order even if run in different threads.
+	 * 
 	 * @param runnable a runnable
 	 * @param progress a progress monitor or <code>null</code>
 	 */
 	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) throws CoreException {
 		runnable.run(Policy.monitorFor(monitor));		
+	}
+	
+	/**
+	 * Connect the listener to the sync set in such a fashion that the listener will
+	 * be connected the the sync set using <code>addChangeListener</code>
+	 * and issued a reset event. This is done to provide a means of connecting to the 
+	 * sync set and initializing a model based on the sync set without worrying about 
+	 * missing events.
+	 * <p>
+	 * The reset event may be done in the context of this method invocation or may be
+	 * done in another thread at the discretion of the <code>SyncInfoSet</code>
+	 * implementation. 
+	 * <p>
+	 * Disconnecting is done by calling <code>removeChangeListener</code>. Once disconnected,
+	 * a listener can reconnect to be reinitialized.
+	 * @param listener
+	 * @param monitor
+	 */
+	public void connect(final ISyncInfoSetChangeListener listener, IProgressMonitor monitor) throws CoreException {
+		run(new IWorkspaceRunnable() {
+			public void run(IProgressMonitor monitor) {
+				try {
+					monitor.beginTask(null, 100);
+					addSyncSetChangedListener(listener);
+					SyncSetChangedEvent event = new SyncSetChangedEvent(SyncInfoSet.this);
+					event.reset();
+					listener.syncSetChanged(event, Policy.subMonitorFor(monitor, 95));
+				} finally {
+					monitor.done();
+				}
+			}
+		}, monitor);
 	}
 }

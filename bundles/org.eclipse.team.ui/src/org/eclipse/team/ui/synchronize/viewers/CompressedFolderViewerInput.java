@@ -21,8 +21,8 @@ import org.eclipse.team.core.subscribers.*;
 
 public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 
-	public CompressedFolderViewerInput(SyncInfoSet set) {
-		super(set);
+	public CompressedFolderViewerInput(AbstractTreeViewer viewer, SyncInfoSet set) {
+		super(viewer, set);
 	}
 	
 	/* (non-Javadoc)

@@ -30,7 +30,7 @@ import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
  */
 public final class SubscriberSyncInfoCollector implements IResourceChangeListener, ISubscriberChangeListener {
 
-	private SyncSetInputFromSubscriber set;
+	private SyncSetInputFromSubscriber syncSetInput;
 	private SubscriberEventHandler eventHandler;
 	private Subscriber subscriber;
 	private IResource[] roots;
@@ -58,16 +58,16 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 		this.roots = roots;
 		this.subscriber = subscriber;
 		Assert.isNotNull(subscriber);
+		this.eventHandler = new SubscriberEventHandler(subscriber);
+		this.syncSetInput = eventHandler.getSyncSetInput();
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
+		subscriber.addListener(this);
 	}
 	
 	/**
 	 * Start the collector. 
 	 */
 	public void start() {
-		this.set = new SyncSetInputFromSubscriber(subscriber);
-		this.eventHandler = new SubscriberEventHandler(set);
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
-		subscriber.addListener(this);
 		eventHandler.start();
 	}
 	
@@ -79,7 +79,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * @return a SyncInfoSet containing out-of-sync resources
 	 */
 	public SyncInfoSet getSyncInfoSet() {
-		return set.getSyncSet();
+		return syncSetInput.getSyncSet();
 	}
 
 	/**
@@ -126,7 +126,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 */
 	public void dispose() {
 		eventHandler.shutdown();
-		set.disconnect();
+		syncSetInput.disconnect();
 		getSubscriber().removeListener(this);		
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 	}
@@ -286,5 +286,12 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 */
 	public void setRoots(IResource[] roots) {
 		this.roots = roots;
+	}
+	
+	/**
+	 * @return Returns the eventHandler.
+	 */
+	public SubscriberEventHandler getEventHandler() {
+		return eventHandler;
 	}
 }

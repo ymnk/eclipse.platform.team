@@ -18,8 +18,8 @@ public class WorkingSetSyncSetInput extends SyncSetInputFromSyncSet {
 
 	private SyncInfoWorkingSetFilter workingSetFilter = new SyncInfoWorkingSetFilter();
 	
-	public WorkingSetSyncSetInput(SyncInfoSet set) {
-		super(set);
+	public WorkingSetSyncSetInput(SyncInfoSet set, SubscriberEventHandler handler) {
+		super(set, handler);
 		setFilter(workingSetFilter);
 	}
 	

@@ -88,6 +88,13 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+		updateActionEnablement();
+	}
+
+	/*
+	 * Update the enablement of any action delegates 
+	 */
+	private void updateActionEnablement() {
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		if (viewer != null && getSyncInfoSet() != null) {
 			ISelection selection = new StructuredSelection(getSyncInfoSet().getSyncInfos());
@@ -121,6 +128,10 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		
 		// Sync changes are used to update the action state for the update/commit buttons.
 		getSyncInfoSet().addSyncSetChangedListener(this);
+		
+		// Update the enablement of any action delegates.
+		// This is done after sync set registry to avoid the possibility of losing changes
+		updateActionEnablement();
 		
 		// Listen for decorator changed to refresh the viewer's labels.
 		CVSUIPlugin.addPropertyChangeListener(this);

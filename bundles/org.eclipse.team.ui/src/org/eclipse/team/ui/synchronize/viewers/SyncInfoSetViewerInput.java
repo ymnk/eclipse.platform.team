@@ -14,7 +14,8 @@ import java.util.*;
 
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.compare.structuremergeviewer.*;
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
@@ -23,6 +24,7 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**
  * An input that can be used with both {@link DiffTreeViewerConfiguration} and 
@@ -55,14 +57,17 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	// The viewer this input is being displayed in
 	private AbstractTreeViewer viewer;
 
+	private boolean refreshViewer;
+
 	/**
 	 * Create an input based on the provide sync set. The input is not initialized
 	 * until <code>prepareInput</code> is called. 
 	 * 
 	 * @param set the sync set used as the basis for the model created by this input.
 	 */
-	public SyncInfoSetViewerInput(SyncInfoSet set) {
+	public SyncInfoSetViewerInput(AbstractTreeViewer viewer, SyncInfoSet set) {
 		super(null /* no parent */, set, ResourcesPlugin.getWorkspace().getRoot());
+		this.viewer = viewer;
 	}
 
 	/**
@@ -104,34 +109,16 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 
 	/**
 	 * Builds the viewer model based on the contents of the sync set.
-	 * Note: currently this must be called from the UI thread.
 	 */
 	public void prepareInput(IProgressMonitor monitor) {
-		associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), this);
 		try {
-			// Build the viewer tree and register for changes in a runnable
-			// to ensure we don't miss anything
-			getSyncInfoSet().run(new IWorkspaceRunnable() {
-				public void run(IProgressMonitor monitor) throws CoreException {
-					buildModelObjects(SyncInfoSetViewerInput.this);
-					getSyncInfoSet().addSyncSetChangedListener(SyncInfoSetViewerInput.this);
-				}
-			}, monitor);
+			// Connect to the sync set which will register us as a listener and give us a reset event
+			// in a background thread
+			getSyncInfoSet().connect(this, monitor);
 		} catch (CoreException e) {
 			// Shouldn't happen
 			TeamPlugin.log(e);
 		}
-	}
-
-	/**
-	 * Associate a viewer with the builder.
-	 * @param v
-	 *            the viewer
-	 */
-	public void setViewer(AbstractTreeViewer v) {
-		// This is where we should bootstrap the connecting to the sync set
-		this.viewer = v;
-		prepareInput(null);
 	}
 
 	/**
@@ -147,19 +134,24 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged()
 	 */
 	public void syncSetChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
-		final Control ctrl = viewer.getControl();
-		if (ctrl != null && !ctrl.isDisposed()) {
-			ctrl.getDisplay().syncExec(new Runnable() {
-				public void run() {
-					if (!ctrl.isDisposed()) {
-						BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
-							public void run() {
-								syncSetChanged(event);
-							}
-						});
+		if (event.isReset()) {
+			reset();
+		} else {
+			final Control ctrl = viewer.getControl();
+			if (ctrl != null && !ctrl.isDisposed()) {
+				ctrl.getDisplay().syncExec(new Runnable() {
+					public void run() {
+						if (!ctrl.isDisposed()) {
+							BusyIndicator.showWhile(ctrl.getDisplay(),
+								new Runnable() {
+									public void run() {
+										handleChanges(event);
+									}
+								});
+						}
 					}
-				}
-			});
+				});
+			}
 		}
 	}
 	
@@ -355,49 +347,37 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	
 
 	protected void reset() {
-		viewer.getControl().setRedraw(false);
-		resourceMap.clear();
-		clearModelObjects(this);
-		
-		// remove all from tree viewer
-		IDiffElement[] elements = getChildren();
-		for (int i = 0; i < elements.length; i++) {
-			viewer.remove(elements[i]);
+		try {
+			refreshViewer = false;
+			resourceMap.clear();
+			clearModelObjects(this);
+			
+			// remove all from tree viewer
+			IDiffElement[] elements = getChildren();
+			for (int i = 0; i < elements.length; i++) {
+				viewer.remove(elements[i]);
+			}
+			
+			associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), this);
+			buildModelObjects(this);
+		} finally {
+			refreshViewer = true;
 		}
-		
-		buildModelObjects(this);
-		viewer.refresh();
-		if (viewer instanceof INavigatable) {
-			((INavigatable) viewer).gotoDifference(true);
-		}
-		viewer.getControl().setRedraw(true);
-	}
-
-
-
-	
-	/**
-	 * Callback that is invoked from within an <code>asyncExec</code> when
-	 * the model <code>SyncInfoSet</code> has changed. This method disables
-	 * redraw in the viewer and then either refreshes the viewer (if the event
-	 * was a reset) or invokes the <code>handleChanges(ISyncInfoSetChangeEvent)</code>
-	 * method. Subclasses not need to override this method to handle changes
-	 * but should instead override <code>handleChanges(ISyncInfoSetChangeEvent)</code>.
-	 * @param event
-	 *            the <code>SyncInfoSet</code> change event.
-	 * @see handleChanges(ISyncInfoSetChangeEvent)
-	 */
-	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
-		if (event.isReset()) {
-			reset();
-		} else {
-			handleChanges(event);
-		}
+		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+			public void run() {
+				if (viewer != null && !viewer.getControl().isDisposed()) {
+					viewer.refresh();
+					if (viewer instanceof INavigatable) {
+						((INavigatable) viewer).gotoDifference(true);
+					}
+				}
+			}
+		});
 	}
 
 	protected void refreshInViewer(DiffNode diffNode) {
-		AbstractTreeViewer tree = getTreeViewer();
-		if (tree != null) {
+		if (canUpdateViewer()) {
+			AbstractTreeViewer tree = getTreeViewer();
 			viewer.refresh(diffNode, true);
 			updateParentLabels(diffNode);
 		}
@@ -412,8 +392,8 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	protected void removeFromViewer(IResource resource) {
 		DiffNode node = getModelObject(resource);
 		clearModelObjects(node);
-		AbstractTreeViewer tree = getTreeViewer();
-		if (tree != null) {
+		if (canUpdateViewer()) {
+			AbstractTreeViewer tree = getTreeViewer();
 			tree.remove(node);
 			updateParentLabels(node);
 		}
@@ -421,8 +401,8 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	
 	protected void addToViewer(SyncInfoDiffNode node) {
 		associateDiffNode(node.getResource(), node);
-		AbstractTreeViewer tree = getTreeViewer();
-		if (tree != null) {
+		if (canUpdateViewer()) {
+			AbstractTreeViewer tree = getTreeViewer();
 			tree.add(node.getParent(), node);
 			updateParentLabels(node);
 		}
@@ -430,13 +410,21 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	
 
 	/**
+	 * @param tree
+	 * @return
+	 */
+	private boolean canUpdateViewer() {
+		return refreshViewer && getTreeViewer() != null;
+	}
+
+	/**
 	 * Forces the viewer to update the labels for parents whose children have
 	 * changed during this round of sync set changes.
 	 */
 	protected void updateParentLabels() {
 		try {
-			AbstractTreeViewer tree = getTreeViewer();
-			if (tree != null) {
+			if (canUpdateViewer()) {
+				AbstractTreeViewer tree = getTreeViewer();
 				tree.update(parentsToUpdate.toArray(new Object[parentsToUpdate.size()]), null);
 			}
 		} finally {

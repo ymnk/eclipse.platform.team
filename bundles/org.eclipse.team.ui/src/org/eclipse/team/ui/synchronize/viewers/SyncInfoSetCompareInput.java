@@ -144,6 +144,6 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		return diffViewerConfiguration.getInput();
+		return diffViewerConfiguration.getViewer().getInput();
 	}	
 }

@@ -11,19 +11,19 @@
 package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * Ths class uses the contents of one sync set as the input of another.
  */
-public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSetChangeListener {
+public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSetChangeListener2 {
 
 	SyncInfoSet inputSyncSet;
 
-	public SyncSetInputFromSyncSet(SyncInfoSet set) {
+	public SyncSetInputFromSyncSet(SyncInfoSet set, SubscriberEventHandler handler) {
+		super(handler);
 		this.inputSyncSet = set;
 		inputSyncSet.addSyncSetChangedListener(this);
 	}
@@ -41,7 +41,7 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.AbstractSyncSet#initialize(java.lang.String, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected void fetchInput(IProgressMonitor monitor) throws TeamException {
+	protected void fetchInput(IProgressMonitor monitor) {
 		if (inputSyncSet == null) return;
 		SyncInfo[] infos = inputSyncSet.getSyncInfos();
 		for (int i = 0; i < infos.length; i++) {
@@ -58,12 +58,7 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 			syncSet.beginInput();
 			if (event.isReset()) {
 				syncSet.clear();
-				try {
-					fetchInput(monitor);
-				} catch (TeamException e) {
-					// TODO: this could be bad
-					TeamPlugin.log(e);
-				}
+				fetchInput(monitor);
 			} else {
 				syncSetChanged(event.getChangedResources(), monitor);			
 				syncSetChanged(event.getAddedResources(), monitor);
@@ -84,5 +79,17 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 		for (int i = 0; i < resources.length; i++) {
 			remove(resources[i]);
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.core.subscribers.ISyncInfoSetChangeListener2#handleError(org.eclipse.team.internal.core.subscribers.SubscriberErrorEvent, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void handleError(SubscriberErrorEvent event, IProgressMonitor monitor) {
+		getSyncSet().handleErrorEvent(event, monitor);
+	}
+	
+	public void reset() throws CoreException {
+		getSyncSet().removeSyncSetChangedListener(this);
+		getSyncSet().connect(this, null);
 	}
 }

@@ -11,8 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.util.*;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
@@ -27,9 +25,8 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.ui.synchronize.viewers.*;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNodeRoot;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.progress.UIJob;
 

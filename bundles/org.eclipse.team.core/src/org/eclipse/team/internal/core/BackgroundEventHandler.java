@@ -153,7 +153,7 @@ public abstract class BackgroundEventHandler {
 	protected void jobDone(IJobChangeEvent event) {
 		if (isShutdown()) {
 			// The handler has been shutdown. Clean up the queue.
-			synchronized(awaitingProcessing) {
+			synchronized(this) {
 				awaitingProcessing.clear();
 			}
 		} else if (! isQueueEmpty()) {
@@ -191,20 +191,16 @@ public abstract class BackgroundEventHandler {
 	 * already running then notify in case it was waiting.
 	 * @param event the event to be queued
 	 */
-	protected void queueEvent(Event event) {
-		synchronized(awaitingProcessing) {
-			if (Policy.DEBUG_BACKGROUND_EVENTS) {
-				System.out.println("Event queued on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			awaitingProcessing.add(event);
-			if (!isShutdown() && eventHandlerJob != null) {
-				if(eventHandlerJob.getState() == Job.NONE) {
-					schedule();
-				} else {
-					synchronized(this) {
-						notify();
-					}
-				}
+	protected synchronized void queueEvent(Event event) {
+		if (Policy.DEBUG_BACKGROUND_EVENTS) {
+			System.out.println("Event queued on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		awaitingProcessing.add(event);
+		if (!isShutdown() && eventHandlerJob != null) {
+			if(eventHandlerJob.getState() == Job.NONE) {
+				schedule();
+			} else {
+				notify();
 			}
 		}
 	}
@@ -221,23 +217,19 @@ public abstract class BackgroundEventHandler {
 	 * Return the next event that has been queued, removing it from the queue. 
 	 * @return the next event in the queue
 	 */
-	private Event nextElement() {
-		synchronized(awaitingProcessing) {
-			if (isShutdown() || isQueueEmpty()) {
-				return null;
-			}
-			return (Event) awaitingProcessing.remove(0);
+	private synchronized Event nextElement() {
+		if (isShutdown() || isQueueEmpty()) {
+			return null;
 		}
+		return (Event) awaitingProcessing.remove(0);
 	}
 	
 	/**
 	 * Return whether there are unprocessed events on the event queue.
 	 * @return whether there are unprocessed events on the queue
 	 */
-	protected boolean isQueueEmpty() {
-		synchronized(awaitingProcessing) {
-			return awaitingProcessing.isEmpty();
-		}
+	protected synchronized boolean isQueueEmpty() {
+		return awaitingProcessing.isEmpty();
 	}
 	
 	/**
