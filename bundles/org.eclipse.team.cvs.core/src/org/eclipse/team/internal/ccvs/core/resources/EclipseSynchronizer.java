@@ -528,7 +528,8 @@ public class EclipseSynchronizer {
 			// set the dirty count using what was cached in the phantom it
 			beginOperation(null);
 			FolderSyncInfo folderInfo = synchronizerCache.getCachedFolderSync(folder);
-			if (folderInfo != null) {
+			byte[] syncBytes = synchronizerCache.getCachedSyncBytes(folder);
+			if (folderInfo != null && syncBytes != null) {
 				if (folder.getFolder(SyncFileWriter.CVS_DIRNAME).exists()) {
 					// There is already a CVS subdirectory which indicates that
 					// either the folder was recreated by an external tool or that
@@ -557,6 +558,7 @@ public class EclipseSynchronizer {
 
 				// set the sync info using what was cached in the phantom
 				setFolderSync(folder, folderInfo);
+				setCachedSyncBytes(folder, syncBytes);
 			}
 		} finally {
 			try {

@@ -179,11 +179,8 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 */
 	/*package*/ void flush(IFolder folder) throws CVSException {
 		try {
-			if (!folder.exists() && !folder.isPhantom()) return;
-			IResource[] children = folder.members(true);
-			for (int i = 0; i < children.length; i++) {
-				IResource resource = children[i];
-				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, resource, IResource.DEPTH_ZERO);
+			if (folder.exists() || folder.isPhantom()) {
+				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, folder, IResource.DEPTH_ZERO);
 			}
 			if (folder.exists() || folder.isPhantom()) {
 				getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, folder, IResource.DEPTH_ZERO);
