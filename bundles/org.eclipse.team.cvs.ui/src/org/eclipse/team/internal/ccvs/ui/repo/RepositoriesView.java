@@ -11,8 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.repo;
 
 
-import java.util.Properties;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
@@ -67,7 +65,7 @@ public class RepositoriesView extends RemoteViewPart {
 	
 	// Actions
 	private Action newAction;
-	private Action newAnonAction;
+	private Action newStdAction;
 	private PropertyDialogAction propertiesAction;
 	private RemoveRootAction removeRootAction;
 	
@@ -95,7 +93,7 @@ public class RepositoriesView extends RemoteViewPart {
 			});
 		}
 	};
-	
+
 	/**
 	 * Constructor for RepositoriesView.
 	 * @param partName
@@ -123,22 +121,16 @@ public class RepositoriesView extends RemoteViewPart {
 		};
 		WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_REPOSITORY_LOCATION_ACTION);
 		
-		if (includeAnonConnection()) {
-			newAnonAction = new Action(Policy.bind("RepositoriesView.newAnonCVS"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION)) { //$NON-NLS-1$
-				public void run() {
-					Properties p = new Properties();
-					p.setProperty("connection", "pserver"); //$NON-NLS-1$ //$NON-NLS-2$
-					p.setProperty("user", "anonymous"); //$NON-NLS-1$ //$NON-NLS-2$
-					p.setProperty("host", "dev.eclipse.org"); //$NON-NLS-1$ //$NON-NLS-2$
-					p.setProperty("root", "/home/eclipse"); //$NON-NLS-1$ //$NON-NLS-2$
-					NewLocationWizard wizard = new NewLocationWizard(p);
-					WizardDialog dialog = new WizardDialog(shell, wizard);
-					dialog.open();
-				}
-			};
-			WorkbenchHelp.setHelp(newAnonAction, IHelpContextIds.NEW_DEV_ECLIPSE_REPOSITORY_LOCATION_ACTION);
-		}
-		
+		// New Standard Repository (popup)
+		newStdAction = new Action(Policy.bind("RepositoriesView.newStd"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION)) { //$NON-NLS-1$
+			public void run() {
+				NewLocationWizard wizard = new NewLocationWizard(NewLocationWizard.STANDARD);
+				WizardDialog dialog = new WizardDialog(shell, wizard);
+				dialog.open();
+			}
+		};
+		WorkbenchHelp.setHelp(newStdAction, IHelpContextIds.NEW_REPOSITORY_LOCATION_ACTION);
+
 		// Properties
 		propertiesAction = new PropertyDialogAction(shell, getViewer());
 		getViewSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.PROPERTIES, propertiesAction);		
@@ -164,14 +156,6 @@ public class RepositoriesView extends RemoteViewPart {
 	}
 	
 	/**
-	 * Method includeEclipseConnection.
-	 * @return boolean
-	 */
-	private boolean includeAnonConnection() {
-		return System.getProperty("eclipse.cvs.anon") != null; //$NON-NLS-1$
-	}
-
-	/**
 	 * @see org.eclipse.team.internal.ccvs.ui.repo.RemoteViewPart#addWorkbenchActions(org.eclipse.jface.action.IMenuManager)
 	 */
 	protected void addWorkbenchActions(IMenuManager manager) {
@@ -192,8 +176,7 @@ public class RepositoriesView extends RemoteViewPart {
 			manager.add(propertiesAction);
 		}
 		sub.add(newAction);
-		if (newAnonAction != null)
-			sub.add(newAnonAction);		
+		sub.add(newStdAction);
 	}
 	
 	/*

@@ -44,44 +44,46 @@ import org.eclipse.ui.help.WorkbenchHelp;
  * Wizard page for entering information about a CVS repository location.
  */
 public class ConfigurationWizardMainPage extends CVSWizardPage {
-	private boolean showValidate;
-	private boolean validate;
+	protected boolean showValidate;
+	protected boolean validate;
 	
 	// Widgets
 	
 	// Connection Method
-	private Combo connectionMethodCombo;
+	protected Combo connectionMethodCombo;
 	// User
-	private Combo userCombo;
+	protected Combo userCombo;
 	// Password
-	private Text passwordText;
+	protected Text passwordText;
 	// Port
-	private Text portText;
-	private Button useDefaultPort;
-	private Button useCustomPort;
+	protected Text portText;
+	protected Button useDefaultPort;
+	protected Button useCustomPort;
 	// Host
-	private Combo hostCombo;
+	protected Combo hostCombo;
 	// Repository Path
-	private Combo repositoryPathCombo;
+	protected Combo repositoryPathCombo;
 	// Validation
-	private Button validateButton;
+	protected Button validateButton;
 	
-	private static final int COMBO_HISTORY_LENGTH = 5;
+	protected static final int COMBO_HISTORY_LENGTH = 5;
 	
-	private Properties properties = null;
+	protected Properties properties = null;
 	
 	// Dialog store id constants
-	private static final String STORE_USERNAME_ID =
+	protected static final String STORE_USERNAME_ID =
 		"ConfigurationWizardMainPage.STORE_USERNAME_ID";//$NON-NLS-1$
-	private static final String STORE_HOSTNAME_ID =
+	protected static final String STORE_HOSTNAME_ID =
 		"ConfigurationWizardMainPage.STORE_HOSTNAME_ID";//$NON-NLS-1$
-	private static final String STORE_PATH_ID =
+	protected static final String STORE_PATH_ID =
 		"ConfigurationWizardMainPage.STORE_PATH_ID";//$NON-NLS-1$
-	private static final String STORE_DONT_VALIDATE_ID =
+	protected static final String STORE_PROJECT_ID =
+		"ConfigurationWizardMainPage.STORE_PROJECT_ID";//$NON-NLS-1$
+	protected static final String STORE_DONT_VALIDATE_ID =
 		"ConfigurationWizardMainPage.STORE_DONT_VALIDATE_ID";//$NON-NLS-1$
 	
 	// In case the page was launched from a different wizard	
-	private IDialogSettings settings;
+	protected IDialogSettings settings;
 	
 	/**
 	 * ConfigurationWizardMainPage constructor.
@@ -102,7 +104,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	 * @param newEntry the entry to add to the history
 	 * @return the history with the new entry appended
 	 */
-	private String[] addToHistory(String[] history, String newEntry) {
+	protected String[] addToHistory(String[] history, String newEntry) {
 		ArrayList l = new ArrayList(Arrays.asList(history));
 		addToHistory(l, newEntry);
 		String[] r = new String[l.size()];
@@ -123,7 +125,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	 * @param history the current history
 	 * @param newEntry the entry to add to the history
 	 */
-	private void addToHistory(List history, String newEntry) {
+	protected void addToHistory(List history, String newEntry) {
 		history.remove(newEntry);
 		history.add(0,newEntry);
 	
@@ -280,7 +282,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	/**
 	 * Initializes states of the controls.
 	 */
-	private void initializeValues() {
+	protected void initializeValues() {
 		// Set remembered values
 		IDialogSettings settings = getDialogSettings();
 		if (settings != null) {
@@ -297,6 +299,12 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 				}
 			}
 			String[] userNames = settings.getArray(STORE_USERNAME_ID);
+			if (userNames == null) {
+				userNames = new String[] {
+					System.getProperty("user.name"),
+				};
+				settings.put(STORE_USERNAME_ID, userNames);
+			}
 			if (userNames != null) {
 				for (int i = 0; i < userNames.length; i++) {
 					userCombo.add(userNames[i]);
@@ -355,7 +363,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	/**
 	 * Saves the widget values
 	 */
-	private void saveWidgetValues() {
+	protected void saveWidgetValues() {
 		// Update history
 		IDialogSettings settings = getDialogSettings();
 		if (settings != null) {
@@ -409,7 +417,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	 * Validates the contents of the editable fields and set page completion 
 	 * and error messages appropriately.
 	 */
-	private void validateFields() {
+	protected void validateFields() {
 		String user = userCombo.getText();
 		if (user.length() == 0) {
 			setErrorMessage(null);

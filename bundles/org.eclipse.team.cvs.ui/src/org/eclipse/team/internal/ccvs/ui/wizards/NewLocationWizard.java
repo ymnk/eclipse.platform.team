@@ -34,7 +34,22 @@ public class NewLocationWizard extends Wizard {
 
 	private Properties properties = null;
 	
+	// Type of wizard, whether GENERIC or STANDARD.
+	private int type;
+
+	/** Type used when creating a dialog that can find an arbitrary
+		cvs repository.  */
+	public static final int GENERIC = 0;
+	/** Type used when creating a dialog that knows about the standard
+		public repositories.  */
+	public static final int STANDARD = 1;
+
 	public NewLocationWizard() {
+		this(GENERIC);
+	}
+
+	public NewLocationWizard(int type) {
+		this.type = type;
 		IDialogSettings workbenchSettings = CVSUIPlugin.getPlugin().getDialogSettings();
 		IDialogSettings section = workbenchSettings.getSection("NewLocationWizard");//$NON-NLS-1$
 		if (section == null) {
@@ -53,7 +68,11 @@ public class NewLocationWizard extends Wizard {
 	 * Creates the wizard pages
 	 */
 	public void addPages() {
-		mainPage = new ConfigurationWizardMainPage("repositoryPage1", Policy.bind("NewLocationWizard.heading"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION)); //$NON-NLS-1$ //$NON-NLS-2$
+		if (type == GENERIC) {
+			mainPage = new ConfigurationWizardMainPage("repositoryPage1", Policy.bind("NewLocationWizard.heading"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION)); //$NON-NLS-1$ //$NON-NLS-2$
+		} else {
+			mainPage = new StandardWizardMainPage("repositoryPage1", Policy.bind("NewLocationWizard.heading"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION)); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 		if (properties != null) {
 			mainPage.setProperties(properties);
 		}
