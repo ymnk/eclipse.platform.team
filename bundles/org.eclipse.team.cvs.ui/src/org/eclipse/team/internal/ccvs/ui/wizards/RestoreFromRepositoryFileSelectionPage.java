@@ -113,7 +113,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	private Map entriesCache = new HashMap();
 	private Map filesToRestore = new HashMap();
 
-	private static final int SELECTION_TABLE_WIDTH = 400;
+	private static final int WIZARD_WIDTH = 550;
 	
 	class HistoryInput implements ITypedElement, IStreamContentAccessor, IModificationDate {
 		IFile file;
@@ -166,15 +166,17 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		
 		// Top and bottom panes: top is the two selection panes, bottom is the file content viewer
 		Splitter vsplitter= new Splitter(composite,  SWT.VERTICAL);
-		vsplitter.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL
-					| GridData.VERTICAL_ALIGN_FILL | GridData.GRAB_VERTICAL));
+		GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL
+					| GridData.VERTICAL_ALIGN_FILL | GridData.GRAB_VERTICAL);
+		data.widthHint = WIZARD_WIDTH;
+		vsplitter.setLayoutData(data);
 		
 		// Top left and top right panes: the left for the files, the right for the log entries
 		Splitter hsplitter= new Splitter(vsplitter,  SWT.HORIZONTAL);
 
 		// Top left: file selection pane
 		fileSelectionPane = new CompareViewerPane(hsplitter, SWT.BORDER | SWT.FLAT);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);
+		data = new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);
 		fileSelectionPane.setLayoutData(data);
 		fileTree = createFileSelectionTree(fileSelectionPane);
 		
@@ -199,7 +201,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	}
 
 	protected CheckboxTableViewer createRevisionSelectionTable(CompareViewerPane composite, HistoryTableProvider tableProvider) {
-		CheckboxTableViewer table = tableProvider.createCheckBoxTable(composite, SELECTION_TABLE_WIDTH);
+		CheckboxTableViewer table = tableProvider.createCheckBoxTable(composite);
 		table.setContentProvider(new IStructuredContentProvider() {
 			public Object[] getElements(Object inputElement) {
 				ILogEntry[] entries = getSelectedEntries();
@@ -251,8 +253,6 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		tree.setInput(treeInput);
 		
 		GridData data = new GridData(GridData.FILL_BOTH | GridData.GRAB_VERTICAL);
-		data.heightHint = LIST_HEIGHT_HINT;
-		data.widthHint = SELECTION_TABLE_WIDTH;
 		tree.getTree().setLayoutData(data);
 		tree.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {

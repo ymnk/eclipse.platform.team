@@ -253,12 +253,11 @@ public class HistoryTableProvider {
 	 * @param parent
 	 * @return TableViewer
 	 */
-	public CheckboxTableViewer createCheckBoxTable(Composite parent, int widthHint) {
+	public CheckboxTableViewer createCheckBoxTable(Composite parent) {
 		Table table = new Table(parent, SWT.CHECK | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		GridData data = new GridData(GridData.FILL_BOTH);
-		data.widthHint = widthHint;
 		table.setLayoutData(data);
 	
 		TableLayout layout = new TableLayout();
