@@ -24,13 +24,12 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	// key for remembering if state has been loaded for a project
 	private final static QualifiedName STATE_LOADED_KEY = new QualifiedName("org.eclipse.team.core.deployment", "state_restored_key");
 	
-	//  {project -> list of Mapping}
+	// {project -> list of Mapping}
 	private Map mappings = new HashMap(5);
 
-//	registry for deployment provider extensions
+	// registry for deployment provider extensions
 	private DeploymentProviderRegistry registry;
-	
-	
+		
 	//	persistence constants
 	private final static String CTX_PROVIDERS = "deploymentProviders"; //$NON-NLS-1$
 	private final static String CTX_PROVIDER = "provider"; //$NON-NLS-1$
@@ -115,8 +114,9 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		// TODO: make concurrent safe!!
 		IProject project = container.getProject();
 		List projectMaps = getMappings(container);
-		if(projectMaps != null) {
-			projectMaps.remove(container);
+		Mapping m = getMappingFor(container, teamProvider.getID());
+		if(m != null) {
+			projectMaps.remove(m);
 			if(projectMaps.isEmpty()) {
 				mappings.remove(project);
 			}
@@ -156,19 +156,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	}
 	
 	public boolean getMappedTo(IResource resource, String id) {
-		List projectMappings = getMappings(resource);
-		String fullPath = resource.getFullPath().toString();
-		if(projectMappings != null) {
-			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
-				Mapping m = (Mapping) it.next();
-				
-				// mapping can be initialize without having provider loaded yet!
-				if(m.getDescription().getId().equals(id) && fullPath.startsWith(m.getContainer().getFullPath().toString())) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return getMappingFor(resource, id) != null;
 	}
 	
 	private void checkOverlapping(IContainer container) throws TeamException {
@@ -177,7 +165,8 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		if(projectMappings != null) {
 			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
 				Mapping m = (Mapping) it.next();
-				if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+				String first = m.getContainer().getFullPath().toString();
+				if(fullPath.startsWith(first) || first.startsWith(fullPath)) {
 					throw new TeamException(container.getFullPath().toString() + " is already mapped to " + m.getDescription().getId());
 				}
 			}
@@ -216,23 +205,44 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		return (List)mappings.get(project);
 	}
 	
+	private Mapping getMappingFor(IResource resource, String id) {
+		List projectMappings = getMappings(resource);
+		String fullPath = resource.getFullPath().toString();
+		if(projectMappings != null) {
+			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
+				Mapping m = (Mapping) it.next();				
+				// mapping can be initialize without having provider loaded yet!
+				if(m.getDescription().getId().equals(id) && fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+					return m;
+				}
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * Saves a file containing the list of participant ids that are registered with this
 	 * manager. Each participant is also given the chance to save it's state. 
 	 */
 	private void saveState(IProject project) throws TeamException {
+		
 		// TODO: have to handle the whole overwritten - editing crap with this file!!
-		XMLMemento xmlMemento = XMLMemento.createWriteRoot(CTX_PROVIDERS);	
-		List providers = (List)mappings.get(project);
-		for (Iterator it2 = providers.iterator(); it2.hasNext(); ) {
-			Mapping mapping = (Mapping) it2.next();
-			IMemento node = xmlMemento.createChild(CTX_PROVIDER);
-			node.putString(CTX_ID, mapping.getDescription().getId());
-			node.putString(CTX_PATH, mapping.getContainer().getFullPath().toString());
-			mapping.getProvider().saveState(node.createChild(CTX_PROVIDER_DATA));
-		}
 		try {
-			if(! providers.isEmpty()) {
+			XMLMemento xmlMemento = XMLMemento.createWriteRoot(CTX_PROVIDERS);	
+			List providers = (List)mappings.get(project);
+			if(providers == null) {
+				IFile settingsFile = project.getFile(FILENAME);
+				if(settingsFile.exists()) {
+					settingsFile.delete(true /* force */, true /* keep history */, null);
+				}
+			} else {
+				for (Iterator it2 = providers.iterator(); it2.hasNext(); ) {
+					Mapping mapping = (Mapping) it2.next();
+					IMemento node = xmlMemento.createChild(CTX_PROVIDER);
+					node.putString(CTX_ID, mapping.getDescription().getId());
+					node.putString(CTX_PATH, mapping.getContainer().getProjectRelativePath().toString());
+					mapping.getProvider().saveState(node.createChild(CTX_PROVIDER_DATA));
+				}
 				IFile settingsFile = project.getFile(FILENAME);
 				if(! settingsFile.exists()) {
 					settingsFile.create(new ByteArrayInputStream(new byte[0]), true, null);
@@ -243,11 +253,6 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 				} finally {
 					writer.close();
 					settingsFile.refreshLocal(IResource.DEPTH_ZERO, null);
-				}
-			} else {
-				IFile settingsFile = project.getFile(FILENAME);
-				if(settingsFile.exists()) {
-					settingsFile.delete(true /* force */, true /* keep history */, null);
 				}
 			}
 		} catch (IOException e) {

@@ -23,16 +23,14 @@ import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
  * <ul>
  * <li>a deployment provider doesn't have full control of workspace resources whereas the repository
  * provider can hook into the IMoveDeleteHook and IFileModificationValidator.
- * <li>multiple team providers can be mapped to the same folder whereas there is only one
+ * <li>multiple deployment providers can be mapped to the same folder whereas there is only one
  * repository provider per project.
- * <li>a deployment provider can be mapped to any folder as long as the mapping is not self overlapping
+ * <li>a deployment provider can be mapped to any folder as long as the mapping is not overlapping
  * whereas the repository provider must be mapped at the project.
  * </ul>
- * </p><p>
- * Mapping of a deployment provider and a container is always deep. This is why overlapping team providers
- * of the same type is not allowed.
  * </p>
  * @see RepositoryProvider
+ * @see IDeploymentProviderManager
  * @since 3.0
  */
 public abstract class DeploymentProvider implements IExecutableExtension {
