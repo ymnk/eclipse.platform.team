@@ -292,7 +292,7 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 		return resource;
 	}
 
-	public abstract void handleModification(boolean forAddition) throws CVSException;
+	public abstract boolean handleModification(boolean forAddition) throws CVSException;
 	
 	/**
 	 * Method created is invoked after a resource is created

@@ -827,7 +827,8 @@ public class EclipseSynchronizer {
 			}
 			
 			/*** broadcast events ***/
-			changedResources.addAll(changedFolders);				
+			changedResources.addAll(changedFolders);
+			changedResources.addAll(dirtyParents);	
 			IResource[] resources = (IResource[]) changedResources.toArray(
 				new IResource[changedResources.size()]);
 			broadcastResourceStateChanges(resources);
@@ -859,7 +860,10 @@ public class EclipseSynchronizer {
 			for (int i = 0; i < resources.length; i++) {
 				IResource resource = resources[i];
 				try {
-					internalSetDirtyIndicator(resource, RECOMPUTE_INDICATOR);
+					if((resource.getType() == IResource.FILE && !contentsChangedByUpdate((IFile)resource, false /* don't clear */)) ||
+					    resource.getType() != IResource.FILE) {
+						adjustDirtyStateRecursively(resource, RECOMPUTE_INDICATOR);
+					}
 				} catch (CVSException e) {
 					CVSProviderPlugin.log(e);
 				}
@@ -1230,35 +1234,36 @@ public class EclipseSynchronizer {
 		return SyncFileWriter.isEdited(resource);
 	}
 	
-	private void internalSetDirtyIndicator(IResource resource, String indicator) throws CVSException {		
-		adjustDirtyStateRecursively(resource, indicator);
-	}
-	
-	public void adjustDirtyStateRecursively(IResource resource, String indicator) throws CVSException {
+	private void adjustDirtyStateRecursively(IResource resource, String indicator) throws CVSException {
 		if (resource.getType() == IResource.ROOT) return;
-			try {
-				beginOperation(null);
-				try {
-					if (Policy.DEBUG_DIRTY_CACHING) {
-						debug(resource, indicator, "adjusting dirty state");
-					}
-					getSyncInfoCacheFor(resource).setDirtyIndicator(resource, indicator);
-				} finally {
-					IContainer parent = resource.getParent();
-					String parentIndicator = getDirtyIndicator(parent);
-					if(indicator == RECOMPUTE_INDICATOR) {
-						adjustDirtyStateRecursively(parent, RECOMPUTE_INDICATOR);
-					} else if(indicator == IS_DIRTY_INDICATOR && parentIndicator == NOT_DIRTY_INDICATOR) {
-						adjustDirtyStateRecursively(parent, indicator);
-					} else if(indicator == NOT_DIRTY_INDICATOR && parentIndicator == IS_DIRTY_INDICATOR) {
-						adjustDirtyStateRecursively(parent, RECOMPUTE_INDICATOR);
-					} else {
-						// parents are already in the good state
-					}
-				}
-			} finally {
-				endOperation(null);
+		try {
+			beginOperation(null);
+			
+			if (indicator == getDirtyIndicator(resource)) {
+				return;
+			} 					
+			
+			if (Policy.DEBUG_DIRTY_CACHING) {
+				debug(resource, indicator, "adjusting dirty state");
 			}
+
+			getSyncInfoCacheFor(resource).setDirtyIndicator(resource, indicator);										
+
+			IContainer parent = resource.getParent();
+			if(indicator == NOT_DIRTY_INDICATOR) {
+				adjustDirtyStateRecursively(parent, RECOMPUTE_INDICATOR);
+			}
+			
+			if(indicator == RECOMPUTE_INDICATOR) {
+				adjustDirtyStateRecursively(parent, RECOMPUTE_INDICATOR);
+			} 
+			
+			if(indicator == IS_DIRTY_INDICATOR) {
+				adjustDirtyStateRecursively(parent, indicator);
+			} 
+		} finally {
+			endOperation(null);
+		}
 	}
 
 	protected String getDirtyIndicator(IResource resource) throws CVSException {
@@ -1279,11 +1284,6 @@ public class EclipseSynchronizer {
 		try {
 			beginOperation(null);
 			String indicator = modified ? IS_DIRTY_INDICATOR : NOT_DIRTY_INDICATOR;
-		
-			if (indicator == getDirtyIndicator(resource)) {
-				return;
-			} 
-			
 			// set the dirty indicator and adjust the parent accordingly			
 			adjustDirtyStateRecursively(resource, indicator);
 		} finally {
@@ -1302,8 +1302,12 @@ public class EclipseSynchronizer {
 		sessionPropertyCache.markFileAsUpdated(file);
 	}
 	
-	protected boolean contentsChangedByUpdate(IFile file) throws CVSException {
-		return sessionPropertyCache.contentsChangedByUpdate(file);
+	protected boolean contentsChangedByUpdate(IFile file, boolean clear) throws CVSException {
+		if(file.exists()) {
+			return sessionPropertyCache.contentsChangedByUpdate(file, clear);
+		} else {
+			return false;
+		}
 	}
 
 	/**

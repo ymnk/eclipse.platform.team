@@ -508,7 +508,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		EclipseSynchronizer.getInstance().markFileAsUpdated(getIFile());
 	}
 	
-	public void handleModification(boolean forAddition) throws CVSException {
+	public boolean handleModification(boolean forAddition) throws CVSException {
 		if (isIgnored()) {			
 			// Special case handling for when a resource passes from the un-managed state
 			// to the ignored state (e.g. ignoring the ignore file). Parent dirty state must be
@@ -519,13 +519,14 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			if(! resource.isDerived()) {
 				setModified(false);
 			}
-			return;
+			return true;
 		} 
-		if (EclipseSynchronizer.getInstance().contentsChangedByUpdate(getIFile()))
-			return;
-			
-		// set the modification state to what it really is and return true if the modification state changed
-		setModified(computeModified(getSyncInfo()));
+		if(!EclipseSynchronizer.getInstance().contentsChangedByUpdate(getIFile(), true /* clear update state */)) {
+			// set the modification state to what it really is and return true if the modification state changed
+			setModified(computeModified(getSyncInfo()));
+			return true;
+		}
+		return false;
 	}
 	
 	/**

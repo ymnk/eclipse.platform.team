@@ -358,9 +358,9 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		return indicator == EclipseSynchronizer.IS_DIRTY_INDICATOR;
 	}
 	
-	public void handleModification(boolean forAddition) throws CVSException {
+	public boolean handleModification(boolean forAddition) throws CVSException {
 		// For non-additions, we are only interested in sync info changes
-		if (isIgnored() || !forAddition) return;
+		if (isIgnored() || !forAddition) return false;
 
 		// the folder is an addition.
 		FolderSyncInfo info = getFolderSyncInfo();
@@ -368,7 +368,9 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		// otherwise, flush the ancestors to recalculate
 		if (info == null) {
 			setModified((IContainer)getIResource(), EclipseSynchronizer.IS_DIRTY_INDICATOR);
+			return true;
 		}
+		return false;
 	}
 	
 	/**
