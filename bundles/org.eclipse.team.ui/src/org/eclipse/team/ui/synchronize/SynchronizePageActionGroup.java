@@ -28,6 +28,8 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	 * made to <code>filleContextMenu</code> or <code>setActionBars</code>
 	 * but after the control for the page has been created. As a result
 	 * of this, the site of the configuration can be accessed.
+	 * Sublcasses may override this method but must invoke
+	 * the overriden method.
 	 * @param configuration the configuration for the part to which
 	 * the contribution is associated
 	 */
@@ -52,7 +54,9 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	 */
 	public void dispose() {
 		super.dispose();
-		configuration.removeActionContribution(this);
+		if (configuration != null) {
+			configuration.removeActionContribution(this);
+		}
 	}
 	
 	/**

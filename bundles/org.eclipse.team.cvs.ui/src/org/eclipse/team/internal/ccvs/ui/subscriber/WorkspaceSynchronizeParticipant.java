@@ -37,14 +37,13 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 		private ActionDelegateWrapper commitToolbar;
 		private ActionDelegateWrapper updateToolbar;
 		public void initialize(ISynchronizePageConfiguration configuration) {
-			initialize(configuration);
+			super.initialize(configuration);
 			commitToolbar = new ActionDelegateWrapper(new SubscriberCommitAction(), configuration.getSite().getPart());
 			WorkspaceUpdateAction action = new WorkspaceUpdateAction();
 			action.setPromptBeforeUpdate(true);
 			updateToolbar = new ActionDelegateWrapper(action, configuration.getSite().getPart());
 			Utils.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle()); //$NON-NLS-1$
 			Utils.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
-			super.initialize(configuration);
 		}
 		public void fillActionBars(IActionBars actionBars) {
 			IToolBarManager toolbar = actionBars.getToolBarManager();

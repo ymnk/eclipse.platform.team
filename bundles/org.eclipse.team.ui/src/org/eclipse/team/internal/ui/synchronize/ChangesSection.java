@@ -42,7 +42,6 @@ import org.eclipse.ui.part.PageBook;
 public class ChangesSection extends Composite {
 	
 	private SubscriberParticipant participant;
-	private Composite parent;
 	private SubscriberParticipantPage page;
 	private FormToolkit forms;
 			
@@ -72,9 +71,10 @@ public class ChangesSection extends Composite {
 	private boolean showingError;
 
 	/**
-	 * Listen to sync set changes so that we can update message to user and totals.
+	 * Register an action contribution in order to receive model
+	 * change notification so that we can update message to user and totals.
 	 */
-	private ISynchronizeModelChangeListener changedListener = new ISynchronizeModelChangeListener() {
+	private SynchronizePageActionGroup changedListener = new SynchronizePageActionGroup() {
 		public void modelChanged(ISynchronizeModelElement root) {
 			calculateDescription();
 		}
@@ -125,7 +125,6 @@ public class ChangesSection extends Composite {
 		this.page = page;
 		this.configuration = configuration;
 		this.participant = page.getParticipant();
-		this.parent = parent;
 		
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
@@ -154,7 +153,7 @@ public class ChangesSection extends Composite {
 	public void setViewer(Viewer viewer) {
 		this.changesViewer = viewer;
 		calculateDescription();
-		page.getViewerAdvisor().addInputChangedListener(changedListener);
+		configuration.addActionContribution(changedListener);
 		participant.getSyncInfoSet().addSyncSetChangedListener(subscriberListener);
 		getSyncInfoTree().addSyncSetChangedListener(outputSetListener);
 	}
@@ -236,7 +235,6 @@ public class ChangesSection extends Composite {
 		long incomingChanges = workingSet.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);		
 		
 		if(changesInFilter == 0 && changesInWorkingSet != 0) {
-			int mode = configuration.getMode();
 			final int newMode = outgoingChanges != 0 ? SubscriberPageConfiguration.OUTGOING_MODE : SubscriberPageConfiguration.INCOMING_MODE;
 			long numChanges = outgoingChanges != 0 ? outgoingChanges : incomingChanges;
 			StringBuffer text = new StringBuffer();
@@ -289,7 +287,7 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
-		page.getViewerAdvisor().removeInputChangedListener(changedListener);
+		configuration.removeActionContribution(changedListener);
 		participant.getSyncInfoSet().removeSyncSetChangedListener(subscriberListener);
 	}
 	
