@@ -251,9 +251,9 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 					try {
 						Utils.runWithProgress(parent, cancelable, runnable);
 					} catch (InvocationTargetException e) {
-						exception[1] = e;
+						exception[0] = e;
 					} catch (InterruptedException e) {
-						exception[1] = e;
+						exception[0] = e;
 					}
 				}
 			};
@@ -342,6 +342,8 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		createImageDescriptor(ICVSUIConstants.IMG_REFRESH, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_REFRESH_ENABLED, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_REFRESH_DISABLED, baseURL);
+		createImageDescriptor(ICVSUIConstants.IMG_LINK_WITH_EDITOR, baseURL);
+		createImageDescriptor(ICVSUIConstants.IMG_LINK_WITH_EDITOR_ENABLED, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL_ENABLED, baseURL);
 		createImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION, baseURL);
@@ -558,14 +560,15 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		Preferences corePrefs = CVSProviderPlugin.getPlugin().getPluginPreferences();
 		
 		// work in progress START
-		store.setDefault(ICVSUIConstants.BACKGROUND_REPOVIEW, false);
-		store.setDefault(ICVSUIConstants.BACKGROUND_OPERATIONS, false);
-		store.setDefault(ICVSUIConstants.USE_NEW_SYNCVIEW, false);
+		store.setDefault(ICVSUIConstants.BACKGROUND_REPOVIEW, true);
+		store.setDefault(ICVSUIConstants.BACKGROUND_OPERATIONS, true);
+		store.setDefault(ICVSUIConstants.USE_NEW_SYNCVIEW, true);
 		// work in progress END
 		
 		store.setDefault(ICVSUIConstants.PREF_REPOSITORIES_ARE_BINARY, false);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_COMMENTS, true);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_TAGS, true);
+		store.setDefault(ICVSUIConstants.PREF_HISTORY_VIEW_EDITOR_LINKING, false);
 		store.setDefault(ICVSUIConstants.PREF_PRUNE_EMPTY_DIRECTORIES, CVSProviderPlugin.DEFAULT_PRUNE);
 		store.setDefault(ICVSUIConstants.PREF_TIMEOUT, CVSProviderPlugin.DEFAULT_TIMEOUT);
 		store.setDefault(ICVSUIConstants.PREF_CONSIDER_CONTENTS, false);

@@ -22,6 +22,8 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -106,18 +108,27 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CheckoutOperation#checkout(org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	protected IStatus checkout(ICVSRemoteFolder folder, IProgressMonitor monitor) throws CVSException {
+		return checkout(folder, getLocalFolder(), isRecursive(), monitor);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.CheckoutOperation#checkout(org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected void checkout(ICVSRemoteFolder[] folders, IProgressMonitor monitor) throws CVSException {
-		ICVSFolder parentLocalFolder = getLocalFolder();
-		boolean recurse = isRecursive();
-		monitor.beginTask(null, 100 * folders.length + 100);
-		for (int i = 0; i < folders.length; i++) {
-			ICVSRemoteFolder folder = folders[i];
-			checkout(folders[i], parentLocalFolder, recurse, Policy.subMonitorFor(monitor, 100));
+		monitor.beginTask(null, 100);
+		ISchedulingRule rule = getSchedulingRule();
+		try {
+			//	Obtain a scheduling rule on the projects were about to overwrite
+			Platform.getJobManager().beginRule(rule);
+			super.checkout(folders, Policy.subMonitorFor(monitor, 90));
+			refreshRoot(getLocalRoot(getLocalFolder()), Policy.subMonitorFor(monitor, 10));
+		} finally {
+			Platform.getJobManager().endRule(rule);
+			monitor.done();
 		}
-		refreshRoot(getLocalRoot(parentLocalFolder), Policy.subMonitorFor(monitor, 100));
-		monitor.done();
 	}
 	
 	/*
@@ -311,18 +322,19 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 		return OK;
 	}
 
-	private void checkout(final ICVSRemoteFolder remoteFolder, ICVSFolder parentFolder, boolean recurse, IProgressMonitor monitor) throws CVSException {
+	private IStatus checkout(final ICVSRemoteFolder remoteFolder, ICVSFolder parentFolder, boolean recurse, IProgressMonitor monitor) throws CVSException {
 		// Open a connection session to the repository
+		monitor.beginTask(null, 100);
 		ICVSRepositoryLocation repository = remoteFolder.getRepository();
 		Session session = new Session(repository, parentFolder);
 		try {
-			session.open(Policy.subMonitorFor(monitor, 10));
+			session.open(Policy.subMonitorFor(monitor, 5), false /* read-only */);
 			
 			// Determine which local folders will be affected
-			ICVSFolder[] targetFolders = prepareLocalFolders(session, remoteFolder, parentFolder, localFolderName, Policy.subMonitorFor(monitor, 10));
+			ICVSFolder[] targetFolders = prepareLocalFolders(session, remoteFolder, parentFolder, localFolderName, Policy.subMonitorFor(monitor, 5));
 			if (targetFolders == null) {
 				// an error occured and has been added to the operation's error list
-				return;
+				return getLastError();
 			}
 			
 			// Add recurse option
@@ -350,13 +362,14 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 				(LocalOption[])localOptions.toArray(new LocalOption[localOptions.size()]),
 				new String[] { remoteFolder.getRepositoryRelativePath() },
 				null,
-				Policy.subMonitorFor(monitor, 10));
+				Policy.subMonitorFor(monitor, 80));
 			if (!status.isOK()) {
-				addError(status);
-				return;
+				return status;
 			}
 			
 			manageFolders(targetFolders, repository.getLocation());
+			
+			return OK;
 			
 		} finally {
 			session.close();
@@ -406,4 +419,18 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 	public String getName() {
 		return getTaskName();
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getSchedulingRule()
+	 */
+	protected ISchedulingRule getSchedulingRule() {
+		try {
+			// Use the project of the target folder as the scheduling rule
+			return getLocalFolder().getIResource().getProject();
+		} catch (CVSException e) {
+			CVSUIPlugin.log(e);
+			return null;
+		}
+	}
+
 }

@@ -338,13 +338,18 @@ public class RepositoryRoot extends PlatformObject {
 
 		attributes.clear();
 		attributes.put(RepositoriesViewContentHandler.ID_ATTRIBUTE, root.getLocation());
-		String programName = ((CVSRepositoryLocation)root).getRemoteCVSProgramName();
-		if (!programName.equals(CVSRepositoryLocation.DEFAULT_REMOTE_CVS_PROGRAM_NAME)) {
-			attributes.put(RepositoriesViewContentHandler.REPOSITORY_PROGRAM_NAME_ATTRIBUTE, programName);
-		}
 		if (name != null) {
 			attributes.put(RepositoriesViewContentHandler.NAME_ATTRIBUTE, name);
 		}
+		String readLocation = ((CVSRepositoryLocation)root).getReadLocation();
+		if (readLocation != null) {
+			attributes.put(RepositoriesViewContentHandler.READ_ID_ATTRIBUTE, readLocation);
+		}
+		String writeLocation = ((CVSRepositoryLocation)root).getWriteLocation();
+		if (writeLocation != null) {
+			attributes.put(RepositoriesViewContentHandler.WRITE_ID_ATTRIBUTE, writeLocation);
+		}
+		
 		writer.startTag(RepositoriesViewContentHandler.REPOSITORY_TAG, attributes, true);
 		
 		// Gather all the modules that have tags and/or auto-refresh files

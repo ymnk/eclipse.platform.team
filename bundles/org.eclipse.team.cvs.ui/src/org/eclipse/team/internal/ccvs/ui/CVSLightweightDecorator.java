@@ -95,7 +95,7 @@ public class CVSLightweightDecorator
 	public CVSLightweightDecorator() {
 		CVSProviderPlugin.addResourceStateChangeListener(this);
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
-		exceptions = new ExceptionCollector(Policy.bind("CVSDecorator.exceptionMessage"), CVSUIPlugin.ID, IStatus.ERROR, CVSUIPlugin.getPlugin().getLog());
+		exceptions = new ExceptionCollector(Policy.bind("CVSDecorator.exceptionMessage"), CVSUIPlugin.ID, IStatus.ERROR, CVSUIPlugin.getPlugin().getLog()); //$NON-NLS-1$
 	}
 
 	public static boolean isDirty(final ICVSResource cvsResource) {
@@ -398,7 +398,8 @@ public class CVSLightweightDecorator
 				// check if the folder is local diectory with no remote
 				ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)resource);
 				try {
-					if (cvsFolder.getFolderSyncInfo().getRepository().equals(FolderSyncInfo.VIRTUAL_DIRECTORY)) {
+					FolderSyncInfo folderSyncInfo = cvsFolder.getFolderSyncInfo();
+					if (folderSyncInfo != null && folderSyncInfo.getRepository().equals(FolderSyncInfo.VIRTUAL_DIRECTORY)) {
 						return noRemoteDir;
 					}
 				} catch (CVSException e) {

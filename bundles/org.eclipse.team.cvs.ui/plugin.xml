@@ -885,7 +885,7 @@
 	
 	<!-- ********** QuickDiff text editor support ************** -->
 	<extension
-         point="org.eclipse.ui.editors.quickDiffReferenceProvider">
+         point="org.eclipse.ui.workbench.texteditor.quickDiffReferenceProvider">
       <referenceprovider
             label="%CVSRemoteQuickDiffProvider.label"
             class="org.eclipse.team.internal.ccvs.ui.RemoteRevisionQuickDiffProvider"

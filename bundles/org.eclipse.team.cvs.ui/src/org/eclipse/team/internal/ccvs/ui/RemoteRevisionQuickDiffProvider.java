@@ -19,46 +19,193 @@ import java.io.Reader;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.team.core.sync.IRemoteResource;
+import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
+import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.ICVSFile;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.editors.quickdiff.IQuickDiffProviderImplementation;
-import org.eclipse.ui.editors.text.StorageDocumentProvider;
+import org.eclipse.ui.editors.text.IStorageDocumentProvider;
 import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.ui.texteditor.IElementStateListener;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.quickdiff.IQuickDiffProviderImplementation;
 
 /**
- * Quick and dirty cvs reference provider. No background, no hourglass cursor, no nothing.
+ * The CVS quick diff provider that returns the latest remote revision for a file
+ * that is managed by the CVS provider.
+ * 
+ * 
+ * 
  * @since 3.0
  */
 public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplementation {
 
-	private boolean fDocumentRead= false;
-	private ITextEditor fEditor= null;
-	private IDocument fReference= null;
+	private boolean fDocumentRead = false;
+	private ITextEditor fEditor = null;
+	private IDocument fReference = null;
+	private IDocumentProvider documentProvider = null;
+	private IEditorInput input = null;
 	private String fId;
+	private ICVSFile cvsFile;
 
+	protected Job updateJob;
+	
+	/**
+	 * Updates the document if a sync changes occurs to the associated CVS file.
+	 */
+	private ITeamResourceChangeListener teamChangeListener = new ITeamResourceChangeListener() {
+		public void teamResourceChanged(TeamDelta[] deltas) {
+			if(cvsFile != null) {
+				for (int i = 0; i < deltas.length; i++) {
+					TeamDelta delta = deltas[i];
+					try {
+						if(delta.getResource().equals(cvsFile.getIResource())) {
+							if(delta.getFlags() == TeamDelta.SYNC_CHANGED) {
+								fetchContentsInJob();
+							}
+						}
+					} catch (CVSException e) {
+						e.printStackTrace();
+					} 
+				}
+			}
+		}
+	};
+
+	/**
+	 * Updates the document if the document is changed (e.g. replace with)
+	 */
+	private IElementStateListener documentListener = new IElementStateListener() {
+		public void elementDirtyStateChanged(Object element, boolean isDirty) {
+		}
+
+		public void elementContentAboutToBeReplaced(Object element) {
+		}
+
+		public void elementContentReplaced(Object element) {
+			if(element == input) {
+				fetchContentsInJob();
+			}
+		}
+
+		public void elementDeleted(Object element) {
+		}
+
+		public void elementMoved(Object originalElement, Object movedElement) {
+		}
+	};
+	
 	/*
 	 * @see org.eclipse.test.quickdiff.DocumentLineDiffer.IQuickDiffReferenceProvider#getReference()
 	 */
-	public IDocument getReference() {
-		if (!fDocumentRead)
-			readDocument();
-		if (fDocumentRead)
-			return fReference;
-		else
+	public IDocument getReference(IProgressMonitor monitor) {
+		try {
+			if (!fDocumentRead)
+				readDocument(monitor);
+			if (fDocumentRead)
+				return fReference;
+			else
+				return null;
+		} catch(CoreException e) {
+			CVSUIPlugin.log(e);
 			return null;
+		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.texteditor.quickdiff.IQuickDiffProviderImplementation#setActiveEditor(org.eclipse.ui.texteditor.ITextEditor)
+	 */
+	public void setActiveEditor(ITextEditor targetEditor) {
+		if (targetEditor != fEditor) {
+			dispose();
+			fEditor= targetEditor;
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.texteditor.quickdiff.IQuickDiffProviderImplementation#isEnabled()
+	 */
+	public boolean isEnabled() {
+		if (!initialized())
+			return false;
+		return getCVSFile() != null;
+	}
+
+	/*
+	 * @see org.eclipse.jface.text.source.diff.DocumentLineDiffer.IQuickDiffReferenceProvider#dispose()
+	 */
+	public void dispose() {
+		fReference= null;
+		cvsFile = null;
+		fDocumentRead= false;
+		if(documentProvider != null) {
+			documentProvider.removeElementStateListener(documentListener);
+		}
+		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().removeListener(teamChangeListener);
+	}
+
+	/*
+	 * @see org.eclipse.quickdiff.QuickDiffTestPlugin.IQuickDiffProviderImplementation#setId(java.lang.String)
+	 */
+	public void setId(String id) {
+		fId= id;
+	}
+
+	/*
+	 * @see org.eclipse.jface.text.source.diff.DocumentLineDiffer.IQuickDiffReferenceProvider#getId()
+	 */
+	public String getId() {
+		return fId;
+	}
+	
+	private boolean initialized() {
+		return fEditor != null;
+	}
+	
+	private void readDocument(IProgressMonitor monitor) throws CoreException {
+		if (!initialized())
+			return;
+
+		fDocumentRead= false;
+	
+		if (fReference == null) {
+			fReference= new Document();
+		}
+	
+		cvsFile = getCVSFile();
+		if(cvsFile != null) {
+			ICVSRemoteResource remote = CVSWorkspaceRoot.getRemoteTree(cvsFile.getIResource(), cvsFile.getSyncInfo().getTag(), monitor);
+			IDocumentProvider docProvider= fEditor.getDocumentProvider();
+			if (docProvider instanceof IStorageDocumentProvider) {
+				documentProvider = docProvider;
+				IStorageDocumentProvider provider= (IStorageDocumentProvider) documentProvider;			
+				String encoding= provider.getEncoding(fEditor.getEditorInput());
+				if (encoding == null) {
+					encoding= provider.getDefaultEncoding();
+				}
+				InputStream stream= remote.getContents(monitor);
+				if (stream == null) {
+					return;
+				}
+				setDocumentContent(fReference, stream, encoding);
+				
+				CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().addListener(teamChangeListener);
+				((IDocumentProvider)provider).addElementStateListener(documentListener);
+			}
+		}
+		fDocumentRead= true;
+	}
+	
 	/**
 	 * Intitializes the given document with the given stream using the given encoding.
 	 *
@@ -82,108 +229,51 @@ public class RemoteRevisionQuickDiffProvider implements IQuickDiffProviderImplem
 			}
 			document.set(caw.toString());
 		} catch (IOException x) {
-			String msg= x.getMessage() == null ? "" : x.getMessage(); //$NON-NLS-1$
-			IStatus s= new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, IStatus.OK, msg, x);
-			throw new CoreException(s);
+			throw new CVSException(Policy.bind("RemoteRevisionQuickDiffProvider.readingFile"), x);
 		} finally {
 			if (in != null) {
 				try {
 					in.close();
 				} catch (IOException x) {
+					throw new CVSException(Policy.bind("RemoteRevisionQuickDiffProvider.closingFile"), x);
 				}
 			}
 		}
 	}
-
-	private void readDocument() {
-		// TODO this is quick&dirty
-		if (!initialized())
-			return;
-		fDocumentRead= false;
+	
+	private ICVSFile getCVSFile() {
 		IEditorInput input= fEditor.getEditorInput();
-		if (fReference == null)
-			fReference= new Document();
 		if (input instanceof IFileEditorInput) {
 			IFile file= ((IFileEditorInput)input).getFile();
-			IRemoteResource remote= null;
 			try {
-				remote= CVSWorkspaceRoot.getRemoteResourceFor(file);
+				if(CVSWorkspaceRoot.isSharedWithCVS(file)) {
+					return CVSWorkspaceRoot.getCVSFileFor(file);
+				}
 			} catch (CVSException e) {
-				return;
+				CVSUIPlugin.log(e);
 			}
-			if (remote == null)
-				return;
+		}
+		return null;
+	}
 
-			IDocumentProvider provider= fEditor.getDocumentProvider();
-			if (provider instanceof StorageDocumentProvider) {
-				StorageDocumentProvider sProvider= (StorageDocumentProvider)provider;
-				String encoding= sProvider.getEncoding(input);
-				if (encoding == null)
-					encoding= sProvider.getDefaultEncoding();
+	private void fetchContentsInJob() {
+		if(updateJob != null && updateJob.getState() != Job.NONE) {
+			updateJob.cancel();
+			try {
+				updateJob.join();
+			} catch (InterruptedException e) {				
+			}
+		}
+		Job updateJob = new Job(Policy.bind("RemoteRevisionQuickDiffProvider.fetchingFile")) {
+			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					InputStream stream= remote.getContents(new NullProgressMonitor());
-					if (stream == null)
-						return;
-					setDocumentContent(fReference, stream, encoding);
-				} catch (CoreException e1) {
-					// TODO Auto-generated catch block
-					MessageDialog.openError(fEditor.getSite().getShell(), "CoreException", "Error when retrieving remote version");
-					return;
+					readDocument(monitor);
+				} catch (CoreException e) {
+					return e.getStatus();
 				}
+				return Status.OK_STATUS;
 			}
-		}
-		fDocumentRead= true;
-	}
-
-	private boolean initialized() {
-		return fEditor != null;
-	}
-
-	public void setActiveEditor(ITextEditor targetEditor) {
-		if (targetEditor != fEditor) {
-			dispose();
-			fEditor= targetEditor;
-		}
-	}
-
-	/*
-	 * @see org.eclipse.quickdiff.QuickDiffTestPlugin.IQuickDiffProviderImplementation#isEnabled()
-	 */
-	public boolean isEnabled() {
-		if (!initialized())
-			return false;
-		IEditorInput input= fEditor.getEditorInput();
-		if (input instanceof IFileEditorInput) {
-			IFile file= ((IFileEditorInput)input).getFile();
-			try {
-				return CVSWorkspaceRoot.isSharedWithCVS(file);
-			} catch (CVSException e) {
-				// TODO: handle exception
-				e.printStackTrace();
-			}
-		}
-		return false;
-	}
-
-	/*
-	 * @see org.eclipse.jface.text.source.diff.DocumentLineDiffer.IQuickDiffReferenceProvider#dispose()
-	 */
-	public void dispose() {
-		fReference= null;
-		fDocumentRead= false;
-	}
-
-	/*
-	 * @see org.eclipse.quickdiff.QuickDiffTestPlugin.IQuickDiffProviderImplementation#setId(java.lang.String)
-	 */
-	public void setId(String id) {
-		fId= id;
-	}
-
-	/*
-	 * @see org.eclipse.jface.text.source.diff.DocumentLineDiffer.IQuickDiffReferenceProvider#getId()
-	 */
-	public String getId() {
-		return fId;
+		};
+		updateJob.schedule();
 	}
 }

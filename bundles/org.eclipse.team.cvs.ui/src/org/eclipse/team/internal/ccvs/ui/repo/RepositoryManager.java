@@ -213,7 +213,7 @@ public class RepositoryManager {
 	public ICVSRemoteResource[] getFoldersForTag(ICVSRepositoryLocation location, CVSTag tag, IProgressMonitor monitor) throws CVSException {		
 		monitor = Policy.monitorFor(monitor);
 		try {
-			monitor.beginTask(Policy.bind("RepositoryManager.fetchingRemoteFolders", tag.getName()), 100);
+			monitor.beginTask(Policy.bind("RepositoryManager.fetchingRemoteFolders", tag.getName()), 100); //$NON-NLS-1$
 			if (tag.getType() == CVSTag.HEAD) {
 				ICVSRemoteResource[] resources = location.members(tag, false, Policy.subMonitorFor(monitor, 60));
 				RepositoryRoot root = getRepositoryRootFor(location);
@@ -909,7 +909,10 @@ public class RepositoryManager {
 						CVSProviderPlugin.getPlugin().disposeRepository(oldLocation);
 						
 						newLocation.updateCache();
-						root.setRepositoryLocation(newLocation);
+						// Get the new location from the CVS plugin to ensure we use the
+						// instance that will be returned by future calls to getRepository()
+						root.setRepositoryLocation(
+							CVSProviderPlugin.getPlugin().getRepository(newLocation.getLocation()));
 						add(root);
 					} catch (CVSException e) {
 						throw new InvocationTargetException(e);
