@@ -99,7 +99,8 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void showPageRec(PageRec pageRec) {
 		super.showPageRec(pageRec);
 		activeParticipantRef = (ISynchronizeParticipant)fPartToParticipant.get(pageRec.part);
-		fRemoveAction.setParticipant(activeParticipantRef);
+		if (fRemoveAction != null)
+			fRemoveAction.setParticipant(activeParticipantRef);
 		updateTitle();		
 	}
 

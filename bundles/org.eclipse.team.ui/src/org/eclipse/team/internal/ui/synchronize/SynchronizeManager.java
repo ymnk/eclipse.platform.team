@@ -22,6 +22,8 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
+import org.eclipse.team.internal.ui.registry.SynchronizeWizardDescription;
+import org.eclipse.team.internal.ui.registry.SynchronizeWizardRegistry;
 import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.*;
@@ -66,6 +68,11 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 * Contains the participant descriptions
 	 */
 	private SynchronizeParticipantRegistry participantRegistry = new SynchronizeParticipantRegistry();
+	
+	/**
+	 * Contains the synchronize wizard descriptions
+	 */
+	private SynchronizeWizardRegistry wizardRegistry = new SynchronizeWizardRegistry();
 	
 	/**
 	 * Contains a table of the state saved between sessions for a participant. The set is keyed
@@ -486,7 +493,9 @@ public class SynchronizeManager implements ISynchronizeManager {
 		try {
 			// Initialize the participant registry - reads all participant extension descriptions.
 			participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
-
+			// Initialize the wizard registry
+			wizardRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCHRONIZE_WIZARDS);
+			
 			// Instantiate and register any dynamic participants saved from a
 			// previous session.
 			restoreSavedParticipants();
@@ -598,5 +607,9 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 */
 	public ISynchronizeParticipantDescriptor getParticipantDescriptor(String id) {
 		return participantRegistry.find(id);
+	}
+	
+	public SynchronizeWizardDescription[] getWizardDescriptors() {
+		return wizardRegistry.getSynchronizeWizards();
 	}
 }

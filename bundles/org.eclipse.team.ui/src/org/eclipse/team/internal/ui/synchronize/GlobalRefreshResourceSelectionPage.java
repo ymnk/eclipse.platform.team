@@ -10,13 +10,22 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CheckStateChangedEvent;
+import org.eclipse.jface.viewers.DecoratingLabelProvider;
+import org.eclipse.jface.viewers.ICheckStateListener;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -24,11 +33,19 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.IWorkingSetManager;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.IWorkingSetSelectionDialog;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
@@ -42,7 +59,6 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
  * all resources are checked.
  * 
  * @see SubscriberRefreshWizard
- * @see ISynchronizeParticipant#createSynchronizeWizard()
  * @since 3.0
  */
 public class GlobalRefreshResourceSelectionPage extends WizardPage {
@@ -247,7 +263,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	 * @return  the list of top-most resources that have been checked or an
 	 * empty list if nothing is selected.
 	 */
-	public IResource[] getCheckedResources() {
+	public IResource[] getRootResources() {
 		TreeItem[] item = fViewer.getTree().getItems();
 		List checked = new ArrayList();
 		for (int i = 0; i < item.length; i++) {
@@ -267,7 +283,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	
 	private void updateEnclosingProjectScope() {
 		if(enclosingProjectsScope.getSelection()) {
-			IResource[] selectedResources = getCheckedResources();
+			IResource[] selectedResources = getRootResources();
 			List projects = new ArrayList();
 			for (int i = 0; i < selectedResources.length; i++) {
 				projects.add(selectedResources[i].getProject());
@@ -288,7 +304,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	}
 	
 	private void updateSelectedResourcesScope() {
-		setPageComplete(getCheckedResources().length > 0);
+		setPageComplete(getRootResources().length > 0);
 	}
 	
 	private void selectWorkingSetAction() {

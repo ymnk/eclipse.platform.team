@@ -30,7 +30,16 @@
       <import plugin="org.eclipse.compare"/>
    </requires>
 
-
+<!-- *************** Synchronize Wizards **************** -->
+   <extension
+         point="org.eclipse.team.ui.synchronizationWizards">
+      <wizard
+            name="%WorkspaceSynchronizeWizard.name"
+            icon="icons/full/eview16/cvs_persp.gif"
+            class="org.eclipse.team.internal.ccvs.ui.subscriber.CVSSynchronizeWizard"
+            id="org.eclipse.team.ccvs.ui.SharingWizard">
+      </wizard>
+   </extension>
 <!-- *************** Synchronize View Participant **************** -->
    <extension
          point="org.eclipse.team.ui.synchronizeParticipants">
@@ -87,7 +96,7 @@
          </run>
       </validator>
    </extension>
-<!-- ******************* Wizards ****************** -->
+<!-- ******************* Configurationb Wizard ****************** -->
    <extension
          point="org.eclipse.team.ui.configurationWizards">
       <wizard

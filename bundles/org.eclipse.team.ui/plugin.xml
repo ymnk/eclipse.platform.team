@@ -30,7 +30,7 @@
 
    <extension-point id="configurationWizards" name="%configurationWizards" schema="schema/configurationWizards.exsd"/>
    <extension-point id="synchronizeParticipants" name="%synchronizeParticipants" schema="schema/synchronizeParticipants.exsd"/>
-   <extension-point id="logicalViews" name="%logicalViews" schema="schema/logicalViews.exsd"/>
+   <extension-point id="synchronizeWizards" name="%synchronizeWizards" schema="schema/synchronizeWizards.exsd"/>
 
 <!-- **************** PREFERENCES ******************* -->
    <extension

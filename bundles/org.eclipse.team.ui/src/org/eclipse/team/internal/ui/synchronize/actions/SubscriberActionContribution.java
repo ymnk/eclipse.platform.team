@@ -11,14 +11,17 @@
 package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.action.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
-import org.eclipse.team.internal.ui.synchronize.SubscriberRefreshWizard;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
+import org.eclipse.team.ui.synchronize.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 import org.eclipse.ui.IActionBars;
 
 /**
@@ -43,10 +46,7 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 		if(participant.doesSupportSynchronize()) {
 			refreshAllAction = new Action() {
 				public void run() {
-					// Prime the refresh wizard with an appropriate initial selection
-					final SubscriberRefreshWizard wizard = new SubscriberRefreshWizard(participant);				
-					WizardDialog dialog = new WizardDialog(site.getShell(), wizard);
-					dialog.open();
+					participant.refresh(participant.getResources(), Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetails", participant.getName()), site.getWorkbenchSite()); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			};
 			Utils.initAction(refreshAllAction, "action.refreshWithRemote."); //$NON-NLS-1$

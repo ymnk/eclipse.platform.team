@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.registry;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.internal.WorkbenchPlugin;
 
 public class SynchronizeParticipantDescriptor implements ISynchronizeParticipantDescriptor {
 	public  static final String ATT_ID = "id"; //$NON-NLS-1$
@@ -47,13 +48,6 @@ public class SynchronizeParticipantDescriptor implements ISynchronizeParticipant
 		configElement = e;
 		description = desc;
 		loadFromExtension();
-	}
-	/**
-	 * Return an instance of the declared view.
-	 */
-	public IViewPart createView() throws CoreException {
-		Object obj = WorkbenchPlugin.createExtension(configElement, ATT_CLASS);
-		return (IViewPart) obj;
 	}
 
 	public IConfigurationElement getConfigurationElement() {

@@ -21,6 +21,7 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.wizards.GlobalSynchronizeWizard;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
+import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowPulldownDelegate;
 
@@ -153,8 +154,13 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 		
 	private void run(ISynchronizeParticipantReference participant) {
 		try {
-			WizardDialog dialog = new WizardDialog(window.getShell(), participant.getParticipant().createSynchronizeWizard());
-			dialog.open();
+			SubscriberParticipant subscriberParticipant = ((SubscriberParticipant)participant.getParticipant());
+			subscriberParticipant.refresh(
+					subscriberParticipant.getResources(), 
+					Policy.bind("Participant.synchronizing"), 
+					Policy.bind("Participant.synchronizingDetails", 
+					subscriberParticipant.getName()),
+					null /* don't have a site */); //$NON-NLS-1$ //$NON-NLS-2$
 			updateTooltipMessage();
 		} catch (TeamException e) {
 			Utils.handle(e);

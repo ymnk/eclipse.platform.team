@@ -10,14 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
@@ -26,9 +27,17 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.team.internal.ui.synchronize.RefreshSubscriberJob;
+import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicy;
+import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicyInModalDialog;
+import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
+import org.eclipse.team.internal.ui.synchronize.SubscriberRefreshSchedule;
+import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -84,13 +93,6 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	public final IPageBookViewPage createPage(ISynchronizePageConfiguration configuration) {
 		validateConfiguration(configuration);
 		return new SubscriberParticipantPage(configuration, getSubscriberSyncInfoCollector());
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createRefreshPage()
-	 */
-	public IWizard createSynchronizeWizard() {
-		return new SubscriberRefreshWizard(this);
 	}
 	
 	/**
