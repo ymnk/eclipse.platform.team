@@ -515,6 +515,9 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 			if(delta.getFlags() == TeamDelta.SUBSCRIBER_CREATED) {
 				SyncTreeSubscriber s = delta.getSubscriber();
 				addSubscriber(s);
+			} else if(delta.getFlags() == TeamDelta.SUBSCRIBER_DELETED) {
+				SyncTreeSubscriber s = delta.getSubscriber();
+				removeSubscriber(s);
 			}
 		}
 	}
@@ -528,13 +531,19 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		initializeSubscriberInput(si);
 	}
 	
-	public void removeSubscriber(SyncTreeSubscriber s) {
-			SubscriberInput si = (SubscriberInput)subscriberInputs.get(s.getId());
-			ActionContext context = new ActionContext(null);
-			context.setInput(si);
-			actions.removeContext(context);	
-			initializeSubscriberInput(lastInput);
-		}
+	private void removeSubscriber(SyncTreeSubscriber s) {
+		// notify that context is changing
+		SubscriberInput si = (SubscriberInput)subscriberInputs.get(s.getId());
+		ActionContext context = new ActionContext(null);
+		context.setInput(si);
+		actions.removeContext(context);
+		
+		// forget about this input
+		subscriberInputs.remove(s.getId());
+		
+		// show last input
+		initializeSubscriberInput(lastInput);
+	}
 	
 	public void collapseAll() {
 		if (viewer == null || !(viewer instanceof AbstractTreeViewer)) return;

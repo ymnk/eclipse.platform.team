@@ -15,6 +15,7 @@ import java.util.Iterator;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -27,6 +28,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
 import org.eclipse.team.internal.ui.actions.TeamAction;
@@ -70,7 +72,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private Action toggleViewerType;
 	private Action open;
 	private ExpandAllAction expandAll;
-	private Action cancelSubscription;
+	private CancelSubscription cancelSubscription;
 	
 	class RefreshAction extends Action {
 		public RefreshAction() {
@@ -113,16 +115,25 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	}
 	
 	class CancelSubscription extends Action {
-			public CancelSubscription() {
-				setText("Cancel");
-				setToolTipText("Cancel the active synchronization target");
-			}
-			public void run() {
-				ActionContext context = getContext();
-				SubscriberInput input = (SubscriberInput)context.getInput();
-				getSyncView().removeSubscriber(input.getSubscriber());
-			}
+		public CancelSubscription() {
+			setText("Cancel");
+			setToolTipText("Cancel the active synchronization target");
 		}
+		public void run() {
+			ActionContext context = getContext();
+			SubscriberInput input = (SubscriberInput)context.getInput();
+			input.getSubscriber().cancel();
+		}
+		public void updateTitle(SubscriberInput input) {
+			SyncTreeSubscriber subscriber = input.getSubscriber();
+			if(subscriber.isCancellable()) {
+				setText("Cancel [" + subscriber.getName() +"]");
+			} else {
+				setText("Cancel");
+			}
+			setToolTipText("Cancel the active synchronization target");
+		}
+	}
 	
 	class ExpandAllAction extends Action {
 		public ExpandAllAction() {
@@ -319,24 +330,17 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	}
 
 	public void refreshFilters() {
-		final SubscriberInput input = getSubscriberContext();
-		if(input != null) {
-			getSyncView().run(new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					try {
-						monitor.beginTask(null, 100);
-						input.setFilter(new AndSyncInfoFilter(
-						new SyncInfoFilter[] {
-							new SyncInfoDirectionFilter(directionsFilters.getDirectionFilters()), 
-							new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters())
-						}), monitor);
-					} catch (TeamException e) {
-						throw new InvocationTargetException(e);
-					} finally {
-						monitor.done();
-					}
-					}
-				});
+	final SubscriberInput input = getSubscriberContext();
+	if(input != null) {
+		try {
+			input.setFilter(new AndSyncInfoFilter(
+			new SyncInfoFilter[] {
+				new SyncInfoDirectionFilter(directionsFilters.getDirectionFilters()), 
+				new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters())
+			}), new NullProgressMonitor());
+			} catch (TeamException e) {
+				
+			}
 		}
 	}
 	
@@ -372,6 +376,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		SubscriberInput input = getSubscriberContext();
 		refreshAction.setEnabled(input != null);
 		cancelSubscription.setEnabled(input.getSubscriber().isCancellable());
+		cancelSubscription.updateTitle(input);
 		// This is invoked before the subscriber input is initialized
 		if (input.getWorkingSet() == null) {
 			// set the input to use the last selected working set
@@ -382,6 +387,9 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			// for the input is the same as the one being passed to the menu
 			workingSetGroup.setWorkingSet(getWorkingSet());
 		}
+		
+		// refresh the selecte filter
+		refreshFilters();
 	}
 	
 	/* (non-Javadoc)

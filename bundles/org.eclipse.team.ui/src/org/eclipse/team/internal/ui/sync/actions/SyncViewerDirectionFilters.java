@@ -145,7 +145,7 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 		currentSyncMode = mode;
 		activateCurrentMode();
 		if(changed) {
-			getSyncView().setTitle(title);  
+			//getSyncView().setTitle(title);  
 			getRefreshGroup().refreshFilters();
 		}
 	}
