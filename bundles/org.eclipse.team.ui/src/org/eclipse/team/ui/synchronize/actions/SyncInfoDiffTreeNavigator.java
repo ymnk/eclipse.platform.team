@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.actions;
 
-import java.util.Iterator;
-
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.NavigationAction;
 import org.eclipse.core.resources.IResource;
@@ -31,14 +29,35 @@ import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
  */
 public class SyncInfoDiffTreeNavigator {
 	
+	private final class OpenAction extends Action {
+		public void run() {
+			target.openSelection();
+		}
+		public void update() {
+			ISelection selection = target.getSelection();
+			if (selection instanceof IStructuredSelection) {
+				IStructuredSelection ss = (IStructuredSelection)selection;
+				if (ss.size() == 1) {
+					Object element = ss.getFirstElement();
+					if (element instanceof SyncInfoDiffNode) {
+						IResource resource = ((SyncInfoDiffNode)element).getResource();
+						setEnabled(resource != null && resource.getType() == IResource.FILE);
+						return;
+					}
+				}
+			}
+			setEnabled(false);
+		}
+	}
+
 	/**
 	 * Direction to navigate
 	 */
 	final public static int NEXT = 1;
 	final public static int PREVIOUS = 2;
 	
-	private Action expandAll;
-	private Action open;
+	private ExpandAllAction expandAll;
+	private OpenAction open;
 	private NavigationAction nextAction;
 	private NavigationAction previousAction;
 	
@@ -222,66 +241,24 @@ public class SyncInfoDiffTreeNavigator {
 	}
 	
 	public void createActions(final StructuredViewer viewer) {
-		expandAll = new Action() {
-			public void run() {
-				expandAllFromSelection(viewer);
-			}
-			// TODO: needs to be invoked when the selection changes
-			public void update() {
-				ISelection selection = target.getSelection();
-				if (selection instanceof IStructuredSelection) {
-					IStructuredSelection ss = (IStructuredSelection)selection;
-					setEnabled(!ss.isEmpty());
-				}
-				setEnabled(false);
-			}
-		};
-		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
+		AbstractTreeViewer abstractTreeViewer = getAbstractTreeViewer(viewer);
+		if (abstractTreeViewer != null) {
+			expandAll = new ExpandAllAction(abstractTreeViewer);
+			Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
+		}
 		
-		open = new Action() {
-			public void run() {
-				target.openSelection();
-			}
-			// TODO: needs to be invoked when the selection changes
-			public void update() {
-				ISelection selection = target.getSelection();
-				if (selection instanceof IStructuredSelection) {
-					IStructuredSelection ss = (IStructuredSelection)selection;
-					if (ss.size() == 1) {
-						Object element = ss.getFirstElement();
-						if (element instanceof SyncInfoDiffNode) {
-							IResource resource = ((SyncInfoDiffNode)element).getResource();
-							setEnabled(resource != null && resource.getType() == IResource.FILE);
-							return;
-						}
-					}
-				}
-				setEnabled(false);
-			}
-		};
+		open = new OpenAction();
 		Utils.initAction(open, "action.open."); //$NON-NLS-1$
 	}
 	
 	public void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
 		AbstractTreeViewer tree = getAbstractTreeViewer(viewer);
 		if (isShowOpenAction()) {
+			open.update();
 			manager.add(open);
 		}
 		if (tree != null) {
 			manager.add(expandAll);
-		}
-	}
-
-	protected void expandAllFromSelection(StructuredViewer viewer) {
-		AbstractTreeViewer tree = getAbstractTreeViewer(viewer);
-		if (tree == null) return;
-		ISelection selection = tree.getSelection();
-		if(! selection.isEmpty()) {
-			Iterator elements = ((IStructuredSelection)selection).iterator();
-			while (elements.hasNext()) {
-				Object next = elements.next();
-				tree.expandToLevel(next, AbstractTreeViewer.ALL_LEVELS);
-			}
 		}
 	}
 	
