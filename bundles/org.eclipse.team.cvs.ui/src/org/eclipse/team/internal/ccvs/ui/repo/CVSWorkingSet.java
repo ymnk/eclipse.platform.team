@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.XMLWriter;
 
-public class CVSWorkingSet {
+public class CVSWorkingSet implements Cloneable {
 	private String name;
 	// Map of ICVSRepositoryLocation -> Set (String folder paths that are repository relative)
 	Map remotePaths = new HashMap();
@@ -166,6 +167,40 @@ public class CVSWorkingSet {
 			remotePaths.put(location, set);
 		}
 		set.add(currentRemotePath);
+	}
+	
+	protected Object clone() {
+		CVSWorkingSet copy = new CVSWorkingSet(getName());
+		for (Iterator iter = remotePaths.keySet().iterator(); iter.hasNext();) {
+			ICVSRepositoryLocation key = (ICVSRepositoryLocation) iter.next();
+			Set value = (Set)remotePaths.get(key);
+			for (Iterator iterator = value.iterator(); iterator.hasNext();) {
+				String element = (String) iterator.next();
+				copy.addRemotePath(key, element);
+			}
+		}
+		return copy;
+	}
+	
+	protected void mutate(CVSWorkingSet set) {
+		name = set.getName();
+		remotePaths = new HashMap();
+		ICVSRepositoryLocation[] locations = set.getRepositoryLocations();
+		for (int i = 0; i < locations.length; i++) {
+			ICVSRepositoryLocation key = locations[i];
+			String[] paths = set.getRemotePaths(key);
+			for (int j = 0; j < paths.length; j++) {
+				String path = paths[j];
+				addRemotePath(key, path);
+			}
+		}
+	}
+	
+	public boolean equals(CVSWorkingSet set) {
+		if (!set.getName().equals(getName())) return false;
+		// XXX Not sure if the below works
+		if (!set.remotePaths.equals(remotePaths)) return false;
+		return true;
 	}
 	
 }

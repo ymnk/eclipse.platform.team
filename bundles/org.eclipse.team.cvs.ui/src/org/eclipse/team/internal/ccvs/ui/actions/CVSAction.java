@@ -349,7 +349,25 @@ abstract public class CVSAction extends TeamAction {
 		}
 		return null;
 	}
-		
+	
+	protected Object[] getSelectedResources(Class c) {
+		ArrayList result = null;
+		if (!selection.isEmpty()) {
+			result = new ArrayList();
+			Iterator elements = ((IStructuredSelection) selection).iterator();
+			while (elements.hasNext()) {
+				Object adapter = getAdapter(elements.next(), c);
+				if (c.isInstance(adapter)) {
+					result.add(adapter);
+				}
+			}
+		}
+		if (result != null && !result.isEmpty()) {
+			return (Object[])result.toArray(new Object[result.size()]);
+		}
+		return new Object[0];
+	}
+	
 	/**
 	 * Returns the selected CVS resources
 	 */

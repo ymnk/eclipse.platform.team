@@ -21,6 +21,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
@@ -88,7 +89,7 @@ public class RepositoriesView extends ViewPart {
 		public void repositoryRemoved(ICVSRepositoryLocation root) {
 			refresh();
 		}
-		public void repositoryChanged(ICVSRepositoryLocation root) {
+		public void repositoriesChanged(ICVSRepositoryLocation[] roots) {
 			refresh();
 		}
 		public void workingSetChanged(CVSWorkingSet set) {
@@ -106,17 +107,15 @@ public class RepositoriesView extends ViewPart {
 	private Action newWorkingSetAction;
 	private Action deselectWorkingSetAction;
 	private Action editWorkingSetAction;
-	private Action deleteWorkingSetAction;
 	
 	public class ChangeWorkingSetAction extends Action {
 		String name;
 		public ChangeWorkingSetAction(String name, int index) {
-			super(index + " " + name);
+			super(Policy.bind("RepositoriesView.workingSetMenuItem", new Integer(index).toString(), name));
 			this.name = name;
 		}
 		public void run() {
 			CVSUIPlugin.getPlugin().getRepositoryManager().setCurrentWorkingSet(name);
-			RepositoriesView.this.refreshAll();
 		}
 	}
 	
@@ -175,9 +174,12 @@ public class RepositoriesView extends ViewPart {
 		// New Working Set (popup)
 		newWorkingSetAction = new Action(Policy.bind("RepositoriesView.newWorkingSet")) { //$NON-NLS-1$
 			public void run() {
-				CVSWorkingSetWizard wizard = new CVSWorkingSetWizard();
-				WizardDialog dialog = new WizardDialog(shell, wizard);
+				WorkingSetSelectionDialog dialog = new WorkingSetSelectionDialog(shell, false);
 				dialog.open();
+				CVSWorkingSet[] sets = dialog.getSelection();
+				if (sets != null && sets.length > 0) {
+					CVSUIPlugin.getPlugin().getRepositoryManager().setCurrentWorkingSet(sets[0]);
+				}
 			}
 		};
 		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
@@ -197,19 +199,14 @@ public class RepositoriesView extends ViewPart {
 			public void run() {
 				String name = null;
 				CVSWorkingSet set = CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet();
-			}
-		};
-		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
-		
-		// Delete Working Set (popup)
-		deleteWorkingSetAction = new Action(Policy.bind("RepositoriesView.deleteWorkingSet")) { //$NON-NLS-1$
-			public void run() {
-				// XXX should prompt
-				CVSWorkingSet set = CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet();
-				if (set != null) {
-					CVSUIPlugin.getPlugin().getRepositoryManager().removeWorkingSet(set);
+				RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();				
+				CVSWorkingSetWizard wizard = new CVSWorkingSetWizard(set);
+				WizardDialog dialog = new WizardDialog(shell, wizard);
+				if (dialog.open() == Window.OK) {
+					CVSWorkingSet newSet = wizard.getSelection();
+					manager.addWorkingSet(newSet);
+					manager.setCurrentWorkingSet(newSet);
 				}
-				refreshViewer();
 			}
 		};
 		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
@@ -295,8 +292,6 @@ public class RepositoriesView extends ViewPart {
 		deselectWorkingSetAction.setEnabled(CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() != null);
 		mgr.add(editWorkingSetAction);
 		editWorkingSetAction.setEnabled(CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() != null);
-		mgr.add(deleteWorkingSetAction);
-		deleteWorkingSetAction.setEnabled(CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() != null);
 
 		mgr.add(new Separator());
 		

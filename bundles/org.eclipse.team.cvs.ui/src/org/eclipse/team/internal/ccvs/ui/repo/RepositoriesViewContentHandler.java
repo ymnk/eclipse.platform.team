@@ -18,6 +18,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -29,6 +30,7 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 
 	public static final String REPOSITORY_TAG = "repository"; //$NON-NLS-1$
 	public static final String WORKING_SET_TAG = "working-set"; //$NON-NLS-1$
+	public static final String CURRENT_WORKING_SET_TAG = "current-working-set"; //$NON-NLS-1$
 	public static final String MODULE_TAG = "module"; //$NON-NLS-1$
 	public static final String TAG_TAG = "tag"; //$NON-NLS-1$
 	public static final String AUTO_REFRESH_FILE_TAG = "auto-refresh-file"; //$NON-NLS-1$
@@ -155,6 +157,12 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", AUTO_REFRESH_FILE_TAG, PATH_ATTRIBUTE));
 			}
 			autoRefreshFiles.add(path);
+		} else if (localName.equals(CURRENT_WORKING_SET_TAG)) {
+			String name = atts.getValue(NAME_ATTRIBUTE);
+			if (name == null) {
+				throw new SAXException(Policy.bind("RepositoriesViewContentHandler.missingAttribute", CURRENT_WORKING_SET_TAG, NAME_ATTRIBUTE));
+			}
+			CVSUIPlugin.getPlugin().getRepositoryManager().setCurrentWorkingSet(name);
 		}
 		// empty buffer
 		buffer = new StringBuffer();

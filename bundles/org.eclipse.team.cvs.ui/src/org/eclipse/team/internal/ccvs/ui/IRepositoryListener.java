@@ -11,7 +11,7 @@ import org.eclipse.team.internal.ccvs.ui.repo.CVSWorkingSet;
 public interface IRepositoryListener {
 	public void repositoryAdded(ICVSRepositoryLocation root);
 	public void repositoryRemoved(ICVSRepositoryLocation root);
-	public void repositoryChanged(ICVSRepositoryLocation root);
+	public void repositoriesChanged(ICVSRepositoryLocation[] roots);
 	public void workingSetChanged(CVSWorkingSet set);
 }
 

@@ -314,7 +314,7 @@ public class CVSRepositoryPropertiesPage extends PropertyPage {
 									true,
 									DetailsDialogWithProjects.DLG_IMG_WARNING);
 								int r = dialog.open();
-								if (r != dialog.OK) {
+								if (r != DetailsDialogWithProjects.OK) {
 									result[0] = false;
 									return;
 								}

@@ -28,7 +28,22 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 public class CVSWorkingSetWizard extends Wizard {
 	
 	private CVSWorkingSetFolderSelectionPage folderSelectionPage;
+	
+	private CVSWorkingSet selection;
+	private CVSWorkingSet editedSet;
 
+	/**
+	 * Constructor for CVSWorkingSetWizard.
+	 */
+	public CVSWorkingSetWizard() {
+		super();
+	}
+
+	public CVSWorkingSetWizard(CVSWorkingSet editedSet) {
+		super();
+		this.editedSet = editedSet;
+	}
+	
 	/**
 	 * @see org.eclipse.jface.wizard.IWizard#addPages()
 	 */
@@ -40,6 +55,7 @@ public class CVSWorkingSetWizard extends Wizard {
 			Policy.bind("CVSWorkingSetFolderSelectionPage.projectSelectionPageTitle"), //$NON-NLS-1$
 			substImage,
 			Policy.bind("CVSWorkingSetFolderSelectionPage.projectSelectionPageDescription")); //$NON-NLS-1$
+		folderSelectionPage.setOriginalWorkingSet(editedSet);
 		addPage(folderSelectionPage);
 	}
 
@@ -51,12 +67,24 @@ public class CVSWorkingSetWizard extends Wizard {
 			RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 			CVSWorkingSet set = new CVSWorkingSet(folderSelectionPage.getWorkingSetName());
 			set.setFolders(folderSelectionPage.getSelectedFolders());
-			manager.addWorkingSet(set);
+			selection = set;
+			if (editedSet != null) {
+				editedSet.mutate(set);
+				selection = editedSet;
+			}
 			return true;
 		} catch (CVSException e) {
 			CVSUIPlugin.openError(getShell(), null, null, e, CVSUIPlugin.PERFORM_SYNC_EXEC);
 		}
 		return false;
+	}
+	
+	/**
+	 * Method getSelection.
+	 * @return CVSWorkingSet
+	 */
+	public CVSWorkingSet getSelection() {
+		return selection;
 	}
 	
 }

@@ -1,13 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2002 IBM Corporation and others.
- * All rights reserved.   This program and the accompanying materials
- * are made available under the terms of the Common Public License v0.5
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v05.html
- * 
- * Contributors:
- * IBM - Initial implementation
- ******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.repo;
 
 import java.lang.reflect.InvocationTargetException;
@@ -22,34 +12,46 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
-import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
 
 /**
- * For each child of the selected tag, refresh the known tags using the auto-refresh files
+ * @author Administrator
+ *
+ * To change this generated comment edit the template variable "typecomment":
+ * Window>Preferences>Java>Templates.
+ * To enable and disable the creation of type comments go to
+ * Window>Preferences>Java>Code Generation.
  */
-public class AutoRefreshMembership extends CVSAction {
+public class RefreshTagsAction extends CVSAction {
 
 	/**
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#execute(org.eclipse.jface.action.IAction)
 	 */
 	protected void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		// XXX this method only removes. It never adds
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				CVSTagElement[] tags = getSelectedTags();
+				ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
 				RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 				try {
-					ICVSRemoteResource[] resources = manager.getFoldersForTag(tags[0].getRoot(), tags[0].getTag(), Policy.monitorFor(null));
-					monitor.beginTask(null, 100 * resources.length);
-					for (int i = 0; i < resources.length; i++) {
-						ICVSRemoteResource resource = resources[i];
-						if (resource instanceof ICVSFolder) {
-							manager.refreshDefinedTags((ICVSFolder)resource, true /* replace */, true, Policy.subMonitorFor(monitor, 100));
+					monitor.beginTask(null, 100 * locations.length);
+					for (int j = 0; j < locations.length; j++) {
+						ICVSRepositoryLocation location = locations[j];
+						// todo: This omits defined modules when there is no current working set
+						ICVSRemoteResource[] resources = manager.getWorkingFoldersForTag(location, CVSTag.DEFAULT, Policy.subMonitorFor(monitor, 10));
+						IProgressMonitor subMonitor = Policy.subMonitorFor(monitor, 90);
+						subMonitor.beginTask(null, 100 * resources.length);
+						for (int i = 0; i < resources.length; i++) {
+							ICVSRemoteResource resource = resources[i];
+							if (resource instanceof ICVSFolder) {
+								manager.refreshDefinedTags((ICVSFolder)resource, true /* replace */, true, Policy.subMonitorFor(subMonitor, 100));
+							}
 						}
+						subMonitor.done();
 					}
+					monitor.done();
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
 				}
@@ -61,25 +63,26 @@ public class AutoRefreshMembership extends CVSAction {
 	 * @see org.eclipse.team.internal.ui.actions.TeamAction#isEnabled()
 	 */
 	protected boolean isEnabled() throws TeamException {
-		CVSTagElement[] tags = getSelectedTags();
-		if (tags.length != 1) return false;
-		return (tags[0].getTag().getType() == CVSTag.VERSION || tags[0].getTag().getType() == CVSTag.BRANCH);
+		ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
+		if (locations.length == 0) return false;
+		return true;
 	}
 	
 	/**
 	 * Returns the selected CVS tags
 	 */
-	protected CVSTagElement[] getSelectedTags() {
+	protected ICVSRepositoryLocation[] getSelectedRepositoryLocations() {
 		ArrayList tags = new ArrayList();
 		if (!selection.isEmpty()) {
 			Iterator elements = ((IStructuredSelection) selection).iterator();
 			while (elements.hasNext()) {
-				Object adapter = getAdapter(elements.next(), CVSTagElement.class);
-				if (adapter instanceof CVSTagElement) {
+				Object adapter = getAdapter(elements.next(), ICVSRepositoryLocation.class);
+				if (adapter instanceof ICVSRepositoryLocation) {
 					tags.add(adapter);
 				}
 			}
 		}
-		return (CVSTagElement[])tags.toArray(new CVSTagElement[tags.size()]);
+		return (ICVSRepositoryLocation[])tags.toArray(new ICVSRepositoryLocation[tags.size()]);
 	}
+
 }

@@ -11,7 +11,9 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.ui.model.BranchCategory;
 import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
+import org.eclipse.team.internal.ccvs.ui.model.VersionCategory;
 
 public class RepositorySorter extends ViewerSorter {
 	public int category(Object element) {
@@ -33,6 +35,12 @@ public class RepositorySorter extends ViewerSorter {
 				return 6;
 			}
 		}
+		if (element instanceof BranchCategory) {
+			return 4;
+		}
+		if (element instanceof VersionCategory) {
+			return 5;
+		} 
 		return 0;
 	}
 

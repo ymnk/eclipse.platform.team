@@ -39,6 +39,8 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 			}
 		} else if(element instanceof VersionCategory) {
 			return true;
+		}  else if(element instanceof BranchCategory) {
+			return true;
 		} else if(element instanceof CVSTagElement) {
 			return true;
 		} else if(element instanceof RemoteModule) {
