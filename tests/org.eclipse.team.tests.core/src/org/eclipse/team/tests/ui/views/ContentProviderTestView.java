@@ -15,17 +15,34 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.views.CompressedFolderContentProvider;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantLabelProvider;
+import org.eclipse.ui.*;
 import org.eclipse.ui.part.ViewPart;
 
 public class ContentProviderTestView extends ViewPart {
 	
-	public static final String ID = "org.eclipse.team.tests.ui.views.ContentProviderTestView";
+	public static final String VIEW_ID = "org.eclipse.team.tests.ui.views.ContentProviderTestView";
 	
 	private TestTreeViewer viewer;
 
+	public static ContentProviderTestView findViewInActivePage(IWorkbenchPage activePage) {
+		try {
+			if (activePage == null) {
+				activePage = TeamUIPlugin.getActivePage();
+				if (activePage == null) return null;
+			}
+			IViewPart part = activePage.findView(VIEW_ID);
+			if (part == null)
+				part = activePage.showView(VIEW_ID);
+			return (ContentProviderTestView)part;
+		} catch (PartInitException pe) {
+			return null;
+		}
+	}
+	
 	public ContentProviderTestView() {
 	}
 
@@ -43,4 +60,9 @@ public class ContentProviderTestView extends ViewPart {
 	public void setFocus() {
 		viewer.getControl().setFocus();
 	}
+	
+	public TestTreeViewer getViewer() {
+		return viewer;
+	}
+
 }

@@ -11,8 +11,8 @@
 package org.eclipse.team.tests.ui.views;
 
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.*;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 public class TestTreeViewer extends TreeViewer {
 
@@ -27,4 +27,21 @@ public class TestTreeViewer extends TreeViewer {
 	public TestTreeViewer(Tree tree) {
 		super(tree);
 	}
+	
+	public Item[] getRootItems() {
+		expandAll();
+		return getChildren(getControl());
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.AbstractTreeViewer#getChildren(org.eclipse.swt.widgets.Widget)
+	 */
+	public Item[] getChildren(Widget o) {
+		return super.getChildren(o);
+	}
+	
+	public boolean hasItemFor(SyncInfoDiffNode node) {
+		return findItem(node) != null;
+	}
+
 }
