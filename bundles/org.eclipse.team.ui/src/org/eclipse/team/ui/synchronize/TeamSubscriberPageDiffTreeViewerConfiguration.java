@@ -15,11 +15,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.ui.IWorkbenchActionConstants;
 
 /**
  * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer for the synchroniza view
@@ -39,14 +37,6 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 		this.participant = participant;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.StructuredViewer)
-	 */
-	public void initializeViewer(Composite parent, StructuredViewer viewer) {
-		super.initializeViewer(parent, viewer);
-		initializeActions(viewer);
-	}
-	
 	protected void initializeActions(StructuredViewer treeViewer) {
 		super.initializeActions(treeViewer);
 		openWithActions = new OpenWithActionGroup(view, participant);
@@ -59,7 +49,7 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 		refactorActions.fillContextMenu(manager);
 		manager.add(refreshSelectionAction);
 		manager.add(new Separator());
-		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+		super.fillContextMenu(viewer, manager);
 	}
 	
 	/*
