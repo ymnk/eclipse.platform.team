@@ -10,10 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.core.change;
 
-import java.util.*;
+import java.util.StringTokenizer;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.osgi.service.prefs.Preferences;
 
@@ -28,7 +33,7 @@ public class ChangeSet {
     private static final String CTX_COMMENT = "comment"; //$NON-NLS-1$
     private static final String CTX_RESOURCES = "resources"; //$NON-NLS-1$
     
-    Set resources = new HashSet();
+    SyncInfoTree set = new SyncInfoTree();
     private String title;
     private String comment;
     private final SubscriberChangeSetManager manager;
@@ -92,12 +97,22 @@ public class ChangeSet {
     }
     
     /**
+     * Return the SyncInfoSet that contains the resources
+     * that belong to this change set.
+     * @return the SyncInfoSet that contains the resources
+     * that belong to this change set
+     */
+    public SyncInfoTree getSyncInfos() {
+        return set;
+    }
+    
+    /**
      * Remove the resource from the set.
      * @param resource the resource to be removed
      */
     public void remove(IResource resource) {
-        if (this.resources.remove(resource)) {
-            getManager().resourceChanged(this, resource);
+        if (contains(resource)) {
+            set.remove(resource);
         }
     }
     
@@ -117,11 +132,13 @@ public class ChangeSet {
      * any descendants are also removed.
      */
     public void rootRemoved(IResource root) {
-        for (Iterator iter = resources.iterator(); iter.hasNext();) {
-            IResource resource = (IResource) iter.next();
-            if (root.getFullPath().isPrefixOf(resource.getFullPath())) {
-                remove(resource);
+        SyncInfo[] infos = set.getSyncInfos(root, IResource.DEPTH_INFINITE);
+        if (infos.length > 0) {
+            IResource[] resources = new IResource[infos.length];
+            for (int i = 0; i < resources.length; i++) {
+                resources[i] = infos[i].getLocal();
             }
+            set.removeAll(resources);
         }
     }
     
@@ -131,9 +148,9 @@ public class ChangeSet {
      * @param resource
      * @throws TeamException
      */
-    public void add(IResource resource) throws TeamException {
-        if (addResource(resource)) {
-            getManager().resourceAdded(this, resource);
+    public void add(SyncInfo info) throws TeamException {
+        if (getManager().isModified(info)) {
+            set.add(info);
         }
     }
     
@@ -143,19 +160,24 @@ public class ChangeSet {
      * @param resources the resources to be added.
      * @throws TeamException
      */
-    public void add(IResource[] resources) throws TeamException {
-        for (int i = 0; i < resources.length; i++) {
-            IResource resource = resources[i];
-            add(resource);
-        }
+    public void add(SyncInfo[] infos) throws TeamException {
+       try {
+           set.beginInput();
+           for (int i = 0; i < infos.length; i++) {
+              SyncInfo info = infos[i];
+              add(info);
+           }
+       } finally {
+           set.endInput(null);
+       }
     }
 
-    private boolean addResource(IResource resource) throws TeamException {
-        if (getManager().isModified(resource)) {
-            resources.add(resource);
-            return true;
+    private void addResource(IResource resource) throws TeamException {
+        Subscriber subscriber = getManager().getSubscriber();
+        SyncInfo info = subscriber.getSyncInfo(resource);
+        if (info != null) {
+            add(info);
         }
-        return false;
     }
 
     private SubscriberChangeSetManager getManager() {
@@ -167,7 +189,7 @@ public class ChangeSet {
      * @return whether the set contains any files
      */
     public boolean isEmpty() {
-        return resources.isEmpty();
+        return set.isEmpty();
     }
 
     /**
@@ -176,7 +198,7 @@ public class ChangeSet {
      * @return true if the given file is included in this set
      */
     public boolean contains(IResource local) {
-        return resources.contains(local);
+        return set.getSyncInfo(local) != null;
     }
 
     /**
@@ -192,7 +214,7 @@ public class ChangeSet {
      * @return the resources that are contained in this set
      */
     public IResource[] getResources() {
-        return (IResource[]) resources.toArray(new IResource[resources.size()]);
+        return set.getResources();
     }
     
     public void save(Preferences prefs) {
@@ -200,10 +222,11 @@ public class ChangeSet {
         if (comment != null) {
             prefs.put(CTX_COMMENT, comment);
         }
-        if (!resources.isEmpty()) {
+        if (!isEmpty()) {
 	        StringBuffer buffer = new StringBuffer();
-	        for (Iterator iter = resources.iterator(); iter.hasNext();) {
-	            IResource resource = (IResource) iter.next();
+	        IResource[] resources = set.getResources();
+	        for (int i = 0; i < resources.length; i++) {
+                IResource resource = resources[i];
 	            buffer.append(resource.getFullPath().toString());
 	            buffer.append('\n');
 	        }
@@ -216,20 +239,25 @@ public class ChangeSet {
         comment = prefs.get(CTX_COMMENT, null);
         String resourcePaths = prefs.get(CTX_RESOURCES, null);
         if (resourcePaths != null) {
-            IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-            StringTokenizer tokenizer = new StringTokenizer(resourcePaths, "\n"); //$NON-NLS-1$
-            while (tokenizer.hasMoreTokens()) {
-                String next = tokenizer.nextToken();
-                if (next.trim().length() > 0) {
-                    IResource resource = root.findMember(next);
-                    if (resource != null) {
-                        try {
-                            addResource(resource);
-                        } catch (TeamException e) {
-                            TeamPlugin.log(e);
-                        }
-                    }
-                }
+            try {
+                getSyncInfos().beginInput();
+	            IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+	            StringTokenizer tokenizer = new StringTokenizer(resourcePaths, "\n"); //$NON-NLS-1$
+	            while (tokenizer.hasMoreTokens()) {
+	                String next = tokenizer.nextToken();
+	                if (next.trim().length() > 0) {
+	                    IResource resource = root.findMember(next);
+	                    if (resource != null) {
+	                        try {
+	                            addResource(resource);
+	                        } catch (TeamException e) {
+	                            TeamPlugin.log(e);
+	                        }
+	                    }
+	                }
+	            }
+            } finally {
+                getSyncInfos().endInput(null);
             }
         }
     }

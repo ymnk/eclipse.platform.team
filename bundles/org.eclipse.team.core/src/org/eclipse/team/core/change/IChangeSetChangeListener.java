@@ -30,7 +30,7 @@ public interface IChangeSetChangeListener {
      * set.
      * @param set the default set
      */
-    void defaultSetChanged(ChangeSet set);
+    void defaultSetChanged(ChangeSet previousDefault, ChangeSet set);
     
     /**
      * The given set has been removed from the set manager.
