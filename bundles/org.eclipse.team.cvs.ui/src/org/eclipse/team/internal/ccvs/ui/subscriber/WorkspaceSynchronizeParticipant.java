@@ -120,7 +120,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 	}
 	
 	/**
-	 * No arg contructor used to create workspace scope and for
+	 * No arg contructor used for
 	 * creation of persisted participant after startup
 	 */
 	public WorkspaceSynchronizeParticipant() {
