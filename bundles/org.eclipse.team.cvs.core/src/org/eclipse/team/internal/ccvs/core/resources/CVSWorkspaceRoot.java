@@ -599,20 +599,40 @@ public class CVSWorkspaceRoot {
 	}
 	
 	public static ICVSRemoteResource getRemoteTree(IResource resource, CVSTag tag, IProgressMonitor progress) throws TeamException {
+		return getRemoteTree(resource, tag, false /* cache file contents hint */, progress);
+	}
+
+	public static ICVSRemoteResource getRemoteTree(IResource resource, CVSTag tag, boolean cacheFileContentsHint, IProgressMonitor progress) throws TeamException {
 		ICVSResource managed = CVSWorkspaceRoot.getCVSResourceFor(resource);
 		ICVSRemoteResource remote = CVSWorkspaceRoot.getRemoteResourceFor(resource);
 		if (remote == null) {
-			remote = getRemoteTreeFromParent(resource, managed, tag, progress);
+			progress.beginTask(null, 100);
+			remote = getRemoteTreeFromParent(resource, managed, tag, Policy.subMonitorFor(progress, 50));
+			if (cacheFileContentsHint && remote != null && remote instanceof RemoteFile) {
+				RemoteFile file = (RemoteFile)remote;
+				if (!file.isContentsCached()) {
+					file.fetchContents(Policy.subMonitorFor(progress, 50));
+				}
+			}
+			progress.done();
 		} else if(resource.getType() == IResource.FILE) {
 			ICVSRepositoryLocation location = remote.getRepository();
-			remote = RemoteFolderTreeBuilder.buildRemoteTree((CVSRepositoryLocation)location, (ICVSFile)managed, tag, progress);
+			if (cacheFileContentsHint) {
+				remote = FileContentCachingService.buildRemoteTree((CVSRepositoryLocation)location, (ICVSFile)managed, tag, progress);
+			} else {
+				remote = RemoteFolderTreeBuilder.buildRemoteTree((CVSRepositoryLocation)location, (ICVSFile)managed, tag, progress);
+			}
 		} else {
 			ICVSRepositoryLocation location = remote.getRepository();
-			remote = RemoteFolderTreeBuilder.buildRemoteTree((CVSRepositoryLocation)location, (ICVSFolder)managed, tag, progress);		
+			if (cacheFileContentsHint) {
+				remote = FileContentCachingService.buildRemoteTree((CVSRepositoryLocation)location, (ICVSFolder)managed, tag, progress);
+			} else {
+				remote = RemoteFolderTreeBuilder.buildRemoteTree((CVSRepositoryLocation)location, (ICVSFolder)managed, tag, progress);
+			}	
 		}
 		return remote;
 	}
-
+	
 	public static boolean hasRemote(IResource resource) {
 		try {
 			ICVSResource cvsResource = getCVSResourceFor(resource);

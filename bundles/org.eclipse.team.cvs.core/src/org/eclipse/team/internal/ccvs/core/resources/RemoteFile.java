@@ -22,7 +22,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
@@ -175,7 +174,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		return new ByteArrayInputStream(contents);
 	}
 	
-	private void fetchContents(IProgressMonitor monitor) throws CVSException {
+	/* package*/ void fetchContents(IProgressMonitor monitor) throws CVSException {
 		monitor.beginTask(Policy.bind("RemoteFile.getContents"), 100);//$NON-NLS-1$
 		Session session = new Session(getRepository(), parent, false /* create backups */);
 		session.open(Policy.subMonitorFor(monitor, 10));
@@ -398,6 +397,13 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	}
 	
 	/*
+	 * Return whether there are already contents cached for the given handle
+	 */
+	public boolean isContentsCached() {
+		return getRemoteContentsCache().hasContents(getCacheRelativePath());
+	}
+	
+	/*
 	 * @see ICVSFile#setReadOnly(boolean)
 	 */
 	public void setReadOnly(boolean readOnly) throws CVSException {
@@ -563,8 +569,9 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 * @see org.eclipse.team.core.sync.IRemoteResource#getComment()
 	 */
 	public String getComment() throws CVSException {
-		ILogEntry entry = getLogEntry(new NullProgressMonitor());
-		return entry.getComment();
+//		ILogEntry entry = getLogEntry(new NullProgressMonitor());
+//		return entry.getComment();
+		return "";
 	}
 
 	/* (non-Javadoc)
@@ -578,7 +585,8 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 * @see org.eclipse.team.core.sync.IRemoteResource#getCreatorDisplayName()
 	 */
 	public String getCreatorDisplayName() throws CVSException {
-		ILogEntry entry = getLogEntry(new NullProgressMonitor());
-		return entry.getAuthor();
+//		ILogEntry entry = getLogEntry(new NullProgressMonitor());
+//		return entry.getAuthor();
+	return "";
 	}
 }
