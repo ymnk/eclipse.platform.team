@@ -10,51 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.ISafeRunnable;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
 import org.eclipse.team.ui.ITeamUIConstants;
-import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.WorkbenchException;
-import org.eclipse.ui.XMLMemento;
+import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.*;
 
 /**
  * Manages the registered synchronize participants. It handles notification of
@@ -299,13 +266,6 @@ public class SynchronizeManager implements ISynchronizeManager {
 			participants.addAll(Arrays.asList(instances));
 		}
 		return (ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]);
-	}
-		
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeManager#getParticipantDescriptors()
-	 */
-	public ISynchronizeParticipantDescriptor[] getParticipantDescriptors() {
-		return participantRegistry.getSynchronizeParticipants();
 	}
 	
 	/*

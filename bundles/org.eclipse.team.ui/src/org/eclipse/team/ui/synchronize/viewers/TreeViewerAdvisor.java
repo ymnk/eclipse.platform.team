@@ -31,6 +31,7 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
@@ -171,7 +172,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IPrope
 		manager.add(expandAllAction);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
-
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#getDiffNodeController()

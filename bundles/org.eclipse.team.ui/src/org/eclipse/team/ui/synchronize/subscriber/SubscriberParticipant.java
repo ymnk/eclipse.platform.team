@@ -11,17 +11,15 @@
 package org.eclipse.team.ui.synchronize.subscriber;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.wizard.IWizardPage;
+import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.RefreshUserNotificationPolicy;
-import org.eclipse.team.internal.ui.synchronize.actions.GlobalRefreshResourceSelectionPage;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.*;
@@ -107,8 +105,8 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createRefreshPage()
 	 */
-	public IWizardPage createRefreshPage() {
-		return new GlobalRefreshResourceSelectionPage(this);
+	public IWizard createRefreshPage() {
+		return null; //new GlobalRefreshResourceSelectionPage(this);
 	}
 	
 	public void setMode(int mode) {
@@ -207,7 +205,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	
 	/**
 	 * This method is invoked just before the collector is started. 
-	 * This gives an opertunity to configure the collector parameters
+	 * This gives an oportunity to configure the collector parameters
 	 * before collection starts. The default implementation sets the working
 	 * set as returned by <code>getWorkingSet()</code> and sets the mode 
 	 * as returned by <code>getMode()</code>.

@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowPulldownDelegate;
 import org.eclipse.ui.texteditor.IUpdate;
@@ -38,18 +37,18 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 	}
 	
 	class RefreshParticipantAction extends Action {
-		private ISynchronizeParticipantDescriptor participantDescriptor;
+		private ISynchronizeParticipant participant;
 
 		public void run() {
-			GlobalSynchronizeWizard wizard = new GlobalSynchronizeWizard(participantDescriptor);
+			GlobalSynchronizeWizard wizard = new GlobalSynchronizeWizard();
 			SynchronizeWizardDialog dialog = new SynchronizeWizardDialog(window.getShell(), wizard);
 			dialog.open();
 		}
 
-		public RefreshParticipantAction(int prefix, ISynchronizeParticipantDescriptor participantDescriptor) {
-			super("&" + prefix + " " + participantDescriptor.getName()); //$NON-NLS-1$ //$NON-NLS-2$
-			this.participantDescriptor = participantDescriptor;
-			setImageDescriptor(participantDescriptor.getImageDescriptor());
+		public RefreshParticipantAction(int prefix, ISynchronizeParticipant participant) {
+			super("&" + prefix + " " + participant.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+			this.participant = participant;
+			setImageDescriptor(participant.getImageDescriptor());
 		}
 	}
 
@@ -95,9 +94,9 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 			fMenu.dispose();
 		}
 		fMenu = new Menu(parent);
-		ISynchronizeParticipantDescriptor[] descriptions = TeamUI.getSynchronizeManager().getParticipantDescriptors();
-		for (int i = 0; i < descriptions.length; i++) {
-			ISynchronizeParticipantDescriptor description = descriptions[i];
+		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		for (int i = 0; i < participants.length; i++) {
+			ISynchronizeParticipant description = participants[i];
 			if (description.doesSupportRefresh()) {
 				Action action = new RefreshParticipantAction(i + 1, description);
 				addActionToMenu(fMenu, action);

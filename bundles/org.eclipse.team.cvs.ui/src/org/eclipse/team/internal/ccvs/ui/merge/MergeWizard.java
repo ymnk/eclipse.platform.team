@@ -26,7 +26,7 @@ import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.subscriber.OpenCompareDialogAction;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.CompareDialog;
+import org.eclipse.team.ui.synchronize.viewers.ParticipantCompareDialog;
 import org.eclipse.ui.*;
 
 public class MergeWizard extends Wizard {
@@ -71,8 +71,8 @@ public class MergeWizard extends Wizard {
 		}
 			
 		OpenCompareDialogAction compareAction = new OpenCompareDialogAction(activePage.getWorkbenchWindow().getShell(), CVSMergeSubscriber.ID_MODAL, participant, s.roots()) {
-			protected CompareDialog createCompareDialog(Shell shell, String title, CompareEditorInput input) {
-				return new CompareDialog(shell, title, input) {
+			protected ParticipantCompareDialog createCompareDialog(Shell shell, String title, CompareEditorInput input) {
+				return new ParticipantCompareDialog(shell, title, input) {
 					public boolean close() {
 						final IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 						if(! isRememberParticipant() && store.getBoolean(ICVSUIConstants.PREF_PROMPT_ON_MIXED_TAGS)) {						

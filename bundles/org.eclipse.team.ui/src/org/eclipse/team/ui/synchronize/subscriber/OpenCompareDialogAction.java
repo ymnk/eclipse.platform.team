@@ -112,13 +112,13 @@ public class OpenCompareDialogAction {
 		} catch (InvocationTargetException e) {
 			Utils.handle(e);
 		}
-		CompareDialog dialog = createCompareDialog(getShell(), participant.getName(), input);
+		ParticipantCompareDialog dialog = createCompareDialog(getShell(), participant.getName(), input);
 		dialog.setSynchronizeParticipant(participant);
 		dialog.setBlockOnOpen(true);
 		dialog.open();
 	}
 	
-	protected CompareDialog createCompareDialog(Shell shell, String title, CompareEditorInput input) {
-		return new CompareDialog(shell, title, input);
+	protected ParticipantCompareDialog createCompareDialog(Shell shell, String title, CompareEditorInput input) {
+		return new ParticipantCompareDialog(shell, title, input);
 	}
 }

@@ -26,11 +26,24 @@ import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 
 /**
- * A compare dialog that displays a comparison. 
+ * A dialog that displays a synchronize participant. There are some cases when it
+ * is more appropriate to display synchronization information in a dialog instead of
+ * in the Synchronize View. This class provides a modal context in which to show
+ * this.
+ * <p>
+ * To allow a user to transfer this synchronization state to the Synchronize View simply 
+ * set the participant.
+ * </p><p>
+ * The dialog tracks changes made in the content merge viewers, displays a change
+ * indication and will ensure that changes are saved when the dialog is closed.
+ * </p><p>
+ * Buffered or un-buffered compare editor inputs are supported.
+ * </p>
  * 
+ * @see SynchronizeCompareInput
  * @since 3.0
  */
-public class CompareDialog extends ResizableDialog implements IPropertyChangeListener {
+public class ParticipantCompareDialog extends ResizableDialog implements IPropertyChangeListener {
 		
 	private CompareEditorInput fCompareEditorInput;
 	private ISynchronizeParticipant participant;
@@ -39,7 +52,15 @@ public class CompareDialog extends ResizableDialog implements IPropertyChangeLis
 	private String title;
 	private boolean isDirty = false;
 
-	public CompareDialog(Shell shell, String title, CompareEditorInput input) {
+	/**
+	 * Creates a dialog with the given title and input. The input is not created until the dialog
+	 * is opened.
+	 * 
+	 * @param shell the parent shell or <code>null</code> to create a top level shell. 
+	 * @param title the shell's title
+	 * @param input the compare input to show in the dialog
+	 */
+	public ParticipantCompareDialog(Shell shell, String title, CompareEditorInput input) {
 		super(shell, null);
 		this.title = title;
 		Assert.isNotNull(input);
@@ -49,19 +70,6 @@ public class CompareDialog extends ResizableDialog implements IPropertyChangeLis
 	
 	public void setSynchronizeParticipant(ISynchronizeParticipant participant) {
 		this.participant = participant;
-	}
-		
-	public void propertyChange(PropertyChangeEvent event) {
-		if (fCompareEditorInput != null) {
-			if(fCompareEditorInput.isSaveNeeded()) {
-				// the dirty flag is required because there is a compare bug that causes the dirty bit to be reset sometimes
-				// although the underlying compare editor input is still dirty.
-				isDirty = true;
-				getShell().setText(title + " *");
-			} else {
-				getShell().setText(title);
-			}
-		}
 	}
 	
 	/* (non-Javadoc)
@@ -124,6 +132,19 @@ public class CompareDialog extends ResizableDialog implements IPropertyChangeLis
 		}
 	}
 
+	public void propertyChange(PropertyChangeEvent event) {
+		if (fCompareEditorInput != null) {
+			if(fCompareEditorInput.isSaveNeeded()) {
+				// the dirty flag is required because there is a compare bug that causes the dirty bit to be reset sometimes
+				// although the underlying compare editor input is still dirty.
+				isDirty = true;
+				getShell().setText(title + " *"); //$NON-NLS-1$
+			} else {
+				getShell().setText(title);
+			}
+		}
+	}
+	
 	protected Object getParticipant() {
 		return participant;
 	}

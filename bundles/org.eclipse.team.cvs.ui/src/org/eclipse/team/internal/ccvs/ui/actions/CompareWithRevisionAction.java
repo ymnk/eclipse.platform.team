@@ -29,7 +29,7 @@ import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSCompareRevisionsInput;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.ui.synchronize.viewers.CompareDialog;
+import org.eclipse.team.ui.synchronize.viewers.ParticipantCompareDialog;
 
 /**
  * Compare with revision will allow a user to browse the history of a file, compare with the
@@ -96,7 +96,7 @@ public class CompareWithRevisionAction extends WorkspaceAction {
 				CVSCompareRevisionsInput input = new CVSCompareRevisionsInput((IFile)getSelectedResources()[0], entries[0]);
 				// running with a null progress monitor is fine because we have already pre-fetched the log entries above.
 				input.run(new NullProgressMonitor());
-				CompareDialog cd = createCompareDialog(getShell(), input);
+				ParticipantCompareDialog cd = createCompareDialog(getShell(), input);
 				cd.setBlockOnOpen(true);
 				cd.open();
 			}
@@ -106,8 +106,8 @@ public class CompareWithRevisionAction extends WorkspaceAction {
 	/**
 	 * Return the compare dialog to use to show the compare input.
 	 */
-	protected CompareDialog createCompareDialog(Shell shell, CVSCompareRevisionsInput input) {
-		return  new CompareDialog(getShell(), "Compare With Revision", input);
+	protected ParticipantCompareDialog createCompareDialog(Shell shell, CVSCompareRevisionsInput input) {
+		return  new ParticipantCompareDialog(getShell(), "Compare With Revision", input);
 	}
 	
 	/* (non-Javadoc)

@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
@@ -101,7 +102,14 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * Creates and returns a wizard page used to globally refresh this participant.
 	 * 
 	 */
-	public IWizardPage createRefreshPage();
+	public IWizard createRefreshPage();
+	
+	/**
+	 * Returns if this participant supports a global refresh action.
+	 * 
+	 * @return if this participant supports a global refresh action.
+	 */
+	public boolean doesSupportRefresh();
 	
 	/**
 	 * Initializes this participant with the given participant state.  

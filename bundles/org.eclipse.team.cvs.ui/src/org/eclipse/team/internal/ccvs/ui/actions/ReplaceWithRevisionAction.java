@@ -16,7 +16,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.ui.CVSCompareRevisionsInput;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.viewers.CompareDialog;
+import org.eclipse.team.ui.synchronize.viewers.ParticipantCompareDialog;
 
 /**
  * Displays a compare dialog and allows the same behavior as the compare. In addition
@@ -29,7 +29,7 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 	
 	protected static final int REPLACE_ID = 10;
 	
-	protected class ReplaceCompareDialog extends CompareDialog {
+	protected class ReplaceCompareDialog extends ParticipantCompareDialog {
 		private Button replaceButton;
 		
 		public ReplaceCompareDialog(Shell shell, String title, CVSCompareRevisionsInput input) {
@@ -73,7 +73,7 @@ public class ReplaceWithRevisionAction extends CompareWithRevisionAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CompareWithRevisionAction#createCompareDialog(org.eclipse.swt.widgets.Shell, org.eclipse.team.internal.ccvs.ui.CVSCompareRevisionsInput)
 	 */
-	protected CompareDialog createCompareDialog(Shell shell, CVSCompareRevisionsInput input) {
+	protected ParticipantCompareDialog createCompareDialog(Shell shell, CVSCompareRevisionsInput input) {
 		return new ReplaceCompareDialog(shell, "Replace With Revision", input);
 	}
 }

@@ -73,9 +73,13 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 		
 	public GlobalRefreshResourceSelectionPage(SubscriberParticipant participant) {
 		super("Synchronize");
-		this.participant = participant;
 		setDescription("Select the resource to synchronize");
 		setTitle("Synchronize");
+		setParticipant(participant);
+	}
+	
+	public void setParticipant(SubscriberParticipant participant) {
+		this.participant = participant;
 	}
 
 	/* (non-Javadoc)

@@ -30,6 +30,7 @@ import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
