@@ -576,7 +576,7 @@
          <action
                label="%CVSWorkspaceSubscriber.commit.label"
                tooltip="%CVSWorkspaceSubscriber.commit.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
+               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitAction"
                helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_commit_action"
                id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.commit">
          </action>

@@ -105,7 +105,7 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 	}
 	private void collect(IResource resource, IProgressMonitor monitor) throws TeamException {
 		SyncInfo info = getSubscriber().getSyncInfo(resource, monitor);		
-		collect(info);
+		collect(resource, info);
 	}
 	
 	/* (non-Javadoc)
@@ -187,7 +187,7 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 		// recalculate sync state, we don't have progress though? Not ideal
 		// since the calculation could be long running...
 		try {
-			collect(resource, null);
+			collect(resource, (IProgressMonitor)null);
 		} catch (TeamException e) {
 			log(e);
 		}

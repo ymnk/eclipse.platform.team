@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.ui.sync.views.SyncResource;
 
@@ -136,7 +137,18 @@ public class SyncResourceSet {
 	 */
 	public SyncResource[] getSyncResources() {
 		return (SyncResource[]) set.toArray(new SyncResource[set.size()]);
-		
+	}
+	
+	/**
+	 * Returns the resources from all the nodes in this set.
+	 */
+	public IResource[] getResources() {
+		SyncResource[] changed = getSyncResources();
+		IResource[] resources = new IResource[changed.length];
+		for (int i = 0; i < changed.length; i++) {
+			resources[i] = changed[i].getResource();
+		}
+		return resources;
 	}
 	
 	/**
@@ -144,6 +156,28 @@ public class SyncResourceSet {
 	 */
 	public boolean isEmpty() {
 		return set.isEmpty();
+	}
+	/**
+	 * @param resources
+	 */
+	public void removeResources(IResource[] resources) {
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			removeResource(resource);
+		}
+	}
+	/**
+	 * @param resource
+	 */
+	private void removeResource(IResource resource) {
+		for (Iterator it = set.iterator(); it.hasNext();) {
+			SyncResource node = (SyncResource)it.next();
+			if (node.getResource().equals(resource)) {
+				it.remove();
+				// short-circuit the operation once a match is found
+				return;
+			}
+		}
 	}
 	
 }

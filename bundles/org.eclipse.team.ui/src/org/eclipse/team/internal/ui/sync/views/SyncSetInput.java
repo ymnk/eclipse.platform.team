@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
-import org.eclipse.team.ui.sync.*;
+import org.eclipse.team.ui.sync.SyncInfoFilter;
 
 /**
  * This is the superclass for all SyncSet input providers
@@ -66,9 +67,13 @@ public abstract class SyncSetInput {
 	 * 
 	 * @param info
 	 */
-	protected void collect(SyncInfo info) {
-		boolean isOutOfSync = filter.select(info);
-		boolean wasOutOfSync = syncSet.isMember(info);
+	protected void collect(IResource resource, SyncInfo info) {
+		boolean isOutOfSync = false;
+		if (info != null) {
+			isOutOfSync = filter.select(info);
+		}
+		SyncInfo oldInfo = syncSet.getSyncInfo(resource);
+		boolean wasOutOfSync = oldInfo != null;
 		if (isOutOfSync) {
 			if (wasOutOfSync) {
 				syncSet.changed(info);
@@ -76,7 +81,7 @@ public abstract class SyncSetInput {
 				syncSet.add(info);
 			}
 		} else if (wasOutOfSync) {
-			syncSet.remove(info);
+			syncSet.remove(oldInfo);
 		}
 	}
 

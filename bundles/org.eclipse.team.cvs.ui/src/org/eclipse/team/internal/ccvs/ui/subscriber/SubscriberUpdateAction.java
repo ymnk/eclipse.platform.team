@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -19,7 +18,6 @@ import java.util.Set;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
@@ -37,10 +35,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.client.Command;
-import org.eclipse.team.internal.ccvs.core.client.PruneFolderVisitor;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -142,7 +137,7 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncResourceSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(SyncResourceSet syncSet, IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+	public void run(SyncResourceSet syncSet, IProgressMonitor monitor) throws CVSException {
 	
 		SyncResource[] changed = syncSet.getSyncResources();
 		if (changed.length == 0) return;
@@ -247,7 +242,7 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 			// a backup file in case the update fails. The backups could be purged after
 			// the update succeeds.
 			if (parentCreationElements.size() > 0) {
-				handleFolderCreations((SyncResource[]) parentCreationElements.toArray(new SyncResource[parentCreationElements.size()]));				
+				makeInSync((SyncResource[]) parentCreationElements.toArray(new SyncResource[parentCreationElements.size()]));				
 			}
 			if (deletions.size() > 0) {
 				runLocalDeletions((SyncResource[])deletions.toArray(new SyncResource[deletions.size()]), manager, Policy.subMonitorFor(monitor, deletions.size() * 100));
@@ -259,7 +254,7 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 				runUpdateShallow((SyncResource[])updateShallow.toArray(new SyncResource[updateShallow.size()]), manager, Policy.subMonitorFor(monitor, updateShallow.size() * 100));
 			}
 		} catch (final TeamException e) {
-			throw new InvocationTargetException(e);
+			throw CVSException.wrapException(e);
 		} finally {
 			monitor.done();
 		}
@@ -280,17 +275,6 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 			&& ((changedNode.getKind() & SyncInfo.CHANGE_MASK) == SyncInfo.CHANGE)
 		 	&& onlyUpdateAutomergeable 
 		 	&& (changedNode.getKind() & SyncInfo.AUTOMERGE_CONFLICT) != 0);
-	}
-
-	protected void handleFolderCreations(SyncResource[] folders) throws TeamException {
-		// If a node has a parent that is an incoming folder creation, we have to 
-		// create that folder locally and set its sync info before we can get the
-		// node itself. We must do this for all incoming folder creations (recursively)
-		// in the case where there are multiple levels of incoming folder creations.
-		for (int i = 0; i < folders.length; i++) {
-			SyncResource resource = folders[i];
-			makeInSync(resource);
-		}
 	}
 
 	/**
@@ -327,22 +311,6 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 		}
 		pruneEmptyParents(nodes);
 		monitor.done();
-	}
-
-	/**
-	 * @param nodes
-	 */
-	protected void pruneEmptyParents(SyncResource[] nodes) throws CVSException {
-		// TODO: A more explicit tie in to the pruning mechanism would be prefereable.
-		// i.e. I don't like referencing the option and visitor directly
-		if (!CVSProviderPlugin.getPlugin().getPruneEmptyDirectories()) return;
-		ICVSResource[] cvsResources = new ICVSResource[nodes.length];
-		for (int i = 0; i < cvsResources.length; i++) {
-			cvsResources[i] = CVSWorkspaceRoot.getCVSResourceFor(nodes[i].getLocalResource());
-		}
-		new PruneFolderVisitor().visit(
-			CVSWorkspaceRoot.getCVSFolderFor(ResourcesPlugin.getWorkspace().getRoot()),
-			cvsResources);
 	}
 
 	protected void runUpdateDeletions(SyncResource[] nodes, RepositoryManager manager, IProgressMonitor monitor) throws TeamException {
@@ -398,4 +366,7 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 		return result[0];
 	}
 
+	protected String getErrorTitle() {
+		return Policy.bind("UpdateAction.update"); //$NON-NLS-1$
+	}
 }

@@ -308,10 +308,6 @@ public class SyncSet {
 		return (Object[]) children.toArray(new Object[children.size()]);
 	}
 
-	protected boolean isMember(SyncInfo info) {
-		return resources.containsKey(info.getLocal().getFullPath());
-	}
-
 	protected boolean hasMembers(IContainer container) {
 		return parents.containsKey(container.getFullPath());
 	}

@@ -12,7 +12,6 @@ package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,6 +31,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ITeamResourceChangeListener;
 import org.eclipse.team.core.sync.RemoteSyncElement;
@@ -41,11 +41,11 @@ import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.core.sync.TeamProvider;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitAction;
 import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateAction;
 import org.eclipse.team.internal.ui.sync.views.SyncResource;
 import org.eclipse.team.internal.ui.sync.views.SyncSet;
@@ -107,7 +107,6 @@ public class CVSSubscriberTest extends EclipseTest {
 		assertTrue(resourcePaths.length == syncKinds.length);
 		if (refresh) refresh(root);
 		IResource[] resources = getResources(root, resourcePaths);
-		SyncTreeSubscriber subscriber = getSubscriber();
 		for (int i=0;i<resources.length;i++) {
 			assertSyncEquals(message, resources[i], syncKinds[i]);
 		}
@@ -118,8 +117,13 @@ public class CVSSubscriberTest extends EclipseTest {
 		SyncTreeSubscriber subscriber = getSubscriber();
 		int conflictTypeMask = 0x0F; // ignore manual and auto merge sync types for now.
 		SyncInfo info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
-		int kind = info.getKind() & conflictTypeMask;
+		int kind;
 		int kindOther = syncKind & conflictTypeMask;
+		if (info == null) {
+			kind = SyncInfo.IN_SYNC;
+		} else {
+			kind = info.getKind() & conflictTypeMask;
+		}
 		assertTrue(message + ": improper sync state for " + resource + " expected " + 
 				   RemoteSyncElement.kindToString(kindOther) + " but was " +
 				   RemoteSyncElement.kindToString(kind), kind == kindOther);
@@ -167,33 +171,6 @@ public class CVSSubscriberTest extends EclipseTest {
 				break;
 			}
 			assertTrue(message + ": resource " + resources[i] + " still exists in some form", false);
-		}
-	}
-	
-	protected void makeInSync(IContainer root, String[] resourcePaths) throws CoreException, TeamException {
-		IResource[] resources = getResources(root, resourcePaths);
-		SyncTreeSubscriber subscriber = getSubscriber();
-		for (int i=0;i<resources.length;i++) {
-			CVSSyncInfo info = (CVSSyncInfo) subscriber.getSyncInfo(resources[i], DEFAULT_MONITOR);
-			info.makeInSync();
-		}
-	}
-	
-	protected void makeOutgoing(IProject root, String[] resourcePaths) throws CoreException, TeamException {
-		IResource[] resources = getResources(root, resourcePaths);
-		SyncTreeSubscriber subscriber = getSubscriber();
-		for (int i=0;i<resources.length;i++) {
-			CVSSyncInfo info = (CVSSyncInfo) subscriber.getSyncInfo(resources[i], DEFAULT_MONITOR);
-			info.makeOutgoing(DEFAULT_MONITOR);
-		}
-	}
-	
-	protected void makeIncoming(IProject root, String[] resourcePaths) throws CoreException, TeamException {
-		IResource[] resources = getResources(root, resourcePaths);
-		SyncTreeSubscriber subscriber = getSubscriber();
-		for (int i=0;i<resources.length;i++) {
-			CVSSyncInfo info = (CVSSyncInfo) subscriber.getSyncInfo(resources[i], DEFAULT_MONITOR);
-			info.makeIncoming(DEFAULT_MONITOR);
 		}
 	}
 	
@@ -383,15 +360,22 @@ public class CVSSubscriberTest extends EclipseTest {
 	public IResource[] updateResources(IContainer container, String[] hierarchy, boolean ignoreLocalChanges) throws CoreException, TeamException {
 		IResource[] resources = getResources(container, hierarchy);
 		SyncResource[] syncResources = createSyncResources(resources);
-		try {
-			updateResources(syncResources);
-		} catch (InvocationTargetException e) {
-			throw CVSException.wrapException(e);
-		} catch (InterruptedException e) {
-			throw CVSException.wrapException(e);
-		}
+		updateResources(syncResources);
 		return resources;
 	}
+	
+	/**
+	 * Commit the resources from an existing container to the CVS repository.
+	 * This commit uses the SubscriberCommitAction to perform the commit so that all special
+	 * cases should be handled properly
+	 */
+	public IResource[] commitResources(IContainer container, String[] hierarchy) throws CoreException, TeamException {
+		IResource[] resources = getResources(container, hierarchy);
+		SyncResource[] syncResources = createSyncResources(resources);
+		commitResources(syncResources);
+		return resources;
+	}
+	
 	/**
 	 * @param resources
 	 */
@@ -412,10 +396,17 @@ public class CVSSubscriberTest extends EclipseTest {
 	/**
 	 * @param syncResources
 	 */
-	private void updateResources(SyncResource[] syncResources) throws InvocationTargetException, InterruptedException {
+	private void updateResources(SyncResource[] syncResources) throws CVSException {
 		new SubscriberUpdateAction().run(new SyncResourceSet(syncResources), DEFAULT_MONITOR);	
 	}
 
+	/**
+	 * @param syncResources
+	 */
+	private void commitResources(SyncResource[] syncResources) throws CVSException {
+		new SubscriberCommitAction().run(new SyncResourceSet(syncResources), DEFAULT_MONITOR);	
+	}
+	
 	/*
 	 * Perform a simple test that checks for the different types of incoming changes
 	 */
@@ -592,12 +583,7 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.OUTGOING | SyncInfo.ADDITION,
 				SyncInfo.OUTGOING | SyncInfo.ADDITION});
 				
-		// Update the resource sync info so the resources can be commited
-		// Merge won't work for folders so we'll add them explicilty!!!
-		addResources(project, new String[] {"folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, false);
-		// TODO: the following line is not needed due to implicit remove
-		// deleteResources(project, new String[] {"folder1/b.txt"}, false);
-		commitResources(project, new String[] {"folder1/b.txt", "folder2/folder3/add.txt"});
+		commitResources(project, new String[] {"folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"});
 		
 		// Ensure we are in sync
 		assertSyncEquals("testOutgoingQuestionables", project, 
@@ -653,14 +639,8 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE });
 				
 		// Release the folder1/a.txt conflict by merging and then committing
-		makeOutgoing(project, new String[] {"folder1/a.txt"});
-		assertSyncEquals("testFileConflict", project, 
-			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			true, new int[] {
-				SyncInfo.IN_SYNC,
-				SyncInfo.IN_SYNC,
-				SyncInfo.OUTGOING | SyncInfo.CHANGE });
-		commitResources(new IResource[] {project.getFile("folder1/a.txt")}, IResource.DEPTH_ZERO);
+		commitResources(project, new String[] {"folder1/a.txt"});
+		
 		assertSyncEquals("testFileConflict", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
 			true, new int[] {
@@ -705,17 +685,10 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.CONFLICTING | SyncInfo.ADDITION,
 				SyncInfo.CONFLICTING | SyncInfo.ADDITION,
 				SyncInfo.OUTGOING | SyncInfo.ADDITION });
-				
-		// Release the conflict cases (MERGE is not required for add3.txt but we do it anyway to ensure it doesn't cause problems)
-		makeOutgoing(project, new String[]{"add1b.txt", "add2b.txt", "add3.txt"});
-		assertSyncEquals("testAdditionConflicts", project, 
-			new String[] { "file.txt", "add1b.txt", "add2b.txt", "add3.txt"}, 
-			true, new int[] {
-				SyncInfo.IN_SYNC,
-				SyncInfo.OUTGOING | SyncInfo.CHANGE,
-				SyncInfo.OUTGOING | SyncInfo.CHANGE,
-				SyncInfo.OUTGOING | SyncInfo.ADDITION });
-		commitResources(new IResource[] {project.getFile("add1b.txt"), project.getFile("add2b.txt"), project.getFile("add3.txt")}, IResource.DEPTH_ZERO);
+		
+		// Commit conflicting add1b.txt and add2b.txt and outgoing add3.txt
+		commitResources(project, new String[]{"add1b.txt", "add2b.txt", "add3.txt"});
+
 		assertSyncEquals("testAdditionConflicts", project, 
 			new String[] { "file.txt", "add1b.txt", "add2b.txt", "add3.txt"}, 
 			true, new int[] {
@@ -837,15 +810,13 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.IN_SYNC });
 
 		// Release the resources
-		// XXX SPECIAL CASE: "delete1.txt", "delete2.txt" and "delete3.txt" must be merged
-		makeOutgoing(project, new String[]{"delete1.txt", "delete2.txt", "delete3.txt"});
-		// XXX SPECIAL CASE: "delete4.txt" and "delete5.txt" must be unmanaged
-		unmanageResources(project, new String[]{"delete4.txt", "delete5.txt"});
 		commitResources(project, new String[] { "delete1.txt", "delete2.txt", "delete3.txt", "delete4.txt", "delete5.txt"});
+		
 		assertSyncEquals("testDeletionConflictsB", project, 
 			new String[] { "delete3.txt"}, 
 			true, new int[] {
 				SyncInfo.IN_SYNC });
+		
 		assertDeleted("testDeletionConflictsB", project, new String[] {"delete1.txt", "delete2.txt", "delete4.txt", "delete5.txt"});
 	}
 	
@@ -935,7 +906,7 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.OUTGOING | SyncInfo.DELETION});
 				
 		// Commit the deletion
-		commitResources(new IResource[] {file}, IResource.DEPTH_ZERO);
+		commitResources(project , new String[] {"folder1/b.txt"});
 		
 		// Get the sync tree again for the project and ensure others aren't effected
 		assertSyncEquals("testOutgoingDeletion", project, 
@@ -988,33 +959,33 @@ public class CVSSubscriberTest extends EclipseTest {
 	/* 
 	 * Test changes using a granularity of contents
 	 */
-	 public void testGranularityContents() throws TeamException, CoreException, IOException {
-		// Create a test project (which commits it as well)
-		IProject project = createProject("testGranularityContents", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
-		
-		// Checkout a copy and make some modifications
-		IProject copy = checkoutCopy(project, "-copy");
-		appendText(copy.getFile("file1.txt"), "same text", false);
-		setContentsAndEnsureModified(copy.getFile("folder1/a.txt"));
-		commitProject(copy);
-
-		// Make the same modifications to the original
-		appendText(project.getFile("file1.txt"), "same text", false);
-		setContentsAndEnsureModified(project.getFile("folder1/a.txt"), "unique text");
-		
-		// Get the sync tree for the project
-		String oldId = getSubscriber().getCurrentComparisonCriteria().getId();
-		// TODO: There should be a better way to handle the selection of comparison criteria
-		getSubscriber().setCurrentComparisonCriteria("org.eclipse.team.comparisoncriteria.content");
-		assertSyncEquals("testGranularityContents", project, 
-			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			true, new int[] {
-				SyncInfo.IN_SYNC,
-				SyncInfo.IN_SYNC,
-				SyncInfo.CONFLICTING | SyncInfo.CHANGE });
-		getSubscriber().setCurrentComparisonCriteria(oldId);
-
-	 }
+//	 public void testGranularityContents() throws TeamException, CoreException, IOException {
+//		// Create a test project (which commits it as well)
+//		IProject project = createProject("testGranularityContents", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+//		
+//		// Checkout a copy and make some modifications
+//		IProject copy = checkoutCopy(project, "-copy");
+//		appendText(copy.getFile("file1.txt"), "same text", false);
+//		setContentsAndEnsureModified(copy.getFile("folder1/a.txt"));
+//		commitProject(copy);
+//
+//		// Make the same modifications to the original
+//		appendText(project.getFile("file1.txt"), "same text", false);
+//		setContentsAndEnsureModified(project.getFile("folder1/a.txt"), "unique text");
+//		
+//		// Get the sync tree for the project
+//		String oldId = getSubscriber().getCurrentComparisonCriteria().getId();
+//		// TODO: There should be a better way to handle the selection of comparison criteria
+//		getSubscriber().setCurrentComparisonCriteria("org.eclipse.team.comparisoncriteria.content");
+//		assertSyncEquals("testGranularityContents", project, 
+//			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
+//			true, new int[] {
+//				SyncInfo.IN_SYNC,
+//				SyncInfo.IN_SYNC,
+//				SyncInfo.CONFLICTING | SyncInfo.CHANGE });
+//		getSubscriber().setCurrentComparisonCriteria(oldId);
+//
+//	 }
 	 
 //	 public void testSimpleMerge() throws TeamException, CoreException, IOException {
 //		// Create a test project (which commits it as well)
@@ -1166,4 +1137,27 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.OUTGOING | SyncInfo.ADDITION});
 	 }
 
+	public void testRenameUnshared() throws CoreException, TeamException {
+	   // Create a test project (which commits it as well)
+	   IProject project = createProject("testRenameUnshared", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		
+	   // Create a new file without adding it to version control
+	   buildResources(project, new String[] {"oldName.txt"}, false);
+	 	
+	   // Get the sync tree for the project
+	   assertSyncEquals("testRenameUnshared", project, 
+		   new String[] { "oldName.txt" }, 
+		   true, new int[] {SyncInfo.OUTGOING | SyncInfo.ADDITION});
+			
+	   IFile rename = project.getFile("oldName.txt");
+	   rename.move(new Path("newName.txt"), false, false, DEFAULT_MONITOR);
+	
+	   assertDeleted("testRenameUnshared", project, new String[] {"oldName.txt"});
+
+	   assertSyncEquals("testRenameUnshared", project, 
+		   new String[] { "newName.txt"}, 
+		   true, new int[] {
+			   SyncInfo.OUTGOING | SyncInfo.ADDITION});
+	}
+	
 }

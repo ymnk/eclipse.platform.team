@@ -167,7 +167,8 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
 	 */
-	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {	
+	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
+		if (!isSupervised(resource)) return null;
 		IRemoteResource remoteResource = getRemoteResource(resource);
 		if(resource.getType() == IResource.FILE) {
 			IRemoteResource baseResource = getBaseResource(resource);

@@ -89,4 +89,11 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 			collect(infos[i]);
 		}
 	}
+
+	/**
+	 * @param info
+	 */
+	private void collect(SyncInfo info) {
+		collect(info.getLocal(), info);
+	}
 }

@@ -142,4 +142,8 @@ public class SyncResource implements IAdaptable {
 	public IResource getResource() {
 		return resource;
 	}
+	
+	public String toString() {
+		return "Sync for " + getResource().getFullPath().toString();
+	}
 }
