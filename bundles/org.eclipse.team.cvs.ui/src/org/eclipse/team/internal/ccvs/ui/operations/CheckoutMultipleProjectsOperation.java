@@ -21,7 +21,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
  * Each one will become a new project (overwritting any exsiting projects
  * with the same name).
  */
-public class CheckoutMultipleProjectsOperation extends CheckoutOperation {
+public class CheckoutMultipleProjectsOperation extends CheckoutProjectOperation {
 	
 	public CheckoutMultipleProjectsOperation(Shell shell, ICVSRemoteFolder[] remoteFolders, String targetLocation) {
 		super(shell, remoteFolders, targetLocation);

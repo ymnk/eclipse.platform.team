@@ -19,7 +19,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
  * This operation checks out a single remote folder into the workspace as
  * a project.
  */
-public class CheckoutSingleProjectOperation extends CheckoutOperation {
+public class CheckoutSingleProjectOperation extends CheckoutProjectOperation {
 
 	private boolean preconfigured;
 	private ICVSRemoteFolder remoteFolder;
