@@ -23,8 +23,8 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**
  * Job to refresh a subscriber with its remote state.
@@ -104,7 +104,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 
 	public boolean shouldRun() {
-		return getSubscriber() != null && getResources() != null;
+		return getSubscriber() != null;
 	}
 		
 	public boolean belongsTo(Object family) {		
@@ -120,7 +120,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * and it will continue to refresh the other subscribers.
 	 */
 	public IStatus runInWorkspace(IProgressMonitor monitor) {		
-		MultiStatus status = new MultiStatus(TeamPlugin.ID, TeamException.UNABLE, Policy.bind("Team.errorRefreshingSubscribers"), null); //$NON-NLS-1$
+		MultiStatus status = new MultiStatus(TeamUIPlugin.ID, TeamException.UNABLE, Policy.bind("RefreshSubscriberJob.0"), null); //$NON-NLS-1$
 		TeamSubscriber subscriber = getSubscriber();
 		IResource[] roots = getResources();
 		
@@ -129,21 +129,17 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			return Status.OK_STATUS;
 		}
 				
-		monitor.beginTask(Policy.bind("RefreshSubscriber.runTitle", subscriber.getName()), 100); //$NON-NLS-1$
+		monitor.beginTask(getTaskName(subscriber, roots), 100);
 		try {
 			lastTimeRun = System.currentTimeMillis();
-			TeamSubscriber[] subscribers = new TeamSubscriber[] {subscriber};
-			for (int i = 0; i < subscribers.length; i++) {
-				TeamSubscriber s = subscribers[i];
-				if(monitor.isCanceled()) {
-					return Status.CANCEL_STATUS;
-				}
-				try {					
-					monitor.setTaskName(s.getName());
-					s.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
-				} catch(TeamException e) {
-					status.merge(e.getStatus());
-				}
+			if(monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
+			try {					
+				monitor.setTaskName(subscriber.getName());
+				subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+			} catch(TeamException e) {
+				status.merge(e.getStatus());
 			}
 		} catch(OperationCanceledException e2) {
 			return Status.CANCEL_STATUS;
@@ -151,6 +147,11 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 			monitor.done();
 		}
 		return status.isOK() ? Status.OK_STATUS : (IStatus) status;
+	}
+
+	protected String getTaskName(TeamSubscriber subscriber, IResource[] roots) {
+		// Don't return a task name as the job name contains the subscriber and resource count
+		return null;
 	}
 
 	protected IResource[] getResources() {

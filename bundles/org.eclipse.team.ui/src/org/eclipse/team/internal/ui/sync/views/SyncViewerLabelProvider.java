@@ -82,18 +82,18 @@ public class SyncViewerLabelProvider extends LabelProvider implements ITableLabe
 			}
 			StringBuffer postfix = new StringBuffer(" (");
 			SyncInfoStatistics stats = set.getStatistics();
-			long count = stats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
+			long count = stats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
 			if(count > 0) {
-				postfix.append("outgoing:" + count);
+				postfix.append("conflicts:" + count);
 			}
 			count = stats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
 			if(count > 0) {
 				postfix.append("incoming:" + count);
 			}
-			count = stats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
+			count = stats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
 			if(count > 0) {
-				postfix.append("conflicts:" + count);
-			}
+				postfix.append("outgoing:" + count);
+			}			
 			postfix.append(")");
 			return name + postfix.toString();
 		}

@@ -11,12 +11,9 @@
 package org.eclipse.team.internal.ui.sync.views;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -40,15 +37,18 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -59,9 +59,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamDelta;
-import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.IPreferenceIds;
@@ -118,6 +116,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
 	private Composite composite = null;
+	private StatisticsPanel statsPanel;
 	private IMemento memento;
 
 	// Viewer type constants
@@ -128,7 +127,6 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	
 	// Remembering the current input and the previous.
 	private SubscriberInput input = null;
-	private SubscriberInput lastInput = null;
 	
 	// Stats about the current subscriber. This is used for status line and/or title updating
 	private ViewStatusInformation statusInformation;
@@ -161,7 +159,13 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
 	 */
-	public void createPartControl(Composite parent) {
+	public void createPartControl(Composite parent) {		
+		GridLayout gridLayout= new GridLayout();
+		gridLayout.makeColumnsEqualWidth= false;
+		gridLayout.marginWidth= 0;
+		gridLayout.marginHeight = 0;
+		parent.setLayout(gridLayout);
+				
 		createViewer(parent);
 		this.composite = parent;
 				
@@ -169,8 +173,8 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		contributeToActionBars();
 		
 		// Register for addition/removal of subscribers
-		TeamProvider.addListener(this);
-		TeamSubscriber[] subscribers = TeamProvider.getSubscribers();
+		TeamSubscriber.getSubscriberManager().addTeamResourceChangeListener(this);
+		TeamSubscriber[] subscribers = TeamSubscriber.getSubscriberManager().getSubscribers();
 		for (int i = 0; i < subscribers.length; i++) {
 			TeamSubscriber subscriber = subscribers[i];
 			addSubscriber(subscriber);
@@ -186,7 +190,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		updateTitle();
 		
 		initializeJobListener();
-		actions.setContext(null);	
+		actions.setContext(null);
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IViewPart#init(org.eclipse.ui.IViewSite, org.eclipse.ui.IMemento)
@@ -207,19 +211,12 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	 */
 	public synchronized void initializeSubscriberInput(final SubscriberInput input) {
 		Assert.isNotNull(input);
-		this.lastInput = this.input;
-		this.input = input;
-	
+
 		// listen to sync set changes in order to update state relating to the
 		// size of the sync sets and update the title
-		if(lastInput != null) {
-			lastInput.getWorkingSetSyncSet().removeSyncSetChangedListener(this);
-			lastInput.getFilteredSyncSet().removeSyncSetChangedListener(this);
-			lastInput.getSubscriberSyncSet().removeSyncSetChangedListener(this);
-		}
-		input.getWorkingSetSyncSet().removeSyncSetChangedListener(this);
-		input.getFilteredSyncSet().addSyncSetChangedListener(this);
-		input.getSubscriberSyncSet().addSyncSetChangedListener(this);
+		disconnectSubscriberInput();
+		this.input = input;
+		input.registerListeners(this);
 
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
@@ -234,10 +231,16 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			
 				RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
 				refreshJob.setSubscriberInput(input);
-				gotoDifference(INavigableControl.NEXT);
 			}
 		});
 		updateTitle();
+	}
+	
+	private void disconnectSubscriberInput() {
+		if(input != null) {
+			input.deregisterListeners(this);
+			input = null;
+		}
 	}
 	/**
 	 * Toggles between label/tree/table viewers. 
@@ -255,7 +258,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			createViewer(composite);
 			composite.layout();
 			if(oldSelection == null || oldSelection.size() == 0) {
-				gotoDifference(INavigableControl.NEXT);
+				//gotoDifference(INavigableControl.NEXT);
 			} else {
 				viewer.setSelection(oldSelection, true);
 			}
@@ -303,6 +306,14 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 				handleOpen(event);
 			}
 		});
+		viewer.getControl().addKeyListener(new KeyListener() {
+			public void keyPressed(KeyEvent event) {
+				handleKeyPressed(event);
+			}
+			public void keyReleased(KeyEvent event) {
+				// do nothing
+			}
+		});
 	}	
 	protected void initializeActions() {
 		actions = new SyncViewerActions(this);
@@ -341,6 +352,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			Label label = new Label(parent, SWT.WRAP);
 			label.setText(Policy.bind("SynchronizeView.noSubscribersMessage")); //$NON-NLS-1$
 		} else {
+			statsPanel = new StatisticsPanel(parent);
 			switch(currentViewType) {
 				case TREE_VIEW:
 					createTreeViewerPartControl(parent); 
@@ -357,9 +369,11 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	}
 
 	protected void createTreeViewerPartControl(Composite parent) {
+		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer = new SyncTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setLabelProvider(SyncViewerLabelProvider.getDecoratingLabelProvider());
 		viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
+		((TreeViewer)viewer).getTree().setLayoutData(data);
 	}
 
 	protected void createTableViewerPartControl(Composite parent) {
@@ -451,6 +465,14 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 
 	}
 	
+	/**
+	 * Handles a key press event from the viewer.
+	 * Delegates to the action group.
+	 */
+	protected void handleKeyPressed(KeyEvent event) {
+		actions.handleKeyPressed(event);
+	}
+	
 	public void activateSubscriber(TeamSubscriber subscriber) {
 		SubscriberInput newInput = (SubscriberInput)subscriberInputs.get(subscriber.getId());
 		if (newInput == null) {
@@ -464,38 +486,38 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	 * Synchronize - (showing N of M changes) - {Subscriber name}
 	 */
 	protected void updateTitle() {
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				SubscriberInput input = getInput();
-				if(input != null) {
-					ViewStatusInformation newStatus = new ViewStatusInformation(input);
-					if(statusInformation == null || ! statusInformation.equals(newStatus)) {
-						statusInformation = newStatus;
-						
-						TeamSubscriber subscriber = input.getSubscriber();
-						String changesText;
-						if(input.getWorkingSet() != null) {
-							changesText = Policy.bind("LiveSyncView.titleChangeNumbers",  //$NON-NLS-1$
-															new Long(statusInformation.getNumShowing()).toString(),
-															new Long(statusInformation.getNumInWorkingSet()).toString(), 
-															new Long(statusInformation.getNumInWorkspace() - statusInformation.getNumInWorkingSet()).toString());
-						} else {
-							changesText = Policy.bind("LiveSyncView.titleChangeNumbersNoWorkingSet",  //$NON-NLS-1$
-																					new Long(statusInformation.getNumShowing()).toString(),
-																					new Long(statusInformation.getNumInWorkingSet()).toString());
-						}
-					 	String title = Policy.bind("LiveSyncView.titleWithSubscriber", new String[] {Policy.bind("LiveSyncView.title"), changesText, subscriber.getName()});  //$NON-NLS-1$ //$NON-NLS-2$
-					 	setTitle(title);
-					 	StringBuffer b = new StringBuffer(title + "\n"); //$NON-NLS-1$
-					 	b.append(input.getSubscriberSyncSet().getStatistics().toString());
-					 	setTitleToolTip(b.toString());					 	
-					}
-				} else {
-					setTitle(Policy.bind("LiveSyncView.title")); //$NON-NLS-1$
-					setTitleToolTip(""); //$NON-NLS-1$
-				}
-			}
-		});
+//		Display.getDefault().asyncExec(new Runnable() {
+//			public void run() {
+//				SubscriberInput input = getInput();
+//				if(input != null) {
+//					ViewStatusInformation newStatus = new ViewStatusInformation(input);
+//					if(statusInformation == null || ! statusInformation.equals(newStatus)) {
+//						statusInformation = newStatus;
+//						
+//						TeamSubscriber subscriber = input.getSubscriber();
+//						String changesText;
+//						if(input.getWorkingSet() != null) {
+//							changesText = Policy.bind("LiveSyncView.titleChangeNumbers",  //$NON-NLS-1$
+//															new Long(statusInformation.getNumShowing()).toString(),
+//															new Long(statusInformation.getNumInWorkingSet()).toString(), 
+//															new Long(statusInformation.getNumInWorkspace() - statusInformation.getNumInWorkingSet()).toString());
+//						} else {
+//							changesText = Policy.bind("LiveSyncView.titleChangeNumbersNoWorkingSet",  //$NON-NLS-1$
+//																					new Long(statusInformation.getNumShowing()).toString(),
+//																					new Long(statusInformation.getNumInWorkingSet()).toString());
+//						}
+//					 	String title = Policy.bind("LiveSyncView.titleWithSubscriber", new String[] {Policy.bind("LiveSyncView.title"), changesText, subscriber.getName()});  //$NON-NLS-1$ //$NON-NLS-2$
+//					 	setTitle(title);
+//					 	StringBuffer b = new StringBuffer(title + "\n"); //$NON-NLS-1$
+//					 	b.append(input.getSubscriberSyncSet().getStatistics().toString());
+//					 	setTitleToolTip(b.toString());					 	
+//					}
+//				} else {
+//					setTitle(Policy.bind("LiveSyncView.title")); //$NON-NLS-1$
+//					setTitleToolTip(""); //$NON-NLS-1$
+//				}
+//			}
+//		});
 	}
 	
 	
@@ -534,7 +556,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		job.setSubscriberInput(null);
 		
 		// Cleanup the subscriber inputs
-		TeamProvider.removeListener(this);
+		TeamSubscriber.getSubscriberManager().removeTeamResourceChangeListener(this);
 		for (Iterator it = subscriberInputs.values().iterator(); it.hasNext();) {
 			SubscriberInput input = (SubscriberInput) it.next();
 			input.dispose();
@@ -611,9 +633,23 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		// forget about this input
 		subscriberInputs.remove(s.getId());
 		
-		if (si == input && lastInput != null) {
-			// show last input
-			initializeSubscriberInput(lastInput);
+		if (si == input) {
+			if (subscriberInputs.isEmpty()) {
+				disconnectSubscriberInput();
+				if(viewer != null) {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							if(viewer == null) return;
+							ActionContext context = new ActionContext(null);
+							context.setInput(null);
+							actions.setContext(context);
+							viewer.setInput(null);
+						}
+					});
+				}
+			} else {
+				initializeSubscriberInput((SubscriberInput)subscriberInputs.values().iterator().next());
+			}
 		}
 	}
 	
@@ -625,22 +661,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	}
 	
 	public ISelection getSelection() {
-		ISelection selection = getViewer().getSelection();
-		if (! selection.isEmpty() && viewer instanceof AbstractTreeViewer) {
-			// For a tree, selection should be deep and only include out-of-sync resources
-			Object[] selected = ((IStructuredSelection)selection).toArray();
-			Set result = new HashSet();
-			for (int i = 0; i < selected.length; i++) {
-				Object object = selected[i];
-				if (object instanceof SynchronizeViewNode) {
-					SynchronizeViewNode syncResource = (SynchronizeViewNode) object;
-					SyncInfo[] infos = syncResource.getChildSyncInfos();
-					result.addAll(Arrays.asList(infos));
-				}
-			}
-			selection = new StructuredSelection((Object[]) result.toArray(new Object[result.size()]));
-		}
-		return selection;
+		return getViewer().getSelection();
 	}
 	
 	/**
@@ -754,7 +775,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		IResource[] resources =event.getRemovedResources();
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
-			OpenInCompareAction.closeCompareEditorFor(this, resource);
+			OpenInCompareAction.closeCompareEditorFor(this.getSite(), resource);
 		}
 	}
 
@@ -819,13 +840,6 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		} else {
 			// Select All in a tree doesn't really work well
 		}
-	}
-	
-	public boolean gotoDifference(int direction) {
-		if(viewer instanceof INavigableControl) {
-			return ((INavigableControl)viewer).gotoDifference(direction);
-		}
-		return false;
 	}
 	
 	private IPreferenceStore getStore() {
