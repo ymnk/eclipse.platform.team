@@ -14,6 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.synchronize.*;
@@ -66,6 +67,10 @@ public class SyncInfoSetTraveralContext extends ResourceMappingContext {
         members.addAll(Arrays.asList(container.members(false)));
         members.addAll(Arrays.asList(set.members(container)));
         return (IResource[]) members.toArray(new IResource[members.size()]);
+    }
+
+    public void refresh(ResourceTraversal[] traversals, IProgressMonitor monitor) throws CoreException {
+        // Do nothing
     }
 
 }

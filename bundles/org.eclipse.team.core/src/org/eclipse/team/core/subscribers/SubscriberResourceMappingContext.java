@@ -12,9 +12,9 @@ package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
@@ -38,8 +38,6 @@ public class SubscriberResourceMappingContext extends ResourceMappingContext {
      * @see org.eclipse.core.resources.mapping.ITraversalContext#contentDiffers(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
      */
     public boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
-        // TODO: would like to avoid multiple refreshes somehow
-        subscriber.refresh(new IResource[] { file} , IResource.DEPTH_ONE, monitor);
         SyncInfo syncInfo = subscriber.getSyncInfo(file);
         return syncInfo != null && syncInfo.getKind() != SyncInfo.IN_SYNC;
     }
@@ -48,26 +46,26 @@ public class SubscriberResourceMappingContext extends ResourceMappingContext {
      * @see org.eclipse.core.resources.mapping.ITraversalContext#fetchContents(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
      */
     public IStorage fetchContents(IFile file, IProgressMonitor monitor) throws CoreException {
-        try {
-            monitor.beginTask(null, 100);
-            subscriber.refresh(new IResource[] { file} , IResource.DEPTH_ONE, Policy.subMonitorFor(monitor, 20));
-            SyncInfo syncInfo = subscriber.getSyncInfo(file);
-            if (syncInfo == null) {
-                throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, IResourceStatus.RESOURCE_NOT_FOUND, "File {0} does not have a corresponding remote" + file.getFullPath().toString(), null));
-            }
-            return syncInfo.getRemote().getStorage(Policy.subMonitorFor(monitor, 80));
-        } finally {
-            monitor.done();
+        SyncInfo syncInfo = subscriber.getSyncInfo(file);
+        if (syncInfo == null) {
+            throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, IResourceStatus.RESOURCE_NOT_FOUND, "File {0} does not have a corresponding remote" + file.getFullPath().toString(), null));
         }
-        
+        return syncInfo.getRemote().getStorage(monitor);
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.core.resources.mapping.ITraversalContext#fetchMembers(org.eclipse.core.resources.IContainer, org.eclipse.core.runtime.IProgressMonitor)
      */
     public IResource[] fetchMembers(IContainer container, IProgressMonitor monitor) throws CoreException {
-        subscriber.refresh(new IResource[] { container} , IResource.DEPTH_ONE, monitor);
         return subscriber.members(container);
+    }
+
+    public void refresh(ResourceTraversal[] traversals, IProgressMonitor monitor) throws CoreException {
+        // TODO For now, refresh for each traversal.
+        for (int i = 0; i < traversals.length; i++) {
+            ResourceTraversal traversal = traversals[i];
+            subscriber.refresh(traversal.getResources(), traversal.getDepth(), monitor);
+        }
     }
 
 }

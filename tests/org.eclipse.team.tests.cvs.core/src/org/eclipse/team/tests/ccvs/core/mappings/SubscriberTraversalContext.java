@@ -10,11 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.tests.ccvs.core.mappings;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
@@ -52,6 +54,19 @@ public class SubscriberTraversalContext extends ResourceMappingContext {
      */
     public IResource[] fetchMembers(IContainer container, IProgressMonitor monitor) throws CoreException {
         return subscriber.members(container);
+    }
+
+    public void refresh(ResourceTraversal[] traversals, IProgressMonitor monitor) throws CoreException {
+        Set result = new HashSet();
+        for (int i = 0; i < traversals.length; i++) {
+            ResourceTraversal traversal = traversals[i];
+            IResource[] resources = traversal.getResources();
+            for (int j = 0; j < resources.length; j++) {
+                IResource resource = resources[j];
+                result.add(resource);
+            }
+        }
+        subscriber.refresh((IResource[]) result.toArray(new IResource[result.size()]), IResource.DEPTH_INFINITE, monitor);
     }
 
 }
