@@ -58,16 +58,7 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	 * Return children of the root with this tag.
 	 */
 	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
-		// Get the folders for the repository
-		Object[] result = CVSUIPlugin.getPlugin().getRepositoryManager().getWorkingFoldersForTag(root, tag, monitor);
-		// Allow access to the module definitions for HEAD when there is no working set in place
-		if (CVSTag.DEFAULT.equals(tag) && CVSUIPlugin.getPlugin().getRepositoryManager().getCurrentWorkingSet() == null) {
-			List children = new ArrayList();
-			children.add(new ModulesCategory(root));
-			children.addAll(Arrays.asList(result));
-			result = (Object[]) children.toArray(new Object[children.size()]);
-		}
-		return result;
+		return CVSUIPlugin.getPlugin().getRepositoryManager().getWorkingFoldersForTag(root, tag, monitor);
 	}
 	
 	public boolean isNeedsProgress() {
