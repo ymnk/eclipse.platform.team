@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.core.resources;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -69,17 +68,6 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 			return result;	
 		} catch (ClassCastException e) {
 			throw new CVSException(Policy.bind("EclipseResource.invalidResourceClass"), e); //$NON-NLS-1$
-		}
-	}
-
-	/*
-	 * @see ICVSResource#delete()
-	 */
-	public void delete() throws CVSException {
-		try {
-			resource.delete(false /*force*/, null);
-		} catch(CoreException e) {
-			throw new CVSException(e.getStatus());
 		}
 	}
 
@@ -144,7 +132,7 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 		if (parent.isIgnored()) return true;
 		FolderSyncInfo info = parent.getFolderSyncInfo();
 		if (info == null) return false;
-		return info.getRepository().equals(FolderSyncInfo.VIRTUAL_DIRECTORY);
+		return info.isVirtualDirectory();
 	}
 	
 	/*

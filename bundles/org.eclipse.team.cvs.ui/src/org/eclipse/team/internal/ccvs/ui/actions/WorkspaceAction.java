@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceStatus;
@@ -28,9 +29,11 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
@@ -66,6 +69,10 @@ public abstract class WorkspaceAction extends CVSAction {
 		if (super.beginExecution(action)) {
 			// Ensure that the required sync info is loaded
 			if (requiresLocalSyncInfo()) {
+				// There is a possibility of the selection containing an orphaned subtree.
+				// If it does, they will be purged and enablement rechecked before the 
+				// operation is performed.
+				handleOrphanedSubtrees();
 				// Check enablement just in case the sync info wasn't loaded
 				if (!isEnabled()) {
 					MessageDialog.openInformation(getShell(), Policy.bind("CVSAction.disabledTitle"), Policy.bind("CVSAction.disabledMessage")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -78,6 +85,64 @@ public abstract class WorkspaceAction extends CVSAction {
 		}
 	}
 
+	/*
+	 * Determine if any of the selected resources are deascendants of
+	 * an orphaned CVS subtree and if they are, purge the CVS folders.
+	 */
+	private boolean handleOrphanedSubtrees() {
+		// invoke the inherited method so that overlaps are maintained
+		IResource[] resources = getSelectedResources();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			handleOrphanedSubtree(resource);
+		}
+		return false;
+	}
+
+	/*
+	 * Determine if the resource is a descendant of an orphaned subtree.
+	 * If it is, purge the CVS folders of the subtree.
+	 */
+	private void handleOrphanedSubtree(IResource resource) {
+		try {
+			if (!CVSWorkspaceRoot.isSharedWithCVS(resource)) return ;
+			ICVSFolder folder;
+			if (resource.getType() == IResource.FILE) {
+				folder = CVSWorkspaceRoot.getCVSFolderFor(resource.getParent());
+			} else {
+				folder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)resource);
+			}
+			handleOrphanedSubtree(folder);
+		} catch (CVSException e) {
+			CVSProviderPlugin.log(e);
+		}
+	}
+	
+	/*
+	 * Recursively check for and handle orphaned CVS folders
+	 */
+	private void handleOrphanedSubtree(final ICVSFolder folder) throws CVSException {
+		if (folder.getIResource().getType() == IResource.PROJECT) return;
+		if (CVSWorkspaceRoot.isOrphanedSubtree((IContainer)folder.getIResource())) {
+			try {
+				run(new IRunnableWithProgress() {
+					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+						try {
+							folder.unmanage(null);
+						} catch (CVSException e) {
+							CVSProviderPlugin.log(e);
+						}
+					}
+				}, true, PROGRESS_WORKBENCH_WINDOW);
+			} catch (InvocationTargetException e) {
+				// Ignore this since we logged the one we care about above
+			} catch (InterruptedException e) {
+				throw new OperationCanceledException();
+			}
+		}
+		handleOrphanedSubtree(folder.getParent());
+	}
+	
 	/**
 	 * Return true if the sync info is loaded for all selected resources.
 	 * The purpose of this method is to allow enablement code to be as fast
