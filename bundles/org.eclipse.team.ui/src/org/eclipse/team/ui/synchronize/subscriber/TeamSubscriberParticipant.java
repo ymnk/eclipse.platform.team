@@ -11,7 +11,6 @@
 package org.eclipse.team.ui.synchronize.subscriber;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.subscribers.*;
@@ -32,8 +31,6 @@ import org.eclipse.ui.part.IPageBookViewPage;
 public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
 	
 	private SubscriberSyncInfoCollector collector;
-	
-	private FilteredSyncInfoCollector filteredSyncSet;
 	
 	private TeamSubscriberRefreshSchedule refreshSchedule;
 	
@@ -116,9 +113,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public void setWorkingSet(IWorkingSet set) {
 		IWorkingSet oldSet = workingSet;
-		if(filteredSyncSet != null) {
+		if(collector != null) {
 			IResource[] resources = set != null ? Utils.getResources(set.getElements()) : new IResource[0];
-			filteredSyncSet.setWorkingSet(resources);
+			collector.setWorkingSet(resources);
 			workingSet = null;
 		} else {
 			workingSet = set;
@@ -132,7 +129,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public void refreshWithRemote(IResource[] resources) {
 		if((resources == null || resources.length == 0)) {
-			TeamParticipantRefreshAction.run(filteredSyncSet.getWorkingSet(), this);
+			TeamParticipantRefreshAction.run(collector.getWorkingSet(), this);
 		} else {
 			TeamParticipantRefreshAction.run(resources, this);
 		}
@@ -144,17 +141,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public void dispose() {
 		refreshSchedule.dispose();				
 		TeamUI.removePropertyChangeListener(this);
-		filteredSyncSet.dispose();
 		collector.dispose();
-	}
-	
-	/**
-	 * Return the <code>FilteredSyncInfoCollector</code> for this participant.
-	 * Thsi collector maintains the set of all out-of-sync resources that
-	 * are being displayed on the participant's synchronize view page.
-	 */
-	public final FilteredSyncInfoCollector getFilteredSyncInfoCollector() {
-		return filteredSyncSet; 
 	}
 	
 	/**
@@ -162,14 +149,13 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * This collector maintains the set of all out-of-sync resources for the subscriber.
 	 * @return the <code>SubscriberSyncInfoCollector</code> for this participant
 	 */
-	public final SubscriberSyncInfoCollector getTeamSubscriberSyncInfoCollector() {
+	public final SubscriberSyncInfoCollector getSubscriberSyncInfoCollector() {
 		return collector;
 	}
 	
 	protected void setSubscriber(Subscriber subscriber) {
 		collector = new SubscriberSyncInfoCollector(subscriber);
-		filteredSyncSet = new FilteredSyncInfoCollector(collector, null /* no initial roots */, null /* no initial filter */);
-
+		
 		// listen for global ignore changes
 		TeamUI.addPropertyChangeListener(this);
 		
@@ -205,7 +191,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	private void updateMode(int mode) {
-		if(filteredSyncSet != null) {	
+		if(collector != null) {	
 		
 		int[] modeFilter = BOTH_MODE_FILTER;
 		switch(mode) {
@@ -219,11 +205,11 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			modeFilter = CONFLICTING_MODE_FILTER; break;
 		}
 
-			getFilteredSyncInfoCollector().setFilter(
+			collector.setFilter(
 					new FastSyncInfoFilter.AndSyncInfoFilter(
 							new FastSyncInfoFilter[] {
 									new FastSyncInfoFilter.SyncInfoDirectionFilter(modeFilter)
-							}), new NullProgressMonitor());
+							}));
 		}
 	}
 	

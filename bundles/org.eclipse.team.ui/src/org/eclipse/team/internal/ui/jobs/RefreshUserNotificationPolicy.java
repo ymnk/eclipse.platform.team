@@ -33,7 +33,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 	 * @see org.eclipse.team.internal.ui.jobs.IRefreshSubscriberListener#refreshDone(org.eclipse.team.internal.ui.jobs.IRefreshEvent)
 	 */
 	public void refreshDone(IRefreshEvent event) {
-		if(event.getSubscriber() != participant.getTeamSubscriberSyncInfoCollector().getSubscriber()) return;
+		if(event.getSubscriber() != participant.getSubscriberSyncInfoCollector().getSubscriber()) return;
 		
 		int type = event.getRefreshType();
 

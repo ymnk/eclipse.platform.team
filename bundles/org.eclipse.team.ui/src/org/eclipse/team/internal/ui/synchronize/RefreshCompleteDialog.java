@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -22,6 +23,7 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
@@ -34,7 +36,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private Button promptWhenNoChanges;
 	private Button promptWithChanges;
 	private SyncInfoSetCompareInput compareEditorInput;
-	private FilteredSyncInfoCollector set;
+	private FilteredSyncInfoCollector collector;
 	private IRefreshEvent event;
 	private final static int RESOURCE_LIST_SIZE = 10;
 	private IDialogSettings settings;
@@ -50,9 +52,25 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
 		
-		this.set = new FilteredSyncInfoCollector(participant.getTeamSubscriberSyncInfoCollector(), getResources(), null);
+		SyncInfoFilter filter = new SyncInfoFilter() {
+			public boolean select(SyncInfo info, IProgressMonitor monitor) {
+				IResource[] resources = getResources();
+				for (int i = 0; i < resources.length; i++) {
+					IResource resource = resources[i];
+					if (info.getLocal().equals(resource)) {
+						return true;
+					}
+				}
+				return false;
+			}
+		};
+		this.collector = new FilteredSyncInfoCollector(
+				participant.getSubscriberSyncInfoCollector(), 
+				participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
+				filter);
+		this.collector.start();
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
-				new DiffTreeViewerConfiguration(participant.getId(), set.getSyncInfoSet())); 
+				new DiffTreeViewerConfiguration(participant.getId(), collector.getSyncInfoSet())); 
 		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$
@@ -82,7 +100,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 * @see org.eclipse.jface.window.Window#close()
 	 */
 	public boolean close() {
-		set.dispose();
+		collector.dispose();
 		Rectangle bounds = getShell().getBounds();
 		settings.put(HEIGHT_KEY, bounds.height);
 		settings.put(WIDTH_KEY, bounds.width);

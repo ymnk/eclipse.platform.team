@@ -89,7 +89,7 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		
 		// Create a sync set containing only the resources that will be committed.
 		TeamSubscriberParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		SyncInfoSet currentSet = participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet currentSet = participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
 		MutableSyncInfoSet set = new MutableSyncInfoSet();
 		for (int i = 0; i < resourcesToCommit.length; i++) {
 			IResource resource = resourcesToCommit[i];

@@ -138,7 +138,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	}
 	
 	private SyncInfoSet getSyncInfoSet() {
-		return getParticipant().getFilteredSyncInfoCollector().getSyncInfoSet();
+		return getParticipant().getSubscriberSyncInfoCollector().getSyncInfoSet();
 	}
 	
 	/* (non-Javadoc)

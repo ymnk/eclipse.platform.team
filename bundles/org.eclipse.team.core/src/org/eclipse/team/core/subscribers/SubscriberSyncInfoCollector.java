@@ -14,8 +14,7 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.core.subscribers.SubscriberEventHandler;
-import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
+import org.eclipse.team.internal.core.subscribers.*;
 
 /**
  * This collector maintains a {@link SyncInfoSet} for a particular team subscriber keeping
@@ -30,7 +29,9 @@ import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSubscriber;
  */
 public final class SubscriberSyncInfoCollector implements IResourceChangeListener, ISubscriberChangeListener {
 
-	private SyncSetInputFromSubscriber syncSetInput;
+	private SyncSetInputFromSubscriber subscriberInput;
+	private WorkingSetSyncSetInput workingSetInput;
+	private SyncSetInputFromSyncSet filteredInput;
 	private SubscriberEventHandler eventHandler;
 	private Subscriber subscriber;
 	private IResource[] roots;
@@ -38,7 +39,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	/**
 	 * Create a collector on the subscriber that collects out-of-sync resources
 	 * for all roots of the subscriber. The <code>start()</code> method must be called after creation
-	 * to rpime the collector's sync set.
+	 * to prime the collector's sync sets.
 	 * @param subscriber the Subscriber
 	 */
 	public SubscriberSyncInfoCollector(Subscriber subscriber) {
@@ -50,7 +51,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * the given roots. If the roots are <code>null</code>, then all out-of-sync resources
 	 * from the subscriber are collected. An empty array of roots will cause no resources
 	 * to be collected. The <code>start()</code> method must be called after creation
-	 * to rpime the collector's sync set.
+	 * to rpime the collector's sync sets.
 	 * @param subscriber the Subscriber
 	 * @param roots the roots of the out-of-sync resources to be collected
 	 */
@@ -59,9 +60,18 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 		this.subscriber = subscriber;
 		Assert.isNotNull(subscriber);
 		this.eventHandler = new SubscriberEventHandler(subscriber);
-		this.syncSetInput = eventHandler.getSyncSetInput();
+		this.subscriberInput = eventHandler.getSyncSetInput();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
 		subscriber.addListener(this);
+		
+		// TODO: optimize and don't use working set if no roots are passed in
+		workingSetInput = new WorkingSetSyncSetInput(subscriberInput.getSyncSet(), getEventHandler());
+		filteredInput = new SyncSetInputFromSyncSet(workingSetInput.getSyncSet(), getEventHandler());
+		filteredInput.setFilter(new SyncInfoFilter() {
+			public boolean select(SyncInfo info, IProgressMonitor monitor) {
+				return true;
+			}
+		});
 	}
 	
 	/**
@@ -73,13 +83,14 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	
 	/**
 	 * Return the set that provides access to the out-of-sync resources for the collector's
-	 * subscriber. The set will contain only those resources that are children of the roots
-	 * of the collector unless the roots of the colletor has been set to <code>null</code>
-	 * in which case all out-of-sync resources from the subscriber are collected.
+	 * subscriber that are descendants of the roots for the collector,
+	 * are in the collector's working set and match the collectors filter. 
+	 * @see getSubscriberSyncInfoSet()
+	 * @see getWorkingSetSyncInfoSet()
 	 * @return a SyncInfoSet containing out-of-sync resources
 	 */
 	public SyncInfoSet getSyncInfoSet() {
-		return syncSetInput.getSyncSet();
+		return filteredInput.getSyncSet();
 	}
 
 	/**
@@ -101,8 +112,8 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	}
 	
 	/**
-	 * Clears this collector's <code>SyncInfoSet</code> and causes it to be recreated from the
-	 * associated <code>Subscriber</code>. The reset may occur in the background. If the
+	 * Clears this collector's sync info sets and causes them to be recreated from the
+	 * associated <code>Subscriber</code>. The reset will occur in the background. If the
 	 * caller wishes to wait for the reset to complete, they should call 
 	 * {@link waitForCollector(IProgressMonitor)}.
 	 */
@@ -126,7 +137,11 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 */
 	public void dispose() {
 		eventHandler.shutdown();
-		syncSetInput.disconnect();
+		subscriberInput.disconnect();
+		workingSetInput.disconnect();
+		if(filteredInput != null) {
+			filteredInput.disconnect();
+		}
 		getSubscriber().removeListener(this);		
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 	}
@@ -279,7 +294,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	/**
 	 * Set the roots that are to be considered by the collector. The provided
 	 * resources should be either a subset of the roots of the collector's subscriber
-	 * of children of those roots. Other resources can be provided but will be ignored.
+	 * or children of those roots. Other resources can be provided but will be ignored.
 	 * Setting the roots to <code>null</code> will cause the roots of the subscriber
 	 * to be used
 	 * @param roots The roots to be considered or <code>null</code>.
@@ -289,9 +304,76 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	}
 	
 	/**
+	 * Return the event handler that performs the background processing for this collector.
+	 * The event handler also serves the purpose of serializing the modifications and adjustments
+	 * to the collector's sync sets in order to ensure that the state of the sets is kept
+	 * consistent.
 	 * @return Returns the eventHandler.
 	 */
-	public SubscriberEventHandler getEventHandler() {
+	protected SubscriberEventHandler getEventHandler() {
 		return eventHandler;
 	}
+	
+	/**
+	 * Set the working set resources used to filter the output <code>SyncInfoSet</code>.
+	 * @see getWorkingSetSyncInfoSet()
+	 * @param resources the working set resources
+	 */
+	public void setWorkingSet(IResource[] resources) {
+		workingSetInput.setWorkingSet(resources);
+		workingSetInput.reset();
+	}
+	
+	/**
+	 * Get th working set resources used to filter the output sync info set.
+	 * @return the working set resources
+	 */
+	public IResource[] getWorkingSet() {
+		return workingSetInput.getWorkingSet();
+	}
+	
+	/**
+	 * Set the filter for this collector. Only elements that match the filter will
+	 * be in the out sync info set.
+	 * @see getSyncInfoSet()
+	 * @param filter the sync info filter
+	 */
+	public void setFilter(SyncInfoFilter filter) {
+		filteredInput.setFilter(filter);
+		filteredInput.reset();
+	}
+	
+	/**
+	 * Return the filter that is filtering the output of this collector.
+	 * @return a sync info filter
+	 */
+	public SyncInfoFilter getFilter() {
+		if(filteredInput != null) {
+			return filteredInput.getFilter();
+		}
+		return null;
+	}
+	
+	/**
+	 * Return a <code>SyncInfoSet</code> that contains the out-of-sync elements
+	 * from the subsciber sync info set filtered
+	 * by the working set resources but not the collector's <code>SyncInfoFilter</code>.
+	 * @see getSubscriberSyncInfoSet()
+	 * @return a <code>SyncInfoSet</code>
+	 */
+	public SyncInfoSet getWorkingSetSyncInfoSet() {
+		return workingSetInput.getSyncSet();
+	}
+
+	/**
+	 * Return the <code>SyncInfoSet</code> that contains all the all the out-of-sync resources for the
+	 * subscriber that are descendants of the roots of this collector. The set will contain only those resources that are children of the roots
+	 * of the collector unless the roots of the colletor has been set to <code>null</code>
+	 * in which case all out-of-sync resources from the subscriber are collected.
+	 * @return the subscriber sync info set
+	 */
+	public SyncInfoSet getSubscriberSyncInfoSet() {
+		return subscriberInput.getSyncSet();
+	}
+
 }

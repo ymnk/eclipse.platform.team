@@ -31,7 +31,6 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	private SubscriberSyncInfoCollector collector;
 	private RefreshAction refreshAction;
 	private RefreshAction refreshAllAction;
-	private FilteredSyncInfoCollector filteredSyncSet;
 
 	/**
 	 * Return a <code>SyncInfoSetCompareConfiguration</code> that can be used in a
@@ -44,7 +43,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	public static CVSLocalCompareConfiguration create(IResource[] resources, CVSTag tag) {
 		CVSCompareSubscriber subscriber = new CVSCompareSubscriber(resources, tag);
 		SubscriberSyncInfoCollector collector = new SubscriberSyncInfoCollector(subscriber);
-		FilteredSyncInfoCollector filtered = new FilteredSyncInfoCollector(collector, null, new SyncInfoFilter() {
+		collector.setFilter(new SyncInfoFilter() {
 			private SyncInfoFilter contentCompare = new SyncInfoFilter.ContentComparisonSyncInfoFilter();
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
 				// Want to select infos whose contents do not match
@@ -52,21 +51,19 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 			}
 		});
 		collector.start();
-		return new CVSLocalCompareConfiguration(subscriber, collector, filtered);
+		return new CVSLocalCompareConfiguration(subscriber, collector);
 	}
 	
-	private CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, SubscriberSyncInfoCollector collector, FilteredSyncInfoCollector filtered) {
-		super("org.eclipse.team.cvs.ui.compare-participant", filtered.getSyncInfoSet()); //$NON-NLS-1$
+	private CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, SubscriberSyncInfoCollector collector) {
+		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet()); //$NON-NLS-1$
 		this.subscriber = subscriber;
 		this.collector = collector;
-		this.filteredSyncSet = filtered;
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#dispose()
 	 */
 	public void dispose() {
-		filteredSyncSet.dispose();
 		collector.dispose();
 		subscriber.dispose();
 		super.dispose();
@@ -110,6 +107,6 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#getSyncSet()
 	 */
 	public SyncInfoSet getSyncSet() {
-		return filteredSyncSet.getSyncInfoSet();
+		return collector.getSyncInfoSet();
 	}
 }

@@ -95,12 +95,12 @@ public class TeamSubscriberRefreshSchedule {
 	}
 	
 	protected void startJob() {
-		SyncInfoSet set = participant.getFilteredSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet set = participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
 		if(set == null) { 
 			return;
 		}
 		if(job == null) {
-			job = new RefreshSubscriberJob(Policy.bind("TeamSubscriberRefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getTeamSubscriberSyncInfoCollector()); //$NON-NLS-1$
+			job = new RefreshSubscriberJob(Policy.bind("TeamSubscriberRefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getSubscriberSyncInfoCollector()); //$NON-NLS-1$
 		} else if(job.getState() != Job.NONE){
 			stopJob();
 		}

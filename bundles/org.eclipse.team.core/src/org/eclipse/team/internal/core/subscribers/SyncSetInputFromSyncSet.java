@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.subscribers.*;
 
@@ -88,8 +87,8 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 		getSyncSet().handleErrorEvent(event, monitor);
 	}
 	
-	public void reset() throws CoreException {
+	public void reset() {
 		getSyncSet().removeSyncSetChangedListener(this);
-		getSyncSet().connect(this, null);
+		getSyncSet().connect(this);
 	}
 }

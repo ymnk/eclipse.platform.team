@@ -97,12 +97,11 @@ public class ChangesSection extends Composite {
 
 		calculateDescription();
 		
-		participant.getFilteredSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
-		participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
 	}
 	
 	private void calculateDescription() {
-		if(participant.getFilteredSyncInfoCollector().getSyncInfoSet().size() == 0) {
+		if(participant.getSubscriberSyncInfoCollector().getSyncInfoSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
 					if (changesSectionContainer.isDisposed()) return;
@@ -133,12 +132,12 @@ public class ChangesSection extends Composite {
 		data.grabExcessVerticalSpace = true;
 		composite.setLayoutData(data);
 		
-		SyncInfoSet workspace = participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet();
-		SyncInfoSet workingSet = participant.getFilteredSyncInfoCollector().getWorkingSetSyncInfoSet();
-		SyncInfoSet filteredSet = participant.getFilteredSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet workspace = participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
+		SyncInfoSet workingSet = participant.getSubscriberSyncInfoCollector().getWorkingSetSyncInfoSet();
+		SyncInfoSet filteredSet = participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
 		
 		int changesInWorkspace = workspace.size();
-		int changesInWorkingSet =workingSet.size();
+		int changesInWorkingSet = workingSet.size();
 		int changesInFilter = filteredSet.size();
 		
 		long outgoingChanges = workingSet.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
@@ -206,7 +205,7 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
-		participant.getFilteredSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
-		participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
 	}
 }

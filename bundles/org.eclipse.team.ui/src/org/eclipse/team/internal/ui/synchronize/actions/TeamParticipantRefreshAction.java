@@ -23,10 +23,10 @@ import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
 public class TeamParticipantRefreshAction extends RefreshAction {
 	
 	public TeamParticipantRefreshAction(ISelectionProvider provider, TeamSubscriberParticipant participant, boolean refreshAll) {
-		super(provider, participant.getName(), participant.getTeamSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant), refreshAll);
+		super(provider, participant.getName(), participant.getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant), refreshAll);
 	}
 	
 	public static void run(IResource[] resources, TeamSubscriberParticipant participant) {
-		run(participant.getName(), resources, participant.getTeamSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant));
+		run(participant.getName(), resources, participant.getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant));
 	}
 }

@@ -49,6 +49,30 @@ public class SubscriberSyncInfoSet extends MutableSyncInfoSet {
 	}
 
 	/**
+	 * Variation of connect that does not need progress and does not throw an exception.
+	 * Progress ins provided by the background event handler and errors are passed through
+	 * the chain to the view.
+	 * @param listener
+	 */
+	public void connect(final ISyncInfoSetChangeListener listener) {
+		handler.run(new IWorkspaceRunnable() {
+			public void run(IProgressMonitor monitor) {
+				beginInput();
+				try {
+					monitor.beginTask(null, 100);
+					addSyncSetChangedListener(listener);
+					SyncSetChangedEvent event = new SyncSetChangedEvent(SubscriberSyncInfoSet.this);
+					event.reset();
+					listener.syncSetChanged(event, Policy.subMonitorFor(monitor, 95));
+				} finally {
+					endInput(Policy.subMonitorFor(monitor, 5));
+					monitor.done();
+				}
+			}
+		});
+	}
+	
+	/**
 	 * Propogate the error to any listeners who handle errors
 	 * @param event
 	 */

@@ -64,7 +64,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	private SubscriberSyncInfoCollector getCollector(Subscriber subscriber) {
 		TeamSubscriberParticipant participant = getParticipant(subscriber);
 		if (participant == null) return null;
-		SubscriberSyncInfoCollector syncInfoCollector = participant.getTeamSubscriberSyncInfoCollector();
+		SubscriberSyncInfoCollector syncInfoCollector = participant.getSubscriberSyncInfoCollector();
 		EclipseTest.waitForSubscriberInputHandling(syncInfoCollector);
 		return syncInfoCollector;
 	}
