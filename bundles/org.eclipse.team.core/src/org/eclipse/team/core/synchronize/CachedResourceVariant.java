@@ -30,7 +30,7 @@ import org.eclipse.team.internal.core.*;
  * they must implement <code>fetchContents</code> to retrieve the contents of the
  * resource variant and then call <code>setContents</code> to place these contents in the cache.
  * Subclasses may also call <code>cacheHandle</code> in order to place the handle in the
- * cacheso that it can be retrieved later by calling <code>getCachedHandle</code> on any
+ * cache so that it can be retrieved later by calling <code>getCachedHandle</code> on any
  * resource variant whose cache path is the same as the cached handle. This allows subclasses to
  * cache additional resource variant properties such as author, comment, etc.
  * </p>
@@ -39,7 +39,7 @@ import org.eclipse.team.internal.core.*;
  * cached entries if they have not been accessed for a certain amount of time.
  * </p>
  */
-public abstract class ResourceVariant extends PlatformObject implements IRemoteResource {
+public abstract class CachedResourceVariant extends PlatformObject implements IResourceVariant {
 	
 	// holds the storage instance for this resource variant
 	private IStorage storage;
@@ -61,13 +61,13 @@ public abstract class ResourceVariant extends PlatformObject implements IRemoteR
 			return getFullPath();
 		}
 		public String getName() {
-			return ResourceVariant.this.getName();
+			return CachedResourceVariant.this.getName();
 		}
 		public boolean isReadOnly() {
 			return true;
 		}
 		public Object getAdapter(Class adapter) {
-			return ResourceVariant.this.getAdapter(adapter);
+			return CachedResourceVariant.this.getAdapter(adapter);
 		}
 	}
 	
@@ -208,7 +208,7 @@ public abstract class ResourceVariant extends PlatformObject implements IRemoteR
 	 * should be called.
 	 * @return a cached copy of this resource variant or <code>null</code>
 	 */
-	protected ResourceVariant getCachedHandle() {
+	protected CachedResourceVariant getCachedHandle() {
 		ResourceVariantCacheEntry entry = getCacheEntry();
 		if (entry == null) return null;
 		return entry.getResourceVariant();

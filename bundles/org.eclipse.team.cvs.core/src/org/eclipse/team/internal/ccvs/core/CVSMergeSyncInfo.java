@@ -20,7 +20,7 @@ import org.eclipse.team.core.synchronize.*;
  */
 public class CVSMergeSyncInfo extends CVSSyncInfo {
 
-	public CVSMergeSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, Subscriber subscriber) {
+	public CVSMergeSyncInfo(IResource local, IResourceVariant base, IResourceVariant remote, Subscriber subscriber) {
 		super(local, base, remote, subscriber);
 	}
 	

@@ -16,7 +16,7 @@ import java.util.Date;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ResourceVariant;
+import org.eclipse.team.core.synchronize.CachedResourceVariant;
 
 /**
  * This class provides the implementation for the ICacheEntry
@@ -33,7 +33,7 @@ public class ResourceVariantCacheEntry {
 	private byte[] syncBytes;
 	private int state = UNINITIALIZED;
 	private long lastAccess;
-	private ResourceVariant resourceVariant;
+	private CachedResourceVariant resourceVariant;
 	private ILock lock;
 
 	public ResourceVariantCacheEntry(ResourceVariantCache cache, ILock lock, String id, String filePath) {
@@ -207,11 +207,11 @@ public class ResourceVariantCacheEntry {
 		return id;
 	}
 	
-	public ResourceVariant getResourceVariant() {
+	public CachedResourceVariant getResourceVariant() {
 		return resourceVariant;
 	}
 	
-	public void setResourceVariant(ResourceVariant resourceVariant) {
+	public void setResourceVariant(CachedResourceVariant resourceVariant) {
 		this.resourceVariant = resourceVariant;
 	}
 }

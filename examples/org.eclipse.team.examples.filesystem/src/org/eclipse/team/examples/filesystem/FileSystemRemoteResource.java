@@ -19,7 +19,7 @@ import org.eclipse.team.core.TeamException;
 
 /**
  * Class represents a handle to a <code>java.io.File</code> that conforms to
- * the <code>org.eclipse.team.core.IRemoteResource</code> interface.
+ * the <code>org.eclipse.team.core.IResourceVariant</code> interface.
  */
 public class FileSystemRemoteResource implements IAdaptable, IStorage {
 
@@ -56,7 +56,7 @@ public class FileSystemRemoteResource implements IAdaptable, IStorage {
 	 * Returns an input stream containing the contents of the remote resource.
 	 * The remote resource must be a file.
 	 * 
-	 * @see org.eclipse.team.core.sync.IRemoteResource#getContents(IProgressMonitor)
+	 * @see org.eclipse.team.core.sync.IResourceVariant#getContents(IProgressMonitor)
 	 */
 	public InputStream getContents(IProgressMonitor progress) throws TeamException {
 		if (isContainer())
@@ -78,14 +78,14 @@ public class FileSystemRemoteResource implements IAdaptable, IStorage {
 	}
 
 	/**
-	 * @see org.eclipse.team.core.sync.IRemoteResource#getName()
+	 * @see org.eclipse.team.core.sync.IResourceVariant#getName()
 	 */
 	public String getName() {
 		return ioFile.getName();
 	}
 
 	/**
-	 * @see org.eclipse.team.core.sync.IRemoteResource#isContainer()
+	 * @see org.eclipse.team.core.sync.IResourceVariant#isContainer()
 	 */
 	public boolean isContainer() {
 		return ioFile.isDirectory();
@@ -95,7 +95,7 @@ public class FileSystemRemoteResource implements IAdaptable, IStorage {
 	 * Fetch the members of the remote resource. The remote resource must be a 
 	 * container.
 	 * 
-	 * @see org.eclipse.team.core.sync.IRemoteResource#members(IProgressMonitor)
+	 * @see org.eclipse.team.core.sync.IResourceVariant#members(IProgressMonitor)
 	 */
 	public FileSystemRemoteResource[] members(IProgressMonitor progress) throws TeamException {
 		// Make sure we have a container

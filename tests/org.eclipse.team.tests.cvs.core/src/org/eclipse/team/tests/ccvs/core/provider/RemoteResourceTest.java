@@ -19,7 +19,7 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.IRemoteResource;
+import org.eclipse.team.core.synchronize.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.*;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutToRemoteFolderOperation;
@@ -197,7 +197,7 @@ public class RemoteResourceTest extends EclipseTest {
 		setContentsAndEnsureModified(file, "");
 		commitResources(project, new String[] {"file.txt"});
 		
-		IRemoteResource remote = (IRemoteResource)CVSWorkspaceRoot.getRemoteResourceFor(file);
+		IResourceVariant remote = (IResourceVariant)CVSWorkspaceRoot.getRemoteResourceFor(file);
 		InputStream in = remote.getStorage(DEFAULT_MONITOR).getContents();
 		int count = 0;
 		while(in.read() != -1) {
@@ -338,7 +338,7 @@ public class RemoteResourceTest extends EclipseTest {
 		setContentsAndEnsureModified(project.getFile("file1.txt"), contents);
 		commitProject(project);
 		project.getFile("file1.txt").delete(false, null);
-		IRemoteResource remote = (IRemoteResource)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile("file1.txt"));
+		IResourceVariant remote = (IResourceVariant)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile("file1.txt"));
 		String fetchedContents = asString(remote.getStorage(DEFAULT_MONITOR).getContents());
 		assertEquals("Contents do not match", contents, fetchedContents);
 	}

@@ -14,7 +14,7 @@ package org.eclipse.team.internal.ccvs.core.resources;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ResourceVariant;
+import org.eclipse.team.core.synchronize.CachedResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
@@ -27,7 +27,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
  * resources that reside in a CVS repository but have not necessarily been loaded
  * locally.
  */
-public abstract class RemoteResource extends ResourceVariant implements ICVSRemoteResource {
+public abstract class RemoteResource extends CachedResourceVariant implements ICVSRemoteResource {
 
 	protected RemoteFolder parent;
 	protected String name;

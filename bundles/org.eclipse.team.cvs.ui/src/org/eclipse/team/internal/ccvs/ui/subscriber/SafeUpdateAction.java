@@ -218,8 +218,8 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 				FastSyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
 				new FastSyncInfoFilter() {
 					public boolean select(SyncInfo info) {
-						IRemoteResource remote = info.getRemote();
-						IRemoteResource base = info.getBase();
+						IResourceVariant remote = info.getRemote();
+						IResourceVariant base = info.getBase();
 						if (info.getLocal().exists()) {
 							// local != base and no remote will fail
 							return (base != null && remote == null);

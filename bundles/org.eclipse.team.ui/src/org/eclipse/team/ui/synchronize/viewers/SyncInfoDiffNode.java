@@ -207,7 +207,7 @@ public class SyncInfoDiffNode extends AdaptableDiffNode {
 	 * Create an ITypedElement for the given remote resource. The contents for the remote resource
 	 * will be retrieved from the given IStorage which is a local cache used to buffer the remote contents
 	 */
-	private static ITypedElement createTypeElement(IRemoteResource remoteResource) {
+	private static ITypedElement createTypeElement(IResourceVariant remoteResource) {
 		return new RemoteResourceTypedElement(remoteResource);
 	}
 

@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.IRemoteResource;
+import org.eclipse.team.core.synchronize.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 
 /**
@@ -98,7 +98,7 @@ public class ResourceEditionNode implements IStructureComparator, ITypedElement,
 			CVSUIPlugin.runWithProgress(null, true /*cancelable*/, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
-						holder[0] = ((IRemoteResource)resource).getStorage(monitor).getContents();
+						holder[0] = ((IResourceVariant)resource).getStorage(monitor).getContents();
 					} catch (TeamException e) {
 						throw new InvocationTargetException(e);
 					} catch (CoreException e) {

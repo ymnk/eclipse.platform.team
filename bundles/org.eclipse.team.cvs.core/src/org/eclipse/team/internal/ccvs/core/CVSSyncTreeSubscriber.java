@@ -30,7 +30,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	
 	public static final String SYNC_KEY_QUALIFIER = "org.eclipse.team.cvs"; //$NON-NLS-1$
 	
-	private IRemoteResourceComparator comparisonCriteria;
+	private IResourceVariantComparator comparisonCriteria;
 	
 	private QualifiedName id;
 	private String name;
@@ -73,7 +73,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			return super.getSyncInfo(resource);
 		} else {
 			// In CVS, folders do not have a base. Hence, the remote is used as the base.
-			IRemoteResource remoteResource = getRemoteResource(resource);
+			IResourceVariant remoteResource = getRemoteResource(resource);
 			return getSyncInfo(resource, remoteResource, remoteResource);
 		}
 	}
@@ -91,7 +91,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 * @param monitor
 	 * @return
 	 */
-	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
+	protected SyncInfo getSyncInfo(IResource local, IResourceVariant base, IResourceVariant remote) throws TeamException {
 		CVSSyncInfo info = new CVSSyncInfo(local, base, remote, this);
 		info.init();
 		return info;
@@ -196,11 +196,11 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		}
 	}
 	
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
+	public IResourceVariant getRemoteResource(IResource resource) throws TeamException {
 		return getRemoteResource(resource, getRemoteSynchronizationCache());
 	}
 
-	public IRemoteResource getBaseResource(IResource resource) throws TeamException {
+	public IResourceVariant getBaseResource(IResource resource) throws TeamException {
 		if (isThreeWay()) {
 			return getRemoteResource(resource, getBaseSynchronizationCache());
 		} else {
@@ -218,7 +218,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 */
 	protected abstract SynchronizationCache getRemoteSynchronizationCache();
 	
-	protected IRemoteResource getRemoteResource(IResource resource, SynchronizationCache cache) throws TeamException {
+	protected IResourceVariant getRemoteResource(IResource resource, SynchronizationCache cache) throws TeamException {
 		byte[] remoteBytes = cache.getSyncBytes(resource);
 		if (remoteBytes == null) {
 			// There is no remote handle for this resource
@@ -275,7 +275,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
 	 */
-	public IRemoteResourceComparator getResourceComparator() {
+	public IResourceVariantComparator getResourceComparator() {
 		return comparisonCriteria;
 	}
 	

@@ -22,7 +22,7 @@ import org.eclipse.team.core.TeamException;
  * @see SyncInfo
  * @since 3.0
  */
-public interface IRemoteResource {
+public interface IResourceVariant {
 	
 	/**
 	 * Answers the name of the remote resource. The name may be

@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ResourceVariant;
+import org.eclipse.team.core.synchronize.CachedResourceVariant;
 
 /**
  * This class implements a caching facility that can be used by TeamProviders to cache contents
@@ -234,7 +234,7 @@ public class ResourceVariantCache {
 		return internalGetCacheEntry(id);
 	}
 	
-	public synchronized ResourceVariantCacheEntry add(String id, ResourceVariant resource) {
+	public synchronized ResourceVariantCacheEntry add(String id, CachedResourceVariant resource) {
 		clearOldCacheEntries();
 		String filePath = String.valueOf(cacheDirSize++);
 		ResourceVariantCacheEntry entry = new ResourceVariantCacheEntry(this, lock, id, filePath);

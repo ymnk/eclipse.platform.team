@@ -131,16 +131,16 @@ public class SyncInfo implements IAdaptable {
 	 * Members:
 	 *====================================================================*/
 	 private IResource local;
-	 private IRemoteResource base;
-	 private IRemoteResource remote;
-	 private IRemoteResourceComparator comparator;
+	 private IResourceVariant base;
+	 private IResourceVariant remote;
+	 private IResourceVariantComparator comparator;
 	 
 	 private int syncKind;
 	
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, IRemoteResourceComparator comparator) {
+	public SyncInfo(IResource local, IResourceVariant base, IResourceVariant remote, IResourceVariantComparator comparator) {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
@@ -178,7 +178,7 @@ public class SyncInfo implements IAdaptable {
 	 *
 	 * @return a remote resource handle, or <code>null</code>
 	 */
-	public IRemoteResource getBase() {
+	public IResourceVariant getBase() {
 		return base;
 	}
 	
@@ -193,7 +193,7 @@ public class SyncInfo implements IAdaptable {
 	 *
 	 * @return a remote resource handle, or <code>null</code>
 	 */
-	public IRemoteResource getRemote() {
+	public IResourceVariant getRemote() {
 		return remote;
 	}
 	
@@ -201,7 +201,7 @@ public class SyncInfo implements IAdaptable {
 	 * Returns the subscriber that created and maintains this sync info
 	 * object. 
 	 */
-	public IRemoteResourceComparator getComparator() {
+	public IResourceVariantComparator getComparator() {
 		return comparator;
 	}
 	
@@ -248,19 +248,19 @@ public class SyncInfo implements IAdaptable {
 			if (!equalObjects(local1, local2)) return false;
 		
 			// Next, ensure the base resources are equal
-			IRemoteResource base1 = null;
+			IResourceVariant base1 = null;
 			if (node1.getBase() != null)
 				base1 = node1.getBase();
-			IRemoteResource base2 = null;
+			IResourceVariant base2 = null;
 			if (node2.getBase() != null)
 				base2 = node2.getBase();
 			if (!equalObjects(base1, base2)) return false;
 
 			// Finally, ensure the remote resources are equal
-			IRemoteResource remote1 = null;
+			IResourceVariant remote1 = null;
 			if (node1.getRemote() != null)
 				remote1 = node1.getRemote();
-			IRemoteResource remote2 = null;
+			IResourceVariant remote2 = null;
 			if (node2.getRemote() != null)
 					remote2 = node2.getRemote();
 			if (!equalObjects(remote1, remote2)) return false;

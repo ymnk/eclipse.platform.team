@@ -26,7 +26,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.IRemoteResource;
+import org.eclipse.team.core.synchronize.IResourceVariant;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
@@ -277,8 +277,8 @@ public class Utils {
 	}
 
 	public static void updateLabels(SyncInfo sync, CompareConfiguration config) {
-		final IRemoteResource remote = sync.getRemote();
-		final IRemoteResource base = sync.getBase();
+		final IResourceVariant remote = sync.getRemote();
+		final IResourceVariant base = sync.getBase();
 		String localContentId = sync.getLocalContentIdentifier();
 		if (localContentId != null) {
 			config.setLeftLabel(Policy.bind("SyncInfoCompareInput.localLabelExists", localContentId)); //$NON-NLS-1$

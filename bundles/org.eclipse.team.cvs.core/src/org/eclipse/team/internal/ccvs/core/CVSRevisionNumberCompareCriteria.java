@@ -12,15 +12,15 @@ package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.synchronize.IRemoteResource;
-import org.eclipse.team.core.synchronize.IRemoteResourceComparator;
+import org.eclipse.team.core.synchronize.IResourceVariant;
+import org.eclipse.team.core.synchronize.IResourceVariantComparator;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
  * CVSRevisionNumberCompareCriteria
  */
- public class CVSRevisionNumberCompareCriteria implements IRemoteResourceComparator {
+ public class CVSRevisionNumberCompareCriteria implements IResourceVariantComparator {
  	
 	private CVSSyncTreeSubscriber subscriber;
 
@@ -41,7 +41,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 	}
 	
 	/**
-	 * @see RemoteSyncElement#timestampEquals(IRemoteResource, IRemoteResource)
+	 * @see RemoteSyncElement#timestampEquals(IResourceVariant, IResourceVariant)
 	 */
 	protected boolean compare(ICVSRemoteResource e1, ICVSRemoteResource e2) {
 		if(e1.isContainer()) {
@@ -54,7 +54,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 	}
 
 	/**
-	 * @see RemoteSyncElement#timestampEquals(IResource, IRemoteResource)
+	 * @see RemoteSyncElement#timestampEquals(IResource, IResourceVariant)
 	 */
 	protected boolean compare(IResource e1, ICVSRemoteResource e2) {
 		if(e1.getType() != IResource.FILE) {
@@ -84,14 +84,14 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.IComparisonCriteria#compare(org.eclipse.core.resources.IResource, org.eclipse.team.core.subscribers.ISubscriberResource)
 	 */
-	public boolean compare(IResource local, IRemoteResource remote) {
+	public boolean compare(IResource local, IResourceVariant remote) {
 		return compare(local, (ICVSRemoteResource)remote);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.IComparisonCriteria#compare(org.eclipse.team.core.subscribers.ISubscriberResource, org.eclipse.team.core.subscribers.ISubscriberResource)
 	 */
-	public boolean compare(IRemoteResource base, IRemoteResource remote) {
+	public boolean compare(IResourceVariant base, IResourceVariant remote) {
 		return compare((ICVSRemoteResource)base, (ICVSRemoteResource)remote);
 	}
 
