@@ -27,7 +27,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ISubscriberResource;
+import org.eclipse.team.core.synchronize.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
@@ -256,7 +256,7 @@ public class CVSCompareRevisionsInput extends CompareEditorInput {
 							if (selection.size() != 1) return;
 							VersionCompareDiffNode node = (VersionCompareDiffNode)selection.getFirstElement();
 							ResourceEditionNode right = (ResourceEditionNode)node.getRight();
-							ISubscriberResource edition = (ISubscriberResource)right.getRemoteResource();
+							IRemoteResource edition = (IRemoteResource)right.getRemoteResource();
 							// Do the load. This just consists of setting the local contents. We don't
 							// actually want to change the base.
 							try {

@@ -15,7 +15,7 @@ import java.io.*;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ISubscriberResource;
+import org.eclipse.team.core.synchronize.IRemoteResource;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 
@@ -126,8 +126,8 @@ public class ContentComparator {
 		try {
 			if (resource instanceof IFile) {
 				return new BufferedInputStream(((IFile) resource).getContents());
-			} else if(resource instanceof ISubscriberResource) {
-				ISubscriberResource remote = (ISubscriberResource)resource;
+			} else if(resource instanceof IRemoteResource) {
+				IRemoteResource remote = (IRemoteResource)resource;
 				if (!remote.isContainer()) {
 					return new BufferedInputStream(remote.getStorage(monitor).getContents());
 				}

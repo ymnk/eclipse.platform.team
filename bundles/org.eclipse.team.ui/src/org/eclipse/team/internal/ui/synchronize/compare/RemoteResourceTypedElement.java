@@ -19,20 +19,20 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ISubscriberResource;
+import org.eclipse.team.core.synchronize.IRemoteResource;
 
 /**
  * RemoteResourceTypedElement
  */
 public class RemoteResourceTypedElement extends BufferedContent implements ITypedElement, IEditableContent {
 
-	private ISubscriberResource remote;
+	private IRemoteResource remote;
 	private IStorage bufferedContents;
 
 	/**
 	 * Creates a new content buffer for the given team node.
 	 */
-	public RemoteResourceTypedElement(ISubscriberResource remote) {
+	public RemoteResourceTypedElement(IRemoteResource remote) {
 		this.remote = remote;
 	}
 
@@ -103,7 +103,7 @@ public class RemoteResourceTypedElement extends BufferedContent implements IType
 		return null;
 	}
 	
-	public ISubscriberResource getRemote() {
+	public IRemoteResource getRemote() {
 		return remote;
 	}
 

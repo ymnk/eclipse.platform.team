@@ -177,7 +177,7 @@ abstract public class Subscriber {
 	 * Returns the comparison criteria that will be used by the sync info
 	 * created by this subscriber.
 	 */
-	abstract public ISubscriberResourceComparator getResourceComparator();
+	abstract public IRemoteResourceComparator getResourceComparator();
 
 	/**
 	 * Adds a listener to this team subscriber. Has no effect if an identical

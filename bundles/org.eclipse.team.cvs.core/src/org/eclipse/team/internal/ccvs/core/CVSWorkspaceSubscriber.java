@@ -243,7 +243,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		return remoteSynchronizer.isRemoteKnown(resource);
 	}
 
-	public void setRemote(IProject project, ISubscriberResource remote, IProgressMonitor monitor) throws TeamException {
+	public void setRemote(IProject project, IRemoteResource remote, IProgressMonitor monitor) throws TeamException {
 		// TODO: This exposes internal behavior to much
 		IResource[] changedResources = 
 			new CVSRefreshOperation(remoteSynchronizer, baseSynchronizer, null).collectChanges(project, remote, IResource.DEPTH_INFINITE, monitor);

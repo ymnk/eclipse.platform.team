@@ -15,7 +15,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ISubscriberResource;
+import org.eclipse.team.core.synchronize.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
@@ -33,7 +33,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
  * resources that reside in a CVS repository but have not necessarily been loaded
  * locally.
  */
-public abstract class RemoteResource extends PlatformObject implements ICVSRemoteResource, ISubscriberResource {
+public abstract class RemoteResource extends PlatformObject implements ICVSRemoteResource, IRemoteResource {
 
 	protected RemoteFolder parent;
 	protected String name;

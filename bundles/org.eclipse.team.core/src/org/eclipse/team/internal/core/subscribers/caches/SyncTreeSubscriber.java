@@ -21,15 +21,15 @@ import org.eclipse.team.core.synchronize.*;
 
 /**
  * A specialization of Subscriber that provides some additional logic for creating
- * <code>SyncInfo</code> from <code>ISubscriberResource</code> instances. 
+ * <code>SyncInfo</code> from <code>IRemoteResource</code> instances. 
  * The <code>members()</code> also assumes that remote 
  * instances are stored in the <code>ISynchronizer</code>.
  */
 public abstract class SyncTreeSubscriber extends Subscriber {
 
-	public abstract ISubscriberResource getRemoteResource(IResource resource) throws TeamException;
+	public abstract IRemoteResource getRemoteResource(IResource resource) throws TeamException;
 
-	public abstract ISubscriberResource getBaseResource(IResource resource) throws TeamException;
+	public abstract IRemoteResource getBaseResource(IResource resource) throws TeamException;
 	
 	/**
 	 * Return whether the given local resource has a corresponding remote resource
@@ -40,8 +40,8 @@ public abstract class SyncTreeSubscriber extends Subscriber {
 
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
 		if (!isSupervised(resource)) return null;
-		ISubscriberResource remoteResource = getRemoteResource(resource);
-		ISubscriberResource baseResource;
+		IRemoteResource remoteResource = getRemoteResource(resource);
+		IRemoteResource baseResource;
 		if (getResourceComparator().isThreeWay()) {
 			baseResource= getBaseResource(resource);
 		} else {
@@ -59,7 +59,7 @@ public abstract class SyncTreeSubscriber extends Subscriber {
 	 * @param monitor
 	 * @return
 	 */
-	protected SyncInfo getSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote) throws TeamException {
+	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
 		return new SyncInfo(local, base, remote, this.getResourceComparator());
 	}
 

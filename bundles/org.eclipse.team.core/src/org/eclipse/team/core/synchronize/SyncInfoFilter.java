@@ -28,7 +28,7 @@ public abstract class SyncInfoFilter {
 	/**
 	 * Selects <code>SyncInfo</code> whose local and remote contents match.
 	 * This filter makes use of the <code>IStorage</code> provided by
-	 * an <code>ISubscriberResource</code> to obtain the remote contents.
+	 * an <code>IRemoteResource</code> to obtain the remote contents.
 	 * This means that the comparison may contact the server unless the contents
 	 * were cached locally by a previous operation. The caching of remote
 	 * contents is subscriber specific. 
@@ -49,7 +49,7 @@ public abstract class SyncInfoFilter {
 			criteria = new ContentComparator(ignoreWhitespace);
 		}
 		public boolean select(SyncInfo info, IProgressMonitor monitor) {
-			ISubscriberResource remote = info.getRemote();
+			IRemoteResource remote = info.getRemote();
 			IResource local = info.getLocal();
 			if (remote == null) return local.exists();
 			if (!local.exists()) return true;

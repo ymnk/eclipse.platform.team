@@ -313,7 +313,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 * If called on a new folder, the sync info will be copied.
 	 */
 	protected void makeRemoteLocal(SyncInfo info, IProgressMonitor monitor) throws TeamException {
-		ISubscriberResource remote = info.getRemote();
+		IRemoteResource remote = info.getRemote();
 		IResource local = info.getLocal();
 		try {
 			if(remote==null) {

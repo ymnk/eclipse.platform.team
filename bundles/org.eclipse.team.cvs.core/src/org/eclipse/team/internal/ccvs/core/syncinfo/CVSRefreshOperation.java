@@ -17,7 +17,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.ISubscriberResource;
+import org.eclipse.team.core.synchronize.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
@@ -48,7 +48,7 @@ public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#getRemoteSyncBytes(org.eclipse.core.resources.IResource, org.eclipse.team.core.subscribers.ISubscriberResource)
 	 */
-	protected byte[] getRemoteSyncBytes(IResource local, ISubscriberResource remote) throws TeamException {
+	protected byte[] getRemoteSyncBytes(IResource local, IRemoteResource remote) throws TeamException {
 		if (remote != null) {
 			return ((RemoteResource)remote).getSyncBytes();
 		} else {
@@ -63,11 +63,11 @@ public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#getRemoteChildren(org.eclipse.team.core.subscribers.ISubscriberResource, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected ISubscriberResource[] getRemoteChildren(ISubscriberResource remote, IProgressMonitor progress) throws TeamException {
+	protected IRemoteResource[] getRemoteChildren(IRemoteResource remote, IProgressMonitor progress) throws TeamException {
 		ICVSRemoteResource[] children = remote != null ? (ICVSRemoteResource[])((RemoteResource)remote).members(progress) : new ICVSRemoteResource[0];
-		ISubscriberResource[] result = new ISubscriberResource[children.length];
+		IRemoteResource[] result = new IRemoteResource[children.length];
 		for (int i = 0; i < children.length; i++) {
-			result[i] = (ISubscriberResource)children[i];
+			result[i] = (IRemoteResource)children[i];
 		}
 		return result;
 	}
@@ -100,10 +100,10 @@ public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#buildRemoteTree(org.eclipse.core.resources.IResource, int, boolean, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected ISubscriberResource getRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
+	protected IRemoteResource getRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
 		// TODO: we are currently ignoring the depth parameter because the build remote tree is
 		// by default deep!
-		return (ISubscriberResource)CVSWorkspaceRoot.getRemoteTree(resource, tag, cacheFileContentsHint, monitor);
+		return (IRemoteResource)CVSWorkspaceRoot.getRemoteTree(resource, tag, cacheFileContentsHint, monitor);
 	}
 
 }

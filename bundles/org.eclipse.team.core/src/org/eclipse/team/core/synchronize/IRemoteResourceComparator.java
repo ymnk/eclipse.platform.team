@@ -13,7 +13,7 @@ package org.eclipse.team.core.synchronize;
 import org.eclipse.core.resources.IResource;
 
 /**
- * An <code>ISubscriberResourceComparator</code> is provided by a <code>Subscriber</code> 
+ * An <code>IRemoteResourceComparator</code> is provided by a <code>Subscriber</code> 
  * and used by a <code>SyncInfo</code> to calculate the sync
  * state of the workspace resources. Subscribers should provide a criteria
  * best suited for their environment. For example, an FTP subscriber could choose to use file
@@ -24,7 +24,7 @@ import org.eclipse.core.resources.IResource;
  * @see Subscriber
  * @since 3.0
  */
-public interface ISubscriberResourceComparator {
+public interface IRemoteResourceComparator {
 	
 	/**
 	 * Returns <code>true</code> if the local resource
@@ -36,7 +36,7 @@ public interface ISubscriberResourceComparator {
 	 * @return <code>true</code> if local and remote are equal based on this criteria and <code>false</code>
 	 * otherwise.
 	 */
-	public boolean compare(IResource local, ISubscriberResource remote);
+	public boolean compare(IResource local, IRemoteResource remote);
 	
 	/**
 	 * Returns <code>true</code> if the base resource
@@ -48,7 +48,7 @@ public interface ISubscriberResourceComparator {
 	 * @return <code>true</code> if base and remote are equal based on this criteria and <code>false</code>
 	 * otherwise.
 	 */
-	public boolean compare(ISubscriberResource base, ISubscriberResource remote);
+	public boolean compare(IRemoteResource base, IRemoteResource remote);
 
 	/**
 	 * Answers <code>true</code> if the base tree is maintained by this

@@ -274,8 +274,8 @@ public class Utils {
 	}
 
 	public static void updateLabels(SyncInfo sync, CompareConfiguration config) {
-		final ISubscriberResource remote = sync.getRemote();
-		final ISubscriberResource base = sync.getBase();
+		final IRemoteResource remote = sync.getRemote();
+		final IRemoteResource base = sync.getBase();
 		String localContentId = sync.getLocalContentIdentifier();
 		if (localContentId != null) {
 			config.setLeftLabel(Policy.bind("SyncInfoCompareInput.localLabelExists", localContentId)); //$NON-NLS-1$

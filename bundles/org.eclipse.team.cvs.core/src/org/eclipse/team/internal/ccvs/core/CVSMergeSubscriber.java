@@ -83,7 +83,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().addListener(this);
 	}
 
-	protected SyncInfo getSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote) throws TeamException {
+	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
 		return new CVSMergeSyncInfo(local, base, remote, this);
 	}
 
@@ -316,7 +316,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.utils.SyncTreeSubscriber#getBaseResource(org.eclipse.core.resources.IResource)
 	 */
-	public ISubscriberResource getBaseResource(IResource resource) throws TeamException {
+	public IRemoteResource getBaseResource(IResource resource) throws TeamException {
 		// Use the merged bytes for the base if there are some
 		byte[] mergedBytes = mergedSynchronizer.getSyncBytes(resource);
 		if (mergedBytes != null) {

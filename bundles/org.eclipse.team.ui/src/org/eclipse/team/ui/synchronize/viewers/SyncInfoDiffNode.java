@@ -75,7 +75,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * Create an ITypedElement for the given remote resource. The contents for the remote resource
 	 * will be retrieved from the given IStorage which is a local cache used to buffer the remote contents
 	 */
-	private static ITypedElement createTypeElement(ISubscriberResource remoteResource) {
+	private static ITypedElement createTypeElement(IRemoteResource remoteResource) {
 		return new RemoteResourceTypedElement(remoteResource);
 	}
 

@@ -15,18 +15,17 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 
 /**
- * This interface provides access to a remote resource that is controlled
- * by a particular subscriber. It is used by <code>SyncInfo</code> instances
+ * This interface is used by <code>SyncInfo</code> instances
  * to provide access to the base and remote resources that correspond to 
- * a locla resource.
+ * a local resource.
  * 
  * @see SyncInfo
  * @since 3.0
  */
-public interface ISubscriberResource {
+public interface IRemoteResource {
 	
 	/**
-	 * Answers the name of the subscriber resource. The name may be
+	 * Answers the name of the remote resource. The name may be
 	 * displayed to the user.
 	 * 
 	 * @return name of the subscriber resource.
@@ -34,7 +33,7 @@ public interface ISubscriberResource {
 	public String getName();
 	
 	/**
-	 * Answers if the remote element may have children.
+	 * Answers if the remote resource may have children.
 	 * 
 	 * @return <code>true</code> if the remote element may have children and 
 	 * <code>false</code> otherwise.
@@ -42,14 +41,15 @@ public interface ISubscriberResource {
 	public boolean isContainer();
 	
 	/**
-	 * Return an instance of IStorage or <code>null</code> if the subscriber resource
+	 * Return an instance of IStorage or <code>null</code> if the remote resource
 	 * does not have contents (i.e. is a folder). Since the <code>ISorage#getContents()</code>
-	 * method does not accept an IProgressMonitor, this method must ensure that the contents
-	 * access by the resulting IStorage is cached locally (hence the IProgressMonitor 
+	 * method does not accept an <code>IProgressMonitor</code>, this method must ensure that the contents
+	 * access by the resulting <code>IStorage</code> is cached locally (hence the <code>IProgressMonitor</code> 
 	 * argument to this method). Implementations of this method should
-	 * ensure that the resulting IStorage is accessing locally cached contents and is not
+	 * ensure that the resulting <code>IStorage</code> is accessing locally cached contents and is not
 	 * contacting the server.
-	 * @return
+	 * @return an <code>IStorage</code> that provides access to the contents of 
+	 * the remote resource or <code>null</code> if the remote resource is a container.
 	 */
 	public IStorage getStorage(IProgressMonitor monitor) throws TeamException;
 	
@@ -63,9 +63,9 @@ public interface ISubscriberResource {
 	public String getContentIdentifier();
 	
 	/**
-	 * Returns whether the subscriber resource is equal to the provided object.
-	 * @param object
-	 * @return
+	 * Returns whether the remote resource is equal to the provided object.
+	 * @param object the object to be compared
+	 * @return whether the object is equal to the remote resource
 	 */
 	public boolean equals(Object object);
 

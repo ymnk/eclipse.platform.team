@@ -12,15 +12,15 @@ package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.synchronize.ISubscriberResource;
-import org.eclipse.team.core.synchronize.ISubscriberResourceComparator;
+import org.eclipse.team.core.synchronize.IRemoteResource;
+import org.eclipse.team.core.synchronize.IRemoteResourceComparator;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
  * CVSRevisionNumberCompareCriteria
  */
- public class CVSRevisionNumberCompareCriteria implements ISubscriberResourceComparator {
+ public class CVSRevisionNumberCompareCriteria implements IRemoteResourceComparator {
  	
 	private CVSSyncTreeSubscriber subscriber;
 
@@ -84,14 +84,14 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.IComparisonCriteria#compare(org.eclipse.core.resources.IResource, org.eclipse.team.core.subscribers.ISubscriberResource)
 	 */
-	public boolean compare(IResource local, ISubscriberResource remote) {
+	public boolean compare(IResource local, IRemoteResource remote) {
 		return compare(local, (ICVSRemoteResource)remote);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.IComparisonCriteria#compare(org.eclipse.team.core.subscribers.ISubscriberResource, org.eclipse.team.core.subscribers.ISubscriberResource)
 	 */
-	public boolean compare(ISubscriberResource base, ISubscriberResource remote) {
+	public boolean compare(IRemoteResource base, IRemoteResource remote) {
 		return compare((ICVSRemoteResource)base, (ICVSRemoteResource)remote);
 	}
 

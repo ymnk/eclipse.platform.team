@@ -38,7 +38,7 @@ public class CVSSyncInfo extends SyncInfo {
 	private static final int SYNC_INFO_CONFLICTS = 5;
 	private Subscriber subscriber;
 
-	public CVSSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, Subscriber subscriber) throws TeamException {
+	public CVSSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, Subscriber subscriber) throws TeamException {
 		super(local, base, remote, subscriber.getResourceComparator());
 		this.subscriber = subscriber;
 	}
@@ -102,7 +102,7 @@ public class CVSSyncInfo extends SyncInfo {
 	
 		// 2. Set the CVS specific sync type based on the workspace sync state provided
 		// by the CVS server.
-		ISubscriberResource remote = getRemote();
+		IRemoteResource remote = getRemote();
 		if(remote!=null && (kind & SyncInfo.PSEUDO_CONFLICT) == 0) {
 			RemoteResource cvsRemote = (RemoteResource)remote;
 			int type = cvsRemote.getWorkspaceSyncState();
@@ -326,8 +326,8 @@ public class CVSSyncInfo extends SyncInfo {
 	}
 	
 	public String toString() {
-		ISubscriberResource base = getBase();
-		ISubscriberResource remote = getRemote();
+		IRemoteResource base = getBase();
+		IRemoteResource remote = getRemote();
 		StringBuffer result = new StringBuffer(super.toString());
 		result.append("Local: "); //$NON-NLS-1$
 		result.append(getLocal().toString());
