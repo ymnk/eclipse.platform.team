@@ -2,19 +2,19 @@ Questions/comments related to resource traversals
 
 Questions:
 
-1) [DONE] It would be helpful to have an IResourceMapping#getProjects() to make project containment detection easier.
+- [DONE] It would be helpful to have an IResourceMapping#getProjects() to make project containment detection easier.
 Should we add this? We could also remove the getProjects() from the traversal.
 
-What about a visit on resource mapper that accepts a resource visitor
+- What about a visit on resource mapper that accepts a resource visitor (submitted bug 81521 to Platform Resources)
 
-I noticed that the ITraversalContext throws exceptions under some non-exceptional cases
+- I noticed that the ITraversalContext throws exceptions under some non-exceptional cases
 (e.g. a remote doesn't exist). Perhaps we should consider returning null here instead.
 
-2) Are heterogeneous selections supported?
+- Are heterogeneous selections supported?
    - case 1: Two model objects that map to different providers
    - case 2: A single model object that spans multiple providers
    
-3) Ignored resource handling
+- Ignored resource handling
    - How do we handle a logical model element (i.e. traversals) that contains ignored resources 
    (due to provider ignores) but are part of the model. This is easy for depth-zero traversals
    but tricky for depth one and depth infinite.
@@ -27,9 +27,9 @@ Pending Items:
 
  - Commit needs to be reworked but I'm postponing this until Silvio is done
 
- - Sync/Compare with Tag/Merge are a bit more complicated. Deferring util later.
+ - Sync/Compare with Tag/Merge are a bit more complicated. Deferring until later.
 
- - EditAction, UneditAction, ShowEditorsAction, GenerateDiffFileAction does not follow the standard action/operation pattern. Deferring.
+ - EditAction, UneditAction, ShowEditorsAction, GenerateDiffFileAction do not follow the standard action/operation pattern. Deferring.
 
  - TagLocalAction requires dirty prompting: need a dialog which shows mappers and traversals
     - also the TagAction hierarchy is smelly due to shared code between local and remote tagging
@@ -40,10 +40,10 @@ Pending Items:
    A trickier problem is that, if we keep a participant around, model changes may occur. This is a problem as there is no generic
    model change mechanism.
    
-   The roots of the scope are the resources of the traversals. There may be duplication when all the resources are combined.
+   - The roots of the scope are the resources of the traversals. There may be duplication when all the resources are combined.
    
-   In order to filter a sync page by mappers, the sync scope needs to be pushed down into the collectors and scope methods 
-   need to be added to provide access to the traversal depth
+   - In order to filter a sync page by mappers, the sync scope needs to be pushed down into the collectors and scope methods 
+     need to be added to provide access to the traversal depth
 
 Summary of changes:
 
