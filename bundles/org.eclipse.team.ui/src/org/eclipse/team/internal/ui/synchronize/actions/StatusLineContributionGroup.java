@@ -18,12 +18,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberConfiguration;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.actions.ActionGroup;
@@ -47,21 +48,21 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private SubscriberSyncInfoCollector collector;
-	private SubscriberParticipant participant;
+	private SubscriberConfiguration configuration;
+	private SubscriberParticipantPage page;
 
-	public StatusLineContributionGroup(final Shell shell, SubscriberParticipant participant, final WorkingSetFilterActionGroup setGroup) {
+	public StatusLineContributionGroup(final Shell shell, SubscriberParticipantPage page, SubscriberConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
 		super();
-		this.participant = participant;
-		this.collector = participant.getSubscriberSyncInfoCollector();
-		this.incoming = createStatusLineContribution(INCOMING_ID, SubscriberParticipant.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
-		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
-		this.conflicting = createStatusLineContribution(CONFLICTING_ID, SubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
+		this.page = page;
+		this.configuration = configuration;
+		this.incoming = createStatusLineContribution(INCOMING_ID, SubscriberConfiguration.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
+		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberConfiguration.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
+		this.conflicting = createStatusLineContribution(CONFLICTING_ID, SubscriberConfiguration.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
 		
 		this.totalChanges = new StatusLineCLabelContribution(TOTALS_ID, TEXT_FIELD_MAX_SIZE);
 		this.workingSet = new StatusLineCLabelContribution(WORKINGSET_ID, TEXT_FIELD_MAX_SIZE);
 		this.workingSet.setTooltip(Policy.bind("StatisticsPanel.workingSetTooltip")); //$NON-NLS-1$
-		updateWorkingSetText(participant.getWorkingSet());
+		updateWorkingSetText(configuration.getWorkingSet());
 
 		this.workingSet.addListener(SWT.MouseDoubleClick, new Listener() {
 			public void handleEvent(Event event) {
@@ -70,14 +71,18 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		});
 		
 		// Listen to changes to update the working set
-		participant.addPropertyChangeListener(this);
+		configuration.addPropertyChangeListener(this);
 		
 		// Listen to changes to update the counts
-		collector.getSyncInfoTree().addSyncSetChangedListener(this);
+		page.getFilteredCollector().getSyncInfoTree().addSyncSetChangedListener(this);
 	}
 
 	private boolean isThreeWay() {
-		return participant.getSubscriber().getResourceComparator().isThreeWay();
+		return getParticipant().getSubscriber().getResourceComparator().isThreeWay();
+	}
+	
+	private SubscriberParticipant getParticipant() {
+		return (SubscriberParticipant)configuration.getParticipant();
 	}
 	
 	private void updateWorkingSetText(IWorkingSet set) {
@@ -96,7 +101,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		StatusLineCLabelContribution item = new StatusLineCLabelContribution(id, 15);
 		item.addListener(SWT.MouseDown, new Listener() {
 			public void handleEvent(Event event) {
-				participant.setMode(mode);
+				configuration.setMode(mode);
 			}
 		});
 		item.setText(label); //$NON-NLS-1$
@@ -105,15 +110,15 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 
 	public void dispose() {
-		collector.getSyncInfoTree().removeSyncSetChangedListener(this);
-		participant.removePropertyChangeListener(this);
+		page.getFilteredCollector().getSyncInfoTree().removeSyncSetChangedListener(this);
+		configuration.removePropertyChangeListener(this);
 		incomingImage.dispose();
 		outgoingImage.dispose();
 		conflictingImage.dispose();
 	}
 
 	public void propertyChange(PropertyChangeEvent event) {
-		if (event.getProperty().equals(SubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {	
+		if (event.getProperty().equals(SubscriberConfiguration.P_SYNCVIEWPAGE_WORKINGSET)) {	
 			updateWorkingSetText((IWorkingSet)event.getNewValue());
 			updateCounts();
 		}
@@ -129,9 +134,9 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 
 	private void updateCounts() {
-		if (collector != null) {
-			SyncInfoSet workspaceSetStats = collector.getSubscriberSyncInfoSet();
-			SyncInfoSet workingSetSetStats = collector.getWorkingSetSyncInfoSet();
+		if (getParticipant().getSubscriberSyncInfoCollector() != null) {
+			SyncInfoSet workspaceSetStats = getParticipant().getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
+			SyncInfoSet workingSetSetStats = page.getFilteredCollector().getWorkingSetSyncInfoSet();
 
 			final int total = workspaceSetStats.size();
 			final int workspaceConflicting = (int) workspaceSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
@@ -143,7 +148,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
-					IWorkingSet set = participant.getWorkingSet();
+					IWorkingSet set = configuration.getWorkingSet();
 					if (set != null) {
 						conflicting.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetConflicting).toString(), new Integer(workspaceConflicting).toString())); //$NON-NLS-1$
 						incoming.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString())); //$NON-NLS-1$

@@ -14,6 +14,8 @@ import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.team.ui.synchronize.subscribers.*;
+import org.eclipse.ui.*;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -95,7 +97,17 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @return a page book view page representation of this synchronize
 	 * participant
 	 */
-	public IPageBookViewPage createPage(ISynchronizeView view);
+	public IPageBookViewPage createPage(SubscriberConfiguration configuration);
+	
+	/**
+	 * Creates a default synchronize configuration that is used to control various
+	 * UI elements of the participant.
+	 * 
+	 * @param part the part that will be displaying the participants page, or <code>null</code>
+	 * if the page is being shown in a dialog or other UI composite.
+	 * @return a new synchronize configuration
+	 */
+	public ISynchronizeConfiguration createSynchronizeConfiguration(IWorkbenchPart part);
 	
 	/**
 	 * Creates and returns a wizard page used to globally synchronize this participant. Participants

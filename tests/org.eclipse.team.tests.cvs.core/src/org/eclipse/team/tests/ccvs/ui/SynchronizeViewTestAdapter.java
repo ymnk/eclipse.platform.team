@@ -11,7 +11,6 @@
 package org.eclipse.team.tests.ccvs.ui;
 
 import junit.framework.AssertionFailedError;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ISelection;
@@ -51,7 +50,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	
 	public SyncInfo getSyncInfo(Subscriber subscriber, IResource resource) throws TeamException {
 		// Wait for the collector
-		SyncInfoSet set = getCollector(subscriber).getSyncInfoTree();
+		SyncInfoSet set = getCollector(subscriber).getSubscriberSyncInfoSet();
 		// Obtain the sync info from the viewer to ensure that the 
 		// entire chain has the proper state
 		SyncInfo info = internalGetSyncInfo(subscriber, resource);
@@ -103,7 +102,6 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	private SubscriberSyncInfoCollector getCollector(Subscriber subscriber) {
 		SubscriberParticipant participant = getParticipant(subscriber);
 		if (participant == null) return null;
-		participant.setMode(SubscriberParticipant.BOTH_MODE);
 		SubscriberSyncInfoCollector syncInfoCollector = participant.getSubscriberSyncInfoCollector();
 		EclipseTest.waitForSubscriberInputHandling(syncInfoCollector);
 		return syncInfoCollector;
@@ -114,7 +112,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	protected void assertProjectRemoved(Subscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
-		SyncInfoTree set = getCollector(subscriber).getSyncInfoTree();
+		SyncInfoTree set = getCollector(subscriber).getSubscriberSyncInfoSet();
 		if (set.hasMembers(project)) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
 		}

@@ -13,12 +13,12 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscribers.DirectionFilterActionGroup;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberConfiguration;
 import org.eclipse.ui.IActionBars;
 
 public class WorkspaceSynchronizeAdvisor extends CVSSynchronizeViewerAdvisor {
@@ -27,9 +27,8 @@ public class WorkspaceSynchronizeAdvisor extends CVSSynchronizeViewerAdvisor {
 	private ActionDelegateWrapper commitToolbar;
 	private ActionDelegateWrapper updateToolbar;
 	
-	public WorkspaceSynchronizeAdvisor(ISynchronizeView view, SubscriberParticipant participant) {
-		super(view, participant);
-		
+	public WorkspaceSynchronizeAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+		super(configuration, syncInfoTree);
 	}
 	
 	/* (non-Javadoc)
@@ -38,7 +37,9 @@ public class WorkspaceSynchronizeAdvisor extends CVSSynchronizeViewerAdvisor {
 	protected void initializeActions(StructuredViewer treeViewer) {
 		super.initializeActions(treeViewer);
 		
-		modes = new DirectionFilterActionGroup(getParticipant(), SubscriberParticipant.ALL_MODES);
+		SubscriberConfiguration configuration = getConfiguration();
+		configuration.setSupportedModes(SubscriberConfiguration.ALL_MODES);
+		modes = new DirectionFilterActionGroup(configuration);
 
 		commitToolbar = new ActionDelegateWrapper(new SubscriberCommitAction(), getSynchronizeView());
 		WorkspaceUpdateAction action = new WorkspaceUpdateAction();

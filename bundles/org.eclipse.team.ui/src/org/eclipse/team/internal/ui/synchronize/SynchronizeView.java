@@ -12,7 +12,6 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -21,11 +20,10 @@ import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.*;
 
@@ -134,7 +132,8 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		if(component instanceof ISynchronizeParticipant) {
 			ISynchronizeParticipant participant = (ISynchronizeParticipant)component;			
 			participant.addPropertyChangeListener(this);
-			page = participant.createPage(this);
+			SubscriberConfiguration sc = new SubscriberConfiguration(participant, this);
+			page = participant.createPage(sc);
 		} else if(component instanceof IPageBookViewPage) {
 			page = (IPageBookViewPage)component;
 		}	

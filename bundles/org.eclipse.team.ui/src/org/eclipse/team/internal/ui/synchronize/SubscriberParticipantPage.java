@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.synchronize;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
@@ -21,10 +22,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.subscribers.WorkingSetFilteredSyncInfoCollector;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberRefreshWizard;
 import org.eclipse.ui.*;
@@ -42,14 +44,34 @@ import org.eclipse.ui.part.*;
  * @since 3.0
  */
 public final class SubscriberParticipantPage implements IPageBookViewPage, IPropertyChangeListener, IAdaptable {
+	
+	/** 
+	 * Settings constant for section name (value <code>SubscriberParticipantPage</code>).
+	 */
+	private static final String STORE_SECTION_POSTFIX = "SubscriberParticipantPage"; //$NON-NLS-1$
+	/** 
+	 * Settings constant for sort order (value <code>SubscriberParticipantPage</code>).
+	 */
+	private static final String STORE_SORT_TYPE = "SubscriberParticipantPage.STORE_SORT_TYPE"; //$NON-NLS-1$
+	/** 
+	 * Settings constant for working set (value <code>SubscriberParticipantPage</code>).
+	 */
+	private static final String STORE_WORKING_SET = "SubscriberParticipantPage.STORE_WORKING_SET"; //$NON-NLS-1$
+	/** 
+	 * Settings constant for working set (value <code>SubscriberParticipantPage</code>).
+	 */
+	private static final String STORE_MODE = "SubscriberParticipantPage.STORE_MODE"; //$NON-NLS-1$
+	
+	private IDialogSettings settings;
+	private WorkingSetFilteredSyncInfoCollector collector;
+	private SubscriberConfiguration configuration;
+	
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
-	private Composite composite = null;
+	private Composite composite;
 	private ChangesSection changesSection;
 	private Viewer changesViewer;
 	private boolean settingWorkingSet = false;
-	
-	private ISynchronizeView view;
 	private SubscriberParticipant participant;
 	private IPageSite site;
 	
@@ -68,10 +90,15 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public SubscriberParticipantPage(SubscriberParticipant page, ISynchronizeView view, StructuredViewerAdvisor viewerAdvisor) {
-		this.participant = page;
-		this.view = view;
-		this.viewerAdvisor = viewerAdvisor;
+	public SubscriberParticipantPage(SubscriberConfiguration configuration) {
+		this.participant = (SubscriberParticipant)configuration.getParticipant();
+		IDialogSettings viewsSettings = TeamUIPlugin.getPlugin().getDialogSettings();
+		
+		String key = Utils.getKey(participant.getId(), participant.getSecondaryId());
+		settings = viewsSettings.getSection(key + STORE_SECTION_POSTFIX);
+		if (settings == null) {
+			settings = viewsSettings.addNewSection(key + STORE_SECTION_POSTFIX);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -91,7 +118,7 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 		composite.setLayoutData(data);
 		
 		// Create the changes section which, in turn, creates the changes viewer and its configuration
-		this.changesSection = new ChangesSection(composite, this);
+		this.changesSection = new ChangesSection(composite, this, configuration);
 		this.changesViewer = createChangesViewer(changesSection.getComposite());
 		changesSection.setViewer(changesViewer);
 		
@@ -101,15 +128,15 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 				return viewerAdvisor.navigate(next);
 			}
 		};
-		gotoNext = new NavigateAction(view, nav, true /*next*/);		
-		gotoPrevious = new NavigateAction(view, nav, false /*previous*/);
+		gotoNext = new NavigateAction(configuration, nav, true /*next*/);		
+		gotoPrevious = new NavigateAction(configuration, nav, false /*previous*/);
 		
 		if(participant.doesSupportSynchronize()) {
 			refreshAllAction = new Action() {
 				public void run() {
 					// Prime the refresh wizard with an appropriate initial selection
 					final SubscriberRefreshWizard wizard = new SubscriberRefreshWizard(participant);
-					IWorkingSet set = participant.getWorkingSet();
+					IWorkingSet set = configuration.getWorkingSet();
 					if(set != null) {
 						int scopeHint = SubscriberRefreshWizard.SCOPE_WORKING_SET;
 						wizard.setScopeHint(scopeHint);
@@ -142,17 +169,18 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 		Utils.initAction(configureSchedule, "action.configureSchedulel."); //$NON-NLS-1$
 		
 		// view menu
-		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), this, view, participant);		
+		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), participant.toString(), this, configuration.getWorkingSet());		
 		showPreferences = new SyncViewerShowPreferencesAction(getShell());		
-		statusLine = new StatusLineContributionGroup(getShell(), getParticipant(), workingSetGroup);
+		statusLine = new StatusLineContributionGroup(getShell(), this, configuration, workingSetGroup);
 		
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
-		participant.setMode(participant.getMode());
+		collector = new WorkingSetFilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector(), participant.getSubscriber().roots());
+		collector.reset();
 	}
 	
 	private Shell getShell() {
-		return view.getSite().getShell();
+		return site.getShell();
 	}
 
 	/* (non-Javadoc)
@@ -173,6 +201,7 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
 	 */
 	public void dispose() {
+		collector.dispose();
 		statusLine.dispose();
 		changesSection.dispose();
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
@@ -270,29 +299,13 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	public void propertyChange(PropertyChangeEvent event) {
 		// Working set changed by user
 		if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
-			if(settingWorkingSet) return;
 			settingWorkingSet = true;
-			participant.setWorkingSet((IWorkingSet)event.getNewValue());
-			settingWorkingSet = false;
-		// Working set changed programatically
-		} else if(event.getProperty().equals(SubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
-			if(settingWorkingSet) return;
-			settingWorkingSet = true;
-			Object newValue = event.getNewValue();
-			if (newValue instanceof IWorkingSet) {	
-				workingSetGroup.setWorkingSet((IWorkingSet)newValue);
-			} else if (newValue == null) {
-				workingSetGroup.setWorkingSet(null);
-			}
-			settingWorkingSet = false;
+			configuration.setWorkingSet((IWorkingSet)event.getNewValue());
 		// Change to showing of sync state in text labels preference
 		} else if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
 			if(changesViewer instanceof StructuredViewer) {
 				((StructuredViewer)changesViewer).refresh(true /* update labels */);
 			}
-		} else if(event.getProperty().equals(SubscriberParticipant.P_SYNCVIEWPAGE_SELECTION)) {
-			IStructuredSelection selection = (IStructuredSelection)event.getNewValue();
-			setSelection(selection.toArray(), true);			
 		}
 	}
 	
@@ -301,13 +314,6 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	 */
 	public SubscriberParticipant getParticipant() {
 		return participant;
-	}
-	
-	/**
-	 * @return Returns the view.
-	 */
-	public ISynchronizeView getSynchronizeView() {
-		return view;
 	}
 	
 	private Viewer createChangesViewer(Composite parent) {
@@ -329,5 +335,9 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 
 	public void setSelection(Object[] objects, boolean reveal) {
 		getViewerAdvisor().setSelection(objects, reveal);
+	}
+	
+	public WorkingSetFilteredSyncInfoCollector getFilteredCollector() {
+		return collector;
 	}
 }

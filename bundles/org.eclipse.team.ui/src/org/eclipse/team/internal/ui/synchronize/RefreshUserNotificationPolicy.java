@@ -81,7 +81,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 					}
 						
 					// Ensure synchronized resources are selected in the view
-					participant.selectResources(event.getResources());
+					//participant.selectResources(event.getResources());
 					
 					// Prompt user if preferences are set for this type of refresh.
 					if (prompt) {

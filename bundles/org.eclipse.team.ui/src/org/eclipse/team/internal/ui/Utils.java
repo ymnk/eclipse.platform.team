@@ -14,7 +14,6 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
-
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
@@ -32,7 +31,7 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberConfiguration;
 import org.eclipse.ui.*;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
@@ -378,13 +377,13 @@ public class Utils {
 
 	public static String modeToString(int mode) {
 		switch (mode) {
-			case SubscriberParticipant.INCOMING_MODE :
+			case SubscriberConfiguration.INCOMING_MODE :
 				return Policy.bind("Utils.22"); //$NON-NLS-1$
-			case SubscriberParticipant.OUTGOING_MODE :
+			case SubscriberConfiguration.OUTGOING_MODE :
 				return Policy.bind("Utils.23"); //$NON-NLS-1$
-			case SubscriberParticipant.BOTH_MODE :
+			case SubscriberConfiguration.BOTH_MODE :
 				return Policy.bind("Utils.24"); //$NON-NLS-1$
-			case SubscriberParticipant.CONFLICTING_MODE :
+			case SubscriberConfiguration.CONFLICTING_MODE :
 				return Policy.bind("Utils.25"); //$NON-NLS-1$
 		}
 		return Policy.bind("Utils.26"); //$NON-NLS-1$
@@ -506,5 +505,9 @@ public class Utils {
 		if (o1 == null && o2 == null) return true;
 		if (o1 == null || o2 == null) return false;
 		return o1.equals(o2);
+	}
+
+	public static String getKey(String id, String secondaryId) {
+	    return secondaryId == null ? id : id + '/' + secondaryId;
 	}
 }

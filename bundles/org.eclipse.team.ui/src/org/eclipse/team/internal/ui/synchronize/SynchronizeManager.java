@@ -151,7 +151,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 		
 		public void save(IMemento memento) {
-			String key = getKey(descriptor.getId(), getSecondaryId());
+			String key = Utils.getKey(descriptor.getId(), getSecondaryId());
 			ISynchronizeParticipant ref = (ISynchronizeParticipant) counter.get(key);
 			if(ref != null) {
 				ref.saveState(memento);
@@ -191,7 +191,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 		
 		public boolean isInstantiated() {
-			String key = getKey(descriptor.getId(), getSecondaryId());
+			String key = Utils.getKey(descriptor.getId(), getSecondaryId());
 			return (ISynchronizeParticipant) counter.get(key) != null;
 		}
 
@@ -200,7 +200,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		 */
 		public ISynchronizeParticipant getParticipant() throws TeamException {
 			try {
-				String key = getKey(descriptor.getId(), getSecondaryId());
+				String key = Utils.getKey(descriptor.getId(), getSecondaryId());
 				ISynchronizeParticipant participant = (ISynchronizeParticipant) counter.get(key);
 				int refCount = 1;
 				if (participant == null) {
@@ -218,7 +218,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 
 		public void setParticipant(ISynchronizeParticipant participant) {
-			String key = getKey(descriptor.getId(), getSecondaryId());
+			String key = Utils.getKey(descriptor.getId(), getSecondaryId());
 			counter.put(key, participant);
 		}
 		
@@ -296,24 +296,13 @@ public class SynchronizeManager implements ISynchronizeManager {
 				throw new PartInitException(Policy.bind("SynchronizeManager.20", type)); //$NON-NLS-1$
 		    }
 		}
-		String key = getKey(type, secondaryId);
+		String key = Utils.getKey(type, secondaryId);
 		ParticipantInstance ref = (ParticipantInstance) participantReferences.get(key);
 		if (ref == null) {
 			ref = new ParticipantInstance(desc, secondaryId, displayName, null);
 		}
 		return ref;
 	}
-	
-	/**
-     * Returns the key to use in the ReferenceCounter.
-     * 
-     * @param id the primary view id
-     * @param secondaryId the secondary view id or <code>null</code>
-     * @return the key to use in the ReferenceCounter
-     */
-    private String getKey(String id, String secondaryId) {
-        return secondaryId == null ? id : id + '/' + secondaryId;
-    }
 	
 	/*
 	 * (non-Javadoc)
@@ -325,7 +314,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		List added = new ArrayList(participants.length);
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			String key = getKey(participant.getId(), participant.getSecondaryId());
+			String key = Utils.getKey(participant.getId(), participant.getSecondaryId());
 			if(! participantReferences.containsKey(key)) {
 				try {
 					ParticipantInstance ref = createParticipantReference(participant.getId(), participant.getSecondaryId(), participant.getName());
@@ -353,7 +342,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		List removed = new ArrayList(participants.length);
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			String key = getKey(participant.getId(), participant.getSecondaryId());
+			String key = Utils.getKey(participant.getId(), participant.getSecondaryId());
 			if(participantReferences.containsKey(key)) {
 				ParticipantInstance ref = (ParticipantInstance)participantReferences.remove(key);
 				if(ref.isInstantiated()) {
@@ -376,7 +365,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeManager#get(java.lang.String)
 	 */
 	public ISynchronizeParticipantReference get(String id, String secondaryId) {
-		String key = getKey(id, secondaryId);
+		String key = Utils.getKey(id, secondaryId);
 		return (ISynchronizeParticipantReference) participantReferences.get(key);
 	}
 	
@@ -530,7 +519,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		List participants = new ArrayList();
 		for (int i = 0; i < desc.length; i++) {
 			SynchronizeParticipantDescriptor descriptor = desc[i];
-			String key = getKey(descriptor.getId(), null);
+			String key = Utils.getKey(descriptor.getId(), null);
 			if (descriptor.isStatic() && !participantReferences.containsKey(key)) {
 				participantReferences.put(key, new ParticipantInstance(descriptor, null /* no secondary id */, null /* use type name */, null /* no saved state */));
 			}
@@ -559,7 +548,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 			SynchronizeParticipantDescriptor desc = participantRegistry.find(id);
 			if (desc != null) {
 				IConfigurationElement cfgElement = desc.getConfigurationElement();
-				String key = getKey(id, secondayId);
+				String key = Utils.getKey(id, secondayId);
 				participantReferences.put(key, new ParticipantInstance(desc, secondayId, displayName, memento2.getChild(CTX_PARTICIPANT_DATA)));
 			} else {
 				TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id), null)); //$NON-NLS-1$

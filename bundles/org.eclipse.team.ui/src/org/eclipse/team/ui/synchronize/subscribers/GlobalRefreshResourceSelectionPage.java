@@ -242,8 +242,8 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			selectWorkingSetButton.setLayoutData(data);
 			Dialog.applyDialogFont(selectWorkingSetButton);
 			
-			workingSet = participant.getWorkingSet();
-			updateWorkingSetLabel();
+			//workingSet = participant.getWorkingSet();
+			//updateWorkingSetLabel();
 			initializeScopingHint();
 		}
 		Dialog.applyDialogFont(top);

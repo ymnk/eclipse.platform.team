@@ -13,11 +13,12 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
 import org.eclipse.team.internal.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.team.ui.synchronize.subscribers.DirectionFilterActionGroup;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
@@ -29,8 +30,8 @@ public class MergeSynchronizeAdvisor extends CVSSynchronizeViewerAdvisor {
 	private DirectionFilterActionGroup modes;
 	private ActionDelegateWrapper updateAdapter;
 	
-	public MergeSynchronizeAdvisor(ISynchronizeView view, SubscriberParticipant participant) {
-		super(view, participant);		
+	public MergeSynchronizeAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+		super(configuration, syncInfoTree);		
 	}
 		
 	/* (non-Javadoc)
@@ -41,12 +42,14 @@ public class MergeSynchronizeAdvisor extends CVSSynchronizeViewerAdvisor {
 		
 		SubscriberParticipant p = getParticipant();
 		removeAction = new RemoveSynchronizeParticipantAction(p);
-		modes = new DirectionFilterActionGroup(getParticipant(), SubscriberParticipant.INCOMING_MODE | SubscriberParticipant.CONFLICTING_MODE);
+		SubscriberConfiguration configuration = getConfiguration();
+		configuration.setSupportedModes(SubscriberConfiguration.INCOMING_MODE | SubscriberConfiguration.CONFLICTING_MODE);
+		modes = new DirectionFilterActionGroup(configuration);
 		MergeUpdateAction action = new MergeUpdateAction();
 		action.setPromptBeforeUpdate(true);
 		updateAdapter = new ActionDelegateWrapper(action, getSynchronizeView());
 		Utils.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
-		getParticipant().setMode(SubscriberParticipant.INCOMING_MODE);
+		configuration.setMode(SubscriberConfiguration.INCOMING_MODE);
 	}
 	
 	/* (non-Javadoc)

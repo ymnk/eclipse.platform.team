@@ -17,13 +17,13 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoFilter;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 
@@ -40,8 +40,8 @@ public class CompareParticipant extends SubscriberParticipant {
 	private class CompareParticipantAdvisor extends CVSSynchronizeViewerAdvisor {
 		private RemoveSynchronizeParticipantAction removeAction;
 		
-		public CompareParticipantAdvisor(ISynchronizeView view, SubscriberParticipant participant) {
-			super(view, participant);
+		public CompareParticipantAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+			super(configuration, syncInfoTree);
 		}
 		
 		protected void initializeActions(StructuredViewer treeViewer) {
@@ -63,7 +63,6 @@ public class CompareParticipant extends SubscriberParticipant {
 	
 	public CompareParticipant(CVSCompareSubscriber subscriber) {
 		super();
-		setMode(BOTH_MODE);
 		setSubscriber(subscriber);
 	}
 		
@@ -101,7 +100,8 @@ public class CompareParticipant extends SubscriberParticipant {
 	 */
 	protected void preCollectingChanges() {
 		super.preCollectingChanges();
-		getSubscriberSyncInfoCollector().setFilter(contentComparison);
+		// JEAN-MICHEL: how to handle filter configurability?
+		//getSubscriberSyncInfoCollector().setFilter(contentComparison);
 	}
 	
 	/* (non-Javadoc)
@@ -114,8 +114,8 @@ public class CompareParticipant extends SubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#createSynchronizeViewerAdvisor(org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(ISynchronizeView view) {
-		return new CompareParticipantAdvisor(view, this);
+	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+		return new CompareParticipantAdvisor(configuration, syncInfoTree);
 	}
 	
 	/**

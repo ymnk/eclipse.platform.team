@@ -15,11 +15,12 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.team.ui.synchronize.subscribers.SynchronizeViewerAdvisor;
 
 public class CVSSynchronizeViewerAdvisor extends SynchronizeViewerAdvisor implements ISynchronizeModelChangeListener, IPropertyChangeListener {
@@ -52,9 +53,8 @@ public class CVSSynchronizeViewerAdvisor extends SynchronizeViewerAdvisor implem
 		}
 	}
 	
-	public CVSSynchronizeViewerAdvisor(ISynchronizeView view, SubscriberParticipant participant) {
-		super(view, participant);
-		participant.addPropertyChangeListener(this);
+	public CVSSynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+		super(configuration, syncInfoTree);
 		
 		// Sync changes are used to update the action state for the update/commit buttons.
 		addInputChangedListener(this);
@@ -71,32 +71,11 @@ public class CVSSynchronizeViewerAdvisor extends SynchronizeViewerAdvisor implem
 		return new DecoratingColorLabelProvider(oldProvider, new CVSLabelDecorator());
 	}
 	
-	public boolean isGroupIncomingByComment() {
-		return isGroupIncomingByComment;
-	}
-	
-	public void setGroupIncomingByComment(boolean enabled) {
-		this.isGroupIncomingByComment = enabled;
-		if(getParticipant().getMode() == SubscriberParticipant.INCOMING_MODE) {
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.TreeViewerAdvisor#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		String property = event.getProperty();
-		if(property.equals(SubscriberParticipant.P_SYNCVIEWPAGE_MODE) && isGroupIncomingByComment()) {
-			int oldMode = ((Integer)event.getOldValue()).intValue();
-			int newMode = ((Integer)event.getNewValue()).intValue();
-			if(newMode == SubscriberParticipant.INCOMING_MODE || 
-			   oldMode == SubscriberParticipant.INCOMING_MODE) {
-				aSyncExec(new Runnable() {
-					public void run() {
-					}
-				});				
-			}
-		}
 		if(property.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getViewer() != null && getSyncInfoSet() != null) {
 			getViewer().refresh(true /* update labels */);
 		}

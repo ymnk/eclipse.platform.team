@@ -19,9 +19,8 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IKeyBindingService;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberConfiguration;
+import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionFactory;
 
 /**
@@ -33,7 +32,7 @@ import org.eclipse.ui.actions.ActionFactory;
  */
 public class NavigateAction extends Action {
 	private final boolean next;
-	private ISynchronizeView view;
+	private SubscriberConfiguration configuration;
 	private INavigatable navigator;
 	
 	/**
@@ -42,18 +41,21 @@ public class NavigateAction extends Action {
 	final public static int NEXT = 1;
 	final public static int PREVIOUS = 2;
 	
-	public NavigateAction(ISynchronizeView view, INavigatable navigator, boolean next) {
+	public NavigateAction(SubscriberConfiguration configuration, INavigatable navigator, boolean next) {
 		this.navigator = navigator;
-		this.view = view;
+		this.configuration = configuration;
 		this.next = next;
-
-		IKeyBindingService kbs = view.getSite().getKeyBindingService();		
-		if(next) {
-			Utils.initAction(this, "action.navigateNext."); //$NON-NLS-1$
-			view.getViewSite().getActionBars().setGlobalActionHandler(ActionFactory.NEXT.getId(), this);			
-		} else {
-			Utils.initAction(this, "action.navigatePrevious."); //$NON-NLS-1$
-			view.getViewSite().getActionBars().setGlobalActionHandler(ActionFactory.PREVIOUS.getId(), this);			
+		IWorkbenchPart part = configuration.getPart();
+		if (part != null && part.getSite() instanceof IViewSite) {
+			IViewSite viewSite = (IViewSite)part.getSite();
+			IKeyBindingService kbs = part.getSite().getKeyBindingService();
+			if (next) {
+				Utils.initAction(this, "action.navigateNext."); //$NON-NLS-1$
+				viewSite.getActionBars().setGlobalActionHandler(ActionFactory.NEXT.getId(), this);
+			} else {
+				Utils.initAction(this, "action.navigatePrevious."); //$NON-NLS-1$
+				viewSite.getActionBars().setGlobalActionHandler(ActionFactory.PREVIOUS.getId(), this);
+			}
 		}
 	}
 	
@@ -75,12 +77,12 @@ public class NavigateAction extends Action {
 		if(info.getLocal().getType() != IResource.FILE) {
 			if(! navigator.gotoDifference(next)) {
 				info = getSyncInfoFromSelection();
-				OpenInCompareAction.openCompareEditor(view, view.getParticipant().getName(), info, true /* keep focus */);
+				OpenInCompareAction.openCompareEditor(configuration.getPart(), configuration.getParticipant().getName(), info, true /* keep focus */);
 			}
 			return;
 		}
 		
-		IEditorPart editor = OpenInCompareAction.findOpenCompareEditor(view.getSite(), info.getLocal());			
+		IEditorPart editor = OpenInCompareAction.findOpenCompareEditor(configuration.getPart().getSite(), info.getLocal());			
 		boolean atEnd = false;
 		CompareEditorInput input;
 		ICompareNavigator navigator;
@@ -93,19 +95,19 @@ public class NavigateAction extends Action {
 				if(navigator.selectChange(next)) {
 					if(! this.navigator.gotoDifference(next)) {
 						info = getSyncInfoFromSelection();
-						OpenInCompareAction.openCompareEditor(view, getTitle(), info, true /* keep focus */);
+						OpenInCompareAction.openCompareEditor(configuration.getPart(), getTitle(), info, true /* keep focus */);
 					}
 				}				
 			}
 		} else {
 			// otherwise, select the next change and open a compare editor which will automatically
 			// show the first change.
-			OpenInCompareAction.openCompareEditor(view, getTitle(), info, true /* keep focus */);
+			OpenInCompareAction.openCompareEditor(configuration.getPart(), getTitle(), info, true /* keep focus */);
 		}
 	}
 
 	private SyncInfo getSyncInfoFromSelection() {
-		IStructuredSelection selection = (IStructuredSelection)view.getSite().getPage().getSelection();
+		IStructuredSelection selection = (IStructuredSelection)configuration.getPart().getSite().getPage().getSelection();
 		if(selection == null) return null;
 		Object obj = selection.getFirstElement();
 		if (obj instanceof SyncInfoModelElement) {
@@ -116,6 +118,6 @@ public class NavigateAction extends Action {
 	}
 	
 	private String getTitle() {
-		return view.getParticipant().getName();
+		return configuration.getParticipant().getName();
 	}
 }

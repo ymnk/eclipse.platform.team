@@ -97,12 +97,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 		CompareConfiguration cc = new CompareConfiguration();
 		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
 			public String getTitle() {
-				int numChanges = participant.getSubscriberSyncInfoCollector().getSyncInfoTree().size();
-				if (numChanges > 1) {
-					return Policy.bind("OpenComparedDialog.diffViewTitleMany", Integer.toString(numChanges)); //$NON-NLS-1$
-				} else {
-					return Policy.bind("OpenComparedDialog.diffViewTitleOne", Integer.toString(numChanges)); //$NON-NLS-1$
-				}
+				return Policy.bind("OpenComparedDialog.diffViewTitleMany", Integer.toString(1)); //$NON-NLS-1$
 			}
 		};
 		try {

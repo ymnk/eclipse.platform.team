@@ -14,6 +14,7 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
@@ -33,15 +34,21 @@ public class SynchronizeViewerAdvisor extends TreeViewerAdvisor {
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
 	private Action refreshSelectionAction;
+	private SubscriberConfiguration configuration;
 
-	public SynchronizeViewerAdvisor(ISynchronizeView view, SubscriberParticipant participant) {
-		super(participant.getId(), view.getViewSite(), participant.getSubscriberSyncInfoCollector().getSyncInfoTree());
+	public SynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+		super(configuration.getParticipant().getId(), configuration.getPart().getSite(), syncInfoTree);
+		this.configuration = configuration;
 		this.view = view;
-		this.participant = participant;
+		this.participant = (SubscriberParticipant)configuration.getParticipant();
 	}
 
 	protected SubscriberParticipant getParticipant() {
 		return participant;
+	}
+	
+	protected SubscriberConfiguration getConfiguration() {
+		return configuration;
 	}
 
 	protected void initializeActions(StructuredViewer treeViewer) {
