@@ -14,7 +14,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -82,8 +83,6 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		if (settings == null) {
 			this.settings = workbenchSettings.addNewSection("RefreshCompleteDialog");//$NON-NLS-1$
 		}
-		
-		initialize();
 	}
 
 	/**
@@ -192,9 +191,10 @@ public class RefreshCompleteDialog extends DetailsDialog {
 					return "Resources found during last refresh";
 				}
 			};
-			// We don't need a progress monitor because the actualy model will be built
-			// by the event processing thread.
+			// Preparing the input should be fast since we haven't started the collector
 			compareEditorInput.run(new NullProgressMonitor());
+			// Starting the collector will populate the dialog in the background
+			initialize();
 		} catch (InterruptedException e) {
 			Utils.handle(e);
 		} catch (InvocationTargetException e) {

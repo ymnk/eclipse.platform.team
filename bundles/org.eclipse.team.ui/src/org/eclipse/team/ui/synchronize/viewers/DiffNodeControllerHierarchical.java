@@ -16,7 +16,9 @@ import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
@@ -26,6 +28,7 @@ import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.ui.progress.UIJob;
 
 /**
  * An input that can be used with both {@link } and 
@@ -62,18 +65,49 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	
 	private Set pendingLabelUpdates = new HashSet();
 	
+	private LabelUpdateJob labelUpdater = new LabelUpdateJob();
+	
+	class LabelUpdateJob extends UIJob {
+		public static final int BATCH_WAIT_INCREMENT = 100;
+		Set nodes = new HashSet();
+		public LabelUpdateJob() {
+			super("Updating labels");
+			setSystem(true);
+		}
+		public IStatus runInUIThread(IProgressMonitor monitor) {
+			Object[] updates;
+			synchronized(nodes) {
+				updates = nodes.toArray(new Object[nodes.size()]);
+				nodes.clear();
+			}
+			if (canUpdateViewer()) {
+				AbstractTreeViewer tree = getTreeViewer();
+				tree.update(updates, null);
+			}
+			schedule(BATCH_WAIT_INCREMENT);
+			return Status.OK_STATUS;
+		}
+		public void add(Object node, boolean isBusy) {
+			synchronized(nodes) {
+				nodes.add(node);
+			}
+			if (isBusy) {
+				schedule(BATCH_WAIT_INCREMENT);
+			} else {
+				// Wait when unbusying to give the events a chance to propogate through
+				// the collector
+				schedule(BATCH_WAIT_INCREMENT * 10);
+			}
+		}
+		public boolean shouldRun() {
+			return !nodes.isEmpty();
+		}
+	}
+	
 	private IPropertyChangeListener listener = new IPropertyChangeListener() {
 		public void propertyChange(final PropertyChangeEvent event) {
 			if (event.getProperty() == AdaptableDiffNode.BUSY_PROPERTY) {
-				// TODO: needs to be optimized
-				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-					public void run() {
-						if (canUpdateViewer()) {
-							AbstractTreeViewer tree = getTreeViewer();
-							tree.update(event.getSource(), null);
-						}
-					}
-				});
+				labelUpdater.add(event.getSource(), ((Boolean)event.getNewValue()).booleanValue());
 			}
 		}
 	};

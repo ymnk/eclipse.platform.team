@@ -48,7 +48,7 @@ public abstract class AdaptableDiffNode extends DiffNode implements IAdaptable {
 		if (listeners == null) {
 			listeners = new ListenerList();
 		}
-		listeners.add(listeners);
+		listeners.add(listener);
 	}
 	
 	public synchronized void removePropertyChangeListener(IPropertyChangeListener listener) {
