@@ -201,6 +201,15 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		}
 		return result[0];
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.wizard.IWizard#performCancel()
+	 */
+	public boolean performCancel() {
+		// TODO If on the last page, offer to disconnect
+		// TODO If we created the repo location, dispose of it
+		return super.performCancel();
+	}
 
 	private void reconcileProject(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		new ReconcileProjectOperation(getShell(), project, getRemoteFolder()).run(monitor);
@@ -434,9 +443,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		return result[0];
 	}
 	
-	/**
-	 * @param b
-	 */
 	private void populateSyncPage(final boolean exists) {
 		try {
 			getContainer().run(true, true, new IRunnableWithProgress() {
@@ -447,6 +453,8 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 						} else {
 							shareProject(monitor);
 						}
+						// TODO: Sync subscriber input may be behind so view
+						// may be empty
 					} catch (CVSException e) {
 						throw new InvocationTargetException(e);
 					}
@@ -472,7 +480,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	
 	private void prepareTagPage(ICVSRemoteFolder remote) {
 		tagPage.setFolder(remote);
-		tagPage.setDescription(Policy.bind("SharingWizard.25") + remote.getRepositoryRelativePath()); //$NON-NLS-1$
+		tagPage.setDescription(Policy.bind("SharingWizard.25", remote.getRepositoryRelativePath())); //$NON-NLS-1$
 
 	}
 }
