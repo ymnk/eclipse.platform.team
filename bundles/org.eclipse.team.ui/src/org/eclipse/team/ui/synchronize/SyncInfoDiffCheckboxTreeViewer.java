@@ -20,7 +20,11 @@ import org.eclipse.team.internal.ui.synchronize.views.ITreeViewerAccessor;
 import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
-// TODO: This is an internal superclass
+/**
+ * [Note: the superclass is internal but contains much behavior that should
+ * be re-used instead of copied. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=48138
+ * for more details.]
+ */
 public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer implements INavigatable, ITreeViewerAccessor {
 
 	private DiffTreeViewerConfiguration configuration;
