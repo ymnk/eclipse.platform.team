@@ -232,17 +232,11 @@ public final class Team {
 	 * @param monitor a progress monitor to indicate the duration of the operation, or
 	 * <code>null</code> if progress reporting is not required.
 	 */
-	public static void removeNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
-		try {
-			IProjectDescription description = proj.getDescription();
-			String[] prevNatures= description.getNatureIds();
-			List newNatures = new ArrayList(Arrays.asList(prevNatures));
-			newNatures.remove(natureId);
-			description.setNatureIds((String[])newNatures.toArray(new String[newNatures.size()]));
-			proj.setDescription(description, monitor);
-		} catch(CoreException e) {
-			throw wrapException(Policy.bind("manager.errorRemovingNature", proj.getName(), natureId), e); //$NON-NLS-1$
-		}
+	public static void removeNatureFromProject(IProject proj, String natureID, IProgressMonitor monitor) throws TeamException {
+		if(!RepositoryProvider.getProvider(proj).getID().equals(natureID))
+			throw new TeamException(Policy.bind("manager.errorRemovingNature", proj.getName(), natureID)); //$NON-NLS-1$
+
+		RepositoryProvider.unmap(proj);
 	}
 	
 	/**
@@ -256,17 +250,7 @@ public final class Team {
 	 * @exception TeamException if a problem occured setting the nature
 	 */
 	public static void addNatureToProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
-		try {
-			IProjectDescription description = proj.getDescription();
-			String[] prevNatures= description.getNatureIds();
-			String[] newNatures= new String[prevNatures.length + 1];
-			System.arraycopy(prevNatures, 0, newNatures, 0, prevNatures.length);
-			newNatures[prevNatures.length]= natureId;
-			description.setNatureIds(newNatures);
-			proj.setDescription(description, monitor);
-		} catch(CoreException e) {
-			throw wrapException(Policy.bind("manager.errorSettingNature", proj.getName(), natureId), e); //$NON-NLS-1$
-		}
+		RepositoryProvider.map(proj, natureId);
 	}
 	
 	/*
