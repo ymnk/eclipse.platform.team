@@ -760,12 +760,5 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		Assert.isTrue( ! path.isEmpty());
 		return getRelativePathFromRootRelativePath((ICVSFolder)root.getChild(path.segment(0)), path.removeFirstSegments(1));
 	}
-	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFolder#getPendingNotifications()
-	 */
-	public NotifyInfo[] getPendingNotifications() throws CVSException {
-		return null;
-	}
 
 }

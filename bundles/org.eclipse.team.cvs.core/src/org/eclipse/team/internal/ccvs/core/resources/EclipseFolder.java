@@ -315,14 +315,5 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	public ICVSResource[] fetchChildren(IProgressMonitor monitor) throws CVSException {
 		return members(FILE_MEMBERS | FOLDER_MEMBERS);
 	}
-	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFolder#getPendingNotifications()
-	 */
-	public NotifyInfo[] getPendingNotifications() throws CVSException {
-		if (isCVSFolder()) {
-			return EclipseSynchronizer.getInstance().getAllNotifyInfo((IContainer)resource);		
-		}
-		return null;
-	}
+
 }

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -872,6 +873,7 @@ public class EclipseSynchronizer {
 	 */
 	public NotifyInfo getNotifyInfo(IResource resource) throws CVSException {
 		NotifyInfo[] infos = SyncFileWriter.readAllNotifyInfo(resource.getParent());
+		if (infos == null) return null;
 		for (int i = 0; i < infos.length; i++) {
 			NotifyInfo notifyInfo = infos[i];
 			if (notifyInfo.getName().equals(resource.getName())) {
@@ -879,15 +881,6 @@ public class EclipseSynchronizer {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Anwser all the notification information associated with the given folder
-	 * @param parent
-	 * @return NotifyInfo[]
-	 */
-	public NotifyInfo[] getAllNotifyInfo(IContainer parent) throws CVSException {
-		return SyncFileWriter.readAllNotifyInfo(parent);
 	}
 	
 	/**
@@ -911,4 +904,11 @@ public class EclipseSynchronizer {
 		SyncFileWriter.writeAllNotifyInfo(resource.getParent(), newInfos);
 	}
 
+	public void copyFileToBaseDirectory(IFile file) throws CVSException {
+		ResourceSyncInfo info = getResourceSync(file);
+		// The file must exist remotely and must exist
+		if (info == null || info.isAdded() || info.isDeleted())
+			return;
+		SyncFileWriter.writeFileToBaseDirectory(file, info);
+	}
 }

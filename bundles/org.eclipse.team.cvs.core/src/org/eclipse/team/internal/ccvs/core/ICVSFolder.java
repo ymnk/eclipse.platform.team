@@ -152,12 +152,5 @@ public interface ICVSFolder extends ICVSResource {
 	 * @exception CVSException if the operation failed.
 	 */
 	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException;
-	
-	/**
-	 * Answer the list of pending notifications for the folder. An empty list or <code>null</code>
-	 * may be returned if there are no pending notifications.
-	 * 
-	 * This method is used by the command framework and should not be used by other clients.
-	 */
-	public NotifyInfo[] getPendingNotifications() throws CVSException;
+
 }

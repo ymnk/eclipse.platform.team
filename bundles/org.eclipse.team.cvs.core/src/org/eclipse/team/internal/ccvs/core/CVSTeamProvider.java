@@ -333,43 +333,6 @@ public class CVSTeamProvider extends RepositoryProvider {
 			throw new CVSServerException(status);
 		}
 	}
-
-	/**
-	 * Checkout the provided resources so they can be modified locally and committed.
-	 */
-	public void checkout(IResource[] resources, boolean recurse, IProgressMonitor progress) throws TeamException {
-		
-		final ICVSResource[] cvsResources = getCVSArguments(resources);
-		
-		// mark the files locally as being checked out
-		for (int i = 0; i < cvsResources.length; i++) {
-			ICVSResource resource = cvsResources[i];
-			resource.accept(new ICVSResourceVisitor() {
-				public void visitFile(ICVSFile file) throws CVSException {
-					file.checkout(ICVSFile.NO_NOTIFICATION);
-				}
-				public void visitFolder(ICVSFolder folder) throws CVSException {
-					// nothing needs to be done here as the recurse will handle the traversal
-				}
-			}, recurse);
-		}
-		
-		// send the noop command to the server in order to deliver the notifications
-		final boolean[] connected = new boolean[] { false };
-		try {
-			Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true, new ICVSRunnable() {
-				public void run(IProgressMonitor monitor) throws CVSException {
-					connected[0] = true;
-					Command.NOOP.execute(Command.NO_GLOBAL_OPTIONS, Command.NO_LOCAL_OPTIONS, 
-					cvsResources, null, monitor);
-				}
-			}, progress);
-		} catch (CVSException e) {
-			// Only report the exception if we were able to connect.
-			// If we couldn't connect, the notification will be sent the next time we do.
-			if (connected[0]) throw e;
-		}
-	}
 		
 	/**
 	 * @see ITeamProvider#delete(IResource[], int, IProgressMonitor)
@@ -482,7 +445,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 			progress.done();
 		}
 	}
-	
+		
 	/**
 	 * Replace the local version of the provided resources with the remote using "cvs update -C ..."
 	 * 
@@ -792,14 +755,6 @@ public class CVSTeamProvider extends RepositoryProvider {
 			s.close();
 			progress.done();
 		}
-	}
-	
-	/**
-	 * Currently, we support only the optimistic model so uncheckout dores nothing.
-	 * 
-	 * @see ITeamProvider#uncheckout(IResource[], int, IProgressMonitor)
-	 */
-	public void uncheckout(IResource[] resources, int depth, IProgressMonitor progress) throws TeamException {
 	}
 	
 	/**
@@ -1200,7 +1155,9 @@ public class CVSTeamProvider extends RepositoryProvider {
 						if (readOnlys.isEmpty()) return OK;
 						
 						// XXX We should try to create a PM using the provided context
-						checkout((IFile[]) readOnlys.toArray(new IFile[readOnlys.size()]), false /* recurse */, null);
+						edit((IFile[]) readOnlys.toArray(new IFile[readOnlys.size()]), 
+							false /* recurse */, true /* notify server */, 
+							ICVSFile.NO_NOTIFICATION, null);
 					} catch (TeamException e) {
 						return e.getStatus();
 					}
@@ -1210,7 +1167,9 @@ public class CVSTeamProvider extends RepositoryProvider {
 					// Ignore files that are not read-only
 					if (!file.isReadOnly()) return OK;
 					try {
-						checkout(new IResource[] {file}, false /* recurse */, null);
+						edit(new IResource[] {file},
+							false /* recurse */, true /* notify server */, 
+							ICVSFile.NO_NOTIFICATION, null);
 					} catch (TeamException e) {
 						return e.getStatus();
 					}
@@ -1224,8 +1183,114 @@ public class CVSTeamProvider extends RepositoryProvider {
 
 	/**
 	 * Answer true if watch/edit support is enabled for this provider.
+	 * @return boolean
 	 */
 	public boolean isWatchEditEnabled() {
 		return CVSProviderPlugin.getPlugin().isWatchEditEnabled();
+	}
+
+	/**
+	 * Checkout (cvs edit) the provided resources so they can be modified locally and committed.
+	 * This will make any read-only resources in the list writable and will notify the server
+	 * that the file is being edited. This notification may be done immediately or at some 
+	 * later point depending on whether contact with the server is possble at the time of 
+	 * invocation or the value of the notify server parameter.
+	 * 
+	 * The recurse parameter is equivalent to the cvs local options -l (<code>true</code>) and 
+	 * -R (<code>false</code>). The notifyServer parameter can be used to defer server contact
+	 * until the next command. This may be approrpiate if no shell or progress monitor is available
+	 * to the caller. The notification bit field indicates what temporary watches are to be used while
+	 * the file is being edited. The possible values that can be ORed together are ICVSFile.EDIT, 
+	 * ICVSFile.UNEDIT and ICVSFile.COMMIT. There pre-ORed convenience values ICVSFile.NO_NOTIFICATION
+	 * and ICVSFile.NOTIFY_ON_ALL are also available.
+	 * 
+	 * @param resources the resources to be edited
+	 * @param recurse indicates whether to recurse (-R) or not (-l)
+	 * @param notifyServer indicates whether to notify the server now, if possible,
+	 *     or defer until the next command.
+	 * @param notification the temporary watches.
+	 * @param progress progress monitor to provide progress indication/cancellation or <code>null</code>
+	 * @exception CVSException if this method fails.
+	 * @since 2.1
+	 * 
+	 * @see CVSTeamProvider#unedit
+	 */
+	public void edit(IResource[] resources, boolean recurse, boolean notifyServer, final int notification, IProgressMonitor progress) throws CVSException {
+		notifyEditUnedit(resources, recurse, notifyServer, new ICVSResourceVisitor() {
+			public void visitFile(ICVSFile file) throws CVSException {
+				if (file.isReadOnly())
+					file.edit(notification);
+			}
+			public void visitFolder(ICVSFolder folder) throws CVSException {
+				// nothing needs to be done here as the recurse will handle the traversal
+			}
+		}, progress);
+	}
+	
+	/**
+	 * Unedit the given resources. Any writtable resources will be reverted to their base contents
+	 * and made read-only and the server will be notified that the file is no longer being edited.
+	 * This notification may be done immediately or at some 
+	 * later point depending on whether contact with the server is possble at the time of 
+	 * invocation or the value of the notify server parameter.
+	 * 
+	 * The recurse parameter is equivalent to the cvs local options -l (<code>true</code>) and 
+	 * -R (<code>false</code>). The notifyServer parameter can be used to defer server contact
+	 * until the next command. This may be approrpiate if no shell or progress monitor is available
+	 * to the caller.
+	 * 
+	 * @param resources the resources to be unedited
+	 * @param recurse indicates whether to recurse (-R) or not (-l)
+	 * @param notifyServer indicates whether to notify the server now, if possible,
+	 *     or defer until the next command.
+	 * @param progress progress monitor to provide progress indication/cancellation or <code>null</code>
+	 * @exception CVSException if this method fails.
+	 * @since 2.1
+	 * 
+	 * @see CVSTeamProvider#edit
+	 */
+	public void unedit(IResource[] resources, boolean recurse, boolean notifyServer, IProgressMonitor progress) throws TeamException {
+		notifyEditUnedit(resources, recurse, notifyServer, new ICVSResourceVisitor() {
+			public void visitFile(ICVSFile file) throws CVSException {
+				if (!file.isReadOnly())
+					file.unedit();
+			}
+			public void visitFolder(ICVSFolder folder) throws CVSException {
+				// nothing needs to be done here as the recurse will handle the traversal
+			}
+		}, progress);
+	}
+	
+	/*
+	 * This method captures the common behavior between the edit and unedit methods.
+	 */
+	private void notifyEditUnedit(IResource[] resources, boolean recurse, boolean notifyServer, ICVSResourceVisitor editUneditVisitor, IProgressMonitor progress) throws CVSException {
+		progress = Policy.monitorFor(progress);
+		final ICVSResource[] cvsResources = getCVSArguments(resources);
+		
+		// mark the files locally as being checked out
+		for (int i = 0; i < cvsResources.length; i++) {
+			cvsResources[i].accept(editUneditVisitor, recurse);
+		}
+		
+		// send the noop command to the server in order to deliver the notifications
+		if (notifyServer) {
+			final boolean[] connected = new boolean[] { false };
+			try {
+				Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true, new ICVSRunnable() {
+					public void run(IProgressMonitor monitor) throws CVSException {
+						connected[0] = true;
+						Command.NOOP.execute(Command.NO_GLOBAL_OPTIONS, Command.NO_LOCAL_OPTIONS, 
+						cvsResources, null, monitor);
+					}
+				}, progress);
+			} catch (CVSException e) {
+				// Only report the exception if we were able to connect.
+				// If we couldn't connect, the notification will be sent the next time we do.
+				if (connected[0]) throw e;
+			} finally {
+				progress.done();
+			}
+		}
 	}
 }

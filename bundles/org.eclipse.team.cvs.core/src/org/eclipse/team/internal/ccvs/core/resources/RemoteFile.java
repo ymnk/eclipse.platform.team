@@ -548,21 +548,14 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#checkout(int)
 	 */
-	public void checkout(int notifications) throws CVSException {
+	public void edit(int notifications) throws CVSException {
 		// do nothing
-	}
-
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#isCheckedOut()
-	 */
-	public boolean isCheckedOut() {
-		return false;
 	}
 
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#uncheckout()
 	 */
-	public void uncheckout() throws CVSException {
+	public void unedit() throws CVSException {
 		// do nothing
 	}
 

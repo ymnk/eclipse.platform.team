@@ -253,8 +253,8 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#checkout(int)
 	 */
-	public void checkout(int notifications) throws CVSException {
-		if (isCheckedOut()) return;
+	public void edit(int notifications) throws CVSException {
+		if (!isReadOnly()) return;
 		
 		// convert the notifications to internal form
 		char[] internalFormat;
@@ -287,17 +287,10 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	}
 
 	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#isCheckedOut()
-	 */
-	public boolean isCheckedOut() throws CVSException {
-		return !isReadOnly();
-	}
-
-	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#uncheckout()
 	 */
-	public void uncheckout() throws CVSException {
-		if (!isCheckedOut()) return;
+	public void unedit() throws CVSException {
+		if (isReadOnly()) return;
 		
 		// record the notification
 		NotifyInfo info = getNotifyInfo();

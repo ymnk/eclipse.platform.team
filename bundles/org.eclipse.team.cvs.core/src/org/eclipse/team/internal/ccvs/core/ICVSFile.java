@@ -70,16 +70,14 @@ public interface ICVSFile extends ICVSResource {
 	 * Sets the file to read-only (<code>true</code>) or writable (<code>false</code>).
 	 * 
 	 * This method is used by the command framework and should not be used by other clients.
-	 * Other clients should use <code>checkout</code> and <code>uncheckout</code> instead as they
+	 * Other clients should use <code>edit</code> and <code>unedit</code> instead as they
 	 * will report the change to the server if appropriate.
 	 */
 	void setReadOnly(boolean readOnly) throws CVSException;
 	
 	/**
-	 * Answers whether the file is read-only or not.
-	 * 
-	 * This method is used by the command framework and should not be used by other clients.
-	 * Other clients should use <code>isCheckedOut</code> instead.
+	 * Answers whether the file is read-only or not. If a file is read-only, <code>edit</code>
+	 * should be invoked to make the file editable.
 	 */
 	boolean isReadOnly() throws CVSException;
 	
@@ -118,12 +116,6 @@ public interface ICVSFile extends ICVSResource {
 	public ILogEntry[] getLogEntries(IProgressMonitor monitor) throws TeamException;
 	
 	/**
-	 * Indicate whether a fiel has been checked out for local editing. A file is checked out
-	 * for local editing if it's read-only bit is false.
-	 */
-	public boolean isCheckedOut() throws CVSException;
-	
-	/**
 	 * Mark the file as checked out to allow local editing (analogous to "cvs edit"). 
 	 * If this method is invoked when <code>isCheckedOut()</code> returns <code>false</code>, 
 	 * a notification message that will be sent to the server on the next connection
@@ -132,7 +124,7 @@ public interface ICVSFile extends ICVSResource {
 	 * @param notifications the set of operations for which the local user would like notification
 	 * while the local file is being edited.
 	 */
-	public void checkout(int notifications) throws CVSException;
+	public void edit(int notifications) throws CVSException;
 
 	/**
 	 * Undo a checkout of the file (analogous to "cvs unedit").
@@ -140,7 +132,7 @@ public interface ICVSFile extends ICVSResource {
 	 * a notification message that will be sent to the server on the next connection
 	 * If <code>isCheckedOut()</code> returns <code>false</code> then nothing is done.
 	 */
-	public void uncheckout() throws CVSException;
+	public void unedit() throws CVSException;
 	
 	/**
 	 * Answer any pending notification information associated with the receiver.

@@ -54,6 +54,8 @@ public class SyncFileWriter {
 	//private static final String PERMISSIONS = "Permissions"; //$NON-NLS-1$
 	public static final String ENTRIES_LOG="Entries.Log"; //$NON-NLS-1$
 	public static final String NOTIFY = "Notify"; //$NON-NLS-1$
+	public static final String BASE_DIRNAME = "Base"; //$NON-NLS-1$
+	public static final String BASEREV = "Baserev"; //$NON-NLS-1$
 	
 	// the local workspace file that contains pattern for ignored resources
 	public static final String IGNORE_FILE = ".cvsignore"; //$NON-NLS-1$
@@ -425,4 +427,29 @@ public class SyncFileWriter {
 			throw CVSException.wrapException(e);
 		}
 	}
+	/**
+	 * Method writeFileToBaseDirectory.
+	 * @param file
+	 * @param info
+	 */
+	public static void writeFileToBaseDirectory(IFile file, ResourceSyncInfo info) throws CVSException {
+		try {
+			IContainer cvsFolder = getCVSSubdirectory(file.getParent());
+			IFolder baseFolder = cvsFolder.getFolder(new Path(BASE_DIRNAME));
+			if (!baseFolder.exists()) {
+				baseFolder.create(false /* force */, true /* local */, null);
+			}
+			IFile target = baseFolder.getFile(new Path(file.getName()));
+			if (target.exists()) {
+				// XXX Should ensure that we haven't already copied it
+				// XXX write the revision to the CVS/Baserev file
+				target.setContents(file.getContents(), false /* force */, false /* history */, null);
+			} else {
+				target.create(file.getContents(), false /* force */, null);
+			}
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+
 }
