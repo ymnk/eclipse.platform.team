@@ -54,9 +54,10 @@ public class SingleFolderTagSource extends TagSource {
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.merge.TagSource#refresh(org.eclipse.core.runtime.IProgressMonitor)
      */
-    public void refresh(IProgressMonitor monitor) throws TeamException {
-        CVSUIPlugin.getPlugin().getRepositoryManager().refreshDefinedTags(getFolder(), false /* replace */, true /* notify */, monitor);
+    public CVSTag[] refresh(boolean bestEffort, IProgressMonitor monitor) throws TeamException {
+        CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().refreshDefinedTags(getFolder(), bestEffort /* recurse */, true /* notify */, monitor);
         fireChange();
+        return tags;
     }
 
     /* (non-Javadoc)

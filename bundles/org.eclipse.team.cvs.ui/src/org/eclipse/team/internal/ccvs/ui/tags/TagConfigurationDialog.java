@@ -137,8 +137,9 @@ public class TagConfigurationDialog extends Dialog {
         /* (non-Javadoc)
          * @see org.eclipse.team.internal.ccvs.ui.merge.TagSource#refresh(org.eclipse.core.runtime.IProgressMonitor)
          */
-        public void refresh(IProgressMonitor monitor) throws TeamException {
-            // The wrapper is never refreshed       
+        public CVSTag[] refresh(boolean bestEffort, IProgressMonitor monitor) throws TeamException {
+            // The wrapper is never refreshed
+            return new CVSTag[0];
         }
 
         /* (non-Javadoc)
@@ -268,8 +269,7 @@ public class TagConfigurationDialog extends Dialog {
 				updateEnablements();
 			}
 		});
-	
-	
+
 		comp = new Composite(shell, SWT.NULL);
 		gridLayout = new GridLayout();
 		gridLayout.numColumns = 1;

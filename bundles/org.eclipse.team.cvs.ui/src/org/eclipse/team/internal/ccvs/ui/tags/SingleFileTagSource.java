@@ -57,10 +57,11 @@ public class SingleFileTagSource extends TagSource {
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.tags.TagSource#refresh(org.eclipse.core.runtime.IProgressMonitor)
      */
-    public void refresh(IProgressMonitor monitor) throws TeamException {
+    public CVSTag[] refresh(boolean bestEffort, IProgressMonitor monitor) throws TeamException {
         CVSTag[] tags = fetchTagsFor(file, monitor); 
         commit(tags, false, monitor);
         fireChange();
+        return tags;
     }
 
     /* (non-Javadoc)

@@ -14,15 +14,17 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.ui.*;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.dialogs.DialogArea;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.help.WorkbenchHelp;
@@ -107,7 +109,10 @@ public class TagRefreshButtonArea extends DialogArea {
 						PlatformUI.getWorkbench().getProgressService().run(true, true, new IRunnableWithProgress() {
 							public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 								try {
-								    tagSource.refresh(monitor);
+								    CVSTag[] tags = tagSource.refresh(false, monitor);
+								    if (tags.length == 0 && promptForBestEffort()) {
+								        tagSource.refresh(true, monitor);
+								    }
 								} catch (TeamException e) {
 									throw new InvocationTargetException(e);
 								}
@@ -122,7 +127,36 @@ public class TagRefreshButtonArea extends DialogArea {
 			});
 		return refreshButton;		
 	 }
-		
+	
+    private boolean promptForBestEffort() {
+        final boolean[] prompt = new boolean[] { false };
+        shell.getDisplay().syncExec(new Runnable() {
+            public void run() {
+		        MessageDialog dialog = new MessageDialog(shell, "No Tags Found", null,
+		                getNoTagsFoundMessage(),
+		                MessageDialog.INFORMATION,
+		                new String[] {
+		            		"Perform Deep Search",
+		            		"Configure Manually",
+		            		"Cancel"
+		        		}, 1);
+		        int code = dialog.open();
+		        if (code == 0) {
+		            prompt[0] = true;
+		        } else if (code == 1) {
+					TagConfigurationDialog d = new TagConfigurationDialog(shell, tagSource);
+					d.open();
+		        }
+
+            }
+        });
+        return prompt[0];
+    }
+    
+    private String getNoTagsFoundMessage() {
+        return "Tags were not found for {0} using the auto-refresh files and a shallow cvs log operation. You can choose to search using a deep cvs log operation, to manually configure the tags or to cancel." + tagSource.getShortDescription();
+    }
+    
 	protected static ICVSFolder getSingleFolder(TagSource tagSource) {
 	    if (tagSource instanceof SingleFolderTagSource)
 	        return ((SingleFolderTagSource)tagSource).getFolder();

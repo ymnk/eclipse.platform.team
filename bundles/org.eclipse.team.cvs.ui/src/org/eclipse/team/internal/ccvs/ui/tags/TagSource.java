@@ -38,8 +38,8 @@ public abstract class TagSource {
         public CVSTag[] getTags(int type) {
             return new CVSTag[0];
         }
-        public void refresh(IProgressMonitor monitor) throws TeamException {
-            // No-op
+        public CVSTag[] refresh(boolean bestEffort, IProgressMonitor monitor) throws TeamException {
+            return new CVSTag[0];
         }
         public ICVSResource[] getCVSResources() {
             return new ICVSResource[0];
@@ -146,8 +146,10 @@ public abstract class TagSource {
     /**
      * Refresh the tags by contacting the server if appropriate
      * @param monitor a progress monitor
+     * @param bestEffort if best effort is true, then the whole folder contents may be searched
+     * @return any discovered tags
      */
-    public abstract void refresh(IProgressMonitor monitor) throws TeamException;
+    public abstract CVSTag[] refresh(boolean bestEffort, IProgressMonitor monitor) throws TeamException;
     
     public abstract ICVSRepositoryLocation getLocation();
 

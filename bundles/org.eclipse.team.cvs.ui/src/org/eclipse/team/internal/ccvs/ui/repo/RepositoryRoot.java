@@ -11,14 +11,19 @@
 package org.eclipse.team.internal.ccvs.ui.repo;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.client.Command;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation.LogEntryCache;
 
 public class RepositoryRoot extends PlatformObject {
 
@@ -303,18 +308,95 @@ public class RepositoryRoot extends PlatformObject {
 	/**
 	 * Fetches tags from auto-refresh files.
 	 */
-	public void refreshDefinedTags(String remotePath, boolean replace, IProgressMonitor monitor) throws TeamException {
+	public CVSTag[] refreshDefinedTags(ICVSFolder folder, boolean recurse, IProgressMonitor monitor) throws TeamException {
+	    monitor.beginTask(null, 100);
+	    CVSTag[] tags = null;
+	    if (!recurse) {
+	        // Only try the auto-refresh file(s) if we are not recursing into sub-folders
+	        tags = fetchTagsUsingAutoRefreshFiles(folder, Policy.subMonitorFor(monitor, 50));
+	    }
+        if (tags == null || tags.length == 0) {
+            // There we're no tags found on the auto-refresh files or we we're aksed to go deep
+            // Try using the log command
+            tags = fetchTagsUsingLog(folder, recurse, Policy.subMonitorFor(monitor, 50));
+        }
+		if (tags != null && tags.length > 0) {
+		    String remotePath = getRemotePathFor(folder);
+			addTags(remotePath, tags);
+		}
+		monitor.done();
+		return tags;
+	}
+	
+    private CVSTag[] fetchTagsUsingLog(ICVSFolder folder, final boolean recurse, IProgressMonitor monitor) throws CVSException {
+        LogEntryCache logEntries = new LogEntryCache();
+        RemoteLogOperation operation = new RemoteLogOperation(null, new ICVSRemoteResource[] { asRemoteResource(folder) }, null, null, logEntries) {
+            protected Command.LocalOption[] getLocalOptions(CVSTag tag1,CVSTag tag2) {
+                Command.LocalOption[] options = super.getLocalOptions(tag1, tag2);
+                if (recurse) 
+                    return options;
+                Command.LocalOption[] newOptions = new Command.LocalOption[options.length + 1];
+                System.arraycopy(options, 0, newOptions, 0, options.length);
+                newOptions[options.length] = Command.DO_NOT_RECURSE;
+                return newOptions;
+            }
+        };
+        try {
+            operation.run(monitor);
+        } catch (InvocationTargetException e) {
+            throw CVSException.wrapException(e);
+        } catch (InterruptedException e) {
+            // Ignore;
+        }
+        String[] keys = logEntries.getCachedFilePaths();
+        Set tags = new HashSet();
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            ILogEntry[] entries = logEntries.getLogEntries(key);
+            for (int j = 0; j < entries.length; j++) {
+                ILogEntry entry = entries[j];
+                tags.addAll(Arrays.asList(entry.getTags()));
+            }
+        }
+        return (CVSTag[]) tags.toArray(new CVSTag[tags.size()]);
+    }
+
+    private ICVSRemoteResource asRemoteResource(ICVSFolder folder) throws CVSException {
+        if (folder instanceof ICVSRemoteResource) {
+            return (ICVSRemoteResource)folder;
+        }
+        return CVSWorkspaceRoot.getRemoteResourceFor(folder);
+    }
+
+    /**
+	 * Fetches tags from auto-refresh files.
+	 */
+	private CVSTag[] fetchTagsUsingAutoRefreshFiles(ICVSFolder folder, IProgressMonitor monitor) throws TeamException {
+	    String remotePath = getRemotePathFor(folder);
 		String[] filesToRefresh = getAutoRefreshFiles(remotePath);
-		monitor.beginTask(null, filesToRefresh.length * 10); //$NON-NLS-1$
 		try {
+			monitor.beginTask(null, filesToRefresh.length * 10); //$NON-NLS-1$
 			List tags = new ArrayList();
 			for (int i = 0; i < filesToRefresh.length; i++) {
 				ICVSRemoteFile file = root.getRemoteFile(filesToRefresh[i], CVSTag.DEFAULT);
-				tags.addAll(Arrays.asList(fetchTags(file, Policy.subMonitorFor(monitor, 5))));
+				try {
+                    tags.addAll(Arrays.asList(fetchTags(file, Policy.subMonitorFor(monitor, 5))));
+        		} catch (TeamException e) {
+        			IStatus status = e.getStatus();
+        			boolean doesNotExist = false;
+        			if (status.getCode() == CVSStatus.SERVER_ERROR && status.isMultiStatus()) {
+        				IStatus[] children = status.getChildren();
+        				if (children.length == 1 && children[0].getCode() == CVSStatus.DOES_NOT_EXIST) {
+        				    // Don't throw an exception if the file does no exist
+        					doesNotExist = true;
+        				}
+        			}
+        			if (!doesNotExist) {
+        			    throw e;
+        			}
+                }
 			}
-			if (!tags.isEmpty()) {
-				addTags(remotePath, (CVSTag[]) tags.toArray(new CVSTag[tags.size()]));
-			}
+			return (CVSTag[]) tags.toArray(new CVSTag[tags.size()]);
 		} finally {
 			monitor.done();
 		}
@@ -324,34 +406,26 @@ public class RepositoryRoot extends PlatformObject {
 	 * Returns Branch and Version tags for the given files
 	 */	
 	private CVSTag[] fetchTags(ICVSRemoteFile file, IProgressMonitor monitor) throws TeamException {
-		try {
-			Set tagSet = new HashSet();
-			ILogEntry[] entries = file.getLogEntries(monitor);
-			for (int j = 0; j < entries.length; j++) {
-				CVSTag[] tags = entries[j].getTags();
-				for (int k = 0; k < tags.length; k++) {
-					tagSet.add(tags[k]);
-				}
+		Set tagSet = new HashSet();
+		ILogEntry[] entries = file.getLogEntries(monitor);
+		for (int j = 0; j < entries.length; j++) {
+			CVSTag[] tags = entries[j].getTags();
+			for (int k = 0; k < tags.length; k++) {
+				tagSet.add(tags[k]);
 			}
-			return (CVSTag[])tagSet.toArray(new CVSTag[0]);
-		} catch (TeamException e) {
-			IStatus status = e.getStatus();
-			if (status.getCode() == CVSStatus.SERVER_ERROR && status.isMultiStatus()) {
-				IStatus[] children = status.getChildren();
-				if (children.length == 1 && children[0].getCode() == CVSStatus.DOES_NOT_EXIST) {
-					return new CVSTag[0];
-				}
-			}
-			throw e;
 		}
+		return (CVSTag[])tagSet.toArray(new CVSTag[0]);
 	}
 	
+	/*
+	 * Return the cache key (path) for the given folder path.
+	 * This has been changed to cache the tags directly 
+	 * with the folder to better support non-root projects.
+	 * However, resources in the local workspace use the folder
+	 * the project is mapped to as the tag source (see TagSource)
+	 */
 	private String getCachePathFor(String remotePath) {
-		String root = new Path(null, remotePath).segment(0);
-		if (isDefinedModuleName(remotePath)) {
-			return asDefinedModulePath(root);
-		}
-		return root;
+		return remotePath;
 	}
 	
 	/**
