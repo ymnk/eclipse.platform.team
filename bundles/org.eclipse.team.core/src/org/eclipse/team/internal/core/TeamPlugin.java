@@ -45,7 +45,7 @@ final public class TeamPlugin extends Plugin {
 	// The id of the project set extension point
 	public static final String PROJECT_SET_EXTENSION = "projectSets"; //$NON-NLS-1$
 	// The id of the targets extension point
-	public static final String REPOSITORIES_EXTENSION = "repositories"; //$NON-NLS-1$
+	public static final String REPOSITORY_EXTENSION = "repository"; //$NON-NLS-1$
 	// The id of the targets extension point
 	public static final String TARGETS_EXTENSION = "targets"; //$NON-NLS-1$
 

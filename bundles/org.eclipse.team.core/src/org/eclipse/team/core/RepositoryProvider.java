@@ -71,8 +71,8 @@ public abstract class RepositoryProvider implements IProjectNature {
 	private final static String TEAM_SETID = "org.eclipse.team.repository-provider"; //$NON-NLS-1$
 	
 	private final static QualifiedName PROVIDER_PROP_KEY = 
-		new QualifiedName("org.eclipse.team", "repository");  //$NON-NLS-1$  //$NON-NLS-2$
-		
+		new QualifiedName("org.eclipse.team.core", "repository");  //$NON-NLS-1$  //$NON-NLS-2$
+
 	private final static List AllProviderTypeIds = initializeAllProviderTypes();
 	
 	// the project instance that this nature is assigned to
@@ -370,7 +370,7 @@ public abstract class RepositoryProvider implements IProjectNature {
 		
 		TeamPlugin plugin = TeamPlugin.getPlugin();
 		if (plugin != null) {
-			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORIES_EXTENSION);
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORY_EXTENSION);
 			if (extension != null) {
 				IExtension[] extensions =  extension.getExtensions();
 				for (int i = 0; i < extensions.length; i++) {
@@ -388,7 +388,7 @@ public abstract class RepositoryProvider implements IProjectNature {
 	private static RepositoryProvider newProvider(String id) {
 		TeamPlugin plugin = TeamPlugin.getPlugin();
 		if (plugin != null) {
-			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORIES_EXTENSION);
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORY_EXTENSION);
 			if (extension != null) {
 				IExtension[] extensions =  extension.getExtensions();
 				for (int i = 0; i < extensions.length; i++) {
