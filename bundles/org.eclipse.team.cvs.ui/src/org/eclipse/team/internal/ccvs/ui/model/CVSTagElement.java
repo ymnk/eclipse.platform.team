@@ -102,7 +102,7 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable, IDefer
 	}
 
 	public ISchedulingRule getRule() {
-		return new BatchSimilarSchedulingRule("org.eclipse.team.cvs.ui.model.tagelement");
+		return new BatchSimilarSchedulingRule("org.eclipse.team.cvs.ui.model.tagelement"); //$NON-NLS-1$
 	}
 	
 	public boolean isContainer() {

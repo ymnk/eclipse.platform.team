@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.uijobs;
 
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.progress.IElementCollector;
@@ -26,10 +25,17 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 public interface IDeferredWorkbenchAdapter extends IWorkbenchAdapter {
 		
 	/**
+	 * Called by a job run in a separate thread to fetch the children of this adapter.
+	 * The adapter should return notify of new children via the collector.
+	 * <p>
+	 * It is good practice to check the passed in monitor for cancellation. This will 
+	 * provide good responsiveness for cancellation requests made by the user.
+	 * </p>
 	 * 
-	 * @param o
-	 * @param collector
-	 * @param monitor
+	 * @param o the object to fetch the children for
+	 * @param collector the collector to notify about new children
+	 * @param  monitor a progress monitor that will never be <code>null<code> to
+ 	 *                   support reporting and cancellation.
 	 */
 	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor);
 
