@@ -225,11 +225,6 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 			// set the dirty count using what was cached in the phantom it
 			beginOperation(null);
 			FolderSyncInfo folderInfo = getPhantomFolderSyncInfo(folder);
-			int count = internalGetDirtyCount(folder);
-			if (count != -1) {
-				setDirtyCount(folder, count);
-				setModified(folder, count > 0 || folderInfo == null);
-			}
 			if (folderInfo != null) {
 				beginOperation(null);
 				Map map = getPhantomResourceSyncInfoMap(folder);
@@ -597,20 +592,21 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 	 */
 	protected boolean addDeletedChild(IContainer container, IFile file) throws CVSException {
 		if (container.isPhantom()) {
-			try {
-				beginOperation(null);
-				int oldCount = internalGetDirtyCount(container);
-				if (oldCount == -1) {
-					// there is no cached count so wait until the first query
-					// or there was no deleted file
-					return false;
-				}
-				int newCount = calculateDirtyCountForPhantom(container);
-				// adjust the parent folder count if the newCount is 1;
-				return oldCount == 0 && newCount == 1;
-			} finally {
-				endOperation(null);
-			}
+//			try {
+//				beginOperation(null);
+//				int oldCount = internalGetDirtyCount(container);
+//				if (oldCount == -1) {
+//					// there is no cached count so wait until the first query
+//					// or there was no deleted file
+//					return false;
+//				}
+//				int newCount = calculateDirtyCountForPhantom(container);
+//				// adjust the parent folder count if the newCount is 1;
+//				return oldCount == 0 && newCount == 1;
+//			} finally {
+//				endOperation(null);
+//			}
+			return true;
 		} else {
 			return super.addDeletedChild(container, file);
 		}
@@ -621,23 +617,23 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 	 */
 	protected boolean removeDeletedChild(IContainer container, IFile file) throws CVSException {
 		if (container.isPhantom()) {
-			try {
-				beginOperation(null);
-				int oldCount = internalGetDirtyCount(container);
-				if (oldCount == -1 || oldCount == 0) {
-					// there is no cached count so wait until the first query
-					// or there was no deleted file
-					return false;
-				}
-				int newCount = calculateDirtyCountForPhantom(container);
-				// adjust the parent folder count if the newCount is 0;
-				return newCount == 0;
-			} finally {
-				endOperation(null);
-			}
+//			try {
+//				beginOperation(null);
+//				int oldCount = internalGetDirtyCount(container);
+//				if (oldCount == -1 || oldCount == 0) {
+//					// there is no cached count so wait until the first query
+//					// or there was no deleted file
+//					return false;
+//				}
+//				int newCount = calculateDirtyCountForPhantom(container);
+//				// adjust the parent folder count if the newCount is 0;
+//				return newCount == 0;
+//			} finally {
+//				endOperation(null);
+//			}
+			return true;
 		} else {
 			return super.removeDeletedChild(container, file);
 		}
 	}
-
 }

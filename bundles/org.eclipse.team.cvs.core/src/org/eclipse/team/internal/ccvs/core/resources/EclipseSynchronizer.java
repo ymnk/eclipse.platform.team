@@ -1317,8 +1317,13 @@ public class EclipseSynchronizer {
 		}
 	}
 
-	private void setDeletedChildren(IContainer parent, Set deletedFiles) throws CoreException {
-		parent.setSessionProperty(DELETED_CHILDREN, deletedFiles);
+	protected void setDeletedChildren(IContainer parent, Set deletedFiles) throws CVSException {
+		if (!parent.exists()) return;
+		try {
+			parent.setSessionProperty(DELETED_CHILDREN, deletedFiles);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
 	}
 
 	private Set getDeletedChildren(IContainer parent) throws CoreException {
@@ -1343,6 +1348,32 @@ public class EclipseSynchronizer {
 		}
 	}
 	
+	protected void flushModificationCache(IContainer container, int depth) throws CVSException {
+		if (container.getType() == IResource.ROOT) return;
+		final CVSException[] exception = new CVSException[] { null };
+		try {
+			container.accept(new IResourceVisitor() {
+				public boolean visit(IResource resource) throws CoreException {
+					try {
+						if (resource.getType() == IResource.FILE) {
+							flushModificationCache((IFile)resource);
+						} else {
+							flushModificationCache((IContainer)resource);
+						}
+					} catch (CVSException e) {
+						exception[0] = e;
+					}
+					return true;
+				}
+			}, depth, true);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+		if (exception[0] != null) {
+			throw exception[0];
+		}
+	}
+
 	/*
 	 * Flush all cached info for
 	 *  the file and it's ancestors

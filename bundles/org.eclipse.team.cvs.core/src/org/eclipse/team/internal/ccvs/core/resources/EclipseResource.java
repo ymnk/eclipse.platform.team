@@ -277,12 +277,12 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	/*
 	 * Flush all cached info for the file and it's ancestors
 	 */
-	protected void flushAncestors() throws CVSException {
+	protected void flushWithAncestors() throws CVSException {
 		if (resource.getType() == IResource.ROOT) return;
 		try {
 			flushModificationCache();
 		} finally {
-			((EclipseResource)getParent()).flushAncestors();
+			((EclipseResource)getParent()).flushWithAncestors();
 		}
 	}
 	
@@ -298,5 +298,18 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	 * Method prepareToBeDeleted is invoked by the move/delete hook to allow the
 	 * resource to prepare to be deleted.
 	 */
-	protected abstract void prepareToBeDeleted() throws CVSException;
+	protected void prepareToBeDeleted() throws CVSException {
+		// Flush the dirty info for the resource and it's ancestors.
+		// Although we could be smarter, we need to do this because the
+		// deletion may fail.
+		String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(getIResource());
+		if (indicator != null) {
+			flushWithAncestors();
+		}
+	}
+	
+	/*
+	 * Method syncInfoChanged is invoked by the sync file change listener.
+	 */
+	protected abstract void syncInfoChanged() throws CVSException;
 }

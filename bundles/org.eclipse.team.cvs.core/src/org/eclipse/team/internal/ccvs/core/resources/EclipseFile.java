@@ -463,7 +463,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		}
 	}
 
-	public void syncInfoChanged(ResourceSyncInfo info) throws CVSException {
+	public void syncInfoChanged() throws CVSException {
 		if (isIgnored()) {
 			// check to see if the file was previously marked as dirty
 			String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(getIResource());
@@ -471,12 +471,10 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 				((EclipseFolder)getParent()).adjustModifiedCount(false);
 			}
 			// make sure the file is no longer marked
-			if (indicator != null) {
-				EclipseSynchronizer.getInstance().setDirtyIndicator(getIResource(), null);
-			}
+			flushModificationCache();
 			return;
 		}
-		setModified(isModified(info));
+		setModified(isModified(getSyncInfo()));
 	}
 	
 	/**
@@ -532,7 +530,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		} catch (CVSException e) {
 			// flush any cached info for the file and it's parent's so they are recalculated.
 			try {
-				flushAncestors();
+				flushWithAncestors();
 			} catch (CVSException ex) {
 				// This is bad because now we have no clue as to whether the properties are up to date
 				// XXX Need a multi-status with original exception as well.
@@ -548,21 +546,6 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	protected void flushModificationCache() throws CVSException {
 		EclipseSynchronizer.getInstance().flushModificationCache(getIFile());
 
-	}
-	
-	/*
-	 * @see org.eclipse.team.internal.ccvs.core.resources.EclipseResource#prepareToBeDeleted()
-	 */
-	protected void prepareToBeDeleted() throws CVSException {
-		// Decrement the parent count for both managed and unmanaged files.
-		// For managed files, the sync info change following the delete will increment the count again
-		if (!isIgnored()) {
-			String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(getIFile());
-			if (indicator == EclipseSynchronizer.IS_DIRTY_INDICATOR) {
-				// If the file is mark as dirty, decrement the parent's dirty count
-				((EclipseFolder)getParent()).adjustModifiedCount(false);
-			}
-		}
 	}
 }
 

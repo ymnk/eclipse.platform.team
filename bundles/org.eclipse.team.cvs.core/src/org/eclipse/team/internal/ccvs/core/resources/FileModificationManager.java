@@ -10,12 +10,11 @@
  ******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.resources;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -35,7 +34,6 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
-import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
  * This class performs several functions related to determining the modified
@@ -140,14 +138,8 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 	 * @param resources
 	 */
 	public void syncInfoChanged(IResource[] resources) throws CVSException {
-		List files = new ArrayList();
 		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			if (resource.getType() == IResource.FILE) {
-				ICVSFile file = CVSWorkspaceRoot.getCVSFileFor((IFile)resource);
-				ResourceSyncInfo info = file.getSyncInfo();
-				((EclipseFile)file).syncInfoChanged(info);
-			}
+			((EclipseResource)CVSWorkspaceRoot.getCVSResourceFor(resources[i])).syncInfoChanged();
 		}
 	}
 	
@@ -173,6 +165,11 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 			// XXX Should wrap exception
 			throw new CoreException(e.getStatus());
 		}
+	}
+	
+	public void folderCreated(IFolder folder) throws CVSException {
+		EclipseFolder cvsFolder = (EclipseFolder)CVSWorkspaceRoot.getCVSFolderFor(folder);
+		cvsFolder.folderCreated();
 	}
 	
 	/*
