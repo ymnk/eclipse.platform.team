@@ -29,12 +29,18 @@ Package Specification</h2>
     when the remote state changes or when roots are added or removed.</li>
 </ul>
 <h3>Implementing a Subscriber </h3>
-<p>The subsciber maintains the synchronization state between its locla resources 
-  and their corresponding remotes.</p>
-<p>fetch the remote states (during a refresh)</p>
-<p>cache them locally (including state for files that do not exists locally)</p>
-<p>notify listeners of changes</p>
-<p>provide access to the cached state via members and getSyncInfo</p>
+<p>An implementation of a subscriber must provide:
+<ul>
+  <li>a subclass of Subcriber which maintains the synchronization state between its local resources 
+  and their corresponding remotes.</li>
+  <li>an implemenation of IRemoteResource which provides access to the contents
+  and other state of a remote resource that corresponds to a local resource</li>
+  <li>an implementation of IRemoteResourceComparator which is used by SyncInfo to determine the synchronization
+  state of a resource.</li>
+</ul>
+Optionally, a subscriber may provide a subclass of SyncInfo in order to customize the algorithm used to
+determine the synchronization state of a resource.
+</p>
 <h3>Additional Classes</h3>
 <p>The SubscriberSyncInfoCollector is used to collect the SyncInfo for out-of-sync 
   resources from a subscriber into a SyncInfoTree that can be used to, for example, 

@@ -21,17 +21,39 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 /**
  * A Subscriber provides synchronization between local resources and a
  * remote location that is used to share those resources.
- * 
- * A Subscriber is only required to send out change notification any time the sync
- * state of a resoure changes but the local state does not. For instance,
- * if the contents of a file have been modified or a file or folder has
- * been deleted, the Subscriber may or may not send out a SubscriberChangeEvent.SYNC_CHANGED
- * event. Also, if a project is deleted or closed, the Subscriber is not required to
- * issue a SubscriberChangeEvent.ROOT_REMOVED event. It is up to clients to requery the subscriber
+ * <p>
+ * When queried for the <code>SyncInfo</code> corresponding to a local resource using 
+ * <code>getSyncInfo(IResource)</code>, the subscriber should not contact the server. 
+ * Server round trips should only occur within the <code>refresh<code>
+ * method of the subscriber. Consequently,
+ * the implementation of a subscriber must cache enough state information for a remote resource to calculate the 
+ * synchronization state without contacting the server.  During a refresh, the latest remote resource state 
+ * information should be fetched and cached. For
+ * a subscriber that supports three-way compare, the refresh should also fetch the latest base state unless this is
+ * available by some other means (e.g. for some repository tools, the base state is persisted on disk with the
+ * local resources).
+ * </p>
+ * <p>
+ * After a refresh, the subscriber must notify any listeners of local resources whose corresponding remote resource 
+ * or base resource changed. The subscriber does not need to notify listeners when the state changes due to a local
+ * modification since local changes are available through the <code>IResource</code> delta mechanism. However, 
+ * the subscriber must
+ * cache enough information (e..g the local timestamp of when the file was in-sync with its corresponding remote 
+ * resource)
+ * to determine if the file represents an outgoing change so that <code>SyncInfo</code> obtained
+ * after a delta will indicate that the file has an outgoing change. The subscriber must also notify listeners 
+ * when roots and added 
+ * or removed. For example, a subscriber for a repository provider would fire a root added event when a project 
+ * was shared
+ * with a repository. No event is required when a root is deleted as this is available through the 
+ * <code>IResource</code> delta mechanism. It is up to clients to requery the subscriber
  * when the state of a resource changes locally by listening to IResource deltas.
+ * </p>
+ * <p>
+ * The remote and base states can also include the state for resources that do not exist locally (i.e outgoing deletions 
+ * or incoming additions). When queried for the members of a local resource, the subscriber should include any children
+ * for which a remote exists even if the local does not.
  * 
- * [Note: How can we allow the refresh() operation to optimize the sync
- * calculation based on the currently configured compare criteria?]
  */
 abstract public class Subscriber {
 
