@@ -19,6 +19,7 @@
 
 <extension-point id="fileTypes" name="File Types Registry"/>
 <extension-point id="ignore" name="Global Ignore Registry"/>
+<extension-point id="projectSets" name="Project Sets"/>
 
 <!-- Define some example text extensions. This will be done
      by other plugins later. -->

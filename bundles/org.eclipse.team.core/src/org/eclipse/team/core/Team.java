@@ -1,5 +1,3 @@
-package org.eclipse.team.core;
-
 /*******************************************************************************
  * Copyright (c) 2002 IBM Corporation and others.
  * All rights reserved.   This program and the accompanying materials
@@ -10,6 +8,7 @@ package org.eclipse.team.core;
  * Contributors:
  * IBM - Initial API and implementation
  ******************************************************************************/
+package org.eclipse.team.core;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -500,5 +499,30 @@ public final class Team {
 		} catch (TeamException ex) {
 			TeamPlugin.log(IStatus.WARNING, Policy.bind("TeamPlugin_setting_global_ignore_7"), ex); //$NON-NLS-1$
 		}
+	}
+	
+	public static IProjectSetSerializer getProjectSetSerializer(String id) {
+		TeamPlugin plugin = TeamPlugin.getPlugin();
+		if (plugin != null) {
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.PROJECT_SET_EXTENSION);
+			if (extension != null) {
+				IExtension[] extensions =  extension.getExtensions();
+				for (int i = 0; i < extensions.length; i++) {
+					IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
+					for (int j = 0; j < configElements.length; j++) {
+						String extensionId = configElements[j].getAttribute("id"); //$NON-NLS-1$
+						if (extensionId != null && extensionId.equals(id)) {
+							try {
+								return (IProjectSetSerializer)configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
+							} catch (CoreException e) {
+								TeamPlugin.log(e.getStatus());
+								return null;
+							}
+						}
+					}
+				}
+			}		
+		}
+		return null;
 	}
 }
