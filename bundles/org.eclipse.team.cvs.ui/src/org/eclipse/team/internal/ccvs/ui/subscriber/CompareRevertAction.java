@@ -27,7 +27,7 @@ public class CompareRevertAction extends CVSSubscriberAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.core.subscribers.MutableSyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
-		SyncInfo[] changed = syncSet.members();
+		SyncInfo[] changed = syncSet.getSyncInfos();
 		if (changed.length == 0) return;
 		
 		// The list of sync resources to be updated using "cvs update"

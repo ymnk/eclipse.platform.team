@@ -137,7 +137,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	 */
 	public void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		
-		final SyncInfo[] changed = syncSet.members();
+		final SyncInfo[] changed = syncSet.getSyncInfos();
 		if (changed.length == 0) return;
 		
 		// A list of files to be committed

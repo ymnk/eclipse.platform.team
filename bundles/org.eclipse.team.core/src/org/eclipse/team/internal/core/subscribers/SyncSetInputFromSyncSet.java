@@ -43,7 +43,7 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 	 */
 	protected void fetchInput(IProgressMonitor monitor) throws TeamException {
 		if (inputSyncSet == null) return;
-		SyncInfo[] infos = inputSyncSet.members();
+		SyncInfo[] infos = inputSyncSet.getSyncInfos();
 		for (int i = 0; i < infos.length; i++) {
 			collect(infos[i], monitor);
 		}

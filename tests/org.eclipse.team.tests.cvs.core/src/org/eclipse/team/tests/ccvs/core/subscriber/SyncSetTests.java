@@ -66,9 +66,9 @@ public class SyncSetTests extends CVSSyncSubscriberTest {
 					while(! done[0]) {
 						try {
 							set.add(new TestSyncInfo());
-							set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot(), IResource.DEPTH_INFINITE);
+							set.getSyncInfos(ResourcesPlugin.getWorkspace().getRoot(), IResource.DEPTH_INFINITE);
 							set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot());
-							set.members();
+							set.getSyncInfos();
 						} catch (Exception e) {
 							error[0] = new Status(IStatus.ERROR, "this", 1, "", e);
 							return error[0];						
@@ -91,9 +91,9 @@ public class SyncSetTests extends CVSSyncSubscriberTest {
 		
 		for(int i = 0; i < 10000; i++) {
 			set.add(new TestSyncInfo());
-			set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot(), IResource.DEPTH_INFINITE);
+			set.getSyncInfos(ResourcesPlugin.getWorkspace().getRoot(), IResource.DEPTH_INFINITE);
 			set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot());
-			set.members();
+			set.getSyncInfos();
 			set.members(ResourcesPlugin.getWorkspace().getRoot());
 			set.clear();		
 		}

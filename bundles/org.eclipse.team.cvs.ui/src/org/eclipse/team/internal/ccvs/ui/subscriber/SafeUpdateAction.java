@@ -77,9 +77,9 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 					if(promptForOverwrite(failedSet)) {
 						overwriteUpdate(failedSet, Policy.subMonitorFor(monitor, willFail.length * 100));
 						if (!failedSet.isEmpty()) {
-							MutableSyncInfoSet temp = new MutableSyncInfoSet(syncSet.members());
+							MutableSyncInfoSet temp = new MutableSyncInfoSet(syncSet.getSyncInfos());
 							temp.addAll(failedSet);
-							syncSet = new SelectionSyncInfoSet(temp.members());
+							syncSet = new SelectionSyncInfoSet(temp.getSyncInfos());
 						}
 					}
 				} else {
@@ -106,7 +106,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	 * @param monitor
 	 */
 	protected void safeUpdate(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
-		SyncInfo[] changed = syncSet.members();
+		SyncInfo[] changed = syncSet.getSyncInfos();
 		if (changed.length == 0) return;
 		
 		// The list of sync resources to be updated using "cvs update"

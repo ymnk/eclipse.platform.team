@@ -216,7 +216,7 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 
 	private SyncInfoDiffNode[] calculateRoots(SyncInfoSet set, IProgressMonitor monitor) {
 		commentRoots.clear();
-		SyncInfo[] infos = set.members();
+		SyncInfo[] infos = set.getSyncInfos();
 		monitor.beginTask("fetching from server", set.size() * 100);
 		for (int i = 0; i < infos.length; i++) {
 			if(monitor.isCanceled()) {

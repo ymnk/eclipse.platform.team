@@ -229,7 +229,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 					set.collect(event.getResult(), monitor);
 					break;
 				case SubscriberEvent.REMOVAL :
-					set.getSyncSet().remove(event.getResource(), event.getDepth() == IResource.DEPTH_INFINITE /* recurse */);
+					set.getSyncSet().remove(event.getResource(), event.getDepth());
 					break;
 			}
 		}

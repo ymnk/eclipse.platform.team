@@ -38,7 +38,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		}
 
 		public void run() {
-			ISelection selection = new StructuredSelection(getSyncInfoSet().members());
+			ISelection selection = new StructuredSelection(getSyncInfoSet().getSyncInfos());
 			if (!selection.isEmpty()) {
 				delegate.selectionChanged(this, selection);
 				delegate.run(this);
@@ -89,7 +89,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		if (viewer != null && getSyncInfoSet() != null) {
-			ISelection selection = new StructuredSelection(getSyncInfoSet().members());
+			ISelection selection = new StructuredSelection(getSyncInfoSet().getSyncInfos());
 			for (Iterator it = delegates.iterator(); it.hasNext(); ) {
 				CVSActionDelegate delegate = (CVSActionDelegate) it.next();
 				delegate.getDelegate().selectionChanged(delegate, selection);

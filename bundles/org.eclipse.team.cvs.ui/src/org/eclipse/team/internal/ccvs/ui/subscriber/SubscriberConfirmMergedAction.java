@@ -38,7 +38,7 @@ public class SubscriberConfirmMergedAction extends CVSSubscriberAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws CVSException {
-		SyncInfo[] syncResources = syncSet.members();
+		SyncInfo[] syncResources = syncSet.getSyncInfos();
 		monitor.beginTask(null, 100 * syncResources.length);
 		try {
 			for (int i = 0; i < syncResources.length; i++) {

@@ -29,7 +29,9 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	 * @param infos the <code>SyncInfo</code> instances to be contained by this set
 	 */
 	public SelectionSyncInfoSet(SyncInfo[] infos) {
-		super(infos);
+		for (int i = 0; i < infos.length; i++) {
+			internalAdd(infos[i]);
+		}
 	}
 	
 	public synchronized void remove(IResource local) {
@@ -65,7 +67,7 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	 * Removes all nodes from this set that are not auto-mergeable conflicts
 	 */
 	public void removeNonMergeableNodes() {
-		SyncInfo[] infos = members();
+		SyncInfo[] infos = getSyncInfos();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			if ((info.getKind() & SyncInfo.MANUAL_CONFLICT) != 0) {
@@ -80,7 +82,7 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	 * Indicate whether the set has nodes matching the given filter
 	 */
 	public boolean hasNodes(FastSyncInfoFilter filter) {
-		SyncInfo[] infos = members();
+		SyncInfo[] infos = getSyncInfos();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			if (info != null && filter.select(info)) {
@@ -94,7 +96,7 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	 * Removes all nodes from this set that do not match the given filter
 	 */
 	public void selectNodes(FastSyncInfoFilter filter) {
-		SyncInfo[] infos = members();
+		SyncInfo[] infos = getSyncInfos();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			if (info == null || !filter.select(info)) {
@@ -107,7 +109,7 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	 * Removes all nodes from this set that match the given filter
 	 */
 	public void rejectNodes(FastSyncInfoFilter filter) {
-		SyncInfo[] infos = members();
+		SyncInfo[] infos = getSyncInfos();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			if (info != null && filter.select(info)) {
@@ -121,7 +123,7 @@ public class SelectionSyncInfoSet extends SyncInfoSet {
 	 */
 	public SyncInfo[] getNodes(FastSyncInfoFilter filter) {
 		List result = new ArrayList();
-		SyncInfo[] infos = members();
+		SyncInfo[] infos = getSyncInfos();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			if (info != null && filter.select(info)) {

@@ -15,12 +15,11 @@ import java.util.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
 
 /**
- * A potentially dynamic collection of {@link SyncInfo} objects that is optimized 
- * for fast retrieval of out-of-sync resources. There are
+ * A potentially dynamic collection of {@link SyncInfo} objects that provides
+ * several methods for accessing the out-of-sync resources contained in the set. There are
  * generally two ways in which a sync info sets are used, both of which 
  * are implemented as subclasses of <code>SyncInfoSet</code>:
  * <ul>
@@ -44,110 +43,89 @@ import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
 public abstract class SyncInfoSet {
 	// fields used to hold resources of interest
 	// {IPath -> SyncInfo}
-	protected Map resources = Collections.synchronizedMap(new HashMap());
-	
-	// {IPath -> Set of deep out of sync child IResources}
-	// Weird thing is that the child set will include the parent if the parent is out of sync
-	private Map parents = Collections.synchronizedMap(new HashMap());
+	private Map resources = Collections.synchronizedMap(new HashMap());
 
 	// keep track of number of sync kinds in the set
 	private SyncInfoStatistics statistics = new SyncInfoStatistics();
 	
 	/**
-	 * Create an empty immutable set.
+	 * Create an empty set.
 	 */
 	protected SyncInfoSet() {
-	}
-	
-	/**
-	 * Create a new set that will contain the provided sync infos.
-	 * @param infos a list of <code>SyncInfo</code> that are added to
-	 * the new set. 
-	 */
-	protected SyncInfoSet(SyncInfo[] infos) {
-		this();
-		for (int i = 0; i < infos.length; i++) {
-			internalAdd(infos[i]);
-		}
 	}
 
 	/**
 	 * Return an array of <code>SyncInfo</code> for all out-of-sync resources that are contained by the set.
+	 * This call is equivalent in function to 
+	 * <code>getSyncInfos(ResourcesPlugin.getWorkspace().getRoot(), IResource.DEPTH_INFINITE)</code>
+	 * but is optimized to retrieve all contained <code>SyncInfo</code>.
 	 * @return an array of <code>SyncInfo</code>
 	 */
-	public synchronized SyncInfo[] members() {
+	public synchronized SyncInfo[] getSyncInfos() {
 		return (SyncInfo[]) resources.values().toArray(new SyncInfo[resources.size()]);
 	}
 	
 	/**
 	 * Return the immediate children of the given resource who are either out-of-sync 
-	 * or contain out-of-sync resources.
+	 * or are ancestors of out-of-sync resources. The default implementation traverses all
+	 * resources returned from <code>members()</code> and selects those that are
+	 * children of the resource. Subclasses may override to optimize.
 	 * 
 	 * @param resource the parent resource 
 	 * @return the children of the resource that are either out-of-sync or are ancestors of
 	 * out-of-sync resources contained in the set
 	 */
-	public synchronized IResource[] members(IResource resource) {
-		if (resource.getType() == IResource.FILE) return new IResource[0];
-		IContainer parent = (IContainer)resource;
-		if (parent.getType() == IResource.ROOT) return internalMembers((IWorkspaceRoot)parent);
-		// OPTIMIZE: could be optimized so that we don't traverse all the deep 
-		// children to find the immediate ones.
-		Set children = new HashSet();
-		IPath path = parent.getFullPath();
-		Set possibleChildren = (Set)parents.get(path);
-		if(possibleChildren != null) {
-			for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
-				Object next = it.next();
-				IResource element = (IResource)next;
-				IPath childPath = element.getFullPath();
-				IResource modelObject = null;
-				if(childPath.segmentCount() == (path.segmentCount() +  1)) {
-					modelObject = element;
-
-				} else if (childPath.segmentCount() > path.segmentCount()) {
-					IContainer childFolder = parent.getFolder(new Path(childPath.segment(path.segmentCount())));
-					modelObject = childFolder;
-				}
-				if (modelObject != null) {
-					children.add(modelObject);
-				}
+	public IResource[] members(IResource resource) {
+		if (resource.getType() == IResource.FILE) {
+			return new IResource[0];
+		}
+		IContainer container = (IContainer)resource;
+		IPath containerFullPath = container.getFullPath();
+		SyncInfo[] infos = getSyncInfos();
+		Set result = new HashSet();
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			IPath fullPath = info.getLocal().getFullPath();
+			if (containerFullPath.segmentCount() > fullPath.segmentCount() 
+					&& containerFullPath.isPrefixOf(fullPath)) {
+				result.add(container.findMember(fullPath.segment(containerFullPath.segmentCount())));
 			}
 		}
-		return (IResource[]) children.toArray(new IResource[children.size()]);
+		return (IResource[]) result.toArray(new IResource[result.size()]);
 	}
 	
 	/**
 	 * Return wether the given resource has any children in the sync set. The children
 	 * could be either out-of-sync resources that are contained by the set or containers
-	 * that are ancestors of out-of-sync resources contained by the set.
+	 * that are ancestors of out-of-sync resources contained by the set. The default implementation
+	 * invokes <code>members(IResource)</code> in order to determine if there are members for the
+	 * resource. Subclasses may override in order to optimize this.
 	 * @param resource the parent resource
 	 * @return the members of the parent in the set.
 	 */
-	public synchronized boolean hasMembers(IResource resource) {
-		if (resource.getType() == IResource.FILE) return false;
-		IContainer parent = (IContainer)resource;
-		if (parent.getType() == IResource.ROOT) return !resources.isEmpty();
-		IPath path = parent.getFullPath();
-		Set allDescendants = (Set)parents.get(path);
-		return (allDescendants != null && !allDescendants.isEmpty());
+	public boolean hasMembers(IResource resource) {
+		return members(resource).length > 0;
 	}
 	
 	/**
 	 * Return the <code>SyncInfo</code> for each out-of-sync resource in the subtree rooted at the given resource
-	 * to the depth specified. The depth is on of:
+	 * to the depth specified. The depth is one of:
 	 * <ul>
 	 * <li><code>IResource.DEPTH_ZERO</code>: the resource only,
 	 * <li><code>IResource.DEPTH_ONE</code>: the resource or its direct children,
 	 * <li><code>IResource.DEPTH_INFINITE</code>: the resource and all of it's descendants.
 	 * <ul>
 	 * If the given resource is out of sync, it will be included in the result.
+	 * <p>
+	 * The default implementation makes use of <code>getSyncInfo(IResource)</code>,
+	 * <code>members(IResource)</code> and <code>getSyncInfos()</code>
+	 * to provide the varying depths. Subclasses may override to optimize.
 	 * 
 	 * @param resource the root of the resource subtree
 	 * @param depth the depth of the subtree
 	 * @return the <code>SyncInfo</code> for any out-of-sync resources
 	 */
-	public synchronized SyncInfo[] getSyncInfo(IResource resource, int depth) {
+	public synchronized SyncInfo[] getSyncInfos(IResource resource, int depth) {
 		if (depth == IResource.DEPTH_ZERO || resource.getType() == IResource.FILE) {
 			SyncInfo info = getSyncInfo(resource);
 			if (info == null) {
@@ -174,29 +152,42 @@ public abstract class SyncInfoSet {
 		}
 		// if it's the root then return all out of sync resources.
 		if(resource.getType() == IResource.ROOT) {
-			return members();
+			return getSyncInfos();
 		}
 		// for folders return all children deep.
-		List infos = new ArrayList();
-		IResource[] children = internalGetDeepSyncInfo(resource);
-		for (int i = 0; i < children.length; i++) {
-			IResource child = children[i];
-			SyncInfo info = getSyncInfo(child);
-			if(info != null) {
-				infos.add(info);
-			} else {
-				TeamPlugin.log(IStatus.INFO, "missing sync info: " + child.getFullPath(), null);
+		return internalGetDeepSyncInfo((IContainer)resource);
+	}
+
+	/*
+	 * Return the <code>SyncInfo</code> for all out-of-sync resources in the
+	 * set that are at or below the given resource in the resource hierarchy.
+	 * @param resource the root resource. This method is used by 
+	 * <code>getSyncInfos(IResource, int)</code> when the depth is 
+	 * <code>IResource.DEPTH_INFINITE</code> and the resource is a container.
+	 * @return the <code>SyncInfo</code> for all out-of-sync resources at or below the given resource
+	 */
+	private SyncInfo[] internalGetDeepSyncInfo(IContainer container) {
+		IPath containerFullPath = container.getFullPath();
+		SyncInfo[] infos = getSyncInfos();
+		Set result = new HashSet();
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			IPath fullPath = info.getLocal().getFullPath();
+			if (containerFullPath.isPrefixOf(fullPath)) {
+				result.add(info);
 			}
 		}
-		return (SyncInfo[]) infos.toArray(new SyncInfo[infos.size()]);
+		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
 
 	/**
-	 * Return all out-of-sync resources contained in this set.
-	 * @return all out-of-sync resources
+	 * Return all out-of-sync resources contained in this set. The default implementation
+	 * uses <code>getSyncInfos()</code> to determine the resources contained in the set.
+	 * Subclasses may override to optimize.
+	 * @return all out-of-sync resources contained in the set
 	 */
-	public synchronized IResource[] getResources() {
-		SyncInfo[] infos = members();
+	public IResource[] getResources() {
+		SyncInfo[] infos = getSyncInfos();
 		List resources = new ArrayList();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
@@ -225,7 +216,7 @@ public abstract class SyncInfoSet {
 
 	/**
 	 * Return the number of out-of-sync resources in the given set whose sync kind
-	 * matches the given kind and mask (e.g. <code>SyncInfo#getKind() & mask == kind</code>).
+	 * matches the given kind and mask (e.g. <code>(SyncInfo#getKind() & mask) == kind</code>).
 	 * @param kind the sync kind
 	 * @param mask the sync kind mask
 	 * @return the number of matching resources in the set.
@@ -235,8 +226,8 @@ public abstract class SyncInfoSet {
 	}
 	
 	/**
-	 * Returns true if there are any conflicting nodes in the set, and
-	 * false otherwise.
+	 * Returns <code>true</code> if there are any conflicting nodes in the set, and
+	 * <code>false</code> otherwise.
 	 */
 	public boolean hasConflicts() {
 		return countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK) > 0;
@@ -249,22 +240,12 @@ public abstract class SyncInfoSet {
 	public synchronized boolean isEmpty() {
 		return resources.isEmpty();
 	}
-
-	/**
-	 * Add the <code>SyncInfo</code> to the set, adjusting any internal data structures.
-	 * @param info the <code>SyncInfo</code> being added.
-	 */
-	protected synchronized void internalAdd(SyncInfo info) {
-		internalChange(info);
-		IResource local = info.getLocal();
-		addToParents(local, local);
-	}
 	
 	/**
-	 * Change the sync info for a resource to be the supplied sync info.
+	 * Add the <code>SyncInfo</code> to the set, replacing any previously existing one.
 	 * @param info the new <code>SyncInfo</code>
 	 */
-	protected synchronized void internalChange(SyncInfo info) {
+	protected synchronized void internalAdd(SyncInfo info) {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		SyncInfo oldSyncInfo = (SyncInfo)resources.put(path, info); 
@@ -275,49 +256,7 @@ public abstract class SyncInfoSet {
 			statistics.add(info);
 		}
 	}
-
-	/*
-	 * This sync set maintains a data structure that maps a folder to the
-	 * set of out-of-sync resources at or below the folder. This method updates
-	 * this data structure. It also invokes the <code>internalAddedSubtreeRoot</code>
-	 * for the highest added parent to allow subclass to record this in change events.
-	 */
-	private boolean addToParents(IResource resource, IResource parent) {
-		if (parent.getType() == IResource.ROOT) {
-			return false;
-		}
-		// this flag is used to indicate if the parent was previosuly in the set
-		boolean addedParent = false;
-		if (parent.getType() == IResource.FILE) {
-			// the file is new
-			addedParent = true;
-		} else {
-			Set children = (Set)parents.get(parent.getFullPath());
-			if (children == null) {
-				children = new HashSet();
-				parents.put(parent.getFullPath(), children);
-				// this is a new folder in the sync set
-				addedParent = true;
-			}
-			children.add(resource);
-		}
-		// if the parent already existed and the resource is new, record it
-		if (!addToParents(resource, parent.getParent()) && addedParent) {
-			internalAddedSubtreeRoot(parent);
-		}
-		return addedParent;
-	}
 	
-	/**
-	 * This method is invoked when a resource is added to the sync set.
-	 * The argument will be the highest node that previously had no
-	 * descendants in the sync set but now has descendants.
-	 * Subclasses may override this method in order to capture
-	 * this event.
-	 * @param parent the added subtree root
-	 */
-	protected abstract void internalAddedSubtreeRoot(IResource parent);
-
 	/**
 	 * Remove the resource from the set, updating all internal data structures.
 	 * @param resource the resource to be removed
@@ -329,65 +268,9 @@ public abstract class SyncInfoSet {
 		if (info != null) {
 			statistics.remove(info);
 		}
-		removeFromParents(resource, resource);
 		return info;
 	}
 	
-	/*
-	 * Recursively remove the resource from it's parents in the internal data
-	 * structures of the set. Also, invoke the <code>internalRemoveSubtreeRoot</code>
-	 * method to allow subclass to include the subtree removal in a change event.
-	 */
-	private boolean removeFromParents(IResource resource, IResource parent) {
-		if (parent.getType() == IResource.ROOT) {
-			return false;
-		}
-		// this flag is used to indicate if the parent was removed from the set
-		boolean removedParent = false;
-		if (parent.getType() == IResource.FILE) {
-			// the file will be removed
-			removedParent = true;
-		} else {
-			Set children = (Set)parents.get(parent.getFullPath());
-			if (children != null) {
-				children.remove(resource);
-				if (children.isEmpty()) {
-					parents.remove(parent.getFullPath());
-					removedParent = true;
-				}
-			}
-		}
-		//	if the parent wasn't removed and the resource was, record it
-		if (!removeFromParents(resource, parent.getParent()) && removedParent) {
-			internalRemovedSubtreeRoot(parent);
-		}
-		return removedParent;
-	}
-	
-	/**
-	 * This method is invoked when a resource is removed from the set.
-	 * The resource argument is the highest resource that used to have
-	 * descendants in the set but no longer does.
-	 * @param parent the removed subtree root
-	 */
-	protected abstract void internalRemovedSubtreeRoot(IResource parent);
-
-	/*
-	 * Return the projects that contain out-of-sync resources in the set
-	 */
-	private IResource[] internalMembers(IWorkspaceRoot root) {
-		Set possibleChildren = parents.keySet();
-		Set children = new HashSet();
-		for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
-			Object next = it.next();
-			IResource element = root.findMember((IPath)next);
-			if (element != null) {
-				children.add(element.getProject());
-			}
-		}
-		return (IResource[]) children.toArray(new IResource[children.size()]);
-	}
-
 	/**
 	 * Registers the given listener for sync info set notifications if the
 	 * <code>SyncInfoSet</code> implementation supports change notification.
@@ -416,28 +299,14 @@ public abstract class SyncInfoSet {
 	 */
 	protected synchronized void clear() {
 		resources.clear();
-		parents.clear();
 		statistics.clear();
-	}
-	
-	/**
-	 * Return the <code>SyncInfo</code> for all out-of-sync resources in the
-	 * set that are at or below the given resource in the resource hierarchy.
-	 * @param resource the root resource
-	 * @return the <code>SyncInfo</code> for all out-of-sync resources at or below the given resource
-	 */
-	protected synchronized IResource[] internalGetDeepSyncInfo(IResource resource) {
-		// The parent map contains a set of all out-of-sync children
-		Set allChildren = (Set)parents.get(resource.getFullPath());
-		if (allChildren == null) return new IResource[0];
-		return (IResource[]) allChildren.toArray(new IResource[allChildren.size()]);
 	}
 
 	/**
 	 * Run the given runnable. For mutable subclasses this operation
 	 * will block other threads from modifying the 
 	 * set and postpone any change notifications until after the runnable
-	 * has been executed.
+	 * has been executed. Mutable subclasses must override.
 	 * @param runnable a runnable
 	 * @param progress a progress monitor or <code>null</code>
 	 */

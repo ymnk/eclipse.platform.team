@@ -54,8 +54,8 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	public MutableSyncInfoSet(SyncInfo[] infos) {
 		// Use the add method so out internal data structures are updated.
 		// We don't need to worry about event generation since no listeners can be registered yet.
+		beginInput();
 		try {
-			beginInput();
 			for (int i = 0; i < infos.length; i++) {
 				SyncInfo info = infos[i];
 				add(info);
@@ -103,8 +103,8 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * @param info
 	 */
 	public void add(SyncInfo info) {
+		beginInput();
 		try {
-			beginInput();
 			internalAdd(info);
 			changes.added(info);
 			IResource local = info.getLocal();
@@ -119,8 +119,8 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * @param set the set whose sync info should be added to this set
 	 */
 	public void addAll(SyncInfoSet set) {
+		beginInput();
 		try {
-			beginInput();
 			SyncInfo[] infos = set.getSyncInfos();
 			for (int i = 0; i < infos.length; i++) {
 				add(infos[i]);
@@ -136,8 +136,8 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * @param info the new <code>SyncInfo</code> for the corresponding local resource
 	 */
 	public void changed(SyncInfo info) {
+		beginInput();
 		try {
-			beginInput();
 			internalAdd(info);
 			changes.changed(info);
 		} finally {
@@ -150,8 +150,8 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * @param resource the resource to be removed
 	 */
 	public void remove(IResource resource) {
+		beginInput();
 		try {
-			beginInput();
 			SyncInfo info = internalRemove(resource);
 			removeFromParents(resource, resource);
 			changes.removed(resource, info);
@@ -165,8 +165,8 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * Reset the sync set so it is empty.
 	 */
 	public void clear() {
+		beginInput();
 		try {
-			beginInput();
 			super.clear();
 			synchronized(this) {
 				parents.clear();
@@ -189,8 +189,8 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * @param depth the depth of the subtree
 	 */
 	public void remove(IResource resource, int depth) {
+		beginInput();
 		try {
-			beginInput();
 			if (getSyncInfo(resource) != null) {
 				remove(resource);
 			}
