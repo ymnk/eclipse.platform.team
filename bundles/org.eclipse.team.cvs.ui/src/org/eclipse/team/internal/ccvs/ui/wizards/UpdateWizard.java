@@ -17,7 +17,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.client.Command;
@@ -35,6 +34,7 @@ public class UpdateWizard extends ResizableWizard {
 	private TagSelectionWizardPage tagSelectionPage;
 	
 	public UpdateWizard(IWorkbenchPart part, ResourceMapping[] mappers) {
+        super("UpdateWizard", CVSUIPlugin.getPlugin().getDialogSettings()); //$NON-NLS-1$
 		this.part = part;
 		this.mappers = mappers;
 		setWindowTitle(Policy.bind("UpdateWizard.title")); //$NON-NLS-1$
