@@ -12,7 +12,6 @@ package org.eclipse.team.core.subscribers.utils;
 
 import java.util.*;
 
-import org.eclipse.core.internal.jobs.JobManager;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
@@ -53,7 +52,7 @@ public abstract class SynchronizationCacheRefreshOperation {
 		try {
 			// Get a scheduling rule on the project since CVS may obtain a lock higher then
 			// the resource itself.
-			JobManager.getInstance().beginRule(rule, monitor);
+			Platform.getJobManager().beginRule(rule, monitor);
 			if (!resource.getProject().isAccessible()) {
 				// The project is closed so silently skip it
 				return new IResource[0];
@@ -73,7 +72,7 @@ public abstract class SynchronizationCacheRefreshOperation {
 				sub.done();	 
 			}
 		} finally {
-			JobManager.getInstance().endRule(rule);
+			Platform.getJobManager().endRule(rule);
 			monitor.done();
 		}
 		if (changedResources == null) return new IResource[0];
