@@ -18,7 +18,7 @@ import org.eclipse.team.core.TeamException;
  * It does so in an optimal way by storing the bytes only for those resources
  * whose remote differ from the base bytes stored in the base synchronization cache.
  */
-public class DescendantSynchronizationCache extends SynchronizationCache {
+public abstract class DescendantSynchronizationCache extends SynchronizationCache {
 	SynchronizationCache baseCache, remoteCache;
 
 	public DescendantSynchronizationCache(SynchronizationCache baseCache, SynchronizationCache remoteCache) {
@@ -96,16 +96,13 @@ public class DescendantSynchronizationCache extends SynchronizationCache {
 	 * This method indicates whether the remote bytes are a later revision or version
 	 * on the same line-of-descent as the base. A line of descent may be a branch or a fork
 	 * (depending on the terminology used by the versioing server).
-	 * By deafautl, this method returns <code>true</code>. Subclass may override.
 	 * @param resource the local resource
 	 * @param baseBytes the base bytes for the local resoource
 	 * @param remoteBytes the remote bytes for the local resoource
 	 * @return whether the remote bytes are later on the same line-of-descent as the base bytes
 	 */
-	protected boolean isDescendant(IResource resource, byte[] baseBytes, byte[] remoteBytes) throws TeamException {
-		return true;
-	}
-
+	protected abstract boolean isDescendant(IResource resource, byte[] baseBytes, byte[] remoteBytes) throws TeamException;
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.AbstractSynchronizationCache#setRemoteDoesNotExist(org.eclipse.core.resources.IResource)
 	 */
