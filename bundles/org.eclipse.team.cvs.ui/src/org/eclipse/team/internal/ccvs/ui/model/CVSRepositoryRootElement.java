@@ -5,6 +5,7 @@ package org.eclipse.team.internal.ccvs.ui.model;
  * All Rights Reserved.
  */
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
@@ -44,7 +45,7 @@ public class CVSRepositoryRootElement extends CVSModelElement {
 	public Object getParent(Object o) {
 		return null;
 	}
-	public Object[] getChildren(Object o) {
+	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
 		ICVSRepositoryLocation location = null;
 		if (o instanceof ICVSRepositoryLocation) {
 			location = (ICVSRepositoryLocation)o;

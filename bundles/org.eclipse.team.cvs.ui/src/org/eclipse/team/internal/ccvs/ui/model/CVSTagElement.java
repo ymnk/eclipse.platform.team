@@ -10,11 +10,8 @@
  ******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.model;
  
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -56,25 +53,13 @@ public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	/**
 	 * Return children of the root with this tag.
 	 */
-	public Object[] getChildren(Object o) {
+	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
 		// Return the remote elements for the tag
-		final Object[][] result = new Object[1][];
-		try {
-			CVSUIPlugin.runWithProgress(null, true /*cancelable*/, new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					try {
-						result[0] = CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
-					} catch (TeamException e) {
-						throw new InvocationTargetException(e);
-					}
-				}
-			});
-		} catch (InterruptedException e) {
-			return new Object[0];
-		} catch (InvocationTargetException e) {
-			handle(e.getTargetException());
-		}
-		return result[0];
+		return CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
+	}
+	
+	public boolean isNeedsProgress() {
+		return true;
 	}
 	public ImageDescriptor getImageDescriptor(Object object) {
 		if (!(object instanceof CVSTagElement)) return null;

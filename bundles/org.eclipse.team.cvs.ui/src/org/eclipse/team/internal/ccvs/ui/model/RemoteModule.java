@@ -49,40 +49,6 @@ public class RemoteModule extends CVSModelElement implements IAdaptable {
 	}
 	
 	/**
-	 * Returns the children of this object.  When this object
-	 * is displayed in a tree, the returned objects will be this
-	 * element's children.  Returns an empty enumeration if this
-	 * object has no children. The children of the RemoteModule
-	 * are the versions for that module.
-	 */
-	public Object[] getChildren(Object o) {
-		final Object[][] result = new Object[1][];
-		try {
-			CVSUIPlugin.runWithProgress(null, true /*cancelable*/, new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
-					try {
-						manager.refreshDefinedTags(folder, false /* replace */, false, monitor);
-					} catch(TeamException e) {
-						// continue
-					}
-					CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(folder, CVSTag.VERSION);
-					Object[] versions = new Object[tags.length];
-					for (int i = 0; i < versions.length; i++) {
-						versions[i] = folder.forTag(tags[i]);
-					}
-					result[0] = versions;
-				}
-			});
-		} catch (InterruptedException e) {
-			return new Object[0];
-		} catch (InvocationTargetException e) {
-			handle(e.getTargetException());
-		}
-		return result[0];
-	}
-	
-	/**
 	 * Returns an image to be used for displaying an object in the desktop.
 	 * @param object The object to get an image for.
 	 * @param owner The viewer that the image will be used in.  The image will
@@ -126,4 +92,36 @@ public class RemoteModule extends CVSModelElement implements IAdaptable {
 	public ICVSRemoteResource getCVSResource() {
 		return folder;
 	}
+	
+	/**
+	 * Returns the children of this object.  When this object
+	 * is displayed in a tree, the returned objects will be this
+	 * element's children.  Returns an empty enumeration if this
+	 * object has no children. The children of the RemoteModule
+	 * are the versions for that module.
+	 *
+	 * @see org.eclipse.team.internal.ccvs.ui.model.CVSModelElement#internalGetChildren(java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
+		RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+		try {
+			manager.refreshDefinedTags(folder, false /* replace */, false, monitor);
+		} catch(TeamException e) {
+			// continue
+		}
+		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(folder, CVSTag.VERSION);
+		Object[] versions = new Object[tags.length];
+		for (int i = 0; i < versions.length; i++) {
+			versions[i] = folder.forTag(tags[i]);
+		}
+		return versions;
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.ui.model.CVSModelElement#isNeedsProgress()
+	 */
+	public boolean isNeedsProgress() {
+		return true;
+	}
+
 }

@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -50,7 +51,7 @@ public class GroupedByVersionCategory extends CVSModelElement implements IAdapta
 	 * 
 	 * XXX This method looks wrong to me somehow
 	 */
-	public Object[] getChildren(Object o) {
+	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
 		//String -> CTags[]
 		Map mappings = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownProjectsAndVersions(repository);
 		Map remoteVersionModules = new HashMap();

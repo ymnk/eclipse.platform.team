@@ -153,6 +153,16 @@ public class RepositoriesView extends ViewPart {
 		};
 		WorkbenchHelp.setHelp(newAnonAction, IHelpContextIds.NEW_DEV_ECLIPSE_REPOSITORY_LOCATION_ACTION);
 
+		// New Working Set (popup)
+		final Action newWorkingSetAction = new Action(Policy.bind("RepositoriesView.newWorkingSet"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION)) { //$NON-NLS-1$
+			public void run() {
+				CVSWorkingSetWizard wizard = new CVSWorkingSetWizard();
+				WizardDialog dialog = new WizardDialog(shell, wizard);
+				dialog.open();
+			}
+		};
+		//WorkbenchHelp.setHelp(newAction, IHelpContextIds.NEW_CVS_WORKING_SET_ACTION);
+		
 		// Properties
 		propertiesAction = new PropertyDialogAction(shell, viewer);
 		getViewSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.PROPERTIES, propertiesAction);		
@@ -198,6 +208,7 @@ public class RepositoriesView extends ViewPart {
 				}
 				sub.add(newAction);
 				sub.add(newAnonAction);
+				sub.add(newWorkingSetAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
