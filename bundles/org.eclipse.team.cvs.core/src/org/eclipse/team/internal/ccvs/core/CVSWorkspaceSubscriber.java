@@ -145,9 +145,9 @@ public class CVSWorkspaceSubscriber implements ISyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
 	 */
-	public SyncInfo getSyncInfo(IResource resource) {		
+	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) {		
 		try {
-			return new SyncInfo(resource, CVSWorkspaceRoot.getRemoteResourceFor(resource), getRemoteResource(resource), this);
+			return SyncInfo.computeSyncKind(resource, CVSWorkspaceRoot.getRemoteResourceFor(resource), getRemoteResource(resource), this, monitor);
 		}  catch (TeamException e) {
 			// log this error?
 			return null;

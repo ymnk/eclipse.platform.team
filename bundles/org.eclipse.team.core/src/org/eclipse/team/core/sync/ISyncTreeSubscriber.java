@@ -115,13 +115,15 @@ public interface ISyncTreeSubscriber {
 	 * or for resources which have no corresponding remote resource.
 	 * </p>
 	 * <p> 
-	 * This is a fast operation; the repository is not contacted.
+	 * This method may take some time; it depends on the comparison criteria
+	 * that is used to calculate the synchronization state (e.g. using content
+	 * or only timestamps).
 	 * </p>
 	 *
 	 * @param resource the resource of interest
 	 * @return sync info
 	 */
-	public SyncInfo getSyncInfo(IResource resource); 
+	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor); 
 	
 	/**
 	 * Return <code>true

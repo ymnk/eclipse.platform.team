@@ -126,18 +126,20 @@ public class SyncInfo {
 	 private IRemoteResource base;
 	 private IRemoteResource remote;
 	 private ISyncTreeSubscriber subscriber;
+	 
+	 private int syncKind;
 	
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, ISyncTreeSubscriber subscriber) {
+	private SyncInfo(int syncKind, IResource local, IRemoteResource base, IRemoteResource remote, ISyncTreeSubscriber subscriber) {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
 		this.subscriber = subscriber;
+		this.syncKind = syncKind;
 	}
-	
-	
+		
 	/**
 	 * Returns the state of the local resource. Note that the
 	 * resource may or may not exist.
@@ -187,26 +189,28 @@ public class SyncInfo {
 	}
 	
 	/**
-	 * Returns the nature of synchronization of the local and
-	 * remote resources.
+	 * Returns the kind of synchronization for this node. 
+	 * @return
 	 */
-	public int getSyncKind(IProgressMonitor progress) {
-		
-		// TODO: should we cache the sync state for next time. Is this object then immutable?
-		// what if the comparison criteria changes? Maybe we need an event marking that the
-		// criteria has changed???
+	public int getKind() {
+		return syncKind;
+	}
+	
+	/**
+	 * Computes the nature of synchronization of the local and remote resources based on the 
+	 * default comparison criteria in the subscriber.
+	 * <p>
+	 * This operation is long running.
+	 * </p>
+	 */
+	static public SyncInfo computeSyncKind(IResource local, IRemoteResource base, IRemoteResource remote, ISyncTreeSubscriber subscriber, IProgressMonitor progress) {
 		
 		progress = Policy.monitorFor(progress);
 		int description = IN_SYNC;
 	
-		IResource local = getLocal();
-		IRemoteResource remote = getRemote();
-		IRemoteResource base = getBase();
-		
-		ISyncTreeSubscriber subscriber = getSubscriber();
 		ComparisonCriteria criteria = subscriber.getCurrentComparisonCriteria();
 		
-		boolean localExists = getLocal().exists();
+		boolean localExists = local.exists();
 	
 		if (subscriber.isThreeWay()) {
 			if (base == null) {
@@ -281,7 +285,7 @@ public class SyncInfo {
 				}
 			}
 		}
-		return description;
+		return new SyncInfo(description, local, base, remote, subscriber);
 	}
 
 	static public boolean isInSync(int kind) {
