@@ -281,7 +281,7 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 		// special handling for folders, the generic sync algorithm doesn't work well
 		// with CVS because folders are not in namespaces (e.g. they exist in all versions
 		// and branches).
-		if(isContainer()) {
+		if(isContainer() && isThreeWay()) {
 			int folderKind = IRemoteSyncElement.IN_SYNC;
 			IResource local = getLocal();
 			ICVSRemoteFolder remote = (ICVSRemoteFolder)getRemote();
@@ -293,7 +293,7 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 					// conflicting deletion ignore
 				}
 			} else {
-				if(remote == null) { 
+				if(remote == null) {
 					if(cvsFolder.isCVSFolder()) {
 						folderKind = IRemoteSyncElement.INCOMING | IRemoteSyncElement.DELETION;
 					} else {
@@ -306,7 +306,7 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 					// we aren't checking the folder mappings to ensure that they are the same.
 				}
 			}
-			return isThreeWay() ? folderKind : folderKind & IRemoteSyncElement.CHANGE_MASK;
+			return folderKind;
 		}
 		
 		// 1. Run the generic sync calculation algorithm, then handle CVS specific

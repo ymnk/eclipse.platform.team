@@ -5,6 +5,7 @@ package org.eclipse.team.ui.sync;
  * All Rights Reserved.
  */
  
+import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
 import org.eclipse.compare.BufferedContent;
@@ -18,10 +19,17 @@ import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -47,6 +55,7 @@ import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.views.navigator.ResourceNavigator;
 import org.eclipse.ui.views.navigator.ShowInNavigatorAction;
 
@@ -194,10 +203,12 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 	 */
 	protected void fillContextMenu(IMenuManager manager) {
 		manager.add(expandAll);
-		manager.add(removeFromTree);
-		manager.add(copyAllRightToLeft); 
+		manager.add(removeFromTree); 
 		if (showInNavigator != null) {
 			manager.add(showInNavigator);
+		}
+		if(syncMode == SyncView.SYNC_COMPARE) {
+			manager.add(copyAllRightToLeft);
 		}
 	}
 	
@@ -270,10 +281,7 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 				// mark all selected nodes as in sync
 				for (Iterator it = ((IStructuredSelection)s).iterator(); it.hasNext();) {
 					Object element = it.next();
-					if(element instanceof TeamFile) {
-						TeamFile f = (TeamFile)element;
-						f.setKind(IRemoteSyncElement.IN_SYNC);					
-					}
+					setAllChildrenInSync((IDiffElement)element);
 				}
 				refresh();				
 			}
@@ -286,9 +294,32 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 					return;
 				}
 				for (Iterator it = ((IStructuredSelection)s).iterator(); it.hasNext();) {
-					Object element = it.next();
+					final Object element = it.next();
 					if(element instanceof DiffElement) {
-						copyAllRightToLeft((DiffElement)element);
+						try {
+							new ProgressMonitorDialog(getTree().getShell()).run(false, false, new IRunnableWithProgress() {
+								public void run(IProgressMonitor monitor)
+									throws InvocationTargetException, InterruptedException {
+										try {
+											ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+												public void run(IProgressMonitor monitor) throws CoreException {
+													try {
+														monitor.beginTask("Copying right contents into workspace", 100);
+														copyAllRightToLeft((DiffElement)element, Policy.subMonitorFor(monitor, 100));
+													} finally {
+														monitor.done();
+													}
+												}
+											}, monitor);
+										} catch(CoreException e) {
+											throw new InvocationTargetException(e);
+										}
+									}
+							});
+						} catch(InvocationTargetException e) {
+							ErrorDialog.openError(WorkbenchPlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getShell(), Policy.bind("CatchupReleaseViewer.errorCopyAllRightToLeft"), null, null); //$NON-NLS-1$
+						} catch(InterruptedException e) {
+						}														
 					}						
 				}
 				refresh();				
@@ -344,16 +375,32 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 		showOnlyConflicts.setChecked(false);
 		setFilters(CategoryFilter.SHOW_INCOMING| CategoryFilter.SHOW_CONFLICTS | CategoryFilter.SHOW_OUTGOING);
 	}
-	
-	protected void copyAllRightToLeft(IDiffElement element) {
+
+	/**
+	 * Method setAllChildrenInSync.
+	 * @param iDiffElement
+	 */
+	private void setAllChildrenInSync(IDiffElement element) {
 		if(element instanceof DiffContainer) {
 			DiffContainer container = (DiffContainer)element;
 			IDiffElement[] children = container.getChildren();
 			for (int i = 0; i < children.length; i++) {
-				copyAllRightToLeft(children[i]);
+				setAllChildrenInSync(children[i]);
+			}			
+		}
+		((DiffElement)element).setKind(IRemoteSyncElement.IN_SYNC);
+	}
+	
+	protected void copyAllRightToLeft(IDiffElement element, IProgressMonitor monitor) throws CoreException {
+		if(element instanceof DiffContainer) {
+			DiffContainer container = (DiffContainer)element;
+			IDiffElement[] children = container.getChildren();
+			for (int i = 0; i < children.length; i++) {
+				copyAllRightToLeft(children[i], monitor);
 			}
 		} else if(element instanceof TeamFile) {
 			TeamFile file = (TeamFile)element;
+			file.setProgressMonitor(monitor);
 			if(file.getKind() != IRemoteSyncElement.IN_SYNC) {
 				if(file.getRight() == null || file.getLeft() == null) {
 					file.copy(false /* right to left */);
@@ -370,6 +417,7 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 					}
 				}
 			}
+			file.setProgressMonitor(null);
 		}
 	}
 	

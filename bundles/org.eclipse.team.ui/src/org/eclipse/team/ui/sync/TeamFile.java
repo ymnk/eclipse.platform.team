@@ -11,7 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.ITypedElement;
-import org.eclipse.compare.structuremergeviewer.DiffContainer;
 import org.eclipse.compare.structuremergeviewer.DiffElement;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
@@ -60,7 +59,9 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 	private TypedBufferedContent commonByteContents;
 	private TypedBufferedContent remoteByteContents;
 	
-	boolean modified = false;
+	boolean hasBeenSaved = false;
+
+	private IProgressMonitor monitor;
 	
 	/**
 	 * Creates a new file node.
@@ -168,8 +169,8 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 	 * @see ITypedInput#getName
 	 */
 	public String getName() {
-		if(modified) {
-			return mergeResource.getName() + " (merged)";
+		if(hasBeenSaved) {
+			return "<" + mergeResource.getName() + ">";
 		} else {
 			return mergeResource.getName();
 		}
@@ -274,14 +275,13 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		} else {
 			setKind(OUTGOING | (getKind() & Differencer.CHANGE_TYPE_MASK));
 		}
-		
-		// update the UI with the sync state change.
-		fireThreeWayInputChange();
+		hasBeenSaved = false;
+	}
+	
+	public void setProgressMonitor(IProgressMonitor monitor) {
+		this.monitor = monitor;
 	}
 		
-	/**
-	 * Saves cached copy to disk and clears dirty flag.
-	 */
 	private void saveChanges(final InputStream is) throws CoreException {
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -296,8 +296,12 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 						}
 					} else {
 						file.delete(false, true, monitor);
+						deleteParents(getParent(), getResource().getParent());
 					}
-					modified = true;
+					hasBeenSaved = true;
+
+					// update the UI with the sync state change.
+					fireThreeWayInputChange();
 				} catch (CoreException e) {
 					throw new InvocationTargetException(e);
 				}
@@ -315,9 +319,24 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 		}
 	}
 	
+	private void deleteParents(IDiffContainer parentNode, IContainer parentFolder) throws CoreException {
+		if(parentFolder.members().length == 0 && parentFolder.getType() != IResource.PROJECT) {
+			IContainer parent = parentFolder.getParent();
+			parentFolder.delete(false, null);
+			if(parentNode instanceof ChangedTeamContainer) {
+				((ChangedTeamContainer)parentNode).setKind(IRemoteSyncElement.IN_SYNC);
+			}
+			deleteParents(parentNode.getParent(), parent);
+		}
+	}
+	
 	private void run(IRunnableWithProgress runnable) throws CoreException {
 		try {
-			new ProgressMonitorDialog(shell).run(false, false, runnable);
+			if(monitor == null) {
+				new ProgressMonitorDialog(shell).run(false, false, runnable);
+			} else {
+				runnable.run(monitor);
+			}
 		} catch (InvocationTargetException e) {
 			if (e.getTargetException() instanceof CoreException) {
 				throw (CoreException)e.getTargetException();
@@ -338,5 +357,9 @@ public class TeamFile extends DiffElement implements ICompareInput, ITeamNode {
 			for (int i = listenerArray.length; --i >= 0;)
 				 ((ICompareInputChangeListener) listenerArray[i]).compareInputChanged(this);
 		}
+	}
+	
+	public boolean hasBeenSaved() {
+		return hasBeenSaved;
 	}
 }
