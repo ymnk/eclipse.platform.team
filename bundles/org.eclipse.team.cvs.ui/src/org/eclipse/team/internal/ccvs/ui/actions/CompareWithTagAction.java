@@ -19,7 +19,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.events.TreeAdapter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -28,8 +27,6 @@ import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CompareParticipant;
 import org.eclipse.team.ui.synchronize.subscriber.*;
 import org.eclipse.team.ui.synchronize.viewers.*;
-import org.eclipse.team.ui.synchronize.viewers.CompareDialog;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoCompareInput;
 
 public class CompareWithTagAction extends WorkspaceAction {
 
@@ -50,25 +47,17 @@ public class CompareWithTagAction extends WorkspaceAction {
 					public void run() {
 						if (event.getChanges().length == 0) {
 							MessageDialog.openInformation(getShell(), "Compare Complete", "No changes found comparing resources");
+							return;
 						}
-						if (isFolderCompare(resources)) {
-							compareAndOpenDialog(event, participant);
-						} else {
-							MessageDialog.openInformation(getShell(), "Compare Complete", event.getChanges().length + " change(s) found comparing " + resources.length + " files. Compare editors will now be opened to show the changes.");
+						if (isSingleFileCompare(resources)) {
 							compareAndOpenEditors(event, participant);
+						} else {
+							compareAndOpenDialog(event, participant);
 						}
 					}
 				});
 			}
 		});
-		
-		
-		/*IWorkbenchWindow wWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		IWorkbenchPage activePage = null;
-		if (wWindow != null) {
-			activePage = wWindow.getActivePage();
-		}*/
-		
 	}
 
 	/**
@@ -79,20 +68,15 @@ public class CompareWithTagAction extends WorkspaceAction {
 	 * @return <code>true</code> if at least one element in the selection
 	 * is a folder and <code>false</code> otherwise.
 	 */
-	protected boolean isFolderCompare(IResource[] resources) {
-		for (int i = 0; i < resources.length; i++) {
-			if(resources[i].getType() != IResource.FILE) {
-				return true;
-			}			
-		}
-		return false;
+	protected boolean isSingleFileCompare(IResource[] resources) {
+		return resources.length == 1 && resources[0].getType() == IResource.FILE;
 	}
 	
 	protected void compareAndOpenEditors(IRefreshEvent event, CompareParticipant participant) {
 		SyncInfo[] changes= event.getChanges();
 		for (int i = 0; i < changes.length; i++) {
 			SyncInfo info = changes[i];
-			CompareUI.openCompareDialog(new SyncInfoCompareInput(event.getSubscriber().getName(), info));
+			CompareUI.openCompareEditor(new SyncInfoCompareInput(event.getSubscriber().getName(), info));
 		}
 	}
 	
@@ -110,6 +94,7 @@ public class CompareWithTagAction extends WorkspaceAction {
 			e.printStackTrace();
 		}
 		CompareDialog dialog = new CompareDialog(getShell(), input);
+		dialog.setSynchronizeParticipant(participant);
 		dialog.setBlockOnOpen(true);
 		dialog.open();
 	}
