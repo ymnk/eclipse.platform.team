@@ -43,5 +43,4 @@ public class TestTreeViewer extends TreeViewer {
 	public boolean hasItemFor(SyncInfoDiffNode node) {
 		return findItem(node) != null;
 	}
-
 }

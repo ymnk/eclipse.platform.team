@@ -15,9 +15,11 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscriber.*;
-import org.eclipse.team.ui.synchronize.viewers.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberPageDiffTreeViewerConfiguration;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;
 
 public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDiffTreeViewerConfiguration {
 
@@ -75,9 +77,9 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#getInput()
 	 */
-	protected SyncInfoDiffNodeRoot getInput() {
+	protected Object getInput() {
 		if(isGroupIncomingByComment() && getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
-			return new ChangeLogDiffNodeRoot(getSyncSet());
+			return new ChangeLogViewerInput(getSyncSet());
 		} else {
 			return super.getInput();
 		}

@@ -50,8 +50,8 @@ public class ContentProviderTestView extends ViewPart {
 	}
 
 	public void setInput(SyncInfoSet set) {
-		CompressedFolderDiffNodeRoot root = new CompressedFolderDiffNodeRoot(set);
-		viewer.setSorter(root.getSorter());
+		CompressedFolderViewerInput root = new CompressedFolderViewerInput(set);
+		viewer.setSorter(root.getViewerSorter());
 		viewer.setInput(root);
 	}
 
@@ -62,5 +62,4 @@ public class ContentProviderTestView extends ViewPart {
 	public TestTreeViewer getViewer() {
 		return viewer;
 	}
-
 }

@@ -45,7 +45,7 @@ import org.eclipse.ui.progress.UIJob;
  * 
  * {date/time, comment, user} -> {*files}
  */
-public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
+public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 	
 	private Map commentRoots = new HashMap();
 	private PendingUpdateAdapter pendingItem;
@@ -172,15 +172,15 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 		}
 	};
 	
-	public ChangeLogDiffNodeBuilder(SyncInfoDiffNodeRoot root) {
-		super(root);
+	public ChangeLogViewerInput(SyncInfoSet set) {
+		super(set);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder#buildTree(org.eclipse.compare.structuremergeviewer.DiffNode)
+	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#buildTree(org.eclipse.compare.structuremergeviewer.DiffNode)
 	 */
 	protected IDiffElement[] buildTree(DiffNode node) {
-		if(node == getRoot()) {
+		if(node == this) {
 			UIJob job = new UIJob("") {
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					AbstractTreeViewer tree = getTreeViewer();			
@@ -189,7 +189,7 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 							pendingItem = new PendingUpdateAdapter();
 						}
 						removeAllFromTree();
-						tree.add(getRoot(), pendingItem);
+						tree.add(ChangeLogViewerInput.this, pendingItem);
 					}
 					return Status.OK_STATUS;
 				}
@@ -206,7 +206,7 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 				} catch (InterruptedException e) {
 				}
 			}
-			fetchLogEntriesJob.setSyncInfoSet(getRoot().getSyncInfoSet());
+			fetchLogEntriesJob.setSyncInfoSet(getSyncInfoSet());
 			fetchLogEntriesJob.schedule();						
 		} else {
 			return super.buildTree(node);
@@ -227,7 +227,7 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 				DateComment dateComment = new DateComment(logEntry.getDate(), logEntry.getComment(), logEntry.getAuthor());
 				ChangeLogDiffNode changeRoot = (ChangeLogDiffNode) commentRoots.get(dateComment);
 				if (changeRoot == null) {
-					changeRoot = new ChangeLogDiffNode(getRoot(), logEntry);
+					changeRoot = new ChangeLogDiffNode(this, logEntry);
 					commentRoots.put(dateComment, changeRoot);
 				}
 				changeRoot.add(infos[i]);
@@ -281,14 +281,14 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder#syncSetChanged(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
+	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#syncSetChanged(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
 	 */
 	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
 		reset();
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder#dispose()
+	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#dispose()
 	 */
 	public void dispose() {
 		shutdown = true;

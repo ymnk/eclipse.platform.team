@@ -30,8 +30,8 @@ public class SyncInfoSetContentProvider extends BaseWorkbenchContentProvider {
 	 */
 	public void inputChanged(Viewer v, Object oldInput, Object newInput) {
 		this.viewer = v;
-		SyncInfoDiffNodeRoot oldNode = (SyncInfoDiffNodeRoot)oldInput;
-		SyncInfoDiffNodeRoot newNode = (SyncInfoDiffNodeRoot)newInput;
+		SyncInfoSetViewerInput oldNode = (SyncInfoSetViewerInput)oldInput;
+		SyncInfoSetViewerInput newNode = (SyncInfoSetViewerInput)newInput;
 		if (oldNode != newNode) {
 			if (oldNode != null) {
 				oldNode.dispose();
@@ -47,8 +47,8 @@ public class SyncInfoSetContentProvider extends BaseWorkbenchContentProvider {
 	 */
 	public void dispose() {
 		Object input = viewer.getInput();
-		if (input instanceof SyncInfoDiffNodeRoot) {
-			((SyncInfoDiffNodeRoot)input).dispose();
+		if (input instanceof SyncInfoSetViewerInput) {
+			((SyncInfoSetViewerInput)input).dispose();
 		}
 	}
 }

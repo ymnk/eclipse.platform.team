@@ -16,19 +16,37 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.team.core.subscribers.*;
 
-public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
+public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 
-	public CompressedFolderDiffNodeBuilder(SyncInfoDiffNodeRoot root) {
-		super(root);
+	public CompressedFolderViewerInput(SyncInfoSet set) {
+		super(set);
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder#createChildren(org.eclipse.compare.structuremergeviewer.IDiffContainer)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot#getSorter()
 	 */
-	protected IDiffElement[] createChildren(DiffNode container) {
+	public ViewerSorter getViewerSorter() {
+		return new SyncInfoDiffNodeSorter() {
+			protected int compareNames(IResource resource1, IResource resource2) {
+				if (resource1.getType() == IResource.FOLDER && resource2.getType() == IResource.FOLDER) {
+					return collator.compare(resource1.getParent().toString(), resource2.getProjectRelativePath().toString());
+				}
+				return super.compareNames(resource1, resource2);
+			}
+		};
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#createChildren(org.eclipse.compare.structuremergeviewer.IDiffContainer)
+	 */
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput#createModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
+	 */
+	protected IDiffElement[] createModelObjects(DiffNode container) {
 		if (container instanceof SyncInfoDiffNode) {
 			SyncInfoDiffNode node = (SyncInfoDiffNode)container;
 			if (node.getResource().getType() == IResource.PROJECT) {
@@ -38,17 +56,17 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 				return getFolderChildren(container, node.getResource());
 			}
 		}
-		return super.createChildren(container);
+		return super.createModelObjects(container);
 	}
 	
 	private IDiffElement[] getFolderChildren(DiffNode parent, IResource resource) {
 		// Folders will only contain out-of-sync children
-		IResource[] children = getRoot().getSyncInfoSet().members(resource);
+		IResource[] children = getSyncInfoSet().members(resource);
 		List result = new ArrayList();
 		for (int i = 0; i < children.length; i++) {
 			IResource child = children[i];
 			if (child.getType() == IResource.FILE) {
-				result.add(createChildNode(parent, child));
+				result.add(createModelObject(parent, child));
 			}
 		}
 		return (IDiffElement[])result.toArray(new IDiffElement[result.size()]);
@@ -57,7 +75,7 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	private IDiffElement[] getProjectChildren(DiffNode parent, IProject project) {
 		// The out-of-sync elements could possibly include the project so the code 
 		// below is written to ignore the project
-		SyncInfo[] outOfSync = getRoot().getSyncInfoSet().getSyncInfos(project, IResource.DEPTH_INFINITE);
+		SyncInfo[] outOfSync = getSyncInfoSet().getSyncInfos(project, IResource.DEPTH_INFINITE);
 		Set result = new HashSet();
 		Set resourcesToShow = new HashSet();
 		for (int i = 0; i < outOfSync.length; i++) {
@@ -75,23 +93,27 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 		}
 		for (Iterator iter = resourcesToShow.iterator(); iter.hasNext();) {
 			IResource resource = (IResource) iter.next();
-			result.add(createChildNode(parent, resource));
+			result.add(createModelObject(parent, resource));
 		}
 		
 		return (IDiffElement[])result.toArray(new IDiffElement[result.size()]);
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder#createChildNode(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#createChildNode(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
 	 */
-	protected SyncInfoDiffNode createChildNode(DiffNode parent, IResource resource) {
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput#createModelObject(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
+	 */
+	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
 		if (resource.getType() == IResource.FOLDER) {
-			SyncInfoDiffNode node = new CompressedFolderDiffNode(parent, getRoot().getSyncInfoSet(), resource);
+			SyncInfoDiffNode node = new CompressedFolderDiffNode(parent, getSyncInfoSet(), resource);
 			associateDiffNode(resource, node);
 			addToViewer(node);
 			return node;
 		}
-		return super.createChildNode(parent, resource);
+		return super.createModelObject(parent, resource);
 	}
 	
 	/**
@@ -112,17 +134,17 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 					if (compressedNode == null) {
 						DiffNode projectNode = getModelObject(local.getProject());
 						if (projectNode == null) {
-							projectNode = createChildNode(getRoot(), local.getProject());
+							projectNode = createModelObject(this, local.getProject());
 						}
-						compressedNode = createChildNode(projectNode, local.getParent());
+						compressedNode = createModelObject(projectNode, local.getParent());
 					}
-					createChildNode(compressedNode, local);
+					createModelObject(compressedNode, local);
 				} else {
 					DiffNode projectNode = getModelObject(local.getProject());
 					if (projectNode == null) {
-						projectNode = createChildNode(getRoot(), local.getProject());
+						projectNode = createModelObject(this, local.getProject());
 					}
-					createChildNode(projectNode, local);
+					createModelObject(projectNode, local);
 				}
 			} else {
 				// Either The folder node was added as the parent of a newly added out-of-sync file
@@ -188,7 +210,7 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 			return false;
 		}
 		// Check if the sync set has any file children of the parent
-		IResource[] members = getRoot().getSyncInfoSet().members(parent);
+		IResource[] members = getSyncInfoSet().members(parent);
 		for (int i = 0; i < members.length; i++) {
 			IResource member = members[i];
 			if (member.getType() == IResource.FILE) {

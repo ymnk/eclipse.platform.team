@@ -58,12 +58,17 @@ LabelProvider
 SuperCharged MVC
 ================
 
-View (viewers) -> view configurators (menus, content provider, label provider, controller)
+Sync Set Compare Input (displays a diff tree viewer with the compare panes)
 
-Model (diff nodes) logical structure of sync info
+Sync Info Compare Input (displays a compare pane for one sync info)
 
-Controller (creates model, keeps it up-to-date, sorter)
+Viewer (viewers) -> view configurators (menus, content provider, label provider, controller)
 
-Data (sync info)
+Viewer Model (diff nodes) logical structure of sync info
 
+Viewer Input (creates viewer model, keeps it up-to-date, sorter)
 
+Data (sync info, sync info set)
+
+1. when does the viewer model get created, it is implementation dependant
+2. what is creating the viewer model takes a while.

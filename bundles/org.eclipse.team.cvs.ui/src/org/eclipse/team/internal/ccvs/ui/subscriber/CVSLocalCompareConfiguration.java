@@ -18,8 +18,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.ui.synchronize.subscriber.*;
-import org.eclipse.team.ui.synchronize.viewers.*;
+import org.eclipse.team.ui.synchronize.subscriber.RefreshAction;
+import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
 
 /**
  * Provides compare specific support
@@ -71,7 +71,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 		super.dispose();
 	}
 	
-	public SyncInfoDiffNode prepareInput(IProgressMonitor monitor) throws TeamException {
+	public Object prepareInput(IProgressMonitor monitor) throws TeamException {
 		subscriber.refresh(subscriber.roots(), IResource.DEPTH_INFINITE, monitor);
 		collector.waitForCollector(monitor);
 		return getInput();

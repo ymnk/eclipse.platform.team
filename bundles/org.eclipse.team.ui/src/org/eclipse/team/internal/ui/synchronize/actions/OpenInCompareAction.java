@@ -18,8 +18,10 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.viewers.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoCompareInput;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
 /**
@@ -41,11 +43,13 @@ public class OpenInCompareAction extends Action {
 
 	public void run() {
 		ISelection selection = view.getSite().getPage().getSelection();
-		Object obj = ((IStructuredSelection)selection).getFirstElement();
-		if (obj instanceof SyncInfoDiffNode) {
-			SyncInfo info = ((SyncInfoDiffNode) obj).getSyncInfo();
-			if (info != null) {
-				openCompareEditor(view, participant, info, true /* keep focus */);
+		if(selection instanceof IStructuredSelection) {
+		Object obj = ((IStructuredSelection) selection).getFirstElement();
+			if (obj instanceof SyncInfoDiffNode) {
+				SyncInfo info = ((SyncInfoDiffNode) obj).getSyncInfo();
+				if (info != null) {
+					openCompareEditor(view, participant, info, true);
+				}
 			}
 		}
 	}

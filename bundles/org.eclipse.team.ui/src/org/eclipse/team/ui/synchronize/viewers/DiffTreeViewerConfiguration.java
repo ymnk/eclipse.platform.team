@@ -30,53 +30,64 @@ import org.eclipse.ui.internal.PluginAction;
 /**
  * A <code>DiffTreeViewerConfiguration</code> object controls various UI
  * aspects of sync info viewers like the context menu, toolbar, content
- * provider, and label provider.
+ * provider, and label provider. A configuration is created to display
+ * {@link SyncInfo}objects contained in the provided {@link SyncInfoSet}.
  * <p>
- * It provides extended viewer contributions by allowing them to be scoped
- * to a particular id. To enable declarative action
- * contributions for a configuration there are two steps required:
+ * This configuration allows viewer contributions made in a plug-in manifest to
+ * be scoped to a particular unique id. As a result the context menu for the
+ * viewer can be configured to show object contributions for random id schemes.
+ * To enable declarative action contributions for a configuration there are two
+ * steps required:
  * <ul>
  * <li>Create a viewer contribution with a <code>targetID</code> that groups
- * sets of actions that are related. A common pratice if to use the participant 
- * id as the targetID. 
+ * sets of actions that are related. A common pratice for synchronize view
+ * configurations is to use the participant id as the targetID.
+ * 
  * <pre>
- * <viewerContribution
- *   id="org.eclipse.team.ccvs.ui.CVSCompareSubscriberContributions"
- *   targetID="org.eclipse.team.cvs.ui.compare-participant">	
- *   ...
- * </pre> 
- * <li>Create a configuration instance with a <code>menuID</code> that matches 
- * the targetID in the viewer contribution.
+ *  &lt;viewerContribution
+ *  id=&quot;org.eclipse.team.ccvs.ui.CVSCompareSubscriberContributions&quot;
+ *  targetID=&quot;org.eclipse.team.cvs.ui.compare-participant&quot;&gt;
+ *  ...
+ * </pre>
+ * 
+ * <li>Create a configuration instance with a <code>menuID</code> that
+ * matches the targetID in the viewer contribution.
  * </ul>
  * <p>
  * Clients may use this class as is, or subclass to add new state and behavior.
+ * The default behavior is to show sync info in a tree
  * </p>
  * @since 3.0
  */
 public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
-	
+
 	private SyncInfoSet set;
 	private String menuID;
-	private StructuredViewer viewer;	
+	private StructuredViewer viewer;
 	private ExpandAllAction expandAllAction;
-	
+
 	/**
-	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given sync set
-	 * and menuId. If the menuId is <code>null</code>, then no contributed menus will be shown
-	 * in the diff viewer created from this configuration.
-	 * @param menuId the id of menu objectContributions
-	 * @param set the <code>SyncInfoSet</code> to be displayed in the resulting diff viewer
+	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given
+	 * sync set.
+	 * @param set
+	 *            the <code>SyncInfoSet</code> to be displayed in the
+	 *            resulting diff viewer.
 	 */
 	public DiffTreeViewerConfiguration(SyncInfoSet set) {
 		this(null, set);
 	}
-	
+
 	/**
-	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given sync set
-	 * and menuId. If the menuId is <code>null</code>, then no contributed menus will be shown
-	 * in the diff viewer created from this configuration.
-	 * @param menuId the id of menu objectContributions
-	 * @param set the <code>SyncInfoSet</code> to be displayed in the resulting diff viewer
+	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given
+	 * sync set and menuId. If the menuId is <code>null</code>, then no
+	 * contributed menus will be shown in the diff viewer created from this
+	 * configuration.
+	 * @param menuId
+	 *            the id of <code>targetID</code> specified in <code>viewerContribution</code>
+	 *            extension points.
+	 * @param set
+	 *            the <code>SyncInfoSet</code> to be displayed in the
+	 *            resulting diff viewer
 	 */
 	public DiffTreeViewerConfiguration(String menuID, SyncInfoSet set) {
 		this.menuID = menuID;
@@ -86,79 +97,84 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 
 	/**
 	 * Initialize the viewer with the elements of this configuration, including
-	 * content and label providers, sorter, input and menus. This method is invoked from the
-	 * constructor of <code>SyncInfoDiffTreeViewer</code> to initialize the viewers. A
-	 * configuration instance may only be used with one viewer.
-	 * @param parent the parent composite
-	 * @param viewer the viewer being initialized
+	 * content and label providers, sorter, input and menus. This method is
+	 * invoked from the constructor of <code>SyncInfoDiffTreeViewer</code> to
+	 * initialize the viewers. A configuration instance may only be used with
+	 * one viewer.
+	 * @param parent
+	 *            the parent composite
+	 * @param viewer
+	 *            the viewer being initialized
 	 */
 	public void initializeViewer(Composite parent, StructuredViewer viewer) {
 		Assert.isTrue(this.viewer == null, "A DiffTreeViewerConfiguration can only be used with a single viewer."); //$NON-NLS-1$
 		this.viewer = viewer;
-				
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(data);
-		
 		initializeListeners(viewer);
 		hookContextMenu(viewer);
 		initializeActions(viewer);
-		
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setContentProvider(getContentProvider());
 		setInput(viewer);
 	}
 
-	
 	/**
-	 * Set the input of the viewer to a <code>SyncInfoDiffNodeRoot</code>. This will also set the
-	 * sorter of the viewer to the one provided by the input.
-	 * @param viewer the viewer
+	 * Set the input of the viewer to a <code>SyncInfoDiffNodeRoot</code>.
+	 * This will also set the sorter of the viewer to the one provided by the
+	 * input.
+	 * @param viewer
+	 *            the viewer
 	 */
 	protected void setInput(StructuredViewer viewer) {
-		SyncInfoDiffNodeRoot input = getInput();
+		SyncInfoSetViewerInput input = (SyncInfoSetViewerInput) getInput();
 		// TODO: must prevent sorter change from causing a refresh
-		// viewer.setInput(null); /* prevent a refresh when the sorter changes */
-		viewer.setSorter(input.getSorter());
+		// viewer.setInput(null); /* prevent a refresh when the sorter changes
+		// */
+		viewer.setSorter(input.getViewerSorter());
 		viewer.setInput(input);
 	}
 
 	/**
-	 * Get the input that will be assigned to the viewer initialized by this configuration.
-	 * Subclass may override.
+	 * Get the input that will be assigned to the viewer initialized by this
+	 * configuration. Subclass may override.
 	 * @return the viewer input
 	 */
-	protected SyncInfoDiffNodeRoot getInput() {
+	protected Object getInput() {
 		if (getShowCompressedFolders()) {
-			return new CompressedFolderDiffNodeRoot(getSyncSet());
+			return new CompressedFolderViewerInput(getSyncSet());
 		}
-		return new SyncInfoDiffNodeRoot(getSyncSet());
+		return new SyncInfoSetViewerInput(getSyncSet());
 	}
 
 	/**
-	 * Get the label provider that will be assigned to the viewer initialized by this configuration.
-	 * Subclass may override but should either wrap the default one provided
-	 * by this method or subclass <code>TeamSubscriberParticipantLabelProvider</code>.
-	 * In the later case, the logical label provider should still be assigned to the
-	 * subclass of <code>TeamSubscriberParticipantLabelProvider</code>.
-	 * @param logicalProvider the label provider for the selected logical view
+	 * Get the label provider that will be assigned to the viewer initialized
+	 * by this configuration. Subclass may override but should either wrap the
+	 * default one provided by this method or subclass <code>TeamSubscriberParticipantLabelProvider</code>.
+	 * In the later case, the logical label provider should still be assigned
+	 * to the subclass of <code>TeamSubscriberParticipantLabelProvider</code>.
+	 * @param logicalProvider
+	 *            the label provider for the selected logical view
 	 * @return a label provider
 	 * @see SyncInfoLabelProvider
 	 */
 	protected ILabelProvider getLabelProvider() {
 		return new SyncInfoLabelProvider();
 	}
-	
+
 	protected IStructuredContentProvider getContentProvider() {
 		return new SyncInfoSetContentProvider();
 	}
-		
+
 	/**
-	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
-	 * to initialize any listeners for the viewer.
-	 * @param viewer the viewer being initialize
+	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code>
+	 * in order to initialize any listeners for the viewer.
+	 * @param viewer
+	 *            the viewer being initialize
 	 */
 	protected void initializeListeners(final StructuredViewer viewer) {
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
+
 			public void doubleClick(DoubleClickEvent event) {
 				handleDoubleClick(viewer, event);
 			}
@@ -166,23 +182,25 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	}
 
 	/**
-	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
-	 * to initialize any actions for the viewer. It is invoked before the input is set on
-	 * the viewer in order to allow actions to be initialized before there is any reaction 
-	 * to the input being set (e.g. selecting and opening the first element).
+	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code>
+	 * in order to initialize any actions for the viewer. It is invoked before
+	 * the input is set on the viewer in order to allow actions to be
+	 * initialized before there is any reaction to the input being set (e.g.
+	 * selecting and opening the first element).
 	 * <p>
-	 * The default behavior is to add the up and down navigation nuttons to the toolbar.
-	 * Subclasses can override.
-	 * @param viewer the viewer being initialize
+	 * The default behavior is to add the up and down navigation nuttons to the
+	 * toolbar. Subclasses can override.
+	 * @param viewer
+	 *            the viewer being initialize
 	 */
 	protected void initializeActions(StructuredViewer viewer) {
-		expandAllAction = new ExpandAllAction((AbstractTreeViewer)viewer);
+		expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
 		Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
 	}
-	
+
 	/**
-	 * Return the <code>SyncInfoSet</code> being shown by the viewer associated with
-	 * this configuration.
+	 * Return the <code>SyncInfoSet</code> being shown by the viewer
+	 * associated with this configuration.
 	 * @return a <code>SyncInfoSet</code>
 	 */
 	public SyncInfoSet getSyncSet() {
@@ -190,97 +208,105 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	}
 
 	/**
-	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
-	 * to configure the viewer to call <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
+	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code>
+	 * in order to configure the viewer to call <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
 	 * when a context menu is being displayed in the diff tree viewer.
-	 * @param viewer the viewer being initialized
+	 * @param viewer
+	 *            the viewer being initialized
 	 * @see fillContextMenu(StructuredViewer, IMenuManager)
 	 */
 	protected void hookContextMenu(final StructuredViewer viewer) {
 		final MenuManager menuMgr = new MenuManager(menuID); //$NON-NLS-1$
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
+
 			public void menuAboutToShow(IMenuManager manager) {
 				fillContextMenu(viewer, manager);
 			}
 		});
 		Menu menu = menuMgr.createContextMenu(viewer.getControl());
 		menu.addMenuListener(new MenuListener() {
+
 			public void menuHidden(MenuEvent e) {
 			}
+
 			// Hack to allow action contributions to update their
 			// state before the menu is shown. This is required when
 			// the state of the selection changes and the contributions
-			// need to update enablement based on this. 
+			// need to update enablement based on this.
 			public void menuShown(MenuEvent e) {
 				IContributionItem[] items = menuMgr.getItems();
 				for (int i = 0; i < items.length; i++) {
 					IContributionItem item = items[i];
-					if(item instanceof ActionContributionItem) {
-						IAction actionItem = ((ActionContributionItem)item).getAction();
-						if(actionItem instanceof PluginAction) {
-							((PluginAction)actionItem).selectionChanged(viewer.getSelection());
+					if (item instanceof ActionContributionItem) {
+						IAction actionItem = ((ActionContributionItem) item).getAction();
+						if (actionItem instanceof PluginAction) {
+							((PluginAction) actionItem).selectionChanged(viewer.getSelection());
 						}
 					}
 				}
 			}
 		});
 		viewer.getControl().setMenu(menu);
-		
-		if(allowParticipantMenuContributions()) {
+		if (allowParticipantMenuContributions()) {
 			IWorkbenchPartSite site = Utils.findSite(viewer.getControl());
-			if(site == null) {
+			if (site == null) {
 				site = Utils.findSite();
 			}
-			if(site != null) {
+			if (site != null) {
 				site.registerContextMenu(menuID, menuMgr, viewer);
 			}
 		}
 	}
-	
+
 	/**
-	 * Callback that is invoked when a context menu is about to be shown in the diff viewer.
-	 * @param viewer the viewer
-	 * @param manager the menu manager
+	 * Callback that is invoked when a context menu is about to be shown in the
+	 * diff viewer.
+	 * @param viewer
+	 *            the viewer
+	 * @param manager
+	 *            the menu manager
 	 */
 	protected void fillContextMenu(final StructuredViewer viewer, IMenuManager manager) {
 		manager.add(expandAllAction);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
-	
+
 	protected StructuredViewer getViewer() {
 		return viewer;
 	}
-	
+
 	/**
 	 * Cleanup listeners
-	 */	
+	 */
 	public void dispose() {
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 	}
-	
+
 	/**
-	 * Handles a double-click event from the viewer.
-	 * Expands or collapses a folder when double-clicked.
-	 * 
-	 * @param viewer the viewer
-	 * @param event the double-click event
+	 * Handles a double-click event from the viewer. Expands or collapses a
+	 * folder when double-clicked.
+	 * @param viewer
+	 *            the viewer
+	 * @param event
+	 *            the double-click event
 	 */
 	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		Object element = selection.getFirstElement();
-		if(viewer instanceof TreeViewer) {
-			AbstractTreeViewer treeViewer = ((AbstractTreeViewer)viewer); 
-			if(treeViewer.getExpandedState(element)) {
+		if (viewer instanceof TreeViewer) {
+			AbstractTreeViewer treeViewer = ((AbstractTreeViewer) viewer);
+			if (treeViewer.getExpandedState(element)) {
 				treeViewer.collapseToLevel(element, AbstractTreeViewer.ALL_LEVELS);
 			} else {
-				TreeViewerUtils.navigate((TreeViewer)viewer, true /*next*/, false /*don't fire open*/, true /*only expand*/);
+				TreeViewerUtils.navigate((TreeViewer) viewer, true /* next */, false /* no-open */, true /* only-expand */);
 			}
 		}
 	}
-	
+
 	/**
-	 * Return the menu id that is used to obtain context menu items from the workbench.
+	 * Return the menu id that is used to obtain context menu items from the
+	 * workbench.
 	 * @return the menuId.
 	 */
 	public String getMenuId() {
@@ -288,28 +314,29 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	}
 
 	/**
-	 * Returns whether workbench menu items whould be included in the context menu.
-	 * By default, this returns <code>true</code> if there is a menu id and <code>false</code>
-	 * otherwise
+	 * Returns whether workbench menu items whould be included in the context
+	 * menu. By default, this returns <code>true</code> if there is a menu id
+	 * and <code>false</code> otherwise
 	 * @return whether to include workbench context menu items
 	 */
 	protected boolean allowParticipantMenuContributions() {
 		return getMenuId() != null;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
-	public void propertyChange(PropertyChangeEvent event) {	
+	public void propertyChange(PropertyChangeEvent event) {
 		if (viewer != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
 			setInput(viewer);
 		}
 	}
-		
+
 	private boolean getShowCompressedFolders() {
 		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
 	}
-	
+
 	protected void aSyncExec(Runnable r) {
 		final Control ctrl = viewer.getControl();
 		if (ctrl != null && !ctrl.isDisposed()) {
