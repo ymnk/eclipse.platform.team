@@ -92,7 +92,9 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 * @return
 	 */
 	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
-		return new CVSSyncInfo(local, base, remote, this);
+		CVSSyncInfo info = new CVSSyncInfo(local, base, remote, this);
+		info.init();
+		return info;
 	}
 
 	/* (non-Javadoc)

@@ -39,7 +39,7 @@ public class CVSSyncInfo extends SyncInfo {
 	private static final int SYNC_INFO_CONFLICTS = 5;
 	private Subscriber subscriber;
 
-	public CVSSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, Subscriber subscriber) throws TeamException {
+	public CVSSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, Subscriber subscriber) {
 		super(local, base, remote, ((SyncTreeSubscriber)subscriber).getResourceComparator());
 		this.subscriber = subscriber;
 	}

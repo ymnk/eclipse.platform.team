@@ -84,7 +84,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	}
 
 	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
-		return new CVSMergeSyncInfo(local, base, remote, this);
+		CVSMergeSyncInfo info = new CVSMergeSyncInfo(local, base, remote, this);
+		info.init();
+		return info;
 	}
 
 	public void merged(IResource[] resources) throws TeamException {

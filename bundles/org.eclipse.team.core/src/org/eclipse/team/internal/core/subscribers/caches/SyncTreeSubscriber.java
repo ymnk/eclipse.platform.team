@@ -65,7 +65,9 @@ public abstract class SyncTreeSubscriber extends Subscriber {
 	 * @return
 	 */
 	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
-		return new SyncInfo(local, base, remote, this.getResourceComparator());
+		SyncInfo info = new SyncInfo(local, base, remote, this.getResourceComparator());
+		info.init();
+		return info;
 	}
 
 	public IResource[] members(IResource resource) throws TeamException {

@@ -147,12 +147,11 @@ public class SyncInfo implements IAdaptable {
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, IRemoteResourceComparator comparator) throws TeamException {
+	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, IRemoteResourceComparator comparator) {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
 		this.comparator = comparator;
-		this.syncKind = calculateKind();
 	}
 	
 	/**
@@ -321,6 +320,26 @@ public class SyncInfo implements IAdaptable {
 		return Policy.bind("RemoteSyncElement.delimit", label); //$NON-NLS-1$
 	}
 	
+	/**
+	 * Method that is invoked after instance creation to initialize the sync kind.
+	 * This method should only be invoked by the creator of the <code>SyncInfo</code>
+	 * instance. It is not done from the constructor in order to allow subclasses
+	 * to calculate the sync kind from any additional state variables they may have.
+	 * @throws TeamException
+	 */
+	public final void init() throws TeamException {
+		syncKind = calculateKind();
+	}
+	
+	/**
+	 * Method that is invoked from the <code>init()</code> method to calculate
+	 * the sync kind for this instance of <code>SyncInfo</code>. The result is
+	 * assigned to an instance variable and is available using <code>getKind()</code>.
+	 * Subclasses should not invoke this method but may override it in order to customize
+	 * the sync kind calculation algorithm.
+	 * @return the sync kind of this <code>SyncInfo</code>
+	 * @throws TeamException
+	 */
 	protected int calculateKind() throws TeamException {
 		int description = IN_SYNC;
 		
