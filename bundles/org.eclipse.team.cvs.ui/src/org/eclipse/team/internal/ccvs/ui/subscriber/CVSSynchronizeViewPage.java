@@ -21,12 +21,12 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
-import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
 import org.eclipse.ui.IActionDelegate;
 
