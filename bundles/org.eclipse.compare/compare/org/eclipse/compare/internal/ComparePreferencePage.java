@@ -13,6 +13,9 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.texteditor.PropagatingFontFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+import org.eclipse.ui.help.DialogPageContextComputer;
+import org.eclipse.ui.help.WorkbenchHelp;
+
 
 public class ComparePreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 		
@@ -22,6 +25,8 @@ public class ComparePreferencePage extends FieldEditorPreferencePage implements 
 	public static final String INITIALLY_SHOW_ANCESTOR_PANE= PREFIX + "InitiallyShowAncestorPane"; //$NON-NLS-1$
 	public static final String TEXT_FONT= PREFIX + "TextFont"; //$NON-NLS-1$
 
+	private static final String HELP_CONTEXT_ID= "compare_viewers_preference_page_context";
+	
 
 	public ComparePreferencePage() {
 		super(GRID);
@@ -36,6 +41,12 @@ public class ComparePreferencePage extends FieldEditorPreferencePage implements 
 	}
 
 	public void init(IWorkbench workbench) {
+	}	
+
+	public void createControl(Composite parent) {
+		// 1GJYMG4: ITPUI:WINNT - no context help for some menus/dialogs
+		super.createControl(parent);
+		WorkbenchHelp.setHelp(parent, new DialogPageContextComputer(this, HELP_CONTEXT_ID));
 	}	
 
 	protected IPreferenceStore doGetPreferenceStore() {
