@@ -12,12 +12,12 @@ package org.eclipse.team.ui.synchronize.views;
 
 import java.util.*;
 
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.*;
@@ -97,7 +97,6 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
-		if (viewer == null) return;
 		final Control ctrl = viewer.getControl();
 		if (ctrl != null && !ctrl.isDisposed()) {
 			ctrl.getDisplay().asyncExec(new Runnable() {
@@ -127,33 +126,29 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * @see handleChanges(ISyncInfoSetChangeEvent)
 	 */
 	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
-		viewer.getControl().setRedraw(false);
 		if (event.isReset()) {
-			internalReset();
+			reset();
 		} else {
 			handleChanges(event);
 		}
-		viewer.getControl().setRedraw(true);
 	}
 	
-	/**
-	 * 
-	 */
-	protected void internalReset() {
-		// On a reset, clear the diff node model and rebuild it. Then refresh the 
-		// viewer.
-		viewer.remove(getRoot().getChildren());
-		clearModelObjects(getRoot());
-		resourceMap.clear();
-		associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), getRoot());
-		buildTree(getRoot());
-		// TODO: Is this refresh redundant?
-		((StructuredViewer) viewer).refresh();
+	private void removeAllFromTree() {
+		IDiffElement[] elements = getRoot().getChildren();
+		for (int i = 0; i < elements.length; i++) {
+			viewer.remove(elements[i]);			
+		}
 	}
 
 	protected void reset() {
 		viewer.getControl().setRedraw(false);
-		internalReset();
+		resourceMap.clear();
+		clearModelObjects(getRoot(), viewer);
+		buildTree(getRoot());
+		viewer.refresh();
+		if(viewer instanceof INavigatable) {
+			((INavigatable)viewer).gotoDifference(true);
+		}
 		viewer.getControl().setRedraw(true);
 	}
 	
@@ -167,10 +162,15 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * @param event the event containing the changed resourcses.
 	 */
 	protected void handleChanges(ISyncInfoSetChangeEvent event) {
-		handleResourceChanges(event);
-		handleResourceRemovals(event);
-		handleResourceAdditions(event);
-		updateParentLabels();
+		try {
+			viewer.getControl().setRedraw(false);
+			handleResourceChanges(event);
+			handleResourceRemovals(event);
+			handleResourceAdditions(event);
+			updateParentLabels();
+		} finally {
+			viewer.getControl().setRedraw(true);
+		}
 	}
 
 	/**
@@ -344,8 +344,8 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * Dispose of the builder
 	 */
 	public void dispose() {
-		root.getSyncInfoSet().removeSyncSetChangedListener(this);
 		resourceMap.clear();
+		root.getSyncInfoSet().removeSyncSetChangedListener(this);
 	}
 	/**
 	 * @return Returns the root.
@@ -354,12 +354,12 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		return root;
 	}
 	
-	protected void clearModelObjects(DiffNode node) {
+	protected void clearModelObjects(DiffNode node, AbstractTreeViewer viewer) {
 		IDiffElement[] children = node.getChildren();
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
 			if(element instanceof DiffNode) {
-				clearModelObjects((DiffNode)element);
+				clearModelObjects((DiffNode)element, viewer);
 			}
 		}
 		IDiffContainer parent = node.getParent();
