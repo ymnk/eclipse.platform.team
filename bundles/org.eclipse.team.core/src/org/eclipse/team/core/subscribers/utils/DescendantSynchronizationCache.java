@@ -123,5 +123,12 @@ public abstract class DescendantSynchronizationCache extends SynchronizationCach
 	protected SynchronizationCache getRemoteCache() {
 		return remoteCache;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.utils.SynchronizationCache#members(org.eclipse.core.resources.IResource)
+	 */
+	public IResource[] members(IResource resource) throws TeamException {
+		return getRemoteCache().members(resource);
+	}
 
 }

@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.QualifiedName;
@@ -99,6 +102,29 @@ public class SynchronizationSyncBytesCache extends SynchronizationCache {
 	 */
 	public boolean setRemoteDoesNotExist(IResource resource) throws TeamException {
 		return setSyncBytes(resource, NO_REMOTE);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.utils.SynchronizationCache#members(org.eclipse.core.resources.IResource)
+	 */
+	public IResource[] members(IResource resource) throws TeamException {
+		if(resource.getType() == IResource.FILE) {
+			return new IResource[0];
+		}	
+		try {
+			// Filter and return only resources that have sync bytes in the cache.
+			IResource[] members = ((IContainer)resource).members(true /* include phantoms */);
+			List filteredMembers = new ArrayList(members.length);
+			for (int i = 0; i < members.length; i++) {
+				IResource member = members[i];
+				if(getSyncBytes(member) != null) {
+					filteredMembers.add(member);
+				}
+			}
+			return (IResource[]) filteredMembers.toArray(new IResource[filteredMembers.size()]);
+		} catch (CoreException e) {
+			throw TeamException.asTeamException(e);
+		}
 	}
 
 }

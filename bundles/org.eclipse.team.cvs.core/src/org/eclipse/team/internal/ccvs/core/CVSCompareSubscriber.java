@@ -12,8 +12,8 @@ package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.core.subscribers.utils.SessionSynchronizationCache;
 import org.eclipse.team.core.subscribers.utils.SynchronizationCache;
-import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSynchronizationCache;
 
 /**
  * This subscriber is used when comparing the local workspace with its
@@ -36,9 +36,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber {
 	}
 
 	private void initialize() {
-		QualifiedName id = getId();
-		String syncKeyPrefix = id.getLocalName();
-		remoteSynchronizer = new CVSSynchronizationCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + tag.getName()));
+		remoteSynchronizer = new SessionSynchronizationCache();
 	}
 
 	public void dispose() {	

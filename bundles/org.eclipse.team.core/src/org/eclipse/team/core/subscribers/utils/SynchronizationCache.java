@@ -87,6 +87,13 @@ public abstract class SynchronizationCache {
 	public abstract boolean setRemoteDoesNotExist(IResource resource) throws TeamException;
 	
 	/**
+	 * Return the children of the given resource that have sync bytes in this cache.
+	 * @param resource the parent resource
+	 * @return the memebrs who have sync bytes in this cache
+	 */
+	public abstract IResource[] members(IResource resource) throws TeamException;
+	
+	/**
 	 * Helper method to compare two byte arrays for equality
 	 * @param syncBytes1 the first byte array
 	 * @param syncBytes2 the second byte array

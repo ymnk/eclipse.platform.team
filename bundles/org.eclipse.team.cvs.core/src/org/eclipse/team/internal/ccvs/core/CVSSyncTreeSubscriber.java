@@ -12,8 +12,7 @@ package org.eclipse.team.internal.ccvs.core;
 
 import java.util.*;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -21,8 +20,6 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.utils.*;
 import org.eclipse.team.internal.ccvs.core.resources.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
-import org.eclipse.team.internal.ccvs.core.syncinfo.CVSRefreshOperation;
-import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 
 /**
  * This class provides common funtionality for three way sychronizing
@@ -270,5 +267,48 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 */
 	public IComparisonCriteria getDefaultComparisonCriteria() {
 		return comparisonCriteria;
+	}
+	
+	public IResource[] members(IResource resource) throws TeamException {
+		if(resource.getType() == IResource.FILE) {
+			return new IResource[0];
+		}	
+		try {
+			Set allMembers = new HashSet();
+			allMembers.addAll(Arrays.asList(((IContainer)resource).members()));
+			allMembers.addAll(Arrays.asList(getMembers(getRemoteSynchronizationCache(), resource)));
+			if (isThreeWay()) {
+				allMembers.addAll(Arrays.asList(getMembers(getBaseSynchronizationCache(), resource)));
+			}
+			for (Iterator iterator = allMembers.iterator(); iterator.hasNext();) {
+				IResource member = (IResource) iterator.next();
+				if(!member.exists() && !hasRemote(member)) {
+					// Remove deletion conflicts
+					iterator.remove();
+				} else if (!isSupervised(resource)) {
+					// Remove unsupervised resources
+					iterator.remove();
+				}
+			}
+			return (IResource[]) allMembers.toArray(new IResource[allMembers.size()]);
+		} catch (CoreException e) {
+			throw TeamException.asTeamException(e);
+		}
+	}
+
+	private IResource[] getMembers(SynchronizationCache cache, IResource resource) throws TeamException, CoreException {
+		// Filter and return only phantoms associated with the remote synchronizer.
+		IResource[] members;
+		try {
+			members = cache.members(resource);
+		} catch (CoreException e) {
+			if (!isSupervised(resource) || e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
+				// The resource is no longer supervised or doesn't exist in any form
+				// so ignore the exception and return that there are no members
+				return new IResource[0];
+			}
+			throw e;
+		}
+		return members;
 	}
 }

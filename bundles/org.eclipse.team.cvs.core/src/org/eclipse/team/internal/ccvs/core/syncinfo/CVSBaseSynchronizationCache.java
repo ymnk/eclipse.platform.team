@@ -53,4 +53,14 @@ public class CVSBaseSynchronizationCache extends SynchronizationCache {
 	public boolean setRemoteDoesNotExist(IResource resource) throws TeamException {
 		throw new UnsupportedOperationException();
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.utils.SynchronizationCache#members(org.eclipse.core.resources.IResource)
+	 */
+	public IResource[] members(IResource resource) throws TeamException {
+		if(resource.getType() == IResource.FILE) {
+			return new IResource[0];
+		}	
+		return EclipseSynchronizer.getInstance().members((IContainer)resource);
+	}
 }
