@@ -35,7 +35,7 @@ public class CheckoutSingleProjectOperation extends CheckoutOperation {
 	 * @return
 	 */
 	private String getRemoteFolderName() {
-		return remoteFolder.getName();
+		return getRemoteFolders()[0].getName();
 	}
 
 	/**

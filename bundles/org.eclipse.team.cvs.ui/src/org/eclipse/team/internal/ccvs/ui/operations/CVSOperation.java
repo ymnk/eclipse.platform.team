@@ -70,12 +70,12 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 	 * @throws InterruptedException
 	 * @throws CVSException
 	 */
-	public void execute(IRunnableContext runnableContext) throws InterruptedException, CVSException {
-		if (runnableContext == null) {
-			runnableContext = getRunnableContext();
+	public void execute(IRunnableContext aRunnableContext) throws InterruptedException, CVSException {
+		if (aRunnableContext == null) {
+			aRunnableContext = getRunnableContext();
 		}
 		try {
-			runnableContext.run(isInterruptable(), isInterruptable(), this);
+			aRunnableContext.run(isInterruptable(), isInterruptable(), this);
 		} catch (InvocationTargetException e) {
 			throw CVSException.wrapException(e);
 		} catch (OperationCanceledException e) {
@@ -230,13 +230,13 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 		} else {
 			buttons = new String[] {IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL};
 		}	
-		Shell shell = getShell();
+		Shell displayShell = getShell();
 		final MessageDialog dialog = 
-			new MessageDialog(shell, title, null, msg, MessageDialog.QUESTION, buttons, 0);
+			new MessageDialog(displayShell, title, null, msg, MessageDialog.QUESTION, buttons, 0);
 
 		// run in syncExec because callback is from an operation,
 		// which is probably not running in the UI thread.
-		shell.getDisplay().syncExec(
+		displayShell.getDisplay().syncExec(
 			new Runnable() {
 				public void run() {
 					dialog.open();

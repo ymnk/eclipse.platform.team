@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -30,7 +29,6 @@ import org.eclipse.team.internal.ccvs.ui.TagetLocationSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutMultipleProjectsOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutSingleProjectOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.HasProjectMetaFileOperation;
-import org.eclipse.team.internal.ui.PromptingDialog;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.NewProjectAction;
 
@@ -125,27 +123,7 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 		(new NewProjectAction(PlatformUI.getWorkbench().getActiveWorkbenchWindow())).run();
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(listener);
 		// Ensure that the project only has a single member which is the .project file
-		IProject project = listener.getNewProject();
-		if (project == null) return null;
-		try {
-			IResource[] members = project.members();
-			if ((members.length == 0) 
-				||(members.length == 1 && members[0].getName().equals(".project"))) { //$NON-NLS-1$
-				return project;
-			} else {
-				// prompt to overwrite
-				PromptingDialog prompt = new PromptingDialog(getShell(), new IProject[] { project }, 
-						getOverwriteLocalAndFileSystemPrompt(), 
-						Policy.bind("ReplaceWithAction.confirmOverwrite"));//$NON-NLS-1$
-				try {
-					if (prompt.promptForMultiple().length == 1) return project;
-				} catch (InterruptedException e) {
-				}
-			}
-		} catch (CoreException e) {
-			handle(e);
-		}
-		return null;
+		return listener.getNewProject();
 	}
 	
 	class NewProjectListener implements IResourceChangeListener {
