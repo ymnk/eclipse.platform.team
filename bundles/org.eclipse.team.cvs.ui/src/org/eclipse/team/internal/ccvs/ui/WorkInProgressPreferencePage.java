@@ -10,13 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui;
 
-import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
-import org.eclipse.team.internal.ccvs.ui.Policy;
 
 public class WorkInProgressPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 	
@@ -39,9 +36,6 @@ public class WorkInProgressPreferencePage extends FieldEditorPreferencePage impl
 	 * @see org.eclipse.jface.preference.FieldEditorPreferencePage#createFieldEditors()
 	 */
 	public void createFieldEditors() {		
-		addField(new BooleanFieldEditor(ICVSUIConstants.BACKGROUND_REPOVIEW, Policy.bind("WorkInProgressPreferencePage.2"), SWT.NONE, getFieldEditorParent()));	 //$NON-NLS-1$
-		addField(new BooleanFieldEditor(ICVSUIConstants.BACKGROUND_OPERATIONS, Policy.bind("WorkInProgressPreferencePage.3"), SWT.NONE, getFieldEditorParent())); //$NON-NLS-1$
-		addField(new BooleanFieldEditor(ICVSUIConstants.USE_NEW_SYNCVIEW, Policy.bind("WorkInProgressPreferencePage.4"), SWT.NONE, getFieldEditorParent())); //$NON-NLS-1$
 	}
 	
 	/* (non-Javadoc)

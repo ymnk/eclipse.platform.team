@@ -14,11 +14,20 @@ package org.eclipse.team.internal.ccvs.ui;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPluginDescriptor;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Preferences;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -31,8 +40,13 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
+import org.eclipse.team.internal.ccvs.ui.console.CVSOutputConsole;
 import org.eclipse.team.internal.ccvs.ui.model.CVSAdapterFactory;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
@@ -42,7 +56,10 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
@@ -69,6 +86,11 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	private static CVSUIPlugin plugin;
 	
 	/**
+	 * The CVS console
+	 */
+	private CVSOutputConsole console;
+	
+	/**
 	 * The repository manager
 	 */
 	private RepositoryManager repositoryManager;
@@ -85,6 +107,19 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	public CVSUIPlugin(IPluginDescriptor descriptor) {
 		super(descriptor);
 		plugin = this;
+	}
+	
+	/**
+	 * Returns the standard display to be used. The method first checks, if
+	 * the thread calling this method has an associated display. If so, this
+	 * display is returned. Otherwise the method returns the default display.
+	 */
+	public static Display getStandardDisplay() {
+		Display display= Display.getCurrent();
+		if (display == null) {
+			display= Display.getDefault();
+		}
+		return display;		
 	}
 	
 	/**
@@ -569,12 +604,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		// Get the plugin preferences for CVS Core
 		Preferences corePrefs = CVSProviderPlugin.getPlugin().getPluginPreferences();
 		
-		// work in progress START
-		store.setDefault(ICVSUIConstants.BACKGROUND_REPOVIEW, true);
-		store.setDefault(ICVSUIConstants.BACKGROUND_OPERATIONS, true);
-		store.setDefault(ICVSUIConstants.USE_NEW_SYNCVIEW, true);
-		// work in progress END
-		
 		store.setDefault(ICVSUIConstants.PREF_REPOSITORIES_ARE_BINARY, false);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_COMMENTS, true);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_TAGS, true);
@@ -689,6 +718,15 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		} else {
 			return null;
 		}
+	}
+	
+	/**
+	 * Returns the system speed setting. This is mainly used to determine to enable/disable
+	 * certain CVS features.
+	 * @since 3.0 
+	 */
+	public static int getPlatformPerformance() {
+		return Platform.getPlugin(Platform.PI_RUNTIME).getPluginPreferences().getInt(Platform.PREF_PLATFORM_PERFORMANCE);
 	}
 	
 	/**

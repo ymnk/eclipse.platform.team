@@ -368,7 +368,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	}
  
 	private RemoteContentsCache getRemoteContentsCache() {
-		return RemoteContentsCache.getCache(CVSProviderPlugin.ID);
+		return CVSProviderPlugin.getPlugin().getRemoteContentsCache();
 	}
 
 	/* 

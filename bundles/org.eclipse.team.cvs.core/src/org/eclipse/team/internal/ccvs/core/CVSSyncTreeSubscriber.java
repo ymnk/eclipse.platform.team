@@ -12,8 +12,7 @@ package org.eclipse.team.internal.ccvs.core;
 
 import java.util.*;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -103,8 +102,9 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 			try {
 				members = ((IContainer)resource).members(true /* include phantoms */);
 			} catch (CoreException e) {
-				if (!isSupervised(resource)) {
-					// The resource is no longer supervised so ignore the exception and return that there are no members
+				if (!isSupervised(resource) || e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
+					// The resource is no longer supervised or doesn't exist in any form
+					// so ignore the exception and return that there are no members
 					return new IResource[0];
 				}
 				throw e;
@@ -220,7 +220,7 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 		if (!errors.isEmpty()) {
 			throw new CVSException(new MultiStatus(CVSProviderPlugin.ID, 0, 
 					(IStatus[]) errors.toArray(new IStatus[errors.size()]), 
-					"Errors occurred during refresh of {0}" + getName(), null));
+					Policy.bind("CVSSyncTreeSubscriber.1", getName()), null)); //$NON-NLS-1$
 		}
 	}
 
@@ -241,7 +241,7 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 			fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources));
 			return Status.OK_STATUS;
 		} catch (TeamException e) {
-			return new CVSStatus(IStatus.ERROR, "An error occurred refreshing {0}: {1}" + resource.getFullPath().toString() +  e.getMessage(), e);
+			return new CVSStatus(IStatus.ERROR, Policy.bind("CVSSyncTreeSubscriber.2", resource.getFullPath().toString(), e.getMessage()), e); //$NON-NLS-1$
 		} finally {
 			monitor.done();
 		} 

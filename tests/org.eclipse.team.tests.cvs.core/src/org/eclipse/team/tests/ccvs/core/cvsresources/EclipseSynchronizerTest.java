@@ -76,12 +76,13 @@ public class EclipseSynchronizerTest extends EclipseTest {
 	public void testFolderSync() throws CoreException, CVSException {
 		// Workspace root
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-//		FolderSyncInfo info = sync.getFolderSync(root);
-//		assertNull(info);
-//		sync.deleteFolderSync(root);
-//		sync.setFolderSync(root, dummyFolderSync(root));
-//		info = sync.getFolderSync(root);
-//		assertNull(info);
+		// Setting should not be an error but sync info should always be null
+		FolderSyncInfo info = sync.getFolderSync(root);
+		assertNull(info);
+		sync.deleteFolderSync(root);
+		sync.setFolderSync(root, dummyFolderSync(root));
+		info = sync.getFolderSync(root);
+		assertNull(info);
 
 		// Non-existant project
 		IProject project = root.getProject(getName() + "-" + System.currentTimeMillis());
@@ -299,7 +300,7 @@ public class EclipseSynchronizerTest extends EclipseTest {
 		// ignore list
 		IResource cvsIgnore = project.getFile(".cvsignore");
 		cvsIgnore.delete(true, null);
-		waitForIgnoreHandlerCompletion();
+		waitForIgnoreFileHandling();
 		
 		assertIsIgnored(project.getFile("a.txt"), false);
 		assertIsIgnored(project.getFile("c.java"), false);
@@ -492,7 +493,7 @@ public class EclipseSynchronizerTest extends EclipseTest {
 	}
 	
 	private FolderSyncInfo dummyFolderSync(IContainer container) {
-		return new FolderSyncInfo("repo", "root", CVSTag.DEFAULT, false);
+		return new FolderSyncInfo("repo", ":pserver:user@host:/root", CVSTag.DEFAULT, false);
 	}
 
 	private ResourceSyncInfo dummyResourceSync(IResource resource) {

@@ -14,9 +14,9 @@ import java.io.*;
 import junit.extensions.TestSetup;
 import junit.framework.Test;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.connection.CVSCommunicationException;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 
 public class CVSTestSetup extends TestSetup {
@@ -27,6 +27,7 @@ public class CVSTestSetup extends TestSetup {
 	public static final String RSH;
 	public static final int WAIT_FACTOR;
 	public static final int COMPRESSION_LEVEL;
+	public static final boolean FAIL_IF_EXCEPTION_LOGGED;
 	
 	public static final String READ_REPOSITORY_LOCATION;
 	public static final String WRITE_REPOSITORY_LOCATION;
@@ -46,6 +47,7 @@ public class CVSTestSetup extends TestSetup {
 		LOCAL_REPO = Boolean.valueOf(System.getProperty("eclipse.cvs.localRepo", "false")).booleanValue();
 		WAIT_FACTOR = Integer.parseInt(System.getProperty("eclipse.cvs.waitFactor", "1"));
 		COMPRESSION_LEVEL = Integer.parseInt(System.getProperty("eclipse.cvs.compressionLevel", "0"));
+		FAIL_IF_EXCEPTION_LOGGED = Boolean.valueOf(System.getProperty("eclipse.cvs.failLog", "true")).booleanValue();
 	}
 
 	public static void loadProperties() {
@@ -161,7 +163,7 @@ public class CVSTestSetup extends TestSetup {
 		executeRemoteCommand(repository, "cvs -d " + repoRoot + " init");
 	}
 	
-	public void setUp() throws CVSException {
+	public void setUp() throws CoreException {
 		if (repository == null) {
 			repository = setupRepository(REPOSITORY_LOCATION);
 		}
@@ -186,7 +188,12 @@ public class CVSTestSetup extends TestSetup {
 		System.out.println("Connecting to: " + repository.getHost());
 		
 		try {
-			repository.validateConnection(new NullProgressMonitor());
+			try {
+				repository.validateConnection(new NullProgressMonitor());
+			} catch (CVSCommunicationException e) {
+				// Try once more, just in case it is a transient server problem
+				repository.validateConnection(new NullProgressMonitor());
+			}
 		} catch (CVSException e) {
 			System.out.println("Unable to connect to remote repository: " + repository.toString());
 			throw e;

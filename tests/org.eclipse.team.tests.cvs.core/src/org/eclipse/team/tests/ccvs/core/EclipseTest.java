@@ -9,26 +9,71 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.team.tests.ccvs.core;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.*;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.tests.harness.EclipseWorkspaceTest;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.core.client.*;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.internal.ccvs.core.ICVSFile;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.client.Command;
+import org.eclipse.team.internal.ccvs.core.client.Import;
+import org.eclipse.team.internal.ccvs.core.client.Session;
+import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
+import org.eclipse.team.internal.ccvs.core.connection.CVSCommunicationException;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
-import org.eclipse.team.internal.ccvs.core.resources.*;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileChangeListener;
-import org.eclipse.team.internal.ccvs.ui.operations.*;
+import org.eclipse.team.internal.ccvs.ui.operations.CVSOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.CheckoutSingleProjectOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.ReplaceOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.TagInRepositoryOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.TagOperation;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.tests.ccvs.ui.HeadlessCVSRunnableContext;
 
 public class EclipseTest extends EclipseWorkspaceTest {
@@ -36,6 +81,22 @@ public class EclipseTest extends EclipseWorkspaceTest {
 	protected static IProgressMonitor DEFAULT_MONITOR = new NullProgressMonitor();
 	protected static final int RANDOM_CONTENT_SIZE = 3876;
 	protected static String eol = System.getProperty("line.separator");
+	
+	public static Test suite(Class c) {
+		String testName = System.getProperty("eclipse.cvs.testName");
+		if (testName == null) {
+			TestSuite suite = new TestSuite(c);
+			return new CVSTestSetup(suite);
+		} else {
+			try {
+				return new CVSTestSetup((Test)c.getConstructor(new Class[] { String.class }).newInstance(new Object[] {testName}));
+			} catch (Exception e) {
+				fail(e.getMessage());
+				// Above will throw so below is never actually reached
+				return null;
+			}
+		}
+	}
 	
 	public EclipseTest() {
 		super();
@@ -706,27 +767,29 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		}
 	}
 	
-	public void waitForIgnoreHandlerCompletion() {
-		Job job = SyncFileChangeListener.getDeferredHandler().getEventHandlerJob();
-		final boolean[] done = new boolean[] { false };
-		job.addJobChangeListener(new JobChangeAdapter() {
-			public void done(IJobChangeEvent event) {
-				done[0] = true;
-			}
-		});
-		int count = 0;
-		while (job.getState() != Job.NONE && ! done[0]) {
+	public static void waitForJobCompletion(Job job) {
+		// process UI events first, give the main thread a chance
+		// to handle any syncExecs or asyncExecs posted as a result
+		// of the event processing thread.
+		while (Display.getCurrent().readAndDispatch()) {};
+		
+		// wait for the event handler to process changes.
+		while(job.getState() != Job.NONE) {
+			while (Display.getCurrent().readAndDispatch()) {};
 			try {
-				Thread.sleep(100);
-				count++;
+				Thread.sleep(10);		
 			} catch (InterruptedException e) {
-				// ignore and keep going;
-			}
-			// Only wait 10 seconds at most
-			if (count == 100) {
-				fail("Ignore handling job does not seem to be finishing");
 			}
 		}
+		while (Display.getCurrent().readAndDispatch()) {};
+	}
+	
+	public static void waitForIgnoreFileHandling() {
+		waitForJobCompletion(SyncFileChangeListener.getDeferredHandler().getEventHandlerJob());
+	}
+	
+	public static void waitForSubscriberInputHandling(SubscriberInput input) {
+		waitForJobCompletion(input.getEventHandler().getEventHandlerJob());
 	}
 
 	protected static void executeHeadless(CVSOperation op) throws CVSException {
@@ -743,7 +806,62 @@ public class EclipseTest extends EclipseWorkspaceTest {
 	protected void tearDown() throws Exception {
 		super.tearDown();
 		if (CVSTestSetup.logListener != null) {
-			CVSTestSetup.logListener.checkErrors();
+			try {
+				CVSTestSetup.logListener.checkErrors();
+			} catch (CoreException e) {
+				if (CVSTestSetup.FAIL_IF_EXCEPTION_LOGGED) {
+					fail("Exception written to log: ", e);
+				} else {
+					// Write the log to standard out so it can be more easily seen
+					write(e.getStatus(), 0);
+				}
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see junit.framework.TestCase#runBare()
+	 */
+	public void runBare() throws Throwable {
+		try {
+			super.runBare();
+		} catch (CVSException e) {
+			// If a communication exception occurred
+			// perhaps it is a server problem
+			// Try again, just in case it is
+			if (containsCommunicationException(e)) {
+				super.runBare();
+			} else {
+				throw e;
+			}
+		}
+	}
+
+	private boolean containsCommunicationException(CVSException e) {
+		if (e instanceof CVSCommunicationException) return true;
+		IStatus status = e.getStatus();
+		if (status.getException() instanceof CVSCommunicationException) return true;
+		if (status.isMultiStatus()) {
+			IStatus[] children = status.getChildren();
+			for (int i = 0; i < children.length; i++) {
+				IStatus child = children[i];
+				if (child.getException() instanceof CVSCommunicationException) return true;
+			}
+		}
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.tests.harness.EclipseWorkspaceTest#ensureDoesNotExistInWorkspace(org.eclipse.core.resources.IResource)
+	 */
+	public void ensureDoesNotExistInWorkspace(IResource resource) {
+		// Overridden to change how the workspace is deleted on teardown
+		if (resource.getType() == IResource.ROOT) {
+			// Delete each project individually
+			IProject[] projects = ((IWorkspaceRoot)resource).getProjects();
+			ensureDoesNotExistInWorkspace(projects);
+		} else {
+			super.ensureDoesNotExistInWorkspace(resource);
 		}
 	}
 
