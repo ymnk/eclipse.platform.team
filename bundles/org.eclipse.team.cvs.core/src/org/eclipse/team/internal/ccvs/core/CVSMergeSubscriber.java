@@ -46,7 +46,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 		for(int i=0; i<syncPartners.length; i++) {
 			if(syncPartners[i].getQualifier().equals(RemoteSynchronizer.SYNC_KEY_QUALIFIER)) {
 				// this sync partner belongs to the VCM plug-in
-				if(!syncPartners[i].getLocalName().startsWith(UNIQUE_ID_PREFIX)) {
+				if(syncPartners[i].getLocalName().startsWith(UNIQUE_ID_PREFIX)) {
 					// this sync partner does not belong to the sharing manager,
 					// it must be a merge manager. Remove this sync partner,
 					// which gets rid of its sync info.

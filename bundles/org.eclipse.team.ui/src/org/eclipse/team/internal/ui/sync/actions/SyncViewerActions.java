@@ -195,13 +195,13 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		
 		IToolBarManager manager = actionBars.getToolBarManager();
 		manager.add(chooseSubscriberAction);
+		manager.add(chooseComparisonCriteriaAction);
+		manager.add(new Separator());
 		directionsFilters.fillActionBars(actionBars);
 		manager.add(new Separator());
 		manager.add(refreshAction);
-		manager.add(new Separator());
 		manager.add(collapseAll);
 		manager.add(toggleViewerType);
-		manager.add(chooseComparisonCriteriaAction);
 		
 		IMenuManager dropDownMenu = actionBars.getMenuManager();
 		workingSetGroup.fillActionBars(actionBars);
