@@ -34,6 +34,8 @@ public class FTPTestSetup extends TestSetup {
 
 	public static final String FTP_URL;
 	public static final boolean SCRUB_URL;
+	public static final boolean DEBUG;
+	public static final String SCRUB_DISABLE_FILE = ".donotscrub";
 	
 	private static final IProgressMonitor DEFAULT_PROGRESS_MONITOR = new NullProgressMonitor();
 	
@@ -44,6 +46,7 @@ public class FTPTestSetup extends TestSetup {
 		loadProperties();
 		FTP_URL = System.getProperty("eclipse.ftp.url");
 		SCRUB_URL = Boolean.valueOf(System.getProperty("eclipse.ftp.init", "false")).booleanValue();
+		DEBUG = Boolean.valueOf(System.getProperty("eclipse.ftp.debug", "false")).booleanValue();
 	}
 	
 	public static void loadProperties() {
@@ -84,11 +87,17 @@ public class FTPTestSetup extends TestSetup {
 	protected void scrubCurrentDirectory(FTPClient client) throws FTPException {
 		FTPDirectoryEntry[] entries = client.listFiles(null, DEFAULT_PROGRESS_MONITOR);
 		for (int i = 0; i < entries.length; i++) {
+			if (entries[i].getName().equals(SCRUB_DISABLE_FILE)) return;
+		}
+		for (int i = 0; i < entries.length; i++) {
 			FTPDirectoryEntry entry = entries[i];
 			if (entry.hasFileSemantics()) {
 				client.deleteFile(entry.getName(), DEFAULT_PROGRESS_MONITOR);
 			}
 			if (entry.hasDirectorySemantics()) {
+				client.changeDirectory(entry.getName(), DEFAULT_PROGRESS_MONITOR);
+				scrubCurrentDirectory(client);
+				client.changeDirectory(FTPClient.PARENT_DIRECTORY, DEFAULT_PROGRESS_MONITOR);
 				client.deleteDirectory(entry.getName(), DEFAULT_PROGRESS_MONITOR);
 			}
 		}
@@ -97,7 +106,7 @@ public class FTPTestSetup extends TestSetup {
 	protected URL setupURL(String urlString) throws MalformedURLException, FTPException {
 
 		// Give some info about which repository the tests are running against
-		System.out.println("Connecting to: " + urlString);
+		if (DEBUG) System.out.println("Connecting to: " + urlString);
 		
 		// Validate that we can connect, also creates and caches the repository location. This
 		// is important for the UI tests.
@@ -108,6 +117,7 @@ public class FTPTestSetup extends TestSetup {
 			// Initialize the repo if requested
 			// For safety, do not scrub if no path is provided
 			if( SCRUB_URL && ! new Path(url.getPath()).isEmpty()) {
+				if (DEBUG) System.out.println("Scrubbing: " + url.getPath());
 				scrubCurrentDirectory(client);
 			}
 		} finally {
@@ -125,25 +135,35 @@ public class FTPTestSetup extends TestSetup {
 		FTPServerLocation location = FTPServerLocation.fromURL(url, false);
 		FTPClient client = new FTPClient(location, null, getListener());
 		client.open(DEFAULT_PROGRESS_MONITOR);
+		String urlPath = url.getPath();
+		// Strip leading slash
+		if (urlPath.indexOf('/') == 0) {
+			urlPath = urlPath.substring(1);
+		}
 		try {
-			client.createDirectory(url.getPath(), DEFAULT_PROGRESS_MONITOR);
+			client.createDirectory(urlPath, DEFAULT_PROGRESS_MONITOR);
 		} catch (FTPException e) {
 			// Ignore the exception
 		}
-		client.changeDirectory(url.getPath(), DEFAULT_PROGRESS_MONITOR);
+		try {
+			client.changeDirectory(urlPath, DEFAULT_PROGRESS_MONITOR);
+		} catch (FTPException e) {
+			client.close(DEFAULT_PROGRESS_MONITOR);
+			throw e;
+		}
 		return client;
 	}
 	
 	public static IFTPClientListener getListener() {
 		return new IFTPClientListener() {
 			public void responseReceived(int responseCode, String responseText) {
-				System.out.println(responseText);
+				if (DEBUG) System.out.println(responseText);
 			}
 			public void requestSent(String command, String argument) {
 				if (argument != null) {
-					System.out.println(command + " " + argument);
+					if (DEBUG) System.out.println(command + " " + argument);
 				} else {
-					System.out.println(command);
+					if (DEBUG) System.out.println(command);
 				}
 			}
 		};
