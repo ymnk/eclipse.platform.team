@@ -100,6 +100,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	public SubscriberParticipant(ISynchronizeScope scope) {
 		this();
 		this.scope = scope;
+		scope.addPropertyChangeListener(this);
 	}
 	
 	/* (non-Javadoc)

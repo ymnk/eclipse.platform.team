@@ -293,7 +293,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 */
 	public void init(String secondaryId, IMemento memento) throws PartInitException {
 		setSecondaryId(secondaryId);
-		pinned = Boolean.getBoolean(memento.getString(CTX_PINNED));
+		pinned = Boolean.valueOf(memento.getString(CTX_PINNED)).booleanValue();
 	}
 
 	/* (non-Javadoc)
