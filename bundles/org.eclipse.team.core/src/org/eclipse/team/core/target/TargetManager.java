@@ -27,6 +27,9 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ISynchronizer;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -40,6 +43,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.target.LocationMapping;
+import org.eclipse.team.internal.core.target.UrlUtil;
 
 public class TargetManager {
 	private static final String TARGET_SITES_FILE = ".targetSites"; //$NON-NLS-1$
@@ -54,6 +58,36 @@ public class TargetManager {
 	public static void startup() {
 		ResourcesPlugin.getWorkspace().getSynchronizer().add(TARGET_MAPPINGS);
 		readLocations();
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(new IResourceChangeListener() {
+			public void resourceChanged(IResourceChangeEvent event) {
+				IResourceDelta root = event.getDelta();
+				IResourceDelta[] projectDeltas = root.getAffectedChildren(IResourceDelta.ADDED);
+				for (int i = 0; i < projectDeltas.length; i++) {
+					try {
+						IResourceDelta delta = projectDeltas[i];
+						IResource resource = delta.getResource();
+						// We're only interested in projects
+						if (resource.getType() != IResource.PROJECT) continue;
+						boolean movedFrom = (delta.getFlags() & IResourceDelta.MOVED_FROM) > 0;
+						// We're only interested in moves
+						if (! movedFrom) continue;
+						IProject project = (IProject)resource;
+						TargetProvider provider = TargetManager.getProvider(project);
+						// If there is a provider, then the provider must have handled the move themselves
+						if (provider != null) continue;
+						IPath oldPath = delta.getMovedFromPath();
+						if (oldPath.segmentCount() != 1) continue;
+						IProject oldProject = ResourcesPlugin.getWorkspace().getRoot().getProject(oldPath.lastSegment());
+						provider = TargetManager.getProvider(oldProject);
+						// If there's no provider, there's no work to do
+						if (provider == null) continue;
+						TargetManager.map(project, provider.getSite(), UrlUtil.getTrailingPath(provider.getURL(), provider.getSite().getURL()));
+					} catch (TeamException e) {
+						TeamPlugin.log(e.getStatus());
+					}
+				}
+			}
+		}, IResourceChangeEvent.POST_CHANGE);
 	}
 
 	public static Site[] getSites() {
