@@ -6,6 +6,7 @@ import java.util.Iterator;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
@@ -41,15 +42,17 @@ public class RefreshTagsAction extends CVSAction {
 						ICVSRepositoryLocation location = locations[j];
 						// todo: This omits defined modules when there is no current working set
 						ICVSRemoteResource[] resources = manager.getWorkingFoldersForTag(location, CVSTag.DEFAULT, Policy.subMonitorFor(monitor, 10));
-						IProgressMonitor subMonitor = Policy.subMonitorFor(monitor, 90);
-						subMonitor.beginTask(null, 100 * resources.length);
-						for (int i = 0; i < resources.length; i++) {
-							ICVSRemoteResource resource = resources[i];
-							if (resource instanceof ICVSFolder) {
-								manager.refreshDefinedTags((ICVSFolder)resource, true /* replace */, true, Policy.subMonitorFor(subMonitor, 100));
+						if (promptToRefresh(location, resources)) {
+							IProgressMonitor subMonitor = Policy.subMonitorFor(monitor, 90);
+							subMonitor.beginTask(null, 100 * resources.length);
+							for (int i = 0; i < resources.length; i++) {
+								ICVSRemoteResource resource = resources[i];
+								if (resource instanceof ICVSFolder) {
+									manager.refreshDefinedTags((ICVSFolder)resource, true /* replace */, true, Policy.subMonitorFor(subMonitor, 100));
+								}
 							}
+							subMonitor.done();
 						}
-						subMonitor.done();
 					}
 					monitor.done();
 				} catch (TeamException e) {
@@ -85,4 +88,17 @@ public class RefreshTagsAction extends CVSAction {
 		return (ICVSRepositoryLocation[])tags.toArray(new ICVSRepositoryLocation[tags.size()]);
 	}
 
+	private boolean promptToRefresh(final ICVSRepositoryLocation location, final ICVSRemoteResource[] resources) {
+		if (resources.length == 0) return true;
+		final boolean[] result = new boolean[] {false};
+		getShell().getDisplay().syncExec(new Runnable() {
+			public void run() {
+				result[0] = MessageDialog.openQuestion(getShell(), 
+					Policy.bind("RefreshTagsAction.title"), 
+					Policy.bind("RefreshTagsAction.message", location.getLocation(), new Integer(resources.length).toString()));
+			}
+		});
+		return result[0];
+	}
+			
 }
