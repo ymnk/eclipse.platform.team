@@ -21,9 +21,9 @@ import org.eclipse.team.internal.core.Policy;
  */
 public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSetChangeListener {
 
-	SyncInfoSet inputSyncSet;
+	SubscriberSyncInfoSet inputSyncSet;
 
-	public SyncSetInputFromSyncSet(SyncInfoSet set, SubscriberEventHandler handler) {
+	public SyncSetInputFromSyncSet(SubscriberSyncInfoSet set, SubscriberEventHandler handler) {
 		super(handler);
 		this.inputSyncSet = set;
 		inputSyncSet.addSyncSetChangedListener(this);
@@ -79,8 +79,8 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	}
 	
 	public void reset() {
-		getSyncSet().removeSyncSetChangedListener(this);
-		getSyncSet().connect(this);
+		inputSyncSet.removeSyncSetChangedListener(this);
+		inputSyncSet.connect(this);
 	}
 
 	/* (non-Javadoc)

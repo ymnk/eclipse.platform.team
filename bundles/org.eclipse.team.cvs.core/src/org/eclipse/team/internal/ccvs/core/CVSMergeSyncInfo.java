@@ -20,6 +20,10 @@ import org.eclipse.team.core.synchronize.*;
  */
 public class CVSMergeSyncInfo extends CVSSyncInfo {
 
+	public CVSMergeSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, Subscriber subscriber) throws TeamException {
+		super(local, base, remote, subscriber);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncInfo#handleDeletionConflicts(int)
 	 */
@@ -45,10 +49,6 @@ public class CVSMergeSyncInfo extends CVSSyncInfo {
 		}
 		
 		return kind;
-	}
-
-	public CVSMergeSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, Subscriber subscriber) throws TeamException {
-		super(local, base, remote, subscriber);
 	}
 	
 	/* (non-Javadoc)

@@ -12,13 +12,12 @@ package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
 
 public class WorkingSetSyncSetInput extends SyncSetInputFromSyncSet {
 
 	private SyncInfoWorkingSetFilter workingSetFilter = new SyncInfoWorkingSetFilter();
 	
-	public WorkingSetSyncSetInput(SyncInfoSet set, SubscriberEventHandler handler) {
+	public WorkingSetSyncSetInput(SubscriberSyncInfoSet set, SubscriberEventHandler handler) {
 		super(set, handler);
 		setFilter(workingSetFilter);
 	}

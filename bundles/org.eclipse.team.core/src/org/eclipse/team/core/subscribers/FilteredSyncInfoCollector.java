@@ -11,6 +11,7 @@
 package org.eclipse.team.core.subscribers;
 
 import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoSet;
 import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSyncSet;
 
 /**
@@ -30,7 +31,7 @@ import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSyncSet;
 public final class FilteredSyncInfoCollector {
 
 	private SyncSetInputFromSyncSet filteredInput;
-	private SyncInfoSet source;
+	private SubscriberSyncInfoSet source;
 
 	/**
 	 * Create a filtered sync info collector that collects sync info from the source set.
@@ -38,7 +39,7 @@ public final class FilteredSyncInfoCollector {
 	 * @param set the source set
 	 * @param filter the filter to be applied to the output set
 	 */
-	public FilteredSyncInfoCollector(SubscriberSyncInfoCollector collector, SyncInfoSet set, SyncInfoFilter filter) {
+	public FilteredSyncInfoCollector(SubscriberSyncInfoCollector collector, SubscriberSyncInfoSet set, SyncInfoFilter filter) {
 		this.source = set;
 		filteredInput = new SyncSetInputFromSyncSet(source, collector.getEventHandler());
 		filteredInput.setFilter(filter);

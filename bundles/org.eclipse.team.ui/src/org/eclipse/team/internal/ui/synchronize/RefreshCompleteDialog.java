@@ -24,11 +24,14 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoFilter;
+import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoSet;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.ui.synchronize.subscriber.*;
-import org.eclipse.team.ui.synchronize.viewers.*;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetCompareInput;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
@@ -65,7 +68,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		};
 		this.collector = new FilteredSyncInfoCollector(
 				participant.getSubscriberSyncInfoCollector(), 
-				participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
+				(SubscriberSyncInfoSet)participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
 				filter);
 		this.collector.start();
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
