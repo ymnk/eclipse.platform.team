@@ -59,7 +59,7 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 		String property = event.getProperty();
 		if(property.equals(CVSUIPlugin.P_DECORATORS_CHANGED)) {
 			Viewer viewer = configuration.getPage().getViewer();
-			if(viewer instanceof StructuredViewer) {
+			if(viewer instanceof StructuredViewer && !viewer.getControl().isDisposed()) {
 				((StructuredViewer)viewer).refresh(true);
 			}
 		}
