@@ -34,7 +34,7 @@ public class OptimizedRemoteSynchronizer extends RemoteSynchronizer {
 	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#getSyncBytes(org.eclipse.core.resources.IResource)
 	 */
 	public byte[] getSyncBytes(IResource resource) throws CVSException {
-		byte[] bytes = super.getSyncBytes(resource);
+		byte[] bytes = getRemoteBytes(resource);
 		if (bytes == null) {
 			// The remote was never known so use the base
 			bytes = baseSynchronizer.getSyncBytes(resource);
@@ -63,4 +63,15 @@ public class OptimizedRemoteSynchronizer extends RemoteSynchronizer {
 		return baseSynchronizer;
 	}
 
+	/**
+	 * Return the bytes for the remote resource if there is a remote that differs
+	 * from the local.
+	 * 
+	 * @param resource
+	 * @return
+	 * @throws CVSException
+	 */
+	public byte[] getRemoteBytes(IResource resource) throws CVSException {
+		return super.getSyncBytes(resource);
+	}
 }

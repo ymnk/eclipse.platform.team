@@ -76,12 +76,20 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 		IResource[] roots = getSubscriber().roots();
 		monitor.beginTask(null, 100 * roots.length);
 		try {
-			for (int i = 0; i < roots.length; i++) {
-				IResource resource = roots[i];
-				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 100);
-				sub.beginTask(null, 512);
-				collectDeeply(resource, sub);
-				sub.done();
+			SyncInfo[] outOfSync = getSubscriber().getAllOutOfSync(roots, IResource.DEPTH_INFINITE, Policy.infiniteSubMonitorFor(monitor, 100 * roots.length));
+			if (outOfSync == null) {
+				for (int i = 0; i < roots.length; i++) {
+					IResource resource = roots[i];
+					IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 100);
+					sub.beginTask(null, 512);
+					collectDeeply(resource, sub);
+					sub.done();
+				}
+			} else {
+				for (int i = 0; i < outOfSync.length; i++) {
+					SyncInfo info = outOfSync[i];
+					collect(info);
+				}
 			}
 		} finally {
 			monitor.done();

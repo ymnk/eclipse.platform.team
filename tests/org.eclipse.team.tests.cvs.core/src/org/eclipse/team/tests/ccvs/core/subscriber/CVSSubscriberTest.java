@@ -1160,4 +1160,27 @@ public class CVSSubscriberTest extends EclipseTest {
 			   SyncInfo.OUTGOING | SyncInfo.ADDITION});
 	}
 	
+	public void testOutgoingEmptyFolder() throws CoreException, TeamException {
+		// Create a test project (which commits it as well)
+		IProject project = createProject("testOutgoingEmptyFolder", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+
+		// Create an empty folder without adding it to version control
+		buildResources(project, new String[] {"folder2/"}, false);
+		
+		assertSyncEquals("testOutgoingEmptyFolder", project, 
+			new String[] { "folder2/" }, 
+			true, new int[] {
+				SyncInfo.OUTGOING | SyncInfo.ADDITION});
+				
+		commitResources(project, new String[] { "folder2" });
+		
+		assertSyncEquals("testOutgoingEmptyFolder", project, 
+			new String[] { "folder2/" }, 
+			true, new int[] {
+				SyncInfo.IN_SYNC});
+				
+		// Ensure that the folder still exists (i.e. wasn't pruned)
+		assertTrue("Folder should still exist", project.getFolder("folder2").exists());
+	}
+	
 }

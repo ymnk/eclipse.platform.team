@@ -123,6 +123,8 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	 * @return
 	 */
 	private IResource[] getUnaddedResources(SyncResourceSet syncSet) throws CVSException {
+		// TODO: should only get outgoing additions (since conflicting additions 
+		// could be considered to be under version control already)
 		IResource[] resources = syncSet.getResources();
 		List result = new ArrayList();
 		for (int i = 0; i < resources.length; i++) {
@@ -160,15 +162,17 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		
 		final SyncResource[] changed = syncSet.getSyncResources();
 		if (changed.length == 0) return;
-				
-		final List commits = new ArrayList();
-		final List additions = new ArrayList();
-		final List deletions = new ArrayList();
-		final List toMerge = new ArrayList();
-		final List makeOutgoing = new ArrayList();
-
+		
+		// A list of files to be committed
+		final List commits = new ArrayList(); // of IResource
+		// New resources that are not yet under CVS control and need a "cvs add"
+		final List additions = new ArrayList(); // of IResource
+		// Deleted resources that need a "cvs remove"
+		final List deletions = new ArrayList(); // of IResource
+		// A list of incoming or conflicting file changes to be made outgoing changes
+		final List makeOutgoing = new ArrayList(); // of SyncResource
 		// A list of out-of-sync folders that must be made in-sync
-		final List makeInSync = new ArrayList();
+		final List makeInSync = new ArrayList(); // of SyncResource
 		
 		for (int i = 0; i < changed.length; i++) {
 			SyncResource changedNode = changed[i];
@@ -217,8 +221,13 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 						break;
 				}
 			} else {
-				if (isOutOfSync(changedNode)) {
-					makeInSync.add(parent);
+				if (((kind & SyncInfo.DIRECTION_MASK) == SyncInfo.OUTGOING)
+					&& ((kind & SyncInfo.CHANGE_MASK) == SyncInfo.ADDITION)) {
+						// Outgoing folder additions must be added
+						additions.add(changedNode.getResource());
+				} else if (isOutOfSync(changedNode)) {
+					// otherwise, make any out-of-sync folders in-sync using the remote info
+					makeInSync.add(changedNode);
 				}
 			}
 		}
@@ -247,8 +256,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 			}
 			manager.commit((IResource[])commits.toArray(new IResource[commits.size()]), comment, Policy.subMonitorFor(monitor, commits.size() * 100));
 			
-			// prune any empty folders after the commit 
-			pruneEmptyParents(changed);
+			// TODO: are there any cases that need to have folders pruned?
 		} catch (TeamException e) {
 			throw CVSException.wrapException(e);
 		}

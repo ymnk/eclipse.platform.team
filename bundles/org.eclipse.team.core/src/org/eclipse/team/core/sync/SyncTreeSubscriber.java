@@ -262,4 +262,24 @@ abstract public class SyncTreeSubscriber {
 		}
 		return deltas;
 	}
+	
+	/**
+	 * Return an array of all out-of-sync resources (getKind() != 0) that occur 
+	 * under the given resources to the specified depth. The purpose of this method is
+	 * to provide subscribers a means of optimizing the determination of 
+	 * all out-of-sync out-of-sync descendants of a set of resources. 
+	 * <p>
+	 * A return value of an empty array indicates that there are no out-of-sync resources
+	 * supervised by the subscriber. A return of <code>null</code> indicates that the
+	 * subscriber does not support this operation in an optimized fashion. In this case,
+	 * the caller can determine the out-of-sync resources by traversing the resource
+	 * structure form the roots of the subscriber (@see <code>getRoots()</code>).
+	 * @param resources
+	 * @param depth
+	 * @param monitor
+	 * @return
+	 */
+	public SyncInfo[] getAllOutOfSync(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		return null;
+	}
 }

@@ -15,11 +15,16 @@ import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.TeamDelta;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 
@@ -32,7 +37,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	
 	// qualified name for remote sync info
 	private static final String REMOTE_RESOURCE_KEY = "remote-resource-key";
-	
+
 	CVSWorkspaceSubscriber(QualifiedName id, String name, String description) {
 		super(id, name, description);
 		
@@ -142,5 +147,74 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	 */
 	protected ResourceSynchronizer getBaseSynchronizer() {
 		return remoteSynchronizer.getBaseSynchronizer();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#getAllOutOfSync(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public SyncInfo[] getAllOutOfSync(IResource[] resources, final int depth, IProgressMonitor monitor) throws TeamException {
+		monitor.beginTask(null, resources.length * 100);
+		final List result = new ArrayList();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+			final IProgressMonitor infinite = Policy.infiniteSubMonitorFor(monitor, 100);
+			try {
+				infinite.beginTask(null, 512);
+				resource.accept(new IResourceVisitor() {
+					public boolean visit(IResource resource) throws CoreException {
+						try {
+							if (isOutOfSync(resource, infinite)) {
+								SyncInfo info = getSyncInfo(resource, infinite);
+								if (info != null && info.getKind() != 0) {
+									result.add(info);
+								}
+							}
+							return true;
+						} catch (TeamException e) {
+							// TODO: This is probably not the right thing to do here
+							throw new CoreException(e.getStatus());
+						}
+					}
+				}, depth, true /* include phantoms */);
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			} finally {
+				infinite.done();
+			}
+		}
+		monitor.done();
+		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+	}
+	
+	private boolean isOutOfSync(IResource resource, IProgressMonitor monitor) throws CVSException {
+		return (hasIncomingChange(resource) || hasOutgoingChange(CVSWorkspaceRoot.getCVSResourceFor(resource), monitor));
+	}
+	
+	private boolean hasOutgoingChange(ICVSResource resource, IProgressMonitor monitor) throws CVSException {
+		if (resource.isFolder()) {
+			// A folder is an outgoing change if it is not a CVS folder and not ignored
+			ICVSFolder folder = (ICVSFolder)resource;
+			// TODO: The parent caches the dirty state so we only need to check
+			// the file if the parent is dirty.
+			// TODO: Unfortunately, the modified check on the parent still loads
+			// the CVS folder information so not much is gained
+			if (folder.getParent().isModified(monitor)) {
+				return !folder.isCVSFolder() && !folder.isIgnored();
+			}
+		} else {
+			// A file is an outgoing change if it is modified
+			ICVSFile file = (ICVSFile)resource;
+			// TODO: The parent chaches the dirty state so we only need to check
+			// the file if the parent is dirty
+			if (file.getParent().isModified(monitor)) {
+				return file.isModified(monitor);
+			}
+		}
+		return false;
+	}
+	
+	private boolean hasIncomingChange(IResource resource) throws CVSException {
+		return remoteSynchronizer.getRemoteBytes(resource) != null;
 	}
 }
