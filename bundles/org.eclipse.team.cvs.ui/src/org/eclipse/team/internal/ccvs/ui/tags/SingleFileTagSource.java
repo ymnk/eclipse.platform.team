@@ -60,6 +60,7 @@ public class SingleFileTagSource extends TagSource {
     public void refresh(IProgressMonitor monitor) throws TeamException {
         CVSTag[] tags = fetchTagsFor(file, monitor); 
         commit(tags, false, monitor);
+        fireChange();
     }
 
     /* (non-Javadoc)
@@ -82,7 +83,8 @@ public class SingleFileTagSource extends TagSource {
      * @see org.eclipse.team.internal.ccvs.ui.tags.TagSource#commit(org.eclipse.team.internal.ccvs.core.CVSTag[], boolean, org.eclipse.core.runtime.IProgressMonitor)
      */
     public void commit(CVSTag[] tags, boolean replace, IProgressMonitor monitor) throws CVSException {
-        parentFolderTagSource.commit(tags, replace, monitor);  
+        parentFolderTagSource.commit(tags, replace, monitor);
+        fireChange();
     }
 
     /* (non-Javadoc)

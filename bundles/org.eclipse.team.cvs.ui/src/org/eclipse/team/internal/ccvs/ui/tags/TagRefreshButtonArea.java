@@ -20,7 +20,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.ui.*;
@@ -86,7 +85,6 @@ public class TagRefreshButtonArea extends DialogArea {
 				public void handleEvent(Event event) {
 					TagConfigurationDialog d = new TagConfigurationDialog(shell, tagSource);
 					d.open();
-					updateEnablementOnRefreshButton(refreshButton, tagSource);
 				}
 			});		
 		
@@ -94,22 +92,6 @@ public class TagRefreshButtonArea extends DialogArea {
 		WorkbenchHelp.setHelp(addButton, IHelpContextIds.TAG_CONFIGURATION_OVERVIEW);		
 		Dialog.applyDialogFont(buttonComp);
     }
-
-	 
-	 private static void updateEnablementOnRefreshButton(Button refreshButton, TagSource tagSource) {
-	 	try {
-			ICVSFolder folder = getSingleFolder(tagSource);
-			if (folder != null) {
-	            String[] files = CVSUIPlugin.getPlugin().getRepositoryManager().getAutoRefreshFiles(folder);
-				refreshButton.setEnabled(files.length != 0);
-			} else {
-			    refreshButton.setEnabled(false);
-			}
-		} catch (CVSException e) {
-			refreshButton.setEnabled(false);
-			CVSUIPlugin.log(e);
-		}
-	 }
 	
 	/*
 	 * Returns a button that implements the standard refresh tags operation. The runnable is run immediatly after 
@@ -138,7 +120,6 @@ public class TagRefreshButtonArea extends DialogArea {
 					}
 				}
 			});
-		updateEnablementOnRefreshButton(refreshButton, tagSource);
 		return refreshButton;		
 	 }
 		
@@ -153,7 +134,5 @@ public class TagRefreshButtonArea extends DialogArea {
     public void setTagSource(TagSource tagSource) {
         Assert.isNotNull(tagSource);
         this.tagSource = tagSource;
-        if (refreshButton != null && !refreshButton.isDisposed())
-            updateEnablementOnRefreshButton(refreshButton, tagSource);
     }
 }

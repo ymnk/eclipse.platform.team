@@ -39,9 +39,6 @@ import org.eclipse.ui.part.PageBook;
  * filtering of the displayed tags.
  */
 public class TagSelectionArea extends DialogArea {
-
-	private static final int DEFAULT_WIDTH_HINT = 300;
-	private static final int DEFAULT_HEIGHT_HINT = 400;
 	
     /*
      * Property constant which identifies the selected tag or
@@ -76,11 +73,10 @@ public class TagSelectionArea extends DialogArea {
     private final TagSource.ITagSourceChangeListener listener = new TagSource.ITagSourceChangeListener() {
         public void tagsChanged(TagSource source) {
 			Shell shell = getShell();
-			if (!shell.isDisposed() && tagTree != null && !tagTree.getControl().isDisposed()) {
+			if (!shell.isDisposed()) {
 	            shell.getDisplay().syncExec(new Runnable() {
 					public void run() {
-					    if (tagTree != null && !tagTree.getControl().isDisposed())
-					        tagTree.refresh();
+					    refresh();
 					}
 				});
 			}
