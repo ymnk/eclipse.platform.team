@@ -52,9 +52,9 @@ private void printTag(String name, HashMap parameters, boolean tab, boolean newL
 	sb.append("<"); //$NON-NLS-1$
 	sb.append(name);
 	if (parameters != null)
-		for (Enumeration e = Collections.enumeration(parameters.keySet()); e.hasMoreElements();) {
+		for (Enumeration enum = Collections.enumeration(parameters.keySet()); enum.hasMoreElements();) {
 			sb.append(" "); //$NON-NLS-1$
-			String key = (String) e.nextElement();
+			String key = (String) enum.nextElement();
 			sb.append(key);
 			sb.append("=\""); //$NON-NLS-1$
 			sb.append(getEscaped(String.valueOf(parameters.get(key))));
