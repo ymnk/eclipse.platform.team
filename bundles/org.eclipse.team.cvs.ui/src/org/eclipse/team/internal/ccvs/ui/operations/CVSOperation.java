@@ -14,7 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -134,10 +133,6 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 				return CVSOperation.this.runInJob(monitor);
 			}
 		};
-	}
-	
-	protected void fireDelta() {
-		ResourcesPlugin.getWorkspace().checkpoint(false);
 	}
 	
 	/**

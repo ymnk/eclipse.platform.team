@@ -411,8 +411,6 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 				CVSTeamProvider provider = (CVSTeamProvider)RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId());
 				provider.setWatchEditEnabled(CVSProviderPlugin.getPlugin().isWatchEditEnabled());
 			}
-			// Allow deltas to be sent out
-			fireDelta();
 		} finally {
 			monitor.done();
 		}
