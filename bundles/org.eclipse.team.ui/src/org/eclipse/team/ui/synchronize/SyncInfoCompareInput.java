@@ -33,10 +33,10 @@ import org.eclipse.team.ui.ISharedImages;
  * in an editor. This input can alternatly be used to show compare results in 
  * a dialog by calling {@link CompareUI#openCompareDialog()}.
  * <p>
- * Supports saving the local resource if changed in the editor.
+ * Supports saving the local resource that is changed in the editor.
  * </p>
  * <p>
- * Use {@link SyncInfoCompareInput} to display more than one <code>SyncInfo</code>
+ * Use {@link SyncInfoSetCompareInput} to display more than one <code>SyncInfo</code>
  * in an compare viewer. 
  * </p>
  * @see SyncInfoDiffNode

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import java.util.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,9 +38,12 @@ import org.eclipse.ui.progress.UIJob;
  * instead of grouped physically. This could be used for showing incoming
  * changes and also for showing the results of comparisons.
  * 
- * Some problems with this:
- * - how to support logical groupins based on any of the information in
- * the log entry?
+ * + 2003-12-09 Tuesday 6:04 jlemieux
+ *   + Bug 3456: this was changed last night
+ *     + org/eclipse/com/Main.java
+ *     + org/blah/this/Other.txt
+ * 
+ * {date/time, comment, user} -> {*files}
  */
 public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	
@@ -47,6 +51,44 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	private PendingUpdateAdapter pendingItem;
 	private boolean shutdown = false;
 	private FetchLogEntriesJob fetchLogEntriesJob;
+	
+	public static class DateComment {
+		Date date;
+		String comment;
+		private String user;
+		DateComment(Date date, String comment, String user) {
+			this.date = date;
+			this.comment = comment;
+			this.user = user;	
+		}
+
+		public boolean equals(Object obj) {
+			if(obj == this) return true;
+			if(! (obj instanceof DateComment)) return false;
+			DateComment other = (DateComment)obj;
+			
+			Calendar c1 = new GregorianCalendar();
+			c1.setTime(date);
+			int year = c1.get(Calendar.YEAR);
+			int day = c1.get(Calendar.DAY_OF_YEAR);
+			
+			Calendar c2 = new GregorianCalendar();
+			c2.setTime(other.date);
+			int yearOther = c2.get(Calendar.YEAR);
+			int dayOther = c2.get(Calendar.DAY_OF_YEAR);
+			
+			return year == yearOther && day == dayOther && comment.equals(other.comment) &&
+				user.equals(other.user);
+		}
+		
+		
+		/* (non-Javadoc)
+		 * @see java.lang.Object#hashCode()
+		 */
+		public int hashCode() {
+			return date.hashCode() + comment.hashCode() + user.hashCode();
+		}
+	}
 	
 	/**
 	 * The PendingUpdateAdapter is a convenience object that can be used
@@ -182,11 +224,11 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 			}
 			ILogEntry logEntry = getSyncInfoComment((CVSSyncInfo) infos[i], monitor);
 			if(logEntry != null) {
-				String comment = logEntry.getComment();
-				ChangeLogDiffNode changeRoot = (ChangeLogDiffNode) commentRoots.get(comment);
+				DateComment dateComment = new DateComment(logEntry.getDate(), logEntry.getComment(), logEntry.getAuthor());
+				ChangeLogDiffNode changeRoot = (ChangeLogDiffNode) commentRoots.get(dateComment);
 				if (changeRoot == null) {
 					changeRoot = new ChangeLogDiffNode(getRoot(), logEntry);
-					commentRoots.put(comment, changeRoot);
+					commentRoots.put(dateComment, changeRoot);
 				}
 				changeRoot.add(infos[i]);
 			}
@@ -212,13 +254,19 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 			String baseRevision = getRevisionString(base);
 			String remoteRevision = getRevisionString(remote);
 			String localRevision = getRevisionString(local);
-				
-			boolean useRemote = ResourceSyncInfo.isLaterRevision(remoteRevision, localRevision);
+			// TODO: handle new files where there is no local or remote	
+			boolean useRemote = true;
+			if(local != null && remote != null) {
+				useRemote = ResourceSyncInfo.isLaterRevision(remoteRevision, localRevision);
+			} else if(remote == null) {
+				useRemote = false;
+			}
 			if (useRemote) {
 				return ((RemoteFile) remote).getLogEntry(monitor);
-			} else {
+			} else if (local != null){
 				return ((RemoteFile) local).getLogEntry(monitor);
 			}
+			return null;
 		} catch (CVSException e) {
 			CVSUIPlugin.log(e);
 			return null;

@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.synchronize;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -85,6 +86,18 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		return activeParticipant;
 	}
 
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
+		IPage page = getCurrentPage();
+		if(page instanceof IAdaptable) {
+			return ((IAdaptable)page).getAdapter(adapter);
+		}
+		return null;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.PageBookView#showPageRec(org.eclipse.ui.part.PageBookView.PageRec)
 	 */

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import java.text.DateFormat;
+
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
@@ -45,14 +47,15 @@ public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, I
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getImageDescriptor(java.lang.Object)
 	 */
 	public ImageDescriptor getImageDescriptor(Object object) {
-		return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION);
+		return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_DATE);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
 	 */
 	public String getLabel(Object o) {
-		return logEntry.getComment() + "(" + logEntry.getAuthor() +")";
+		String date = DateFormat.getDateTimeInstance().format(logEntry.getDate());
+		return date + ": " + logEntry.getComment() + " (" + logEntry.getAuthor() +")";
 	}
 
 	public void add(SyncInfo info) {

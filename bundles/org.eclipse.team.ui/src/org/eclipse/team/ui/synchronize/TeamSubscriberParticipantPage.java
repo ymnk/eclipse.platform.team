@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.compare.internal.INavigatable;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -39,7 +40,7 @@ import org.eclipse.ui.part.*;
  * </p> 
  * @since 3.0
  */
-public class TeamSubscriberParticipantPage implements IPageBookViewPage, IPropertyChangeListener {
+public class TeamSubscriberParticipantPage implements IPageBookViewPage, IPropertyChangeListener, IAdaptable {
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
 	private Composite composite = null;
@@ -167,13 +168,28 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
 	public Object getAdapter(Class key) {
+		if (key.equals(ISelectionProvider.class))
+			return getChangesViewer();
 		if (key == IShowInSource.class) {
 			return new IShowInSource() {
 				public ShowInContext getShowInContext() {					
 					StructuredViewer v = (StructuredViewer)getChangesViewer();
 					if (v == null) return null;
-					return new ShowInContext(null, v.getSelection());
+					ISelection s = v.getSelection();
+					if (s instanceof IStructuredSelection) {
+						Object[] resources = Utils.getResources(((IStructuredSelection)s).toArray());
+						return new ShowInContext(null, new StructuredSelection(resources));
+					}
+					return null;
 				}
+			};
+		}
+		if (key == IShowInTargetList.class) {
+			return new IShowInTargetList() {
+				public String[] getShowInTargetIds() {
+					return new String[] { IPageLayout.ID_RES_NAV };
+				}
+
 			};
 		}
 		return null;

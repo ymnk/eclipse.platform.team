@@ -71,7 +71,7 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 ======================================================================
 x navigable APIs must be consolidated, sync view navigation
 x compare configuration review
-- logical view extensions
+x logical view extensions [not going to do this in 3.0]
   - based on project natures
   - ui (e.g. layouts/context menu??)
 x content provider should not assume diff nodes have associated resources
@@ -118,6 +118,8 @@ x several places require a resource
   show all elements in it's sync set. Could the comment builder place all outgoing changes in 
   an additional section. The user would never see this but it would fulfill the contract.
   [jm] yes, this is what i ended up doing.
+  [mv] for efficiency, we should still try to couple the mode change with the content provider
+  change so that the diff node tree is not built and displayed twice during a change
 - the test cases starve the subscriber event handler such that an event has additions and removals for the same resources
   - this causes failures in the diff tree builders
   - although less likely in UI, can still happen
@@ -147,3 +149,5 @@ x sync view title says "Summary" when first opened
 SyncInfoDiffNodes (in Util). This is problematic as now the diff tree cannot contain diff nodes that
 do not map to a resource but parent nodes that do. The selection determination for SubscriberAction
 needs to walk the diff node tree for this case.
+
+- serializing eventing 
