@@ -263,8 +263,31 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#getIResource()
 	 */
-	public IResource getIResource() throws CVSException {
+	public IResource getIResource() {
 		return resource;
 	}
 
+	/*
+	 * Flush all cached modification info for the resource and it's ancestors
+	 */
+	protected abstract void flushModificationCache() throws CVSException;
+
+	/*
+	 * Flush all cached info for the file and it's ancestors
+	 */
+	protected void flushAncestors() throws CVSException {
+		try {
+			flushModificationCache();
+		} finally {
+			((EclipseResource)getParent()).flushAncestors();
+		}
+	}
+	
+	protected String getDirtyIndicator() throws CVSException {
+		return EclipseSynchronizer.getInstance().getDirtyIndicator(getIResource());
+	}
+
+	protected void setDirtyIndicator(String indicator) throws CVSException {
+		EclipseSynchronizer.getInstance().setDirtyIndicator(getIResource(), indicator);
+	}
 }

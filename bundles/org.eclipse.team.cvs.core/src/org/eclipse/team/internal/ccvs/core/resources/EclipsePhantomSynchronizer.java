@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ISynchronizer;
@@ -54,6 +55,7 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 		// Add the sync keys to the workspace synchronizer which is used to handle folder deletions
 		getWorkspaceSynchronizer().add(FOLDER_SYNC_KEY);
 		getWorkspaceSynchronizer().add(RESOURCE_SYNC_KEY);
+		getWorkspaceSynchronizer().add(DIRTY_COUNT);
 	}
 	
 	/**
@@ -466,6 +468,160 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 			changedResources.clear();
 		}
 		super.broadcastResourceStateChanges(resources);
+	}
+
+	/*
+	 * Return the dirty count for the given folder. For existing folders, the
+	 * dirty count may not have been calculated yet and this method will return
+	 * null in that case. For phantom folders, the dirty count is calculated if
+	 * it does not exist yet.
+	 */
+	protected Integer getDirtyCount(IContainer parent) throws CVSException {
+		if (parent.isPhantom()) {
+			try {
+				// get the count from the synchronizer
+				int count = internalGetDirtyCount(parent);
+				if (count == -1) {
+					count = calculateDirtyCountForPhantom(parent);
+					setDirtyCount(parent, count);
+				}
+				return new Integer(count);
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			}
+		} else {
+			return super.getDirtyCount(parent);
+		}
+	}
+	
+	protected int internalGetDirtyCount(IContainer parent) throws CoreException {
+		byte[] bytes = getWorkspaceSynchronizer().getSyncInfo(DIRTY_COUNT, parent);
+		if (bytes == null) return -1;
+		return intFromBytes(bytes);
+	}
+	
+	protected void setDirtyCount(IContainer container, int count) throws CVSException {
+		if (container.isPhantom()) {
+			try {
+				beginOperation(null);
+				getWorkspaceSynchronizer().setSyncInfo(DIRTY_COUNT, container, getBytes(count));
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			} finally {
+			   endOperation(null);
+		   	}
+		} else {
+			super.setDirtyCount(container, count);
+		}
+	}
+	
+	/*
+	 * Calculate the dirty count for the given phantom folder, performing any
+	 * necessary calculations on the childen as well
+	 */
+	private int calculateDirtyCountForPhantom(IContainer parent) throws CVSException {
+		ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor(parent);
+		ICVSResource[] children = cvsFolder.members(ICVSFolder.MANAGED_MEMBERS | ICVSFolder.PHANTOM_MEMBERS);
+		int count = 0;
+		for (int i = 0; i < children.length; i++) {
+			ICVSResource resource = children[i];
+			if (resource.isFolder()) {
+				Integer dc = getDirtyCount(parent);
+				if (dc.intValue() > 0) count++;
+			} else {
+				// Any non-existant managed files are dirty (outgoing deletion)
+				count++;
+			}
+		}
+		return count;
+	}
+	/*
+	 * Convert an int to a byte array
+	 */
+	private byte[] getBytes(int count) {
+		byte[] result = new byte[4];
+		result[0] = (byte)(count & 256);
+		result[1] = (byte)(count<<8 & 256);
+		result[1] = (byte)(count<<16 & 256);
+		result[1] = (byte)(count<<24 & 256);
+		return result;
+	}
+
+	/*
+	 * Convert a byte array to an int
+	 */
+	private int intFromBytes(byte[] bytes) {
+		return bytes[0] + (bytes[1]>>8) + (bytes[2]>>16) + (bytes[3]>>24);
+	}
+	
+	/*
+	 * Flush all cached info for the container and it's ancestors
+	 */
+	protected void flushModificationCache(IContainer container) throws CVSException {
+		if (container.isPhantom()) {
+			try {
+				beginOperation(null);
+				getWorkspaceSynchronizer().flushSyncInfo(DIRTY_COUNT, container, IResource.DEPTH_ZERO);
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			} finally {
+				endOperation(null);
+			}
+		} else {
+			super.flushModificationCache(container);
+		}
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer#addDeletedChild(org.eclipse.core.resources.IContainer, org.eclipse.core.resources.IFile)
+	 */
+	protected boolean addDeletedChild(IContainer container, IFile file) throws CVSException {
+		if (container.isPhantom()) {
+			try {
+				beginOperation(null);
+				int oldCount = internalGetDirtyCount(container);
+				if (oldCount == -1) {
+					// there is no cached count so wait until the first query
+					// or there was no deleted file
+					return false;
+				}
+				int newCount = calculateDirtyCountForPhantom(container);
+				// adjust the parent folder count if the newCount is 1;
+				return oldCount == 0 && newCount == 1;
+			} catch (CoreException e) {
+			   throw CVSException.wrapException(e);
+		    } finally {
+				endOperation(null);
+			}
+		} else {
+			return super.addDeletedChild(container, file);
+		}
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer#removeDeletedChild(org.eclipse.core.resources.IContainer, org.eclipse.core.resources.IFile)
+	 */
+	protected boolean removeDeletedChild(IContainer container, IFile file) throws CVSException {
+		if (container.isPhantom()) {
+			try {
+				beginOperation(null);
+				int oldCount = internalGetDirtyCount(container);
+				if (oldCount == -1 || oldCount == 0) {
+					// there is no cached count so wait until the first query
+					// or there was no deleted file
+					return false;
+				}
+				int newCount = calculateDirtyCountForPhantom(container);
+				// adjust the parent folder count if the newCount is 0;
+				return newCount == 0;
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			} finally {
+				endOperation(null);
+			}
+		} else {
+			return super.removeDeletedChild(container, file);
+		}
 	}
 
 }

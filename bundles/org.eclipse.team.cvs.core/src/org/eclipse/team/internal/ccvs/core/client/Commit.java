@@ -6,9 +6,7 @@ package org.eclipse.team.internal.ccvs.core.client;
  */
 
 import java.util.Collection;
-import java.util.Date;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -19,7 +17,6 @@ import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener;
-import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 public class Commit extends Command {
@@ -96,20 +93,7 @@ public class Commit extends Command {
 			// There should be sync info. Log the problem
 			return new Status(IStatus.WARNING, CVSProviderPlugin.ID, 0, Policy.bind("Commit.syncInfoMissing", cvsFile.getIResource().getFullPath().toString()), null); //$NON-NLS-1$
 		}
-		Date timeStamp = info.getTimeStamp();
-		if (timeStamp == null) {
-			// If the entry line has no timestamp, put the file timestamp in the entry line
-			MutableResourceSyncInfo mutable = info.cloneMutable();
-			mutable.setTimeStamp(cvsFile.getTimeStamp());
-			// Setting the sync info to a change mutatble should trigger a check for modified 
-			// see FileModificationManager and MutableResourceSyncInfo.
-			cvsFile.setSyncInfo(mutable);
-		} else {
-			// reset the file timestamp to the one from the entry line
-			cvsFile.setTimeStamp(timeStamp);
-			// the file will be no longer modified
-			CVSProviderPlugin.getPlugin().getFileModificationManager().setModified((IFile)cvsFile.getIResource(), false);
-		}
+		cvsFile.checkedIn(null);
 		return new Status(IStatus.INFO, CVSProviderPlugin.ID, 0, Policy.bind("Commit.timestampReset", cvsFile.getIResource().getFullPath().toString()), null); //$NON-NLS-1$;
 	}
 	

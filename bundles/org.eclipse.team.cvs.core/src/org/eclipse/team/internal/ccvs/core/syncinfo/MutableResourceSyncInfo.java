@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 
 import java.util.Date;
 
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
@@ -145,5 +146,12 @@ public class MutableResourceSyncInfo extends ResourceSyncInfo {
 	
 	public void reported() {
 		this.reported = true;
+	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo#setEntryLine(java.lang.String)
+	 */
+	public void setEntryLine(String entryLine) throws CVSException {
+		super.setEntryLine(entryLine);
+		this.changed = true;
 	}
 }

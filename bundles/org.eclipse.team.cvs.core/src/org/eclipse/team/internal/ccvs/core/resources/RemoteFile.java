@@ -413,12 +413,6 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	public void setTimeStamp(Date date) throws CVSException {
 	}
 
-	public boolean isModified() throws CVSException {
-		// it is safe to always consider a remote file handle as modified. This will cause any
-		// CVS command to fetch new contents from the server.
-		return true;
-	}
-
 	/**
 	 * @see ICVSFile#moveTo(String)
 	 */
