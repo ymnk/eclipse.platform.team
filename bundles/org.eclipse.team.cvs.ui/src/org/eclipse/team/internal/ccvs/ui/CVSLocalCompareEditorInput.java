@@ -20,11 +20,16 @@ import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
 import org.eclipse.team.ui.sync.SyncView;
 
 public class CVSLocalCompareEditorInput extends CVSSyncCompareInput {
-	CVSTag tag;
+	CVSTag[] tags;
+	
+	public CVSLocalCompareEditorInput(IResource[] resources, CVSTag[] tags) {
+		super(resources);
+		this.tags = tags;
+	}
 	
 	public CVSLocalCompareEditorInput(IResource[] resources, CVSTag tag) {
 		super(resources);
-		this.tag = tag;
+		this.tags = new CVSTag[] {tag};
 	}
 	
 	public Viewer createDiffViewer(Composite parent) {
@@ -41,6 +46,7 @@ public class CVSLocalCompareEditorInput extends CVSSyncCompareInput {
 		try {
 			for (int i = 0; i < trees.length; i++) {
 				IResource resource = resources[i];
+				CVSTag tag = i > tags.length ? tags[0] : tags[i];
 				IRemoteResource remote = CVSWorkspaceRoot.getRemoteTree(resource, tag, Policy.subMonitorFor(monitor, 50));
 				trees[i] = new CVSCompareSyncElement(resource, remote);				 
 			}
@@ -51,12 +57,8 @@ public class CVSLocalCompareEditorInput extends CVSSyncCompareInput {
 		return trees;
 	}
 	
-	public CVSTag getTag() {
-		return tag;
-	}
-	
 	public String getTitle() {
-		return "CVS Compare [" + tag.getName() +"]";
+		return "CVS Compare [" + tags[0].getName() +"]";
 	}
 	
 	public boolean isSaveNeeded() {

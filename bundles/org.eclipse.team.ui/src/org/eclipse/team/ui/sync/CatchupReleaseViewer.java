@@ -404,15 +404,14 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 			if(file.getKind() != IRemoteSyncElement.IN_SYNC) {
 				if(file.getRight() == null || file.getLeft() == null) {
 					file.copy(false /* right to left */);
-				} else {
-					ITypedElement te = file.getLeft();
-					ITypedElement rte = file.getRight();
-					if(te instanceof IEditableContent) {
-						IEditableContent editable = (IEditableContent)te;
-						if(editable.isEditable()) {
-							if(rte instanceof BufferedContent) {
-								editable.setContent(((BufferedContent)rte).getContent());
-							}
+				} 
+				ITypedElement te = file.getLeft();
+				ITypedElement rte = file.getRight();
+				if(te instanceof IEditableContent) {
+					IEditableContent editable = (IEditableContent)te;
+					if(editable.isEditable()) {
+						if(rte instanceof BufferedContent) {
+							editable.setContent(((BufferedContent)rte).getContent());
 						}
 					}
 				}

@@ -146,7 +146,10 @@ public class CVSSyncCompareInput extends SyncCompareInput {
 		updateView();
 		
 		// prompt user with warning
-		promptForConfirmMerge(getShell());
+		Shell shell = getShell();
+		if(shell != null) {
+			promptForConfirmMerge(getShell());
+		}
 	}
 	
 	/*

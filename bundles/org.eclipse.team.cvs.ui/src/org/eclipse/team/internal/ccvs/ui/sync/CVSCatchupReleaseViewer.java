@@ -300,10 +300,14 @@ public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 						mergeRecursive((IDiffElement)element, needsMerge);
 					}
 				}
-				IRemoteSyncElement[] files = (IRemoteSyncElement[]) needsMerge.toArray(new IRemoteSyncElement[needsMerge.size()]);
+				TeamFile[] files = (TeamFile[]) needsMerge.toArray(new TeamFile[needsMerge.size()]);
 				if(files.length != 0) {
 					try {
-						CVSUIPlugin.getPlugin().getRepositoryManager().merged(files);
+						for (int i = 0; i < files.length; i++) {		
+							TeamFile teamFile = (TeamFile)files[i];
+							CVSUIPlugin.getPlugin().getRepositoryManager().merged(new IRemoteSyncElement[] {teamFile.getMergeResource().getSyncElement()});
+							teamFile.merged();
+						}
 					} catch(TeamException e) {
 						ErrorDialog.openError(getControl().getShell(), null, null, e.getStatus());
 					}
@@ -345,11 +349,7 @@ public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 			}
 		} else if(element instanceof TeamFile) {
 			TeamFile file = (TeamFile)element;
-			file.merged();
-			needsMerge.add(file.getMergeResource().getSyncElement());
-			ISelection s = getSelection();
-			setSelection(new StructuredSelection(element.getParent()));
-			setSelection(s);
+			needsMerge.add(file);			
 		}
 	}
 	
