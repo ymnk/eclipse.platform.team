@@ -56,7 +56,7 @@ public class SyncSet {
 	private void collectParentCreations(ITeamNode node) {
 		IDiffElement parent = node.getParent();
 		if (parent != null && parent instanceof ITeamNode) {
-			if (parent.getKind() != IRemoteSyncElement.IN_SYNC) {
+			if ((parent.getKind() & Differencer.CHANGE_TYPE_MASK) == Differencer.ADDITION) {
 				set.add(parent);
 				collectParentCreations((ITeamNode)parent);
 			}

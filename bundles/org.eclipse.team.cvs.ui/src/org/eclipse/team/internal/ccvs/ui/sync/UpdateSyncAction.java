@@ -146,6 +146,8 @@ public class UpdateSyncAction extends MergeAction {
 		Set parentCreationElements = new HashSet();
 		// A list of diff elements in the sync set which are folder conflicts
 		Set parentConflictElements = new HashSet();
+		// A list of diff elements in the sync set which are outgoing folder deletions
+		Set parentDeletionElements = new HashSet();
 		// A list of the team nodes that we need to perform makeIncoming on
 		List makeIncoming = new ArrayList();
 		// A list of diff elements that need to be unmanaged and locally deleted
@@ -158,6 +160,8 @@ public class UpdateSyncAction extends MergeAction {
 				if (((parentKind & Differencer.CHANGE_TYPE_MASK) == Differencer.ADDITION) &&
 					((parentKind & Differencer.DIRECTION_MASK) == ITeamNode.INCOMING)) {
 					parentCreationElements.add(parent);
+				} else if (isLocallyDeletedFolder(parent)) {
+					parentDeletionElements.add(parent);
 				} else if ((parentKind & Differencer.DIRECTION_MASK) == ITeamNode.CONFLICTING) {
 					parentConflictElements.add(parent);
 				}
@@ -234,6 +238,16 @@ public class UpdateSyncAction extends MergeAction {
 					makeInSync(element);
 					// Remove the folder from the update shallow list since we have it locally now
 					updateIgnoreLocalShallow.remove(element);
+				}				
+			}
+			if (parentDeletionElements.size() > 0) {
+				// If a node has a parent that is an outgoing folder deletion, we have to 
+				// recreate that folder locally (it's sync info already exists locally). 
+				// We must do this for all outgoing folder deletions (recursively)
+				// in the case where there are multiple levels of outgoing folder deletions.
+				Iterator it = parentDeletionElements.iterator();
+				while (it.hasNext()) {
+					recreateLocallyDeletedFolder((IDiffElement)it.next());
 				}				
 			}
 			if (parentConflictElements.size() > 0) {

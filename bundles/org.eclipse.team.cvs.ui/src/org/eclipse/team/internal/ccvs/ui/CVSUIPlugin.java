@@ -323,8 +323,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			throw new CoreException(e.getStatus());
 		}
 		
-		CVSTeamProvider.setMoveDeleteHook(new CVSMoveDeleteHook());
-		
 		Console.startup();
 	}
 	

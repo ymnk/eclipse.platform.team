@@ -266,7 +266,20 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 			ICVSRemoteFolder remote = (ICVSRemoteFolder)getRemote();
 			ICVSFolder cvsFolder = (ICVSFolder)localSync.getCVSResource();
 			if(!local.exists()) {
-				if(remote != null) {
+				if ( cvsFolder.isCVSFolder()) {
+					// We have local information for the folder but it doesn't exist
+					if (remote == null) {
+						// Conflicting deletion. Purge local information
+						try {
+							cvsFolder.unmanage(null);
+						} catch (CVSException e) {
+							CVSProviderPlugin.log(e.getStatus());
+						}
+					} else {
+						// The folder exists remotely and has been deleted locally
+						folderKind = IRemoteSyncElement.OUTGOING | IRemoteSyncElement.DELETION;
+					} 
+				} else if(remote != null) {
 					folderKind = IRemoteSyncElement.INCOMING | IRemoteSyncElement.ADDITION;
 				} else {
 					// conflicting deletion ignore

@@ -445,4 +445,47 @@ public class EclipseSynchronizerTest extends EclipseTest {
 			listA.remove(obj);
 		}
 	}
+	
+//	/**
+//	 * test the folder phantoms for outgoing child file deletions
+//	 * Requires that the projetc have the CVS nature on it
+//	 */
+//	public void testPhantoms() throws CoreException, CVSException {
+//		// Build a project with some folders
+//		IProject project = getUniqueTestProject(getName() + "-phantoms");
+//		buildResources(project, new String[] {"folder1/folder2/file.txt"}, true);
+//		// Add folder sync and resource sync for each resource
+//		IFolder folder1 = project.getFolder("folder1");
+//		IFolder folder2 = project.getFolder("folder1/folder2");
+//		IFile file = project.getFile("folder1/folder2/file.txt");
+//		sync.setFolderSync(project, dummyFolderSync(project));
+//		sync.setFolderSync(folder1, dummyFolderSync(folder1));
+//		sync.setResourceSync(folder1, dummyResourceSync(folder1));
+//		sync.setFolderSync(folder2, dummyFolderSync(folder2));
+//		sync.setResourceSync(folder2, dummyResourceSync(folder2));
+//		sync.setResourceSync(file, dummyResourceSync(file));
+//		// Delete a folder and ensure that the sync info still exists
+//		folder1.delete(false, null);
+//		assertNotNull(sync.getFolderSync(folder1));
+//		assertNotNull(sync.getFolderSync(folder2));
+//		assertNotNull(sync.getResourceSync(folder1));
+//		assertNotNull(sync.getResourceSync(folder2));
+//		assertNotNull(sync.getResourceSync(file));
+//		// Re-add the folders and ensure the sync info still exists
+//		folder1.create(false, true, null);
+//		folder2.create(false, true, null);
+//		assertNotNull(sync.getFolderSync(folder1));
+//		assertNotNull(sync.getFolderSync(folder2));
+//		assertNotNull(sync.getResourceSync(folder1));
+//		assertNotNull(sync.getResourceSync(folder2));
+//		assertNotNull(sync.getResourceSync(file));
+//		// Delete the folder and the sync info and ensure it is gone
+//		folder1.delete(false, null);
+//		sync.deleteResourceSync(file);
+//		assertNull(sync.getResourceSync(file));
+//		sync.deleteFolderSync(folder2);
+//		assertNull(sync.getFolderSync(folder2));
+//		sync.deleteFolderSync(folder1);
+//		assertNull(sync.getFolderSync(folder1));	
+//	}
 }

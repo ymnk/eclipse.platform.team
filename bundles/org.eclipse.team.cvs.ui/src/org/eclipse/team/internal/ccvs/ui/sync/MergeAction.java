@@ -7,8 +7,10 @@ package org.eclipse.team.internal.ccvs.ui.sync;
  
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -21,6 +23,10 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.resources.CVSRemoteSyncElement;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.ui.sync.ChangedTeamContainer;
@@ -136,11 +142,15 @@ abstract class MergeAction extends Action {
 				IDiffElement[] children = container.getChildren();
 				if (children.length > 0) {
 					IDiffContainer parent = container.getParent();
-					UnchangedTeamContainer unchanged = new UnchangedTeamContainer(parent, container.getResource());
-					for (int j = 0; j < children.length; j++) {
-						unchanged.add(children[j]);
+					// Only convert to an UnchangedTeamContainer if the folder exists locally.
+					// Otherwise, leave it as is.
+					if (container.getResource().exists()) {
+						UnchangedTeamContainer unchanged = new UnchangedTeamContainer(parent, container.getResource());
+						for (int j = 0; j < children.length; j++) {
+							unchanged.add(children[j]);
+						}
+						parent.removeToRoot(container);
 					}
-					parent.removeToRoot(container);
 					continue;
 				}
 				// No children, it will get removed below.
@@ -193,4 +203,39 @@ abstract class MergeAction extends Action {
 	protected boolean saveIfNecessary() {
 		return getDiffModel().saveIfNecessary();
 	}		
+	
+	/**
+	 * Answer true if the given diff element represents a locally deleted CVS folder.
+	 * The sync state of locally deleted CVS folders is either outgoing deletion or
+	 * conflicting change.
+	 */
+	protected boolean isLocallyDeletedFolder(IDiffElement element) {
+		if ( ! (element.getType() == IDiffElement.FOLDER_TYPE)) return false;
+		int kind = element.getKind();
+		return (((kind & Differencer.CHANGE_TYPE_MASK) == Differencer.DELETION) &&
+					((kind & Differencer.DIRECTION_MASK) == ITeamNode.OUTGOING))
+				||	(((kind & Differencer.CHANGE_TYPE_MASK) == Differencer.CHANGE) &&
+					((kind & Differencer.DIRECTION_MASK) == ITeamNode.CONFLICTING));
+	}
+	
+	/** 
+	 * Recreate any parents that are outgoing folder deletions
+	 */
+	protected void recreateLocallyDeletedFolder(IDiffElement element) throws TeamException {
+		// Recursively make the parent element (and its parents) in sync.
+		// Walk up and find the parents which need to be made in sync too. (For
+		// each parent that doesn't already have sync info).
+		if (element == null) return;
+		if (element instanceof ChangedTeamContainer) {
+			CVSRemoteSyncElement syncElement = (CVSRemoteSyncElement)((ChangedTeamContainer)element).getMergeResource().getSyncElement();
+			// recreate the folder
+			ICVSFolder cvsFolder = (ICVSFolder) CVSWorkspaceRoot.getCVSResourceFor(syncElement.getLocal());
+			if (! cvsFolder.exists()) {
+				recreateLocallyDeletedFolder(element.getParent());
+				cvsFolder.mkdir();
+				syncElement.makeInSync(Policy.monitorFor(null));
+				((ChangedTeamContainer)element).makeInSync();
+			}
+		}
+	}
 }

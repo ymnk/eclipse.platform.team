@@ -37,9 +37,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSRemoteSyncElement;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.RepositoryManager;
@@ -146,6 +148,8 @@ public class ForceUpdateSyncAction extends MergeAction {
 		Set parentCreationElements = new HashSet();
 		// A list of diff elements in the sync set which are folder conflicts
 		Set parentConflictElements = new HashSet();
+		// A list of diff elements in the sync set which are outgoing folder deletions
+		Set parentDeletionElements = new HashSet();
 		// A list of the team nodes that we need to perform makeIncoming on
 		List makeIncoming = new ArrayList();
 		// A list of diff elements that need to be unmanaged and locally deleted
@@ -158,6 +162,8 @@ public class ForceUpdateSyncAction extends MergeAction {
 				if (((parentKind & Differencer.CHANGE_TYPE_MASK) == Differencer.ADDITION) &&
 					((parentKind & Differencer.DIRECTION_MASK) == ITeamNode.INCOMING)) {
 					parentCreationElements.add(parent);
+				} else if (isLocallyDeletedFolder(parent)) {
+					parentDeletionElements.add(parent);
 				} else if ((parentKind & Differencer.DIRECTION_MASK) == ITeamNode.CONFLICTING) {
 					parentConflictElements.add(parent);
 				}
@@ -183,8 +189,10 @@ public class ForceUpdateSyncAction extends MergeAction {
 							deletions.add(changed[i]);
 							break;
 						case Differencer.DELETION:
-							makeIncoming.add(changed[i]);
-							updateDeep.add(resource);
+							if (resource.getType() == IResource.FILE) {
+								makeIncoming.add(changed[i]);
+								updateDeep.add(resource);
+							}
 							break;
 						case Differencer.CHANGE:
 							updateIgnoreLocalShallow.add(resource);
@@ -234,6 +242,16 @@ public class ForceUpdateSyncAction extends MergeAction {
 				Iterator it = parentCreationElements.iterator();
 				while (it.hasNext()) {
 					makeInSync((IDiffElement)it.next());
+				}				
+			}
+			if (parentDeletionElements.size() > 0) {
+				// If a node has a parent that is an outgoing folder deletion, we have to 
+				// recreate that folder locally (it's sync info already exists locally). 
+				// We must do this for all outgoing folder deletions (recursively)
+				// in the case where there are multiple levels of outgoing folder deletions.
+				Iterator it = parentDeletionElements.iterator();
+				while (it.hasNext()) {
+					recreateLocallyDeletedFolder((IDiffElement)it.next());
 				}				
 			}
 			if (parentConflictElements.size() > 0) {
@@ -329,6 +347,7 @@ public class ForceUpdateSyncAction extends MergeAction {
 			}
 		}
 	}
+	
 	protected boolean isEnabled(ITeamNode node) {
 		// The force update action is enabled only for conflicting and outgoing changes
 		SyncSet set = new SyncSet(new StructuredSelection(node));
