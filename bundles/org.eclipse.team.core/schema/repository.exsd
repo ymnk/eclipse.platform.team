@@ -68,7 +68,8 @@ Optionaly, a repository provider type can designate that it can import projects 
          <attribute name="canImportId" type="string">
             <annotation>
                <documentation>
-                  
+                  The id of an older version of this provider. Including this means that this provider can import the project sets that were created by using the older version of the provider.
+Since 3.0.1
                </documentation>
             </annotation>
          </attribute>
