@@ -389,8 +389,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * in which case all out-of-sync resources from the subscriber are collected.
 	 * @return the subscriber sync info set
 	 */
-	public SyncInfoSet getSubscriberSyncInfoSet() {
-		return subscriberInput.getSyncSet();
+	public SyncInfoTree getSubscriberSyncInfoSet() {
+		return (SyncInfoTree)subscriberInput.getSyncSet();
 	}
-
 }

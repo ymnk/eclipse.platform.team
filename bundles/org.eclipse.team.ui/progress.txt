@@ -1,0 +1,25 @@
+1. team operation supports (action, icon, keep) configuration
+2. refresh subscriber
+3. prompting and use of actions
+4. should we prompt when modal and just return INFO otherwise.
+
+Prompting for modal jobs:
+1. run a cvs compare or merge
+1b. status of compare/merge -> changes found, or not found
+2. show results in modal dialog
+3a. compare completes and dialog shows the results or dialog displays that there are no changes. The job is removed from the progres view.
+3b. user runs operation in background, when it completes should it prompt as in 3a, or simply return goto action and IStatus.INFO. item remains in progress view.
+
+Prompting for non-modal jobs:
+1. run synchronize
+2. status of synchronize -> changes found or not found
+3. show results in sync view
+
+ISSUES:
+- icon property should simply take an image descriptor and/or URL
+- property to determine if job is model, this is needed to decide how to prompt
+- blocked dialog that is shown when ui thread is blocked by background task should show the progress of the background task. It shouldn't really be called "blocked" but instead "waiting" with
+progress showing will seem more natural.
+- the keep property should be queried by the progress view when the job terminates, I would the pattern that a job is only kept if run non-modaly.
+- bug in 'run in background' dialog. Open sync view, select outgoing change, select override and update. When prompted to confirm select 'no'. Sync view return no non-busy state but a run in backgorund dialog pops-up but there are
+no jobs running.

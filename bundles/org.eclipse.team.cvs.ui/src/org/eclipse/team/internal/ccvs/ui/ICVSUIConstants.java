@@ -19,6 +19,7 @@ public interface ICVSUIConstants {
 	
 	// images
 	public final String IMG_CVS_CONSOLE = "cview16/console_view.gif"; //$NON-NLS-1$
+	public final String IMG_CVS_PERSPECTIVE = "cview16/cvs_persp.gif"; //$NON-NLS-1$
 	
 	// overlays
 	public final String IMG_MERGEABLE_CONFLICT = "ovr16/confauto_ov.gif"; //$NON-NLS-1$
