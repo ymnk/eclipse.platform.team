@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.internal.core.*;
@@ -103,11 +104,19 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 * Instantiate the provider denoted by ID and store in session property.
 	 * Return the new provider instance.
 	 */
-	private static RepositoryProvider mapNewProvider(IProject project, String id) throws CoreException {
+	private static RepositoryProvider mapNewProvider(IProject project, String id) throws TeamException {
 		RepositoryProvider provider = newProvider(id); 	// instantiate via extension point
+
+		if(provider == null)
+			throw new TeamException(Policy.bind("RepositoryProvider.couldNotInstantiateProvider", project.getName(), id));
+			
 		provider.setProject(project);
 		//store provider instance as session property
-		project.setSessionProperty(PROVIDER_PROP_KEY, provider);
+		try {
+			project.setSessionProperty(PROVIDER_PROP_KEY, provider);
+		} catch (CoreException e) {
+			throw TeamPlugin.wrapException(e);
+		}
 		return provider;
 	}	
 
@@ -286,7 +295,9 @@ public abstract class RepositoryProvider implements IProjectNature {
 				}
 			}
 		} catch(CoreException e) {
-			TeamPlugin.log(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind(""), e)); //$NON-NLS-1$
+			TeamPlugin.log(e.getStatus());
+		} catch(TeamException e) {
+			TeamPlugin.log(e.getStatus());
 		}
 		return null;
 	}
@@ -331,9 +342,11 @@ public abstract class RepositoryProvider implements IProjectNature {
 					}			
 				}
 			}
-		} catch(CoreException ex) {
+		} catch(CoreException e) {
 			// would happen if provider nature id is not registered with the resources plugin
-			TeamPlugin.log(new Status(IStatus.WARNING, TeamPlugin.ID, 0, Policy.bind("RepositoryProviderTypeRepositoryProvider_not_registered_as_a_nature_id___3") + id, ex)); //$NON-NLS-1$
+			TeamPlugin.log(new Status(IStatus.WARNING, TeamPlugin.ID, 0, Policy.bind("RepositoryProviderTypeRepositoryProvider_not_registered_as_a_nature_id___3", id), e)); //$NON-NLS-1$
+		} catch(TeamException e) {
+			TeamPlugin.log(e.getStatus());
 		}
 		return null;
 	}
@@ -409,5 +422,4 @@ public abstract class RepositoryProvider implements IProjectNature {
 		}
 		return null;
 	}	
-
 }

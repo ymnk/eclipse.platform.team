@@ -10,11 +10,14 @@
  ******************************************************************************/
 package org.eclipse.team.internal.core;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPluginDescriptor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.target.TargetManager;
@@ -110,6 +113,11 @@ final public class TeamPlugin extends Plugin {
 	public static TeamException wrapException(CoreException e) {
 		IStatus status = e.getStatus();
 		return new TeamException(new Status(status.getSeverity(), ID, status.getCode(), status.getMessage(), e));
+	}
+	
+	public static void convertNatureToProperty(IProject project, String id) throws TeamException {
+		Team.removeNatureFromProject(project, id, new NullProgressMonitor());
+		RepositoryProvider.map(project, id);
 	}
 
 }
