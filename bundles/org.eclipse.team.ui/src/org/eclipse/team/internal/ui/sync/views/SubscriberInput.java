@@ -71,8 +71,6 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 	 * is a long running operation.
 	 */
 	public void prepareInput(IProgressMonitor monitor) throws TeamException {
-		// TODO: Should not refresh all subscriber roots
-		refreshLocalState(getSubscriber().roots(), Policy.subMonitorFor(monitor, 70));						
 	}
 	
 	public TeamSubscriber getSubscriber() {
@@ -96,9 +94,9 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 		filteredSyncSet.disconnect();
 		TeamUI.removePropertyChangeListener(this);		
 	}
-
+	
 	public IResource[] roots() {
-		return subscriberSyncSet.getRoots();
+		return getSubscriber().roots();
 	}
 
 	/* (non-Javadoc)
@@ -195,7 +193,6 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 					eventHandler.removeAllChildren(deltas[i].getResource());
 					break;
 				case TeamDelta.PROVIDER_CONFIGURED:
-					// TODO: get the workbench progress monitor
 					eventHandler.collectDeeply(deltas[i].getResource());
 					break; 						
 			}

@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 public class SubscriberEventHandler {
@@ -22,12 +23,22 @@ public class SubscriberEventHandler {
 	public SubscriberEventHandler(SyncSetInputFromSubscriber set) {
 		this.set = set;		
 	}
+
+	protected void collect(IResource resource, IProgressMonitor monitor) throws TeamException {
+		SyncInfo info = set.getSubscriber().getSyncInfo(resource, monitor);
+		// resource is no longer under the subscriber control
+		if (info == null) {
+			set.remove(resource);
+		} else { 
+			set.collect(info);
+		}
+	}
 	
 	public void handleChange(IResource resource) {
 		// recalculate sync state, we don't have progress though? Not ideal
 		// since the calculation could be long running...
 		try {
-			set.collect(resource, (IProgressMonitor)null);
+			collect(resource, null);
 		} catch (TeamException e) {
 			TeamUIPlugin.log(e);
 		}
@@ -45,7 +56,7 @@ public class SubscriberEventHandler {
 	
 	public void collectDeeply(IResource resource) {
 		try {
-			set.collect(resource, (IProgressMonitor)null);
+			collect(resource, (IProgressMonitor)null);
 			if (resource.getType() != IResource.FILE) {
 				collectMembers((IContainer) resource);
 			}
