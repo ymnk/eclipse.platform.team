@@ -199,6 +199,11 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	
 	private int fPts[]= new int[8];	// scratch area for polygon drawing
 	
+	//PR1GI3HDZ
+	private boolean fIgnoreAncestor= false;
+	private ActionContributionItem fIgnoreAncestorItem;
+	//end PR1GI3HDZ
+
 	private ActionContributionItem fNextItem;	// goto next difference
 	private ActionContributionItem fPreviousItem;	// goto previous difference
 	private ActionContributionItem fCopyDiffLeftToRightItem;
@@ -1062,7 +1067,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 				
 		boolean threeWay= isThreeWay();
 		
-		if (threeWay) {
+		if (threeWay && !fIgnoreAncestor) {
 			aDoc= fAncestor.getDocument();
 			aRegion= fAncestor.getRegion();
 		}
@@ -1524,6 +1529,23 @@ public class TextMergeViewer extends ContentMergeViewer  {
 //		a.setChecked(fSynchronizedScrolling);
 //		tbm.appendToGroup("modes", a);
 		
+		//PR1GI3HDZ
+		final String ignoreAncestorActionKey= "action.IgnoreAncestor.";	//$NON-NLS-1$
+		Action ignoreAncestorAction= new Action() {
+			public void run() {
+				setIgnoreAncestor(! fIgnoreAncestor);
+				Utilities.initToggleAction(this, getResourceBundle(), ignoreAncestorActionKey, fIgnoreAncestor);
+			}
+		};
+		ignoreAncestorAction.setChecked(fIgnoreAncestor);
+		Utilities.initAction(ignoreAncestorAction, getResourceBundle(), ignoreAncestorActionKey);
+		Utilities.initToggleAction(ignoreAncestorAction, getResourceBundle(), ignoreAncestorActionKey, fIgnoreAncestor);
+		
+		fIgnoreAncestorItem= new ActionContributionItem(ignoreAncestorAction);
+		fIgnoreAncestorItem.setVisible(false);
+		tbm.appendToGroup("modes", fIgnoreAncestorItem); //$NON-NLS-1$
+		// end PR1GI3HDZ
+
 		tbm.add(new Separator());
 					
 		Action a= new Action() {
@@ -1613,6 +1635,27 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			super.propertyChange(event);
 	}
 	
+	//PR1GI3HDZ
+	private void setIgnoreAncestor(boolean ignore) {
+		if (ignore != fIgnoreAncestor) {
+			fIgnoreAncestor= ignore;
+			setAncestorVisibility(false, !fIgnoreAncestor);
+		
+			// clear stuff
+			fCurrentDiff= null;
+		 	fChangeDiffs= null;
+			fAllDiffs= null;
+					
+			doDiff();
+					
+			invalidateLines();
+			updateVScrollBar();
+			
+			selectFirstDiff();
+		}
+	}
+	//end PR1GI3HDZ
+	
 	private void selectFirstDiff() {
 		Diff firstDiff= null;
 		if (CompareNavigator.getDirection(fComposite))
@@ -1642,29 +1685,10 @@ public class TextMergeViewer extends ContentMergeViewer  {
 				
 	protected void updateToolItems() {
 					
-		boolean visible= false;
-		Object input= getInput();
-		if (input != null) {
-			visible= true;
-			
-			IMergeViewerContentProvider content= getMergeContentProvider();
-			
-			//boolean y= getMergePolicy().isLeftEditable();
-			//boolean m= getMergePolicy().isRightEditable();
-			
-				//destinationEditable= content.isRightEditable(getInput());
-				//destinationEditable= content.isLeftEditable(getInput());
-			/*
-			if (USE_MORE_CONTROLS) {	
-				fBothItem.setVisible(destinationEditable);
-				fAutoItem.setVisible(destinationEditable);
-			}
-			fRejectItem.setVisible(destinationEditable);
-			*/
-		}
-		
-		//fNextItem.setVisible(visible);
-		//fPreviousItem.setVisible(visible);
+		//PR1GI3HDZ
+		if (fIgnoreAncestorItem != null)
+			fIgnoreAncestorItem.setVisible(isThreeWay());
+		//end PR1GI3HDZ
 		
 		super.updateToolItems();
 	}
@@ -1896,7 +1920,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	private RGB getFillColor(Diff diff) {
 		boolean selected= fCurrentDiff != null && fCurrentDiff.fParent == diff;
 		
-		if (isThreeWay()) {
+		if (isThreeWay() && !fIgnoreAncestor) {
 			switch (diff.fDirection) {
 			case RangeDifference.RIGHT:
 				if (fLeftIsLocal)
@@ -1919,7 +1943,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	private RGB getStrokeColor(Diff diff) {
 		boolean selected= fCurrentDiff != null && fCurrentDiff.fParent == diff;
 		
-		if (isThreeWay()) {
+		if (isThreeWay() && !fIgnoreAncestor) {
 			switch (diff.fDirection) {
 			case RangeDifference.RIGHT:
 				if (fLeftIsLocal)
@@ -2076,7 +2100,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			// before we set fCurrentDiff we change the selection
 			// so that the paint code uses the old background colors
 			// otherwise selection isn't drawn correctly
-			if (isThreeWay())
+			if (isThreeWay() && !fIgnoreAncestor)
 				fAncestor.setSelection(d.fAncestorPos);
 			fLeft.setSelection(d.fLeftPos);
 			fRight.setSelection(d.fRightPos);
@@ -2111,7 +2135,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			int ls= fLeft.getLineRange(d.fLeftPos, region).x;
 			int rs= fRight.getLineRange(d.fRightPos, region).x;
 			
-			if (isThreeWay()) {
+			if (isThreeWay() && !fIgnoreAncestor) {
 				int as= fAncestor.getLineRange(d.fAncestorPos, region).x;
 				if (as >= fAncestor.getTopIndex() && as <= fAncestor.getBottomIndex())
 					ancestorIsVisible= true;
