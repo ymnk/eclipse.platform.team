@@ -29,8 +29,19 @@ import org.eclipse.team.internal.ui.Policy;
 
 /**
  * Manages the registered synchronize participants. It handles notification of
- * participant lifecycles, creation of <code>static</code> participants, and
- * the re-creation of persisted participants.
+ * participant lifecycles, creation of <code>static</code> participants, management
+ * of dynamic participants, and the re-creation of persisted participants.
+ * <p>
+ * A participant is defined in a plugin manifest and can have several properties:
+ * - static: means that they always exist and don't have to be added to the manager
+ * - dynamic: will be added to the manager at some later time
+ * 
+ * Lifecycle:
+ * 	startup -> registry read and stored in a participant instance
+ *     createParticipant(id) -> 
+ * 	releaseParticipant(IParticipantDescriptor) -> 
+ *     getParticipantRegistry -> return IParticipantDescriptors that describe the participants
+ * 	shutdown -> persist all settings
  * 
  * @see ISynchronizeView
  * @see ISynchronizeParticipant
@@ -41,13 +52,17 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 * Synchronize participants listeners
 	 */
 	private ListenerList fListeners = null;
-
 	/**
 	 * List of registered synchronize view pages {String id -> List participant
 	 * instances}}
 	 */
 	private Map synchronizeParticipants = Collections.synchronizedMap(new HashMap(10));
+	/**
+	 * Contains the participant descriptions
+	 */
 	private SynchronizeParticipantRegistry participantRegistry = new SynchronizeParticipantRegistry();
+	
+	private ReferenceCounter counter;
 
 	// change notification constants
 	private final static int ADDED = 1;
@@ -211,12 +226,52 @@ public class SynchronizeManager implements ISynchronizeManager {
 		return participantRegistry.find(id);
 	}
 	
+	public ISynchronizeParticipantReference createParticipant(String id, String secondaryId) {
+		ISynchronizeParticipantDescriptor desc = participantRegistry.find(id);
+		// ensure that the view id is valid
+		if (desc == null)
+			throw new PartInitException(WorkbenchMessages.format("ViewFactory.couldNotCreate", new Object[] { id })); //$NON-NLS-1$
+		// ensure that multiple instances are allowed if a secondary id is given
+		if (secondaryId != null) {
+		    if (!desc.getAllowMultiple()) {
+				throw new PartInitException(WorkbenchMessages.format("ViewFactory.noMultiple", new Object[] { id })); //$NON-NLS-1$
+		    }
+		}
+		String key = getKey(id, secondaryId);
+		IViewReference ref = (IViewReference) counter.get(key);
+		if (ref == null) {
+			ref = new ViewReference(id, secondaryId);
+			counter.put(key, ref);
+		} else {
+			counter.addRef(key);
+		}
+		return ref;
+	}
+	
+	/**
+     * Returns the key to use in the ReferenceCounter.
+     * 
+     * @param id the primary view id
+     * @param secondaryId the secondary view id or <code>null</code>
+     * @return the key to use in the ReferenceCounter
+     */
+    private String getKey(String id, String secondaryId) {
+        return secondaryId == null ? id : id + '/' + secondaryId;
+    }
+
+	public void destroyParticipants(ISynchronizeParticipant participant) {
+		
+	}
+	
+	public ISync
+	
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#addSynchronizeParticipants(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 	 */
 	public synchronized void addSynchronizeParticipants(ISynchronizeParticipant[] participants) {
+		// renamed to createSynchronizeParticipant(id)
 		List added = new ArrayList(participants.length);
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
@@ -243,6 +298,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#removeSynchronizeParticipants(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 	 */
 	public synchronized void removeSynchronizeParticipants(ISynchronizeParticipant[] participants) {
+		// decrement instance count
 		List removed = new ArrayList(participants.length);
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
