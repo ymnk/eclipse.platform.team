@@ -47,6 +47,29 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
         return (IWorkbenchAdapter)o.getAdapter(IWorkbenchAdapter.class);
     }
     
+    /**
+     * Return the label that shgould be used for the given mapping
+     * as determined using the IWorkbnchAdaptable for the mapping
+     * or it's model object.
+     * @param mapping the mappings
+     * @return it's label
+     */
+    public static String getLabel(ResourceMapping mapping) {
+        Object o = mapping;
+        IWorkbenchAdapter workbenchAdapter = getWorkbenchAdapter((IAdaptable)o);
+        if (workbenchAdapter == null) {
+            Object modelObject = mapping.getModelObject();
+            if (modelObject instanceof IAdaptable) {
+                workbenchAdapter = getWorkbenchAdapter((IAdaptable)modelObject);
+                o = modelObject;
+            }
+        }
+        if (workbenchAdapter == null) {
+            return mapping.toString();
+        }
+        return workbenchAdapter.getLabel(o);
+    }
+    
     public class ResourceMappingElement implements IWorkbenchAdapter, IAdaptable {
         private ResourceMapping mapping;
         private ResourceMappingContext context;
@@ -107,20 +130,7 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
          * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
          */
         public String getLabel(Object o) {
-            o = mapping;
-            IWorkbenchAdapter workbenchAdapter = getWorkbenchAdapter((IAdaptable)o);
-            if (workbenchAdapter == null) {
-                Object modelObject = mapping.getModelObject();
-                if (modelObject instanceof IAdaptable) {
-                    workbenchAdapter = getWorkbenchAdapter((IAdaptable)modelObject);
-                    o = modelObject;
-                }
-            }
-            if (workbenchAdapter == null) {
-                return null;
-            }
-            return workbenchAdapter.getLabel(o);
-            
+            return ResourceMappingResourceDisplayArea.getLabel(mapping);  
         }
 
         /* (non-Javadoc)
@@ -253,7 +263,8 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
     public void createArea(Composite parent) {
         Composite composite = createComposite(parent, 1, true);
         
-        label = createWrappingLabel(composite, getLabelText(), 1);
+        String message = "Preview resources.";
+        label = createWrappingLabel(composite, message, 1);
         viewer = new TreeViewer(composite);
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 100;
@@ -261,25 +272,24 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
         viewer.setContentProvider(new WorkbenchContentProvider());
         viewer.setLabelProvider(new WorkbenchLabelProvider());
         viewer.setSorter(new ResourceSorter(ResourceSorter.NAME)); // TODO: Should not be a resource sorter
-        setInput();
+        setInput(message);
         Dialog.applyDialogFont(parent);
     }
 
-    private String getLabelText() {
-        return "Preview the resources that make up for the selected element";
-    }
-
-    private void setInput() {
+    private void setInput(String labelText) {
         if (viewer != null) {
             Object o = null;
             if (mapping != null)
                 o = new ResourceMappingElement(mapping, context);
             viewer.setInput(o);
         }
+        if (label != null) {
+            label.setText(labelText);
+        }
     }
 
-    public void setMapping(ResourceMapping mapping) {
+    public void setMapping(ResourceMapping mapping, String labelText) {
         this.mapping = mapping;
-        setInput();
+        setInput(labelText);
     }
 }
