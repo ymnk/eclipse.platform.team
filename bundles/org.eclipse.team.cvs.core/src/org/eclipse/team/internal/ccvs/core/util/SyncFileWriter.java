@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -469,6 +470,28 @@ public class SyncFileWriter {
 	}
 	
 	/*
+	 * Reads all lines of the specified file.
+	 * Returns null if the file does not exist.
+	 */
+	public static byte[][] readLines(InputStream stream) throws CVSException {
+		try {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+			List fileContentStore = new ArrayList();
+			try {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					fileContentStore.add(line.getBytes());
+				}
+				return (byte[][]) fileContentStore.toArray(new byte[fileContentStore.size()][]);
+			} finally {
+				reader.close();
+			}
+		} catch (IOException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	/*
 	 * Writes all lines to the specified file, using linefeed terminators for
 	 * compatibility with other CVS clients.
 	 */
@@ -513,6 +536,22 @@ public class SyncFileWriter {
 			throw CVSException.wrapException(e);
 		}
 	}
+	
+	public static void writeLines(OutputStream os, byte[][] contents) throws CVSException {
+		try {
+			try {
+				for (int i = 0; i < contents.length; i++) {
+					os.write(contents[i]);
+					os.write(0x0A); // newline byte
+				}
+			} finally {
+				os.close();
+			}
+		} catch (IOException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
 	/**
 	 * Method writeFileToBaseDirectory.
 	 * 

@@ -30,6 +30,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 
 /**
  * This cache uses session properties to hold the bytes representing the sync
@@ -100,9 +101,10 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 	 * @param infos
 	 * @return byte[]
 	 */
-	private byte[] getBytes(byte[][] infos) {
-		// todo
-		return null;
+	private byte[] getBytes(byte[][] infos) throws CVSException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		SyncFileWriter.writeLines(out, infos);
+		return out.toByteArray();
 	}
 	
 	/**
@@ -110,8 +112,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 	 * into a Map of ResourceSyncInfo
 	 */
 	private static byte[][] getResourceSyncInfo(byte[] bytes) throws CVSException {
-		// todo
-		return null;
+		return SyncFileWriter.readLines(new ByteArrayInputStream(bytes));
 	}
 
 	/**
