@@ -6,6 +6,7 @@ package org.eclipse.team.core.sync;
  */
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
@@ -40,7 +41,7 @@ import org.eclipse.team.internal.core.Policy;
  * ]
  * </p>
  */
-public class SyncInfo {
+public class SyncInfo implements IAdaptable {
 	
 	/*====================================================================
 	 * Constants defining synchronization types:  
@@ -306,5 +307,15 @@ public class SyncInfo {
 			return getLocal().equals(((SyncInfo)other).getLocal());
 		}
 		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
+		if (adapter == IResource.class) {
+			return getLocal();
+		}
+		return null;
 	}
 }
