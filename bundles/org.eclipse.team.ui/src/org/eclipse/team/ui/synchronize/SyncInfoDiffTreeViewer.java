@@ -40,7 +40,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, 
 	protected void inputChanged(Object in, Object oldInput) {
 		super.inputChanged(in, oldInput);		
 		if (in != oldInput) {
-			gotoDifference(true);
+			TreeViewerUtils.navigate(this, true /*next*/, false /*don't fire open event*/);
 		}
 	}
 	
@@ -48,7 +48,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, 
 	 * @see org.eclipse.team.ui.synchronize.actions.INavigableControl#gotoDifference(int)
 	 */
 	public boolean gotoDifference(boolean direction) {
-		return TreeViewerUtils.gotoDifference(this, direction, true);
+		return TreeViewerUtils.navigate(this, direction, false);
 	}
 
 	/* (non-Javadoc)

@@ -52,5 +52,4 @@ public class SyncInfoSetContentProvider extends BaseWorkbenchContentProvider {
 			((SyncInfoDiffNodeRoot)input).dispose();
 		}
 	}
-	
 }

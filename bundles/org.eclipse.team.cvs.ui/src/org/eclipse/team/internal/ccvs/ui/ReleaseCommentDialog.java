@@ -26,12 +26,10 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.FastSyncInfoFilter;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.help.WorkbenchHelp;
-import org.eclipse.team.internal.ccvs.ui.Policy;
 
 /**
  * Prompts the user for a multi-line comment for releasing to CVS.
@@ -88,10 +86,18 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		CompareConfiguration cc = new CompareConfiguration();
 		cc.setLeftEditable(false);
 		
+		// Create a sync set containing only the resources that will be committed.
 		TeamSubscriberParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		FastSyncInfoFilter.SyncInfoDirectionFilter filter = new FastSyncInfoFilter.SyncInfoDirectionFilter(SyncInfo.OUTGOING);
-		compareEditorInput = new SyncInfoSetCompareInput(cc, 
-				new DiffTreeViewerConfiguration(null, participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet()));
+		SyncInfoSet currentSet = participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet();
+		MutableSyncInfoSet set = new MutableSyncInfoSet();
+		for (int i = 0; i < resourcesToCommit.length; i++) {
+			IResource resource = resourcesToCommit[i];
+			SyncInfo info = currentSet.getSyncInfo(resource);
+			if(info != null) {
+				set.add(info);
+			}
+		}
+		compareEditorInput = new SyncInfoSetCompareInput(cc, new DiffTreeViewerConfiguration(set));
 		
 		// set F1 help
 		WorkbenchHelp.setHelp(composite, IHelpContextIds.RELEASE_COMMENT_DIALOG);	

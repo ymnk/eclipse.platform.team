@@ -19,19 +19,6 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 public class TreeViewerUtils {
-	
-	/**
-	 * Selects the next (or previous) node of the current selection.
-	 * If there is no current selection the first (last) node in the tree is selected.
-	 * Wraps around at end or beginning.
-	 * Clients may override. 
-	 *
-	 * @param next if <code>true</code> the next node is selected, otherwise the previous node
-	 */
-	public static boolean gotoDifference(TreeViewer viewer, boolean next, boolean fireOpen) {	
-		return navigate(viewer, next, fireOpen);
-	}
-	
 	/**
 	 * Selects the next (or previous) node of the current selection.
 	 * If there is no current selection the first (last) node in the tree is selected.

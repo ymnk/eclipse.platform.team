@@ -13,8 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import java.util.*;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
@@ -39,8 +38,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		}
 
 		public void run() {
-			IStructuredContentProvider cp = (IStructuredContentProvider) ((StructuredViewer)getChangesViewer()).getContentProvider();
-			StructuredSelection selection = new StructuredSelection(cp.getElements(getSyncInfoSet()));
+			ISelection selection = new StructuredSelection(getSyncInfoSet().members());
 			if (!selection.isEmpty()) {
 				delegate.selectionChanged(this, selection);
 				delegate.run(this);
@@ -54,7 +52,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 
 	public CVSSynchronizeViewPage(TeamSubscriberParticipant participant, ISynchronizeView view) {
 		super(participant, view);
-		groupByComment = new Action("Group By Comment", Action.AS_CHECK_BOX) {
+		groupByComment = new Action("Show incoming grouped by comment", Action.AS_CHECK_BOX) {
 			public void run() {
 				config.setGroupIncomingByComment(!config.isGroupIncomingByComment());
 				setChecked(config.isGroupIncomingByComment());
@@ -79,7 +77,8 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	public void setActionBars(IActionBars actionBars) {
 		super.setActionBars(actionBars);
 		IMenuManager mgr = actionBars.getMenuManager();
-		mgr.appendToGroup("others", groupByComment);
+		mgr.add(new Separator());
+		mgr.add(groupByComment);
 	}
 	
 	/*
@@ -90,8 +89,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		if (viewer != null && getSyncInfoSet() != null) {
-			IStructuredContentProvider cp = (IStructuredContentProvider) viewer.getContentProvider();
-			StructuredSelection selection = new StructuredSelection(cp.getElements(getSyncInfoSet()));
+			ISelection selection = new StructuredSelection(getSyncInfoSet().members());
 			for (Iterator it = delegates.iterator(); it.hasNext(); ) {
 				CVSActionDelegate delegate = (CVSActionDelegate) it.next();
 				delegate.getDelegate().selectionChanged(delegate, selection);

@@ -50,7 +50,7 @@ public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer i
 	 * @see org.eclipse.team.ui.synchronize.actions.INavigableControl#gotoDifference(int)
 	 */
 	public boolean gotoDifference(boolean next) {
-		return TreeViewerUtils.gotoDifference(this, next, true);
+		return TreeViewerUtils.navigate(this, next, true);
 	}
 
 	/* (non-Javadoc)

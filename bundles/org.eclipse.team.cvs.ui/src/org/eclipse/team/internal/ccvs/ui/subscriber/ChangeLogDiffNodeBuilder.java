@@ -17,8 +17,6 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
@@ -48,6 +46,7 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	}
 
 	private DiffNode[] calculateRoots(SyncInfoSet set) {
+		commentRoots.clear();
 		SyncInfo[] infos = set.members();
 		for (int i = 0; i < infos.length; i++) {
 			String comment = getSyncInfoComment((CVSSyncInfo) infos[i]);
@@ -69,12 +68,11 @@ public class ChangeLogDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 			return e.getMessage();
 		}
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder#syncSetChanged(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
 	 */
 	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
-	   commentRoots.clear();
-       reset();
+		reset();
 	}
 }
