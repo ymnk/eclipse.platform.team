@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.*;
 import org.eclipse.team.internal.core.Policy;
+import org.eclipse.team.internal.core.Assert;
 
 public abstract class SynchronizedTargetProvider extends TargetProvider {
 

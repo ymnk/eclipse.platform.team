@@ -20,6 +20,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
 import sun.security.action.GetLongAction;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.internal.core.Assert;
 
 /**
  * Synchronizes the given folder between the workspace and provider.
