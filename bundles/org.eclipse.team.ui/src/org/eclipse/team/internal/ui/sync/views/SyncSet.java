@@ -23,16 +23,12 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
-import org.eclipse.team.core.sync.SyncTreeSubscriber;
 
 /**
  * This class keeps track of a set of resources that are associated with 
  * a sychronization view/operation. 
  */
 public class SyncSet {
-
-	protected SyncTreeSubscriber subscriber;
-
 	// fields used to hold resources of interest
 	// {IPath -> SyncInfo}
 	protected Map resources = new HashMap();
@@ -120,16 +116,6 @@ public class SyncSet {
 			return new SyncContainer((IContainer)resource);
 		}
 		return null;
-	}
-	
-	/**
-	 * Create a new sync set. This will calculate the set of out-of-sync resources
-	 * from scratch.
-	 * 
-	 * @param monitor
-	 */
-	public SyncSet(SyncTreeSubscriber subscriber) {
-		this.subscriber = subscriber;
 	}
 	
 	protected void resetChanges() {
@@ -257,27 +243,26 @@ public class SyncSet {
 	 * @return
 	 */
 	public Object[] members(IResource parent) {
-		try {
-			IResource[] members;
-			if(parent == null) {
-				members = subscriber.roots();
-			} else {
-				members = subscriber.members(parent);
+		// TODO: must be optimized so that we don't traverse all the deep children to find
+		// the immediate ones.
+		List children = new ArrayList();
+		IPath path = parent.getFullPath();
+		Set possibleChildren = (Set)parents.get(path);
+		if(possibleChildren != null) {
+			for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
+				IResource element = (IResource) it.next();
+				IPath childPath = element.getFullPath();
+				if(childPath.segmentCount() == (path.segmentCount() +  1)) {
+					SyncInfo childInfo = getSyncInfo(element);
+					if (childInfo != null && isMember(childInfo)) {
+						children.add(childInfo);
+					} else if (element.getType() != IResource.FILE && hasMembers((IContainer)element)) {
+						children.add(new SyncContainer((IContainer)element));
+					}
+				}				
 			}
-			List result = new ArrayList();
-			for (int i = 0; i < members.length; i++) {
-				IResource resource = members[i];
-				SyncInfo childInfo = getSyncInfo(resource);
-				if (childInfo != null && isMember(childInfo)) {
-					result.add(childInfo);
-				} else if (resource.getType() != IResource.FILE && hasMembers((IContainer)resource)) {
-					result.add(new SyncContainer((IContainer)resource));
-				}
-			}
-			return (Object[]) result.toArray(new Object[result.size()]);
-		} catch (TeamException e) {
-			return new SyncInfo[0];
 		}
+		return (Object[]) children.toArray(new Object[children.size()]);
 	}
 
 	protected boolean isMember(SyncInfo info) {
@@ -321,10 +306,6 @@ public class SyncSet {
 		return (SyncInfo)resources.get(resource.getFullPath());
 	}
 
-	protected SyncTreeSubscriber getSubscriber() {
-		return subscriber;
-	}
-	
 	/**
 	 * This method is invoked by a SyncSetInput provider when the 
 	 * provider is starting to provide new input to the SyncSet

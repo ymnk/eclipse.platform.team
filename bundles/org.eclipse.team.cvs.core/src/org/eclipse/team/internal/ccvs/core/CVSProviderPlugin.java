@@ -42,6 +42,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Preferences;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
@@ -309,7 +310,10 @@ public class CVSProviderPlugin extends Plugin {
 		
 		createCacheDirectory();
 		
-		cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber("CVS", "Synchronizes the CVS managed resources in your workspace with their associated remote location");
+		cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber(
+				new QualifiedName(ID, "workspace-subscriber"), 
+				"CVS",  
+				"Synchronizes the CVS managed resources in your workspace with their associated remote location");
 		TeamProvider.registerSubscriber(cvsWorkspaceSubscriber);
 	}
 	

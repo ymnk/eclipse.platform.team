@@ -24,8 +24,7 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 	/**
 	 * @param syncSet
 	 */
-	protected SyncSetInputFromSyncSet(SyncSet syncSet) {
-		super(syncSet);
+	protected SyncSetInputFromSyncSet() {
 	}
 
 	/**

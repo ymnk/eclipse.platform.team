@@ -11,12 +11,13 @@
 package org.eclipse.team.internal.ui.sync.views;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -50,7 +51,6 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PartInitException;
@@ -60,29 +60,38 @@ import org.eclipse.ui.part.ViewPart;
 
 public class SyncViewer extends ViewPart {
 	
+	/*
+	 * The viewer thst is shown in the view. Currently this can be
+	 * either a table or tree viewer.
+	 */
 	private StructuredViewer viewer;
+	
+	/*
+	 * Parent composite of this view. It is remembered so that we can
+	 * dispose of its children when the viewer type is switched.
+	 */
 	private Composite composite = null;
 	private IMemento memento;
 	
-	// viewer type constants
+	/*
+	 * viewer type constants
+	 */ 
 	public static final int TREE_VIEW = 0;
 	public static final int TABLE_VIEW = 1;
 	
-	// the viewer input
-	private SyncSet syncSet;
-	private SyncSet filteredSet;
-	
-	private SyncSetInputFromSubscriber subscriberInput;
-	private SyncSetInputFromSyncSet filteredInput;
-	
-	
-	private SyncViewerActions actions;
-	
-	private SyncTreeSubscriber subscriber;
-	
-	/**
-	 * The constructor.
+	/*
+	 * Array of SubscriberInput objects. There is one of these for each subscriber
+	 * registered with the sync view. 
 	 */
+	private List subscriberInputs = new ArrayList(1);
+	private SubscriberInput input = null;
+	
+	/*
+	 * A set of common actions. They are hooked to the active SubscriberInput and
+	 * must be reset when the input changes.
+	 */
+	private SyncViewerActions actions;
+			
 	public SyncViewer() {
 	}
 
@@ -95,19 +104,6 @@ public class SyncViewer extends ViewPart {
 		initializeSyncSet();
 		createViewer(parent, TABLE_VIEW);
 		contributeToActionBars();
-				
-		Action a= new Action() {
-					public void run() {
-						showMessage("messagekjafd hkajs hfdkasjdhfkjh ");
-					}
-				};
-		a.setText("CVS NSync ACtion");
-		IKeyBindingService kbs = getSite().getKeyBindingService();
-		if (kbs != null) {
-			a.setActionDefinitionId("org.eclipse.team.cvs.commit");
-			kbs.registerAction(a);
-		}
-
 		this.composite = parent;
 	}
 
@@ -146,7 +142,7 @@ public class SyncViewer extends ViewPart {
 		viewer.setContentProvider(new SyncSetTreeContentProvider());
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setSorter(new SyncViewerSorter());
-		viewer.setInput(filteredSet);
+		//viewer.setInput(filteredInput.getSyncSet());
 	}
 	
 	private void createTableViewerPartControl(Composite parent) {
@@ -172,7 +168,7 @@ public class SyncViewer extends ViewPart {
 		viewer.setContentProvider(new SyncSetTableContentProvider());
 		viewer.setLabelProvider(new SyncViewerLabelProvider());
 		viewer.setSorter(new SyncViewerSorter());
-		viewer.setInput(filteredSet);
+		//viewer.setInput(filteredInput.getSyncSet());
 	}
 	
 	/**
@@ -226,32 +222,17 @@ public class SyncViewer extends ViewPart {
 		actions.restore(memento);
 	}
 
-	private void initializeSyncSet() {
+	private void initializeSubscriberInput(SubscriberInput input) {
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
-					initializeSyncSet(monitor);
+					actions.
+					input.prepareInput(monitor);
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
 				}
 			}
 		});
-	}
-	
-	private void initializeSyncSet(IProgressMonitor monitor) throws TeamException {
-		monitor.beginTask(null, 100);
-		try {
-			syncSet = new SyncSet(getSubscriber());
-			subscriberInput = new SyncSetInputFromSubscriber(syncSet);
-			subscriberInput.setSubscriber(getSubscriber(), Policy.subMonitorFor(monitor, 70));
-			
-			filteredSet = new SyncSet(getSubscriber());
-			filteredInput = new SyncSetInputFromSyncSet(filteredSet);
-			resetFilters(Policy.subMonitorFor(monitor, 10));
-			filteredInput.setInputSyncSet(syncSet, Policy.subMonitorFor(monitor, 20));
-		} finally {
-			monitor.done();
-		}
 	}
 	
 	private void resetFilters() {
@@ -366,12 +347,8 @@ public class SyncViewer extends ViewPart {
 	 */
 	public void dispose() {
 		super.dispose();
-		if (syncSet != null) {
-			subscriberInput.disconnect();
-		}
-		if (filteredSet != null) {
-			filteredInput.disconnect();
-		}
+		subscriberInput.disconnect();
+		filteredInput.disconnect();
 	}
 
 	/* (non-Javadoc)
@@ -379,13 +356,6 @@ public class SyncViewer extends ViewPart {
 	 */
 	public void setTitle(String title) {
 		super.setTitle(getSubscriber().getName() + ": " + title);
-	}
-
-	/**
-	 * @return
-	 */
-	protected SyncSet getSyncSet() {
-		return syncSet;
 	}
 
 	/**
@@ -400,7 +370,7 @@ public class SyncViewer extends ViewPart {
 		if (subscriber == null) {
 			// TODO: hack for taking the first subscriber only. This will have to change
 			// to allow more than one subscriber.
-			this.subscriber = TeamProvider.getSubscribers()[0];
+			this.subscriber = TeamProvider.getSubscriber();
 		}
 		return subscriber;
 	}
@@ -487,5 +457,4 @@ public class SyncViewer extends ViewPart {
 		super.saveState(memento);
 		actions.save(memento);
 	}
-
 }

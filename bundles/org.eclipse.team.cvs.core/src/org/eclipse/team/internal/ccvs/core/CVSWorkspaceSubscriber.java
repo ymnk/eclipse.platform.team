@@ -48,12 +48,10 @@ import org.eclipse.team.internal.core.Assert;
  */
 public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResourceStateChangeListener {
 
-	public static final String ID = "org.eclipse.team.cvs.core.subscriber"; //$NON-NLS-1$
-	
 	private static final byte[] NO_REMOTE = new byte[0];
 	
 	// describes this subscriber
-	private String id;
+	private QualifiedName id;
 	private String name;
 	private String description;
 	
@@ -64,7 +62,8 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	// qualified name for remote sync info
 	private QualifiedName REMOTE_RESOURCE_KEY = new QualifiedName("org.eclipse.team.cvs", "remote-resource-key");
 	
-	CVSWorkspaceSubscriber(String name, String description) {
+	CVSWorkspaceSubscriber(QualifiedName id, String name, String description) {
+		this.id = id;
 		this.name = name;
 		this.description = description;
 		
@@ -90,8 +89,8 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getId()
 	 */
-	public String getId() {
-		return ID;
+	public QualifiedName getId() {
+		return id;
 	}
 
 	/* (non-Javadoc)

@@ -19,29 +19,19 @@ import org.eclipse.team.core.sync.SyncInfo;
  */
 public abstract class SyncSetInput {
 	
-	private SyncSet syncSet;
+	private SyncSet syncSet = new SyncSet();
 	private SyncSetFilter filter = new SyncSetFilter();
 	
-	protected SyncSetInput(SyncSet syncSet) {
-		this.syncSet = syncSet;
-	}
-
-	/**
-	 * @return
-	 */
 	public SyncSet getSyncSet() {
 		return syncSet;
 	}
 
-	/**
-	 * @param e
-	 */
 	protected void log(TeamException e) {
 		// TODO: log or throw or communicate to the view that an error has occured
 	}
 	
 	/**
-	 * The input is no longer being used. Disconnect it from its source
+	 * The input is no longer being used. Disconnect it from its source.
 	 */
 	public abstract void disconnect();
 
@@ -103,5 +93,4 @@ public abstract class SyncSetInput {
 		this.filter = filter;
 		reset(monitor);
 	}
-
 }

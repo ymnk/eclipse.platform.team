@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -22,6 +23,11 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
+import org.eclipse.team.internal.ui.sync.views.AndSyncSetFilter;
+import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.views.SyncSetChangeFilter;
+import org.eclipse.team.internal.ui.sync.views.SyncSetDirectionFilter;
+import org.eclipse.team.internal.ui.sync.views.SyncSetFilter;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.ui.IActionBars;
@@ -142,20 +148,23 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(new Separator("Additions"));
 	}
 
-	/**
-	 * 
-	 */
 	public int[] getDirectionFilters() {
 		return directionsFilters.getDirectionFilters();
 	}
 
-	/**
-	 * 
-	 */
 	public int[] getChangeFilters() {
 		return changeFilters.getChangeFilters();
 	}
 
+	public void registerInput(SubscriberInput input) throws TeamException{
+		this.input = input;
+		input.setFilter(new AndSyncSetFilter(
+				new SyncSetFilter[] {
+					new SyncSetDirectionFilter(directionsFilters.getDirectionFilters()), 
+					new SyncSetChangeFilter(changeFilters.getChangeFilters())
+			}), new NullProgressMonitor());	
+	}
+	
 	public void open() {
 		open.run();
 	}

@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 
 /**
@@ -33,7 +34,7 @@ abstract public class SyncTreeSubscriber {
 	/**
 	 * Return the unique id that identified this subscriber.
 	 */
-	abstract public String getId();
+	abstract public QualifiedName getId();
 	
 	/**
 	 * Return the name of this subscription, in a format that is suitable for 

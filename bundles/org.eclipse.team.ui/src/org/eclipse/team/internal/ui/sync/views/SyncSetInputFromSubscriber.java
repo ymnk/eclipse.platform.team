@@ -29,23 +29,11 @@ import org.eclipse.team.internal.core.Policy;
 /**
  * This class translates resource deltas and subscriber events into the effects 
  * on a sync set
- * 
- * TODO: This class has direct dependencies on CVS
  */
 public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResourceChangeListener, ITeamResourceChangeListener {
 
 	private SyncTreeSubscriber subscriber;
 
-	/**
-	 * Create a new sync set. This will calculate the set of out-of-sync resources
-	 * from scratch.
-	 * 
-	 * @param monitor
-	 */
-	public SyncSetInputFromSubscriber(SyncSet syncSet) {
-		super(syncSet);
-	}
-	
 	private void connect(SyncTreeSubscriber s) {
 		if (this.subscriber != null) return;
 		this.subscriber = s;
