@@ -493,6 +493,9 @@ public class EclipseSynchronizer {
 					if (info == null) return;
 					synchronizerCache.setCachedFolderSync(container, info);
 					changedFolders.add(container);
+					// move the resource sync as well
+					byte[] syncBytes = getSyncBytes(resource);
+					synchronizerCache.setCachedSyncBytes(resource, syncBytes);
 					// todo
 					// Move the dirty count into phantom space
 					int dirtyCount = getDirtyCount(container);
@@ -809,7 +812,9 @@ public class EclipseSynchronizer {
 	 */
 	private void setCachedResourceSync(IResource resource, ResourceSyncInfo info) throws CVSException {
 		//todo
-		getSyncInfoCacheFor(resource).setCachedSyncBytes(resource, info.getBytes());
+		byte[] syncBytes = null;
+		if (info != null) syncBytes = info.getBytes();
+		getSyncInfoCacheFor(resource).setCachedSyncBytes(resource, syncBytes);
 	}
 	
 	/**

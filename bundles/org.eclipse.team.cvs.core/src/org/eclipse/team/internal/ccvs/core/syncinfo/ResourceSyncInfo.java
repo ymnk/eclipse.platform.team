@@ -47,6 +47,7 @@ public class ResourceSyncInfo {
 	// file sync information can be associated with a local resource that has been deleted. This is
 	// noted by prefixing the revision with this character.
 	private static final String DELETED_PREFIX = "-"; //$NON-NLS-1$
+	private static final byte DELETED_PREFIX_BYTE = '-';
 	
 	// a sync element with a revision of '0' is considered a new file that has
 	// not been comitted to the repo. Is visible so that clients can create sync infos
@@ -544,7 +545,7 @@ public class ResourceSyncInfo {
 	public static String getName(byte[] syncBytes) throws CVSException {
 		String name = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 1, false);
 		if (name == null) {
-			throw new CVSException(Policy.bind("Malformed_entry_line,_missing_name___12") + syncBytes);
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
 		}
 		return name;
 	}
@@ -564,6 +565,16 @@ public class ResourceSyncInfo {
 	 * @return byte[]
 	 */
 	public static byte[] convertToDeletion(byte[] syncBytes) throws CVSException  {
+		int index = startOfSlot(syncBytes, 2);
+		if (index == -1) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		if (syncBytes.length > index && syncBytes[index+1] != DELETED_PREFIX_BYTE) {
+			byte[] newSyncBytes = new byte[syncBytes.length + 1];
+			System.arraycopy(syncBytes, 0, newSyncBytes, 0, index + 1);
+			newSyncBytes[index + 1] = DELETED_PREFIX_BYTE;
+			System.arraycopy(syncBytes, index + 1, newSyncBytes, index + 2, syncBytes.length - index - 1);
+		}
 		return syncBytes;
 	}
 	
@@ -573,6 +584,35 @@ public class ResourceSyncInfo {
 	 * @return byte[]
 	 */
 	public static byte[] convertFromDeletion(byte[] syncBytes) throws CVSException {
+		int index = startOfSlot(syncBytes, 2);
+		if (index == -1) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		if (syncBytes.length > index && syncBytes[index+1] == DELETED_PREFIX_BYTE) {
+			byte[] newSyncBytes = new byte[syncBytes.length - 1];
+			System.arraycopy(syncBytes, 0, newSyncBytes, 0, index + 1);
+			System.arraycopy(syncBytes, index + 2, newSyncBytes, index + 1, newSyncBytes.length - index - 1);
+		}
 		return syncBytes;
+	}
+	/**
+	 * Method startOfSlot returns the index of the slash that occurs before the
+	 * given slot index. The provided index should be >= 1 which assumes that
+	 * slot zero occurs before the first slash.
+	 * 
+	 * @param syncBytes
+	 * @param i
+	 * @return int
+	 */
+	private static int startOfSlot(byte[] syncBytes, int slot) {
+		int count = 0;
+		for (int j = 0; j < syncBytes.length; j++) {
+			byte b = syncBytes[j];
+			if (syncBytes[j] == SEPARATOR_BYTE) {
+				count++;
+				if (count == slot) return j;
+			} 
+		}
+		return -1;
 	}
 }
