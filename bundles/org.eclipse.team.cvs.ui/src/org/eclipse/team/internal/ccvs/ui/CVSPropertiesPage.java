@@ -202,7 +202,7 @@ public class CVSPropertiesPage extends PropertyPage {
 	private void initializeValues() {
 		passwordChanged = false;
 		
-		provider = (CVSTeamProvider)RepositoryProviderType.getProvider(project);
+		provider = (CVSTeamProvider)RepositoryProviderType.getProvider(project, CVSProviderPlugin.getTypeId());
 		if (provider == null) return;
 		
 		CVSWorkspaceRoot cvsRoot = provider.getCVSWorkspaceRoot();
@@ -242,7 +242,7 @@ public class CVSPropertiesPage extends PropertyPage {
 	}
 	
 	private void initializeTag() {
-		provider = (CVSTeamProvider)RepositoryProviderType.getProvider(project);
+		provider = (CVSTeamProvider)RepositoryProviderType.getProvider(project, CVSProviderPlugin.getTypeId());
 		if (provider == null) return;
 		CVSWorkspaceRoot cvsRoot = provider.getCVSWorkspaceRoot();
 		try {

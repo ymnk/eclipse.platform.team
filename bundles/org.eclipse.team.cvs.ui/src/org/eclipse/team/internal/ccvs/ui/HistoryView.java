@@ -640,8 +640,8 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 		if (resource instanceof IFile) {
 			IFile file = (IFile)resource;
 			this.file = file;
-			RepositoryProvider teamProvider = RepositoryProviderType.getProvider(file.getProject());
-			if (teamProvider != null && teamProvider.isOfType(CVSProviderPlugin.getTypeId())) {
+			RepositoryProvider teamProvider = RepositoryProviderType.getProvider(file.getProject(), CVSProviderPlugin.getTypeId());
+			if (teamProvider != null) {
 				this.provider = (CVSTeamProvider)teamProvider;
 				try {
 					ICVSRemoteResource remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(file);

@@ -32,14 +32,6 @@ public abstract class RepositoryProvider implements IProjectNature {
 	}
 	
 	/**
-	 * Returns a <code>RepositoryProviderType</code> that describes the type of this provider.
-	 * 
-	 * @return the <code>RepositoryProviderType</code> of this provider
-	 * @see RepositoryProviderType
-	 */
-	abstract public RepositoryProviderType getProviderType();	
-	
-	/**
 	 * Configures the nature for the given project. This method is called after <code>setProject</code>
 	 * and before the nature is added to the project. If an exception is generated during configuration
 	 * of the project the nature will not be assigned to the project.
@@ -62,48 +54,19 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 */
 	final public void configure() throws CoreException {
 		RepositoryProvider provider = RepositoryProviderType.getProvider(getProject());
-		// Core Bug 11395
-		// When configure is called the nature has already been assigned to the project. This check will always
-		// fail. Also, if configure fails the nature is still added to the project.
-		//if(provider!=null) {
-		//	throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "A provider is already associated with this project: " + provider, null));
-		//}
-		// Alternate slower check
-		RepositoryProviderType[] types = RepositoryProviderType.getAllProviderTypes();
-		int count = 0;
-		for (int i = 0; i < types.length; i++) {
-			if(getProject().getNature(types[i].getID())!=null) {
-				count++;
-			}
-		}
-		if(count==1) {
+		try {
 			configureProject();
-		} else {
-			// FIXME: Must confirm with core how to correctly back-out/revert a nature application to a project
-			// remove this nature from the provider. I'm not sure 
+		} catch(CoreException e) {
 			try {
-				TeamPlugin.removeNatureFromProject(getProject(), getProviderType().getID(), null);
-			} catch(TeamException e) {
-				throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProvider_Error_removing_nature_from_project___1") + provider, null)); //$NON-NLS-1$
+				TeamPlugin.removeNatureFromProject(getProject(), getID(), null);
+			} catch(TeamException e2) {
+				throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProvider_Error_removing_nature_from_project___1") + provider, e2)); //$NON-NLS-1$
 			}
-			if(count>1) {
-				// another provider id is already associated with the project
-				throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProvider_Too_many_providers_associated_with_project___2") + provider, null)); //$NON-NLS-1$
-			} else if(count==0) {
-				// although a subclass of RepositoryProvider is registered as a nature, the id has not been registered with 
-				// the org.eclipse.team.core.repository-provider-type extension point.
-				throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProvider_providerTypeIdNotRegistered") + provider, null)); //$NON-NLS-1$
-			}			
+			throw e;
 		}
 	}
 
-	/**
-	 * Returns <code>true</code> if this provider is of the given type id and <code>false</code>
-	 * otherwise.
-	 */
-	public boolean isOfType(String id) {
-		return getProviderType().getID().equals(id);
-	}
+	abstract public String getID();
 
 	/**
 	 * Returns an object which implements a set of provider neutral operations for this 
@@ -161,6 +124,6 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 * @return a string description of this provider
 	 */
 	public String toString() {
-		return getProject().getName() + ":" + getProviderType(); //$NON-NLS-1$
+		return getProject().getName() + ":" + getID(); //$NON-NLS-1$
 	}
 }

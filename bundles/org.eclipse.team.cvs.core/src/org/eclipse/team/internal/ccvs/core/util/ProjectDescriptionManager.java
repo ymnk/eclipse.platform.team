@@ -227,8 +227,8 @@ public class ProjectDescriptionManager {
 						IResource resource = delta.getResource();
 						if (resource.getType() == IResource.PROJECT) {
 							IProject project = (IProject)resource;
-							RepositoryProvider provider = RepositoryProviderType.getProvider(project);
-							if (provider!=null && !provider.isOfType(CVSProviderPlugin.getTypeId())) continue;
+							RepositoryProvider provider = RepositoryProviderType.getProvider(project, CVSProviderPlugin.getTypeId());
+							if (provider!=null) continue;
 							// First, check if the .vcm_meta file for the project is in the delta.
 							IResourceDelta[] children = delta.getAffectedChildren(IResourceDelta.REMOVED | IResourceDelta.ADDED | IResourceDelta.CHANGED);
 							boolean inSync = false;

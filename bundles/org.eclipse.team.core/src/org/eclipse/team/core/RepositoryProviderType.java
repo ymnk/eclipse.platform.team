@@ -6,11 +6,16 @@ package org.eclipse.team.core;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IProjectNature;
+import org.eclipse.core.resources.IProjectNatureDescriptor;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -24,16 +29,7 @@ import org.eclipse.team.core.internal.Policy;
  */
 abstract public class RepositoryProviderType {
 	
-	// contains a list of registered provider types keyed by provider type id.
-	// {keys = String (ids) values = RepositoryProviderType
-	private static final Map providerTypes =  new HashMap();
-	
-	/**
-	 * Default constructor required for the team plugin to instantiate this class from a
-	 * extension definition.
-	 */
-	public RepositoryProviderType() {
-	}
+	private final static String TEAM_SETID = "org.eclipse.team.repository-provider";
 	
 	/**
 	 * Registers a provider type. This method is not intended to be called by clients and should only be
@@ -42,11 +38,6 @@ abstract public class RepositoryProviderType {
 	 * @throws TeamException if the provider type is already registered.
 	 */
 	/*package*/ final static void addProviderType(RepositoryProviderType providerType) throws TeamException {
-		if(providerTypes.containsKey(providerType.getID())) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProviderTypeduplicate_provider_found_in_plugin.xml___1") + providerType.getID(), null)); //$NON-NLS-1$
-		} else {
-			providerTypes.put(providerType.getID(), providerType);			
-		}
 	}
 
 	/**
@@ -54,8 +45,16 @@ abstract public class RepositoryProviderType {
 	 * 
 	 * @return an array of registered <code>RepositoryProviderType</code> instances.
 	 */
-	final public static RepositoryProviderType[] getAllProviderTypes() {
-		return (RepositoryProviderType[]) providerTypes.values().toArray(new RepositoryProviderType[providerTypes.size()]);
+	final public static String[] getAllProviderTypeIds() {
+		IProjectNatureDescriptor[] desc = ResourcesPlugin.getWorkspace().getNatureDescriptors();
+		List teamSet = new ArrayList();
+		for (int i = 0; i < desc.length; i++) {
+			List sets = new ArrayList(Arrays.asList(desc[i].getNatureSetIds()));
+			if(sets.contains(TEAM_SETID)) {
+				teamSet.add(desc[i].getNatureId());
+			}
+		}
+		return (String[]) teamSet.toArray(new String[teamSet.size()]);
 	}
 	
 	/**
@@ -67,25 +66,23 @@ abstract public class RepositoryProviderType {
 	 * associated with a provider.
 	 */
 	final public static RepositoryProvider getProvider(IProject project) {
-		RepositoryProviderType[] allTypes = getAllProviderTypes();
-		for (int i = 0; i < allTypes.length; i++) {
-			RepositoryProvider provider = allTypes[i].getInstance(project);
-			if(provider!=null) {
-				return provider;
+		if(project.isAccessible()) {
+			try {
+				IProjectDescription projectDesc = project.getDescription();
+				String[] natureIds = projectDesc.getNatureIds();
+				IWorkspace workspace = ResourcesPlugin.getWorkspace();
+				for (int i = 0; i < natureIds.length; i++) {
+					IProjectNatureDescriptor desc = workspace.getNatureDescriptor(natureIds[i]);
+					List sets = new ArrayList(Arrays.asList(desc.getNatureSetIds()));
+					if(sets.contains(TEAM_SETID)) {
+						return getProvider(project, natureIds[i]);
+					}			
+				}
+			} catch(CoreException e) {
+				TeamPlugin.log(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind(""), e)); //$NON-NLS-1$
 			}
 		}
 		return null;
-	}
-	
-	/**
-	 * Returns the provider type instance with the given id or <code>null</code> if a provider type
-	 * with that id is not registered.
-	 * 
-	 * @return a provider type with the given id or <code>null</code> if a provider with that id
-	 * is not registered.
-	 */
-	final public static RepositoryProviderType getProviderType(String id) {
-		return (RepositoryProviderType) providerTypes.get(id);
 	}
 	
 	/**
@@ -94,8 +91,7 @@ abstract public class RepositoryProviderType {
 	 * 
 	 * @return the repository provider
 	 */
-	final public RepositoryProvider getInstance(IProject project) {
-		String id = getID();
+	final public static RepositoryProvider getProvider(IProject project, String id) {
 		try {
 			if(project.exists() && project.isOpen()) {
 				return (RepositoryProvider)project.getNature(id);
@@ -110,43 +106,20 @@ abstract public class RepositoryProviderType {
 	}
 	
 	/**
-	 * Returns the unique identifier for this provider type. 
-	 * For example, org.eclipse.team.repotype.provider.
-	 * This identifier must match the <code>IProjectNature</code> ID of
-	 * the corresponding <code>RepositoryProvider</code>.
-	 * 
-	 * @return the id
-	 */
-	abstract public String getID();
-	
-	/**
 	 * Returns all instances of the providers of this type.
 	 * 
 	 * @return an array of repository providers
 	 */
-	public RepositoryProvider[] getAllInstances() {
+	final public static RepositoryProvider[] getAllInstances(String id) {
 		// traverse projects in workspace and return the list of project that have our id as the nature id.
 		List projectsWithMyId = new ArrayList();
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		for (int i = 0; i < projects.length; i++) {
-			RepositoryProvider provider = getInstance(projects[i]);
+			RepositoryProvider provider = getProvider(projects[i], id);
 			if(provider!=null) {
 				projectsWithMyId.add(provider);
 			}
 		}
 		return (RepositoryProvider[]) projectsWithMyId.toArray(new RepositoryProvider[projectsWithMyId.size()]);
-	}
-	
-	/**
-	 * Returns a description of this provider type. The exact details of the
-	 * representation are unspecified and subject to change, but the following
-	 * may be regarded as typical:
-	 * 
-	 * "org.eclipse.team.cvs.provider"
-	 * 
-	 * @return a string description of this provider type
-	 */
-	public String toString() {
-		return getID();
 	}
 }

@@ -117,8 +117,8 @@ public class CVSDecorationRunnable implements Runnable {
 		// with a CVS provider. This could happen if the team nature was removed
 		// between the time the decoration event was posted to the thread and the time
 		// the thread processes the decoration.
-		RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject());
-		if(!resource.exists() || provider==null || !provider.isOfType(CVSProviderPlugin.getTypeId())) {
+		RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
+		if(!resource.exists() || provider==null) {
 			return null;
 		}
 			

@@ -965,10 +965,6 @@ public class CVSTeamProvider extends RepositoryProvider {
 		return new Status(IStatus.ERROR, CVSProviderPlugin.ID, TeamException.UNABLE, getMessageFor(e), e);
 	}
 	
-	public RepositoryProviderType getProviderType() {
-		return CVSRepositoryProviderType.getInstance();
-	}	
-	
 	public void configureProject() throws CoreException {
 	}
 	/**
@@ -1174,5 +1170,12 @@ public class CVSTeamProvider extends RepositoryProvider {
 	private static void makeDirty(IFile file) throws CVSException {
 		ICVSFile mFile = CVSWorkspaceRoot.getCVSFileFor(file);
 		mFile.setTimeStamp(null);
+	}
+	
+	/*
+	 * @see RepositoryProvider#getID()
+	 */
+	public String getID() {
+		return CVSProviderPlugin.getTypeId();
 	}
 }

@@ -195,7 +195,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 						for (int i = 0; i < projectDeltas.length; i++) {							
 							IResourceDelta delta = projectDeltas[i];
 							IResource resource = delta.getResource();
-							RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject());	
+							RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());	
 
 							// if a project is moved the originating project will not be associated with the CVS provider
 							// however listeners will probably still be interested in the move delta.	
@@ -204,7 +204,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 								provider = RepositoryProviderType.getProvider(destination.getProject());
 							}
 							
-							if(provider!=null && provider.isOfType(CVSProviderPlugin.getTypeId())) {
+							if(provider!=null) {
 								delta.accept(visitor);
 							}
 						}

@@ -48,8 +48,8 @@ public class SetKeywordSubstitutionAction extends TeamAction {
 			// resource must be local
 			if (! resource.isAccessible()) return false;
 			// provider must be CVS
-			RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject());
-			if (provider == null || !provider.isOfType(CVSProviderPlugin.getTypeId())) return false;
+			RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
+			if (provider == null) return false;
 			// resource must either be a project, or it must be managed
 			if (resource.getType() != IResource.PROJECT) {
 				ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
