@@ -250,13 +250,11 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	 * Method updateWidgetEnablements.
 	 */
 	private void updateWidgetEnablements() {
-		
+		setErrorMessage(null);
 		if (filesToRestore.isEmpty()) {
 			setPageComplete(false);
-			setErrorMessage(null);
 			return;
 		}
-		
 		for (Iterator iter = filesToRestore.keySet().iterator(); iter.hasNext();) {
 			IFile file = (IFile) iter.next();
 			if (file.exists()) {
@@ -264,16 +262,8 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 				setErrorMessage(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileExists", file.getName())); //$NON-NLS-1$
 				return;
 			}
-			
-			ILogEntry entry = (ILogEntry) filesToRestore.get(file);
-			if (entry.isDeletion())  {
-				setPageComplete(false);
-				setErrorMessage(Policy.bind("RestoreFromRepositoryFileSelectionPage.revisionIsDeletion", entry.getRevision(), file.getName())); //$NON-NLS-1$
-				return;
-			}
 		}
 		setPageComplete(true);
-		setErrorMessage(null);
 	}
 	
 	/**
@@ -351,6 +341,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		if (fileContentPane != null && !fileContentPane.isDisposed()) {
 			fileContentPane.setInput(null);
 		}
+		setErrorMessage(null);
 		
 		// refresh the tree
 		if (fileTree != null) {
@@ -386,6 +377,8 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		revisionSelectionPane.setImage(CompareUI.getImage(selectedFile));
 		// Clear the file content pane
 		fileContentPane.setInput(null);
+		// Clear any previous error messages
+		setErrorMessage(null);
 	}
 	
 	private void handleFileSelection(SelectionChangedEvent event) {
@@ -434,6 +427,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 						}
 					}
 				});
+
 			} catch (CVSException e) {
 				setErrorMessage(
 					CVSUIPlugin.openError(getShell(), null, null, e, CVSUIPlugin.PERFORM_SYNC_EXEC)
@@ -483,13 +477,19 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		} catch (InterruptedException e) {
 			return null;
 		}
+		setErrorMessage(null);
 		return new BufferedInputStream(is[0]);
 	}
 
 	private void handleRevisionChecked(CheckStateChangedEvent event) {
+		// Only allow one element to be checked
 		if (event.getChecked()) {
-			revisionsTable.setCheckedElements(new Object[] {event.getElement()});
-			filesToRestore.put(selectedFile, event.getElement());
+			if (((ILogEntry)event.getElement()).isDeletion()) {
+				revisionsTable.setChecked(event.getElement(), false);
+			} else {
+				revisionsTable.setCheckedElements(new Object[] {event.getElement()});
+				filesToRestore.put(selectedFile, event.getElement());
+			}
 		}
 		if (revisionsTable.getCheckedElements().length == 0) {
 			filesToRestore.remove(selectedFile);

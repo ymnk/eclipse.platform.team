@@ -33,7 +33,6 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 
 /**
@@ -102,14 +101,10 @@ public class GenerateDiffFileOperation implements IRunnableWithProgress {
 
 			//check for empty diff and report			
 			if (emptyDiff) {
-				CVSUIPlugin.openDialog(shell, new CVSUIPlugin.IOpenableInShell() {
-					public void open(Shell shell) {
-						MessageDialog.openInformation(
-							shell,
-							Policy.bind("GenerateCVSDiff.noDiffsFoundTitle"), //$NON-NLS-1$
-							Policy.bind("GenerateCVSDiff.noDiffsFoundMsg")); //$NON-NLS-1$
-					}
-				}, CVSUIPlugin.PERFORM_SYNC_EXEC);
+				MessageDialog.openInformation(
+					shell,
+					Policy.bind("GenerateCVSDiff.noDiffsFoundTitle"), //$NON-NLS-1$
+					Policy.bind("GenerateCVSDiff.noDiffsFoundMsg")); //$NON-NLS-1$
 			}
 		} catch (TeamException e) {
 			throw new InvocationTargetException(e);

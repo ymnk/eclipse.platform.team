@@ -117,7 +117,7 @@ public class AddSyncAction extends MergeAction {
 			set.removeConflictingNodes();
 			return set.hasNonAddedChanges();
 		} catch (CVSException e) {
-			CVSUIPlugin.log(e);
+			CVSUIPlugin.log(e.getStatus());
 			return false;
 		}
 	}	

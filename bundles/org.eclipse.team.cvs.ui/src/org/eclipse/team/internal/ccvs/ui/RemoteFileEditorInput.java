@@ -27,8 +27,8 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  * An editor input for a file in a repository.
  */
 public class RemoteFileEditorInput implements IWorkbenchAdapter, IStorageEditorInput {
-	ICVSRemoteFile file;
-	IStorage storage;
+	private ICVSRemoteFile file;
+	private IStorage storage;
 
 	/**
 	 * Creates FileEditionEditorInput on the given file.

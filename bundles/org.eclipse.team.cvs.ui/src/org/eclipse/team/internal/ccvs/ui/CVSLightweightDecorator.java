@@ -46,8 +46,8 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.TeamImages;
 
 public class CVSLightweightDecorator
 	extends LabelProvider
@@ -80,9 +80,9 @@ public class CVSLightweightDecorator
 	}
 
 	static {
-		dirty = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
-		checkedIn = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
-		added = new CachedImageDescriptor(TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
+		dirty = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
+		checkedIn = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
+		added = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
 		merged = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_MERGED));
 		newResource = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_QUESTIONABLE));
 		edited = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_EDITED));
@@ -99,7 +99,7 @@ public class CVSLightweightDecorator
 			return !cvsResource.isIgnored() && cvsResource.isModified(null);
 		} catch (CVSException e) {
 			//if we get an error report it to the log but assume dirty
-			CVSUIPlugin.log(e);
+			CVSUIPlugin.log(e.getStatus());
 			return true;
 		}
 	}
@@ -265,7 +265,7 @@ public class CVSLightweightDecorator
 		CVSDecoratorConfiguration.decorate(decoration, format, bindings);
 			
 		} catch (CVSException e) {
-			CVSUIPlugin.log(e);
+			CVSUIPlugin.log(e.getStatus());
 			return;
 		}
 	}
@@ -343,7 +343,7 @@ public class CVSLightweightDecorator
 					}
 				}
 			} catch (CVSException e) {
-				CVSUIPlugin.log(e);
+				CVSUIPlugin.log(e.getStatus());
 				return null;
 			}
 		}
@@ -372,7 +372,7 @@ public class CVSLightweightDecorator
 					}
 				}
 			} catch (CVSException e) {
-				CVSUIPlugin.log(e);
+				CVSUIPlugin.log(e.getStatus());
 				return null;
 			}
 		}
@@ -449,7 +449,7 @@ public class CVSLightweightDecorator
 			});
 			postLabelEvent(new LabelProviderChangedEvent(this, resources.toArray()));
 		} catch (CoreException e) {
-			CVSProviderPlugin.log(e);
+			CVSProviderPlugin.log(e.getStatus());
 		}
 	}
 	

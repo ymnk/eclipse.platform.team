@@ -90,7 +90,7 @@ public class IgnoreAction extends Action {
 			if (cvsResource.isManaged()) return false;
 			if (cvsResource.isIgnored()) return false;
 		} catch (CVSException e) {
-			CVSUIPlugin.log(e);
+			CVSUIPlugin.log(e.getStatus());
 			return false;
 		}
 		return true;

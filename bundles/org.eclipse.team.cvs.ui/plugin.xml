@@ -153,14 +153,6 @@
                id="org.eclipse.team.ccvs.ui.showHistory">
          </action>
          <action
-               label="%ShowAnnotationAction.label"
-               tooltip="%ShowAnnotationAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction"
-               menubarPath="team.main/group2"
-               helpContextId="org.eclipse.team.cvs.ui.get_annotate_action_context"
-               id="org.eclipse.team.ccvs.ui.showAnnotation">
-         </action>
-         <action
                label="%CompareWithRevisionAction.label"
                tooltip="%CompareWithRevisionAction.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.CompareWithRevisionAction"
@@ -383,6 +375,14 @@
       <objectContribution
             objectClass="org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder"
             id="org.eclipse.team.ccvs.ui.RemoteFolderContributions">
+          <action
+               label="%CheckoutIntoAction.label"
+               tooltip="%CheckoutIntoAction.tooltip"
+               menubarPath="checkoutGroup"
+               class="org.eclipse.team.internal.ccvs.ui.actions.CheckoutIntoAction"
+               helpContextId="org.eclipse.team.cvs.ui.checkout_into_action_context"
+               id="org.eclipse.team.ccvs.ui.checkoutInto">
+         </action>
          <action
                label="%CheckoutAsAction.label"
                tooltip="%CheckoutAsAction.tooltip"
@@ -433,13 +433,6 @@
                helpContextId="org.eclipse.team.cvs.ui.show_in_history_action_context"
                id="org.eclipse.team.ccvs.ui.showHistory">
          </action>
-         <action
-               label="%ShowAnnotationAction.label"
-               tooltip="%ShowAnnotationAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction"
-               helpContextId="org.eclipse.team.cvs.ui.get_annotate_action_context"
-               id="org.eclipse.team.ccvs.ui.showAnnotation">
-         </action>
       </objectContribution>
       <objectContribution
             objectClass="org.eclipse.team.internal.ccvs.core.ILogEntry"
@@ -458,13 +451,6 @@
                enablesFor="2"
                helpContextId="org.eclipse.team.cvs.ui.compare_remote_resources_action_context"
                id="org.eclipse.team.ccvs.ui.compareLogEntries">
-         </action>
-         <action
-               label="%ShowAnnotationAction.label"
-               tooltip="%ShowAnnotationAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction"
-               helpContextId="org.eclipse.team.cvs.ui.get_annotate_action_context"
-               id="org.eclipse.team.ccvs.ui.showAnnotation">
          </action>
       </objectContribution>
       <objectContribution
@@ -562,48 +548,6 @@
          </action>
       </objectContribution>
    </extension>
-   
-<!-- ************* Subscriber Menus ************ -->
-   <extension
-         point="org.eclipse.team.ui.subscriberMenus">
-      <subscriberContribution
-            subscriberClass="org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber"
-            id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriberContributions">
-          <action
-               label="%CVSWorkspaceSubscriber.update.label"
-               tooltip="%CVSWorkspaceSubscriber.update.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceUpdateAction"
-               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_update_action"
-               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.update">
-         </action>
-         <action
-               label="%CVSWorkspaceSubscriber.commit.label"
-               tooltip="%CVSWorkspaceSubscriber.commit.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitAction"
-               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_commit_action"
-               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.commit">
-         </action>
-         <action
-               label="%CVSWorkspaceSubscriber.confirmMerged.label"
-               tooltip="%CVSWorkspaceSubscriber.confirmMerged.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberConfirmMergedAction"
-               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_confirm_merged_action"
-               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.confirmMerged">
-         </action>
-      </subscriberContribution>
-          <subscriberContribution
-            subscriberClass="org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber"
-            id="org.eclipse.team.ccvs.ui.CVSMergeSubscriberContributions">
-          <action
-               label="%CVSWorkspaceSubscriber.merge.label"
-               tooltip="%CVSWorkspaceSubscriber.merge.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.subscriber.MergeUpdateAction"
-               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_merge_action"
-               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.merge">
-         </action>
-      </subscriberContribution>
-   </extension>
-   
 <!-- ************** Views ********************** -->
    <extension
          point="org.eclipse.ui.views">
@@ -640,13 +584,7 @@
             class="org.eclipse.team.internal.ccvs.ui.EditorsView"
             id="org.eclipse.team.ccvs.ui.EditorsView">
       </view>
-      <view
-            name="%AnnotateView.name"
-            icon="icons/full/cview16/annotate_view.gif"
-            category="org.eclipse.team.ccvs.ui"
-            class="org.eclipse.team.internal.ccvs.ui.AnnotateView"
-            id="org.eclipse.team.ccvs.ui.AnnotateView">
-      </view>
+      
    </extension>
 <!-- **************** Preferences ******************* -->
    <extension
@@ -730,7 +668,18 @@
          </action>
       </viewContribution>
    </extension>
-
+<!-- **************** Markers ******************* -->
+   <extension
+         point="org.eclipse.ui.markerResolution">
+      <markerResolutionGenerator
+            markerType="org.eclipse.team.cvs.core.cvsremove"
+            class="org.eclipse.team.internal.ccvs.ui.CVSRemoveResolutionGenerator">
+      </markerResolutionGenerator>
+      <markerResolutionGenerator
+            markerType="org.eclipse.team.cvs.core.cvsadd"
+            class="org.eclipse.team.internal.ccvs.ui.CVSAddResolutionGenerator">
+      </markerResolutionGenerator>
+   </extension>
 <!-- **************** CVS Perspective ******************* -->
    <extension
          point="org.eclipse.ui.perspectives">
@@ -761,17 +710,10 @@
                 relative="org.eclipse.ui.views.ResourceNavigator"
                 visible="false"
                 relationship="stack"/>
-           <view id="org.eclipse.team.ccvs.ui.AnnotateView"
-                relative="org.eclipse.ui.views.ResourceNavigator"
-                visible="false"
-                relationship="stack"/>
       </perspectiveExtension>
 	<perspectiveExtension 
 		targetID="org.eclipse.team.cvs.ui.cvsPerspective">
 		<actionSet id="org.eclipse.team.cvs.ui.CVSActionSet"/>
-		<view id="org.eclipse.team.ccvs.ui.AnnotateView"
-        		relative="org.eclipse.team.ccvs.ui.RepositoriesView"
-                relationship="stack"/>
 	</perspectiveExtension>
    </extension>
 

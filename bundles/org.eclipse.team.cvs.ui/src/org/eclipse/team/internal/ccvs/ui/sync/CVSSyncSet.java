@@ -95,7 +95,7 @@ public class CVSSyncSet extends SyncSet {
 			} catch (CVSException e) {
 				// isManaged or isCVSFolder threw an exception
 				// Log it and continue
-				CVSUIPlugin.log(e);
+				CVSUIPlugin.log(e.getStatus());
 			}
 		}
 		return false;
@@ -136,7 +136,7 @@ public class CVSSyncSet extends SyncSet {
 			} catch (CVSException e) {
 				// isManaged or isCVSFolder threw an exception
 				// Log it and continue
-				CVSUIPlugin.log(e);
+				CVSUIPlugin.log(e.getStatus());
 			}
 		}
 		return false;
@@ -173,7 +173,7 @@ public class CVSSyncSet extends SyncSet {
 							}
 						}
 					} catch (CVSException e) {
-						CVSUIPlugin.log(e);
+						CVSUIPlugin.log(e.getStatus());
 					}
 					break;
 				case IRemoteSyncElement.CONFLICTING:

@@ -36,10 +36,7 @@ public class CVSRepositoryRootElement extends CVSModelElement {
 	public String getLabel(Object o) {
 		if (o instanceof ICVSRepositoryLocation) {
 			ICVSRepositoryLocation root = (ICVSRepositoryLocation)o;
-			o = CVSUIPlugin.getPlugin().getRepositoryManager().getRepositoryRootFor(root);
-			if (o == null) {
-				return root.getLocation();
-			}
+			return root.getLocation();
 		}
 		if (o instanceof RepositoryRoot) {
 			RepositoryRoot root = (RepositoryRoot)o;

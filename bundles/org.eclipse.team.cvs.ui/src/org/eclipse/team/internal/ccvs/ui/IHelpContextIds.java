@@ -67,6 +67,7 @@ public interface IHelpContextIds {
 	public static final String PREF_KEYWORDMODE = PREFIX + "default_keywordmode_pref"; //$NON-NLS-1$
 	public static final String PREF_COMMS_TIMEOUT = PREFIX + "comms_timeout_pref"; //$NON-NLS-1$
 	public static final String PREF_CONSIDER_CONTENT = PREFIX + "consider_content_pref"; //$NON-NLS-1$
+	public static final String PREF_MARKERS_ENABLED = PREFIX + "markers_enabled_pref"; //$NON-NLS-1$
 	public static final String PREF_REPLACE_DELETE_UNMANAGED = PREFIX + "replace_deletion_of_unmanaged_pref"; //$NON-NLS-1$
 	public static final String PREF_SAVE_DIRTY_EDITORS = PREFIX + "save_dirty_editors_pref"; //$NON-NLS-1$
 	public static final String PREF_TREAT_NEW_FILE_AS_BINARY = PREFIX + "treat_new_files_as_binary_pref"; //$NON-NLS-1$
@@ -86,7 +87,6 @@ public interface IHelpContextIds {
 	public static final String RESOURCE_HISTORY_VIEW = PREFIX + "resource_history_view_context"; //$NON-NLS-1$
 	public static final String COMPARE_REVISIONS_VIEW = PREFIX + "compare_revision_view_context"; //$NON-NLS-1$
 	public static final String CVS_EDITORS_VIEW = PREFIX + "cvs_editors_view_context"; //$NON-NLS-1$
-	public static final String ANNOTATE_VIEW = PREFIX + "annotate_view_context"; //$NON-NLS-1$
 
 	// Viewers
 	public static final String CATCHUP_RELEASE_VIEWER = PREFIX + "catchup_release_viewer_context"; //$NON-NLS-1$
@@ -95,7 +95,6 @@ public interface IHelpContextIds {
 	public static final String ADD_TO_CVSIGNORE = PREFIX + "add_to_cvsignore_context"; //$NON-NLS-1$
 
 	// Actions
-	public static final String GET_ANNOTATE_ACTION = PREFIX + "get_annotate_action_context"; //$NON-NLS-1$
 	public static final String GET_FILE_REVISION_ACTION = PREFIX + "get_file_revision_action_context"; //$NON-NLS-1$
 	public static final String GET_FILE_CONTENTS_ACTION = PREFIX + "get_file_contents_action_context"; //$NON-NLS-1$
 	public static final String TAG_WITH_EXISTING_ACTION = PREFIX + "tag_with_existing_action_context"; //$NON-NLS-1$

@@ -26,6 +26,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.DetailsDialog;
 import org.eclipse.ui.help.WorkbenchHelp;
@@ -186,6 +187,20 @@ public class AddToVersionControlDialog extends DetailsDialog {
 			List result = Arrays.asList(resourcesToAdd);
 			return (IResource[]) result.toArray(new IResource[result.size()]);
 		}
+	}
+	
+	protected static final int LABEL_WIDTH_HINT = 400;
+	protected Label createWrappingLabel(Composite parent, String text) {
+		Label label = new Label(parent, SWT.LEFT | SWT.WRAP);
+		label.setText(text);
+		GridData data = new GridData();
+		data.horizontalSpan = 1;
+		data.horizontalAlignment = GridData.FILL;
+		data.horizontalIndent = 0;
+		data.grabExcessHorizontalSpace = true;
+		data.widthHint = LABEL_WIDTH_HINT;
+		label.setLayoutData(data);
+		return label;
 	}
 	
 	/* (non-Javadoc)

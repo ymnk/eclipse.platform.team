@@ -45,7 +45,6 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -643,7 +642,7 @@ public class HistoryView extends ViewPart {
 					}
 				}
 			} catch(CVSException e) {
-				CVSUIPlugin.log(e);
+				CVSUIPlugin.log(e.getStatus());
 			}
 		}
 		return true;
@@ -672,26 +671,4 @@ public class HistoryView extends ViewPart {
 			}
 		});
 	}
-	
-	/**
-	 * Select the revision in the receiver.
-	 */
-	public void selectRevision(String revision) {
-			if (entries == null) {
-				return;
-			}
-		
-			ILogEntry entry = null;
-			for (int i = 0; i < entries.length; i++) {
-				if (entries[i].getRevision().equals(revision)) {
-					entry = entries[i];
-					break;
-				}
-			}
-		
-			if (entry != null) {
-				IStructuredSelection selection = new StructuredSelection(entry);
-				tableViewer.setSelection(selection, true);
-			}
-		}
 }
