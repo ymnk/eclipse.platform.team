@@ -48,9 +48,11 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	}
 
 	/**
-	 * Create a new simple team provider initialized with the given state factory.
+	 * Create a target provider, with given storage key.
+	 * The key is the localName of the QualifiedName for state lookup.
+	 * @see QualifiedName
 	 */
-	public SynchronizedTargetProvider() {
+	public SynchronizedTargetProvider(String key) {
 		super();
 	}
 	 
@@ -334,8 +336,35 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 */	}
 
 
+	private static String[] getAllTargetTypes() {
+		return new String[] {"org.eclipse.team.webdav"};
+	}
 
-	/*************** Config Info Persisting ***************/
+	private static SynchronizedTargetProvider newProvider(IProject project, String type, String key) {
+		// look up class via extension point
+		SynchronizedTargetProvider provider; //=  new SomeClassWeLookedUp(key)
+		provider.setProject(project);
+		provider.restoreConfiguration();
+	}
+	
+	/*************** Synchronizer/Configuration ***************/
+
+	public static void restoreAllProviders() throws CoreException, IOException {
+		String[] targetTypes = getAllTargetTypes();
+		QualifiedName[] partners = getSynchronizer().getPartners();
+		boolean registered = false;
+		
+		for (int i = 0; i < partners.length; i++) {
+			for (int j = 0; j < targetTypes.length; j++) {
+				String targetType = partners[i].getQualifier();
+				if(targetType == targetTypes[j]) {
+					String secondaryKey = partners[i].getLocalName();
+					IProject project =...
+					newProvider(project, targetType, secondaryKey);
+				}
+			}
+		}
+	}
 	
 	/*
 	 * Retrieve configuration information for the receiver
