@@ -27,6 +27,7 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.synchronize.presentation.AdaptableDiffNode;
 import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
@@ -66,7 +67,7 @@ public abstract class SubscriberAction implements IObjectActionDelegate, IViewAc
 			handle(e);
 		}
 	}
-	
+
 	/**
 	 * Subsclasses must override to provide behavior for the action.
 	 * @param syncSet the set of filtered sync info objects on which to perform the action.
@@ -156,6 +157,12 @@ public abstract class SubscriberAction implements IObjectActionDelegate, IViewAc
 	}
 	
 	private void markBusy(IDiffElement[] elements, boolean isBusy) {
+		for (int i = 0; i < elements.length; i++) {
+			IDiffElement element = elements[i];
+			if (element instanceof AdaptableDiffNode) {
+				((AdaptableDiffNode)element).setPropertyToRoot(AdaptableDiffNode.BUSY_PROPERTY, isBusy);
+			}
+		}
 	}
 
 	/**

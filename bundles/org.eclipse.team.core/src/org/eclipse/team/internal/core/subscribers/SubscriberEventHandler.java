@@ -396,4 +396,11 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		this.progressGroup = progressGroup;
 		this.ticks = ticks;
 	}
+	
+	/**
+	 * @return Returns the started.
+	 */
+	protected boolean isStarted() {
+		return started;
+	}
 }

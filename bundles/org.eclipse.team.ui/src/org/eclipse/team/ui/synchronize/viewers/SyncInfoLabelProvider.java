@@ -84,7 +84,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	public Color getForeground(Object element) {
 		if (element instanceof AdaptableDiffNode) {
 			AdaptableDiffNode node = (AdaptableDiffNode)element;
-			if(node.hasFlag(AdaptableDiffNode.BUSY)) {
+			if(node.getProperty(AdaptableDiffNode.BUSY_PROPERTY)) {
 				return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
 			}
 		}
@@ -183,7 +183,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 */
 	private boolean hasDecendantConflicts(DiffNode node) {
 		if(node instanceof AdaptableDiffNode) {
-			return ((AdaptableDiffNode)node).hasFlag(AdaptableDiffNode.PROPOGATED_CONFLICT);
+			return ((AdaptableDiffNode)node).getProperty(AdaptableDiffNode.PROPAGATED_CONFLICT_PROPERTY);
 		}
 		return false;
 	}

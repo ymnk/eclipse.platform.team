@@ -79,7 +79,6 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	}
 	
 	public void reset() {
-		inputSyncSet.removeSyncSetChangedListener(this);
 		inputSyncSet.connect(this);
 	}
 

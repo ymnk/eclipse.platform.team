@@ -12,7 +12,8 @@ package org.eclipse.team.ui.synchronize.presentation;
 
 import java.util.*;
 
-import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ViewerSorter;
@@ -90,7 +91,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
 	 */	
-	protected IDiffElement[] createModelObjects(DiffNode container) {
+	protected IDiffElement[] createModelObjects(AdaptableDiffNode container) {
 		IResource resource = null;
 		if (container == getRoot()) {
 			resource = ResourcesPlugin.getWorkspace().getRoot();
@@ -108,7 +109,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		return super.createModelObjects(container);
 	}
 	
-	private IDiffElement[] getFolderChildren(DiffNode parent, IResource resource) {
+	private IDiffElement[] getFolderChildren(AdaptableDiffNode parent, IResource resource) {
 		// Folders will only contain out-of-sync children
 		IResource[] children = getSyncInfoTree().members(resource);
 		List result = new ArrayList();
@@ -121,7 +122,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		return (IDiffElement[])result.toArray(new IDiffElement[result.size()]);
 	}
 
-	private IDiffElement[] getProjectChildren(DiffNode parent, IProject project) {
+	private IDiffElement[] getProjectChildren(AdaptableDiffNode parent, IProject project) {
 		// The out-of-sync elements could possibly include the project so the code 
 		// below is written to ignore the project
 		SyncInfo[] outOfSync = getSyncInfoTree().getSyncInfos(project, IResource.DEPTH_INFINITE);
@@ -155,16 +156,15 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObject(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
 	 */
-	protected DiffNode createModelObject(DiffNode parent, IResource resource) {
+	protected AdaptableDiffNode createModelObject(AdaptableDiffNode parent, IResource resource) {
 		if (resource.getType() == IResource.FOLDER) {
 			SyncInfo info = getSyncInfoTree().getSyncInfo(resource);
-			DiffNode newNode;
+			AdaptableDiffNode newNode;
 			if(info != null) {
 				newNode = new CompressedFolderDiffNode(parent, info);
 			} else {
 				newNode = new UnchangedCompressedDiffNode(parent, resource);
 			}
-			associateDiffNode(newNode);
 			addToViewer(newNode);
 			return newNode;
 		}
@@ -181,34 +181,38 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		SyncInfo[] infos = event.getAddedResources();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
-			IResource local = info.getLocal();
-			DiffNode existingNode = getModelObject(local);
-			if (existingNode == null) {
-				if (local.getType() == IResource.FILE) {
-					DiffNode compressedNode = getModelObject(local.getParent());
-					if (compressedNode == null) {
-						DiffNode projectNode = getModelObject(local.getProject());
-						if (projectNode == null) {
-							projectNode = createModelObject(getRoot(), local.getProject());
-						}
-						compressedNode = createModelObject(projectNode, local.getParent());
-					}
-					createModelObject(compressedNode, local);
-				} else {
-					DiffNode projectNode = getModelObject(local.getProject());
-					if (projectNode == null) {
-						projectNode = createModelObject(getRoot(), local.getProject());
-					}
-					createModelObject(projectNode, local);
-				}
-			} else {
-				// Either The folder node was added as the parent of a newly added out-of-sync file
-				// or the file was somehow already there so just refresh
-				handleChange(existingNode, info);
-			}
+			addResource(info);
 		}
 	}
 	
+	private void addResource(SyncInfo info) {
+		IResource local = info.getLocal();
+		AdaptableDiffNode existingNode = getModelObject(local);
+		if (existingNode == null) {
+			if (local.getType() == IResource.FILE) {
+				AdaptableDiffNode compressedNode = getModelObject(local.getParent());
+				if (compressedNode == null) {
+					AdaptableDiffNode projectNode = getModelObject(local.getProject());
+					if (projectNode == null) {
+						projectNode = createModelObject(getRoot(), local.getProject());
+					}
+					compressedNode = createModelObject(projectNode, local.getParent());
+				}
+				createModelObject(compressedNode, local);
+			} else {
+				AdaptableDiffNode projectNode = getModelObject(local.getProject());
+				if (projectNode == null) {
+					projectNode = createModelObject(getRoot(), local.getProject());
+				}
+				createModelObject(projectNode, local);
+			}
+		} else {
+			// Either The folder node was added as the parent of a newly added out-of-sync file
+			// or the file was somehow already there so just refresh
+			handleChange(existingNode, info);
+		}
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.sync.views.SyncSetContentProvider#handleResourceRemovals(org.eclipse.team.internal.ui.sync.views.SyncSetChangedEvent)
 	 */
@@ -239,15 +243,10 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 				} else {
 					// A folder has been removed (i.e. is in-sync)
 					// but may still contain children
-					// TODO: The remove followed by and add has a major
-					// problem since the remove does a removeToRoot.
-					// If it's the lst thing in the set (or subtree)
-					// the add will fail (silently even)
-					// Should just use remove but I don't have time
-					// to test it right now
 					removeFromViewer(resource);
 					if (hasFileMembers((IContainer)resource)) {
-						addResources(new IResource[] {resource});
+						createModelObject(getModelObject(resource.getProject()), resource);
+						buildModelObjects(getModelObject(resource));
 					}
 				}
 			}

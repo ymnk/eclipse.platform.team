@@ -12,10 +12,13 @@ package org.eclipse.team.ui.synchronize.presentation;
 
 import java.util.*;
 
-import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -45,12 +48,6 @@ import org.eclipse.team.internal.ui.Utils;
  */
 public class DiffNodeControllerHierarchical extends DiffNodeController implements ISyncInfoSetChangeListener {
 
-	// During updates we keep track of the parent elements that need their
-	// labels updated. This is required to support displaying information in a 
-	// parent label that is dependant on the state of its children. For example,
-	// showing conflict markers on folders if it contains child conflicts.
-	private Set pendingLabelUpdates = new HashSet();
-	
 	// Map from resources to model objects. This allows effecient lookup
 	// of model objects based on changes occuring to resources.
 	private Map resourceMap = Collections.synchronizedMap(new HashMap());
@@ -65,6 +62,24 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	private RootDiffNode root;
 	
 	private SyncInfoTree set;
+	
+	private Set pendingLabelUpdates = new HashSet();
+	
+	private IPropertyChangeListener listener = new IPropertyChangeListener() {
+		public void propertyChange(final PropertyChangeEvent event) {
+			if (event.getProperty() == AdaptableDiffNode.BUSY_PROPERTY) {
+				// TODO: needs to be optimized
+				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+					public void run() {
+						if (canUpdateViewer()) {
+							AbstractTreeViewer tree = getTreeViewer();
+							tree.update(event.getSource(), null);
+						}
+					}
+				});
+			}
+		}
+	};
 
 	private class RootDiffNode extends UnchangedResourceDiffNode {
 		public RootDiffNode() {
@@ -72,6 +87,14 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		}
 		public void fireChanges() {
 			fireChange();
+		}
+		public boolean hasChildren() {
+			// This is required to allow the sync framework to be used in wizards
+			// where the input is not populated until after the compare input is
+			// created
+			// (i.e. the compare input will only create the diff viewer if the
+			// input has children
+			return true;
 		}
 	}
 	
@@ -94,8 +117,8 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 *            the resource
 	 * @return the <code>SyncInfoDiffNode</code> for the given resource
 	 */
-	protected DiffNode getModelObject(IResource resource) {
-		return (DiffNode) resourceMap.get(resource);
+	protected AdaptableDiffNode getModelObject(IResource resource) {
+		return (AdaptableDiffNode) resourceMap.get(resource);
 	}
 
 	/**
@@ -115,23 +138,10 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		return new SyncInfoDiffNodeSorter();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.eclipse.compare.structuremergeviewer.DiffContainer#hasChildren()
-	 */
-	public boolean hasChildren() {
-		// This is required to allow the sync framework to be used in wizards
-		// where the input is not populated until after the compare input is
-		// created
-		// (i.e. the compare input will only create the diff viewer if the
-		// input has children
-		return true;
-	}
-
 	/**
 	 * Builds the viewer model based on the contents of the sync set.
 	 */
-	public DiffNode prepareInput(IProgressMonitor monitor) {
+	public AdaptableDiffNode prepareInput(IProgressMonitor monitor) {
 		try {
 			// Connect to the sync set which will register us as a listener and give us a reset event
 			// in a background thread
@@ -182,23 +192,25 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param node
 	 * @return
 	 */
-	protected IDiffElement[] buildModelObjects(DiffNode node) {
+	protected IDiffElement[] buildModelObjects(AdaptableDiffNode node) {
 		IDiffElement[] children = createModelObjects(node);
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
-			if (element instanceof DiffNode) {
-				buildModelObjects((DiffNode) element);
+			if (element instanceof AdaptableDiffNode) {
+				buildModelObjects((AdaptableDiffNode) element);
 			}
 		}
 		return children;
 	}
 
 	/**
-	 * Create the
+	 * Invoked by the <code>buildModelObject</code> method to create
+	 * the childen of the given node. This method can be overriden
+	 * by subclasses but subclasses should inv
 	 * @param container
 	 * @return
 	 */
-	protected IDiffElement[] createModelObjects(DiffNode container) {
+	protected IDiffElement[] createModelObjects(AdaptableDiffNode container) {
 		IResource resource = null;
 		if (container == getRoot()) {
 			resource = ResourcesPlugin.getWorkspace().getRoot();
@@ -208,7 +220,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		if(resource != null) {
 			SyncInfoTree infoTree = getSyncInfoTree();
 			IResource[] children = infoTree.members(resource);
-			DiffNode[] nodes = new DiffNode[children.length];
+			AdaptableDiffNode[] nodes = new AdaptableDiffNode[children.length];
 			for (int i = 0; i < children.length; i++) {
 				nodes[i] = createModelObject(container, children[i]);
 			}
@@ -217,9 +229,9 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		return new IDiffElement[0];
 	}
 
-	protected DiffNode createModelObject(DiffNode parent, IResource resource) {
+	protected AdaptableDiffNode createModelObject(AdaptableDiffNode parent, IResource resource) {
 		SyncInfo info = getSyncInfoTree().getSyncInfo(resource);
-		DiffNode newNode;
+		AdaptableDiffNode newNode;
 		if(info != null) {
 			newNode = new SyncInfoDiffNode(parent, info);
 		} else {
@@ -237,12 +249,12 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param node
 	 *            the root node
 	 */
-	protected void clearModelObjects(DiffNode node) {
+	protected void clearModelObjects(AdaptableDiffNode node) {
 		IDiffElement[] children = node.getChildren();
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
-			if (element instanceof DiffNode) {
-				clearModelObjects((DiffNode) element);
+			if (element instanceof AdaptableDiffNode) {
+				clearModelObjects((AdaptableDiffNode) element);
 			}
 		}
 		IResource resource = (IResource)Utils.getAdapter(node, IResource.class);
@@ -269,7 +281,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		return result;
 	}
 
-	protected void associateDiffNode(DiffNode node) {
+	protected void associateDiffNode(AdaptableDiffNode node) {
 		if(node instanceof IAdaptable) {
 			IResource resource = (IResource)((IAdaptable)node).getAdapter(IResource.class);
 			if(resource != null) {
@@ -325,7 +337,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			IResource local = info.getLocal();
-			DiffNode diffNode = getModelObject(local);
+			AdaptableDiffNode diffNode = getModelObject(local);
 			// If a sync info diff node already exists then just update
 			// it, otherwise remove the old diff node and create a new
 			// sub-tree.
@@ -341,7 +353,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param diffNode the diff node to be changed
 	 * @param info the new sync info for the diff node
 	 */
-	protected void handleChange(DiffNode diffNode, SyncInfo info) {
+	protected void handleChange(AdaptableDiffNode diffNode, SyncInfo info) {
 		IResource local = info.getLocal();
 		// TODO: Get any additional sync bits
 		if(diffNode instanceof SyncInfoDiffNode) {
@@ -351,9 +363,9 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 			boolean isConflict = isConflicting(diffNode);
 			updateLabel(diffNode);
 			if (wasConflict && !isConflict) {
-				conflictRemoved(diffNode);
+				setParentConflict(diffNode, false);
 			} else if (!wasConflict && isConflict) {
-				setParentConflict(diffNode);
+				setParentConflict(diffNode, true);
 			}
 		} else {
 			removeFromViewer(local);
@@ -362,7 +374,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		// TODO: set any additional sync info bits
 	}
 
-	protected boolean isConflicting(DiffNode diffNode) {
+	protected boolean isConflicting(AdaptableDiffNode diffNode) {
 		return (diffNode.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING;
 	}
 
@@ -384,7 +396,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		for (int i = 0; i < removedResources.length; i++) {
 			IResource resource = removedResources[i];
 			if (resource.getType() != IResource.FILE) {
-				DiffNode node = getModelObject(resource);
+				AdaptableDiffNode node = getModelObject(resource);
 				if (node != null) {
 					removeFromViewer(resource);
 					addResources(new IResource[] {resource});
@@ -439,23 +451,23 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param resource
 	 */
 	protected void removeFromViewer(IResource resource) {
-		DiffNode node = getModelObject(resource);
+		AdaptableDiffNode node = getModelObject(resource);
 		if (node == null) return;
-		boolean wasConflict = isConflicting(node);
-		clearModelObjects(node);
-		if (wasConflict) {
-			conflictRemoved(node);
+		if (isConflicting(node)) {
+			setParentConflict(node, false);
 		}
+		clearModelObjects(node);
 		if (canUpdateViewer()) {
 			AbstractTreeViewer tree = getTreeViewer();
 			tree.remove(node);
 		}
 	}
 
-	protected void addToViewer(DiffNode node) {
+	protected void addToViewer(AdaptableDiffNode node) {
 		associateDiffNode(node);
+		node.addPropertyChangeListener(listener);
 		if (isConflicting(node)) {
-			setParentConflict(node);
+			setParentConflict(node, true);
 		}
 		if (canUpdateViewer()) {
 			AbstractTreeViewer tree = getTreeViewer();
@@ -466,14 +478,14 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	protected void addResources(IResource[] added) {
 		for (int i = 0; i < added.length; i++) {
 			IResource resource = added[i];
-			DiffNode node = getModelObject(resource);
+			AdaptableDiffNode node = getModelObject(resource);
 			if (node != null) {
 				// Somehow the node exists. Remove it and read it to ensure
 				// what is shown matches the contents of the sync set
 				removeFromViewer(resource);
 			}
 			// Build the sub-tree rooted at this node
-			DiffNode parent = getModelObject(resource.getParent());
+			AdaptableDiffNode parent = getModelObject(resource.getParent());
 			if (parent != null) {
 				node = createModelObject(parent, resource);
 				buildModelObjects(node);
@@ -489,132 +501,6 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		return refreshViewer && getTreeViewer() != null;
 	}
 
-	/**
-	 * Forces the viewer to update the labels for parents whose children have
-	 * changed during this round of sync set changes.
-	 */
-	protected void firePendingLabelUpdates() {
-		try {
-			if (canUpdateViewer()) {
-				AbstractTreeViewer tree = getTreeViewer();
-				tree.update(pendingLabelUpdates.toArray(new Object[pendingLabelUpdates.size()]), null);
-			}
-		} finally {
-			pendingLabelUpdates.clear();
-		}
-	}
-
-	/**
-	 * Forces the viewer to update the labels for parents of this element. This
-	 * can be useful when parents labels include information about their
-	 * children that needs updating when a child changes.
-	 * <p>
-	 * This method should only be called while processing sync set changes.
-	 * Changed parents are accumulated and updated at the end of the change
-	 * processing
-	 */
-	protected void setParentConflict(DiffNode diffNode) {
-		propogateFlag(diffNode, AdaptableDiffNode.PROPOGATED_CONFLICT);
-	}
-	
-	/**
-	 * The given node has changed from a conflict. The PARENT_OF_CONFLICT
-	 * flag needs to be recalculated for the nodes parents
-	 * @param diffNode the node whose conflict state change
-	 */
-	protected void conflictRemoved(DiffNode diffNode) {
-		recalculateParentFlag(diffNode, AdaptableDiffNode.PROPOGATED_CONFLICT);
-	}
-	
-	public void setBusy(DiffNode[] nodes) {
-		for (int i = 0; i < nodes.length; i++) {
-			DiffNode node = nodes[i];
-			propogateFlag(node, AdaptableDiffNode.BUSY);
-		}
-	}
-	
-	public void clearBusy(DiffNode[] nodes) {
-		for (int i = 0; i < nodes.length; i++) {
-			DiffNode node = nodes[i];
-			recalculateParentFlag(node, AdaptableDiffNode.BUSY);
-		}
-	}
-	
-	/**
-	 * Add the given flag to the sync kind of the diff node and
-	 * all of its ancestors.
-	 * @param diffNode the diff node
-	 * @param flag the flag to be added to the diff node and its ancestors
-	 */
-	private void propogateFlag(DiffNode diffNode, int flag) {
-		addFlag(diffNode, flag);
-		DiffNode parent = (DiffNode)diffNode.getParent();
-		while (parent != null) {
-			if (hasFlag(parent, flag)) return;
-			addFlag(parent, flag);
-			parent = (DiffNode)parent.getParent();
-		}
-	}
-
-	/**
-	 * Return whether the given diff node has the one-bit flag set
-	 * in its sync kind.
-	 * @param diffNode the diff node
-	 * @param flag the one-bit flag
-	 * @return <code>true</code> if the flag is set in the diff node's sync kind
-	 */
-	private boolean hasFlag(DiffNode diffNode, int flag) {
-		return (((AdaptableDiffNode)diffNode).getFlags() & flag) != 0;
-	}
-	
-	private void addFlag(DiffNode diffNode, int flag) {
-		((AdaptableDiffNode)diffNode).addFlag(flag);
-		updateLabel(diffNode);
-	}
-	
-	private void removeFlag(DiffNode diffNode, int flag) {
-		((AdaptableDiffNode)diffNode).removeFlag(flag);
-		updateLabel(diffNode);
-	}
-	
-	private void recalculateParentFlag(DiffNode diffNode, int flag) {
-		removeFlag(diffNode, flag);
-		DiffNode parent = (DiffNode)diffNode.getParent();
-		if (parent != null) {
-			// If the parent doesn't have the tag, no recalculation is required
-			// Also, if the parent still has a child with the tag, no recalculation is needed
-			if (hasFlag(parent, flag) && !hasChildWithFlag(parent, flag)) {
-				// The parent no longer has the flag so propogate the reclaculation
-				recalculateParentFlag(parent, flag);
-			}
-		}
-	}
-	
-	/**
-	 * @param parent
-	 * @param flag
-	 * @return
-	 */
-	private boolean hasChildWithFlag(DiffNode parent, int flag) {
-		IDiffElement[] childen = parent.getChildren();
-		for (int i = 0; i < childen.length; i++) {
-			IDiffElement element = childen[i];
-			if (hasFlag((DiffNode)element, flag)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Update the label of the given diff node. Diff nodes
-	 * are accumulated and updated in a single call.
-	 * @param diffNode the diff node to be updated
-	 */
-	protected void updateLabel(DiffNode diffNode) {
-		pendingLabelUpdates.add(diffNode);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -632,7 +518,44 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeController#getInput()
 	 */
-	public DiffNode getInput() {
+	public AdaptableDiffNode getInput() {
 		return getRoot();
+	}
+	
+		/**
+	 * Update the label of the given diff node. Diff nodes
+	 * are accumulated and updated in a single call.
+	 * @param diffNode the diff node to be updated
+	 */
+	protected void updateLabel(AdaptableDiffNode diffNode) {
+		pendingLabelUpdates.add(diffNode);
+	}
+
+	/**
+	 * Forces the viewer to update the labels for parents whose children have
+	 * changed during this round of sync set changes.
+	 */
+	protected void firePendingLabelUpdates() {
+		try {
+			if (canUpdateViewer()) {
+				AbstractTreeViewer tree = getTreeViewer();
+				tree.update(pendingLabelUpdates.toArray(new Object[pendingLabelUpdates.size()]), null);
+			}
+		} finally {
+			pendingLabelUpdates.clear();
+		}
+	}
+
+	protected void setParentConflict(AdaptableDiffNode diffNode, boolean value) {
+		diffNode.setPropertyToRoot(AdaptableDiffNode.PROPAGATED_CONFLICT_PROPERTY, value);
+		updateParentLabels(diffNode);
+	}
+
+	private void updateParentLabels(AdaptableDiffNode diffNode) {
+		updateLabel(diffNode);
+		while (diffNode.getParent() != null) {
+			diffNode = (AdaptableDiffNode)diffNode.getParent();
+			updateLabel(diffNode);
+		}
 	}
 }

@@ -10,45 +10,33 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.presentation;
 
-import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 public class AdaptableDiffNode extends DiffNode implements IAdaptable {
 
-	/**
-	 * Bit flag which indicates that the diff node is currently
-	 * be worked on by a background job.
-	 */
-	public static final int BUSY = 1;
+	public static final String BUSY_PROPERTY = TeamUIPlugin.ID + ".busy"; //$NON-NLS-1$
+	public static final String PROPAGATED_CONFLICT_PROPERTY = TeamUIPlugin.ID + ".conflict"; //$NON-NLS-1$
 	
-	/**
-	 * Bit flag which indicates that this diff node is 
-	 * a conflict or is a parent of a conflict
+	/*
+	 * Internal flags bits for stroing properties in the flags variable
 	 */
-	public static final int PROPOGATED_CONFLICT = 2;
+	private static final int BUSY_FLAG = 1;
+	private static final int PROPAGATED_CONFLICT_FLAG = 2;
 
 	// Instance variable containing the flags for this node
 	private int flags;
+	private ListenerList listeners;
 	
 	public AdaptableDiffNode(IDiffContainer parent, int kind) {
 		super(parent, kind);
-	}
-
-	/*
-	 * Added as part
-	 */
-	public ImageDescriptor getImageDescriptor(Object object) {
-		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.structuremergeviewer.DiffContainer#hasChildren()
-	 */
-	public boolean hasChildren() {
-		return true;
 	}
 	
 	/* (non-Javadoc)
@@ -58,38 +46,133 @@ public class AdaptableDiffNode extends DiffNode implements IAdaptable {
 		return Platform.getAdapterManager().getAdapter(this, adapter);
 	}
 
-	/**
-	 * Return the flags associated with this node
-	 * @return the flags for this node
+	public synchronized void addPropertyChangeListener(IPropertyChangeListener listener) {
+		if (listeners == null) {
+			listeners = new ListenerList();
+		}
+		listeners.add(listeners);
+	}
+	
+	public synchronized void removePropertyChangeListener(IPropertyChangeListener listener) {
+		if (listeners != null) {
+			listeners.remove(listener);
+			if (listeners.isEmpty()) {
+				listeners = null;
+			}
+		}
+	}
+	
+	/*
+	 * Added as part
 	 */
-	public int getFlags() {
-		return flags;
+	public ImageDescriptor getImageDescriptor(Object object) {
+		return null;
 	}
 	
 	/**
-	 * Return whether this node has the given flag set.
-	 * @param flag the flag to test
-	 * @return <code>true</code> if the flag is set
+	 * Return whether this node has the given property set.
+	 * @param propertyName the flag to test
+	 * @return <code>true</code> if the property is set
 	 */
-	public boolean hasFlag(int flag) {
-		return (getFlags() & flag) != 0;
+	public boolean getProperty(String propertyName) {
+		return (getFlags() & getFlag(propertyName)) > 0;
 	}
-
+	
 	/**
 	 * Add the flag to the flags for this node
-	 * @param flag the flag to add
+	 * @param propertyName the flag to add
 	 */
-	public void addFlag(int flag) {
-		flags |= flag;
+	public void setProperty(String propertyName, boolean value) {
+		if (value) {
+			if (!getProperty(propertyName)) {
+				int flag = getFlag(propertyName);
+				flags |= flag;
+				firePropertyChange(propertyName);
+			}
+		} else {
+			if (getProperty(propertyName)) {
+				int flag = getFlag(propertyName);
+				flags ^= flag;
+				firePropertyChange(propertyName);
+			}
+		}
+	}
+	
+	public void setPropertyToRoot(String propertyName, boolean value) {
+		if (value) {
+			addToRoot(propertyName);
+		} else {
+			removeToRoot(propertyName);
+		}
 	}
 
-	/**
-	 * Remove the flag from the flags of this node.
-	 * @param flag the flag to remove
-	 */
-	public void removeFlag(int flag) {
-		if (hasFlag(flag)) {
-			flags ^= flag;
+	private void addToRoot(String flag) {
+		setProperty(flag, true);
+		AdaptableDiffNode parent = (AdaptableDiffNode)getParent();
+		if (parent != null) {
+			if (parent.getProperty(flag)) return;
+			parent.addToRoot(flag);
+		}
+	}
+
+	private void firePropertyChange(String propertyName) {
+		Object[] allListeners;
+		synchronized(this) {
+			if (listeners == null) return;
+			allListeners = listeners.getListeners();
+		}
+		boolean set = getProperty(propertyName);
+		final PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, Boolean.valueOf(!set), Boolean.valueOf(set));
+		for (int i = 0; i < allListeners.length; i++) {
+			Object object = allListeners[i];
+			if (object instanceof IPropertyChangeListener) {
+				final IPropertyChangeListener listener = (IPropertyChangeListener)object;
+				Platform.run(new ISafeRunnable() {
+					public void handleException(Throwable exception) {
+						// Exceptions logged by the platform
+					}
+					public void run() throws Exception {
+						listener.propertyChange(event);
+					}
+				});
+			}
+		}
+	}
+	
+	private int getFlag(String propertyName) {
+		if (propertyName == BUSY_PROPERTY) {
+			return BUSY_FLAG;
+		} else if (propertyName == PROPAGATED_CONFLICT_PROPERTY) {
+			return PROPAGATED_CONFLICT_FLAG;
+		}
+		return 0;
+	}
+	
+	private int getFlags() {
+		return flags;
+	}
+	
+	private boolean hasChildWithFlag(String flag) {
+		IDiffElement[] childen = getChildren();
+		for (int i = 0; i < childen.length; i++) {
+			IDiffElement element = childen[i];
+			if (((AdaptableDiffNode)element).getProperty(flag)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void removeToRoot(String flag) {
+		setProperty(flag, false);
+		AdaptableDiffNode parent = (AdaptableDiffNode)getParent();
+		if (parent != null) {
+			// If the parent doesn't have the tag, no recalculation is required
+			// Also, if the parent still has a child with the tag, no recalculation is needed
+			if (parent.getProperty(flag) && !parent.hasChildWithFlag(flag)) {
+				// The parent no longer has the flag so propogate the reclaculation
+				parent.removeToRoot(flag);
+			}
 		}
 	}
 }
