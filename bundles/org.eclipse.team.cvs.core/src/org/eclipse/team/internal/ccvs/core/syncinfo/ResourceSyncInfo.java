@@ -873,4 +873,18 @@ public class ResourceSyncInfo {
 		return syncType == TYPE_MERGED || syncType == TYPE_MERGED_WITH_CONFLICTS;
 	}
 
+	/**
+	 * Method isMerge.
+	 * @param syncBytes1
+	 * @return boolean
+	 */
+	public static boolean isMergedWithConflicts(byte[] syncBytes) throws CVSException {
+		String timestamp = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 3, false);
+		if (timestamp == null) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes))); //$NON-NLS-1$
+		}
+		int syncType = getSyncType(timestamp);
+		return syncType == TYPE_MERGED_WITH_CONFLICTS;
+	}
+	
 }
