@@ -153,9 +153,8 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 			// if the folder is already conflicting then don't bother propagating the conflict
 			int kind = SyncSetContentProvider.getSyncKind(element);
 			if((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
-				SubscriberInput input = ((SynchronizeViewNode)element).getSubscriberInput();
+				SyncInfo[] infos = ((SynchronizeViewNode)element).getChildSyncInfos();
 				SyncSet set = new SyncSet();
-				SyncInfo[] infos = input.getWorkingSetSyncSet().getOutOfSyncDescendants(resource);
 				for (int i = 0; i < infos.length; i++) {
 					set.add(infos[i]);
 				}

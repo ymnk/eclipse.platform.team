@@ -26,7 +26,7 @@ import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.internal.ui.synchronize.views.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.team.internal.ui.widgets.ControlFactory;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
@@ -293,7 +293,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	}
 	
 	public SyncChangesViewer createChangesViewer(Composite parent) {
-		SyncChangesViewer viewer =  new SyncChangesTreeViewer(parent, getParticipant(), getSynchronizeView());
+		SyncChangesViewer viewer =  new SyncChangesTreeViewer(parent, getParticipant(), getInput().getFilteredSyncSet());
 		getSite().setSelectionProvider(viewer.getViewer());
 		viewer.getViewer().setLabelProvider(new TeamSubscriberParticipantLabelProvider());
 		return viewer;

@@ -10,12 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.views;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 
 /**
@@ -37,7 +35,7 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 		IResource resource = getResource(element);
 		if (resource != null) {
 			return members(resource);
-		} else if (element instanceof SubscriberInput) {
+		} else if (element instanceof SyncSet) {
 			return members(ResourcesPlugin.getWorkspace().getRoot());
 		}
 		return new Object[0];
@@ -79,7 +77,7 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 				IResource resource = added[i];
 				Object parent;
 				if (resource.getType() == IResource.PROJECT) {
-					parent = getSubscriberInput();
+					parent = getSyncSet();
 				} else {
 					parent = getModelParent(resource);				
 				}

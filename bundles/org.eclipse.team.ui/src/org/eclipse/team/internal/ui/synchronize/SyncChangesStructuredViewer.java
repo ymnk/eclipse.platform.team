@@ -14,38 +14,34 @@ import java.util.Iterator;
 
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.events.MenuEvent;
-import org.eclipse.swt.events.MenuListener;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.internal.PluginAction;
 
 public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 
 	private TeamSubscriberParticipant participant;
-	private ISynchronizeView view;
+	//private ISynchronizeView view;
 	
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
 	private RefreshAction refreshSelectionAction;
 	private Action expandAll;
 	
-	public SyncChangesStructuredViewer(TeamSubscriberParticipant participant, ISynchronizeView view) {
-		super(participant, view);
-		this.view = view;
+	public SyncChangesStructuredViewer(TeamSubscriberParticipant participant, SyncSet set) {
+		super(participant, set);
 		this.participant = participant;		
 	}
 	
 	protected void createActions() {
 		// context menus
-		openWithActions = new OpenWithActionGroup(view, participant);
-		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
-		refreshSelectionAction = new RefreshAction(view.getSite().getPage(), participant, false /* refresh all */);
+		//openWithActions = new OpenWithActionGroup(view, participant);
+		//refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
+		//refreshSelectionAction = new RefreshAction(view.getSite().getPage(), participant, false /* refresh all */);
 		expandAll = new Action() {
 			public void run() {
 				Viewer viewer = getViewer();
@@ -62,52 +58,19 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
 	}
 	
-	protected void hookContextMenu() {
-		if(getViewer() != null) {
-			final MenuManager menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
-			menuMgr.setRemoveAllWhenShown(true);
-			menuMgr.addMenuListener(new IMenuListener() {
-				public void menuAboutToShow(IMenuManager manager) {
-					setContextMenu(manager);
-				}
-			});
-			Menu menu = menuMgr.createContextMenu(getViewer().getControl());
-			menu.addMenuListener(new MenuListener() {
-				public void menuHidden(MenuEvent e) {
-				}
-				// Hack to allow action contributions to update their
-				// state before the menu is shown. This is required when
-				// the state of the selection changes and the contributions
-				// need to update enablement based on this. 
-				public void menuShown(MenuEvent e) {
-					IContributionItem[] items = menuMgr.getItems();
-					for (int i = 0; i < items.length; i++) {
-						IContributionItem item = items[i];
-						if(item instanceof ActionContributionItem) {
-							IAction actionItem = ((ActionContributionItem)item).getAction();
-							if(actionItem instanceof PluginAction) {
-								((PluginAction)actionItem).selectionChanged(getViewer().getSelection());
-							}
-						}
-					}
-				}
-			});
-			getViewer().getControl().setMenu(menu);			
-			view.getSite().registerContextMenu(participant.getId(), menuMgr, getViewer());
-		}
+	private void handleOpen(OpenEvent event) {
+		//openWithActions.openInCompareEditor();
 	}
 	
-	protected void setContextMenu(IMenuManager manager) {	
-		openWithActions.fillContextMenu(manager);
-		refactorActions.fillContextMenu(manager);
-		manager.add(refreshSelectionAction);
+	protected void fillContextMenu(IMenuManager manager) {	
+		//openWithActions.fillContextMenu(manager);
+		//refactorActions.fillContextMenu(manager);
+		//manager.add(refreshSelectionAction);
 		manager.add(new Separator());
 		manager.add(expandAll);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
-	
-	public abstract StructuredViewer getViewer();
-	
+
 	protected void initializeListeners() {
 		Viewer viewer = getViewer();
 		getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
@@ -128,10 +91,6 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 				}
 			});
 		}
-	}
-	
-	private void handleOpen(OpenEvent event) {
-		openWithActions.openInCompareEditor();
 	}
 	
 	/**
@@ -160,7 +119,7 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 	 */
 	private void updateStatusLine(IStructuredSelection selection) {
 		String msg = getStatusLineMessage(selection);
-		view.getViewSite().getActionBars().getStatusLineManager().setMessage(msg);
+		//view.getViewSite().getActionBars().getStatusLineManager().setMessage(msg);
 	}
 	
 	/**

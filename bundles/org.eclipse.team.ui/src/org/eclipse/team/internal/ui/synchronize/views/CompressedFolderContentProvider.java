@@ -10,18 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.views;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 
 /**
@@ -86,7 +80,7 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 				// The resource is in-sync so return a compressed folder
 				IResource resource = ((SynchronizeViewNode)parent).getResource();
 				if (resource.getType() == IResource.FOLDER) {
-					return new CompressedFolder((SubscriberInput)viewer.getInput(), resource);
+					return new CompressedFolder((SyncSet)viewer.getInput(), resource);
 					
 				}
 			}
@@ -147,7 +141,7 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 	 */
 	public Object getModelObject(IResource resource) {
 		if (resource.getType() == IResource.FOLDER && getSyncSet().getSyncInfo(resource) == null) {
-			return new CompressedFolder(getSubscriberInput(), resource);
+			return new CompressedFolder(getSyncSet(), resource);
 		}
 		return super.getModelObject(resource);
 	}

@@ -17,16 +17,16 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.internal.ui.synchronize.views.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
 public class SyncChangesTableViewer extends SyncChangesStructuredViewer {
 	
 	private SyncTableViewer viewer;
 	
-	public SyncChangesTableViewer(Composite parent, TeamSubscriberParticipant participant, ISynchronizeView view) {
-		super(participant, view);
+	public SyncChangesTableViewer(Composite parent, TeamSubscriberParticipant participant, SyncSet set) {
+		super(participant, set);
 		// Create the table
 		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
 		table.setHeaderVisible(true);
@@ -47,6 +47,7 @@ public class SyncChangesTableViewer extends SyncChangesStructuredViewer {
 		// Set the table contents
 		viewer.setContentProvider(new SyncSetTableContentProvider());
 		viewer.setSorter(new SyncViewerTableSorter());
+		viewer.setInput(getSyncSet());
 	}
 	
 	/**

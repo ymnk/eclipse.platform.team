@@ -15,9 +15,9 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.internal.ui.synchronize.views.SyncTreeViewer;
 import org.eclipse.team.internal.ui.synchronize.views.SyncViewerSorter;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
@@ -25,13 +25,13 @@ public class SyncChangesTreeViewer extends SyncChangesStructuredViewer {
 
 	private SyncTreeViewer viewer;
 	
-	public SyncChangesTreeViewer(Composite parent, TeamSubscriberParticipant participant, ISynchronizeView view) {
-		super(participant, view);
+	public SyncChangesTreeViewer(Composite parent, TeamSubscriberParticipant participant, SyncSet set) {
+		super(participant, set);
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer = new SyncTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
 		((TreeViewer)viewer).getTree().setLayoutData(data);
-		viewer.setInput(participant.getInput());
+		viewer.setInput(getSyncSet());
 		
 		createActions();
 		hookContextMenu();

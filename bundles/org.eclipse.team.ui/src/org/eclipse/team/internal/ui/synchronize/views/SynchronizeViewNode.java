@@ -13,8 +13,6 @@ package org.eclipse.team.internal.ui.synchronize.views;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
 
@@ -28,31 +26,20 @@ import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
 public class SynchronizeViewNode implements IAdaptable, ITeamSubscriberParticipantNode {
 
 	private IResource resource;
-	private SubscriberInput input;
+	private SyncSet input;
 
 	/**
 	 * Construct a SynchromizeViewNode
 	 * @param input The SubscriberInput for the node.
 	 * @param resource The resource for the node
 	 */
-	public SynchronizeViewNode(SubscriberInput input, IResource resource) {
+	public SynchronizeViewNode(SyncSet input, IResource resource) {
 		this.input = input;	
 		this.resource = resource;
 	}
 
 	protected SyncSet getSyncSet() {
-		return input.getFilteredSyncSet();
-	}
-	
-	public SubscriberInput getSubscriberInput() {
 		return input;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeViewNode#getTeamSubscriber()
-	 */
-	public TeamSubscriber getTeamSubscriber() {
-		return input.getSubscriber();
 	}
 	
 	/* (non-Javadoc)
@@ -87,8 +74,7 @@ public class SynchronizeViewNode implements IAdaptable, ITeamSubscriberParticipa
 	public boolean equals(Object object) {
 		if (object instanceof SynchronizeViewNode) {
 			SynchronizeViewNode syncViewNode = (SynchronizeViewNode) object;
-			return getTeamSubscriber().equals(syncViewNode.getTeamSubscriber()) && 
-				getResource().equals(syncViewNode.getResource());
+			return getResource().equals(syncViewNode.getResource());
 		}
 		return super.equals(object);
 	}
@@ -97,7 +83,7 @@ public class SynchronizeViewNode implements IAdaptable, ITeamSubscriberParticipa
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		return getResource().hashCode() | getTeamSubscriber().hashCode();
+		return getResource().hashCode();
 	}
 
 	/**

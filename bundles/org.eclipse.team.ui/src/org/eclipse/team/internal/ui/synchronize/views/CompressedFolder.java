@@ -10,20 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.views;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 
 /**
  * A compressed folder appears under a project and contains out-of-sync resources
  */
 public class CompressedFolder extends SynchronizeViewNode {
 
-	public CompressedFolder( SubscriberInput input, IResource resource) {
+	public CompressedFolder(SyncSet input, IResource resource) {
 		super(input, resource);
 	}
 	

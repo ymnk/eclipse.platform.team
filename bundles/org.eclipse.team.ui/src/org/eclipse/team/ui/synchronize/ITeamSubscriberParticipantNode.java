@@ -30,12 +30,6 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
  */
 public interface ITeamSubscriberParticipantNode {
 	/**
-	 * Answer the receiver's Subscriber
-	 * 
-	 * @return the node's TeamSubscriber
-	 */
-	public abstract TeamSubscriber getTeamSubscriber();
-	/**
 	 * Returns the SyncInfo for this node. Note that the SynchronizeView only
 	 * creates nodes for resources that are out-of-sync.
 	 * 

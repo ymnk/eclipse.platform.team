@@ -15,15 +15,10 @@ import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
+import org.eclipse.team.internal.ui.synchronize.sets.*;
 
 /**
  * This class provides the contents for a StructuredViewer using a SyncSet as the model
@@ -33,18 +28,10 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	protected Viewer viewer;
 	
 	protected SyncSet getSyncSet() {
-		SubscriberInput input = getSubscriberInput();
-		if (input == null) {
-			return null;
-		}
-		return ((SubscriberInput)input).getFilteredSyncSet();
-	}
-	
-	protected SubscriberInput getSubscriberInput() {
 		if(viewer == null || viewer.getControl().isDisposed()) {
 			return null;	
 		}
-		return (SubscriberInput)viewer.getInput();
+		return (SyncSet)viewer.getInput();
 	}
 	
 	/* (non-Javadoc)
@@ -53,21 +40,21 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	public void inputChanged(Viewer v, Object oldInput, Object newInput) {
 		
 		this.viewer = v;
-		SubscriberInput oldSubscriberInput = null;
-		SubscriberInput newSubscriberInput = null;
+		SyncSet oldSyncSet = null;
+		SyncSet newSyncSet = null;
 		
-		if (oldInput instanceof SubscriberInput) {
-			oldSubscriberInput = (SubscriberInput) oldInput;
+		if (oldInput instanceof SyncSet) {
+			oldSyncSet = (SyncSet) oldInput;
 		}
-		if (newInput instanceof SubscriberInput) {
-			newSubscriberInput = (SubscriberInput) newInput;
+		if (newInput instanceof SyncSet) {
+			newSyncSet = (SyncSet) newInput;
 		}
-		if (oldSubscriberInput != newSubscriberInput) {
-			if (oldSubscriberInput != null) {
-				((SubscriberInput)oldSubscriberInput).getFilteredSyncSet().removeSyncSetChangedListener(this);
+		if (oldSyncSet != newSyncSet) {
+			if (oldSyncSet != null) {
+				((SyncSet)oldSyncSet).removeSyncSetChangedListener(this);
 			}
-			if (newSubscriberInput != null) {
-				((SubscriberInput)newSubscriberInput).getFilteredSyncSet().addSyncSetChangedListener(this);
+			if (newSyncSet != null) {
+				((SyncSet)newSyncSet).addSyncSetChangedListener(this);
 			}
 		}
 	}
@@ -81,9 +68,9 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
 	public void dispose() {
-		SubscriberInput input = getSubscriberInput();
+		SyncSet input = getSyncSet();
 		if (input != null) {
-			input.getFilteredSyncSet().removeSyncSetChangedListener(this);
+			input.removeSyncSetChangedListener(this);
 		}
 	}
 	
@@ -178,7 +165,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * out-of-sync resources.
 	 */
 	public Object[] members(IResource resource) {
-		IResource[] resources = getSubscriberInput().getFilteredSyncSet().members(resource);
+		IResource[] resources = getSyncSet().members(resource);
 		Object[] result = new Object[resources.length];
 		for (int i = 0; i < resources.length; i++) {
 			IResource child = resources[i];
@@ -259,9 +246,9 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 */
 	public Object getModelObject(IResource resource) {
 		if (resource.getType() == IResource.ROOT) {
-			return getSubscriberInput();
+			return getSyncSet();
 		} else {
-			return new SynchronizeViewNode(getSubscriberInput(), resource);
+			return new SynchronizeViewNode(getSyncSet(), resource);
 		}
 	}
 	
