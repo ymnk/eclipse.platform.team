@@ -19,6 +19,7 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -91,6 +92,40 @@ public class ResourceMapperTests extends EclipseTest {
         assertBranched(mapping, branch);
     }
     
+    /**
+     * Add any resources contained by the mapping
+     * @param mapping
+     * @throws CoreException 
+     */
+    protected void add(ResourceMapping mapping) throws CoreException {
+        SyncInfoTree set = getUnaddedResource(mapping);
+        add(new ResourceMapping[] { mapping });
+        assertAdded(mapping, set);
+    }
+
+    private void assertAdded(ResourceMapping mapping, final SyncInfoTree set) throws CoreException {
+        // Assert that all resources covered by the mapping are now under version control (i.e. are in-sync)
+        // Remove the resources contained in the mapping from the set of unadded resources.
+        visit(mapping, null, new IResourceVisitor() {
+            public boolean visit(IResource resource) throws CoreException {
+                ICVSResource cvsResource = getCVSResource(resource);
+                assertTrue("Resource was not added but should have been: " + resource.getFullPath(), 
+                        (cvsResource.isManaged() 
+                                || (cvsResource.isFolder() 
+                                        && ((ICVSFolder)cvsResource).isCVSFolder())));
+                set.remove(resource);
+                return true;
+            }
+        });
+        // Assert that the remaining unadded resources are still unadded
+        SyncInfo[] infos = set.getSyncInfos();
+        for (int i = 0; i < infos.length; i++) {
+            SyncInfo info = infos[i];
+            ICVSResource cvsResource = getCVSResource(info.getLocal());
+            assertTrue("Resource was added but should not have been: " + info.getLocal().getFullPath(), !cvsResource.isManaged());
+        }
+    }
+
     /*
      * Need to ensure that only the resources contained in the mapping
      * have the branch tag associated with them.
@@ -294,6 +329,24 @@ public class ResourceMapperTests extends EclipseTest {
         return set;
     }
 
+    private SyncInfoTree getUnaddedResource(ResourceMapping mapping) {
+        SyncInfoTree set = getAllOutOfSync(mapping.getProjects());
+        set.selectNodes(new FastSyncInfoFilter() {
+            public boolean select(SyncInfo info) {
+                try {
+                    if (info.getLocal().getType() != IResource.PROJECT && info.getRemote() == null && info.getBase() == null) {
+                        ICVSResource resource = getCVSResource(info.getLocal());
+                        return !resource.isManaged();
+                    }
+                } catch (CVSException e) {
+                    fail(e.getMessage());
+                }
+                return false;
+            }
+        });
+        return set;
+    }
+    
     private SyncInfoTree getAllOutOfSync(IProject[] projects) {
         SyncInfoTree set = new SyncInfoTree();
         CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().collectOutOfSync(projects, IResource.DEPTH_INFINITE, set, DEFAULT_MONITOR);
@@ -330,7 +383,7 @@ public class ResourceMapperTests extends EclipseTest {
 
     public void testUpdate() throws Exception {
         // Create a test project, import it into cvs and check it out
-        IProject project = createProject("testUpdate", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt" });
+        IProject project = createProject("testUpdate", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder1/subfolder1/c.txt" });
 
         // Check the project out under a different name
         IProject copy = checkoutCopy(project, "-copy");
@@ -339,57 +392,82 @@ public class ResourceMapperTests extends EclipseTest {
         addResources(copy, new String[] { "added.txt", "folder2/", "folder2/added.txt" }, false);
         setContentsAndEnsureModified(copy.getFile("changed.txt"));
         deleteResources(new IResource[] {copy.getFile("deleted.txt")});
+        setContentsAndEnsureModified(copy.getFile("folder1/a.txt"));
+        setContentsAndEnsureModified(copy.getFile("folder1/subfolder1/c.txt"));
         commit(asResourceMapping(new IResource[] { copy }, IResource.DEPTH_INFINITE), "A commit message");
         
-        // Update the other project using depth one and ensure we got only what was asked for
+        // Update the project using depth one and ensure we got only what was asked for
         update(asResourceMapping(new IResource[] { project }, IResource.DEPTH_ONE), null);
         
-        // Update the specific file
-        update(asResourceMapping(new IResource[] { project.getFile("folder1/a.txt") }, IResource.DEPTH_ONE), null);
+        // Update a subfolder using depth one and ensure we got only what was asked for
+        update(asResourceMapping(new IResource[] { project.getFolder("folder1") }, IResource.DEPTH_ONE), null);
         
-        // Update everything
-        update(asResourceMapping(new IResource[] { project }, IResource.DEPTH_INFINITE), null);
+        // Update the specific file
+        update(asResourceMapping(new IResource[] { project.getFile("folder1/subfolder1/c.txt") }, IResource.DEPTH_ZERO), null);
+        
+        // Update the remaining resources
+        update(asResourceMapping(new IResource[] { project.getFolder("folder2") }, IResource.DEPTH_INFINITE), null);
         assertEquals(project, copy);
     }
 
     public void testCommit() throws Exception {
         // Create a test project, import it into cvs and check it out
-        IProject project = createProject("testCommit", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt" });
-
-        // Check the project out under a different name
-        IProject copy = checkoutCopy(project, "-copy");
+        IProject project = createProject("testCommit", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder1/subfolder1/c.txt" });
         
         // Perform some operations on the copy and commit only the top level
-        addResources(copy, new String[] { "added.txt", "folder2/", "folder2/added.txt" }, false);
-        setContentsAndEnsureModified(copy.getFile("changed.txt"));
-        deleteResources(new IResource[] {copy.getFile("deleted.txt")});
-        commit(asResourceMapping(new IResource[] { copy }, IResource.DEPTH_ONE), "A commit message");
+        addResources(project, new String[] { "added.txt", "folder2/", "folder2/added.txt" }, false);
+        setContentsAndEnsureModified(project.getFile("changed.txt"));
+        deleteResources(new IResource[] {project.getFile("deleted.txt")});
+        setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
+        setContentsAndEnsureModified(project.getFile("folder1/subfolder1/c.txt"));
+        
+        // Commit the project shallow
+        commit(asResourceMapping(new IResource[] { project }, IResource.DEPTH_ONE), "A commit message");
+        
+        // Commit a subfolder shallow
+        commit(asResourceMapping(new IResource[] { project.getFolder("folder1") }, IResource.DEPTH_ONE), "A commit message");
         
         // Now commit the file specifically
-        commit(asResourceMapping(new IResource[] { copy.getFile("folder1/a.txt") }, IResource.DEPTH_ZERO), "A commit message");
+        commit(asResourceMapping(new IResource[] { project.getFile("folder1/subfolder1/c.txt") }, IResource.DEPTH_ZERO), "A commit message");
         
-        // Now commit everything
-        commit(asResourceMapping(new IResource[] { copy }, IResource.DEPTH_INFINITE), "A commit message");
+        // Now commit the rest
+        commit(asResourceMapping(new IResource[] { project.getFolder("folder2") }, IResource.DEPTH_INFINITE), "A commit message");
+        
+        // Check the project out under a different name
+        IProject copy = checkoutCopy(project, "-copy");
+        assertEquals(project, copy);
     }
     
     public void testTag() throws Exception {
         // Create a test project, import it into cvs and check it out
-        IProject project = createProject("testTag", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt" });
+        IProject project = createProject("testTag", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder1/subfolder1/c.txt" });
 
         tag(asResourceMapping(new IResource[] { project }, IResource.DEPTH_ONE), new CVSTag("v1", CVSTag.VERSION));
-        tag(asResourceMapping(new IResource[] { project.getFile("folder1/a.txt") }, IResource.DEPTH_ZERO), new CVSTag("v2", CVSTag.VERSION));
+        tag(asResourceMapping(new IResource[] { project.getFolder("folder1") }, IResource.DEPTH_ONE), new CVSTag("v2", CVSTag.VERSION));
+        tag(asResourceMapping(new IResource[] { project.getFile("folder1/subfolder1/c.txt") }, IResource.DEPTH_ZERO), new CVSTag("v3", CVSTag.VERSION));
+        tag(asResourceMapping(new IResource[] { project}, IResource.DEPTH_INFINITE), new CVSTag("v4", CVSTag.VERSION));
     }
     
     public void testBranch() throws Exception {
         // Create a test project, import it into cvs and check it out
-        IProject project = createProject("testBranch", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt" });
+        IProject project = createProject("testBranch", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder1/subfolder1/c.txt"  });
 
         branch(asResourceMapping(new IResource[] { project }, IResource.DEPTH_ONE), new CVSTag("b1", CVSTag.BRANCH));
-        branch(asResourceMapping(new IResource[] { project.getFile("folder1/a.txt") }, IResource.DEPTH_ZERO), new CVSTag("b2", CVSTag.BRANCH));
+        branch(asResourceMapping(new IResource[] { project.getFolder("folder1") }, IResource.DEPTH_ONE), new CVSTag("b2", CVSTag.BRANCH));
+        branch(asResourceMapping(new IResource[] { project.getFile("folder1/subfolder1/c.txt") }, IResource.DEPTH_ZERO), new CVSTag("b3", CVSTag.BRANCH));
+        branch(asResourceMapping(new IResource[] { project }, IResource.DEPTH_INFINITE), new CVSTag("b4", CVSTag.BRANCH));
     }
     
-    public void testAdd() {
-        
+    public void testAdd() throws TeamException, CoreException {
+        // Create an empty project
+        IProject project = createProject("testAdd", new String[] { });
+        // add some resources
+        buildResources(project, new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder1/subfolder1/c.txt"  }, false);
+        // add them to CVS
+        add(asResourceMapping(new IResource[] { project }, IResource.DEPTH_ONE));
+        add(asResourceMapping(new IResource[] { project.getFolder("folder1") }, IResource.DEPTH_ONE));
+        add(asResourceMapping(new IResource[] { project.getFile("folder1/subfolder1/c.txt") }, IResource.DEPTH_ZERO));
+        add(asResourceMapping(new IResource[] { project }, IResource.DEPTH_INFINITE));
     }
     
 }

@@ -120,7 +120,7 @@ public class AddOperation extends RepositoryProviderOperation {
 										files.put(ksubst, set);
 									}
 									set.add(mResource);
-								} else {
+								} else if (!isManagedProject(resource, mResource)){
 									folders.add(mResource);
 								}
 							}
@@ -191,6 +191,13 @@ public class AddOperation extends RepositoryProviderOperation {
 	}
 	
 	/*
+     * Return true if the resource is a project that is already a CVS folder
+     */
+    protected boolean isManagedProject(IResource resource, ICVSResource resource2) throws CVSException {
+        return resource.getType() == IResource.PROJECT && ((ICVSFolder)resource2).isCVSFolder();
+    }
+
+    /*
 	 * Consider a folder managed only if it's also a CVS folder
 	 */
 	private boolean isManaged(ICVSResource cvsResource) throws CVSException {

@@ -93,8 +93,13 @@ public class EclipseTest extends ResourceTest {
 	
 	protected void addResources(IResource[] newResources) throws CoreException {
 		if (newResources.length == 0) return;
-		executeHeadless(new AddOperation(null, asResourceMappers(newResources, IResource.DEPTH_INFINITE)));
+		ResourceMapping[] mappings = asResourceMappers(newResources, IResource.DEPTH_INFINITE);
+        add(mappings);
 	}
+
+    protected void add(ResourceMapping[] mappings) throws CVSException {
+        executeHeadless(new AddOperation(null, mappings));
+    }
 	
 	/**
 	 * Perform a CVS edit of the given resources
