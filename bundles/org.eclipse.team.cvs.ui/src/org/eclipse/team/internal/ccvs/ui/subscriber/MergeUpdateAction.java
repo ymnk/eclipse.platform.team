@@ -108,7 +108,7 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 		return new OrSyncInfoFilter(new SyncInfoFilter[] {
 			// Conflicting additions will fail
 			SyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.ADDITION),
-			// Some conflicting changes will aways fail
+			// Conflicting changes involving a deletion on one side will aways fail
 			new AndSyncInfoFilter(new SyncInfoFilter[] {
 				SyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
 				new SyncInfoFilter() {
@@ -223,7 +223,7 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 	}
 
 	private void addSkippedFiles(IFile[] files) {
-		skippedFiles.add(Arrays.asList(files));
+		skippedFiles.addAll(Arrays.asList(files));
 	}
 	
 	/* (non-Javadoc)

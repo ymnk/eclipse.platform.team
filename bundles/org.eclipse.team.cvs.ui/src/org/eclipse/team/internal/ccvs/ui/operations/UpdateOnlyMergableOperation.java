@@ -83,7 +83,7 @@ public class UpdateOnlyMergableOperation extends RepositoryProviderOperation {
 	 * @param files
 	 */
 	protected void addSkippedFiles(IFile[] files) {
-		skippedFiles.add(Arrays.asList(files));
+		skippedFiles.addAll(Arrays.asList(files));
 	}
 	
 	public IFile[] getSkippedFiles() {

@@ -44,8 +44,10 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionDelegate;
 
@@ -169,7 +171,11 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 		if (shell != null) {
 			return shell;
 		} else {
-			return TeamUIPlugin.getPlugin().getWorkbench().getActiveWorkbenchWindow().getShell();
+			IWorkbench workbench = TeamUIPlugin.getPlugin().getWorkbench();
+			if (workbench == null) return null;
+			IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+			if (window == null) return null;
+			return window.getShell();
 		}
 	}
 	/**
