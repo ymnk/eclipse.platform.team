@@ -106,6 +106,21 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         }
         return (ChangeSetDiffNode[]) result.toArray(new ChangeSetDiffNode[result.size()]);
     }
+    
+    private ChangeSetDiffNode[] getActiveChangeSetNodes(ISynchronizeModelElement root) {
+        List result = new ArrayList();
+        IDiffElement[] children = root.getChildren();
+        for (int i = 0; i < children.length; i++) {
+            IDiffElement element = children[i];
+            if (element instanceof ChangeSetDiffNode) {
+                ChangeSetDiffNode node = (ChangeSetDiffNode)element;
+                if (node.getSet() instanceof ActiveChangeSet) {
+                    result.add(node);
+                }
+            }
+        }
+        return (ChangeSetDiffNode[]) result.toArray(new ChangeSetDiffNode[result.size()]);
+    }
 
     /**
      * Adds IFiles to the list
@@ -210,9 +225,19 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         assertNotNull("Change set " + set.getTitle() + " did not appear in the sync view", node);
         IResource[] outOfSync = getOutOfSyncResources(node);
         assertResourcesAreTheSame(resources, outOfSync);
+        // Assert that all active sets are visible in the view
+        ChangeSet[] sets = getActiveChangeSetManager().getSets();
+        for (int i = 0; i < sets.length; i++) {
+            ChangeSet changeSet = sets[i];
+            node = getChangeSetNodeFor(root, changeSet);
+            assertNotNull("The node for set " + set.getName() + " is not in the view", node);
+            
+        }
+        ChangeSetDiffNode[] nodes = getActiveChangeSetNodes(root);
+        assertNodesInViewer(getWorkspaceSubscriber(), nodes);
     }
     
-    private ChangeSetDiffNode getChangeSetNodeFor(ISynchronizeModelElement root, ActiveChangeSet set) {
+    private ChangeSetDiffNode getChangeSetNodeFor(ISynchronizeModelElement root, ChangeSet set) {
         IDiffElement[] children = root.getChildren();
         for (int i = 0; i < children.length; i++) {
             IDiffElement element = children[i];
