@@ -107,15 +107,9 @@ public class TimeoutOutputStream extends FilterOutputStream {
 	 * @throws IOException if an i/o error occurs
 	 */
 	public synchronized void write(int b) throws IOException {
-		boolean written = false;
-		do {
-			syncCommit(true);
-			if (length < iobuffer.length) {
-				iobuffer[(head + length) % iobuffer.length] = (byte) b;
-				length++;
-				written = true;
-			}
-		} while (!written);
+		syncCommit(true);
+		iobuffer[(head + length) % iobuffer.length] = (byte) b;
+		length++;
 		notify();
 	}
 	
