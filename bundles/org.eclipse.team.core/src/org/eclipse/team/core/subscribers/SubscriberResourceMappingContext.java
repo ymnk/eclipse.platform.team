@@ -8,25 +8,31 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.tests.ccvs.core.mappings;
+package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.variants.IResourceVariant;
+import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * A traversal context that uses the remote state of a subscriber.
- * It does not refresh the subscriber's state.
+ * It does not refresh it's state.
+ * @since 3.1
  */
-public class SubscriberTraversalContext extends ResourceMappingContext {
+public class SubscriberResourceMappingContext extends ResourceMappingContext {
     
     Subscriber subscriber;
+
+    /**
+     * Create a resource mappin context for the given subscriber
+     * @param subscriber the subscriber
+     */
+    public SubscriberResourceMappingContext(Subscriber subscriber) {
+        this.subscriber = subscriber;
+    }
 
     /* (non-Javadoc)
      * @see org.eclipse.core.resources.mapping.ITraversalContext#contentDiffers(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
@@ -40,17 +46,25 @@ public class SubscriberTraversalContext extends ResourceMappingContext {
      * @see org.eclipse.core.resources.mapping.ITraversalContext#fetchContents(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
      */
     public IStorage fetchContents(IFile file, IProgressMonitor monitor) throws CoreException {
-        SyncInfo syncInfo = subscriber.getSyncInfo(file);
-        IResourceVariant remote = syncInfo.getRemote();
-        if (remote == null)
-            throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, IResourceStatus.RESOURCE_NOT_FOUND, "The remote counterpart of {0} does not exist" + file.getFullPath(), null));
-        return remote.getStorage(monitor);
+        try {
+            monitor.beginTask(null, 100);
+            subscriber.refresh(new IResource[] { file} , IResource.DEPTH_ONE, Policy.subMonitorFor(monitor, 20));
+            SyncInfo syncInfo = subscriber.getSyncInfo(file);
+            if (syncInfo == null) {
+                throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, IResourceStatus.RESOURCE_NOT_FOUND, "File {0} does not have a corresponding remote" + file.getFullPath().toString(), null));
+            }
+            return syncInfo.getRemote().getStorage(Policy.subMonitorFor(monitor, 80));
+        } finally {
+            monitor.done();
+        }
+        
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.core.resources.mapping.ITraversalContext#fetchMembers(org.eclipse.core.resources.IContainer, org.eclipse.core.runtime.IProgressMonitor)
      */
     public IResource[] fetchMembers(IContainer container, IProgressMonitor monitor) throws CoreException {
+        subscriber.refresh(new IResource[] { container} , IResource.DEPTH_ONE, monitor);
         return subscriber.members(container);
     }
 

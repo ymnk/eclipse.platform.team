@@ -14,9 +14,9 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.*;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.*;
+import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.subscribers.SubscriberResourceMappingContext;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
@@ -30,9 +30,18 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  */
 public class ResourceMappingScope extends AbstractSynchronizeScope {
     
-    ResourceMapping[] mappings;
-    IResource[] roots;
+    private ResourceMapping[] mappings;
+    private IResource[] roots;
+    private Subscriber subscriber;
 
+    /**
+     * Create the resource mapping scope for the subscriber
+     */
+    public ResourceMappingScope(Subscriber subscriber, ResourceMapping[] mappings) {
+        this.subscriber = subscriber;
+        this.mappings = mappings;
+    }
+    
     /* (non-Javadoc)
      * @see org.eclipse.team.ui.synchronize.ISynchronizeScope#getName()
      */
@@ -91,12 +100,8 @@ public class ResourceMappingScope extends AbstractSynchronizeScope {
         }
     }
 
-    /**
-     * @return
-     */
     private ResourceMappingContext getMappingContext() {
-        // TODO Auto-generated method stub
-        return null;
+        return new SubscriberResourceMappingContext(subscriber);
     }
 
     private IWorkbenchAdapter getWorkbenchAdapter(Object modelObject) {

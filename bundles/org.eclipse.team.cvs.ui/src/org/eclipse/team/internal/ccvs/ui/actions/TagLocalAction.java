@@ -25,7 +25,7 @@ public class TagLocalAction extends TagAction {
 		// Prompt for any uncommitted changes
         mappings = getCVSResourceMappings();
         MappingSelectionDialog dialog = new MappingSelectionDialog(getShell(), "Tag Uncommitted Changes?", mappings, getResourceFilter());
-		mappings = dialog.promtpToSelectMappings();
+		mappings = dialog.promptToSelectMappings();
 		if(mappings.length == 0) {
 			// nothing to do
 			return false;						
