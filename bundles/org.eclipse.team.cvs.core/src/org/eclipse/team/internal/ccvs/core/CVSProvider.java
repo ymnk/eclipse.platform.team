@@ -178,10 +178,7 @@ public class CVSProvider implements ICVSProvider {
 			for (int i = 0; i < projects.length; i++) {
 				IProject project = projects[i];
 				// Register the project with Team
-				// (unless the project already has the proper nature from the project meta-information)
-				if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId())) {
-					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
-				}
+				RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 			}
 			
 		} finally {
@@ -481,15 +478,8 @@ public class CVSProvider implements ICVSProvider {
 						
 			folder.setFolderSyncInfo(new FolderSyncInfo(moduleName, location.getLocation(), null, false));
 
-			// Register the project with Team
-			// (unless the project already has the proper nature from the project meta-information)
-			try {
-				if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId())) {
-					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
-				}
-			} catch (CoreException e) {
-				throw wrapException(e);
-			} 
+			//Register it with Team.  If it already is, no harm done.
+			RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 		} catch (TeamException e) {
 			// The checkout may have triggered password caching
 			// Therefore, if this is a newly created location, we want to clear its cache
@@ -547,13 +537,7 @@ public class CVSProvider implements ICVSProvider {
 		}
 		
 		// Register the project with Team
-		// (unless the project already has the proper nature from the project meta-information)
-		try {
-			if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId()))
-				RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
-		} catch (CoreException e) {
-			throw wrapException(e);
-		}
+		RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 	}
 	
 	private CVSException wrapException(CoreException e) {

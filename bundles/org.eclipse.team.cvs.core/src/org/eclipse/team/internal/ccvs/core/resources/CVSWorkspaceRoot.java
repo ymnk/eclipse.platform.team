@@ -149,13 +149,9 @@ public class CVSWorkspaceRoot {
 			RemoteFolderTree remote = RemoteFolderTreeBuilder.buildRemoteTree((CVSRepositoryLocation)folder.getRepository(), folder, folder.getTag(), Policy.subMonitorFor(progress, 80));
 			CVSRemoteSyncElement tree = new CVSRemoteSyncElement(true /*three way*/, project, null, remote);
 			tree.makeFoldersInSync(Policy.subMonitorFor(progress, 10));
-			try {
-				if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId())) {
-					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
-				}
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
-			}
+
+			RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
+
 			progress.done();
 			return tree;
 		}
