@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.ui.merge;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
@@ -56,8 +55,6 @@ public class MergeWizard extends Wizard {
 		
 		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
 		MergeSynchronizeParticipant participant = new MergeSynchronizeParticipant(s);
-		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
-		boolean showInSyncView = store.getBoolean(ICVSUIConstants.PREF_SHOW_COMPARE_MERGE_IN_SYNCVIEW);
 		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 		participant.refresh(resources, Policy.bind("Participant.merging"), Policy.bind("Participant.mergingDetail", participant.getName()), null); //$NON-NLS-1$ //$NON-NLS-2$
 		return true;

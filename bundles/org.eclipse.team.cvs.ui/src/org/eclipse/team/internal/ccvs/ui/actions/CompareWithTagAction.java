@@ -15,10 +15,8 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CompareParticipant;
@@ -36,7 +34,6 @@ public class CompareWithTagAction extends WorkspaceAction {
 		// Run the comparison
 		CVSCompareSubscriber s = new CVSCompareSubscriber(resources, tag);
 		CompareParticipant participant = new CompareParticipant(s);
-		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 		participant.refresh(resources, Policy.bind("Participant.comparing"), 	participant.getName(), null); //$NON-NLS-1$
 	}
