@@ -705,8 +705,7 @@
 	<extension
          point="org.eclipse.team.core.repositoryMappingNotification">
       <repository
-            class="org.eclipse.team.internal.ccvs.ui.RepositoryMappingListener"
-            id="org.eclipse.team.cvs.ui.repositoryMappingListener">
+            class="org.eclipse.team.internal.ccvs.ui.RepositoryMappingListener">
       </repository>
 	</extension>
 </plugin>

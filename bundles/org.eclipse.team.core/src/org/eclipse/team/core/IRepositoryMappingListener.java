@@ -16,6 +16,23 @@ import org.eclipse.core.resources.IProject;
  * Instances of this interface can be registered with the repositoryMappingNotification
  * extension point to receive notification when a repository provider is mapped/unmapped
  * to/from a project.
+ * <p>
+ * Instances are registered with Team by placing the following snippet in their plugin.xml, 
+ * where <code>RepositoryMappingListener</code> is a class that implements IRepositoryMappingListener.
+ * </p>
+ * 
+ * 	<code>
+ *  &lt;extension
+ *       point="org.eclipse.team.core.repositoryMappingNotification"&gt;
+ *    &lt;repository
+ *          class="org.eclipse.component.RepositoryMappingListener"&gt;
+ *    &lt;/repository&gt;
+ *	&lt;/extension&gt;
+ * </code>
+ * 
+ * @see RepositoryProvider
+ *
+ * @since 2.0
  */
 public interface IRepositoryMappingListener {
 	

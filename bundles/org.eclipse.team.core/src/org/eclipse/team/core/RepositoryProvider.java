@@ -152,15 +152,24 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 */
 	public static void unmap(IProject project) throws TeamException {
 		try{
-			boolean hasProviderAssociated = project.getPersistentProperty(PROVIDER_PROP_KEY) != null;
+			String id = project.getPersistentProperty(PROVIDER_PROP_KEY);
 			
 			//If you tried to remove a non-existance nature it would fail, so we need to as well with the persistent prop
-			if(! hasProviderAssociated)
+			if(id == null)
 				throw new TeamException(Policy.bind("RepositoryProvider.No_Provider_Registered", project.getName())); //$NON-NLS-1$
 
 			//This will instantiate one if it didn't already exist,
 			//which is ok since we need to call deconfigure() on it for proper lifecycle
-			getProvider(project).deconfigure();
+			RepositoryProvider provider = getProvider(project);
+			if (provider == null) {
+				// There is a persistant property but the provider cannot be obtained.
+				// The reason could be that the provider's plugin is no longer available.
+				// Better log it just in case this is unexpected.
+				TeamPlugin.log(new Status(IStatus.ERROR, TeamPlugin.ID, 0, 
+					Policy.bind("RepositoryProvider.couldNotInstantiateProvider", id), null)); 
+			} else {
+				provider.deconfigure();
+			}
 							
 			project.setSessionProperty(PROVIDER_PROP_KEY, null);
 			project.setPersistentProperty(PROVIDER_PROP_KEY, null);
