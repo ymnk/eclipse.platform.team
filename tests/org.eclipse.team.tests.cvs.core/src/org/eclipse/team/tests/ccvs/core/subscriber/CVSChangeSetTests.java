@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,18 +18,20 @@ import junit.framework.Test;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.subscriber.ChangeLogDiffNode;
 import org.eclipse.team.internal.ccvs.ui.subscriber.ChangeLogModelManager;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.tests.ccvs.ui.SynchronizeViewTestAdapter;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.PartInitException;
 
 /**
@@ -51,7 +54,7 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
     private void assertIncomingChangesInSets(IFile[][] files, String[] messages) throws CoreException {
         // Get the workspace subscriber which also creates a participant and page in the sync view
         Subscriber workspaceSubscriber = getWorkspaceSubscriber();
-        enableCommitSets(workspaceSubscriber);
+        enableChangeSets(workspaceSubscriber);
         refresh(workspaceSubscriber);
         ISynchronizeModelElement root = getModelRoot(workspaceSubscriber);
         for (int i = 0; i < messages.length; i++) {
@@ -102,11 +105,12 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         workspaceSubscriber.refresh(workspaceSubscriber.roots(), IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
     }
 
-    private void enableCommitSets(Subscriber workspaceSubscriber) throws PartInitException {
+    private void enableChangeSets(Subscriber workspaceSubscriber) throws PartInitException {
         ISynchronizeParticipant participant = SynchronizeViewTestAdapter.getParticipant(workspaceSubscriber);
         SubscriberParticipantPage page = (SubscriberParticipantPage)SynchronizeViewTestAdapter.getSyncViewPage(participant);
         ChangeLogModelManager manager = (ChangeLogModelManager)page.getConfiguration().getProperty(SynchronizePageConfiguration.P_MODEL_MANAGER);
         manager.setCommitSetsEnabled(true);
+        page.getConfiguration().setMode(ISynchronizePageConfiguration.BOTH_MODE);
     }
 
     /*
@@ -141,6 +145,118 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         return provider.getModelRoot();
     }
 
+    private SubscriberChangeSetCollector getActiveChangeSetManager() {
+        return CVSUIPlugin.getPlugin().getChangeSetManager();
+    }
+    
+    /*
+     * Assert that the given resources make up the given set both directly
+     * and by what is displayed in the sync view.
+     */
+    private void assertInActiveSet(IResource[] resources, ActiveChangeSet set) throws CoreException {
+        assertResourcesAreTheSame(resources, set.getResources());
+        ISynchronizeModelElement root = getModelRoot(getActiveChangeSetManager().getSubscriber());
+        ChangeSetDiffNode node = getChangeSetNodeFor(root, set);
+        assertNotNull("Change set " + set.getTitle() + " did not appear in the sync view", node);
+        IResource[] outOfSync = getOutOfSyncResources(node);
+        assertResourcesAreTheSame(resources, outOfSync);
+    }
+    
+    private ChangeSetDiffNode getChangeSetNodeFor(ISynchronizeModelElement root, ActiveChangeSet set) {
+        IDiffElement[] children = root.getChildren();
+        for (int i = 0; i < children.length; i++) {
+            IDiffElement element = children[i];
+            if (element instanceof ChangeSetDiffNode) {
+                ChangeSetDiffNode node = (ChangeSetDiffNode)element;
+                if (node.getSet() == set) {
+                    return node;
+                }
+            }
+        }
+        return null;
+    }
+
+    private IResource[] getOutOfSyncResources(ISynchronizeModelElement element) {
+        ArrayList arrayList = new ArrayList();
+        getOutOfSync(element, arrayList);
+        SyncInfo[] infos = (SyncInfo[]) arrayList.toArray(new SyncInfo[arrayList.size()]);
+        IResource[] resources = getResources(infos);
+        return resources;
+    }
+
+    private IResource[] getResources(SyncInfo[] infos) {
+        IResource[] resources = new IResource[infos.length];
+        for (int i = 0; i < resources.length; i++) {
+            resources[i] = infos[i].getLocal();
+        }
+        return resources;
+    }
+
+    private void getOutOfSync(ISynchronizeModelElement node, List list) {
+        SyncInfo info = getSyncInfo(node);
+        if (info != null && info.getKind() != SyncInfo.IN_SYNC) {
+            list.add(info);
+        }
+        IDiffElement[] children = node.getChildren();
+        for (int i = 0; i < children.length; i++) {
+            IDiffElement child = children[i];
+            getOutOfSync((ISynchronizeModelElement)child, list);
+        }
+        return;
+    }
+    
+    private SyncInfo getSyncInfo(ISynchronizeModelElement node) {
+        if (node instanceof IAdaptable) {
+            return (SyncInfo)((IAdaptable)node).getAdapter(SyncInfo.class);
+        }
+        return null;
+    }
+
+    private void assertResourcesAreTheSame(IResource[] resources1, IResource[] resources2) {
+        assertEquals("The number of resources do not match the expected number", resources1.length, resources2.length);
+        for (int i = 0; i < resources1.length; i++) {
+            IResource resource = resources1[i];
+            boolean found = false;
+            for (int j = 0; j < resources2.length; j++) {
+                IResource resource2 = resources2[j];
+                if (resource2.equals(resource)) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("Expected resource " + resource.getFullPath().toString() + " was not presebt", found);
+        }
+    }
+
+    /*
+     * Assert that the given resources make up the root set
+     * displayed in the sync view. The root set is those 
+     * resources that are not part of an active change set.
+     */
+    private void assertInRootSet(IResource[] resources) throws CoreException {
+        ISynchronizeModelElement[] nodes = getNonChangeSetRoots(getModelRoot(getActiveChangeSetManager().getSubscriber()));
+        List list = new ArrayList();
+        for (int i = 0; i < nodes.length; i++) {
+            ISynchronizeModelElement element = nodes[i];
+            getOutOfSync(element, list);
+        }
+        IResource[] outOfSync = getResources((SyncInfo[]) list.toArray(new SyncInfo[list.size()]));
+        assertResourcesAreTheSame(resources, outOfSync);
+        
+    }
+    
+    private ISynchronizeModelElement[] getNonChangeSetRoots(ISynchronizeModelElement modelRoot) {
+        List result = new ArrayList();
+        IDiffElement[] children = modelRoot.getChildren();
+        for (int i = 0; i < children.length; i++) {
+            IDiffElement element = children[i];
+            if (!(element instanceof ChangeSetDiffNode)) {
+                result.add(element);
+            }
+        }
+        return (ISynchronizeModelElement[]) result.toArray(new ISynchronizeModelElement[result.size()]);
+    }
+
     public void testSimpleCommit() throws CoreException {
 	    IProject project = createProject(new String[] { "file1.txt", "file2.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 	    
@@ -172,4 +288,27 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
 	            }, new String[] {message1, message2, message3});
 	}
 	
+    public void testSimpleActiveChangeSet() throws CoreException {
+        IProject project = createProject(new String[] { "file1.txt", "file2.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+        // Enable Change Sets
+        enableChangeSets(getWorkspaceSubscriber());
+	    // Add a folder and file
+	    IFolder newFolder = project.getFolder("folder2");
+        newFolder.create(false, true, null);
+        IFile newFile = newFolder.getFile("file.txt");
+        newFile.create(new ByteArrayInputStream("Hi There".getBytes()), false, null);
+        // Create an active commit set and assert that it appears in the sync view
+        SubscriberChangeSetCollector manager = getActiveChangeSetManager();
+        ActiveChangeSet set = manager.createSet("test", new SyncInfo[0]);
+        manager.add(set);
+        assertInActiveSet(new IResource[] { }, set);
+        assertInRootSet(new IResource[] {newFolder, newFile});
+        // Add the new file to the set and assert that the file is in the set and the folder is still at the root
+        set.add(new IResource[] { newFile });
+        assertInActiveSet(new IResource[] { newFile }, set);
+        assertInRootSet(new IResource[] {newFolder });
+	    // Add the folder to the set
+        set.add(new IResource[] { newFolder });
+        assertInActiveSet(new IResource[] { newFolder, newFile }, set);
+    }
 }

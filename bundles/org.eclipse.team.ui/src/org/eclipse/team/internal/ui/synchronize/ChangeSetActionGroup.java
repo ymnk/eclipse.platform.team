@@ -16,16 +16,16 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.team.core.subscribers.ActiveChangeSet;
-import org.eclipse.team.core.subscribers.SubscriberChangeSetManager;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.AndSyncInfoFilter;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.core.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
@@ -34,9 +34,15 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
  * This action group contributes actions that support the management
  * of Change sets to a synchronize page.
  */
-public abstract class ChangeSetManagementActionGroup extends SynchronizePageActionGroup {
+public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
 
-    public final static String CHANGE_SET_GROUP = "chaneg_set_group"; //$NON-NLS-1$
+    /**
+     * Menu group that can be added to the context menu
+     */
+    public final static String CHANGE_SET_GROUP = "change_set_group"; //$NON-NLS-1$
+    
+	// Constants for persisting sorting options
+	private static final String P_LAST_COMMENTSORT = TeamUIPlugin.ID + ".P_LAST_COMMENT_SORT"; //$NON-NLS-1$
     
     public static final AndSyncInfoFilter OUTGOING_FILE_FILTER = new AndSyncInfoFilter(new FastSyncInfoFilter[] {
             new FastSyncInfoFilter() {
@@ -169,51 +175,134 @@ public abstract class ChangeSetManagementActionGroup extends SynchronizePageActi
         }
 	}
 	
+	/* *****************************************************************************
+	 * Action that allows changing the model providers sort order.
+	 */
+	private class ToggleSortOrderAction extends Action {
+		private int criteria;
+		protected ToggleSortOrderAction(String name, int criteria) {
+			super(name, Action.AS_RADIO_BUTTON);
+			this.criteria = criteria;
+			update();		
+		}
+
+		public void run() {
+			if (isChecked() && sortCriteria != criteria) {
+			    sortCriteria = criteria;
+				String key = getSettingsKey();
+				IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+				if(pageSettings != null) {
+					pageSettings.put(key, criteria);
+				}
+				update();
+				provider.setViewerSorter(getViewerSorter());
+			}
+		}
+		
+		public void update() {
+		    setChecked(criteria == sortCriteria);
+		}
+		
+		protected String getSettingsKey() {
+		    return P_LAST_COMMENTSORT;
+		}
+	}
+
+	/*
+	 * The model provider for this action group
+	 */
+	private ChangeSetModelProvider provider;
+	
+	/*
+	 * The actions created by this group
+	 */
+	private MenuManager sortByComment;
 	private CreateChangeSetAction createChangeSet;
 	private MenuManager addToChangeSet;
     private EditChangeSetAction editChangeSet;
     private MakeDefaultChangeSetAction makeDefault;
-    private boolean alive = false;
+    
+    /*
+     * Flag indicating whether the active change sets are included
+     */
+    private boolean includesActive = false;
+    
+    /*
+     * The currently chosen sort criteria
+     */
+    private int sortCriteria = ChangeSetModelSorter.DATE;
     
 	public void initialize(ISynchronizePageConfiguration configuration) {
 		super.initialize(configuration);
-		if (getChangeSetManager() == null) return;
-		alive = true;
-		addToChangeSet = new MenuManager(Policy.bind("ChangeLogModelProvider.12")); //$NON-NLS-1$
-		addToChangeSet.setRemoveAllWhenShown(true);
-		addToChangeSet.addMenuListener(new IMenuListener() {
-            public void menuAboutToShow(IMenuManager manager) {
-                addChangeSets(manager);
-            }
-        });
-		createChangeSet = new CreateChangeSetAction(configuration);
-		addToChangeSet.add(createChangeSet);
-		addToChangeSet.add(new Separator());
-		editChangeSet = new EditChangeSetAction(configuration);
-		makeDefault = new MakeDefaultChangeSetAction(configuration);
+		sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0a"));	 //$NON-NLS-1$
+		appendToGroup(
+				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+				ISynchronizePageConfiguration.SORT_GROUP, 
+				sortByComment);
+		initializeSortCriteria(configuration);
 		
-		appendToGroup(
-				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-				CHANGE_SET_GROUP, 
-				addToChangeSet);
-		appendToGroup(
-				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-				CHANGE_SET_GROUP, 
-				editChangeSet);
-		appendToGroup(
-				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-				CHANGE_SET_GROUP, 
-				makeDefault);
+		sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1a"), ChangeSetModelSorter.COMMENT)); //$NON-NLS-1$
+		sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2a"), ChangeSetModelSorter.DATE)); //$NON-NLS-1$
+		sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3a"), ChangeSetModelSorter.USER)); //$NON-NLS-1$
+		
+		if (getChangeSetManager() != null) {
+			includesActive = true;
+			addToChangeSet = new MenuManager(Policy.bind("ChangeLogModelProvider.12")); //$NON-NLS-1$
+			addToChangeSet.setRemoveAllWhenShown(true);
+			addToChangeSet.addMenuListener(new IMenuListener() {
+	            public void menuAboutToShow(IMenuManager manager) {
+	                addChangeSets(manager);
+	            }
+	        });
+			createChangeSet = new CreateChangeSetAction(configuration);
+			addToChangeSet.add(createChangeSet);
+			addToChangeSet.add(new Separator());
+			editChangeSet = new EditChangeSetAction(configuration);
+			makeDefault = new MakeDefaultChangeSetAction(configuration);
+			
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CHANGE_SET_GROUP, 
+					addToChangeSet);
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CHANGE_SET_GROUP, 
+					editChangeSet);
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CHANGE_SET_GROUP, 
+					makeDefault);
+		}
 	}
 	
+    private void initializeSortCriteria(ISynchronizePageConfiguration configuration) {
+		try {
+			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+			if(pageSettings != null) {
+				sortCriteria = pageSettings.getInt(P_LAST_COMMENTSORT);
+			}
+		} catch(NumberFormatException e) {
+			// ignore and use the defaults.
+		}
+		switch (sortCriteria) {
+        case ChangeSetModelSorter.COMMENT:
+        case ChangeSetModelSorter.DATE:
+        case ChangeSetModelSorter.USER:
+            break;
+        default:
+            sortCriteria = ChangeSetModelSorter.DATE;
+            break;
+        }
+    }
+    
     protected void addChangeSets(IMenuManager manager) {
-        ActiveChangeSet[] sets = getChangeSetManager().getSets();
+        ChangeSet[] sets = getChangeSetManager().getSets();
         ISelection selection = getContext().getSelection();
         createChangeSet.selectionChanged(selection);
 		addToChangeSet.add(createChangeSet);
 		addToChangeSet.add(new Separator());
         for (int i = 0; i < sets.length; i++) {
-            ActiveChangeSet set = sets[i];
+            ActiveChangeSet set = (ActiveChangeSet)sets[i];
             AddToChangeSetAction action = new AddToChangeSetAction(getConfiguration(), set, selection);
             manager.add(action);
         }
@@ -223,24 +312,26 @@ public abstract class ChangeSetManagementActionGroup extends SynchronizePageActi
      * Return the change set manager for the current page.
      * @return the change set manager for the current page
      */
-    protected SubscriberChangeSetManager getChangeSetManager() {
-        return (SubscriberChangeSetManager)getConfiguration().getProperty(ISynchronizePageConfiguration.P_CHANGE_SET_MANAGER);
+    protected SubscriberChangeSetCollector getChangeSetManager() {
+        return (SubscriberChangeSetCollector)getConfiguration().getProperty(ISynchronizePageConfiguration.P_CHANGE_SET_MANAGER);
     }
 
     /* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#dispose()
 	 */
 	public void dispose() {
-	    if (alive) {
+	    if (includesActive) {
 			addToChangeSet.dispose();
 			addToChangeSet.removeAll();
 	    }
+		sortByComment.dispose();
+		sortByComment.removeAll();
 		super.dispose();
 	}
 	
 	
     public void updateActionBars() {
-        if (alive) {
+        if (includesActive) {
 	        editChangeSet.selectionChanged((IStructuredSelection)getContext().getSelection());
 	        makeDefault.selectionChanged((IStructuredSelection)getContext().getSelection());
         }
@@ -261,13 +352,21 @@ public abstract class ChangeSetManagementActionGroup extends SynchronizePageActi
     }
     
     /**
+     * Return a viewer sorter that utilizes the sort criteria
+     * selected by the user.
+     */
+	public ViewerSorter getViewerSorter() {
+		return new ChangeSetModelSorter(provider, sortCriteria);
+	}
+	
+    /**
      * Create a change set from the given manager that contains the given sync info.
      * This method is invoked from the UI thread.
      * @param manager a change set manager
      * @param infos the sync info to be added to the change set
      * @return the created set.
      */
-    protected abstract ActiveChangeSet createChangeSet(SubscriberChangeSetManager manager, SyncInfo[] infos);
+    protected abstract ActiveChangeSet createChangeSet(SubscriberChangeSetCollector manager, SyncInfo[] infos);
     
     /**
      * Edit the title and comment of the given change set.

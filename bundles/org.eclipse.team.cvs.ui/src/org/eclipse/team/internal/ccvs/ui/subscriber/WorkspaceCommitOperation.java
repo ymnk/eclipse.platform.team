@@ -22,7 +22,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ActiveChangeSet;
+import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -267,10 +267,10 @@ public class WorkspaceCommitOperation extends CVSSubscriberOperation {
 
     private String getProposedComment(IResource[] resourcesToCommit) {
     	StringBuffer comment = new StringBuffer();
-        ActiveChangeSet[] sets = CommitSetManager.getInstance().getSets();
+        ChangeSet[] sets = CVSUIPlugin.getPlugin().getChangeSetManager().getSets();
         int numMatchedSets = 0;
         for (int i = 0; i < sets.length; i++) {
-            ActiveChangeSet set = sets[i];
+            ChangeSet set = sets[i];
             if (containsOne(set, resourcesToCommit)) {
             	if(numMatchedSets > 0) comment.append(System.getProperty("line.separator")); //$NON-NLS-1$
                 comment.append(set.getComment());
@@ -279,18 +279,8 @@ public class WorkspaceCommitOperation extends CVSSubscriberOperation {
         }
         return comment.toString();
     }
-
-    private boolean containsAll(ActiveChangeSet set, IResource[] resourcesToCommit) {
-        for (int j = 0; j < resourcesToCommit.length; j++) {
-            IResource resource = resourcesToCommit[j];
-            if (!set.contains(resource)) {
-                return false;
-            }
-        }
-        return true;
-    }
     
-    private boolean containsOne(ActiveChangeSet set, IResource[] resourcesToCommit) {
+    private boolean containsOne(ChangeSet set, IResource[] resourcesToCommit) {
     	 for (int j = 0; j < resourcesToCommit.length; j++) {
             IResource resource = resourcesToCommit[j];
             if (set.contains(resource)) {

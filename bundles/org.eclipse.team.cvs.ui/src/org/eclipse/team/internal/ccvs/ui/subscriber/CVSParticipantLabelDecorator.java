@@ -68,7 +68,7 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 			}
 		if (element instanceof ChangeSetDiffNode) {
 		    ActiveChangeSet set = (ActiveChangeSet)((ChangeSetDiffNode)element).getSet();
-		    if (CommitSetManager.getInstance().isDefault(set)) {
+		    if (CVSUIPlugin.getPlugin().getChangeSetManager().isDefault(set)) {
 		        text = Policy.bind("CommitSetDiffNode.0", text); //$NON-NLS-1$
 		    }
 		}
@@ -137,7 +137,7 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 	public Font decorateFont(Object element) {
 		if (element instanceof ChangeSetDiffNode) {
 		    ActiveChangeSet set = (ActiveChangeSet)((ChangeSetDiffNode)element).getSet();
-		    if (CommitSetManager.getInstance().isDefault(set)) {
+		    if (CVSUIPlugin.getPlugin().getChangeSetManager().isDefault(set)) {
 		    	if (boldFont == null) {
 					Font defaultFont = JFaceResources.getDefaultFont();
 					FontData[] data = defaultFont.getFontData();

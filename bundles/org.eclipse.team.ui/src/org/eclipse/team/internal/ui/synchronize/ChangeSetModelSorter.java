@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.subscriber;
+package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
@@ -22,17 +22,17 @@ import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
  * 
  * @since 3.0
  */
-public class ChangeLogModelSorter extends ViewerSorter {
+public class ChangeSetModelSorter extends ViewerSorter {
 	
 	private int commentCriteria;
-	private ChangeLogModelProvider provider;
+	private ChangeSetModelProvider provider;
 	
 	// Comment sorting options
 	public final static int DATE = 1;
 	public final static int COMMENT = 2;
 	public final static int USER = 3;
 	
-	public ChangeLogModelSorter(ChangeLogModelProvider provider, int commentCriteria) {
+	public ChangeSetModelSorter(ChangeSetModelProvider provider, int commentCriteria) {
 		this.provider = provider;
 		this.commentCriteria = commentCriteria;
 	}

@@ -23,7 +23,7 @@ public interface IChangeSetChangeListener {
      * The given set has been added to the set manager.
      * @param set the added set
      */
-    void setAdded(ActiveChangeSet set);
+    void setAdded(ChangeSet set);
     
     /**
      * The default change set has change to be the given set.
@@ -31,19 +31,19 @@ public interface IChangeSetChangeListener {
      * set.
      * @param set the default set
      */
-    void defaultSetChanged(ActiveChangeSet previousDefault, ActiveChangeSet set);
+    void defaultSetChanged(ChangeSet previousDefault, ChangeSet set);
     
     /**
      * The given set has been removed from the set manager.
      * @param set the removed set
      */
-    void setRemoved(ActiveChangeSet set);
+    void setRemoved(ChangeSet set);
     
     /**
      * The title of the given set has changed.
      * @param set the set whose title changed
      */
-    void titleChanged(ActiveChangeSet set);
+    void nameChanged(ChangeSet set);
 
     /**
      * The state of the given resources have change with respect to the
@@ -53,6 +53,6 @@ public interface IChangeSetChangeListener {
      * @param set the set that has changed
      * @param resources the resources whose containment state has changed w.r.t the set
      */
-    void resourcesChanged(ActiveChangeSet set, IResource[] resources);
+    void resourcesChanged(ChangeSet set, IResource[] resources);
 
 }

@@ -22,7 +22,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CommitSetManager;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
 /**
@@ -33,21 +33,21 @@ public class CommitSetTests extends EclipseTest {
 	private List addedSets = new ArrayList();
 	private List removedSets = new ArrayList();
 	private IChangeSetChangeListener listener = new IChangeSetChangeListener() {
-        public void setAdded(ActiveChangeSet set) {
+        public void setAdded(ChangeSet set) {
             addedSets.add(set);
         }
-        public void setRemoved(ActiveChangeSet set) {
+        public void setRemoved(ChangeSet set) {
             removedSets.add(set);
         }
-        public void titleChanged(ActiveChangeSet set) {
+        public void nameChanged(ChangeSet set) {
             // TODO Auto-generated method stub
 
         }
-        public void defaultSetChanged(ActiveChangeSet oldDefault, ActiveChangeSet set) {
+        public void defaultSetChanged(ChangeSet oldDefault, ChangeSet set) {
             // TODO Auto-generated method stub
             
         }
-        public void resourcesChanged(ActiveChangeSet set, IResource[] resources) {
+        public void resourcesChanged(ChangeSet set, IResource[] resources) {
             // TODO Auto-generated method stub
             
         }
@@ -74,7 +74,7 @@ public class CommitSetTests extends EclipseTest {
      */
     protected ActiveChangeSet createCommitSet(String title, IFile[] files, boolean manageSet) throws TeamException {
         assertIsModified(getName(), files);
-        SubscriberChangeSetManager manager = CommitSetManager.getInstance();
+        SubscriberChangeSetCollector manager = CVSUIPlugin.getPlugin().getChangeSetManager();
         ActiveChangeSet set = manager.createSet(title, files);
         assertEquals("Not all files were asdded to the set", files.length, set.getResources().length);
         if (manageSet) {
@@ -101,7 +101,7 @@ public class CommitSetTests extends EclipseTest {
     }
     
     private boolean setIsManaged(ActiveChangeSet set) {
-        return CommitSetManager.getInstance().contains(set);
+        return CVSUIPlugin.getPlugin().getChangeSetManager().contains(set);
     }
 
     private void waitForSetAddedEvent(ActiveChangeSet set) {
@@ -144,7 +144,7 @@ public class CommitSetTests extends EclipseTest {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        CommitSetManager.getInstance().addListener(listener);
+        CVSUIPlugin.getPlugin().getChangeSetManager().addListener(listener);
     }
     
     /* (non-Javadoc)
@@ -152,7 +152,7 @@ public class CommitSetTests extends EclipseTest {
      */
     protected void tearDown() throws Exception {
         super.tearDown();
-        CommitSetManager.getInstance().removeListener(listener);
+        CVSUIPlugin.getPlugin().getChangeSetManager().removeListener(listener);
     }
     
     /**

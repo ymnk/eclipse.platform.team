@@ -16,6 +16,7 @@ import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.actions.*;
 import org.eclipse.team.internal.ui.synchronize.ScopableSubscriberParticipant;
@@ -151,7 +152,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 		
 		// The manager adds itself to the configuration in it's constructor
 		new ChangeLogModelManager(configuration);
-		configuration.setProperty(ISynchronizePageConfiguration.P_CHANGE_SET_MANAGER, CommitSetManager.getInstance());
+		configuration.setProperty(ISynchronizePageConfiguration.P_CHANGE_SET_MANAGER, CVSUIPlugin.getPlugin().getChangeSetManager());
 		
 		// Add context menu groups here to give the client displaying the
 		// page a chance to remove the context menu

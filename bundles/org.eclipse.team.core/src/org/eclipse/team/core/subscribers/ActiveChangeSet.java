@@ -30,14 +30,14 @@ public class ActiveChangeSet extends ChangeSet {
     private static final String CTX_RESOURCES = "resources"; //$NON-NLS-1$
     
     private String comment;
-    private final SubscriberChangeSetManager manager;
+    private final SubscriberChangeSetCollector manager;
     
 	/**
 	 * Create a change set with the given title
 	 * @param manager the manager that owns this set
      * @param title the title of the set
      */
-    public ActiveChangeSet(SubscriberChangeSetManager manager, String title) {
+    public ActiveChangeSet(SubscriberChangeSetCollector manager, String title) {
         super(title);
         this.manager = manager;
     }
@@ -60,7 +60,7 @@ public class ActiveChangeSet extends ChangeSet {
      */
     public void setTitle(String title) {
         setName(title);
-        getManager().titleChanged(this);
+        getManager().fireNameChangedEvent(this);
     }
 
     /**
@@ -105,7 +105,7 @@ public class ActiveChangeSet extends ChangeSet {
         }
     }
 
-    private SubscriberChangeSetManager getManager() {
+    private SubscriberChangeSetCollector getManager() {
         return manager;
     }
 

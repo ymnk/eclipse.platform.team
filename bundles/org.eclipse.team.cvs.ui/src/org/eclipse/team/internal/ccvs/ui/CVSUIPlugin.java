@@ -15,12 +15,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jface.dialogs.ErrorDialog;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.MessageDialogWithToggle;
+import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
@@ -31,6 +30,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SubscriberChangeSetCollector;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
@@ -38,7 +38,6 @@ import org.eclipse.team.internal.ccvs.ui.console.CVSOutputConsole;
 import org.eclipse.team.internal.ccvs.ui.model.CVSAdapterFactory;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CommitSetManager;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
@@ -81,6 +80,8 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 */
 	private RepositoryManager repositoryManager;
 	
+    private SubscriberChangeSetCollector changeSetManager;
+    
 	/**
 	 * CVSUIPlugin constructor
 	 * 
@@ -342,6 +343,13 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		return repositoryManager;
 	}
 	
+    public synchronized SubscriberChangeSetCollector getChangeSetManager() {
+        if (changeSetManager == null) {
+            changeSetManager = new SubscriberChangeSetCollector(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
+        }
+        return changeSetManager;
+    }
+    
 	/**
 	 * Initializes the table of images used in this plugin.
 	 */
@@ -667,7 +675,8 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		
 		console = new CVSOutputConsole();
 
-		CommitSetManager.getInstance();
+		// Must load the change set manager on startup since it listens to deltas
+		getChangeSetManager();
 		
 		IPreferenceStore store = getPreferenceStore();
 		if (store.getBoolean(ICVSUIConstants.PREF_FIRST_STARTUP)) {
@@ -707,7 +716,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			}
 			
 			console.shutdown();
-			CommitSetManager.getInstance().dispose();
+			getChangeSetManager().dispose();
 		} finally {
 			super.stop(context);
 		}

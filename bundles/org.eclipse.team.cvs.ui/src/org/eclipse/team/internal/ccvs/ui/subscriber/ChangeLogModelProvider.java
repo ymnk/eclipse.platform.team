@@ -19,9 +19,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -79,46 +76,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	
 	private Map rootToProvider = new HashMap(); // Maps ISynchronizeModelElement -> AbstractSynchronizeModelProvider
 	
-	private int sortCriteria = ChangeLogModelSorter.DATE;
-	
 	private ViewerSorter embeddedSorter;
 	
-	// Constants for persisting sorting options
-	private static final String P_LAST_COMMENTSORT = TeamUIPlugin.ID + ".P_LAST_COMMENT_SORT"; //$NON-NLS-1$
-	
-	/* *****************************************************************************
-	 * Action that allows changing the model providers sort order.
-	 */
-	private class ToggleSortOrderAction extends Action {
-		private int criteria;
-		protected ToggleSortOrderAction(String name, int criteria) {
-			super(name, Action.AS_RADIO_BUTTON);
-			this.criteria = criteria;
-			update();		
-		}
-
-		public void run() {
-			if (isChecked() && sortCriteria != criteria) {
-			    sortCriteria = criteria;
-				String key = getSettingsKey();
-				IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-				if(pageSettings != null) {
-					pageSettings.put(key, criteria);
-				}
-				update();
-				ChangeLogModelProvider.this.firePropertyChange(P_VIEWER_SORTER, null, null);
-			}
-		}
-		
-		public void update() {
-		    setChecked(criteria == sortCriteria);
-		}
-		
-		protected String getSettingsKey() {
-		    return P_LAST_COMMENTSORT;
-		}
-	}
-
 	/* *****************************************************************************
 	 * Action that will open a commit set in a compare editor.
 	 * It provides a comparison between the files in the
@@ -270,40 +229,19 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	/* *****************************************************************************
 	 * Action group for this layout. It is added and removed for this layout only.
 	 */
-	public class ChangeLogActionGroup extends ChangeSetManagementActionGroup {
-		private MenuManager sortByComment;
+	public class ChangeLogActionGroup extends ChangeSetActionGroup {
         private OpenCommitSetAction openCommitSet;
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
-			sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0a"));	 //$NON-NLS-1$
 			openCommitSet = new OpenCommitSetAction(configuration);
 			
 			appendToGroup(
 					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 					ISynchronizePageConfiguration.FILE_GROUP, 
 					openCommitSet);
-			
-			appendToGroup(
-					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					ISynchronizePageConfiguration.SORT_GROUP, 
-					sortByComment);
-			
-			ChangeLogModelProvider.this.initialize(configuration);
-			
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1a"), ChangeLogModelSorter.COMMENT)); //$NON-NLS-1$
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2a"), ChangeLogModelSorter.DATE)); //$NON-NLS-1$
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3a"), ChangeLogModelSorter.USER)); //$NON-NLS-1$
 		}
 
-        /* (non-Javadoc)
-		 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#dispose()
-		 */
-		public void dispose() {
-			sortByComment.dispose();
-			sortByComment.removeAll();
-			super.dispose();
-		}
-	    protected ActiveChangeSet createChangeSet(final SubscriberChangeSetManager manager, final SyncInfo[] infos) {
+	    protected ActiveChangeSet createChangeSet(final SubscriberChangeSetCollector manager, final SyncInfo[] infos) {
 	        ActiveChangeSet set = manager.createSet(Policy.bind("ChangeLogModelProvider.1"), new SyncInfo[0]); //$NON-NLS-1$
 			CommitSetDialog dialog = new CommitSetDialog(getConfiguration().getSite().getShell(), set, getResources(infos),
 			        Policy.bind("ChangeLogModelProvider.2"), Policy.bind("ChangeLogModelProvider.3")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -412,32 +350,11 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		super(configuration, set);
 		Assert.isNotNull(id);
         this.id = id;
-		configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, ChangeSetManagementActionGroup.CHANGE_SET_GROUP);
+		configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, ChangeSetActionGroup.CHANGE_SET_GROUP);
 		if (configuration.getComparisonType() == ISynchronizePageConfiguration.THREE_WAY) {
-		    CommitSetManager.getInstance().addListener(this);
+		    getActiveChangeSetManager().addListener(this);
 		}
-		initialize(configuration);
 	}
-	
-    private void initialize(ISynchronizePageConfiguration configuration) {
-		try {
-			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-			if(pageSettings != null) {
-				sortCriteria = pageSettings.getInt(P_LAST_COMMENTSORT);
-			}
-		} catch(NumberFormatException e) {
-			// ignore and use the defaults.
-		}
-		switch (sortCriteria) {
-        case ChangeLogModelSorter.COMMENT:
-        case ChangeLogModelSorter.DATE:
-        case ChangeLogModelSorter.USER:
-            break;
-        default:
-            sortCriteria = ChangeLogModelSorter.DATE;
-            break;
-        }
-    }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#createActionGroup()
@@ -662,7 +579,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
      * Add the local change to the appropriate outgoing commit set
      */
     private void addLocalChange(SyncInfo info) {
-        ActiveChangeSet set = getCommitSetFor(info);
+        ChangeSet set = getCommitSetFor(info);
         if (set == null) {
             // The change is not part of a change set so add it to the root provider
             addToCommitSetProvider(info, getModelRoot());
@@ -769,7 +686,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 * Find an existing comment set
 	 * TODO: we could do better than a linear lookup?
 	 */
-    private ChangeSetDiffNode getDiffNodeFor(ActiveChangeSet set) {
+    private ChangeSetDiffNode getDiffNodeFor(ChangeSet set) {
         if (set == null) return null;
 		IDiffElement[] elements = getModelRoot().getChildren();
 		for (int i = 0; i < elements.length; i++) {
@@ -789,15 +706,19 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 * TODO: we could do better than a linear lookup?
 	 * TODO: can a file be in multiple sets?
 	 */
-    private ActiveChangeSet getCommitSetFor(SyncInfo info) {
-        ActiveChangeSet[] sets = CommitSetManager.getInstance().getSets();
+    private ChangeSet getCommitSetFor(SyncInfo info) {
+        ChangeSet[] sets = getActiveChangeSetManager().getSets();
         for (int i = 0; i < sets.length; i++) {
-            ActiveChangeSet set = sets[i];
+            ChangeSet set = sets[i];
             if (set.contains(info.getLocal())) {
                 return set;
             }
         }
         return null;
+    }
+    
+    public SubscriberChangeSetCollector getActiveChangeSetManager() {
+        return CVSUIPlugin.getPlugin().getChangeSetManager();
     }
     
 	/*
@@ -1013,7 +934,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		if (logs != null) {
 		    logs.clearEntries();
 		}
-		CommitSetManager.getInstance().removeListener(this);
+		getActiveChangeSetManager().removeListener(this);
 		super.dispose();
 	}
 
@@ -1021,7 +942,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#getViewerSorter()
 	 */
 	public ViewerSorter getViewerSorter() {
-		return new ChangeLogModelSorter(this, sortCriteria);
+		return new ChangeSetModelSorter(this, sortCriteria);
 	}
 
 	/* (non-Javadoc)
@@ -1062,21 +983,21 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#setAdded(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet)
      */
-    public void setAdded(ActiveChangeSet set) {
+    public void setAdded(ChangeSet set) {
         refresh(set.getResources(), true /* we may not be in the UI thread */);
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#setRemoved(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet)
      */
-    public void setRemoved(ActiveChangeSet set) {
+    public void setRemoved(ChangeSet set) {
         refresh(set.getResources(), true /* we may not be in the UI thread */);
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#titleChanged(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet)
      */
-    public void titleChanged(ActiveChangeSet set) {
+    public void nameChanged(ChangeSet set) {
         // We need to refresh all the files because the title is used
         // to cache the commit set (i.e. used as the hashCode in various maps)
         refresh(set.getResources(), true /* we may not be in the UI thread */);
@@ -1197,7 +1118,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
     /* (non-Javadoc)
      * @see org.eclipse.team.core.change.IChangeSetChangeListener#defaultSetChanged(org.eclipse.team.core.change.ChangeSet)
      */
-    public void defaultSetChanged(ActiveChangeSet oldDefault, ActiveChangeSet set) {
+    public void defaultSetChanged(ChangeSet oldDefault, ChangeSet set) {
         if (oldDefault != null) {
             refreshNode(getDiffNodeFor(oldDefault));
         }
@@ -1209,7 +1130,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
     /* (non-Javadoc)
      * @see org.eclipse.team.core.change.IChangeSetChangeListener#resourcesChanged(org.eclipse.team.core.change.ChangeSet, org.eclipse.core.resources.IResource[])
      */
-    public void resourcesChanged(ActiveChangeSet set, IResource[] resources) {
+    public void resourcesChanged(ChangeSet set, IResource[] resources) {
         // Any element that has been added to the set sould be removed 
         // from the root set
         ISynchronizeModelProvider provider = getProviderRootedAt(getModelRoot());
