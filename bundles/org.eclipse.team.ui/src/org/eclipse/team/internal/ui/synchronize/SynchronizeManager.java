@@ -10,31 +10,53 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.*;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.core.SaveContext;
+import org.eclipse.team.internal.core.SaveContextXMLWriter;
+import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
-import org.eclipse.team.internal.ui.registry.SynchronizePartnerDescriptor;
 import org.eclipse.team.ui.ITeamUIConstants;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeManager;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.WorkbenchException;
 
 /**
  * Manages the registered synchronize participants. It handles notification
  * of participant lifecycles, creation of <code>static</code> participants, 
  * and the re-creation of persisted participants.
  * 
+ * @see ISynchronizeView
+ * @see ISynchronizeParticipant
  * @since 3.0
  */
 public class SynchronizeManager implements ISynchronizeManager {
 	/**
-	 * Synchronize View page listeners
+	 * Synchronize participants listeners
 	 */
 	private ListenerList fListeners = null;
 	
@@ -219,28 +241,40 @@ public class SynchronizeManager implements ISynchronizeManager {
 	}
 	
 	/**
-	 *  
+	 * Creates the participant registry and restore any saved participants. Will also instantiate
+	 * any static participants.   
 	 */
-	public void restoreParticipants() throws PartInitException, TeamException, CoreException {
-		participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
-		restoreSynchronizeParticipants();
-		// Create any new participants that had previously not been added (e.g. new plugins being
-		// added.
-		SynchronizePartnerDescriptor[] desc = participantRegistry.getSynchronizeParticipants();
-		List participants = new ArrayList();
-		for (int i = 0; i < desc.length; i++) {
-			SynchronizePartnerDescriptor descriptor = desc[i];
-			if(descriptor.isStatic() && ! synchronizeParticipants.containsKey(descriptor.getId())) {
-				participants.add(createParticipant(descriptor.getId(), descriptor));
+	public void initialize() {
+		try {
+			// Initialize the participant registry
+			participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
+			
+			// Instantiate and register any participants saved from a previous session
+			restoreSynchronizeParticipants();
+			
+			// Instantiate and register any static participant that has not already been
+			// created.
+			SynchronizeParticipantDescriptor[] desc = participantRegistry.getSynchronizeParticipants();
+			List participants = new ArrayList();
+			for (int i = 0; i < desc.length; i++) {
+				SynchronizeParticipantDescriptor descriptor = desc[i];
+				if(descriptor.isStatic() && ! synchronizeParticipants.containsKey(descriptor.getId())) {
+					participants.add(createParticipant(descriptor.getId(), descriptor));
+				}
+			}		
+			if(! participants.isEmpty()) {
+				addSynchronizeParticipants((ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]));
 			}
-		}
-		if(! participants.isEmpty()) {
-			addSynchronizeParticipants((ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]));
+		} catch (CoreException e) { 
+			TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.8"), e)); //$NON-NLS-1$
 		}
 	}
 	
-	private void restoreSynchronizeParticipants() throws TeamException, PartInitException, CoreException {
-		ISaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME); //$NON-NLS-1$
+	/**
+	 * Restores participants that have been saved between sessions. 
+	 */
+	private void restoreSynchronizeParticipants() throws TeamException, CoreException {
+		ISaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME);
 		if(root != null && root.getName().equals(CTX_PARTICIPANTS)) {
 			List participants = new ArrayList();
 			ISaveContext[] contexts = root.getChildren();
@@ -249,10 +283,13 @@ public class SynchronizeManager implements ISynchronizeManager {
 				if(context.getName().equals(CTX_PARTICIPANT)) {
 					String qualified_name = context.getAttribute(CTX_QUALIFIED_NAME);
 					String local_name = context.getAttribute(CTX_LOCAL_NAME);
-					SynchronizePartnerDescriptor desc = participantRegistry.find(qualified_name);
+					SynchronizeParticipantDescriptor desc = participantRegistry.find(qualified_name);
+					QualifiedName id = new QualifiedName(qualified_name, local_name);					
 					if(desc != null) {
 						IConfigurationElement cfgElement = desc.getConfigurationElement();
-						participants.add(createParticipant(new QualifiedName(qualified_name, local_name), desc));
+						participants.add(createParticipant(id, desc));
+					} else {
+						TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.9", id.toString()), null)); //$NON-NLS-1$
 					}
 				}
 			}
@@ -262,13 +299,20 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 	}
 	
-	private ISynchronizeParticipant createParticipant(QualifiedName id, SynchronizePartnerDescriptor desc) throws CoreException, PartInitException {
-		ISynchronizeParticipant participant = (ISynchronizeParticipant)TeamUIPlugin.createExtension(desc.getConfigurationElement(), SynchronizePartnerDescriptor.ATT_CLASS);
+	/**
+	 * Creates a participant instance with the given id from the participant description
+	 */
+	private ISynchronizeParticipant createParticipant(QualifiedName id, SynchronizeParticipantDescriptor desc) throws CoreException {
+		ISynchronizeParticipant participant = (ISynchronizeParticipant)TeamUIPlugin.createExtension(desc.getConfigurationElement(), SynchronizeParticipantDescriptor.ATT_CLASS);
 		participant.setInitializationData(desc.getConfigurationElement(), id.toString(), id);
 		participant.init(id);
 		return participant;
 	}
-	
+
+	/**
+	 * Saves a file containing the list of participant ids that are registered with this
+	 * manager. Each participant is also given the chance to save it's state. 
+	 */
 	private void saveState() {
 		ISaveContext root = new SaveContext();
 		root.setName(CTX_PARTICIPANTS);
@@ -287,9 +331,9 @@ public class SynchronizeManager implements ISynchronizeManager {
 				participant.saveState();
 			}
 			root.setChildren((SaveContext[])children.toArray(new SaveContext[children.size()]));
-			SaveContextXMLWriter.writeXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME, (SaveContext)root); //$NON-NLS-1$
+			SaveContextXMLWriter.writeXMLPluginMetaFile(TeamUIPlugin.getPlugin(), FILENAME, (SaveContext)root);
 		} catch (TeamException e) {
-			TeamPlugin.log(e);
+			TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.10"), e)); //$NON-NLS-1$
 		}
 	}
 }

@@ -213,7 +213,7 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 			// start once the platform has started and stabilized
 			refreshJob.schedule(20000 /* 20 seconds */);
 		}
-		((SynchronizeManager)TeamUI.getSynchronizeManager()).restoreParticipants();
+		((SynchronizeManager)TeamUI.getSynchronizeManager()).initialize();
 	}
 	
 	/* (non-Javadoc)

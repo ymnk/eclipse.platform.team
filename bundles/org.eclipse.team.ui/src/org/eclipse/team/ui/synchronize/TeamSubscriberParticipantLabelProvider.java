@@ -1,4 +1,4 @@
-package org.eclipse.team.internal.ui.synchronize;
+package org.eclipse.team.ui.synchronize;
 
 import java.util.HashMap;
 import java.util.Iterator;

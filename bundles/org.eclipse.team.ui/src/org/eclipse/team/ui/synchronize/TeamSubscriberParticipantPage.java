@@ -45,7 +45,6 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
-import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.team.internal.ui.synchronize.actions.ComparisonCriteriaActionGroup;
 import org.eclipse.team.internal.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;

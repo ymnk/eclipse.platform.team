@@ -14,19 +14,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.IPage;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -35,16 +33,7 @@ import org.eclipse.ui.part.PageBook;
 import org.eclipse.ui.part.PageBookView;
 
 /**
- * @author JLemieux
- *
- * To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Generation - Code and Comments
- */
-/**
- * @author JLemieux
- *
- * To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Generation - Code and Comments
+ * Implements a Synchronize View that contains multiple synchronize participants. 
  */
 public class SynchronizeView extends PageBookView implements ISynchronizeView, ISynchronizeParticipantListener, IPropertyChangeListener {
 	
@@ -107,9 +96,9 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void updateTitle() {
 		ISynchronizeParticipant page = getParticipant();
 		if (page == null) {
-			setTitle("Synchronize View");
+			setTitle(Policy.bind("SynchronizeView.1")); //$NON-NLS-1$
 		} else {
-			setTitle("Synchronize View - " + page.getName());
+			setTitle(Policy.bind("SynchronizeView.2") + page.getName()); //$NON-NLS-1$
 		}
 	}
 
@@ -227,26 +216,6 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		fPartToPage = new HashMap();
 	}
 	
-	/**
-	 * Creates a pop-up menu on the given control. The menu
-	 * is registered with this view's site, such that other
-	 * plug-ins may contribute to the menu.
-	 * 
-	 * @param menuControl the control with which the pop-up
-	 *  menu will be associated with.
-	 */
-	protected void createContextMenu(Control menuControl) {
-		MenuManager menuMgr= new MenuManager("#PopUp"); //$NON-NLS-1$
-		menuMgr.setRemoveAllWhenShown(true);
-		Menu menu= menuMgr.createContextMenu(menuControl);
-		menuControl.setMenu(menu);
-
-		// register the context menu such that other plugins may contribute to it
-		if (getSite() != null) {
-			getSite().registerContextMenu(menuMgr, null);
-		}
-	}
-
 	/**
 	 * Create the default actions for the view. These will be shown regardless of the
 	 * participant being displayed.

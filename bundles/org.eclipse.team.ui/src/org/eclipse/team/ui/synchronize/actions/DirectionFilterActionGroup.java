@@ -31,7 +31,7 @@ import org.eclipse.ui.actions.ActionGroup;
  * <p>
  * When a modes changes a property change event is fired from the participant 
  * with a value of <code>TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE</code>.
- * 
+ * </p>
  * @see TeamSubscriberParticipant
  * @since 3.0 
  */
@@ -172,7 +172,6 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @see org.eclipse.ui.actions.ActionGroup#dispose()
 	 */
 	public void dispose() {
-		// TODO Auto-generated method stub
 		super.dispose();
 	}
 }

@@ -32,9 +32,9 @@ public class SynchronizeParticipantRegistry extends RegistryReader {
 	protected boolean readElement(IConfigurationElement element) {
 		if (element.getName().equals(TAG_SYNCPARTICIPANT)) {
 			String descText = getDescription(element);
-			SynchronizePartnerDescriptor desc;
+			SynchronizeParticipantDescriptor desc;
 			try {
-				desc = new SynchronizePartnerDescriptor(element, descText);
+				desc = new SynchronizeParticipantDescriptor(element, descText);
 				participants.put(desc.getId().getQualifier(), desc);
 			} catch (CoreException e) {
 				TeamUIPlugin.log(e);
@@ -44,11 +44,11 @@ public class SynchronizeParticipantRegistry extends RegistryReader {
 		return false;
 	}
 	
-	public SynchronizePartnerDescriptor[] getSynchronizeParticipants() {
-		return (SynchronizePartnerDescriptor[])participants.values().toArray(new SynchronizePartnerDescriptor[participants.size()]);
+	public SynchronizeParticipantDescriptor[] getSynchronizeParticipants() {
+		return (SynchronizeParticipantDescriptor[])participants.values().toArray(new SynchronizeParticipantDescriptor[participants.size()]);
 	}
 	
-	public SynchronizePartnerDescriptor find(String id) {
-		return (SynchronizePartnerDescriptor)participants.get(id);
+	public SynchronizeParticipantDescriptor find(String id) {
+		return (SynchronizeParticipantDescriptor)participants.get(id);
 	}
 }
