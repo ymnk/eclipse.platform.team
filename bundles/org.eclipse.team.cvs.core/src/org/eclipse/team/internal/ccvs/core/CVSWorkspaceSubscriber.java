@@ -14,17 +14,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 import org.eclipse.team.core.synchronize.IResourceVariant;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
-import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
 import org.eclipse.team.internal.core.subscribers.caches.PersistantResourceVariantTree;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
+import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * CVSWorkspaceSubscriber
@@ -218,6 +221,78 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	 */
 	protected ResourceVariantTree getRemoteSynchronizationCache() {
 		return remoteSynchronizer;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.sync.TeamSubscriber#getAllOutOfSync(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public SyncInfo[] getAllOutOfSync(IResource[] resources, final int depth, final IProgressMonitor monitor) throws TeamException {
+		monitor.beginTask(null, IProgressMonitor.UNKNOWN);
+		final List result = new ArrayList();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			try {
+				// We need to do a scheduling rule on the project to
+				// avoid overly desctructive operations from occuring 
+				// while we gather sync info
+				Platform.getJobManager().beginRule(resource, monitor);
+				resource.accept(new IResourceVisitor() {
+					public boolean visit(IResource innerResource) throws CoreException {
+						try {
+							if (innerResource.getType() != IResource.FILE) {
+								monitor.subTask(Policy.bind("CVSWorkspaceSubscriber.1", innerResource.getFullPath().toString())); //$NON-NLS-1$
+							}
+							if (isOutOfSync(innerResource, monitor)) {
+								SyncInfo info = getSyncInfo(innerResource);
+								if (info != null && info.getKind() != 0) {
+									result.add(info);
+								}
+							}
+							return true;
+						} catch (TeamException e) {
+							// TODO:See bug 42795
+							throw new CoreException(e.getStatus());
+						}
+					}
+				}, depth, true /* include phantoms */);
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			} finally {
+				Platform.getJobManager().endRule(resource);
+				monitor.done();
+			}
+		}
+		monitor.done();
+		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+	}
+	
+	/* internal use only */ boolean isOutOfSync(IResource resource, IProgressMonitor monitor) throws TeamException {
+		return (hasIncomingChange(resource) || hasOutgoingChange(resource, monitor));
+	}
+	
+	private boolean hasIncomingChange(IResource resource) throws TeamException {
+		return remoteSynchronizer.isVariantKnown(resource);
+	}
+	
+	private boolean hasOutgoingChange(IResource resource, IProgressMonitor monitor) throws CVSException {
+		if (resource.getType() == IResource.PROJECT || resource.getType() == IResource.ROOT) {
+			// a project (or the workspace root) cannot have outgoing changes
+			return false;
+		}
+		int state = EclipseSynchronizer.getInstance().getModificationState(resource.getParent());
+		if (state == ICVSFile.CLEAN) {
+			// if the parent is known to be clean then the resource must also be clean
+			return false;
+		}
+		if (resource.getType() == IResource.FILE) {
+			// A file is an outgoing change if it is modified
+			ICVSFile file = CVSWorkspaceRoot.getCVSFileFor((IFile)resource);
+			return file.isModified(monitor);
+		} else {
+			// A folder is an outgoing change if it is not a CVS folder and not ignored
+			ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)resource);
+			return !folder.isCVSFolder() && !folder.isIgnored();
+		}
 	}
 
 }
