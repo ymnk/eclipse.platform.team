@@ -5,6 +5,8 @@ package org.eclipse.team.internal.ccvs.ui;
  * All Rights Reserved.
  */
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -12,15 +14,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.xerces.parsers.SAXParser;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
@@ -47,6 +52,9 @@ import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.core.client.Command;
+import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * This class is repsible for maintaining the UI's list of known repositories,
@@ -55,15 +63,18 @@ import org.eclipse.team.internal.ccvs.core.client.Command;
  * It also provides a number of useful methods for assisting in repository operations.
  */
 public class RepositoryManager {
+	// old state file
 	private static final String STATE_FILE = ".repositoryManagerState"; //$NON-NLS-1$
 	private static final int STATE_FILE_VERSION_1 = -1;
-	
+	// new state file
+	private static final String REPOSITORIES_VIEW_FILE = "repositoriesView.xml"; //$NON-NLS-1$
+
 	// Map ICVSRepositoryLocation -> List of CVSTag
-	Hashtable branchTags = new Hashtable();
-	// Map ICVSRepositoryLocation -> Hashtable of (Project name -> Set of CVSTag)
-	Hashtable versionTags = new Hashtable();
-	// Map ICVSRepositoryLocation -> Hashtable of (Project name -> Set of file paths that are project relative)
-	Hashtable autoRefreshFiles = new Hashtable();
+	Map branchTags = new HashMap();
+	// Map ICVSRepositoryLocation -> Map of (Project name -> Set of CVSTag)
+	Map versionTags = new HashMap();
+	// Map ICVSRepositoryLocation -> Map of (Project name -> Set of file paths that are project relative)
+	Map autoRefreshFiles = new HashMap();
 	
 	List listeners = new ArrayList();
 
@@ -101,7 +112,7 @@ public class RepositoryManager {
 			ICVSRepositoryLocation location = getRepositoryLocationFor(project);
 			String name = new Path(project.getFolderSyncInfo().getRepository()).segment(0);
 			Set result = new HashSet();
-			Hashtable table = (Hashtable)versionTags.get(location);
+			Map table = (Map)versionTags.get(location);
 			if (table == null) {
 				return (CVSTag[])result.toArray(new CVSTag[result.size()]);
 			}
@@ -123,7 +134,7 @@ public class RepositoryManager {
 	public CVSTag[] getKnownVersionTags(ICVSRepositoryLocation location) {
 		Set result = new HashSet();
 		// Get the table of tags for the location
-		Hashtable table = (Hashtable)versionTags.get(location);
+		Map table = (Map)versionTags.get(location);
 		if (table != null) {
 			// The table is keyed by folder
 			for (Iterator iter = table.values().iterator(); iter.hasNext();) {
@@ -135,7 +146,7 @@ public class RepositoryManager {
 	}
 	
 	public Map getKnownProjectsAndVersions(ICVSRepositoryLocation location) {
-		return (Hashtable)versionTags.get(location);
+		return (Map)versionTags.get(location);
 	}
 	
 	public ICVSRemoteResource[] getFoldersForTag(ICVSRepositoryLocation location, CVSTag tag, IProgressMonitor monitor) throws CVSException {
@@ -145,7 +156,7 @@ public class RepositoryManager {
 		}
 		Set result = new HashSet();
 		// Get the table of tags for the location
-		Hashtable table = (Hashtable)versionTags.get(location);
+		Map table = (Map)versionTags.get(location);
 		if (table != null) {
 			// The table is keyed by folder
 			for (Iterator iter = table.keySet().iterator(); iter.hasNext();) {
@@ -265,7 +276,7 @@ public class RepositoryManager {
 	 */
 	public void rootRemoved(ICVSRepositoryLocation root) {
 		CVSTag[] branchTags = getKnownBranchTags(root);
-		Hashtable vTags = (Hashtable)this.versionTags.get(root);
+		Map vTags = (Map)this.versionTags.get(root);
 		this.branchTags.remove(root);
 		this.versionTags.remove(root);
 		this.autoRefreshFiles.remove(root);
@@ -295,9 +306,9 @@ public class RepositoryManager {
 		try {		
 			// Make sure there is a version tag table for the location
 			ICVSRepositoryLocation location = getRepositoryLocationFor(resource);
-			Hashtable table = (Hashtable)versionTags.get(location);
+			Map table = (Map)versionTags.get(location);
 			if (table == null) {
-				table = new Hashtable();
+				table = new HashMap();
 				versionTags.put(location, table);
 			}
 			
@@ -337,7 +348,7 @@ public class RepositoryManager {
 	public void addAutoRefreshFiles(ICVSFolder project, String[] relativeFilePaths) {
 		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
 		initDefaultAutoRefreshFiles(project);
-		Hashtable table = (Hashtable)autoRefreshFiles.get(location);
+		Map table = (Map)autoRefreshFiles.get(location);
 		Set set = (Set)table.get(project.getName());
 		for (int i = 0; i < relativeFilePaths.length; i++) {
 			set.add(relativeFilePaths[i]);
@@ -347,7 +358,7 @@ public class RepositoryManager {
 	public void removeAutoRefreshFiles(ICVSFolder project, String[] relativeFilePaths) {
 		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
 		initDefaultAutoRefreshFiles(project);
-		Hashtable table = (Hashtable)autoRefreshFiles.get(location);
+		Map table = (Map)autoRefreshFiles.get(location);
 		if (table == null) return;
 		Set set = (Set)table.get(project.getName());
 		if (set == null) return;
@@ -359,16 +370,16 @@ public class RepositoryManager {
 	public String[] getAutoRefreshFiles(ICVSFolder project) {
 		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
 		initDefaultAutoRefreshFiles(project);
-		Hashtable table = (Hashtable)autoRefreshFiles.get(location);
+		Map table = (Map)autoRefreshFiles.get(location);
 		Set set = (Set)table.get(project.getName());
 		return (String[])set.toArray(new String[0]);
 	}
 	
 	private void initDefaultAutoRefreshFiles(ICVSFolder project) {
 		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
-		Hashtable table = (Hashtable)autoRefreshFiles.get(location);
+		Map table = (Map)autoRefreshFiles.get(location);
 		if (table == null) {
-			table = new Hashtable();
+			table = new HashMap();
 			autoRefreshFiles.put(location, table);
 		}
 		Set set = (Set)table.get(project.getName());
@@ -409,7 +420,7 @@ public class RepositoryManager {
 	 */
 	public void removeVersionTags(ICVSFolder project, CVSTag[] tags) {
 		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
-		Hashtable table = (Hashtable)versionTags.get(location);
+		Map table = (Map)versionTags.get(location);
 		if (table == null) return;
 		Set set = (Set)table.get(project.getName());
 		if (set == null) return;
@@ -440,21 +451,39 @@ public class RepositoryManager {
 	}
 	
 	private void loadState() throws TeamException {
-		IPath pluginStateLocation = CVSUIPlugin.getPlugin().getStateLocation().append(STATE_FILE);
+		IPath pluginStateLocation = CVSUIPlugin.getPlugin().getStateLocation().append(REPOSITORIES_VIEW_FILE);
 		File file = pluginStateLocation.toFile();
 		if (file.exists()) {
 			try {
-				DataInputStream dis = new DataInputStream(new FileInputStream(file));
+				BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
 				try {
-					readState(dis);
+					readState(is);
 				} finally {
-					dis.close();
+					is.close();
 				}
 			} catch (IOException e) {
 				CVSUIPlugin.log(new Status(Status.ERROR, CVSUIPlugin.ID, TeamException.UNABLE, Policy.bind("RepositoryManager.ioException"), e)); //$NON-NLS-1$
 			} catch (TeamException e) {
 				CVSUIPlugin.log(e.getStatus());
 			}
+		} else {
+			IPath oldPluginStateLocation = CVSUIPlugin.getPlugin().getStateLocation().append(STATE_FILE);
+			if (file.exists()) {
+				try {
+					DataInputStream dis = new DataInputStream(new FileInputStream(file));
+					try {
+						readOldState(dis);
+					} finally {
+						dis.close();
+					}
+					// saveState();
+					// file.delete();
+				} catch (IOException e) {
+					CVSUIPlugin.log(new Status(Status.ERROR, CVSUIPlugin.ID, TeamException.UNABLE, Policy.bind("RepositoryManager.ioException"), e)); //$NON-NLS-1$
+				} catch (TeamException e) {
+					CVSUIPlugin.log(e.getStatus());
+				}
+			} 
 		}
 	}
 	
@@ -479,7 +508,84 @@ public class RepositoryManager {
 		} catch (IOException e) {
 			throw new TeamException(new Status(Status.ERROR, CVSUIPlugin.ID, TeamException.UNABLE, Policy.bind("RepositoryManager.save",stateFile.getAbsolutePath()), e)); //$NON-NLS-1$
 		}
+		tempFile = pluginStateLocation.append(REPOSITORIES_VIEW_FILE + ".tmp").toFile(); //$NON-NLS-1$
+		stateFile = pluginStateLocation.append(REPOSITORIES_VIEW_FILE).toFile();
+		try {
+			XMLWriter writer = new XMLWriter(new BufferedOutputStream(new FileOutputStream(tempFile)));
+			try {
+				writeState(writer);
+			} finally {
+				writer.close();
+			}
+			if (stateFile.exists()) {
+				stateFile.delete();
+			}
+			boolean renamed = tempFile.renameTo(stateFile);
+			if (!renamed) {
+				throw new TeamException(new Status(Status.ERROR, CVSUIPlugin.ID, TeamException.UNABLE, Policy.bind("RepositoryManager.rename", tempFile.getAbsolutePath()), null)); //$NON-NLS-1$
+			}
+		} catch (IOException e) {
+			throw new TeamException(new Status(Status.ERROR, CVSUIPlugin.ID, TeamException.UNABLE, Policy.bind("RepositoryManager.save",stateFile.getAbsolutePath()), e)); //$NON-NLS-1$
+		}
 	}
+	private void writeState(XMLWriter writer) throws IOException {
+		writer.startTag(RepositoriesViewContentHandler.REPOSITORIES_VIEW_TAG, null, true);
+		// Write the repositories
+		Collection repos = Arrays.asList(getKnownRoots());
+		Iterator it = repos.iterator();
+		HashMap attributes = new HashMap();
+		while (it.hasNext()) {
+			
+			// write the repository start tag with attributes
+			CVSRepositoryLocation root = (CVSRepositoryLocation)it.next();
+			attributes.clear();
+			attributes.put(RepositoriesViewContentHandler.ID_ATTRIBUTE, root.getLocation());
+			String programName = root.getRemoteCVSProgramName();
+			if (!programName.equals(CVSRepositoryLocation.DEFAULT_REMOTE_CVS_PROGRAM_NAME)) {
+				attributes.put(RepositoriesViewContentHandler.REPOSITORY_PROGRAM_NAME_ATTRIBUTE, programName);
+			}
+			writer.startTag(RepositoriesViewContentHandler.REPOSITORY_TAG, attributes, true);
+			
+			// Gather all the modules that have tags and/or auto-refresh files
+			Set paths = new HashSet();
+			Map versionTable = (HashMap)versionTags.get(root);
+			if (versionTable != null) paths.addAll(versionTable.keySet());
+			Map autoRefreshTable = (HashMap)autoRefreshFiles.get(root);
+			if (autoRefreshTable != null) paths.addAll(autoRefreshTable.keySet());
+
+			// for each module, write the moduel, tags and auto-refresh files.
+			Iterator projIt = paths.iterator();
+			while (projIt.hasNext()) {
+				String path = (String)projIt.next();
+				attributes.clear();
+				attributes.put(RepositoriesViewContentHandler.PATH_ATTRIBUTE, path);
+				writer.startTag(RepositoriesViewContentHandler.MODULE_TAG, attributes, true);
+				Set tagSet = (Set)versionTable.get(path);
+				Iterator tagIt = tagSet.iterator();
+				while (tagIt.hasNext()) {
+					CVSTag tag = (CVSTag)tagIt.next();
+					attributes.clear();
+					attributes.put(RepositoriesViewContentHandler.NAME_ATTRIBUTE, tag.getName());
+					attributes.put(RepositoriesViewContentHandler.TYPE_ATTRIBUTE, RepositoriesViewContentHandler.TAG_TYPES[tag.getType()]);
+					writer.printTag(RepositoriesViewContentHandler.TAG_TAG, attributes, true, true);
+				}
+				Set refreshSet = (Set)autoRefreshTable.get(path);
+				Iterator filenameIt = tagSet.iterator();
+				while (filenameIt.hasNext()) {
+					String filename = (String)filenameIt.next();
+					attributes.clear();
+					attributes.put(RepositoriesViewContentHandler.NAME_ATTRIBUTE, filename);
+					writer.printTag(RepositoriesViewContentHandler.AUTO_REFRESH_FILE_TAG, attributes, true, true);
+				}
+				writer.endTag(RepositoriesViewContentHandler.MODULE_TAG);
+			}
+			// write the auto-refresh files for each remote folder
+			
+			writer.endTag(RepositoriesViewContentHandler.REPOSITORY_TAG);
+		}
+		writer.endTag(RepositoriesViewContentHandler.REPOSITORIES_VIEW_TAG);
+	}
+		
 	private void writeState(DataOutputStream dos) throws IOException {
 		// Write the repositories
 		Collection repos = Arrays.asList(getKnownRoots());
@@ -499,7 +605,7 @@ public class RepositoryManager {
 				dos.writeInt(branchTags[i].getType());
 			}
 			// write number of projects for which there are tags in this root
-			Hashtable table = (Hashtable)versionTags.get(root);
+			Map table = (Map)versionTags.get(root);
 			if (table == null) {
 				dos.writeInt(0);
 			} else {
@@ -519,7 +625,7 @@ public class RepositoryManager {
 				}
 			}
 			// write number of projects for which there were customized auto refresh files
-			table = (Hashtable)autoRefreshFiles.get(root);
+			table = (Map)autoRefreshFiles.get(root);
 			if (table == null) {
 				dos.writeInt(0);
 			} else {
@@ -540,7 +646,18 @@ public class RepositoryManager {
 			}
 		}
 	}
-	private void readState(DataInputStream dis) throws IOException, TeamException {
+	
+	private void readState(InputStream stream) throws IOException, TeamException {
+		SAXParser parser = new SAXParser();
+		parser.setContentHandler(new RepositoriesViewContentHandler());
+		try {
+			parser.parse(new InputSource(stream));
+		} catch (SAXException ex) {
+			throw new CVSException(Policy.bind("RepositoryManager.parsingProblem"), ex); //$NON-NLS-1$
+		}
+	}
+	
+	private void readOldState(DataInputStream dis) throws IOException, TeamException {
 		int repoSize = dis.readInt();
 		boolean version1 = false;
 		if (repoSize == STATE_FILE_VERSION_1) {
@@ -563,7 +680,7 @@ public class RepositoryManager {
 			// read the number of projects for this root that have version tags
 			int projSize = dis.readInt();
 			if (projSize > 0) {
-				Hashtable projTable = new Hashtable();
+				Map projTable = new HashMap();
 				versionTags.put(root, projTable);
 				for (int j = 0; j < projSize; j++) {
 					String name = dis.readUTF();
@@ -585,7 +702,7 @@ public class RepositoryManager {
 				try {
 					projSize = dis.readInt();
 					if (projSize > 0) {
-						Hashtable autoRefreshTable = new Hashtable();
+						Map autoRefreshTable = new HashMap();
 						autoRefreshFiles.put(root, autoRefreshTable);
 						for (int j = 0; j < projSize; j++) {
 							String name = dis.readUTF();
@@ -617,7 +734,7 @@ public class RepositoryManager {
 	 * This schedules the resources for addition; they still need to be committed.
 	 */
 	public void add(IResource[] resources, IProgressMonitor monitor) throws TeamException {
-		Hashtable table = getProviderMapping(resources);
+		Map table = getProviderMapping(resources);
 		Set keySet = table.keySet();
 		monitor.beginTask("", keySet.size() * 1000); //$NON-NLS-1$
 		monitor.setTaskName(Policy.bind("RepositoryManager.adding")); //$NON-NLS-1$
@@ -637,7 +754,7 @@ public class RepositoryManager {
 	 * This schedules the resources for deletion; they still need to be committed.
 	 */
 	public void delete(IResource[] resources, IProgressMonitor monitor) throws TeamException {
-		Hashtable table = getProviderMapping(resources);
+		Map table = getProviderMapping(resources);
 		Set keySet = table.keySet();
 		monitor.beginTask("", keySet.size() * 1000); //$NON-NLS-1$
 		monitor.setTaskName(Policy.bind("RepositoryManager.deleting")); //$NON-NLS-1$
@@ -653,7 +770,7 @@ public class RepositoryManager {
 	}
 	
 	public void update(IResource[] resources, Command.LocalOption[] options, boolean createBackups, IProgressMonitor monitor) throws TeamException {
-		Hashtable table = getProviderMapping(resources);
+		Map table = getProviderMapping(resources);
 		Set keySet = table.keySet();
 		monitor.beginTask("", keySet.size() * 1000); //$NON-NLS-1$
 		monitor.setTaskName(Policy.bind("RepositoryManager.updating")); //$NON-NLS-1$
@@ -671,7 +788,7 @@ public class RepositoryManager {
 	 * Mark the files as merged.
 	 */
 	public void merged(IRemoteSyncElement[] elements) throws TeamException {
-		Hashtable table = getProviderMapping(elements);
+		Map table = getProviderMapping(elements);
 		Set keySet = table.keySet();
 		Iterator iterator = keySet.iterator();
 		while (iterator.hasNext()) {
@@ -710,7 +827,7 @@ public class RepositoryManager {
 	 * @param monitor  the progress monitor
 	 */
 	public void commit(IResource[] resources, String comment, IProgressMonitor monitor) throws TeamException {
-		Hashtable table = getProviderMapping(resources);
+		Map table = getProviderMapping(resources);
 		Set keySet = table.keySet();
 		monitor.beginTask("", keySet.size() * 1000); //$NON-NLS-1$
 		monitor.setTaskName(Policy.bind("RepositoryManager.committing")); //$NON-NLS-1$
@@ -726,11 +843,11 @@ public class RepositoryManager {
 	}
 	
 	/**
-	 * Helper method. Return a hashtable mapping provider to a list of resources
+	 * Helper method. Return a Map mapping provider to a list of resources
 	 * shared with that provider.
 	 */
-	private Hashtable getProviderMapping(IResource[] resources) {
-		Hashtable result = new Hashtable();
+	private Map getProviderMapping(IResource[] resources) {
+		Map result = new HashMap();
 		for (int i = 0; i < resources.length; i++) {
 			RepositoryProvider provider = RepositoryProvider.getProvider(resources[i].getProject(), CVSProviderPlugin.getTypeId());
 			List list = (List)result.get(provider);
@@ -743,11 +860,11 @@ public class RepositoryManager {
 		return result;
 	}
 	/**
-	 * Helper method. Return a hashtable mapping provider to a list of IRemoteSyncElements
+	 * Helper method. Return a Map mapping provider to a list of IRemoteSyncElements
 	 * shared with that provider.
 	 */
-	private Hashtable getProviderMapping(IRemoteSyncElement[] elements) {
-		Hashtable result = new Hashtable();
+	private Map getProviderMapping(IRemoteSyncElement[] elements) {
+		Map result = new HashMap();
 		for (int i = 0; i < elements.length; i++) {
 			RepositoryProvider provider = RepositoryProvider.getProvider(elements[i].getLocal().getProject(), CVSProviderPlugin.getTypeId());
 			List list = (List)result.get(provider);
