@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.model;
 
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.progress.IElementCollector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -22,7 +23,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
-public class RemoteFolderElement extends RemoteResourceElement {
+public class RemoteFolderElement extends RemoteResourceElement implements IDeferredWorkbenchAdapter {
 	
 	/**
 	 * Overridden to append the version name to remote folders which
@@ -48,6 +49,11 @@ public class RemoteFolderElement extends RemoteResourceElement {
 		return PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJ_FOLDER);
 	}
 	
+	public Object[] fetchChildren(Object o, IProgressMonitor monitor) throws TeamException {
+		if (!(o instanceof ICVSRemoteFolder)) return new Object[0];
+		return ((ICVSRemoteFolder)o).members(monitor);
+	}
+
 	public boolean isDeferred() {
 		return true;
 	}
@@ -56,8 +62,23 @@ public class RemoteFolderElement extends RemoteResourceElement {
 		return "org.eclipse.team.cvs.ui.remotefolderelement";
 	}
 
-	public Object[] fetchChildren(Object o, IProgressMonitor monitor) throws TeamException {
-		if (!(o instanceof ICVSRemoteFolder)) return new Object[0];
-		return ((ICVSRemoteFolder)o).members(monitor);
+	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
+		try {
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(null, 100);
+			collector.add(fetchChildren(o, Policy.subMonitorFor(monitor, 90)), Policy.subMonitorFor(monitor, 10));
+		} catch (TeamException e) {
+			CVSUIPlugin.log(e);
+		} finally {
+			monitor.done();
+		}
 	}
+
+	public boolean isThreadSafe() {
+		return false;
+	}
+
+	public boolean isContainer() {
+		return true;
+	}	
 }

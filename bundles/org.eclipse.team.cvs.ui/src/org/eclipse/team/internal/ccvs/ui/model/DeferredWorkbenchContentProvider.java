@@ -85,7 +85,7 @@ public class DeferredWorkbenchContentProvider extends WorkbenchContentProvider {
 					System.out.println("DeferredJob: fetching children for parent: " + parent.toString());
 					adapter.fetchDeferredChildren(parent, collector, monitor);
 					System.out.println("DeferredJob: finished children for parent: " + parent.toString());
-					collector.done(parent);
+					//collector.done(parent);
 				} catch(OperationCanceledException e) {
 					return Status.CANCEL_STATUS;
 				}
