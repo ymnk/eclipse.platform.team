@@ -433,10 +433,10 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			// The file contents matched the server contents so no entry line was sent
 			if (oldInfo == null) return;
 			Date timeStamp = oldInfo.getTimeStamp();
-			if (timeStamp == null) {
+			if (timeStamp == null || oldInfo.isMergedWithConflicts()) {
 				// If the entry line has no timestamp, put the file timestamp in the entry line
 				MutableResourceSyncInfo mutable = oldInfo.cloneMutable();
-				mutable.setTimeStamp(getTimeStamp());
+				mutable.setTimeStamp(getTimeStamp(), true /* clear merged */);
 				newInfo = mutable;
 			} else {
 				// reset the file timestamp to the one from the entry line
