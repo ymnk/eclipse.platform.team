@@ -118,7 +118,7 @@ public class CVSFolderPropertiesPage extends PropertyPage {
 			// Display error text
 			createLabel(composite, Policy.bind("CVSFilePropertiesPage.error"), 2); //$NON-NLS-1$
 		}
-		WorkbenchHelp.setHelp(composite, IHelpContextIds.FOLDER_PROPERTY_PAGE);
+		WorkbenchHelp.setHelp(getControl(), IHelpContextIds.FOLDER_PROPERTY_PAGE);
 		return composite;
 	}
 

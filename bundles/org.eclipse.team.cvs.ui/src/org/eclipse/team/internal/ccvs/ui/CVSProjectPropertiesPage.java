@@ -241,7 +241,7 @@ public class CVSProjectPropertiesPage extends PropertyPage {
 		});
 		
 		initializeValues(oldLocation);
-		WorkbenchHelp.setHelp(composite, IHelpContextIds.PROJECT_PROPERTY_PAGE);
+		WorkbenchHelp.setHelp(getControl(), IHelpContextIds.PROJECT_PROPERTY_PAGE);
 		return composite;
 	}
 	/**
