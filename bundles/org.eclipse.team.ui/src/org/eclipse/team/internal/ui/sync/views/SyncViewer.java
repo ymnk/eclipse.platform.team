@@ -699,23 +699,21 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 		updateTitle();
 	}
 
-	public void aboutToRun(Job job) {
-	}
-
-	public void awake(Job job) {
-	}
-
+	/**
+	 * IJobChangeListener overrides. The only one of interest is done so that we can
+	 * change the icon of the view when the refresh jobis running.
+	 */
 	public void done(Job job, IStatus result) {
 		if(job instanceof RefreshSubscribersJob) {
 			viewImage = initialImg;
-			firePropertyChange(IWorkbenchPart.PROP_TITLE);
+			fireSavePropertyChange(IWorkbenchPart.PROP_TITLE);
 		}
 	}
 
 	public void running(Job job) {
 		if(job instanceof RefreshSubscribersJob) {
 			viewImage = refreshingImg;
-			firePropertyChange(IWorkbenchPart.PROP_TITLE);
+			fireSavePropertyChange(IWorkbenchPart.PROP_TITLE);
 		}
 	}
 
@@ -723,5 +721,19 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	}
 
 	public void sleeping(Job job) {
+	}
+
+	public void aboutToRun(Job job) {
+	}
+
+	public void awake(Job job) {
+	}
+	
+	private void fireSavePropertyChange(final int property) {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {		
+				firePropertyChange(property);
+			}
+		});
 	}
 }

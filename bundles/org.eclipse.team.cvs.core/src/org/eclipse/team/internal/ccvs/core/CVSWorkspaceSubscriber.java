@@ -42,7 +42,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		super(id, name, description);
 		
 		// install sync info participant
-		remoteSynchronizer = new OptimizedRemoteSynchronizer(REMOTE_RESOURCE_KEY);
+		remoteSynchronizer = new OptimizedRemoteSynchronizer(REMOTE_RESOURCE_KEY, true);
 		
 		// TODO: temporary proxy for CVS events
 		CVSProviderPlugin.addResourceStateChangeListener(this); 

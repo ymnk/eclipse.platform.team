@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui;
+package org.eclipse.team.internal.ui;
 
 import java.util.ArrayList;
 import java.util.Iterator;

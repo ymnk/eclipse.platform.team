@@ -44,10 +44,12 @@ public class RemoteTagSynchronizer extends RemoteSynchronizer {
 
 	private static final byte[] NO_REMOTE = new byte[0];
 	private CVSTag tag;
+	private boolean cacheContents = false;
 	
-	public RemoteTagSynchronizer(String id, CVSTag tag) {
+	public RemoteTagSynchronizer(String id, CVSTag tag, boolean cacheContents) {
 		super(id);
 		this.tag = tag;
+		this.cacheContents = cacheContents;
 	}
 
 	public void collectChanges(IResource local, ICVSRemoteResource remote, int depth, IProgressMonitor monitor) throws TeamException {
@@ -63,6 +65,7 @@ public class RemoteTagSynchronizer extends RemoteSynchronizer {
 		for (Iterator it = children.keySet().iterator(); it.hasNext();) {
 			IResource localChild = (IResource) it.next();
 			ICVSRemoteResource remoteChild = (ICVSRemoteResource)children.get(localChild);
+			
 			collectChanges(localChild, remoteChild, 
 				depth == IResource.DEPTH_INFINITE ? IResource.DEPTH_INFINITE : IResource.DEPTH_ZERO, 
 				monitor);

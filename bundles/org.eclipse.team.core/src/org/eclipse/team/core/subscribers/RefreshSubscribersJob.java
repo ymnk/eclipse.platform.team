@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
@@ -33,29 +35,84 @@ import org.eclipse.team.internal.core.Policy;
  * cancelled and the subscriber and resources that the user asked to refresh are processed.
  * Upon completion of the user initiated refresh, the scheduled background refreshes
  * will resume.
+ * 
+ * [Note: this job currently updates all roots of every subscriber. It may be better to have API 
+ * to specify a more constrained set of resources and subscribers to refresh.] 
  */
-public class RefreshSubscribersJob extends Job implements ITeamResourceChangeListener,IJobChangeListener {
+public class RefreshSubscribersJob extends Job implements ITeamResourceChangeListener, IJobChangeListener {
 	
 	private final static boolean DEBUG = Policy.DEBUG_REFRESH_JOB;
-	private static long REFRESH_DELAY = 10000; //5 /* minutes */ * (60 * 1000); 
+	private static long refreshInterval = 10000; //5 /* minutes */ * (60 * 1000); 
+	
 	private Map subscribers = Collections.synchronizedMap(new  HashMap());
+	private List importantSubscribers = Collections.synchronizedList(new  ArrayList());
+	
+	private RefreshSubscribersJob instance;
 	
 	public RefreshSubscribersJob() {
 		TeamProvider.addListener(this);
 		Platform.getJobManager().addJobChangeListener(this);
+		setPriority(Job.DECORATE);
 		if(! subscribers.isEmpty()) {
 			if(DEBUG) System.out.println("refreshJob: starting job in constructor");
-			schedule();
+			schedule(refreshInterval);
+		}
+		
+		instance = this;
+	}
+	
+	public RefreshSubscribersJob getInstance() {
+		if(instance == null) {
+			new RefreshSubscribersJob();
+		}
+		return instance;
+	}
+	
+	/**
+	 * Specify the interval in seconds at which this job is scheduled.
+	 * @param seconds delay specified in seconds
+	 */
+	synchronized public void setRefreshInterval(long seconds) {
+		refreshInterval = seconds * 1000;
+		
+		// if the job hasn't been run yet then update the interval time,
+		// otherwise wait until the job is finished and the interval time
+		// will be used when it is rescheduled.
+		if(getState() == Job.WAITING) {
+			cancel();
+			schedule(refreshInterval);
 		}
 	}
 	
+	/**
+	 * Returns the interval of this job in seconds. 
+	 * @return
+	 */
+	synchronized public long getRefreshInterval() {
+		return refreshInterval / 1000;
+	}
+	
+	/**
+	 * Called to schedule a subscriber to be refreshed immediately. If the job is currently running it
+	 * will be cancelled and the job will be restarted to refresh the given subscriber only.   
+	 */
 	synchronized public void refreshNow(IResource[] resources, TeamSubscriber subscriber) {
 	}
 	
+	/**
+	 * This is run by the job scheduler. A list of subscribers will be refreshed, errors will not stop the job 
+	 * and it will continue to refresh the other subscribers.
+	 */
 	public IStatus run(IProgressMonitor monitor) {		
 		monitor.beginTask("", subscribers.size() * 100);
 		try {		
-			for (Iterator it = subscribers.values().iterator(); it.hasNext();) {
+			Iterator it;
+			if(importantSubscribers != null && ! importantSubscribers.isEmpty()) {
+				it = importantSubscribers.iterator();
+			} else {
+				it = subscribers.values().iterator();
+			}
+			while (it.hasNext()) {
 				if(monitor.isCanceled()) {
 					return Status.CANCEL_STATUS;
 				}
@@ -74,10 +131,22 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 			return Status.CANCEL_STATUS;
 		} finally {
 			monitor.done();
+			importantSubscribers.clear();
 		}
 		return Status.OK_STATUS;
 	}
 
+	/**
+	 * This job will update it's list of subscribers to refresh based on the create/delete 
+	 * subscriber events. 
+	 * 
+	 * If a new subscriber is created it will be added to the list of subscribers
+	 * to refresh and the job will be started if it isn't already.
+	 * 
+	 * If a subscriber is deleted, the job is cancelled to ensure that the subscriber being 
+	 * deleted can be properly shutdown. After removing the subscriber from the list the
+	 * job is restarted is there are any subscribers left.  
+	 */
 	public void teamResourceChanged(TeamDelta[] deltas) {
 		for (int i = 0; i < deltas.length; i++) {
 			TeamDelta delta = deltas[i];
@@ -87,7 +156,7 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 				if(DEBUG) System.out.println("refreshJob: adding subscriber " + s.getName());
 				if(this.getState() == Job.NONE) {
 					if(DEBUG) System.out.println("refreshJob: starting job after adding " + s.getName());
-					schedule(REFRESH_DELAY);
+					schedule(refreshInterval);
 				}				
 			} else if(delta.getFlags() == TeamDelta.SUBSCRIBER_DELETED) {
 				// cancel current refresh just to make sure that the subscriber being deleted can
@@ -97,31 +166,30 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 				subscribers.remove(s.getId());
 				if(DEBUG) System.out.println("refreshJob: removing subscriber " + s.getName());
 				if(! subscribers.isEmpty()) {
-					schedule();
+					schedule(refreshInterval);
 				}
 			}
 		}
 	}
 
-	public void aboutToRun(Job job) {
-	}
-
-	public void awake(Job job) {
-	}
-
+	/**
+	 * IJobChangeListener overrides. The only one of interest is done so that we can
+	 * restart this job.
+	 */
 	public void done(Job job, IStatus result) {
 		if(job == this) {
 			if(DEBUG) System.out.println("refreshJob: restarting job");
-			schedule(REFRESH_DELAY);
+			schedule(refreshInterval);
 		}
 	}
-
+	public void aboutToRun(Job job) {
+	}
+	public void awake(Job job) {
+	}
 	public void running(Job job) {
 	}
-
 	public void scheduled(Job job) {
 	}
-
 	public void sleeping(Job job) {
 	}
 }
