@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ui.synchronize.actions;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
@@ -32,7 +31,6 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 	// the changes viewer are contributed via the viewer and not the page.
 	private Action configureSchedule;
 	private SyncViewerShowPreferencesAction showPreferences;
-	private Action refreshAllAction;
 	private Action refreshSelectionAction;
 
 	/* (non-Javadoc)
@@ -44,12 +42,7 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 		final ISynchronizePageSite site = configuration.getSite();
 		// toolbar
 		if(participant.doesSupportSynchronize()) {
-			refreshAllAction = new Action() {
-				public void run() {
-					participant.refresh(participant.getResources(), Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetails", participant.getName()), site.getWorkbenchSite()); //$NON-NLS-1$ //$NON-NLS-2$
-				}
-			};
-			Utils.initAction(refreshAllAction, "action.refreshWithRemote."); //$NON-NLS-1$
+
 			refreshSelectionAction = new Action() {
 				public void run() {
 					IStructuredSelection selection = (IStructuredSelection)site.getSelectionProvider().getSelection();
@@ -91,16 +84,6 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 	 */
 	public void fillActionBars(IActionBars actionBars) {
 		if(actionBars != null) {
-			
-			// toolbar
-			IToolBarManager manager = actionBars.getToolBarManager();
-			if (findGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP) != null
-				&& findGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP) != null) {
-				// Place synchronize with navigato to save space
-				appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, refreshAllAction);	
-			} else {
-				appendToGroup(manager, ISynchronizePageConfiguration.SYNCHRONIZE_GROUP, refreshAllAction);
-			}
 
 			// view menu
 			IMenuManager menu = actionBars.getMenuManager();

@@ -27,7 +27,6 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.TeamImages;
-import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 
@@ -40,6 +39,9 @@ import org.eclipse.ui.PartInitException;
  * @since 3.0
  */
 public abstract class AbstractSynchronizeParticipant implements ISynchronizeParticipant {
+	
+	private final static String CTX_PINNED = "root"; //$NON-NLS-1$
+	
 	// property listeners
 	private ListenerList fListeners;
 
@@ -173,8 +175,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#doesSupportRefresh()
 	 */
 	public boolean doesSupportSynchronize() {
-		ISynchronizeParticipantReference ref = TeamUI.getSynchronizeManager().get(getId(), getSecondaryId());
-		return ref == null ? false : ref.getDescriptor().isGlobalSynchronize();
+		return true;
 	}
 	
 	/*
@@ -291,12 +292,14 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#init(org.eclipse.ui.IMemento)
 	 */
 	public void init(String secondaryId, IMemento memento) throws PartInitException {
+		pinned = Boolean.getBoolean(memento.getString(CTX_PINNED));
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#saveState(org.eclipse.ui.IMemento)
 	 */
 	public void saveState(IMemento memento) {
+		memento.putString(CTX_PINNED, Boolean.toString(pinned));
 	}
 
 	/* (non-Javadoc)

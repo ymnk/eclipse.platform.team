@@ -19,7 +19,9 @@ import org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction;
 import org.eclipse.team.internal.ui.synchronize.ScopableSubscriberParticipant;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
@@ -164,5 +166,9 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 		configuration.addMenuGroup(
 				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 				CONTEXT_MENU_CONTRIBUTION_GROUP_4);
+	}
+	
+	protected ISynchronizeParticipantDescriptor getDescriptor() {
+		return TeamUI.getSynchronizeManager().getParticipantDescriptor(ID);
 	}
 }

@@ -223,6 +223,13 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 				workingSetGroup);
 	}
 	
+	private void initializeStatusLine() {
+		statusLine = new StatusLineContributionGroup(
+				configuration.getSite().getShell(), 
+				configuration, 
+				null);
+	}
+	
 	/**
 	 * Must be called when an advisor is no longer needed.
 	 */
@@ -436,6 +443,8 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 					menu.add(new Separator(getGroupId("others"))); //$NON-NLS-1$
 					menu.add(new Separator());
 					start = 1;
+				} else {
+					initializeStatusLine();
 				}
 				for (int i = start; i < groups.length; i++) {
 					String group = groups[i];

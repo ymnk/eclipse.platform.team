@@ -61,11 +61,13 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		this.workingSet.setTooltip(Policy.bind("StatisticsPanel.workingSetTooltip")); //$NON-NLS-1$
 		updateWorkingSetText(configuration.getWorkingSet());
 
-		this.workingSet.addListener(SWT.MouseDoubleClick, new Listener() {
-			public void handleEvent(Event event) {
-				new SelectWorkingSetAction(setGroup, shell).run();
-			}
-		});
+		if (setGroup != null) {
+			this.workingSet.addListener(SWT.MouseDoubleClick, new Listener() {
+				public void handleEvent(Event event) {
+					new SelectWorkingSetAction(setGroup, shell).run();
+				}
+			});
+		}
 		
 		// Listen to changes to update the working set
 		configuration.addPropertyChangeListener(this);

@@ -10,7 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IToolBarManager;
@@ -21,15 +25,26 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.actions.PinParticipantAction;
-import org.eclipse.team.internal.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeManager;
+import org.eclipse.team.ui.synchronize.ISynchronizePage;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.part.*;
+import org.eclipse.ui.part.IPage;
+import org.eclipse.ui.part.IPageBookViewPage;
+import org.eclipse.ui.part.MessagePage;
+import org.eclipse.ui.part.PageBook;
+import org.eclipse.ui.part.PageBookView;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
@@ -61,11 +76,6 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * Action to remove the selected participant
 	 */
 	private PinParticipantAction fPinAction;
-	
-	/**
-	 * Action to remove the selected participant
-	 */
-	private RemoveSynchronizeParticipantAction fRemoveAction;
 	
 	/**
 	 * Preference key to save
@@ -105,8 +115,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void showPageRec(PageRec pageRec) {
 		super.showPageRec(pageRec);
 		activeParticipantRef = (ISynchronizeParticipant)fPartToParticipant.get(pageRec.part);
-		if (fRemoveAction != null)
-			updateActionEnablements();
+		updateActionEnablements();
 		updateTitle();		
 	}
 
@@ -278,13 +287,13 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void createActions() {
 		fPageDropDown = new SynchronizePageDropDownAction(this);
 		fPinAction = new PinParticipantAction();
-		fRemoveAction = new RemoveSynchronizeParticipantAction(this);
 		updateActionEnablements();
 	}
 
 	private void updateActionEnablements() {
-		fPinAction.setParticipant(activeParticipantRef);
-		fRemoveAction.setParticipant(activeParticipantRef);
+		if (fPinAction != null) {
+			fPinAction.setParticipant(activeParticipantRef);
+		}
 	}
 
 	/**
@@ -295,7 +304,6 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void configureToolBar(IToolBarManager mgr) {
 		mgr.add(fPageDropDown);
 		mgr.add(fPinAction);
-		mgr.add(fRemoveAction);
 	}
 
 	/* (non-Javadoc)
