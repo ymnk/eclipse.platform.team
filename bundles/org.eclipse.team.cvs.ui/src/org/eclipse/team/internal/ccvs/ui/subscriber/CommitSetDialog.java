@@ -20,7 +20,7 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.change.ChangeSet;
+import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.ui.help.WorkbenchHelp;
 

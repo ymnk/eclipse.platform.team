@@ -8,15 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.change;
+package org.eclipse.team.core.subscribers;
 
-import java.util.StringTokenizer;
+import java.util.*;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.TeamPlugin;
@@ -148,7 +145,7 @@ public class ChangeSet {
      * @param resource
      * @throws TeamException
      */
-    public void add(SyncInfo info) throws TeamException {
+    public void add(SyncInfo info) {
         if (getManager().isModified(info)) {
             set.add(info);
         }
@@ -160,7 +157,7 @@ public class ChangeSet {
      * @param resources the resources to be added.
      * @throws TeamException
      */
-    public void add(SyncInfo[] infos) throws TeamException {
+    public void add(SyncInfo[] infos) {
        try {
            set.beginInput();
            for (int i = 0; i < infos.length; i++) {
@@ -259,6 +256,25 @@ public class ChangeSet {
             } finally {
                 getSyncInfos().endInput(null);
             }
+        }
+    }
+
+    /**
+     * Add the resources to the change set if they are outgoing changes.
+     * @param resources the resouces to add.
+     * @throws TeamException
+     */
+    public void add(IResource[] resources) throws TeamException {
+        List toAdd = new ArrayList();
+        for (int i = 0; i < resources.length; i++) {
+            IResource resource = resources[i];
+            SyncInfo info = manager.getSyncInfo(resource);
+            if (info != null) {
+                toAdd.add(info);
+            }
+        }
+        if (!toAdd.isEmpty()) {
+            add((SyncInfo[]) toAdd.toArray(new SyncInfo[toAdd.size()]));
         }
     }
 }

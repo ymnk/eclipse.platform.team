@@ -12,7 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
-import org.eclipse.team.core.change.ChangeSet;
+import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 

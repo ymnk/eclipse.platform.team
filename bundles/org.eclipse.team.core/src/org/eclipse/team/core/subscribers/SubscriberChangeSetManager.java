@@ -8,31 +8,19 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.change;
+package org.eclipse.team.core.subscribers;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.core.internal.runtime.ListenerList;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.ISafeRunnable;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IPreferencesService;
-import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.preferences.*;
 import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
-import org.eclipse.team.internal.core.BackgroundEventHandler;
-import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.core.*;
 import org.eclipse.team.internal.core.subscribers.SubscriberResourceCollector;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
@@ -48,27 +36,10 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
     private static final int RESOURCE_REMOVAL = 1;
     private static final int RESOURCE_CHANGE = 2;
     
-    private static final int SET_RESOURCE_CHANGE = 3;
-    private static final int SET_TITLE_CHANGE = 4;
-    private static final int SET_ADDED = 5;
-    private static final int SET_REMOVED = 6;
-    private static final int DEFAULT_SET_CHANGED = 7;
-    
     private List activeSets;
     private ListenerList listeners = new ListenerList();
     private ChangeSet defaultSet;
     private EventHandler handler;
-    
-    private class SetEvent extends BackgroundEventHandler.Event {
-        private final ChangeSet set;
-        public SetEvent(ChangeSet set, IResource resource, int type) {
-            super(resource, type, IResource.DEPTH_ZERO);
-            this.set = set;
-        }
-        public ChangeSet getSet() {
-            return set;
-        }
-    }
     
     /*
      * Background event handler for serializing and batching change set changes
@@ -85,16 +56,8 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
          * @see org.eclipse.team.internal.core.BackgroundEventHandler#processEvent(org.eclipse.team.internal.core.BackgroundEventHandler.Event, org.eclipse.core.runtime.IProgressMonitor)
          */
         protected void processEvent(Event event, IProgressMonitor monitor) throws CoreException {
-            switch (event.getType()) {
-            case RESOURCE_REMOVAL:
-                handleRemove(event.getResource());
-                break;
-            case RESOURCE_CHANGE:
-                handleChange(event.getResource(), event.getDepth());
-                break;
-            default:
-                break;
-            }
+            // Handle everything in the dispatch
+            dispatchEvents.add(event);
         }
         
         /* (non-Javadoc)
@@ -105,11 +68,51 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
                 return false;
             }
             try {
-
+                beginDispath();
+                for (Iterator iter = dispatchEvents.iterator(); iter.hasNext();) {
+                    Event event = (Event) iter.next();
+	                switch (event.getType()) {
+	                case RESOURCE_REMOVAL:
+	                    handleRemove(event.getResource());
+	                    break;
+	                case RESOURCE_CHANGE:
+	                    handleChange(event.getResource(), event.getDepth());
+	                    break;
+	                default:
+	                    break;
+	                }
+                }
             } finally {
-                dispatchEvents.clear();
+                try {
+                    endDispatch(monitor);
+                } finally {
+                    dispatchEvents.clear();
+                }
             }
             return true;
+        }
+
+        private void beginDispath() {
+            for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
+                ChangeSet set = (ChangeSet) iter.next();
+                set.getSyncInfos().beginInput();
+            }
+        }
+
+        private void endDispatch(IProgressMonitor monitor) {
+            monitor.beginTask(null, 100 * activeSets.size());
+            for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
+                ChangeSet set = (ChangeSet) iter.next();
+                try {
+                    set.getSyncInfos().endInput(Policy.subMonitorFor(monitor, 100));
+                } catch (RuntimeException e) {
+                    // Don't worry about ending every set if an error occurs.
+                    // Instead, log the error and suggest a restart.
+                    TeamPlugin.log(IStatus.ERROR, "An error occurred while reconciling change sets. Restarting the application is recommended.", e);
+                    throw e;
+                }
+            }
+            monitor.done();
         }
         
         /* (non-Javadoc)
@@ -141,10 +144,22 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
          * Handle the change
          */
         private void handleChange(IResource resource, int depth) throws TeamException {
-            if (isModified(resource)) {
-                // Consider for inclusion in the default set
-                // if the resource is not already a memebr of another set
-                considerForDefaultSet(resource);
+            SyncInfo syncInfo = getSyncInfo(resource);
+            if (isModified(syncInfo)) {
+                ChangeSet[] containingSets = getContainingSets(resource);
+                if (containingSets.length == 0) {
+	                // Consider for inclusion in the default set
+	                // if the resource is not already a memebr of another set
+                    if (defaultSet != null) {
+                        defaultSet.add(syncInfo);
+                     }
+                } else {
+                    for (int i = 0; i < containingSets.length; i++) {
+                        ChangeSet set = containingSets[i];
+                        // Update the sync info in the set
+                        set.getSyncInfos().add(syncInfo);
+                    }
+                }
             } else {
                 removeFromAllSets(resource);
             }
@@ -158,46 +173,31 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         }
         
         private void removeFromAllSets(IResource resource) {
+            List toRemove = new ArrayList();
             for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
                 ChangeSet set = (ChangeSet) iter.next();
                 if (set.contains(resource)) {
                     set.remove(resource);
 	                if (set.isEmpty()) {
-	                    remove(set);
+	                    toRemove.add(set);
 	                }
                 }
             }
-        }
-
-        private void considerForDefaultSet(IResource resource) throws TeamException {
-            if (defaultSet != null && !isInActiveSet(resource)) {
-               defaultSet.add(resource);
+            for (Iterator iter = toRemove.iterator(); iter.hasNext();) {
+                ChangeSet set = (ChangeSet) iter.next();
+                remove(set);
             }
         }
-        
-        private boolean isInActiveSet(IResource resource) {
+
+        private ChangeSet[] getContainingSets(IResource resource) {
+            Set sets = new HashSet();
             for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
                 ChangeSet set = (ChangeSet) iter.next();
                 if (set.contains(resource)) {
-                    return true;
+                    sets.add(set);
                 }
             }
-            return false;
-        }
-        
-        private void resourcesChanged(final ChangeSet set, final IResource[] files) {
-            Object[] listeners = getListeners();
-            for (int i = 0; i < listeners.length; i++) {
-                final IChangeSetChangeListener listener = (IChangeSetChangeListener) listeners[i];
-                Platform.run(new ISafeRunnable() {
-                    public void handleException(Throwable exception) {
-                        // Exceptions are logged by the platform
-                    }
-                    public void run() throws Exception {
-                        listener.resourcesChanged(set, files);
-                    }
-                });
-            }
+            return (ChangeSet[]) sets.toArray(new ChangeSet[sets.size()]);
         }
     }
     
@@ -256,25 +256,6 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         return true;
     }
     
-    /*
-     * Callback that is invoked from a ChangeSet when a resource
-     * has been added to the set. The add may have been done by
-     * a third party (i.e. not the manager) so make sure the 
-     * resource does not exist in other sets.
-     */
-    /* package */ void resourceAdded(final ChangeSet set, IResource resource) {
-        resourceChanged(set, resource);
-        if (isSingleSetPerResource()) {
-	        // Remove the added files from any other set that contains them
-	        for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-	            ChangeSet otherSet = (ChangeSet) iter.next();
-	            if (otherSet != set) {
-	                otherSet.remove(resource);
-	            }
-	        }
-        }
-    }
-    
     /**
      * Create a commit set with the given title and files. The created
      * set is not added to the control of the commit set manager
@@ -293,6 +274,26 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         return commitSet;
     }
 
+    /**
+     * Create a change set containing the given files if
+     * they have been modified locally.
+     * @param title the title of the commit set
+     * @param files the files contained in the set
+     * @return the created set
+     * @throws TeamException
+     */
+    public ChangeSet createSet(String title, IFile[] files) throws TeamException {
+        List infos = new ArrayList();
+        for (int i = 0; i < files.length; i++) {
+            IFile file = files[i];
+            SyncInfo info = getSyncInfo(file);
+            if (info != null) {
+                infos.add(info);
+            }
+        }
+        return createSet(title, (SyncInfo[]) infos.toArray(new SyncInfo[infos.size()]));
+    }
+    
     /**
      * Add the set to the list of active sets.
      * @param set the set to be added
@@ -379,6 +380,10 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @param set the set which is to become the default set
      */
     public void makeDefault(ChangeSet set) {
+        // The default set must be an active set
+        if (!contains(set)) {
+            add(set);
+        }
         final ChangeSet oldSet = defaultSet;
         defaultSet = set;
         Object[] listeners = getListeners();
@@ -414,16 +419,16 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
     }
     
     /**
-     * Return whether the resource is modified locally w.r.t.
-     * the subscriber.
+     * Return the sync info for the given resource obtained
+     * from the subscriber.
      * @param resource the resource
-     * @return whether the resource is modified locally
+     * @return the sync info for the resource
      * @throws TeamException
      */
-    protected boolean isModified(IResource resource) throws TeamException {
+    protected SyncInfo getSyncInfo(IResource resource) throws TeamException {
         Subscriber subscriber = getSubscriber();
         SyncInfo info = subscriber.getSyncInfo(resource);
-        return isModified(info);
+        return info;
     }
     
     protected boolean isModified(SyncInfo info) {
@@ -525,7 +530,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @see org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.synchronize.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
      */
     public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
-        handleSyncSetChange(set, set.getSyncInfos());
+        handleSyncSetChange(set, set.getSyncInfos(), set.getResources());
     }
 
     /* (non-Javadoc)
@@ -533,7 +538,23 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      */
     public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
         SyncInfoSet set = event.getSet();
-        handleSyncSetChange(set, event.getAddedResources());
+        handleSyncSetChange(set, event.getAddedResources(), getAllResources(event));
+    }
+
+    private IResource[] getAllResources(ISyncInfoSetChangeEvent event) {
+        Set allResources = new HashSet();
+        SyncInfo[] addedResources = event.getAddedResources();
+        for (int i = 0; i < addedResources.length; i++) {
+            SyncInfo info = addedResources[i];
+            allResources.add(info.getLocal());
+        }
+        SyncInfo[] changedResources = event.getChangedResources();
+        for (int i = 0; i < changedResources.length; i++) {
+            SyncInfo info = changedResources[i];
+            allResources.add(info.getLocal());
+        }
+        allResources.addAll(Arrays.asList(event.getRemovedResources()));
+        return (IResource[]) allResources.toArray(new IResource[allResources.size()]);
     }
 
     private void handleAddedResources(ChangeSet set, SyncInfo[] infos) {
@@ -552,14 +573,34 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         }
     }
     
-    private void handleSyncSetChange(SyncInfoSet set, SyncInfo[] addedInfos) {
+    private void handleSyncSetChange(SyncInfoSet set, SyncInfo[] addedInfos, IResource[] allAffectedResources) {
         ChangeSet changeSet = getChangeSet(set);
         if (set.isEmpty() && changeSet != null) {
             remove(changeSet);
         }
+        fireResourcesChangedEvent(changeSet, allAffectedResources);
         handleAddedResources(changeSet, addedInfos);
     }
 
+    /**
+     * @param changeSet
+     * @param allAffectedResources
+     */
+    private void fireResourcesChangedEvent(final ChangeSet changeSet, final IResource[] allAffectedResources) {
+        Object[] listeners = getListeners();
+        for (int i = 0; i < listeners.length; i++) {
+            final IChangeSetChangeListener listener = (IChangeSetChangeListener)listeners[i];
+            Platform.run(new ISafeRunnable() {
+                public void handleException(Throwable exception) {
+                    // Exceptions are logged by the platform
+                }
+                public void run() throws Exception {
+                    listener.resourcesChanged(changeSet, allAffectedResources);
+                }
+            });
+        }
+    }
+    
     private ChangeSet getChangeSet(SyncInfoSet set) {
         for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
             ChangeSet changeSet = (ChangeSet) iter.next();

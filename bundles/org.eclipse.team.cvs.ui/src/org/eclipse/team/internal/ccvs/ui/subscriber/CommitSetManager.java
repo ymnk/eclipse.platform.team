@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.team.core.change.SubscriberChangeSetManager;
+import org.eclipse.team.core.subscribers.SubscriberChangeSetManager;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 
 /**

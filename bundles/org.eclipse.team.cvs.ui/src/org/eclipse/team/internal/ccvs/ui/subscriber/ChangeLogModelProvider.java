@@ -29,8 +29,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.change.ChangeSet;
-import org.eclipse.team.core.change.IChangeSetChangeListener;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.*;
@@ -161,7 +160,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
                         public void run() {
                             try {
                                 IResource[] resources = Utils.getResources(getSelectedDiffElements());
-                                ChangeSet set = CommitSetManager.getInstance().createSet(Policy.bind("ChangeLogModelProvider.1"), null); //$NON-NLS-1$
+                                ChangeSet set = CommitSetManager.getInstance().createSet(Policy.bind("ChangeLogModelProvider.1"), new SyncInfo[0]); //$NON-NLS-1$
                         		CommitSetDialog dialog = new CommitSetDialog(getConfiguration().getSite().getShell(), set, resources,
                         		        Policy.bind("ChangeLogModelProvider.2"), Policy.bind("ChangeLogModelProvider.3")); //$NON-NLS-1$ //$NON-NLS-2$
                         		dialog.open();
@@ -593,8 +592,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		}
 	};
 	private static final ChangeLogModelProviderDescriptor descriptor = new ChangeLogModelProviderDescriptor();
-
-    private ChangeSet defaultSet;
 	
 	public ChangeLogModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set, String id) {
 		super(configuration, set);
@@ -1380,15 +1377,16 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
     /* (non-Javadoc)
      * @see org.eclipse.team.core.change.IChangeSetChangeListener#defaultSetChanged(org.eclipse.team.core.change.ChangeSet)
      */
-    public void defaultSetChanged(ChangeSet set) {
-        if (defaultSet != null) {
-            refreshNode(getDiffNodeFor(defaultSet));
+    public void defaultSetChanged(ChangeSet oldDefault, ChangeSet set) {
+        if (oldDefault != null) {
+            refreshNode(getDiffNodeFor(oldDefault));
         }
-        defaultSet = set;
-        if (defaultSet != null) {
-            refreshNode(getDiffNodeFor(defaultSet));
+        if (set != null) {
+            refreshNode(getDiffNodeFor(set));
         }
     }
+    
+    
 
     /* (non-Javadoc)
      * @see org.eclipse.team.core.change.IChangeSetChangeListener#resourcesChanged(org.eclipse.team.core.change.ChangeSet, org.eclipse.core.resources.IResource[])

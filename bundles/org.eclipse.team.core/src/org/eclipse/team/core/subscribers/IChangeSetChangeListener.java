@@ -8,9 +8,10 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.change;
+package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
+
 
 /**
  * Interface for registering change set change listeners with
