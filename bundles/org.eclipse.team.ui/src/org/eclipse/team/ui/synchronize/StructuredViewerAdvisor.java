@@ -263,9 +263,11 @@ public abstract class StructuredViewerAdvisor {
 	 * @param viewer the viewer to set the input.
 	 */
 	public final void setInput(ISynchronizeModelProvider modelProvider) {
-		modelProvider.setViewer(viewer);
-		viewer.setSorter(modelProvider.getViewerSorter());
-		viewer.setInput(modelProvider.getModelRoot());
+		if (viewer != null) {
+			modelProvider.setViewer(viewer);
+			viewer.setSorter(modelProvider.getViewerSorter());
+			viewer.setInput(modelProvider.getModelRoot());
+		}
 	}
 	
 	/**

@@ -81,6 +81,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 * Constructs a new SynchronizeView.
 	 */
 	public SubscriberParticipantPage(SubscriberPageConfiguration configuration) {
+		this.configuration = configuration;
 		this.participant = (SubscriberParticipant)configuration.getParticipant();
 		IDialogSettings viewsSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		
@@ -130,7 +131,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	public void init(ISynchronizePageSite site) {
 		this.site = site;
 		configuration.setSite(site);
-		((IActionContribution)configuration).initialize(configuration);
 	}
 	
 	public ISynchronizePageSite getSynchronizePageSite() {

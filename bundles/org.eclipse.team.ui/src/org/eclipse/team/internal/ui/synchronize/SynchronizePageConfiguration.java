@@ -29,6 +29,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	private ListenerList propertyChangeListeners = new ListenerList();
 	private ListenerList actionContributions = new ListenerList();
 	private Map properties = new HashMap();
+	private boolean actionsInitialized = false;
 	
 	/**
 	 * Create a configuration for creating a page from the given particpant.
@@ -108,6 +109,9 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 		synchronized(actionContributions) {
 			actionContributions.add(contribution);
 		}
+		if (actionsInitialized) {
+			contribution.initialize(this);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -154,6 +158,7 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 				}
 			});
 		}
+		actionsInitialized = true;
 	}
 	
 	/**
@@ -181,6 +186,9 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 * @param actionBars the action bars of the view
 	 */
 	public void setActionBars(final IActionBars actionBars) {
+		if (!actionsInitialized) {
+			initialize(this);
+		}
 		final Object[] listeners = actionContributions.getListeners();
 		for (int i= 0; i < listeners.length; i++) {
 			final IActionContribution contribution = (IActionContribution)listeners[i];
