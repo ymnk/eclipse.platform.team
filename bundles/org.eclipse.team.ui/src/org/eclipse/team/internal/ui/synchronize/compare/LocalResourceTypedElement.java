@@ -28,7 +28,10 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 /**
- * LocalResourceTypedElement
+ * A resource node that is not buffered. Changes made to it are applied directly 
+ * to the underlying resource.
+ * 
+ * @since 3.0
  */
 public class LocalResourceTypedElement extends ResourceNode {
 

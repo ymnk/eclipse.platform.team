@@ -117,3 +117,5 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 - there are several places in SyncInfoSet and in the DiffNodes where we must use the workspace root
 as the input resource to imply get all members? Maybe this should be cleaned up a bit.
 - SyncInfoSet must be cleaned up a lot, the API is vague and method names are not clear.
+- SyncInfoDiffNode doesn't have to return a resource or a syncinfo. By definition a diff node already has API
+for returning a sync kind getKind() and access to all three resources getRight(), getLeft(), getAncestor().

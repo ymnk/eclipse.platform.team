@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.core.resources.IResource;
@@ -26,9 +27,8 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
 	
-	private IResource resource;
 	private SyncInfoSet syncSet;
-	private SyncInfo info;
+	private SyncInfo    info;
 		
 	/**
 	 * Create an ITypedElement for the given local resource. The returned ITypedElement
@@ -111,9 +111,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 */
 	public SyncInfoDiffNode(IDiffContainer parent, SyncInfoSet set, IResource resource) {
 		this(parent, createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
-		this.syncSet = set;	
-		this.resource = resource;
-		this.info = null;
+		this.syncSet = set;
 	}
 	
 	/**
@@ -125,32 +123,36 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	public SyncInfoDiffNode(SyncInfo info) {
 		this(null, createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
 		this.info = info;
-		this.syncSet = null;	
-		this.resource = info.getLocal();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
 	public Object getAdapter(Class adapter) {
-		if (adapter == SyncInfo.class) {
-			return getSyncInfo();
-		}
 		if(adapter == IWorkbenchAdapter.class) {
 			return this;
 		}
 		return null;
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeViewNode#getSyncInfo()
+	
+	/**
+	 * Return the <code>SyncInfoSet</code> from which this diff node was derived.
+	 * @return a <code>SyncInfoSet</code>
 	 */
-	public SyncInfo getSyncInfo() {
-		SyncInfoSet input = getSyncInfoSet();
-		if(info != null) {
-			return info;
-		} else if(input != null && resource != null) {
-			return input.getSyncInfo(resource);
+	public SyncInfoSet getSyncInfoSet() {
+		return syncSet;
+	}
+	
+	/**
+	 * Helper method that returns the resource associated with this node. A node is not
+	 * required to have an associated local resource.
+	 * @return the resource associated with this node or <code>null</code> if the local
+	 * contributor is not a resource.
+	 */
+	public IResource getResource() {
+		ITypedElement element = getLeft();
+		if(element instanceof ResourceNode) {
+			return ((ResourceNode)element).getResource();
 		}
 		return null;
 	}
@@ -161,7 +163,9 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 */
 	public SyncInfo[] getDescendantSyncInfos() {
 		SyncInfoSet input = getSyncInfoSet();
-		if(input != null && getResource() != null) {
+		IResource resource = getResource();
+		SyncInfo info = getSyncInfo();
+		if(input != null && resource != null) {
 			return input.getOutOfSyncDescendants(resource);
 		} else if(info != null) {
 			return new SyncInfo[] {info};
@@ -187,13 +191,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 			return super.hashCode();
 		}
 		return resource.hashCode();
-	}
-
-	/**
-	 * @return IResource The receiver's resource
-	 */
-	public IResource getResource() {
-		return resource;
 	}
 	
 	/* (non-Javadoc)
@@ -225,28 +222,11 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	}
 	
 	/**
-	 * Return the <code>SyncInfoSet</code> from which this diff node was derived.
-	 * @return a <code>SyncInfoSet</code>
-	 */
-	public SyncInfoSet getSyncInfoSet() {
-		return syncSet;
-	}
-	
-	/**
-	 * Indicates whether the diff node represents a resource path or a single level.
-	 * This is used by the <code>SyncViewerSorter</code> to determine whether to compare
-	 * the full path of two resources or justtheir names.
-	 * @return whether the node represents a resource path
-	 */
-	public boolean isResourcePath() {
-		return false;
-	}
-	
-	/**
 	 * Return whether this diff node has descendant conflicts in the view in which it appears.
 	 * @return whether the node has descendant conflicts
 	 */
 	public boolean hasDecendantConflicts() {
+		IResource resource = getResource();
 		// If this node has no resource, we can't tell
 		// The subclass which created the node with no resource should have overridden this method
 		if (resource != null && resource.getType() == IResource.FILE) return false;
@@ -264,6 +244,12 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 		return false;
 	}
 
+	protected SyncInfo getSyncInfo() {
+		return info;
+	}
+		
+	/** WorkbenchAdapter methods **/
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
 	 */
@@ -301,7 +287,8 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()
 	 */
 	public String getName() {
-		if (getResource() != null) {
+		IResource resource = getResource();
+		if (resource != null) {
 			return resource.getName();
 		}
 		return super.getName();

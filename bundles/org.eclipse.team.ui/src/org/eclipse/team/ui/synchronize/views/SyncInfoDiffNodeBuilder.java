@@ -63,14 +63,15 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		if (container instanceof SyncInfoDiffNode) {
 			SyncInfoDiffNode parentNode = (SyncInfoDiffNode)container;
 			IResource resource = parentNode.getResource();
-			if (resource != null) {
-				IResource[] children = parentNode.getSyncInfoSet().members(resource);
-				SyncInfoDiffNode[] nodes = new SyncInfoDiffNode[children.length];
-				for (int i = 0; i < children.length; i++) {
-					nodes[i] = createChildNode(parentNode, children[i]);
-				}
-				return nodes;
+			if (resource == null) {
+				resource = ResourcesPlugin.getWorkspace().getRoot();
 			}
+			IResource[] children = parentNode.getSyncInfoSet().members(resource);
+			SyncInfoDiffNode[] nodes = new SyncInfoDiffNode[children.length];
+			for (int i = 0; i < children.length; i++) {
+				nodes[i] = createChildNode(parentNode, children[i]);
+			}
+			return nodes;
 		}
 		return new IDiffElement[0];
 	}

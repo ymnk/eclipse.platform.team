@@ -12,7 +12,7 @@ package org.eclipse.team.ui.synchronize.views;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
@@ -41,6 +41,7 @@ public class SyncInfoDiffNodeSorter extends ResourceSorter {
 	}
 
 	protected IResource getResource(Object obj) {
-		return TreeViewerUtils.getResource(obj);
+		IResource[] resources = Utils.getResources(new Object[] {obj});
+		return resources.length == 1 ? resources[0] : null;
 	}
 }

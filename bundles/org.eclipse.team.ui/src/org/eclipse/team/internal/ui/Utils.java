@@ -27,6 +27,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.ui.TeamImages;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.*;
 import org.eclipse.team.internal.ui.Policy;
@@ -384,13 +385,18 @@ public class Utils {
 		List resources = new ArrayList();
 		for (int i = 0; i < elements.length; i++) {
 			Object element = elements[i];
+			IResource resource = null;
 			if(element instanceof IResource) {
-				resources.add(element);
+				resource = (IResource)element;
 			} else if(element instanceof IAdaptable) {
-				IResource resource = (IResource)((IAdaptable)element).getAdapter(IResource.class);
-				if(resource != null) {
-					resources.add(resource);
-				}
+				resource = (IResource)((IAdaptable)element).getAdapter(IResource.class);
+				
+			} else if(element instanceof SyncInfoDiffNode) {
+				resource = ((SyncInfoDiffNode)element).getResource();
+			}
+			
+			if(resource != null) {
+				resources.add(resource);
 			}
 		}
 		return (IResource[]) resources.toArray(new IResource[resources.size()]);
