@@ -11,6 +11,9 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.sets.SyncInfoStatistics;
+import org.eclipse.team.internal.ui.sync.sets.SyncSet;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
@@ -62,17 +65,45 @@ public class SyncViewerLabelProvider extends LabelProvider implements ITableLabe
 	}
 	
 	public String getText(Object element) {
-		if (element instanceof CompressedFolder) {
-			IResource resource = getResource(element);
-			return resource.getProjectRelativePath().toString();
-		}
+		String name;
 		IResource resource = getResource(element);
-		return workbenchLabelProvider.getText(resource);
+		if (element instanceof CompressedFolder) {
+			name = resource.getProjectRelativePath().toString();
+		} else {
+			name = workbenchLabelProvider.getText(resource);		
+		}
+		
+		if(element instanceof SynchronizeViewNode && resource.getType() != IResource.FILE) {
+			SubscriberInput input = ((SynchronizeViewNode)element).getSubscriberInput();
+			SyncSet set = new SyncSet();
+			SyncInfo[] infos = input.getWorkingSetSyncSet().getOutOfSyncDescendants(resource);
+			for (int i = 0; i < infos.length; i++) {
+				set.add(infos[i]);
+			}
+			StringBuffer postfix = new StringBuffer(" (");
+			SyncInfoStatistics stats = set.getStatistics();
+			long count = stats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
+			if(count > 0) {
+				postfix.append("outgoing:" + count);
+			}
+			count = stats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
+			if(count > 0) {
+				postfix.append("incoming:" + count);
+			}
+			count = stats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
+			if(count > 0) {
+				postfix.append("conflicts:" + count);
+			}
+			postfix.append(")");
+			return name + postfix.toString();
+		}
+		
+		return name;
 	}
 	
 	public Image getImage(Object element) {
 		if (element instanceof CompressedFolder) {
-			return compareConfig.getImage(getCompressedFolderImage(), 0);
+			return compareConfig.getImage(getCompressedFolderImage(), IRemoteSyncElement.IN_SYNC);
 		}
 		IResource resource = getResource(element);
 		int kind = getSyncKind(element);
