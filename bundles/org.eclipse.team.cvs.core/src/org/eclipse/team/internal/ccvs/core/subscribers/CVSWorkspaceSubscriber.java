@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.core;
+package org.eclipse.team.internal.ccvs.core.subscribers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,13 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamDelta;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.ICVSFile;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
+import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
@@ -38,7 +45,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	// qualified name for remote sync info
 	private static final String REMOTE_RESOURCE_KEY = "remote-resource-key"; //$NON-NLS-1$
 
-	CVSWorkspaceSubscriber(QualifiedName id, String name, String description) {
+	public CVSWorkspaceSubscriber(QualifiedName id, String name, String description) {
 		super(id, name, description);
 		
 		// install sync info participant

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.core;
+package org.eclipse.team.internal.ccvs.core.subscribers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +34,10 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.core.sync.IRemoteResource;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteTagSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;

@@ -63,7 +63,7 @@
    <extension
          point="org.eclipse.team.core.subscriber">
       <subscriber
-            class="org.eclipse.team.internal.ccvs.core.CVSSubscriberFactory">
+            class="org.eclipse.team.internal.ccvs.core.subscribers.CVSSubscriberFactory">
       </subscriber>
    </extension>
 <!-- *************** Resource patterns ignored by CVS **************** -->

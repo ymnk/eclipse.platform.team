@@ -55,6 +55,7 @@ import org.eclipse.team.internal.ccvs.core.client.listeners.IConsoleListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.FileModificationManager;
+import org.eclipse.team.internal.ccvs.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.AddDeleteMoveListener;
 import org.eclipse.team.internal.ccvs.core.util.ProjectDescriptionManager;

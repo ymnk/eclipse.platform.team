@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.core;
+package org.eclipse.team.internal.ccvs.core.subscribers;
 
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;

@@ -561,7 +561,7 @@
    <extension
          point="org.eclipse.team.ui.subscriberMenus">
       <subscriberContribution
-            subscriberClass="org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber"
+            subscriberClass="org.eclipse.team.internal.ccvs.core.subscribers.CVSWorkspaceSubscriber"
             id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriberContributions">
           <action
                label="%CVSWorkspaceSubscriber.update.label"
@@ -586,7 +586,7 @@
          </action>
       </subscriberContribution>
           <subscriberContribution
-            subscriberClass="org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber"
+            subscriberClass="org.eclipse.team.internal.ccvs.core.subscribers.CVSMergeSubscriber"
             id="org.eclipse.team.ccvs.ui.CVSMergeSubscriberContributions">
           <action
                label="%CVSWorkspaceSubscriber.merge.label"

@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
+import org.eclipse.team.internal.ccvs.core.subscribers.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.ui.sync.SyncInfoDirectionFilter;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
