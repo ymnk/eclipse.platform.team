@@ -245,9 +245,9 @@ public class ForceCommitSyncAction extends MergeAction {
 		// The force commit action is enabled only for conflicting and incoming changes
 		SyncSet set = new SyncSet(new StructuredSelection(node));
 		if (syncMode == SyncView.SYNC_OUTGOING) {
-			return set.hasConflicts();
+			return (set.hasConflicts() && hasRealChanges(node, ITeamNode.CONFLICTING));
 		} else {
-			return set.hasIncomingChanges() || set.hasConflicts();
+			return ((set.hasOutgoingChanges() || set.hasConflicts()) && hasRealChanges(node, ITeamNode.CONFLICTING | ITeamNode.INCOMING));
 		}
 	}	
 	

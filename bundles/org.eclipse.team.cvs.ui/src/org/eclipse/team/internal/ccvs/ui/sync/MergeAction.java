@@ -263,12 +263,12 @@ abstract class MergeAction extends Action {
 	 * the folder if it doesn't contain any real changes
 	 */
 	private void removeLocallyDeletedFolder(ChangedTeamContainer container) {
-		if (hasRealIncomingChanges(container)) {
+		if (hasRealChanges(container, ITeamNode.CONFLICTING | ITeamNode.INCOMING)) {
 			// Leave as a conflict
 			return;
 		}
 		IDiffContainer parent = container.getParent();
-		if (hasRealOutgoingChanges(container)) {
+		if (hasRealChanges(container, ITeamNode.OUTGOING)) {
 			// Convert to an outgoing deletion
 			container.setKind(ITeamNode.OUTGOING | Differencer.DELETION);
 		} else {
@@ -284,46 +284,25 @@ abstract class MergeAction extends Action {
 	}
 	
 	/**
-	 * A real incomming change is anything that is a conflict or incoming change
-	 * and which is not a locally deleted folder
+	 * Determine whether the folder has real changes of the given direction in it.
+	 * A real change in the given direction is anything that is not a locally deleted folder
 	 */
-	private boolean hasRealIncomingChanges(ChangedTeamContainer container) {
+	protected boolean hasRealChanges(ChangedTeamContainer container, int changeDirectionFlags) {
 		IDiffElement[] children = container.getChildren();
 		for (int i = 0; i < children.length; i++) {
-			IDiffElement element = children[i];
-			if ( ! isLocallyDeletedFolder(element)) {
-				int direction = element.getKind() & Differencer.DIRECTION_MASK;
-				if (direction == ITeamNode.CONFLICTING || direction == ITeamNode.INCOMING) {
-					return true;
-				}
-			}
-			if (element instanceof ChangedTeamContainer)  {
-				boolean hasIncomingChanges = hasRealIncomingChanges((ChangedTeamContainer)element);
-				if (hasIncomingChanges) return true;
+			if (hasRealChanges(children[i], changeDirectionFlags)) {
+				return true;
 			}
 		}
 		return false;
 	}
 	
-	/**
-	 * A real incomming change is anything that is a conflict or outgoing change
-	 * and which is not a locally deleted folder
-	 */
-	private boolean hasRealOutgoingChanges(ChangedTeamContainer container) {
-		IDiffElement[] children = container.getChildren();
-		for (int i = 0; i < children.length; i++) {
-			IDiffElement element = children[i];
-			if ( ! isLocallyDeletedFolder(element)) {
-				int direction = element.getKind() & Differencer.DIRECTION_MASK;
-				if (direction == ITeamNode.CONFLICTING || direction == ITeamNode.OUTGOING) {
-					return true;
-				}
-			}
-			if (element instanceof ChangedTeamContainer)  {
-				boolean hasIncomingChanges = hasRealOutgoingChanges((ChangedTeamContainer)element);
-				if (hasIncomingChanges) return true;
-			}
+	protected boolean hasRealChanges(IDiffElement node, int changeDirectionFlags) {
+		if (isLocallyDeletedFolder(node)) {
+			return hasRealChanges((ChangedTeamContainer)node, changeDirectionFlags);
+		} else {
+			int direction = node.getKind() & Differencer.DIRECTION_MASK;
+			return ((direction & changeDirectionFlags) != 0);
 		}
-		return false;
 	}
 }
