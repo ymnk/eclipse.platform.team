@@ -5,14 +5,10 @@ package org.eclipse.team.internal.ccvs.core.resources;
  * All Rights Reserved.
  */
 
-import java.io.File;
-
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.ccvs.core.CVSProviderPlugin;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.IIgnoreInfo;
@@ -75,7 +71,7 @@ abstract class EclipseResource implements ICVSResource {
 	 */
 	public void delete() throws CVSException {
 		try {
-			resource.delete(true /*force*/, null);
+			resource.delete(false /*force*/, null);
 		} catch(CoreException e) {
 			throw new CVSException(e.getStatus());
 		}
@@ -235,28 +231,11 @@ abstract class EclipseResource implements ICVSResource {
 	public String toString() {
 		return getPath();
 	}
-			
-	/*
-	 * REFACTOR Temporary helper for accessing the underlying file associated with this
-	 * eclipse resource. Must be removed when the refactoring is complete.
-	 */
-	protected File getIOFile() {
-		IPath location = resource.getLocation();
-		if(location!=null) {
-			return location.toFile();
-		}
-		return null;
-	}
 	
 	/*
-	 * @see ICVSResource#reloadSyncInfo(IProgressMonitor)
+	 * @see ICVSResource#unmanage()
 	 */
-	public void reloadSyncInfo(IProgressMonitor monitor) throws CVSException {
-	}
-
-	/*
-	 * @see ICVSResource#saveSyncInfo(IProgressMonitor)
-	 */
-	public void saveSyncInfo(IProgressMonitor monitor) throws CVSException {
+	public void unmanage() throws CVSException {
+		EclipseSynchronizer.getInstance().deleteResourceSync(resource, new NullProgressMonitor());
 	}
 }

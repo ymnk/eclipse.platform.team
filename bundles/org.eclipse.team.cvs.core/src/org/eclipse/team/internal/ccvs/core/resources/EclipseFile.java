@@ -7,6 +7,7 @@ package org.eclipse.team.internal.ccvs.core.resources;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,6 +17,7 @@ import java.util.Date;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -118,7 +120,13 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 				throw new CVSException(Policy.bind("LocalFile.invalidDateFormat", date), e); //$NON-NLS-1$
 			}
 		}		
-		getIOFile().setLastModified(millSec);		
+		getIOFile().setLastModified(millSec);
+		try {
+			// Needed for workaround to Platform Core Bug #
+			resource.refreshLocal(IResource.DEPTH_ZERO, null);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}		
 	}
 
 	/*
@@ -178,14 +186,7 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	public String getRemoteLocation(ICVSFolder stopSearching) throws CVSException {
 		return getParent().getRemoteLocation(stopSearching) + SEPARATOR + getName();
 	}
-		
-	/*
-	 * @see ICVSResource#unmanage()
-	 */
-	public void unmanage() throws CVSException {
-		EclipseSynchronizer.getInstance().deleteResourceSync(resource, new NullProgressMonitor());
-	}
-	
+				
 	/*
 	 * @see ICVSFile#setReadOnly()
 	 */
@@ -199,4 +200,15 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	private IFile getIFile() {
 		return (IFile)resource;
 	}	
+	
+	/*
+	 * To allow accessing size and timestamp for the underlying java.io.File
+	 */
+	private File getIOFile() {
+		IPath location = resource.getLocation();
+		if(location!=null) {
+			return location.toFile();
+		}
+		return null;
+	}
 }

@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.ccvs.core.ICVSFolder;
@@ -125,20 +128,19 @@ public class SyncFileWriter {
 	 * Delete this file from Entries/Permissions file
 	 */
 	public static void deleteSync(ICVSResource file) throws CVSException {
-		if(file.isFolder()) {
-			writeEntriesLog(file, new ResourceSyncInfo(file.getName()), REMOVE_TAG);		
-		} else {
-			writeEntriesLog(file, new ResourceSyncInfo(file.getName(), "0", "", "", null, ""), REMOVE_TAG);		 //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		ICVSFolder parent = file.getParent();
+		if(parent!=null && parent.exists()) {
+			if(file.isFolder()) {
+				writeEntriesLog(file, new ResourceSyncInfo(file.getName()), REMOVE_TAG);		
+			} else {
+				writeEntriesLog(file, new ResourceSyncInfo(file.getName(), "0", "", "", null, ""), REMOVE_TAG);		 //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+			}
 		}
 	}
 	
-	public static void deleteFolderSync(ICVSFolder folder) throws CVSException {
-		ICVSFolder[] children = folder.getFolders();
-		for (int i = 0; i < children.length; i++) {
-			deleteFolderSync(children[i]);
-		}
-		ICVSFolder cvsSubDir = getCVSSubdirectory(folder);
-		cvsSubDir.delete();
+	public static void deleteCVSSubDirectory(IContainer folder) throws CoreException {
+		IContainer cvsSubDir = folder.getFolder(new Path("CVS"));
+		cvsSubDir.delete(false /*force*/, null);
 	}
 		
 	/**

@@ -14,6 +14,8 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -213,8 +215,9 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	/*
 	 * @see ICVSResource#unmanage()
 	 */
-	public void unmanage() throws CVSException {
+	public void unmanage() throws CVSException {		
 		EclipseSynchronizer.getInstance().deleteFolderSync((IContainer)resource, new NullProgressMonitor());
+		super.unmanage();
 	}
 	
 	/*
@@ -249,25 +252,32 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	/*
 	 * @see ICVSFolder#run(ICVSRunnable, IProgressMonitor)
 	 */
-	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException {
-		monitor = Policy.monitorFor(monitor);
+	public void run(final ICVSRunnable job, IProgressMonitor monitor) throws CVSException {
+		final CVSException[] error = new CVSException[1];		
 		try {
-			monitor.beginTask(null, 100);
-			try {
-				EclipseSynchronizer.getInstance().beginOperation(Policy.subMonitorFor(monitor, 5));
-				job.run(Policy.subMonitorFor(monitor, 85));
-			} finally {
-				EclipseSynchronizer.getInstance().endOperation(Policy.subMonitorFor(monitor, 8));
-				try {
-					// this is temporary until core allows setting of timestamp via a
-					// IResource handle
-					resource.refreshLocal(IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 2));
-				} catch(CoreException e) {
-					throw CVSException.wrapException(e);
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					monitor = Policy.monitorFor(monitor);
+					try {
+						monitor.beginTask(null, 100);
+						try {
+							EclipseSynchronizer.getInstance().beginOperation(Policy.subMonitorFor(monitor, 5));
+							job.run(Policy.subMonitorFor(monitor, 85));
+						} finally {
+							EclipseSynchronizer.getInstance().endOperation(Policy.subMonitorFor(monitor, 8));
+						}
+					} catch(CVSException e) {
+						error[0] = e; 
+					} finally {						
+						monitor.done();
+					}
 				}
-			}
-		} finally {
-			monitor.done();
+			}, monitor);
+		} catch(CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+		if(error[0]!=null) {
+			throw error[0];
 		}
 	}
 }
