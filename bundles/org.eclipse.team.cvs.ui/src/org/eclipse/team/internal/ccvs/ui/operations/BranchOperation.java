@@ -67,7 +67,7 @@ public class BranchOperation extends RepositoryProviderOperation {
 		ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(resources[0].getProject());
 		final BranchPromptDialog dialog = new BranchPromptDialog(getShell(),
 											Policy.bind("BranchWizard.title"), //$NON-NLS-1$
-											folder, 
+											getCVSResources(), 
 											allSticky, 
 											calculateInitialVersionName(resources,allSticky));
 		if (dialog.open() != InputDialog.OK) return false;		

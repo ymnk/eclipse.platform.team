@@ -14,13 +14,44 @@ import java.util.*;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.*;
 
 /**
  * A tag source provides access to a set of tags.
  */
 public abstract class TagSource {
     
+    /**
+     * Create a tag source for the given folders
+     * @param folders one or more folders
+     * @return a tag source for the supplied folders
+     */
+    public static TagSource create(ICVSFolder[] folders) {
+        if (folders.length == 1) {
+            return new SingleFolderTagSource(folders[0]);
+        } else {
+            return new MultiFolderTagSource(folders);
+        }
+    }
+    
+    /**
+     * Create a tag source for a list of resources
+     * @param resources one or more resources
+     * @return a tag source
+     */
+    public static TagSource create(ICVSResource[] resources) {
+        // TODO Should use a better tag source
+        return new SingleFolderTagSource(getFirstFolder(resources));
+    }
+    
+	private static ICVSFolder getFirstFolder(ICVSResource[] resources) {
+		if (resources[0].isFolder()) {
+			return (ICVSFolder)resources[0];
+		} else {
+			return resources[0].getParent();
+		}
+	}
+	
     public abstract CVSTag[] getTags(int type);
     
     public CVSTag[] getTags(int[] types) {
@@ -44,4 +75,22 @@ public abstract class TagSource {
      * @param monitor a progress monitor
      */
     public abstract void refresh(IProgressMonitor monitor) throws TeamException;
+    
+    public abstract ICVSRepositoryLocation getLocation();
+
+    /**
+     * Return a short description of the tag source for displaying in UI.
+     * @return a short description of the tag source for displaying in UI.
+     */
+    public abstract String getShortDescription();
+
+    /**
+     * Commit a set of tag changes to the tag cache
+     * @param tags the tags that should be cached
+     * @param replace whether existing tags not in the list should be removed
+     * @param monitor a progress monitor
+     * @throws CVSException
+     */
+    public abstract void commit(CVSTag[] tags, boolean replace, IProgressMonitor monitor) throws CVSException;
+
 }

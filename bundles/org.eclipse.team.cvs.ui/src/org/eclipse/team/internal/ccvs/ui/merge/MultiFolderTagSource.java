@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.merge;
 
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.ui.model.CVSFolderElement;
 
 /**
  * A tag source for multiple folders.
@@ -25,6 +26,24 @@ public class MultiFolderTagSource extends SingleFolderTagSource {
     public MultiFolderTagSource(ICVSFolder[] folders) {
         super(folders[0]);
         this.folders = folders;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ccvs.ui.merge.SingleFolderTagSource#getShortDescription()
+     */
+    public String getShortDescription() {
+        return "{0} folders" + folders.length;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ccvs.ui.merge.SingleFolderTagSource#getChildren(java.lang.Object)
+     */
+    public Object[] getChildren(Object o) {
+		CVSFolderElement[] elements = new CVSFolderElement[folders.length];
+		for (int i = 0; i < folders.length; i++) {
+			elements[i] = new CVSFolderElement(folders[i], false);
+		}
+		return elements;
     }
 
 }

@@ -134,7 +134,7 @@ public class MergeWizardStartPage extends CVSWizardPage {
 		};
 
 		setControl(composite);
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new ICVSFolder[] {CVSWorkspaceRoot.getCVSFolderFor(project)}, 
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, TagSource.create(new ICVSFolder[] {CVSWorkspaceRoot.getCVSFolderFor(project)}), 
 														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
 														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
 														  afterRefresh, afterConfigure);
@@ -144,7 +144,7 @@ public class MergeWizardStartPage extends CVSWizardPage {
 	}
 	private void initialize() {
 		ICVSFolder cvsProject = CVSWorkspaceRoot.getCVSFolderFor(project);
-		table.setInput(new TagRootElement(new SingleFolderTagSource(cvsProject), CVSTag.VERSION));
+		table.setInput(new TagRootElement(null, new SingleFolderTagSource(cvsProject), CVSTag.VERSION));
 	}
 	public void setProject(IProject project) {
 		this.project = project;

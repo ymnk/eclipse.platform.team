@@ -23,6 +23,7 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
+import org.eclipse.team.internal.ccvs.ui.merge.TagSource;
 
 /**
  * Dialog to prompt the user to choose a tag for a selected resource
@@ -94,7 +95,7 @@ public class TagSelectionDialog extends Dialog implements IPropertyChangeListene
 		super(parentShell);
 		
 		// Create a tag selection area with a custom recurse option
-		tagSelectionArea = new TagSelectionArea(this, null, folders, message, includeFlags, helpContext) {
+		tagSelectionArea = new TagSelectionArea(this, null, TagSource.create(folders), message, includeFlags, helpContext) {
 			protected void createCustomArea(Composite parent) {
 				if(showRecurse) {
 					final Button recurseCheck = new Button(parent, SWT.CHECK);

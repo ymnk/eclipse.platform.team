@@ -13,24 +13,15 @@ package org.eclipse.team.internal.ccvs.ui;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
-import org.eclipse.team.internal.ccvs.ui.merge.SingleFolderTagSource;
+import org.eclipse.team.internal.ccvs.ui.merge.TagSource;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositorySorter;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
@@ -40,7 +31,6 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class BranchPromptDialog extends DetailsDialog {
 
-	private ICVSFolder folder;
 	private String branchTag = ""; //$NON-NLS-1$
 	private String versionTag= ""; //$NON-NLS-1$
 	private String versionName= "";		 //$NON-NLS-1$
@@ -55,10 +45,11 @@ public class BranchPromptDialog extends DetailsDialog {
 	
 	// widgets;
 	private TreeViewer tagTree;
+    private TagSource tagSource;
 	
-	public BranchPromptDialog(Shell parentShell, String title, ICVSFolder folder, boolean allResourcesSticky, String versionName) {
+	public BranchPromptDialog(Shell parentShell, String title, ICVSResource[] resources, boolean allResourcesSticky, String versionName) {
 		super(parentShell, title);
-		this.folder = folder;
+		this.tagSource = TagSource.create(resources);
 		this.allStickyResources = allResourcesSticky;
 		this.versionName = versionName;
 	}	
@@ -169,7 +160,7 @@ public class BranchPromptDialog extends DetailsDialog {
 		label.setLayoutData(data);
 		
 		tagTree = createTree(composite);
-		tagTree.setInput(new ProjectElement(new SingleFolderTagSource(folder), ProjectElement.INCLUDE_BRANCHES | ProjectElement.INCLUDE_VERSIONS));
+		tagTree.setInput(new ProjectElement(tagSource, ProjectElement.INCLUDE_BRANCHES | ProjectElement.INCLUDE_VERSIONS));
 		Runnable refresh = new Runnable() {
 			public void run() {
 				getShell().getDisplay().syncExec(new Runnable() {
@@ -179,7 +170,7 @@ public class BranchPromptDialog extends DetailsDialog {
 				});
 			}
 		};
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new ICVSFolder[] {folder}, 
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, tagSource, 
 														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
 														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
 														  refresh, refresh);

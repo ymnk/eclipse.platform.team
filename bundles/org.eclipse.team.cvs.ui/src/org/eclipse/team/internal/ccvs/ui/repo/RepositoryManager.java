@@ -267,6 +267,10 @@ public class RepositoryManager {
 		root.addDateTag(tag);
 		broadcastRepositoryChange(root);
 	}
+	public CVSTag[] getDateTags(ICVSRepositoryLocation location) {
+		RepositoryRoot root = getRepositoryRootFor(location);
+		return root.getDateTags();
+	}
 	public void removeDateTag(ICVSRepositoryLocation location, CVSTag tag){
 		RepositoryRoot root = getRepositoryRootFor(location);
 		root.removeDateTag(tag);

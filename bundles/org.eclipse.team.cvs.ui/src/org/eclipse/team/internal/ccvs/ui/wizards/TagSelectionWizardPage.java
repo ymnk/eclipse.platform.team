@@ -133,7 +133,7 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 					});
 				}
 			};
-			buttons = TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, remoteFolders, 
+			buttons = TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, TagSource.create(remoteFolders), 
 														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
 														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
 														  refresh, refresh);

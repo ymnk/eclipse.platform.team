@@ -75,13 +75,13 @@ public class ProjectElement implements IAdaptable, IWorkbenchAdapter {
 		this.includeFlags = includeFlags;
 		if (this.includeFlags == 0) this.includeFlags = INCLUDE_ALL_TAGS;
 		if ((includeFlags & INCLUDE_BRANCHES) > 0) {	
-            branches = new TagRootElement(tagSource, CVSTag.BRANCH);
+            branches = new TagRootElement(this, tagSource, CVSTag.BRANCH);
 		}
 		if ((includeFlags & INCLUDE_VERSIONS) > 0) {
-			versions = new TagRootElement(tagSource, CVSTag.VERSION);
+			versions = new TagRootElement(this, tagSource, CVSTag.VERSION);
 		}
 		if ((includeFlags & INCLUDE_DATES) > 0) {
-			dates = new TagRootElement(tagSource, CVSTag.DATE);
+			dates = new TagRootElement(this, tagSource, CVSTag.DATE);
 		}
 	}
 	

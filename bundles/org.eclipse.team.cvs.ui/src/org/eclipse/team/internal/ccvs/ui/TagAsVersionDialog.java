@@ -13,34 +13,14 @@ package org.eclipse.team.internal.ccvs.ui;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.TableLayout;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.merge.*;
-import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
-import org.eclipse.team.internal.ccvs.ui.merge.TagRootElement;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.ui.help.WorkbenchHelp;
@@ -50,8 +30,6 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 public class TagAsVersionDialog extends DetailsDialog {
 
 	private ITagOperation operation;
-
-	private ICVSFolder folder;
 	
 	private Text tagText;
 	private Button moveTagButton;
@@ -62,19 +40,13 @@ public class TagAsVersionDialog extends DetailsDialog {
 	private static final int TABLE_HEIGHT_HINT = 150;
 	
 	private TableViewer existingVersionTable;
+
+    private TagSource tagSource;
 	
 	public TagAsVersionDialog(Shell parentShell, String title, ITagOperation operation) {
 		super(parentShell, title);
-		this.folder = getFirstFolder(operation.getCVSResources());
+		this.tagSource = TagSource.create(operation.getCVSResources());
 		this.operation = operation;
-	}	
-
-	private ICVSFolder getFirstFolder(ICVSResource[] resources) {
-		if (resources[0].isFolder()) {
-			return (ICVSFolder)resources[0];
-		} else {
-			return resources[0].getParent();
-		}
 	}
 	
 	/**
@@ -199,22 +171,22 @@ public class TagAsVersionDialog extends DetailsDialog {
 			}
 		};
 		
-		Runnable afterConfigure = new Runnable() {
+        Runnable afterConfigure = new Runnable() {
 			public void run() {
 				getShell().getDisplay().syncExec(new Runnable() {
 					public void run() {
-						existingVersionTable.setInput(new TagRootElement(new SingleFolderTagSource(folder), CVSTag.VERSION));
+						existingVersionTable.setInput(new TagRootElement(null, tagSource, CVSTag.VERSION));
 					}
 				});
 			}
 		};
 		
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new ICVSFolder[] {folder}, 
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, tagSource, 
 														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
 														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
 														  afterRefresh, afterConfigure);
 		
-		existingVersionTable.setInput(new TagRootElement(new SingleFolderTagSource(folder), CVSTag.VERSION));
+		existingVersionTable.setInput(new TagRootElement(null, tagSource, CVSTag.VERSION));
 		Dialog.applyDialogFont(parent);
 		return composite;
 	}

@@ -21,15 +21,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
 import org.eclipse.team.internal.ccvs.ui.merge.*;
-import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
-import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement.ProjectElementSorter;
-import org.eclipse.team.internal.ccvs.ui.repo.*;
+import org.eclipse.team.internal.ccvs.ui.repo.NewDateTagAction;
+import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.dialogs.DialogArea;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.model.WorkbenchContentProvider;
@@ -67,20 +65,18 @@ public class TagSelectionArea extends DialogArea {
     private final int includeFlags;
     private CVSTag selection;
     
-    private ICVSFolder[] folders;
     private String helpContext;
 
     private Text filterText;
 
     private TagSource tagSource;
     
-    public TagSelectionArea(Dialog parentDialog, IDialogSettings settings, ICVSFolder[] folders, String message, int includeFlags, String helpContext) {
+    public TagSelectionArea(Dialog parentDialog, IDialogSettings settings, TagSource tagSource, String message, int includeFlags, String helpContext) {
         super(parentDialog, settings);
-        this.folders = folders;
         this.message = message;
         this.includeFlags = includeFlags;
         this.helpContext = helpContext;
-        this.tagSource = new MultiFolderTagSource(folders);
+        this.tagSource = tagSource;
     }
 
     /* (non-Javadoc)
@@ -107,7 +103,7 @@ public class TagSelectionArea extends DialogArea {
     private void createTagTree(Composite parent) {
         Composite inner = createGrabbingComposite(parent, 1);
         if (isFilteringEnabled()) {
-            createWrappingLabel(inner, "Filter displayed tags (? = any character, * = any Strung):", 1);
+            createWrappingLabel(inner, "Filter &tag list (? = any character, * = any Strung):", 1);
             filterText = createText(inner, 1);
             filterText.addModifyListener(new ModifyListener() {
                 public void modifyText(ModifyEvent e) {
@@ -188,7 +184,7 @@ public class TagSelectionArea extends DialogArea {
 				});
 			}
 		};
-        TagConfigurationDialog.createTagDefinitionButtons(getShell(), parent, folders, 
+        TagConfigurationDialog.createTagDefinitionButtons(getShell(), parent, tagSource, 
 														  Dialog.convertVerticalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_HEIGHT), 
 														  Dialog.convertHorizontalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_WIDTH),
 														  refresh, refresh);
@@ -304,9 +300,10 @@ public class TagSelectionArea extends DialogArea {
 	private void addDateTag(CVSTag tag){
 		if(tag == null) return;
 		List dateTags = new ArrayList();
-		dateTags.addAll(Arrays.asList(CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(folders[0],CVSTag.DATE)));
+		ICVSRepositoryLocation location = getLocation();
+		dateTags.addAll(Arrays.asList(CVSUIPlugin.getPlugin().getRepositoryManager().getDateTags(location)));
 		if(!dateTags.contains( tag)){
-			CVSUIPlugin.getPlugin().getRepositoryManager().addDateTag(getLocation(),tag);
+            CVSUIPlugin.getPlugin().getRepositoryManager().addDateTag(location, tag);
 		}
 		try {
 			tagTree.getControl().setRedraw(false);
@@ -330,7 +327,7 @@ public class TagSelectionArea extends DialogArea {
 	private void addMenuItemActions(IMenuManager manager) {
 		manager.add(new Action(Policy.bind("TagSelectionDialog.0")) { //$NON-NLS-1$
 			public void run() {
-				CVSTag dateTag = NewDateTagAction.getDateTag(getShell(), CVSUIPlugin.getPlugin().getRepositoryManager().getRepositoryLocationFor(folders[0]));
+				CVSTag dateTag = NewDateTagAction.getDateTag(getShell(), getLocation());
 				addDateTag(dateTag);
 			}
 		});
@@ -370,9 +367,7 @@ public class TagSelectionArea extends DialogArea {
 	}
 	
 	private ICVSRepositoryLocation getLocation(){
-		RepositoryManager mgr = CVSUIPlugin.getPlugin().getRepositoryManager();
-		ICVSRepositoryLocation location = mgr.getRepositoryLocationFor(folders[0]);
-		return location;
+		return tagSource.getLocation();
 	}
     public CVSTag getSelection() {
         return selection;
