@@ -33,7 +33,7 @@ public interface ISynchronizeView extends IViewPart {
 	/**
 	 * The id for this view
 	 */
-	public static final String VIEW_ID = "org.eclipse.team.sync.views.SynchronizeView";
+	public static final String VIEW_ID = "org.eclipse.team.sync.views.SynchronizeView"; //$NON-NLS-1$
 	
 	/**
 	 * Displays the given synchronize participant in the Synchronize View. This

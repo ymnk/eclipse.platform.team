@@ -1,4 +1,4 @@
-package org.eclipse.team.internal.ui.synchronize;
+package org.eclipse.team.ui.synchronize;
 
 import java.util.Iterator;
 
@@ -17,6 +17,7 @@ import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -44,6 +45,7 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.ComparisonCriteriaActionGroup;
 import org.eclipse.team.internal.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
@@ -61,8 +63,6 @@ import org.eclipse.team.internal.ui.synchronize.views.SyncTableViewer;
 import org.eclipse.team.internal.ui.synchronize.views.SyncTreeViewer;
 import org.eclipse.team.internal.ui.synchronize.views.SyncViewerSorter;
 import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.IActionBars;
@@ -82,6 +82,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
 	private Composite composite = null;
+	private boolean settingWorkingSet = false;
 	
 	// Viewer type constants
 	private int layout;
@@ -234,7 +235,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			disposeChildren(composite);
 			createViewer(composite);
 			composite.layout();
-			setActionBars(null);
 			if(oldSelection == null || oldSelection.size() == 0) {
 				//gotoDifference(INavigableControl.NEXT);
 			} else {
@@ -282,10 +282,14 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		busyCursor.setControl(viewer.getControl());
 	}
 	
+	protected ILabelProvider getLabelProvider() {
+		return new TeamSubscriberParticipantLabelProvider();		
+	}
+	
 	protected void createTreeViewerPartControl(Composite parent) {
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer = new SyncTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		viewer.setLabelProvider(participant.getLabelProvider());
+		viewer.setLabelProvider(getLabelProvider());
 		viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
 		((TreeViewer)viewer).getTree().setLayoutData(data);
 	}
@@ -311,7 +315,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		// Set the table contents
 		viewer = tableViewer;
 		viewer.setContentProvider(new SyncSetTableContentProvider());
-		viewer.setLabelProvider(participant.getLabelProvider());		
+		viewer.setLabelProvider(getLabelProvider());		
 		viewer.setSorter(new SyncViewerTableSorter());
 	}
 	
@@ -323,14 +327,14 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		// revision
 		TableColumn col = new TableColumn(table, SWT.NONE);
 		col.setResizable(true);
-		col.setText("Resource"); //$NON-NLS-1$
+		col.setText("Resource");
 		col.addSelectionListener(headerListener);
 		layout.addColumnData(new ColumnWeightData(30, true));
 		
 		// tags
 		col = new TableColumn(table, SWT.NONE);
 		col.setResizable(true);
-		col.setText("In Folder"); //$NON-NLS-1$
+		col.setText("In Folder");
 		col.addSelectionListener(headerListener);
 		layout.addColumnData(new ColumnWeightData(50, true));
 	}
@@ -493,9 +497,11 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPage#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionBars(final IActionBars actionBars) {
+	public void setActionBars(IActionBars actionBars) {
 		if(actionBars != null) {
 			IToolBarManager manager = actionBars.getToolBarManager();			
+			
+			// toolbar
 			manager.add(refreshAction);
 			manager.add(comparisonCriteria);
 			manager.add(new Separator());		
@@ -503,23 +509,27 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			manager.add(gotoPrevious);
 			manager.add(collapseAll);
 			manager.add(new Separator());
-			participant.setActionsBars(actionBars, actionBars.getToolBarManager());
-			
-			// drop down menu
-			IMenuManager menu = actionBars.getMenuManager();
-			MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
-			layoutMenu.add(toggleLayoutTable);
-			layoutMenu.add(toggleLayoutTree);
-			workingSetGroup.fillActionBars(actionBars);
-			menu.add(layoutMenu);
-			menu.add(new Separator());
-			menu.add(showPreferences);
+
+			// view menu
+			updateViewMenu(actionBars);
 			
 			// status line
 			statusLine.fillActionBars(actionBars);
 		}		
 	}
 
+	protected void updateViewMenu(IActionBars actionBars) {
+		IMenuManager menu = actionBars.getMenuManager();
+		menu.removeAll();
+		MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
+		layoutMenu.add(toggleLayoutTable);
+		layoutMenu.add(toggleLayoutTree);
+		workingSetGroup.fillActionBars(actionBars);
+		menu.add(layoutMenu);
+		menu.add(new Separator());
+		menu.add(showPreferences);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPageBookViewPage#getSite()
 	 */
@@ -535,24 +545,28 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
+		// Layout change
 		if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_LAYOUT)) {
 			switchViewerType(((Integer)event.getNewValue()).intValue());
+		// Direction mode change
 		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE)) {
 			updateMode(((Integer)event.getNewValue()).intValue());
+		// Working set changed via menu selection - notify participant and
+		// do all the real work when we get the next workset changed event
 		} else if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
+			if(settingWorkingSet) return;
+			participant.setWorkingSet((IWorkingSet)event.getNewValue());
+		// Working set changed programatically
+		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
+			settingWorkingSet = true;
 			Object newValue = event.getNewValue();
 			if (newValue instanceof IWorkingSet) {	
-				input.setWorkingSet((IWorkingSet)newValue);
+				workingSetGroup.setWorkingSet((IWorkingSet)newValue);
 			} else if (newValue == null) {
-				input.setWorkingSet(null);
+				workingSetGroup.setWorkingSet(null);
 			}
-			view.getViewSite().getActionBars().getMenuManager().markDirty();
-			view.getViewSite().getActionBars().updateActionBars();
+			settingWorkingSet = false;
 		}
-	}
-
-	public void setWorkingSet(IWorkingSet set) {
-		workingSetGroup.setWorkingSet(set);	
 	}
 
 	private void updateMode(int mode) {
@@ -585,5 +599,12 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 */
 	public RefreshAction getRefreshAction() {
 		return refreshAction;
-	}	
+	}
+	
+	/**
+	 * @return Returns the participant.
+	 */
+	public TeamSubscriberParticipant getParticipant() {
+		return participant;
+	}
 }

@@ -10,61 +10,44 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.Utilities;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.DirectionFilterActionGroup;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.PartInitException;
 
-public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipant {
-	
+public class WorkspaceSynchronizePage extends CVSSynchronizeViewPage {
+
 	private DirectionFilterActionGroup modes;
-	
+
 	private Action commitToolbar;
 	private Action updateToolbar;
-	
-	public final static QualifiedName ID = new QualifiedName("org.eclipse.team.cvs.ui.cvsworkspace-participant", "syncparticipant"); //$NON-NLS-1$ //$NON-NLS-2$
-	
-	protected void setSubscriber(TeamSubscriber subscriber) {
-		super.setSubscriber(subscriber);
-		modes = new DirectionFilterActionGroup(this, ALL_MODES);
-		
+
+	public WorkspaceSynchronizePage(TeamSubscriberParticipant page, ISynchronizeView view, SubscriberInput input) {
+		super(page, view, input);
+		modes = new DirectionFilterActionGroup(getParticipant(), TeamSubscriberParticipant.ALL_MODES);
+
 		commitToolbar = new CVSActionDelegate(new SubscriberCommitAction());
 		updateToolbar = new CVSActionDelegate(new WorkspaceUpdateAction());
-		
+
 		Utilities.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle()); //$NON-NLS-1$
 		Utilities.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.SubscriberPage#setActionsBars(org.eclipse.ui.IActionBars)
+	 * @see org.eclipse.ui.part.IPage#setActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void setActionsBars(IActionBars actionBars, IToolBarManager detailsToolbar) {
+	public void setActionBars(IActionBars actionBars) {
+		super.setActionBars(actionBars);
 		IToolBarManager toolbar = actionBars.getToolBarManager();
 		modes.fillToolBar(toolbar);
-		toolbar.add(new Separator());		
+		toolbar.add(new Separator());
 		toolbar.add(updateToolbar);
 		toolbar.add(commitToolbar);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
-	 */
-	public void init(QualifiedName id) throws PartInitException {
-		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
-		setSubscriber(subscriber);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#saveState(org.eclipse.team.core.ISaveContext)
-	 */
-	public void saveState() {
-		// no state to save
 	}
 }

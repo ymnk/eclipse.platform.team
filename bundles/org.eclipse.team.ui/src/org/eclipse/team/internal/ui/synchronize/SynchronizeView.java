@@ -265,10 +265,10 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleView#display(org.eclipse.ui.console.IConsole)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeView#display(org.eclipse.team.ui.synchronize.ISynchronizeParticipant)
 	 */
-	public void display(ISynchronizeParticipant console) {
-		SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)fPageToPart.get(console);
+	public void display(ISynchronizeParticipant participant) {
+		SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)fPageToPart.get(participant);
 		if (part != null) {
 			partActivated(part);
 		}

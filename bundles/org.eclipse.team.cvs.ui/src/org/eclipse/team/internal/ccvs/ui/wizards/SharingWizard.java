@@ -301,11 +301,11 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 				}
 				ISynchronizeView view = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
 				if(view != null) {
-					TeamSubscriberParticipant page = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeViewPage();
+					TeamSubscriberParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
 					IWorkingSet workingSet = CVSUIPlugin.getWorkingSet(new IResource[] {project}, Policy.bind("SyncAction.workingSetName")); //$NON-NLS-1$)
-					page.setWorkingSet(workingSet);
-					view.display(page);
-					page.setMode(TeamSubscriberParticipant.OUTGOING_MODE);
+					participant.setWorkingSet(workingSet);
+					participant.setMode(TeamSubscriberParticipant.OUTGOING_MODE);
+					view.display(participant);
 				} else {
 					CVSUIPlugin.openError(getContainer().getShell(), Policy.bind("error"), Policy.bind("Error.unableToShowSyncView"), null); //$NON-NLS-1$ //$NON-NLS-2$
 				}

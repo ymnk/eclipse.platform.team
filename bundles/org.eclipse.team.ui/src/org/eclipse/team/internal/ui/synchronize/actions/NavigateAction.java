@@ -17,7 +17,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantPage;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.IViewPart;

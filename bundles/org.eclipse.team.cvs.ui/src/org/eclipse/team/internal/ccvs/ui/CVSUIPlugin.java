@@ -46,7 +46,7 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.ui.model.CVSAdapterFactory;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CVSWorkspaceSynchronizeParticipant;
+import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
@@ -67,10 +67,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	
 	private Hashtable imageDescriptors = new Hashtable(20);
 
-	// timeout in milliseconds before displaying a progress monitor dialog
-	// (used for normally short-running interactive operations)
-	private static final int TIMEOUT = 2000;
-
 	/**
 	 * The singleton plug-in instance
 	 */
@@ -80,7 +76,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 * The repository manager
 	 */
 	private RepositoryManager repositoryManager;
-	private CVSWorkspaceSynchronizeParticipant cvsWorkspaceSynchronizeViewPage;
 	
 	// constants used by watch/edit as values for string preference
 	public static final String EDIT = "edit"; //$NON-NLS-1$
@@ -649,10 +644,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		TeamUI.addPropertyChangeListener(listener);
 		
 		Console.startup();
-		// Commented out until we have fully ported the CVS console to the new API				
-		//ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] {new CVSOutputConsole()});
-		
-		//TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {cvsWorkspaceSynchronizeViewPage});
 	}
 	
 	public static IWorkingSet getWorkingSet(IResource[] resources, String name) {
@@ -685,7 +676,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	/**
 	 * @return Returns the cvsWorkspaceSynchronizeViewPage.
 	 */
-	public CVSWorkspaceSynchronizeParticipant getCvsWorkspaceSynchronizeViewPage() {
-		return (CVSWorkspaceSynchronizeParticipant)TeamUI.getSynchronizeManager().find(CVSWorkspaceSynchronizeParticipant.ID);
+	public WorkspaceSynchronizeParticipant getCvsWorkspaceSynchronizeParticipant() {
+		return (WorkspaceSynchronizeParticipant)TeamUI.getSynchronizeManager().find(WorkspaceSynchronizeParticipant.ID);
 	}
 }

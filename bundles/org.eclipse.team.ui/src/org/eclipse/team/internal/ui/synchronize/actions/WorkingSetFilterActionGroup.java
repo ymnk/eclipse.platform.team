@@ -146,4 +146,3 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 		}
 	}	
 }
-

@@ -11,36 +11,27 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.Separator;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.core.SaveContext;
 import org.eclipse.team.internal.core.SaveContextXMLWriter;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.ui.Utilities;
-import org.eclipse.team.ui.synchronize.actions.DirectionFilterActionGroup;
-import org.eclipse.team.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
-import org.eclipse.ui.IActionBars;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.part.IPageBookViewPage;
 
-public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
+public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	
-	private RemoveSynchronizeParticipantAction removeAction;
-	private DirectionFilterActionGroup modes;
-	private Action updateAdapter;
-	
-	public CVSMergeSynchronizeParticipant() {
+	public MergeSynchronizeParticipant() {
 		super();
 	}
 	
-	public CVSMergeSynchronizeParticipant(CVSMergeSubscriber subscriber) {
+	public MergeSynchronizeParticipant(CVSMergeSubscriber subscriber) {
 		super();
 		setSubscriber(subscriber);
 		setImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION));
@@ -53,31 +44,6 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 		super.setSubscriber(subscriber);
 		setId(subscriber.getId());
 		setName(subscriber.getName());
-		makeActions();
-	}
-	
-	private void makeActions() {
-		removeAction = new RemoveSynchronizeParticipantAction(this);
-		modes = new DirectionFilterActionGroup(this, INCOMING_MODE | CONFLICTING_MODE);
-		updateAdapter = new CVSActionDelegate(new MergeUpdateAction());
-		Utilities.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle());
-		setMode(INCOMING_MODE);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.SubscriberPage#setActionsBars(org.eclipse.ui.IActionBars)
-	 */
-	public void setActionsBars(IActionBars actionBars, IToolBarManager detailsToolbar) {		
-		if(actionBars != null) {
-			IToolBarManager toolbar = actionBars.getToolBarManager();
-			toolbar.add(new Separator());
-			if(detailsToolbar != null) {
-				modes.fillToolBar(detailsToolbar);
-			}
-			toolbar.add(new Separator());
-			actionBars.getToolBarManager().add(updateAdapter);
-			actionBars.getToolBarManager().add(removeAction);
-		}		
 	}
 	
 	/* (non-Javadoc)
@@ -118,5 +84,12 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	
 	private String getMetaFileName(String id) {
 		return "mergeSyncPartners" + id + ".xml"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPage(org.eclipse.team.ui.synchronize.ISynchronizeView)
+	 */
+	public IPageBookViewPage createPage(ISynchronizeView view) {		
+		return new MergeSynchronizePage(this, view, getInput());
 	}
 }

@@ -37,6 +37,7 @@ import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
 import org.eclipse.team.internal.ui.synchronize.SynchronizeManager;
+import org.eclipse.team.internal.ui.synchronize.TeamSynchronizingPerspective;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
@@ -165,7 +166,7 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT, SyncViewerTableSorter.COL_NAME);
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT_REVERSED, false);
 		store.setDefault(IPreferenceIds.SYNCVIEW_SELECTED_MODE, TeamSubscriberParticipant.BOTH_MODE);
-		store.setDefault(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE, "org.eclipse.team.internal.ui.sync.views.TeamSynchronizingPerspective"); //$NON-NLS-1$
+		store.setDefault(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE, TeamSynchronizingPerspective.ID);
 	}
 	
 	/**

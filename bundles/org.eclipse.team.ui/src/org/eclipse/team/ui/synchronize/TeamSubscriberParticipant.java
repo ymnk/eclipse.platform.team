@@ -2,16 +2,12 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
-import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantPage;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -24,8 +20,8 @@ import org.eclipse.ui.part.IPageBookViewPage;
 public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 	
 	private SubscriberInput input;
-	private TeamSubscriberParticipantPage page;
 	private int currentMode;
+	private int currentLayout;
 	
 	/**
 	 * Property constant indicating the mode of a page has changed. 
@@ -71,8 +67,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view) {
-		this.page = new TeamSubscriberParticipantPage(this, view, input);
-		return page;
+		return new TeamSubscriberParticipantPage(this, view, input);
 	}
 	
 	public void setMode(int mode) {
@@ -87,15 +82,20 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public void setLayout(int layout) {
-		firePropertyChange(this, P_SYNCVIEWPAGE_LAYOUT, new Integer(page.getLayout()), new Integer(layout));
+		int oldLayout = currentLayout;
+		currentLayout = layout;		
+		firePropertyChange(this, P_SYNCVIEWPAGE_LAYOUT, new Integer(oldLayout), new Integer(layout));
 	}
 	
 	public int getLayout() {
-		return page.getLayout();		
+		return currentLayout;
 	}
 	
 	public void setWorkingSet(IWorkingSet set) {
-		page.setWorkingSet(set);
+		SubscriberInput input = getInput();
+		IWorkingSet oldSet = input.getWorkingSet();
+		input.setWorkingSet(set);
+		firePropertyChange(this, P_SYNCVIEWPAGE_WORKINGSET, oldSet, set);
 	}
 	
 	public IWorkingSet getWorkingSet() {
@@ -103,18 +103,11 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public void refreshWithRemote(IResource[] resources) {
-		if((resources == null || resources.length == 0) && page != null) {
-			page.getRefreshAction().run();
+		if((resources == null || resources.length == 0)) {
+			RefreshAction.run(input.workingSetRoots(), input.getSubscriber());
 		} else {
 			RefreshAction.run(resources, input.getSubscriber());
 		}
-	}
-	
-	public void setActionsBars(IActionBars actionBars, IToolBarManager detailsToolbar) {		
-	}
-	
-	public ILabelProvider getLabelProvider() {
-		return new TeamSubscriberParticipantLabelProvider();
 	}
 	
 	/* (non-Javadoc)
@@ -141,7 +134,10 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		}
 	}
 	
-	protected SubscriberInput getInput() {
+	/*
+	 * For testing only!
+	 */
+	public SubscriberInput getInput() {
 		return input;
 	}
 	
@@ -149,8 +145,4 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		this.input = new SubscriberInput(subscriber);
 		this.currentMode = BOTH_MODE;
 	}
-
-	protected TeamSubscriberParticipantPage getPage() {
-		return page;
-	}	
 }

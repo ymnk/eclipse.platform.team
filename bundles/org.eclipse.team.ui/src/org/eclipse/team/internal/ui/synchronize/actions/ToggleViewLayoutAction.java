@@ -19,23 +19,23 @@ import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
 public class ToggleViewLayoutAction extends Action implements IPropertyChangeListener {	
 	private int layout;
-	private TeamSubscriberParticipant page;
+	private TeamSubscriberParticipant participant;
 	
-	public ToggleViewLayoutAction(TeamSubscriberParticipant page, int layout) {
+	public ToggleViewLayoutAction(TeamSubscriberParticipant participant, int layout) {
 		super(null, SWT.RADIO);
-		this.page = page;
+		this.participant = participant;
 		this.layout = layout;
 		if(layout == TeamSubscriberParticipant.TABLE_LAYOUT) {
 			Utils.initAction(this, "action.toggleViewFlat."); //$NON-NLS-1$	
 		} else {
 			Utils.initAction(this, "action.toggleViewHierarchical."); //$NON-NLS-1$
 		}
-		setChecked(page.getLayout() == layout);
-		page.addPropertyChangeListener(this);
+		setChecked(participant.getLayout() == layout);
+		participant.addPropertyChangeListener(this);
 	}
 	
 	public void run() {
-		page.setLayout(layout);
+		participant.setLayout(layout);
 	}
 
 	/* (non-Javadoc)

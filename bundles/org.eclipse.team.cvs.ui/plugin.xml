@@ -29,7 +29,7 @@
       <participant
             name="CVS Workspace"
             icon="icons/full/cview16/rep_editors_view.gif"
-            class="org.eclipse.team.internal.ccvs.ui.subscriber.CVSWorkspaceSynchronizeParticipant"
+            class="org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant"
             type="static"
             qualified_name="org.eclipse.team.cvs.ui.cvsworkspace-participant"
             local_name="syncparticipant">
@@ -37,7 +37,7 @@
       <participant
             name="CVS Merge"
             icon="icons/full/obj16/prjversions_rep.gif"
-            class="org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSynchronizeParticipant"
+            class="org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant"
             type="dynamic"
             qualified_name="org.eclipse.team.cvs.ui.cvsmerge-participant"
             local_name="unknown">

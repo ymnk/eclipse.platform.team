@@ -10,12 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.jobs;
 
-import java.util.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -63,6 +67,8 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 			}
 		}
 	}
+	
+	
 	
 	/**
 	 * This is run by the job scheduler. A list of subscribers will be refreshed, errors will not stop the job 
@@ -112,6 +118,13 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 	 */
 	protected String getTaskName() {
 		// Return a meaningfull task nam since the job name will be generic
-		return Policy.bind("RefreshSubscriberJob.1", String.valueOf(inputs.size()), "all"); //$NON-NLS-1$
+		return Policy.bind("RefreshSubscriberJob.1", String.valueOf(inputs.size()), "all");
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.jobs.Job#shouldRun()
+	 */
+	public boolean shouldRun() {
+		return ! inputs.isEmpty();
 	}
 }
