@@ -3,31 +3,25 @@ package org.eclipse.team.internal.ui.synchronize;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.widgets.FormSection;
 import org.eclipse.team.ui.controls.IControlFactory;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
 public class DropDownParticipantSection extends FormSection {
 	
-	private ISynchronizeParticipant participant;
+	private TeamSubscriberParticipant participant;
 	private Composite parent;
 	private ParticipantComposite participantComposite;
 	private ISynchronizeView view;
 	
-	public DropDownParticipantSection(Composite parent, ISynchronizeParticipant participant, ISynchronizeView view) {
+	public DropDownParticipantSection(Composite parent, TeamSubscriberParticipant participant, ISynchronizeView view) {
 		this.participant = participant;
 		this.parent = parent;
 		this.view = view;
 		setCollapsable(true);
 		setCollapsed(true);
+		setHeaderRightText("Outgoing | No Working Set");
 	}
-	/*
-	 * (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.widgets.FormSection#getDescription()
-	 */
-	public String getDescription() {
-		return null;
-	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.widgets.FormSection#getHeaderText()
@@ -53,5 +47,5 @@ public class DropDownParticipantSection extends FormSection {
 		parent.getParent().layout(true);
 		parent.setRedraw(true);
 		parent.getParent().setRedraw(true);
-	}
+	}	
 }

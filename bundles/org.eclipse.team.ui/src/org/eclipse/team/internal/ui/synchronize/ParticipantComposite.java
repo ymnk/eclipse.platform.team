@@ -12,15 +12,10 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.widgets.HyperlinkAdapter;
 import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
@@ -30,7 +25,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizeView;
 public class ParticipantComposite extends Composite {
 
 	private ISynchronizeParticipant participant;	
-	private Color background;
 	private Image participantImage;
 	private ISynchronizeView view;
 	private IControlFactory factory;
@@ -39,7 +33,6 @@ public class ParticipantComposite extends Composite {
 		super(parent, style);
 		this.factory = factory;
 		this.participant = participant;		
-		this.background = new Color(parent.getDisplay(), new RGB(255, 255, 255));
 		this.participantImage = participant.getImageDescriptor().createImage();
 		this.view = view;		
 		createComposite(this);
@@ -112,5 +105,13 @@ public class ParticipantComposite extends Composite {
 			}
 		}
 		return area;
-	}	
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.swt.widgets.Widget#dispose()
+	 */
+	public void dispose() {
+		super.dispose();
+		participantImage.dispose();
+	}
 }

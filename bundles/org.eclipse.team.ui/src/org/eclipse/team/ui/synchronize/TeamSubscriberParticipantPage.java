@@ -32,6 +32,8 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.DropDownParticipantSection;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.synchronize.sets.*;
+import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.views.*;
 import org.eclipse.team.internal.ui.widgets.FormSection;
@@ -98,6 +100,15 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
 	
+	private ISyncSetChangedListener changedListener = new ISyncSetChangedListener() {
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent)
+		 */
+		public void syncSetChanged(SyncSetChangedEvent event) {
+			calculateDescription();
+		}
+	};
+	
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
@@ -133,7 +144,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			public String getHeaderText() {
 				return "Changes";
 			}
-		
 			/* (non-Javadoc)
 			 * @see org.eclipse.team.internal.ui.widgets.FormSection#createClient(org.eclipse.swt.widgets.Composite, org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
 			 */
@@ -142,7 +152,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 				GridLayout layout = new GridLayout();
 				layout.marginHeight = 0;
 				layout.marginWidth = 0;
-				top.setBackground(new Color(parent.getDisplay(), new RGB(123,111,111)));
 				top.setLayout(layout);
 				createChangesSection(top);
 				return top;				
@@ -159,6 +168,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		};
 		changesSection.setCollapsable(true);
 		changesSection.setCollapsed(false);
+		changesSection.setDescription("");
+		calculateDescription();
 		
 		createViewer(composite);
 		
@@ -203,7 +214,27 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 				
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
-		updateMode(participant.getMode());		
+		getInput().registerListeners(changedListener);
+		updateMode(participant.getMode());	
+	}
+	
+	private void calculateDescription() {
+		if(getInput().getFilteredSyncSet().size() == 0) {
+			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+				public void run() {
+					changesSection.setDescription("Emptya gflahfdlahdf ljkahdf lkjahlfdk jhsadlkjhf lkfjdhalkjsdf hljdhf laksjhf lakjsf hlkajsh flkjash flkajsh flkjash flkjashd lfkjah lfkjash fdlkjahslf");
+				}
+			});
+		} else {
+			String description = changesSection.getDescription();
+			if(description != null) {
+				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+					public void run() {
+						changesSection.setDescription("");
+					}
+				});
+			}
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -440,6 +471,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	public void dispose() {
 		busyCursor.dispose();
 		statusLine.dispose();
+		getInput().deregisterListeners(changedListener);
 	}
 	
 	/*

@@ -20,6 +20,7 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
+import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantComposite;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.controls.IControlFactory;
@@ -213,11 +214,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createOverviewPage(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
 	public Composite createOverviewComposite(Composite parent, IControlFactory factory, ISynchronizeView view) {
-		Composite top = factory.createComposite(parent);
-		GridLayout layout = new GridLayout();
-		top.setLayout(layout);
-		top.setBackground(new Color(parent.getDisplay(), new RGB(23,33,221)));
-		Label l = factory.createLabel(top, "details of the participant go here");
-		return top;
+		return new TeamSubscriberParticipantComposite(parent, factory, this, view);
 	}
 }

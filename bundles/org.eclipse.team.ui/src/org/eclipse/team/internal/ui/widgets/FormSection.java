@@ -34,6 +34,7 @@ public abstract class FormSection implements IPropertyChangeListener {
 	public static final int SELECTION = 1;
 	private String headerColorKey = ControlFactory.DEFAULT_HEADER_COLOR;
 	private String headerText;
+	private String headerRightText;
 	private Control client;
 	protected Label header;
 	protected Label headerRightLabel;
@@ -86,13 +87,13 @@ public abstract class FormSection implements IPropertyChangeListener {
 			}
 			if (headerPainted && header != null) {
 				Point hsize = header.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
-				maxWidth = Math.max(maxWidth, hsize.x);
+				maxWidth = Math.max(maxWidth, hsize.x);			
+				if (headerRightLabel != null) {
+					Point hrsize = headerRightLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
+					maxWidth += hrsize.x;
+				}
 			}
-			if (headerRightLabel != null) {
-				Point hrsize = headerRightLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
-				maxWidth = Math.max(maxWidth, hrsize.x);
-			}
-			if (descriptionPainted && descriptionLabel != null) {
+			if (descriptionPainted && descriptionLabel != null && description.length() > 0) {
 				Point dsize = descriptionLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
 				maxWidth = Math.max(maxWidth, dsize.x);
 			}
@@ -137,6 +138,7 @@ public abstract class FormSection implements IPropertyChangeListener {
 				if (toggleSize != null)
 					hwidth = cwidth - toggleSize.x - 5;
 				Point hsize = header.computeSize(hwidth, SWT.DEFAULT, flush);
+				//Point hsize = header.computeSize(-1, SWT.DEFAULT, flush);
 				height += 18; //(hsize.y - 20);
 				collapsedHeight = hsize.y;
 				height += vspacing;
@@ -147,7 +149,7 @@ public abstract class FormSection implements IPropertyChangeListener {
 				height += vspacing;
 				collapsedHeight += vspacing + sepHeight;
 			}
-			if (hHint == SWT.DEFAULT && descriptionPainted && descriptionLabel != null) {
+			if (hHint == SWT.DEFAULT && descriptionPainted && descriptionLabel != null && description.length() > 0) {
 				Point dsize = descriptionLabel.computeSize(cwidth, SWT.DEFAULT, flush);
 				height += dsize.y;
 				height += vspacing;
@@ -163,27 +165,33 @@ public abstract class FormSection implements IPropertyChangeListener {
 			int height = parent.getClientArea().height;
 			int y = 0;
 			Point toggleSize = null;
+			Point hsize = null;
 
 			if (collapsable) {
 				toggleSize = toggle.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
 			}
 			if (headerPainted && header != null) {
-				Point hsize;
-
 				int availableWidth = width;
 				if (toggleSize != null)
 					availableWidth = width - toggleSize.x - 5;
-				hsize = header.computeSize(availableWidth, SWT.DEFAULT, flush);
+				//hsize = header.computeSize(availableWidth, SWT.DEFAULT, flush);
+				hsize = header.computeSize(-1, SWT.DEFAULT, flush);
 				int hx = 0;
 				if (toggle != null) {
 					int ty = y + hsize.y - toggleSize.y;
 					toggle.setBounds(0, ty, toggleSize.x, toggleSize.y);
 					hx = toggleSize.x; // + 5;
 				}
+				if(headerRightLabel != null) {
+					Point hrsize = headerRightLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
+					int restWidth = availableWidth;
+					availableWidth -= hrsize.x;
+					headerRightLabel.setBounds(availableWidth + hx, y, restWidth, hsize.y);
+				}
 				header.setBounds(hx, y, availableWidth, hsize.y);
 
 				y += hsize.y + vspacing;
-			}
+			}					
 			if (addSeparator && separator != null) {
 				separator.setBounds(0, y, width, 2);
 				y += sepHeight + vspacing;
@@ -191,10 +199,15 @@ public abstract class FormSection implements IPropertyChangeListener {
 			if (toggle != null && toggle.getSelection()) {
 				return;
 			}
-			if (descriptionPainted && descriptionLabel != null) {
+			if (descriptionPainted && descriptionLabel != null && description.length() > 0) {
+				descriptionLabel.setVisible(true);
 				Point dsize = descriptionLabel.computeSize(width, SWT.DEFAULT, flush);
-				descriptionLabel.setBounds(0, y, width, dsize.y);
+				descriptionLabel.setBounds(5, y, width, dsize.y);
 				y += dsize.y + vspacing;
+			} else {
+				if(descriptionLabel != null) {
+					descriptionLabel.setVisible(false);
+				}
 			}
 			if (client != null) {
 				client.setBounds(0, y, width, height - y);
@@ -238,8 +251,10 @@ public abstract class FormSection implements IPropertyChangeListener {
 
 		if (headerPainted) {
 			Color headerColor = factory.getColor(getHeaderColorKey());
-			header = factory.createHeadingLabel(section, getHeaderText(), headerColor, SWT.WRAP);					
-			headerRightLabel = factory.createLabel(section, "outgoing", SWT.WRAP);
+			header = factory.createHeadingLabel(section, getHeaderText(), headerColor, SWT.WRAP);			
+			if(headerRightText != null) {
+				headerRightLabel = factory.createLabel(section, getHeaderRightText(), SWT.WRAP);	
+			}			
 			if (collapsable) {
 				toggle = new ToggleControl(section, SWT.NULL);
 				toggle.setSelection(collapsed);
@@ -296,12 +311,14 @@ public abstract class FormSection implements IPropertyChangeListener {
 	}
 
 	protected void reflow() {
-		control.setRedraw(false);
-		control.getParent().setRedraw(false);
-		control.layout(true);
-		control.getParent().layout(true);
-		control.setRedraw(true);
-		control.getParent().setRedraw(true);
+		if(control != null && !control.isDisposed()) {
+			control.setRedraw(false);
+			control.getParent().setRedraw(false);
+			control.layout(true);
+			control.getParent().layout(true);
+			control.setRedraw(true);
+			control.getParent().setRedraw(true);
+		}
 	}
 
 	protected Text createText(Composite parent, String label, ControlFactory factory) {
@@ -360,6 +377,9 @@ public abstract class FormSection implements IPropertyChangeListener {
 	public java.lang.String getHeaderText() {
 		return headerText;
 	}
+	public java.lang.String getHeaderRightText() {
+		return headerRightText;
+	}
 	public int getHeightHint() {
 		return heightHint;
 	}
@@ -407,8 +427,10 @@ public abstract class FormSection implements IPropertyChangeListener {
 		// of hard-coded one
 		description = trimNewLines(newDescription);
 		//description = newDescription;
-		if (descriptionLabel != null)
+		if (descriptionLabel != null && !descriptionLabel.isDisposed()) {
 			descriptionLabel.setText(newDescription);
+		}
+		reflow();
 	}
 	public void setDescriptionPainted(boolean newDescriptionPainted) {
 		descriptionPainted = newDescriptionPainted;
@@ -430,6 +452,11 @@ public abstract class FormSection implements IPropertyChangeListener {
 		headerText = newHeaderText;
 		if (header != null)
 			header.setText(headerText);
+	}
+	public void setHeaderRightText(String newHeaderText) {
+		headerRightText = newHeaderText;
+		if (headerRightLabel != null)
+			headerRightLabel.setText(headerText);
 	}
 	public void setHeightHint(int newHeightHint) {
 		heightHint = newHeightHint;
