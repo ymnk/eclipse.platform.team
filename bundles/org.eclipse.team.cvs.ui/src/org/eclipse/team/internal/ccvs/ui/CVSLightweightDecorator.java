@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.ui;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -22,7 +21,6 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -35,6 +33,8 @@ import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.themes.ITheme;
 
 public class CVSLightweightDecorator extends LabelProvider implements ILightweightLabelDecorator, IResourceStateChangeListener, IPropertyChangeListener {
 
@@ -108,15 +108,13 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
          * @see org.eclipse.jface.viewers.IDecoration#setForegroundColor(org.eclipse.swt.graphics.Color)
          */
         public void setForegroundColor(Color color) {
-            // Ignore for now
-            
+            // Ignore for now  
         }
         /* (non-Javadoc)
          * @see org.eclipse.jface.viewers.IDecoration#setBackgroundColor(org.eclipse.swt.graphics.Color)
          */
         public void setBackgroundColor(Color color) {
-            // Ignore for now
-            
+            // Ignore for now       
         }
         /* (non-Javadoc)
          * @see org.eclipse.jface.viewers.IDecoration#setFont(org.eclipse.swt.graphics.Font)
@@ -140,6 +138,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this);
 		TeamUI.addPropertyChangeListener(this);
 		CVSUIPlugin.addPropertyChangeListener(this);
+		PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().addPropertyChangeListener(this);
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
 	}
 
@@ -275,6 +274,10 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 
 			if (isDirty) {
 				bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
+				ITheme current = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+				decoration.setBackgroundColor(current.getColorRegistry().get(CVSDecoratorConfiguration.OUTGOING_CHANGE_BACKGROUND_COLOR));
+				decoration.setForegroundColor(current.getColorRegistry().get(CVSDecoratorConfiguration.OUTGOING_CHANGE_FOREGROUND_COLOR));
+				decoration.setFont(current.getFontRegistry().get(CVSDecoratorConfiguration.OUTGOING_CHANGE_FONT));
 			}
 			CVSTag tag = getTagToShow(resource);
 			if (tag != null) {
@@ -617,6 +620,9 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         String prop = event.getProperty();
         return prop.equals(TeamUI.GLOBAL_IGNORES_CHANGED) 
         	|| prop.equals(TeamUI.GLOBAL_FILE_TYPES_CHANGED) 
-        	|| prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED);
+        	|| prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED)
+			|| prop.equals(CVSDecoratorConfiguration.OUTGOING_CHANGE_BACKGROUND_COLOR)
+			|| prop.equals(CVSDecoratorConfiguration.OUTGOING_CHANGE_FOREGROUND_COLOR)
+			|| prop.equals(CVSDecoratorConfiguration.OUTGOING_CHANGE_FONT);
     }
 }
