@@ -42,12 +42,7 @@ public class ChangeLogDiffNode extends SynchronizeModelElement {
 	}
 	
 	public boolean equals(Object obj) {
-		if(obj == this) return true;
-		if(! (obj instanceof ChangeLogDiffNode)) return false;
-		ChangeLogDiffNode other = (ChangeLogDiffNode)obj;
-		ILogEntry otherLog = other.getComment();
-		ILogEntry thisLog = getComment();
-		return thisLog.getComment().equals(otherLog.getComment()) && thisLog.getAuthor().equals(otherLog.getAuthor());
+		return (obj == this);
 	}
 
 	/* (non-Javadoc)

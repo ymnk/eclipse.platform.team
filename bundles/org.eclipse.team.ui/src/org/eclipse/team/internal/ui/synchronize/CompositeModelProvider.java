@@ -131,10 +131,10 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      */
     protected ISynchronizeModelProvider[] beginInput() {
         ISynchronizeModelProvider[] providers = getProviders();
-        for (int i = 0; i < providers.length; i++) {
-            ISynchronizeModelProvider provider = providers[i];
-            provider.getSyncInfoSet().beginInput();
-        }
+//        for (int i = 0; i < providers.length; i++) {
+//            ISynchronizeModelProvider provider = providers[i];
+//            provider.getSyncInfoSet().beginInput();
+//        }
         return providers;
     }
     
@@ -143,15 +143,15 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      */
     protected void endInput(ISynchronizeModelProvider[] providers, IProgressMonitor monitor) {
         RuntimeException exception = null;
-        for (int i = 0; i < providers.length; i++) {
-            ISynchronizeModelProvider provider = providers[i];
-            try {
-                provider.getSyncInfoSet().endInput(monitor);
-            } catch (RuntimeException e) {
-                // Remember the exception but continue so all locks are freed
-                exception = e;
-            }
-        } 
+//        for (int i = 0; i < providers.length; i++) {
+//            ISynchronizeModelProvider provider = providers[i];
+//            try {
+//                provider.getSyncInfoSet().endInput(monitor);
+//            } catch (RuntimeException e) {
+//                // Remember the exception but continue so all locks are freed
+//                exception = e;
+//            }
+//        } 
         if (exception != null) {
             throw exception;
         }
@@ -262,6 +262,15 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      */
     protected void nodeRemoved(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
         // Update the resource-to-element map and the element-to-provider map
+        modelObjectCleared(node);
+        super.nodeRemoved(node, provider);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#modelObjectCleared(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
+     */
+    public void modelObjectCleared(ISynchronizeModelElement node) {
+        super.modelObjectCleared(node);
 	    IResource r = node.getResource();
 		if(r != null) {
 			List elements = (List)resourceToElements.get(r);
@@ -273,7 +282,6 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
 			}
 		}
 		elementToProvider.remove(node);
-        super.nodeRemoved(node, provider);
     }
     
     /* (non-Javadoc)

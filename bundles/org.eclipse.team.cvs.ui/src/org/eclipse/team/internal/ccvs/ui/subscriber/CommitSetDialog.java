@@ -117,7 +117,7 @@ public class CommitSetDialog extends Dialog {
 		composite.setFont(parent.getFont());
 		
 		Label label = new Label(composite, SWT.NONE);
-		label.setText("&Name:");
+		label.setText(Policy.bind("CommitSetDialog.0")); //$NON-NLS-1$
 		label.setLayoutData(new GridData(GridData.BEGINNING));
 		
 		nameText = new Text(composite, SWT.BORDER);
@@ -131,7 +131,7 @@ public class CommitSetDialog extends Dialog {
 
     private void initializeValues() {
         String initialText = set.getTitle();
-        if (initialText == null) initialText = "";
+        if (initialText == null) initialText = ""; //$NON-NLS-1$
         nameText.setText(initialText);
         
         if (useTitleButton != null) {
@@ -141,8 +141,8 @@ public class CommitSetDialog extends Dialog {
     }
     
     private void createOptionsArea(Composite composite) {
-        useTitleButton = createRadioButton(composite, "Use the &title as the commit comment");
-        enterCommentButton = createRadioButton(composite, "Enter a commit &comment");
+        useTitleButton = createRadioButton(composite, Policy.bind("CommitSetDialog.2")); //$NON-NLS-1$
+        enterCommentButton = createRadioButton(composite, Policy.bind("CommitSetDialog.3")); //$NON-NLS-1$
         SelectionAdapter listener = new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
                 updateEnablements();

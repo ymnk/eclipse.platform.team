@@ -37,7 +37,7 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 			return ID;
 		}		
 		public String getName() {
-			return "Flat";
+			return Policy.bind("FlatModelProvider.0"); //$NON-NLS-1$
 		}		
 		public ImageDescriptor getImageDescriptor() {
 			return TeamImages.getImageDescriptor(ITeamUIImages.IMG_FLAT);

@@ -15,6 +15,7 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ui.synchronize.*;
@@ -38,7 +39,7 @@ public class ChangeLogModelManager extends HierarchicalModelManager implements I
 	
 	private class ToggleCommitSetAction extends Action {
         public ToggleCommitSetAction() {
-            super("Show Commit Sets", CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CHANGELOG));
+            super(Policy.bind("ChangeLogModelManager.0"), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CHANGELOG)); //$NON-NLS-1$
             update();
         }
         public void run() {

@@ -133,7 +133,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	private class CreateCommitSetAction extends SynchronizeModelAction {
 	    
         public CreateCommitSetAction(ISynchronizePageConfiguration configuration) {
-            super("&New Commit Set...", configuration);
+            super(Policy.bind("ChangeLogModelProvider.0"), configuration); //$NON-NLS-1$
         }
         
         /* (non-Javadoc)
@@ -153,16 +153,16 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
                         public void run() {
                             try {
                                 IResource[] resources = Utils.getResources(getSelectedDiffElements());
-                                CommitSet set = CommitSetManager.getInstance().createCommitSet("New Set", null);
+                                CommitSet set = CommitSetManager.getInstance().createCommitSet(Policy.bind("ChangeLogModelProvider.1"), null); //$NON-NLS-1$
                         		CommitSetDialog dialog = new CommitSetDialog(getConfiguration().getSite().getShell(), set, resources,
-                        		        "New Commit Set", "Enter the name and comment for the new commit set");
+                        		        Policy.bind("ChangeLogModelProvider.2"), Policy.bind("ChangeLogModelProvider.3")); //$NON-NLS-1$ //$NON-NLS-2$
                         		dialog.open();
                         		if (dialog.getReturnCode() != InputDialog.OK) return;
                         		set.addFiles(resources);
                 	            CommitSetManager.getInstance().add(set);
                             } catch (CVSException e) {
                                 CVSUIPlugin.openError(getConfiguration().getSite().getShell(),
-                                        "Could not create set", "A problem occurred while trying to create the commit set", e);
+                                        Policy.bind("ChangeLogModelProvider.4"), Policy.bind("ChangeLogModelProvider.5"), e); //$NON-NLS-1$ //$NON-NLS-2$
                             }
                         }
                     });
@@ -201,14 +201,14 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	private class EditCommitSetAction extends CommitSetAction {
 
         public EditCommitSetAction(ISynchronizePageConfiguration configuration) {
-            super("Ed&it Comment...", configuration);
+            super(Policy.bind("ChangeLogModelProvider.6"), configuration); //$NON-NLS-1$
         }
         
         public void run() {
             CommitSet set = getSelectedSet();
             if (set == null) return;
     		CommitSetDialog dialog = new CommitSetDialog(getConfiguration().getSite().getShell(), set, set.getFiles(),
-    		        "Edit Commit Set Comment", "Edit the name and comment for the new commit set");
+    		        Policy.bind("ChangeLogModelProvider.7"), Policy.bind("ChangeLogModelProvider.8")); //$NON-NLS-1$ //$NON-NLS-2$
     		dialog.open();
     		if (dialog.getReturnCode() != InputDialog.OK) return;
     		// Nothing to do here as the set was updated by the dialog
@@ -219,7 +219,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	private class MakeDefaultCommitSetAction extends CommitSetAction {
 
         public MakeDefaultCommitSetAction(ISynchronizePageConfiguration configuration) {
-            super("Make De&fault", configuration);
+            super(Policy.bind("ChangeLogModelProvider.9"), configuration); //$NON-NLS-1$
         }
         
         public void run() {
@@ -258,7 +258,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
                         set.addFiles(Utils.getResources(getSelectedDiffElements()));
                     } catch (CVSException e) {
                         CVSUIPlugin.openError(getConfiguration().getSite().getShell(),
-                                "Could not add files", "A problem occurred while rying to add the files to the commit set", e);
+                                Policy.bind("ChangeLogModelProvider.10"), Policy.bind("ChangeLogModelProvider.11"), e); //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
             };
@@ -277,7 +277,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
 			sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0"));	 //$NON-NLS-1$
-			addToCommitSet = new MenuManager("Add &To");
+			addToCommitSet = new MenuManager(Policy.bind("ChangeLogModelProvider.12")); //$NON-NLS-1$
 			addToCommitSet.setRemoveAllWhenShown(true);
 			addToCommitSet.addMenuListener(new IMenuListener() {
                 public void menuAboutToShow(IMenuManager manager) {
@@ -938,7 +938,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
     protected void nodeRemoved(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
         super.nodeRemoved(node, provider);
         // TODO: This should be done using the proper API
-		if (node instanceof SynchronizeModelElement) {
+		if (node instanceof SyncInfoModelElement) {
 			CVSSyncInfo info = (CVSSyncInfo) ((SyncInfoModelElement) node).getSyncInfo();
 			if (info != null) {
 				ICVSRemoteResource remote = getRemoteResource(info);

@@ -36,7 +36,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
  */
 public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implements IResourceChangeListener, ISyncInfoSetChangeListener {
     
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = Policy.DEBUG_SYNC_MODELS;
     
     private static final IWorkspaceRoot ROOT = ResourcesPlugin.getWorkspace().getRoot();
     
@@ -118,7 +118,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
      * Create the marker update handler.
      */
     public SynchronizeModelUpdateHandler(AbstractSynchronizeModelProvider provider) {
-        super(Policy.bind("SynchronizeModelProvider.0"), "Errors occurred while updating problem markers"); //$NON-NLS-1$
+        super(Policy.bind("SynchronizeModelProvider.0"), Policy.bind("SynchronizeModelUpdateHandler.0")); //$NON-NLS-1$ //$NON-NLS-2$
         this.provider = provider;
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
         provider.getSyncInfoSet().addSyncSetChangedListener(this);
@@ -403,19 +403,53 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
     public void nodeAdded(ISynchronizeModelElement element, AbstractSynchronizeModelProvider provider) {
         element.addPropertyChangeListener(listener);
         this.provider.nodeAdded(element, provider);
+        if (DEBUG) {
+            System.out.println("Node added: " + getDebugDisplayLabel(element) + " -> " + getDebugDisplayLabel((ISynchronizeModelElement)element.getParent()) + " : " + getDebugDisplayLabel(provider)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
     }
 
     /**
      * This method is invoked whenever a node is removed the viewer
      * by the provider or a sub-provider. The handler removes any
      * listener and notifies the root provider that 
-     * a node was removed.
+     * a node was removed. The node removed may have children for which 
+     * a nodeRemoved callback was not invoked (see modelObjectCleared).
      * @param element the removed element
      * @param provider the provider that added the element
      */
     public void nodeRemoved(ISynchronizeModelElement element, AbstractSynchronizeModelProvider provider) {
         element.removePropertyChangeListener(listener);
-        provider.nodeRemoved(element, provider);
+        this.provider.nodeRemoved(element, provider);
+        if (DEBUG) {
+            System.out.println("Node removed: " + getDebugDisplayLabel(element) + " -> " + getDebugDisplayLabel((ISynchronizeModelElement)element.getParent()) + " : " + getDebugDisplayLabel(provider)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
+    }
+
+    /**
+     * This method is invoked whenever a model object (i.e. node)
+     * is cleared from the model. This is similar to node removal but
+     * is deep.
+     * @param node the node that was cleared
+     */
+    public void modelObjectCleared(ISynchronizeModelElement node) {
+        this.provider.modelObjectCleared(node);
+        if (DEBUG) {
+            System.out.println("Node cleared: " + getDebugDisplayLabel(node)); //$NON-NLS-1$
+        }
+    }
+    
+    private String getDebugDisplayLabel(ISynchronizeModelElement node) {
+        if (node == null) {
+            return "ROOT"; //$NON-NLS-1$
+        }
+        if (node.getResource() != null) {
+            return node.getResource().getFullPath().toString();
+        }
+        return node.getName();
+    }
+
+    private String getDebugDisplayLabel(AbstractSynchronizeModelProvider provider2) {
+        return provider2.toString();
     }
     
     /* (non-Javadoc)
@@ -464,9 +498,6 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
         return provider;
     }
 
-    /**
-     * @param monitor
-     */
     public void connect(IProgressMonitor monitor) {
         getProvider().getSyncInfoSet().connect(this, monitor);
     }

@@ -27,7 +27,6 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.synchronize.*;
 
-
 /**
  * This class is reponsible for creating and maintaining a presentation model of 
  * {@link SynchronizeModelElement} elements that can be shown in a viewer. The model
@@ -552,7 +551,6 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
     }
     
 	protected void addToViewer(ISynchronizeModelElement node) {
-	    updateHandler.nodeAdded(node, this);
 		propogateConflictState(node, false);
 		// Set the marker property on this node.
 		// There is no need to propogate this to the parents 
@@ -564,6 +562,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		if (Utils.canUpdateViewer(getViewer())) {
 			doAdd((SynchronizeModelElement)node.getParent(), node);
 		}
+		updateHandler.nodeAdded(node, this);
 	}
 	
 	/**
@@ -589,6 +588,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * @param node the root node
 	 */
 	protected void clearModelObjects(ISynchronizeModelElement node) {
+	    // Clear all the children of the node
 		IDiffElement[] children = node.getChildren();
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
@@ -602,10 +602,13 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
                 }
 			}
 		}
+		// Remove the node from the tree
 		IDiffContainer parent = node.getParent();
 		if (parent != null) {
 			parent.removeToRoot(node);
 		}
+		// Notify the update handler that the node has been cleared
+		updateHandler.modelObjectCleared(node);
 	}
 	
 	/**
@@ -652,13 +655,26 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	/**
 	 * This is a callback from the model update handler that gets invoked 
 	 * when a node is removed from the viewer. It is only invoked for the
-	 * root level model provider.
+	 * root level model provider. A removed node may have children for
+	 * which a <code>nodeRemoved</code> callback is not recieved (see
+	 * <code>modelObjectCleared</code>).
 	 * @param node
 	 */
 	protected void nodeRemoved(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
 	    // Default is to do nothing
 	}
 	
+    /**
+	 * This is a callback from the model update handler that gets invoked 
+	 * when a node is cleared from the model. It is only invoked for the
+	 * root level model provider. This calbakc is deep in the sense that 
+	 * a callbakc is sent for each node that is cleared.
+     * @param node the node that was removed.
+     */
+    public void modelObjectCleared(ISynchronizeModelElement node) {
+        // Default is to do nothing
+    }
+    
     public void addPropertyChangeListener(IPropertyChangeListener listener) {
         synchronized (this) {
             if (listeners == null) {
@@ -718,5 +734,22 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
     
     protected void runViewUpdate(final Runnable runnable) {
         updateHandler.runViewUpdate(runnable);
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        ISynchronizeModelElement element = getModelRoot();
+        String name = getClass().getName();
+        int index = name.lastIndexOf("."); //$NON-NLS-1$
+        if (index != -1) {
+            name = name.substring(index + 1);
+        }
+        String name2 = element.getName();
+        if (name2.length() == 0) {
+            name2 = "/"; //$NON-NLS-1$
+        }
+        return name + ": " + name2; //$NON-NLS-1$
     }
 }
