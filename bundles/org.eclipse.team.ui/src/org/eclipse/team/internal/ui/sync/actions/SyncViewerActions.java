@@ -61,6 +61,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private SyncViewerSubscriberActions subscriberActions;
 	
 	private WorkingSetFilterActionGroup workingSetGroup;
+	private OpenWithActionGroup openWithActionGroup;
 	
 	private SyncViewerToolbarDropDownAction chooseSubscriberAction;
 	private ChooseComparisonCriteriaAction chooseComparisonCriteriaAction;
@@ -69,16 +70,19 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	
 	// other view actions
 	private Action collapseAll;
-	private Action refreshAction;
+	private Action refreshSelectionAction;
+	private Action refreshAllAction;
 	private Action toggleViewerType;
 	private Action open;
 	private ExpandAllAction expandAll;
 	private CancelSubscription cancelSubscription;
 	
 	class RefreshAction extends Action {
-		public RefreshAction() {
+		private boolean refreshAll;
+		public RefreshAction(boolean refreshAll) {
+			this.refreshAll = refreshAll;
 			setText("Refresh with Repository");
-			setToolTipText("Refresh the selected resources with the repository");
+			setToolTipText("Refresh with the repository");
 			setImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_REFRESH_ENABLED));
 			setDisabledImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_REFRESH_DISABLED));
 			setHoverImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_REFRESH));
@@ -93,7 +97,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 						getResources(context.getSelection());
 						SubscriberInput input = (SubscriberInput)context.getInput();
 						IResource[] resources = getResources(context.getSelection());
-						if (resources.length == 0) {
+						if (refreshAll || resources.length == 0) {
 							// If no resources are selected, refresh all the subscriber roots
 							resources = input.roots();
 						}
@@ -108,8 +112,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 					if(selection == null) {
 						return new IResource[0];
 					}
-					return (IResource[])TeamAction.getSelectedAdaptables(selection, IResource.class);
-					
+					return (IResource[])TeamAction.getSelectedAdaptables(selection, IResource.class);					
 				}
 			});
 		}
@@ -260,8 +263,11 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		chooseComparisonCriteriaAction = new ChooseComparisonCriteriaAction(comparisonCriteria);
 		
 		// initialize other actions
-		refreshAction = new RefreshAction();
-		refreshAction.setEnabled(false);
+		refreshAllAction = new RefreshAction(true);
+		refreshAllAction.setEnabled(false);
+		refreshSelectionAction = new RefreshAction(false);
+		refreshSelectionAction.setEnabled(false);
+		
 		collapseAll = new CollapseAllAction();
 		expandAll = new ExpandAllAction();
 		cancelSubscription = new CancelSubscription();
@@ -287,6 +293,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			}
 		};
 		workingSetGroup = new WorkingSetFilterActionGroup(syncView.getSite().getShell(), workingSetUpdater);
+		openWithActionGroup = new OpenWithActionGroup(getSyncView());
 	}
 
 	/* (non-Javadoc)
@@ -301,7 +308,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(new Separator());
 		directionsFilters.fillActionBars(actionBars);
 		manager.add(new Separator());
-		manager.add(refreshAction);
+		manager.add(refreshAllAction);
 		manager.add(collapseAll);
 		manager.add(toggleViewerType);
 		
@@ -320,10 +327,11 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		super.fillContextMenu(manager);
 		
 		manager.add(open);
+		openWithActionGroup.fillContextMenu(manager);		
 		manager.add(new Separator());
 		manager.add(expandAll);
 		manager.add(new Separator());
-		manager.add(refreshAction);
+		manager.add(refreshSelectionAction);
 		// Subscriber menus go here
 		subscriberActions.fillContextMenu(manager);
 		// Other plug-ins can contribute there actions here
@@ -376,7 +384,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	 */
 	protected void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
-		refreshAction.setEnabled(input != null);
+		refreshAllAction.setEnabled(input != null);
+		refreshSelectionAction.setEnabled(input != null);
 		cancelSubscription.setEnabled(input.getSubscriber().isCancellable());
 		cancelSubscription.updateTitle(input);
 		// This is invoked before the subscriber input is initialized
@@ -403,6 +412,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		comparisonCriteria.setContext(context);
 		subscriberInputs.setContext(context);
 		subscriberActions.setContext(context);
+		openWithActionGroup.setContext(context);
 		
 		// causes initializeActions to be called. Must be called after
 		// setting the context for contained groups.

@@ -36,7 +36,7 @@ public class OpenInCompareAction extends Action {
 	
 	public OpenInCompareAction(SyncViewer viewer) {
 		this.viewer = viewer;
-		setText("Open");
+		setText("Open With Compare Editor");
 	}
 
 	public void run() {	
