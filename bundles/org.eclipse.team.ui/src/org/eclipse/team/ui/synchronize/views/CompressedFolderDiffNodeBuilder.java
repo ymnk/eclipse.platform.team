@@ -107,21 +107,18 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			IResource local = info.getLocal();
-			if (local.getType() == IResource.FILE) {
-				DiffNode compressedNode = getModelObject(local.getParent());
-				if (compressedNode == null) {
-					DiffNode projectNode = getModelObject(local.getProject());
-					if (projectNode == null) {
-						projectNode = createChildNode(getRoot(), local.getProject());
+			DiffNode existingNode = getModelObject(local);
+			if (existingNode == null) {
+				if (local.getType() == IResource.FILE) {
+					DiffNode compressedNode = getModelObject(local.getParent());
+					if (compressedNode == null) {
+						DiffNode projectNode = getModelObject(local.getProject());
+						if (projectNode == null) {
+							projectNode = createChildNode(getRoot(), local.getProject());
+						}
+						compressedNode = createChildNode(projectNode, local.getParent());
 					}
-					compressedNode = createChildNode(projectNode, local.getParent());
-				}
-				createChildNode(compressedNode, local);
-			} else {
-				DiffNode existingNode = getModelObject(local);
-				if (existingNode != null) {
-					// The node was added as the parent of a newly added out-of-sync file
-					refreshInViewer(existingNode);
+					createChildNode(compressedNode, local);
 				} else {
 					DiffNode projectNode = getModelObject(local.getProject());
 					if (projectNode == null) {
@@ -129,6 +126,11 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 					}
 					createChildNode(projectNode, local);
 				}
+			} else {
+				// Either The folder node was added as the parent of a newly added out-of-sync file
+				// or the file was somehow already there so just refresh
+				refreshInViewer(existingNode);
+				
 			}
 		}
 	}
@@ -146,8 +148,9 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 		for (int i = 0; i < roots.length; i++) {
 			IResource resource = roots[i];
 			if (resource.getType() == IResource.PROJECT) {
-				removals.add(getModelObject(resource));
-				unassociateDeeply(resource);
+				DiffNode modelObject = getModelObject(resource);
+				removals.add(modelObject);
+				clearModelObjects(modelObject);
 			} else {
 				remainingRoots.add(resource);
 			}
@@ -163,14 +166,14 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 					// A root of the resource has also been removed.
 					// However, the resource's model parent would be a 
 					// compressed folder on the resource's parent folder.
-					unassociateDiffNode(resource);
 					resource = resource.getParent();
 				}
 				DiffNode modelObject = getModelObject(resource);
-				removals.add(modelObject);
-				modelObject.getParent().removeToRoot(modelObject);
-				unassociateDiffNode(resource);
-				updateParentLabels(modelObject);
+				if (modelObject != null) {
+					removals.add(modelObject);
+					clearModelObjects(modelObject);
+					updateParentLabels(modelObject);
+				}
 			}
 		}
 		AbstractTreeViewer tree = getTreeViewer();

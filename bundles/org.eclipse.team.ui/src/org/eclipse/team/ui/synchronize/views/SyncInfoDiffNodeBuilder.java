@@ -40,7 +40,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	}
 
 	/**
-	 * Build the tree
+	 * Build the tree from the root diff node.
 	 */
 	public void buildTree() {
 		associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), root);
@@ -95,16 +95,6 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		resourceMap.remove(childResource);
 	}
 	
-	protected void unassociateDeeply(IResource parentResource) {
-		unassociateDiffNode(parentResource);
-		for (Iterator iter = resourceMap.keySet().iterator(); iter.hasNext();) {
-			IResource r = (IResource) iter.next();
-			if (parentResource.getFullPath().isPrefixOf(r.getFullPath())) {
-				iter.remove();
-			}
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
@@ -155,7 +145,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	protected void reset() {
 		viewer.getControl().setRedraw(false);
 		resourceMap.clear();
-		clearModelObjects(getRoot(), viewer);
+		clearModelObjects(getRoot());
 		removeAllFromTree();
 		buildTree(getRoot());
 		viewer.refresh();
@@ -235,9 +225,10 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		for (int i = 0; i < nodes.length; i++) {
 			nodes[i] = getModelObject(removedRoots[i]);
 			DiffNode node = nodes[i];
-			node.getParent().removeToRoot(node);
-			unassociateDeeply(removedRoots[i]);
-			updateParentLabels(node);
+			if (node != null) {
+				clearModelObjects(node);
+				updateParentLabels(node);
+			}
 		}
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
@@ -255,6 +246,12 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		IResource[] added = event.getAddedSubtreeRoots();
 		for (int i = 0; i < added.length; i++) {
 			IResource resource = added[i];
+			DiffNode node = getModelObject(resource);
+			if (node != null) {
+				// Somehow the node exists. Remove it and read it to ensure what is
+				// shown matches the contents of the sync set
+				remove(resource);
+			}
 			buildSubTree(getModelObject(resource.getParent()), resource);	
 		}
 	}
@@ -368,17 +365,57 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		return root;
 	}
 	
-	protected void clearModelObjects(DiffNode node, AbstractTreeViewer viewer) {
+	/**
+	 * Clear the model objects from the diff tree, cleaning up any cached
+	 * state (such as resource to model object map). This method recurses deeply
+	 * on the tree to allow the cleanup of any cached state for the children as
+	 * well.
+	 * @param node the root node
+	 */
+	protected void clearModelObjects(DiffNode node) {
 		IDiffElement[] children = node.getChildren();
+		IResource resource = getResource(node);
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
 			if(element instanceof DiffNode) {
-				clearModelObjects((DiffNode)element, viewer);
+				clearModelObjects((DiffNode)element);
 			}
+		}
+		if (resource != null) {
+			unassociateDiffNode(resource);
 		}
 		IDiffContainer parent = node.getParent();
 		if(parent != null) {
 			parent.removeToRoot(node);
 		}
+	}
+	
+	/**
+	 * Return the resource associated with the node or <code>null</code> if the node
+	 * is not directly associated with a resource.
+	 * @param node a diff node
+	 * @return a resource or <code>null</code>
+	 */
+	protected IResource getResource(DiffNode node) {
+		if (node instanceof SyncInfoDiffNode) {
+			return ((SyncInfoDiffNode)node).getResource();
+		}
+		return null;
+	}
+
+	/**
+	 * Remove any traces of the resource and any of it's descendants in the
+	 * hiearchy defined by the content provider from the content provider
+	 * and the viewer it is associated with.
+	 * @param resource
+	 */
+	protected void remove(IResource resource) {
+		DiffNode node = getModelObject(resource);
+		clearModelObjects(node);
+		AbstractTreeViewer tree = getTreeViewer();
+		if (tree != null) {
+			tree.remove(node);
+		}
+		
 	}
 }

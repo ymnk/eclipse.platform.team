@@ -139,7 +139,7 @@ public class MergeUpdateAction extends SafeUpdateAction {
 	 * incoming-change
 	 * incoming-deletion
 	 */
-	protected void overwriteUpdate(SyncInfoSet set, IProgressMonitor monitor) throws TeamException {
+	protected void overwriteUpdate(SelectionSyncInfoSet set, IProgressMonitor monitor) throws TeamException {
 		SyncInfo[] nodes = set.members();
 		monitor.beginTask(null, 1000 * nodes.length);
 		try {

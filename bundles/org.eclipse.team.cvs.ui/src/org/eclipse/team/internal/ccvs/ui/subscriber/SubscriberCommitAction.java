@@ -99,7 +99,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return true;
 	}
 	
-	private IResource[] getUnaddedResources(SyncInfoSet syncSet) throws CVSException {
+	private IResource[] getUnaddedResources(SelectionSyncInfoSet syncSet) throws CVSException {
 		// TODO: Should only get outgoing additions (since conflicting additions 
 		// could be considered to be under version control already)
 		IResource[] resources = syncSet.getResources();
@@ -239,7 +239,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	 * Note: This method is designed to be overridden by test cases.
 	 * @return 0 to sync conflicts, 1 to sync all non-conflicts, 2 to cancel
 	 */
-	protected int promptForConflicts(SyncInfoSet syncSet) {
+	protected int promptForConflicts(SelectionSyncInfoSet syncSet) {
 		String[] buttons = new String[] {IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL, IDialogConstants.CANCEL_LABEL};
 		String question = Policy.bind("CommitSyncAction.questionRelease"); //$NON-NLS-1$
 		String title = Policy.bind("CommitSyncAction.titleRelease"); //$NON-NLS-1$
