@@ -9,7 +9,7 @@
 - P2 need an event for adding roots to a subscriber to update the list shown
 - P3 support for table widget in changes page
 - remove duplicated tree/table viewers classes. the orignial ones simply have the INavigable behavior.
-- P1 make changes section only be a pagebook. this would easily allow adding any number of composites to the page?
+s P1 make changes section only be a pagebook. this would easily allow adding any number of composites to the page?
 - compareeditorinput fetcheds remote content outside of a progress monitor
 - decorations for SyncInfoDiffElements (of which type.. project persistent property setting?)
 - labels for compare editors (text merge viewers and title for diff viewer)

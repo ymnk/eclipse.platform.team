@@ -11,27 +11,37 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.widgets.FormSection;
+import org.eclipse.team.internal.ui.widgets.HyperlinkAdapter;
 import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.part.PageBook;
 
 public class ChangesSection extends FormSection {
 	
 	private TeamSubscriberParticipant participant;
 	private Composite parent;
 	private ParticipantComposite participantComposite;
-	private ISynchronizeView view;
+	private final ISynchronizeView view;
 	private Viewer changesViewer;
+	private PageBook changesSectionContainer;
+	private Composite filteredContainer;
+	private IControlFactory factory;
 
 	private ISyncSetChangedListener changedListener = new ISyncSetChangedListener() {
 		public void syncSetChanged(ISyncInfoSetChangeEvent event) {
 			calculateDescription();
 		}
 	};
+	
 	private TeamSubscriberParticipantPage page;
 		
 	public ChangesSection(Composite parent, TeamSubscriberParticipantPage page) {
@@ -42,7 +52,7 @@ public class ChangesSection extends FormSection {
 		setCollapsable(true);
 		setCollapsed(false);
 		setDescription("");
-		calculateDescription();
+		//calculateDescription();
 		updateHeaderRightText();
 	}
 	
@@ -60,12 +70,22 @@ public class ChangesSection extends FormSection {
 	 *      org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
 	 */
 	public Composite createClient(Composite parent, IControlFactory factory) {
+		this.factory = factory;
 		Composite clientComposite = factory.createComposite(parent);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
 		clientComposite.setLayout(layout);
-		changesViewer = page.createChangesViewer(clientComposite);
+		changesSectionContainer = new PageBook(clientComposite, SWT.NONE);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		changesSectionContainer.setBackground(new Color(changesSectionContainer.getDisplay(), new RGB(2,4,5)));
+		data.grabExcessHorizontalSpace = true;
+		data.grabExcessVerticalSpace = true;
+		changesSectionContainer.setLayoutData(data);
+		changesViewer = page.createChangesViewer(changesSectionContainer);
+
+		calculateDescription();
+		
 		participant.getInput().registerListeners(changedListener);
 		return clientComposite;
 	}
@@ -86,35 +106,62 @@ public class ChangesSection extends FormSection {
 		if(participant.getInput().getFilteredSyncSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
-					setDescription(getEmptyChangesText());
+					filteredContainer = getEmptyChangesComposite(changesSectionContainer, factory);
+					changesSectionContainer.showPage(filteredContainer);
 				}
 			});
 		} else {
-			String description = getDescription();
-			if(description != null) {
+			if(filteredContainer != null) {
 				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 					public void run() {
-						setDescription("");
+						filteredContainer.dispose();
+						filteredContainer = null;
+						changesSectionContainer.showPage(changesViewer.getControl());
 					}
 				});
 			}
 		}
 	}
 	
-	private String getEmptyChangesText() {
+	private Composite getEmptyChangesComposite(Composite parent, IControlFactory factory) {
+		Composite composite = factory.createComposite(parent);
+		GridLayout layout = new GridLayout();
+		composite.setLayout(layout);
 		ITeamSubscriberSyncInfoSets input = participant.getInput();
 		int changesInWorkspace = input.getSubscriberSyncSet().size();
 		int changesInWorkingSet = input.getWorkingSetSyncSet().size();
 		int changesInFilter = input.getFilteredSyncSet().size();		
+		
 		if(changesInFilter == 0 && changesInWorkingSet != 0) {
-			return "The current mode '" + Utils.modeToString(participant.getMode()) + "' doesn't contain any changes. Switch to another mode.";
+			factory.createLabel(composite, "The current mode '" + Utils.modeToString(participant.getMode()) + "' doesn't contain any changes.");
+			createHyperlink(factory, composite, "Change to both mode", new HyperlinkAdapter() {
+				public void linkActivated(Control linkLabel) {
+					participant.setMode(TeamSubscriberParticipant.BOTH_MODE);
+				}
+			});
 		} else if(changesInFilter == 0 && changesInWorkingSet == 0 && changesInWorkspace != 0) {
-			return "The current working set '" + Utils.workingSetToString(participant.getWorkingSet(), 50) + "' is hiding changes in your workspace. Remove working set.";
+			factory.createLabel(composite, "The current working set '" + Utils.workingSetToString(participant.getWorkingSet(), 50) + "' is hiding changes in your workspace.");
+			createHyperlink(factory, composite, "Remove working set", new HyperlinkAdapter() {
+				public void linkActivated(Control linkLabel) {
+					participant.setWorkingSet(null);
+				}
+			});
 		} else {
-			return "No changes in workspace";
+			factory.createLabel(composite, "No changes in workspace.");
 		}
+		
+		return composite;
 	}
 	
+	/**
+	 * @param factory
+	 * @param composite
+	 */
+	private void createHyperlink(IControlFactory factory, Composite composite, String text, HyperlinkAdapter adapter) {
+		final Label label = factory.createLabel(composite, text, SWT.WRAP);
+		factory.turnIntoHyperlink(label, adapter);
+	}
+
 	public Viewer getChangesViewer() {
 		return changesViewer;
 	}

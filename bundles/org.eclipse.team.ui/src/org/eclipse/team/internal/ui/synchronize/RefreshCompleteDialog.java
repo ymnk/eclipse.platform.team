@@ -166,4 +166,12 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	protected boolean includeErrorMessage() {
 		return false;
 	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeDetailsButton()
+	 */
+	protected boolean includeDetailsButton() {
+		return changes.length != 0;
+	}
 }

@@ -16,15 +16,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
@@ -52,12 +47,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	/**
 	 * If true a rescheduled refresh job should be retarted when cancelled
 	 */
-	/* internal use only */ boolean restartOnCancel = true; 
+	private boolean restartOnCancel = true; 
 	
 	/**
 	 * The schedule delay used when rescheduling a completed job 
 	 */
-	/* internal use only */ static long scheduleDelay = 20000; 
+	private static long scheduleDelay = 20000; 
 	
 	/**
 	 * The subscribers and roots to refresh. If these are changed when the job
@@ -65,13 +60,6 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 */
 	private IResource[] resources;
 	private ITeamSubscriberSyncInfoSets input;
-	
-	protected class MD extends MessageDialog {
-		public MD(Shell parentShell, String dialogTitle, Image dialogTitleImage, String dialogMessage, int dialogImageType, String[] dialogButtonLabels, int defaultIndex) {
-			super(parentShell, dialogTitle, dialogTitleImage, dialogMessage, dialogImageType, dialogButtonLabels, defaultIndex);
-			setShellStyle(SWT.DIALOG_TRIM | SWT.MODELESS);
-		}
-	}
 	
 	protected class ChangeListener implements ITeamResourceChangeListener {
 		private List changes = new ArrayList();

@@ -64,13 +64,7 @@ public class ParticipantComposite extends Composite {
 				final Label label = factory.createLabel(composite, participant.getName(), SWT.WRAP);
 				label.setLayoutData(new GridData());
 				label.setFont(JFaceResources.getBannerFont());
-				label.setText(participant.getName());
-			}
-			{
-				final Label label = factory.createLabel(composite, "Goto Page", SWT.NONE);
-				final GridData gridData_1 = new GridData();				
-				gridData_1.horizontalAlignment = GridData.END;
-				label.setLayoutData(gridData_1);
+				label.setText(participant.getName());			
 				factory.turnIntoHyperlink(label, new HyperlinkAdapter() {
 					public void linkActivated(Control linkLabel) {
 						view.display(participant);

@@ -113,7 +113,9 @@ abstract public class DetailsDialog extends Dialog {
 		if (includeCancelButton()) {
 			createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
 		}
-		detailsButton = createButton(parent, IDialogConstants.DETAILS_ID, IDialogConstants.SHOW_DETAILS_LABEL, false);
+		if(includeDetailsButton()) {
+			detailsButton = createButton(parent, IDialogConstants.DETAILS_ID, IDialogConstants.SHOW_DETAILS_LABEL, false);
+		}
 		updateEnablements();
 	}
 
@@ -287,6 +289,10 @@ abstract public class DetailsDialog extends Dialog {
 	}
 	
 	protected boolean includeErrorMessage() {
+		return true;
+	}
+	
+	protected boolean includeDetailsButton() {
 		return true;
 	}
 }
