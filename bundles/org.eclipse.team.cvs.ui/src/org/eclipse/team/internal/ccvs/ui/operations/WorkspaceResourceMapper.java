@@ -59,6 +59,6 @@ public final class WorkspaceResourceMapper extends ResourceMapping {
         return asTraversal(resource, depth, context);
     }
     private ResourceTraversal[] asTraversal(IResource resource, final int depth, ResourceMappingContext context) {
-        return new ResourceTraversal[] { new ResourceTraversal(new IResource[] { resource }, depth)} ;
+        return new ResourceTraversal[] { new ResourceTraversal(new IResource[] { resource }, depth, IResource.NONE)} ;
     }
 }

@@ -262,7 +262,7 @@ public class ResourceMapperTests extends EclipseTest {
             }
             public ResourceTraversal[] getTraversals(ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
                 return new ResourceTraversal[] {
-                        new ResourceTraversal(resources, depth)
+                        new ResourceTraversal(resources, depth, IResource.NONE)
                     };
             }
         };
