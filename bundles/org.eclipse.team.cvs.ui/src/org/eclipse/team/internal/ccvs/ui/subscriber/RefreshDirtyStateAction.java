@@ -18,7 +18,6 @@ import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoChangeTypeFi
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
-import org.eclipse.ui.IWorkbenchPart;
 
 /**
  * Resets the dirty state of files whose contents match their base.
@@ -44,7 +43,7 @@ public class RefreshDirtyStateAction extends CVSParticipantAction {
 	 * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#getSubscriberOperation(org.eclipse.ui.IWorkbenchPart, org.eclipse.compare.structuremergeviewer.IDiffElement[])
 	 */
 	protected SynchronizeModelOperation getSubscriberOperation(
-			IWorkbenchPart part, IDiffElement[] elements) {
-		return new RefreshDirtyStateOperation(part, elements);
+			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+		return new RefreshDirtyStateOperation(configuration, elements);
 	}
 }

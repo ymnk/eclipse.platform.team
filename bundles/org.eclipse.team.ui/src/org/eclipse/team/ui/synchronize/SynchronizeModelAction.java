@@ -13,6 +13,7 @@ package org.eclipse.team.ui.synchronize;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -24,7 +25,6 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
-import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 /**
@@ -42,10 +42,9 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
  * @since 3.0
  */
 public abstract class SynchronizeModelAction extends BaseSelectionListenerAction {
-
-	// TODO: Should be replaced by sync site
-	private IWorkbenchPart part;
 	
+	private ISynchronizePageConfiguration configuration;
+
 	/**
 	 * Create an action with the given text and configuration.
 	 * @param text the action's text
@@ -53,6 +52,7 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 	 */
 	protected SynchronizeModelAction(String text, ISynchronizePageConfiguration configuration) {
 		super(text);
+		this.configuration = configuration;
 		initialize(configuration);
 	}
 	
@@ -78,7 +78,7 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 		// TODO: We used to prompt for unsaved changes in any editor. We don't anymore. Would
 		// it be better to prompt for unsaved changes to editors affected by this action?
 		try {
-			getSubscriberOperation(part, getFilteredDiffElements()).run();
+			getSubscriberOperation(configuration, getFilteredDiffElements()).run();
 		} catch (InvocationTargetException e) {
 			handle(e);
 		} catch (InterruptedException e) {
@@ -91,10 +91,12 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 	 * will be run when the action is run. Subclass may implement this method and provide 
 	 * an operation subclass or may override the <code>run(IAction)</code> method directly
 	 * if they choose not to implement a <code>SynchronizeModelOperation</code>.
+	 * @param configuration the synchronize page configuration for the page
+	 * to which this action is associated
 	 * @param elements the selected diff element for which this action is enabled.
 	 * @return the subscriber operation to be run by this action.
 	 */
-	protected abstract SynchronizeModelOperation getSubscriberOperation(IWorkbenchPart part, IDiffElement[] elements);
+	protected abstract SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration configuration, IDiffElement[] elements);
 	
 	/** 
 	 * Generic error handling code that uses an error dialog to show the error to the 
@@ -164,5 +166,12 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 			selectionChanged(StructuredSelection.EMPTY);
 		}
 		
+	}
+	
+	/**
+	 * @return Returns the configuration.
+	 */
+	public ISynchronizePageConfiguration getConfiguration() {
+		return configuration;
 	}
 }

@@ -16,7 +16,6 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
-import org.eclipse.ui.IWorkbenchPart;
 
 /**
  * Runs an update command that will prompt the user for overwritting local
@@ -36,7 +35,7 @@ public class OverrideAndUpdateAction extends CVSParticipantAction {
 		return new SyncInfoDirectionFilter(new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING});
 	}
 	
-	protected SynchronizeModelOperation getSubscriberOperation(IWorkbenchPart part, IDiffElement[] elements) {
-		return new OverrideAndUpdateSubscriberOperation(part, elements);
+	protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+		return new OverrideAndUpdateSubscriberOperation(configuration, elements);
 	}
 }

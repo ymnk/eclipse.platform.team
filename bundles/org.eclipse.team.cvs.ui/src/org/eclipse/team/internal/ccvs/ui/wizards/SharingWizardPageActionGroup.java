@@ -22,7 +22,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
-import org.eclipse.ui.IWorkbenchPart;
 
 /**
  * Adviser used to add toolbar buttons to the last page of the sharing wizard.
@@ -49,8 +48,8 @@ public class SharingWizardPageActionGroup extends SynchronizePageActionGroup {
 		protected FastSyncInfoFilter getSyncInfoFilter() {
 			return new SyncInfoDirectionFilter(new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING});
 		}
-		protected SynchronizeModelOperation getSubscriberOperation(IWorkbenchPart part, IDiffElement[] elements) {
-			return new WorkspaceCommitOperation(part, elements, true /* override */);
+		protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+			return new WorkspaceCommitOperation(configuration, elements, true /* override */);
 		}
 		
 	}

@@ -16,7 +16,6 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
-import org.eclipse.ui.IWorkbenchPart;
 
 public class ConfirmMergedAction extends CVSParticipantAction {
 	
@@ -34,7 +33,7 @@ public class ConfirmMergedAction extends CVSParticipantAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.actions.SubscriberAction#getSubscriberOperation(org.eclipse.compare.structuremergeviewer.IDiffElement[])
 	 */
-	protected SynchronizeModelOperation getSubscriberOperation(IWorkbenchPart part, IDiffElement[] elements) {
-		return new ConfirmMergedOperation(part, elements);
+	protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+		return new ConfirmMergedOperation(configuration, elements);
 	}
 }

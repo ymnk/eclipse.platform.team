@@ -13,7 +13,10 @@ package org.eclipse.team.ui.synchronize;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IKeyBindingService;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchSite;
 
 /**
  * A site which provides access to the context in which this page
@@ -105,4 +108,5 @@ public interface ISynchronizePageSite {
 	 * shown in a modal dialog
 	 */
 	boolean isModal();
+
 }

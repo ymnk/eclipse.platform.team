@@ -105,11 +105,9 @@ public class CompareParticipant extends CVSParticipant implements IPropertyChang
 		configuration.addMenuGroup(
 				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 				CONTEXT_MENU_CONTRIBUTION_GROUP);
-		if (!configuration.getSite().isModal()) { 
-			configuration.addMenuGroup(
-					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					NON_MODAL_CONTEXT_MENU_CONTRIBUTION_GROUP);
-		}
+		configuration.addMenuGroup(
+				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+				NON_MODAL_CONTEXT_MENU_CONTRIBUTION_GROUP);
 		configuration.addActionContribution(new CompareParticipantActionContribution());
 	}
 	

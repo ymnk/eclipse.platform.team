@@ -142,6 +142,7 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 		IWorkingSetManager manager = TeamUIPlugin.getPlugin().getWorkbench().getWorkingSetManager();
 		IWorkingSet newSet = manager.createWorkingSet("sharing wizard", new IAdaptable[] {project});
 		configuration.setWorkingSet(newSet);
+		configuration.setRunnableContext(getContainer());
 		
 		CompareConfiguration cc = new CompareConfiguration();
 		cc.setLeftEditable(false);

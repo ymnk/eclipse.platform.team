@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
@@ -385,4 +386,19 @@ public interface ISynchronizePageConfiguration {
 	 * or a cusom type).
 	 */
 	void setComparisonType(String type);
+	
+	/**
+	 * Sets the runnable context that can be used by the page's
+	 * actions to display progress.
+	 * @param context a runnable context (or null)
+	 */
+	void setRunnableContext(IRunnableContext context);
+	
+	/**
+	 * Return the runnable context. If <code>null</code> is returned,
+	 * actions can use their own method of progress feedback either
+	 * using a background job or the progress service
+	 * @return a runnable context (or <code>null</code>)
+	 */
+	IRunnableContext getRunnableContext();
 }
