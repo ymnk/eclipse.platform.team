@@ -22,9 +22,12 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
  * with the same name).
  */
 public class CheckoutMultipleProjectsOperation extends CheckoutProjectOperation {
+
+	boolean hasTargetLocation;
 	
 	public CheckoutMultipleProjectsOperation(Shell shell, ICVSRemoteFolder[] remoteFolders, String targetLocation) {
 		super(shell, remoteFolders, targetLocation);
+		hasTargetLocation = targetLocation != null;
 		setInvolvesMultipleResources(remoteFolders.length > 1);
 	}
 	
@@ -44,4 +47,12 @@ public class CheckoutMultipleProjectsOperation extends CheckoutProjectOperation 
 		ICVSRemoteFolder[] remoteFolders = getRemoteFolders();
 		return Policy.bind("CheckoutMultipleProjectsOperation.taskName", new Integer(remoteFolders.length).toString());  //$NON-NLS-1$
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CheckoutProjectOperation#getTargetProjects(org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder[])
+	 */
+	protected IProject[] getTargetProjects(ICVSRemoteFolder[] folders) {
+		return null;
+	}
+	
 }

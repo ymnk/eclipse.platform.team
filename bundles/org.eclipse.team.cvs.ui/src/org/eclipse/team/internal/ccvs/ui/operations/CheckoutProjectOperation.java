@@ -183,8 +183,14 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 			session.open(Policy.subMonitorFor(pm, 50));
 			
 			// Determine the local target projects (either the project provider or the module expansions) 
-			IProject[] targetProjects = prepareProjects(session, project,moduleName, Policy.subMonitorFor(pm, 50));
+			IProject[] targetProjects = prepareProjects(session, project, moduleName, Policy.subMonitorFor(pm, 50));
 			if (targetProjects == null) return;
+			
+			// Determine if the target project is the same name as the remote folder
+			// in which case we'll use -d to flatten the directory structure
+			if (targetProjects.length == 1 && targetProjects[0].getName().equals(resource.getName())) {
+				project = targetProjects[0];
+			}
 		
 			// Build the local options
 			List localOptions = new ArrayList();
@@ -229,6 +235,9 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 	 * Prepare the workspace to receive the project(s). If project is not null, then
 	 * if will be the only target project of the checkout. Otherwise, the remote folder
 	 * could expand to multiple projects.
+	 * 
+	 * If the remote resource is a folder which is not a root folder (i.e. a/b/c),
+	 * then the target project will be the last segment (i.e. c).
 	 */
 	private IProject[] prepareProjects(Session session, IProject project, String moduleName, IProgressMonitor pm) throws CVSException {
 			
@@ -245,8 +254,14 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 			
 			// Convert the module expansions to local projects
 			String[] expansions = session.getModuleExpansions();
-			for (int j = 0; j < expansions.length; j++) {
-				targetProjectSet.add(ResourcesPlugin.getWorkspace().getRoot().getProject(new Path(expansions[j]).segment(0)));
+			if (expansions.length == 1 && expansions[0].equals(moduleName)) {
+				// For a remote folder, use the last segment as the project to be created
+				String lastSegment = new Path(expansions[0]).lastSegment();
+				targetProjectSet.add(ResourcesPlugin.getWorkspace().getRoot().getProject(lastSegment));
+			} else {
+				for (int j = 0; j < expansions.length; j++) {
+					targetProjectSet.add(ResourcesPlugin.getWorkspace().getRoot().getProject(new Path(expansions[j]).segment(0)));
+				}
 			}
 			
 		} else {
