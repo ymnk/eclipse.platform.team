@@ -11,10 +11,7 @@
 package org.eclipse.team.ui.synchronize.subscribers;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -26,17 +23,11 @@ import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicy;
-import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicyInModalDialog;
-import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
-import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IWorkbenchSite;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.*;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.progress.ProgressManager;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -114,6 +105,16 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 */
 	public IWizard createSynchronizeWizard() {
 		return new SubscriberRefreshWizard(this);
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPageConfiguration()
+	 */
+	public ISynchronizePageConfiguration createPageConfiguration() {
+		SubscriberPageConfiguration configuration = new SubscriberPageConfiguration(this, getSubscriberSyncInfoCollector());
+		initializeConfiguration(configuration);
+		return configuration;
 	}
 	
 	public void setRefreshSchedule(SubscriberRefreshSchedule schedule) {
@@ -235,7 +236,7 @@ private void internalRefresh(IResource[] resources, final IRefreshSubscriberList
 	 * This collector maintains the set of all out-of-sync resources for the subscriber.
 	 * @return the <code>SubscriberSyncInfoCollector</code> for this participant
 	 */
-	SubscriberSyncInfoCollector getSubscriberSyncInfoCollector() {
+	public SubscriberSyncInfoCollector getSubscriberSyncInfoCollector() {
 		return collector;
 	}
 	

@@ -15,22 +15,22 @@ import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.*;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
+import org.eclipse.team.ui.SaveablePartAdapter;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 import org.eclipse.ui.progress.IProgressService;
@@ -42,13 +42,16 @@ import org.eclipse.ui.progress.IProgressService;
  * 
  * @since 3.0
  */
-public class SynchronizeInput implements IContentChangeListener, ICompareContainer {
+public class ParticipantPageSaveablePart extends SaveablePartAdapter implements IContentChangeListener {
 
 	private CompareConfiguration cc;
 	private ISynchronizeParticipant participant;
+	private ISynchronizePageConfiguration pageConfiguration;
 	private IPageBookViewPage page;
+	private Image titleImage;
 	private Shell shell;
 	
+	// Tracking of dirty state
 	private boolean fDirty= false;
 	private ArrayList fDirtyViewers= new ArrayList();
 	private IPropertyChangeListener fDirtyStateListener;
@@ -60,6 +63,9 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 	private CompareViewerSwitchingPane fStructuredComparePane;
 	private Viewer viewer;
 
+	/*
+	 * Page site that allows hosting the participant page in a dialog.
+	 */
 	class CompareViewerPaneSite implements ISynchronizePageSite {
 		public IWorkbenchPage getPage() {
 			return null;
@@ -92,10 +98,23 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 		}	
 	}
 	
-	public SynchronizeInput(Shell shell, CompareConfiguration cc, ISynchronizeParticipant participant) {
+	/**
+	 * Creates a part for the provided participant. The page configuration is used when creating the participant page and the resulting
+	 * compare/merge panes will be configured with the provided compare configuration.
+	 * <p>
+	 * For example, clients can decide if the user can edit the compare panes by calling {@link CompareConfiguration#setLeftEditable(boolean)}
+	 * or {@link CompareConfiguration#setRightEditable(boolean)}. 
+	 * </p>
+	 * @param shell the parent shell for this part
+	 * @param cc the compare configuration that will be used to create the compare panes
+	 * @param pageConfiguration the configuration that will be provided to the participant prior to creating the page
+	 * @param participant the participant whose page will be displayed in this part
+	 */
+	public ParticipantPageSaveablePart(Shell shell, CompareConfiguration cc, ISynchronizePageConfiguration pageConfiguration, ISynchronizeParticipant participant) {
 		this.cc = cc;
 		this.shell = shell;
 		this.participant = participant;
+		this.pageConfiguration = pageConfiguration;
 		
 		fDirtyStateListener= new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent e) {
@@ -111,7 +130,77 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 		};
 	}
 	
-	public Control createContents(Composite parent2) {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.SaveablePartAdapter#dispose()
+	 */
+	public void dispose() {
+		if(titleImage != null) {
+			titleImage.dispose();
+		}
+		super.dispose();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IWorkbenchPart#getTitleImage()
+	 */
+	public Image getTitleImage() {
+		if(titleImage == null) {
+			titleImage = participant.getImageDescriptor().createImage();
+		}
+		return titleImage;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IWorkbenchPart#getTitle()
+	 */
+	public String getTitle() {
+		return participant.getName();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.ISaveablePart#isDirty()
+	 */
+	public boolean isDirty() {
+		return fDirty || fDirtyViewers.size() > 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.IContentChangeListener#contentChanged(org.eclipse.compare.IContentChangeNotifier)
+	 */
+	public void contentChanged(IContentChangeNotifier source) {
+		try {
+			if (source instanceof DiffNode) {
+				commit(new NullProgressMonitor(), (DiffNode) source);
+			} else if (source instanceof LocalResourceTypedElement) {
+				 ((LocalResourceTypedElement) source).commit(new NullProgressMonitor());
+			}
+		} catch (CoreException e) {
+			Utils.handle(e);
+		}
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see CompareEditorInput#saveChanges(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void doSave(IProgressMonitor pm) {
+		//super.saveChanges(pm);
+		ISynchronizeModelElement root = (ISynchronizeModelElement)viewer.getInput();
+		if (root != null && root instanceof DiffNode) {
+			try {
+				commit(pm, (DiffNode)root);
+			} catch (CoreException e) {
+				Utils.handle(e);
+			} finally {
+				setDirty(false);
+			}
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IWorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
+	 */
+	public void createPartControl(Composite parent2) {
 		Composite parent = new Composite(parent2, SWT.NULL);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
@@ -124,12 +213,10 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 		
 		Splitter vsplitter = new Splitter(parent, SWT.VERTICAL);
 		vsplitter.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL | GridData.GRAB_VERTICAL));
-		// we need two panes: the left for the elements, the right one
-		// for the structured diff
+		// we need two panes: the left for the elements, the right one for the structured diff
 		Splitter hsplitter = new Splitter(vsplitter, SWT.HORIZONTAL);
 		fEditionPane = new CompareViewerPane(hsplitter, SWT.BORDER | SWT.FLAT);
 		fStructuredComparePane = new CompareViewerSwitchingPane(hsplitter, SWT.BORDER | SWT.FLAT, true) {
-
 			protected Viewer getViewer(Viewer oldViewer, Object input) {
 				if (input instanceof ICompareInput)
 					return CompareUIPlugin.findStructureViewer(oldViewer, (ICompareInput) input, this, cc);
@@ -143,8 +230,7 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 		});
 		fEditionPane.setText("Changes");
 		
-		ISynchronizePageConfiguration c = participant.createPageConfiguration();
-		IPageBookViewPage page = participant.createPage(c);
+		IPageBookViewPage page = participant.createPage(pageConfiguration);
 		try {
 			((ISynchronizePage)page).init(new CompareViewerPaneSite());
 		} catch (PartInitException e1) {
@@ -194,9 +280,11 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 			}
 		};
 		vsplitter.setWeights(new int[]{30, 70});
-		return parent;
 	}
 	
+	/*
+	 * Feeds input from the participant page into the content and structured viewers.
+	 */
 	private void setInput(Object input) {
 		fContentPane.setInput(input);
 		if (fStructuredComparePane != null)
@@ -221,7 +309,7 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 	 * labelling in the compare input's contents viewers.
 	 * @param viewer the diff viewer created by the compare input
 	 */
-	protected void initializeDiffViewer(Viewer viewer) {
+	private void initializeDiffViewer(Viewer viewer) {
 		if (viewer instanceof StructuredViewer) {
 			((StructuredViewer) viewer).addOpenListener(new IOpenListener() {
 				public void open(OpenEvent event) {
@@ -262,7 +350,7 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 		}
 	}
 	
-	/* private */ SyncInfoModelElement getElement(ISelection selection) {
+	private SyncInfoModelElement getElement(ISelection selection) {
 		if (selection != null && selection instanceof IStructuredSelection) {
 			IStructuredSelection ss= (IStructuredSelection) selection;
 			if (ss.size() == 1) {
@@ -275,26 +363,6 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 		return null;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see CompareEditorInput#saveChanges(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void saveChanges(IProgressMonitor pm) throws CoreException {
-		//super.saveChanges(pm);
-		ISynchronizeModelElement root = (ISynchronizeModelElement)viewer.getInput();
-		if (root != null && root instanceof DiffNode) {
-			try {
-				commit(pm, (DiffNode)root);
-			} finally {
-				setDirty(false);
-			}
-		}
-	}
-
-	public Viewer getViewer() {
-		return viewer;
-	}
-	
 	private static void commit(IProgressMonitor pm, DiffNode node) throws CoreException {
 		ITypedElement left = node.getLeft();
 		if (left instanceof LocalResourceTypedElement)
@@ -304,50 +372,13 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 		if (right instanceof LocalResourceTypedElement)
 			 ((LocalResourceTypedElement) right).commit(pm);
 		
-		//node.getC
 		IDiffElement[] children = (IDiffElement[])node.getChildren();
 		for (int i = 0; i < children.length; i++) {
 			commit(pm, (DiffNode)children[i]);			
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.IContentChangeListener#contentChanged(org.eclipse.compare.IContentChangeNotifier)
-	 */
-	public void contentChanged(IContentChangeNotifier source) {
-		try {
-			if (source instanceof DiffNode) {
-				commit(new NullProgressMonitor(), (DiffNode) source);
-			} else if (source instanceof LocalResourceTypedElement) {
-				 ((LocalResourceTypedElement) source).commit(new NullProgressMonitor());
-			}
-		} catch (CoreException e) {
-			Utils.handle(e);
-		}
-	}
-	
-	/**
-	 * Returns <code>true</code> if there are unsaved changes.
-	 * The value returned is the value of the <code>DIRTY_STATE</code> property of this input object. 
-	 * Returns <code>true</code> if this input has unsaved changes,
-	 * that is if <code>setDirty(true)</code> has been called.
-	 * Subclasses don't have to override if the functionality provided by <doce>setDirty</code>
-	 * is sufficient.
-	 *
-	 * @return <code>true</code> if there are changes that need to be saved
-	 */
-	public boolean isSaveNeeded() {
-		return fDirty || fDirtyViewers.size() > 0;
-	}
-		
-	/**
-	 * Sets the dirty state of this input to the given
-	 * value and sends out a <code>PropertyChangeEvent</code> if the new value differs from the old value.
-	 *
-	 * @param dirty the dirty state for this compare input
-	 */
-	public void setDirty(boolean dirty) {
-
+	private void setDirty(boolean dirty) {
 		boolean confirmSave= true;
 		Object o= cc.getProperty(CompareEditor.CONFIRM_SAVE_PROPERTY);
 		if (o instanceof Boolean)
@@ -391,26 +422,5 @@ public class SynchronizeInput implements IContentChangeListener, ICompareContain
 			public void updateActionBars() {
 			}
 		};
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.ICompareContainer#getTitleImage()
-	 */
-	public ImageDescriptor getImageDescriptor() {
-		return participant.getImageDescriptor();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.ICompareContainer#getTitle()
-	 */
-	public String getTitle() {
-		return participant.getName();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.ICompareContainer#getCompareConfiguration()
-	 */
-	public CompareConfiguration getCompareConfiguration() {
-		return cc;
 	}
 }

@@ -261,7 +261,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPageConfiguration()
 	 */
-	public final ISynchronizePageConfiguration createPageConfiguration() {
+	public ISynchronizePageConfiguration createPageConfiguration() {
 		SynchronizePageConfiguration configuration = new SynchronizePageConfiguration(this);
 		initializeConfiguration(configuration);
 		return configuration;
@@ -275,5 +275,4 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * @param configuration the newly create page configuration
 	 */
 	protected abstract void initializeConfiguration(ISynchronizePageConfiguration configuration);
-
 }

@@ -10,22 +10,19 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.lang.reflect.InvocationTargetException;
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.*;
-import org.eclipse.ui.PlatformUI;
 
 public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubscriberListener {
 
@@ -97,9 +94,8 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 
 	protected void compareAndOpenDialog(final IRefreshEvent event, final SubscriberParticipant participant) {
 		CompareConfiguration cc = new CompareConfiguration();
-		SynchronizeInput input = new SynchronizeInput(Utils.getShell(null), cc, participant);
-		SynchronizeDialog dialog = new SynchronizeDialog(shell, participant.getName(), input);
-		dialog.setSynchronizeParticipant(participant);
+		ParticipantPageSaveablePart input = new ParticipantPageSaveablePart(Utils.getShell(null), cc, participant.createPageConfiguration(), participant);
+		ParticipantPageDialog dialog = new ParticipantPageDialog(shell, input, participant);
 		dialog.setBlockOnOpen(true);
 		dialog.open();
 	}
