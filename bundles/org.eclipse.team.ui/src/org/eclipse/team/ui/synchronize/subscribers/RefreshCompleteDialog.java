@@ -21,7 +21,6 @@ import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.ui.synchronize.SynchronizeCompareInput;
 
 /**
  * A dialog that is displayed at the end of a synchronize. The dialog shows the result of
@@ -33,7 +32,6 @@ import org.eclipse.team.ui.synchronize.SynchronizeCompareInput;
 public class RefreshCompleteDialog extends DetailsDialog {
 	private SyncInfoFilter filter;
 	private FilteredSyncInfoCollector collector;
-	private SynchronizeCompareInput compareEditorInput;
 	private IRefreshEvent event;
 	private SubscriberParticipant participant;
 	private Button dontShowAgainButton;
