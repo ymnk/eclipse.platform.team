@@ -36,7 +36,7 @@
       </participant>
       <participant
             name="CVS Merge"
-            icon="icons/full/cview16/repo_rep.gif"
+            icon="icons/full/obj16/prjversions_rep.gif"
             class="org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSynchronizeParticipant"
             type="dynamic"
             id="org.eclipse.team.cvs.ui.cvsmerge_syncparticipant">

@@ -53,8 +53,6 @@ public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipan
 	
 	public CVSSynchronizeParticipant() {
 	}
-		
-	
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeParticipant#dispose()

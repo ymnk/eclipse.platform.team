@@ -22,9 +22,9 @@ import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSynchronizeParticipant;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.team.ui.sync.ISynchronizeManager;
 import org.eclipse.team.ui.sync.ISynchronizeParticipant;
+import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -65,7 +65,7 @@ public class MergeWizard extends Wizard {
 		CVSTag endTag = endPage.getTag();				
 		
 		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
-		CVSMergeSynchronizeParticipant page = new CVSMergeSynchronizeParticipant(s, s.getName(), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION));
+		CVSMergeSynchronizeParticipant page = new CVSMergeSynchronizeParticipant(s);
 		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
 		manager.addSynchronizeParticipants(new ISynchronizeParticipant[] {page});
 		
