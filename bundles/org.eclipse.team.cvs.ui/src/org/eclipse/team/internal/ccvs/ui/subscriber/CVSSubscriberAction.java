@@ -297,4 +297,67 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		});
 		return (result[0] == UpdateDialog.YES);
 	}
+	
+	/**
+	 * Make the contents of the local resource match that of the remote
+	 * without modifying the sync info of the local resource.
+	 * If called on a new folder, the sync info will be copied.
+	 */
+	protected void makeRemoteLocal(SyncInfo info, IProgressMonitor monitor) throws TeamException {
+		ISubscriberResource remote = info.getRemote();
+		IResource local = info.getLocal();
+		try {
+			if(remote==null) {
+				if (local.exists()) {
+					local.delete(IResource.KEEP_HISTORY, monitor);
+				}
+			} else {
+				if(remote.isContainer()) {
+					ensureContainerExists(info);
+				} else {
+					monitor.beginTask(null, 200);
+					try {
+						IFile localFile = (IFile)local;
+						if(local.exists()) {
+							localFile.setContents(remote.getStorage(Policy.subMonitorFor(monitor, 100)).getContents(), false /*don't force*/, true /*keep history*/, Policy.subMonitorFor(monitor, 100));
+						} else {
+							ensureContainerExists(getParent(info));
+							localFile.create(remote.getStorage(Policy.subMonitorFor(monitor, 100)).getContents(), false /*don't force*/, Policy.subMonitorFor(monitor, 100));
+						}
+					} finally {
+						monitor.done();
+					}
+				}
+			}
+		} catch(CoreException e) {
+			throw new CVSException(Policy.bind("UpdateMergeActionProblems_merging_remote_resources_into_workspace_1"), e); //$NON-NLS-1$
+		}
+	}
+	
+	private boolean ensureContainerExists(SyncInfo info) throws TeamException {
+		IResource local = info.getLocal();
+		// make sure that the parent exists
+		if (!local.exists()) {
+			if (!ensureContainerExists(getParent(info))) {
+				return false;
+			}
+		}
+		// make sure that the folder sync info is set;
+		if (isOutOfSync(info)) {
+			if (info instanceof CVSSyncInfo) {
+				CVSSyncInfo cvsInfo = (CVSSyncInfo)info;
+				IStatus status = cvsInfo.makeInSync();
+				if (status.getSeverity() == IStatus.ERROR) {
+					logError(status);
+					return false;
+				}
+			}
+		}
+		// create the folder if it doesn't exist
+		ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)local);
+		if (!cvsFolder.exists()) {
+			cvsFolder.mkdir();
+		}
+		return true;
+	}
 }

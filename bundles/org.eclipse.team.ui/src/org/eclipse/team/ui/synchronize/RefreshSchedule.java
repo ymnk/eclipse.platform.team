@@ -8,6 +8,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.*;
+import org.eclipse.team.ui.synchronize.actions.*;
 import org.eclipse.ui.IMemento;
 
 public class RefreshSchedule {

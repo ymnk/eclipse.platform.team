@@ -23,7 +23,7 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.actions.INavigableControl;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 
@@ -56,10 +56,11 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private NavigateAction gotoPrevious;
 	private Action configureSchedule;
 	private SyncViewerShowPreferencesAction showPreferences;
-	private RefreshAction refreshAllAction;
+	private TeamParticipantRefreshAction refreshAllAction;
 	private Action collapseAll;
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
+	private SynchronizeViewCompareConfiguration configuration;
 		
 	/**
 	 * Constructs a new SynchronizeView.
@@ -88,12 +89,13 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		// Create the busy cursor with no control to start with (createViewer will set it)
 		busyCursor = new JobBusyCursor(parent.getParent().getParent(), TeamSubscriber.SUBSCRIBER_JOB_TYPE);
 		
-		changesSection = new ChangesSection(composite, this);		
+		// Create the changes section which, in turn, creates the changes viewer and its configuration
+		changesSection = new ChangesSection(composite, this);
 		
 		// toolbar
-		gotoNext = new NavigateAction(view, changesSection.getChangesViewer(), INavigableControl.NEXT);		
-		gotoPrevious = new NavigateAction(view, changesSection.getChangesViewer(), INavigableControl.PREVIOUS);
-		refreshAllAction = new RefreshAction(getSite().getPage(), getParticipant(), true /* refresh all */);
+		gotoNext = new NavigateAction(view, configuration.getNavigator(), SyncInfoDiffTreeNavigator.NEXT);		
+		gotoPrevious = new NavigateAction(view, configuration.getNavigator(), SyncInfoDiffTreeNavigator.PREVIOUS);
+		refreshAllAction = new TeamParticipantRefreshAction(getSite().getSelectionProvider(), getParticipant(), true /* refresh all */);
 		collapseAll = new Action() {
 			public void run() {
 				Viewer viewer = getChangesViewer();
@@ -264,7 +266,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	}
 	
 	public Viewer createChangesViewer(Composite parent) {
-		SynchronizeViewCompareConfiguration configuration = new SynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
+		configuration = new SynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
 		Viewer viewer =  configuration.createViewer(parent);
 		getSite().setSelectionProvider(viewer);		
 		return viewer;

@@ -14,6 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
@@ -24,14 +25,67 @@ import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 public class CompressedFolderContentProvider extends SyncSetTreeContentProvider {
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.sync.views.SyncSetContentProvider#handleResourceAdditions(org.eclipse.team.internal.ui.sync.views.SyncSetChangedEvent)
+	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider#handleResourceChanges(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
 	 */
-	protected void handleResourceAdditions(SyncSetChangedEvent event) {
+	protected void handleResourceChanges(ISyncInfoSetChangeEvent event) {
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
-			// TODO: For now, refresh any projects with additions
+			SyncInfo[] infos = event.getChangedResources();
+			
+			// Determine if any folders changed sync state
+			Set projectsToRefresh = new HashSet();
+			for (int i = 0; i < infos.length; i++) {
+				SyncInfo info = infos[i];
+				if (info.getLocal().getType() != IResource.FILE) {
+					// For folder sync changes, we refresh the whole project
+					// so that any compressed folders are adjusted properly
+					// (as rebalancing is tricky)
+					// TODO: Perhaps this could be optimized
+					projectsToRefresh.add(info.getLocal().getProject());
+				}
+			}
+			if (!projectsToRefresh.isEmpty()) {
+				
+				// Exclude any resources whose project will be refreshed
+				// Create a new event
+				SyncSetChangedEvent remainingChanges = new SyncSetChangedEvent(event.getSet());
+				for (int i = 0; i < infos.length; i++) {
+					SyncInfo info = infos[i];
+					if (!projectsToRefresh.contains(info.getLocal().getProject())) {
+						remainingChanges.changed(info);
+					}
+				}
+				// Refresh the projects
+				for (Iterator iter = projectsToRefresh.iterator(); iter.hasNext();) {
+					IResource resource = (IResource) iter.next();
+					tree.refresh(getModelObject(resource), true);
+				}
+				event = remainingChanges;
+			}
+		}
+		super.handleResourceChanges(event);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.sync.views.SyncSetContentProvider#handleResourceAdditions(org.eclipse.team.internal.ui.sync.views.SyncSetChangedEvent)
+	 */
+	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
+		AbstractTreeViewer tree = getTreeViewer();
+		if (tree != null) {
 			IResource[] roots = event.getAddedRoots();
-			refreshProjects(tree, roots);
+			for (int i = 0; i < roots.length; i++) {
+				IResource resource = roots[i];
+				if (resource.getType() == IResource.PROJECT) {
+					// Add the project
+					tree.add(getModelObject(resource.getParent()), getModelObject(resource));
+					updateParentLabels(resource);
+				} else {
+					// TODO: Refresh the resources project for now
+					// because trying to rebalance compressed folder may be tricky
+					// perhaps we could be smarter
+					tree.refresh(getModelObject(resource.getProject()), true);
+				}
+			}
 		} else {
 			super.handleResourceAdditions(event);
 		}
@@ -40,32 +94,58 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.sync.views.SyncSetContentProvider#handleResourceRemovals(org.eclipse.team.internal.ui.sync.views.SyncSetChangedEvent)
 	 */
-	protected void handleResourceRemovals(SyncSetChangedEvent event) {
+	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
-			// TODO: For now, refresh any projects with deletions
 			IResource[] roots = event.getRemovedRoots();
-			refreshProjects(tree, roots);
+			IResource[] resources = event.getRemovedResources();
+			Set removals = new HashSet();
+			
+			// First, deal with any projects that have been removed
+			List remainingRoots = new ArrayList();
+			for (int i = 0; i < roots.length; i++) {
+				IResource resource = roots[i];
+				if (resource.getType() == IResource.PROJECT) {
+					removals.add(getModelObject(resource));
+				} else {
+					remainingRoots.add(resource);
+				}
+			}
+			roots = (IResource[]) remainingRoots.toArray(new IResource[remainingRoots.size()]);
+			
+			// Then determine the other model objects that must be removed
+			if (roots.length > 0) {
+				for (int i = 0; i < resources.length; i++) {
+					IResource resource = resources[i];
+					if (isChildOfRoot(resource, roots)) {
+						// A root of the resource has also been removed.
+						// However, the resource's model parent would be a 
+						// compressed folder on the resource's parent folder.
+						removals.add(getModelObject(resource.getParent()));
+						updateParentLabels(resource);
+					} else {
+						// The resources parent still has children so just remove 
+						// the resource's model object
+						removals.add(getModelObject(resource));
+						updateParentLabels(resource);
+					}
+				}
+			}
+			tree.remove(removals.toArray(new Object[removals.size()]));
 		} else {
 			super.handleResourceRemovals(event);
 		}
 	}
 
-	private void refreshProjects(AbstractTreeViewer tree, IResource[] roots) {
-		if (roots.length == 0) return;
-		Set projects = new HashSet();
+	private boolean isChildOfRoot(IResource resource, IResource[] roots) {
 		for (int i = 0; i < roots.length; i++) {
-			if (roots[i].getType() == IResource.PROJECT) {
-				// when a project is involved, refresh the whole tree
-				tree.refresh();
-				return;
+			IResource root = roots[i];
+			if (!root.equals(resource)
+					&& root.getFullPath().isPrefixOf(resource.getFullPath())) {
+				return true;
 			}
-			projects.add(getModelObject(roots[i].getProject()));
 		}
-		for (Iterator iter = projects.iterator(); iter.hasNext();) {
-			Object element = (Object) iter.next();
-			tree.refresh(element);
-		}
+		return false;
 	}
 	
 	public Object getParent(Object element) {
@@ -111,7 +191,7 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 				result.add(getModelObject(info.getLocal()));
 			}
 		}
-		return (Object[]) result.toArray(new Object[result.size()]);
+		return result.toArray(new Object[result.size()]);
 	}
 
 	private Object[] getProjectChildren(IProject project) {
@@ -130,7 +210,7 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 				}
 			}
 		}
-		return (Object[]) result.toArray(new Object[result.size()]);
+		return result.toArray(new Object[result.size()]);
 	}
 
 	/**
@@ -154,5 +234,4 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 		}
 		return getLowestInSyncParent(parent);
 	}
-	
 }

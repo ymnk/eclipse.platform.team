@@ -19,9 +19,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator.INavigationTarget;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.actions.INavigableTree;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
 /**
@@ -34,7 +34,7 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 	
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
-	private RefreshAction refreshSelectionAction;
+	private TeamParticipantRefreshAction refreshSelectionAction;
 	
 	public SynchronizeViewCompareConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
 		super(participant.getId(), participant.getSyncInfoSetCollector().getSyncInfoSet());
@@ -47,7 +47,7 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
-		refreshSelectionAction = new RefreshAction(view.getSite().getPage(), participant, false /*refresh*/);
+		refreshSelectionAction = new TeamParticipantRefreshAction(treeViewer, participant, false /*refresh*/);
 		return treeViewer;
 	}
 	
@@ -140,7 +140,7 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeNavigation(org.eclipse.swt.widgets.Control, org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator.INavigationTarget)
 	 */
-	protected void initializeNavigation(Control tree, INavigationTarget target) {
+	protected void initializeNavigation(Control tree, INavigableTree target) {
 		super.initializeNavigation(tree, target);
 		getNavigator().setShowOpenAction(false);
 	}

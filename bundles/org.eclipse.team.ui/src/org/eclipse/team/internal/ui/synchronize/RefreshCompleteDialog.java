@@ -26,8 +26,8 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.internal.ui.jobs.IRefreshEvent;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.actions.IRefreshEvent;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 

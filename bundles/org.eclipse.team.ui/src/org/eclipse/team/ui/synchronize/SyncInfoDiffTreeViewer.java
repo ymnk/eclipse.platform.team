@@ -15,10 +15,10 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator;
-import org.eclipse.team.ui.synchronize.actions.INavigableControl;
+import org.eclipse.team.ui.synchronize.actions.INavigableTree;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
 
-public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableControl, SyncInfoDiffTreeNavigator.INavigationTarget {
+public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableTree {
 
 	private SyncInfoSetCompareConfiguration configuration;
 	
@@ -58,7 +58,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 	 * @see org.eclipse.team.ui.synchronize.actions.INavigableControl#gotoDifference(int)
 	 */
 	public boolean gotoDifference(int direction) {
-		boolean next = direction == INavigableControl.NEXT ? true : false;
+		boolean next = direction == SyncInfoDiffTreeNavigator.NEXT ? true : false;
 		return configuration.getNavigator().navigate(next, false);
 	}
 

@@ -17,7 +17,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
+import org.eclipse.team.internal.ui.synchronize.actions.TeamParticipantRefreshAction;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -131,9 +131,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public void refreshWithRemote(IResource[] resources) {
 		if((resources == null || resources.length == 0)) {
-			RefreshAction.run(filteredSyncSet.getWorkingSet(), this);
+			TeamParticipantRefreshAction.run(filteredSyncSet.getWorkingSet(), this);
 		} else {
-			RefreshAction.run(resources, this);
+			TeamParticipantRefreshAction.run(resources, this);
 		}
 	}
 	

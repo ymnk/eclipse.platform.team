@@ -724,7 +724,15 @@
 		
 		<viewerContribution
             id="org.eclipse.team.ccvs.ui.CVSCompareSubscriberContributions"
-            targetID="org.eclipse.team.cvs.ui.compare-participant">			
+            targetID="org.eclipse.team.cvs.ui.compare-participant">		
+            <action
+				label="%CVSCompareSubscriber.revert.label"
+				menubarPath="SubscriberActionsGroup1"
+				tooltip="%CVSCompareSubscriber.revert.tooltip"
+				class="org.eclipse.team.internal.ccvs.ui.subscriber.CompareRevertAction"
+				helpContextId="org.eclipse.team.cvs.ui.compare_revert_action"
+				id="org.eclipse.team.ccvs.ui.CVSCompareSubscriber.revert">
+			</action>	
 		    <action
                label="%ShowHistoryAction.label"
                tooltip="%ShowHistoryAction.tooltip"

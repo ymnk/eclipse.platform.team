@@ -29,9 +29,9 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator;
-import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator.INavigationTarget;
 import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.ui.synchronize.actions.INavigableTree;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
@@ -86,8 +86,8 @@ public class SyncInfoSetCompareConfiguration {
 		initializeListeners(viewer);
 		
 		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
-		if (viewer instanceof INavigationTarget) {
-			initializeNavigation(viewer.getControl(), (INavigationTarget)viewer);
+		if (viewer instanceof INavigableTree) {
+			initializeNavigation(viewer.getControl(), (INavigableTree)viewer);
 			navigator.createActions(viewer);
 		}
 		hookContextMenu(viewer);
@@ -125,7 +125,7 @@ public class SyncInfoSetCompareConfiguration {
 		return new TeamSubscriberParticipantLabelProvider();
 	}
 
-	protected void initializeNavigation(Control tree, INavigationTarget target) {
+	protected void initializeNavigation(Control tree, INavigableTree target) {
 		this.navigator = new SyncInfoDiffTreeNavigator(target);
 		INavigatable nav= new INavigatable() {
 			public boolean gotoDifference(boolean next) {

@@ -1,4 +1,4 @@
-package org.eclipse.team.internal.ui.jobs;
+package org.eclipse.team.ui.synchronize.actions;
 
 public interface IRefreshSubscriberListener {	
 	public void refreshStarted(IRefreshEvent event);	

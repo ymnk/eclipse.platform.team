@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize;
+package org.eclipse.team.ui.synchronize.actions;
 
 import java.util.Iterator;
 
@@ -21,30 +21,31 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 
 /**
- * This class provides the navigation support required for keybindings
+ * This class provides the tree navigation support for tree based diff viewers
+ * created using a <code>SyncInfoSetCompareConfiguration</code>. This includes
+ * menu actions for expanding the tree and opening the selected item in the
+ * text compare pane as well as up and down navigation actions that are added
+ * to the toolbas and bound to the navigation keys.
  */
 public class SyncInfoDiffTreeNavigator {
+	
+	/**
+	 * Direction to navigate
+	 */
+	final public static int NEXT = 1;
+	final public static int PREVIOUS = 2;
 	
 	private Action expandAll;
 	private Action open;
 	private NavigationAction nextAction;
 	private NavigationAction previousAction;
 	
-	public interface INavigationTarget {
-		void openSelection();
-		Tree getTree();
-		void createChildren(TreeItem item);
-		ISelection getSelection();
-		void setSelection(ISelection selection, boolean b);
-	}
-	
-	INavigationTarget target;
+	INavigableTree target;
 	boolean showOpenAction = true;
 	
-	public SyncInfoDiffTreeNavigator(INavigationTarget target) {
+	public SyncInfoDiffTreeNavigator(INavigableTree target) {
 		this.target = target;
 	}
 
@@ -57,7 +58,7 @@ public class SyncInfoDiffTreeNavigator {
 	 * @param next if <code>true</code> the next node is selected, otherwise the previous node
 	 */
 	public boolean gotoDifference(int direction) {	
-		boolean next = direction == INavigableControl.NEXT ? true : false;
+		boolean next = direction == SyncInfoDiffTreeNavigator.NEXT ? true : false;
 		return navigate(next, false);
 	}
 	
@@ -203,7 +204,7 @@ public class SyncInfoDiffTreeNavigator {
 		return item;
 	}
 	
-	public INavigationTarget getTarget() {
+	public INavigableTree getTarget() {
 		return target;
 	}
 	
@@ -224,6 +225,15 @@ public class SyncInfoDiffTreeNavigator {
 		expandAll = new Action() {
 			public void run() {
 				expandAllFromSelection(viewer);
+			}
+			// TODO: needs to be invoked when the selection changes
+			public void update() {
+				ISelection selection = target.getSelection();
+				if (selection instanceof IStructuredSelection) {
+					IStructuredSelection ss = (IStructuredSelection)selection;
+					setEnabled(!ss.isEmpty());
+				}
+				setEnabled(false);
 			}
 		};
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$

@@ -12,12 +12,16 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriberSyncInfoCollector;
-import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration;
+import org.eclipse.team.ui.synchronize.actions.RefreshAction;
 
 /**
  * Provides compare specific support
@@ -26,6 +30,7 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 
 	private CVSCompareSubscriber subscriber;
 	private TeamSubscriberSyncInfoCollector collector;
+	private RefreshAction refreshAction;
 
 	/**
 	 * Return a <code>SyncInfoSetCompareConfiguration</code> that can be used in a
@@ -62,5 +67,27 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 		subscriber.refresh(subscriber.roots(), IResource.DEPTH_INFINITE, monitor);
 		collector.waitForCollector(monitor);
 		return super.prepareInput(monitor);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#fillContextMenu(org.eclipse.jface.viewers.StructuredViewer, org.eclipse.jface.action.IMenuManager)
+	 */
+	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
+		manager.add(refreshAction);
+		manager.add(new Separator());
+		super.fillContextMenu(viewer, manager);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.StructuredViewer)
+	 */
+	public void initializeViewer(Composite parent, StructuredViewer viewer) {
+		super.initializeViewer(parent, viewer);
+		initializeActions(viewer);
+	}
+
+	private void initializeActions(StructuredViewer viewer) {
+		refreshAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getTeamSubscriber()).getName(), collector, null /* no listener */, false);
+		
 	}
 }
