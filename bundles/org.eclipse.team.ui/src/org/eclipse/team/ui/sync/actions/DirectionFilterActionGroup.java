@@ -122,8 +122,12 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		page.removePropertyChangeListener(this);
+		if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_MODE)) {
+			Integer mode = (Integer)event.getNewValue();
+			checkMode(mode.intValue());
+		}
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#dispose()
 	 */

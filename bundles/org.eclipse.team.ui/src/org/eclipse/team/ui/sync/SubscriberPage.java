@@ -61,7 +61,6 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 	 */
 	public IPageBookViewPage createPage(INewSynchronizeView view) {
 		this.page = new SubscriberSynchronizeViewPage(this, view);
-		setMode(TeamUIPlugin.getPlugin().getPreferenceStore().getInt(IPreferenceIds.SYNCVIEW_SELECTED_MODE));
 		return page;
 	}
 	
