@@ -239,6 +239,35 @@ public class SyncInfo implements IAdaptable {
 		return null;
 	}
 	
+	public String toString() {
+		return getLocal().getName() + " " + kindToString(getKind());		
+	}
+	
+	public static String kindToString(int kind) {
+		String label = ""; //$NON-NLS-1$
+		if(kind==IN_SYNC) {
+			label = Policy.bind("RemoteSyncElement.insync"); //$NON-NLS-1$
+		} else {
+			switch(kind & DIRECTION_MASK) {
+				case CONFLICTING: label = Policy.bind("RemoteSyncElement.conflicting"); break; //$NON-NLS-1$
+				case OUTGOING: label = Policy.bind("RemoteSyncElement.outgoing"); break; //$NON-NLS-1$
+				case INCOMING: label = Policy.bind("RemoteSyncElement.incoming"); break; //$NON-NLS-1$
+			}	
+			switch(kind & CHANGE_MASK) {
+				case CHANGE: label = Policy.bind("concatStrings", label, Policy.bind("RemoteSyncElement.change")); break; //$NON-NLS-1$ //$NON-NLS-2$
+				case ADDITION: label = Policy.bind("concatStrings", label, Policy.bind("RemoteSyncElement.addition")); break; //$NON-NLS-1$ //$NON-NLS-2$
+				case DELETION: label = Policy.bind("concatStrings", label, Policy.bind("RemoteSyncElement.deletion")); break; //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			if((kind & MANUAL_CONFLICT) != 0) {			
+				label = Policy.bind("concatStrings", label, Policy.bind("RemoteSyncElement.manual")); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			if((kind & AUTOMERGE_CONFLICT) != 0) {				
+				label = Policy.bind("concatStrings", label, Policy.bind("RemoteSyncElement.auto")); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+		}
+		return Policy.bind("RemoteSyncElement.delimit", label); //$NON-NLS-1$
+	}
+	
 	protected int calculateKind(IProgressMonitor progress) throws TeamException {
 		progress = Policy.monitorFor(progress);
 		int description = IN_SYNC;

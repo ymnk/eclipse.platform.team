@@ -193,25 +193,6 @@ public class SyncSet {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		resources.put(path, info);
-		updateStats(true, info);
-	}
-
-	private void updateStats(boolean add, SyncInfo info) {
-		Integer direction = new Integer(SyncInfo.getDirection(info.getKind()));
-		Integer count = (Integer)stats.get(direction);
-		int increment = (add ? 1 : -1);
-		if(count == null) {
-				// initialize the count
-				count =  new Integer(0);
-		}
-
-		count = new Integer(count.intValue() + increment);
-
-		if(count.intValue() <= 0) {
-			stats.remove(direction);
-		} else {
-			stats.put(direction, count);
-		}
 	}
 
 	public int getCount(int directionFlag) {
@@ -226,7 +207,6 @@ public class SyncSet {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		resources.remove(path);
-		updateStats(false, info);
 		changes.removed(info);
 		removeFromParents(local, local);
 	}
