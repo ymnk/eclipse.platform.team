@@ -19,8 +19,9 @@ public class AllRootsElement extends CVSModelElement implements IAdaptable {
 		return null;
 	}
 	public Object[] getChildren(Object o) {
-		return CVSUIPlugin.getPlugin().getRepositoryManager().getKnownRoots();
+		return CVSUIPlugin.getPlugin().getRepositoryManager().getKnownRepositoryRoots();
 	}
+	
 	public String getLabel(Object o) {
 		return null;
 	}

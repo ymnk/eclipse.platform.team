@@ -85,10 +85,25 @@ public class RepositoryManager {
 	/**
 	 * Answer an array of all known remote roots.
 	 */
-	public ICVSRepositoryLocation[] getKnownRoots() {
+	public ICVSRepositoryLocation[] getKnownRepositoryLocations() {
 		return CVSProviderPlugin.getPlugin().getKnownRepositories();
 	}
 	
+	public RepositoryRoot[] getKnownRepositoryRoots() {
+		ICVSRepositoryLocation[] locations = getKnownRepositoryLocations();
+		List roots = new ArrayList();
+		for (int i = 0; i < locations.length; i++) {
+			try {
+				ICVSRepositoryLocation location = locations[i];
+				RepositoryRoot root = getRepositoryRootFor(location);
+				if (root != null)
+					roots.add(root);
+			} catch (CVSException e) {
+				CVSUIPlugin.log(e);
+			}
+		}
+		return (RepositoryRoot[]) roots.toArray(new RepositoryRoot[roots.size()]);
+	}
 	/**
 	 * Get the list of known branch tags for a given remote root.
 	 */
@@ -343,7 +358,7 @@ public class RepositoryManager {
 	private void writeState(XMLWriter writer) throws IOException, CVSException {
 		writer.startTag(RepositoriesViewContentHandler.REPOSITORIES_VIEW_TAG, null, true);
 		// Write the repositories
-		Collection repos = Arrays.asList(getKnownRoots());
+		Collection repos = Arrays.asList(getKnownRepositoryLocations());
 		Iterator it = repos.iterator();
 		HashMap attributes = new HashMap();
 		while (it.hasNext()) {
@@ -629,7 +644,7 @@ public class RepositoryManager {
 		return getRepositoryRootFor(location);
 	}
 	
-	private RepositoryRoot getRepositoryRootFor(ICVSRepositoryLocation location) throws CVSException {
+	public RepositoryRoot getRepositoryRootFor(ICVSRepositoryLocation location) throws CVSException {
 		RepositoryRoot root = (RepositoryRoot)repositoryRoots.get(location.getLocation());
 		if (root == null) {
 			root = new RepositoryRoot(location);

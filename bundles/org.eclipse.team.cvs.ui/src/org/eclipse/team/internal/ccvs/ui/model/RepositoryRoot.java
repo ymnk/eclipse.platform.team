@@ -44,7 +44,7 @@ public class RepositoryRoot extends CVSModelElement implements IAdaptable {
 	ICVSRepositoryLocation root;
 	String name;
 	// Map of String (remote folder path) -> Set (CVS tags)
-	Map knownTags;
+	Map knownTags = new HashMap();
 	// Map of String (remote folder path) -> Set (file paths that are project relative)
 	Map autoRefreshFiles = new HashMap();
 	
