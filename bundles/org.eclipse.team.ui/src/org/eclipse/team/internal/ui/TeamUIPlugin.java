@@ -32,7 +32,6 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
-import org.eclipse.team.internal.ui.jobs.ViewFeedbackManager;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerDirectionFilters;
 import org.eclipse.team.internal.ui.sync.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.ISharedImages;
@@ -198,7 +197,7 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 			refreshJob.setRestartOnCancel(true);
 			refreshJob.setReschedule(true);
 			// start once the platform has started and stabilized
-			ViewFeedbackManager.getInstance().schedule(refreshJob, 20000 /* 20 seconds */, SubscriberAction.SUBSCRIBER_JOB_TYPE);
+			SubscriberAction.getJobStatusHandler().schedule(refreshJob, 20000 /* 20 seconds */);
 		}
 	}
 	

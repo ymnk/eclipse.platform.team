@@ -66,7 +66,6 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.IJobListener;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
-import org.eclipse.team.internal.ui.jobs.ViewFeedbackManager;
 import org.eclipse.team.internal.ui.sync.actions.OpenInCompareAction;
 import org.eclipse.team.internal.ui.sync.actions.RefreshAction;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
@@ -139,7 +138,6 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	 */
 	private IJobListener jobListener = new IJobListener() {
 		public synchronized void started(QualifiedName jobType) {
-			if (!jobType.equals(SubscriberAction.SUBSCRIBER_JOB_TYPE)) return;
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
 					showBusyCursor();
@@ -148,7 +146,6 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		}
 
 		public synchronized void finished(QualifiedName jobType) {
-			if (!jobType.equals(SubscriberAction.SUBSCRIBER_JOB_TYPE)) return;
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
 					showNormalCursor();
@@ -310,12 +307,13 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		// Register for feedback from subscriber jobs.
 		// Synchronize so the state doesn't change while setting the cursor
 		synchronized (jobListener) {
-			ViewFeedbackManager.getInstance().addJobListener(jobListener);
-			if (ViewFeedbackManager.getInstance().hasRunningJobs(SubscriberAction.SUBSCRIBER_JOB_TYPE)) {
+			SubscriberAction.getJobStatusHandler().addJobListener(jobListener);
+			if (SubscriberAction.getJobStatusHandler().hasRunningJobs()) {
 				showBusyCursor();
 			}
 		}
 	}	
+
 	protected void initializeActions() {
 		actions = new SyncViewerActions(this);
 		actions.restore(memento);
@@ -541,7 +539,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			input.dispose();
 		}
 		
-		ViewFeedbackManager.getInstance().removeJobListener(jobListener);
+		SubscriberAction.getJobStatusHandler().removeJobListener(jobListener);
 		waitCursor.dispose();
 	}
 

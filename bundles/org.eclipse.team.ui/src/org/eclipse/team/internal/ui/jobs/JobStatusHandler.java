@@ -11,10 +11,8 @@
 package org.eclipse.team.internal.ui.jobs;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.QualifiedName;
@@ -23,42 +21,41 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 /**
- * This class is reponisble for notifying views when jobs that effect
- * the contents of the view start and stop
+ * This class is reponsible for notifying listeners when jobs registered
+ * with the handler start and stop. Start is invoked when the first registered job starts
+ * anf finish is invoked when the last registered job finishes.
  */
-public class ViewFeedbackManager {
+public class JobStatusHandler {
 	
+	private QualifiedName jobType;
+	private Set jobs = new HashSet();
 	private List listeners = new ArrayList();
-	private Map jobTypes = new HashMap();
 	
-	private static ViewFeedbackManager instance;
-	
-	public synchronized static ViewFeedbackManager getInstance() {
-		if (instance == null) {
-			instance = new ViewFeedbackManager();
-		}
-		return instance;
+	public JobStatusHandler(QualifiedName jobType) {
+		super();
+		this.jobType = jobType;
 	}
-	public void schedule(Job job, final QualifiedName jobType) {
-		job.addJobChangeListener(getJobChangeListener(jobType));
+	
+	public void schedule(Job job) {
+		job.addJobChangeListener(getJobChangeListener());
 		// indicate that the job has started since it will be schdulued immediatley
-		jobStarted(job, jobType);
+		jobStarted(job);
 		job.schedule();
 	}
 
-	public void schedule(Job job, long delay, final QualifiedName jobType) {
-		job.addJobChangeListener(getJobChangeListener(jobType));
+	public void schedule(Job job, long delay) {
+		job.addJobChangeListener(getJobChangeListener());
 		job.schedule(delay);
 	}
 	
-	private JobChangeAdapter getJobChangeListener(final QualifiedName jobType) {
+	private JobChangeAdapter getJobChangeListener() {
 		return new JobChangeAdapter() {
 			public void done(IJobChangeEvent event) {
-				jobDone(event.getJob(), jobType);
+				jobDone(event.getJob());
 
 			}
 			public void running(IJobChangeEvent event) {
-				jobStarted(event.getJob(), jobType);
+				jobStarted(event.getJob());
 			}
 		};
 	}
@@ -80,23 +77,18 @@ public class ViewFeedbackManager {
 		}
 	}
 	
-	/* internal use only */ void jobStarted(Job job, QualifiedName jobType) {
-		if (recordJob(job, jobType)) {
-			fireStartNotification(jobType);
+	/* internal use only */ void jobStarted(Job job) {
+		if (recordJob(job)) {
+			fireStartNotification();
 		}
 	}
 
 	/*
 	 * Record the job and return true if it's the first job of that type
 	 */
-	private boolean recordJob(Job job, QualifiedName jobType) {
-		Set jobs = (Set)jobTypes.get(jobType);
-		if (jobs == null) {
-			jobs = new HashSet();
-			jobTypes.put(jobType, jobs);
-		}
+	private boolean recordJob(Job job) {
 		if (!jobs.add(job)) {
-			// The job was already in the set. Invalid?
+			// The job was already in the set.
 			return false;
 		}
 		return jobs.size() == 1;
@@ -105,20 +97,15 @@ public class ViewFeedbackManager {
 	/*
 	 * Remove the job and return true if it is the last job for the type
 	 */
-	private boolean removeJob(Job job, QualifiedName jobType) {
-		Set jobs = (Set)jobTypes.get(jobType);
-		if (jobs == null) {
-			// TODO: Is this invalid?
-			return false;
-		}
+	private boolean removeJob(Job job) {
 		if (!jobs.remove(job)) {
-			// The job wasn't in the list. Probably invalid
+			// The job wasn't in the list.
 			return false;
 		}
 		return jobs.isEmpty();
 	}
 	
-	private void fireStartNotification(QualifiedName jobType) {
+	private void fireStartNotification() {
 		IJobListener[] listenerArray = getJobListeners();
 		for (int i = 0; i < listenerArray.length; i++) {
 			IJobListener listener = listenerArray[i];
@@ -126,13 +113,13 @@ public class ViewFeedbackManager {
 		}
 	}
 
-	/* internal use only */ void jobDone(Job job, QualifiedName jobType) {
-		if (removeJob(job, jobType)) {
-			fireEndNotification(jobType);
+	/* internal use only */ void jobDone(Job job) {
+		if (removeJob(job)) {
+			fireEndNotification();
 		}
 	}
 
-	private void fireEndNotification(QualifiedName jobType) {
+	private void fireEndNotification() {
 		IJobListener[] listenerArray = getJobListeners();
 		for (int i = 0; i < listenerArray.length; i++) {
 			IJobListener listener = listenerArray[i];
@@ -140,8 +127,8 @@ public class ViewFeedbackManager {
 		}
 	}
 	
-	public boolean hasRunningJobs(QualifiedName jobType) {
-		Set jobs = (Set)jobTypes.get(jobType);
-		return jobs != null && !jobs.isEmpty();
+	public boolean hasRunningJobs() {
+		return !jobs.isEmpty();
 	}
+
 }
