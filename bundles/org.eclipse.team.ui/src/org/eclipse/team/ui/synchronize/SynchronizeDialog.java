@@ -10,13 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.internal.ResizableDialog;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.util.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.layout.GridData;
@@ -44,12 +45,13 @@ import org.eclipse.team.ui.TeamUI;
  */
 public class SynchronizeDialog extends ResizableDialog implements IPropertyChangeListener {
 		
-	private CompareEditorInput fCompareEditorInput;
+	private SynchronizeInput input;
 	private ISynchronizeParticipant participant;
 	private Button saveButton;
 	private Button rememberParticipantButton;
 	private String title;
 	private boolean isDirty = false;
+	private CompareConfiguration cc;
 
 	/**
 	 * Creates a dialog with the given title and input. The input is not created until the dialog
@@ -59,12 +61,14 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 	 * @param title the shell's title
 	 * @param input the compare input to show in the dialog
 	 */
-	public SynchronizeDialog(Shell shell, String title, CompareEditorInput input) {
+	public SynchronizeDialog(Shell shell, String title, CompareConfiguration cc, ISynchronizeParticipant participant) {
 		super(shell, null);
 		this.title = title;
-		Assert.isNotNull(input);
-		fCompareEditorInput= input;
-		fCompareEditorInput.addPropertyChangeListener(this);
+		this.cc = cc;
+		this.participant = participant;
+	
+		//fCompareEditorInput= input;
+		//fCompareEditorInput.addPropertyChangeListener(this);
 	}
 	
 	public void setSynchronizeParticipant(ISynchronizeParticipant participant) {
@@ -83,7 +87,8 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 	 */
 	protected Control createDialogArea(Composite parent2) {
 		Composite parent = (Composite) super.createDialogArea(parent2);
-		Control c = fCompareEditorInput.createContents(parent);
+		this.input = new SynchronizeInput(getShell(), cc, participant);
+		Control c = input.createControl(parent);
 		c.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		ISynchronizeParticipantReference[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
@@ -94,7 +99,7 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 		}
 		Shell shell = c.getShell();
 		shell.setText(title);
-		shell.setImage(fCompareEditorInput.getTitleImage());
+		//shell.setImage(fCompareEditorInput.getTitleImage());
 		Dialog.applyDialogFont(parent2);
 		return parent;
 	}
@@ -136,8 +141,8 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 	}
 
 	public void propertyChange(PropertyChangeEvent event) {
-		if (fCompareEditorInput != null) {
-			if(fCompareEditorInput.isSaveNeeded()) {
+		if (input != null) {
+			if(input.isSaveNeeded()) {
 				// the dirty flag is required because there is a compare bug that causes the dirty bit to be reset sometimes
 				// although the underlying compare editor input is still dirty.
 				isDirty = true;
@@ -152,11 +157,11 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 	 * Save any changes to the compare editor.
 	 */
 	private void saveChanges() {
-		if (fCompareEditorInput.isSaveNeeded() && MessageDialog.openConfirm(getShell(), Policy.bind("ParticipantCompareDialog.2"), Policy.bind("ParticipantCompareDialog.3"))) {						 //$NON-NLS-1$ //$NON-NLS-2$
+		if (input.isSaveNeeded() && MessageDialog.openConfirm(getShell(), Policy.bind("ParticipantCompareDialog.2"), Policy.bind("ParticipantCompareDialog.3"))) {						 //$NON-NLS-1$ //$NON-NLS-2$
 			BusyIndicator.showWhile(null, new Runnable() {
 				public void run() {
 					try {
-						fCompareEditorInput.saveChanges(new NullProgressMonitor());
+						input.saveChanges(new NullProgressMonitor());
 					} catch (CoreException e) {
 						Utils.handle(e);
 					}
@@ -167,9 +172,5 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 	
 	protected ISynchronizeParticipant getParticipant() {
 		return participant;
-	}
-	
-	protected CompareEditorInput getCompareEditorInput() {
-		return fCompareEditorInput;
 	}
 }

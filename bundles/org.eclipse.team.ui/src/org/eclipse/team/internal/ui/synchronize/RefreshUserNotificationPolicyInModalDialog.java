@@ -97,21 +97,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 
 	protected void compareAndOpenDialog(final IRefreshEvent event, final SubscriberParticipant participant) {
 		CompareConfiguration cc = new CompareConfiguration();
-		SynchronizeCompareInput input = new SynchronizeCompareInput(Utils.getShell(null), PlatformUI.getWorkbench().getActiveWorkbenchWindow(), cc, participant) {
-			public String getTitle() {
-				return "Changes";
-			}
-		};
-		try {
-			// model will be built in the background since we know the compare input was 
-			// created with a subscriber participant
-			input.run(new NullProgressMonitor());
-		} catch (InterruptedException e) {
-			Utils.handle(e);
-		} catch (InvocationTargetException e) {
-			Utils.handle(e);
-		}
-		SynchronizeDialog dialog = new SynchronizeDialog(shell, participant.getName(), input);
+		SynchronizeDialog dialog = new SynchronizeDialog(shell, participant.getName(), cc, participant);
 		dialog.setSynchronizeParticipant(participant);
 		dialog.setBlockOnOpen(true);
 		dialog.open();
