@@ -11,7 +11,10 @@
 package org.eclipse.team.ui.synchronize.subscribers;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -21,13 +24,19 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicy;
+import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicyInModalDialog;
+import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
+import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.progress.ProgressManager;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -83,28 +92,9 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
 	public final IPageBookViewPage createPage(ISynchronizePageConfiguration configuration) {
-		Assert.isTrue(configuration instanceof SubscriberPageConfiguration);
 		validateConfiguration(configuration);
-		return new SubscriberParticipantPage((SubscriberPageConfiguration)configuration);
+		return new SubscriberParticipantPage(configuration, getSubscriberSyncInfoCollector());
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPageConfiguration()
-	 */
-	public final ISynchronizePageConfiguration createPageConfiguration() {
-		SubscriberPageConfiguration configuration = new SubscriberPageConfiguration(this, getSubscriberSyncInfoCollector());
-		initializeConfiguration(configuration);
-		return configuration;
-	}
-	
-	/**
-	 * This method is invoked after a page configuration is created but before 
-	 * it is returned by the <code>createPageConfiguration</code> method.
-	 * Subclasses can implement this method to tailor the configuration
-	 * in ways appropriate to the participant.
-	 * @param configuration the newly create page configuration
-	 */
-	protected abstract void initializeConfiguration(ISynchronizePageConfiguration configuration);
 	
 	/**
 	 * This method is invoked before the given configuration is used to
@@ -118,7 +108,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	protected void validateConfiguration(ISynchronizePageConfiguration configuration) {
 		// Do nothing by default
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createRefreshPage()
 	 */
@@ -280,7 +270,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * Returns the viewer advisor which will be used to configure the display of the participant.
 	 * @return
 	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
+	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(ISynchronizePageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		return new TreeViewerAdvisor(configuration);
 	}
 	

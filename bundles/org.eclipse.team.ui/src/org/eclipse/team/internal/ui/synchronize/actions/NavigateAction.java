@@ -50,15 +50,19 @@ public class NavigateAction extends Action {
 		this.title = title;
 		this.navigator = navigator;
 		this.next = next;
-		if (site.getWorkbenchSite() instanceof IViewSite) {
-			IViewSite viewSite = (IViewSite)site.getWorkbenchSite();
-			if (next) {
-				Utils.initAction(this, "action.navigateNext."); //$NON-NLS-1$
+		IWorkbenchSite workbenchSite = site.getWorkbenchSite();
+		IViewSite viewSite = null;
+		if (workbenchSite instanceof IViewSite) {
+			viewSite = (IViewSite)workbenchSite;
+		}
+		if (next) {
+			Utils.initAction(this, "action.navigateNext."); //$NON-NLS-1$
+			if (viewSite != null)
 				viewSite.getActionBars().setGlobalActionHandler(ActionFactory.NEXT.getId(), this);
-			} else {
-				Utils.initAction(this, "action.navigatePrevious."); //$NON-NLS-1$
+		} else {
+			Utils.initAction(this, "action.navigatePrevious."); //$NON-NLS-1$
+			if (viewSite != null)
 				viewSite.getActionBars().setGlobalActionHandler(ActionFactory.PREVIOUS.getId(), this);
-			}
 		}
 	}
 	

@@ -16,15 +16,20 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.subscribers.*;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.actions.ActionGroup;
@@ -48,13 +53,13 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private ISubscriberPageConfiguration configuration;
+	private ISynchronizePageConfiguration configuration;
 
-	public StatusLineContributionGroup(final Shell shell, ISubscriberPageConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
+	public StatusLineContributionGroup(final Shell shell, ISynchronizePageConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
 		this.configuration = configuration;
-		this.incoming = createStatusLineContribution(INCOMING_ID, SubscriberPageConfiguration.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
-		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberPageConfiguration.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
-		this.conflicting = createStatusLineContribution(CONFLICTING_ID, SubscriberPageConfiguration.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
+		this.incoming = createStatusLineContribution(INCOMING_ID, ISynchronizePageConfiguration.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
+		this.outgoing = createStatusLineContribution(OUTGOING_ID, ISynchronizePageConfiguration.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
+		this.conflicting = createStatusLineContribution(CONFLICTING_ID, ISynchronizePageConfiguration.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
 		
 		this.totalChanges = new StatusLineCLabelContribution(TOTALS_ID, TEXT_FIELD_MAX_SIZE);
 		this.workingSet = new StatusLineCLabelContribution(WORKINGSET_ID, TEXT_FIELD_MAX_SIZE);
@@ -207,7 +212,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 	
 	private SyncInfoSet getWorkingSetSyncInfoSet() {
-		return (SyncInfoSet)configuration.getProperty(SubscriberPageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
+		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
 	}
 	
 	private SyncInfoTree getParticipantSyncInfoSet() {

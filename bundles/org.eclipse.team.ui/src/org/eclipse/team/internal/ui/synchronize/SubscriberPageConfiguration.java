@@ -30,7 +30,7 @@ import org.eclipse.ui.IWorkingSet;
  * </p>
  * @since 3.0
  */
-public class SubscriberPageConfiguration extends SynchronizePageConfiguration implements ISubscriberPageConfiguration {
+public class SubscriberPageConfiguration extends SynchronizePageConfiguration {
 
 	/**
 	 * Private property that gives access to a set the
@@ -39,10 +39,10 @@ public class SubscriberPageConfiguration extends SynchronizePageConfiguration im
 	 */
 	public static final String P_WORKING_SET_SYNC_INFO_SET = TeamUIPlugin.ID + ".P_WORKING_SET_SYNC_INFO_SET"; //$NON-NLS-1$
 	
-	private final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
-	private final static int[] OUTGOING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING};
-	private final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
-	private final static int[] CONFLICTING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING};
+	public final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
+	public final static int[] OUTGOING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING};
+	public final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
+	public final static int[] CONFLICTING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING};
 
 	/**
 	 * Filters out-of-sync resources by working set and mode

@@ -80,6 +80,6 @@ public interface ISharedImages {
 	 public final String IMG_CHANGE_FILTER = "elcl16/change_filter.gif"; //$NON-NLS-1$	 
 	 public final String IMG_COMPRESSED_FOLDER = "obj/compressed_folder_obj.gif"; //$NON-NLS-1$
 	 public final String IMG_WARNING = "ovr/warning_co.gif"; //$NON-NLS-1$
-	 public final String IMG_HIERARCHICAL = "clcl16/hierarchicalLayout.gif"; //$NON-NLS-1$
+	 public final String IMG_HIERARCHICAL = "elcl16/hierarchicalLayout.gif"; //$NON-NLS-1$
 }
 

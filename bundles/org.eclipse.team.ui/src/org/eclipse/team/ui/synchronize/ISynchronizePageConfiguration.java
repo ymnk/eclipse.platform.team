@@ -14,6 +14,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkingSet;
 
 /**
  * Configures the model, actions and label decorations of an 
@@ -35,7 +36,15 @@ public interface ISynchronizePageConfiguration {
 	 * displayed by the page.
 	 */
 	public static final String P_SYNC_INFO_SET = TeamUIPlugin.ID  + ".P_SYNC_INFO_SET"; //$NON-NLS-1$
-		
+	
+	/**
+	 * Property that gives access to a set the
+	 * contains all out-of-sync resources for the particpant
+	 * in the selected working set.
+	 */
+	public static final String P_WORKING_SET_SYNC_INFO_SET = TeamUIPlugin.ID + ".P_WORKING_SET_SYNC_INFO_SET"; //$NON-NLS-1$
+
+	
 	/**
 	 * Property constant for the list of label decorators 
 	 * (instance of <code>ILabelDecorator[]</code>) that will be 
@@ -43,7 +52,6 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public static final String P_LABEL_DECORATORS = TeamUIPlugin.ID  + ".P_LABEL_DECORATORS"; //$NON-NLS-1$
 
-	
 	/**
 	 * Property constant that defines the groups in the toolbar 
 	 * menu of the page. The value for this
@@ -88,6 +96,22 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public static final String P_WORKING_SET = TeamUIPlugin.ID + ".P_WORKING_SET"; //$NON-NLS-1$
 
+	/**
+	 * Property constant for the mode used to filter the visible
+	 * elements of the model. The value can be one of the mode integer
+	 * constants.
+	 */
+	public static final String P_MODE = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_MODE";	 //$NON-NLS-1$
+	
+	/**
+	 * Property constant which indicates which modes are to be available to the user.
+	 * The value is to be an integer that combines one or more of the
+	 * mode bit values.
+	 * Either <code>null</code> or <code>0</code> can be used to indicate that
+	 * mode filtering is not supported.
+	 */
+	public static final String P_SUPPORTED_MODES = TeamUIPlugin.ID  + ".P_SUPPORTED_MODES";	 //$NON-NLS-1$
+	
 	/**
 	 * The id of the synchronize group the determines where the synchronize 
 	 * actions appear.
@@ -182,6 +206,15 @@ public interface ISynchronizePageConfiguration {
 	public static final String[] DEFAULT_VIEW_MENU = new String[] { WORKING_SET_GROUP, LAYOUT_GROUP, SYNCHRONIZE_GROUP, PREFERENCES_GROUP };
 
 	/**
+	 * Modes are direction filters for the view
+	 */
+	public final static int INCOMING_MODE = 0x1;
+	public final static int OUTGOING_MODE = 0x2;
+	public final static int BOTH_MODE = 0x4;
+	public final static int CONFLICTING_MODE = 0x8;
+	public final static int ALL_MODES = INCOMING_MODE | OUTGOING_MODE | CONFLICTING_MODE | BOTH_MODE;
+
+	/**
 	 * Return the particpant associated with the page to shich this configuration
 	 * is associated.
 	 * @return the particpant
@@ -245,6 +278,10 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public abstract void removeActionContribution(SynchronizePageActionGroup group);
 	
+	/**
+	 * Add a label decorator to the page configuration.
+	 * @param decorator a label decorator
+	 */
 	public void addLabelDecorator(ILabelDecorator decorator);
 	
 	/**
@@ -275,4 +312,47 @@ public interface ISynchronizePageConfiguration {
 	 * otherwise
 	 */
 	public abstract boolean hasMenuGroup(String menuPropertyId, String groupId);
+	
+	/**
+	 * Return the value of the P_WORKING_SET property of this configuration.
+	 * @return the working set property
+	 */
+	IWorkingSet getWorkingSet();
+	
+	/**
+	 * Set the P_WORKING_SET property of this configuration to the
+	 * given working set (which may be <code>null</code>).
+	 * @param set the working set or <code>null</code>
+	 */
+	void setWorkingSet(IWorkingSet set);
+	
+	/**
+	 * Return the value of the P_MODE property of this configuration.
+	 * @return the mode property value
+	 */
+	int getMode();
+
+	/**
+	 * Set the P_MODE property of this configuration to the
+	 * given mode flag (one of <code>INCOMING_MODE</code>,
+	 * <code>OUTGOING_MODE</code>, <code>BOTH_MODE</code>
+	 * or <code>CONFLICTING_MODE</code>).
+	 * @param mode the mode value
+	 */
+	void setMode(int mode);
+	
+	/**
+	 * Return the value of the P_SUPPORTED_MODES property of this configuration.
+	 * @return the supported modes property value
+	 */
+	int getSupportedModes();
+	
+	/**
+	 * Set the P_SUPPORTED_MODES property of this configuration to the
+	 * ORed combination of one or more mode flags (<code>INCOMING_MODE</code>,
+	 * <code>OUTGOING_MODE</code>, <code>BOTH_MODE</code>
+	 * and <code>CONFLICTING_MODE</code>).
+	 * @param modes the supported modes
+	 */
+	void setSupportedModes(int modes);
 }

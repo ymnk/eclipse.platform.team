@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
 import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
-import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
+
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
@@ -88,7 +88,7 @@ public abstract class StructuredViewerAdvisor {
 		public void propertyChange(PropertyChangeEvent event) {
 			// Working set changed by user
 			if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
-				((ISubscriberPageConfiguration)configuration).setWorkingSet((IWorkingSet)event.getNewValue());
+				configuration.setWorkingSet((IWorkingSet)event.getNewValue());
 			} else
 				// Change to showing of sync state in text labels preference
 				if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
@@ -140,17 +140,15 @@ public abstract class StructuredViewerAdvisor {
 	 */
 	private void initializeActions(StructuredViewer viewer) {
 		// view menu
-		if (configuration instanceof ISubscriberPageConfiguration) {
-			workingSetGroup = new WorkingSetFilterActionGroup(
-					configuration.getSite().getShell(), 
-					getUniqueId(configuration.getParticipant()), 
-					propertyListener, 
-					((ISubscriberPageConfiguration)configuration).getWorkingSet());		
-			statusLine = new StatusLineContributionGroup(
-					configuration.getSite().getShell(), 
-					(ISubscriberPageConfiguration)configuration, 
-					workingSetGroup);
-		}
+		workingSetGroup = new WorkingSetFilterActionGroup(
+				configuration.getSite().getShell(), 
+				getUniqueId(configuration.getParticipant()), 
+				propertyListener, 
+				configuration.getWorkingSet());		
+		statusLine = new StatusLineContributionGroup(
+				configuration.getSite().getShell(), 
+				configuration, 
+				workingSetGroup);
 	}
 	
 	/**
@@ -159,6 +157,9 @@ public abstract class StructuredViewerAdvisor {
 	public void dispose() {
 		if (statusLine != null) {
 			statusLine.dispose();
+		}
+		if (getActionGroup() != null) {
+			getActionGroup().dispose();
 		}
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(propertyListener);
 	}

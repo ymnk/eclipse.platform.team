@@ -41,10 +41,12 @@ import org.eclipse.ui.part.IPageBookViewPage;
  * A participant must create a page that will be displayed in the ISynchronizeView page 
  * book view. 
  * </p><p>
- * Clients may implement this interface.
+ * Clients are not intended to implement this interface. Instead, they 
+ * should sublcass {@link AbstractSynchronizeParticpant}.
  * </p>
  * @see ISynchronizeView
  * @see ISynchronizeManager
+ * @see AbstractSynchronizeParticpant
  * @since 3.0
  */
 public interface ISynchronizeParticipant extends IExecutableExtension {

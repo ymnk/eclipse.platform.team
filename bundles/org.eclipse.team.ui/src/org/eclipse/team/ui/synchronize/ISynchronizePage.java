@@ -43,4 +43,17 @@ public interface ISynchronizePage {
 	 * doesn't have a viewer.
 	 */
 	public Viewer getViewer();
+
+	/**
+	 * Callback that is invoked from the synchronize configuration
+	 * whenever a property's value is about to be changed. The page
+	 * can react to the change before change events are fired or
+	 * veto the change.
+	 * @param configuration the synchronize page configuration
+	 * @param key the property key
+	 * @param newValue
+	 * @return
+	 */
+	public boolean aboutToChangeProperty(ISynchronizePageConfiguration configuration, String key, Object newValue);
+
 }

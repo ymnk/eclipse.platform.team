@@ -21,10 +21,18 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.forms.HyperlinkGroup;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
@@ -112,7 +120,7 @@ public class ChangesSection extends Composite {
 			calculateDescription();
 		}
 	};
-	private SubscriberPageConfiguration configuration;
+	private ISynchronizePageConfiguration configuration;
 	
 	/**
 	 * Create a changes section on the following page.
@@ -120,7 +128,7 @@ public class ChangesSection extends Composite {
 	 * @param parent the parent control 
 	 * @param page the page showing this section
 	 */
-	public ChangesSection(Composite parent, SubscriberParticipantPage page, SubscriberPageConfiguration configuration) {
+	public ChangesSection(Composite parent, SubscriberParticipantPage page, ISynchronizePageConfiguration configuration) {
 		super(parent, SWT.NONE);
 		this.page = page;
 		this.configuration = configuration;
@@ -235,7 +243,7 @@ public class ChangesSection extends Composite {
 		long incomingChanges = workingSet.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);		
 		
 		if(changesInFilter == 0 && changesInWorkingSet != 0) {
-			final int newMode = outgoingChanges != 0 ? SubscriberPageConfiguration.OUTGOING_MODE : SubscriberPageConfiguration.INCOMING_MODE;
+			final int newMode = outgoingChanges != 0 ? ISynchronizePageConfiguration.OUTGOING_MODE : ISynchronizePageConfiguration.INCOMING_MODE;
 			long numChanges = outgoingChanges != 0 ? outgoingChanges : incomingChanges;
 			StringBuffer text = new StringBuffer();
 			text.append(Policy.bind("ChangesSection.filterHides", Utils.modeToString(configuration.getMode()))); //$NON-NLS-1$
@@ -346,6 +354,6 @@ public class ChangesSection extends Composite {
 	}
 	
 	private SyncInfoSet getWorkingSetSyncInfoSet() {
-		return (SyncInfoSet)configuration.getProperty(SubscriberPageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
+		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
 	}
 }

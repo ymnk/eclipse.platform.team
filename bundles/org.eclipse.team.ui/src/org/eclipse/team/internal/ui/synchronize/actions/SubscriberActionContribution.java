@@ -79,7 +79,7 @@ public final class SubscriberActionContribution extends SynchronizePageActionGro
 		
 		showPreferences = new SyncViewerShowPreferencesAction(site.getShell());
 		
-		modes = new DirectionFilterActionGroup((ISubscriberPageConfiguration)configuration);
+		modes = new DirectionFilterActionGroup(configuration);
 	}
 
 	/* (non-Javadoc)

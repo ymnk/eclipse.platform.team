@@ -10,21 +10,41 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
+import org.eclipse.team.core.subscribers.WorkingSetFilteredSyncInfoCollector;
+import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.actions.SubscriberActionContribution;
+import org.eclipse.team.ui.synchronize.ISynchronizePage;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
+import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
+import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IPageLayout;
-import org.eclipse.ui.part.*;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.part.IShowInSource;
+import org.eclipse.ui.part.IShowInTargetList;
+import org.eclipse.ui.part.Page;
+import org.eclipse.ui.part.ShowInContext;
 
 /**
  * A synchronize view page that works with participants that are subclasses of 
@@ -53,7 +73,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	private static final String STORE_MODE = "SubscriberParticipantPage.STORE_MODE"; //$NON-NLS-1$
 	
 	private IDialogSettings settings;
-	private SubscriberPageConfiguration configuration;
+	private ISynchronizePageConfiguration configuration;
 	
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
@@ -66,11 +86,21 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	// the changes viewer are contributed via the viewer and not the page.
 	private StructuredViewerAdvisor viewerAdvisor;
 	private ISynchronizePageSite site;
+	
+	private final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
+	private final static int[] OUTGOING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING};
+	private final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
+	private final static int[] CONFLICTING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING};
+
+	/**
+	 * Filters out-of-sync resources by working set and mode
+	 */
+	private WorkingSetFilteredSyncInfoCollector collector;
 		
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public SubscriberParticipantPage(SubscriberPageConfiguration configuration) {
+	public SubscriberParticipantPage(ISynchronizePageConfiguration configuration, SubscriberSyncInfoCollector subscriberCollector) {
 		this.configuration = configuration;
 		this.participant = (SubscriberParticipant)configuration.getParticipant();
 		IDialogSettings viewsSettings = TeamUIPlugin.getPlugin().getDialogSettings();
@@ -80,6 +110,9 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		if (settings == null) {
 			settings = viewsSettings.addNewSection(key + STORE_SECTION_POSTFIX);
 		}
+		
+		configuration.addActionContribution(new SubscriberActionContribution());
+		initializeCollector(subscriberCollector);
 	}
 	
 	/* (non-Javadoc)
@@ -109,7 +142,8 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 */
 	public void init(ISynchronizePageSite site) {
 		this.site = site;
-		configuration.setSite(site);
+		// TODO: Should not need to cast configuration
+		((SynchronizePageConfiguration)configuration).setSite(site);
 	}
 	
 	public ISynchronizePageSite getSynchronizePageSite() {
@@ -129,7 +163,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	public void dispose() {
 		changesSection.dispose();
 		composite.dispose();
-		((SynchronizePageActionGroup)configuration).dispose();
 	}
 
 	/*
@@ -203,5 +236,78 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	
 	public Viewer getViewer() {
 		return changesViewer;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePage#aboutToChangeProperty(org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration, java.lang.String, java.lang.Object)
+	 */
+	public boolean aboutToChangeProperty(ISynchronizePageConfiguration configuration, String key, Object newValue) {
+		if (key.equals(ISynchronizePageConfiguration.P_MODE)) {
+			return (internalSetMode(configuration.getMode(), ((Integer)newValue).intValue()));
+		}
+		if (key.equals(ISynchronizePageConfiguration.P_WORKING_SET)) {
+			return (internalSetWorkingSet(configuration.getWorkingSet(), (IWorkingSet)newValue));
+		}
+		return true;
+	}
+	
+	private boolean internalSetMode(int oldMode, int mode) {
+		if(oldMode == mode) return false;
+		updateMode(mode);
+		return true;
+	}
+	
+	private boolean internalSetWorkingSet(IWorkingSet oldSet, IWorkingSet workingSet) {
+		if (workingSet == null || !workingSet.equals(oldSet)) {
+			updateWorkingSet(workingSet);
+			return true;
+		}
+		return false;
+	}
+	
+	private void updateWorkingSet(IWorkingSet workingSet) {
+		if(collector != null) {
+			IResource[] resources = workingSet != null ? Utils.getResources(workingSet.getElements()) : new IResource[0];
+			collector.setWorkingSet(resources);
+		}
+	}
+
+	/*
+	 * This method is invoked from <code>setMode</code> when the mode has changed.
+	 * It sets the filter on the collector to show the <code>SyncInfo</code>
+	 * appropriate for the mode.
+	 * @param mode the new mode (one of <code>INCOMING_MODE_FILTER</code>,
+	 * <code>OUTGOING_MODE_FILTER</code>, <code>CONFLICTING_MODE_FILTER</code>
+	 * or <code>BOTH_MODE_FILTER</code>)
+	 */
+	private void updateMode(int mode) {
+		if(collector != null) {	
+		
+			int[] modeFilter = BOTH_MODE_FILTER;
+			switch(mode) {
+			case ISynchronizePageConfiguration.INCOMING_MODE:
+				modeFilter = INCOMING_MODE_FILTER; break;
+			case ISynchronizePageConfiguration.OUTGOING_MODE:
+				modeFilter = OUTGOING_MODE_FILTER; break;
+			case ISynchronizePageConfiguration.BOTH_MODE:
+				modeFilter = BOTH_MODE_FILTER; break;
+			case ISynchronizePageConfiguration.CONFLICTING_MODE:
+				modeFilter = CONFLICTING_MODE_FILTER; break;
+			}
+
+			collector.setFilter(
+					new FastSyncInfoFilter.AndSyncInfoFilter(
+							new FastSyncInfoFilter[] {
+									new FastSyncInfoFilter.SyncInfoDirectionFilter(modeFilter)
+							}));
+		}
+	}
+	
+	private void initializeCollector(SubscriberSyncInfoCollector subscriberCollector) {
+		SubscriberParticipant participant = getParticipant();
+		collector = new WorkingSetFilteredSyncInfoCollector(subscriberCollector, participant.getSubscriber().roots());
+		collector.reset();
+		configuration.setProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET, collector.getSyncInfoTree());
+		configuration.setProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET, collector.getWorkingSetSyncInfoSet());
 	}
 }

@@ -24,7 +24,6 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
 import org.eclipse.ui.*;
 
 public class MergeSynchronizeParticipant extends CVSParticipant {
@@ -195,8 +194,8 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 		super.initializeConfiguration(configuration);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ACTION_GROUP);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP);
-		((ISubscriberPageConfiguration)configuration).setSupportedModes(ISubscriberPageConfiguration.INCOMING_MODE | ISubscriberPageConfiguration.CONFLICTING_MODE);
-		((ISubscriberPageConfiguration)configuration).setMode(ISubscriberPageConfiguration.INCOMING_MODE);
+		configuration.setSupportedModes(ISynchronizePageConfiguration.INCOMING_MODE | ISynchronizePageConfiguration.CONFLICTING_MODE);
+		configuration.setMode(ISynchronizePageConfiguration.INCOMING_MODE);
 		configuration.addActionContribution(new MergeParticipantActionContribution());
 	}
 }

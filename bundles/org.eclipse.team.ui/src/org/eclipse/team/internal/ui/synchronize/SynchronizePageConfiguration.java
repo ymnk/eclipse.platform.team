@@ -15,12 +15,20 @@ import java.util.Map;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.util.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.ListenerList;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.actions.DefaultSynchronizePageActions;
+import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
+import org.eclipse.team.ui.synchronize.ISynchronizePage;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.actions.ActionContext;
 
 /**
@@ -28,7 +36,7 @@ import org.eclipse.ui.actions.ActionContext;
  * extends SynchronizePageActionGroup in order to delegate action group
  * operations.
  */
-public abstract class SynchronizePageConfiguration extends SynchronizePageActionGroup implements ISynchronizePageConfiguration {
+public class SynchronizePageConfiguration extends SynchronizePageActionGroup implements ISynchronizePageConfiguration {
 
 	/**
 	 * Property constant for the page's viewer input which is 
@@ -60,6 +68,7 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 	private ListenerList actionContributions = new ListenerList();
 	private Map properties = new HashMap();
 	private boolean actionsInitialized = false;
+	private ISynchronizePage page;
 	
 	/**
 	 * Create a configuration for creating a page from the given particpant.
@@ -120,9 +129,11 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 	 */
 	public void setProperty(String key, Object newValue) {
 		Object oldValue = properties.get(key);
-		properties.put(key, newValue);
-		if (oldValue == null || !oldValue.equals(newValue))
-			firePropertyChange(key, oldValue, newValue);
+		if (page == null || page.aboutToChangeProperty(this, key, newValue)) {
+			properties.put(key, newValue);
+			if (oldValue == null || !oldValue.equals(newValue))
+				firePropertyChange(key, oldValue, newValue);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -388,5 +399,56 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 			id += getParticipant().getSecondaryId();
 		}
 		return id + "." + group; //$NON-NLS-1$
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration#getWorkingSet()
+	 */
+	public IWorkingSet getWorkingSet() {
+		Object o = getProperty(P_WORKING_SET);
+		if (o instanceof IWorkingSet) {
+			return (IWorkingSet)o;
+		}
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration#getMode()
+	 */
+	public int getMode() {
+		Object o = getProperty(P_MODE);
+		if (o instanceof Integer) {
+			return ((Integer)o).intValue();
+		}
+		return 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration#setWorkingSet(org.eclipse.ui.IWorkingSet)
+	 */
+	public void setWorkingSet(IWorkingSet set) {
+		setProperty(P_WORKING_SET, set);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration#setMode(int)
+	 */
+	public void setMode(int mode) {
+		setProperty(P_MODE, new Integer(mode));
+	}
+
+	public int getSupportedModes() {
+		Object o = getProperty(P_SUPPORTED_MODES);
+		if (o instanceof Integer) {
+			return ((Integer)o).intValue();
+		}
+		return 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration#setSupportedModes(int)
+	 */
+	public void setSupportedModes(int modes) {
+		setProperty(P_SUPPORTED_MODES, new Integer(modes));
 	}
 }

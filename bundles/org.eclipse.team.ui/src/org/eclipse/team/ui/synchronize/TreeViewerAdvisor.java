@@ -44,7 +44,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	private Action collapseAll;
 	private NavigateAction gotoNext;
 	private NavigateAction gotoPrevious;
-	private HierarchicalModelManager modelManager;
 	
 	class NavigationActionGroup extends SynchronizePageActionGroup {
 		public void initialize(ISynchronizePageConfiguration configuration) {
@@ -146,7 +145,8 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	public TreeViewerAdvisor(ISynchronizePageConfiguration configuration) {
 		super(configuration);
 		configuration.addActionContribution(new NavigationActionGroup());
-		modelManager = new HierarchicalModelManager(this, configuration);
+		// Create the model manager. It hooks itself up
+		new HierarchicalModelManager(this, configuration);
 	}
 	
 	/* (non-Javadoc)

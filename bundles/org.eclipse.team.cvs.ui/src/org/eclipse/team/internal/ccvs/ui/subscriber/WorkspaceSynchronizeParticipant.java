@@ -16,9 +16,12 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.PartInitException;
 
 public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 
@@ -74,6 +77,6 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 		super.initializeConfiguration(configuration);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ACTION_GROUP);
 		configuration.addActionContribution(new WorkspaceActionContribution());
-		((ISubscriberPageConfiguration)configuration).setSupportedModes(ISubscriberPageConfiguration.ALL_MODES);
+		configuration.setSupportedModes(ISynchronizePageConfiguration.ALL_MODES);
 	}
 }
