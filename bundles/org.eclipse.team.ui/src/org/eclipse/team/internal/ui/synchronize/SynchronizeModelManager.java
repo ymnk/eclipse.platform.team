@@ -148,23 +148,6 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 		}
 	}
 	
-	/**
-	 * Sets a new selection for this viewer and optionally makes it visible. The advisor will try and
-	 * convert the objects into the appropriate viewer objects. This is required because the model
-	 * provider controls the actual model elements in the viewer and must be consulted in order to
-	 * understand what objects can be selected in the viewer.
-	 * 
-	 * @param object the objects to select
-	 * @param reveal <code>true</code> if the selection is to be made visible, and
-	 *                  <code>false</code> otherwise
-	 */
-	protected void setSelection(Object[] objects, boolean reveal) {
-		ISelection selection = getSelection(objects);
-		if (!selection.isEmpty()) {
-			advisor.setSelection(selection, reveal);
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
