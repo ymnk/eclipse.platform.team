@@ -34,9 +34,9 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 	public Object[] getChildren(Object element) {
 		IResource resource = SyncSet.getIResource(element);
 		if (resource != null) {
-			return getSyncSet().members(resource);
+			return SyncSet.members(getSyncSet(), resource);
 		} else if (element instanceof SyncSet) {
-			return getSyncSet().members(ResourcesPlugin.getWorkspace().getRoot());
+			return SyncSet.members(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
 		}
 		return new Object[0];
 	}

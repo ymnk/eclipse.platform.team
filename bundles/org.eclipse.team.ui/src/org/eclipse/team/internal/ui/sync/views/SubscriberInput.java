@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.ui.sync.SyncInfoFilter;
 
 /**
  * SubscriberInput encapsulates the UI model for synchronization changes associated
@@ -67,7 +68,7 @@ public class SubscriberInput {
 		return filteredInput.getSyncSet();
 	}
 	
-	public void setFilter(SyncSetFilter filter, IProgressMonitor monitor) throws TeamException {
+	public void setFilter(SyncInfoFilter filter, IProgressMonitor monitor) throws TeamException {
 		filteredInput.setFilter(filter, monitor);
 	}
 

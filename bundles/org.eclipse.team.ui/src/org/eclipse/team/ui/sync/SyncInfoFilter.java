@@ -8,15 +8,15 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.views;
+package org.eclipse.team.ui.sync;
 
 import org.eclipse.team.core.sync.SyncInfo;
 
 /**
- * A SyncSetFilter is used by a SyncSetInput to detemine which resources
+ * A SyncInfoFilter is used by a SyncSetInput to detemine which resources
  * should be part of the sync set.
  */
-public class SyncSetFilter {
+public class SyncInfoFilter {
 	
 	/**
 	 * Return true if the provided SyncInfo matches the filter.

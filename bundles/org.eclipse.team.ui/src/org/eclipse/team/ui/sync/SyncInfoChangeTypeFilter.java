@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.views;
+package org.eclipse.team.ui.sync;
 
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.core.sync.SyncInfo;
@@ -16,11 +16,11 @@ import org.eclipse.team.core.sync.SyncInfo;
 /**
  * Thsi class filters the SyncInfo by change type (addition, deletion, change)
  */
-public class SyncSetChangeFilter extends SyncSetFilter {
+public class SyncInfoChangeTypeFilter extends SyncInfoFilter {
 
 	private int[] changeFilters = new int[] {IRemoteSyncElement.ADDITION, IRemoteSyncElement.DELETION, IRemoteSyncElement.CHANGE};
 
-	public SyncSetChangeFilter(int[] changeFilters) {
+	public SyncInfoChangeTypeFilter(int[] changeFilters) {
 		this.changeFilters = changeFilters;
 	}
 	

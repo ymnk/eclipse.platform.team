@@ -260,7 +260,7 @@ public class CVSSyncInfo extends SyncInfo {
 	 * If the local folder is already managed and is a cvs folder, this operation
 	 * will throw an exception if the mapping does not match that of the remote.
 	 */
-	 public void makeInSync(IProgressMonitor monitor) throws TeamException {
+	 public void makeInSync() throws TeamException {
 	 	
 		// Only work on folders
 		if (getLocal().getType() == IResource.FILE) return;

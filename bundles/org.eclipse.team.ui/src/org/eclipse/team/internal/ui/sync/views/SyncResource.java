@@ -62,21 +62,26 @@ public class SyncResource implements IAdaptable {
 		return syncSet.getSyncInfo(resource);
 	}
 	
-	public SyncInfo[] getDescendatSyncInfos() {
+	/**
+	 * Return an array of all descendants (including the receiver) that have
+	 * a non-null sync-info.
+	 * @return
+	 */
+	public SyncResource[] getOutOfSyncDescendants() {
 		List result = new ArrayList();
 		SyncInfo info = getSyncInfo();
 		if (info != null) {
-			result.add(info);
+			result.add(this);
 		}
-		Object[] members = syncSet.members(getLocalResource());
+		Object[] members = SyncSet.members(syncSet, getLocalResource());
 		for (int i = 0; i < members.length; i++) {
 			Object object = members[i];
 			if (object instanceof SyncResource) {
 				SyncResource child = (SyncResource) object;
-				result.addAll(Arrays.asList(child.getDescendatSyncInfos()));
+				result.addAll(Arrays.asList(child.getOutOfSyncDescendants()));
 			}
 		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+		return (SyncResource[]) result.toArray(new SyncResource[result.size()]);
 	}
 	
 	/* (non-Javadoc)
@@ -95,5 +100,39 @@ public class SyncResource implements IAdaptable {
 	 */
 	public int hashCode() {
 		return getLocalResource().hashCode();
+	}
+
+	/**
+	 * @return
+	 */
+	public int getChangeDirection() {
+		return getKind() & SyncInfo.CHANGE_MASK;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getKind() {
+		SyncInfo info = getSyncInfo();
+		if (info == null) return 0;
+		return info.getKind();
+	}
+
+	/**
+	 * @return
+	 */
+	public SyncResource getParent() {
+		Object parent = SyncSet.getParent(syncSet, this);
+		if (parent instanceof SyncResource) {
+			return (SyncResource)parent;
+		}
+		return null;
+	}
+
+	/**
+	 * @return
+	 */
+	public IResource getResource() {
+		return resource;
 	}
 }

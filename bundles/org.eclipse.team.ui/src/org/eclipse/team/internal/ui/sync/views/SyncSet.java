@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -76,6 +78,10 @@ public class SyncSet {
 			return info.getKind();
 		}
 		return 0;
+	}
+	
+	public static Object[] members(SyncSet syncSet, IResource resource) {
+		return syncSet.members(resource);
 	}
 	
 	/**
@@ -356,4 +362,5 @@ public class SyncSet {
 	/* package */ void endInput() {
 		fireChanges();
 	}
+
 }

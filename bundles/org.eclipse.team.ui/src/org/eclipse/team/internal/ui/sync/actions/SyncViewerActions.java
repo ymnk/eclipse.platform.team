@@ -21,15 +21,16 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.UIConstants;
-import org.eclipse.team.internal.ui.sync.views.*;
+import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
+import org.eclipse.team.ui.sync.*;
 
 /**
  * This class managers the actions associated with the SyncViewer class.
@@ -174,10 +175,10 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
 						monitor.beginTask(null, 100);
-						input.setFilter(new AndSyncSetFilter(
-						new SyncSetFilter[] {
-							new SyncSetDirectionFilter(directionsFilters.getDirectionFilters()), 
-							new SyncSetChangeFilter(changeFilters.getChangeFilters())
+						input.setFilter(new AndSyncInfoFilter(
+						new SyncInfoFilter[] {
+							new SyncInfoDirectionFilter(directionsFilters.getDirectionFilters()), 
+							new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters())
 						}), monitor);
 					} catch (TeamException e) {
 						throw new InvocationTargetException(e);

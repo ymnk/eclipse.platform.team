@@ -14,12 +14,9 @@ package org.eclipse.team.internal.ui.actions;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -40,13 +37,11 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.target.TargetManager;
 import org.eclipse.team.internal.core.target.TargetProvider;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.sync.views.SyncResource;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
@@ -163,25 +158,6 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	 */
 	protected IResource[] getSelectedResources() {
 		return (IResource[])getSelectedResources(IResource.class);
-	}
-
-	/**
-	 * Returns the selected SyncInfos. This method returns all directly referenced 
-	 * SyncInfos and and SyncInfos that are children of selected folders. Subclasses
-	 * may wish to check for selected SyncInfo before checking for selected resources
-	 * so they can provide special handling for this type of object (e.g. operate on
-	 * only those resources visible in the Synchronize View).
-	 * 
-	 * @return the selected resources
-	 */
-	protected SyncInfo[] getSelectedSyncInfos() {
-		SyncResource[] syncResources = (SyncResource[])getSelectedResources(SyncResource.class);
-		Set result = new HashSet();
-		for (int i = 0; i < syncResources.length; i++) {
-			SyncResource resource = syncResources[i];
-			result.addAll(Arrays.asList(resource.getDescendatSyncInfos()));
-		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
 	
 	/**

@@ -11,9 +11,12 @@
 package org.eclipse.team.internal.ui.sync.views;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -32,7 +35,9 @@ import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
@@ -48,6 +53,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ITeamResourceChangeListener;
+import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.core.sync.TeamProvider;
@@ -426,6 +432,21 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	}
 	
 	public ISelection getSelection() {
-		return getViewer().getSelection();
+		ISelection selection = getViewer().getSelection();
+		if (! selection.isEmpty() && viewer instanceof AbstractTreeViewer) {
+			// For a tree, selection should be deep and only include out-of-sync resources
+			Object[] selected = ((IStructuredSelection)selection).toArray();
+			Set result = new HashSet();
+			for (int i = 0; i < selected.length; i++) {
+				Object object = selected[i];
+				if (object instanceof SyncResource) {
+					SyncResource syncResource = (SyncResource) object;
+					SyncResource[] infos = syncResource.getOutOfSyncDescendants();
+					result.addAll(Arrays.asList(infos));
+				}
+			}
+			selection = new StructuredSelection((Object[]) result.toArray(new Object[result.size()]));
+		}
+		return selection;
 	}
 }

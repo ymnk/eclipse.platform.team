@@ -172,7 +172,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		SyncTreeSubscriber subscriber = getSubscriber();
 		for (int i=0;i<resources.length;i++) {
 			CVSSyncInfo info = (CVSSyncInfo) subscriber.getSyncInfo(resources[i], DEFAULT_MONITOR);
-			info.makeInSync(DEFAULT_MONITOR);
+			info.makeInSync();
 		}
 	}
 	

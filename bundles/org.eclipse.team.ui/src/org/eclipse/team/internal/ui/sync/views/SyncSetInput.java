@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.sync.views;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.ui.sync.*;
 
 /**
  * This is the superclass for all SyncSet input providers
@@ -20,7 +21,7 @@ import org.eclipse.team.core.sync.SyncInfo;
 public abstract class SyncSetInput {
 	
 	private SyncSet syncSet = new SyncSet();
-	private SyncSetFilter filter = new SyncSetFilter();
+	private SyncInfoFilter filter = new SyncInfoFilter();
 	
 	public SyncSet getSyncSet() {
 		return syncSet;
@@ -82,14 +83,14 @@ public abstract class SyncSetInput {
 	/**
 	 * @return
 	 */
-	public SyncSetFilter getFilter() {
+	public SyncInfoFilter getFilter() {
 		return filter;
 	}
 
 	/**
 	 * @param filter
 	 */
-	public void setFilter(SyncSetFilter filter, IProgressMonitor monitor) throws TeamException {
+	public void setFilter(SyncInfoFilter filter, IProgressMonitor monitor) throws TeamException {
 		this.filter = filter;
 		reset(monitor);
 	}
