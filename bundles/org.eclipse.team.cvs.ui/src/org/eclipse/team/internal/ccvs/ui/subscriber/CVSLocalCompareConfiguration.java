@@ -45,8 +45,12 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 		collector.setFilter(new SyncInfoFilter() {
 			private SyncInfoFilter contentCompare = new SyncInfoFilter.ContentComparisonSyncInfoFilter();
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
-				// Want to select infos whose contents do not match
-				return !contentCompare.select(info, monitor);
+				if (info.getLocal().getType() == IResource.FILE) {
+					// Want to select infos whose contents do not match
+					return !contentCompare.select(info, monitor);
+				} else {
+					return true;
+				}
 			}
 		});
 		collector.start();

@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IWorkspaceRunnable;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
@@ -39,30 +38,20 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 		this.handler = handler;
 	}	
 
-	public void run(final IWorkspaceRunnable runnable, IProgressMonitor monitor) {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.synchronize.SyncInfoSet#connect(org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void connect(ISyncInfoSetChangeListener listener, IProgressMonitor monitor) {
 		if (handler == null) {
-			super.run(runnable, monitor);
+			super.connect(listener, monitor);
 		} else {
-			handler.run(new IWorkspaceRunnable() {
-				public void run(IProgressMonitor monitor) throws CoreException {
-					// Perform a beginInput to ensure no modifications are performed on the set
-					// while the runnable is being run in the background job
-					try {
-						beginInput();
-						monitor.beginTask(null, 100);
-						runnable.run(Policy.subMonitorFor(monitor, 95));
-					} finally {
-						endInput(Policy.subMonitorFor(monitor, 5));
-						monitor.done();
-					}
-				}
-			});
+			connect(listener);
 		}
 	}
 
 	/**
 	 * Variation of connect that does not need progress and does not throw an exception.
-	 * Progress ins provided by the background event handler and errors are passed through
+	 * Progress is provided by the background event handler and errors are passed through
 	 * the chain to the view.
 	 * @param listener
 	 */
@@ -84,7 +73,7 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 						monitor.done();
 					}
 				}
-			});
+			}, true /* high priority */);
 		}
 	}
 	

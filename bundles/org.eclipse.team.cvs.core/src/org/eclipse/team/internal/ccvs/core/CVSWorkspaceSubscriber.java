@@ -14,16 +14,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
+import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
+import org.eclipse.team.core.synchronize.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
 
 /**
  * CVSWorkspaceSubscriber
@@ -170,78 +171,6 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		SubscriberChangeEvent delta = new SubscriberChangeEvent(this, ISubscriberChangeEvent.ROOT_REMOVED, project);
 		fireTeamResourceChange(new SubscriberChangeEvent[] {delta});
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#getAllOutOfSync(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public SyncInfo[] getAllOutOfSync(IResource[] resources, final int depth, IProgressMonitor monitor) throws TeamException {
-		monitor.beginTask(null, resources.length * 100);
-		final List result = new ArrayList();
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			final IProgressMonitor infinite = Policy.infiniteSubMonitorFor(monitor, 100);
-			try {
-				// We need to do a scheduling rule on the project to
-				// avoid overly desctructive operations from occuring 
-				// while we gather sync info
-				infinite.beginTask(null, 512);
-				Platform.getJobManager().beginRule(resource, Policy.subMonitorFor(infinite, 1));
-				resource.accept(new IResourceVisitor() {
-					public boolean visit(IResource innerResource) throws CoreException {
-						try {
-							if (isOutOfSync(innerResource, infinite)) {
-								SyncInfo info = getSyncInfo(innerResource);
-								if (info != null && info.getKind() != 0) {
-									result.add(info);
-								}
-							}
-							return true;
-						} catch (TeamException e) {
-							// TODO:See bug 42795
-							throw new CoreException(e.getStatus());
-						}
-					}
-				}, depth, true /* include phantoms */);
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
-			} finally {
-				Platform.getJobManager().endRule(resource);
-				infinite.done();
-			}
-		}
-		monitor.done();
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
-	}
-	
-	/* internal use only */ boolean isOutOfSync(IResource resource, IProgressMonitor monitor) throws TeamException {
-		return (hasIncomingChange(resource) || hasOutgoingChange(CVSWorkspaceRoot.getCVSResourceFor(resource), monitor));
-	}
-	
-	private boolean hasOutgoingChange(ICVSResource resource, IProgressMonitor monitor) throws CVSException {
-		if (resource.isFolder()) {
-			// A folder is an outgoing change if it is not a CVS folder and not ignored
-			ICVSFolder folder = (ICVSFolder)resource;
-			// OPTIMIZE: The following checks load the CVS folder information
-			if (folder.getParent().isModified(monitor)) {
-				return !folder.isCVSFolder() && !folder.isIgnored();
-			}
-		} else {
-			// A file is an outgoing change if it is modified
-			ICVSFile file = (ICVSFile)resource;
-			// The parent caches the dirty state so we only need to check
-			// the file if the parent is dirty
-			// OPTIMIZE: Unfortunately, the modified check on the parent still loads
-			// the CVS folder information so not much is gained
-			if (file.getParent().isModified(monitor)) {
-				return file.isModified(monitor);
-			}
-		}
-		return false;
-	}
-	
-	private boolean hasIncomingChange(IResource resource) throws TeamException {
-		return remoteSynchronizer.isRemoteKnown(resource);
-	}
 
 	public void setRemote(IProject project, IResourceVariant remote, IProgressMonitor monitor) throws TeamException {
 		// TODO: This exposes internal behavior to much
@@ -289,5 +218,45 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	protected SynchronizationCache getRemoteSynchronizationCache() {
 		return remoteSynchronizer;
 	}
+	
+//	/* (non-Javadoc)
+//	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
+//	 */
+//	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
+//		if (resource.getType() == IResource.FILE) {
+//			// Try to optimize the in-sync case using the cached deep folder dirty indicator
+//			IFile file = (IFile)resource;
+//			if (isKnownToBeInSync(file)) {
+//				CVSInSyncInfo info = new CVSInSyncInfo(file, this);
+//				info.init();
+//				return info;
+//			}
+//		}
+//		return super.getSyncInfo(resource);
+//	}
+//	
+//	/*
+//	 * Return true if the file is known to be in-sync and false if it must be calculated
+//	 */
+//	private boolean isKnownToBeInSync(IFile file) throws TeamException {
+//		return (!hasIncomingChange(file) && isKnownToBeClean(file));
+//	}
+//
+//	private boolean hasIncomingChange(IResource resource) throws TeamException {
+//		return remoteSynchronizer.isRemoteKnown(resource);
+//	}
+//	
+//	/*
+//	 * Return true if the file is known to be clean and false if it must be calculated
+//	 */
+//	private boolean isKnownToBeClean(IFile file) throws TeamException {
+//		int state = EclipseSynchronizer.getInstance().getModificationState(file.getParent());
+//		if (state == ICVSFile.CLEAN) {
+//			// if the parent is known to be clean then the file must also be clean
+//			return true;
+//		}
+//		// Otherwise, nothing is known
+//		return false;
+//	}
 
 }

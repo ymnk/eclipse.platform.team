@@ -206,8 +206,8 @@ public class SyncInfoSet {
 		}
 	}
 
-	/**
-	 * Run the given runnable. For mutable subclasses this operation
+	/*
+	 * Run the given runnable. This operation
 	 * will block other threads from modifying the 
 	 * set and postpone any change notifications until after the runnable
 	 * has been executed. Mutable subclasses must override.
@@ -221,7 +221,7 @@ public class SyncInfoSet {
 	 * @param runnable a runnable
 	 * @param progress a progress monitor or <code>null</code>
 	 */
-	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) {
+	private void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) {
 		monitor = Policy.monitorFor(monitor);
 		monitor.beginTask(null, 100);
 		try {

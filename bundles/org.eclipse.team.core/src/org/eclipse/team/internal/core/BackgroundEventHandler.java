@@ -192,11 +192,15 @@ public abstract class BackgroundEventHandler {
 	 * already running then notify in case it was waiting.
 	 * @param event the event to be queued
 	 */
-	protected synchronized void queueEvent(Event event) {
+	protected synchronized void queueEvent(Event event, boolean front) {
 		if (Policy.DEBUG_BACKGROUND_EVENTS) {
 			System.out.println("Event queued on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		awaitingProcessing.add(event);
+		if (front) {
+			awaitingProcessing.add(0, event);
+		} else {
+			awaitingProcessing.add(event);
+		}
 		if (!isShutdown() && eventHandlerJob != null) {
 			if(eventHandlerJob.getState() == Job.NONE) {
 				schedule();
@@ -218,11 +222,18 @@ public abstract class BackgroundEventHandler {
 	 * Return the next event that has been queued, removing it from the queue. 
 	 * @return the next event in the queue
 	 */
-	private synchronized Event nextElement() {
+	protected synchronized Event nextElement() {
 		if (isShutdown() || isQueueEmpty()) {
 			return null;
 		}
 		return (Event) awaitingProcessing.remove(0);
+	}
+	
+	protected synchronized Event peek() {
+		if (isShutdown() || isQueueEmpty()) {
+			return null;
+		}
+		return (Event) awaitingProcessing.get(0);
 	}
 	
 	/**
@@ -263,9 +274,9 @@ public abstract class BackgroundEventHandler {
 					if (Policy.DEBUG_BACKGROUND_EVENTS) {
 						System.out.println("Event processed on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 					}
-					if(isReadyForDispath()) {
+					if(isReadyForDispatch()) {
 						dispatchEvents(Policy.subMonitorFor(subMonitor, 1));
-						processingEventsDuration = System.currentTimeMillis();
+						eventsDispatched();
 					}
 				} catch (CoreException e) {
 					// handle exception but keep going
@@ -276,6 +287,10 @@ public abstract class BackgroundEventHandler {
 			monitor.done();
 		}
 		return errors.getStatus();
+	}
+
+	protected void eventsDispatched() {
+		processingEventsDuration = System.currentTimeMillis();
 	}
 
 	/**
@@ -294,7 +309,7 @@ public abstract class BackgroundEventHandler {
 	 * @return <code>true</code> if processed events should be dispatched and
 	 * <code>false</code> otherwise
 	 */
-	protected boolean isReadyForDispath() {		
+	protected boolean isReadyForDispatch() {		
 		long duration = System.currentTimeMillis() - processingEventsDuration;
 		if(duration >= DISPATCH_DELAY) {
 			return true;

@@ -78,15 +78,28 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		}
 	}
 	
+	/**
+	 * This is a special event used to reset and connect sync sets.
+	 * The preemtive flag is used to indicate that the runnable should take
+	 * the highest priority and thus be placed on the front of the queue
+	 * and be processed as soon as possible, preemting any event that is currently
+	 * being processed. The curent event will continue processing once the 
+	 * high priority event has been processed
+	 */
 	public class RunnableEvent extends Event {
 		static final int RUNNABLE = 1000;
 		private IWorkspaceRunnable runnable;
-		public RunnableEvent(IWorkspaceRunnable runnable) {
+		private boolean preemtive;
+		public RunnableEvent(IWorkspaceRunnable runnable, boolean preemtive) {
 			super(ResourcesPlugin.getWorkspace().getRoot(), RUNNABLE, IResource.DEPTH_ZERO);
 			this.runnable = runnable;
+			this.preemtive = preemtive;
 		}
 		public void run(IProgressMonitor monitor) throws CoreException {
 			runnable.run(monitor);
+		}
+		public boolean isPreemtive() {
+			return preemtive;
 		}
 	}
 	
@@ -113,10 +126,10 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		reset(syncSetInput.getSubscriber().roots(), SubscriberEvent.INITIALIZE);
 	}
 
-	protected synchronized void queueEvent(Event event) {
+	protected synchronized void queueEvent(Event event, boolean front) {
 		// Only post events if the handler is started
 		if (started) {
-			super.queueEvent(event);
+			super.queueEvent(event, front);
 		}
 	}
 	/**
@@ -149,7 +162,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 			public void run(IProgressMonitor monitor) throws CoreException {
 				syncSetInput.reset(monitor);
 			}
-		});
+		}, false /* keep ordering the same */);
 		// Then, prime the set from the subscriber
 		reset(roots, SubscriberEvent.CHANGE);
 	}
@@ -161,7 +174,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * @param depth the depth of the change calculation
 	 */
 	public void change(IResource resource, int depth) {
-		queueEvent(new SubscriberEvent(resource, SubscriberEvent.CHANGE, depth));
+		queueEvent(new SubscriberEvent(resource, SubscriberEvent.CHANGE, depth), false);
 	}
 	
 	/**
@@ -171,7 +184,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 */
 	public void remove(IResource resource) {
 		queueEvent(
-			new SubscriberEvent(resource, SubscriberEvent.REMOVAL, IResource.DEPTH_INFINITE));
+			new SubscriberEvent(resource, SubscriberEvent.REMOVAL, IResource.DEPTH_INFINITE), false);
 	}
 	
 	/**
@@ -181,8 +194,10 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	private void collect(
 		IResource resource,
 		int depth,
-		IProgressMonitor monitor,
-		List results) {
+		IProgressMonitor monitor) {
+		
+		// handle any preemtive events before continuing
+		handlePreemptiveEvents(monitor);
 		
 		if (resource.getType() != IResource.FILE
 			&& depth != IResource.DEPTH_ZERO) {
@@ -195,8 +210,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 						depth == IResource.DEPTH_INFINITE
 							? IResource.DEPTH_INFINITE
 							: IResource.DEPTH_ZERO,
-						monitor,
-						results);
+						monitor);
 				}
 			} catch (TeamException e) {
 				handleException(e, resource, ITeamStatus.SYNC_INFO_SET_ERROR, "The members of folder {0} could not be retrieved." + resource.getFullPath().toString());
@@ -208,18 +222,26 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 			SyncInfo info = syncSetInput.getSubscriber().getSyncInfo(resource);
 			// resource is no longer under the subscriber control
 			if (info == null) {
-				results.add(
+				resultCache.add(
 					new SubscriberEvent(resource, SubscriberEvent.REMOVAL, IResource.DEPTH_ZERO));
 			} else {
-				results.add(
+				resultCache.add(
 					new SubscriberEvent(resource, SubscriberEvent.CHANGE, IResource.DEPTH_ZERO, info));
 			}
+			handlePendingDispatch(monitor);
 		} catch (TeamException e) {
 			handleException(e, resource, ITeamStatus.RESOURCE_SYNC_INFO_ERROR, "The synchronization state for resource {0} could not be determined." + resource.getFullPath().toString());
 		}
 		monitor.worked(1);
 	}
 	
+	private void handlePendingDispatch(IProgressMonitor monitor) {
+		if (isReadyForDispatch()) {
+			dispatchEvents(Policy.subMonitorFor(monitor, 5));
+			eventsDispatched();
+		}
+	}
+
 	/*
 	 * Handle the exception by returning it as a status from the job but also by
 	 * dispatching it to the sync set input so any down stream views can react
@@ -239,8 +261,8 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * @return Event[] the change events
 	 * @throws TeamException
 	 */
-	private SubscriberEvent[] getAllOutOfSync(
-		IResource[] resources,
+	private void collectAll(
+		IResource resource,
 		int depth,
 		IProgressMonitor monitor) {
 		
@@ -248,7 +270,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		try {
 			SyncInfo[] infos = null;
 				try {
-					infos = syncSetInput.getSubscriber().getAllOutOfSync(resources, depth, Policy.subMonitorFor(monitor, 50));
+					infos = syncSetInput.getSubscriber().getAllOutOfSync(new IResource[] { resource }, depth, Policy.subMonitorFor(monitor, 10));
 				} catch (TeamException e) {
 					// Log the exception and fallback to using hierarchical search
 					TeamPlugin.log(e);
@@ -257,26 +279,19 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 			// The subscriber hasn't cached out-of-sync resources. We will have to
 			// traverse all resources and calculate their state. 
 			if (infos == null) {
-				List events = new ArrayList();
-				IProgressMonitor subMonitor = Policy.infiniteSubMonitorFor(monitor, 50);
-				subMonitor.beginTask(null, resources.length);
-				for (int i = 0; i < resources.length; i++) {
-					collect(
-						resources[i],
+				IProgressMonitor subMonitor = Policy.infiniteSubMonitorFor(monitor, 90);
+				subMonitor.beginTask(null, 20);
+				collect(
+						resource,
 						IResource.DEPTH_INFINITE,
-						subMonitor,
-						events);
-				}
-				return (SubscriberEvent[]) events.toArray(new SubscriberEvent[events.size()]);
-				// The subscriber has returned the list of out-of-sync resources.
+						subMonitor);
 			} else {
-				SubscriberEvent[] events = new SubscriberEvent[infos.length];
+				// The subscriber has returned the list of out-of-sync resources.
 				for (int i = 0; i < infos.length; i++) {
 					SyncInfo info = infos[i];
-					events[i] =
-						new SubscriberEvent(info.getLocal(), SubscriberEvent.CHANGE, depth, info);
+					resultCache.add(
+						new SubscriberEvent(info.getLocal(), SubscriberEvent.CHANGE, depth, info));
 				}
-				return events;
 			}
 		} finally {
 			monitor.done();
@@ -317,7 +332,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	private void reset(IResource[] roots, int type) {
 		IResource[] resources = roots;
 		for (int i = 0; i < resources.length; i++) {
-			queueEvent(new SubscriberEvent(resources[i], type, IResource.DEPTH_INFINITE));
+			queueEvent(new SubscriberEvent(resources[i], type, IResource.DEPTH_INFINITE), false);
 		}
 	}
 
@@ -334,22 +349,18 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 					resultCache.add(event);
 					break;
 				case SubscriberEvent.CHANGE :
-					List results = new ArrayList();
 					collect(
 						event.getResource(),
 						event.getDepth(),
-						monitor,
-						results);
-					resultCache.addAll(results);
+						monitor);
 					break;
 				case SubscriberEvent.INITIALIZE :
+					getEventHandlerJob().setSystem(false);
 					monitor.subTask(Policy.bind("SubscriberEventHandler.2", event.getResource().getFullPath().toString())); //$NON-NLS-1$
-					SubscriberEvent[] events =
-						getAllOutOfSync(
-							new IResource[] { event.getResource()},
+					collectAll(
+							event.getResource(),
 							event.getDepth(),
 							Policy.subMonitorFor(monitor, 64));
-					resultCache.addAll(Arrays.asList(events));
 					break;
 			}
 		} catch (RuntimeException e) {
@@ -364,6 +375,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	private void executeRunnable(Event event, IProgressMonitor monitor) {
 		// Dispatch any queued results to clear pending output events
 		dispatchEvents(Policy.subMonitorFor(monitor, 1));
+		eventsDispatched();
 		try {
 			((RunnableEvent)event).run(Policy.subMonitorFor(monitor, 1));
 		} catch (CoreException e) {
@@ -375,16 +387,18 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#dispatchEvents()
 	 */
 	protected void dispatchEvents(IProgressMonitor monitor) {
-		dispatchEvents((SubscriberEvent[]) resultCache.toArray(new SubscriberEvent[resultCache.size()]), monitor);
-		resultCache.clear();
+		if (!resultCache.isEmpty()) {
+			dispatchEvents((SubscriberEvent[]) resultCache.toArray(new SubscriberEvent[resultCache.size()]), monitor);
+			resultCache.clear();
+		}
 	}
 
 	/**
 	 * Queue up the given runnable in an event to be processed by this job
 	 * @param runnable the runnable to be run by the handler
 	 */
-	public void run(IWorkspaceRunnable runnable) {
-		queueEvent(new RunnableEvent(runnable));
+	public void run(IWorkspaceRunnable runnable, boolean frontOnQueue) {
+		queueEvent(new RunnableEvent(runnable, frontOnQueue), frontOnQueue);
 	}
 
 	/**
@@ -405,5 +419,12 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 */
 	protected boolean isStarted() {
 		return started;
+	}
+	
+	private void handlePreemptiveEvents(IProgressMonitor monitor) {
+		Event event = peek();
+		if (event instanceof RunnableEvent && ((RunnableEvent)event).isPreemtive()) {
+			executeRunnable(nextElement(), monitor);
+		}
 	}
 }

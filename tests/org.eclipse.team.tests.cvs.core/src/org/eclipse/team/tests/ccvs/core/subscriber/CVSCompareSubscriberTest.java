@@ -89,9 +89,9 @@ public class CVSCompareSubscriberTest extends CVSSyncSubscriberTest {
 				SyncInfo.IN_SYNC,
 				SyncInfo.ADDITION, 
 				SyncInfo.DELETION, 
-				SyncInfo.DELETION, 
+				SyncInfo.IN_SYNC, 
 				SyncInfo.DELETION,
-				SyncInfo.ADDITION,
+				SyncInfo.IN_SYNC,
 				SyncInfo.ADDITION});
 	}
 
