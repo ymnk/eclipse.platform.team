@@ -13,9 +13,16 @@ package org.eclipse.team.core.subscribers;
 import org.eclipse.core.resources.IResource;
 
 /**
- * An event generated when a {@link ISyncInfoSet} collection is changed. The
- * mix of return types, SyncInfo and IResource, is a result of an optimization 
- * included in {@link ISyncInfoSet} collections that doesn't maintain SyncInfo objects
+ * An event generated when a {@link SyncInfoSet} collection is changed. The event contains 
+ * a description of the changes which include added, changed and removed resources.
+ * In some cases, (e.g. when the change is too complicated to be efficiently described
+ * using the mechanisms provided by this interface) the event will be a reset. In these
+ * cases, the client should ignore any other contents of the event are reclaculate
+ * from scratch any state that is derived from the <code>SyncInfoSet</code> from
+ * which the event originated. 
+ * <p>
+ * The mix of return types, SyncInfo and IResource, is a result of an optimization 
+ * included in {@link SyncInfoSet} collections that doesn't maintain SyncInfo objects
  * for in-sync resources.
  *  
  * @see SyncInfoSet#addSyncSetChangedListener(ISyncSetChangedListener)
@@ -32,12 +39,19 @@ public interface ISyncInfoSetChangeEvent {
 	public SyncInfo[] getAddedResources();
 	
 	/**
-	 * Returns parent resources of all newly added elements. 
+	 * Returns the highest parent resources of all newly added elements available in this event
+	 * by calling <code>getAddedResources()</code>. In other words, it returns the set of all
+	 * parent containers that did not previously have descendants in the sync set but are direct
+	 * children of containers that did previously have descescendants in the set. 
+	 * <p>
+	 * These roots are provided in order
+	 * to allow listeners to optimize the reconciliation of hierachical views of 
+	 * the <code>SyncInfoSet</code> contents. 
 	 * 
-	 * @return parents of all newly added elements.  or an empty list if this event 
+	 * @return parents of all newly added elements  or an empty list if this event 
 	 * doesn't contain added resources.
 	 */
-	public IResource[] getAddedRoots();
+	public IResource[] getAddedSubtreeRoots();
 	
 	/**
 	 * Returns changed <code>SyncInfo</code> elements. The returned elements
@@ -49,8 +63,9 @@ public interface ISyncInfoSetChangeEvent {
 	public SyncInfo[] getChangedResources();
 	
 	/**
-	 * Returns removed <code>SyncInfo</code> elements. The returned elements
-	 * are all  in-sync resources.
+	 * Returns the removed <code>IResource</code> elements for which the set no longer
+	 * contains on out-of-sync <code>SyncInfo</code>. The returned elements
+	 * are all in-sync resources.
 	 * 
 	 * @return removed <code>SyncInfo</code> elements or an empty list if this event 
 	 * doesn't contain removed resources.
@@ -58,26 +73,35 @@ public interface ISyncInfoSetChangeEvent {
 	public IResource[] getRemovedResources();
 	
 	/**
-	 * Returns parent resources of all newly removed elements. 
+	 * Returns the highest parent resources of all newly removed elements available in this event
+	 * by calling <code>getRemovedResources()</code>. In other words, it returns the set of all
+	 * parent containers that previously had descendants in the sync set but are direct
+	 * children of containers that still have descescendants in the set. 
+	 * <p>
+	 * These roots are provided in order
+	 * to allow listeners to optimize the reconciliation of hierachical views of 
+	 * the <code>SyncInfoSet</code> contents. 
 	 * 
 	 * @return parents of all newly removed elements.  or an empty list if this event 
 	 * doesn't contain added resources.
 	 */
-	public IResource[] getRemovedRoots();
+	public IResource[] getRemovedSubtreeRoots();
 	
 	/**
-	 * Returns the {@link ISyncInfoSet} that generated these events.
+	 * Returns the {@link SyncInfoSet} that generated these events.
 	 * 
-	 * @return the {@link ISyncInfoSet} that generated these events.
+	 * @return the {@link SyncInfoSet} that generated these events.
 	 */
 	public SyncInfoSet getSet();
 	
 	/**
 	 * Returns <code>true</code> if the associated set has been reset and <code>false</code>
-	 * otherwise. A sync info set is reset when changes in the set are all recalculated.
+	 * otherwise. A sync info set is reset when changes in the set are all recalculated. If
+	 * reset is <code>true</code> then all other contents of the event are to be ignored.
 	 * 
 	 * @return <code>true</code> if the associated set has been reset and <code>false</code>
 	 * otherwise.
 	 */
 	public boolean isReset();
+	
 }

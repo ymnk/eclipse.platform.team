@@ -22,7 +22,6 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.PruneFolderVisitor;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -146,7 +145,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 //			 boolean result = saveIfNecessary();
 //			 if (!result) return null;
 
-		MutableSyncInfoSet syncSet = getFilteredSyncInfoSet(getFilteredSyncInfos());
+		SelectionSyncInfoSet syncSet = getFilteredSyncInfoSet(getFilteredSyncInfos());
 		if (syncSet == null || syncSet.isEmpty()) return;
 		try {
 			getCVSRunnableContext().run(getJobName(syncSet), getSchedulingRule(syncSet), true, getRunnable(syncSet));
@@ -165,7 +164,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 * @param syncSet
 	 * @return
 	 */
-	public IRunnableWithProgress getRunnable(final MutableSyncInfoSet syncSet) {
+	public IRunnableWithProgress getRunnable(final SelectionSyncInfoSet syncSet) {
 		return new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
@@ -189,7 +188,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		};
 	}
 
-	protected abstract void run(MutableSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
+	protected abstract void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
 
 	/*
 	 * Return the ICVSRunnableContext which will be used to run the operation.
@@ -244,9 +243,9 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	/**
 	 * Filter the sync resource set using action specific criteria or input from the user.
 	 */
-	protected MutableSyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
+	protected SelectionSyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
 		// If there are conflicts or outgoing changes in the syncSet, we need to warn the user.
-		return new MutableSyncInfoSet(selectedResources);
+		return new SelectionSyncInfoSet(selectedResources);
 	}
 	
 	protected void pruneEmptyParents(SyncInfo[] nodes) throws CVSException {
@@ -287,7 +286,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 * 
 	 * @return whether to perform the overwrite
 	 */
-	protected boolean promptForOverwrite(final MutableSyncInfoSet syncSet) {
+	protected boolean promptForOverwrite(final SelectionSyncInfoSet syncSet) {
 		final int[] result = new int[] {Dialog.CANCEL};
 		TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {
 			public void run() {

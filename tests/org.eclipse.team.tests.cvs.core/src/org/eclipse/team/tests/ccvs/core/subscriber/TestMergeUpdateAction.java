@@ -12,7 +12,7 @@ package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
+import org.eclipse.team.core.subscribers.SelectionSyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeUpdateAction;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
@@ -24,7 +24,7 @@ class TestMergeUpdateAction extends MergeUpdateAction {
 		this.allowOverwrite = allowOverwrite;
 	}
 
-	protected boolean promptForOverwrite(MutableSyncInfoSet syncSet) {
+	protected boolean promptForOverwrite(SelectionSyncInfoSet syncSet) {
 		if (allowOverwrite) return true;
 		if (syncSet.isEmpty()) return true;
 		IResource[] resources = syncSet.getResources();
@@ -32,7 +32,7 @@ class TestMergeUpdateAction extends MergeUpdateAction {
 		return false;
 	}
 	
-	public IRunnableWithProgress getRunnable(MutableSyncInfoSet syncSet) {
+	public IRunnableWithProgress getRunnable(SelectionSyncInfoSet syncSet) {
 		return super.getRunnable(syncSet);
 	}
 	

@@ -45,8 +45,8 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getFilteredSyncInfoSet(org.eclipse.team.internal.ui.sync.views.SyncInfo[])
 	 */
-	protected MutableSyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
-		MutableSyncInfoSet syncSet = super.getFilteredSyncInfoSet(selectedResources);
+	protected SelectionSyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
+		SelectionSyncInfoSet syncSet = super.getFilteredSyncInfoSet(selectedResources);
 		if (!promptForConflictHandling(syncSet)) return null;
 		try {
 			if (!promptForUnaddedHandling(syncSet)) return null;
@@ -56,7 +56,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return syncSet;
 	}
 	
-	protected boolean promptForConflictHandling(MutableSyncInfoSet syncSet) {
+	protected boolean promptForConflictHandling(SelectionSyncInfoSet syncSet) {
 		// If there is a conflict in the syncSet, remove from sync set.
 		if (syncSet.hasConflicts() || syncSet.hasIncomingChanges()) {
 			syncSet.removeConflictingNodes();
@@ -65,7 +65,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return true;
 	}
 
-	private boolean promptForUnaddedHandling(MutableSyncInfoSet syncSet) throws CVSException {
+	private boolean promptForUnaddedHandling(SelectionSyncInfoSet syncSet) throws CVSException {
 		if (syncSet.isEmpty()) return false;
 		
 		// accumulate any resources that are not under version control
@@ -135,7 +135,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(MutableSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	public void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		
 		final SyncInfo[] changed = syncSet.members();
 		if (changed.length == 0) return;

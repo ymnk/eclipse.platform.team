@@ -11,7 +11,7 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
+import org.eclipse.team.core.subscribers.SelectionSyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceUpdateAction;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
@@ -20,16 +20,16 @@ class TestUpdateAction extends WorkspaceUpdateAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.SafeUpdateAction#warnAboutFailedResources(org.eclipse.team.ui.sync.SyncInfoSet)
 	 */
-	protected void warnAboutFailedResources(MutableSyncInfoSet syncSet) {
+	protected void warnAboutFailedResources(SelectionSyncInfoSet syncSet) {
 		return;
 	}
 
-	protected boolean promptForOverwrite(MutableSyncInfoSet syncSet) {
+	protected boolean promptForOverwrite(SelectionSyncInfoSet syncSet) {
 		EclipseTest.fail("Should never prompt on update, simply update nodes that are valid.");
 		return false;
 	}
 	
-	public IRunnableWithProgress getRunnable(MutableSyncInfoSet syncSet) {
+	public IRunnableWithProgress getRunnable(SelectionSyncInfoSet syncSet) {
 		return super.getRunnable(syncSet);
 	}
 	

@@ -15,7 +15,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
+import org.eclipse.team.core.subscribers.SelectionSyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 
 /**
@@ -27,7 +27,7 @@ public class UpdateDialog extends SyncInfoSetDetailsDialog {
 
 	public static final int YES = IDialogConstants.YES_ID;
 	
-	public UpdateDialog(Shell parentShell, MutableSyncInfoSet syncSet) {
+	public UpdateDialog(Shell parentShell, SelectionSyncInfoSet syncSet) {
 		super(parentShell, Policy.bind("UpdateDialog.overwriteTitle"), Policy.bind("UpdateDialog.overwriteDetailsTitle"), syncSet); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 

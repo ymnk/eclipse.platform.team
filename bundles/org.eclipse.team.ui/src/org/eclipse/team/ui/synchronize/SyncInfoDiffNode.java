@@ -261,14 +261,13 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 		// The subclass which created the node with no resource should have overridden this method
 		if (resource != null && resource.getType() == IResource.FILE) return false;
 		// If the set has no conflicts then the node doesn't either
-		if (getSyncInfoSet().countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK) == 0) {
-			return false;
-		}
-		SyncInfo[] infos = getDescendantSyncInfos();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
-				return true;
+		if (getSyncInfoSet().hasConflicts()) {
+			SyncInfo[] infos = getDescendantSyncInfos();
+			for (int i = 0; i < infos.length; i++) {
+				SyncInfo info = infos[i];
+				if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
+					return true;
+				}
 			}
 		}
 		return false;

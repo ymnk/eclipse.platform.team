@@ -14,9 +14,9 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
-import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 /**
  * A dynamic collection of {@link SyncInfo} objects. This data structure is optimized 
@@ -41,20 +41,15 @@ public class SyncInfoSet {
 	
 	// {IPath -> Set of deep out of sync child IResources}
 	// Weird thing is that the child set will include the parent if the parent is out of sync
-	protected Map parents = Collections.synchronizedMap(new HashMap());
+	private Map parents = Collections.synchronizedMap(new HashMap());
 
-	// fields used for change notification
-	protected SyncSetChangedEvent changes;
-	protected Set listeners = Collections.synchronizedSet(new HashSet());
-	
 	// keep track of number of sync kinds in the set
-	protected SyncInfoStatistics statistics = new SyncInfoStatistics();
+	private SyncInfoStatistics statistics = new SyncInfoStatistics();
 	
 	/**
 	 * Don't directly allow creating an empty immutable set.
 	 */
 	protected SyncInfoSet() {
-		resetChanges();
 	}
 	
 	/**
@@ -66,30 +61,6 @@ public class SyncInfoSet {
 		this();
 		for (int i = 0; i < infos.length; i++) {
 			internalAdd(infos[i]);
-		}
-	}
-
-	/**
-	 * Registers the given listener for sync info set notifications. Has
-	 * no effect if an identical listener is already registered.
-	 * 
-	 * @param listener listener to register
-	 */
-	public void addSyncSetChangedListener(ISyncSetChangedListener listener) {
-		synchronized(listeners) {
-			listeners.add(listener);
-		}
-	}
-
-	/**
-	 * Deregisters the given listener for participant notifications. Has
-	 * no effect if listener is not already registered.
-	 * 
-	 * @param listener listener to deregister
-	 */
-	public void removeSyncSetChangedListener(ISyncSetChangedListener listener) {
-		synchronized(listeners) {
-			listeners.remove(listener);
 		}
 	}
 
@@ -174,18 +145,15 @@ public class SyncInfoSet {
 			return members();
 		}
 		// for folders return all children deep.
-		IContainer container = (IContainer)resource;
-		IPath path = container.getFullPath();
-		Set children = (Set)parents.get(path);
-		if (children == null) return new SyncInfo[0];
 		List infos = new ArrayList();
-		for (Iterator iter = children.iterator(); iter.hasNext();) {
-			IResource child = (IResource) iter.next();
+		IResource[] children = internalGetDescendants(resource);
+		for (int i = 0; i < children.length; i++) {
+			IResource child = children[i];
 			SyncInfo info = getSyncInfo(child);
 			if(info != null) {
 				infos.add(info);
 			} else {
-				TeamPlugin.log(IStatus.INFO, "missing sync info: " + child.getFullPath(), null); //$NON-NLS-1$
+				TeamPlugin.log(IStatus.INFO, "missing sync info: " + child.getFullPath(), null);
 			}
 		}
 		return (SyncInfo[]) infos.toArray(new SyncInfo[infos.size()]);
@@ -213,8 +181,7 @@ public class SyncInfoSet {
 	 * @see org.eclipse.team.ui.synchronize.ISyncInfoSet#dispose()
 	 */
 	public void dispose() {
-		// TODO Auto-generated method stub
-		
+		// Nothing to do
 	}
 
 	/* (non-Javadoc)
@@ -247,29 +214,18 @@ public class SyncInfoSet {
 	public boolean hasOutgoingChanges() {
 		return countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK) > 0;
 	}
-	
-	/**
-	 * Returns true if this sync set has auto-mergeable conflicts.
-	 */
-	public boolean hasAutoMergeableConflicts() {
-		return countFor(SyncInfo.AUTOMERGE_CONFLICT, 0) > 0;
-	}
-	
+		
 	public boolean isEmpty() {
 		return resources.isEmpty();
 	}
 
-	protected void resetChanges() {
-		changes = new SyncSetChangedEvent(this);
-	}
 	
-	protected void internalAdd(SyncInfo info) {
+	protected synchronized void internalAdd(SyncInfo info) {
 		internalAddSyncInfo(info);
-		changes.added(info);
 		IResource local = info.getLocal();
 		addToParents(local, local);
 	}
-
+	
 	protected void internalAddSyncInfo(SyncInfo info) {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
@@ -282,6 +238,11 @@ public class SyncInfoSet {
 		}
 	}
 
+	/*
+	 * This sync set maintains a data structure that maps a folder to the
+	 * set of out-of-sync resources at or below the folder. This method updates
+	 * this data sructure.
+	 */
 	private boolean addToParents(IResource resource, IResource parent) {
 		if (parent.getType() == IResource.ROOT) {
 			return false;
@@ -303,11 +264,69 @@ public class SyncInfoSet {
 		}
 		// if the parent already existed and the resource is new, record it
 		if (!addToParents(resource, parent.getParent()) && addedParent) {
-			changes.addedRoot(parent);
+			internalAddedSubtreeRoot(parent);
 		}
 		return addedParent;
 	}
 	
+	/**
+	 * This method is invoked when a resource is added to the sync set.
+	 * The argument will be the highest node that previously had no
+	 * descendants in the sync set but now has descendants.
+	 * Subclasses may override this method in order to capture
+	 * this event.
+	 * @param parent the added subtree root
+	 */
+	protected void internalAddedSubtreeRoot(IResource parent) {
+		// do nothing by default
+	}
+
+	protected synchronized SyncInfo internalRemove(IResource local) {
+		IPath path = local.getFullPath();
+		SyncInfo info = (SyncInfo)resources.remove(path);
+		if (info != null) {
+			statistics.remove(info);
+		}
+		removeFromParents(local, local);
+		return info;
+	}
+	
+	private boolean removeFromParents(IResource resource, IResource parent) {
+		if (parent.getType() == IResource.ROOT) {
+			return false;
+		}
+		// this flag is used to indicate if the parent was removed from the set
+		boolean removedParent = false;
+		if (parent.getType() == IResource.FILE) {
+			// the file will be removed
+			removedParent = true;
+		} else {
+			Set children = (Set)parents.get(parent.getFullPath());
+			if (children != null) {
+				children.remove(resource);
+				if (children.isEmpty()) {
+					parents.remove(parent.getFullPath());
+					removedParent = true;
+				}
+			}
+		}
+		//	if the parent wasn't removed and the resource was, record it
+		if (!removeFromParents(resource, parent.getParent()) && removedParent) {
+			internalRemovedSubtreeRoot(parent);
+		}
+		return removedParent;
+	}
+	
+	/**
+	 * This method is invoked when a resource is removed from the set.
+	 * The resource srgument is the highest resource that used to have
+	 * descendants in the set but no longer does.
+	 * @param parent the removed subtree root
+	 */
+	protected void internalRemovedSubtreeRoot(IResource parent) {
+		// do nothing by default
+	}
+
 	private IResource[] getRoots(IContainer root) {
 		Set possibleChildren = parents.keySet();
 		Set children = new HashSet();
@@ -319,5 +338,57 @@ public class SyncInfoSet {
 			}
 		}
 		return (IResource[]) children.toArray(new IResource[children.size()]);
+	}
+
+	protected Set listeners = Collections.synchronizedSet(new HashSet());
+
+	/**
+	 * Registers the given listener for sync info set notifications. Has
+	 * no effect if an identical listener is already registered.
+	 * 
+	 * @param listener listener to register
+	 */
+	public void addSyncSetChangedListener(ISyncSetChangedListener listener) {
+		synchronized(listeners) {
+			listeners.add(listener);
+		}
+	}
+
+	/**
+	 * Deregisters the given listener for participant notifications. Has
+	 * no effect if listener is not already registered.
+	 * 
+	 * @param listener listener to deregister
+	 */
+	public void removeSyncSetChangedListener(ISyncSetChangedListener listener) {
+		synchronized(listeners) {
+			listeners.remove(listener);
+		}
+	}
+	
+	/**
+	 * Reset the sync set so it is empty
+	 */
+	protected void clear() {
+		resources.clear();
+		parents.clear();
+		statistics.clear();
+	}
+	
+	protected synchronized IResource[] internalGetDescendants(IResource resource) {
+		// The parent map contains a set of all out-of-sync children
+		Set allChildren = (Set)parents.get(resource.getFullPath());
+		if (allChildren == null) return new IResource[0];
+		return (IResource[]) allChildren.toArray(new IResource[allChildren.size()]);
+	}
+
+	/**
+	 * Run the given runnable, blocking other threads from modifying the 
+	 * set and postponing any changes to the end.
+	 * @param runnable a runnable
+	 * @param progress a o\progress monitor or <code>null</code>
+	 */
+	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) throws CoreException {
+		runnable.run(Policy.monitorFor(monitor));		
 	}
 }

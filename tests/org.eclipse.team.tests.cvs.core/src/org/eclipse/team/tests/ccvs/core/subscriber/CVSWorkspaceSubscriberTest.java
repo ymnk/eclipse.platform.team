@@ -271,7 +271,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		IResource[] resources = getResources(container, hierarchy);
 		SyncInfo[] syncResources = createSyncInfos(resources);
 		try {
-			action.getRunnable(new MutableSyncInfoSet(syncResources)).run(DEFAULT_MONITOR);
+			action.getRunnable(new SelectionSyncInfoSet(syncResources)).run(DEFAULT_MONITOR);
 			return resources;
 		} catch (InvocationTargetException e) {
 			throw CVSException.wrapException(e);

@@ -14,13 +14,14 @@ import java.util.*;
 
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.compare.structuremergeviewer.*;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 
@@ -42,10 +43,20 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * Build the tree
 	 */
 	public void buildTree() {
-		// TODO: need to ensure taht sync set doesn't change while in this method
-		buildTree(root);
 		associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), root);
-		root.getSyncInfoSet().addSyncSetChangedListener(this);
+		try {
+			// Build the viewer tree and register for changes in a runnable
+			// to ensure we don't miss anything
+			root.getSyncInfoSet().run(new IWorkspaceRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					buildTree(root);
+					root.getSyncInfoSet().addSyncSetChangedListener(SyncInfoDiffNodeBuilder.this);
+				}
+			}, null);
+		} catch (CoreException e) {
+			// Shouldn't happen
+			TeamPlugin.log(e);
+		}
 	}
 	
 	protected IDiffElement[] buildTree(DiffNode node) {
@@ -100,7 +111,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	public void syncSetChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		final Control ctrl = viewer.getControl();
 		if (ctrl != null && !ctrl.isDisposed()) {
-			ctrl.getDisplay().asyncExec(new Runnable() {
+			ctrl.getDisplay().syncExec(new Runnable() {
 				public void run() {
 					if (!ctrl.isDisposed()) {
 						BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
@@ -218,7 +229,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * @param event
 	 */
 	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
-		IResource[] removedRoots = event.getRemovedRoots();
+		IResource[] removedRoots = event.getRemovedSubtreeRoots();
 		if (removedRoots.length == 0) return;
 		DiffNode[] nodes = new DiffNode[removedRoots.length];
 		for (int i = 0; i < nodes.length; i++) {
@@ -241,7 +252,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 * @param event
 	 */
 	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
-		IResource[] added = event.getAddedRoots();
+		IResource[] added = event.getAddedSubtreeRoots();
 		for (int i = 0; i < added.length; i++) {
 			IResource resource = added[i];
 			buildSubTree(getModelObject(resource.getParent()), resource);	

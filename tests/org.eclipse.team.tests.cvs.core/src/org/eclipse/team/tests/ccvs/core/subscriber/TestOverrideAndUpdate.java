@@ -1,6 +1,6 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
+import org.eclipse.team.core.subscribers.SelectionSyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.subscriber.OverrideAndUpdateAction;
 
 public class TestOverrideAndUpdate extends OverrideAndUpdateAction {	
@@ -10,7 +10,7 @@ public class TestOverrideAndUpdate extends OverrideAndUpdateAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.SafeUpdateAction#promptForOverwrite(org.eclipse.team.ui.sync.SyncInfoSet)
 	 */
-	protected boolean promptForOverwrite(MutableSyncInfoSet syncSet) {
+	protected boolean promptForOverwrite(SelectionSyncInfoSet syncSet) {
 		this.prompted = true;
 		return true;
 	}
@@ -18,7 +18,7 @@ public class TestOverrideAndUpdate extends OverrideAndUpdateAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.SafeUpdateAction#warnAboutFailedResources(org.eclipse.team.ui.sync.SyncInfoSet)
 	 */
-	protected void warnAboutFailedResources(MutableSyncInfoSet syncSet) {
+	protected void warnAboutFailedResources(SelectionSyncInfoSet syncSet) {
 		return;
 	}
 

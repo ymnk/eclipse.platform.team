@@ -29,11 +29,11 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	private Set addedResources = new HashSet();
 	
 	// IResources
-	private Set removedRoots = new HashSet();
-	private Set addedRoots = new HashSet();
+	private Set removedSubtrees = new HashSet();
+	private Set addedSubtrees = new HashSet();
 	
 	private boolean reset = false;
-	
+
 	public SyncSetChangedEvent(SyncInfoSet set) {
 		super();
 		this.set = set;
@@ -65,10 +65,10 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		changedResources.add(info);
 	}
 	
-	public void removedRoot(IResource root) {
-		if (addedRoots.contains(root)) {
+	public void removedSubtreeRoot(IResource root) {
+		if (addedSubtrees.contains(root)) {
 			// The root was added and removed which is a no-op
-			addedRoots.remove(root);
+			addedSubtrees.remove(root);
 		} else if (isDescendantOfAddedRoot(root)) {
 			// Nothing needs to be done since no listeners ever knew about the root
 		} else {
@@ -76,7 +76,7 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 			// (in which case it need not be added).
 			// Also, remove any exisiting roots that are children
 			// of the new root
-			for (Iterator iter = removedRoots.iterator(); iter.hasNext();) {
+			for (Iterator iter = removedSubtrees.iterator(); iter.hasNext();) {
 				IResource element = (IResource) iter.next();
 				// check if the root is already in the list
 				if (root.equals(element)) return;
@@ -88,7 +88,7 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 					return;
 				}
 			}
-			removedRoots.add(root);
+			removedSubtrees.add(root);
 		}
 	}
 	
@@ -96,8 +96,8 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		return root.getFullPath().isPrefixOf(element.getFullPath());
 	}
 
-	public void addedRoot(IResource parent) {
-		if (removedRoots.contains(parent)) {
+	public void addedSubtreeRoot(IResource parent) {
+		if (removedSubtrees.contains(parent)) {
 			// The root was re-added. Just removing the removedRoot
 			// may not give the proper event.
 			// Since we can't be sure, just force a reset.
@@ -105,13 +105,13 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		} else {
 			// only add the root if their isn't a higher root in the list already
 			if (!isDescendantOfAddedRoot(parent)) {
-				addedRoots.add(parent);
+				addedSubtrees.add(parent);
 			}
 		}
 	}
 	
 	private boolean isDescendantOfAddedRoot(IResource resource) {
-		for (Iterator iter = addedRoots.iterator(); iter.hasNext();) {
+		for (Iterator iter = addedSubtrees.iterator(); iter.hasNext();) {
 			IResource root = (IResource) iter.next();
 			if (isParent(root, resource)) {
 				// There is a higher added root already in the list
@@ -125,8 +125,8 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		return (SyncInfo[]) addedResources.toArray(new SyncInfo[addedResources.size()]);
 	}
 
-	public IResource[] getAddedRoots() {
-		return (IResource[]) addedRoots.toArray(new IResource[addedRoots.size()]);
+	public IResource[] getAddedSubtreeRoots() {
+		return (IResource[]) addedSubtrees.toArray(new IResource[addedSubtrees.size()]);
 	}
 
 	public SyncInfo[] getChangedResources() {
@@ -137,8 +137,8 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 		return (IResource[]) removedResources.toArray(new IResource[removedResources.size()]);
 	}
 
-	public IResource[] getRemovedRoots() {
-		return (IResource[]) removedRoots.toArray(new IResource[removedRoots.size()]);
+	public IResource[] getRemovedSubtreeRoots() {
+		return (IResource[]) removedSubtrees.toArray(new IResource[removedSubtrees.size()]);
 	}
 		
 	public SyncInfoSet getSet() {
@@ -154,6 +154,6 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	}
 	
 	public boolean isEmpty() {
-		return changedResources.isEmpty() && removedResources.isEmpty() && addedResources.isEmpty() && removedRoots.isEmpty() && addedRoots.isEmpty();
+		return changedResources.isEmpty() && removedResources.isEmpty() && addedResources.isEmpty() && removedSubtrees.isEmpty() && addedSubtrees.isEmpty();
 	}
 }

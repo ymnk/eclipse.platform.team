@@ -67,7 +67,7 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 	
 	private void mergeResources(TeamSubscriber subscriber, SyncInfo[] infos, boolean allowOverwrite) throws TeamException, InvocationTargetException, InterruptedException {
 		TestMergeUpdateAction action = new TestMergeUpdateAction(allowOverwrite);
-		action.getRunnable(new MutableSyncInfoSet(infos)).run(DEFAULT_MONITOR);
+		action.getRunnable(new SelectionSyncInfoSet(infos)).run(DEFAULT_MONITOR);
 	}
 	
 	/**

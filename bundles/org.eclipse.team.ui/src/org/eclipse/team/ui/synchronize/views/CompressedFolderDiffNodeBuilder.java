@@ -132,7 +132,7 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 	 */
 	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
 		
-		IResource[] roots = event.getRemovedRoots();
+		IResource[] roots = event.getRemovedSubtreeRoots();
 		Set removals = new HashSet();
 		
 		// First, deal with any projects that have been removed

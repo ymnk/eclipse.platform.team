@@ -10,73 +10,109 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers;
 
-import java.util.*;
-
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 public class MutableSyncInfoSet extends SyncInfoSet {
 
+	private SyncSetChangedEvent changes;
+	private ILock lock = Platform.getJobManager().newLock();
+	
 	public MutableSyncInfoSet() {
-		super();
+		resetChanges();
 	}
 	
 	public MutableSyncInfoSet(SyncInfo[] infos) {
 		super(infos);
 	}
-	
-	public synchronized void remove(IResource local) {
-		IPath path = local.getFullPath();
-		SyncInfo info = (SyncInfo)resources.remove(path);
-		changes.removed(local, info);
-		if (info != null) {
-			statistics.remove(info);
+		
+	/**
+	 * Add the given <code>SyncInfo</code> to the set. An change event will
+	 * be generated unless the call to this method is nested in between calls
+	 * to <code>beginInput()</code> and <code>endInput(IProgressMonitor)</code>
+	 * in which case the event for this addition and any other sync set
+	 * change will be fired in a batched event when <code>endInput</code>
+	 * is invoked.
+	 * Invoking this method outside of the above mentioned block will result
+	 * in the <code>endInput(IProgressMonitor)</code> being invoked with a null
+	 * progress monitor. If responsiveness is required, the client should always
+	 * nest sync set modifications.
+	 * @param info
+	 */
+	public void add(SyncInfo info) {
+		try {
+			beginInput();
+			internalAdd(info);
+			changes.added(info);
+		} finally {
+			endInput(null);
 		}
-		removeFromParents(local, local);
-	}
-	
-	public void removeAll(IResource[] resources) {
-		for (int i = 0; i < resources.length; i++) {
-			remove(resources[i]);			
-		}
-	}
-
-	public synchronized void add(SyncInfo info) {
-		internalAdd(info);
 	}
 	
 	public void addAll(SyncInfoSet set) {
-		SyncInfo[] infos = set.members();
-		for (int i = 0; i < infos.length; i++) {
-			add(infos[i]);
+		try {
+			beginInput();
+			SyncInfo[] infos = set.members();
+			for (int i = 0; i < infos.length; i++) {
+				add(infos[i]);
+			}
+		} finally {
+			endInput(null);
 		}
 	}
 	
-	public synchronized void changed(SyncInfo info) {
-		internalAddSyncInfo(info);
-		changes.changed(info);
+	public void changed(SyncInfo info) {
+		try {
+			beginInput();
+			internalAddSyncInfo(info);
+			changes.changed(info);
+		} finally {
+			endInput(null);
+		}
+	}
+
+	public void remove(IResource local) {
+		try {
+			beginInput();
+			SyncInfo info = internalRemove(local);
+			changes.removed(local, info);
+		} finally {
+			endInput(null);
+		}
+
 	}
 
 	/**
 	 * Reset the sync set so it is empty
 	 */
-	public synchronized void clear() {
-		resources.clear();
-		parents.clear();
-		changes.reset();
-		statistics.clear();
+	public void clear() {
+		try {
+			beginInput();
+			super.clear();
+			changes.reset();
+		} finally {
+			endInput(null);
+		}
 	}
 
-	public synchronized void removeAllChildren(IResource resource) {
-		// The parent map contains a set of all out-of-sync children
-		Set allChildren = (Set)parents.get(resource.getFullPath());
-		if (allChildren == null) return;
-		IResource [] removed = (IResource[]) allChildren.toArray(new IResource[allChildren.size()]);
-		for (int i = 0; i < removed.length; i++) {
-			remove(removed[i]);
+	public void remove(IResource resource, boolean recurse) {
+		try {
+			beginInput();
+			if (getSyncInfo(resource) != null) {
+				remove(resource);
+			}
+			if (recurse) {
+				IResource [] removed = internalGetDescendants(resource);
+				for (int i = 0; i < removed.length; i++) {
+					remove(removed[i]);
+				}
+			}
+		} finally {
+			endInput(null);
 		}
 	}
 
@@ -85,9 +121,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * provider is starting to provide new input to the SyncSet
 	 */
 	public void beginInput() {
-		synchronized(this) {
-			resetChanges();
-		}
+		lock.acquire();
 	}
 
 	/**
@@ -95,9 +129,23 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	 * provider is done providing new input to the SyncSet
 	 */
 	public void endInput(IProgressMonitor monitor) {
-		fireChanges(monitor);
+		if (lock.getDepth() == 1) {
+			// Remain locked while firing the events so the handlers 
+			// can expect the set to remain constant while they process the events
+			fireChanges(Policy.monitorFor(monitor));
+		}
+		lock.release();
+	}
+	
+	private void resetChanges() {
+		changes = new SyncSetChangedEvent(this);
 	}
 
+	/**
+	 * Fire an event to all listeners containing the events (add, remove, change)
+	 * accumulated so far. 
+	 * @param monitor the progress monitor
+	 */
 	private void fireChanges(final IProgressMonitor monitor) {
 		// Use a synchronized block to ensure that the event we send is static
 		final SyncSetChangedEvent event;
@@ -128,119 +176,34 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		}
 		monitor.done();
 	}
-
-	private boolean removeFromParents(IResource resource, IResource parent) {
-		if (parent.getType() == IResource.ROOT) {
-			return false;
-		}
-		// this flag is used to indicate if the parent was removed from the set
-		boolean removedParent = false;
-		if (parent.getType() == IResource.FILE) {
-			// the file will be removed
-			removedParent = true;
-		} else {
-			Set children = (Set)parents.get(parent.getFullPath());
-			if (children != null) {
-				children.remove(resource);
-				if (children.isEmpty()) {
-					parents.remove(parent.getFullPath());
-					removedParent = true;
-				}
-			}
-		}
-		//	if the parent wasn't removed and the resource was, record it
-		if (!removeFromParents(resource, parent.getParent()) && removedParent) {
-			changes.removedRoot(parent);
-		}
-		return removedParent;
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalAddedSubtreeRoot(org.eclipse.core.resources.IResource)
+	 */
+	protected void internalAddedSubtreeRoot(IResource parent) {
+		super.internalAddedSubtreeRoot(parent);
+		changes.addedSubtreeRoot(parent);
+	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#internalRemovedSubtreeRoot(org.eclipse.core.resources.IResource)
+	 */
+	protected void internalRemovedSubtreeRoot(IResource parent) {
+		super.internalRemovedSubtreeRoot(parent);
+		changes.removedSubtreeRoot(parent);
 	}
 	
-	/**
-	 * Removes all conflicting nodes from this set.
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncInfoSet#run(org.eclipse.core.resources.IWorkspaceRunnable, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void removeConflictingNodes() {
-		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.CONFLICTING));
-	}
-	/**
-	 * Removes all outgoing nodes from this set.
-	 */
-	public void removeOutgoingNodes() {
-		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.OUTGOING));
-	}
-	/**
-	 * Removes all incoming nodes from this set.
-	 */
-	public void removeIncomingNodes() {
-		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.INCOMING));
-	}
-	
-	/**
-	 * Removes all nodes from this set that are not auto-mergeable conflicts
-	 */
-	public void removeNonMergeableNodes() {
-		SyncInfo[] infos = members();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			if ((info.getKind() & SyncInfo.MANUAL_CONFLICT) != 0) {
-				remove(info.getLocal());
-			} else if ((info.getKind() & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
-				remove(info.getLocal());
-			}
+	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) throws CoreException {
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(null, 100);
+		try {
+			beginInput();
+			super.run(runnable, Policy.subMonitorFor(monitor, 80));
+		} finally {
+			endInput(Policy.subMonitorFor(monitor, 20));
 		}
-	}
-	
-	/**
-	 * Indicate whether the set has nodes matching the given filter
-	 */
-	public boolean hasNodes(FastSyncInfoFilter filter) {
-		SyncInfo[] infos = members();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			if (info != null && filter.select(info)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * Removes all nodes from this set that do not match the given filter
-	 */
-	public void selectNodes(FastSyncInfoFilter filter) {
-		SyncInfo[] infos = members();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			if (info == null || !filter.select(info)) {
-				remove(info.getLocal());
-			}
-		}
-	}
-	
-	/**
-	 * Removes all nodes from this set that match the given filter
-	 */
-	public void rejectNodes(FastSyncInfoFilter filter) {
-		SyncInfo[] infos = members();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			if (info != null && filter.select(info)) {
-				remove(info.getLocal());
-			}
-		}
-	}
-	
-	/**
-	 * Return all nodes in this set that match the given filter
-	 */
-	public SyncInfo[] getNodes(FastSyncInfoFilter filter) {
-		List result = new ArrayList();
-		SyncInfo[] infos = members();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			if (info != null && filter.select(info)) {
-				result.add(info);
-			}
-		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+		
 	}
 }

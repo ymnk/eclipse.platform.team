@@ -30,6 +30,9 @@ public interface ISyncSetChangedListener {
 	/**
 	 * Sent when a {@link ISyncInfoSet} changes. For example, when a resource's 
 	 * synchronization state changes.
+	 * <p>
+	 * The originating sync set will be locked for modification while these events are being fired.
+	 * Clients should no modify the set, obtain locks or run for a long time within a handler.
 	 * 
 	 * @param event an event containing information about the change.
 	 */

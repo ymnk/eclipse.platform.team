@@ -36,7 +36,7 @@ public abstract class SyncInfoSetDetailsDialog extends DetailsDialog {
 	
 	private CheckboxTableViewer listViewer;
 	
-	private MutableSyncInfoSet syncSet;
+	private SelectionSyncInfoSet syncSet;
 	private Object[] selectedResources;
 	private String detailsTitle;
 
@@ -44,7 +44,7 @@ public abstract class SyncInfoSetDetailsDialog extends DetailsDialog {
 	 * @param parentShell
 	 * @param dialogTitle
 	 */
-	public SyncInfoSetDetailsDialog(Shell parentShell, String dialogTitle, String detailsTitle, MutableSyncInfoSet syncSet) {
+	public SyncInfoSetDetailsDialog(Shell parentShell, String dialogTitle, String detailsTitle, SelectionSyncInfoSet syncSet) {
 		super(parentShell, dialogTitle);
 		this.syncSet = syncSet;
 		this.detailsTitle = detailsTitle;
@@ -164,7 +164,7 @@ public abstract class SyncInfoSetDetailsDialog extends DetailsDialog {
 	/**
 	 * @return
 	 */
-	public MutableSyncInfoSet getSyncSet() {
+	public SelectionSyncInfoSet getSyncSet() {
 		return syncSet;
 	}
 

@@ -11,12 +11,12 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
+import org.eclipse.team.core.subscribers.SelectionSyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberConfirmMergedAction;
 
 
 class TestMarkAsMergedAction extends SubscriberConfirmMergedAction {
-	public IRunnableWithProgress getRunnable(MutableSyncInfoSet syncSet) {
+	public IRunnableWithProgress getRunnable(SelectionSyncInfoSet syncSet) {
 		return super.getRunnable(syncSet);
 	}
 	protected boolean canRunAsJob() {

@@ -92,7 +92,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		// update the title now that the remote revision number as been fetched
 		// from the server
 		setTitle(getTitle());
-		Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
+		Utils.updateLabels(sync, getCompareConfiguration());
 		try {
 			node.cacheContents(monitor);
 		} catch (TeamException e) {

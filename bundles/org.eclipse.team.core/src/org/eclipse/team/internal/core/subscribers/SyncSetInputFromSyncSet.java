@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * Ths class uses the contents of one sync set as the input of another.
@@ -57,11 +58,17 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 			syncSet.beginInput();
 			if (event.isReset()) {
 				syncSet.clear();
+				try {
+					fetchInput(monitor);
+				} catch (TeamException e) {
+					// TODO: this could be bad
+					TeamPlugin.log(e);
+				}
+			} else {
+				syncSetChanged(event.getChangedResources(), monitor);			
+				syncSetChanged(event.getAddedResources(), monitor);
+				remove(event.getRemovedResources());
 			}
-			syncSetChanged(event.getChangedResources(), monitor);			
-			syncSetChanged(event.getAddedResources(), monitor);
-			
-			remove(event.getRemovedResources());
 		} finally {
 			getSyncSet().endInput(monitor);
 		}

@@ -48,7 +48,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(MutableSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	public void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		try {
 			if(! promptIfNeeded(syncSet)) return;
 			// First, remove any known failure cases
@@ -65,7 +65,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 			
 			// It is possible that some of the conflicting changes were not auto-mergable.
 			// Accumulate all resources that have not been updated so far
-			final MutableSyncInfoSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
+			final SelectionSyncInfoSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
 			
 			// Remove all these from the original sync set
 			syncSet.rejectNodes(new FastSyncInfoFilter() {
@@ -80,7 +80,11 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 					// Ask the user if a replace should be performed on the remaining nodes
 					if(promptForOverwrite(failedSet)) {
 						overwriteUpdate(failedSet, Policy.subMonitorFor(monitor, willFail.length * 100));
-						syncSet.addAll(failedSet);
+						if (!failedSet.isEmpty()) {
+							MutableSyncInfoSet temp = new MutableSyncInfoSet(syncSet.members());
+							temp.addAll(failedSet);
+							syncSet = new SelectionSyncInfoSet(temp.members());
+						}
 					}
 				} else {
 					// Warn the user that some nodes could not be updated. This can happen if there are
@@ -265,7 +269,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	/*
 	 * Return the complete set of selected resources that failed to update safely
 	 */
-	private MutableSyncInfoSet createFailedSet(SyncInfoSet syncSet, SyncInfo[] willFail, IFile[] files) {
+	private SelectionSyncInfoSet createFailedSet(SyncInfoSet syncSet, SyncInfo[] willFail, IFile[] files) {
 		List result = new ArrayList();
 		for (int i = 0; i < files.length; i++) {
 			IFile file = files[i];
@@ -275,14 +279,14 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 		for (int i = 0; i < willFail.length; i++) {
 			result.add(willFail[i]);
 		}
-		return new MutableSyncInfoSet((SyncInfo[]) result.toArray(new SyncInfo[result.size()]));
+		return new SelectionSyncInfoSet((SyncInfo[]) result.toArray(new SyncInfo[result.size()]));
 	}
 	
 	/**
 	 * Warn user that some files could not be updated.
 	 * Note: This method is designed to be overridden by test cases.
 	 */
-	protected void warnAboutFailedResources(final MutableSyncInfoSet syncSet) {
+	protected void warnAboutFailedResources(final SelectionSyncInfoSet syncSet) {
 		final int[] result = new int[] {Dialog.CANCEL};
 		TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {
 			public void run() {

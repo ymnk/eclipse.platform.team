@@ -12,13 +12,13 @@ package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
+import org.eclipse.team.core.subscribers.SelectionSyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitAction;
 
 class TestCommitAction extends SubscriberCommitAction {
 
-	public IRunnableWithProgress getRunnable(MutableSyncInfoSet syncSet) {
+	public IRunnableWithProgress getRunnable(SelectionSyncInfoSet syncSet) {
 		return super.getRunnable(syncSet);
 	}
 	
