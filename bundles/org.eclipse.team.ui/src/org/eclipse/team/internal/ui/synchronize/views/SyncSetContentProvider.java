@@ -32,7 +32,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	// parents who need a label update accumulated while handling sync set changes
 	private Set parentsToUpdate = new HashSet();
 	
-	protected SyncInfoSet getSyncSet(Object input) {
+	protected SyncInfoSet getSyncInfoSet(Object input) {
 		if (input == null) {
 			return null;
 		}
@@ -45,11 +45,11 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		return null;
 	}
 	
-	protected SyncInfoSet getSyncSet() {
+	protected SyncInfoSet getSyncInfoSet() {
 		if(viewer == null || viewer.getControl().isDisposed()) {
 			return null;	
 		}
-		return getSyncSet(viewer.getInput());
+		return getSyncInfoSet(viewer.getInput());
 	}
 
 	/* (non-Javadoc)
@@ -58,8 +58,8 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	public void inputChanged(Viewer v, Object oldInput, Object newInput) {
 		
 		this.viewer = v;
-		SyncInfoSet oldSyncSet = getSyncSet(oldInput);
-		SyncInfoSet newSyncSet = getSyncSet(newInput);
+		SyncInfoSet oldSyncSet = getSyncInfoSet(oldInput);
+		SyncInfoSet newSyncSet = getSyncInfoSet(newInput);
 
 		if (oldSyncSet != newSyncSet) {
 			if (oldSyncSet != null) {
@@ -80,7 +80,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
 	public void dispose() {
-		SyncInfoSet input = getSyncSet();
+		SyncInfoSet input = getSyncInfoSet();
 		if (input != null) {
 			input.removeSyncSetChangedListener(this);
 		}
@@ -183,7 +183,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * out-of-sync resources.
 	 */
 	public Object[] members(IResource resource) {
-		IResource[] resources = getSyncSet().members(resource);
+		IResource[] resources = getSyncInfoSet().members(resource);
 		Object[] result = new Object[resources.length];
 		for (int i = 0; i < resources.length; i++) {
 			IResource child = resources[i];
@@ -263,7 +263,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @param resource
 	 */
 	public Object getModelObject(IResource resource) {
-		return new SyncInfoDiffNode(getSyncSet(), resource);
+		return new SyncInfoDiffNode(getSyncInfoSet(), resource);
 	}
 	
 	protected Object[] getModelObjects(IResource[] resources) {

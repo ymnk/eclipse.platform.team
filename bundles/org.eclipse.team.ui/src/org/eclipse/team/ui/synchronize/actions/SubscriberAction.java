@@ -48,7 +48,7 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 			Object object = selected[i];
 			if (object instanceof SyncInfoDiffNode) {
 				SyncInfoDiffNode syncResource = (SyncInfoDiffNode) object;
-				SyncInfo[] infos = syncResource.getChildSyncInfos();
+				SyncInfo[] infos = syncResource.getDescendantSyncInfos();
 				result.addAll(Arrays.asList(infos));
 			}
 		}

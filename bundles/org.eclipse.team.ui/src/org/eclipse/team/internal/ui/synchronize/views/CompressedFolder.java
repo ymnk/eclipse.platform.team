@@ -29,7 +29,7 @@ public class CompressedFolder extends SyncInfoDiffNode {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getChildSyncInfos()
 	 */
-	public SyncInfo[] getChildSyncInfos() {
+	public SyncInfo[] getDescendantSyncInfos() {
 		IResource[] children = getSyncInfoSet().members(getResource());
 		List result = new ArrayList();
 		for (int i = 0; i < children.length; i++) {
@@ -48,4 +48,12 @@ public class CompressedFolder extends SyncInfoDiffNode {
 		}
 		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#isResourcePath()
+	 */
+	public boolean isResourcePath() {
+		return true;
+	}
+
 }

@@ -182,11 +182,11 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 
 	private Object[] getFolderChildren(IResource resource) {
 		// Folders will only contain out-of-sync children
-		IResource[] children = getSyncSet().members(resource);
+		IResource[] children = getSyncInfoSet().members(resource);
 		List result = new ArrayList();
 		for (int i = 0; i < children.length; i++) {
 			IResource child = children[i];
-			SyncInfo info = getSyncSet().getSyncInfo(child);
+			SyncInfo info = getSyncInfoSet().getSyncInfo(child);
 			if (info != null) {
 				result.add(getModelObject(info.getLocal()));
 			}
@@ -195,7 +195,7 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 	}
 
 	private Object[] getProjectChildren(IProject project) {
-		SyncInfo[] outOfSync = getSyncSet().getOutOfSyncDescendants(project);
+		SyncInfo[] outOfSync = getSyncInfoSet().getOutOfSyncDescendants(project);
 		Set result = new HashSet();
 		for (int i = 0; i < outOfSync.length; i++) {
 			SyncInfo info = outOfSync[i];
@@ -220,8 +220,8 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 	 * are not visible in the view).
 	 */
 	public Object getModelObject(IResource resource) {
-		if (resource.getType() == IResource.FOLDER && getSyncSet().getSyncInfo(resource) == null) {
-			return new CompressedFolder(getSyncSet(), resource);
+		if (resource.getType() == IResource.FOLDER && getSyncInfoSet().getSyncInfo(resource) == null) {
+			return new CompressedFolder(getSyncInfoSet(), resource);
 		}
 		return super.getModelObject(resource);
 	}
@@ -229,7 +229,7 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 	private IContainer getLowestInSyncParent(IResource resource) {
 		if (resource.getType() == IResource.ROOT) return (IContainer)resource;
 		IContainer parent = resource.getParent();
-		if (getSyncSet().getSyncInfo(parent) == null) {
+		if (getSyncInfoSet().getSyncInfo(parent) == null) {
 			return parent;
 		}
 		return getLowestInSyncParent(parent);

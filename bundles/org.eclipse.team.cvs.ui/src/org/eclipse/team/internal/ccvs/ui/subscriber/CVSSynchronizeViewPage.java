@@ -60,7 +60,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		 */
 		protected Image decorateImage(Image base, Object element) {
 			if(element instanceof ChangeLogDiffNode) {
-				return getCompressedFolderImage();
+				//TODO: return getCompressedFolderImage();
 			}
 			return super.decorateImage(base, element);
 		}

@@ -16,7 +16,7 @@ import org.eclipse.compare.*;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -29,9 +29,13 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.registry.LogicalViewRegistry;
+import org.eclipse.team.internal.ui.synchronize.actions.LogicalViewActionGroup;
 import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.synchronize.actions.INavigableTree;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
+import org.eclipse.team.ui.synchronize.content.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
@@ -46,6 +50,8 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
  */
 public class SyncInfoSetCompareConfiguration {
 	
+	private static LogicalViewRegistry logicalViewRegistry;
+	
 	private SyncInfoSet set;
 	private String menuId;
 	private boolean acceptParticipantMenuContributions = false;
@@ -53,6 +59,39 @@ public class SyncInfoSetCompareConfiguration {
 	// fields that are tied to a single viewer
 	private SyncInfoDiffTreeNavigator navigator;
 	private IPropertyChangeListener propertyListener;
+	
+	private LogicalViewActionGroup logicalViews;
+	
+	private static synchronized LogicalViewRegistry getLogicalViewRegistry() {
+		if (logicalViewRegistry == null) {
+			logicalViewRegistry = new LogicalViewRegistry();
+			logicalViewRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_LOGICAL_VIEWS);
+		}
+		return logicalViewRegistry;
+	}
+	
+	/**
+	 * Return all the logical views that have been registered with Team.
+	 * The providers associated with the views will not be instantiated until
+	 * they are accessed so this list can be retrieved without fear of loading
+	 * client plugins.
+	 * @return the regisitered logical views
+	 */
+	public static ILogicalView[] getLogicalViews() {
+		return getLogicalViewRegistry().getLogicalViews();
+	}
+	
+	/**
+	 * Return the registered view with the given id or <code>null</code> if no view
+	 * exists for the given id. The provider associated with the view will not be instantiated until
+	 * it is accessed so the logical view can be retrieved without fear of loading
+	 * client plugins.
+	 * @param id the id of the logical view
+	 * @return the logical view with the given id or <code>null</code>
+	 */
+	public static ILogicalView getLogicalView(String id) {
+		return getLogicalViewRegistry().getLogicalView(id);
+	}
 	
 	/**
 	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given sync set
@@ -75,13 +114,15 @@ public class SyncInfoSetCompareConfiguration {
 	 * @param viewer the viewer being initialized
 	 */
 	public void initializeViewer(Composite parent, final StructuredViewer viewer) {
-		viewer.setSorter(getViewerSorter());
-		viewer.setLabelProvider(getLabelProvider());
+		ILogicalView view = getDefaultLogicalView();
+		setLogicalViewProvider(viewer, view);
+		logicalViews = new LogicalViewActionGroup();
+		logicalViews.setSelectedView(view);
+		
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(data);
 		propertyListener = getPropertyListener(viewer);
 		getStore().addPropertyChangeListener(propertyListener);
-		viewer.setContentProvider(getContentProvider());
 		
 		initializeListeners(viewer);
 		
@@ -107,22 +148,13 @@ public class SyncInfoSetCompareConfiguration {
 	}
 
 	/**
-	 * Get the viewer sorter that will be assigned to the viewer initialized by this configuration.
-	 * Subclass may override.
-	 * @return a viewer sorter
-	 */
-	protected SyncViewerSorter getViewerSorter() {
-		return new SyncViewerSorter(ResourceSorter.NAME);
-	}
-
-	/**
 	 * Get the label provider that will be assigned to the viewer initialized by this configuration.
 	 * Subclass may override but any created label provider should wrap the default one provided
 	 * by this method.
 	 * @return a label provider
 	 */
-	protected ILabelProvider getLabelProvider() {
-		return new TeamSubscriberParticipantLabelProvider();
+	protected ILabelProvider getLabelProvider(SyncInfoLabelProvider logicalProvider) {
+		return new TeamSubscriberParticipantLabelProvider(logicalProvider);
 	}
 
 	protected void initializeNavigation(Control tree, INavigableTree target) {
@@ -168,7 +200,8 @@ public class SyncInfoSetCompareConfiguration {
 		return new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
 				if (event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-					viewer.setContentProvider(getContentProvider());
+					// TODO: 
+					//viewer.setContentProvider(getContentProvider());
 				}
 			}
 		};
@@ -187,11 +220,11 @@ public class SyncInfoSetCompareConfiguration {
 	 * Subclass may override but should return a subclass of <code>SyncSetContentProvider</code>.
 	 * @return a content provider
 	 */
-	protected IContentProvider getContentProvider() {
+	protected ILogicalView getDefaultLogicalView() {
 		if (getStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			return new CompressedFolderContentProvider();
+			return getLogicalView(CompressFolderView.ID);
 		} else {
-			return new SyncSetTreeContentProvider();
+			return null;
 		}
 	}
 
@@ -237,11 +270,47 @@ public class SyncInfoSetCompareConfiguration {
 		}
 	}
 	
-	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
+	protected void fillContextMenu(final StructuredViewer viewer, IMenuManager manager) {
 		navigator.fillContextMenu(viewer, manager);
+		addLogicalViewSelection(viewer, manager);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
+	protected void addLogicalViewSelection(final StructuredViewer viewer, IMenuManager manager) {
+		logicalViews.fillContextMenu(manager);
+		logicalViews.setPropertyChangeListener(new IPropertyChangeListener() {
+			public void propertyChange(final PropertyChangeEvent event) {
+				if (event.getProperty().equals(LogicalViewActionGroup.SELECTED_VIEW)) {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							ILogicalView view = (ILogicalView)event.getNewValue();
+							setLogicalViewProvider(viewer, view);
+						}
+					});
+				}
+			}
+		});
+	}
+
+	protected void setLogicalViewProvider(StructuredViewer viewer, ILogicalView view) {
+		if (view != null) {
+			try {
+				LogicalViewProvider provider = view.getLogicalViewProvider();
+				viewer.setContentProvider(provider.getContentProvider());
+				viewer.setLabelProvider(getLabelProvider(provider.getLabelProvider()));
+				viewer.setSorter(provider.getSorter());
+			} catch (CoreException e) {
+				TeamUIPlugin.log(e);
+				view = null;
+			}
+		}
+		if (view == null) {
+			viewer.setContentProvider(new SyncSetTreeContentProvider());
+			viewer.setLabelProvider(getLabelProvider(new SyncInfoLabelProvider()));
+			viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
+		}
+	}
+	
 	protected Object getTitle() {
 		return "Synchronization Changes";
 	}

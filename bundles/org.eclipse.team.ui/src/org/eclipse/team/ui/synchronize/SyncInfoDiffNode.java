@@ -25,13 +25,14 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	
 	private IResource resource;
 	private SyncInfoSet input;
+	// TODO: Create subclass for SyncInfoCompareInput
 	private SyncInfo info;
 		
 	/**
 	 * Create an ITypedElement for the given local resource. The returned ITypedElement
 	 * will prevent editing of outgoing deletions.
 	 */
-	public static ITypedElement createTypeElement(IResource resource, final int kind) {
+	private static ITypedElement createTypeElement(IResource resource, final int kind) {
 		if(resource != null && resource.exists()) {
 			return new LocalResourceTypedElement(resource) {
 				public boolean isEditable() {
@@ -49,39 +50,15 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	 * Create an ITypedElement for the given remote resource. The contents for the remote resource
 	 * will be retrieved from the given IStorage which is a local cache used to buffer the remote contents
 	 */
-	public static ITypedElement createTypeElement(ISubscriberResource remoteResource) {
+	private static ITypedElement createTypeElement(ISubscriberResource remoteResource) {
 		return new RemoteResourceTypedElement(remoteResource);
 	}
 	
 	/**
 	 * Creates a new diff node.
 	 */	
-	public SyncInfoDiffNode(ITypedElement base, ITypedElement local, ITypedElement remote, int syncKind) {
+	private SyncInfoDiffNode(ITypedElement base, ITypedElement local, ITypedElement remote, int syncKind) {
 		super(syncKind, base, local, remote);
-	}
-
-	/**
-	 * Construct a SynchromizeViewNode
-	 * @param input The SubscriberInput for the node.
-	 * @param resource The resource for the node
-	 */
-	public SyncInfoDiffNode(SyncInfoSet input, IResource resource) {
-		this(createBaseTypeElement(input, resource), createLocalTypeElement(input, resource), createRemoteTypeElement(input, resource), getSyncKind(input, resource));
-		this.input = input;	
-		this.resource = resource;
-		this.info = null;
-	}
-	
-	/**
-	 * Construct a SynchromizeViewNode
-	 * @param input The SubscriberInput for the node.
-	 * @param resource The resource for the node
-	 */
-	public SyncInfoDiffNode(SyncInfo info) {
-		this(createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
-		this.info = info;
-		this.input = null;	
-		this.resource = info.getLocal();
 	}
 
 	private static ITypedElement createRemoteTypeElement(SyncInfoSet set, IResource resource) {
@@ -117,6 +94,39 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 		return null;
 	}
 	
+	private static int getSyncKind(SyncInfoSet set, IResource resource) {
+		SyncInfo info = set.getSyncInfo(resource);
+		if(info != null) {
+			return info.getKind();
+		}
+		return SyncInfo.IN_SYNC;
+	}
+	
+	/**
+	 * Construct a <code>SyncInfoDiffNode</code> for a resource for use in a diff tree viewer.
+	 * @param set The set associated with the diff tree veiwer
+	 * @param resource The resource for the node
+	 */
+	public SyncInfoDiffNode(SyncInfoSet set, IResource resource) {
+		this(createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
+		this.input = set;	
+		this.resource = resource;
+		this.info = null;
+	}
+	
+	/**
+	 * Construct a <code>SyncInfoDiffNode</code> for use in a compare input that does not 
+	 * make use of a diff tree viewer.
+	 * TODO: Create subclass for SyncInfoCompareInput
+	 * @param info The <code>SyncInfo</code> for a resource
+	 */
+	public SyncInfoDiffNode(SyncInfo info) {
+		this(createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
+		this.info = info;
+		this.input = null;	
+		this.resource = info.getLocal();
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
@@ -139,18 +149,11 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 		return null;
 	}
 	
-	protected static int getSyncKind(SyncInfoSet set, IResource resource) {
-		SyncInfo info = set.getSyncInfo(resource);
-		if(info != null) {
-			return info.getKind();
-		}
-		return SyncInfo.IN_SYNC;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.ISynchronizeViewNode#getChildSyncInfos()
+	/**
+	 * Return the <code>SyncInfo</code> for all visible out-of-sync resources
+	 * that are descendants of this node in the diff viewer.
 	 */
-	public SyncInfo[] getChildSyncInfos() {
+	public SyncInfo[] getDescendantSyncInfos() {
 		if(input != null) {
 			return input.getOutOfSyncDescendants(resource);
 		} else if(info != null) {
@@ -228,6 +231,16 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 			if(info != null && info.length > 0)
 				return true;
 		}
+		return false;
+	}
+	
+	/**
+	 * Indicates whether the diff node represents a resource path or a single level.
+	 * This is used by the <code>SyncViewerSorter</code> to determine whether to compare
+	 * the full path of two resources or justtheir names.
+	 * @return whether the node represents a resource path
+	 */
+	public boolean isResourcePath() {
 		return false;
 	}
 }

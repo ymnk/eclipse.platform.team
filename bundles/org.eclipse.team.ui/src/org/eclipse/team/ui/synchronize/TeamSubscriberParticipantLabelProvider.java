@@ -21,13 +21,12 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.sync.IRemoteSyncElement;
+import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.views.CompressedFolder;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
 import org.eclipse.ui.internal.WorkbenchColors;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
  * Provides basic labels for the subscriber participant synchronize view 
@@ -45,24 +44,20 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	private static final int COL_PARENT = 1;
 	private boolean working = false;
 	
-	private Image compressedFolderImage;
-	
 	// cache for folder images that have been overlayed with conflict icon
 	private Map fgImageCache;
 	
-	// Keep track of the compare and workbench image providers
+	// Keep track of the compare provider and sync info label provider
 	// so they can be properly disposed
 	CompareConfiguration compareConfig = new CompareConfiguration();
-	WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
-	
-	public Image getCompressedFolderImage() {
-		if (compressedFolderImage == null) {
-			compressedFolderImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER).createImage();
-		}
-		return compressedFolderImage;
-	}
+	SyncInfoLabelProvider syncInfoLabelProvider;
 
 	public TeamSubscriberParticipantLabelProvider() {
+		this(new SyncInfoLabelProvider());
+	}
+	
+	public TeamSubscriberParticipantLabelProvider(SyncInfoLabelProvider syncInfoLabelProvider) {
+		Assert.isNotNull(syncInfoLabelProvider);
 		JobStatusHandler.addJobListener(new IJobListener() {
 			public void started(QualifiedName jobType) {
 				working = true;
@@ -89,8 +84,9 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 		// The label provider may of been created after the subscriber job has been
 		// started.
 		this.working = JobStatusHandler.hasRunningJobs(TeamSubscriber.SUBSCRIBER_JOB_TYPE);
+		this.syncInfoLabelProvider = syncInfoLabelProvider;
 	}
-	
+
 	protected String decorateText(String input, Object element) {
 		return input;
 	}
@@ -100,13 +96,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	}
 	
 	public String getText(Object element) {
-		String name;
-		IResource resource = SyncSetContentProvider.getResource(element);
-		if (element instanceof CompressedFolder) {
-			name = resource.getProjectRelativePath().toString();
-		} else {
-			name = workbenchLabelProvider.getText(resource);		
-		}
+		String name = syncInfoLabelProvider.getText(element);
 		if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
 			SyncInfo info = SyncSetContentProvider.getSyncInfo(element);
 			if (info != null && info.getKind() != SyncInfo.IN_SYNC) {
@@ -119,19 +109,15 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	
 	/**
 	 * An image is decorated by at most 3 different plugins. 
-	 * 1. ask the workbench for the default icon for the resource
+	 * 1. ask the sync info label decorator for the default icon for the resource
 	 * 2. ask the compare plugin for the sync kind overlay
 	 * 3. overlay the conflicting image on folders/projects containing conflicts 
 	 */
 	public Image getImage(Object element) {
 		Image decoratedImage = null;
-		IResource resource = SyncSetContentProvider.getResource(element);		
-		if (element instanceof CompressedFolder) {
-			decoratedImage = compareConfig.getImage(getCompressedFolderImage(), IRemoteSyncElement.IN_SYNC);
-		} else if(element instanceof SyncInfoDiffNode){						
-			Image image = workbenchLabelProvider.getImage(resource);
-			decoratedImage = getCompareImage(image, element);			
-		}		
+		IResource resource = SyncSetContentProvider.getResource(element);
+		Image image = syncInfoLabelProvider.getImage(element);
+		decoratedImage = getCompareImage(image, element);	
 		decoratedImage = propagateConflicts(decoratedImage, element, resource);
 		return decorateImage(decoratedImage, element);
 	}
@@ -142,7 +128,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 			case SyncInfo.OUTGOING:
 				kind = (kind &~ SyncInfo.OUTGOING) | SyncInfo.INCOMING;
 				break;
-			case IRemoteSyncElement.INCOMING:
+			case SyncInfo.INCOMING:
 				kind = (kind &~ SyncInfo.INCOMING) | SyncInfo.OUTGOING;
 				break;
 		}	
@@ -154,7 +140,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 			// if the folder is already conflicting then don't bother propagating the conflict
 			int kind = SyncSetContentProvider.getSyncKind(element);
 			if((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
-				SyncInfo[] infos = ((SyncInfoDiffNode)element).getChildSyncInfos();
+				SyncInfo[] infos = ((SyncInfoDiffNode)element).getDescendantSyncInfos();
 				SyncInfoSet set = new SyncInfoSet(infos);
 				long count = set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
 				if(count > 0) {
@@ -184,11 +170,8 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	 */
 	public void dispose() {
 		super.dispose();
-		workbenchLabelProvider.dispose();
+		syncInfoLabelProvider.dispose();
 		compareConfig.dispose();
-		if (compressedFolderImage != null) {
-			compressedFolderImage.dispose();
-		}
 		if(fgImageCache != null) {
 			Iterator it = fgImageCache.values().iterator();
 			while (it.hasNext()) {

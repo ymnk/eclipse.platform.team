@@ -48,7 +48,7 @@ public class ChangeLogContentProvider extends SyncSetTreeContentProvider {
 	 * @return
 	 */
 	private Object[] calculateRoots() {
-		SyncInfoSet set = getSyncSet();
+		SyncInfoSet set = getSyncInfoSet();
 		SyncInfo[] infos = set.members();
 		commentRoots.clear();
 		for (int i = 0; i < infos.length; i++) {
@@ -63,28 +63,6 @@ public class ChangeLogContentProvider extends SyncSetTreeContentProvider {
 		return (ChangeLogDiffNode[]) commentRoots.values().toArray(new ChangeLogDiffNode[commentRoots.size()]);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetTreeContentProvider#getModelParent(org.eclipse.core.resources.IResource)
-	 */
-	protected Object getModelParent(IResource resource) {
-		// TODO Auto-generated method stub
-		return super.getModelParent(resource);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider#getParent(java.lang.Object)
-	 */
-	public Object getParent(Object element) {
-		return super.getParent(element);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
-	 */
-	public boolean hasChildren(Object element) {
-		// TODO Auto-generated method stub
-		return super.hasChildren(element);
-	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider#handleResourceAdditions(org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent)
 	 */

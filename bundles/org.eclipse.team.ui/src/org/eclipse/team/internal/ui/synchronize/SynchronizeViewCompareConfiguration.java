@@ -56,6 +56,8 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 		refactorActions.fillContextMenu(manager);
 		manager.add(refreshSelectionAction);
 		manager.add(new Separator());
+		addLogicalViewSelection(viewer, manager);
+		manager.add(new Separator());
 		getNavigator().fillContextMenu(viewer, manager);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
