@@ -56,7 +56,7 @@ public class SubscriberTraversalContext extends ResourceMappingContext {
         return subscriber.members(container);
     }
 
-    public void refresh(ResourceTraversal[] traversals, IProgressMonitor monitor) throws CoreException {
+    public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
         Set result = new HashSet();
         for (int i = 0; i < traversals.length; i++) {
             ResourceTraversal traversal = traversals[i];

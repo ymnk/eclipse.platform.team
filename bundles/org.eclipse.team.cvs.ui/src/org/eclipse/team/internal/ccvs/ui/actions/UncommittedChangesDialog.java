@@ -16,11 +16,13 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberResourceMappingContext;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
@@ -98,7 +100,12 @@ public abstract class UncommittedChangesDialog extends MappingSelectionDialog {
 
     boolean matchesFilter(ResourceMapping mapping) {
         try {
-            mapping.visit(new SubscriberResourceMappingContext(subscriber), new IResourceVisitor() {
+            mapping.accept(new SubscriberResourceMappingContext(subscriber, new SyncInfoFilter() {
+                public boolean select(SyncInfo info, IProgressMonitor monitor) {
+                    return info != null && info.getKind() != SyncInfo.IN_SYNC;
+                }
+            
+            }), new IResourceVisitor() {
                 public boolean visit(IResource resource) throws CoreException {
                     SyncInfo info = subscriber.getSyncInfo(resource);
                     if (info != null && resourceFilter.select(info)) {

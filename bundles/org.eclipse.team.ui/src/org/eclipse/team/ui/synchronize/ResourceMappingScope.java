@@ -17,6 +17,8 @@ import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberResourceMappingContext;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
@@ -101,7 +103,11 @@ public class ResourceMappingScope extends AbstractSynchronizeScope {
     }
 
     private ResourceMappingContext getMappingContext() {
-        return new SubscriberResourceMappingContext(subscriber);
+        return new SubscriberResourceMappingContext(subscriber, new SyncInfoFilter() {
+            public boolean select(SyncInfo info, IProgressMonitor monitor) {
+                return true;
+            }
+        });
     }
 
     private IWorkbenchAdapter getWorkbenchAdapter(Object modelObject) {

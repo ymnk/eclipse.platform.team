@@ -145,7 +145,9 @@ public class UpdateOperation extends SingleCommandOperation {
 	}
     
     protected ResourceMappingContext getResourceMappingContext() {
-        SubscriberResourceMappingContext context = new SubscriberResourceMappingContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
-        return context;
+        if (Update.IGNORE_LOCAL_CHANGES.isElementOf(getLocalOptions(false))) {
+            return SubscriberResourceMappingContext.getReplaceContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
+        }
+        return SubscriberResourceMappingContext.getUpdateContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
     }
 }

@@ -69,7 +69,7 @@ public class SyncInfoSetTraveralContext extends ResourceMappingContext {
         return (IResource[]) members.toArray(new IResource[members.size()]);
     }
 
-    public void refresh(ResourceTraversal[] traversals, IProgressMonitor monitor) throws CoreException {
+    public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
         // Do nothing
     }
 

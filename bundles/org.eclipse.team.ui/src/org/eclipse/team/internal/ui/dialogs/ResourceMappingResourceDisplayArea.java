@@ -333,7 +333,7 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
                 }
 
                 private void buildFilteredResourceMap(final ResourceMapping mapping, final ResourceTraversal traversal, IProgressMonitor monitor, final Map result) throws CoreException {
-                    traversal.visit(new IResourceVisitor() {
+                    traversal.accept(new IResourceVisitor() {
                         public boolean visit(IResource resource) throws CoreException {
                             if (filter.select(resource, mapping, traversal)) {
                                 // Add the resource to the result
