@@ -18,12 +18,15 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.IProgressService;
 
 /**
  * A <code>CompareEditorInput</code> whose diff viewer shows the resources contained
@@ -116,12 +119,33 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 			((StructuredViewer) viewer).addOpenListener(new IOpenListener() {
 				public void open(OpenEvent event) {
 					ISelection s = event.getSelection();
-					SyncInfoDiffNode node = getElement(s);
+					final SyncInfoDiffNode node = getElement(s);
 					if (node != null) {
 						IResource resource = node.getResource();
 						int kind = node.getKind();
 						if (resource != null && resource.getType() == IResource.FILE) {
-							Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
+							// Cache the contents because compare doesn't show progress
+							// when calling getContents on a diff node.
+							IProgressService manager = PlatformUI.getWorkbench().getProgressService();
+							try {
+								manager.busyCursorWhile(new IRunnableWithProgress() {
+									public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+										try {
+											node.cacheContents(monitor);
+										} catch (TeamException e) {
+											throw new InvocationTargetException(e);
+										}
+									}
+								});
+							} catch (InvocationTargetException e) {
+								Utils.handle(e);
+							} catch (InterruptedException e) {
+								Utils.handle(e);
+							} finally {
+								// Update the labels even if the content wasn't fetched correctly. This is
+								// required because the selection would still of changed.
+								Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
+							}
 						}
 					}
 				}

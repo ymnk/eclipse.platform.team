@@ -114,11 +114,19 @@ abstract public class DetailsDialog extends Dialog {
 			createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
 		}
 		if(includeDetailsButton()) {
-			detailsButton = createButton(parent, IDialogConstants.DETAILS_ID, IDialogConstants.SHOW_DETAILS_LABEL, false);
+			detailsButton = createButton(parent, IDialogConstants.DETAILS_ID, getDetailsButtonLabelShow(), false);
 		}
 		updateEnablements();
 	}
 
+	protected String getDetailsButtonLabelShow() {
+		return IDialogConstants.SHOW_DETAILS_LABEL;
+	}
+	
+	protected String getDetailsButtonLabelHide() {
+		return IDialogConstants.HIDE_DETAILS_LABEL;
+	}
+	
 	/* (non-Javadoc)
 	 * Method declared on Dialog.
 	 * Creates and returns the contents of the upper part 
@@ -202,11 +210,11 @@ abstract public class DetailsDialog extends Dialog {
 		if (detailsCreated) {
 			detailsComposite.dispose();
 			detailsCreated = false;
-			detailsButton.setText(IDialogConstants.SHOW_DETAILS_LABEL);
+			detailsButton.setText(getDetailsButtonLabelShow());
 		} else {
 			detailsComposite = createDropDownDialogArea((Composite)getContents());
 			detailsCreated = true;
-			detailsButton.setText(IDialogConstants.HIDE_DETAILS_LABEL);
+			detailsButton.setText(getDetailsButtonLabelHide());
 		}
         Dialog.applyDialogFont(getContents());
 		Point newSize = getContents().computeSize(SWT.DEFAULT, SWT.DEFAULT);

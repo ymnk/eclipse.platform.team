@@ -63,9 +63,17 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			final Label label = new Label(area, SWT.WRAP);
 			final GridData gridData = new GridData(GridData.FILL_BOTH);
 			gridData.horizontalSpan = 2;
-			gridData.widthHint = 250;
+			gridData.widthHint = 325;
 			label.setLayoutData(gridData);
-			label.setText(Policy.bind("ConfigureRefreshScheduleDialog.1", schedule.getParticipant().getName(), SubscriberRefreshSchedule.refreshEventAsString(schedule.getLastRefreshEvent())));			 //$NON-NLS-1$
+			label.setText(Policy.bind("ConfigureRefreshScheduleDialog.1", schedule.getParticipant().getName()));			 //$NON-NLS-1$
+		}
+		{
+			final Label label = new Label(area, SWT.WRAP);
+			final GridData gridData = new GridData(GridData.FILL_BOTH);
+			gridData.horizontalSpan = 2;
+			gridData.widthHint = 325;
+			label.setLayoutData(gridData);
+			label.setText(Policy.bind("ConfigureRefreshScheduleDialog.1a", SubscriberRefreshSchedule.refreshEventAsString(schedule.getLastRefreshEvent())));			 //$NON-NLS-1$
 		}
 		{
 			userRefreshOnly = new Button(area, SWT.RADIO);

@@ -47,6 +47,13 @@
             type="dynamic"
             id="org.eclipse.team.cvs.ui.cvsmerge-participant">
       </participant>
+      <participant
+            name="%CVSCompareParticipant"
+            icon="icons/full/cview16/compare_view.gif"
+            class="org.eclipse.team.internal.ccvs.ui.subscriber.CompareSynchronizeParticipant"
+            type="dynamic"
+            id="org.eclipse.team.cvs.ui.compare-participant">
+      </participant>
 </extension>
 
 <!-- *************** Authenticator **************** -->
@@ -262,14 +269,6 @@
                menubarPath="compareWithMenu/compareWithGroup"
                helpContextId="org.eclipse.team.cvs.ui.compare_with_tag_action_context"
                id="org.eclipse.team.ccvs.ui.compareWithTag">
-         </action>      
-        <action
-               label="%CompareWithRemoteAction.label"
-               tooltip="%CompareWithRemoteAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
-               menubarPath="compareWithMenu/compareWithGroup"
-               helpContextId="org.eclipse.team.cvs.ui.compare_with_latest_action_context"
-               id="org.eclipse.team.ccvs.ui.compareWithRemote">
          </action>
          <action
                label="%ReplaceWithTagAction.label"

@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.synchronize.IResourceVariantComparator;
 import org.eclipse.team.core.synchronize.SyncInfo;
 
 /**
@@ -133,6 +134,12 @@ abstract public class Subscriber {
 	 */
 	abstract public SyncInfo getSyncInfo(IResource resource) throws TeamException;
 
+	/**
+	 * Returns the comparison criteria that will be used by the sync info
+	 * created by this subscriber.
+	 */
+	abstract public IResourceVariantComparator getResourceComparator();
+	
 	/**
 	 * Refreshes the resource hierarchy from the given resources and their
 	 * children (to the specified depth) from the corresponding resources in

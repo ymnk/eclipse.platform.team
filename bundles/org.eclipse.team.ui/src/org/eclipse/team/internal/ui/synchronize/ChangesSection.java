@@ -142,6 +142,10 @@ public class ChangesSection extends Composite {
 		}
 	}
 	
+	private boolean isThreeWay() {
+		return page.getParticipant().getSubscriber().getResourceComparator().isThreeWay();
+	}
+	
 	private Composite getEmptyChangesComposite(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_WHITE));
@@ -151,6 +155,11 @@ public class ChangesSection extends Composite {
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.grabExcessVerticalSpace = true;
 		composite.setLayoutData(data);
+		
+		if(! isThreeWay()) {
+			createDescriptionLabel(composite,Policy.bind("ChangesSection.noChanges", participant.getName()));	 //$NON-NLS-1$
+			return composite;
+		}
 		
 		SyncInfoSet workspace = participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
 		SyncInfoSet workingSet = participant.getSubscriberSyncInfoCollector().getWorkingSetSyncInfoSet();

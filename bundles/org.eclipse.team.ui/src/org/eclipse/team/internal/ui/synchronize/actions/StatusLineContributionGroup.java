@@ -34,12 +34,14 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	private static final String OUTGOING_ID = TeamUIPlugin.ID + "org.eclipse.team.iu.statusline.outgoing"; //$NON-NLS-1$
 	private static final String CONFLICTING_ID = TeamUIPlugin.ID + "org.eclipse.team.iu.statusline.conflicting"; //$NON-NLS-1$
 	private static final String WORKINGSET_ID = TeamUIPlugin.ID + "org.eclipse.team.iu.statusline.workingset"; //$NON-NLS-1$
-	private final static int WORKING_SET_FIELD_SIZE = 25;
+	private static final String TOTALS_ID = TeamUIPlugin.ID + "org.eclipse.team.iu.statusline.totals"; //$NON-NLS-1$
+	private final static int TEXT_FIELD_MAX_SIZE = 25;
 
 	private StatusLineCLabelContribution incoming;
 	private StatusLineCLabelContribution outgoing;
 	private StatusLineCLabelContribution conflicting;
 	private StatusLineCLabelContribution workingSet;
+	private StatusLineCLabelContribution totalChanges;
 	
 	private Image incomingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_INCOMING).createImage();
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
@@ -56,7 +58,8 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
 		this.conflicting = createStatusLineContribution(CONFLICTING_ID, SubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
 		
-		this.workingSet = new StatusLineCLabelContribution(WORKINGSET_ID, 25);
+		this.totalChanges = new StatusLineCLabelContribution(TOTALS_ID, TEXT_FIELD_MAX_SIZE);
+		this.workingSet = new StatusLineCLabelContribution(WORKINGSET_ID, TEXT_FIELD_MAX_SIZE);
 		this.workingSet.setTooltip(Policy.bind("StatisticsPanel.workingSetTooltip")); //$NON-NLS-1$
 		updateWorkingSetText();
 
@@ -73,14 +76,18 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		collector.getSyncInfoTree().addSyncSetChangedListener(this);
 	}
 
+	private boolean isThreeWay() {
+		return participant.getSubscriber().getResourceComparator().isThreeWay();
+	}
+	
 	private void updateWorkingSetText() {
 		IWorkingSet set = participant.getWorkingSet();
 		if (set == null) {
 			workingSet.setText(Policy.bind("StatisticsPanel.noWorkingSet")); //$NON-NLS-1$
 		} else {
 			String name = set.getName();
-			if (name.length() > WORKING_SET_FIELD_SIZE) {
-				name = name.substring(0, WORKING_SET_FIELD_SIZE - 3) + "..."; //$NON-NLS-1$
+			if (name.length() > TEXT_FIELD_MAX_SIZE) {
+				name = name.substring(0, TEXT_FIELD_MAX_SIZE - 3) + "..."; //$NON-NLS-1$
 			}
 			workingSet.setText(name);
 		}
@@ -127,6 +134,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 			SyncInfoSet workspaceSetStats = collector.getSubscriberSyncInfoSet();
 			SyncInfoSet workingSetSetStats = collector.getWorkingSetSyncInfoSet();
 
+			final int total = workspaceSetStats.size();
 			final int workspaceConflicting = (int) workspaceSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
 			final int workspaceOutgoing = (int) workspaceSetStats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
 			final int workspaceIncoming = (int) workspaceSetStats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
@@ -155,6 +163,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 						outgoing.setTooltip(Policy.bind("StatisticsPanel.numbersTooltip", Policy.bind("StatisticsPanel.outgoing"))); //$NON-NLS-1$ //$NON-NLS-2$
 						incoming.setTooltip(Policy.bind("StatisticsPanel.numbersTooltip", Policy.bind("StatisticsPanel.incoming"))); //$NON-NLS-1$ //$NON-NLS-2$
 					}
+					totalChanges.setText(Policy.bind("StatisticsPanel.numberTotal", Integer.toString(total)));
 				}
 			});
 		}
@@ -168,9 +177,13 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	public void fillActionBars(IActionBars actionBars) {
 		IStatusLineManager mgr = actionBars.getStatusLineManager();
 		mgr.add(workingSet);
-		mgr.add(incoming);
-		mgr.add(outgoing);
-		mgr.add(conflicting);
+		if (isThreeWay()) {
+			mgr.add(incoming);
+			mgr.add(outgoing);
+			mgr.add(conflicting);
+		} else {
+			mgr.add(totalChanges);
+		}
 	}
 
 	/* (non-Javadoc)

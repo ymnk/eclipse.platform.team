@@ -68,13 +68,18 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		if (resourcesToCommit.length > 0) 
 		commitCommentArea.setProject(resourcesToCommit[0].getProject());
 		
-		set = createResourcesToCommitSyncInfoSet(resourcesToCommit);
-	
 		IDialogSettings workbenchSettings = CVSUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("ReleaseCommentDialog");//$NON-NLS-1$
 		if (settings == null) {
 			this.settings = workbenchSettings.addNewSection("ReleaseCommentDialog");//$NON-NLS-1$
 		}		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeDetailsButton()
+	 */
+	protected boolean includeDetailsButton() {
+		return false;
 	}
 	
 	/*

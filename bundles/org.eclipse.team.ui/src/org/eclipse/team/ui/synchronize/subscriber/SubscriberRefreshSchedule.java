@@ -100,7 +100,7 @@ public class SubscriberRefreshSchedule {
 			return;
 		}
 		if(job == null) {
-			job = new RefreshSubscriberJob(Policy.bind("SubscriberRefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getSubscriberSyncInfoCollector()); //$NON-NLS-1$
+			job = new RefreshSubscriberJob(Policy.bind("RefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getSubscriberSyncInfoCollector()); //$NON-NLS-1$
 		} else if(job.getState() != Job.NONE){
 			stopJob();
 		}
@@ -155,16 +155,16 @@ public class SubscriberRefreshSchedule {
 		}
 		SyncInfo[] changes = event.getChanges();
 		if (changes.length != 0) {
-			text.append(Policy.bind("SubscriberRefreshSchedule.6", Integer.toString(changes.length))); //$NON-NLS-1$
+			text.append(Policy.bind("RefreshSchedule.6", Integer.toString(changes.length))); //$NON-NLS-1$
 		} else {
-			text.append(Policy.bind("SubscriberRefreshSchedule.7")); //$NON-NLS-1$
+			text.append(Policy.bind("RefreshSchedule.7")); //$NON-NLS-1$
 		}
 		return text.toString();
 	} 
 	
 	public String getScheduleAsString() {
 		if(! isEnabled()) {
-			return Policy.bind("SubscriberRefreshSchedule.8"); //$NON-NLS-1$
+			return Policy.bind("RefreshSchedule.8"); //$NON-NLS-1$
 		}		
 		return getRefreshIntervalAsString();
 	}
@@ -186,10 +186,10 @@ public class SubscriberRefreshSchedule {
 		}		
 		String unit;
 		if(minutes >= 1) {
-			unit = (hours ? Policy.bind("SubscriberRefreshSchedule.9") : Policy.bind("SubscriberRefreshSchedule.10")); //$NON-NLS-1$ //$NON-NLS-2$
+			unit = (hours ? Policy.bind("RefreshSchedule.9") : Policy.bind("RefreshSchedule.10")); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
-			unit = (hours ? Policy.bind("SubscriberRefreshSchedule.11") : Policy.bind("SubscriberRefreshSchedule.12")); //$NON-NLS-1$ //$NON-NLS-2$
+			unit = (hours ? Policy.bind("RefreshSchedule.11") : Policy.bind("RefreshSchedule.12")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		return Policy.bind("SubscriberRefreshSchedule.13", Long.toString(minutes), unit); //$NON-NLS-1$
+		return Policy.bind("RefreshSchedule.13", Long.toString(minutes), unit); //$NON-NLS-1$
 	}
 }

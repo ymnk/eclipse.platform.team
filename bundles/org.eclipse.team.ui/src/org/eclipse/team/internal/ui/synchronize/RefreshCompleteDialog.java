@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -35,22 +34,18 @@ import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetCompareInput;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class RefreshCompleteDialog extends DetailsDialog {
+	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
+	private final static int RESOURCE_LIST_SIZE = 10;
+	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
+	private FilteredSyncInfoCollector collector;
+	private SyncInfoSetCompareInput compareEditorInput;
+	private IRefreshEvent event;
+	private SubscriberParticipant participant;
 
 	private Button promptWhenNoChanges;
 	private Button promptWithChanges;
-	private SyncInfoSetCompareInput compareEditorInput;
-	private FilteredSyncInfoCollector collector;
-	private IRefreshEvent event;
-	private final static int RESOURCE_LIST_SIZE = 10;
 	private IDialogSettings settings;
-	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
-	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
-	private SubscriberParticipant participant;
-	private SyncInfoTree syncInfoSet = new SyncInfoTree();
-	
-	/**
-	 * Create the dialog. The <code>initialize</code> methdo must be called to populate the dialog.
-	 */
+
 	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event, SubscriberParticipant participant) {
 		super(parentShell, Policy.bind("RefreshCompleteDialog.4", participant.getName())); //$NON-NLS-1$
 		this.participant = participant;
@@ -58,10 +53,10 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		setShellStyle(shellStyle | SWT.RESIZE | SWT.MAX);
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
-		
 		// Set-up a sync info set that contains the resources that where found
 		// when the refresh occured.
 		SyncInfoFilter filter = new SyncInfoFilter() {
+
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
 				IResource[] resources = getResources();
 				for (int i = 0; i < resources.length; i++) {
@@ -76,8 +71,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		this.collector = new FilteredSyncInfoCollector(
 				participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
 				syncInfoSet, 
-				filter);
-		
+				filter);		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$
 		if (settings == null) {
@@ -93,23 +87,6 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jface.window.Window#getInitialSize()
-	 */
-	protected Point getInitialSize() {
-		int width, height;
-		try {
-			height = settings.getInt(HEIGHT_KEY);
-			width = settings.getInt(WIDTH_KEY);
-		} catch(NumberFormatException e) {
-			return super.getInitialSize();
-		}
-		Point p = super.getInitialSize();
-		return new Point(width, p.y);
-	}
-	
-	
-	
-	/* (non-Javadoc)
 	 * @see org.eclipse.jface.window.Window#close()
 	 */
 	public boolean close() {
@@ -119,64 +96,24 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		settings.put(WIDTH_KEY, bounds.width);
 		return super.close();
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#createMainDialogArea(org.eclipse.swt.widgets.Composite)
+	 * @see org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse.swt.widgets.Composite)
 	 */
-	protected void createMainDialogArea(Composite parent) {
-		StringBuffer text = new StringBuffer();
-		SyncInfo[] changes = event.getChanges();
-		IResource[] resources = event.getResources();
-		
-		if(changes.length != 0) {
-			text.append(Policy.bind("RefreshCompleteDialog.5", Integer.toString(changes.length))); //$NON-NLS-1$
-		} else {
-			text.append(Policy.bind("RefreshCompleteDialog.6")); //$NON-NLS-1$
-		}
-		text.append(Policy.bind("RefreshCompleteDialog.7", Integer.toString(resources.length)));		 //$NON-NLS-1$ //$NON-NLS-2$
-		createLabel(parent, text.toString(), 2);
-		
-		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-		GridData data = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL);
-		data.horizontalSpan = 2;
-		data.widthHint = 200;
-		table.setLayoutData(data);
-		/*TableLayout layout = new TableLayout();
-		layout.addColumnData(new ColumnWeightData(100, true));
-		table.setLayout(layout);
-		TableColumn col = new TableColumn(table, SWT.NONE);
-		col.setResizable(true);	*/
-		TableViewer resourceList = new TableViewer(table);
-		resourceList.setContentProvider(new ArrayContentProvider());
-		resourceList.setLabelProvider(new WorkbenchLabelProvider());
-		resourceList.setInput(resources);
-				
-		createLabel(parent, "", 2); //$NON-NLS-1$
-		promptWhenNoChanges = new Button(parent, SWT.CHECK);
-		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
-		data.horizontalSpan = 2;
-		promptWhenNoChanges.setLayoutData(data);
-		
-		promptWithChanges = new Button(parent, SWT.CHECK);
+	protected void createButtonsForButtonBar(Composite parent) {
+		super.createButtonsForButtonBar(parent);
+	}
 
-		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
-		data.horizontalSpan = 2;
-		promptWithChanges.setLayoutData(data);
-
-		if(event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
-			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.13"))); //$NON-NLS-1$
-			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES));
-			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.14"))); //$NON-NLS-1$
-			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES));
-			
-		} else {
-			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.15"))); //$NON-NLS-1$
-			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES));
-			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.16"))); //$NON-NLS-1$
-			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES));
-		}
-				
-		Dialog.applyDialogFont(parent);
+	protected Combo createCombo(Composite parent, int widthChars) {
+		Combo combo = new Combo(parent, SWT.READ_ONLY);
+		GridData data = new GridData(GridData.FILL_HORIZONTAL);
+		GC gc = new GC(combo);
+		gc.setFont(combo.getFont());
+		FontMetrics fontMetrics = gc.getFontMetrics();
+		data.widthHint = Dialog.convertWidthInCharsToPixels(fontMetrics, widthChars);
+		gc.dispose();
+		combo.setLayoutData(data);
+		return combo;
 	}
 
 	/* (non-Javadoc)
@@ -187,6 +124,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 			CompareConfiguration compareConfig = new CompareConfiguration();
 			DiffTreeViewerConfiguration viewerAdvisor = new DiffTreeViewerConfiguration(participant.getId(), syncInfoSet);
 			compareEditorInput = new SyncInfoSetCompareInput(compareConfig, viewerAdvisor) {
+
 				public String getTitle() {
 					return "Resources found during last refresh";
 				}
@@ -200,9 +138,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		} catch (InvocationTargetException e) {
 			Utils.handle(e);
 		}
-		
-		Composite result= new Composite(parent, SWT.NONE);
-		GridLayout layout= new GridLayout();
+		Composite result = new Composite(parent, SWT.NONE);
+		GridLayout layout = new GridLayout();
 		result.setLayout(layout);
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.grabExcessHorizontalSpace = true;
@@ -210,7 +147,6 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		data.heightHint = 350;
 		//data.widthHint = 700;
 		result.setLayoutData(data);
-		
 		Control c = compareEditorInput.createContents(result);
 		data = new GridData(GridData.FILL_BOTH);
 		c.setLayoutData(data);
@@ -218,46 +154,136 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#updateEnablements()
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#createMainDialogArea(org.eclipse.swt.widgets.Composite)
 	 */
-	protected void updateEnablements() {
+	protected void createMainDialogArea(Composite parent) {
+		StringBuffer text = new StringBuffer();
+		SyncInfo[] changes = event.getChanges();
+		IResource[] resources = event.getResources();
+		if (changes.length != 0) {
+			text.append(Policy.bind("RefreshCompleteDialog.5", Integer.toString(changes.length))); //$NON-NLS-1$
+		} else {
+			text.append(Policy.bind("RefreshCompleteDialog.6")); //$NON-NLS-1$
+		}
+		text.append(Policy.bind("RefreshCompleteDialog.7", Integer.toString(resources.length))); //$NON-NLS-1$ //$NON-NLS-2$
+		createLabel(parent, text.toString(), 2);
+		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		GridData data = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL);
+		data.horizontalSpan = 2;
+		data.widthHint = 200;
+		table.setLayoutData(data);
+		/*TableLayout layout = new TableLayout();
+		 layout.addColumnData(new ColumnWeightData(100, true));
+		 table.setLayout(layout);
+		 TableColumn col = new TableColumn(table, SWT.NONE);
+		 col.setResizable(true);	*/
+		TableViewer resourceList = new TableViewer(table);
+		resourceList.setContentProvider(new ArrayContentProvider());
+		resourceList.setLabelProvider(new WorkbenchLabelProvider());
+		resourceList.setInput(resources);
+		createLabel(parent, "", 2); //$NON-NLS-1$
+		promptWhenNoChanges = new Button(parent, SWT.CHECK);
+		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
+		data.horizontalSpan = 2;
+		promptWhenNoChanges.setLayoutData(data);
+		promptWithChanges = new Button(parent, SWT.CHECK);
+		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
+		data.horizontalSpan = 2;
+		promptWithChanges.setLayoutData(data);
+		if (event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
+			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.13"))); //$NON-NLS-1$
+			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES));
+			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.14"))); //$NON-NLS-1$
+			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES));
+		} else {
+			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.15"))); //$NON-NLS-1$
+			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES));
+			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.16"))); //$NON-NLS-1$
+			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES));
+		}
+		Dialog.applyDialogFont(parent);
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse.swt.widgets.Composite)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#getDetailsButtonLabelHide()
 	 */
-	protected void createButtonsForButtonBar(Composite parent) {
-		super.createButtonsForButtonBar(parent);
+	protected String getDetailsButtonLabelHide() {
+		return Policy.bind("RefreshCompleteDialog.18");
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#getDetailsButtonLabelShow()
+	 */
+	protected String getDetailsButtonLabelShow() {
+		return Policy.bind("RefreshCompleteDialog.17");
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.window.Window#getInitialSize()
+	 */
+	protected Point getInitialSize() {
+		int width, height;
+		try {
+			height = settings.getInt(HEIGHT_KEY);
+			width = settings.getInt(WIDTH_KEY);
+		} catch (NumberFormatException e) {
+			return super.getInitialSize();
+		}
+		Point p = super.getInitialSize();
+		return new Point(width, p.y);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeCancelButton()
 	 */
 	protected boolean includeCancelButton() {
 		return false;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeDetailsButton()
+	 */
+	protected boolean includeDetailsButton() {
+		return event.getChanges().length != 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeErrorMessage()
+	 */
+	protected boolean includeErrorMessage() {
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.Dialog#okPressed()
+	 */
+	protected void okPressed() {
+		if (event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, promptWithChanges.getSelection());
+		} else {
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES, promptWithChanges.getSelection());
+		}
+		TeamUIPlugin.getPlugin().savePluginPreferences();
+		super.okPressed();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#updateEnablements()
+	 */
+	protected void updateEnablements() {
+	}
+
 	private Label createLabel(Composite parent, String text, int columns) {
 		Label label = new Label(parent, SWT.WRAP);
 		label.setText(text);
 		GridData data = new GridData();
-		data.horizontalSpan = columns;		
+		data.horizontalSpan = columns;
 		label.setLayoutData(data);
 		return label;
 	}
-	
-	protected Combo createCombo(Composite parent, int widthChars) {
-		Combo combo = new Combo(parent, SWT.READ_ONLY);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		GC gc = new GC(combo);
-		gc.setFont(combo.getFont());
-		FontMetrics fontMetrics = gc.getFontMetrics();		
-		data.widthHint = Dialog.convertWidthInCharsToPixels(fontMetrics, widthChars);
-		gc.dispose();
-		combo.setLayoutData(data);
-		return combo;
-	}
-	
+
 	private IResource[] getResources() {
 		SyncInfo[] changes = event.getChanges();
 		IResource[] resources = new IResource[changes.length];
@@ -266,35 +292,5 @@ public class RefreshCompleteDialog extends DetailsDialog {
 			resources[i] = info.getLocal();
 		}
 		return resources;
-	}
-		
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeErrorMessage()
-	 */
-	protected boolean includeErrorMessage() {
-		return false;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeDetailsButton()
-	 */
-	protected boolean includeDetailsButton() {
-		return event.getChanges().length != 0;
-	}
-		
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.dialogs.Dialog#okPressed()
-	 */
-	protected void okPressed() {		
-		if(event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
-			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
-			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, promptWithChanges.getSelection());			
-		} else {
-			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
-			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES, promptWithChanges.getSelection());
-		}
-		TeamUIPlugin.getPlugin().savePluginPreferences();
-		super.okPressed();		
 	}
 }

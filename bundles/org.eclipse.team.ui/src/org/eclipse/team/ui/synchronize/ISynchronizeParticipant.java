@@ -66,6 +66,15 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	public String getName();
 	
 	/**
+	 * Returns <code>true</code> if this participant should be persisted between
+	 * workbench sessions and <code>false</code> otherwise.
+	 * 
+	 * @return <code>true</code> if this participant should be persisted between
+	 * workbench sessions and <code>false</code> otherwise.
+	 */
+	public boolean isPersistent();
+	
+	/**
 	 * Returns an image descriptor for this synchronize participant, or <code>null</code>
 	 * if none.
 	 * 

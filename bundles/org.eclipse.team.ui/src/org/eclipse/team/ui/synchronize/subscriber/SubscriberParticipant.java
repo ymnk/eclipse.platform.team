@@ -170,13 +170,17 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		}
 		updateMode(getMode());
 		
+		preCollectingChanges();
 		collector.start();
 		
-		// start the refresh how that a subscriber has been added
+		// start the refresh now that a subscriber has been added
 		SubscriberRefreshSchedule schedule = getRefreshSchedule();
 		if(schedule.isEnabled()) {
 			getRefreshSchedule().startJob();
 		}
+	}
+	
+	protected void preCollectingChanges() {
 	}
 	
 	/**
