@@ -21,6 +21,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
@@ -74,8 +75,14 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 		// show the sync view
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
+			String id = "";
+			if(subscriber instanceof CVSMergeSubscriber) {
+				id = ((CVSMergeSubscriber)subscriber).getId().getQualifier();
+			} else if(subscriber instanceof CVSWorkspaceSubscriber) {
+				id = ((CVSWorkspaceSubscriber)subscriber).getId().getQualifier();
+			}
 			ISynchronizeParticipant participant = participants[i];
-			if(participant.getId().equals(subscriber.getId())) {
+			if(participant.getId().equals(id)) {
 				if(participant instanceof TeamSubscriberParticipant) {
 					SubscriberInput input = ((TeamSubscriberParticipant)participant).getInput();
 					waitForEventNotification(input);
@@ -120,7 +127,7 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			if(participant.getId().getQualifier().equals(CVSMergeSubscriber.QUALIFIED_NAME)) {
+			if(participant.getId().equals(CVSMergeSubscriber.QUALIFIED_NAME)) {
 				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 			}
 		}
