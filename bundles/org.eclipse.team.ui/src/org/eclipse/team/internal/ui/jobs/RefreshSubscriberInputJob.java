@@ -86,7 +86,11 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 						ITeamSubscriberSyncInfoSets input = (ITeamSubscriberSyncInfoSets) it.next();
 						monitor.setTaskName(Policy.bind(Policy.bind("RefreshSubscriberInputJob.1"), input.getParticipant().getName(), new Integer(input.workingSetRoots().length).toString())); //$NON-NLS-1$
 						TeamSubscriber subscriber = input.getSubscriber();
+						
+						notifyListeners(true, new RefreshEvent(IRefreshEvent.SCHEDULED_REFRESH, input.getParticipant()));
 						subscriber.refresh(input.workingSetRoots(), IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+						notifyListeners(false, new RefreshEvent(IRefreshEvent.SCHEDULED_REFRESH, input.getParticipant()));
+						
 						input.getParticipant().setLastRefreshTime(lastTimeRun);
 					}
 				} catch(TeamException e) {

@@ -24,25 +24,25 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
+import org.eclipse.team.internal.ui.jobs.IRefreshEvent;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoSetCompareInput;
 import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
 	private SyncInfo[] changes;
-	private ITeamSubscriberSyncInfoSets[] inputs;
-	private Button openSyncButton;
 	private Button promptWhenNoChanges;
 	private Button promptWithChanges;
 	private CompareEditorInput compareEditorInput;
+	private int type;
 	
-	public RefreshCompleteDialog(Shell parentShell, SyncInfo[] changes, ITeamSubscriberSyncInfoSets[] inputs) {
+	public RefreshCompleteDialog(Shell parentShell, int type, SyncInfo[] changes, ITeamSubscriberSyncInfoSets[] inputs) {
 		super(parentShell, "Synchronization Complete");
+		this.type = type;
 		setImageKey(DLG_IMG_INFO);
 		this.changes = changes;
-		this.inputs = inputs;
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), inputs[0]) {
 			protected boolean allowParticipantMenuContributions() {
 				return true;
@@ -63,19 +63,30 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		createLabel(parent, text, 2);
 		createLabel(parent, "", 2);
 		
-		
 		promptWhenNoChanges = new Button(parent, SWT.CHECK);
-		promptWhenNoChanges.setText(Policy.bind("SyncViewerPreferencePage.16"));
 		GridData data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
 		data.horizontalSpan = 2;
 		promptWhenNoChanges.setLayoutData(data);
 		
 		promptWithChanges = new Button(parent, SWT.CHECK);
-		promptWithChanges.setText(Policy.bind("SyncViewerPreferencePage.17"));
+
 		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
 		data.horizontalSpan = 2;
 		promptWithChanges.setLayoutData(data);
-		
+
+		if(type == IRefreshEvent.USER_REFRESH) {
+			promptWhenNoChanges.setText(Policy.bind("SyncViewerPreferencePage.16"));
+			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES));
+			promptWithChanges.setText(Policy.bind("SyncViewerPreferencePage.17"));
+			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES));
+			
+		} else {
+			promptWhenNoChanges.setText(Policy.bind("SyncViewerPreferencePage.31"));
+			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES));
+			promptWithChanges.setText(Policy.bind("SyncViewerPreferencePage.32"));
+			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES));
+		}
+				
 		Dialog.applyDialogFont(parent);
 	}
 
@@ -129,11 +140,6 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		Label label = new Label(parent, SWT.WRAP);
 		label.setText(text);
 		GridData data = new GridData();
-//				GridData.GRAB_HORIZONTAL |
-//				GridData.GRAB_VERTICAL |
-//				GridData.HORIZONTAL_ALIGN_FILL |
-//				GridData.VERTICAL_ALIGN_CENTER);
-//		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);
 		data.horizontalSpan = columns;		
 		label.setLayoutData(data);
 		return label;
@@ -173,5 +179,20 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 */
 	protected boolean includeDetailsButton() {
 		return changes.length != 0;
+	}
+		
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.Dialog#okPressed()
+	 */
+	protected void okPressed() {		
+		if(type == IRefreshEvent.USER_REFRESH) {
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, promptWhenNoChanges.getSelection());			
+		} else {
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES, promptWhenNoChanges.getSelection());
+		}
+		TeamUIPlugin.getPlugin().savePluginPreferences();
+		super.okPressed();		
 	}
 }

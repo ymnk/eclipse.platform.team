@@ -12,31 +12,17 @@ package org.eclipse.team.internal.ui.preferences;
 
 import java.text.Collator;
 import java.text.DateFormat;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
+import java.util.*;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.preference.BooleanFieldEditor;
-import org.eclipse.jface.preference.FieldEditorPreferencePage;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.preference.IntegerFieldEditor;
+import org.eclipse.jface.preference.*;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.ui.IPerspectiveDescriptor;
-import org.eclipse.ui.IPerspectiveRegistry;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPreferencePage;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.swt.widgets.*;
+import org.eclipse.team.internal.ui.*;
+import org.eclipse.ui.*;
 
 /**
  * This area provides the widgets for providing the CVS commit comment
@@ -50,6 +36,8 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	private BooleanFieldEditor showSyncInLabels = null;
 	private BooleanFieldEditor promptWithChanges = null;
 	private BooleanFieldEditor promptWhenNoChanges = null;
+	private BooleanFieldEditor promptWithChangesBkg = null;
+	private BooleanFieldEditor promptWhenNoChangesBkg = null;
 	
 	private Group refreshGroup;
 	
@@ -174,11 +162,18 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 		addField(scheduledDelay);
 				
 		updateLastRunTime(createLabel(refreshGroup, null, 0));
-									
-		promptWhenNoChanges = new BooleanFieldEditor(SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, Policy.bind("SyncViewerPreferencePage.16"), SWT.NONE, displayGroup); //$NON-NLS-1$
+		
+		Group promptGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.30")); //$NON-NLS-1$
+		
+		promptWhenNoChanges = new BooleanFieldEditor(SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, Policy.bind("SyncViewerPreferencePage.16"), SWT.NONE, promptGroup); //$NON-NLS-1$
 		addField(promptWhenNoChanges);
-		promptWithChanges = new BooleanFieldEditor(SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, Policy.bind("SyncViewerPreferencePage.17"), SWT.NONE, displayGroup); //$NON-NLS-1$
-		addField(promptWhenNoChanges);
+		promptWithChanges = new BooleanFieldEditor(SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, Policy.bind("SyncViewerPreferencePage.17"), SWT.NONE, promptGroup); //$NON-NLS-1$
+		addField(promptWithChanges);
+		
+		promptWhenNoChangesBkg = new BooleanFieldEditor(SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES, Policy.bind("SyncViewerPreferencePage.31"), SWT.NONE, promptGroup); //$NON-NLS-1$
+		addField(promptWhenNoChangesBkg);
+		promptWithChangesBkg = new BooleanFieldEditor(SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES, Policy.bind("SyncViewerPreferencePage.32"), SWT.NONE, promptGroup); //$NON-NLS-1$
+		addField(promptWithChangesBkg);
 				
 		Group perspectiveGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.15")); //$NON-NLS-1$
 		

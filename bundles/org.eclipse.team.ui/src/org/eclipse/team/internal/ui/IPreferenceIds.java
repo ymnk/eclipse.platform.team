@@ -31,4 +31,7 @@ public interface IPreferenceIds {
 	
 	public static final String SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES = PREFIX + "syncview_promptwhennochanges"; //$NON-NLS-1$
 	public static final String SYNCVIEW_VIEW_PROMPT_WITH_CHANGES = PREFIX + "syncview_promptwithchanges"; //$NON-NLS-1$
+	
+	public static final String SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES = PREFIX + "syncview__bkg_promptwhennochanges"; //$NON-NLS-1$
+	public static final String SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES = PREFIX + "syncview_bkg_promptwithchanges"; //$NON-NLS-1$
 }

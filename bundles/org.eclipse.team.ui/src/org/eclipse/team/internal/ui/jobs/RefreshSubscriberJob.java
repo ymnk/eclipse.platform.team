@@ -10,19 +10,19 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.jobs;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
 /**
  * Job to refresh a subscriber with its remote state.
@@ -61,43 +61,53 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	private IResource[] resources;
 	private ITeamSubscriberSyncInfoSets input;
 	
-	protected class ChangeListener implements ITeamResourceChangeListener {
-		private List changes = new ArrayList();
-		private ITeamSubscriberSyncInfoSets input;
-		ChangeListener(ITeamSubscriberSyncInfoSets input) {
-			this.input = input;
+	/**
+	 * User notification logic
+	 */
+	private static RefreshUserNotificationPolicy userNotificationPolicy = new RefreshUserNotificationPolicy();
+	
+	/**
+	 * Refresh started/completed listeners
+	 */
+	private static List listeners = new ArrayList(1);
+	
+	protected static class RefreshEvent implements IRefreshEvent {
+		int type; 
+		TeamSubscriberParticipant participant;
+		
+		RefreshEvent(int type, TeamSubscriberParticipant participant) {
+			this.type = type;
+			this.participant = participant;
 		}
-		public void teamResourceChanged(TeamDelta[] deltas) {
-			for (int i = 0; i < deltas.length; i++) {
-				TeamDelta delta = deltas[i];
-				if(delta.getFlags() == TeamDelta.SYNC_CHANGED) {
-					changes.add(delta);
-				}
-			}
+		
+		public int getRefreshType() {
+			return type;
 		}
-		public SyncInfo[] getChanges() {
-			try {
-				// wait for inputs to stop processing changes
-				if(input instanceof SubscriberInput) {
-					((SubscriberInput)input).getEventHandler().getEventHandlerJob().join();
-				}
-			} catch (InterruptedException e) {
-				// continue
-			}
-			List changedSyncInfos = new ArrayList();
-			for (Iterator it = changes.iterator(); it.hasNext(); ) {
-				TeamDelta delta = (TeamDelta) it.next();
-				SyncInfo info = input.getSubscriberSyncSet().getSyncInfo(delta.getResource());
-				if(info != null) {
-					int direction = info.getKind() & SyncInfo.DIRECTION_MASK;
-					if(direction == SyncInfo.INCOMING || direction == SyncInfo.CONFLICTING) {
-						changedSyncInfos.add(info);
-					}
-				}
-			}
-			return (SyncInfo[]) changedSyncInfos.toArray(new SyncInfo[changedSyncInfos.size()]);
+
+		public TeamSubscriberParticipant getParticipant() {
+			return participant;
 		}
 	}
+	
+	private abstract class Notification implements ISafeRunnable {
+		private IRefreshSubscriberListener listener;
+		public void handleException(Throwable exception) {
+			// don't log the exception....it is already being logged in Platform#run
+		}
+		public void run(IRefreshSubscriberListener listener) {
+			this.listener = listener;
+			Platform.run(this);
+		}
+		public void run() throws Exception {
+			notify(listener);
+		}
+		/**
+		 * Subsclasses overide this method to send an event safely to a lsistener
+		 * @param listener
+		 */
+		protected abstract void notify(IRefreshSubscriberListener listener);
+	}
+	
 		
 	public RefreshSubscriberJob(String name, IResource[] resources, ITeamSubscriberSyncInfoSets input) {
 		super(name);
@@ -118,6 +128,8 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 				}
 			}
 		});
+		
+		addRefreshListener(userNotificationPolicy);
 	}
 	
 	public boolean shouldRun() {
@@ -159,24 +171,10 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 					return Status.CANCEL_STATUS;
 				}
 				try {
-					// listener to collect changes found during the refresh
-					ChangeListener listener = null;
-					boolean promptWhenChanges = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES);
-					boolean promptWithChanges = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES);
-					if(promptWhenChanges || promptWithChanges) {
-						listener = new ChangeListener(input);
-						subscriber.addListener(listener);
-					}
-					
 					// perform the refresh
+					notifyListeners(true, new RefreshEvent(IRefreshEvent.USER_REFRESH, input.getParticipant()));
 					subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
-					input.getParticipant().setLastRefreshTime(lastTimeRun);
-					
-					// notify user if preference is set
-					if(listener != null) {
-						subscriber.removeListener(listener);
-						notifyIfNeeded(listener);
-					}
+					notifyListeners(false, new RefreshEvent(IRefreshEvent.USER_REFRESH, input.getParticipant()));
 				} catch(TeamException e) {
 					status.merge(e.getStatus());
 				}
@@ -245,15 +243,39 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		return reschedule;
 	}
 	
-	private void notifyIfNeeded(ChangeListener listener) {
-		final SyncInfo[] infos = listener.getChanges();
-		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-			public void run() {
-				RefreshCompleteDialog d = new RefreshCompleteDialog(
-						new Shell(TeamUIPlugin.getStandardDisplay()), infos, new  ITeamSubscriberSyncInfoSets[] {input});
-				d.setBlockOnOpen(false);
-				d.open();
+	public static void addRefreshListener(IRefreshSubscriberListener listener) {
+		synchronized(listeners) {
+			if(! listeners.contains(listener)) {
+				listeners.add(listener);
 			}
-		});
+		}
+	}
+	
+	public static void removeRefreshListener(IRefreshSubscriberListener listener) {
+		synchronized(listeners) {
+			listeners.remove(listener);
+		}
+	}
+	
+	protected void notifyListeners(final boolean started, final IRefreshEvent event) {
+		// Get a snapshot of the listeners so the list doesn't change while we're firing
+		IRefreshSubscriberListener[] listenerArray;
+		synchronized (listeners) {
+			listenerArray = (IRefreshSubscriberListener[]) listeners.toArray(new IRefreshSubscriberListener[listeners.size()]);
+		}
+		// Notify each listener in a safe manner (i.e. so their exceptions don't kill us)
+		for (int i = 0; i < listenerArray.length; i++) {
+			IRefreshSubscriberListener listener = listenerArray[i];
+			Notification notification = new Notification() {
+				protected void notify(IRefreshSubscriberListener listener) {
+					if(started) {
+						listener.refreshStarted(event);
+					} else {
+						listener.refreshDone(event);
+					}
+				}
+			};
+			notification.run(listener);
+		}
 	}
 }

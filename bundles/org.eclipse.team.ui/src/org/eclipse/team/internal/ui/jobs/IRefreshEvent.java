@@ -10,16 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.jobs;
 
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
 public interface IRefreshEvent {
 	
 	public static final int SCHEDULED_REFRESH = 1; 
+	
 	public static final int USER_REFRESH = 2;
 	
 	public int getRefreshType();
-	public SyncInfo[] getChanges();
-	public long getDuration();
-	public ISynchronizeParticipant[] getParticipants();
+	
+	public TeamSubscriberParticipant getParticipant();
 }
