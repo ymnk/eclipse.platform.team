@@ -312,11 +312,11 @@ public class CVSLightweightDecorator
 		CVSDecoratorConfiguration.decorate(new IDecoration() {
 			public void addPrefix(String prefix) {
 				decoration.addPrefix(prefix);
-				cacheTextLabel(resource, prefix, CACHED_TEXT_PREFIX);
+				cacheTextLabel(resource, prefix.intern(), CACHED_TEXT_PREFIX);
 			}
 			public void addSuffix(String suffix) {
 				decoration.addSuffix(suffix);
-				cacheTextLabel(resource, suffix, CACHED_TEXT_SUFFIX);
+				cacheTextLabel(resource, suffix.intern(), CACHED_TEXT_SUFFIX);
 			
 			}
 			public void addOverlay(ImageDescriptor overlay) {
