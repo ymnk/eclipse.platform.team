@@ -10,18 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.actions;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -33,7 +30,6 @@ import org.eclipse.team.internal.ccvs.ui.TagetLocationSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutMultipleProjectsOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutSingleProjectOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.HasProjectMetaFileOperation;
-import org.eclipse.team.internal.ui.IPromptCondition;
 import org.eclipse.team.internal.ui.PromptingDialog;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.NewProjectAction;
@@ -79,80 +75,35 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 		if (result != Dialog.OK) return;
 		String targetParentLocation = dialog.getTargetLocation();
 			
-		// if the location is null, just checkout the projects into the workspace
-		if (targetParentLocation == null) {
-			new CheckoutMultipleProjectsOperation(getShell(), folders, null)
-				.execute(new ProgressMonitorDialog(shell));
-			return;
-		}
-		
-		// create the project descriptions for each project
-		IProjectDescription[] descriptions = new IProjectDescription[targetProjects.length];
-		for (int i = 0; i < targetProjects.length; i++) {
-			String projectName = targetProjects[i].getName();
-			descriptions[i] = ResourcesPlugin.getWorkspace().newProjectDescription(projectName);
-			descriptions[i].setLocation(new Path(targetParentLocation).append(projectName));
-		}
-			
-		// prompt if the projects or locations exist locally
-		PromptingDialog prompt = new PromptingDialog(getShell(), targetProjects,
-			getOverwriteLocalAndFileSystemPrompt(descriptions), Policy.bind("ReplaceWithAction.confirmOverwrite"));//$NON-NLS-1$
-		IResource[] projectsToCheckout = prompt.promptForMultiple();
-		if (projectsToCheckout.length== 0) return;
-		
-		// copy the selected projects to a new array
-		final IProject[] projects = new IProject[projectsToCheckout.length];
-		for (int i = 0; i < projects.length; i++) {
-			projects[i] = projectsToCheckout[i].getProject();
-		}
-		
-		// perform the checkout
-		// TODO: The selected projects neew to be used to determine which folders are still 
-		// to be checked out
-		new CheckoutMultipleProjectsOperation(getShell(), folders, descriptions)
+		new CheckoutMultipleProjectsOperation(getShell(), folders, targetParentLocation)
 			.execute(new ProgressMonitorDialog(shell));
 	}
 
 	private void checkoutSingleProject(final ICVSRemoteFolder remoteFolder) throws CVSException, InterruptedException {
+		
 		// Fetch the members of the folder to see if they contain a .project file.
-		final String remoteFolderName = remoteFolder.getName();
+		String remoteFolderName = remoteFolder.getName();
+		boolean hasProjectMetaFile = HasProjectMetaFileOperation.hasMetaFile(getShell(), remoteFolder, new ProgressMonitorDialog(shell));
 		
-		boolean hasProjectMetaFile = HasProjectMetaFileOperation.hasMetaFile(remoteFolder, new ProgressMonitorDialog(shell));
-		
-		// Prompt outside a workspace runnable so that the project creation delta can be heard
 		IProject newProject = null;
-		IProjectDescription newDesc = null;
+		String targetLocation = null;
 		if (hasProjectMetaFile) {
-			
 			// prompt for the project name and location
 			newProject = ResourcesPlugin.getWorkspace().getRoot().getProject(remoteFolderName);
 			TagetLocationSelectionDialog dialog = new TagetLocationSelectionDialog(getShell(), Policy.bind("CheckoutAsAction.enterProjectTitle", remoteFolderName), newProject); //$NON-NLS-1$
 			int result = dialog.open();
 			if (result != Dialog.OK) return;
 			// get the name and location from the dialog
-			String targetLocation = dialog.getTargetLocation();
-			String targetName = dialog.getNewProjectName();
-			
-			// create the project description for a custom location
-			if (targetLocation != null) {
-				newDesc = ResourcesPlugin.getWorkspace().newProjectDescription(newProject.getName());
-				newDesc.setLocation(new Path(targetLocation));
-			}
-			
-			// prompt if the project or location exists locally
-			newProject = ResourcesPlugin.getWorkspace().getRoot().getProject(targetName);
-			PromptingDialog prompt = new PromptingDialog(getShell(), new IResource[] { newProject },
-				getOverwriteLocalAndFileSystemPrompt(
-					newDesc == null ? new IProjectDescription[0] : new IProjectDescription[] {newDesc}), 
-					Policy.bind("ReplaceWithAction.confirmOverwrite"));//$NON-NLS-1$
-			if (prompt.promptForMultiple().length == 0) return;
-			
+			targetLocation = dialog.getTargetLocation();
+			newProject = ResourcesPlugin.getWorkspace().getRoot().getProject(dialog.getNewProjectName());
 		} else {
+			// Create a new file using the platform wizard so the project 
+			// can be configured by the user
 			newProject = getNewProject(remoteFolderName);
 			if (newProject == null) return;
 		}
 		
-		new CheckoutSingleProjectOperation(remoteFolder, newProject, newDesc, !hasProjectMetaFile)
+		new CheckoutSingleProjectOperation(shell, remoteFolder, newProject, targetLocation, !hasProjectMetaFile)
 			.execute(new ProgressMonitorDialog(shell));
 	}
 	
@@ -221,59 +172,11 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 			return newProject;
 		}
 	}
+	
 	/**
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getErrorTitle()
 	 */
 	protected String getErrorTitle() {
 		return Policy.bind("CheckoutAsAction.checkoutFailed"); //$NON-NLS-1$
-	}
-	
-	protected IPromptCondition getOverwriteLocalAndFileSystemPrompt(final IProjectDescription[] descriptions) {
-		return new IPromptCondition() {
-			// prompt if resource in workspace exists or exists in local file system
-			public boolean needsPrompt(IResource resource) {
-				
-				// First, check the description location
-				IProjectDescription desc = findDescription(descriptions, resource);
-				if (desc != null) {
-					File localLocation = desc.getLocation().toFile();
-					return localLocation.exists();
-				}
-				
-				// Next, check if the resource itself exists
-				if (resource.exists()) return true;
-				
-				// Finally, check if the location in the workspace exists;
-				File localLocation  = getFileLocation(resource);
-				if (localLocation.exists()) return true;
-				
-				// The target doesn't exist
-				return false;
-			}
-			public String promptMessage(IResource resource) {
-				IProjectDescription desc = findDescription(descriptions, resource);
-				if (desc != null) {
-					return Policy.bind("AddToWorkspaceAction.thisExternalFileExists", desc.getLocation().toString());//$NON-NLS-1$
-				} else if(resource.exists()) {
-					return Policy.bind("AddToWorkspaceAction.thisResourceExists", resource.getName());//$NON-NLS-1$
-				} else {
-					File localLocation  = getFileLocation(resource);
-					return Policy.bind("AddToWorkspaceAction.thisExternalFileExists", localLocation.toString());//$NON-NLS-1$
-				}
-			}
-			private File getFileLocation(IResource resource) {
-				return new File(resource.getParent().getLocation().toFile(), resource.getName());
-			}
-		};
-	}
-	
-	private IProjectDescription findDescription(IProjectDescription[] descriptions, IResource resource) {
-		IProject project = resource.getProject();
-		for (int i = 0; i < descriptions.length; i++) {
-			IProjectDescription description = descriptions[i];
-			if (description.getName().equals(project.getName()))
-				return description;
-		}
-		return null;
 	}
 }

@@ -11,10 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.operations;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 
@@ -27,49 +24,17 @@ public class CheckoutSingleProjectOperation extends CheckoutOperation {
 	private boolean preconfigured;
 	private ICVSRemoteFolder remoteFolder;
 	private IProject targetProject;
-	private IProjectDescription projectDescription;
 	
-	public CheckoutSingleProjectOperation(ICVSRemoteFolder remoteFolder, IProject targetProject, IProjectDescription projectDescription, boolean preconfigured) {
-		this.remoteFolder = remoteFolder;
-		this.projectDescription = projectDescription;
+	public CheckoutSingleProjectOperation(Shell shell, ICVSRemoteFolder remoteFolder, IProject targetProject, String targetLocation, boolean preconfigured) {
+		super(shell, new ICVSRemoteFolder[] { remoteFolder }, targetLocation);
 		this.targetProject = targetProject;
 		this.preconfigured = preconfigured;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void execute(IProgressMonitor monitor) throws CVSException, InterruptedException {
-		try {
-			String taskName = Policy.bind("CheckoutAsAction.taskname", getRemoteFolderName(), targetProject.getName()); //$NON-NLS-1$
-			monitor.beginTask(taskName, 100);
-			monitor.setTaskName(taskName);
-			int used = 0;
-			if (!isPreconfigured()) {
-				used = 5;
-				createAndOpenProject(targetProject, getProjectDescription(), Policy.subMonitorFor(monitor, used));
-			}
-			checkout(new ICVSRemoteFolder[] { remoteFolder }, new IProject[] { targetProject }, Policy.subMonitorFor(monitor, 100 - used));
-		} catch (TeamException e) {
-			throw CVSException.wrapException(e);
-		} finally {
-			monitor.done();
-		}
-
-	}
-	
-	/**
-	 * 
-	 */
-	private IProjectDescription getProjectDescription() {
-		return projectDescription;
 	}
 	
 	/**
 	 * @return
 	 */
 	private String getRemoteFolderName() {
-		// TODO Auto-generated method stub
 		return remoteFolder.getName();
 	}
 
@@ -78,6 +43,29 @@ public class CheckoutSingleProjectOperation extends CheckoutOperation {
 	 */
 	private boolean isPreconfigured() {
 		return preconfigured;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CheckoutOperation#needsPromptForOverwrite(org.eclipse.core.resources.IProject)
+	 */
+	public boolean needsPromptForOverwrite(IProject project) {
+		// No need to prompt if the project was preconfigured
+		if (isPreconfigured()) return false;
+		return super.needsPromptForOverwrite(project);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
+	 */
+	protected String getTaskName() {
+		return Policy.bind("CheckoutAsAction.taskname", getRemoteFolderName(), targetProject.getName()); //$NON-NLS-1$
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CheckoutOperation#getTargetProjects(org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder[])
+	 */
+	protected IProject[] getTargetProjects(ICVSRemoteFolder[] remoteFolders) {
+		return new IProject[] { targetProject };
 	}
 
 }

@@ -11,15 +11,22 @@
 package org.eclipse.team.internal.ccvs.ui.operations;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.ui.PlatformUI;
 
 
@@ -28,14 +35,32 @@ import org.eclipse.ui.PlatformUI;
  * error handling, prompting and other UI.
  */
 public abstract class CVSOperation implements IRunnableWithProgress {
+
+	private boolean involvesMultipleResources = false;
+
+	private List errors = new ArrayList(); // of IStatus
+
+	protected static final IStatus OK = new CVSStatus(IStatus.OK, Policy.bind("ok"));
 	
 	private IRunnableContext runnableContext;
+	private Shell shell;
 	private boolean interruptable = true;
 	private boolean modifiesWorkspace = true;
 	
+	// instance variable used to indicate behavior while prompting for overwrite
+	private boolean confirmOverwrite = true;
+	
 	public static void run(Shell shell, CVSOperation operation) throws CVSException, InterruptedException {
+		operation.setShell(shell);
 		operation.setRunnableContext(new ProgressMonitorDialog(shell));
 		operation.execute();
+	}
+	
+	/**
+	 * @param shell
+	 */
+	public CVSOperation(Shell shell) {
+		this.shell = shell;
 	}
 	
 	/**
@@ -73,6 +98,7 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public final void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+		startOperation();
 		try {
 			if (isModifiesWorkspace()) {
 				new CVSWorkspaceModifyOperation(this).execute(monitor);
@@ -84,8 +110,18 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
 		}
+		endOperation();
+	}
+
+	protected void startOperation() {
+		resetErrors();
+		confirmOverwrite = true;
 	}
 	
+	protected void endOperation() {
+		handleErrors((IStatus[]) errors.toArray(new IStatus[errors.size()]));
+	}
+
 	/**
 	 * Subclasses must override to perform the operation
 	 * @param monitor
@@ -103,13 +139,6 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 		}
 		return runnableContext;
 	}
-	
-	/**
-	 * @return
-	 */
-	public boolean isInterruptable() {
-		return interruptable;
-	}
 
 	/**
 	 * @param context
@@ -118,6 +147,27 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 		this.runnableContext = context;
 	}
 
+	/**
+	 * @return
+	 */
+	public Shell getShell() {
+		return shell;
+	}
+
+	/**
+	 * @param shell
+	 */
+	public void setShell(Shell shell) {
+		this.shell = shell;
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean isInterruptable() {
+		return interruptable;
+	}
+	
 	/**
 	 * @param b
 	 */
@@ -139,4 +189,91 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 		modifiesWorkspace = b;
 	}
 
+	/**
+	 * @param status
+	 */
+	protected void addError(IStatus status) {
+		errors.add(status);
+	}
+	
+	/**
+	 * 
+	 */
+	protected void resetErrors() {
+		errors.clear();
+	}
+	
+	/**
+	 * @param statuses
+	 */
+	protected void handleErrors(IStatus[] status) {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * This method prompts the user to overwrite an existing resource. It uses the
+	 * <code>involvesMultipleResources</code> to determine what buttons to show.
+	 * @param project
+	 * @return
+	 */
+	protected boolean promptToOverwrite(String title, String msg) {
+		if (!confirmOverwrite) {
+			return true;
+		}
+		String buttons[];
+		if (involvesMultipleResources()) {
+			buttons = new String[] {
+				IDialogConstants.YES_LABEL, 
+				IDialogConstants.YES_TO_ALL_LABEL, 
+				IDialogConstants.NO_LABEL, 
+				IDialogConstants.CANCEL_LABEL};
+		} else {
+			buttons = new String[] {IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL};
+		}	
+		Shell shell = getShell();
+		final MessageDialog dialog = 
+			new MessageDialog(shell, title, null, msg, MessageDialog.QUESTION, buttons, 0);
+
+		// run in syncExec because callback is from an operation,
+		// which is probably not running in the UI thread.
+		shell.getDisplay().syncExec(
+			new Runnable() {
+				public void run() {
+					dialog.open();
+				}
+			});
+		if (involvesMultipleResources()) {
+			switch (dialog.getReturnCode()) {
+				case 0://Yes
+					return true;
+				case 1://Yes to all
+					confirmOverwrite = false; 
+					return true;
+				case 2://No
+					return false;
+				case 3://Cancel
+				default:
+					throw new OperationCanceledException();
+			}
+		} else {
+			return dialog.getReturnCode() == 0;
+		}
+	}
+
+	/**
+	 * This method is used by <code>promptToOverwrite</code> to determine which 
+	 * buttons to show in the prompter.
+	 * 
+	 * @return
+	 */
+	protected boolean involvesMultipleResources() {
+		return involvesMultipleResources;
+	}
+
+	/**
+	 * @param b
+	 */
+	public void setInvolvesMultipleResources(boolean b) {
+		involvesMultipleResources = b;
+	}
 }

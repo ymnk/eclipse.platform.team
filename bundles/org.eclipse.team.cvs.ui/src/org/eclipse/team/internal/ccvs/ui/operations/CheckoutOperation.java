@@ -22,9 +22,11 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -42,11 +44,8 @@ import org.eclipse.team.internal.ccvs.core.client.Request;
 import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
-import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ui.IPromptCondition;
 
 /**
  * This class acts as an abstract class for checkout operations.
@@ -54,29 +53,58 @@ import org.eclipse.team.internal.ui.IPromptCondition;
  */
 public abstract class CheckoutOperation extends CVSOperation {
 
-	protected void createAndOpenProjects(IProject[] projects, IProjectDescription[] descriptions, IProgressMonitor monitor) throws CVSException {
-		monitor.beginTask(null, projects.length* 100);
-		for (int i = 0; i < projects.length; i++) {
-			IProject project = projects[i];
-			IProjectDescription desc = findDescription(descriptions, project);
-			createAndOpenProject(project, desc, Policy.subMonitorFor(monitor, 100));
-		}
-		monitor.done();
-	}
+	private ICVSRemoteFolder[] remoteFolders;
+	private String targetLocation;
 
 	/**
-	 * This should be done in the checkout (scrubProjects?). 
-	 * However, there are some cases where it is not needed 
-	 * (ie. no custom location or pre-configured).
-	 * @deprecated
+	 * @param shell
+	 * @param targetLocation
+	 */
+	public CheckoutOperation(Shell shell, ICVSRemoteFolder[] remoteFolders, String targetLocation) {
+		super(shell);
+		this.remoteFolders = remoteFolders;
+		this.targetLocation = targetLocation;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void execute(IProgressMonitor monitor) throws CVSException, InterruptedException {
+		String taskName = getTaskName();
+		monitor.beginTask(taskName, 100);
+		monitor.setTaskName(taskName);
+		checkout(getRemoteFolders(), getTargetProjects(getRemoteFolders()), Policy.subMonitorFor(monitor, 100));
+	}
+	
+	/**
+	 * @return
+	 */
+	protected ICVSRemoteFolder[] getRemoteFolders() {
+		return remoteFolders;
+	}
+	
+	/**
+	 * @return
+	 */
+	protected IProject[] getTargetProjects(ICVSRemoteFolder[] remoteFolders) {
+		IProject[] projects = new IProject[remoteFolders.length];
+		for (int i = 0; i < projects.length; i++) {
+			projects[i] = ResourcesPlugin.getWorkspace().getRoot().getProject(remoteFolders[i].getName());
+		}
+		return projects;
+	}
+	
+	/**
+	 * Create and open the project, using a custom location if there is one.
+	 * 
 	 * @param project
-	 * @param desc
 	 * @param monitor
 	 * @throws CVSException
 	 */
-	protected void createAndOpenProject(IProject project, IProjectDescription desc, IProgressMonitor monitor) throws CVSException {
+	protected void createAndOpenProject(IProject project, IProgressMonitor monitor) throws CVSException {
 		try {
 			monitor.beginTask(null, 5);
+			IProjectDescription desc = getDescriptionFor(project);
 			if (project.exists()) {
 				if (desc != null) {
 					project.move(desc, true, Policy.subMonitorFor(monitor, 3));
@@ -100,60 +128,23 @@ public abstract class CheckoutOperation extends CVSOperation {
 		}
 	}
 	
-	private IProjectDescription findDescription(IProjectDescription[] descriptions, IResource resource) {
-		IProject project = resource.getProject();
-		for (int i = 0; i < descriptions.length; i++) {
-			IProjectDescription description = descriptions[i];
-			if (description.getName().equals(project.getName()))
-				return description;
-		}
-		return null;
+	protected IProjectDescription getDescriptionFor(IProject project) {
+		if (targetLocation == null) return null;
+		String projectName = project.getName();
+		IProjectDescription description = ResourcesPlugin.getWorkspace().newProjectDescription(projectName);
+		description.setLocation(getTargetLocationFor(project));
+		return description;
 	}
 	
-	protected void checkoutProjects(ICVSRemoteFolder[] folders, IProject[] projects, IProgressMonitor monitor) throws CVSException {
-		try {
-			CVSWorkspaceRoot.checkout(folders, projects, monitor);
-		} catch (TeamException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-	
-	protected IPromptCondition getOverwriteLocalAndFileSystemPrompt() {
-		return new IPromptCondition() {
-			// prompt if resource in workspace exists or exists in local file system
-			public boolean needsPrompt(IResource resource) {
-				File localLocation  = getFileLocation(resource);
-				if(resource.exists() || localLocation.exists()) {
-					return true;
-				}
-				return false;
-			}
-			public String promptMessage(IResource resource) {
-				File localLocation  = getFileLocation(resource);
-				if(resource.exists()) {
-					return Policy.bind("AddToWorkspaceAction.thisResourceExists", resource.getName());//$NON-NLS-1$
-				} else {
-					return Policy.bind("AddToWorkspaceAction.thisExternalFileExists", resource.getName());//$NON-NLS-1$
-				}
-			}
-			private File getFileLocation(IResource resource) {
-				return new File(resource.getParent().getLocation().toFile(), resource.getName());
-			}
-		};
-	}
-	
-	protected static String getTaskName(ICVSRemoteFolder[] remoteFolders) {
-		if (remoteFolders.length == 1) {
-			ICVSRemoteFolder folder = remoteFolders[0];
-			String label = folder.getRepositoryRelativePath();
-			if (label.equals(FolderSyncInfo.VIRTUAL_DIRECTORY)) {
-				label = folder.getName();
-			}
-			return Policy.bind("AddToWorkspace.taskName1", label);  //$NON-NLS-1$
-		}
-		else {
-			return Policy.bind("AddToWorkspace.taskNameN", new Integer(remoteFolders.length).toString());  //$NON-NLS-1$
-		}
+	/**
+	 * Return the target location where the given project should be located or
+	 * null if the default location should be used.
+	 * 
+	 * @param project
+	 */
+	protected IPath getTargetLocationFor(IProject project) {
+		if (targetLocation == null) return null;
+		return new Path(targetLocation);
 	}
 	
 	/**
@@ -164,7 +155,7 @@ public abstract class CheckoutOperation extends CVSOperation {
 	 * Resources existing in the local file system at the target project location but now 
 	 * known to the workbench will be overwritten.
 	 */
-	public void checkout(ICVSRemoteFolder[] resources, IProject[] projects, IProgressMonitor pm) throws CVSException {
+	protected void checkout(ICVSRemoteFolder[] resources, IProject[] projects, IProgressMonitor pm) throws CVSException {
 		try {
 			pm.beginTask(null, 1000 * resources.length);
 			for (int i=0;i<resources.length;i++) {
@@ -202,6 +193,7 @@ public abstract class CheckoutOperation extends CVSOperation {
 			
 			// Determine the local target projects (either the project provider or the module expansions) 
 			IProject[] targetProjects = prepareProjects(session, project,moduleName, Policy.subMonitorFor(pm, 50));
+			if (targetProjects == null) return;
 		
 			// Build the local options
 			List localOptions = new ArrayList();
@@ -229,8 +221,8 @@ public abstract class CheckoutOperation extends CVSOperation {
 				Policy.subMonitorFor(pm, 800));
 			if (status.getCode() == CVSStatus.SERVER_ERROR) {
 				// TODO: Should we cleanup any partially checked out projects?
-				// TODO: Should we return this status
-				throw new CVSServerException(status);
+				signalFailure(status);
+				return;
 			}
 			
 			// Bring the project into the workspace
@@ -256,8 +248,8 @@ public abstract class CheckoutOperation extends CVSOperation {
 			// Fetch the module expansions
 			IStatus status = Request.EXPAND_MODULES.execute(session, new String[] {moduleName}, Policy.subMonitorFor(pm, 50));
 			if (status.getCode() == CVSStatus.SERVER_ERROR) {
-				// TODO: Should we return this status
-				throw new CVSServerException(status);
+				signalFailure(status);
+				return null;
 			}
 			
 			// Convert the module expansions to local projects
@@ -273,65 +265,116 @@ public abstract class CheckoutOperation extends CVSOperation {
 		final IProject[] targetProjects = (IProject[]) targetProjectSet.toArray(new IProject[targetProjectSet.size()]);
 		// Prepare the target projects to receive resources
 		// TODO: Does this really need to be wrapped or is it done higher up?
+		final IStatus[] result = new IStatus[] { null };
 		session.getLocalRoot().run(new ICVSRunnable() {
 			public void run(IProgressMonitor monitor) throws CVSException {
-				scrubProjects(targetProjects, monitor);
+				result[0] = scrubProjects(targetProjects, monitor);
 			}
 		}, Policy.subMonitorFor(pm, 50));
 		pm.done();
-		return targetProjects;
+		// return the target projects if the scrub succeeded
+		if (result[0].isOK()) {
+			return targetProjects;
+		} else {
+			signalFailure(result[0]);
+			return null;
+		}
 	}
-	
+
 	/*
-	 * Delete the target projects before checking out
+	 * This method is invoked to scrub the local projects that are the check out target of
+	 * a single remote module.
 	 */
-	private static void scrubProjects(IProject[] projects, IProgressMonitor monitor) throws CVSException {
+	private IStatus scrubProjects(IProject[] projects, IProgressMonitor monitor) throws CVSException {
 		if (projects == null) {
 			monitor.done();
-			return;
+			return OK;
 		}
+		// Prompt first before any work is done
+		if (projects.length > 1) {
+			setInvolvesMultipleResources(true);
+		}
+		for (int i=0;i<projects.length;i++) {
+			IProject project = projects[i];
+			if (needsPromptForOverwrite(project) && !promptToOverwrite(project)) {
+				return new CVSStatus(IStatus.INFO, "Checkout of project cancelled by user: " + project.getName());
+			}
+		}
+		// Create the projects and remove any previous content
 		monitor.beginTask(Policy.bind("CVSProvider.Scrubbing_projects_1"), projects.length * 100); //$NON-NLS-1$
-		try {	
-			for (int i=0;i<projects.length;i++) {
-				IProject project = projects[i];
-				if (project.exists()) {
-					// TODO: Prompt to confirm overwrite
-					if(!project.isOpen()) {
-						project.open(Policy.subMonitorFor(monitor, 10));
-					}
-					// We do not want to delete the project to avoid a project deletion delta
-					// We do not want to delete the .project to avoid core exceptions
-					monitor.subTask(Policy.bind("CVSProvider.Scrubbing_local_project_1")); //$NON-NLS-1$
-					// unmap the project from any previous repository provider
-					if (RepositoryProvider.getProvider(project) != null)
-						RepositoryProvider.unmap(project);
-					IResource[] children = project.members(IContainer.INCLUDE_TEAM_PRIVATE_MEMBERS);
-					IProgressMonitor subMonitor = Policy.subMonitorFor(monitor, 80);
-					subMonitor.beginTask(null, children.length * 100);
-					try {
-						for (int j = 0; j < children.length; j++) {
-							if ( ! children[j].getName().equals(".project")) {//$NON-NLS-1$
-								children[j].delete(true /*force*/, Policy.subMonitorFor(subMonitor, 100));
-							}
-						}
-					} finally {
-						subMonitor.done();
-					}
-				} else {
-					// Make sure there is no directory in the local file system.
-					File location = new File(project.getParent().getLocation().toFile(), project.getName());
-					if (location.exists()) {
-						// TODO: Prompt to confirm overwrite
-						deepDelete(location);
+		monitor.subTask(Policy.bind("CVSProvider.Scrubbing_local_project_1")); //$NON-NLS-1$	
+		for (int i=0;i<projects.length;i++) {
+			IProject project = projects[i];
+			createAndOpenProject(project, Policy.subMonitorFor(monitor, 10));
+			scrubProject(project, Policy.subMonitorFor(monitor, 90));
+		}
+		monitor.done();
+		return OK;
+	}
+
+	private void scrubProject(IProject project, IProgressMonitor monitor) throws CVSException {
+		try {
+			// unmap the project from any previous repository provider
+			if (RepositoryProvider.getProvider(project) != null)
+				RepositoryProvider.unmap(project);
+			// We do not want to delete the project to avoid a project deletion delta
+			// We do not want to delete the .project to avoid core exceptions
+			IResource[] children = project.members(IContainer.INCLUDE_TEAM_PRIVATE_MEMBERS);
+			monitor.beginTask(null, children.length * 100);
+			try {
+				for (int j = 0; j < children.length; j++) {
+					if ( ! children[j].getName().equals(".project")) {//$NON-NLS-1$
+						children[j].delete(true /*force*/, Policy.subMonitorFor(monitor, 100));
 					}
 				}
+			} finally {
+				monitor.done();
 			}
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
 		} catch (TeamException e) {
 			throw CVSException.wrapException(e);
-		} finally {
-			monitor.done();
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+
+	protected boolean needsPromptForOverwrite(IProject project) {
+				
+		// First, check the description location
+		IProjectDescription desc = getDescriptionFor(project);
+		if (desc != null) {
+			File localLocation = desc.getLocation().toFile();
+			return localLocation.exists();
+		}
+				
+		// Next, check if the resource itself exists
+		if (project.exists()) return true;
+				
+		// Finally, check if the location in the workspace exists;
+		File localLocation  = getFileLocation(project);
+		if (localLocation.exists()) return true;
+				
+		// The target doesn't exist
+		return false;
+	}
+	
+	protected File getFileLocation(IProject project) {
+		return new File(project.getParent().getLocation().toFile(), project.getName());
+	}
+	
+	/**
+	 * @param project
+	 * @return
+	 */
+	private boolean promptToOverwrite(IProject project) {
+		return promptToOverwrite("Confirm overwrite", getOverwritePromptMessage(project));
+	}
+
+	protected String getOverwritePromptMessage(IProject project) {
+		File localLocation  = getFileLocation(project);
+		if(project.exists()) {
+			return Policy.bind("AddToWorkspaceAction.thisResourceExists", project.getName());//$NON-NLS-1$
+		} else {
+			return Policy.bind("AddToWorkspaceAction.thisExternalFileExists", project.getName());//$NON-NLS-1$
 		}
 	}
 	
@@ -358,13 +401,19 @@ public abstract class CheckoutOperation extends CVSOperation {
 		}
 	}
 	
-	private static void deepDelete(File resource) {
-		if (resource.isDirectory()) {
-			File[] fileList = resource.listFiles();
-			for (int i = 0; i < fileList.length; i++) {
-				deepDelete(fileList[i]);
-			}
-		}
-		resource.delete();
+	/**
+	 * @param status
+	 */
+	private void signalFailure(IStatus status) {
+		// TODO: count failures so a count of successes can be displayed at the end
+		addError(status);
 	}
+	
+	/**
+	 * Return the string that is to be used as the task name for the operation
+	 * 
+	 * @param remoteFolders
+	 * @return
+	 */
+	protected abstract String getTaskName();
 }

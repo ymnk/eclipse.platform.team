@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.operations;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
@@ -26,8 +27,8 @@ public class HasProjectMetaFileOperation extends CVSOperation {
 	private ICVSRemoteFolder remoteFolder;
 	private boolean metaFileExists;
 	
-	public static boolean hasMetaFile(ICVSRemoteFolder remoteFolder, IRunnableContext runnableContext) throws CVSException, InterruptedException {
-		HasProjectMetaFileOperation op = new HasProjectMetaFileOperation(remoteFolder);
+	public static boolean hasMetaFile(Shell shell, ICVSRemoteFolder remoteFolder, IRunnableContext runnableContext) throws CVSException, InterruptedException {
+		HasProjectMetaFileOperation op = new HasProjectMetaFileOperation(shell, remoteFolder);
 		if (runnableContext != null) {
 			op.setRunnableContext(runnableContext);
 		}
@@ -35,7 +36,8 @@ public class HasProjectMetaFileOperation extends CVSOperation {
 		return op.metaFileExists();
 	}
 	
-	public HasProjectMetaFileOperation(ICVSRemoteFolder remoteFolder) {
+	public HasProjectMetaFileOperation(Shell shell, ICVSRemoteFolder remoteFolder) {
+		super(shell);
 		this.remoteFolder = remoteFolder;
 	}
 	
