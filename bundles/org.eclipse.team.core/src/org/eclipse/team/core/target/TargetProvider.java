@@ -43,19 +43,21 @@ public abstract class TargetProvider {
 	 * If the remote resource is a container (e.g. folder or project) this operation is equivalent 
 	 * to getting each member of the remote resource, thereby updating the
 	 * content of existing local members, creating local members to receive new remote resources,
-	 * and deleting local members that no longer have a corresponding remote resource.</p>
+	 * and optionally deleting local members that no longer have a corresponding remote resource.</p>
 	 * <p>
 	 * Interrupting the method (via the progress monitor) may lead to partial, but consistent, results.</p>
 	 * 
 	 * @param resources an array of local resources to update from the corresponding remote
 	 * resources.
+	 * @param deleteLocalResources if <code>true</code> the operation will delete local resources that
+	 * aren't on the server and if <code>false</code> local resources won't be deleted.
 	 * @param progress a progress monitor to indicate the duration of the operation, or
 	 * <code>null</code> if progress reporting is not required.
 	 * @throws TeamException if there is a problem getting one or more of the resources.  The
 	 * exception will contain multiple statuses, one for each resource in the <code>resources</code>
 	 * array. 
 	 */
-	public abstract void get(IResource[] resources, IProgressMonitor progress) throws TeamException;
+	public abstract void get(IResource[] resources, boolean deleteLocalResources, IProgressMonitor progress) throws TeamException;
 	
 	/**
 	 * Updates the local resource to have the same content as the given remote
@@ -64,19 +66,21 @@ public abstract class TargetProvider {
 	 * If the remote resource is a container (e.g. folder or project) this operation is equivalent 
 	 * to getting each non-container member of the remote resource, thereby updating the
 	 * content of existing local members, creating local members to receive new remote resources,
-	 * and deleting local members that no longer have a corresponding remote resource.</p>
+	 * and optionally deleting local members that no longer have a corresponding remote resource.</p>
 	 * <p>
 	 * Interrupting the method (via the progress monitor) may lead to partial, but consistent, results.</p>
 	 * 
 	 * @param resources an array of local resources to update from the corresponding remote
 	 * resources.
+	 * @param deleteLocalResources if <code>true</code> the operation will delete local resources that
+	 * aren't on the server and if <code>false</code> local resources won't be deleted.
 	 * @param progress a progress monitor to indicate the duration of the operation, or
 	 * <code>null</code> if progress reporting is not required.
 	 * @throws TeamException if there is a problem getting one or more of the resources.  The
 	 * exception will contain multiple statuses, one for each resource in the <code>resources</code>
 	 * array. 
 	 */
-	public abstract void get(IResource resource, IRemoteTargetResource remote, IProgressMonitor progress) throws TeamException;
+	public abstract void get(IResource resource, IRemoteTargetResource remote, boolean deleteLocalResources, IProgressMonitor progress) throws TeamException;
 
 	/**
 	 * Transfers the content of the local resource to the corresponding remote resource.

@@ -506,7 +506,7 @@ public abstract class ResourceState {
 	/**
 	 * Get the resource corresponding to the receiver to the specified depth.
 	 */
-	protected final void get(int depth, IProgressMonitor progress) throws TeamException {
+	protected final void get(int depth, boolean deleteLocal, IProgressMonitor progress) throws TeamException {
 
 		progress = Policy.monitorFor(progress);
 		
@@ -520,7 +520,7 @@ public abstract class ResourceState {
 			Policy.checkCanceled(progress);
 			
 			// If remote does not exist then simply ensure no local resource exists.			
-			if (!hasRemote(noProgress)) {
+			if (deleteLocal && !hasRemote(noProgress)) {
 				if (hasLocal()) 
 					deleteLocal(noProgress);
 				return;
@@ -556,11 +556,11 @@ public abstract class ResourceState {
 					return;
 				case IResource.DEPTH_ONE :
 					// If we are considering only the immediate members of the collection
-					getFolderShallow(Policy.subMonitorFor(progress, 100));
+					getFolderShallow(deleteLocal, Policy.subMonitorFor(progress, 100));
 					return;
 				case IResource.DEPTH_INFINITE :
 					// We are going in deep.
-					getFolderDeep(Policy.subMonitorFor(progress, 100));
+					getFolderDeep(deleteLocal, Policy.subMonitorFor(progress, 100));
 					return;
 				default :
 					// We have covered all the legal cases.
@@ -575,12 +575,12 @@ public abstract class ResourceState {
 	/**
 	 * Get the folder resource represented by the receiver deeply.
 	 */
-	protected final void getFolderDeep(IProgressMonitor progress) throws TeamException {
+	protected final void getFolderDeep(boolean deleteLocal, IProgressMonitor progress) throws TeamException {
 		progress = Policy.monitorFor(progress);
 		try {
 			progress.beginTask(null, 10);
 			// Could throw if problem getting the folder at this level.
-			ResourceState[] childFolders = getFolderShallow(Policy.subMonitorFor(progress, 7));
+			ResourceState[] childFolders = getFolderShallow(deleteLocal, Policy.subMonitorFor(progress, 7));
 	
 			// If there are no further children then we are done.
 			if (childFolders.length == 0)
@@ -591,7 +591,7 @@ public abstract class ResourceState {
 			try {
 				subProgress.beginTask(null, childFolders.length);
 				for (int i = 0; i < childFolders.length; i++) {
-					childFolders[i].get(IResource.DEPTH_INFINITE, Policy.subMonitorFor(subProgress, 1));
+					childFolders[i].get(IResource.DEPTH_INFINITE, deleteLocal, Policy.subMonitorFor(subProgress, 1));
 				}
 			} finally {
 				subProgress.done();
@@ -611,7 +611,7 @@ public abstract class ResourceState {
 	 * returns an array of children of the remote resource that are themselves
 	 * collections.
 	 */
-	protected final ResourceState[] getFolderShallow(IProgressMonitor progress) throws TeamException {
+	protected final ResourceState[] getFolderShallow(boolean deleteLocal, IProgressMonitor progress) throws TeamException {
 		progress = Policy.monitorFor(progress);
 		IProgressMonitor noProgress = new NullProgressMonitor();
 		try {
@@ -649,7 +649,7 @@ public abstract class ResourceState {
 					remoteChildFolders.add(remoteChildState);
 					// If the local child is not a container then it must be deleted.
 					IResource localChild = remoteChildState.getLocal();
-					if (localChild.exists() && (!(localChild instanceof IContainer)))
+					if (deleteLocal && localChild.exists() && (!(localChild instanceof IContainer)))
 						remoteChildState.deleteLocal(noProgress);
 				} // end if
 			} // end for

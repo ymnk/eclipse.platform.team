@@ -126,6 +126,7 @@ public class SiteSelectionPage extends TargetWizardPage {
 			disconnectTarget.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
 					disconnect = disconnectTarget.getSelection();
+					SiteSelectionPage.this.setPageComplete(true);
 				}
 			});
 		}

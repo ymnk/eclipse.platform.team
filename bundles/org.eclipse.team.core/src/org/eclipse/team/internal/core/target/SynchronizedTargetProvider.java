@@ -112,11 +112,11 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	 * 
 	 * @see TargetProvider.get(IResource[], int, IProgressMonitor)
 	 */
-	public void get(final IResource[] resources, IProgressMonitor progress) throws TeamException {
+	public void get(final IResource[] resources, final boolean deleteLocal, IProgressMonitor progress) throws TeamException {
 		run(new ITargetRunnable() {
 			public void run(IProgressMonitor monitor) throws TeamException {
 				for (int i = 0; i < resources.length; i++) {
-					getState(resources[i]).get(IResource.DEPTH_INFINITE, monitor);
+					getState(resources[i]).get(IResource.DEPTH_INFINITE, deleteLocal, monitor);
 				}
 			}
 		}, Policy.monitorFor(progress));
@@ -128,10 +128,10 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	 * 
 	 * @see TargetProvider.get(IResource, IRemoteTargetResource, IProgressMonitor)
 	 */
-	public void get(final IResource resource, final IRemoteTargetResource remote, IProgressMonitor progress) throws TeamException {
+	public void get(final IResource resource, final IRemoteTargetResource remote, final boolean deleteLocal, IProgressMonitor progress) throws TeamException {
 		run(new ITargetRunnable() {
 			public void run(IProgressMonitor monitor) throws TeamException {
-				getState(resource, remote).get(IResource.DEPTH_INFINITE, monitor);
+				getState(resource, remote).get(IResource.DEPTH_INFINITE, deleteLocal, monitor);
 			}
 		}, Policy.monitorFor(progress));
 	}
