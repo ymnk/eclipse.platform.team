@@ -46,9 +46,6 @@ public class ShareProjectOperation extends CVSOperation {
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected void execute(IProgressMonitor monitor) throws CVSException, InterruptedException {
-		
-		// Determine if the repository is known
-		boolean alreadyExists = CVSProviderPlugin.getPlugin().isKnownRepository(location.getLocation());
 		try {
 			monitor.beginTask(getTaskName(), 100);
 			// Create the remote module
@@ -67,17 +64,9 @@ public class ShareProjectOperation extends CVSOperation {
 			if (exception[0] != null)
 				throw exception[0];
 		} catch (CoreException e) {
-			// The checkout may have triggered password caching
-			// Therefore, if this is a newly created location, we want to clear its cache
-			if ( ! alreadyExists)
-				CVSProviderPlugin.getPlugin().disposeRepository(location);
 			throw CVSException.wrapException(e);
 		} finally {
 			monitor.done();
-		}
-		// Add the repository if it didn't exist already
-		if ( ! alreadyExists) {
-			CVSProviderPlugin.getPlugin().addRepository(location);
 		}
 	}
 

@@ -14,15 +14,49 @@ package org.eclipse.team.internal.ccvs.core.connection;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
 
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.core.client.*;
-import org.eclipse.team.internal.ccvs.core.resources.*;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.core.IConnectionMethod;
+import org.eclipse.team.internal.ccvs.core.IUserAuthenticator;
+import org.eclipse.team.internal.ccvs.core.IUserInfo;
+import org.eclipse.team.internal.ccvs.core.Policy;
+import org.eclipse.team.internal.ccvs.core.client.Command;
+import org.eclipse.team.internal.ccvs.core.client.Session;
+import org.eclipse.team.internal.ccvs.core.client.Update;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTree;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteModule;
+import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
+import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.service.prefs.Preferences;
 
 /**
  * This class manages a CVS repository location.
@@ -101,6 +135,14 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 		FAKE_URL = temp;
 	} 
 	
+	/**
+	 * Return the preferences node whose child nodes are teh know repositories
+	 * @return a preferences node
+	 */
+	public static Preferences getParentPreferences() {
+		return CVSProviderPlugin.getPlugin().getInstancePreferences().node("repositories");
+	}
+	
 	/*
 	 * Create a CVSRepositoryLocation from its composite parts.
 	 */
@@ -140,6 +182,11 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 	 */
 	public void dispose() {
 		flushCache();
+		try {
+			getPreferences().removeNode();
+		} catch (BackingStoreException e) {
+			CVSProviderPlugin.log(IStatus.ERROR, "Error clearing preferences for lcoation {0}" + getLocation(), e);
+		}
 	}
 	
 	/*
@@ -422,9 +469,12 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 		}
 		
 		// Ensure that the receiver is known by the CVS provider
-		CVSProviderPlugin.getPlugin().getRepository(getLocation());
+		if (!hasPreferences()) {
+			storePreferences();
+		}
+		getPreferences().putBoolean("needsDisposal", true);
 	}
-	
+
 	/*
 	 * Cache the user info in the keyring. Return true if the operation
 	 * succeeded and false otherwise. If an error occurs, it will be logged.
@@ -1028,5 +1078,32 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 	 */
 	public void setUserAuthenticator(IUserAuthenticator authenticator) {
 		CVSRepositoryLocation.authenticator = authenticator;
-	}	
+	}
+	
+	/*
+	 * Return the preferences node for this repository
+	 */
+	private Preferences getPreferences() {
+		return getParentPreferences().node(getLocation());
+	}
+	
+	private boolean hasPreferences() {
+		try {
+			return getParentPreferences().nodeExists(getLocation());
+		} catch (BackingStoreException e) {
+			CVSProviderPlugin.log(IStatus.ERROR, "Error retrieving preferences for location {0}" + getLocation(), e);
+			return false;
+		}
+	}
+	
+	public void storePreferences() {
+		Preferences prefs = getPreferences();
+		prefs.putBoolean("needsDisposal", false);
+		if (getReadLocation() != null) {
+			prefs.put("read", getReadLocation());
+		}
+		if (getWriteLocation() != null) {
+			prefs.put("write", getWriteLocation());
+		}
+	}
 }

@@ -17,13 +17,17 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.ICVSListener;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
+import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.service.prefs.Preferences;
 
 /**
  * This class keeps track of the CVS repository locations that are known to
@@ -102,22 +106,10 @@ public class KnownRepositories {
 	}
 	
 	/*
-	 * Add the repository location to the cached locations and notify listeners
-	 */
-	private void addToRepositoriesCache(final ICVSRepositoryLocation repository) {
-		repositories.put(repository.getLocation(), repository);
-		fireNotification(new Notification() {
-			public void notify(ICVSListener listener) {
-				listener.repositoryAdded(repository);
-			}
-		});
-	}
-	
-	/*
 	 * Remove the repository location from the cached locations and notify listeners
 	 */
 	private void removeFromRepositoriesCache(final ICVSRepositoryLocation repository) {
-		if (repositories.remove(repository.getLocation()) != null) {
+		if (getRepositoriesMap().remove(repository.getLocation()) != null) {
 			fireNotification(new Notification() {
 				public void notify(ICVSListener listener) {
 					listener.repositoryRemoved(repository);
@@ -149,7 +141,7 @@ public class KnownRepositories {
 		CVSRepositoryLocation location = CVSRepositoryLocation.fromProperties(configuration);
 		
 		// Check the cache for an equivalent instance and if there is one, throw an exception
-		CVSRepositoryLocation existingLocation = (CVSRepositoryLocation)repositories.get(location.getLocation());
+		CVSRepositoryLocation existingLocation = internalGetRepository(location.getLocation());
 		if (existingLocation != null) {
 			throw new CVSException(new CVSStatus(CVSStatus.ERROR, Policy.bind("CVSProvider.alreadyExists"))); //$NON-NLS-1$
 		}
@@ -161,16 +153,23 @@ public class KnownRepositories {
 	 * Add the repository to the receiver's list of known repositories. Doing this will enable
 	 * password caching accross platform invokations.
 	 */
-	public void addRepository(ICVSRepositoryLocation repository) throws CVSException {
+	public void addRepository(final ICVSRepositoryLocation repository) throws CVSException {
 		// Check the cache for an equivalent instance and if there is one, just update the cache
-		CVSRepositoryLocation existingLocation = (CVSRepositoryLocation)repositories.get(repository.getLocation());
+		CVSRepositoryLocation existingLocation = internalGetRepository(repository.getLocation());
 		if (existingLocation != null) {
+			// Cache the password in case it has changed
 			((CVSRepositoryLocation)repository).updateCache();
 		} else {
-			// Cache the password and register the repository location
-			addToRepositoriesCache(repository);
+			// Store the location and cache the password
+			store((CVSRepositoryLocation)repository);
 			((CVSRepositoryLocation)repository).updateCache();
 		}
+		// Notify no matter what since it may not have been broadcast before
+		fireNotification(new Notification() {
+			public void notify(ICVSListener listener) {
+				listener.repositoryAdded(repository);
+			}
+		});
 	}
 	
 	/**
@@ -188,14 +187,18 @@ public class KnownRepositories {
 	 * The location string corresponds to the Strin returned by ICVSRepositoryLocation#getLocation()
 	 */
 	public boolean isKnownRepository(String location) {
-		return repositories.get(location) != null;
+		return internalGetRepository(location) != null;
 	}
 	
+	private CVSRepositoryLocation internalGetRepository(String location) {
+		return (CVSRepositoryLocation)getRepositoriesMap().get(location);
+	}
+
 	/** 
 	 * Return a list of the know repository locations
 	 */
 	public ICVSRepositoryLocation[] getKnownRepositories() {
-		return (ICVSRepositoryLocation[])repositories.values().toArray(new ICVSRepositoryLocation[repositories.size()]);
+		return (ICVSRepositoryLocation[])getRepositoriesMap().values().toArray(new ICVSRepositoryLocation[getRepositoriesMap().size()]);
 	}
 	
 	/**
@@ -222,11 +225,46 @@ public class KnownRepositories {
 	 * of the location permanently. This means that it cannot be modified by the authenticator. 
 	 */
 	public ICVSRepositoryLocation getRepository(String location) throws CVSException {
-		ICVSRepositoryLocation repository = (ICVSRepositoryLocation)repositories.get(location);
+		ICVSRepositoryLocation repository = internalGetRepository(location);
 		if (repository == null) {
 			repository = CVSRepositoryLocation.fromString(location);
-			addToRepositoriesCache(repository);
+			store((CVSRepositoryLocation)repository);
+			// Do not send out an event since the user may not have
+			// added the location.
 		}
 		return repository;
+	}
+	
+	/*
+	 * Cache the location and store it in the preferences for persistance
+	 */
+	private void store(CVSRepositoryLocation location) {
+		// Cache the location instance for later retrieval
+		getRepositoriesMap().put(location.getLocation(), location);
+		location.storePreferences();
+	}
+	
+	private Map getRepositoriesMap() {
+		if (repositories == null) {
+			// Load the repositories from the preferences
+			repositories = new HashMap();
+			Preferences prefs = CVSRepositoryLocation.getParentPreferences();
+			try {
+				String[] locations = prefs.childrenNames();
+				for (int i = 0; i < locations.length; i++) {
+					String location = locations[i];
+					try {
+						repositories.put(location, CVSRepositoryLocation.fromString(location));
+					} catch (CVSException e) {
+						// Log and continue
+						CVSProviderPlugin.log(e);
+					}
+				}
+			} catch (BackingStoreException e) {
+				// Log and continue (although all repos will be missing)
+				CVSProviderPlugin.log(IStatus.ERROR, "Error restoring CVS repositories", e);
+			}
+		}
+		return repositories;
 	}
 }

@@ -199,6 +199,14 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 				CVSUIPlugin.openError(getContainer().getShell(), null, null, e);
 			}
 		}
+		// Add the location to the provider if it is new
+		if (isNewLocation) {
+			try {
+				CVSProviderPlugin.getPlugin().addRepository(location);
+			} catch (CVSException e) {
+				CVSUIPlugin.openError(getContainer().getShell(), null, null, e);
+			}
+		}
 		return result[0];
 	}
 	
@@ -213,6 +221,14 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 			if (promptToKeepMapping()) {
 				// If we didn't disconnect, don't dispose the repo
 				disposeLocation = false;
+				// Add the location to the provider if it is new
+				if (isNewLocation) {
+					try {
+						CVSProviderPlugin.getPlugin().addRepository(location);
+					} catch (CVSException e) {
+						CVSUIPlugin.openError(getContainer().getShell(), null, null, e);
+					}
+				}
 			} else {
 				try {
 					getContainer().run(true, true, new IRunnableWithProgress() {
@@ -362,8 +378,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 			}
 			
 			// Get the repository location (the get will add the locatin to the provider)
-			boolean isPreviouslyKnown = CVSProviderPlugin.getPlugin().isKnownRepository(info.getRoot());
-			ICVSRepositoryLocation location = CVSProviderPlugin.getPlugin().getRepository(info.getRoot());
+			ICVSRepositoryLocation location = getLocation();
 	
 			// Validate the connection if the user wants to
 			boolean validate = autoconnectPage.getValidate();					
@@ -384,7 +399,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 					if (!keep[0]) {
 						// Remove the root
 						try {
-							if (!isPreviouslyKnown) {
+							if (isNewLocation) {
 								CVSProviderPlugin.getPlugin().disposeRepository(location);
 							}
 						} catch (TeamException e1) {
@@ -414,10 +429,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 			CVSUIPlugin.openError(getShell(), null, null, e, CVSUIPlugin.PERFORM_SYNC_EXEC);
 			if (isNewLocation && location != null) location.flushUserInfo();
 			return false;
-		}
-		// Add the location to the provider if it is new
-		if (isNewLocation) {
-			CVSProviderPlugin.getPlugin().addRepository(location);
 		}
 		
 		// Create the remote module for the project
