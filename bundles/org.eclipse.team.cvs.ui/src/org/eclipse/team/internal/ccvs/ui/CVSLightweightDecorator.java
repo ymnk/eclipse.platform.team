@@ -77,13 +77,31 @@ public class CVSLightweightDecorator
 	}
 
 	static {
-		dirty = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
-		checkedIn = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
-		added = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
-		merged = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_MERGED));
-		newResource = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_QUESTIONABLE));
-		edited = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_EDITED));
-		noRemoteDir = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_NO_REMOTEDIR));
+		dirty =
+			new CachedImageDescriptor(
+				TeamImages.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
+		checkedIn =
+			new CachedImageDescriptor(
+				TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
+		added =
+			new CachedImageDescriptor(
+				TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
+		merged =
+			new CachedImageDescriptor(
+				CVSUIPlugin.getPlugin().getImageDescriptor(
+					ICVSUIConstants.IMG_MERGED));
+		newResource =
+			new CachedImageDescriptor(
+				CVSUIPlugin.getPlugin().getImageDescriptor(
+					ICVSUIConstants.IMG_QUESTIONABLE));
+		edited =
+			new CachedImageDescriptor(
+				CVSUIPlugin.getPlugin().getImageDescriptor(
+					ICVSUIConstants.IMG_EDITED));
+		noRemoteDir =
+			new CachedImageDescriptor(
+				CVSUIPlugin.getPlugin().getImageDescriptor(
+					ICVSUIConstants.IMG_NO_REMOTEDIR));
 	}
 
 	public CVSLightweightDecorator() {
@@ -95,23 +113,23 @@ public class CVSLightweightDecorator
 
 	public static boolean isDirty(final ICVSResource cvsFile) {
 		try {
-			final boolean[] isDirty = new boolean[] {false};
-			
+			final boolean[] isDirty = new boolean[] { false };
+
 			// DECORATOR investigate the implications of not calling isModified() in a 
 			// workspace runnable. Maybe adding a check to EclipseSynchronizer such
 			// that the workspace is never modified (e.g. resulting in a delta) during this
 			// operation.
-			
-//			EclipseSynchronizer.getInstance().run(new ICVSRunnable() {
-//				public void run(IProgressMonitor monitor) throws CVSException {
-//					// file is dirty or file has been merged by an update
-//					if(!cvsFile.isIgnored()) {
-//						isDirty[0] = cvsFile.isModified();
-//					}
-//				}
-//			}, null);
 
-			if(!cvsFile.isIgnored()) {
+			//			EclipseSynchronizer.getInstance().run(new ICVSRunnable() {
+			//				public void run(IProgressMonitor monitor) throws CVSException {
+			//					// file is dirty or file has been merged by an update
+			//					if(!cvsFile.isIgnored()) {
+			//						isDirty[0] = cvsFile.isModified();
+			//					}
+			//				}
+			//			}, null);
+
+			if (!cvsFile.isIgnored()) {
 				isDirty[0] = cvsFile.isModified();
 			}
 
@@ -126,12 +144,13 @@ public class CVSLightweightDecorator
 	public static boolean isDirty(IResource resource) {
 
 		// No need to decorate non-existant resources
-		if (!resource.exists()) return false;
+		if (!resource.exists())
+			return false;
 
 		return isDirty(CVSWorkspaceRoot.getCVSResourceFor(resource));
 
 	}
-	
+
 	/*
 	 * Answers null if a provider does not exist or the provider is not a CVS provider. These resources
 	 * will be ignored by the decorator.
@@ -168,15 +187,14 @@ public class CVSLightweightDecorator
 	 * @see org.eclipse.jface.viewers.ILightweightLabelDecorator#decorate(java.lang.Object, org.eclipse.jface.viewers.IDecoration)
 	 */
 	public void decorate(Object element, IDecoration decoration) {
-		
+
 		IResource resource = getResource(element);
 		if (resource == null || resource.getType() == IResource.ROOT)
 			return;
-			
+
 		CVSTeamProvider cvsProvider = getCVSProviderFor(resource);
 		if (cvsProvider == null)
 			return;
-
 
 		// if the resource is ignored return an empty decoration. This will
 		// force a decoration update event and clear the existing CVS decoration.
@@ -193,7 +211,7 @@ public class CVSLightweightDecorator
 
 		if (Policy.DEBUG_DIRTY_CACHING) {
 			System.out.println("Decorating " //$NON-NLS-1$
-				+ resource.getFullPath());
+			+resource.getFullPath());
 		}
 
 		// determine a if resource has outgoing changes (e.g. is dirty).
@@ -205,82 +223,121 @@ public class CVSLightweightDecorator
 		if (type == IResource.FILE || computeDeepDirtyCheck) {
 			isDirty = CVSLightweightDecorator.isDirty(resource);
 		}
-		
+
 		decorateTextLabel(resource, decoration, isDirty, true);
-		
+
 		ImageDescriptor overlay = getOverlay(resource, isDirty, cvsProvider);
-		if(overlay != null) { //actually sending null arg would work but this makes logic clearer
+		if (overlay != null) {
+			//actually sending null arg would work but this makes logic clearer
 			decoration.addOverlay(overlay);
 		}
 	}
 
-//todo the showRevisions flag is temp, a better solution is DecoratorStrategy classes which have most the code below
-	public static void decorateTextLabel(IResource resource, IDecoration decoration, boolean isDirty, boolean showRevisions) {
+	//todo the showRevisions flag is temp, a better solution is DecoratorStrategy classes which have most the code below
+	public static void decorateTextLabel(
+		IResource resource,
+		IDecoration decoration,
+		boolean isDirty,
+		boolean showRevisions) {
 		try {
 			Map bindings = new HashMap(3);
 			String format = ""; //$NON-NLS-1$
-			IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
+			IPreferenceStore store =
+				CVSUIPlugin.getPlugin().getPreferenceStore();
 
 			// if the resource does not have a location then return. This can happen if the resource
 			// has been deleted after we where asked to decorate it.
-			if(resource.getLocation() == null) {
+			if (resource.getLocation() == null) {
 				return;
 			}
 
 			int type = resource.getType();
 
 			if (type == IResource.FOLDER) {
-				format = store.getString(ICVSUIConstants.PREF_FOLDERTEXT_DECORATION);
+				format =
+					store.getString(ICVSUIConstants.PREF_FOLDERTEXT_DECORATION);
 			} else if (type == IResource.PROJECT) {
-				format = store.getString(ICVSUIConstants.PREF_PROJECTTEXT_DECORATION);
+				format =
+					store.getString(
+						ICVSUIConstants.PREF_PROJECTTEXT_DECORATION);
 			} else {
-				format = store.getString(ICVSUIConstants.PREF_FILETEXT_DECORATION);
+				format =
+					store.getString(ICVSUIConstants.PREF_FILETEXT_DECORATION);
 			}
 
 			if (isDirty) {
-				bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
+				bindings.put(
+					CVSDecoratorConfiguration.DIRTY_FLAG,
+					store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
 			}
 
 			CVSTag tag = getTagToShow(resource);
 			if (tag != null) {
-				bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, tag.getName());
+				bindings.put(
+					CVSDecoratorConfiguration.RESOURCE_TAG,
+					tag.getName());
 			}
 
 			if (type != IResource.FILE) {
-				ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor((IContainer) resource);
+				ICVSFolder folder =
+					CVSWorkspaceRoot.getCVSFolderFor((IContainer) resource);
 				FolderSyncInfo folderInfo = folder.getFolderSyncInfo();
 				if (folderInfo != null) {
-					ICVSRepositoryLocation location = CVSProviderPlugin.getPlugin().getRepository(folderInfo.getRoot());
-					bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_HOST, location.getHost());
-					bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_METHOD, location.getMethod().getName());
-					bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_USER, location.getUsername());
-					bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_ROOT, location.getRootDirectory());
-					bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_REPOSITORY, folderInfo.getRepository());
+					ICVSRepositoryLocation location =
+						CVSProviderPlugin.getPlugin().getRepository(
+							folderInfo.getRoot());
+					bindings.put(
+						CVSDecoratorConfiguration.REMOTELOCATION_HOST,
+						location.getHost());
+					bindings.put(
+						CVSDecoratorConfiguration.REMOTELOCATION_METHOD,
+						location.getMethod().getName());
+					bindings.put(
+						CVSDecoratorConfiguration.REMOTELOCATION_USER,
+						location.getUsername());
+					bindings.put(
+						CVSDecoratorConfiguration.REMOTELOCATION_ROOT,
+						location.getRootDirectory());
+					bindings.put(
+						CVSDecoratorConfiguration.REMOTELOCATION_REPOSITORY,
+						folderInfo.getRepository());
 				}
 			} else {
-				format = store.getString(ICVSUIConstants.PREF_FILETEXT_DECORATION);
-				ICVSFile file = CVSWorkspaceRoot.getCVSFileFor((IFile) resource);
+				format =
+					store.getString(ICVSUIConstants.PREF_FILETEXT_DECORATION);
+				ICVSFile file =
+					CVSWorkspaceRoot.getCVSFileFor((IFile) resource);
 				ResourceSyncInfo fileInfo = file.getSyncInfo();
 				if (fileInfo != null) {
 					if (fileInfo.isAdded()) {
-						bindings.put(CVSDecoratorConfiguration.ADDED_FLAG, store.getString(ICVSUIConstants.PREF_ADDED_FLAG));
+						bindings.put(
+							CVSDecoratorConfiguration.ADDED_FLAG,
+							store.getString(ICVSUIConstants.PREF_ADDED_FLAG));
 					} else {
-						if(showRevisions)
-							bindings.put(CVSDecoratorConfiguration.FILE_REVISION, fileInfo.getRevision());
+						if (showRevisions)
+							bindings.put(
+								CVSDecoratorConfiguration.FILE_REVISION,
+								fileInfo.getRevision());
 					}
-					KSubstOption option = fileInfo.getKeywordMode() != null ?
-						fileInfo.getKeywordMode() :
-						KSubstOption.fromFile((IFile) resource);
-					bindings.put(CVSDecoratorConfiguration.FILE_KEYWORD, option.getShortDisplayText());
+					KSubstOption option =
+						fileInfo.getKeywordMode() != null
+							? fileInfo.getKeywordMode()
+							: KSubstOption.fromFile((IFile) resource);
+					bindings.put(
+						CVSDecoratorConfiguration.FILE_KEYWORD,
+						option.getShortDisplayText());
 				} else {
 					// only show the type that cvs will use when comitting the file
-					KSubstOption option = KSubstOption.fromFile((IFile) resource);
-					bindings.put(CVSDecoratorConfiguration.FILE_KEYWORD, option.getShortDisplayText());
+					KSubstOption option =
+						KSubstOption.fromFile((IFile) resource);
+					bindings.put(
+						CVSDecoratorConfiguration.FILE_KEYWORD,
+						option.getShortDisplayText());
 				}
 			}
-		
-		CVSDecoratorConfiguration.decorate(decoration, format, bindings);
-			
+
+			CVSDecoratorConfiguration.decorate(decoration, format, bindings);
+
 		} catch (CVSException e) {
 			CVSUIPlugin.log(e.getStatus());
 			return;
@@ -291,7 +348,8 @@ public class CVSLightweightDecorator
 	 * Only show the tag if the resources tag is different than the parents. Or else, tag
 	 * names will clutter the text decorations.
 	 */
-	protected static CVSTag getTagToShow(IResource resource) throws CVSException {
+	protected static CVSTag getTagToShow(IResource resource)
+		throws CVSException {
 		ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
 		CVSTag tag = null;
 
@@ -300,56 +358,62 @@ public class CVSLightweightDecorator
 		// if different than parent.
 		boolean managed = false;
 
-		if(cvsResource.isFolder()) {
-			FolderSyncInfo folderInfo = ((ICVSFolder)cvsResource).getFolderSyncInfo();
-			if(folderInfo != null) {
+		if (cvsResource.isFolder()) {
+			FolderSyncInfo folderInfo =
+				((ICVSFolder) cvsResource).getFolderSyncInfo();
+			if (folderInfo != null) {
 				tag = folderInfo.getTag();
 				managed = true;
 			}
 		} else {
-			ResourceSyncInfo info = ((ICVSFile)cvsResource).getSyncInfo();
-			if(info != null) {
+			ResourceSyncInfo info = ((ICVSFile) cvsResource).getSyncInfo();
+			if (info != null) {
 				tag = info.getTag();
 				managed = true;
 			}
 		}
 
 		ICVSFolder parent = cvsResource.getParent();
-		if(parent != null && managed) {
+		if (parent != null && managed) {
 			FolderSyncInfo parentInfo = parent.getFolderSyncInfo();
-			if(parentInfo != null) {
+			if (parentInfo != null) {
 				CVSTag parentTag = parentInfo.getTag();
 				parentTag = (parentTag == null ? CVSTag.DEFAULT : parentTag);
 				tag = (tag == null ? CVSTag.DEFAULT : tag);
 				// must compare tags by name because CVS doesn't do a good job of
 				// using  T and N prefixes for folders and files.
-				if( parentTag.getName().equals(tag.getName())) {
+				if (parentTag.getName().equals(tag.getName())) {
 					tag = null;
 				}
 			}
 		}
 		return tag;
 	}
-	
+
 	/* Determine and return the overlay icon to use.
 	 * We only get to use one, so if many are applicable at once we chose the
 	 * one we think is the most important to show.
 	 * Return null if no overlay is to be used.
-	 */	
-	public static ImageDescriptor getOverlay(IResource resource, boolean isDirty, CVSTeamProvider provider) {
+	 */
+	public static ImageDescriptor getOverlay(
+		IResource resource,
+		boolean isDirty,
+		CVSTeamProvider provider) {
 
 		// for efficiency don't look up a pref until its needed
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
-		boolean showNewResources = store.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION);
+		boolean showNewResources =
+			store.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION);
 
 		// show newResource icon
 		if (showNewResources) {
-			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+			ICVSResource cvsResource =
+				CVSWorkspaceRoot.getCVSResourceFor(resource);
 			try {
 				if (cvsResource.exists()) {
 					boolean isNewResource = false;
 					if (cvsResource.isFolder()) {
-						if (!((ICVSFolder)cvsResource).isCVSFolder()) {
+						if (!((ICVSFolder) cvsResource).isCVSFolder()) {
 							isNewResource = true;
 						}
 					} else if (!cvsResource.isManaged()) {
@@ -364,25 +428,29 @@ public class CVSLightweightDecorator
 				return null;
 			}
 		}
-		
-		boolean showDirty = store.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION);
+
+		boolean showDirty =
+			store.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION);
 
 		// show dirty icon
-		if(showDirty && isDirty) {
-			 return dirty;
+		if (showDirty && isDirty) {
+			return dirty;
 		}
-				
-		boolean showAdded = store.getBoolean(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION);
+
+		boolean showAdded =
+			store.getBoolean(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION);
 
 		if (showAdded && resource.getType() == IResource.FILE) {
 			try {
 				if (resource.getLocation() != null) {
-					ICVSFile cvsFile = CVSWorkspaceRoot.getCVSFileFor((IFile) resource);
+					ICVSFile cvsFile =
+						CVSWorkspaceRoot.getCVSFileFor((IFile) resource);
 					ResourceSyncInfo info = cvsFile.getSyncInfo();
 					// show merged icon if file has been merged but has not been edited (e.g. on commit it will be ignored)
-					if (info != null && info.isNeedsMerge(cvsFile.getTimeStamp())) {
+					if (info != null
+						&& info.isNeedsMerge(cvsFile.getTimeStamp())) {
 						return merged;
-					// show added icon if file has been added locally.
+						// show added icon if file has been added locally.
 					} else if (info != null && info.isAdded()) {
 						// todo
 						return added;
@@ -395,21 +463,30 @@ public class CVSLightweightDecorator
 		}
 
 		// if watch/edit is enabled, show non-read-only files as being edited
-		boolean decorateEdited = store.getBoolean(ICVSUIConstants.PREF_CHECKOUT_READ_ONLY);
-		
-		if (decorateEdited && resource.getType() == IResource.FILE && !resource.isReadOnly() && CVSWorkspaceRoot.hasRemote(resource)) {
+		boolean decorateEdited =
+			store.getBoolean(ICVSUIConstants.PREF_CHECKOUT_READ_ONLY);
+
+		if (decorateEdited
+			&& resource.getType() == IResource.FILE
+			&& !resource.isReadOnly()
+			&& CVSWorkspaceRoot.hasRemote(resource)) {
 			return edited;
 		}
-		
-		boolean showHasRemote = store.getBoolean(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION);
-		
+
+		boolean showHasRemote =
+			store.getBoolean(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION);
+
 		// Simplest is that is has remote.
 		if (showHasRemote && CVSWorkspaceRoot.hasRemote(resource)) {
 			if (resource.getType() != IResource.FILE) {
 				// check if the folder is local diectory with no remote
-				ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)resource);
+				ICVSFolder cvsFolder =
+					CVSWorkspaceRoot.getCVSFolderFor((IContainer) resource);
 				try {
-					if (cvsFolder.getFolderSyncInfo().getRepository().equals(FolderSyncInfo.VIRTUAL_DIRECTORY)) {
+					if (cvsFolder
+						.getFolderSyncInfo()
+						.getRepository()
+						.equals(FolderSyncInfo.VIRTUAL_DIRECTORY)) {
 						return noRemoteDir;
 					}
 				} catch (CVSException e) {
@@ -428,7 +505,7 @@ public class CVSLightweightDecorator
 	/*
 	 * Add resource and its parents to the List
 	 */
-	 
+
 	private void addWithParents(IResource resource, List resources) {
 		IResource current = resource;
 
@@ -437,34 +514,39 @@ public class CVSLightweightDecorator
 			current = current.getParent();
 		}
 	}
-	
+
 	/*
 	 * Return the CVSLightweightDecorator instance that is currently enabled.
 	 * Return null if we don't have a decorator or its not enabled.
-	 */	 
-	/* package */ static CVSLightweightDecorator getActiveCVSDecorator() {
-		IDecoratorManager manager = CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager();
+	 */
+	/* package */
+	static CVSLightweightDecorator getActiveCVSDecorator() {
+		IDecoratorManager manager =
+			CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager();
 		if (manager.getEnabled(CVSUIPlugin.DECORATOR_ID))
-			return (CVSLightweightDecorator) manager.getLightweightLabelDecorator(CVSUIPlugin.DECORATOR_ID);
+			return (
+				CVSLightweightDecorator) manager.getLightweightLabelDecorator(
+				CVSUIPlugin.DECORATOR_ID);
 		return null;
 	}
 	/*
 	 * Perform a blanket refresh of all CVS decorations
 	 */
-	 public static void refresh() {
+	public static void refresh() {
 		CVSLightweightDecorator activeDecorator = getActiveCVSDecorator();
 
-		if(activeDecorator == null)
-			return;	//nothing to do, our decorator isn't active
+		if (activeDecorator == null)
+			return; //nothing to do, our decorator isn't active
 
 		//update all displaying of our decorator;
-		activeDecorator.fireLabelProviderChanged(new LabelProviderChangedEvent(activeDecorator));
+		activeDecorator.fireLabelProviderChanged(
+			new LabelProviderChangedEvent(activeDecorator));
 	}
 
 	/*
 	 * Update the decorators for every resource in project
 	 */
-	 
+
 	public void refresh(IProject project) {
 		final List resources = new ArrayList();
 		try {
@@ -474,19 +556,20 @@ public class CVSLightweightDecorator
 					return true;
 				}
 			});
-			postLabelEvent(new LabelProviderChangedEvent(this, resources.toArray()));
+			postLabelEvent(
+				new LabelProviderChangedEvent(this, resources.toArray()));
 		} catch (CoreException e) {
 			CVSProviderPlugin.log(e.getStatus());
 		}
 	}
-	
+
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceSyncInfoChanged(org.eclipse.core.resources.IResource[])
 	 */
 	public void resourceSyncInfoChanged(IResource[] changedResources) {
 		resourceStateChanged(changedResources);
 	}
-	
+
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModificationStateChanged(org.eclipse.core.resources.IResource[])
 	 */
@@ -502,21 +585,24 @@ public class CVSLightweightDecorator
 		//System.out.println(">> State Change Event");
 		List resourcesToUpdate = new ArrayList();
 
-		boolean showingDeepDirtyIndicators = CVSUIPlugin.getPlugin().getPreferenceStore().getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
+		boolean showingDeepDirtyIndicators =
+			CVSUIPlugin.getPlugin().getPreferenceStore().getBoolean(
+				ICVSUIConstants.PREF_CALCULATE_DIRTY);
 
 		for (int i = 0; i < changedResources.length; i++) {
 			IResource resource = changedResources[i];
 
-			if(showingDeepDirtyIndicators) {
+			if (showingDeepDirtyIndicators) {
 				addWithParents(resource, resourcesToUpdate);
 			} else {
 				resourcesToUpdate.add(resource);
 			}
 		}
 
-		postLabelEvent(new LabelProviderChangedEvent(this, resourcesToUpdate.toArray()));
+		postLabelEvent(
+			new LabelProviderChangedEvent(this, resourcesToUpdate.toArray()));
 	}
-	
+
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectConfigured(org.eclipse.core.resources.IProject)
 	 */

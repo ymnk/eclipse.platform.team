@@ -528,10 +528,8 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	}
 	
 	/**
-	 * Method setModified sets the modified status of the reciever. This method
+	 * Sets the modified status of the receiver. This method
 	 * returns true if there was a change in the modified status of the file.
-	 * @param iFile
-	 * @param b
 	 */
 	private boolean setModified(boolean modified) throws CVSException {
 		try {

@@ -419,15 +419,13 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	}
 
 	/**
-	 * Method adjustParentCount.
-	 * @param file
-	 * @param b
+	 * Flush the parent's dirty state (which will force a recalculation next time isModified() is called)
+	 * if necessary. 
 	 */
 	protected void adjustModifiedCount(boolean modified) throws CVSException {
-		flushWithAncestors();
-		//		if (EclipseSynchronizer.getInstance().adjustModifiedCount((IContainer)getIResource(), modified)) {
-		//			((EclipseFolder)getParent()).adjustModifiedCount(modified);
-		//		}
+		if(isModified() != modified) {
+			flushWithAncestors();
+		}
 	}
 
 	/*

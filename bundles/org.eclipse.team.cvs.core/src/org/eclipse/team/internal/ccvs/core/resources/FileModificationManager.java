@@ -171,9 +171,8 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 	private void resourceAdded(IResource resource) throws CoreException {
 		try {
 			EclipseResource cvsResource = (EclipseResource)CVSWorkspaceRoot.getCVSResourceFor(resource);
-			if (cvsResource.handleModification(true /* addition */)) {
-				modifiedResources.add(resource);
-			}
+			cvsResource.handleModification(true /* addition */);
+			modifiedResources.add(resource);
 		} catch (CVSException e) {
 			throw e.toCoreException();
 		}

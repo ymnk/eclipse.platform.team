@@ -375,8 +375,6 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 
 	/*package*/ boolean contentsChangedByUpdate(IFile file) throws CVSException {
 		try {
-			// DECORATOR why isn't the IS_DIRTY flag set when the file is marked as updated? This
-			// would essentially cache the dirty state on checkout.
 			Object indicator = file.getSessionProperty(CLEAN_UPDATE);
 			boolean updated = false;
 			if (indicator == UPDATED_INDICATOR) {

@@ -1280,6 +1280,12 @@ public class EclipseSynchronizer {
 	 */
 	protected boolean setModified(IResource container, boolean modified) throws CVSException {
 		String indicator = modified ? IS_DIRTY_INDICATOR : NOT_DIRTY_INDICATOR;
+		
+		// DECORATOR this state change check is error prone. it is quite possible that
+		// another thread updated the dirty state (e.g. the decorator) and thus the returned
+		// value from this method will be wrong and lead the caller to make assumptions
+		// that can be wrong. That the state has not changed, but it has just too quickly.
+		
 		// if it's already set, no need to set the property or adjust the parents count
 		if (indicator.equals(getDirtyIndicator(container))) return false;
 		// set the dirty indicator and adjust the parent accordingly
