@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -89,6 +90,13 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 			return null;
 		}
 		RemoteFile file = new RemoteFile(parent, syncBytes);
+		parent.setChildren(new ICVSRemoteResource[] {file});
+		return file;
+	}
+	
+	public static RemoteResource getRemote(IFile local, byte[] bytes) throws CVSException {
+		RemoteFolder parent = (RemoteFolder)CVSWorkspaceRoot.getRemoteResourceFor(local.getParent());
+		RemoteFile file = new RemoteFile(parent, bytes);
 		parent.setChildren(new ICVSRemoteResource[] {file});
 		return file;
 	}
