@@ -1,32 +1,26 @@
 package org.eclipse.team.internal.ui.jobs;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.*;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.IRefreshEvent;
-import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.*;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
 public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener {
 
 	private SubscriberParticipant participant;
-	private boolean addIfNeeded;
-
-	public RefreshUserNotificationPolicy(SubscriberParticipant participant, boolean addIfNeeded) {
+	public RefreshUserNotificationPolicy(SubscriberParticipant participant) {
 		this.participant = participant;
-		this.addIfNeeded = addIfNeeded;
 	}
 
 	/*
@@ -42,7 +36,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 	 * 
 	 * @see org.eclipse.team.internal.ui.jobs.IRefreshSubscriberListener#refreshDone(org.eclipse.team.internal.ui.jobs.IRefreshEvent)
 	 */
-	public void refreshDone(IRefreshEvent event) {
+	public void refreshDone(final IRefreshEvent event) {
 		if(event.getSubscriber() != participant.getSubscriberSyncInfoCollector().getSubscriber()) return;
 		
 		int type = event.getRefreshType();
@@ -53,7 +47,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 		boolean promptWhenNoChangesBkg = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES);
 
 		boolean shouldPrompt = false;
-		SyncInfo[] infos = event.getChanges();
+		final SyncInfo[] infos = event.getChanges();
 
 		if (type == IRefreshEvent.USER_REFRESH) {
 			if (promptWhenNoChanges && infos.length == 0) {
@@ -70,21 +64,26 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 		}
 
 		// If there are interesting changes, ensure the sync view is showing them
-		// Also, add the participant to the sync view only if changes have been found.
+		// Also, select them in the sync view
 		if (infos.length > 0) {
-			participant.setMode(SubscriberParticipant.INCOMING_MODE);
-			final ISynchronizeManager manager = TeamUI.getSynchronizeManager();
-			if (addIfNeeded) {
-				manager.addSynchronizeParticipants(new ISynchronizeParticipant[]{participant});
-				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-					public void run() {
-						ISynchronizeView view = manager.showSynchronizeViewInActivePage(null);
-						if (view != null) {
-							view.display(participant);
+			participant.setMode(SubscriberParticipant.BOTH_MODE);
+		}
+		
+		{
+			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+				public void run() {
+					ISynchronizeView view = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
+					if (view != null) {
+						view.display(participant);
+						List selectedResources = new ArrayList();
+						selectedResources.addAll(Arrays.asList(event.getResources()));
+						for (int i = 0; i < infos.length; i++) {
+							selectedResources.add(infos[i].getLocal());
 						}
+						participant.selectResources((IResource[])selectedResources.toArray(new IResource[selectedResources.size()]));
 					}
-				});
-			}
+				}
+			});
 		}
 		
 		// Prompt user if preferences are set for this type of refresh.

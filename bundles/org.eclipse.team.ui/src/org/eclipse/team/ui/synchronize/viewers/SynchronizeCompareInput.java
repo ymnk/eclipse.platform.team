@@ -19,6 +19,7 @@ import org.eclipse.compare.CompareViewerPane;
 import org.eclipse.compare.NavigationAction;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Separator;
@@ -193,4 +194,12 @@ public class SynchronizeCompareInput extends CompareEditorInput {
 			throw new InvocationTargetException(e);
 		}
 	}	
+		
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.CompareEditorInput#saveChanges(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void saveChanges(IProgressMonitor pm) throws CoreException {
+		// TODO Auto-generated method stub
+		super.saveChanges(pm);
+	}
 }

@@ -17,19 +17,11 @@ import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.actions.TeamParticipantRefreshAction;
+import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.jobs.RefreshUserNotificationPolicy;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IWorkbenchSite;
-import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -50,7 +42,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	
 	private ISynchronizeView view;
 	
-	private boolean starting = true;
+	private SubscriberParticipantPage page;
 	
 	/**
 	 * Key for settings in memento
@@ -101,10 +93,11 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 */
 	public final IPageBookViewPage createPage(ISynchronizeView view) {
 		this.view = view;
-		return doCreatePage(view);
+		this.page = doCreatePage(view);
+		return this.page;
 	}
 	
-	protected IPageBookViewPage doCreatePage(ISynchronizeView view) {
+	protected SubscriberParticipantPage doCreatePage(ISynchronizeView view) {
 		return new SubscriberParticipantPage(this, view);
 	}
 	
@@ -144,13 +137,17 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		return workingSet;
 	}
 	
-	public void refreshWithRemote(IResource[] resources, boolean addIfNeeded) {
+	public void selectResources(IResource[] resources) {
+		page.setSelection(resources, true);
+	}
+	
+	public void refreshWithRemote(IResource[] resources) {
 		IWorkbenchSite site = view != null ? view.getSite() : null;
+		IResource[] resourcesToRefresh = resources;
 		if((resources == null || resources.length == 0)) {
-			TeamParticipantRefreshAction.run(site, collector.getWorkingSet(), this, addIfNeeded);
-		} else {
-			TeamParticipantRefreshAction.run(site, resources, this, addIfNeeded);
+			resourcesToRefresh = collector.getWorkingSet();
 		}
+		RefreshAction.run(site, getName(), resourcesToRefresh, getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(this));
 	}
 	
 	/* (non-Javadoc)

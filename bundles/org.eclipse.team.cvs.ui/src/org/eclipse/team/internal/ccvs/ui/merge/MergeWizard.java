@@ -68,7 +68,7 @@ public class MergeWizard extends Wizard {
 			participant = new MergeSynchronizeParticipant(s);
 			addParticipant = true;
 		}						
-		participant.refreshWithRemote(s.roots(), addParticipant);		
+		participant.refreshWithRemote(s.roots());		
 		return true;
 	}
 	

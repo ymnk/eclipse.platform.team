@@ -323,8 +323,8 @@ public class CVSCompareRevisionsInput extends CompareEditorInput {
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		initLabels();
 		DiffNode diffRoot = new DiffNode(Differencer.NO_CHANGE);
+		ITypedElement left = new ResourceNode(resource);
 		for (int i = 0; i < editions.length; i++) {		
-			ITypedElement left = new TypedBufferedContent(resource);
 			ITypedElement right = new ResourceRevisionNode(editions[i]);
 			diffRoot.add(new VersionCompareDiffNode(left, right));
 		}

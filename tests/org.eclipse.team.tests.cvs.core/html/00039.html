@@ -4,7 +4,7 @@
 <meta NAME="since" content="">
 </head><h2>Local resources with a repository</h2>
 <p>Since: M8<br>
-Last Modified: $Date: 2003/11/27 22:04:58 $</p><body>
+Last Modified: $Date: 2004/03/01 20:37:55 $</p><body>
 <p>
 You should be able to select a project/folder/resource and compare againts
 another branch or version. Multi-select should work across projects in 
@@ -15,7 +15,19 @@ We should support multi-selection of files, but I'm not sure what should be
 shown to the user in those cases.</p>
 <h3>Comparing with another branch or version</h3>
 <ul>
-<li>
+<li>one file selected
+<p>If the file has differences open a compare editor and show then. Otherwise notify the user that the files are
+the same. You should be able to see the details about the file you are comparing (revision, date, name, repo)</p>
+<li>multiple files selected
+<p>Same as 'one file selected' but operate on all selected files. This means that multiple compare editors may be opened
+for each file that is different.</p>
+<li>one folder selected
+<p>Entire contents of the folder are compared deep. If changes are found the user is notified and they are
+shown in a dialog. If no changes are found the user is notified. The dialog should allow the user to browse
+the changes and merge anything into his workspace. If the user wants to keep the comparison non-model, he
+can add it to the synchronize view. There is a button to do so on the compare dialog.</p>
+<li>mixture of files and folders selected
+<p>Same as 'one folder selected' case above.</p>
 </ul>
 <h3>Multi-select files</h3>
 <ul>

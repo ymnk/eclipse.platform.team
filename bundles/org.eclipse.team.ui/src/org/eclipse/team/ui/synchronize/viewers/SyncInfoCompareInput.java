@@ -85,8 +85,8 @@ public final class SyncInfoCompareInput extends CompareEditorInput implements IR
 	 * is displayed to the user.
 	 * @param sync the <code>SyncInfo</code> used as the base for the compare input.
 	 */
-	public SyncInfoCompareInput(CompareConfiguration cc, String description, SyncInfo sync) {
-		super(cc);
+	public SyncInfoCompareInput(String description, SyncInfo sync) {
+		super(getDefaultCompareConfiguration());
 		Assert.isNotNull(sync);
 		Assert.isNotNull(description);
 		this.description = description;
@@ -96,6 +96,12 @@ public final class SyncInfoCompareInput extends CompareEditorInput implements IR
 		initializeResourceChangeListeners();
 	}
 	
+	private static CompareConfiguration getDefaultCompareConfiguration() {
+		CompareConfiguration cc = new CompareConfiguration();
+		//cc.setProperty(CompareConfiguration.USE_OUTLINE_VIEW, true);
+		return cc;
+	}
+
 	private void initializeContentChangeListeners() {
 		ITypedElement te = node.getLeft();
 		if (te instanceof IContentChangeNotifier) {

@@ -10,20 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
-import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.compare.structuremergeviewer.ICompareInput;
-import org.eclipse.compare.structuremergeviewer.ICompareInputChangeListener;
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IContributionItem;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.ListenerList;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.widgets.Control;
@@ -193,6 +184,26 @@ public abstract class StructuredViewerAdvisor {
 	 */
 	public abstract boolean navigate(boolean next);
 
+	/**
+	 * Sets a new selection for this viewer and optionally makes it visible. The advisor will try and
+	 * convert the objects into the appropriate viewer objects. This is required because the model
+	 * provider controls the actual model elements in the viewer and must be consulted in order to
+	 * understand what objects can be selected in the viewer.
+	 * 
+	 * @param object the objects to select
+	 * @param reveal <code>true</code> if the selection is to be made visible, and
+	 *                  <code>false</code> otherwise
+	 */
+	 public void setSelection(Object[] objects, boolean reveal) {
+	 	Object[] viewerObjects = new Object[objects.length];
+	 	if (modelProvider != null) {
+			for (int i = 0; i < objects.length; i++) {
+				viewerObjects[i] = modelProvider.getMapping(objects[i]);
+			}
+			viewer.setSelection(new StructuredSelection(viewerObjects), reveal);
+		}
+	 }
+	
 	/**
 	 * Creates the model that will be shown in the viewers. This can be called before the
 	 * viewer has been created.

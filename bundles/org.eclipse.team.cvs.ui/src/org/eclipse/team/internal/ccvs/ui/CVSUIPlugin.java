@@ -739,7 +739,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			WorkspaceSynchronizeParticipant cvsPage = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
 			view.display(cvsPage);
 			if (resources != null) {
-				cvsPage.refreshWithRemote(resources, false);
+				cvsPage.refreshWithRemote(resources);
 			}
 			if (mode != 0) {
 				cvsPage.setMode(mode);

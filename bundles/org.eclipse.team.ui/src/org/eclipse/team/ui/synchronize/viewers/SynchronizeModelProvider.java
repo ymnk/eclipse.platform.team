@@ -153,6 +153,10 @@ public abstract class SynchronizeModelProvider implements ISyncInfoSetChangeList
 		return getModelRoot();
 	}
 	
+	public Object getMapping(Object object) {
+		return resourceMap.get(object);
+	}
+	
 	/**
 	 * Dispose of the builder
 	 */

@@ -28,6 +28,7 @@ import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
+import org.eclipse.team.ui.synchronize.subscriber.*;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
 import org.eclipse.team.ui.synchronize.viewers.SynchronizeCompareInput;

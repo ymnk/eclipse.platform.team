@@ -12,41 +12,108 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.events.TreeAdapter;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CompareParticipant;
-import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.team.ui.synchronize.subscriber.*;
+import org.eclipse.team.ui.synchronize.viewers.*;
+import org.eclipse.team.ui.synchronize.viewers.CompareDialog;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoCompareInput;
 
 public class CompareWithTagAction extends WorkspaceAction {
 
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		IResource[] resources = getSelectedResources();
+		final IResource[] resources = getSelectedResources();
 		CVSTag tag = promptForTag(resources);
 		if (tag == null)
 			return;
-		IWorkbenchWindow wWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		
+		// Run the comparison
+		CVSCompareSubscriber s = new CVSCompareSubscriber(resources, tag);
+		final CompareParticipant participant = new CompareParticipant(s);
+		RefreshAction.run(null, participant.getName(), s.roots(), participant.getSubscriberSyncInfoCollector(), new IRefreshSubscriberListener() {
+			public void refreshStarted(IRefreshEvent event) {
+			}
+			public void refreshDone(final IRefreshEvent event) {
+				CVSUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+					public void run() {
+						if (event.getChanges().length == 0) {
+							MessageDialog.openInformation(getShell(), "Compare Complete", "No changes found comparing resources");
+						}
+						if (isFolderCompare(resources)) {
+							compareAndOpenDialog(event, participant);
+						} else {
+							MessageDialog.openInformation(getShell(), "Compare Complete", event.getChanges().length + " change(s) found comparing " + resources.length + " files. Compare editors will now be opened to show the changes.");
+							compareAndOpenEditors(event, participant);
+						}
+					}
+				});
+			}
+		});
+		
+		
+		/*IWorkbenchWindow wWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage activePage = null;
 		if (wWindow != null) {
 			activePage = wWindow.getActivePage();
-		}
-		// Create the synchronize view participant
-		CVSCompareSubscriber s = new CVSCompareSubscriber(resources, tag);
-		CompareParticipant participant = (CompareParticipant)SubscriberParticipant.find(s);
-		boolean addParticipant = false;
-		if(participant == null) {
-			participant = new CompareParticipant(s);
-			addParticipant = true;
-		}
-		participant.refreshWithRemote(s.roots(), addParticipant);
+		}*/
+		
 	}
 
+	/**
+	 * Return <code>true</code> if at least one element in the selection
+	 * is a folder.
+	 * 
+	 * @param resources resources to check
+	 * @return <code>true</code> if at least one element in the selection
+	 * is a folder and <code>false</code> otherwise.
+	 */
+	protected boolean isFolderCompare(IResource[] resources) {
+		for (int i = 0; i < resources.length; i++) {
+			if(resources[i].getType() != IResource.FILE) {
+				return true;
+			}			
+		}
+		return false;
+	}
+	
+	protected void compareAndOpenEditors(IRefreshEvent event, CompareParticipant participant) {
+		SyncInfo[] changes= event.getChanges();
+		for (int i = 0; i < changes.length; i++) {
+			SyncInfo info = changes[i];
+			CompareUI.openCompareDialog(new SyncInfoCompareInput(event.getSubscriber().getName(), info));
+		}
+	}
+	
+	protected void compareAndOpenDialog(IRefreshEvent event, CompareParticipant participant) {
+		TreeViewerAdvisor advisor = new TreeViewerAdvisor(participant.getId(), participant.getSubscriberSyncInfoCollector().getSyncInfoTree());
+		CompareConfiguration cc = new CompareConfiguration();
+		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor);	
+		try {
+			input.run(new NullProgressMonitor());
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		CompareDialog dialog = new CompareDialog(getShell(), input);
+		dialog.setBlockOnOpen(true);
+		dialog.open();
+	}
+	
 	protected CVSTag promptForTag(IResource[] resources) {
 		IProject[] projects = new IProject[resources.length];
 		for (int i = 0; i < resources.length; i++) {

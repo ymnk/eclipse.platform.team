@@ -1,0 +1,34 @@
+<html><head><title>File Revisions</title>
+<LINK REL=STYLESHEET HREF=../book.css CHARSET=ISO-8859-1 TYPE=text/css>
+<meta NAME="keywords" content="">
+<meta NAME="since" content="">
+</head><h2>File Revisions</h2>
+<p>Since: M8<br>
+Last Modified: $Date: 2003/11/27 22:04:58 $</p><body>
+
+Comparing
+-> Team > Synchronize with Repository... (file, folder)
+-> Compare With > latest on branch/version (file, folder)
+	three way is possible with default cvs workspace subscriber
+-> Compare With > Two other branches or versions (file, folder) [note: this is meant to be a quick way of comparing two lineups you don't have locally. instead of having to browse the repo view all the time]
+-> Compare With > Another branch/version (file, folder)
+-> Compare With > Revision (file)
+
+Options:
+-> sync view
+	(is long lived, model updates, separates sync overview from browsing changes)
+-> modal dialog
+	(model is simple, user performs task then dis-misses dialog, cons is that the user can't do anything else)
+	- provide option of keeping compare around (e.g. put into sync view)
+-> compare editor
+    (same as model dialog but user expects the local side to stay in sync with local resources changes made outside,
+    these aren't used anymore, instead if local is editable, use sync view).
+
+Features:
+- ensure editor/dialog title
+- ensure left/right labels and images are ok
+- ensure editable property is ok
+- ensure save behavior
+- can you see the history for each file?
+
+</body></html>

@@ -22,8 +22,8 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.IRefreshEvent;
-import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.team.ui.synchronize.subscriber.IRefreshEvent;
+import org.eclipse.team.ui.synchronize.subscriber.IRefreshSubscriberListener;
 
 /**
  * Job to refresh a subscriber with its remote state.
