@@ -29,11 +29,11 @@ import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 public class SyncAction extends WorkspaceAction {
 	
 	public void execute(IAction action) throws InvocationTargetException {
+		ISynchronizeParticipantReference ref = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
 		try {
 			IResource[] resources = getResourcesToSync();
 			if (resources == null || resources.length == 0)
-				return;
-			ISynchronizeParticipantReference ref = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
+				return;		
 			if (ref != null) {
 				ISynchronizeParticipant participant = ref.createParticipant();
 				IWizard wizard = participant.createSynchronizeWizard();
@@ -43,6 +43,8 @@ public class SyncAction extends WorkspaceAction {
 			}
 		} catch (TeamException e) {
 			throw new InvocationTargetException(e);
+		} finally {
+			ref.releaseParticipant();
 		}
 	}
 	

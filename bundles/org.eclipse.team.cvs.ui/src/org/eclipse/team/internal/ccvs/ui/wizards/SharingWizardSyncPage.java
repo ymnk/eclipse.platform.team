@@ -148,7 +148,7 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 			collector.start(new NullProgressMonitor());
 			TreeViewerAdvisor advisor = new SharingWizardTreeAdviser(participant.getId(), null, infos);
 			CompareConfiguration cc = new CompareConfiguration();
-			SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
+			input = new SynchronizeCompareInput(cc, advisor) {
 
 				public String getTitle() {
 					return Policy.bind("SharingWizardSyncPage.0"); //$NON-NLS-1$

@@ -51,18 +51,21 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 		// Operation cancelled, there is no reason to prompt the user
 		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 			public void run() {
-				if (event.getStatus().isOK()) {
-					if (!areChanges()) {
-						MessageDialog.openInformation(Display.getCurrent().getActiveShell(), Policy.bind("OpenComparedDialog.noChangeTitle"), Policy.bind("OpenComparedDialog.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
-						return;
+				try {
+					if (event.getStatus().isOK()) {
+						if (!areChanges()) {
+							MessageDialog.openInformation(Display.getCurrent().getActiveShell(), Policy.bind("OpenComparedDialog.noChangeTitle"), Policy.bind("OpenComparedDialog.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
+							return;
+						}
+						if (isSingleFileCompare(event.getResources())) {
+							compareAndOpenEditors(event, participant);
+						} else {
+							compareAndOpenDialog(event, participant);
+						}
 					}
-					if (isSingleFileCompare(event.getResources())) {
-						compareAndOpenEditors(event, participant);
-					} else {
-						compareAndOpenDialog(event, participant);
-					}
+				} finally {
+					ref.releaseParticipant();
 				}
-				ref.releaseParticipant();
 			}
 		});
 	}

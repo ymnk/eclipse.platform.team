@@ -191,7 +191,8 @@ public class SynchronizeManager implements ISynchronizeManager {
 			if (count <= 0) {
 				saveState();
 				ref.dispose();
-			}			
+			}	
+			System.out.println("** release called " + getId() + ":" + count);
 		}		
 
 		/* (non-Javadoc)
@@ -200,13 +201,15 @@ public class SynchronizeManager implements ISynchronizeManager {
 		public ISynchronizeParticipant createParticipant() throws TeamException {
 			String key = getKey(descriptor.getId(), getSecondaryId());
 			ISynchronizeParticipant participant = (ISynchronizeParticipant) counter.get(key);
+			int refCount = 1;
 			if (participant == null) {
 				participant = instantiate();
 				if(participant != null)
 					counter.put(key, participant);
 			} else {
-				counter.addRef(key);
+				refCount = counter.addRef(key);
 			}
+			System.out.println("** create called " + getId() + ":" + refCount);
 			return participant;
 		}
 

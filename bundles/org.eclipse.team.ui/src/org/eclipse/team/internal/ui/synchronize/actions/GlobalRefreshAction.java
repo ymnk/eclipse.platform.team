@@ -168,6 +168,8 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 			updateTooltipMessage();
 		} catch (TeamException e) {
 			Utils.handle(e);
+		} finally {
+			ref.releaseParticipant();
 		}
 	}
 	
