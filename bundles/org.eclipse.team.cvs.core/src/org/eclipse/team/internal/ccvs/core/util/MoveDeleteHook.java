@@ -66,10 +66,10 @@ public class MoveDeleteHook implements IMoveDeleteHook {
 				byte[] syncBytes = destinationFile.getSyncBytes();
 				// move the file
 				tree.standardMoveFile(source, destination, updateFlags, Policy.subMonitorFor(monitor, 90));
+				// the moved file will maintain any session properties. Purge them
+				EclipseSynchronizer.getInstance().createdByMove(destination);
 				// reassign the sync info from the destination (making sure the sync info is not a deletion)
-				if (syncBytes == null) {
-					destinationFile.unmanage(Policy.subMonitorFor(monitor, 10));
-				} else {
+				if (syncBytes != null) {
 					destinationFile.setSyncBytes(ResourceSyncInfo.convertFromDeletion(syncBytes));
 				}
 				

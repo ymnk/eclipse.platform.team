@@ -1352,4 +1352,15 @@ public class EclipseSynchronizer {
 		return ResourceSyncInfo.convertFromDeletion(syncBytes);
 	}
 	
+	/**
+	 * Method createdByMove clears any session properties on the file so it
+	 * appears as an ADDED file.
+	 * 
+	 * @param destination
+	 */
+	public void createdByMove(IFile file) throws CVSException {
+		deleteResourceSync(file);
+		flushDirtyCache(file, IResource.DEPTH_ZERO);
+	}
+	
 }
