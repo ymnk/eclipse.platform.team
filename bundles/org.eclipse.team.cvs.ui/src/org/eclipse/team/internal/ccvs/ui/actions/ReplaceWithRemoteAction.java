@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.actions;
  
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -25,10 +24,10 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ui.PromptingDialog;
+import org.eclipse.team.internal.core.InfiniteSubProgressMonitor;
+import org.eclipse.team.internal.ui.IPromptCondition;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 
 public class ReplaceWithRemoteAction extends WorkspaceAction {
@@ -37,21 +36,11 @@ public class ReplaceWithRemoteAction extends WorkspaceAction {
 		run(new WorkspaceModifyOperation() {
 			public void execute(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
 				try {
-					
-					IResource resources[] = checkOverwriteOfDirtyResources(getSelectedResources());
-					
-					// Do the replace
-					Hashtable table = getProviderMapping(resources);
-					Set keySet = table.keySet();
-					monitor.beginTask(null, keySet.size() * 1000); //$NON-NLS-1$
-					monitor.setTaskName(Policy.bind("ReplaceWithRemoteAction.replacing")); //$NON-NLS-1$
-					Iterator iterator = keySet.iterator();
-					while (iterator.hasNext()) {
-						IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 1000);
-						CVSTeamProvider provider = (CVSTeamProvider)iterator.next();
-						List list = (List)table.get(provider);
-						IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);
-						provider.get(providerResources, IResource.DEPTH_INFINITE, subMonitor);
+					monitor = Policy.monitorFor(monitor);
+					monitor.beginTask(null, 100);					
+					IResource resources[] = checkOverwriteOfDirtyResources(getSelectedResources(), new InfiniteSubProgressMonitor(monitor, 20));
+					if(resources.length > 0) {
+						performReplace(resources, Policy.subMonitorFor(monitor, 80));
 					}
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
@@ -59,33 +48,31 @@ public class ReplaceWithRemoteAction extends WorkspaceAction {
 					monitor.done();
 				}
 			}
-
-			
 		}, true /* cancelable */, PROGRESS_DIALOG);
 	}
 	
-	private IResource[] checkOverwriteOfDirtyResources(IResource[] resources, IProgressMonitor monitor) throws CVSException, InterruptedException {
-		List dirtyResources = new ArrayList();
-		IResource[] selectedResources = getSelectedResources();
-		
+	private void performReplace(IResource[] resources, IProgressMonitor monitor) throws TeamException {
 		try {
-			monitor = Policy.monitorFor(monitor);
-			monitor.beginTask(null, selectedResources.length * 1000);
-			for (int i = 0; i < selectedResources.length; i++) {
-				IResource resource = selectedResources[i];
-				ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-				if(cvsResource.isModified(Policy.subMonitorFor(monitor, 1000))) {
-					dirtyResources.add(resource);
-				}			
+			Hashtable table = getProviderMapping(resources);
+			Set keySet = table.keySet();
+			monitor.beginTask(null, keySet.size() * 10); //$NON-NLS-1$
+			monitor.setTaskName(Policy.bind("ReplaceWithRemoteAction.replacing")); //$NON-NLS-1$
+			Iterator iterator = keySet.iterator();
+			while (iterator.hasNext()) {
+				IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 10);
+				CVSTeamProvider provider = (CVSTeamProvider)iterator.next();
+				List list = (List)table.get(provider);
+				IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);
+				provider.get(providerResources, IResource.DEPTH_INFINITE, subMonitor);
 			}
 		} finally {
-			monitor.done();		
+			monitor.done();
 		}
-		
-		PromptingDialog dialog = new PromptingDialog(getShell(), selectedResources, 
-				getOverwriteLocalChangesPrompt(dirtyResources), Policy.bind("ReplaceWithAction.confirmOverwrite"));//$NON-NLS-1$
-		return dialog.promptForMultiple();
 	}
+	
+	protected IPromptCondition getPromptCondition(IResource[] dirtyResources) {
+		return getOverwriteLocalChangesPrompt(dirtyResources);
+	}	
 	
 	/**
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getErrorTitle()
