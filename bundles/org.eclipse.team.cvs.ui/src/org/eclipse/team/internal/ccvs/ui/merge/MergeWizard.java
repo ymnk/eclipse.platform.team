@@ -14,7 +14,6 @@ package org.eclipse.team.internal.ccvs.ui.merge;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.core.sync.TeamProvider;
@@ -68,9 +67,7 @@ public class MergeWizard extends Wizard {
 		  
 		// TODO: also register a merge subscriber. This is required to test the new
 		// experimental merge subscriber;
-		String uniqueId = Long.toString(System.currentTimeMillis());
-		CVSMergeSubscriber s = new CVSMergeSubscriber(new QualifiedName("org.eclipse.team.cvs", "merge-" + uniqueId), 
-			resources, startTag, endTag);
+		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
 		TeamProvider.registerSubscriber(s);
 		return true;
 	}

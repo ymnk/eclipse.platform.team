@@ -10,12 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.resources.ISynchronizer;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteSynchronizer;
@@ -26,17 +23,55 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
  */
 public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 
+	private static final String ID_QUALIFIER = "org.eclipse.team.cvs";
+	private static final String UNIQUE_ID_PREFIX = "merge-";
+	
 	private CVSTag start, end;
 	private IResource[] roots;
 	private RemoteSynchronizer remoteSynchronizer;
 	private RemoteSynchronizer baseSynchronizer;
 
-	public CVSMergeSubscriber(QualifiedName id, IResource[] roots, CVSTag start, CVSTag end) {		
-		super(id, "CVS Merge: " + start.getName() + " - " + end.getName(), "CVS Merge");
+	static {
+		// TODO: Temporary measure until pesistance of merge is provided
+		flushOldMerges();
+	}
+	
+	public static void flushOldMerges() {
+		// XXX flush sync info for merge managers. This does not
+		// support ongoing merges (subscriptions); we would need
+		// some kind of lifecycle management that only flushes sync
+		// info for merge managers that are not ongoing merges.
+		ISynchronizer synchronizer = ResourcesPlugin.getWorkspace().getSynchronizer();
+		QualifiedName[] syncPartners = synchronizer.getPartners();
+		for(int i=0; i<syncPartners.length; i++) {
+			if(syncPartners[i].getQualifier().equals(RemoteSynchronizer.SYNC_KEY_QUALIFIER)) {
+				// this sync partner belongs to the VCM plug-in
+				if(!syncPartners[i].getLocalName().startsWith(UNIQUE_ID_PREFIX)) {
+					// this sync partner does not belong to the sharing manager,
+					// it must be a merge manager. Remove this sync partner,
+					// which gets rid of its sync info.
+					synchronizer.remove(syncPartners[i]);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	private static QualifiedName getUniqueId() {
+		String uniqueId = Long.toString(System.currentTimeMillis());
+		return new QualifiedName(ID_QUALIFIER, UNIQUE_ID_PREFIX + uniqueId);
+	}
+	
+	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		
+		super(getUniqueId(), "CVS Merge: " + start.getName() + " - " + end.getName(), "CVS Merge");
 		this.start = start;
 		this.end = end;
 		this.roots = roots;
-		initializeSynchronizers();		
+		initializeSynchronizers();
+		// TODO: Is the merge subscriber interested in workspace sync info changes?
+		// TODO: Do certain operations (e.g. replace with) invalidate a merge subscriber?
 	}
 
 	/* (non-Javadoc)
@@ -45,8 +80,8 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	private void initializeSynchronizers() {				
 		QualifiedName id = getId();
 		String syncKeyPrefix = id.getLocalName();
-		remoteSynchronizer = new RemoteSynchronizer(syncKeyPrefix + end.getName());
-		baseSynchronizer = new RemoteSynchronizer(syncKeyPrefix + start.getName());
+		remoteSynchronizer = new RemoteSynchronizer(syncKeyPrefix + end.getName(), end);
+		baseSynchronizer = new RemoteSynchronizer(syncKeyPrefix + start.getName(), start);
 	}
 
 	/* (non-Javadoc)
@@ -63,47 +98,6 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	 */
 	public boolean isCancellable() {
 		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#refresh(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		int work = 100 * resources.length;
-		monitor.beginTask(null, work);
-		try {
-			for (int i = 0; i < resources.length; i++) {
-				IResource resource = resources[i];	
-				
-				// build the remote tree
-				// TODO: We should really only need to do the start tree once!
-				ICVSRemoteResource startTree = buildRemoteTree(resource, start, depth, Policy.subMonitorFor(monitor, 40));
-				ICVSRemoteResource endTree = buildRemoteTree(resource, end, depth, Policy.subMonitorFor(monitor, 40));
-				
-				// update the known remote handles 
-				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 20);
-				try {
-					sub.beginTask(null, 512);
-					Set allChanges = new HashSet();
-					
-					// TODO: We should really only need to do the start tree once!
-					baseSynchronizer.removeSyncBytes(resource, IResource.DEPTH_INFINITE);
-					baseSynchronizer.collectChanges(resource, startTree, depth, sub);
-					allChanges.addAll(Arrays.asList(baseSynchronizer.getChangedResources()));
-					
-					remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_INFINITE);
-					remoteSynchronizer.collectChanges(resource, endTree, depth, sub);
-					allChanges.addAll(Arrays.asList(remoteSynchronizer.getChangedResources()));
-
-					fireSyncChanged((IResource[]) allChanges.toArray(new IResource[allChanges.size()]));
-				} finally {
-					sub.done();
-					remoteSynchronizer.resetChanges();	 
-				}
-			}
-		} finally {
-			monitor.done();
-		}
 	}
 
 	/* (non-Javadoc)

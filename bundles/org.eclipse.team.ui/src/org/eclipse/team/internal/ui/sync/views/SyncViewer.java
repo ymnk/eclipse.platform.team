@@ -26,6 +26,7 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
@@ -414,5 +415,12 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		if(getInput()== null) {
 			initializeSubscriberInput(si);
 		}
+	}
+	
+	public void collapseAll() {
+		if (viewer == null || !(viewer instanceof AbstractTreeViewer)) return;
+		viewer.getControl().setRedraw(false);		
+		((AbstractTreeViewer)viewer).collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
+		viewer.getControl().setRedraw(true);
 	}
 }

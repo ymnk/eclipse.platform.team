@@ -30,9 +30,11 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
@@ -44,16 +46,18 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
  */
 public class RemoteSynchronizer extends ResourceSynchronizer {
 	
-	private static final String SYNC_NAME_PREFIX = "org.eclipse.team.cvs";
+	public static final String SYNC_KEY_QUALIFIER = "org.eclipse.team.cvs";
 	
 	private static final byte[] NO_REMOTE = new byte[0];
 	
 	private QualifiedName syncName;
 	private Set changedResources = new HashSet();
+	private CVSTag tag;
 	
-	public RemoteSynchronizer(String id) {
-		syncName = new QualifiedName(SYNC_NAME_PREFIX, id);
+	public RemoteSynchronizer(String id, CVSTag tag) {
+		syncName = new QualifiedName(SYNC_KEY_QUALIFIER, id);
 		getSynchronizer().add(syncName);
+		this.tag = tag;
 	}
 
 	/**
@@ -131,24 +135,10 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 		// {IResource -> IRemoteResource}
 		Map mergedResources = new HashMap();
 		
-		IRemoteResource[] remoteChildren =
-			remote != null ? remote.members(progress) : new IRemoteResource[0];
+		IRemoteResource[] remoteChildren = getRemoteChildren(remote, progress);
 		
-		IResource[] localChildren;			
-		if( local.getType() != IResource.FILE && local.exists() ) {
-			// TODO: This should be a list of all non-ignored resources including outgoing deletions
-			ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)local);
-			ICVSResource[] cvsChildren = cvsFolder.members(ICVSFolder.MANAGED_MEMBERS | ICVSFolder.UNMANAGED_MEMBERS);
-			List resourceChildren = new ArrayList();
-			for (int i = 0; i < cvsChildren.length; i++) {
-				ICVSResource cvsResource = cvsChildren[i];
-				resourceChildren.add(cvsResource.getIResource());
-			}
-			localChildren = (IResource[]) resourceChildren.toArray(new IResource[resourceChildren.size()]);
-		} else {
-			localChildren = new IResource[0];
-		}
-		
+		IResource[] localChildren = getLocalChildren(local);		
+
 		if (remoteChildren.length > 0 || localChildren.length > 0) {
 			List syncChildren = new ArrayList(10);
 			Set allSet = new HashSet(20);
@@ -204,6 +194,28 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 		return mergedResources;
 	}
 	
+	private IRemoteResource[] getRemoteChildren(IRemoteResource remote, IProgressMonitor progress) throws TeamException {
+		return remote != null ? remote.members(progress) : new IRemoteResource[0];
+	}
+
+	private IResource[] getLocalChildren(IResource local) throws TeamException {
+		IResource[] localChildren;			
+		if( local.getType() != IResource.FILE && local.exists() ) {
+			// TODO: This should be a list of all non-ignored resources including outgoing deletions
+			ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)local);
+			ICVSResource[] cvsChildren = cvsFolder.members(ICVSFolder.MANAGED_MEMBERS | ICVSFolder.UNMANAGED_MEMBERS);
+			List resourceChildren = new ArrayList();
+			for (int i = 0; i < cvsChildren.length; i++) {
+				ICVSResource cvsResource = cvsChildren[i];
+				resourceChildren.add(cvsResource.getIResource());
+			}
+			localChildren = (IResource[]) resourceChildren.toArray(new IResource[resourceChildren.size()]);
+		} else {
+			localChildren = new IResource[0];
+		}
+		return localChildren;
+	}
+	
 	/*
 	 * Returns a handle to a non-existing resource.
 	 */
@@ -254,4 +266,56 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 		changedResources.clear();
 	}
 
+	/**
+	 * Refreshes the contents of the remote synchronizer and returns the list
+	 * of resources whose remote sync state changed.
+	 * 
+	 * @param resources
+	 * @param depth
+	 * @param monitor
+	 * @return
+	 * @throws TeamException
+	 */
+	public IResource[] refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		int work = 100 * resources.length;
+		monitor.beginTask(null, work);
+		resetChanges();
+		try {
+			for (int i = 0; i < resources.length; i++) {
+				IResource resource = resources[i];	
+				
+				// build the remote tree
+				ICVSRemoteResource tree = buildRemoteTree(resource, depth, Policy.subMonitorFor(monitor, 70));
+				
+				// update the known remote handles 
+				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
+				try {
+					sub.beginTask(null, 512);
+					removeSyncBytes(resource, IResource.DEPTH_INFINITE);
+					collectChanges(resource, tree, depth, sub);
+				} finally {
+					sub.done();	 
+				}
+			}
+		} finally {
+			monitor.done();
+		}
+		IResource[] changes = getChangedResources();
+		resetChanges();
+		return changes;
+	}
+	
+	/**
+	 * Build a remote tree for the given parameters.
+	 * @param resource
+	 * @param tag
+	 * @param monitor
+	 * @return
+	 * @throws TeamException
+	 */
+	protected ICVSRemoteResource buildRemoteTree(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
+		// TODO: we are currently ignoring the depth parameter because the build remote tree is
+		// by default deep!
+		return CVSWorkspaceRoot.getRemoteTree(resource, tag, monitor);
+	}
 }

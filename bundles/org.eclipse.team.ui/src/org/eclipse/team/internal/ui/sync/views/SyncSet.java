@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,8 +56,8 @@ public class SyncSet {
 			return (IResource)element;
 		} if (element instanceof SyncInfo) {
 			resource = ((SyncInfo) element).getLocal();
-		} else if (element instanceof SyncContainer) {
-			resource = ((SyncContainer)element).getContainer();
+		} else if (element instanceof SyncResource) {
+			resource = ((SyncResource)element).getLocalResource();
 		}
 		return resource;
 	}
@@ -75,12 +73,14 @@ public class SyncSet {
 	public static int getSyncKind(SyncSet syncSet, Object element) {
 		if (element instanceof SyncInfo) {
 			return ((SyncInfo) element).getKind();
-		}  else if (element instanceof SyncContainer) {
-			if (syncSet != null) {
-				SyncInfo info = syncSet.getSyncInfo(getIResource(element));
-				if (info != null) {
-					return info.getKind();
-				}
+		}  else if (element instanceof SyncResource) {
+			SyncResource syncResource = (SyncResource)element;
+			SyncInfo info = syncResource.getSyncInfo();
+			if (info == null && syncSet != null) {
+				info = syncSet.getSyncInfo(getIResource(element));
+			}
+			if (info != null) {
+				return info.getKind();
 			}
 		}
 		return 0;
@@ -107,17 +107,14 @@ public class SyncSet {
 	 * @param resource
 	 */
 	public static Object getModelObject(SyncSet syncSet, IResource resource) {
-		SyncInfo info = syncSet.getSyncInfo(resource);
-		if (info != null) {
-			return info;
-		}
-		// TODO: A subscriber may not be rooted at the project!!!
 		if (resource.getType() == IResource.ROOT) {
+			// TODO: A subscriber may not be rooted at the project!!!
 			return syncSet;
-		} else if (resource.getType() != IResource.FILE) {
-			return new SyncContainer((IContainer)resource);
+		} else if (resource.getType() == IResource.FILE) {
+			return new SyncFile(syncSet, resource);
+		} else {
+			return new SyncFolder(syncSet, resource);
 		}
-		return null;
 	}
 	
 	protected void resetChanges() {
@@ -283,7 +280,9 @@ public class SyncSet {
 		for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
 			Object next = it.next();
 			IResource element = ((IWorkspaceRoot)root).findMember((IPath)next);
-			children.add(getModelObject(this, element.getProject()));
+			if (element != null) {
+				children.add(getModelObject(this, element.getProject()));
+			}
 		}
 		return (Object[]) children.toArray(new Object[children.size()]);
 	}

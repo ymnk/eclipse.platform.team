@@ -11,9 +11,12 @@
 package org.eclipse.team.internal.ccvs.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
@@ -26,7 +29,6 @@ import org.eclipse.team.core.sync.ContentComparisonCriteria;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 
 /**
@@ -34,7 +36,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
  * for CVS.
  */
 public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
-
+	
 	private QualifiedName id;
 	private String name;
 	private String description;
@@ -188,11 +190,16 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#refresh(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#refresh(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		// TODO Auto-generated method stub
-
+		IResource[] remoteChanges = getRemoteSynchronizer().refresh(resources, depth, monitor);
+		IResource[] baseChanges = getBaseSynchronizer().refresh(resources, depth, monitor);
+		
+		Set allChanges = new HashSet();
+		allChanges.addAll(Arrays.asList(remoteChanges));
+		allChanges.addAll(Arrays.asList(baseChanges));
+		fireSyncChanged((IResource[]) allChanges.toArray(new IResource[allChanges.size()]));
 	}
 
 	/* (non-Javadoc)
@@ -238,19 +245,5 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 */
 	public void cancel() {
 		// noop
-	}
-
-	/**
-	 * Build a remote tree for the given parameters.
-	 * @param resource
-	 * @param tag
-	 * @param monitor
-	 * @return
-	 * @throws TeamException
-	 */
-	protected ICVSRemoteResource buildRemoteTree(IResource resource, CVSTag tag, int depth, IProgressMonitor monitor) throws TeamException {
-		// TODO: we are currently ignoring the depth parameter because the build remote tree is
-		// by default deep!
-		return CVSWorkspaceRoot.getRemoteTree(resource, tag, monitor);
 	}
 }

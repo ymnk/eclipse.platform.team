@@ -68,7 +68,10 @@ public class CVSSyncInfo extends SyncInfo {
 			} else {
 				if(remote == null) {
 					if(isCVSFolder) {
-						folderKind = SyncInfo.INCOMING | SyncInfo.DELETION;
+						// TODO: This is not really an incoming deletion
+						// The folder will be pruned once any children are commited
+						folderKind = SyncInfo.IN_SYNC;
+						//folderKind = SyncInfo.INCOMING | SyncInfo.DELETION;
 					} else {
 						folderKind = SyncInfo.OUTGOING | SyncInfo.ADDITION;
 					}

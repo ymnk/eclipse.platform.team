@@ -13,12 +13,9 @@ package org.eclipse.team.internal.ccvs.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -83,86 +80,6 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#members(org.eclipse.core.resources.IResource)
-	 */
-	public IResource[] members(IResource resource) throws TeamException {
-		try {
-			return doMembers(resource);
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-
-	/**
-	 * 
-	 * @param resource
-	 * @return
-	 * @throws TeamException
-	 * @throws CoreException
-	 */
-	private IResource[] doMembers(IResource resource) throws TeamException, CoreException {
-		if(resource.getType() == IResource.FILE) {
-			return new IResource[0];
-		}	
-		
-		// TODO: will have to filter and return only the CVS phantoms.
-		IResource[] members = ((IContainer)resource).members(true /* include phantoms */);
-		List filteredMembers = new ArrayList(members.length);
-		for (int i = 0; i < members.length; i++) {
-			IResource member = members[i];
-			
-			// TODO: consider that there may be several sync states on this resource. There
-			// should instead be a method to check for the existance of a set of sync types on
-			// a resource.
-			if(member.isPhantom() && remoteSynchronizer.getSyncBytes(member) == null) {
-				continue;
-			}
-			
-			// TODO: would be nice if we didn't need a CVS resource handle for this.
-			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(member);
-			if( !cvsThing.isIgnored()) {
-				filteredMembers.add(member);
-			}
-		}
-		return (IResource[]) filteredMembers.toArray(new IResource[filteredMembers.size()]);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#refresh(org.eclipse.core.resources.IResource[], int, org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		int work = 100 * resources.length;
-		monitor.beginTask(null, work);
-		try {
-			for (int i = 0; i < resources.length; i++) {
-				IResource resource = resources[i];	
-				
-				// build the remote tree
-				ICVSRemoteResource tree = buildRemoteTree(
-								resource, 
-								null /* build tree based on tags found in the local sync info */ , 
-								depth,
-								Policy.subMonitorFor(monitor, 70));
-				
-				// update the known remote handles 
-				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
-				try {
-					sub.beginTask(null, 512);
-					remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_INFINITE);
-					remoteSynchronizer.collectChanges(resource, tree, depth, sub);
-					IResource[] changes = remoteSynchronizer.getChangedResources();
-					fireSyncChanged(changes);
-				} finally {
-					sub.done();
-					remoteSynchronizer.resetChanges();	 
-				}
-			}
-		} finally {
-			monitor.done();
-		}
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceSyncInfoChanged(org.eclipse.core.resources.IResource[])
 	 */
 	public void resourceSyncInfoChanged(IResource[] changedResources) {
@@ -175,6 +92,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 			IResource resource = changedResources[i];
 			try {
 				// TODO should use revision and tag to determine if remote is stale
+				// TODO outgoing deletions would require special handling
 				if (resource.getType() == IResource.FILE
 						&& (resource.exists() || resource.isPhantom())) {
 					remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_ZERO);

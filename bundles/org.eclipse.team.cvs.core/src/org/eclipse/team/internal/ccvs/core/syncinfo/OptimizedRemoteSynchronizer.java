@@ -27,7 +27,7 @@ public class OptimizedRemoteSynchronizer extends RemoteSynchronizer {
 	 * @param id
 	 */
 	public OptimizedRemoteSynchronizer(String id) {
-		super(id);
+		super(id, null /* use the tag in the local workspace resources */);
 	}
 
 	/* (non-Javadoc)

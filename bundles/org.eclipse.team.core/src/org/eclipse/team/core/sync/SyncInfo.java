@@ -240,7 +240,10 @@ public class SyncInfo implements IAdaptable {
 			if (base == null) {
 				if (remote == null) {
 					if (!localExists) {
-						Assert.isTrue(false);
+						// TODO: Although we used to think this was an error, it may be valid now
+						// given that a sync change may have occured and someone wants to know the 
+						// current sync state
+						description = IN_SYNC;
 					} else {
 						description = OUTGOING | ADDITION;
 					}

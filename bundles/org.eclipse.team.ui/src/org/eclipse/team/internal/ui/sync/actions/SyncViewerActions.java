@@ -21,8 +21,10 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
+import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.UIConstants;
 import org.eclipse.team.internal.ui.sync.views.*;
+import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
@@ -34,6 +36,7 @@ import org.eclipse.ui.actions.ActionContext;
  */
 public class SyncViewerActions extends SyncViewerActionGroup {
 		
+	private CollapseAllAction collapseAll;
 	// action groups for view filtering
 	private SyncViewerDirectionFilters directionsFilters;
 	private SyncViewerChangeFilters changeFilters;
@@ -75,6 +78,17 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		}
 	}
 	
+	class CollapseAllAction extends Action {
+		public CollapseAllAction() {
+			super("Collapse All", TeamImages.getImageDescriptor(ISharedImages.IMG_COLLAPSE_ALL_ENABLED));
+			setToolTipText("Collapse all entries in the view");
+			setHoverImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_COLLAPSE_ALL));
+		}
+		public void run() {
+			getSyncView().collapseAll();
+		}
+	}
+	
 	class ToggleViewAction extends Action {
 		public ToggleViewAction(int initialState) {
 			setText("Toggle Tree/Table");
@@ -110,6 +124,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		// initialize other actions
 		refreshAction = new RefreshAction();
 		refreshAction.setEnabled(false);
+		collapseAll = new CollapseAllAction();
 		
 		toggleViewerType = new ToggleViewAction(SyncViewer.TABLE_VIEW);
 		open = new OpenInCompareAction(syncView);
@@ -125,6 +140,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(new Separator());
 		manager.add(refreshAction);
 		manager.add(new Separator());
+		manager.add(collapseAll);
 		manager.add(toggleViewerType);
 		
 		actionBarMenu = actionBars.getMenuManager();
