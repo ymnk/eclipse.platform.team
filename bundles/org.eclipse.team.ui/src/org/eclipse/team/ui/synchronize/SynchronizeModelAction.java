@@ -15,13 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 /**
  * This action provides utilities for performing operations on selections that
@@ -37,15 +38,25 @@ import org.eclipse.ui.*;
  * @see org.eclipse.team.ui.synchronize.SynchronizeModelOperation
  * @since 3.0
  */
-public abstract class SynchronizeModelAction implements IObjectActionDelegate, IViewActionDelegate, IEditorActionDelegate {
-	
-	private IStructuredSelection selection;
+public abstract class SynchronizeModelAction extends BaseSelectionListenerAction {
+
+	// TODO: Should be replaced by sync site
 	private IWorkbenchPart part;
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
+	/**
+	 * Creates a new action with the given text.
+	 *
+	 * @param text the string used as the text for the action, 
+	 *   or <code>null</code> if there is no text
 	 */
-	public final void run(IAction action) {
+	protected SynchronizeModelAction(String text) {
+		super(text);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.action.Action#run()
+	 */
+	public void run() {
 		// TODO: We used to prompt for unsaved changes in any editor. We don't anymore. Would
 		// it be better to prompt for unsaved changes to editors affected by this action?
 		try {
@@ -76,6 +87,14 @@ public abstract class SynchronizeModelAction implements IObjectActionDelegate, I
 		Utils.handle(e);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.BaseSelectionListenerAction#updateSelection(org.eclipse.jface.viewers.IStructuredSelection)
+	 */
+	protected boolean updateSelection(IStructuredSelection selection) {
+		super.updateSelection(selection);
+		return (getFilteredDiffElements().length > 0);
+	}
+	
 	/**
 	 * This method returns all instances of IDiffElement that are in the current
 	 * selection.
@@ -83,16 +102,7 @@ public abstract class SynchronizeModelAction implements IObjectActionDelegate, I
 	 * @return the selected elements
 	 */
 	protected final IDiffElement[] getSelectedDiffElements() {
-		return Utils.getDiffNodes(selection.toArray());
-	}
-
-	/**
-	 * The default enablement behavior for subscriber actions is to enable
-	 * the action if there is at least one SyncInfo in the selection
-	 * for which the action's filter passes.
-	 */
-	protected boolean isEnabled() {
-		return (getFilteredDiffElements().length > 0);
+		return Utils.getDiffNodes(getStructuredSelection().toArray());
 	}
 
 	/**
@@ -123,62 +133,5 @@ public abstract class SynchronizeModelAction implements IObjectActionDelegate, I
 			}
 		}
 		return (IDiffElement[]) filtered.toArray(new IDiffElement[filtered.size()]);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IObjectActionDelegate#setActivePart(org.eclipse.jface.action.IAction, org.eclipse.ui.IWorkbenchPart)
-	 */
-	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
-		this.part = targetPart;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IViewActionDelegate#init(org.eclipse.ui.IViewPart)
-	 */
-	public void init(IViewPart view) {
-		this.part = view;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IActionDelegate#selectionChanged(org.eclipse.jface.action.IAction, org.eclipse.jface.viewers.ISelection)
-	 */
-	public void selectionChanged(IAction action, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
-			this.selection = (IStructuredSelection) selection;
-			if (action != null) {
-				setActionEnablement(action);
-			}
-		}
-	}
-	
-	/**
-	 * Method invoked from <code>selectionChanged(IAction, ISelection)</code> 
-	 * to set the enablement status of the action. The instance variable 
-	 * <code>selection</code> will contain the latest selection so the methods
-	 * <code>getSelectedResources()</code> and <code>getSelectedProjects()</code>
-	 * will provide the proper objects.
-	 * 
-	 * This method can be overridden by subclasses but should not be invoked by them.
-	 */
-	protected void setActionEnablement(IAction action) {
-		action.setEnabled(isEnabled());
-	}
-		
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IEditorActionDelegate#setActiveEditor(org.eclipse.jface.action.IAction, org.eclipse.ui.IEditorPart)
-	 */
-	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
-		// Ignore since these actions aren't meant for editors.
-		// This seems to be required because of a bug in the UI 
-		// plug-in that will disable viewer actions if they aren't
-		// editor actions? Go figure...
-	}
-	
-	/**
-	 * Returns the workbench part assigned to this action or <code>null</code>.
-	 * @return Returns the part.
-	 */
-	public IWorkbenchPart getPart() {
-		return part;
 	}
 }

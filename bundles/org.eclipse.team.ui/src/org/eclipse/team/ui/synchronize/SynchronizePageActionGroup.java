@@ -10,7 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.jface.action.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IContributionItem;
+import org.eclipse.jface.action.IContributionManager;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.ui.actions.ActionGroup;
 
@@ -52,6 +63,8 @@ import org.eclipse.ui.actions.ActionGroup;
 public abstract class SynchronizePageActionGroup extends ActionGroup {
 
 	private ISynchronizePageConfiguration configuration;
+	
+	private Map menuContributions = new HashMap();
 
 	/**
 	 * Initialize the actions of this contribution.
@@ -88,8 +101,32 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 		if (configuration != null) {
 			configuration.removeActionContribution(this);
 		}
+		disposeMenu(ISynchronizePageConfiguration.P_CONTEXT_MENU);
+		disposeMenu(ISynchronizePageConfiguration.P_TOOLBAR_MENU);
+		disposeMenu(ISynchronizePageConfiguration.P_VIEW_MENU);
 	}
 	
+	private void disposeMenu(String menuId) {
+		Map groups = (Map)menuContributions.get(menuId);
+		if (groups != null) {
+			for (Iterator iter = groups.keySet().iterator(); iter.hasNext(); ) {
+				String groupId = (String) iter.next();
+				List actions = (List)groups.get(groupId);
+				if (actions != null) {
+					for (Iterator iter2 = actions.iterator(); iter2.hasNext();) {
+						Object element = iter2.next();
+						if (element instanceof ISelectionChangedListener) {
+							ISelectionProvider selectionProvider = configuration.getSite().getSelectionProvider();
+							if (selectionProvider != null) {
+								selectionProvider.removeSelectionChangedListener((ISelectionChangedListener)element);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Helper method to find the group of the given id for the page
 	 * associated with the configuration of this action group.
@@ -148,5 +185,63 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Helper method that can be invoked during initialization to add an
+	 * action to a particular menu (one of P_TOOLBAR_MENU, P_VIEW_MENU, P_CONTEXT_MENU
+	 * from ISynchronizePageConfiguration). The action is added to the given group
+	 * if it is present. Otherwise the action is not added to the menu.
+	 * @param menuId the menu id (one of P_TOOLBAR_MENU, P_VIEW_MENU, P_CONTEXT_MENU
+	 * from ISynchronizePageConfiguration)
+	 * @param groupId the group id in the menu to which the action is to be added
+	 * @param action the action to be added
+	 */
+	public void appendToGroup(String menuId, String groupId, IAction action) {
+		internalAppendToGroup(menuId, groupId, action);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#fillContextMenu(org.eclipse.jface.action.IMenuManager)
+	 */
+	public void fillContextMenu(IMenuManager menu) {
+		super.fillContextMenu(menu);
+		Map groups = (Map)menuContributions.get(ISynchronizePageConfiguration.P_CONTEXT_MENU);
+		if (groups != null) {
+			for (Iterator iter = groups.keySet().iterator(); iter.hasNext(); ) {
+				String groupId = (String) iter.next();
+				List actions = (List)groups.get(groupId);
+				if (actions != null) {
+					for (Iterator iter2 = actions.iterator(); iter2.hasNext();) {
+						Object element = iter2.next();
+						if (element instanceof IAction) {
+							appendToGroup(menu, groupId, (IAction)element);
+						} else if (element instanceof IContributionItem) {
+							appendToGroup(menu, groupId, (IContributionItem)element);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private void internalAppendToGroup(String menuId, String groupId, Object action) {
+		Map groups = (Map)menuContributions.get(menuId);
+		if (groups == null) {
+			groups = new HashMap();
+			menuContributions.put(menuId, groups);
+		}
+		List actions = (List)menuContributions.get(groupId);
+		if (actions == null) {
+			actions = new ArrayList();
+			groups.put(groupId, actions);
+		}
+		actions.add(action);
+		if (action instanceof ISelectionChangedListener) {
+			ISelectionProvider selectionProvider = configuration.getSite().getSelectionProvider();
+			if (selectionProvider != null) {
+				selectionProvider.addSelectionChangedListener((ISelectionChangedListener)action);
+			}
+		}
 	}
 }

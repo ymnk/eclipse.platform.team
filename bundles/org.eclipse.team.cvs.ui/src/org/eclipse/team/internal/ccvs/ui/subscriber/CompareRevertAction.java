@@ -11,15 +11,14 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
  * Action in compare editor that reverts the local contents to match the contents on the server.
  */
-public class CompareRevertAction extends SynchronizeModelAction {
-	
+public class CompareRevertAction extends CVSParticipantAction {
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.actions.SubscriberAction#getSubscriberOperation(org.eclipse.compare.structuremergeviewer.IDiffElement[])
 	 */

@@ -37,13 +37,13 @@ import org.eclipse.team.internal.ccvs.ui.sync.ToolTipMessageDialog;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.ui.IWorkbenchPart;
 
-public class SubscriberCommitOperation extends CVSSubscriberOperation {
+public class WorkspaceCommitOperation extends CVSSubscriberOperation {
 	
 	private String comment;
 	private SyncInfoSet syncSet;
 	private boolean override;
 
-	public SubscriberCommitOperation(IWorkbenchPart part, IDiffElement[] elements, boolean override) {
+	public WorkspaceCommitOperation(IWorkbenchPart part, IDiffElement[] elements, boolean override) {
 		super(part, elements);
 		this.override = override;
 	}

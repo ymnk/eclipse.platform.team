@@ -38,7 +38,7 @@ public class ActionDelegateWrapper extends Action {
 				((IEditorActionDelegate)delegate).setActiveEditor(this, (IEditorPart)part);
 			}
 		}
-		// Assume there is no selection untiul told otherwise
+		// Assume there is no selection until told otherwise
 		setSelection(StructuredSelection.EMPTY);
 	}
 

@@ -26,9 +26,9 @@ import org.eclipse.ui.IWorkbenchPart;
  * This action marks the local resource as merged by updating the base
  * resource revision to match the remote resource revision
  */
-public class SubscriberConfirmMergedOperation extends CVSSubscriberOperation {
+public class ConfirmMergedOperation extends CVSSubscriberOperation {
 
-	public SubscriberConfirmMergedOperation(IWorkbenchPart part, IDiffElement[] elements) {
+	public ConfirmMergedOperation(IWorkbenchPart part, IDiffElement[] elements) {
 		super(part, elements);
 	}
 

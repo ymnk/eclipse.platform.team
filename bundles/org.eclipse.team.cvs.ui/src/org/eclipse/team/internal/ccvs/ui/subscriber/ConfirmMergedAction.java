@@ -14,23 +14,22 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
-import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
-public class SubscriberCommitAction extends SynchronizeModelAction {
-
+public class ConfirmMergedAction extends CVSParticipantAction {
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.SubscriberAction#getSyncInfoFilter()
 	 */
 	protected FastSyncInfoFilter getSyncInfoFilter() {
-		return new SyncInfoDirectionFilter(new int[] {SyncInfo.OUTGOING});
+		return new SyncInfoDirectionFilter(new int[] {SyncInfo.CONFLICTING});
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.actions.SubscriberAction#getSubscriberOperation(org.eclipse.compare.structuremergeviewer.IDiffElement[])
 	 */
 	protected SynchronizeModelOperation getSubscriberOperation(IWorkbenchPart part, IDiffElement[] elements) {
-		return new SubscriberCommitOperation(part, elements, false /* override */);
+		return new ConfirmMergedOperation(part, elements);
 	}
 }

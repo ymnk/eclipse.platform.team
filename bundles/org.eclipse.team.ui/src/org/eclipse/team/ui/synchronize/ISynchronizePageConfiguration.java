@@ -158,13 +158,6 @@ public interface ISynchronizePageConfiguration {
 	public static final String PREFERENCES_GROUP = "preferences"; //$NON-NLS-1$
 	
 	/**
-	 * The id of the group that determines where workbench object contributions
-	 * should appear. This group will only be used if there is an
-	 * OBJECT_CONTRIBUTION_ID set in the configuration
-	 */
-	public static final String OBJECT_CONTRIBUTIONS_GROUP = IWorkbenchActionConstants.MB_ADDITIONS;
-
-	/**
 	 * The id of the layout group that determines whether the layout selection
 	 * actions appear in the view dropdown or toolbar.
 	 */

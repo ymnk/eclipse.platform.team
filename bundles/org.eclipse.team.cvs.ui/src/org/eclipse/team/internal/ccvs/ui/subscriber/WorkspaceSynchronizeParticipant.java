@@ -33,20 +33,50 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 	 */
 	public static final String ACTION_GROUP = "cvs_workspace_actions"; //$NON-NLS-1$
 	
+	public static final String CONTEXT_MENU_CONTRIBUTION_GROUP_1 = "context_group_1"; //$NON-NLS-1$
+	public static final String CONTEXT_MENU_CONTRIBUTION_GROUP_2 = "context_group_2"; //$NON-NLS-1$
+	public static final String CONTEXT_MENU_CONTRIBUTION_GROUP_3 = "context_group_3"; //$NON-NLS-1$
+	public static final String CONTEXT_MENU_CONTRIBUTION_GROUP_4 = "context_group_4"; //$NON-NLS-1$
 	/**
 	 * CVS workspace action contribution
 	 */
 	public class WorkspaceActionContribution extends SynchronizePageActionGroup {
 		private ActionDelegateWrapper commitToolbar;
 		private ActionDelegateWrapper updateToolbar;
+		
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
-			commitToolbar = new ActionDelegateWrapper(new SubscriberCommitAction(), configuration.getSite().getPart());
+			commitToolbar = new ActionDelegateWrapper(new WorkspaceCommitAction(), configuration.getSite().getPart());
 			WorkspaceUpdateAction action = new WorkspaceUpdateAction();
 			action.setPromptBeforeUpdate(true);
 			updateToolbar = new ActionDelegateWrapper(action, configuration.getSite().getPart());
 			Utils.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle()); //$NON-NLS-1$
 			Utils.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
+			
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CONTEXT_MENU_CONTRIBUTION_GROUP_1,
+					new WorkspaceUpdateAction());
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CONTEXT_MENU_CONTRIBUTION_GROUP_1,
+					new WorkspaceCommitAction());
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
+					new OverrideAndUpdateAction());
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
+					new OverrideAndCommitAction());
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
+					new ConfirmMergedAction());
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CONTEXT_MENU_CONTRIBUTION_GROUP_4,
+					new RefreshDirtyStateAction());
 		}
 		public void fillActionBars(IActionBars actionBars) {
 			IToolBarManager toolbar = actionBars.getToolBarManager();
@@ -80,5 +110,20 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 		configuration.setSupportedModes(ISynchronizePageConfiguration.ALL_MODES);
 		configuration.setMode(ISynchronizePageConfiguration.BOTH_MODE);
 		//configuration.setProperty(SynchronizePageConfiguration.P_MODEL_MANAGER, new ChangeLogModelManager(configuration));
+		
+		// Add context menu groups here to give the client displaying the
+		// page a chance to remove the context menu
+		configuration.addMenuGroup(
+				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+				CONTEXT_MENU_CONTRIBUTION_GROUP_1);
+		configuration.addMenuGroup(
+				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+				CONTEXT_MENU_CONTRIBUTION_GROUP_2);
+		configuration.addMenuGroup(
+				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+				CONTEXT_MENU_CONTRIBUTION_GROUP_3);
+		configuration.addMenuGroup(
+				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+				CONTEXT_MENU_CONTRIBUTION_GROUP_4);
 	}
 }

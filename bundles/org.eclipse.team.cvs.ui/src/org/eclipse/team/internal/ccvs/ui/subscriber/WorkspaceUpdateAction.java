@@ -14,11 +14,10 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
-import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
-public class WorkspaceUpdateAction extends SynchronizeModelAction {
+public class WorkspaceUpdateAction extends CVSParticipantAction {
 	
 	private boolean promptBeforeUpdate;
 
