@@ -1,4 +1,4 @@
-package org.eclipse.team.internal.ccvs.ui;
+package org.eclipse.team.internal.ccvs.ui.repo;
 
 /*
  * (c) Copyright IBM Corp. 2000, 2002.
@@ -8,7 +8,6 @@ package org.eclipse.team.internal.ccvs.ui;
 import java.util.Properties;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -36,15 +35,21 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.ui.wizards.NewLocationWizard;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
+import org.eclipse.team.internal.ccvs.ui.IRepositoryListener;
+import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.WorkbenchUserAuthenticator;
 import org.eclipse.team.internal.ccvs.ui.actions.OpenRemoteFileAction;
 import org.eclipse.team.internal.ccvs.ui.model.AllRootsElement;
 import org.eclipse.team.internal.ccvs.ui.model.RemoteContentProvider;
+import org.eclipse.team.internal.ccvs.ui.wizards.NewLocationWizard;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.dialogs.PropertyDialogAction;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
-import org.eclipse.ui.dialogs.PropertyDialogAction;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 
@@ -152,7 +157,7 @@ public class RepositoriesView extends ViewPart {
 		propertiesAction = new PropertyDialogAction(shell, viewer);
 		getViewSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.PROPERTIES, propertiesAction);		
 		IStructuredSelection selection = (IStructuredSelection)viewer.getSelection();
-		if (selection.size() == 1 && selection.getFirstElement() instanceof ICVSRepositoryLocation) {
+		if (selection.size() == 1 && selection.getFirstElement() instanceof RepositoryRoot) {
 			propertiesAction.setEnabled(true);
 		} else {
 			propertiesAction.setEnabled(false);
@@ -160,7 +165,7 @@ public class RepositoriesView extends ViewPart {
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection ss = (IStructuredSelection)event.getSelection();
-				boolean enabled = ss.size() == 1 && ss.getFirstElement() instanceof ICVSRepositoryLocation;
+				boolean enabled = ss.size() == 1 && ss.getFirstElement() instanceof RepositoryRoot;
 				propertiesAction.setEnabled(enabled);
 			}
 		});
@@ -188,7 +193,7 @@ public class RepositoriesView extends ViewPart {
 				manager.add(refreshAction);
 				
 				IStructuredSelection selection = (IStructuredSelection)viewer.getSelection();
-				if (selection.size() == 1 && selection.getFirstElement() instanceof ICVSRepositoryLocation) {
+				if (selection.size() == 1 && selection.getFirstElement() instanceof RepositoryRoot) {
 					manager.add(propertiesAction);
 				}
 				sub.add(newAction);

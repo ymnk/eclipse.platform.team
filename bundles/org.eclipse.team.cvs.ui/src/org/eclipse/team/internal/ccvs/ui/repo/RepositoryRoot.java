@@ -8,7 +8,7 @@
  * Contributors:
  * IBM - Initial implementation
  ******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.model;
+package org.eclipse.team.internal.ccvs.ui.repo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
@@ -35,11 +36,14 @@ import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.RepositoriesViewContentHandler;
 import org.eclipse.team.internal.ccvs.ui.XMLWriter;
+import org.eclipse.team.internal.ccvs.ui.model.BranchCategory;
+import org.eclipse.team.internal.ccvs.ui.model.CVSModelElement;
+import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
+import org.eclipse.team.internal.ccvs.ui.model.VersionCategory;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public class RepositoryRoot extends CVSModelElement implements IAdaptable {
+public class RepositoryRoot extends PlatformObject {
 
 	public static final String[] DEFAULT_AUTO_REFRESH_FILES = { ".project", ".vcm_meta" };
 	
@@ -52,39 +56,6 @@ public class RepositoryRoot extends CVSModelElement implements IAdaptable {
 	
 	public RepositoryRoot(ICVSRepositoryLocation root) {
 		this.root = root;
-	}
-	
-	/**
-	 * Returns an object which is an instance of the given class
-	 * associated with this object. Returns <code>null</code> if
-	 * no such object can be found.
-	 */
-	public Object getAdapter(Class adapter) {
-		if (adapter == IWorkbenchAdapter.class) return this;
-		return null;
-	}
-	
-	public ImageDescriptor getImageDescriptor(Object object) {
-		return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_REPOSITORY);
-	}
-	
-	public String getLabel(Object o) {
-		if (name == null)
-			return root.getLocation();
-		else
-			return name;
-	}
-	
-	public Object getParent(Object o) {
-		return null;
-	}
-	
-	public Object[] getChildren(Object o) {
-		return new Object[] {
-			new CVSTagElement(CVSTag.DEFAULT, root),
-			new BranchCategory(root),
-			new VersionCategory(root)
-		};
 	}
 	
 	/**
@@ -320,4 +291,12 @@ public class RepositoryRoot extends CVSModelElement implements IAdaptable {
 		paths.addAll(autoRefreshFiles.keySet());
 		return (String[]) paths.toArray(new String[paths.size()]);
 	}
+	/**
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
+		if (ICVSRepositoryLocation.class.equals(adapter)) return getRoot();
+		return super.getAdapter(adapter);
+	}
+
 }

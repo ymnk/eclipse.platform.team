@@ -1,4 +1,4 @@
-package org.eclipse.team.internal.ccvs.ui;
+package org.eclipse.team.internal.ccvs.ui.repo;
 
 /*
  * (c) Copyright IBM Corp. 2000, 2002.

@@ -8,7 +8,7 @@
  * Contributors:
  * IBM - Initial implementation
  ******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.actions;
+package org.eclipse.team.internal.ccvs.ui.repo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -21,6 +21,7 @@ import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
 
 public class CopyRepositoryNameAction extends CVSAction {
 	protected boolean isEnabled() throws TeamException {
@@ -41,7 +42,7 @@ public class CopyRepositoryNameAction extends CVSAction {
 			repositories = new ArrayList();
 			Iterator elements = ((IStructuredSelection)selection).iterator();
 			while (elements.hasNext()) {
-				Object next = elements.next();
+				Object next = getAdapter(elements.next(), ICVSRepositoryLocation.class);
 				if (next instanceof ICVSRepositoryLocation) {
 					repositories.add(next);
 					continue;

@@ -78,9 +78,9 @@
          </filter>
       </page>
       <page
-            objectClass="org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation"
+            objectClass="org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot"
             name="%CVS"
-            class="org.eclipse.team.internal.ccvs.ui.CVSRepositoryPropertiesPage"
+            class="org.eclipse.team.internal.ccvs.ui.repo.CVSRepositoryPropertiesPage"
             id="org.eclipse.team.ccvs.ui.propertyPages.CVSRepositoryPropertiesPage">
       </page>
    </extension>
@@ -420,13 +420,13 @@
       </objectContribution>
 
       <objectContribution
-            objectClass="org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation"
+            objectClass="org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot"
             id="org.eclipse.team.ccvs.ui.RemoteRootContributions">
          <action
                label="%CopyRepositoryNameAction.label"
                tooltip="%CopyRepositoryNameAction.tooltip"
                menubarPath="miscGroup"
-               class="org.eclipse.team.internal.ccvs.ui.actions.CopyRepositoryNameAction"
+               class="org.eclipse.team.internal.ccvs.ui.repo.CopyRepositoryNameAction"
                helpContextId="org.eclipse.team.cvs.ui.copy_repository_name_action_context"
                id="org.eclipse.team.ccvs.ui.copyNames">
          </action>
@@ -434,7 +434,7 @@
                label="%RemoveRootAction.label"
                tooltip="%RemoveRootAction.tooltip"
                menubarPath="miscGroup"
-               class="org.eclipse.team.internal.ccvs.ui.actions.RemoveRootAction"
+               class="org.eclipse.team.internal.ccvs.ui.repo.RemoveRootAction"
                helpContextId="org.eclipse.team.cvs.ui.remove_root_action_context"
                id="org.eclipse.team.ccvs.ui.removeRoot">
          </action>
@@ -443,7 +443,7 @@
                icon="icons/full/clcl16/newstream_wiz.gif"
                tooltip="%DefineBranchAction.tooltip"
                menubarPath="tagGroup"
-               class="org.eclipse.team.internal.ccvs.ui.actions.DefineBranchAction"
+               class="org.eclipse.team.internal.ccvs.ui.repo.DefineBranchAction"
                helpContextId="org.eclipse.team.cvs.ui.define_branch_action_context"
                id="org.eclipse.team.ccvs.ui.defineBranch">
          </action>
@@ -463,7 +463,7 @@
                label="%DefineBranchAction.label"
                icon="icons/full/clcl16/newstream_wiz.gif"
                tooltip="%DefineBranchAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.DefineBranchAction"
+               class="org.eclipse.team.internal.ccvs.ui.repo.DefineBranchAction"
                helpContextId="org.eclipse.team.cvs.ui.define_branch_action_context"
                id="org.eclipse.team.ccvs.ui.defineBranch">
          </action>
@@ -481,14 +481,14 @@
          <action
                label="%RemoveBranchTagAction.label"
                tooltip="%RemoveBranchTagAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.RemoveBranchTagAction"
+               class="org.eclipse.team.internal.ccvs.ui.repo.RemoveBranchTagAction"
                helpContextId="org.eclipse.team.cvs.ui.remove_branch_action_context"
                id="org.eclipse.team.ccvs.ui.removeBranchTag">
          </action>
          <action
                label="%RefreshTagMembership.label"
                tooltip="%RefreshTagMembership.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.AutoRefreshMembership"
+               class="org.eclipse.team.internal.ccvs.ui.repo.AutoRefreshMembership"
                helpContextId="org.eclipse.team.cvs.ui.refresh_tag_membership_action_context"
                id="org.eclipse.team.ccvs.ui.refreshTagMembership">
          </action>
@@ -550,7 +550,7 @@
             icon="icons/full/cview16/repo_rep.gif"
             category="org.eclipse.team.ccvs.ui"
        		fastViewWidthRatio="0.5"
-            class="org.eclipse.team.internal.ccvs.ui.RepositoriesView"
+            class="org.eclipse.team.internal.ccvs.ui.repo.RepositoriesView"
             id="org.eclipse.team.ccvs.ui.RepositoriesView">
       </view>
       <view

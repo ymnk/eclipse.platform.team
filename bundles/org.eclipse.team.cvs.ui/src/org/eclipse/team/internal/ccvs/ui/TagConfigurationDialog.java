@@ -62,6 +62,7 @@ import org.eclipse.team.internal.ccvs.ui.model.CVSFileElement;
 import org.eclipse.team.internal.ccvs.ui.model.CVSFolderElement;
 import org.eclipse.team.internal.ccvs.ui.model.CVSRootFolderElement;
 import org.eclipse.team.internal.ccvs.ui.model.RemoteContentProvider;
+import org.eclipse.team.internal.ccvs.ui.repo.*;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;

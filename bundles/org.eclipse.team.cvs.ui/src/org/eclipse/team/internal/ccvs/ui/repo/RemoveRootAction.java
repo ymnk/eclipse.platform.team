@@ -8,7 +8,7 @@
  * Contributors:
  * IBM - Initial implementation
  ******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.actions;
+package org.eclipse.team.internal.ccvs.ui.repo;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -31,6 +31,7 @@ import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.actions.CVSAction;
 import org.eclipse.team.internal.ui.DetailsDialogWithProjects;
 
 /**
@@ -46,18 +47,9 @@ public class RemoveRootAction extends CVSAction {
 			resources = new ArrayList();
 			Iterator elements = ((IStructuredSelection) selection).iterator();
 			while (elements.hasNext()) {
-				Object next = elements.next();
+				Object next = getAdapter(elements.next(), ICVSRepositoryLocation.class);
 				if (next instanceof ICVSRepositoryLocation) {
 					resources.add(next);
-					continue;
-				}
-				if (next instanceof IAdaptable) {
-					IAdaptable a = (IAdaptable) next;
-					Object adapter = a.getAdapter(ICVSRepositoryLocation.class);
-					if (adapter instanceof ICVSRemoteFile) {
-						resources.add(adapter);
-						continue;
-					}
 				}
 			}
 		}
