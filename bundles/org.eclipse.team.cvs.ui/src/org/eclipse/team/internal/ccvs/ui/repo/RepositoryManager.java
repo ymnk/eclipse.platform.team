@@ -211,7 +211,6 @@ public class RepositoryManager {
 	}
 	
 	public ICVSRemoteResource[] getFoldersForTag(ICVSRepositoryLocation location, CVSTag tag, IProgressMonitor monitor) throws CVSException {
-		// Concurrency: this is the only interesting case to require a background job 
 		if (tag.getType() == CVSTag.HEAD) {
 			ICVSRemoteResource[] resources = location.members(tag, false, monitor);
 			RepositoryRoot root = getRepositoryRootFor(location);
