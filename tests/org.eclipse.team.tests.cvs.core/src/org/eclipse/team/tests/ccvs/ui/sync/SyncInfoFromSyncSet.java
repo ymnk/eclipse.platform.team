@@ -21,8 +21,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSynchronizeParticipant;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSynchronizeParticipant;
+import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
@@ -30,6 +29,7 @@ import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeManager;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
 /**
  * SyncInfoSource that obtains SyncInfo from the SynchronizeView's SyncSet.
@@ -76,8 +76,8 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
 			if(participant.getId().equals(subscriber.getId())) {
-				if(participant instanceof CVSSynchronizeParticipant) {
-					SubscriberInput input = ((CVSSynchronizeParticipant)participant).getSubscriberInput();
+				if(participant instanceof TeamSubscriberParticipant) {
+					SubscriberInput input = ((TeamSubscriberParticipant)participant).getInput();
 					waitForEventNotification(input);
 					return input;
 				}
@@ -104,7 +104,7 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 	public CVSMergeSubscriber createMergeSubscriber(IProject project, CVSTag root, CVSTag branch) {
 		CVSMergeSubscriber mergeSubscriber = super.createMergeSubscriber(project, root, branch);
 		ISynchronizeManager synchronizeManager = TeamUI.getSynchronizeManager();
-		ISynchronizeParticipant participant = new CVSMergeSynchronizeParticipant(mergeSubscriber);
+		ISynchronizeParticipant participant = new MergeSynchronizeParticipant(mergeSubscriber);
 		synchronizeManager.addSynchronizeParticipants(
 				new ISynchronizeParticipant[] {participant});		
 		ISynchronizeView view = synchronizeManager.showSynchronizeViewInActivePage(null);
