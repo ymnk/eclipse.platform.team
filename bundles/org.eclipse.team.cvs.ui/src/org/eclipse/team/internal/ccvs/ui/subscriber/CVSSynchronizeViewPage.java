@@ -155,7 +155,6 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		ILabelProvider oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
 		viewer.setLabelProvider(new CVSLabelProvider(oldLabelProvider));
-		viewer.setContentProvider(new ChangeLogContentProvider());
 	}
 	
 	private SyncInfoSet getSyncInfoSet() {

@@ -27,7 +27,7 @@ public class CompressedFolder extends SyncInfoDiffNode {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.sync.views.SynchronizeViewNode#getOutOfSyncDescendants()
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getChildSyncInfos()
 	 */
 	public SyncInfo[] getChildSyncInfos() {
 		IResource[] children = getSyncInfoSet().members(getResource());

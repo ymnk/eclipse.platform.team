@@ -21,7 +21,7 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputOld;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
@@ -38,8 +38,8 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	}
 	
 	public SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
-		SubscriberInput input = getInput(subscriber);
-		ISyncInfoSet set = input.getWorkingSetSyncSet();
+		SubscriberInputOld input = getInput(subscriber);
+		SyncInfoSet set = input.getWorkingSetSyncSet();
 		SyncInfo info = set.getSyncInfo(resource);
 		if (info == null) {
 			info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
@@ -50,13 +50,13 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		return info;
 	}
 	
-	private SubscriberInput getInput(TeamSubscriber subscriber) {
+	private SubscriberInputOld getInput(TeamSubscriber subscriber) {
 		// show the sync view
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
 			if(participant instanceof TeamSubscriberParticipant) {
-				SubscriberInput input = ((SubscriberInputSyncInfoSet)((TeamSubscriberParticipant)participant).getSyncInfoSet()).getInput();
+				SubscriberInputOld input = ((SubscriberInputSyncInfoSet)((TeamSubscriberParticipant)participant).getSyncInfoSet()).getInput();
 				TeamSubscriber s = input.getSubscriber();
 				if(s == subscriber) {
 					EclipseTest.waitForSubscriberInputHandling(input);
@@ -72,8 +72,8 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	protected void assertProjectRemoved(TeamSubscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
-		SubscriberInput input = getInput(subscriber);
-		ISyncInfoSet set = input.getSyncInfoSet();
+		SubscriberInputOld input = getInput(subscriber);
+		SyncInfoSet set = input.getSyncInfoSet();
 		if (set.getOutOfSyncDescendants(project).length != 0) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
 		}
@@ -122,6 +122,6 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	public void reset(TeamSubscriber subscriber) throws TeamException {
 		super.reset(subscriber);
-		getInput(subscriber).reset();
+		getInput(subscriber).clear();
 	}
 }

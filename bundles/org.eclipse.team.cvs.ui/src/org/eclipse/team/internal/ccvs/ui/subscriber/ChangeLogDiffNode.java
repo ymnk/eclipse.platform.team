@@ -28,4 +28,10 @@ public class ChangeLogDiffNode extends DiffNode {
 	public String getComment() {
 		return comment;
 	}
+	
+	public boolean equals(Object other) {
+		if(other == this) return true;
+		if(! (other instanceof ChangeLogDiffNode)) return false;
+		return ((ChangeLogDiffNode)other).getComment().equals(getComment());
+	}
 }

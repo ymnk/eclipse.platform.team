@@ -56,5 +56,6 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
   - showing sync view in commit dialog is complicated because there is no easy way of finding out exactly which resources will be committed at the
   point the commit comment dialog is shown. Need to provide new API on the commit dialog for this.
   - convert details dialogs that show sync view into wizards, this allows more room to browse the changes. almost like the refactoring. Preview >> button instead of Next >>.
-  - can you have non-diff nodes in the sync view?
+  - can you have non-diff nodes in the sync view? there shouldn't be any assumptions about the type of diff nodes in the sync view. Basically, any type of diff node should be supported. 
+  This would allow adding logical elements to the view don't directly have an associated IResource or SyncInfo.
   - workbenchadapter for SyncInfoSet, SyncInfo objects?

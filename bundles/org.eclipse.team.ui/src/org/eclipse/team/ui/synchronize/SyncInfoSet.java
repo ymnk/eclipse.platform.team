@@ -187,19 +187,6 @@ public class SyncInfoSet {
 		return (SyncInfo[]) infos.toArray(new SyncInfo[infos.size()]);
 	}
 
-	private IResource[] getRoots(IContainer root) {
-		Set possibleChildren = parents.keySet();
-		Set children = new HashSet();
-		for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
-			Object next = it.next();
-			IResource element = ((IWorkspaceRoot)root).findMember((IPath)next);
-			if (element != null) {
-				children.add(element.getProject());
-			}
-		}
-		return (IResource[]) children.toArray(new IResource[children.size()]);
-	}
-
 	public synchronized IResource[] getResources() {
 		SyncInfo[] infos = members();
 		List resources = new ArrayList();
@@ -315,5 +302,18 @@ public class SyncInfoSet {
 			changes.addedRoot(parent);
 		}
 		return addedParent;
+	}
+	
+	private IResource[] getRoots(IContainer root) {
+		Set possibleChildren = parents.keySet();
+		Set children = new HashSet();
+		for (Iterator it = possibleChildren.iterator(); it.hasNext();) {
+			Object next = it.next();
+			IResource element = ((IWorkspaceRoot)root).findMember((IPath)next);
+			if (element != null) {
+				children.add(element.getProject());
+			}
+		}
+		return (IResource[]) children.toArray(new IResource[children.size()]);
 	}
 }

@@ -31,7 +31,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileChangeListener;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputOld;
 import org.eclipse.team.tests.ccvs.ui.HeadlessCVSRunnableContext;
 
 public class EclipseTest extends EclipseWorkspaceTest {
@@ -766,7 +766,7 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		waitForJobCompletion(SyncFileChangeListener.getDeferredHandler().getEventHandlerJob());
 	}
 	
-	public static void waitForSubscriberInputHandling(SubscriberInput input) {
+	public static void waitForSubscriberInputHandling(SubscriberInputOld input) {
 		waitForJobCompletion(input.getEventHandler().getEventHandlerJob());
 	}
 
