@@ -24,6 +24,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoSetCompareInput;
 import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
@@ -33,6 +34,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private SyncInfo[] changes;
 	private ITeamSubscriberSyncInfoSets[] inputs;
 	private Button openSyncButton;
+	private Button promptWhenNoChanges;
+	private Button promptWithChanges;
 	private CompareEditorInput compareEditorInput;
 	
 	public RefreshCompleteDialog(Shell parentShell, SyncInfo[] changes, ITeamSubscriberSyncInfoSets[] inputs) {
@@ -58,33 +61,22 @@ public class RefreshCompleteDialog extends DetailsDialog {
 			text = "No changes found.";
 		}
 		createLabel(parent, text, 2);
+		createLabel(parent, "", 2);
 		
-		Group group = new Group(parent, SWT.SHADOW_ETCHED_IN);
-		GridLayout layout = new GridLayout(2, false);
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		layout.numColumns = 2;
-		group.setLayout(layout);
-		GridData data = new GridData(GridData.GRAB_HORIZONTAL |
-				GridData.GRAB_VERTICAL |
-				GridData.HORIZONTAL_ALIGN_FILL |
-				GridData.VERTICAL_ALIGN_CENTER);
+		
+		promptWhenNoChanges = new Button(parent, SWT.CHECK);
+		promptWhenNoChanges.setText(Policy.bind("SyncViewerPreferencePage.16"));
+		GridData data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
 		data.horizontalSpan = 2;
-		group.setLayoutData(data);
-		group.setText("Prompt Options");
-		createLabel(group, "This settings controls what to do when a Synchronize operation has completed.", 2);
-		createLabel(group, "No Changes:", 1);
-		Combo combo = createCombo(group, 10);
-		combo.add("Prompt");
-		combo.add("Open Synchronize View");
-		combo.add("Nothing");
+		promptWhenNoChanges.setLayoutData(data);
 		
-		createLabel(group, "With Changes:", 1);
-		combo = createCombo(group, 10);
-		combo.add("Prompt");
-		combo.add("Open Synchronize View");
-		combo.add("Nothing");
-		parent.layout();
+		promptWithChanges = new Button(parent, SWT.CHECK);
+		promptWithChanges.setText(Policy.bind("SyncViewerPreferencePage.17"));
+		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
+		data.horizontalSpan = 2;
+		promptWithChanges.setLayoutData(data);
+		
+		Dialog.applyDialogFont(parent);
 	}
 
 	/* (non-Javadoc)
@@ -104,6 +96,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		data.grabExcessHorizontalSpace = true;
 		data.grabExcessVerticalSpace = true;
 		data.heightHint = 350;
+		//data.widthHint = 700;
 		result.setLayoutData(data);
 		
 		Control c = compareEditorInput.createContents(result);
@@ -122,9 +115,6 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 * @see org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse.swt.widgets.Composite)
 	 */
 	protected void createButtonsForButtonBar(Composite parent) {
-		if(changes.length != 0) {
-			openSyncButton = createButton(parent, 1234, "Synchronize...", true);
-		}
 		super.createButtonsForButtonBar(parent);
 	}
 	
@@ -168,5 +158,12 @@ public class RefreshCompleteDialog extends DetailsDialog {
 			resources[i] = info.getLocal();
 		}
 		return resources;
+	}
+		
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeErrorMessage()
+	 */
+	protected boolean includeErrorMessage() {
+		return false;
 	}
 }

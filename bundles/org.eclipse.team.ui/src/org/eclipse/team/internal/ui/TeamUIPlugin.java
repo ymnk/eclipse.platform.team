@@ -168,6 +168,8 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_TABLESORT_REVERSED, false);
 		store.setDefault(IPreferenceIds.SYNCVIEW_SELECTED_MODE, TeamSubscriberParticipant.BOTH_MODE);
 		store.setDefault(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE, TeamSynchronizingPerspective.ID);
+		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, true);
+		store.setDefault(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, true);
 	}
 	
 	/**

@@ -162,11 +162,13 @@ abstract public class DetailsDialog extends Dialog {
 			createMainDialogArea(composite);
 		}
 		
-		errorMessageLabel = new Label(composite, SWT.NONE);
-		errorMessageLabel.setLayoutData(new GridData(
-			GridData.GRAB_HORIZONTAL |
-			GridData.HORIZONTAL_ALIGN_FILL));
-		errorMessageLabel.setForeground(getShell().getDisplay().getSystemColor(SWT.COLOR_RED));
+		if(includeErrorMessage()) {
+			errorMessageLabel = new Label(composite, SWT.NONE);
+			errorMessageLabel.setLayoutData(new GridData(
+				GridData.GRAB_HORIZONTAL |
+				GridData.HORIZONTAL_ALIGN_FILL));
+			errorMessageLabel.setForeground(getShell().getDisplay().getSystemColor(SWT.COLOR_RED));
+		}
 		
         Dialog.applyDialogFont(parent);
 		return composite;
@@ -282,5 +284,9 @@ abstract public class DetailsDialog extends Dialog {
 	
 	protected boolean isDetailsVisible() {
 		return detailsCreated;
+	}
+	
+	protected boolean includeErrorMessage() {
+		return true;
 	}
 }

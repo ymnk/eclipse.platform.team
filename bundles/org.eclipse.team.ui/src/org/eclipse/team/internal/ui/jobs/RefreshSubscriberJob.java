@@ -22,6 +22,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
@@ -170,20 +171,24 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 					return Status.CANCEL_STATUS;
 				}
 				try {
-					final ChangeListener listener = new ChangeListener(input);
-					subscriber.addListener(listener);
+					// listener to collect changes found during the refresh
+					ChangeListener listener = null;
+					boolean promptWhenChanges = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES);
+					boolean promptWithChanges = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES);
+					if(promptWhenChanges || promptWithChanges) {
+						listener = new ChangeListener(input);
+						subscriber.addListener(listener);
+					}
+					
+					// perform the refresh
 					subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
 					input.getParticipant().setLastRefreshTime(lastTimeRun);
-					subscriber.removeListener(listener);
-
-					TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-							public void run() {
-								RefreshCompleteDialog d = new RefreshCompleteDialog(
-									new Shell(TeamUIPlugin.getStandardDisplay()), listener.getChanges(), new  ITeamSubscriberSyncInfoSets[] {input});
-								d.setBlockOnOpen(false);
-								d.open();
-							}
-						});					
+					
+					// notify user if preference is set
+					if(listener != null) {
+						subscriber.removeListener(listener);
+						notifyIfNeeded(listener);
+					}
 				} catch(TeamException e) {
 					status.merge(e.getStatus());
 				}
@@ -250,5 +255,17 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	
 	public boolean shouldReschedule() {
 		return reschedule;
-	}	
+	}
+	
+	private void notifyIfNeeded(ChangeListener listener) {
+		final SyncInfo[] infos = listener.getChanges();
+		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+			public void run() {
+				RefreshCompleteDialog d = new RefreshCompleteDialog(
+						new Shell(TeamUIPlugin.getStandardDisplay()), infos, new  ITeamSubscriberSyncInfoSets[] {input});
+				d.setBlockOnOpen(false);
+				d.open();
+			}
+		});
+	}
 }

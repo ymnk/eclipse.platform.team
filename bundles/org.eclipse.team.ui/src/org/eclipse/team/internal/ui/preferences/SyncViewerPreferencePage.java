@@ -48,6 +48,8 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	private IntegerFieldEditor2 scheduledDelay = null;
 	private BooleanFieldEditor compressFolders = null;
 	private BooleanFieldEditor showSyncInLabels = null;
+	private BooleanFieldEditor promptWithChanges = null;
+	private BooleanFieldEditor promptWhenNoChanges = null;
 	
 	private Group refreshGroup;
 	
@@ -173,6 +175,11 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 				
 		updateLastRunTime(createLabel(refreshGroup, null, 0));
 									
+		promptWhenNoChanges = new BooleanFieldEditor(SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, Policy.bind("SyncViewerPreferencePage.16"), SWT.NONE, displayGroup); //$NON-NLS-1$
+		addField(promptWhenNoChanges);
+		promptWithChanges = new BooleanFieldEditor(SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, Policy.bind("SyncViewerPreferencePage.17"), SWT.NONE, displayGroup); //$NON-NLS-1$
+		addField(promptWhenNoChanges);
+				
 		Group perspectiveGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.15")); //$NON-NLS-1$
 		
 		createLabel(perspectiveGroup, Policy.bind("SynchronizationViewPreference.defaultPerspectiveDescription"), 1); //$NON-NLS-1$
