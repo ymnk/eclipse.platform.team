@@ -19,7 +19,15 @@ import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IMemento;
 
-
+/**
+ * Abstract superclass of resource scopes for <code>SubscriberParticipant</code>
+ * instances.
+ * <p>
+ * Clients are not expected to subclass this class.
+ * 
+ * @see SubscriberParticipant
+ * @since 3.0
+ */
 public abstract class AbstractSynchronizeScope implements ISynchronizeScope {
 	
 	/*
@@ -62,7 +70,7 @@ public abstract class AbstractSynchronizeScope implements ISynchronizeScope {
 		if (lastDot == -1) {
 			return name;
 		}
-		return name.substring(lastDot + 1)  + "."; //$NON-NLS-1$
+		return name.substring(lastDot + 1); //$NON-NLS-1$
 	}
 	
 	private ListenerList listeners = new ListenerList();
