@@ -21,6 +21,13 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
  * CVSRevisionNumberCompareCriteria
  */
  public class CVSRevisionNumberCompareCriteria implements ISubscriberResourceComparator {
+ 	
+	private CVSSyncTreeSubscriber subscriber;
+
+	public CVSRevisionNumberCompareCriteria(CVSSyncTreeSubscriber subscriber) {
+		this.subscriber = subscriber;
+	}
+
 	/* (non-Javadoc)
 	 * @see ComparisonCriteria#compare(Object, Object, IProgressMonitor)
 	 */
@@ -92,6 +99,6 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 	 * @see org.eclipse.team.core.subscribers.ISubscriberResourceComparator#isThreeWay()
 	 */
 	public boolean isThreeWay() {
-		return true;
+		return subscriber.isThreeWay();
 	}
 }

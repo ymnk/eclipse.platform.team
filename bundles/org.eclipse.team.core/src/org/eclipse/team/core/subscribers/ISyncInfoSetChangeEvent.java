@@ -65,14 +65,4 @@ public interface ISyncInfoSetChangeEvent {
 	 */
 	public SyncInfoSet getSet();
 	
-	/**
-	 * Returns <code>true</code> if the associated set has been reset and <code>false</code>
-	 * otherwise. A sync info set is reset when changes in the set are all recalculated. If
-	 * reset is <code>true</code> then all other contents of the event are to be ignored.
-	 * 
-	 * @return <code>true</code> if the associated set has been reset and <code>false</code>
-	 * otherwise.
-	 */
-	public boolean isReset();
-	
 }

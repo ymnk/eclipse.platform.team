@@ -17,6 +17,7 @@ import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.*;
@@ -87,7 +88,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 * 
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+	public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		updateActionEnablement();
 	}
 
@@ -149,5 +150,19 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 			config = new CVSSynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
 		}
 		return config;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
+		updateActionEnablement();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetError(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.team.core.ITeamStatus[], org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
+		// Nothing to do for errors
 	}
 }

@@ -21,6 +21,7 @@ import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -134,8 +135,8 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged()
 	 */
-	public void syncSetChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
-		if (event.isReset() || ! (event instanceof ISyncInfoTreeChangeEvent)) {
+	public void syncInfoChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+		if (! (event instanceof ISyncInfoTreeChangeEvent)) {
 			reset();
 		} else {
 			final Control ctrl = viewer.getControl();
@@ -439,5 +440,19 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			parentsToUpdate.add(parent);
 			parent = parent.getParent();
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
+		reset();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetError(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.team.core.ITeamStatus[], org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
+		// TODO Auto-generated method stub
 	}
 }

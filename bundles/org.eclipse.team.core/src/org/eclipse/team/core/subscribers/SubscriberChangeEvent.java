@@ -13,16 +13,13 @@ package org.eclipse.team.core.subscribers;
 import org.eclipse.core.resources.IResource;
 
 /**
- * A team delta represents changes in the team state.
+ * A concrete implementation of <code>ISubscriberChangeEvent</code> that can
+ * be used by clients.
  *
  * @see IResource
  * @see ITeamProvider
  */
 public class SubscriberChangeEvent implements ISubscriberChangeEvent {
-	
-	/*====================================================================
-	 * Constants defining the kinds of team changes to resources:
-	 *====================================================================*/
 
 	private Subscriber subscriber; 
 	private int flags;
@@ -50,7 +47,7 @@ public class SubscriberChangeEvent implements ISubscriberChangeEvent {
 	 * Returns an array of deltas for the resources with SubscriberChangeEvent.SYNC_CHANGED
 	 * as the change type.
 	 * @param resources the resources whose sync info has changed
-	 * @return
+	 * @return an array of events
 	 */
 	public static SubscriberChangeEvent[] asSyncChangedDeltas(Subscriber subscriber, IResource[] resources) {
 		SubscriberChangeEvent[] deltas = new SubscriberChangeEvent[resources.length];

@@ -190,20 +190,28 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		}	
 	}
 	
-	private void updateMode(int mode) {
+	/**
+	 * This method is invoked from <code>setMode</code> when the mode has changed.
+	 * It sets the filter on the collector to show the <code>SyncInfo</code>
+	 * appropriate for the mode.
+	 * @param mode the new mode (one of <code>INCOMING_MODE_FILTER</code>,
+	 * <code>OUTGOING_MODE_FILTER</code>, <code>CONFLICTING_MODE_FILTER</code>
+	 * or <code>BOTH_MODE_FILTER</code>)
+	 */
+	protected void updateMode(int mode) {
 		if(collector != null) {	
 		
-		int[] modeFilter = BOTH_MODE_FILTER;
-		switch(mode) {
-		case TeamSubscriberParticipant.INCOMING_MODE:
-			modeFilter = INCOMING_MODE_FILTER; break;
-		case TeamSubscriberParticipant.OUTGOING_MODE:
-			modeFilter = OUTGOING_MODE_FILTER; break;
-		case TeamSubscriberParticipant.BOTH_MODE:
-			modeFilter = BOTH_MODE_FILTER; break;
-		case TeamSubscriberParticipant.CONFLICTING_MODE:
-			modeFilter = CONFLICTING_MODE_FILTER; break;
-		}
+			int[] modeFilter = BOTH_MODE_FILTER;
+			switch(mode) {
+			case TeamSubscriberParticipant.INCOMING_MODE:
+				modeFilter = INCOMING_MODE_FILTER; break;
+			case TeamSubscriberParticipant.OUTGOING_MODE:
+				modeFilter = OUTGOING_MODE_FILTER; break;
+			case TeamSubscriberParticipant.BOTH_MODE:
+				modeFilter = BOTH_MODE_FILTER; break;
+			case TeamSubscriberParticipant.CONFLICTING_MODE:
+				modeFilter = CONFLICTING_MODE_FILTER; break;
+			}
 
 			collector.setFilter(
 					new FastSyncInfoFilter.AndSyncInfoFilter(

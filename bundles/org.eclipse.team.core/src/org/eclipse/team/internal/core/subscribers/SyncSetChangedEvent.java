@@ -13,6 +13,7 @@ package org.eclipse.team.internal.core.subscribers;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.*;
 
 /**
@@ -29,6 +30,10 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	private Set addedResources = new HashSet();
 	
 	private boolean reset = false;
+
+	private boolean errorAdded;
+
+	private List errors = new ArrayList();
 
 	public SyncSetChangedEvent(SyncInfoSet set) {
 		super();
@@ -87,5 +92,13 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	
 	public boolean isEmpty() {
 		return changedResources.isEmpty() && removedResources.isEmpty() && addedResources.isEmpty();
+	}
+
+	public void errorOccurred(ITeamStatus status) {
+		errors.add(status);
+	}
+	
+	public ITeamStatus[] getErrors() {
+		return (ITeamStatus[]) errors.toArray(new ITeamStatus[errors.size()]);
 	}
 }

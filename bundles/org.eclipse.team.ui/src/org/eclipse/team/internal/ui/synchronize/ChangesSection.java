@@ -17,6 +17,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
@@ -62,8 +63,16 @@ public class ChangesSection extends Composite {
 	 * Listen to sync set changes so that we can update message to user and totals.
 	 */
 	private ISyncInfoSetChangeListener changedListener = new ISyncInfoSetChangeListener() {
-		public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+		public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 			calculateDescription();
+		}
+
+		public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
+			calculateDescription();
+		}
+
+		public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
+			// Nothing to do for errors
 		}
 	};
 		

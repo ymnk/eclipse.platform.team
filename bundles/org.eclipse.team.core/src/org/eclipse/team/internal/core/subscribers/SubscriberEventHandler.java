@@ -13,28 +13,18 @@ package org.eclipse.team.internal.core.subscribers;
 import java.util.*;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.TeamException;
+import org.eclipse.core.runtime.*;
+import org.eclipse.team.core.*;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.core.*;
 
-/**
- * @author JLemieux
- *
- * To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Generation - Code and Comments
- */
 /**
  * This handler collects changes and removals to resources and calculates their
  * synchronization state in a background job. The result is fed input the SyncSetInput.
  * 
  * Exceptions that occur when the job is processing the events are collected and
  * returned as part of the Job's status.
- * 
- * OPTIMIZATION: look into provinding events with multiple resources instead of
- * one.
  */
 public class SubscriberEventHandler extends BackgroundEventHandler {
 	// The set that receives notification when the resource synchronization state
@@ -197,7 +187,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 						results);
 				}
 			} catch (TeamException e) {
-				handleException(e, resource, Policy.subMonitorFor(monitor, 1));
+				handleException(e, resource, ITeamStatus.SYNC_INFO_SET_ERROR, "The members of folder {0} could not be retrieved." + resource.getFullPath().toString());
 			}
 		}
 
@@ -213,7 +203,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 					new SubscriberEvent(resource, SubscriberEvent.CHANGE, IResource.DEPTH_ZERO, info));
 			}
 		} catch (TeamException e) {
-			handleException(e, resource, Policy.subMonitorFor(monitor, 1));
+			handleException(e, resource, ITeamStatus.RESOURCE_SYNC_INFO_ERROR, "The synchronization state for resource {0} could not be determined." + resource.getFullPath().toString());
 		}
 		monitor.worked(1);
 	}
@@ -223,12 +213,9 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * dispatching it to the sync set input so any down stream views can react
 	 * accordingly.
 	 */
-	private void handleException(CoreException e, IResource resource, IProgressMonitor monitor) {
+	private void handleException(CoreException e, IResource resource, int code, String message) {
 		handleException(e);
-		monitor.beginTask(null, 100);
-		dispatchEvents(Policy.subMonitorFor(monitor, 95));
-		syncSetInput.handleError(e, resource, Policy.subMonitorFor(monitor, 5));
-		monitor.done();
+		syncSetInput.handleError(new TeamStatus(IStatus.ERROR, TeamPlugin.ID, code, message, e, resource));
 	}
 
 	/**
@@ -320,41 +307,44 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	}
 
 	protected void processEvent(Event event, IProgressMonitor monitor) {
-		// Cancellation is dangerous because this will leave the sync info in a bad state.
-		// Purposely not checking -				 	
-		int type = event.getType();
-		switch (type) {
-			case RunnableEvent.RUNNABLE :
-				executeRunnable(event, monitor);
-				break;
-			case SubscriberEvent.REMOVAL :
-				resultCache.add(event);
-				break;
-			case SubscriberEvent.CHANGE :
-				List results = new ArrayList();
-				collect(
-					event.getResource(),
-					event.getDepth(),
-					monitor,
-					results);
-				resultCache.addAll(results);
-				break;
-			case SubscriberEvent.INITIALIZE :
-				monitor.subTask(Policy.bind("SubscriberEventHandler.2", event.getResource().getFullPath().toString())); //$NON-NLS-1$
-				SubscriberEvent[] events =
-					getAllOutOfSync(
-						new IResource[] { event.getResource()},
+		try {
+			// Cancellation is dangerous because this will leave the sync info in a bad state.
+			// Purposely not checking -
+			int type = event.getType();
+			switch (type) {
+				case RunnableEvent.RUNNABLE :
+					executeRunnable(event, monitor);
+					break;
+				case SubscriberEvent.REMOVAL :
+					resultCache.add(event);
+					break;
+				case SubscriberEvent.CHANGE :
+					List results = new ArrayList();
+					collect(
+						event.getResource(),
 						event.getDepth(),
-						Policy.subMonitorFor(monitor, 64));
-				resultCache.addAll(Arrays.asList(events));
-				break;
+						monitor,
+						results);
+					resultCache.addAll(results);
+					break;
+				case SubscriberEvent.INITIALIZE :
+					monitor.subTask(Policy.bind("SubscriberEventHandler.2", event.getResource().getFullPath().toString())); //$NON-NLS-1$
+					SubscriberEvent[] events =
+						getAllOutOfSync(
+							new IResource[] { event.getResource()},
+							event.getDepth(),
+							Policy.subMonitorFor(monitor, 64));
+					resultCache.addAll(Arrays.asList(events));
+					break;
+			}
+		} catch (RuntimeException e) {
+			// handle the exception and keep processing
+			handleException(new TeamException("An internal error occurred processing subscriber events.", e), event.getResource(), ITeamStatus.SYNC_INFO_SET_ERROR, "An internal error occurred processing resource {0}" + event.getResource().getFullPath().toString());
 		}
 	}
 		
-	/**
-	 * @param event
-	 * @param monitor
-	 * @throws TeamException
+	/*
+	 * Execute the RunnableEvent
 	 */
 	private void executeRunnable(Event event, IProgressMonitor monitor) {
 		// Dispatch any queued results to clear pending output events
@@ -362,7 +352,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		try {
 			((RunnableEvent)event).run(Policy.subMonitorFor(monitor, 1));
 		} catch (CoreException e) {
-			handleException(e, event.getResource(), Policy.subMonitorFor(monitor, 1));
+			handleException(e, event.getResource(), ITeamStatus.SYNC_INFO_SET_ERROR, "An internal error has occurred.");
 		}
 	}
 

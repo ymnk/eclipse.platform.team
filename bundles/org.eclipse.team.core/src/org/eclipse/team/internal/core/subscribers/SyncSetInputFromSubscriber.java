@@ -10,9 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core.subscribers;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
 
@@ -47,11 +46,12 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  {
 
 	/**
 	 * Handle an error that occurred while populating the receiver's set.
-	 * This error should be propogated to any set listeners.
-	 * @param e the error
-	 * @param resource the resource
+	 * The <code>ITeamStatus</code> includes the resource for which the 
+	 * error occurred.
+	 * This error is propogated to any set listeners.
+	 * @param status the error status 
 	 */
-	public void handleError(CoreException e, IResource resource, IProgressMonitor monitor) {
-		getSyncSet().handleErrorEvent(new SubscriberErrorEvent(e, resource), monitor);
+	public void handleError(ITeamStatus  status) {
+		getSyncSet().addError(status);
 	}
 }

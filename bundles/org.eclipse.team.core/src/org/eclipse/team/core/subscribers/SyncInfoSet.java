@@ -12,10 +12,13 @@ package org.eclipse.team.core.subscribers;
 
 import java.util.*;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
@@ -35,6 +38,11 @@ public class SyncInfoSet {
 
 	// keep track of number of sync kinds in the set
 	private SyncInfoStatistics statistics = new SyncInfoStatistics();
+	
+	// keep track of errors that occurred while trying to populate the set
+	private Map errors = new HashMap();
+	
+	private boolean lockedForModification;
 	
 	/**
 	 * Create an empty set.
@@ -132,6 +140,7 @@ public class SyncInfoSet {
 	 * @param info the new <code>SyncInfo</code>
 	 */
 	protected synchronized void internalAdd(SyncInfo info) {
+		Assert.isTrue(!lockedForModification);
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		SyncInfo oldSyncInfo = (SyncInfo)resources.put(path, info); 
@@ -149,6 +158,7 @@ public class SyncInfoSet {
 	 * @return the <code>SyncInfo</code> that was just removed
 	 */
 	protected synchronized SyncInfo internalRemove(IResource resource) {
+		Assert.isTrue(!lockedForModification);
 		IPath path = resource.getFullPath();
 		SyncInfo info = (SyncInfo)resources.remove(path);
 		if (info != null) {
@@ -187,6 +197,7 @@ public class SyncInfoSet {
 	public void clear() {
 		beginInput();
 		try {
+			errors.clear();
 			resources.clear();
 			statistics.clear();
 			getChangeEvent().reset();
@@ -245,7 +256,7 @@ public class SyncInfoSet {
 					addSyncSetChangedListener(listener);
 					SyncSetChangedEvent event = new SyncSetChangedEvent(SyncInfoSet.this);
 					event.reset();
-					listener.syncSetChanged(event, Policy.subMonitorFor(monitor, 95));
+					listener.syncInfoChanged(event, Policy.subMonitorFor(monitor, 95));
 				} finally {
 					monitor.done();
 				}
@@ -500,7 +511,8 @@ public class SyncInfoSet {
 		if(event.isEmpty() && ! event.isReset()) return;
 		ISyncInfoSetChangeListener[] allListeners = getListeners();
 		// Fire the events using an ISafeRunnable
-		monitor.beginTask(null, 100 * allListeners.length);
+		final ITeamStatus[] newErrors = event.getErrors();
+		monitor.beginTask(null, 100 + (newErrors.length > 0 ? 50 : 0) * allListeners.length);
 		for (int i = 0; i < allListeners.length; i++) {
 			final ISyncInfoSetChangeListener listener = allListeners[i];
 			Platform.run(new ISafeRunnable() {
@@ -508,8 +520,19 @@ public class SyncInfoSet {
 					// don't log the exception....it is already being logged in Platform#run
 				}
 				public void run() throws Exception {
-					listener.syncSetChanged(event, Policy.subMonitorFor(monitor, 100));
-	
+					try {
+						lockedForModification = true;
+						if (event.isReset()) {
+							listener.syncInfoSetReset(SyncInfoSet.this, Policy.subMonitorFor(monitor, 100));
+						} else {
+							listener.syncInfoChanged(event, Policy.subMonitorFor(monitor, 100));
+						}
+						if (newErrors.length > 0) {
+							listener.syncInfoSetErrors(SyncInfoSet.this, newErrors, Policy.subMonitorFor(monitor, 50));
+						}
+					} finally {
+						lockedForModification = false;
+					}
 				}
 			});
 		}
@@ -535,5 +558,37 @@ public class SyncInfoSet {
 	 */
 	protected SyncSetChangedEvent getChangeEvent() {
 		return changes;
+	}
+	
+	/**
+	 * Add the error to the set. Errors should be added to the set when the client 
+	 * populating the set cannot determine the <code>SyncInfo</code> for one
+	 * or more resources due to an exception or some other problem. Listeners
+	 * will be notified that an error occurred and can react accordingly.
+	 * Only one error can be associated with a resource (which is obtained from
+	 * the <code>ITeamStatus</code>). It is up to the
+	 * client populating the set to ensure that the error associated with a
+	 * resource contains all relevent information.
+	 * The error will remain in the set until the set is reset.
+	 * @param resource the resource associated with the error or the workspace root
+	 * @param status the status that describes the error that occurred.
+	 */
+	public void addError(ITeamStatus status) {
+		beginInput();
+		try {
+			errors.put(status.getResource(), status);
+			getChangeEvent().errorOccurred(status);
+		} finally {
+			endInput(null);
+		}
+	}
+	
+	/**
+	 * Return an array of the errors the occurred while populating this set.
+	 * The errors will remain with the set until it is reset.
+	 * @return the errors
+	 */
+	public ITeamStatus[] getErrors() {
+		return (ITeamStatus[]) errors.values().toArray(new ITeamStatus[errors.size()]);
 	}
 }

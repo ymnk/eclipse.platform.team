@@ -26,10 +26,22 @@ import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
  * provider can hook into the IMoveDeleteHook and IFileModificationValidator.
  * <li>multiple deployment providers can be mapped to the same folder whereas there is only one
  * repository provider per project.
- * <li>a deployment provider can be mapped to any folder as long as the mapping is not overlapping
+ * <li>a deployment provider can be mapped to any folder
  * whereas the repository provider must be mapped at the project.
  * </ul>
  * </p>
+ * <p>
+ * Deployment providers can be dfined in the plugin manifest using the following XML.
+ * <pre>
+ *    &gt;extension
+         point="org.eclipse.team.core.deployment"&lt;
+      &gt;deployment
+            name="Example Deployment Provider"
+            class="org.eclipse.team.internal.example.DeploymentProviderClass"
+            id="org.eclipse.team.example.DeploymentProvider"&lt;
+      &gt;/deployment&lt;
+   &gt;/extension&lt;
+   </pre>
  * @see RepositoryProvider
  * @see IDeploymentProviderManager
  * @since 3.0
@@ -40,23 +52,52 @@ public abstract class DeploymentProvider implements IExecutableExtension, IAdapt
 	private IContainer container;
 	private String name;
 	
+	/**
+	 * Returns the id of the deployment provider as defined in the plugin manifest
+	 * @return the id
+	 */
 	public String getID() {
 		return id;
 	}
 	
+	/**
+	 * Returns the name of the deployment provider as defined in the plugin manifest.
+	 * @return the name
+	 */
 	public String getName() {
 		return this.name;
 	}
 	
+	/**
+	 * Return the container (folder or project) that this provider is mapped to.
+	 * @return a folder or project
+	 */
 	public IContainer getMappedContainer() {
 		return this.container;
 	}
 	
+	/**
+	 * Method that is invoked when a deployment provider is first mapped to its folder
+	 * using <code>IDeploymentProviderManager#map</code>.
+	 * Mappings are persisted accross workbench invocations. However, this method is
+	 * only invoked when the provider is mapped. The <code>restoreState</code> method
+	 * is invoked on subsequent workbench invocations.
+	 */
 	abstract public void init();
 	
+	/**
+	 * Method that is invoked when a providers is unmapped from a folder using
+	 * <code>IDeploymentProviderManager#unmap</code>.
+	 */
 	abstract public void dispose();
 	
-	public void setContainer(IContainer container) {
+	/**
+	 * Method that is invoked after a deployment provider is first mapped or recreated on workbench
+	 * invocation. This method is invoked before <code>init</code> or <code>restoreState</code>. 
+	 * This method is not intended to be called by clients.
+	 * @param container the container the provider is mapped to
+	 */
+	public final void setContainer(IContainer container) {
 		this.container = container;
 	}
 	

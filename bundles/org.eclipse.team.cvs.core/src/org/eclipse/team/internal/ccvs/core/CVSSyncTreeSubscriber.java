@@ -29,7 +29,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	
 	public static final String SYNC_KEY_QUALIFIER = "org.eclipse.team.cvs"; //$NON-NLS-1$
 	
-	private static ISubscriberResourceComparator comparisonCriteria = new CVSRevisionNumberCompareCriteria();
+	private ISubscriberResourceComparator comparisonCriteria;
 	
 	private QualifiedName id;
 	private String name;
@@ -39,6 +39,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		this.id = id;
 		this.name = name;
 		this.description = description;
+		this.comparisonCriteria = new CVSRevisionNumberCompareCriteria(this);
 	}
 
 	/* (non-Javadoc)

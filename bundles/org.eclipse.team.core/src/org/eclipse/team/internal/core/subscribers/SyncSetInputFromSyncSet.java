@@ -12,12 +12,14 @@ package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * Ths class uses the contents of one sync set as the input of another.
  */
-public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSetChangeListener2 {
+public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSetChangeListener {
 
 	SyncInfoSet inputSyncSet;
 
@@ -51,20 +53,16 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+	public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		SyncInfoSet syncSet = getSyncSet();
+		syncSet.beginInput();
 		try {
-			syncSet.beginInput();
-			if (event.isReset()) {
-				syncSet.clear();
-				fetchInput(monitor);
-			} else {
-				syncSetChanged(event.getChangedResources(), monitor);			
-				syncSetChanged(event.getAddedResources(), monitor);
-				remove(event.getRemovedResources());
-			}
+			monitor.beginTask(null, 105);
+			syncSetChanged(event.getChangedResources(), Policy.subMonitorFor(monitor, 50));			
+			syncSetChanged(event.getAddedResources(), Policy.subMonitorFor(monitor, 50));
+			remove(event.getRemovedResources());
 		} finally {
-			getSyncSet().endInput(monitor);
+			getSyncSet().endInput(Policy.subMonitorFor(monitor, 5));
 		}
 	}
 
@@ -79,16 +77,42 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 			remove(resources[i]);
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.core.subscribers.ISyncInfoSetChangeListener2#handleError(org.eclipse.team.internal.core.subscribers.SubscriberErrorEvent, org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void handleError(SubscriberErrorEvent event, IProgressMonitor monitor) {
-		getSyncSet().handleErrorEvent(event, monitor);
-	}
 	
 	public void reset() {
 		getSyncSet().removeSyncSetChangedListener(this);
 		getSyncSet().connect(this);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
+		SyncInfoSet syncSet = getSyncSet();
+		syncSet.beginInput();
+		try {
+			monitor.beginTask(null, 100);
+			syncSet.clear();
+			fetchInput(Policy.subMonitorFor(monitor, 95));
+		} finally {
+			getSyncSet().endInput(Policy.subMonitorFor(monitor, 5));
+			monitor.done();
+		}
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetError(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.team.core.ITeamStatus[], org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
+		SubscriberSyncInfoSet syncSet = getSyncSet();
+		syncSet.beginInput();
+		try {
+			for (int i = 0; i < errors.length; i++) {
+				ITeamStatus status = errors[i];
+				syncSet.addError(status);
+			}
+		} finally {
+			syncSet.endInput(monitor);
+		}
 	}
 }

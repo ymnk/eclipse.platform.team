@@ -14,7 +14,9 @@ import org.eclipse.core.resources.IResource;
 
 /**
  * This is a change event that provides access to changes in subtrees
- * that contain the out-of-sync resources.
+ * that contain the out-of-sync resources. It is the event type 
+ * provided by {@link SyncInfoTree} when it notifies listeners
+ * of changes.
  */
 public interface ISyncInfoTreeChangeEvent extends ISyncInfoSetChangeEvent {
 	

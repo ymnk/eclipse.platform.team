@@ -11,7 +11,8 @@
 package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IWorkspaceRunnable;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener;
 import org.eclipse.team.core.subscribers.SyncInfoTree;
 import org.eclipse.team.internal.core.Policy;
@@ -78,7 +79,7 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 						addSyncSetChangedListener(listener);
 						SyncSetChangedEvent event = new SyncSetChangedEvent(SubscriberSyncInfoSet.this);
 						event.reset();
-						listener.syncSetChanged(event, Policy.subMonitorFor(monitor, 95));
+						listener.syncInfoChanged(event, Policy.subMonitorFor(monitor, 95));
 					} finally {
 						endInput(Policy.subMonitorFor(monitor, 5));
 						monitor.done();
@@ -86,31 +87,6 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 				}
 			});
 		}
-	}
-
-	/**
-	 * Propogate the error to any listeners who handle errors
-	 * @param event
-	 */
-	public void handleErrorEvent(final SubscriberErrorEvent event, final IProgressMonitor monitor) {
-		ISyncInfoSetChangeListener[] allListeners = getListeners();
-		// Fire the events using an ISafeRunnable
-		monitor.beginTask(null, 100 * allListeners.length);
-		for (int i = 0; i < allListeners.length; i++) {
-			final ISyncInfoSetChangeListener listener = allListeners[i];
-			if (listener instanceof ISyncInfoSetChangeListener2) {
-				Platform.run(new ISafeRunnable() {
-					public void handleException(Throwable exception) {
-						// don't log the exception....it is already being logged in Platform#run
-					}
-					public void run() throws Exception {
-						((ISyncInfoSetChangeListener2)listener).handleError(event, Policy.subMonitorFor(monitor, 100));
-		
-					}
-				});
-			}
-		}
-		monitor.done();
 	}
 	
 }

@@ -15,6 +15,7 @@ import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -74,7 +75,11 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	 * 
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+	public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+		updateCounts();
+	}
+
+	private void updateCounts() {
 		if (collector != null) {
 			SyncInfoSet set = collector.getSyncInfoTree();
 			final int workspaceConflicting = (int) set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
@@ -105,5 +110,19 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		mgr.add(incoming);
 		mgr.add(outgoing);
 		mgr.add(conflicting);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
+		updateCounts();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetError(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.team.core.ITeamStatus[], org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
+		// Nothing to do for errors
 	}
 }
