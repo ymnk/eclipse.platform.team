@@ -438,7 +438,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         ISynchronizeModelElement node = getModelElement(set);
         if (node != null) {
             ISynchronizeModelProvider provider = getProviderRootedAt(node);
-            clearModelObjects(node);
+            removeFromViewer(node);
             removeProvider(provider);
         }
     }

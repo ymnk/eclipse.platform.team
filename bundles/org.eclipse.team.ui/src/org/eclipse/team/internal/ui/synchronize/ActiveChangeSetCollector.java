@@ -183,6 +183,8 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
             set.getSyncInfoSet().addSyncSetChangedListener(this);
             activeSets.put(set, sis);
         }
+        sis.clear();
+        sis.addAll(select(set.getSyncInfoSet().getSyncInfos()));
         return sis;
     }
 
