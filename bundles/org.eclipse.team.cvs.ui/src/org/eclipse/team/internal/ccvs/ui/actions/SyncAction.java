@@ -11,8 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.actions;
  
 import java.lang.reflect.InvocationTargetException;
-
-import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
@@ -26,6 +24,7 @@ import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.actions.OpenInCompareAction;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.PlatformUI;
@@ -76,8 +75,7 @@ public class SyncAction extends WorkspaceAction {
 					if (info.getKind() == SyncInfo.IN_SYNC) {
 						MessageDialog.openInformation(shell, Policy.bind("SyncAction.noChangesTitle"), Policy.bind("SyncAction.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
 					} else {
-						SyncInfoCompareInput input = new SyncInfoCompareInput(subscriber.getName(), info);
-						CompareUI.openCompareEditor(input);
+						OpenInCompareAction.openCompareEditor(subscriber.getName(), info, false, null);
 					}
 				}
 			});
