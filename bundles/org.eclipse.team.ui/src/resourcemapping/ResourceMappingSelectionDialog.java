@@ -14,6 +14,7 @@ import org.eclipse.core.resources.mapping.IResourceMapper;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.model.*;
@@ -26,6 +27,12 @@ public class ResourceMappingSelectionDialog extends Dialog {
 	protected ResourceMappingSelectionDialog(Shell parentShell, IResourceMapper[] mappers) {
 		super(parentShell);
 		this.mappers = mappers;
+		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
+	}
+		
+	protected void configureShell(Shell newShell) {
+		super.configureShell(newShell);
+		newShell.setText("CVS Commit");
 	}
 	
 	protected Control createDialogArea(Composite parent) {
