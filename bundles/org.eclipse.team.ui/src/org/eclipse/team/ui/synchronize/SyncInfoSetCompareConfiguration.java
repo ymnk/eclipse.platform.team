@@ -43,10 +43,15 @@ import org.eclipse.ui.internal.PluginAction;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
- * This class provides the configurability of SyncInfo diff viewers.
- * A configuration can only be used with one viewer.
- * TODO: Should we make it reusable? If not, should assert on second call to createViewer
+ * This class provides the configurability of diff viewers that contain <code>SyncInfo</code>
+ * (e.g. <code>SyncInfoDiffTreeViewer</code> and <code>SyncInfoDiffCheckboxTreeViewer</code>
+ * as well as instance of <code>SyncInfoSetCompareInput</code>.
+ * A configuration can only be used to configure a single viewer and the lifecycle of the 
+ * configuration
  * 
+ * @see SyncInfoSetCompareInput
+ * @see SyncInfoDiffTreeViewer
+ * @see SyncInfoDiffCheckboxTreeViewer
  * @since 3.0
  */
 public class SyncInfoSetCompareConfiguration {
@@ -140,14 +145,32 @@ public class SyncInfoSetCompareConfiguration {
 		viewer.setInput(getInput());
 	}
 
-	protected void initializeNavigator(final StructuredViewer viewer) {
-		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
+	private void initializeNavigator(StructuredViewer viewer) {
 		if (viewer instanceof INavigableTree) {
-			initializeNavigation(viewer.getControl(), (INavigableTree)viewer);
-			navigator.createActions(viewer);
+			initializeNavigation(viewer, (INavigableTree)viewer);
 		}
 	}
 
+	/**
+	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
+	 * to initialize the navigation controller for the diff tree. The navigation control
+	 * is provided by an instance of <code>SyncInfoDiffTreeNavigator</code>.
+	 * @param viewer the viewer to be navigated
+	 * @param target the interface used to navigate the viewer
+	 * @see SyncInfoDiffTreeNavigator
+	 */
+	protected void initializeNavigation(StructuredViewer viewer, INavigableTree target) {
+		this.navigator = new SyncInfoDiffTreeNavigator(target);
+		INavigatable nav= new INavigatable() {
+			public boolean gotoDifference(boolean next) {
+				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+				return getNavigator().navigate(next, true);
+			}
+		};
+		viewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
+		navigator.createActions(viewer);
+	}
+	
 	/**
 	 * Get the input that will be assigned to the viewer initialized by this configuration.
 	 * Subclass may override.
@@ -159,25 +182,23 @@ public class SyncInfoSetCompareConfiguration {
 
 	/**
 	 * Get the label provider that will be assigned to the viewer initialized by this configuration.
-	 * Subclass may override but any created label provider should wrap the default one provided
-	 * by this method.
+	 * Subclass may override but should either wrap the default one provided
+	 * by this method or subclass <code>TeamSubscriberParticipantLabelProvider</code>.
+	 * In the later case, the logical label provider should still be assigned to the
+	 * subclass of <code>TeamSubscriberParticipantLabelProvider</code>.
+	 * @param logicalProvider the label provider for the selected logical view
 	 * @return a label provider
+	 * @see TeamSubscriberParticipantLabelProvider
 	 */
 	protected ILabelProvider getLabelProvider(SyncInfoLabelProvider logicalProvider) {
 		return new TeamSubscriberParticipantLabelProvider(logicalProvider);
 	}
-
-	protected void initializeNavigation(Control tree, INavigableTree target) {
-		this.navigator = new SyncInfoDiffTreeNavigator(target);
-		INavigatable nav= new INavigatable() {
-			public boolean gotoDifference(boolean next) {
-				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
-				return navigator.navigate(next, true);
-			}
-		};
-		tree.setData(INavigatable.NAVIGATOR_PROPERTY, nav);
-	}
 	
+	/**
+	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
+	 * to initialize any listeners for the viewer.
+	 * @param viewer the viewer being initialize
+	 */
 	protected void initializeListeners(final StructuredViewer viewer) {
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -186,6 +207,11 @@ public class SyncInfoSetCompareConfiguration {
 		});
 	}
 
+	/**
+	 * Return the <code>SyncInfoSet</code> being shown by the viewer associated with
+	 * this configuration.
+	 * @return a <code>SyncInfoSet</code>
+	 */
 	public SyncInfoSet getSyncSet() {
 		return set;
 	}
@@ -236,6 +262,13 @@ public class SyncInfoSetCompareConfiguration {
 		}
 	}
 
+	/**
+	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
+	 * to configure the viewer to call <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
+	 * when a context menu is being displayed in the diff tree viewer.
+	 * @param viewer the viewer being initialized
+	 * @see fillContextMenu(StructuredViewer, IMenuManager)
+	 */
 	protected void hookContextMenu(final StructuredViewer viewer) {
 		final MenuManager menuMgr = new MenuManager(menuId); //$NON-NLS-1$
 		menuMgr.setRemoveAllWhenShown(true);
@@ -278,12 +311,23 @@ public class SyncInfoSetCompareConfiguration {
 		}
 	}
 	
+	/**
+	 * Callback that is invoked when a context menu is about to be shown in the diff viewer.
+	 * @param viewer the viewer
+	 * @param manager the menu manager
+	 */
 	protected void fillContextMenu(final StructuredViewer viewer, IMenuManager manager) {
 		navigator.fillContextMenu(viewer, manager);
 		addLogicalViewSelection(viewer, manager);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
+	/**
+	 * Method that can be invoked from <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
+	 * to add a submenu that allows the selection of one of the registered logical views.
+	 * @param viewer the viewer
+	 * @param manager the menu manager
+	 */
 	protected void addLogicalViewSelection(final StructuredViewer viewer, IMenuManager manager) {
 		logicalViews.fillContextMenu(manager);
 		logicalViews.setPropertyChangeListener(new IPropertyChangeListener() {
@@ -300,6 +344,12 @@ public class SyncInfoSetCompareConfiguration {
 		});
 	}
 
+	/**
+	 * Set the logical view to be used in the diff tree viewer. Passing <code>null</code>
+	 * will remove any logical view and use the standard resource hierarchy view.
+	 * @param viewer the viewer
+	 * @param view the logical view to be used
+	 */
 	protected void setLogicalViewProvider(StructuredViewer viewer, ILogicalView view) {
 		if (view != null) {
 			try {
@@ -319,7 +369,11 @@ public class SyncInfoSetCompareConfiguration {
 		}
 	}
 	
-	protected Object getTitle() {
+	/**
+	 * Return the title of the diff viewer. This title is used by the <code>SyncInfoCompareInput</code>.
+	 * @return a title string
+	 */
+	public String getTitle() {
 		return "Synchronization Changes";
 	}
 	
@@ -330,6 +384,11 @@ public class SyncInfoSetCompareConfiguration {
 		getStore().removePropertyChangeListener(propertyListener);
 	}
 	
+	/**
+	 * Called from the <code>SyncInfoCompareInput</code> to hook up the navigation
+	 * commands to the compare input
+	 * @param input the compare input
+	 */
 	public void updateCompareEditorInput(CompareEditorInput input) {
 		navigator.updateCompareEditorInput(input);
 	}
@@ -338,6 +397,7 @@ public class SyncInfoSetCompareConfiguration {
 	 * Handles a double-click event from the viewer.
 	 * Expands or collapses a folder when double-clicked.
 	 * 
+	 * @param viewer the viewer
 	 * @param event the double-click event
 	 */
 	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
@@ -346,10 +406,24 @@ public class SyncInfoSetCompareConfiguration {
 		navigator.reveal(viewer, element);
 	}
 
+	/**
+	 * Return the navigator that is associated with this compare configuration
+	 * and its viewer.
+	 * @return the viewer's navigator
+	 */
 	public SyncInfoDiffTreeNavigator getNavigator() {
 		return navigator;
 	}
 	
+	/**
+	 * Callback that is used to convert resource label change events into 
+	 * label change events on the model objects (namely <code>SyncInfoDiffNode</code>
+	 * instances. Any provided objects that cannot be converted to resources are 
+	 * returned as-is in the resulting array.
+	 * @param viewer the viewer
+	 * @param changed the changed objects
+	 * @return the changed objects converted to diff model objects if possible
+	 */
 	protected Object[] asModelObjects(StructuredViewer viewer, Object[] changed) {
 		if (changed != null && viewer.getInput() != null) {
 			ArrayList others= new ArrayList();
@@ -369,12 +443,19 @@ public class SyncInfoSetCompareConfiguration {
 	}
 	
 	/**
-	 * @return Returns the menuId.
+	 * Return the menu id that is used to obtain context menu items from the workbench.
+	 * @return the menuId.
 	 */
 	public String getMenuId() {
 		return menuId;
 	}
 
+	/**
+	 * Returns whether workbench menu items whould be included in the context menu.
+	 * By default, this returns <code>true</code> if there is a menu id and <code>false</code>
+	 * otherwise
+	 * @return whether to include workbench context menu items
+	 */
 	protected boolean allowParticipantMenuContributions() {
 		return getMenuId() != null;
 	}

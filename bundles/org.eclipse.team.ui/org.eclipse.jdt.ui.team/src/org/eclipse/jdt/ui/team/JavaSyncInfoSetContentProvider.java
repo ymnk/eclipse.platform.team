@@ -23,6 +23,9 @@ import org.eclipse.team.ui.synchronize.content.SyncInfoSetTreeContentProvider;
  * Extend the SyncSetTreeContentProvider to show a Java model elements in the view.
  * 
  * TODO: Refresh behavior needs to be added
+ * TODO: non-java projects
+ * TODO: jars in project
+ * TODO: Outgoing addition of bin folder?
  */
 public class JavaSyncInfoSetContentProvider extends SyncInfoSetTreeContentProvider {
 

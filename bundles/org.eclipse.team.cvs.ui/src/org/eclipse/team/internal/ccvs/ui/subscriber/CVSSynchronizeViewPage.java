@@ -12,60 +12,17 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.util.*;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionDelegate;
 
 public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncSetChangedListener {
-
-	private static class CVSLabelProvider extends TeamSubscriberParticipantLabelProvider {
-		private ILabelProvider oldLabelProvider;
-		public CVSLabelProvider(ILabelProvider oldLabelProvider) {
-			this.oldLabelProvider = oldLabelProvider;
-		}
-		protected String decorateText(String input, Object element) {
-			String text = input;
-			if (element instanceof SyncInfoDiffNode) {
-				IResource resource =  ((SyncInfoDiffNode)element).getResource();
-				if(resource != null) {
-					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
-					CVSLightweightDecorator.decorateTextLabel((IResource) resource, decoration, false, true);
-					StringBuffer output = new StringBuffer(25);
-					if(decoration.prefix != null) {
-						output.append(decoration.prefix);
-					}
-					output.append(text);
-					if(decoration.suffix != null) {
-						output.append(decoration.suffix);
-					}
-					return output.toString();
-				}
-			} else if(element instanceof ChangeLogDiffNode) {
-				return ((ChangeLogDiffNode)element).getComment();
-			}
-			return text;
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantLabelProvider#decorateImage(org.eclipse.swt.graphics.Image, java.lang.Object)
-		 */
-		protected Image decorateImage(Image base, Object element) {
-			if(element instanceof ChangeLogDiffNode) {
-				//TODO: return getCompressedFolderImage();
-			}
-			return super.decorateImage(base, element);
-		}
-
-	}
 	
 	private List delegates = new ArrayList(2);
 
@@ -149,17 +106,16 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		
 		// Listen for decorator changed to refresh the viewer's labels.
 		CVSUIPlugin.addPropertyChangeListener(this);
-		
-		// Add a CVS specific label decorator to show CVS information in the sync
-		// view. We aren't using the global adaptable decorators because we don't
-		// want all outgoing/repository icons in this view. Instead, we add 
-		// CVS specific information that is useful in the synchronizing context.
-		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
-		ILabelProvider oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
-		viewer.setLabelProvider(new CVSLabelProvider(oldLabelProvider));
 	}
 	
 	private SyncInfoSet getSyncInfoSet() {
 		return getParticipant().getFilteredSyncInfoCollector().getSyncInfoSet();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#createSyncInfoSetCompareConfiguration()
+	 */
+	protected SynchronizeViewCompareConfiguration createSyncInfoSetCompareConfiguration() {
+		return new CVSSynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
 	}
 }

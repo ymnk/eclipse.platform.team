@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize;
+package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
@@ -16,11 +16,9 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.actions.INavigableTree;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
@@ -42,15 +40,20 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 		this.participant = participant;
 	}
 	
-	public StructuredViewer createViewer(Composite parent) {
-		final StructuredViewer treeViewer = new SyncInfoDiffTreeViewer(parent, this);
-
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.StructuredViewer)
+	 */
+	public void initializeViewer(Composite parent, StructuredViewer viewer) {
+		super.initializeViewer(parent, viewer);
+		initializeActions(viewer);
+	}
+	
+	protected void initializeActions(StructuredViewer treeViewer) {
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
 		refreshSelectionAction = new TeamParticipantRefreshAction(treeViewer, participant, false /*refresh*/);
-		return treeViewer;
 	}
-	
+
 	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
 		openWithActions.fillContextMenu(manager);
 		refactorActions.fillContextMenu(manager);
@@ -72,7 +75,6 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 		DiffNode node = (DiffNode) selection.getFirstElement();
 		if (node != null && node instanceof SyncInfoDiffNode) {
 			SyncInfoDiffNode syncNode = (SyncInfoDiffNode)node; 
-			SyncInfo info = syncNode.getSyncInfo();
 			if (syncNode != null 
 					&& syncNode.getResource() != null 
 					&& syncNode.getResource().getType() == IResource.FILE) {
@@ -142,8 +144,9 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeNavigation(org.eclipse.swt.widgets.Control, org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator.INavigationTarget)
 	 */
-	protected void initializeNavigation(Control tree, INavigableTree target) {
-		super.initializeNavigation(tree, target);
+	protected void initializeNavigation(StructuredViewer viewer, INavigableTree target) {
+		super.initializeNavigation(viewer, target);
 		getNavigator().setShowOpenAction(false);
 	}
+
 }

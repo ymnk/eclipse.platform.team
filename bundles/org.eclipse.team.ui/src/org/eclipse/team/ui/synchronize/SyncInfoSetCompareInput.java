@@ -12,8 +12,7 @@ package org.eclipse.team.ui.synchronize;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.*;
@@ -47,6 +46,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 
 	public final Viewer createDiffViewer(Composite parent) {
 		StructuredViewer v = internalCreateDiffViewer(parent, diffViewerConfiguration);
+		v.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, diffViewerConfiguration.getTitle());
 		diffViewerConfiguration.updateCompareEditorInput(this);
 		initializeDiffViewer(v);
 		return v;
