@@ -402,7 +402,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
      */
     public void nodeAdded(ISynchronizeModelElement element, AbstractSynchronizeModelProvider provider) {
         element.addPropertyChangeListener(listener);
-        provider.nodeAdded(element, provider);
+        this.provider.nodeAdded(element, provider);
     }
 
     /**
