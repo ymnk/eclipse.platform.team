@@ -20,6 +20,8 @@ import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -53,6 +55,9 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 	private Combo repositoryPathCombo;
 	// Validation
 	private Button validateButton;
+	// Caching password
+	private Button allowCachingButton;
+	private boolean allowCaching = false;
 	
 	private static final int COMBO_HISTORY_LENGTH = 5;
 	
@@ -193,6 +198,18 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 		portText = createTextField(portGroup);
 		portText.addListener(SWT.Modify, listener);
 		
+		allowCachingButton = new Button(composite, SWT.CHECK);
+		allowCachingButton.setText("Remember this logon information and enter it automatically the next time it is needed.");
+		data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+		data.horizontalSpan = 3;
+		allowCachingButton.setLayoutData(data);
+		allowCachingButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				allowCaching = allowCachingButton.getSelection();
+			}
+		});
+		
+		
 		// create a composite to ensure the validate button is in its own tab group
 		if (showValidate) {
 			Composite validateButtonTabGroup = new Composite(composite, SWT.NONE);
@@ -273,6 +290,7 @@ public class ConfigurationWizardMainPage extends CVSWizardPage {
 		if (location == null) {
 			if (!isPageComplete()) return null;
 			location = CVSRepositoryLocation.fromProperties(createProperties());
+			location.setAllowCaching(allowCaching);
 			saveWidgetValues();
 		}
 		return location;

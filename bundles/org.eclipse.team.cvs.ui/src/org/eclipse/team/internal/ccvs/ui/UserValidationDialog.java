@@ -14,8 +14,11 @@ package org.eclipse.team.internal.ccvs.ui;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -30,13 +33,16 @@ public class UserValidationDialog extends Dialog {
 	// widgets
 	protected Text usernameField;
 	protected Text passwordField;
+	protected Button allowCachingButton;
 
 	protected String domain;
 	protected String defaultUsername;
 	protected String password = null;
+	protected boolean allowCaching = false;
 	
 	// whether or not the username can be changed
 	protected boolean isUsernameMutable = true;
+	protected boolean showAllowCachingButton = true;
 	protected String username = null;
 	protected String message = null;
 
@@ -115,6 +121,19 @@ public class UserValidationDialog extends Dialog {
 		createUsernameFields(main);
 		createPasswordFields(main);
 	
+		if(showAllowCachingButton) {
+			allowCachingButton = new Button(main, SWT.CHECK);
+			allowCachingButton.setText("Remember this logon information and enter it automatically the next time it is needed.");
+			GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+			data.horizontalSpan = 3;
+			allowCachingButton.setLayoutData(data);
+			allowCachingButton.addSelectionListener(new SelectionAdapter() {
+				public void widgetSelected(SelectionEvent e) {
+					allowCaching = allowCachingButton.getSelection();
+				}
+			});
+		}
+		
         Dialog.applyDialogFont(parent);
         
 		return main;
@@ -165,6 +184,11 @@ public class UserValidationDialog extends Dialog {
 	public String getUsername() {
 		return username;
 	}
+	
+	public boolean getAllowCaching() {
+		return allowCaching;
+	}
+	
 	/**
 	 * Notifies that the ok button of this dialog has been pressed.
 	 * <p>
@@ -188,5 +212,9 @@ public class UserValidationDialog extends Dialog {
 	 */
 	public void setUsernameMutable(boolean value) {
 		isUsernameMutable = value;
+	}
+	
+	public void setShowAllowCachingButton(boolean value) {
+		showAllowCachingButton = value;
 	}
 }
