@@ -334,6 +334,7 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 	public void prepareForDeletion(IContainer container) throws CVSException {
 		try {
 			beginOperation(null);
+			super.prepareForDeletion(container);
 			if (container.getType() == IResource.PROJECT) {
 				getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, container, IResource.DEPTH_INFINITE);
 				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, container, IResource.DEPTH_INFINITE);
