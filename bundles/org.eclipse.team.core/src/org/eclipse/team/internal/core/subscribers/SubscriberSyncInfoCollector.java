@@ -60,7 +60,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 		this.roots = roots;
 		this.subscriber = subscriber;
 		Assert.isNotNull(subscriber);
-		this.eventHandler = new SubscriberEventHandler(subscriber);
+		this.eventHandler = new SubscriberEventHandler(subscriber, roots);
 		this.subscriberInput = eventHandler.getSyncSetInput();
 		filteredInput = new SyncSetInputFromSyncSet(subscriberInput.getSyncSet(), getEventHandler());
 		filteredInput.setFilter(new SyncInfoFilter() {
@@ -281,18 +281,6 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	}
 	
 	/**
-	 * Set the roots that are to be considered by the collector. The provided
-	 * resources should be either a subset of the roots of the collector's subscriber
-	 * or children of those roots. Other resources can be provided but will be ignored.
-	 * Setting the roots to <code>null</code> will cause the roots of the subscriber
-	 * to be used
-	 * @param roots The roots to be considered or <code>null</code>.
-	 */
-	public void setRoots(IResource[] roots) {
-		this.roots = roots;
-	}
-	
-	/**
 	 * Return the event handler that performs the background processing for this collector.
 	 * The event handler also serves the purpose of serializing the modifications and adjustments
 	 * to the collector's sync sets in order to ensure that the state of the sets is kept
@@ -338,5 +326,13 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 			return filteredInput.getFilter();
 		}
 		return null;
+	}
+
+	/**
+	 * @param roots2
+	 */
+	public void setRoots(IResource[] roots) {
+		this.roots = roots;
+		reset();
 	}
 }

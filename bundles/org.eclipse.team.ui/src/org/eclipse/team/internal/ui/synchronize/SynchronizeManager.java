@@ -325,9 +325,9 @@ public class SynchronizeManager implements ISynchronizeManager {
 				try {
 					ParticipantInstance ref = createParticipantReference(participant.getId(), participant.getSecondaryId(), participant.getName());
 					ref.setParticipant(participant);
+					removeMatchingPinnedParticipant(participant.getId());
 					participantReferences.put(key, ref);
 					added.add(participant);
-					removeMatchingPinnedParticipant(participant.getId());
 				} catch (PartInitException e) {
 					TeamUIPlugin.log(e);
 					continue;
