@@ -80,10 +80,14 @@ public class CompareWithTagAction extends WorkspaceAction {
 		}
 	}
 	
-	protected void compareAndOpenDialog(IRefreshEvent event, CompareParticipant participant) {
+	protected void compareAndOpenDialog(final IRefreshEvent event, CompareParticipant participant) {
 		TreeViewerAdvisor advisor = new TreeViewerAdvisor(participant.getId(), participant.getSubscriberSyncInfoCollector().getSyncInfoTree());
 		CompareConfiguration cc = new CompareConfiguration();
-		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor);	
+		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
+			public String getTitle() {
+				return "CVS Comparison (" + event.getChanges().length + " changes)";
+			}
+		};
 		try {
 			input.run(new NullProgressMonitor());
 		} catch (InterruptedException e) {
