@@ -67,10 +67,13 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 	 * Page site that allows hosting the participant page in a dialog.
 	 */
 	class CompareViewerPaneSite implements ISynchronizePageSite {
+		ISelectionProvider selectionProvider;
 		public IWorkbenchPage getPage() {
 			return null;
 		}
 		public ISelectionProvider getSelectionProvider() {
+			if (selectionProvider != null) 
+				return selectionProvider;
 			return viewer;
 		}
 		public Shell getShell() {
@@ -80,7 +83,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 			return null;
 		}
 		public void setSelectionProvider(ISelectionProvider provider) {
-			//viewer.sets
+			selectionProvider = provider;
 		}
 		public Object getAdapter(Class adapter) {
 			return null;
