@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
 
 import org.eclipse.core.resources.*;
@@ -52,9 +53,15 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
     private final SyncInfoTree collectedInfos = new SyncInfoTree();
     
     /*
-     * The cache that hold the log entries
+     * The cache that hold the log entries while the job is running
      */
-    private final LogEntryCache logEntriesCache;
+    //private LogEntryCache logEntriesCache;
+    
+    /*
+     * SoftReference used to hold on to the log entry cache while
+     * the job is not running so the cache can be cleared if memory is low.
+     */
+    private SoftReference cacheReference;
     
     /*
      * Collector that forewards subscriber changes so that
@@ -140,7 +147,7 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
         super(Policy.bind("CVSChangeSetCollector.4"), "Errors have occured while maintaining the log entry cache."); //$NON-NLS-1$
         this.configuration = configuration;
         this.subscriber = getSubscriber(configuration);
-        logEntriesCache = new LogEntryCache();
+        cacheReference = new SoftReference(new LogEntryCache());
         collector = new LogEntryResourceCollector(subscriber);
     }
 
@@ -243,7 +250,12 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
         super.shutdown();
         collector.dispose();
         // Probably not necessary as GC would take care of it but we'll do it anyway
-        logEntriesCache.clearEntries();
+        if (cacheReference != null) {
+	        LogEntryCache cache = (LogEntryCache)cacheReference.get();
+	        if (cache != null) {
+	            cache.clearEntries();
+	        }
+        }
         collectedInfos.clear();
         
     }
@@ -255,7 +267,9 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
     private void remove(SyncInfo info) {
         if (info != null) {
             collectedInfos.remove(info.getLocal());
-            logEntriesCache.clearEntries(getRemoteResource(info));
+            LogEntryCache cache = (LogEntryCache)cacheReference.get();
+            if (cache != null)
+                cache.clearEntries(getRemoteResource(info));
         }
     }
 
@@ -350,11 +364,16 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
             // Now perform the fetching
             Map projectMapping = getFetchesByProject();
             if (projectMapping.isEmpty()) return true;
+            LogEntryCache logEntriesCache = (LogEntryCache)cacheReference.get();
+            if (logEntriesCache == null) {
+                logEntriesCache = new LogEntryCache();
+                cacheReference = new SoftReference(logEntriesCache);
+            }
             monitor.beginTask(null, 100 * projectMapping.size());
             for (Iterator iter = projectMapping.values().iterator(); iter.hasNext();) {
                 SyncInfoSet set = (SyncInfoSet) iter.next();
-                fetchLogEntries(set, Policy.subMonitorFor(monitor, 90));
-                fireFetchedNotification(set, Policy.subMonitorFor(monitor, 10));
+                fetchLogEntries(logEntriesCache, set, Policy.subMonitorFor(monitor, 90));
+                fireFetchedNotification(logEntriesCache, set, Policy.subMonitorFor(monitor, 10));
             }
         } finally {
             // Clear the fetches even if we were cancelled.
@@ -365,7 +384,7 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
         return true;
     }
 
-    private void fireFetchedNotification(SyncInfoSet set, IProgressMonitor monitor) {
+    private void fireFetchedNotification(LogEntryCache logEntriesCache, SyncInfoSet set, IProgressMonitor monitor) {
         if (listener != null) {
             listener.logEntriesFetched(set, logEntriesCache, monitor);
         }
@@ -444,14 +463,14 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
     /*
      * Fetch the log entries for the info in the given set
      */
-    private void fetchLogEntries(SyncInfoSet set, IProgressMonitor monitor) {
+    private void fetchLogEntries(LogEntryCache logEntriesCache, SyncInfoSet set, IProgressMonitor monitor) {
 	    try {
             if (subscriber instanceof CVSCompareSubscriber) {
                 CVSCompareSubscriber compareSubscriber = (CVSCompareSubscriber)subscriber;
-                fetchLogEntries(compareSubscriber, set, monitor);
+                fetchLogEntries(logEntriesCache, compareSubscriber, set, monitor);
             } else {
                 // Run the log command once with no tags
-            	fetchLogs(set, null, null, monitor);
+            	fetchLogs(logEntriesCache, set, null, null, monitor);
             }
         } catch (CVSException e) {
             handleException(e);
@@ -461,12 +480,12 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
         
     }
     
-    private void fetchLogEntries(CVSCompareSubscriber compareSubscriber, SyncInfoSet set, IProgressMonitor monitor) throws CVSException, InterruptedException {
+    private void fetchLogEntries(LogEntryCache logEntriesCache, CVSCompareSubscriber compareSubscriber, SyncInfoSet set, IProgressMonitor monitor) throws CVSException, InterruptedException {
         Map localTagMap = getLocalTagMap(set);
         monitor.beginTask(null, 100 * localTagMap.size());
         for (Iterator iter = localTagMap.keySet().iterator(); iter.hasNext();) {
             CVSTag localTag = (CVSTag) iter.next();        
-	        fetchLogEntries(compareSubscriber, set, localTag, Policy.subMonitorFor(monitor, 100));
+	        fetchLogEntries(logEntriesCache, compareSubscriber, set, localTag, Policy.subMonitorFor(monitor, 100));
         }
         Policy.checkCanceled(monitor);
         monitor.done();
@@ -517,19 +536,19 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
         }
     }
 
-    private void fetchLogEntries(CVSCompareSubscriber compareSubscriber, SyncInfoSet set, CVSTag localTag, IProgressMonitor monitor) throws CVSException, InterruptedException {
+    private void fetchLogEntries(LogEntryCache logEntriesCache, CVSCompareSubscriber compareSubscriber, SyncInfoSet set, CVSTag localTag, IProgressMonitor monitor) throws CVSException, InterruptedException {
         if (compareSubscriber.isMultipleTagComparison()) {
             Map rootToInfoMap = getRootToInfoMap(compareSubscriber, set);
             monitor.beginTask(null, 100 * rootToInfoMap.size());
             for (Iterator iterator = rootToInfoMap.keySet().iterator(); iterator.hasNext();) {
                 IResource root = (IResource) iterator.next();
                 Policy.checkCanceled(monitor);
-                fetchLogs(set, localTag, compareSubscriber.getTag(root), Policy.subMonitorFor(monitor, 100));
+                fetchLogs(logEntriesCache, set, localTag, compareSubscriber.getTag(root), Policy.subMonitorFor(monitor, 100));
             }
             monitor.done();
         } else {
             Policy.checkCanceled(monitor);
-            fetchLogs(set, localTag, compareSubscriber.getTag(), monitor);
+            fetchLogs(logEntriesCache, set, localTag, compareSubscriber.getTag(), monitor);
         }
     }
 
@@ -556,7 +575,7 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
         return rootToInfosMap;
     }
 
-    private void fetchLogs(SyncInfoSet set, CVSTag localTag, CVSTag remoteTag, IProgressMonitor monitor) throws CVSException, InterruptedException {
+    private void fetchLogs(LogEntryCache logEntriesCache, SyncInfoSet set, CVSTag localTag, CVSTag remoteTag, IProgressMonitor monitor) throws CVSException, InterruptedException {
 	    ICVSRemoteResource[] remoteResources = getRemotesToFetch(set.getSyncInfos());
 	    if (remoteResources.length > 0) {
 			RemoteLogOperation logOperation = new RemoteLogOperation(getConfiguration().getSite().getPart(), remoteResources, localTag, remoteTag, logEntriesCache);
@@ -577,10 +596,6 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
 		}
 		return (ICVSRemoteResource[]) remotes.toArray(new ICVSRemoteResource[remotes.size()]);
 	}
-
-    public LogEntryCache getLogEntryCache() {
-        return logEntriesCache;
-    }
 
     /**
      * Stop any current fetch in process.

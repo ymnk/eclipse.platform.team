@@ -50,6 +50,8 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
     private static final String DEFAULT_INCOMING_SET_NAME = "Unassigned Remote Changes";
     
     boolean disposed = false;
+
+    private LogEntryCache logEntryCache;
     
 	/* *****************************************************************************
 	 * Special sync info that has its kind already calculated.
@@ -194,6 +196,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
         LogEntryCacheUpdateHandler handler = getLogEntryHandler();
         if (handler != null) handler.setListener(null);
 		getConfiguration().setProperty(CVSChangeSetCollector.CVS_CHECKED_IN_COLLECTOR, null);
+		logEntryCache = null;
 		super.dispose();
 	}
 	
@@ -416,6 +419,14 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
      */
     public void logEntriesFetched(SyncInfoSet set, LogEntryCache logEntryCache, IProgressMonitor monitor) {
         if (disposed) return;
+        // Hold on to the cache so we can use it while commit sets are visible
+        this.logEntryCache = logEntryCache;
         handleRemoteChanges(set.getSyncInfos(), logEntryCache, monitor);
+    }
+
+    public ICVSRemoteFile getImmediatePredecessor(ICVSRemoteFile file) throws TeamException {
+        if (logEntryCache != null)
+            return logEntryCache.getImmediatePredecessor(file);
+        return null;
     }
 }
