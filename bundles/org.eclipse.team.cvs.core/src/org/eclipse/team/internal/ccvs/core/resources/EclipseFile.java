@@ -66,15 +66,21 @@ class EclipseFile extends EclipseResource implements ICVSFile {
  		}
  	}
 	
-	public OutputStream getOutputStream() throws CVSException {
+	public OutputStream getOutputStream(final int responseType) throws CVSException {
 		return new ByteArrayOutputStream() {
 			public void close() throws IOException {
 				try {
 					IFile file = getIFile();
-					if(resource.exists()) {
+					if (responseType == CREATED || ( responseType == UPDATED && ! resource.exists())) {
+						file.create(new ByteArrayInputStream(toByteArray()), false /*force*/, null);
+					} else if(responseType == UPDATE_EXISTING) {
 						file.setContents(new ByteArrayInputStream(toByteArray()), false /*force*/, true /*keep history*/, null);
 					} else {
-						file.create(new ByteArrayInputStream(toByteArray()), false /*force*/, null);
+						// Ensure we don't leave the file in a partially written state
+						IFile tempFile = file.getParent().getFile(new Path(file.getName() + ".tmp"));
+						tempFile.create(new ByteArrayInputStream(toByteArray()), true /*force*/, null);
+						file.delete(false, true, null);
+						tempFile.move(new Path(file.getName()), true, true, null);
 					}
 				} catch(CoreException e) {
 					throw new IOException(Policy.bind("EclipseFile_Problem_creating_resource", e.getMessage())); //$NON-NLS-1$ //$NON-NLS-2$
