@@ -4,6 +4,7 @@
  */
 package org.eclipse.compare.internal;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -90,11 +91,11 @@ public class CompareNavigator {
 	}
 	
 	public static void handleNavigationKeys(KeyEvent e) {
-		if (e.character == 14 || e.character == 16) { // next 
+		if (e.character == 4) { // Control-D
 			if (e.widget instanceof Control) {
 				CompareNavigator nav= findNavigator((Control)e.widget);
 				if (nav != null)
-					nav.selectChange(e.character == 14);
+					nav.selectChange((e.stateMask & SWT.SHIFT) == 0);
 			}
 		}
 	}
