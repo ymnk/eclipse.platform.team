@@ -8,25 +8,23 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.subscriber;
+package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.ChangeSet;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.ui.synchronize.SynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
+import org.eclipse.team.internal.ui.ITeamUIImages;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**
- * This diff node represents an outgoing commit set when it appears in the 
- * synchronize view.
+ * Node that represents a Change set in a synchronize page.
  */
-public class CommitSetDiffNode extends SynchronizeModelElement {
+public class ChangeSetDiffNode extends SynchronizeModelElement {
 
     private final ChangeSet set;
 
-    public CommitSetDiffNode(ISynchronizeModelElement parent, ChangeSet set) {
+    public ChangeSetDiffNode(IDiffContainer parent, ChangeSet set) {
         super(parent);
         this.set = set;
     }
@@ -46,15 +44,14 @@ public class CommitSetDiffNode extends SynchronizeModelElement {
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getImageDescriptor(java.lang.Object)
 	 */
 	public ImageDescriptor getImageDescriptor(Object object) {
-		return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CHANGELOG); // TODO: Custom image needed
+		return TeamUIPlugin.getImageDescriptor(ITeamUIImages.IMG_CHANGE_SET);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()
 	 */
 	public String getName() {
-	    String name = set.getTitle();
-		return name;
+		return set.getName();
 	}
 	
 	/* (non-Javadoc)

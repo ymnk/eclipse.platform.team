@@ -17,7 +17,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
-import org.eclipse.team.core.subscribers.ChangeSet;
+import org.eclipse.team.core.subscribers.ActiveChangeSet;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -25,6 +25,7 @@ import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.ChangeSetDiffNode;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
@@ -65,8 +66,8 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 					return output.toString();
 				}
 			}
-		if (element instanceof CommitSetDiffNode) {
-		    ChangeSet set = ((CommitSetDiffNode)element).getSet();
+		if (element instanceof ChangeSetDiffNode) {
+		    ActiveChangeSet set = (ActiveChangeSet)((ChangeSetDiffNode)element).getSet();
 		    if (CommitSetManager.getInstance().isDefault(set)) {
 		        text = Policy.bind("CommitSetDiffNode.0", text); //$NON-NLS-1$
 		    }
@@ -134,8 +135,8 @@ class CVSParticipantLabelDecorator extends LabelProvider implements IPropertyCha
 	}
 
 	public Font decorateFont(Object element) {
-		if (element instanceof CommitSetDiffNode) {
-		    ChangeSet set = ((CommitSetDiffNode)element).getSet();
+		if (element instanceof ChangeSetDiffNode) {
+		    ActiveChangeSet set = (ActiveChangeSet)((ChangeSetDiffNode)element).getSet();
 		    if (CommitSetManager.getInstance().isDefault(set)) {
 		    	if (boldFont == null) {
 					Font defaultFont = JFaceResources.getDefaultFont();

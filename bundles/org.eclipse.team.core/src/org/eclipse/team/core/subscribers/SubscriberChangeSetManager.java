@@ -38,7 +38,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
     
     private List activeSets;
     private ListenerList listeners = new ListenerList();
-    private ChangeSet defaultSet;
+    private ActiveChangeSet defaultSet;
     private EventHandler handler;
     
     /*
@@ -94,17 +94,17 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
 
         private void beginDispath() {
             for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ChangeSet set = (ChangeSet) iter.next();
-                set.getSyncInfos().beginInput();
+                ActiveChangeSet set = (ActiveChangeSet) iter.next();
+                set.getSyncInfoSet().beginInput();
             }
         }
 
         private void endDispatch(IProgressMonitor monitor) {
             monitor.beginTask(null, 100 * activeSets.size());
             for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ChangeSet set = (ChangeSet) iter.next();
+                ActiveChangeSet set = (ActiveChangeSet) iter.next();
                 try {
-                    set.getSyncInfos().endInput(Policy.subMonitorFor(monitor, 100));
+                    set.getSyncInfoSet().endInput(Policy.subMonitorFor(monitor, 100));
                 } catch (RuntimeException e) {
                     // Don't worry about ending every set if an error occurs.
                     // Instead, log the error and suggest a restart.
@@ -128,11 +128,11 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
          */
         private void handleRemove(IResource resource) {
             for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ChangeSet set = (ChangeSet) iter.next();
+                ActiveChangeSet set = (ActiveChangeSet) iter.next();
                 // This will remove any descendants from the set and callback to 
                 // resourcesChanged which will batch changes
                 if (!set.isEmpty()) {
-	                set.rootRemoved(resource);
+	                set.rootRemoved(resource, IResource.DEPTH_INFINITE);
 	                if (set.isEmpty()) {
 	                    remove(set);
 	                }
@@ -146,7 +146,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         private void handleChange(IResource resource, int depth) throws TeamException {
             SyncInfo syncInfo = getSyncInfo(resource);
             if (isModified(syncInfo)) {
-                ChangeSet[] containingSets = getContainingSets(resource);
+                ActiveChangeSet[] containingSets = getContainingSets(resource);
                 if (containingSets.length == 0) {
 	                // Consider for inclusion in the default set
 	                // if the resource is not already a memebr of another set
@@ -155,9 +155,9 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
                      }
                 } else {
                     for (int i = 0; i < containingSets.length; i++) {
-                        ChangeSet set = containingSets[i];
+                        ActiveChangeSet set = containingSets[i];
                         // Update the sync info in the set
-                        set.getSyncInfos().add(syncInfo);
+                        set.getSyncInfoSet().add(syncInfo);
                     }
                 }
             } else {
@@ -175,7 +175,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         private void removeFromAllSets(IResource resource) {
             List toRemove = new ArrayList();
             for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ChangeSet set = (ChangeSet) iter.next();
+                ActiveChangeSet set = (ActiveChangeSet) iter.next();
                 if (set.contains(resource)) {
                     set.remove(resource);
 	                if (set.isEmpty()) {
@@ -184,20 +184,20 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
                 }
             }
             for (Iterator iter = toRemove.iterator(); iter.hasNext();) {
-                ChangeSet set = (ChangeSet) iter.next();
+                ActiveChangeSet set = (ActiveChangeSet) iter.next();
                 remove(set);
             }
         }
 
-        private ChangeSet[] getContainingSets(IResource resource) {
+        private ActiveChangeSet[] getContainingSets(IResource resource) {
             Set sets = new HashSet();
             for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ChangeSet set = (ChangeSet) iter.next();
+                ActiveChangeSet set = (ActiveChangeSet) iter.next();
                 if (set.contains(resource)) {
                     sets.add(set);
                 }
             }
-            return (ChangeSet[]) sets.toArray(new ChangeSet[sets.size()]);
+            return (ActiveChangeSet[]) sets.toArray(new ActiveChangeSet[sets.size()]);
         }
     }
     
@@ -228,7 +228,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
     /**
      * The title of the given set has changed. Notify any listeners.
      */
-    /* package */ void titleChanged(final ChangeSet set) {
+    /* package */ void titleChanged(final ActiveChangeSet set) {
         if (activeSets.contains(set)) {
             Object[] listeners = getListeners();
             for (int i = 0; i < listeners.length; i++) {
@@ -266,8 +266,8 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @return the created set
      * @throws CVSException
      */
-    public ChangeSet createSet(String title, SyncInfo[] infos) throws TeamException {
-        ChangeSet commitSet = new ChangeSet(this, title);
+    public ActiveChangeSet createSet(String title, SyncInfo[] infos) {
+        ActiveChangeSet commitSet = new ActiveChangeSet(this, title);
         if (infos != null && infos.length > 0) {
             commitSet.add(infos);
         }
@@ -282,7 +282,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @return the created set
      * @throws TeamException
      */
-    public ChangeSet createSet(String title, IFile[] files) throws TeamException {
+    public ActiveChangeSet createSet(String title, IFile[] files) throws TeamException {
         List infos = new ArrayList();
         for (int i = 0; i < files.length; i++) {
             IFile file = files[i];
@@ -298,10 +298,10 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * Add the set to the list of active sets.
      * @param set the set to be added
      */
-    public void add(final ChangeSet set) {
+    public void add(final ActiveChangeSet set) {
         if (!contains(set)) {
             activeSets.add(set);
-            set.getSyncInfos().addSyncSetChangedListener(this);
+            set.getSyncInfoSet().addSyncSetChangedListener(this);
             Object[] listeners = getListeners();
             for (int i = 0; i < listeners.length; i++) {
                 final IChangeSetChangeListener listener = (IChangeSetChangeListener)listeners[i];
@@ -314,7 +314,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
                     }
                 });
             }
-            handleAddedResources(set, set.getSyncInfos().getSyncInfos());
+            handleAddedResources(set, set.getSyncInfoSet().getSyncInfos());
         }
     }
 
@@ -322,9 +322,9 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * Remove the set from the list of active sets.
      * @param set the set to be removed
      */
-    public void remove(final ChangeSet set) {
+    public void remove(final ActiveChangeSet set) {
         if (contains(set)) {
-            set.getSyncInfos().removeSyncSetChangedListener(this);
+            set.getSyncInfoSet().removeSyncSetChangedListener(this);
             activeSets.remove(set);
             Object[] listeners = getListeners();
             for (int i = 0; i < listeners.length; i++) {
@@ -346,7 +346,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @param set the commit set being tested
      * @return whether the set is contained in the manager's list of active sets
      */
-    public boolean contains(ChangeSet set) {
+    public boolean contains(ActiveChangeSet set) {
         return activeSets.contains(set);
     }
 
@@ -370,8 +370,8 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * Return the list of active commit sets.
      * @return the list of active commit sets
      */
-    public ChangeSet[] getSets() {
-        return (ChangeSet[]) activeSets.toArray(new ChangeSet[activeSets.size()]);
+    public ActiveChangeSet[] getSets() {
+        return (ActiveChangeSet[]) activeSets.toArray(new ActiveChangeSet[activeSets.size()]);
     }
 
     /**
@@ -379,12 +379,12 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * that ae not already in another set go.
      * @param set the set which is to become the default set
      */
-    public void makeDefault(ChangeSet set) {
+    public void makeDefault(ActiveChangeSet set) {
         // The default set must be an active set
         if (!contains(set)) {
             add(set);
         }
-        final ChangeSet oldSet = defaultSet;
+        final ActiveChangeSet oldSet = defaultSet;
         defaultSet = set;
         Object[] listeners = getListeners();
         for (int i = 0; i < listeners.length; i++) {
@@ -405,7 +405,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * <code>null</code> if there is no default set.
      * @return
      */
-    public ChangeSet getDefaultSet() {
+    public ActiveChangeSet getDefaultSet() {
         return defaultSet;
     }
     /**
@@ -414,7 +414,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @param set the set to test
      * @return whether the set is the default set
      */
-    public boolean isDefault(ChangeSet set) {
+    public boolean isDefault(ActiveChangeSet set) {
         return set == defaultSet;
     }
     
@@ -455,7 +455,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
     private void save() {
 		Preferences prefs = getPreferences();
 		for (Iterator it = activeSets.iterator(); it.hasNext(); ) {
-		    ChangeSet set = (ChangeSet) it.next();
+		    ActiveChangeSet set = (ActiveChangeSet) it.next();
 			if (!set.isEmpty()) {
 			    Preferences child = prefs.node(set.getTitle());
 			    set.save(child);
@@ -480,7 +480,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
             for (int i = 0; i < childNames.length; i++) {
                 String string = childNames[i];
                 Preferences childPrefs = prefs.node(string);
-                ChangeSet set = createSet(string, childPrefs);
+                ActiveChangeSet set = createSet(string, childPrefs);
             	if (defaultSet == null && defaultSetTitle != null && set.getTitle().equals(defaultSetTitle)) {
             	    defaultSet = set;
             	}
@@ -497,8 +497,8 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @param childPrefs the previously saved preferences
      * @return the created change set
      */
-    protected ChangeSet createSet(String title, Preferences childPrefs) {
-        ChangeSet changeSet = new ChangeSet(this, title);
+    protected ActiveChangeSet createSet(String title, Preferences childPrefs) {
+        ActiveChangeSet changeSet = new ActiveChangeSet(this, title);
         changeSet.init(childPrefs);
         return changeSet;
     }
@@ -557,7 +557,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         return (IResource[]) allResources.toArray(new IResource[allResources.size()]);
     }
 
-    private void handleAddedResources(ChangeSet set, SyncInfo[] infos) {
+    private void handleAddedResources(ActiveChangeSet set, SyncInfo[] infos) {
         if (isSingleSetPerResource()) {
             IResource[] resources = new IResource[infos.length];
             for (int i = 0; i < infos.length; i++) {
@@ -565,7 +565,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
             }
 	        // Remove the added files from any other set that contains them
 	        for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-	            ChangeSet otherSet = (ChangeSet) iter.next();
+	            ActiveChangeSet otherSet = (ActiveChangeSet) iter.next();
 	            if (otherSet != set) {
 	                otherSet.remove(resources);
 	            }
@@ -574,7 +574,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
     }
     
     private void handleSyncSetChange(SyncInfoSet set, SyncInfo[] addedInfos, IResource[] allAffectedResources) {
-        ChangeSet changeSet = getChangeSet(set);
+        ActiveChangeSet changeSet = getChangeSet(set);
         if (set.isEmpty() && changeSet != null) {
             remove(changeSet);
         }
@@ -586,7 +586,7 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
      * @param changeSet
      * @param allAffectedResources
      */
-    private void fireResourcesChangedEvent(final ChangeSet changeSet, final IResource[] allAffectedResources) {
+    private void fireResourcesChangedEvent(final ActiveChangeSet changeSet, final IResource[] allAffectedResources) {
         Object[] listeners = getListeners();
         for (int i = 0; i < listeners.length; i++) {
             final IChangeSetChangeListener listener = (IChangeSetChangeListener)listeners[i];
@@ -601,10 +601,10 @@ public class SubscriberChangeSetManager extends SubscriberResourceCollector impl
         }
     }
     
-    private ChangeSet getChangeSet(SyncInfoSet set) {
+    private ActiveChangeSet getChangeSet(SyncInfoSet set) {
         for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-            ChangeSet changeSet = (ChangeSet) iter.next();
-            if (changeSet.getSyncInfos() == set) {
+            ActiveChangeSet changeSet = (ActiveChangeSet) iter.next();
+            if (changeSet.getSyncInfoSet() == set) {
                 return changeSet;
             }
         }

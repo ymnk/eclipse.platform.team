@@ -627,15 +627,28 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 			}
 		}
 		// Remove the node from the tree
-		IDiffContainer parent = node.getParent();
-		if (parent != null) {
-			parent.removeToRoot(node);
-		}
+		removeToRoot(node);
+		
 		// Notify the update handler that the node has been cleared
 		updateHandler.modelObjectCleared(node);
 	}
 	
-	/**
+	/*
+     * Remove to root should only remove to the root of the provider and not the
+     * diff tree.
+     */
+    private void removeToRoot(ISynchronizeModelElement node) {
+        if (node == getModelRoot()) return;
+		IDiffContainer parent = node.getParent();
+		if (parent != null) {
+		    ((SynchronizeModelElement)parent).remove(node);
+		    if (!parent.hasChildren()) {
+		        removeToRoot((ISynchronizeModelElement)parent);
+		    }
+		}
+    }
+
+    /**
 	 * Return the provider that created and manages the given
 	 * model element. The default is to return the receiver.
 	 * Subclasses may override.

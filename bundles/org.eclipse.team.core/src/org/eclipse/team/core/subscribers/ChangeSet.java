@@ -10,97 +10,112 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers;
 
-import java.util.*;
-
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.internal.core.TeamPlugin;
-import org.osgi.service.prefs.Preferences;
 
 /**
- * A change set is used to group a set of changes together
- * for some purpose, whether it be to display them together in
- * the UI or check them into a repository as one checkin.
+ * A change set represents a set of changes that are logically 
+ * grouped together as a single change. The changes are 
+ * represented usign a set of <code>SyncInfo</code>.
+ * 
+ * @since 3.1
  */
-public class ChangeSet {
+public abstract class ChangeSet {
+
+    private String name;
     
-    private static final String CTX_TITLE = "title"; //$NON-NLS-1$
-    private static final String CTX_COMMENT = "comment"; //$NON-NLS-1$
-    private static final String CTX_RESOURCES = "resources"; //$NON-NLS-1$
-    
-    SyncInfoTree set = new SyncInfoTree();
-    private String title;
-    private String comment;
-    private final SubscriberChangeSetManager manager;
-    
-	/**
-	 * Create a change set with the given title
-	 * @param manager the manager that owns this set
-     * @param title the title of the set
+    private SyncInfoTree set = new SyncInfoTree();
+
+    /**
+     * Create a change set with no name. Subclasses
+     * that create a change set in this manner should
+     * provide a name before the set is used by other clients.
      */
-    public ChangeSet(SubscriberChangeSetManager manager, String title) {
-        this.manager = manager;
-        this.title = title;
+    protected ChangeSet() {
+        super();
+    }
+    
+    /**
+     * Create a change set with the given name.
+     */
+    public ChangeSet(String name) {
+        this.name = name;
+    }
+    
+    /**
+     * Return the SyncInfoSet that contains the resources that belong to this change set.
+     * @return  the SyncInfoSet that contains the resources that belong to this change set
+     */
+    public SyncInfoTree getSyncInfoSet() {
+        return set;
     }
 
     /**
-     * Get the title of the change set. The title is used
-     * as the comment when the set is checking in if no comment
-     * has been explicitly set using <code>setComment</code>.
-     * @return the title of the set
+     * Return the resources that are contained in this set.
+     * @return the resources that are contained in this set
      */
-    public String getTitle() {
-        return title;
+    public IResource[] getResources() {
+        return set.getResources();
     }
     
     /**
-     * Set the title of the set. The title is used
-     * as the comment when the set is committed if no comment
-     * has been explicitly set using <code>setComment</code>.
-     * @param title the title of the set
+     * Return whether the set contains any files.
+     * @return whether the set contains any files
      */
-    public void setTitle(String title) {
-        this.title = title;
-        getManager().titleChanged(this);
+    public boolean isEmpty() {
+        return set.isEmpty();
+    }
+
+    /**
+     * Return true if the given file is included in this set.
+     * @param local a ocal file
+     * @return true if the given file is included in this set
+     */
+    public boolean contains(IResource local) {
+        return set.getSyncInfo(local) != null;
     }
     
     /**
-     * Get the comment of this change set. If the comment
-     * as never been set, the title is returned as the comment
-     * @return the comment to be used when the set is committed
+     * Add the resource to this set if it is modified
+     * w.r.t. the subscriber.
+     * @param resource
+     * @throws TeamException
      */
-    public String getComment() {
-        if (comment == null) {
-            return getTitle();
-        }
-        return comment;
-    }
-    
-    /**
-     * Set the comment to be used when the change set is committed.
-     * If <code>null</code> is passed, the title of the set
-     * will be used as the comment.
-     * @param comment the comment for the set or <code>null</code>
-     * if the title should be the comment
-     */
-    public void setComment(String comment) {
-        if (comment != null && comment.equals(getTitle())) {
-            this.comment = null;
-        } else {
-            this.comment = comment;
+    public void add(SyncInfo info) {
+        if (isValidChange(info)) {
+            set.add(info);
         }
     }
     
     /**
-     * Return the SyncInfoSet that contains the resources
-     * that belong to this change set.
-     * @return the SyncInfoSet that contains the resources
-     * that belong to this change set
+     * Return whether the given sync info is a valid change
+     * and can be included in this set. This method is used
+     * by the <code>add</code> method to filter set additions.
+     * @param info a sync info
+     * @return whether the sync info is a valid member of this set
      */
-    public SyncInfoTree getSyncInfos() {
-        return set;
+    protected boolean isValidChange(SyncInfo info) {
+        return (info != null);
+    }
+
+    /**
+     * Add the resources to this set if they are modified
+     * w.r.t. the subscriber.
+     * @param resources the resources to be added.
+     * @throws TeamException
+     */
+    public void add(SyncInfo[] infos) {
+       try {
+           set.beginInput();
+           for (int i = 0; i < infos.length; i++) {
+              SyncInfo info = infos[i];
+              add(info);
+           }
+       } finally {
+           set.endInput(null);
+       }
     }
     
     /**
@@ -123,13 +138,15 @@ public class ChangeSet {
             remove(resource);
         }
     }
-
+    
     /**
-     * The given resource was removed. Ensure that it and
-     * any descendants are also removed.
+     * Remove the resource and it's descendants to the given depth.
+     * @param resource the resource to be removed
+     * @param depth the depth of the removal (one of
+     * <code>IResource.DEPTH_ZERO, IResource.DEPTH_ONE, IResource.DEPTH_INFINITE)</code>
      */
-    public void rootRemoved(IResource root) {
-        SyncInfo[] infos = set.getSyncInfos(root, IResource.DEPTH_INFINITE);
+    public void rootRemoved(IResource resource, int depth) {
+        SyncInfo[] infos = set.getSyncInfos(resource, depth);
         if (infos.length > 0) {
             IResource[] resources = new IResource[infos.length];
             for (int i = 0; i < resources.length; i++) {
@@ -140,141 +157,27 @@ public class ChangeSet {
     }
     
     /**
-     * Add the resource to this set if it is modified
-     * w.r.t. the subscriber.
-     * @param resource
-     * @throws TeamException
+     * Return a comment describing the change.
+     * @return a comment describing the change
      */
-    public void add(SyncInfo info) {
-        if (getManager().isModified(info)) {
-            set.add(info);
-        }
-    }
-    
+    public abstract String getComment();
+
     /**
-     * Add the resources to this set if they are modified
-     * w.r.t. the subscriber.
-     * @param resources the resources to be added.
-     * @throws TeamException
+     * Return the name assigned to this set. The name should be
+     * unique.
+     * @return the name assigned to this set
      */
-    public void add(SyncInfo[] infos) {
-       try {
-           set.beginInput();
-           for (int i = 0; i < infos.length; i++) {
-              SyncInfo info = infos[i];
-              add(info);
-           }
-       } finally {
-           set.endInput(null);
-       }
-    }
-
-    private void addResource(IResource resource) throws TeamException {
-        Subscriber subscriber = getManager().getSubscriber();
-        SyncInfo info = subscriber.getSyncInfo(resource);
-        if (info != null) {
-            add(info);
-        }
-    }
-
-    private SubscriberChangeSetManager getManager() {
-        return manager;
+    public String getName() {
+        return name;
     }
 
     /**
-     * Return whether the set contains any files.
-     * @return whether the set contains any files
+     * Set the name of the change set. The name of a change
+     * set can be changed but it is up to subclass to notify
+     * any interested partied of the name change.
+     * @param name the new name for the set
      */
-    public boolean isEmpty() {
-        return set.isEmpty();
-    }
-
-    /**
-     * Return true if the given file is included in this set.
-     * @param local a ocal file
-     * @return true if the given file is included in this set
-     */
-    public boolean contains(IResource local) {
-        return set.getSyncInfo(local) != null;
-    }
-
-    /**
-     * Return whether the set has a comment that differs from the title.
-     * @return whether the set has a comment that differs from the title
-     */
-    public boolean hasComment() {
-        return comment != null;
-    }
-    
-    /**
-     * Return the resources that are contained in this set.
-     * @return the resources that are contained in this set
-     */
-    public IResource[] getResources() {
-        return set.getResources();
-    }
-    
-    public void save(Preferences prefs) {
-        prefs.put(CTX_TITLE, getTitle());
-        if (comment != null) {
-            prefs.put(CTX_COMMENT, comment);
-        }
-        if (!isEmpty()) {
-	        StringBuffer buffer = new StringBuffer();
-	        IResource[] resources = set.getResources();
-	        for (int i = 0; i < resources.length; i++) {
-                IResource resource = resources[i];
-	            buffer.append(resource.getFullPath().toString());
-	            buffer.append('\n');
-	        }
-	        prefs.put(CTX_RESOURCES, buffer.toString());
-        }
-    }
-
-    public void init(Preferences prefs) {
-        title = prefs.get(CTX_TITLE, ""); //$NON-NLS-1$
-        comment = prefs.get(CTX_COMMENT, null);
-        String resourcePaths = prefs.get(CTX_RESOURCES, null);
-        if (resourcePaths != null) {
-            try {
-                getSyncInfos().beginInput();
-	            IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-	            StringTokenizer tokenizer = new StringTokenizer(resourcePaths, "\n"); //$NON-NLS-1$
-	            while (tokenizer.hasMoreTokens()) {
-	                String next = tokenizer.nextToken();
-	                if (next.trim().length() > 0) {
-	                    IResource resource = root.findMember(next);
-	                    if (resource != null) {
-	                        try {
-	                            addResource(resource);
-	                        } catch (TeamException e) {
-	                            TeamPlugin.log(e);
-	                        }
-	                    }
-	                }
-	            }
-            } finally {
-                getSyncInfos().endInput(null);
-            }
-        }
-    }
-
-    /**
-     * Add the resources to the change set if they are outgoing changes.
-     * @param resources the resouces to add.
-     * @throws TeamException
-     */
-    public void add(IResource[] resources) throws TeamException {
-        List toAdd = new ArrayList();
-        for (int i = 0; i < resources.length; i++) {
-            IResource resource = resources[i];
-            SyncInfo info = manager.getSyncInfo(resource);
-            if (info != null) {
-                toAdd.add(info);
-            }
-        }
-        if (!toAdd.isEmpty()) {
-            add((SyncInfo[]) toAdd.toArray(new SyncInfo[toAdd.size()]));
-        }
+    protected void setName(String name) {
+        this.name = name;
     }
 }

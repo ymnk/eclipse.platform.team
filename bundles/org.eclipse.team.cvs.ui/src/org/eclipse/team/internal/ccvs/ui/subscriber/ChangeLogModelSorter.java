@@ -12,8 +12,9 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
-import org.eclipse.team.core.subscribers.ChangeSet;
+import org.eclipse.team.core.subscribers.ActiveChangeSet;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
+import org.eclipse.team.internal.ui.synchronize.ChangeSetDiffNode;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 
 /**
@@ -37,7 +38,7 @@ public class ChangeLogModelSorter extends ViewerSorter {
 	}
 	
 	protected int classComparison(Object element) {
-		if (element instanceof CommitSetDiffNode) {
+		if (element instanceof ChangeSetDiffNode) {
 			return 0;
 		}
 		if (element instanceof ChangeLogDiffNode) {
@@ -61,9 +62,9 @@ public class ChangeLogModelSorter extends ViewerSorter {
 		//have to deal with non-resources in navigator
 		//if one or both objects are not resources, returned a comparison 
 		//based on class.
-		if (o1 instanceof  CommitSetDiffNode && o2 instanceof CommitSetDiffNode) {
-		    ChangeSet s1 = ((CommitSetDiffNode) o1).getSet();
-		    ChangeSet s2 = ((CommitSetDiffNode) o2).getSet();
+		if (o1 instanceof  ChangeSetDiffNode && o2 instanceof ChangeSetDiffNode) {
+		    ActiveChangeSet s1 = (ActiveChangeSet)((ChangeSetDiffNode) o1).getSet();
+		    ActiveChangeSet s2 = (ActiveChangeSet)((ChangeSetDiffNode) o2).getSet();
 			return compareNames(s1.getTitle(), s2.getTitle());
 		}
 		
@@ -81,9 +82,9 @@ public class ChangeLogModelSorter extends ViewerSorter {
 				return 0;
 		}
 		
-		if (o1 instanceof CommitSetDiffNode)
+		if (o1 instanceof ChangeSetDiffNode)
 			return 1;
-		else if (o2 instanceof CommitSetDiffNode)
+		else if (o2 instanceof ChangeSetDiffNode)
 			return -1;
 		
 		if (o1 instanceof ChangeLogDiffNode)

@@ -33,21 +33,21 @@ public class CommitSetTests extends EclipseTest {
 	private List addedSets = new ArrayList();
 	private List removedSets = new ArrayList();
 	private IChangeSetChangeListener listener = new IChangeSetChangeListener() {
-        public void setAdded(ChangeSet set) {
+        public void setAdded(ActiveChangeSet set) {
             addedSets.add(set);
         }
-        public void setRemoved(ChangeSet set) {
+        public void setRemoved(ActiveChangeSet set) {
             removedSets.add(set);
         }
-        public void titleChanged(ChangeSet set) {
+        public void titleChanged(ActiveChangeSet set) {
             // TODO Auto-generated method stub
 
         }
-        public void defaultSetChanged(ChangeSet oldDefault, ChangeSet set) {
+        public void defaultSetChanged(ActiveChangeSet oldDefault, ActiveChangeSet set) {
             // TODO Auto-generated method stub
             
         }
-        public void resourcesChanged(ChangeSet set, IResource[] resources) {
+        public void resourcesChanged(ActiveChangeSet set, IResource[] resources) {
             // TODO Auto-generated method stub
             
         }
@@ -72,10 +72,10 @@ public class CommitSetTests extends EclipseTest {
      * @return the newly create commit set
      * @throws TeamException
      */
-    protected ChangeSet createCommitSet(String title, IFile[] files, boolean manageSet) throws TeamException {
+    protected ActiveChangeSet createCommitSet(String title, IFile[] files, boolean manageSet) throws TeamException {
         assertIsModified(getName(), files);
         SubscriberChangeSetManager manager = CommitSetManager.getInstance();
-        ChangeSet set = manager.createSet(title, files);
+        ActiveChangeSet set = manager.createSet(title, files);
         assertEquals("Not all files were asdded to the set", files.length, set.getResources().length);
         if (manageSet) {
 	        manager.add(set);
@@ -91,7 +91,7 @@ public class CommitSetTests extends EclipseTest {
      * @param set the commit set
      * @throws CVSException
      */
-    protected void commit(ChangeSet set) throws CoreException {
+    protected void commit(ActiveChangeSet set) throws CoreException {
         boolean isManaged = setIsManaged(set);
         commitResources(set.getResources(), IResource.DEPTH_ZERO);
         if (isManaged) {
@@ -100,11 +100,11 @@ public class CommitSetTests extends EclipseTest {
         }
     }
     
-    private boolean setIsManaged(ChangeSet set) {
+    private boolean setIsManaged(ActiveChangeSet set) {
         return CommitSetManager.getInstance().contains(set);
     }
 
-    private void waitForSetAddedEvent(ChangeSet set) {
+    private void waitForSetAddedEvent(ActiveChangeSet set) {
         int count = 0;
         while (count < 5) {
 	        if (addedSets.contains(set)) {
@@ -121,7 +121,7 @@ public class CommitSetTests extends EclipseTest {
         fail("Did not receive expected set added event");
     }
 
-    private void waitForSetRemovedEvent(ChangeSet set) {
+    private void waitForSetRemovedEvent(ActiveChangeSet set) {
         int count = 0;
         while (count < 5) {
 	        if (removedSets.contains(set)) {
@@ -171,7 +171,7 @@ public class CommitSetTests extends EclipseTest {
                 project.getFile("changed.txt"), 
                 project.getFile("deleted.txt"),
                 project.getFile("added.txt")};
-        ChangeSet set = createCommitSet("testSimpleCommit", files, false /* do not manage the set */);
+        ActiveChangeSet set = createCommitSet("testSimpleCommit", files, false /* do not manage the set */);
         commit(set);
         assertLocalStateEqualsRemote(project);
     }
@@ -193,7 +193,7 @@ public class CommitSetTests extends EclipseTest {
                 project.getFile("changed.txt"), 
                 project.getFile("deleted.txt"),
                 project.getFile("added.txt")};
-        ChangeSet set = createCommitSet("testSimpleCommit", files, true /* manage the set */);
+        ActiveChangeSet set = createCommitSet("testSimpleCommit", files, true /* manage the set */);
         commit(set);
         assertLocalStateEqualsRemote(project);
     }

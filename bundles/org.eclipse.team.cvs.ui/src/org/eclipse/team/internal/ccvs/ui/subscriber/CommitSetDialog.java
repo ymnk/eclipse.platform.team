@@ -20,7 +20,7 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.subscribers.ChangeSet;
+import org.eclipse.team.core.subscribers.ActiveChangeSet;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.ui.help.WorkbenchHelp;
 
@@ -30,7 +30,7 @@ import org.eclipse.ui.help.WorkbenchHelp;
  */
 public class CommitSetDialog extends Dialog {
 
-    private final ChangeSet set;
+    private final ActiveChangeSet set;
     private CommitCommentArea commitCommentArea;
     private Text nameText;
     private Button useTitleButton;
@@ -39,7 +39,7 @@ public class CommitSetDialog extends Dialog {
     private final String description;
     private String comment;
 
-    public CommitSetDialog(Shell parentShell, ChangeSet set, IResource[] files, String title, String description) {
+    public CommitSetDialog(Shell parentShell, ActiveChangeSet set, IResource[] files, String title, String description) {
         super(parentShell);
         this.set = set;
         this.title = title;

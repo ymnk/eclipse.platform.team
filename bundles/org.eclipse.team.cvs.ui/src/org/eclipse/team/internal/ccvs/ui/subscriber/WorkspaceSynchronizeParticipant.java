@@ -151,6 +151,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 		
 		// The manager adds itself to the configuration in it's constructor
 		new ChangeLogModelManager(configuration);
+		configuration.setProperty(ISynchronizePageConfiguration.P_CHANGE_SET_MANAGER, CommitSetManager.getInstance());
 		
 		// Add context menu groups here to give the client displaying the
 		// page a chance to remove the context menu
