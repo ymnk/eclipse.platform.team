@@ -188,10 +188,10 @@ public class SyncInfoSetCompareConfiguration {
 	 * subclass of <code>TeamSubscriberParticipantLabelProvider</code>.
 	 * @param logicalProvider the label provider for the selected logical view
 	 * @return a label provider
-	 * @see TeamSubscriberParticipantLabelProvider
+	 * @see SyncInfoDecoratingLabelProvider
 	 */
 	protected ILabelProvider getLabelProvider(SyncInfoLabelProvider logicalProvider) {
-		return new TeamSubscriberParticipantLabelProvider(logicalProvider);
+		return new SyncInfoDecoratingLabelProvider(logicalProvider);
 	}
 	
 	/**

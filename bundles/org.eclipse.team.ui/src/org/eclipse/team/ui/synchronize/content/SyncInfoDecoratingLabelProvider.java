@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.content;
 
 import java.util.*;
 
@@ -24,20 +24,20 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
-import org.eclipse.team.ui.synchronize.content.SyncInfoSetContentProvider;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.internal.WorkbenchColors;
 
 /**
- * Provides basic labels for the subscriber participant synchronize view 
- * page. This class provides a facility for subclasses to define annotations
+ * Decorates the text and labels from a <code>SyncInfoLabelProvider</code>
+ * with the proper sync kind indications. 
+ * This class provides a facility for subclasses to define annotations
  * on the labels and icons of adaptable objects by overriding
  * <code>decorateText()</code> and <code>decorateImage</code>.
  * 
- * @see TeamSubscriberParticipantPage#getLabelProvider()
+ * @see SyncInfoSetCompareConfiguration#getLabelProvider(SyncInfoLabelProvider)
  * @since 3.0
  */
-public class TeamSubscriberParticipantLabelProvider extends LabelProvider implements ITableLabelProvider, IColorProvider {
+public class SyncInfoDecoratingLabelProvider extends LabelProvider implements ITableLabelProvider, IColorProvider {
 	
 	//column constants
 	private static final int COL_RESOURCE = 0;
@@ -52,11 +52,11 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	CompareConfiguration compareConfig = new CompareConfiguration();
 	SyncInfoLabelProvider syncInfoLabelProvider;
 
-	public TeamSubscriberParticipantLabelProvider() {
+	public SyncInfoDecoratingLabelProvider() {
 		this(new SyncInfoLabelProvider());
 	}
 	
-	public TeamSubscriberParticipantLabelProvider(SyncInfoLabelProvider syncInfoLabelProvider) {
+	public SyncInfoDecoratingLabelProvider(SyncInfoLabelProvider syncInfoLabelProvider) {
 		Assert.isNotNull(syncInfoLabelProvider);
 		JobStatusHandler.addJobListener(new IJobListener() {
 			public void started(QualifiedName jobType) {
@@ -65,7 +65,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 					public void run() {
 						// TODO: What this is this supposed to be?
 						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
+							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoDecoratingLabelProvider.this));
 						}
 					}
 				});
@@ -75,7 +75,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
+							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoDecoratingLabelProvider.this));
 						}
 					}
 				});

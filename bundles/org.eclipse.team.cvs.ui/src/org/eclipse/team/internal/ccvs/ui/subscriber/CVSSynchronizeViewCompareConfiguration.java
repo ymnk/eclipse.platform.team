@@ -15,11 +15,12 @@ import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.content.*;
 import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
 
 public class CVSSynchronizeViewCompareConfiguration extends SynchronizeViewCompareConfiguration {
 
-	private static class CVSLabelProvider extends TeamSubscriberParticipantLabelProvider {
+	private static class CVSLabelProvider extends SyncInfoDecoratingLabelProvider {
 		protected CVSLabelProvider(SyncInfoLabelProvider syncInfoLabelProvider) {
 			super(syncInfoLabelProvider);
 		}
