@@ -10,75 +10,100 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.syncinfo;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 
 /**
  * Provides a per-thread nested locking mechanism. A thread can acquire a
- * lock and then call acquire() multiple times. Other threads that try
- * and acquire the lock will be blocked until the first thread releases all
- * it's nested locks.
+ * lock on a specific resource by calling acquire(). Subsequently, acquire() can be called
+ * multiple times on the resource or any of its children from within the same thread
+ * without blocking. Other threads that try
+ * and acquire the lock on those same resources will be blocked until the first 
+ * thread releases all it's nested locks.
+ * <p>
+ * The locking is managed by the platform via scheduling rules. This class simply 
+ * provides the nesting mechnism in order to allow the client to determine when
+ * the lock for the thread has been released. Therefore, this lock will block if
+ * another thread already locks the same resource.</p>
  */
 public class ReentrantLock {
 
 	private final static boolean DEBUG = Policy.DEBUG_THREADING;
-	private Thread thread;
-	private int nestingCount;
 	
-	private Set readOnlyThreads = new HashSet();
+	private Map nestingCounts = new HashMap();
+	
 	
 	public ReentrantLock() {
-		this.thread = null;
-		this.nestingCount = 0;
 	}
 	
-	public synchronized void acquire() {
-		// stop early if we've been interrupted -- don't enter the lock anew
+	public synchronized void acquire(IResource resource) {
+		lock(resource);	
+		incrementNestingCount(resource);
+	}
+	
+	private void incrementNestingCount(IResource resource) {
 		Thread thisThread = Thread.currentThread();
-
-		// race for access to the lock -- does not guarantee fairness
-		if (thread != thisThread) {
-			while (nestingCount != 0) {
-				try {
-					if(DEBUG) System.out.println("["+ thisThread.getName() + "] waiting for CVS synchronizer lock"); //$NON-NLS-1$ //$NON-NLS-2$
-					wait();
-				} catch(InterruptedException e) {
-					// keep waiting for the lock
-					if(DEBUG) System.out.println("["+ thisThread.getName() + "] interrupted in CVS synchronizer lock"); //$NON-NLS-1$ //$NON-NLS-2$
+		Integer wrapped = (Integer)nestingCounts.get(thisThread);
+		int nestingCount ;
+		if (wrapped == null) {
+			nestingCount = 1;
+			if(DEBUG) System.out.println("[" + thisThread.getName() + "] acquired CVS lock on " + resource.getFullPath()); //$NON-NLS-1$ //$NON-NLS-2$
+		} else {
+			nestingCount = (wrapped.intValue());
+			nestingCount++;
+		}
+		nestingCounts.put(thisThread, new Integer(nestingCount));
+	}
+	
+	private void lock(IResource resource) {
+		// The scheduling rule is either the project or the resource's parent
+		ISchedulingRule rule;
+		if (resource.getType() == IResource.ROOT) {
+			// Never lock the whole workspace
+			rule = new ISchedulingRule() {
+				public boolean contains(ISchedulingRule rule) {
+					return false;
 				}
-			}
-			thread = thisThread;
-			if(DEBUG) System.out.println("[" + thisThread.getName() + "] acquired CVS synchronizer lock"); //$NON-NLS-1$ //$NON-NLS-2$
+				public boolean isConflicting(ISchedulingRule rule) {
+					return false;
+				}
+			};
+		} else  if (resource.getType() == IResource.PROJECT) {
+			rule = resource;
+		} else {
+			rule = resource.getParent();
 		}
-		nestingCount++;
+		Platform.getJobManager().beginRule(rule);
+	}
+
+	private void unlock() {
+		Platform.getJobManager().endRule();
 	}
 	
-	public synchronized void release() {
+	/**
+	 * Release the lock held on any resources by this thread. Return true
+	 * if the thread no longer holds the lock (i.e. nesting count is 0).
+	 */
+	public synchronized boolean release() {
 		Thread thisThread = Thread.currentThread();
-		Assert.isLegal(thread == thisThread,
-			"Thread attempted to release a lock it did not own"); //$NON-NLS-1$
+		Integer wrapped = (Integer)nestingCounts.get(thisThread);
+		Assert.isNotNull(wrapped, "Unmatched acquire/release."); //$NON-NLS-1$
+		int nestingCount = (wrapped.intValue());
+		Assert.isTrue(nestingCount > 0, "Unmatched acquire/release."); //$NON-NLS-1$
 		if (--nestingCount == 0) {
-			if(DEBUG) System.out.println("[" + thread.getName() + "] released CVS synchronizer lock"); //$NON-NLS-1$ //$NON-NLS-2$
-			thread = null;
-			notifyAll();
+			if(DEBUG) System.out.println("[" + thisThread.getName() + "] released CVS lock"); //$NON-NLS-1$ //$NON-NLS-2$
+			nestingCounts.remove(thisThread);
+			unlock();
+			return true;
+		} else {
+			nestingCounts.put(thisThread, new Integer(nestingCount));
+			return false;
 		}
-	}
-	
-	public int getNestingCount() {
-		Thread thisThread = Thread.currentThread();
-		Assert.isLegal(thread == thisThread,
-			"Thread attempted to read nesting count of a lock it did not own"); //$NON-NLS-1$
-		return nestingCount;
-	}
-	
-	public boolean isReadOnly() {
-		return readOnlyThreads.contains(thread);
-	}
-	
-	public void addReadOnlyThread(Thread thread) {
-		readOnlyThreads.add(thread);
 	}
 }
