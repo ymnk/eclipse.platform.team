@@ -680,6 +680,10 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		initializePreferences();
 		
 		Console.startup();
+		
+		// Enable CVS decorators so that users don't have to enable via
+		// the preference pages.
+		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(CVSLightweightDecorator.ID, true);
 	}
 	
 	public static IWorkingSet getWorkingSet(IResource[] resources, String name) {
@@ -718,15 +722,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		} else {
 			return null;
 		}
-	}
-	
-	/**
-	 * Returns the system speed setting. This is mainly used to determine to enable/disable
-	 * certain CVS features.
-	 * @since 3.0 
-	 */
-	public static int getPlatformPerformance() {
-		return Platform.getPlugin(Platform.PI_RUNTIME).getPluginPreferences().getInt(Platform.PREF_PLATFORM_PERFORMANCE);
 	}
 	
 	/**
