@@ -20,6 +20,10 @@ import org.eclipse.core.resources.IResource;
  */
 public interface IResourceStateChangeListener extends EventListener{
 	
+	public static final int CONTENTS_MODIFIED = 0;
+	public static final int NO_LONGER_MODIFIED = 1;
+	public static final int SYNC_INFO_EXTERNALLY_MODIFIED = 2;
+	
 	/**
 	 * Notifies this listener that some resource sync info state changes have
 	 * already happened. For example, a resource's base revision may have
@@ -30,7 +34,7 @@ public interface IResourceStateChangeListener extends EventListener{
 	 * called directly by clients.
 	 * </p>
 	 *
-	 * @param resources that have sync info state changes
+	 * @param changedResources that have sync info state changes
 	 * 
 	 * [Note: The changed state event is purposely vague. For now it is only
 	 * a hint to listeners that they should query the provider to determine the
@@ -43,16 +47,32 @@ public interface IResourceStateChangeListener extends EventListener{
 	 * changed. For example, the resource may have become dirty due to an edit
 	 * or may have become clean due to a commit. The method is only invoked for
 	 * resources that existed before and exist after the state change.
-	 * The resource tree is not open to modification when this method is
+	 * The resource tree may not be open to modification when this method is
 	 * invoked.
+	 * <p>
+	 * A changeType of NO_LONGER_MODIFIED indicates that the files are no longer
+	 * modified from a CVS standpoint (i.e. it was either committed or
+	 * reverted). A changeType of CONTENTS_MODIFIED indicates that the contents
+	 * of the files have been modified but does not gaurentee that the files are
+	 * modified from a CVS standpoint. The receiver must verify the proper
+	 * state. A changeType of SYNC_INFO_EXTERNALLY_MODIFIED indicates that the
+	 * sync info was modified by an external tool so the files may or may not
+	 * still be modified.
+	 * </p>
+	 * <p>
+	 * Resources reported with a changeType of NO_LONGER_MODIFIED or
+	 * SYNC_INFO_EXTERNALLY_MODIFIED will also be reported via a
+	 * <code>resourceSyncInfoChanged</code> invocation.
+	 * </p>
 	 * <p>
 	 * Note: This method is called by CVS team core; it is not intended to be
 	 * called directly by clients.
 	 * </p>
 	 *
-	 * @param resources that have changed state
+	 * @param changedResources that have changed state
+	 * @param changeType the type of state change.
 	 */
-	public void resourceModificationStateChanged(IResource[] changedResources);
+	public void resourceModificationStateChanged(IResource[] changedResources, int changeType);
 	
 	/**
 	 * Notifies this listener that the project has just been configured

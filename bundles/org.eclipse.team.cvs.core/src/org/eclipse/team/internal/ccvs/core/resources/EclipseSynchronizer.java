@@ -32,6 +32,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
+import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.BaserevInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
@@ -357,14 +358,6 @@ public class EclipseSynchronizer {
 			lock.release();
 		}
 	}
-
-	private void broadcastModificationStateChanges() {
-		// Provide notification for files whose modification state changed
-		if (!unmodifiedResources.isEmpty()) {
-			CVSProviderPlugin.broadcastModificationStateChanges((IResource[]) unmodifiedResources.toArray(new IResource[unmodifiedResources.size()]));
-			unmodifiedResources.clear();
-		}
-	}
 	
 	/**
 	 * Flushes unwritten sync information to disk.
@@ -423,7 +416,9 @@ public class EclipseSynchronizer {
 				List changedPeers = new ArrayList();
 				changedPeers.add(root);
 				changedPeers.addAll(Arrays.asList(root.members()));
-				CVSProviderPlugin.broadcastSyncInfoChanges((IResource[]) changedPeers.toArray(new IResource[changedPeers.size()]));
+				IResource[] resources = (IResource[]) changedPeers.toArray(new IResource[changedPeers.size()]);
+				CVSProviderPlugin.broadcastSyncInfoChanges(resources);
+				broadcastModificationChangesForSyncChanges(resources);
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -1136,5 +1131,39 @@ public class EclipseSynchronizer {
 				unmodifiedResources.add(resource);
 			}
 		}, null);	
+	}
+	
+	/**
+	 * Broadcast the modification changes for all files whose sync info may have
+	 * been changed by an external tool.
+	 * 
+	 * @param resources
+	 */
+	private void broadcastModificationChangesForSyncChanges(IResource[] resources) {
+		List files = new ArrayList();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if (resource.getType() == IResource.FILE) {
+				files.add(resource);
+			}
+		}
+		if (!files.isEmpty()) {
+			CVSProviderPlugin.broadcastModificationStateChanges(
+				(IResource[]) files.toArray(new IResource[files.size()]),
+				IResourceStateChangeListener.SYNC_INFO_EXTERNALLY_MODIFIED);
+		}
+	}
+
+	/**
+	 * Broadcast the modification changes for all committed or reverted files
+	 */
+	private void broadcastModificationStateChanges() {
+		// Provide notification for files whose modification state changed
+		if (!unmodifiedResources.isEmpty()) {
+			CVSProviderPlugin.broadcastModificationStateChanges(
+				(IResource[]) unmodifiedResources.toArray(new IResource[unmodifiedResources.size()]),
+				IResourceStateChangeListener.NO_LONGER_MODIFIED);
+			unmodifiedResources.clear();
+		}
 	}
 }
