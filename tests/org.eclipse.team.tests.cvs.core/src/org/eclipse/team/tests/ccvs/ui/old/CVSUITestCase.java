@@ -13,22 +13,12 @@ package org.eclipse.team.tests.ccvs.ui.old;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import junit.framework.Test;
 
-import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.compare.structuremergeviewer.IDiffContainer;
-import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceDescription;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
@@ -38,41 +28,19 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.Console;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.ccvs.ui.actions.AddToWorkspaceAction;
-import org.eclipse.team.internal.ccvs.ui.actions.CommitAction;
-import org.eclipse.team.internal.ccvs.ui.actions.ReplaceWithRemoteAction;
-import org.eclipse.team.internal.ccvs.ui.actions.UpdateAction;
+import org.eclipse.team.internal.ccvs.ui.*;
+import org.eclipse.team.internal.ccvs.ui.actions.*;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.TagOperation;
-import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
-import org.eclipse.team.internal.ccvs.ui.sync.CommitSyncAction;
-import org.eclipse.team.internal.ccvs.ui.sync.ForceCommitSyncAction;
-import org.eclipse.team.internal.ccvs.ui.sync.ForceUpdateSyncAction;
-import org.eclipse.team.internal.ccvs.ui.sync.UpdateSyncAction;
 import org.eclipse.team.internal.ccvs.ui.wizards.SharingWizard;
 import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
 import org.eclipse.team.internal.ui.sync.ITeamNode;
-import org.eclipse.team.internal.ui.sync.SyncSet;
 import org.eclipse.team.internal.ui.sync.SyncView;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
-import org.eclipse.ui.IActionDelegate;
-import org.eclipse.ui.IObjectActionDelegate;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.WorkbenchException;
+import org.eclipse.ui.*;
 
 public class CVSUITestCase extends LoggingTestCase {
 	protected static Set installedTrap = new HashSet();
@@ -378,64 +346,64 @@ public class CVSUITestCase extends LoggingTestCase {
 	 * Commits NON-CONFLICTING and CONFLICTING resources represented by an array of synchronizer nodes.
 	 */
 	private void syncCommitInternal(CVSSyncCompareInput input, ITeamNode[] nodes, final String comment) {
-		FakeSelectionProvider selectionProvider = new FakeSelectionProvider(nodes);
-		// Commit ONLY NON-CONFLICTING changes
-		CommitSyncAction commitAction = new CommitSyncAction(input, selectionProvider, "Commit",
-			testWindow.getShell()) {
-			protected int promptForConflicts(SyncSet syncSet) {
-				return 0; // yes! sync conflicting changes
-			}
-			protected String promptForComment(RepositoryManager manager, IResource[] resourcesToCommit) {
-				return comment;
-			}
-			protected IResource[] promptForResourcesToBeAdded(RepositoryManager manager, IResource[] unadded) {
-				return unadded;
-			}
-		};
-		commitAction.run();
-		// Commit ONLY CONFLICTING changes
-		ForceCommitSyncAction forceCommitAction = new ForceCommitSyncAction(input, selectionProvider, "Force Commit",
-			testWindow.getShell()) {
-			protected int promptForConflicts(SyncSet syncSet) {
-				return 0; // yes! sync conflicting changes
-			}
-			protected String promptForComment(RepositoryManager manager, IResource[] resourcesToCommit) {
-				return comment;
-			}
-			protected IResource[] promptForResourcesToBeAdded(RepositoryManager manager, IResource[] unadded) {
-				return unadded;
-			}
-		};
-		forceCommitAction.run();
+//		FakeSelectionProvider selectionProvider = new FakeSelectionProvider(nodes);
+//		// Commit ONLY NON-CONFLICTING changes
+//		CommitSyncAction commitAction = new CommitSyncAction(input, selectionProvider, "Commit",
+//			testWindow.getShell()) {
+//			protected int promptForConflicts(SyncSet syncSet) {
+//				return 0; // yes! sync conflicting changes
+//			}
+//			protected String promptForComment(RepositoryManager manager, IResource[] resourcesToCommit) {
+//				return comment;
+//			}
+//			protected IResource[] promptForResourcesToBeAdded(RepositoryManager manager, IResource[] unadded) {
+//				return unadded;
+//			}
+//		};
+//		commitAction.run();
+//		// Commit ONLY CONFLICTING changes
+//		ForceCommitSyncAction forceCommitAction = new ForceCommitSyncAction(input, selectionProvider, "Force Commit",
+//			testWindow.getShell()) {
+//			protected int promptForConflicts(SyncSet syncSet) {
+//				return 0; // yes! sync conflicting changes
+//			}
+//			protected String promptForComment(RepositoryManager manager, IResource[] resourcesToCommit) {
+//				return comment;
+//			}
+//			protected IResource[] promptForResourcesToBeAdded(RepositoryManager manager, IResource[] unadded) {
+//				return unadded;
+//			}
+//		};
+//		forceCommitAction.run();
 	}
 
 	/**
 	 * Updates NON-CONFLICTING and CONFLICTING resources represented by an array of synchronizer nodes.
 	 */
 	private void syncGetInternal(CVSSyncCompareInput input, ITeamNode[] nodes) {
-		FakeSelectionProvider selectionProvider = new FakeSelectionProvider(nodes);
-		// Update ONLY NON-CONFLICTING changes
-		UpdateSyncAction updateAction = new UpdateSyncAction(input, selectionProvider, "Update",
-			testWindow.getShell()) {
-			protected boolean promptForConflicts() {
-				return true;
-			}
-			protected int promptForMergeableConflicts() {
-				return 2;
-			}
-		};
-		updateAction.run();
-		// Update ONLY CONFLICTING changes
-		ForceUpdateSyncAction forceUpdateAction = new ForceUpdateSyncAction(input, selectionProvider, "Force Update",
-			testWindow.getShell()) {
-			protected boolean promptForConflicts() {
-				return true;
-			}
-			protected int promptForMergeableConflicts() {
-				return 2;
-			}
-		};
-		forceUpdateAction.run();
+//		FakeSelectionProvider selectionProvider = new FakeSelectionProvider(nodes);
+//		// Update ONLY NON-CONFLICTING changes
+//		UpdateSyncAction updateAction = new UpdateSyncAction(input, selectionProvider, "Update",
+//			testWindow.getShell()) {
+//			protected boolean promptForConflicts() {
+//				return true;
+//			}
+//			protected int promptForMergeableConflicts() {
+//				return 2;
+//			}
+//		};
+//		updateAction.run();
+//		// Update ONLY CONFLICTING changes
+//		ForceUpdateSyncAction forceUpdateAction = new ForceUpdateSyncAction(input, selectionProvider, "Force Update",
+//			testWindow.getShell()) {
+//			protected boolean promptForConflicts() {
+//				return true;
+//			}
+//			protected int promptForMergeableConflicts() {
+//				return 2;
+//			}
+//		};
+//		forceUpdateAction.run();
 	}
 
 	/**
