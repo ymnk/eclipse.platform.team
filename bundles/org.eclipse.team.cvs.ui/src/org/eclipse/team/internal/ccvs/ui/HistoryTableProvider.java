@@ -14,8 +14,8 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
@@ -222,7 +222,7 @@ public class HistoryTableProvider {
 	 * Create a TableViewer that can be used to display a list of ILogEntry instances.
 	 * Ths method provides the labels and sorter but does not provide a content provider
 	 * 	 * @param parent	 * @return TableViewer	 */
-	protected TableViewer createTable(Composite parent) {
+	public TableViewer createTable(Composite parent) {
 		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -246,6 +246,37 @@ public class HistoryTableProvider {
 		return viewer;
 	}
 
+	/**
+	 * Create a CheckBoxTableViewer that can be used to display a list of ILogEntry instances.
+	 * Ths method provides the labels and sorter but does not provide a content provider
+	 * 
+	 * @param parent
+	 * @return TableViewer
+	 */
+	public CheckboxTableViewer createCheckBoxTable(Composite parent) {
+		Table table = new Table(parent, SWT.CHECK | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+		table.setHeaderVisible(true);
+		table.setLinesVisible(true);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		table.setLayoutData(data);
+	
+		TableLayout layout = new TableLayout();
+		table.setLayout(layout);
+		
+		CheckboxTableViewer viewer = new CheckboxTableViewer(table);
+		
+		createColumns(table, layout, viewer);
+
+		viewer.setLabelProvider(new HistoryLabelProvider());
+		
+		// By default, reverse sort by revision.
+		HistorySorter sorter = new HistorySorter(COL_REVISION);
+		sorter.setReversed(true);
+		viewer.setSorter(sorter);
+		
+		return viewer;
+	}
+	
 	/**
 	 * Creates the columns for the history table.
 	 */
