@@ -22,13 +22,13 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.Utilities;
 import org.eclipse.team.ui.synchronize.actions.DirectionFilterActionGroup;
-import org.eclipse.team.ui.synchronize.actions.RemoveSynchronizeViewPageAction;
+import org.eclipse.team.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.PartInitException;
 
 public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	
-	private RemoveSynchronizeViewPageAction removeAction;
+	private RemoveSynchronizeParticipantAction removeAction;
 	private DirectionFilterActionGroup modes;
 	private Action updateAdapter;
 	
@@ -53,7 +53,7 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	}
 	
 	private void makeActions() {
-		removeAction = new RemoveSynchronizeViewPageAction(this);
+		removeAction = new RemoveSynchronizeParticipantAction(this);
 		modes = new DirectionFilterActionGroup(this, INCOMING_MODE | CONFLICTING_MODE);
 		updateAdapter = new CVSActionDelegate(new MergeUpdateAction(), this);
 		Utilities.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle());

@@ -19,6 +19,7 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionDelegate;
@@ -40,7 +41,7 @@ public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipan
 		
 		public void run() {
 			IStructuredContentProvider cp = (IStructuredContentProvider)participant.getPage().getViewer().getContentProvider(); 
-			StructuredSelection selection = new StructuredSelection(cp.getElements(participant.getInput()));
+			StructuredSelection selection = new StructuredSelection(cp.getElements(CVSSynchronizeParticipant.this.getInput()));
 			if(! selection.isEmpty()) {
 				delegate.selectionChanged(this, selection);
 				delegate.run(this);
@@ -105,5 +106,12 @@ public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipan
 	protected void init() {
 		super.init();
 		getInput().getFilteredSyncSet().addSyncSetChangedListener(this);
+	}
+	
+	/**
+	 * A hook for testing only!
+	 */
+	public SubscriberInput getSubscriberInput() {
+		return getInput();
 	}
 }

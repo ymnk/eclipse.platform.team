@@ -48,7 +48,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
-import org.eclipse.team.ui.synchronize.ISynchronizeViewNode;
+import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
 import org.eclipse.ui.PlatformUI;
 
 /**
@@ -244,6 +244,16 @@ abstract public class CVSAction extends TeamAction {
 		};
 		
 		switch (progressKind) {
+			case PROGRESS_WORKBENCH_WINDOW :
+				try {
+					PlatformUI.getWorkbench().getActiveWorkbenchWindow().run(true, true, runnable);
+				} catch (InterruptedException e1) {
+					exceptions[0] = null;
+					e1.printStackTrace();
+				} catch (InvocationTargetException e) {
+					exceptions[0] = e;
+				}
+				break;
 			case PROGRESS_BUSYCURSOR :
 				BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
 					public void run() {
@@ -289,8 +299,8 @@ abstract public class CVSAction extends TeamAction {
 			Iterator elements = ((IStructuredSelection) selection).iterator();
 			while (elements.hasNext()) {
 				Object next = elements.next();
-				if(next instanceof ISynchronizeViewNode) {
-					resources.add(((ISynchronizeViewNode)next).getSyncInfo().getRemote());
+				if(next instanceof ITeamSubscriberParticipantNode) {
+					resources.add(((ITeamSubscriberParticipantNode)next).getSyncInfo().getRemote());
 					continue;
 				}
 				if (next instanceof ICVSResource) {
