@@ -15,6 +15,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -30,6 +33,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 
 /**
@@ -54,7 +58,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * Convert a FolderSyncInfo into a byte array that can be stored
 	 * in the workspace synchronizer
 	 */
-	private static byte[] getBytes(FolderSyncInfo info) throws CVSException {
+	private byte[] getBytes(FolderSyncInfo info) throws CVSException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 		try {
@@ -78,7 +82,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * Convert a byte array that was created using getBytes(FolderSyncInfo)
 	 * into a FolderSyncInfo
 	 */
-	private static FolderSyncInfo getFolderSyncInfo(byte[] bytes) throws CVSException {
+	private FolderSyncInfo getFolderSyncInfo(byte[] bytes) throws CVSException {
 		ByteArrayInputStream in = new ByteArrayInputStream(bytes);
 		DataInputStream dis = new DataInputStream(in);
 		String root;
@@ -116,10 +120,51 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * Convert a byte array that was created using getBytes(Map)
 	 * into a Map of ResourceSyncInfo
 	 */
-	private static byte[][] getResourceSyncInfo(byte[] bytes) throws CVSException {
-		return SyncFileWriter.readLines(new ByteArrayInputStream(bytes));
+	private byte[][] getResourceSyncInfo(byte[] bytes) throws CVSException {
+		byte[][] infos = SyncFileWriter.readLines(new ByteArrayInputStream(bytes));
+		// check to make sure the info is not stored in the old format 
+		if (infos.length != 0) {
+			byte[] firstLine = infos[0];
+			if (firstLine.length != 0 && (firstLine[0] != (byte)'/' && firstLine[0] != (byte)'D')) {
+				Map oldInfos = getResourceSyncInfoMap(bytes);
+				infos = new byte[oldInfos.size()][];
+				int i = 0;
+				for (Iterator iter = oldInfos.values().iterator(); iter.hasNext();) {
+					ResourceSyncInfo element = (ResourceSyncInfo) iter.next();
+					infos[i++] = element.getBytes();
+				}
+				// We can't convert the info to the new format because the caller
+				// may either not be in a workspace runnable or the resource tree
+				// may be closed for modification
+			}
+		}
+		return infos;
 	}
 
+	/**
+	 * ResourceSyncInfo used to be stored as a Map of ResourceSyncInfo.
+	 * We need to be able to retrieve that info the way it was and
+	 * convert it to the new way. 
+	 * 
+	 * Convert a byte array that was created using
+	 * getBytes(Map) into a Map of ResourceSyncInfo
+	 */
+	private Map getResourceSyncInfoMap(byte[] bytes) throws CVSException {
+		ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+		DataInputStream dis = new DataInputStream(in);
+		Map result = new HashMap();
+		try {
+			int size = dis.readInt();
+			for (int i = 0; i < size; i++) {
+				ResourceSyncInfo info = new ResourceSyncInfo(dis.readUTF(), null, null);
+				result.put(info.getName(), info);
+			}
+		} catch (IOException e) {
+			throw CVSException.wrapException(e);
+		}
+		return result;
+	}
+	
 	/**
 	 * Flush any info cahced for the folder
 	 */
