@@ -29,20 +29,22 @@ import org.eclipse.ui.model.WorkbenchContentProvider;
  * hierarchy indicated by their paths
  */
 public class AdaptableHierarchicalResourceList extends AdaptableResourceList {
+	private IContainer root;
 
 	/**
 	 * Constructor for AdaptableHierarchicalResourceList.
 	 * @param resources
 	 */
-	public AdaptableHierarchicalResourceList(IResource[] resources) {
+	public AdaptableHierarchicalResourceList(IContainer root, IResource[] resources) {
 		super(resources);
+		this.root = root;
 	}
 
 	/**
 	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
 	 */
 	public Object[] getChildren(Object o) {
-		return getChildenFor(WorkbenchPlugin.getPluginWorkspace().getRoot());
+		return getChildenFor(root);
 	}
 
 	private IResource[] getChildenFor(IContainer parent) {
@@ -84,4 +86,20 @@ public class AdaptableHierarchicalResourceList extends AdaptableResourceList {
 	public void setResources(IResource[] resources) {
 		this.resources = resources;
 	}
+	/**
+	 * Returns the root.
+	 * @return IContainer
+	 */
+	public IContainer getRoot() {
+		return root;
+	}
+
+	/**
+	 * Sets the root.
+	 * @param root The root to set
+	 */
+	public void setRoot(IContainer root) {
+		this.root = root;
+	}
+
 }
