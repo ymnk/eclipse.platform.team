@@ -94,7 +94,7 @@ public abstract class ScopableSubscriberParticipant extends SubscriberParticipan
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.Subscriber)
 	 */
 	protected void setSubscriber(Subscriber subscriber) {
-		if (this.resources != null && isSameResources(resources, getSubscriber().roots())) {
+		if (this.resources != null && isSameResources(resources, subscriber.roots())) {
 			this.resources = null;
 		}
 		super.setSubscriber(subscriber, this.resources);

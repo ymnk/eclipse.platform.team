@@ -106,6 +106,19 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	}
 	
 	/**
+	 * Set the resources supervised by this participant. If <code>null</code>,
+	 * the participant will include all roots of its subscriber
+	 * @param roots the root resources to consider or <code>null</code>
+	 * to consider all roots of the subscriber
+	 */
+	public void setResources(IResource[] roots) {
+		if (roots != null && isSameResources(roots, getSubscriber().roots())) {
+			roots = null;
+		}
+		collector.setRoots(roots);
+	}
+	
+	/**
 	 * Refresh this participants synchronization state and displays the result in a model dialog. 
 	 * @param resources
 	 * @param taskName
