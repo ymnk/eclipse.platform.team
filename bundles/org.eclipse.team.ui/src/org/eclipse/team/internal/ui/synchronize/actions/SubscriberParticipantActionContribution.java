@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.subscriber;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.ICompareInputChangeListener;
@@ -16,16 +16,15 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.team.internal.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewPart;
 
 /**
- * Actions common to all CVS particpants
+ * Actions common to CVS, FTP and WebDAV particpants
  */
-public abstract class CVSParticipantActionContribution implements IActionContribution, IPropertyChangeListener {
+public abstract class SubscriberParticipantActionContribution implements IActionContribution, IPropertyChangeListener {
 
 	private ISynchronizePageConfiguration configuration;
 	private RemoveSynchronizeParticipantAction removeAction;

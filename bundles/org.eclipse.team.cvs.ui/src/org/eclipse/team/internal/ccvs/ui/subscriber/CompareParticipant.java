@@ -17,15 +17,17 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 
 public class CompareParticipant extends CVSParticipant {
 	
 	/**
 	 * Toolbar actions for compare participants
 	 */
-	public class CompareParticipantActionContribution extends CVSParticipantActionContribution {
+	public class CompareParticipantActionContribution extends SubscriberParticipantActionContribution {
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			createRemoveAction(configuration);
 			super.initialize(configuration);

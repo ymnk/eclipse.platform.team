@@ -17,6 +17,7 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
+import org.eclipse.team.internal.ui.synchronize.actions.SubscriberParticipantActionContribution;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
@@ -35,7 +36,7 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 	/**
 	 * CVS workspace action contribution
 	 */
-	public class WorkspaceActionContribution extends CVSParticipantActionContribution {
+	public class WorkspaceActionContribution extends SubscriberParticipantActionContribution {
 		private ActionDelegateWrapper commitToolbar;
 		private ActionDelegateWrapper updateToolbar;
 		public void initialize(ISynchronizePageConfiguration configuration) {

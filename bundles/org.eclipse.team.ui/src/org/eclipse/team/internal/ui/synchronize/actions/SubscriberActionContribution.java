@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.subscribers;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
@@ -17,15 +17,15 @@ import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
-import org.eclipse.team.internal.ui.synchronize.actions.SyncViewerShowPreferencesAction;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 
 /**
  * Provides the actions to be associated with a synchronize page
  */
-public class SubscriberActionContribution implements IActionContribution {
+public final class SubscriberActionContribution implements IActionContribution {
 	
 	// the changes viewer are contributed via the viewer and not the page.
 	private Action configureSchedule;
