@@ -13,6 +13,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.internal.Policy;
+import org.eclipse.team.internal.simpleAccess.SimpleAccessOperations;
 
 /**
  * A concrete subclass of <code>RepositoryProvider</code> is created for each
@@ -68,25 +69,18 @@ public abstract class RepositoryProvider implements IProjectNature {
 
 	abstract public String getID();
 
-	/**
-	 * Returns an object which implements a set of provider neutral operations for this 
-	 * provider. Answers <code>null</code> if the provider does not wish to support these 
-	 * operations.
-	 * <p>
-	 * The <code>StandardOperations</code> class exposes a basic repository model that
-	 * providers may implement to allow third-party plugins to perform repository operations
-	 * programmatically. For example, a code generation tool may want to get source
-	 * files before generating the code, and check-in the results.  If a provider plugin does
-	 * not adhere to the <i>semantics</i> of the <code>StandardOperations</code> class
-	 * as described, the provider will not be useable programmatically by other third-party 
-	 * plugins.</p>
-	 * 
-	 * @return the repository operations or <code>null</code> if the provider does not
-	 * support provider neutral operations.
-	 */
-	public StandardOperations getStandardOperations() {
-		return null;
-	}
+	/*
+	 * Provisional.
+ 	 * Returns an object which implements a set of provider neutral operations for this 
+ 	 * provider. Answers <code>null</code> if the provider does not wish to support these 
+ 	 * operations.
+ 	 * 
+ 	 * @return the repository operations or <code>null</code> if the provider does not
+ 	 * support provider neutral operations.
+ 	 */
+	public SimpleAccessOperations getSimpleAccess() {
+ 		return null;
+ 	}
 
 	/**
 	 * Returns an <code>IFileModificationValidator</code> for pre-checking operations 
