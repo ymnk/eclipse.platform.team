@@ -39,7 +39,7 @@ public class DeployAction extends TeamAction implements IActionDelegate {
 		if(resources.length == 1) {
 			IResource resource = resources[0];
 			IDeploymentProviderManager manager = Team.getDeploymentManager();
-			if(! manager.getMappedTo(resource, FileSystemDeploymentProvider.ID)) {
+			if(manager.getMappedTo(resource, FileSystemDeploymentProvider.ID)) {
 				return false;
 			}
 		}

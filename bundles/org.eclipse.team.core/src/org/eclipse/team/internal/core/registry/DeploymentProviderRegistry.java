@@ -13,8 +13,7 @@ package org.eclipse.team.internal.core.registry;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 public class DeploymentProviderRegistry extends RegistryReader {
@@ -26,6 +25,7 @@ public class DeploymentProviderRegistry extends RegistryReader {
 	public DeploymentProviderRegistry() {
 		super();
 		this.extensionId = PT_TEAMPROVIDER;
+		readRegistry(Platform.getPluginRegistry(), TeamPlugin.ID, PT_TEAMPROVIDER);		
 	}
 
 	/* (non-Javadoc)

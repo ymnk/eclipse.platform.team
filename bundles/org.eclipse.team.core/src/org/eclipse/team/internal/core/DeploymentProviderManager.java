@@ -137,16 +137,18 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	}
 	
 	public DeploymentProvider getMapping(IResource resource) {
-		List projectMappings = getMappings(resource.getParent());
+		List projectMappings = getMappings(resource);
 		String fullPath = resource.getFullPath().toString();
-		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
-			Mapping m = (Mapping) it.next();
-			if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
-				try {
-					// lazy initialize of provider must be supported
-					return m.getProvider();
-				} catch (CoreException e) {
-					TeamPlugin.log(e);
+		if(projectMappings != null) {
+			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
+				Mapping m = (Mapping) it.next();
+				if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+					try {
+						// lazy initialize of provider must be supported
+						return m.getProvider();
+					} catch (CoreException e) {
+						TeamPlugin.log(e);
+					}
 				}
 			}
 		}
@@ -154,14 +156,16 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	}
 	
 	public boolean getMappedTo(IResource resource, String id) {
-		List projectMappings = getMappings(resource.getParent());
+		List projectMappings = getMappings(resource);
 		String fullPath = resource.getFullPath().toString();
-		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
-			Mapping m = (Mapping) it.next();
-			
-			// mapping can be initialize without having provider loaded yet!
-			if(m.getDescription().getId().equals(id) && fullPath.startsWith(m.getContainer().getFullPath().toString())) {
-				return true;
+		if(projectMappings != null) {
+			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
+				Mapping m = (Mapping) it.next();
+				
+				// mapping can be initialize without having provider loaded yet!
+				if(m.getDescription().getId().equals(id) && fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -170,10 +174,12 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	private void checkOverlapping(IContainer container) throws TeamException {
 		List projectMappings = getMappings(container);
 		String fullPath = container.getFullPath().toString();
-		for (Iterator it = projectMappings.iterator(); it.hasNext();) {
-			Mapping m = (Mapping) it.next();
-			if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
-				throw new TeamException(container.getFullPath().toString() + " is already mapped to " + m.getDescription().getId());
+		if(projectMappings != null) {
+			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
+				Mapping m = (Mapping) it.next();
+				if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
+					throw new TeamException(container.getFullPath().toString() + " is already mapped to " + m.getDescription().getId());
+				}
 			}
 		}
 	}
@@ -190,8 +196,13 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		return newMapping;
 	}
 	
-	private List getMappings(IContainer container) {
-		IProject project = container.getProject();
+	private List getMappings(IResource resource) {
+		IProject project = null;
+		if(resource.getType() != IResource.PROJECT) {
+			 project = resource.getProject();
+		} else {
+			project = (IProject) resource;
+		}
 		List m = (List)mappings.get(project);
 		try {
 			if(project.getSessionProperty(STATE_LOADED_KEY) != null) {

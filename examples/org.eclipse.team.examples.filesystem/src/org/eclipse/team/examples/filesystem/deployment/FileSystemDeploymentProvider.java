@@ -17,6 +17,10 @@ public class FileSystemDeploymentProvider extends DeploymentProvider {
 
 	public final static String ID = "org.eclipse.team.examples.filesystem.FileSystemDeploymentProvider";
 
+	public String getId() {
+		return ID;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.DeploymentProvider#init()
 	 */
