@@ -16,6 +16,7 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * A specialized TeamSubscriber that ustilizes a RemoteSynchronizer to store the
@@ -96,12 +97,12 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 	/**
 	 * Return the synchronizer that provides the remote resources
 	 */
-	protected abstract RemoteSynchronizer getRemoteSynchronizer();
+	protected abstract SubscriberResourceTree getRemoteSynchronizer();
 
 	/**
 	 * Return the synchronizer that provides the base resources
 	 */
-	protected abstract RemoteSynchronizer getBaseSynchronizer();
+	protected abstract SubscriberResourceTree getBaseSynchronizer();
 
 	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
 		if (!isSupervised(resource)) return null;
@@ -116,13 +117,24 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 	}
 
 	/**
-	 * @param resource
-	 * @param baseResource
-	 * @param remoteResource
+	 * Method that creates an instance of SyncInfo for the provider local, base and remote.
+	 * Can be overiden by subclasses.
+	 * @param local
+	 * @param base
+	 * @param remote
 	 * @param monitor
 	 * @return
 	 */
-	protected abstract SyncInfo getSyncInfo(IResource resource, ISubscriberResource baseResource, ISubscriberResource remoteResource, IProgressMonitor monitor) throws TeamException;
+	protected SyncInfo getSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, IProgressMonitor monitor) throws TeamException {
+		try {
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(null, 100);
+			SyncInfo info = new SyncInfo(local, base, remote, this, Policy.subMonitorFor(monitor, 100));
+			return info;
+		} finally {
+			monitor.done();
+		}
+	}
 
 	public IResource[] members(IResource resource) throws TeamException {
 		if(resource.getType() == IResource.FILE) {
@@ -161,6 +173,5 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 		} catch (CoreException e) {
 			throw TeamException.asTeamException(e);
 		}
-	
 	}
 }

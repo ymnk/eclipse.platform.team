@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.ccvs.core.syncinfo.MergedSynchronizer;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSRemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteTagSynchronizer;
 
 /**
@@ -43,7 +43,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	private CVSTag start, end;
 	private List roots;
 	private RemoteTagSynchronizer remoteSynchronizer;
-	private RemoteBytesSynchronizer mergedSynchronizer;
+	private SynchronizationSyncBytesCache mergedSynchronizer;
 	private RemoteTagSynchronizer baseSynchronizer;
 
 	private static final byte[] NO_REMOTE = new byte[0];
@@ -87,7 +87,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		String syncKeyPrefix = id.getLocalName();
 		remoteSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + end.getName(), end);
 		baseSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + start.getName(), start);
-		mergedSynchronizer = new MergedSynchronizer(syncKeyPrefix + "0merged"); //$NON-NLS-1$
+		mergedSynchronizer = new SynchronizationSyncBytesCache(new QualifiedName(CVSRemoteSynchronizer.SYNC_KEY_QUALIFIER, syncKeyPrefix + "0merged")); //$NON-NLS-1$
 		
 		try {
 			setCurrentComparisonCriteria(ContentComparisonCriteria.ID_IGNORE_WS);
@@ -121,8 +121,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.TeamSubscriber#cancel()
 	 */
-	public void cancel() {
-		super.cancel();		
+	public void cancel() {	
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);		
 		remoteSynchronizer.dispose();
 		baseSynchronizer.dispose();
@@ -139,14 +138,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizer()
 	 */
-	protected RemoteSynchronizer getRemoteSynchronizer() {
+	protected SubscriberResourceTree getRemoteSynchronizer() {
 		return remoteSynchronizer;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizer()
 	 */
-	protected RemoteSynchronizer getBaseSynchronizer() {
+	protected SubscriberResourceTree getBaseSynchronizer() {
 		return baseSynchronizer;
 	}
 

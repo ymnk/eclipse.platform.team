@@ -15,12 +15,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 
 /**
- * A remote synchronizer provides API to access a handle for a resource resource
+ * A subscriber resource tree provides API to access a handle for a resource resource
  * associated with a local resource (that may or may not exist locally).
  * API is also provided to trigger a refresh in order to cache the remote state
  * for later retrieval.
  */
-public abstract class RemoteSynchronizer {
+public abstract class SubscriberResourceTree {
 	
 	/**
 	 * Return a subscriber resource handle representing the remote resource associated
@@ -50,13 +50,19 @@ public abstract class RemoteSynchronizer {
 	 * whether to cache file contents during the refresh or to
 	 * allow them to be fetched when request.
 	 * 
-	 * @param resource the resource to refresh
+	 * @param resources the resources to refresh
 	 * @param depth the depth of the operation
 	 * @param cacheFileContentsHint a hint which indicates whether file contents will be used
 	 * @param monitor the progress monitor
 	 * @return the resources whose remote has changed since the last refresh
 	 * @throws TeamException
 	 */
-	public abstract IResource[] refresh(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException;
+	public abstract IResource[] refresh(IResource[] resources, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException;
+	
+	/**
+	 * Dispose of any cached state when the synchronizer is no longer needed.
+	 */
+	public abstract void dispose();
+	
 
 }

@@ -10,60 +10,31 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.syncinfo;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberResource;
-import org.eclipse.team.core.subscribers.RemoteSynchronizer;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.core.subscribers.SyncBytesSubscriberResourceTree;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 
 /**
  * A base sychronizer provides access to the base sync bytes for the 
  * resources in the local workspace
  */
-public class BaseSynchronizer extends RemoteSynchronizer {
+public class BaseSynchronizer extends SyncBytesSubscriberResourceTree {
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#getSyncBytes(org.eclipse.core.resources.IResource)
+	/**
+	 * Create a synchronizer that uses the CVS local workspace synchronization information
 	 */
-	public byte[] getSyncBytes(IResource resource) throws CVSException {
-		if (resource.getType() == IResource.FILE) {
-			// For a file, return the entry line
-			byte[] bytes =  EclipseSynchronizer.getInstance().getSyncBytes(resource);
-			if (bytes != null) {
-				// Use the base sync info (i.e. no deletion or addition)
-				if (ResourceSyncInfo.isDeletion(bytes)) {
-					bytes = ResourceSyncInfo.convertFromDeletion(bytes);
-				} else if (ResourceSyncInfo.isAddition(bytes)) {
-					bytes = null;
-				}
-			}
-			return bytes;
-		} else {
-			// For a folder, return the folder sync info bytes
-			FolderSyncInfo info = EclipseSynchronizer.getInstance().getFolderSync((IContainer)resource);
-			if (info == null) return null;
-			return info.getBytes();
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#getSyncName()
-	 */
-	protected QualifiedName getSyncName() {
-		return new QualifiedName(CVSProviderPlugin.ID, "workspace"); //$NON-NLS-1$
+	public BaseSynchronizer() {
+		super(new CVSBaseSynchronizationCache());
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#refresh(org.eclipse.core.resources.IResource[], int, boolean, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public IResource[] refresh(
-		IResource resource,
+		IResource[] resources,
 		int depth,
 		boolean cacheFileContentsHint,
 		IProgressMonitor monitor)
@@ -85,10 +56,4 @@ public class BaseSynchronizer extends RemoteSynchronizer {
 		return (ISubscriberResource)CVSWorkspaceRoot.getRemoteResourceFor(resource);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.RemoteSynchronizer#hasRemote(org.eclipse.core.resources.IResource)
-	 */
-	public boolean hasRemote(IResource resource) throws TeamException {
-		return getSyncBytes(resource) != null;
-	}
 }

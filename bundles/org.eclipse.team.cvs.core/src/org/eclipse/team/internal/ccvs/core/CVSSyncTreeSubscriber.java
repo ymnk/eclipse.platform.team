@@ -33,7 +33,6 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		this.id = id;
 		this.name = name;
 		this.description = description;
-		initializeComparisonCriteria();
 	}
 
 	/* (non-Javadoc)
@@ -78,11 +77,6 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			monitor = Policy.monitorFor(monitor);
 			monitor.beginTask(null, 100);
 			CVSSyncInfo info = new CVSSyncInfo(local, base, remote, this, Policy.subMonitorFor(monitor, 100));
-			
-			// if it's out of sync, then cache the contents
-			//if(info.getKind() != SyncInfo.IN_SYNC && remote != null) {
-			//	remote.getContents(Policy.subMonitorFor(monitor, 30));
-			//}
 			return info;
 		} finally {
 			monitor.done();
@@ -137,11 +131,11 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		} 
 	}
 	protected IResource[] refreshBase(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getBaseSynchronizer().refresh(resource, depth, getCacheFileContentsHint(), monitor);
+		return getBaseSynchronizer().refresh(new IResource[] {resource}, depth, getCacheFileContentsHint(), monitor);
 	}
 
 	protected IResource[] refreshRemote(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getRemoteSynchronizer().refresh(resource, depth,  getCacheFileContentsHint(), monitor);
+		return getRemoteSynchronizer().refresh(new IResource[] {resource}, depth,  getCacheFileContentsHint(), monitor);
 	}
 
 	private boolean getCacheFileContentsHint() {
@@ -178,20 +172,6 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 */
 	public boolean isThreeWay() {
 		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#isCancellable()
-	 */
-	public boolean isCancellable() {
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#cancel()
-	 */
-	public void cancel() {
-		// noop
 	}
 	
 	/* (non-Javadoc)

@@ -19,8 +19,7 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
-import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 
 /**
@@ -28,7 +27,8 @@ import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
  */
 public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IResourceStateChangeListener {
 	
-	private OptimizedRemoteSynchronizer remoteSynchronizer;
+	private SyncBytesSubscriberResourceTree remoteSynchronizer;
+	private SyncBytesSubscriberResourceTree baseSynchronizer;
 	
 	// qualified name for remote sync info
 	private static final String REMOTE_RESOURCE_KEY = "remote-resource-key"; //$NON-NLS-1$
@@ -37,7 +37,11 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		super(id, name, description);
 		
 		// install sync info participant
-		remoteSynchronizer = new OptimizedRemoteSynchronizer(REMOTE_RESOURCE_KEY);
+		baseSynchronizer = new BaseSynchronizer();
+		remoteSynchronizer = new RemoteTagSynchronizer(
+				baseSynchronizer.getSynchronizationCache(), 
+				new SynchronizationSyncBytesCache(new QualifiedName(CVSRemoteSynchronizer.SYNC_KEY_QUALIFIER, REMOTE_RESOURCE_KEY)),
+				null /* use the tag in the local workspace resources */);
 		
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this); 
 	}
@@ -93,7 +97,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 							}
 						}
 					} else {
-						byte[] localBytes = remoteSynchronizer.getBaseSynchronizer().getSyncBytes(resource);
+						byte[] localBytes = baseSynchronizer.getSyncBytes(resource);
 						if (localBytes == null || !isLaterRevision(remoteBytes, localBytes)) {
 							if (canModifyWorkspace) {
 								remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_ZERO);
@@ -168,15 +172,15 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizer()
 	 */
-	protected RemoteSynchronizer getRemoteSynchronizer() {
+	protected SubscriberResourceTree getRemoteSynchronizer() {
 		return remoteSynchronizer;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizer()
 	 */
-	protected RemoteSynchronizer getBaseSynchronizer() {
-		return remoteSynchronizer.getBaseSynchronizer();
+	protected SubscriberResourceTree getBaseSynchronizer() {
+		return baseSynchronizer;
 	}
 	
 	/* (non-Javadoc)
