@@ -17,11 +17,15 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceStatus;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -33,6 +37,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.traversals.IModelContext;
+import org.eclipse.team.core.traversals.IModelElement;
+import org.eclipse.team.core.traversals.ITraversal;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
@@ -155,6 +162,50 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	 */
 	protected IResource[] getSelectedResources() {
 		return (IResource[])getSelectedResources(IResource.class);
+	}
+	
+	/**
+	 * Returns the selected resource based on the available traversals.
+	 * 
+	 * @return the selected resources based on the available traversals.
+	 */
+	protected ITraversal[] getSelectedTraversals(String providerId) throws TeamException {
+		try {
+			Object[] elements = getSelectedResources(IModelElement.class);
+			ArrayList providerTraversals = new ArrayList();
+			if(elements.length > 0) {
+				for (int i = 0; i < elements.length; i++) {
+					IModelElement element = (IModelElement) elements[i];
+					ITraversal[] traversals = element.getTraversals(getModelContext(), null);
+					for (int j = 0; j < traversals.length; j++) {
+						ITraversal traversal = traversals[j];
+						RepositoryProvider provider = RepositoryProvider.getProvider(traversal.getProject());
+						if (providerId != null && provider.getID().equals(providerId)) {
+							providerTraversals.add(traversal);
+						} else {
+							throw new TeamException("Cannot operate on resources from different repository provider.");
+						}
+					}
+				}
+			}
+			return (ITraversal[]) providerTraversals.toArray(new ITraversal[providerTraversals.size()]);
+		} catch (CoreException e) {
+			throw TeamException.asTeamException(e);
+		}
+	}
+	
+	protected IModelContext getModelContext() {
+		return new IModelContext() {
+			public boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
+				return false;
+			}
+			public IStorage fetchContents(IFile file, IProgressMonitor monitor) throws CoreException {
+				return null;
+			}
+			public IResource[] fetchMembers(IContainer container, IProgressMonitor monitor) throws CoreException {
+				return new IResource[0];
+			}
+		};
 	}
 	
 	/**
