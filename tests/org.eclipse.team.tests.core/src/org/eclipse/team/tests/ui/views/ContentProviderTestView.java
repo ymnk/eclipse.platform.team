@@ -12,7 +12,7 @@ package org.eclipse.team.tests.ui.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.viewers.CompressedFolderViewerInput;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;

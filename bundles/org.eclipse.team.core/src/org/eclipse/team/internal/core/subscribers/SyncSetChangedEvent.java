@@ -14,7 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 
 /**
  * This event keeps track of the changes in a sync set

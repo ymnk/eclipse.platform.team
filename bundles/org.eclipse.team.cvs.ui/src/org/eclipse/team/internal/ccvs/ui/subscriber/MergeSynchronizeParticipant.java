@@ -103,7 +103,7 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPage(org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
-	public IPageBookViewPage createPage(ISynchronizeView view) {		
+	protected IPageBookViewPage doCreatePage(ISynchronizeView view) {
 		return new MergeSynchronizePage(this, view);
 	}
 	

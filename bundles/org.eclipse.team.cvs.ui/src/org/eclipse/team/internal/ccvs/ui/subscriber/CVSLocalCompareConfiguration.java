@@ -18,6 +18,7 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.ui.synchronize.subscriber.RefreshAction;
 import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;

@@ -10,16 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
-import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
@@ -47,6 +49,9 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	
 	private SyncInfoTree syncSet;
 	private IResource resource;
+	
+	private Set workingChildren = new HashSet();
+	private boolean working = false;
 	
 	/**
 	 * Create an ITypedElement for the given local resource. The returned ITypedElement
@@ -253,7 +258,32 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 		}
 		return null;
 	}
+	
+	/** Track nodes that are being worked on **/
+	
+	public boolean isWorking() {
+		return working || ! workingChildren.isEmpty();
+	}
+	
+	public void setWorking(boolean working) {
+		this.working = working;
+		IDiffContainer parent = getParent();
+		while (parent != null) {
+			if(parent instanceof SyncInfoDiffNode) {
+				((SyncInfoDiffNode)parent).updateWorkingChild(this);
+			}
+			parent = parent.getParent();
+		}
+	}
 		
+	public void updateWorkingChild(SyncInfoDiffNode node) {
+		if(node.isWorking()) {
+			workingChildren.add(node);
+		} else {
+			workingChildren.remove(node);
+		}
+	}
+
 	/** WorkbenchAdapter methods **/
 	
 	/* (non-Javadoc)

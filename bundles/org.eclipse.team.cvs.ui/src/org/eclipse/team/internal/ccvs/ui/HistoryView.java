@@ -18,7 +18,7 @@ import java.util.Iterator;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -33,12 +33,13 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.actions.*;
+import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoCompareInput;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
@@ -85,6 +86,7 @@ public class HistoryView extends ViewPart {
 	private IPreferenceStore settings;
 	
 	private FetchLogEntriesJob fetchLogEntriesJob;
+	private JobBusyCursor halfBusyCursor;
 	
 	private boolean shutdown = false;
 	
@@ -382,6 +384,7 @@ public class HistoryView extends ViewPart {
 		contributeActions();
 		
 		setViewerVisibility();
+		halfBusyCursor = new JobBusyCursor(parent);
 		
 		// set F1 help
 		WorkbenchHelp.setHelp(sashForm, IHelpContextIds.RESOURCE_HISTORY_VIEW);
@@ -536,7 +539,7 @@ public class HistoryView extends ViewPart {
 				}
 			}
 		}
-		
+		halfBusyCursor.dispose();
 		getSite().getPage().removePartListener(partListener);
 		getSite().getPage().removePartListener(partListener2);
 	}	
@@ -853,5 +856,21 @@ public class HistoryView extends ViewPart {
 			}
 		}
 		job.schedule();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.part.WorkbenchPart#getJobChangeListener()
+	 * Temporary until the following bug is fixed:
+	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=51991
+	 */
+	public IJobChangeListener getJobChangeListener() {
+		return new JobChangeAdapter() {
+			public void done(IJobChangeEvent event) {
+				halfBusyCursor.finished();
+			}
+			public void running(IJobChangeEvent event) {	
+				halfBusyCursor.started();
+			}
+		};
 	}
 }

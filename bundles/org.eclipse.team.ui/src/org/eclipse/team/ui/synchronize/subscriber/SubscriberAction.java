@@ -17,10 +17,11 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.FastSyncInfoFilter;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
@@ -96,16 +97,19 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		setActivePart(action, targetEditor);
 	}
 		
-	protected void schedule(Job job) {
-		IWorkbenchPart part = getTargetPart();
-		if (part != null) {
-			IWorkbenchPartSite site = part.getSite();
-			if (site != null) {
-				IWorkbenchSiteProgressService siteProgress = (IWorkbenchSiteProgressService) site.getAdapter(IWorkbenchSiteProgressService.class);
-				if (siteProgress != null) {
-					siteProgress.schedule(job);
-					return;
-				}
+	public void updateWorkingState(SyncInfoDiffNode[] nodes, boolean working) {
+		for (int i = 0; i < nodes.length; i++) {
+			SyncInfoDiffNode node = nodes[i];
+			node.setWorking(working);
+		}
+	}
+	
+	public static void schedule(Job job, IWorkbenchSite site) {
+		if (site != null) {
+			IWorkbenchSiteProgressService siteProgress = (IWorkbenchSiteProgressService) site.getAdapter(IWorkbenchSiteProgressService.class);
+			if (siteProgress != null) {
+				siteProgress.schedule(job);
+				return;
 			}
 		}
 		job.schedule();

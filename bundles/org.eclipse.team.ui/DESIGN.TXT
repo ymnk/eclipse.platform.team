@@ -75,3 +75,19 @@ Data (sync info, sync info set)
 
 How is progress shown?
 ======================
+
+1. actions that run jobs that affect a view's content should schedule in the view
+   - object contributions, or delegates get this for free via SubscriberAction which
+     has a schedule which will schedule via the associated IWorkbenchPart.
+   - actions programatically added to a view should be initialized with the view part or view site
+     so that it can run the job in the view's context.
+   - this will get you (1) the view icon change hint, (2) the half-busy cursor
+2. jobs should provide meaningful progress shown in progress view
+   - this will get you (1) a job listed in the progress support showing that something is happening
+3. if working on syncinfodiffnodes in the background you can mark the nodes as working as a hint
+   to the UI to display them differently (e.g. should make this adapter specific)
+   - this will get you (1) nodes in the sync view showing that they are being worked on
+4. Use progress groups in refresh to show remote refresh and sync calculation as one work item.
+   - this will get you (1) one entry in the progress view for both the remote refresh and background
+     processing of sync states. no more updating sync view message.
+

@@ -15,6 +15,7 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.internal.ui.jobs.RefreshUserNotificationPolicy;
 import org.eclipse.team.ui.synchronize.subscriber.RefreshAction;
 import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.ui.IWorkbenchSite;
 
 /**
  * A specialized RefreshAction that extracts the required components from a 
@@ -26,7 +27,7 @@ public class TeamParticipantRefreshAction extends RefreshAction {
 		super(provider, participant.getName(), participant.getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant), refreshAll);
 	}
 	
-	public static void run(IResource[] resources, TeamSubscriberParticipant participant) {
-		run(participant.getName(), resources, participant.getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant));
+	public static void run(IWorkbenchSite site, IResource[] resources, TeamSubscriberParticipant participant) {
+		run(site, participant.getName(), resources, participant.getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant));
 	}
 }

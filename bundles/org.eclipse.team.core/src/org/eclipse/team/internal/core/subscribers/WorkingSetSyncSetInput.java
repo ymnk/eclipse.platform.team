@@ -11,8 +11,8 @@
 package org.eclipse.team.internal.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 
 public class WorkingSetSyncSetInput extends SyncSetInputFromSyncSet {
 

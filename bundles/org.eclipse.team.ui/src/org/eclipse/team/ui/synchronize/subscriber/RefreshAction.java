@@ -11,7 +11,10 @@
 package org.eclipse.team.ui.synchronize.subscriber;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
@@ -19,6 +22,7 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.ui.IWorkbenchSite;
 
 /**
  * A general refresh action that will refresh a subscriber in the background.
@@ -30,17 +34,7 @@ public class RefreshAction extends Action {
 	private SubscriberSyncInfoCollector collector;
 	private IRefreshSubscriberListener listener;
 	private String description;
-	
-	public static void run(String description, IResource[] resources, SubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener) {
-		// Cancel the scheduled background refresh or any other refresh that is happening.
-		// The scheduled background refresh will restart automatically.
-		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
-		RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", description), resources, collector); //$NON-NLS-1$
-		if (listener != null) {
-			RefreshSubscriberJob.addRefreshListener(listener);
-		}
-		job.schedule();
-	}
+	private IWorkbenchSite workbenchSite;
 	
 	public RefreshAction(ISelectionProvider page, String description, SubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener, boolean refreshAll) {
 		this.selectionProvider = page;
@@ -59,7 +53,35 @@ public class RefreshAction extends Action {
 				// If no resources are selected, refresh all the subscriber roots
 				resources = collector.getRoots();
 			}
-			run(description, resources, collector, listener);
+			run(getWorkbenchSite(), description, resources, collector, listener);
 		}					
+	}
+	
+	public static void run(IWorkbenchSite site, String description, IResource[] resources, final SubscriberSyncInfoCollector collector, IRefreshSubscriberListener listener) {
+		// Cancel the scheduled background refresh or any other refresh that is happening.
+		// The scheduled background refresh will restart automatically.
+		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
+		RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", description), resources, collector); //$NON-NLS-1$
+		if (listener != null) {
+			RefreshSubscriberJob.addRefreshListener(listener);
+		}
+		IProgressMonitor group = Platform.getJobManager().createProgressGroup();
+		group.beginTask("Refreshing " + description, 100);
+		job.setProgressGroup(group, 70);
+		collector.setProgressGroup(group, 30);
+		SubscriberAction.schedule(job, site);
+		job.addJobChangeListener(new JobChangeAdapter() {
+			public void done(IJobChangeEvent event) {
+				collector.setProgressGroup(null, 0);
+			}
+		});
+	}
+	
+	public void setWorkbenchSite(IWorkbenchSite part) {
+		this.workbenchSite = part;
+	}
+	
+	public IWorkbenchSite getWorkbenchSite() {
+		return workbenchSite;
 	}
 }

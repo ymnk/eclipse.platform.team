@@ -18,12 +18,11 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscriber.*;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IActionDelegate;
+import org.eclipse.ui.*;
 
 public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncInfoSetChangeListener {
 	
@@ -36,6 +35,10 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 
 		public CVSActionDelegate(IActionDelegate delegate) {
 			this.delegate = delegate;
+			// Associate delegate with the synchronize view, this will allow
+			if(delegate instanceof IViewActionDelegate) {
+				((IViewActionDelegate)delegate).init(getSynchronizeView());
+			}
 			addDelegate(this);
 		}
 

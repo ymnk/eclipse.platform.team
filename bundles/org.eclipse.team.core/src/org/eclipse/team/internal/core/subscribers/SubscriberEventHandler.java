@@ -14,9 +14,10 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.*;
 import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.core.*;
 
 /**
@@ -35,6 +36,10 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	private List resultCache = new ArrayList();
 	
 	private boolean started = false;
+
+	private IProgressMonitor progressGroup;
+
+	private int ticks;
 	
 	/**
 	 * Internal resource synchronization event. Can contain a result.
@@ -118,6 +123,13 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * Schedule the job or process the events now.
 	 */
 	public void schedule() {
+		Job job = getEventHandlerJob();
+		if(progressGroup != null) {
+			job.setSystem(false);
+			job.setProgressGroup(progressGroup, ticks);
+		} else {
+			job.setSystem(true);
+		}
 		getEventHandlerJob().schedule();
 	}
 	
@@ -378,5 +390,10 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 */
 	public SyncSetInputFromSubscriber getSyncSetInput() {
 		return syncSetInput;
+	}
+	
+	public void setProgressGroupHint(IProgressMonitor progressGroup, int ticks) {
+		this.progressGroup = progressGroup;
+		this.ticks = ticks;
 	}
 }

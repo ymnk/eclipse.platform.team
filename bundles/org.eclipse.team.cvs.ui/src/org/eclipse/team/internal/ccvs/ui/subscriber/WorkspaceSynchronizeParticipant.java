@@ -23,9 +23,9 @@ public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 	public final static String ID = "org.eclipse.team.cvs.ui.cvsworkspace-participant"; //$NON-NLS-1$
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPage(org.eclipse.team.ui.synchronize.ISynchronizeView)
+	 * @see org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant#doCreatePage(org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
-	public IPageBookViewPage createPage(ISynchronizeView view) {
+	protected IPageBookViewPage doCreatePage(ISynchronizeView view) {
 		return new WorkspaceSynchronizePage(this, view);
 	}
 	

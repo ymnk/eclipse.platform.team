@@ -13,8 +13,8 @@ package org.eclipse.team.internal.core.subscribers;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.subscribers.ISyncInfoTreeChangeEvent;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 
 public class SyncInfoTreeChangeEvent extends SyncSetChangedEvent implements ISyncInfoTreeChangeEvent {
 

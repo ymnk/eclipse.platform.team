@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ui.synchronize;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -22,6 +22,7 @@ import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
@@ -54,6 +55,11 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	private SynchronizePageDropDownAction fPageDropDown;
 	
 	/**
+	 * Half-busy cursor support
+	 */
+	private JobBusyCursor halfBusyCursor;
+	
+	/**
 	 * Preference key to save
 	 */
 	private static final String KEY_LAST_ACTIVE_PARTICIPANT = "lastactiveparticipant";
@@ -84,18 +90,6 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 */
 	public ISynchronizeParticipant getParticipant() {
 		return activeParticipant;
-	}
-
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
-	public Object getAdapter(Class adapter) {
-		IPage page = getCurrentPage();
-		if(page instanceof IAdaptable) {
-			return ((IAdaptable)page).getAdapter(adapter);
-		}
-		return null;
 	}
 	
 	/* (non-Javadoc)
@@ -179,6 +173,8 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 			section.put(KEY_LAST_ACTIVE_PARTICIPANT, activeParticipant.getId());
 		}
 		
+		
+		halfBusyCursor.dispose();
 		TeamUI.getSynchronizeManager().removeSynchronizeParticipantListener(this);
 		
 	}
@@ -281,8 +277,6 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	/**
 	 * Registers the given runnable with the display
 	 * associated with this view's control, if any.
-	 * 
-	 * @see org.eclipse.swt.widgets.Display#asyncExec(java.lang.Runnable)
 	 */
 	public void asyncExec(Runnable r) {
 		if (isAvailable()) {
@@ -311,6 +305,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		createActions();
 		IToolBarManager tbm= getViewSite().getActionBars().getToolBarManager();
 		configureToolBar(tbm);
+		halfBusyCursor = new JobBusyCursor(parent);
 		updateForExistingParticipants();
 		getViewSite().getActionBars().updateActionBars();
 	}
@@ -346,5 +341,19 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	
 	private boolean isAvailable() {
 		return getPageBook() != null && !getPageBook().isDisposed();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.part.WorkbenchPart#getJobChangeListener()
+	 */
+	public IJobChangeListener getJobChangeListener() {
+		return new JobChangeAdapter() {
+			public void done(IJobChangeEvent event) {
+				halfBusyCursor.finished();
+			}
+			public void running(IJobChangeEvent event) {	
+				halfBusyCursor.started();
+			}
+		};
 	}
 }

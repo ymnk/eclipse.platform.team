@@ -15,7 +15,7 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfo;
 /**
  * This compare input supports selection of multiple sync info using
  * checkboxes.

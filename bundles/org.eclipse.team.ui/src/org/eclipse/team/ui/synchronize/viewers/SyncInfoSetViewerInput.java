@@ -22,7 +22,7 @@ import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 
@@ -122,7 +122,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			TeamPlugin.log(e);
 		}
 	}
-
+	
 	/**
 	 * Dispose of the builder
 	 */

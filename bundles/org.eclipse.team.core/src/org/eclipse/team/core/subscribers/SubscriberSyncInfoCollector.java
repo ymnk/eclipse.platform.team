@@ -13,6 +13,7 @@ package org.eclipse.team.core.subscribers;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.subscribers.*;
 
@@ -72,6 +73,10 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 				return true;
 			}
 		});
+	}
+	
+	public void setProgressGroup(IProgressMonitor monitor, int ticks) {
+		getEventHandler().setProgressGroupHint(monitor, ticks);
 	}
 	
 	/**

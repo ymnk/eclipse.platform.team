@@ -11,7 +11,7 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.subscriber.OverrideAndCommitAction;
 

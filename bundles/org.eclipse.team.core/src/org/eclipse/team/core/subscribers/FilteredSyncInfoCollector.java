@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers;
 
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.subscribers.SyncSetInputFromSyncSet;
 
 /**

@@ -13,8 +13,8 @@ package org.eclipse.team.internal.core.subscribers;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener;
-import org.eclipse.team.core.subscribers.SyncInfoTree;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.Policy;
 
 /**

@@ -12,7 +12,7 @@ package org.eclipse.team.tests.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfo;
 
 public class TestSyncInfo extends SyncInfo {
 

@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.TeamParticipantRefreshAction;
 import org.eclipse.team.ui.TeamUI;
@@ -37,6 +38,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	private int currentMode;
 	
 	private IWorkingSet workingSet;
+	
+	private ISynchronizeView view;
 	
 	/**
 	 * Key for settings in memento
@@ -85,7 +88,12 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
-	public IPageBookViewPage createPage(ISynchronizeView view) {
+	public final IPageBookViewPage createPage(ISynchronizeView view) {
+		this.view = view;
+		return doCreatePage(view);
+	}
+	
+	protected IPageBookViewPage doCreatePage(ISynchronizeView view) {
 		return new TeamSubscriberParticipantPage(this, view);
 	}
 	
@@ -129,9 +137,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public void refreshWithRemote(IResource[] resources) {
 		if((resources == null || resources.length == 0)) {
-			TeamParticipantRefreshAction.run(collector.getWorkingSet(), this);
+			TeamParticipantRefreshAction.run(view.getSite(), collector.getWorkingSet(), this);
 		} else {
-			TeamParticipantRefreshAction.run(resources, this);
+			TeamParticipantRefreshAction.run(view.getSite(), resources, this);
 		}
 	}
 	

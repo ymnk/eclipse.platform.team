@@ -97,6 +97,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			gotoPrevious = new NavigateAction(view, (INavigatable)viewer, false /*previous*/);
 		}
 		refreshAllAction = new TeamParticipantRefreshAction(getSite().getSelectionProvider(), getParticipant(), true /* refresh all */);
+		refreshAllAction.setWorkbenchSite(view.getSite());
 		collapseAll = new Action() {
 			public void run() {
 				Viewer viewer = getChangesViewer();

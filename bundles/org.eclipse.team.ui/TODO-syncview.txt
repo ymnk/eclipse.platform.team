@@ -150,4 +150,9 @@ SyncInfoDiffNodes (in Util). This is problematic as now the diff tree cannot con
 do not map to a resource but parent nodes that do. The selection determination for SubscriberAction
 needs to walk the diff node tree for this case.
 
-- serializing eventing 
+======================================================================
+ PR LIST (05-02-2004) Jm
+======================================================================
+- cvs merge participant doesn't get view progress support because participant is added before
+viewer is created. But this should be solvable by ensuring that showInActivePerspective forces
+viewer creation.

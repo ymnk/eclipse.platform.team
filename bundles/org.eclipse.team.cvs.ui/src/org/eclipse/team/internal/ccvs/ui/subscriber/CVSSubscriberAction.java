@@ -20,7 +20,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.PruneFolderVisitor;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -30,6 +30,8 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberAction;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchSite;
 
 public abstract class CVSSubscriberAction extends SubscriberAction {
 	
@@ -196,7 +198,12 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		if (canRunAsJob() && areJobsEnabled()) {
 			return new CVSNonblockingRunnableContext() {
 				protected void schedule(Job job) {
-					CVSSubscriberAction.this.schedule(job);
+					IWorkbenchSite site = null;
+					IWorkbenchPart part = getTargetPart();
+					if(part != null) {
+						site = part.getSite();
+					}
+					SubscriberAction.schedule(job, site);
 				}
 			};
 		} else {

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers;
+package org.eclipse.team.core.synchronize;
 
 import java.util.*;
 
@@ -17,7 +17,7 @@ import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;

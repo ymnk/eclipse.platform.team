@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.*;
 
 class RefreshChangeListener implements ISubscriberChangeListener {
 	private List changes = new ArrayList();

@@ -18,8 +18,8 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoTree;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.internal.WorkbenchColors;
@@ -30,10 +30,14 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
  */
 public class SyncInfoLabelProvider extends LabelProvider implements IColorProvider {
 
-	private boolean working = false;
-	// cache for folder images that have been overlayed with conflict icon
+	// Cache for folder images that have been overlayed with conflict icon
 	private Map fgImageCache;
+	
+	// Contains direction images
 	CompareConfiguration compareConfig = new CompareConfiguration();
+	
+	// Used as the base label provider for retreiving image and text from
+	// the workbench adapter.
 	private WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
 
 	/**
@@ -109,11 +113,13 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
 	 */
 	public Color getForeground(Object element) {
-		if (working) {
-			return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
-		} else {
-			return null;
+		if (element instanceof SyncInfoDiffNode) {
+			SyncInfoDiffNode node = (SyncInfoDiffNode)element;
+			if(node.isWorking()) {
+				return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
+			}
 		}
+		return null;
 	}
 
 	/*

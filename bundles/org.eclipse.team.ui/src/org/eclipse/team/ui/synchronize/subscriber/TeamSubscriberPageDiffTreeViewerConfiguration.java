@@ -47,6 +47,7 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view);
 		refreshSelectionAction = new TeamParticipantRefreshAction(treeViewer, participant, false /* refresh */);
+		refreshSelectionAction.setWorkbenchSite(view.getSite());
 	}
 
 	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {

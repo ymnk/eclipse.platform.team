@@ -2,7 +2,7 @@ package org.eclipse.team.internal.ui.jobs;
 
 import org.eclipse.core.runtime.*;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.*;
