@@ -24,8 +24,7 @@ public class MergeAction extends WorkspaceAction {
 		final Shell shell = getShell();
 		shell.getDisplay().syncExec(new Runnable() {
 			public void run() {
-				MergeWizard wizard = new MergeWizard();
-				wizard.setResources(getSelectedResources());
+				MergeWizard wizard = new MergeWizard(getTargetPart(), getSelectedResources());
 				WizardDialog dialog = new WizardDialog(shell, wizard);
 				dialog.open();
 			}

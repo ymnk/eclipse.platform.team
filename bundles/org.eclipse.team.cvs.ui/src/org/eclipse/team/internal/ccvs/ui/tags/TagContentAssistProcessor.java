@@ -30,7 +30,6 @@ import org.eclipse.ui.contentassist.ContentAssistHandler;
 public class TagContentAssistProcessor implements ISubjectControlContentAssistProcessor {
 
     private FilteredTagList tags;
-    private String lastError;
     private Map images = new HashMap();
 
     public static void createContentAssistant(Text text, TagSource tagSource, int includeFlags) {
@@ -92,11 +91,9 @@ public class TagContentAssistProcessor implements ISubjectControlContentAssistPr
                     CompletionProposal proposal = new CompletionProposal(name, 0, docLength, name.length(), image, name, null, null);
                     proposals.add(proposal);
                 }
-                lastError = null;
                 return (ICompletionProposal[]) proposals.toArray(new ICompletionProposal[proposals.size()]);
             }
         }
-        lastError = "No matching tags found";
         return null;
     }
 
@@ -140,7 +137,7 @@ public class TagContentAssistProcessor implements ISubjectControlContentAssistPr
      * @see org.eclipse.jface.text.contentassist.IContentAssistProcessor#getErrorMessage()
      */
     public String getErrorMessage() {
-        return lastError;
+        return null;
     }
 
     /* (non-Javadoc)

@@ -18,6 +18,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.tags.*;
 
 public class MergeWizardPage extends CVSWizardPage {
@@ -30,6 +31,9 @@ public class MergeWizardPage extends CVSWizardPage {
     private TagRefreshButtonArea tagRefreshArea;
     private CVSTag startTag;
     private CVSTag endTag;
+    private Button previewButton;
+    private Button noPreviewButton;
+    protected boolean preview = true;
 
     public MergeWizardPage(String pageName, String title, ImageDescriptor titleImage, String description, TagSource tagSource) {
         super(pageName, title, titleImage, description);
@@ -45,10 +49,27 @@ public class MergeWizardPage extends CVSWizardPage {
         Composite mainArea = createComposite(composite, 2, true);
         createEndTagArea(mainArea);
         createStartTagArea(mainArea);
+        createPreviewOptionArea(mainArea);
+        
         createTagRefreshArea(composite);
 
         Dialog.applyDialogFont(composite);
         setControl(composite);
+    }
+
+    private void createPreviewOptionArea(Composite mainArea) {
+        previewButton = createRadioButton(mainArea, Policy.bind("MergeWizardPage.0"), 2); //$NON-NLS-1$
+        noPreviewButton = createRadioButton(mainArea, Policy.bind("MergeWizardPage.1"), 2); //$NON-NLS-1$
+        SelectionAdapter selectionAdapter = new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent e) {
+                preview  = previewButton.getSelection();
+                updateEnablements();
+            }
+        };
+        previewButton.setSelection(preview);
+        noPreviewButton.setSelection(!preview);
+        previewButton.addSelectionListener(selectionAdapter);
+        noPreviewButton.addSelectionListener(selectionAdapter);
     }
 
     private void createTagRefreshArea(Composite parent) {
@@ -58,7 +79,7 @@ public class MergeWizardPage extends CVSWizardPage {
     }
 
     private void createEndTagArea(Composite parent) {
-        createWrappingLabel(parent, "Enter the &branch or version being merged (end tag):", 0, 2);
+        createWrappingLabel(parent, Policy.bind("MergeWizardPage.2"), 0, 2); //$NON-NLS-1$
         endTagField = createTextField(parent);
         endTagField.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -66,12 +87,12 @@ public class MergeWizardPage extends CVSWizardPage {
             }
         });
         TagContentAssistProcessor.createContentAssistant(endTagField, tagSource, TagSelectionArea.INCLUDE_ALL_TAGS);
-        endTagBrowseButton = createPushButton(parent, "Br&owse...");
+        endTagBrowseButton = createPushButton(parent, Policy.bind("MergeWizardPage.3")); //$NON-NLS-1$
         endTagBrowseButton.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
                 TagSelectionDialog dialog = new TagSelectionDialog(getShell(), getTagSource(), 
-                        "Choose End Tag",
-                        "&Select end tag",
+                        Policy.bind("MergeWizardPage.4"), //$NON-NLS-1$
+                        Policy.bind("MergeWizardPage.5"), //$NON-NLS-1$
                         TagSelectionDialog.INCLUDE_ALL_TAGS,
                         false, IHelpContextIds.MERGE_END_PAGE);
                 if (dialog.open() == Dialog.OK) {
@@ -83,7 +104,7 @@ public class MergeWizardPage extends CVSWizardPage {
     }
 
     private void createStartTagArea(Composite parent) {
-        createWrappingLabel(parent, "Enter the &version that is the common base (start tag):", 0, 2);
+        createWrappingLabel(parent, Policy.bind("MergeWizardPage.6"), 0, 2); //$NON-NLS-1$
         startTagField = createTextField(parent);
         startTagField.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -91,12 +112,12 @@ public class MergeWizardPage extends CVSWizardPage {
             }
         });
         TagContentAssistProcessor.createContentAssistant(startTagField, tagSource, TagSelectionArea.INCLUDE_VERSIONS | TagSelectionArea.INCLUDE_DATES);
-        startTagBrowseButton = createPushButton(parent, "Bro&wse...");
+        startTagBrowseButton = createPushButton(parent, Policy.bind("MergeWizardPage.7")); //$NON-NLS-1$
         startTagBrowseButton.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
                 TagSelectionDialog dialog = new TagSelectionDialog(getShell(), getTagSource(), 
-                        "Choose Start Tag",
-                        "&Select start tag",
+                        Policy.bind("MergeWizardPage.8"), //$NON-NLS-1$
+                        Policy.bind("MergeWizardPage.9"), //$NON-NLS-1$
                         TagSelectionDialog.INCLUDE_VERSIONS,
                         false, IHelpContextIds.MERGE_START_PAGE);
                 if (dialog.open() == Dialog.OK) {
@@ -194,15 +215,17 @@ public class MergeWizardPage extends CVSWizardPage {
 
     private void updateEnablements() {
         if (endTag == null && endTagField.getText().length() > 0) {
-            setErrorMessage("The specified end tag is not known to exist. Either enter a different tag or refresh the known tags.");
+            setErrorMessage(Policy.bind("MergeWizardPage.10")); //$NON-NLS-1$
         } else if (startTag == null && startTagField.getText().length() > 0) {
-            setErrorMessage("The specified start tag is not known to exist. Either enter a different tag or refresh the known tags.");
+            setErrorMessage(Policy.bind("MergeWizardPage.11")); //$NON-NLS-1$
         } else if (endTag != null && startTag != null && startTag.equals(endTag)) {
-            setErrorMessage("The start and end tags are the same.");
+            setErrorMessage(Policy.bind("MergeWizardPage.12")); //$NON-NLS-1$
+        } else if (startTag == null && endTag != null && preview) {
+            setErrorMessage(Policy.bind("MergeWizardPage.13")); //$NON-NLS-1$
         } else {
             setErrorMessage(null);
         }
-        setPageComplete(startTag != null && endTag!= null && !startTag.equals(endTag));
+        setPageComplete((startTag != null || !preview) && endTag != null && (startTag == null || !startTag.equals(endTag)));
     }
 
     protected TagSource getTagSource() {
@@ -222,5 +245,9 @@ public class MergeWizardPage extends CVSWizardPage {
     
     public CVSTag getEndTag() {
         return endTag;
+    }
+
+    public boolean isPreview() {
+        return preview;
     }
 }

@@ -99,7 +99,7 @@ public class TagRefreshButtonArea extends DialogArea {
 						getRunnableContext().run(true, true, new IRunnableWithProgress() {
 							public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 								try {
-								    monitor.beginTask("Refreshing tags", 100);
+								    monitor.beginTask(Policy.bind("TagRefreshButtonArea.5"), 100); //$NON-NLS-1$
 								    CVSTag[] tags = tagSource.refresh(false, Policy.subMonitorFor(monitor, 70));
 								    if (tags.length == 0 && promptForBestEffort()) {
 								        tagSource.refresh(true, Policy.subMonitorFor(monitor, 30));
