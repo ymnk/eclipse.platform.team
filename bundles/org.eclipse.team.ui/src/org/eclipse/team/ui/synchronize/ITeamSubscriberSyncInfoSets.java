@@ -22,5 +22,5 @@ public interface ITeamSubscriberSyncInfoSets {
 	public abstract IResource[] subscriberRoots();
 	public abstract void registerListeners(ISyncSetChangedListener listener);
 	public abstract void deregisterListeners(ISyncSetChangedListener listener);
-	public abstract ISyncInfoSet createNewFilteredSyncSet(IResource[] resource);
+	public abstract ISyncInfoSet createNewFilteredSyncSet(IResource[] resource, SyncInfoFilter filter);
 }

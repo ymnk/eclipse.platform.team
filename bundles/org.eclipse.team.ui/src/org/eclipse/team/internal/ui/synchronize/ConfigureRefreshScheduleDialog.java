@@ -1,8 +1,11 @@
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
@@ -18,8 +21,8 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 	private Text time;
 	private Combo hoursOrSeconds;
 
-	protected ConfigureRefreshScheduleDialog(Shell parentShell, RefreshSchedule schedule) {
-		super(parentShell, "Configure Refresh Schedule");
+	public ConfigureRefreshScheduleDialog(Shell parentShell, RefreshSchedule schedule) {
+		super(parentShell, "Configure Refresh Schedule - " + schedule.getParticipant().getName());
 		this.schedule = schedule;
 	}
 	
@@ -53,19 +56,29 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 		final GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 2;
 		area.setLayout(gridLayout);
+		area.setLayoutData(new GridData(GridData.FILL_BOTH));
+
 		{
-			final Label label = new Label(area, SWT.NONE);
-			final GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
-			gridData.horizontalSpan = 10;
+			final Label label = new Label(area, SWT.WRAP);
+			final GridData gridData = new GridData(GridData.FILL_BOTH);
+			gridData.horizontalSpan = 2;
+			gridData.widthHint = 250;
 			label.setLayoutData(gridData);
-			label.setText("Refresh synchronization state:");
+			label.setText("You can allow '" + schedule.getParticipant().getName() + "' to periodically refresh it's synchronization state in the background.\n\nThe last refresh occured at: " + RefreshSchedule.refreshEventAsString(schedule.getLastRefreshEvent()));			
 		}
 		{
 			userRefreshOnly = new Button(area, SWT.RADIO);
 			final GridData gridData = new GridData();
 			gridData.horizontalSpan = 2;
 			userRefreshOnly.setLayoutData(gridData);
-			userRefreshOnly.setText("Only when I choose the Refresh action.");
+			userRefreshOnly.setText("Don't schedule the refresh operation to run periodically.");
+			userRefreshOnly.addSelectionListener(new SelectionListener() {
+				public void widgetSelected(SelectionEvent e) {
+					updateEnablements();
+				}
+				public void widgetDefaultSelected(SelectionEvent e) {
+				}
+			});
 		}
 		{
 			enableBackgroundRefresh = new Button(area, SWT.RADIO);
@@ -73,6 +86,13 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			gridData.horizontalSpan = 2;
 			enableBackgroundRefresh.setLayoutData(gridData);
 			enableBackgroundRefresh.setText("Using the following schedule:");
+			enableBackgroundRefresh.addSelectionListener(new SelectionListener() {
+				public void widgetSelected(SelectionEvent e) {
+					updateEnablements();
+				}
+				public void widgetDefaultSelected(SelectionEvent e) {
+				}
+			});
 		}
 		{
 			final Composite composite = new Composite(area, SWT.NONE);
@@ -106,6 +126,7 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			}
 		}
 		initializeValues();
+		Dialog.applyDialogFont(parent);
 	}
 	
 	/* (non-Javadoc)
@@ -152,7 +173,10 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 		} catch (NumberFormatException e) {
 			setPageComplete(false);
 			setErrorMessage("Number must be a positive number greater than 0");
-		}		
+		}	
+		
+		time.setEnabled(enableBackgroundRefresh.getSelection());
+		hoursOrSeconds.setEnabled(enableBackgroundRefresh.getSelection());
 	}
 	
 	/* (non-Javadoc)

@@ -41,7 +41,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		super(parentShell, "Synchronization Complete - " + event.getParticipant().getName());
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
-		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), event.getParticipant().getInput()) {
+		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), null /* no filter */,  event.getParticipant().getInput()) {
 			protected boolean allowParticipantMenuContributions() {
 				return true;
 			}

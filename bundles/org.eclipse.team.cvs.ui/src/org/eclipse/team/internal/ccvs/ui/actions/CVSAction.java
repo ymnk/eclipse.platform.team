@@ -32,14 +32,14 @@ import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.*;
 
 /**
  * CVSAction is the common superclass for all CVS actions. It provides
  * facilities for enablement handling, standard error handling, selection
  * retrieval and prompting.
  */
-abstract public class CVSAction extends TeamAction {
+abstract public class CVSAction extends TeamAction implements IEditorActionDelegate {
 	
 	private List accumulatedStatus = new ArrayList();
 	
@@ -475,9 +475,12 @@ abstract public class CVSAction extends TeamAction {
 				Object adapter = getAdapter(element, IResource.class);
 				if (adapter instanceof IResource) {
 					resources.add(adapter);
-}
+				}
 			}
 		}
 		return (IResource[]) resources.toArray(new IResource[resources.size()]);
-	}	
+	}
+	
+	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
+	}
 }

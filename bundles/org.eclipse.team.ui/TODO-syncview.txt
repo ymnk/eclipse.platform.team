@@ -16,13 +16,13 @@ x P1 make changes section only be a pagebook. this would easily allow adding any
 
 - compareeditorinput fetcheds remote content outside of a progress monitor
 
-- decorations for SyncInfoDiffElements (of which type.. project persistent property setting?)
+x decorations for SyncInfoDiffElements (of which type.. project persistent property setting?)
 
 - labels for compare editors (text merge viewers and title for diff viewer)
 
 x generic navigate support for SyncInfoDiffTreeViewer, PRd compare for API support
 
-- readonly state for compare panes
+x readonly state for compare panes
 
 - progress support added when fetching (e.g. caching contents in ITypedElement). This will require compare to add some API.
 
@@ -34,11 +34,20 @@ x INavigable in compare needs to be made API.
 
 x cvs update/commit action in sync view toolbar are not updating their state anymore :(
 
-- P3 mode switching at the end of a refresh to ensure that changes are shown if available
+x P3 mode switching at the end of a refresh to ensure that changes are shown if available
 
 x P2 need an event for adding roots to a subscriber to update the list shown
 
+- memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
+
+- overiding outgoing/incoming doesn't show the changes in the commit dialog because the filter is only configured to show in one direction.
+
+- example sync view api usages:
+  1. embeding sync viewer in dialog/wizard
+  2. added a new content provider
+  3. adding custom label decorations
+
 today:
 x stats
-- smart mode switching at the end of an operation that affects the sync view
+x smart mode switching at the end of an operation that affects the sync view
 x remove use of automatic working set

@@ -294,11 +294,22 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets#createNewFilteredSyncSet(org.eclipse.team.ui.synchronize.actions.SyncInfoFilter)
 	 */
-	public ISyncInfoSet createNewFilteredSyncSet(IResource[] resources) {		
+	public ISyncInfoSet createNewFilteredSyncSet(IResource[] resources, SyncInfoFilter filter) {		
 		WorkingSetSyncSetInput set = new WorkingSetSyncSetInput((SyncSet)getSubscriberSyncSet());
 		IWorkingSet workingSet = PlatformUI.getWorkbench().getWorkingSetManager().createWorkingSet("SubscriberInput", resources);
 		workingSet.setElements(resources);
 		set.setWorkingSet(workingSet);
-		return set.getSyncSet();
+		
+		if(filter != null) {
+			SyncSetInputFromSyncSet filteredSet = new SyncSetInputFromSyncSet(set.getSyncSet());
+			filteredSet.setFilter(filter);
+			try {
+				filteredSet.reset(null);
+			} catch (TeamException e) {
+			}
+			return filteredSet.getSyncSet();
+		} else {		
+			return set.getSyncSet();
+		}
 	}
 }

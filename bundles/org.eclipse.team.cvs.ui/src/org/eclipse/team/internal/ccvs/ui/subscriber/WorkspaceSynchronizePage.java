@@ -33,6 +33,9 @@ public class WorkspaceSynchronizePage extends CVSSynchronizeViewPage {
 
 		Utils.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle()); //$NON-NLS-1$
 		Utils.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
+		
+		// force enablement to be update on action delegates
+		//syncSetChanged(null);
 	}
 
 	/* (non-Javadoc)

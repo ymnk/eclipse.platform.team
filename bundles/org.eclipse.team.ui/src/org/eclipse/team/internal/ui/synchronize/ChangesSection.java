@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import javax.naming.ldap.ControlFactory;
+
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -18,9 +20,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
-import org.eclipse.team.internal.ui.widgets.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.part.PageBook;
 
@@ -30,12 +30,13 @@ import org.eclipse.ui.part.PageBook;
  * 
  * @since 3.0
  */
-public class ChangesSection extends FormSection {
+public class ChangesSection extends Composite {
 	
 	private TeamSubscriberParticipant participant;
 	private Composite parent;
-	private IControlFactory factory;
 	private TeamSubscriberParticipantPage page;
+	
+	private static final String COLOR_WHITE = "changes_section.white";
 			
 	/**
 	 * Page book either shows the diff tree viewer if there are changes or
@@ -55,13 +56,6 @@ public class ChangesSection extends FormSection {
 	 * by the participant.
 	 */
 	private Viewer changesViewer;
-	
-	/**
-	 * Label to the right of the section header showing the total number of
-	 * changes in the workspace.
-	 */
-	private Label changeTotalsLabel;
-	private int totalChanges = -1;
 
 	/**
 	 * Listen to sync set changes so that we can update message to user and totals.
@@ -69,7 +63,6 @@ public class ChangesSection extends FormSection {
 	private ISyncSetChangedListener changedListener = new ISyncSetChangedListener() {
 		public void syncSetChanged(ISyncInfoSetChangeEvent event) {
 			calculateDescription();
-			updateChangeTotals(true);
 		}
 	};
 		
@@ -80,75 +73,35 @@ public class ChangesSection extends FormSection {
 	 * @param page the page showing this section
 	 */
 	public ChangesSection(Composite parent, TeamSubscriberParticipantPage page) {
+		super(parent, SWT.NONE);
 		this.page = page;
 		this.participant = page.getParticipant();
 		this.parent = parent;
-		setCollapsable(true);
-		setCollapsed(false);
-		setDescription("");
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.widgets.FormSection#getHeaderText()
-	 */
-	public String getHeaderText() {
-		return "Changes";
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.widgets.FormSection#createClient(org.eclipse.swt.widgets.Composite,
-	 *      org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
-	 */
-	public Composite createClient(Composite parent, IControlFactory factory) {
-		this.factory = factory;
-		Composite clientComposite = factory.createComposite(parent);
+		
+		factory = new ControlFactory(parent.getDisplay());
+		factory.registerColor(COLOR_WHITE, 255,255,255);
+		factory.setBackgroundColor(factory.getColor(COLOR_WHITE));
+		setBackground(factory.getBackgroundColor());
+		
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
-		clientComposite.setLayout(layout);
-		changesSectionContainer = new PageBook(clientComposite, SWT.NONE);
+		setLayout(layout);
 		GridData data = new GridData(GridData.FILL_BOTH);
+		data.grabExcessVerticalSpace = true;
+		setLayoutData(data);
+		
+		changesSectionContainer = new PageBook(this, SWT.NONE);
+		data = new GridData(GridData.FILL_BOTH);
 		data.grabExcessHorizontalSpace = true;
 		data.grabExcessVerticalSpace = true;
 		changesSectionContainer.setLayoutData(data);
 		
 		changesViewer = page.createChangesViewer(changesSectionContainer);
 
-		calculateDescription();		
+		calculateDescription();
+		
 		participant.getInput().registerListeners(changedListener);
-		return clientComposite;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.widgets.FormSection#createHeaderRight(org.eclipse.swt.widgets.Composite, org.eclipse.team.internal.ui.widgets.ControlFactory)
-	 */
-	protected Composite createHeaderRight(Composite parent, ControlFactory factory) {
-		Composite top = factory.createComposite(parent);
-		GridLayout layout = new GridLayout();
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		top.setLayout(layout);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		data.widthHint = 200;
-		top.setLayoutData(data);
-		changeTotalsLabel = factory.createLabel(top, "", 20);
-		int newChanges = participant.getInput().getSubscriberSyncSet().size();
-		changeTotalsLabel.setText(Integer.toString(newChanges) + " Total");
-		return top;
-	}
-	
-	protected void reflow() {
-		super.reflow();
-		if(parent != null && !parent.isDisposed()) {
-			parent.setRedraw(false);
-			parent.getParent().setRedraw(false);
-			parent.layout(true);
-			parent.getParent().layout(true);
-			parent.setRedraw(true);
-			parent.getParent().setRedraw(true);
-		}
 	}
 	
 	private void calculateDescription() {
@@ -177,6 +130,9 @@ public class ChangesSection extends FormSection {
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 2;
 		composite.setLayout(layout);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.grabExcessVerticalSpace = true;
+		composite.setLayoutData(data);
 		
 		ITeamSubscriberSyncInfoSets input = participant.getInput();
 		int changesInWorkspace = input.getSubscriberSyncSet().size();
@@ -206,7 +162,7 @@ public class ChangesSection extends FormSection {
 				}
 			});
 			Label description = factory.createLabel(composite, text.toString(), SWT.WRAP);
-			GridData data = new GridData(GridData.FILL_HORIZONTAL);
+			data = new GridData(GridData.FILL_HORIZONTAL);
 			data.horizontalSpan = 2;
 			data.widthHint = 100;
 			description.setLayoutData(data);	
@@ -219,7 +175,7 @@ public class ChangesSection extends FormSection {
 				}
 			});
 			Label description = factory.createLabel(composite, Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)), SWT.WRAP);
-			GridData data = new GridData(GridData.FILL_HORIZONTAL);
+			data = new GridData(GridData.FILL_HORIZONTAL);
 			data.horizontalSpan = 2;
 			data.widthHint = 100;
 			description.setLayoutData(data);	
@@ -243,17 +199,5 @@ public class ChangesSection extends FormSection {
 	public void dispose() {
 		super.dispose();
 		participant.getInput().deregisterListeners(changedListener);
-	}
-	
-	public void updateChangeTotals(final boolean reflow) {
-		final int newChanges = participant.getInput().getSubscriberSyncSet().size();
-		if (totalChanges != newChanges) {
-			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-				public void run() {
-					changeTotalsLabel.setText(Integer.toString(newChanges) + " Total");
-					totalChanges = newChanges;
-				}
-			});
-		}
 	}
 }

@@ -17,14 +17,19 @@ import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoSetCompareInput;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.help.WorkbenchHelp;
 
 /**
@@ -33,8 +38,12 @@ import org.eclipse.ui.help.WorkbenchHelp;
 public class ReleaseCommentDialog extends DetailsDialog {
 	
 	CommitCommentArea commitCommentArea;
+	//	dialogs settings that are persistent between workbench sessions
+	private IDialogSettings settings;
 	private IResource[] resourcesToCommit;
 	private CompareEditorInput compareEditorInput;
+	private static final String HEIGHT_KEY = "width-key";
+	private static final String WIDTH_KEY = "height-key";
 	
 	/**
 	 * ReleaseCommentDialog constructor.
@@ -50,6 +59,12 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		// Get a project from which the commit template can be obtained
 		if (resourcesToCommit.length > 0) 
 		commitCommentArea.setProject(resourcesToCommit[0].getProject());
+		
+		IDialogSettings workbenchSettings = CVSUIPlugin.getPlugin().getDialogSettings();
+		this.settings = workbenchSettings.getSection("ReleaseCommentDialog");//$NON-NLS-1$
+		if (settings == null) {
+			this.settings = workbenchSettings.addNewSection("ReleaseCommentDialog");//$NON-NLS-1$
+		}		
 	}
 	
 	/*
@@ -69,7 +84,10 @@ public class ReleaseCommentDialog extends DetailsDialog {
 			}
 		});
 		
-		compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), resourcesToCommit, CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant().getInput());
+		CompareConfiguration cc = new CompareConfiguration();
+		cc.setLeftEditable(false);
+		SyncInfoFilter.SyncInfoDirectionFilter filter = new SyncInfoFilter.SyncInfoDirectionFilter(SyncInfo.OUTGOING);
+		compareEditorInput = new SyncInfoSetCompareInput(cc, resourcesToCommit, filter, CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant().getInput());
 		
 		// set F1 help
 		WorkbenchHelp.setHelp(composite, IHelpContextIds.RELEASE_COMMENT_DIALOG);	
@@ -78,6 +96,21 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		//return composite;
 	}
 
+	/**
+	 * @see Window#getInitialSize()
+	 */
+	protected Point getInitialSize() {
+		int width, height;
+		try {
+			height = settings.getInt(HEIGHT_KEY);
+			width = settings.getInt(WIDTH_KEY);
+		} catch(NumberFormatException e) {
+			return super.getInitialSize();
+		}
+		Point p = super.getInitialSize();
+		return new Point(width, p.y);
+	}
+	
 	/**
 	 * Returns the comment.
 	 * @return String
@@ -115,15 +148,16 @@ public class ReleaseCommentDialog extends DetailsDialog {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#updateEnablements()
 	 */
-	protected void updateEnablements() {
-		// TODO Auto-generated method stub
-		
+	protected void updateEnablements() {	
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.window.Window#close()
 	 */
 	public boolean close() {
+		Rectangle bounds = getShell().getBounds();
+		settings.put(HEIGHT_KEY, bounds.height);
+		settings.put(WIDTH_KEY, bounds.width);
 		return super.close();
 	}
 }

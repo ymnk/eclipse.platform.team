@@ -19,7 +19,6 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.*;
@@ -38,9 +37,8 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		public String getText(Object element) {
 			String text = oldLabelProvider.getText(element);
 			if (element instanceof SyncInfoDiffNode) {
-				SyncInfo info =  ((SyncInfoDiffNode)element).getSyncInfo();
-				if(info != null) {
-					IResource resource = info.getLocal();
+				IResource resource =  ((SyncInfoDiffNode)element).getResource();
+				if(resource != null) {
 					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
 					CVSLightweightDecorator.decorateTextLabel((IResource) resource, decoration, false, true);
 					StringBuffer output = new StringBuffer(25);

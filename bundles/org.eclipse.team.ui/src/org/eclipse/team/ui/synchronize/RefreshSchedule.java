@@ -7,6 +7,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.IRefreshEvent;
+import org.eclipse.team.internal.ui.jobs.IRefreshSubscriberListener;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.ui.IMemento;
 
@@ -19,6 +20,8 @@ public class RefreshSchedule {
 	
 	private TeamSubscriberParticipant participant;
 	
+	private IRefreshEvent lastRefreshEvent;
+	
 	/**
 	 * Key for settings in memento
 	 */
@@ -29,8 +32,20 @@ public class RefreshSchedule {
 	 */
 	private static final String CTX_REFRESHSCHEDULE_ENABLED = TeamUIPlugin.ID + ".CTX_REFRESHSCHEDULE_ENABLED"; //$NON-NLS-1$
 		
+	private IRefreshSubscriberListener refreshSubscriberListener = new IRefreshSubscriberListener() {
+		public void refreshStarted(IRefreshEvent event) {
+		}
+		public void refreshDone(final IRefreshEvent event) {
+			if (event.getParticipant() == participant) {
+				lastRefreshEvent = event;
+			}
+		}
+	};
+	
+	
 	public RefreshSchedule(TeamSubscriberParticipant participant) {
-		this.participant = participant;		
+		this.participant = participant;
+		RefreshSubscriberJob.addRefreshListener(refreshSubscriberListener);
 	}
 
 	/**
@@ -95,6 +110,7 @@ public class RefreshSchedule {
 
 	public void dispose() {
 		stopJob();
+		RefreshSubscriberJob.removeRefreshListener(refreshSubscriberListener);
 	}
 	
 	public void saveState(IMemento memento) {
@@ -115,16 +131,24 @@ public class RefreshSchedule {
 	}
 
 	public static String refreshEventAsString(IRefreshEvent event) {
+		if(event == null) {
+			return Policy.bind("SyncViewPreferencePage.lastRefreshRunNever"); //$NON-NLS-1$
+		}
 		long stopMills = event.getStopTime();
 		long startMills = event.getStartTime();
-		SyncInfo[] changes = event.getChanges();
 		StringBuffer text = new StringBuffer();
 		if(stopMills <= 0) {
 			text.append(Policy.bind("SyncViewPreferencePage.lastRefreshRunNever")); //$NON-NLS-1$
 		} else {
 			Date lastTimeRun = new Date(stopMills);
 			text.append(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(lastTimeRun));
-		}				
+		}
+		SyncInfo[] changes = event.getChanges();
+		if (changes.length != 0) {
+			text.append(" (" + Integer.toString(changes.length) + " changes found)");
+		} else {
+			text.append(" (No changes found)");
+		}
 		return text.toString();
 	} 
 	
@@ -133,6 +157,10 @@ public class RefreshSchedule {
 			return "Not Scheduled";
 		}		
 		return getRefreshIntervalAsString();
+	}
+	
+	public IRefreshEvent getLastRefreshEvent() {
+		return lastRefreshEvent;
 	}
 	
 	private String getRefreshIntervalAsString() {

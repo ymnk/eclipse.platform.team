@@ -10,25 +10,46 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.jface.action.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
-import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.internal.ui.widgets.ControlFactory;
+import org.eclipse.team.internal.ui.synchronize.ChangesSection;
+import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
+import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffViewerForSynchronizeView;
+import org.eclipse.team.internal.ui.synchronize.actions.ComparisonCriteriaActionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
+import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
+import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.SyncViewerShowPreferencesAction;
+import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
-import org.eclipse.ui.*;
-import org.eclipse.ui.part.*;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.part.IPageBookViewPage;
+import org.eclipse.ui.part.IPageSite;
+import org.eclipse.ui.part.IShowInSource;
+import org.eclipse.ui.part.ShowInContext;
 
 /**
  * A synchronize view page that works with participants that are subclasses of 
@@ -45,7 +66,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
 	private Composite composite = null;
-	private SummarySection participantSection;
 	private ChangesSection changesSection;
 	private boolean settingWorkingSet = false;
 	
@@ -61,6 +81,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	// the changes viewer are contributed via the viewer and not the page.
 	private NavigateAction gotoNext;
 	private NavigateAction gotoPrevious;
+	private Action configureSchedule;
 	private SyncViewerShowPreferencesAction showPreferences;
 	private RefreshAction refreshAllAction;
 	private ComparisonCriteriaActionGroup comparisonCriteriaGroup;
@@ -81,7 +102,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 * @see org.eclipse.ui.part.IPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
-		//ScrolledComposite sc = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		composite = new Composite(parent, SWT.NONE); 
 		//sc.setContent(composite);
 		GridLayout gridLayout= new GridLayout();
@@ -90,13 +110,14 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		gridLayout.marginHeight = 0;
 		gridLayout.verticalSpacing = 0;
 		composite.setLayout(gridLayout);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.grabExcessVerticalSpace = true;
+		composite.setLayoutData(data);
 		
 		// Create the busy cursor with no control to start with (createViewer will set it)
 		busyCursor = new JobBusyCursor(parent.getParent().getParent(), SubscriberAction.SUBSCRIBER_JOB_TYPE);
-		participantSection = new SummarySection(parent, getParticipant(), getSynchronizeView());		
-		changesSection = new ChangesSection(parent, this);
 		
-		createSections(composite);
+		changesSection = new ChangesSection(composite, this);		
 		
 		// toolbar
 		gotoNext = new NavigateAction(view, changesSection.getChangesViewer(), INavigableControl.NEXT);		
@@ -113,6 +134,16 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		};
 		Utils.initAction(collapseAll, "action.collapseAll."); //$NON-NLS-1$
 		
+		configureSchedule = new Action() {
+			public void run() {
+				ConfigureRefreshScheduleDialog d = new ConfigureRefreshScheduleDialog(
+						getShell(), participant.getRefreshSchedule());
+				d.setBlockOnOpen(false);
+				d.open();
+			}
+		};
+		Utils.initAction(configureSchedule, "action.configureSchedulel."); //$NON-NLS-1$
+		
 		// view menu
 		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(input);		
 		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), this, view, participant);		
@@ -121,6 +152,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
+		participant.setMode(participant.getMode());
 	}
 	
 	private Shell getShell() {
@@ -132,21 +164,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 */
 	public void init(IPageSite site) throws PartInitException {
 		this.site = site;		
-	}
-	
-	private void createSections(Composite parent) {				
-		//tbMgr.createControl(parent);
-		ControlFactory factory = new ControlFactory(parent.getDisplay());
-		factory.setBackgroundColor(new Color(parent.getDisplay(), new RGB(255, 255, 255)));
-		// overview section
-		Control control = participantSection.createControl(parent, factory);
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
-		control.setLayoutData(gd);
-		// changes section
-		control = changesSection.createControl(parent, factory);
-		gd = new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);
-		gd.grabExcessVerticalSpace = true;
-		control.setLayoutData(gd);
 	}
 	
 	protected Viewer getChangesViewer() {
@@ -166,7 +183,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	public void dispose() {
 		busyCursor.dispose();
 		changesSection.dispose();
-		participantSection.dispose();
 	}
 	
 	/*
@@ -224,7 +240,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			workingSetGroup.fillActionBars(actionBars);
 			menu.add(new Separator());
 			menu.add(comparisonCriteria);
-			menu.add(layoutMenu);
+			menu.add(new Separator());
+			menu.add(configureSchedule);
 			menu.add(new Separator());
 			menu.add(showPreferences);
 			

@@ -21,6 +21,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 
 public class SyncInfoSetCompareInput extends CompareEditorInput {
 	// TODO: when are these objects disposed, and how to hook in to the dispose to free listeners?
@@ -28,12 +29,12 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	private ISyncInfoSet set;
 	private ITeamSubscriberSyncInfoSets sets;
 
-	public SyncInfoSetCompareInput(CompareConfiguration configuration, IResource[] resources, ITeamSubscriberSyncInfoSets sets) {
+	public SyncInfoSetCompareInput(CompareConfiguration configuration, IResource[] resources, SyncInfoFilter filter, ITeamSubscriberSyncInfoSets sets) {
 		super(configuration);
 		this.resources = resources;
 		this.sets = sets;
 		if(resources != null && resources.length > 0) {
-			this.set = sets.createNewFilteredSyncSet(resources);
+			this.set = sets.createNewFilteredSyncSet(resources, filter);
 		} else {
 			this.set = sets.getSubscriberSyncSet();
 		}

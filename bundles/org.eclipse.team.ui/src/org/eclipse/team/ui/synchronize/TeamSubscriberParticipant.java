@@ -11,15 +11,15 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantComposite;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.ui.controls.IControlFactory;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -193,12 +193,5 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		}
 		settings.putString(P_SYNCVIEWPAGE_MODE, Integer.toString(getMode()));
 		refreshSchedule.saveState(settings.createChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS));
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createOverviewPage(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.ISynchronizeView)
-	 */
-	public Composite createOverviewComposite(Composite parent, IControlFactory factory, ISynchronizeView view) {
-		return new TeamSubscriberParticipantComposite(parent, true, factory, this, view);
 	}
 }
