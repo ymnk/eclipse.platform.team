@@ -128,11 +128,17 @@ public class SynchronizeManager implements ISynchronizeManager {
 					participant.init(savedState);
 				} catch (PartInitException e2) {
 					TeamUIPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.11"), e2); //$NON-NLS-1$
+					participant = null;
 				} catch (CoreException e) {
 					TeamUIPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.11"), e); //$NON-NLS-1$
+					participant = null;
 				}
 			}
 			return participant;
+		}
+		
+		public boolean isParticipantInitialized() {
+			return participant != null;
 		}
 		
 		public boolean equals(Object other) {
@@ -207,6 +213,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 				participant.init(null);
 			} catch (PartInitException e) {
 				TeamUIPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.13"), e); //$NON-NLS-1$
+				continue;
 			}
 			added.add(participant);
 		}
@@ -266,7 +273,10 @@ public class SynchronizeManager implements ISynchronizeManager {
 		List participants = new ArrayList(instances.size());
 		for (Iterator it = instances.iterator(); it.hasNext(); ) {
 			ParticipantInstance instance = (ParticipantInstance) it.next();
-			participants.add(instance.getParticipant());
+			ISynchronizeParticipant participant = instance.getParticipant();
+			if(participant != null) {
+				participants.add(participant);
+			}
 		}
 		return (ISynchronizeParticipant[]) participants.toArray(new ISynchronizeParticipant[participants.size()]);
 	}
@@ -380,7 +390,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 
 	/**
 	 * Saves a file containing the list of participant ids that are registered
-	 * with this manager. Each participant is also given the chance to save
+	 * with this manager. Each initialized participant is also given the chance to save
 	 * it's state.
 	 */
 	private void saveState() {
@@ -391,10 +401,14 @@ public class SynchronizeManager implements ISynchronizeManager {
 			List participants = (List) synchronizeParticipants.get(id);
 			for (Iterator it2 = participants.iterator(); it2.hasNext(); ) {
 				ParticipantInstance instance = (ParticipantInstance) it2.next();
-				ISynchronizeParticipant participant = instance.getParticipant();
-				IMemento participantNode = xmlMemento.createChild(CTX_PARTICIPANT);
-				participantNode.putString(CTX_ID, participant.getId());
-				participant.saveState(participantNode.createChild(CTX_PARTICIPANT_DATA));
+				// An un-instantiated participant can't have any state to save, also
+				// we don't want to trigger class creation when saving state.
+				if(instance.isParticipantInitialized()) {
+					ISynchronizeParticipant participant = instance.getParticipant();
+					IMemento participantNode = xmlMemento.createChild(CTX_PARTICIPANT);
+					participantNode.putString(CTX_ID, participant.getId());
+					participant.saveState(participantNode.createChild(CTX_PARTICIPANT_DATA));
+				}
 			}
 		}
 		try {
