@@ -23,8 +23,8 @@ import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSynchronizationCache;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Util;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
+import org.eclipse.team.internal.core.subscribers.caches.PersistantResourceVariantTree;
 
 /**
  * A CVSMergeSubscriber is responsible for maintaining the remote trees for a merge into
@@ -48,9 +48,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	
 	private CVSTag start, end;
 	private List roots;
-	private SynchronizationCache remoteSynchronizer;
-	private SynchronizationSyncBytesCache mergedSynchronizer;
-	private SynchronizationCache baseSynchronizer;
+	private ResourceVariantTree remoteSynchronizer;
+	private PersistantResourceVariantTree mergedSynchronizer;
+	private ResourceVariantTree baseSynchronizer;
 	
 	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		
 		this(getUniqueId(), roots, start, end);
@@ -77,7 +77,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		String syncKeyPrefix = id.getLocalName();
 		remoteSynchronizer = new CVSSynchronizationCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + end.getName()));
 		baseSynchronizer = new CVSSynchronizationCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + start.getName()));
-		mergedSynchronizer = new SynchronizationSyncBytesCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + "0merged")); //$NON-NLS-1$
+		mergedSynchronizer = new PersistantResourceVariantTree(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + "0merged")); //$NON-NLS-1$
 		
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
 		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().addListener(this);
@@ -98,11 +98,11 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	}
 	
 	private void internalMerged(IResource resource) throws TeamException {
-		byte[] remoteBytes = remoteSynchronizer.getSyncBytes(resource);
+		byte[] remoteBytes = remoteSynchronizer.getBytes(resource);
 		if (remoteBytes == null) {
-			mergedSynchronizer.setRemoteDoesNotExist(resource);
+			mergedSynchronizer.setVariantDoesNotExist(resource);
 		} else {
-			mergedSynchronizer.setSyncBytes(resource, remoteBytes);
+			mergedSynchronizer.setBytes(resource, remoteBytes);
 		}
 	}
 
@@ -127,7 +127,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	 * @see org.eclipse.team.core.sync.TeamSubscriber#isSupervised(org.eclipse.core.resources.IResource)
 	 */
 	public boolean isSupervised(IResource resource) throws TeamException {
-		return getBaseSynchronizationCache().getSyncBytes(resource) != null || getRemoteSynchronizationCache().getSyncBytes(resource) != null; 
+		return getBaseSynchronizationCache().getBytes(resource) != null || getRemoteSynchronizationCache().getBytes(resource) != null; 
 	}
 
 	public CVSTag getStartTag() {
@@ -191,12 +191,12 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	 * @throws TeamException
 	 */
 	public boolean isMerged(IResource resource) throws TeamException {
-		byte[] mergedBytes = mergedSynchronizer.getSyncBytes(resource);
-		byte[] remoteBytes = remoteSynchronizer.getSyncBytes(resource);
+		byte[] mergedBytes = mergedSynchronizer.getBytes(resource);
+		byte[] remoteBytes = remoteSynchronizer.getBytes(resource);
 		if (mergedBytes == null) {
 			return (remoteBytes == null 
-					&& mergedSynchronizer.isRemoteKnown(resource)
-					&& remoteSynchronizer.isRemoteKnown(resource));
+					&& mergedSynchronizer.isVariantKnown(resource)
+					&& remoteSynchronizer.isVariantKnown(resource));
 		}
 		return Util.equals(mergedBytes, remoteBytes);
 	}
@@ -238,14 +238,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizationCache()
 	 */
-	protected SynchronizationCache getBaseSynchronizationCache() {
+	protected ResourceVariantTree getBaseSynchronizationCache() {
 		return baseSynchronizer;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizationCache()
 	 */
-	protected SynchronizationCache getRemoteSynchronizationCache() {
+	protected ResourceVariantTree getRemoteSynchronizationCache() {
 		return remoteSynchronizer;
 	}
 	
@@ -261,7 +261,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		List unrefreshed = new ArrayList();
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
-			if (!baseSynchronizer.isRemoteKnown(resource)) {
+			if (!baseSynchronizer.isVariantKnown(resource)) {
 				unrefreshed.add(resource);
 			}
 		}
@@ -301,7 +301,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 			if (resource.getType() == IResource.FILE) {
 				ICVSFile local = CVSWorkspaceRoot.getCVSFileFor((IFile)resource);
 				byte[] localBytes = local.getSyncBytes();
-				byte[] remoteBytes = remoteSynchronizer.getSyncBytes(resource);
+				byte[] remoteBytes = remoteSynchronizer.getBytes(resource);
 				if (remoteBytes != null 
 						&& localBytes != null
 						&& local.exists()
@@ -320,9 +320,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	 */
 	public IResourceVariant getBaseResource(IResource resource) throws TeamException {
 		// Use the merged bytes for the base if there are some
-		byte[] mergedBytes = mergedSynchronizer.getSyncBytes(resource);
+		byte[] mergedBytes = mergedSynchronizer.getBytes(resource);
 		if (mergedBytes != null) {
-			byte[] parentBytes = baseSynchronizer.getSyncBytes(resource.getParent());
+			byte[] parentBytes = baseSynchronizer.getBytes(resource.getParent());
 			if (parentBytes != null) {
 				return RemoteFile.fromBytes(resource, mergedBytes, parentBytes);
 			}

@@ -21,40 +21,42 @@ import org.eclipse.team.core.synchronize.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCacheRefreshOperation;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTreeRefresh;
 
 /**
  * CVS Specific refresh operation
  */
-public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
+public class CVSRefreshOperation extends ResourceVariantTreeRefresh {
 
-	private SynchronizationCache cache, baseCache;
+	private ResourceVariantTree cache, baseCache;
 	private CVSTag tag;
+	private boolean cacheFileContentsHint;
 
-	public CVSRefreshOperation(SynchronizationCache cache, SynchronizationCache baseCache, CVSTag tag) {
+	public CVSRefreshOperation(ResourceVariantTree cache, ResourceVariantTree baseCache, CVSTag tag, boolean cacheFileContentsHint) {
 		this.tag = tag;
 		this.cache = cache;
 		this.baseCache = cache;
+		this.cacheFileContentsHint = cacheFileContentsHint;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#getSynchronizationCache()
 	 */
-	protected SynchronizationCache getSynchronizationCache() {
+	protected ResourceVariantTree getResourceVariantTree() {
 		return cache;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#getRemoteSyncBytes(org.eclipse.core.resources.IResource, org.eclipse.team.core.subscribers.ISubscriberResource)
 	 */
-	protected byte[] getRemoteSyncBytes(IResource local, IResourceVariant remote) throws TeamException {
+	protected byte[] getBytes(IResource local, IResourceVariant remote) throws TeamException {
 		if (remote != null) {
 			return ((RemoteResource)remote).getSyncBytes();
 		} else {
 			if (local.getType() == IResource.FOLDER && baseCache != null) {
 				// If there is no remote, use the local sync for the folder
-				return baseCache.getSyncBytes(local);
+				return baseCache.getBytes(local);
 			}
 			return null;
 		}
@@ -63,7 +65,7 @@ public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#getRemoteChildren(org.eclipse.team.core.subscribers.ISubscriberResource, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected IResourceVariant[] getRemoteChildren(IResourceVariant remote, IProgressMonitor progress) throws TeamException {
+	protected IResourceVariant[] fetchMembers(IResourceVariant remote, IProgressMonitor progress) throws TeamException {
 		ICVSRemoteResource[] children = remote != null ? (ICVSRemoteResource[])((RemoteResource)remote).members(progress) : new ICVSRemoteResource[0];
 		IResourceVariant[] result = new IResourceVariant[children.length];
 		for (int i = 0; i < children.length; i++) {
@@ -75,7 +77,7 @@ public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#getLocalChildren(org.eclipse.core.resources.IResource)
 	 */
-	protected IResource[] getLocalChildren(IResource local) throws TeamException {
+	protected IResource[] members(IResource local) throws TeamException {
 		IResource[] localChildren = null;			
 		if( local.getType() != IResource.FILE && (local.exists() || local.isPhantom())) {
 			// Include all non-ignored resources including outgoing deletions
@@ -100,10 +102,19 @@ public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#buildRemoteTree(org.eclipse.core.resources.IResource, int, boolean, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected IResourceVariant getRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
+	protected IResourceVariant fetchVariant(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
 		// TODO: we are currently ignoring the depth parameter because the build remote tree is
 		// by default deep!
 		return (IResourceVariant)CVSWorkspaceRoot.getRemoteTree(resource, tag, cacheFileContentsHint, monitor);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTreeRefreshOperation#collectChanges(org.eclipse.core.resources.IResource, org.eclipse.team.core.synchronize.IResourceVariant, int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public IResource[] collectChanges(IResource local,
+			IResourceVariant remote, int depth, IProgressMonitor monitor)
+			throws TeamException {
+		return super.collectChanges(local, remote, depth, monitor);
 	}
 
 }

@@ -13,15 +13,15 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationSyncBytesCache;
+import org.eclipse.team.internal.core.subscribers.caches.PersistantResourceVariantTree;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
- * Override <code>SynchronizationSyncBytesCache</code> to log an error
+ * Override <code>PersistantResourceVariantTree</code> to log an error
  * if there are no parent bytes for a file.
  */
-public class CVSSynchronizationCache extends SynchronizationSyncBytesCache {
+public class CVSSynchronizationCache extends PersistantResourceVariantTree {
 
 	public CVSSynchronizationCache(QualifiedName name) {
 		super(name);
@@ -30,9 +30,9 @@ public class CVSSynchronizationCache extends SynchronizationSyncBytesCache {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.helpers.SynchronizationCache#setSyncBytes(org.eclipse.core.resources.IResource, byte[])
 	 */
-	public boolean setSyncBytes(IResource resource, byte[] bytes) throws TeamException {
-		boolean changed = super.setSyncBytes(resource, bytes);
-		if (resource.getType() == IResource.FILE && getSyncBytes(resource) != null && !parentHasSyncBytes(resource)) {
+	public boolean setBytes(IResource resource, byte[] bytes) throws TeamException {
+		boolean changed = super.setBytes(resource, bytes);
+		if (resource.getType() == IResource.FILE && getBytes(resource) != null && !parentHasSyncBytes(resource)) {
 			// Log a warning if there is no sync bytes available for the resource's
 			// parent but there is valid sync bytes for the child
 			CVSProviderPlugin.log(new TeamException(Policy.bind("ResourceSynchronizer.missingParentBytesOnSet", getSyncName().toString(), resource.getFullPath().toString()))); //$NON-NLS-1$
@@ -47,6 +47,6 @@ public class CVSSynchronizationCache extends SynchronizationSyncBytesCache {
 	 */
 	protected boolean parentHasSyncBytes(IResource resource) throws TeamException {
 		if (resource.getType() == IResource.PROJECT) return true;
-		return (getSyncBytes(resource.getParent()) != null);
+		return (getBytes(resource.getParent()) != null);
 	}
 }

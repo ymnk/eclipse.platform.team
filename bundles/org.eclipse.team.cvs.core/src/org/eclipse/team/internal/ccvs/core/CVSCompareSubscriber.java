@@ -17,8 +17,8 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.core.subscribers.caches.SessionSynchronizationCache;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.SessionResourceVariantTree;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
 
 /**
  * This subscriber is used when comparing the local workspace with its
@@ -30,7 +30,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	private static final String UNIQUE_ID_PREFIX = "compare-"; //$NON-NLS-1$
 	
 	private CVSTag tag;
-	private SessionSynchronizationCache remoteSynchronizer;
+	private SessionResourceVariantTree remoteSynchronizer;
 	private IResource[] resources;
 	
 	public CVSCompareSubscriber(IResource[] resources, CVSTag tag) {
@@ -41,7 +41,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	}
 
 	private void initialize() {
-		remoteSynchronizer = new SessionSynchronizationCache();
+		remoteSynchronizer = new SessionResourceVariantTree();
 		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().addListener(this);
 	}
 
@@ -73,7 +73,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizationCache()
 	 */
-	protected SynchronizationCache getBaseSynchronizationCache() {
+	protected ResourceVariantTree getBaseSynchronizationCache() {
 		// No base cache needed since it's a two way compare
 		return null;
 	}
@@ -81,7 +81,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizationCache()
 	 */
-	protected SynchronizationCache getRemoteSynchronizationCache() {
+	protected ResourceVariantTree getRemoteSynchronizationCache() {
 		return remoteSynchronizer;
 	}
 	
@@ -158,7 +158,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	 */
 	public boolean isSupervised(IResource resource) throws TeamException {
 		if (super.isSupervised(resource)) {
-			if (!resource.exists() && getRemoteSynchronizationCache().getSyncBytes(resource) == null) {
+			if (!resource.exists() && getRemoteSynchronizationCache().getBytes(resource) == null) {
 				// Exclude conflicting deletions
 				return false;
 			}

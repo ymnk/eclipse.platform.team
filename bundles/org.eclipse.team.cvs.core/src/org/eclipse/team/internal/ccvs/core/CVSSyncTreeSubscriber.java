@@ -151,14 +151,16 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 
 	protected IResource[] refreshBase(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
 		if (isThreeWay()) {
-			return new CVSRefreshOperation(getBaseSynchronizationCache(), null, getBaseTag()).refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+			return new CVSRefreshOperation(getBaseSynchronizationCache(), null, getBaseTag(),  getCacheFileContentsHint())
+				.refresh(resources, depth, monitor);
 		} else {
 			return new IResource[0];
 		}
 	}
 
 	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		return new CVSRefreshOperation(getRemoteSynchronizationCache(), getBaseSynchronizationCache(), getRemoteTag()).refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+		return new CVSRefreshOperation(getRemoteSynchronizationCache(), getBaseSynchronizationCache(), getRemoteTag(), getCacheFileContentsHint())
+			.refresh(resources, depth, monitor);
 	}
 
 	/**
@@ -211,15 +213,15 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	/**
 	 * Return the synchronization cache that provides access to the base sychronization bytes.
 	 */
-	protected abstract SynchronizationCache getBaseSynchronizationCache();
+	protected abstract ResourceVariantTree getBaseSynchronizationCache();
 
 	/**
 	 * Return the synchronization cache that provides access to the base sychronization bytes.
 	 */
-	protected abstract SynchronizationCache getRemoteSynchronizationCache();
+	protected abstract ResourceVariantTree getRemoteSynchronizationCache();
 	
-	protected IResourceVariant getRemoteResource(IResource resource, SynchronizationCache cache) throws TeamException {
-		byte[] remoteBytes = cache.getSyncBytes(resource);
+	protected IResourceVariant getRemoteResource(IResource resource, ResourceVariantTree cache) throws TeamException {
+		byte[] remoteBytes = cache.getBytes(resource);
 		if (remoteBytes == null) {
 			// There is no remote handle for this resource
 			return null;
@@ -227,7 +229,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			// TODO: This code assumes that the type of the remote resource
 			// matches that of the local resource. This may not be true.
 			if (resource.getType() == IResource.FILE) {
-				byte[] parentBytes = cache.getSyncBytes(resource.getParent());
+				byte[] parentBytes = cache.getBytes(resource.getParent());
 				if (parentBytes == null) {
 					// Before failing, try and use the local folder sync bytes
 					ICVSFolder local = CVSWorkspaceRoot.getCVSFolderFor(resource.getParent());
@@ -258,9 +260,9 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		}
 	}
 	
-	private String getSyncName(SynchronizationCache cache) {
-		if (cache instanceof SynchronizationSyncBytesCache) {
-			return ((SynchronizationSyncBytesCache)cache).getSyncName().toString();
+	private String getSyncName(ResourceVariantTree cache) {
+		if (cache instanceof PersistantResourceVariantTree) {
+			return ((PersistantResourceVariantTree)cache).getSyncName().toString();
 		}
 		return cache.getClass().getName();
 	}
@@ -269,7 +271,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 * @see org.eclipse.team.core.subscribers.helpers.SyncTreeSubscriber#hasRemote(org.eclipse.core.resources.IResource)
 	 */
 	protected boolean hasRemote(IResource resource) throws TeamException {
-		return getRemoteSynchronizationCache().getSyncBytes(resource) != null;
+		return getRemoteSynchronizationCache().getBytes(resource) != null;
 	}
 
 	/* (non-Javadoc)
@@ -314,7 +316,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		}
 	}
 
-	private IResource[] getMembers(SynchronizationCache cache, IResource resource) throws TeamException, CoreException {
+	private IResource[] getMembers(ResourceVariantTree cache, IResource resource) throws TeamException, CoreException {
 		// Filter and return only phantoms associated with the remote synchronizer.
 		IResource[] members;
 		try {

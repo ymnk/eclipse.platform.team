@@ -13,15 +13,15 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
 import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 
 
-public class CVSBaseSynchronizationCache extends SynchronizationCache {
+public class CVSBaseSynchronizationCache extends ResourceVariantTree {
 	public void dispose() {
 		// Do nothing
 	}
-	public byte[] getSyncBytes(IResource resource) throws TeamException {
+	public byte[] getBytes(IResource resource) throws TeamException {
 		if (resource.getType() == IResource.FILE) {
 			// For a file, return the entry line
 			byte[] bytes =  EclipseSynchronizer.getInstance().getSyncBytes(resource);
@@ -41,16 +41,16 @@ public class CVSBaseSynchronizationCache extends SynchronizationCache {
 			return info.getBytes();
 		}
 	}
-	public boolean isRemoteKnown(IResource resource) throws TeamException {
-		return getSyncBytes(resource) != null;
+	public boolean isVariantKnown(IResource resource) throws TeamException {
+		return getBytes(resource) != null;
 	}
-	public boolean removeSyncBytes(IResource resource, int depth) throws TeamException {
+	public boolean removeBytes(IResource resource, int depth) throws TeamException {
 		throw new UnsupportedOperationException();
 	}
-	public boolean setSyncBytes(IResource resource, byte[] bytes) throws TeamException {
+	public boolean setBytes(IResource resource, byte[] bytes) throws TeamException {
 		throw new UnsupportedOperationException();
 	}
-	public boolean setRemoteDoesNotExist(IResource resource) throws TeamException {
+	public boolean setVariantDoesNotExist(IResource resource) throws TeamException {
 		throw new UnsupportedOperationException();
 	}
 	

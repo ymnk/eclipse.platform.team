@@ -20,33 +20,54 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
 
 /**
- * This class provides a concrete synchronization cache that uses the
- * <code>org.eclipse.core.resources.ISynchronizer</code>.
+ * A <code>ResourceVariantTree</code> that caches the variant bytes using 
+ * the <code>org.eclipse.core.resources.ISynchronizer</code> so that
+ * the tree is cached accross workbench invocations.
  */
-public class SynchronizationSyncBytesCache extends SynchronizationCache {
+public class PersistantResourceVariantTree extends ResourceVariantTree {
 
 	private static final byte[] NO_REMOTE = new byte[0];
 	
-	protected QualifiedName syncName;
+	private QualifiedName syncName;
 	
-	public SynchronizationSyncBytesCache(QualifiedName name) {
+	/**
+	 * Create a persistant tree that uses the given qualified name
+	 * as the key in the <code>org.eclipse.core.resources.ISynchronizer</code>.
+	 * It must be unique and should use the plugin as the local name
+	 * and a unique id within the plugin as the qualifier name.
+	 * @param name the key used in the Core synchronizer
+	 */
+	public PersistantResourceVariantTree(QualifiedName name) {
 		syncName = name;
 		getSynchronizer().add(syncName);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree#dispose()
+	 */
 	public void dispose() {
 		getSynchronizer().remove(getSyncName());
 	}
 
+	/**
+	 * Convenience method that returns the Core <code>ISynchronizer</code>.
+	 */
 	protected ISynchronizer getSynchronizer() {
 		return ResourcesPlugin.getWorkspace().getSynchronizer();
 	}
 
+	/**
+	 * Return the qualified name that uniquely identifies this tree.
+	 * @return the qwualified name that uniquely identifies this tree.
+	 */
 	public QualifiedName getSyncName() {
 		return syncName;
 	}
 
-	public byte[] getSyncBytes(IResource resource) throws TeamException {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree#getBytes(org.eclipse.core.resources.IResource)
+	 */
+	public byte[] getBytes(IResource resource) throws TeamException {
 		byte[] syncBytes = internalGetSyncBytes(resource);
 		if (syncBytes != null && equals(syncBytes, NO_REMOTE)) {
 			// If it is known that there is no remote, return null
@@ -63,7 +84,10 @@ public class SynchronizationSyncBytesCache extends SynchronizationCache {
 		}
 	}
 	
-	public boolean setSyncBytes(IResource resource, byte[] bytes) throws TeamException {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree#setBytes(org.eclipse.core.resources.IResource, byte[])
+	 */
+	public boolean setBytes(IResource resource, byte[] bytes) throws TeamException {
 		Assert.isNotNull(bytes);
 		byte[] oldBytes = internalGetSyncBytes(resource);
 		if (oldBytes != null && equals(oldBytes, bytes)) return false;
@@ -75,7 +99,10 @@ public class SynchronizationSyncBytesCache extends SynchronizationCache {
 		}
 	}
 
-	public boolean removeSyncBytes(IResource resource, int depth) throws TeamException {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree#removeBytes(org.eclipse.core.resources.IResource, int)
+	 */
+	public boolean removeBytes(IResource resource, int depth) throws TeamException {
 		if (resource.exists() || resource.isPhantom()) {
 			try {
 				if (depth != IResource.DEPTH_ZERO || internalGetSyncBytes(resource) != null) {
@@ -89,7 +116,10 @@ public class SynchronizationSyncBytesCache extends SynchronizationCache {
 		return false;
 	}
 	
-	public boolean isRemoteKnown(IResource resource) throws TeamException {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree#isVariantKnown(org.eclipse.core.resources.IResource)
+	 */
+	public boolean isVariantKnown(IResource resource) throws TeamException {
 		return internalGetSyncBytes(resource) != null;
 	}
 	
@@ -100,12 +130,12 @@ public class SynchronizationSyncBytesCache extends SynchronizationCache {
 	 * <code>getSyncBytes(resource)</code> will return <code>null</code>.
 	 * @return <code>true</code> if this changes the remote sync bytes
 	 */
-	public boolean setRemoteDoesNotExist(IResource resource) throws TeamException {
-		return setSyncBytes(resource, NO_REMOTE);
+	public boolean setVariantDoesNotExist(IResource resource) throws TeamException {
+		return setBytes(resource, NO_REMOTE);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.utils.SynchronizationCache#members(org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree#members(org.eclipse.core.resources.IResource)
 	 */
 	public IResource[] members(IResource resource) throws TeamException {
 		if(resource.getType() == IResource.FILE) {
@@ -117,7 +147,7 @@ public class SynchronizationSyncBytesCache extends SynchronizationCache {
 			List filteredMembers = new ArrayList(members.length);
 			for (int i = 0; i < members.length; i++) {
 				IResource member = members[i];
-				if(getSyncBytes(member) != null) {
+				if(getBytes(member) != null) {
 					filteredMembers.add(member);
 				}
 			}

@@ -18,9 +18,9 @@ import org.eclipse.team.internal.ccvs.core.*;
 /**
  * CVS sycnrhonization cache that ignores stale remote bytes
  */
-public class CVSDescendantSynchronizationCache extends DescendantSynchronizationCache {
+public class CVSDescendantSynchronizationCache extends DescendantResourceVariantTree {
 
-	public CVSDescendantSynchronizationCache(SynchronizationCache baseCache, SynchronizationSyncBytesCache remoteCache) {
+	public CVSDescendantSynchronizationCache(ResourceVariantTree baseCache, PersistantResourceVariantTree remoteCache) {
 		super(baseCache, remoteCache);
 	}
 
@@ -39,12 +39,12 @@ public class CVSDescendantSynchronizationCache extends DescendantSynchronization
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.helpers.SynchronizationCache#setSyncBytes(org.eclipse.core.resources.IResource, byte[])
 	 */
-	public boolean setSyncBytes(IResource resource, byte[] bytes) throws TeamException {
-		boolean changed = super.setSyncBytes(resource, bytes);
-		if (resource.getType() == IResource.FILE && getSyncBytes(resource) != null && !parentHasSyncBytes(resource)) {
+	public boolean setBytes(IResource resource, byte[] bytes) throws TeamException {
+		boolean changed = super.setBytes(resource, bytes);
+		if (resource.getType() == IResource.FILE && getBytes(resource) != null && !parentHasSyncBytes(resource)) {
 			// Log a warning if there is no sync bytes available for the resource's
 			// parent but there is valid sync bytes for the child
-			CVSProviderPlugin.log(new TeamException(Policy.bind("ResourceSynchronizer.missingParentBytesOnSet", ((SynchronizationSyncBytesCache)getRemoteCache()).getSyncName().toString(), resource.getFullPath().toString()))); //$NON-NLS-1$
+			CVSProviderPlugin.log(new TeamException(Policy.bind("ResourceSynchronizer.missingParentBytesOnSet", ((PersistantResourceVariantTree)getRemoteTree()).getSyncName().toString(), resource.getFullPath().toString()))); //$NON-NLS-1$
 		}
 		return changed;
 	}
@@ -56,7 +56,7 @@ public class CVSDescendantSynchronizationCache extends DescendantSynchronization
 	 */
 	protected boolean parentHasSyncBytes(IResource resource) throws TeamException {
 		if (resource.getType() == IResource.PROJECT) return true;
-		return (getSyncBytes(resource.getParent()) != null);
+		return (getBytes(resource.getParent()) != null);
 	}
 
 }
