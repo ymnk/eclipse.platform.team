@@ -63,14 +63,19 @@ public interface ICVSFile extends ICVSResource {
 	 * Other clients should set the contents of the underlying <code>IFile</code> which
 	 * can be obtained using <code>getIResource()</code>.
 	 * 
+	 * @param stream the file bytes
 	 * @param responseType the type of reponse that was received from the server
-	 * 
 	 *    UPDATED - could be a new file or an existing file
 	 *    MERGED - merging remote changes with local changes. Failure could result in loss of local changes
 	 *    CREATED - contents for a file that doesn't exist locally
 	 *    UPDATE_EXISTING - Replacing a local file with no local changes with remote changes.
+	 * @param keepLocalHistory the flag that indicates if local history will be preserved by this call
+	 * @param overrideResponseType the flag to indicate how the response type will be used.
+	 * Set this to <code>true</code> if the CVS operation can ignore the response type when
+	 * creating local files. If a local file exists then it will be backed up before being replaced. If
+	 * <code>false</code> then regular response type handling for file creation will be used.
 	 */
-	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, IProgressMonitor monitor) throws CVSException;
+	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, boolean overrideResponseType, IProgressMonitor monitor) throws CVSException;
 
 	/**
 	 * Answers the workspace synchronization information for this resource. This would 

@@ -370,7 +370,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		return new ByteArrayInputStream(contents == null ? new byte[0] : contents);
 	}
 
-	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, IProgressMonitor monitor) throws CVSException {
+	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, boolean overrideResponseType, IProgressMonitor monitor) throws CVSException {
 		try {
 			try {
 				byte[] buffer = new byte[1024];

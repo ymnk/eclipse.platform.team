@@ -20,6 +20,14 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
  */
 public abstract class CheckoutOperation extends RemoteOperation {
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#isModifiesWorkspace()
+	 */
+	public boolean isModifiesWorkspace() {
+		// allow checkout to run without blocking the workspace
+		return false;
+	}
+
 	public CheckoutOperation(Shell shell, ICVSRemoteFolder[] remoteFolders) {
 		super(shell, remoteFolders);
 	}

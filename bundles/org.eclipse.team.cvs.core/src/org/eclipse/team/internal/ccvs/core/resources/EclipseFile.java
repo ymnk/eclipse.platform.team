@@ -46,6 +46,7 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
 public class EclipseFile extends EclipseResource implements ICVSFile {
 
 	private static final String TEMP_FILE_EXTENSION = ".tmp";//$NON-NLS-1$
+	private static final String FILE_IN_THEWAY_PREFIX = ".###";//$NON-NLS-1$
 	private static final IPath PROJECT_META_DATA_PATH = new Path(".project");//$NON-NLS-1$
 	
 	/**
@@ -199,21 +200,22 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		return getParent().getRemoteLocation(stopSearching) + SEPARATOR + getName();
 	}
 		
-	/*
-	 * @see ICVSFile#setReadOnly()
-	 */
-	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, IProgressMonitor monitor) throws CVSException {
+	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, boolean overrideResponseType, IProgressMonitor monitor) throws CVSException {
 		try {
 			IFile file = getIFile();
-			if (PROJECT_META_DATA_PATH.equals(file.getFullPath().removeFirstSegments(1))) {
+			
+			// allow overwritting the .project file or if the override flag is set all files
+			if (overrideResponseType || PROJECT_META_DATA_PATH.equals(file.getFullPath().removeFirstSegments(1))) {
 				responseType = UPDATED;
 			}
+			
 			switch (responseType) {
 				case UPDATED:
 					if (resource.exists()) {
 						file.setContents(stream, true /*force*/, true /*keep history*/, monitor);
 						break;
 					}
+					// fall through and create a new file
 				case CREATED: // creating a new file so it should not exist locally
 					file.create(stream, false /*force*/, monitor);
 					break;
@@ -226,7 +228,6 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 					tempFile.create(stream, true /*force*/, Policy.subMonitorFor(monitor, 25));
 					file.delete(false, true, Policy.subMonitorFor(monitor, 25));
 					tempFile.move(new Path(file.getName()), true /*force*/, false /*history*/, Policy.subMonitorFor(monitor, 25));
-					monitor.done();
 					break;
 				case UPDATE_EXISTING: // creating a new file so it should exist locally
 					file.setContents(stream, true /*force*/, true /*keep history*/, monitor);
@@ -242,6 +243,8 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			}
 			if (message == null) message = e.getMessage();
 			throw CVSException.wrapException(resource, Policy.bind("EclipseFile_Problem_writing_resource", resource.getFullPath().toString(), message), e); //$NON-NLS-1$
+		} finally {
+			monitor.done();
 		}
 	}
 			

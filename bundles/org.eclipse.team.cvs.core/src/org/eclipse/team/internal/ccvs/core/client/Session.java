@@ -105,12 +105,17 @@ public class Session {
 	private String validRequests = null;
 	private Date modTime = null;
 	private boolean noLocalChanges = false;
-	private boolean createBackups = true;
+	private boolean createBackups = true;	
 	private int compressionLevel = 0;
 	private List expansions;
 	private Collection /* of ICVSFile */ textTransferOverrideSet = null;
 	private boolean hasBeenConnected = false;
 	private Map caseMappings;
+	
+	// Used as a parameter to ICVSFile.setContents to indicate if the reponse type should be ignored. This
+	// will basically allow CREATED to succeed even if a file already exists at that location. This is useful
+	// in a world where plugins/user can create files at the same time as CVS operations are being run. 
+	private boolean overrideResponseType = false;
 	
 	// state need to indicate whether 
 	private boolean ignoringLocalChanges = false;
@@ -1098,7 +1103,7 @@ public class Session {
 			if (IS_CRLF_PLATFORM) in = new LFtoCRLFInputStream(in);
 		}
 		// write the file locally
-		file.setContents(in, responseType, true, new NullProgressMonitor());
+		file.setContents(in, responseType, true, isOverrideResponseType(),  new NullProgressMonitor());
 	}
 
 	/**
@@ -1228,6 +1233,24 @@ public class Session {
 		return ignoringLocalChanges;
 	}
 	
+	/**
+	 * Used as a parameter to ICVSFile.setContents to indicate if the reponse type should be ignored. This
+ 	 * will basically allow CREATED to succeed even if a file already exists at that location. This is useful
+	 * in a world where plugins/user can create files at the same time as CVS operations are being run. 
+	 */
+	public boolean isOverrideResponseType() {
+		return overrideResponseType;
+	}
+
+	/**
+	 * Set this to <code>true</code> if the CVS operation can ignore the response type when
+	 * creating local files. If a local file exists then it will be backed up before being replaced. If
+	 * <code>false</code> then regular response type handling for file creation will be used.
+	 */
+	public void setOverrideResponseType(boolean overrideResponseType) {
+		this.overrideResponseType = overrideResponseType;
+	}
+
 	/**
 	 * Method getUniquePathForInvalidPath.
 	 * @param localDir

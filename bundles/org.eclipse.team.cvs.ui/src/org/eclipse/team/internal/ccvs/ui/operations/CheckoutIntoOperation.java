@@ -345,6 +345,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 			localOptions.add(Update.makeTagOption(tag));
 			
 			// Perform the checkout
+			session.setOverrideResponseType(true);
 			IStatus status = Command.CHECKOUT.execute(session,
 				Command.NO_GLOBAL_OPTIONS,
 				(LocalOption[])localOptions.toArray(new LocalOption[localOptions.size()]),
