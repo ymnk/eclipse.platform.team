@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.actions.BranchAction;
@@ -18,10 +17,11 @@ import org.eclipse.team.internal.ccvs.ui.actions.GenerateDiffFileAction;
 import org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction;
-import org.eclipse.team.internal.ui.synchronize.ScopableSubscriberParticipant;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
+import org.eclipse.team.ui.synchronize.ScopableSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
@@ -126,8 +126,8 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 	public WorkspaceSynchronizeParticipant() {
 	}
 	
-	public WorkspaceSynchronizeParticipant(IResource[] resources) {
-		super(resources);
+	public WorkspaceSynchronizeParticipant(ISynchronizeScope scope) {
+		super(scope);
 		setSubscriber(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
 	}
 	

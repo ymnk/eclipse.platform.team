@@ -562,14 +562,13 @@ public class Utils {
 	}
 	
 	public static String convertSelection(IResource[] resources, int numElements) {
-		StringBuffer  buffer = new StringBuffer("(");
+		StringBuffer  buffer = new StringBuffer();
 		for (int i = 0; i < resources.length && i < numElements; i++) {
 			IResource resource = resources[i];
 			if(i > 0) buffer.append(", ");
 			buffer.append(resource.getFullPath());
 		}
 		if(numElements < resources.length) buffer.append("...");
-		buffer.append(")");
 		return buffer.toString();
 	}
 }

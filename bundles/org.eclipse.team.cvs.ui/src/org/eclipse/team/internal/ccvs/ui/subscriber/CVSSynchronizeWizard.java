@@ -15,6 +15,7 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantWizard;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 
 /**
@@ -42,12 +43,16 @@ public class CVSSynchronizeWizard extends SubscriberParticipantWizard {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.SubscriberParticipantWizard#createParticipant(org.eclipse.core.resources.IResource[])
 	 */
-	protected SubscriberParticipant createParticipant(IResource[] resources) {
+	protected SubscriberParticipant createParticipant(ISynchronizeScope scope) {
 		// First check if there is an existing matching participant
-		WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)SubscriberParticipant.getMatchingParticipant(WorkspaceSynchronizeParticipant.ID, resources);	
+		IResource[] roots = scope.getRoots();
+		if (roots == null) {
+			roots = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().roots();
+		}
+		WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)SubscriberParticipant.getMatchingParticipant(WorkspaceSynchronizeParticipant.ID, roots);	
 		// If there isn't, create one and add to the manager
 		if (participant == null) {
-			return new WorkspaceSynchronizeParticipant(resources);
+			return new WorkspaceSynchronizeParticipant(scope);
 		} else {
 			return participant;
 		}

@@ -46,7 +46,7 @@ public class SyncAction extends WorkspaceAction {
 			WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)SubscriberParticipant.getMatchingParticipant(WorkspaceSynchronizeParticipant.ID, resources);
 			// If there isn't, create one and add to the manager
 			if (participant == null) {
-				participant = new WorkspaceSynchronizeParticipant(resources);
+				participant = new WorkspaceSynchronizeParticipant(new ResourceScope(resources));
 				TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 			}
 			participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$

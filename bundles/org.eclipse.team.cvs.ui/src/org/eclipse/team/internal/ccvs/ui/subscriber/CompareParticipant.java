@@ -76,7 +76,7 @@ public class CompareParticipant extends CVSParticipant implements IPropertyChang
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.Subscriber)
 	 */
 	protected void setSubscriber(Subscriber subscriber) {
-		super.setSubscriber(subscriber, null);
+		super.setSubscriber(subscriber);
 		if (CVSUIPlugin.getPlugin().getPluginPreferences().getBoolean(ICVSUIConstants.PREF_CONSIDER_CONTENTS)) {
 			setSyncInfoFilter(contentComparison);
 		}
@@ -95,7 +95,7 @@ public class CompareParticipant extends CVSParticipant implements IPropertyChang
 	 * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#getName()
 	 */
 	public String getName() {
-		return getSubscriber().getName() + " " + Utils.convertSelection(getSubscriber().roots(), 4);
+		return getSubscriber().getName() + " (" + Utils.convertSelection(getSubscriber().roots(), 4) + ")";
 	}
 	
 	/*

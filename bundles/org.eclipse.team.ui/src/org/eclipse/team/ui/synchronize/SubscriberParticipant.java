@@ -11,7 +11,6 @@
 package org.eclipse.team.ui.synchronize;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -25,7 +24,7 @@ import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoCollector;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
@@ -72,6 +71,11 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	private SubscriberRefreshSchedule refreshSchedule;
 	
 	/*
+	 * Provides the resource scope for this participant
+	 */
+	private ISynchronizeScope scope;
+	
+	/*
 	 * Key for settings in memento
 	 */
 	private static final String CTX_SUBSCRIBER_PARTICIPANT_SETTINGS = TeamUIPlugin.ID + ".TEAMSUBSRCIBERSETTINGS"; //$NON-NLS-1$
@@ -86,6 +90,16 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 */
 	public SubscriberParticipant() {
 		refreshSchedule = new SubscriberRefreshSchedule(this);
+	}
+	
+	/**
+	 * Constructor which should be called when creating a particpant whose resources
+	 * are to be scoped.
+	 * @param scope a synchronize scope
+	 */
+	public SubscriberParticipant(ISynchronizeScope scope) {
+		this();
+		this.scope = scope;
 	}
 	
 	/* (non-Javadoc)
@@ -107,16 +121,13 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		return collector.getRoots();
 	}
 	
-	/**
+	/*
 	 * Set the resources supervised by this participant. If <code>null</code>,
 	 * the participant will include all roots of its subscriber
 	 * @param roots the root resources to consider or <code>null</code>
 	 * to consider all roots of the subscriber
 	 */
-	public void setResources(IResource[] roots) {
-		if (roots != null && isSameResources(roots, getSubscriber().roots())) {
-			roots = null;
-		}
+	private void setResources(IResource[] roots) {
 		collector.setRoots(roots);
 	}
 	
@@ -157,6 +168,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		refreshSchedule.dispose();				
 		TeamUI.removePropertyChangeListener(this);
 		collector.dispose();
+		scope.dispose();
 	}
 	
 	/* (non-Javadoc)
@@ -164,12 +176,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 */
 	public String getName() {
 		String name = super.getName();
-		if (collector.isAllRootsIncluded()) {
-			return name + " (Workspace)";
-		} else {
-			IResource[] resources = collector.getRoots();
-			return name + " " + Utils.convertSelection(resources, 4);
-		}
+		return name + " (" + scope.getName() + ")";
 	}
 	
 	/**
@@ -226,7 +233,10 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	public void propertyChange(PropertyChangeEvent event) {
 		if (event.getProperty().equals(TeamUI.GLOBAL_IGNORES_CHANGED)) {
 			collector.reset();
-		}	
+		}
+		if (event.getProperty().equals(ISynchronizeScope.ROOTS)) {
+			setResources(scope.getRoots());
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -239,6 +249,8 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 			if(settings != null) {
 				SubscriberRefreshSchedule schedule = SubscriberRefreshSchedule.init(settings.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
 				setRefreshSchedule(schedule);
+				this.scope = AbstractSynchronizeScope.createScope(settings);
+				scope.addPropertyChangeListener(this);
 			}
 		}
 	}
@@ -250,6 +262,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		super.saveState(memento);
 		IMemento settings = memento.createChild(CTX_SUBSCRIBER_PARTICIPANT_SETTINGS);
 		refreshSchedule.saveState(settings.createChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS));
+		AbstractSynchronizeScope.saveScope(scope, settings);
 	}
 
 	/**
@@ -341,11 +354,11 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @param roots the root resources to be consider by this participant
 	 * (or <code>null</code> if all roots of the subscriber should be considered
 	 */
-	protected void setSubscriber(Subscriber subscriber, IResource[] roots) {
-		if (roots != null && isSameResources(roots, subscriber.roots())) {
-			roots = null;
+	protected void setSubscriber(Subscriber subscriber) {
+		if (scope == null) {
+			scope = new WorkspaceScope();
 		}
-		collector = new SubscriberSyncInfoCollector(subscriber, roots);
+		collector = new SubscriberSyncInfoCollector(subscriber, scope.getRoots());
 		
 		// listen for global ignore changes
 		TeamUI.addPropertyChangeListener(this);
@@ -389,15 +402,11 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		Utils.schedule(job, site);
 	}
 	
-	private boolean isSameResources(IResource[] resources2, IResource[] resources3) {
-		if (resources2.length != resources3.length) return false;
-		List checkList = Arrays.asList(resources2);
-		for (int i = 0; i < resources3.length; i++) {
-			IResource resource = resources3[i];
-			if (!checkList.contains(resource)) {
-				return false;
-			}
-		}
-		return true;
+	/**
+	 * Return the scope that defines the resources displayed by this participant.
+	 * @return Returns the scope.
+	 */
+	public ISynchronizeScope getScope() {
+		return scope;
 	}
 }

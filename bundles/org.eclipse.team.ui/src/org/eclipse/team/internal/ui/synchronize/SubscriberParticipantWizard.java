@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.ui.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 
 /**
@@ -51,7 +52,7 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 	public boolean performFinish() {
 		IResource[] resources = selectionPage.getRootResources();
 		if(resources != null && resources.length > 0) {
-			SubscriberParticipant participant = createParticipant(resources);
+			SubscriberParticipant participant = createParticipant(selectionPage.getSynchronizeScope());
 			TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 			// We don't know in which site to show progress because a participant could actually be shown in multiple sites.
 			participant.run(null /* no site */);
@@ -61,7 +62,7 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 
 	protected abstract IResource[] getRootResources();
 	
-	protected abstract SubscriberParticipant createParticipant(IResource[] resources);
+	protected abstract SubscriberParticipant createParticipant(ISynchronizeScope scope);
 
 	protected abstract String getName();
 }

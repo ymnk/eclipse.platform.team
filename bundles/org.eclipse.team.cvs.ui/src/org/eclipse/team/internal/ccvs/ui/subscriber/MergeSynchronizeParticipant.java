@@ -111,7 +111,7 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	 * @see org.eclipse.team.ui.sync.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
 	 */
 	public  void setSubscriber(Subscriber subscriber) {
-		super.setSubscriber(subscriber, null);
+		super.setSubscriber(subscriber);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(CVSMergeSubscriber.ID); 
 			setInitializationData(descriptor);
@@ -167,7 +167,7 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#getName()
 	 */
 	public String getName() {		
-		return ((CVSMergeSubscriber)getSubscriber()).getName() + " " + Utils.convertSelection(getSubscriber().roots(), 4); //$NON-NLS-1$
+		return ((CVSMergeSubscriber)getSubscriber()).getName() + " (" + Utils.convertSelection(getSubscriber().roots(), 4) + ")"; //$NON-NLS-1$
 	}
 	
 	/*
