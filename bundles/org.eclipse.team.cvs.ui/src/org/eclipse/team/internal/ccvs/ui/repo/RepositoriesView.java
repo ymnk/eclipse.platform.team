@@ -32,7 +32,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -89,16 +88,10 @@ public class RepositoriesView extends ViewPart {
 		public void repositoryRemoved(ICVSRepositoryLocation root) {
 			refresh();
 		}
-		public void branchTagsAdded(CVSTag[] tags, final ICVSRepositoryLocation root) {
+		public void repositoryChanged(ICVSRepositoryLocation root) {
 			refresh();
 		}
-		public void branchTagsRemoved(CVSTag[] tags, final ICVSRepositoryLocation root) {
-			refresh();
-		}
-		public void versionTagsAdded(CVSTag[] tags, final ICVSRepositoryLocation root) {
-			refresh();
-		}
-		public void versionTagsRemoved(CVSTag[] tags, final ICVSRepositoryLocation root) {
+		public void workingSetChanged(CVSWorkingSet set) {
 			refresh();
 		}
 		private void refresh() {

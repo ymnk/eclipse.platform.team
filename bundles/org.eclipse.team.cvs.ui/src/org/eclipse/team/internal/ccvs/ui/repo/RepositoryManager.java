@@ -208,7 +208,7 @@ public class RepositoryManager {
 		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		root.refreshDefinedTags(remotePath, replace, monitor);
 		if (notify)
-			broadcastChange(root);
+			broadcastRepositoryChange(root);
 	}
 	
 	public void addBranchTags(ICVSRepositoryLocation location, CVSTag[] tags) {
@@ -233,7 +233,7 @@ public class RepositoryManager {
 	public void rootRemoved(ICVSRepositoryLocation root) {
 		RepositoryRoot repoRoot = (RepositoryRoot)repositoryRoots.remove(root.getLocation());
 		if (root != null)
-			broadcastChange(repoRoot);
+			broadcastRepositoryChange(repoRoot);
 	}
 	
 	/**
@@ -246,6 +246,7 @@ public class RepositoryManager {
 		// XXX could be a file or folder
 		String remotePath = RepositoryRoot.getRemotePathFor(resource);
 		root.addTags(remotePath, tags);
+		broadcastRepositoryChange(root);
 	}
 	
 	public void addAutoRefreshFiles(ICVSFolder project, String[] relativeFilePaths) throws CVSException {
@@ -288,6 +289,7 @@ public class RepositoryManager {
 		RepositoryRoot root = getRepositoryRootFor(project);
 		String remotePath = RepositoryRoot.getRemotePathFor(project);
 		root.removeTags(remotePath, tags);
+		broadcastRepositoryChange(root);
 	}
 	
 	public void startup() throws TeamException {
@@ -425,15 +427,9 @@ public class RepositoryManager {
 					for (int k = 0; k < numTags; k++) {
 						tagSet.add(new CVSTag(dis.readUTF(), CVSTag.VERSION));
 					}
-					repoRoot.addTags(name, (CVSTag[]) tagSet.toArray(new CVSTag[tagSet.size()]));
-					Iterator it = listeners.iterator();
-					while (it.hasNext()) {
-						IRepositoryListener listener = (IRepositoryListener)it.next();
-						listener.versionTagsAdded((CVSTag[])tagSet.toArray(new CVSTag[0]), root);
-					}
-					
+					CVSTag[] tags = (CVSTag[]) tagSet.toArray(new CVSTag[tagSet.size()]);
+					repoRoot.addTags(name, tags);
 				}
-				
 			}
 			// read the auto refresh filenames for this project
 			if (version1) {
@@ -454,6 +450,7 @@ public class RepositoryManager {
 					// auto refresh files are not persisted, continue and save them next time.
 				}
 			}
+			broadcastRepositoryChange(repoRoot);
 		}
 	}
 	
@@ -658,16 +655,25 @@ public class RepositoryManager {
 	 * 
 	 * @param currentRepositoryRoot
 	 */
-	public void add(RepositoryRoot currentRepositoryRoot) {
-		repositoryRoots.put(currentRepositoryRoot.getRoot().getLocation(), currentRepositoryRoot);
+	public void add(RepositoryRoot root) {
+		repositoryRoots.put(root.getRoot().getLocation(), root);
+		broadcastRepositoryChange(root);
 	}
 	
-	/*
-	 * Broadcast the change to the given repository configuration to all listeners
-	 * @param root
-	 */
-	private void broadcastChange(RepositoryRoot root) {
-		// XXX todo
+	private void broadcastRepositoryChange(RepositoryRoot root) {
+		Iterator it = listeners.iterator();
+		while (it.hasNext()) {
+			IRepositoryListener listener = (IRepositoryListener)it.next();
+			listener.repositoryChanged(root.getRoot());
+		}
+	}
+	
+	private void broadcastWorkingSetChange(CVSWorkingSet set) {
+		Iterator it = listeners.iterator();
+		while (it.hasNext()) {
+			IRepositoryListener listener = (IRepositoryListener)it.next();
+			listener.workingSetChanged(set);
+		}
 	}
 	
 	/**
@@ -693,6 +699,7 @@ public class RepositoryManager {
 	public void addWorkingSet(CVSWorkingSet set) {
 		workingSets.put(set.getName(), set);
 		setCurrentWorkingSet(set.getName());
+		broadcastWorkingSetChange(set);
 	}
 	
 	/**
@@ -703,6 +710,7 @@ public class RepositoryManager {
 		workingSets.remove(set.getName());
 		if (currentWorkingSet == set)
 			currentWorkingSet = null;
+		broadcastWorkingSetChange(set);
 	}
 	
 	/**
@@ -726,6 +734,7 @@ public class RepositoryManager {
 	 */
 	public void setCurrentWorkingSet(CVSWorkingSet currentWorkingSet) {
 		this.currentWorkingSet = currentWorkingSet;
+		broadcastWorkingSetChange(currentWorkingSet);
 	}
 	
 	/**
