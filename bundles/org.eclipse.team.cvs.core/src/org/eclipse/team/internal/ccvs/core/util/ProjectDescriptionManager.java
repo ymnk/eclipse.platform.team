@@ -13,6 +13,7 @@ import java.io.InputStream;
 
 import org.apache.xerces.parsers.SAXParser;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
@@ -45,8 +46,11 @@ import org.xml.sax.SAXException;
 public class ProjectDescriptionManager {
 
 	public final static IPath PROJECT_DESCRIPTION_PATH = new Path(".vcm_meta"); //$NON-NLS-1$
+	public final static IPath CORE_PROJECT_DESCRIPTION_PATH = new Path(".project"); //$NON-NLS-1$
 	public final static boolean UPDATE_PROJECT_DESCRIPTION_ON_LOAD = true;
 
+	public static final String VCMMETA_MARKER = "org.eclipse.team.cvs.core.vcmmeta";
+	
 	/*
 	 * Read the project meta file into the provider description
 	 */
@@ -141,7 +145,7 @@ public class ProjectDescriptionManager {
 					is.close();
 				}
 				try {
-					project.setDescription(desc, progress);
+					project.setDescription(desc, IResource.FORCE | IResource.KEEP_HISTORY, progress);
 				} catch (CoreException ex) {
 					// Failing to set the description is probably due to a missing nature
 					// Other natures are still set
@@ -156,6 +160,10 @@ public class ProjectDescriptionManager {
 						// Other natures are still set
 						Util.logError(Policy.bind("ProjectDescriptionManager.unableToSetDescription"), ex); //$NON-NLS-1$
 					}
+				}
+				// Mark the .vcm_meta file with a problem marker
+				if (project.getFile(CORE_PROJECT_DESCRIPTION_PATH).exists()) {
+					createVCMMetaMarker(descResource);
 				}
 			} catch(TeamException ex) {
 				Util.logError(Policy.bind("ProjectDescriptionManager.unableToReadDescription"), ex); //$NON-NLS-1$
@@ -178,7 +186,9 @@ public class ProjectDescriptionManager {
 	public static void writeProjectDescriptionIfNecessary(CVSTeamProvider provider, IResource resource, IProgressMonitor monitor) throws CVSException {
 		if (resource.getType() == IResource.PROJECT || isProjectDescription(resource)) {
 			IProject project = resource.getProject();
-			writeProjectDescription(project, monitor);
+			if (project.getFile(PROJECT_DESCRIPTION_PATH).exists() /* || ! project.getFile(CORE_PROJECT_DESCRIPTION_PATH).exists() */) {
+				writeProjectDescription(project, monitor);
+			}
 		}
 	}
 
@@ -232,5 +242,20 @@ public class ProjectDescriptionManager {
 			}
 		};
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(changeListener, IResourceChangeEvent.PRE_AUTO_BUILD);
+	}
+	
+	protected static IMarker createVCMMetaMarker(IResource resource) {
+		try {
+			IMarker[] markers = resource.findMarkers(VCMMETA_MARKER, false, IResource.DEPTH_ZERO);
+   			if (markers.length == 1) {
+   				return markers[0];
+   			}
+			IMarker marker = resource.createMarker(VCMMETA_MARKER);
+			marker.setAttribute(IMarker.MESSAGE, resource.getName() + " file exists in " + resource.getProject().getName() + " but is no longer required and can be deleted");
+			return marker;
+		} catch (CoreException e) {
+			Util.logError("Error creating deletion marker", e);
+		}
+		return null;
 	}
 }
