@@ -144,6 +144,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		viewer.getControl().setRedraw(false);
 		resourceMap.clear();
 		clearModelObjects(getRoot(), viewer);
+		removeAllFromTree();
 		buildTree(getRoot());
 		viewer.refresh();
 		if(viewer instanceof INavigatable) {

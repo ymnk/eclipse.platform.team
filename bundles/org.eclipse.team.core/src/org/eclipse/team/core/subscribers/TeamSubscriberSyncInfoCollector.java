@@ -105,6 +105,7 @@ public final class TeamSubscriberSyncInfoCollector implements IResourceChangeLis
 	public void reset(IProgressMonitor monitor) throws TeamException {
 		monitor.beginTask(null, 100);
 		set.reset(Policy.subMonitorFor(monitor, 100));
+		// TODO: This is a problem
 		eventHandler.initialize(getRoots());
 		monitor.done();
 	}
