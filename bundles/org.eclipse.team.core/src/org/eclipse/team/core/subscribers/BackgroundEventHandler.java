@@ -176,6 +176,7 @@ public abstract class BackgroundEventHandler {
 	}
 	
 	/**
+	 * Returns whether the handle has been shutdown.
 	 * @return Returns whether the handle has been shutdown.
 	 */
 	public boolean isShutdown() {
@@ -197,7 +198,9 @@ public abstract class BackgroundEventHandler {
 				if(eventHandlerJob.getState() == Job.NONE) {
 					schedule();
 				} else {
-					notify();
+					synchronized(this) {
+						notify();
+					}
 				}
 			}
 		}
@@ -239,6 +242,12 @@ public abstract class BackgroundEventHandler {
 	 * directly check for or handle cancelation of the provided monitor. However,
 	 * it does invoke <code>processEvent(Event)</code> which may check for and handle
 	 * cancelation by shuting down the receiver.
+	 * <p>
+	 * The <code>isReadyForDispatch()</code> method is used in conjuntion
+	 * with the <code>dispatchEvents(IProgressMonitor)</code> to allow
+	 * the output of the event handler to be batched in order to avoid
+	 * fine grained UI updating.
+	 * @param monitor a progress monitor
 	 */
 	protected IStatus processEvents(IProgressMonitor monitor) {
 		errors.clear();
@@ -275,6 +284,7 @@ public abstract class BackgroundEventHandler {
 
 	/**
 	 * Notify clients of processed events.
+	 * @param monitor a progress monitor
 	 */
 	protected abstract void dispatchEvents(IProgressMonitor monitor) throws TeamException;
 
@@ -324,7 +334,7 @@ public abstract class BackgroundEventHandler {
 	 * events. If this is the case, the handler should accumulate these events in the 
 	 * <code>proceessEvent</code> method and propogate them from the <code>dispatchEvent</code>
 	 * method which is invoked periodically in order to batch outgoing events and avoid
-	 * the UI "disco ball" effect.
+	 * the UI becoming too jumpy.
 	 * 
 	 * @param event the <code>Event</code> to be processed
 	 * @param monitor a progress monitor
