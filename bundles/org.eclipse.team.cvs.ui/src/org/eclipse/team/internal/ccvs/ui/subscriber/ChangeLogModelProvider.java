@@ -13,7 +13,8 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.compare.structuremergeviewer.DiffNode;
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
@@ -82,10 +83,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	private Map rootToProvider = new HashMap(); // Maps ISynchronizeModelElement -> AbstractSynchronizeModelProvider
 	
 	// Constants for persisting sorting options
-	private final static String SORT_ORDER_GROUP = "changelog_sort"; //$NON-NLS-1$
 	private final static String COMMIT_SET_GROUP = "commit_set"; //$NON-NLS-1$
 	private static final String P_LAST_COMMENTSORT = TeamUIPlugin.ID + ".P_LAST_COMMENT_SORT"; //$NON-NLS-1$
-	private static final String P_LAST_RESOURCESORT = TeamUIPlugin.ID + ".P_LAST_RESOURCE_SORT"; //$NON-NLS-1$
 	
     public static final AndSyncInfoFilter OUTGOING_FILE_FILTER = new AndSyncInfoFilter(new FastSyncInfoFilter[] {
             new FastSyncInfoFilter() {
@@ -101,13 +100,9 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 */
 	private class ToggleSortOrderAction extends Action {
 		private int criteria;
-		private int sortType;
-		public final static int RESOURCE_NAME = 1;
-		public final static int COMMENT = 2;
-		protected ToggleSortOrderAction(String name, int criteria, int sortType, int defaultCriteria) {
+		protected ToggleSortOrderAction(String name, int criteria, int defaultCriteria) {
 			super(name, Action.AS_RADIO_BUTTON);
 			this.criteria = criteria;
-			this.sortType = sortType;
 			setChecked(criteria == defaultCriteria);		
 		}
 
@@ -116,8 +111,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 			if (viewer != null && !viewer.getControl().isDisposed()) {
 				ChangeLogModelSorter sorter = (ChangeLogModelSorter) viewer.getSorter();
 				if (isChecked() && sorter != null && getCriteria(sorter) != criteria) {
-					viewer.setSorter(createSorter(sorter));
-					String key = sortType == RESOURCE_NAME ? P_LAST_RESOURCESORT : P_LAST_COMMENTSORT;
+					viewer.setSorter(createSorter());
+					String key = getSettingsKey();
 					IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
 					if(pageSettings != null) {
 						pageSettings.put(key, criteria);
@@ -137,19 +132,16 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 			}	
 		}
 		
-		protected ChangeLogModelSorter createSorter(ChangeLogModelSorter sorter) {
-			if(sortType == COMMENT) {
-				return new ChangeLogModelSorter(criteria, sorter.getResourceCriteria());
-			}	else {
-				return new ChangeLogModelSorter(sorter.getCommentCriteria(), criteria);
-			}
+		protected ChangeLogModelSorter createSorter() {
+			return new ChangeLogModelSorter(ChangeLogModelProvider.this, criteria);
 		}
 		
 		protected int getCriteria(ChangeLogModelSorter sorter) {
-			if(sortType == COMMENT)
-				return sorter.getCommentCriteria();
-			else
-				return sorter.getResourceCriteria();
+			return sorter.getCommentCriteria();
+		}
+		
+		protected String getSettingsKey() {
+		    return P_LAST_COMMENTSORT;
 		}
 	}
 
@@ -293,7 +285,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 */
 	public class ChangeLogActionGroup extends SynchronizePageActionGroup {
 		private MenuManager sortByComment;
-		private MenuManager sortByResource;
 		private CreateCommitSetAction createCommitSet;
 		private MenuManager addToCommitSet;
         private EditCommitSetAction editCommitSet;
@@ -301,7 +292,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
 			sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0"));	 //$NON-NLS-1$
-			sortByResource = new MenuManager(Policy.bind("ChangeLogModelProvider.6"));	 //$NON-NLS-1$
 			addToCommitSet = new MenuManager("Add &To");
 			addToCommitSet.setRemoveAllWhenShown(true);
 			addToCommitSet.addMenuListener(new IMenuListener() {
@@ -317,12 +307,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 			
 			appendToGroup(
 					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					SORT_ORDER_GROUP, 
+					ISynchronizePageConfiguration.SORT_GROUP, 
 					sortByComment);
-			appendToGroup(
-					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-					SORT_ORDER_GROUP, 
-					sortByResource);
 			appendToGroup(
 					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 					COMMIT_SET_GROUP, 
@@ -338,13 +324,9 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 			
 			ChangeLogModelSorter sorter = (ChangeLogModelSorter)getViewerSorter();
 			
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1"), ChangeLogModelSorter.COMMENT, ToggleSortOrderAction.COMMENT, sorter.getCommentCriteria())); //$NON-NLS-1$
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2"), ChangeLogModelSorter.DATE, ToggleSortOrderAction.COMMENT, sorter.getCommentCriteria())); //$NON-NLS-1$
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3"), ChangeLogModelSorter.USER, ToggleSortOrderAction.COMMENT, sorter.getCommentCriteria())); //$NON-NLS-1$
-
-			sortByResource.add( new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.8"), ChangeLogModelSorter.PATH, ToggleSortOrderAction.RESOURCE_NAME, sorter.getResourceCriteria())); //$NON-NLS-1$
-			sortByResource.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.7"), ChangeLogModelSorter.NAME, ToggleSortOrderAction.RESOURCE_NAME, sorter.getResourceCriteria())); //$NON-NLS-1$
-			sortByResource.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.9"), ChangeLogModelSorter.PARENT_NAME, ToggleSortOrderAction.RESOURCE_NAME, sorter.getResourceCriteria())); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1"), ChangeLogModelSorter.COMMENT, sorter.getCommentCriteria())); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2"), ChangeLogModelSorter.DATE, sorter.getCommentCriteria())); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3"), ChangeLogModelSorter.USER, sorter.getCommentCriteria())); //$NON-NLS-1$
 		}
 		
         protected void addCommitSets(IMenuManager manager) {
@@ -365,10 +347,8 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		 */
 		public void dispose() {
 			sortByComment.dispose();
-			sortByResource.dispose();
 			addToCommitSet.dispose();
 			sortByComment.removeAll();
-			sortByResource.removeAll();
 			addToCommitSet.removeAll();
 			super.dispose();
 		}
@@ -459,7 +439,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		this.tag1 = tag1;
 		this.tag2 = tag2;
         this.id = id;
-		configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, SORT_ORDER_GROUP);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, COMMIT_SET_GROUP);
 		this.sortGroup = new ChangeLogActionGroup();
 		configuration.addActionContribution(sortGroup);
@@ -924,17 +903,15 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 */
 	public ViewerSorter getViewerSorter() {
 		int commentSort = ChangeLogModelSorter.DATE;
-		int resourceSort = ChangeLogModelSorter.PATH;
 		try {
 			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
 			if(pageSettings != null) {
 				commentSort = pageSettings.getInt(P_LAST_COMMENTSORT);
-				resourceSort = pageSettings.getInt(P_LAST_RESOURCESORT);
 			}
 		} catch(NumberFormatException e) {
 			// ignore and use the defaults.
 		}
-		return new ChangeLogModelSorter(commentSort, resourceSort);
+		return new ChangeLogModelSorter(this, commentSort);
 	}
 
 	/* (non-Javadoc)
@@ -1074,5 +1051,21 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
         if (node == getModelRoot()) {
             rootToProvider.clear();
         }
+    }
+
+    /**
+     * Return the id of the sub-provider used by the commit set provider.
+     * @return the id of the sub-provider used by the commit set provider
+     */
+    public String getSubproviderId() {
+        return id;
+    }
+
+    /**
+     * Return the sorter associated with the sub-provider being used.
+     * @return the sorter associated with the sub-provider being used
+     */
+    public ViewerSorter getEmbeddedSorter() {
+        return embeddedSorter;
     }
 }

@@ -306,11 +306,11 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      */
 	protected ISynchronizeModelProvider createModelProvider(ISynchronizeModelElement parent, String id) {
 		if (id.endsWith(FlatModelProvider.FlatModelProviderDescriptor.ID)) {
-		    return new FlatModelProvider(getConfiguration(), getSyncInfoSet());
+		    return new FlatModelProvider(this, parent, getConfiguration(), new SyncInfoTree());
 		} else if(id.endsWith(CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID)) {
-			return new CompressedFoldersModelProvider(this, parent, getConfiguration(), getSyncInfoSet());
+			return new CompressedFoldersModelProvider(this, parent, getConfiguration(), new SyncInfoTree());
 		} else {
-			return new HierarchicalModelProvider(this, parent, getConfiguration(), getSyncInfoSet());
+			return new HierarchicalModelProvider(this, parent, getConfiguration(), new SyncInfoTree());
 		}
 	}
 }

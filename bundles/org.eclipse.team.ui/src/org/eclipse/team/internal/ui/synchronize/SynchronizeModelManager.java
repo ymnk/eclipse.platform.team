@@ -19,9 +19,9 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 import org.eclipse.ui.IActionBars;
@@ -53,19 +53,13 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 		}
 
 		public void run() {
-			ISynchronizeModelProvider mp = getActiveModelProvider();
-			if (!mp.getDescriptor().getId().equals(descriptor.getId())) {
-				mp.saveState();
-				internalPrepareInput(descriptor.getId(), null);
-				setInput();
+			if (!getSelectedProviderId().equals(descriptor.getId())) {
+				setInput(descriptor.getId(), null);
 			}
 		}
 		
 		public void update() {
-			ISynchronizeModelProvider mp = getActiveModelProvider();
-			if(mp != null) {
-				setChecked(mp.getDescriptor().getId().equals(descriptor.getId()));
-			}
+			setChecked(getSelectedProviderId().equals(descriptor.getId()));
 		}
 
 		/* (non-Javadoc)
@@ -105,12 +99,55 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 	 */
 	protected abstract ISynchronizeModelProvider createModelProvider(String id);
 	
+	/**
+	 * Return the provider that is currently active.
+	 * @return the provider that is currently active
+	 */
 	protected ISynchronizeModelProvider getActiveModelProvider() {
 		return modelProvider;
 	}
 	
-	protected Object internalPrepareInput(String id, IProgressMonitor monitor) {
+	/**
+	 * Return the default provider Id to be used if there is no explicit selection.
+     * @return the default provider Id 
+     */
+    protected String getDefaultProviderId() {
+        if (getShowCompressedFolders()) {
+        	return CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID;
+        } else {
+        	return HierarchicalModelProvider.HierarchicalModelProviderDescriptor.ID;
+        }
+    }
+    
+	private boolean getShowCompressedFolders() {
+		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
+	}
+	
+	/**
+	 * Return the id of the selected provider. By default, this is the 
+	 * id of the active provider. However, subclasses that use a composite
+	 * may return an id that differs from that of the active provider
+	 * and return an id of a sub-provider instead.
+	 * @return the id of the selected provider
+	 */
+	protected String getSelectedProviderId() {
+	    ISynchronizeModelProvider provider = getActiveModelProvider();
+	    if (provider != null) {
+	        return provider.getDescriptor().getId();
+	    }
+	    return getDefaultProviderId();
+	}
+	
+	/**
+	 * Replace the active provider with a provider for the given id.
+	 * The new provider is created and initialized and assigned
+	 * as the input of the viewer.
+	 * @param id the id used to consfigure the new model provider
+	 * @param monitor a progress monitor
+	 */
+	protected void setInput(String id, IProgressMonitor monitor) {
 		if(modelProvider != null) {
+		    modelProvider.saveState();
 			modelProvider.dispose();
 		}
 		modelProvider = createModelProvider(id);		
@@ -118,7 +155,17 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 		if(pageSettings != null) {
 			pageSettings.put(P_LAST_PROVIDER, modelProvider.getDescriptor().getId());
 		}
-		return modelProvider.prepareInput(monitor);
+		modelProvider.prepareInput(monitor);
+		setInput();
+	}
+	
+	/**
+	 * Set the input of the viewer to the root model element.
+	 */
+	protected void setInput() {
+		configuration.setProperty(SynchronizePageConfiguration.P_MODEL, modelProvider.getModelRoot());
+		if(advisor != null)
+			advisor.setInput(modelProvider);
 	}
 	
 	/**
@@ -165,23 +212,15 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 		// The input may of been set already. In that case, don't change it and
 		// simply assign it to the view.
 		if(modelProvider == null) {
-			String defaultProviderId = null; /* use providers prefered */
+			String defaultProviderId = getDefaultProviderId(); /* use providers prefered */
 			IDialogSettings pageSettings = configuration.getSite().getPageSettings();
 			if(pageSettings != null) {
 				defaultProviderId = pageSettings.get(P_LAST_PROVIDER); 
 			}
-			internalPrepareInput(defaultProviderId, null);
+			setInput(defaultProviderId, null);
+		} else {
+		    setInput();
 		}
-		setInput();
-	}
-	
-	/**
-	 * Set the input of the viewer
-	 */
-	protected void setInput() {
-		configuration.setProperty(SynchronizePageConfiguration.P_MODEL, modelProvider.getModelRoot());
-		if(advisor != null)
-			advisor.setInput(modelProvider);
 	}
 	
 	/* (non-Javadoc)
@@ -225,9 +264,18 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 	}
 	
 	/**
-	 * @return Returns the configuration.
+	 * Returns the configuration
+	 * @return the configuration.
 	 */
 	public ISynchronizePageConfiguration getConfiguration() {
 		return configuration;
+	}
+	
+	/**
+	 * Return the sync info set that is contained in the configuration.
+	 * @return the sync info set that is contained in the configuration
+	 */
+    protected SyncInfoSet getSyncInfoSet() {
+		return (SyncInfoSet)getConfiguration().getProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET);
 	}
 }

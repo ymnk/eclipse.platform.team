@@ -59,7 +59,7 @@ public class HierarchicalModelProvider extends SynchronizeModelProvider {
 	 * 
 	 * @param set the sync set used as the basis for the model created by this input.
 	 */
-	public HierarchicalModelProvider(ISynchronizePageConfiguration configuration, SyncInfoTree set) {
+	public HierarchicalModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
 		super(configuration, set);
 	}
 

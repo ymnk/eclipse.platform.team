@@ -437,8 +437,11 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 			if (element instanceof ISynchronizeModelElement) {
 			    ISynchronizeModelElement sme = (ISynchronizeModelElement) element;
                 AbstractSynchronizeModelProvider provider = getProvider(sme);
-                if (provider != null)
+                if (provider != null) {
                     provider.clearModelObjects(sme);
+                } else {
+                    clearModelObjects(sme);
+                }
 			}
 		}
 		IDiffContainer parent = node.getParent();

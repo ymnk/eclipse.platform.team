@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 /**
@@ -20,9 +17,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
  */
 public class HierarchicalModelManager extends SynchronizeModelManager {
 	
-	/**
-	 * @param configuration
-	 */
 	public HierarchicalModelManager(ISynchronizePageConfiguration configuration) {
 		super(configuration);
 	}
@@ -42,11 +36,7 @@ public class HierarchicalModelManager extends SynchronizeModelManager {
 	 */
 	protected ISynchronizeModelProvider createModelProvider(String id) {
 		if(id == null) {
-			if (getShowCompressedFolders()) {
-				id = CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID;
-			} else {
-				id = HierarchicalModelProvider.HierarchicalModelProviderDescriptor.ID;
-			}
+			id = getDefaultProviderId();
 		}
 		if (id.endsWith(FlatModelProvider.FlatModelProviderDescriptor.ID)) {
 		    return new FlatModelProvider(getConfiguration(), getSyncInfoSet());
@@ -55,18 +45,5 @@ public class HierarchicalModelManager extends SynchronizeModelManager {
 		} else {
 			return new HierarchicalModelProvider(getConfiguration(), getSyncInfoSet());
 		}
-	}
-
-	protected SyncInfoTree getSyncInfoSet() {
-		return (SyncInfoTree)getConfiguration().getProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET);
-	}
-	
-	/**
-	 * Return the state of the compressed folder setting.
-	 * 
-	 * @return the state of the compressed folder setting.
-	 */
-	private boolean getShowCompressedFolders() {
-		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
 	}
 }

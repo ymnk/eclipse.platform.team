@@ -84,7 +84,7 @@ public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
 	}
 	private static final CompressedFolderModelProviderDescriptor compressedDescriptor = new CompressedFolderModelProviderDescriptor();
 	
-	public CompressedFoldersModelProvider(ISynchronizePageConfiguration configuration, SyncInfoTree set) {
+	public CompressedFoldersModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
 		super(configuration, set);
 	}
 	

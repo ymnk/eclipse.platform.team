@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
+import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 
 /**
  * Sorter for the change log model provider. 
@@ -22,22 +23,16 @@ import org.eclipse.team.internal.ccvs.core.ILogEntry;
 public class ChangeLogModelSorter extends ViewerSorter {
 	
 	private int commentCriteria;
-	private int resourceCriteria;
+	private ChangeLogModelProvider provider;
 	
 	// Comment sorting options
 	public final static int DATE = 1;
 	public final static int COMMENT = 2;
 	public final static int USER = 3;
 	
-	// Resource sorting options
-	public final static int NAME = 1;
-	public final static int PATH = 2;
-	public final static int PARENT_NAME = 3;
-	
-	public ChangeLogModelSorter(int commentCriteria, int resourceCriteria) {
-		super();
+	public ChangeLogModelSorter(ChangeLogModelProvider provider, int commentCriteria) {
+		this.provider = provider;
 		this.commentCriteria = commentCriteria;
-		this.resourceCriteria = resourceCriteria;
 	}
 	
 	protected int classComparison(Object element) {
@@ -84,30 +79,28 @@ public class ChangeLogModelSorter extends ViewerSorter {
 			else
 				return 0;
 		}
+		
+		if (o1 instanceof CommitSetDiffNode)
+			return 1;
+		else if (o2 instanceof CommitSetDiffNode)
+			return -1;
+		
+		if (o1 instanceof ChangeLogDiffNode)
+			return 1;
+		else if (o2 instanceof ChangeLogDiffNode)
+			return -1;
 
-//		if (o1 instanceof ChangeLogModelProvider.FullPathSyncInfoElement && o2 instanceof ChangeLogModelProvider.FullPathSyncInfoElement) {
-//			IResource r1 = ((ISynchronizeModelElement)o1).getResource();
-//			IResource r2 = ((ISynchronizeModelElement)o2).getResource();
-//			if(resourceCriteria == NAME) 
-//				return compareNames(r1.getName(), r2.getName());
-//			else if(resourceCriteria == PATH)
-//				return compareNames(r1.getFullPath().toString(), r2.getFullPath().toString());
-//			else if(resourceCriteria == PARENT_NAME)
-//				return compareNames(r1.getParent().getName(), r2.getParent().getName());
-//			else return 0;
-//		} else if (o1 instanceof ISynchronizeModelElement)
-//			return 1;
-//		else if (o2 instanceof ISynchronizeModelElement)
-//			return -1;
+		if (o1 instanceof ISynchronizeModelElement && o2 instanceof ISynchronizeModelElement) {
+			return provider.getEmbeddedSorter().compare(viewer, o1, o2);
+		} else if (o1 instanceof ISynchronizeModelElement)
+			return 1;
+		else if (o2 instanceof ISynchronizeModelElement)
+			return -1;
 		
 		return 0;
 	}
 
 	public int getCommentCriteria() {
 		return commentCriteria;
-	}
-
-	public int getResourceCriteria() {
-		return resourceCriteria;
 	}
 }

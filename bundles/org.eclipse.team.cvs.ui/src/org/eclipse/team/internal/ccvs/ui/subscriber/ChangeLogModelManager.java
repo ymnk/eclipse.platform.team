@@ -36,10 +36,14 @@ public class ChangeLogModelManager extends HierarchicalModelManager implements I
 	private class ToggleCommitSetAction extends Action {
         public ToggleCommitSetAction() {
             super("Show Commit Sets", CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CHANGELOG));
-            setChecked(enabled);
+            update();
         }
         public void run() {
             enabled = !enabled;
+            update();
+            setInput(getSelectedProviderId(), null);
+        }
+        private void update() {
             setChecked(enabled);
         }
 	}
@@ -87,6 +91,18 @@ public class ChangeLogModelManager extends HierarchicalModelManager implements I
 	        return super.createModelProvider(id);
 	    }
 	}
+	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelManager#getSelectedProviderId()
+     */
+    protected String getSelectedProviderId() {
+        String id = super.getSelectedProviderId();
+        if (id.equals(ChangeLogModelProvider.ChangeLogModelProviderDescriptor.ID)) {
+            return ((ChangeLogModelProvider)getActiveModelProvider()).getSubproviderId();
+        } else {
+            return id;
+        }
+    }
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)

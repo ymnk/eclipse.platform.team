@@ -376,6 +376,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
     }
     
     public void dispose() {
+        shutdown();
         ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
         provider.getSyncInfoSet().removeSyncSetChangedListener(this);
     }
