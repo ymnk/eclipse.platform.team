@@ -23,6 +23,7 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 
@@ -39,10 +40,10 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * model then update the viewer. In effect mediating between the sync set
  * changes and the model shown to the user. This happens in the ui thread.
  * </p>
- * 
+ * NOT ON DEMAND - model is created then maintained!
  * @since 3.0
  */
-public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInfoSetChangeListener {
+public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListener, DiffNodeController {
 
 	// During updates we keep track of the parent elements that need their
 	// labels updated. This is required to support displaying information in a 
@@ -60,6 +61,10 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	// Flasg to indicate if tree control should be updated while
 	// building the model.
 	private boolean refreshViewer;
+	
+	private SyncInfoDiffNode root;
+	
+	private SyncInfoTree set;
 
 	/**
 	 * Create an input based on the provide sync set. The input is not initialized
@@ -67,8 +72,10 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * 
 	 * @param set the sync set used as the basis for the model created by this input.
 	 */
-	public SyncInfoSetViewerInput(SyncInfoTree set) {
-		super(null /* no parent */, set, ResourcesPlugin.getWorkspace().getRoot());
+	public DiffNodeControllerHierarchical(SyncInfoTree set) {
+		Assert.isNotNull(set);
+		this.root = new SyncInfoDiffNode(null, set, ResourcesPlugin.getWorkspace().getRoot());
+		this.set = set;
 	}
 
 	/**
@@ -115,15 +122,16 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	/**
 	 * Builds the viewer model based on the contents of the sync set.
 	 */
-	public void prepareInput(IProgressMonitor monitor) {
+	public DiffNode prepareInput(IProgressMonitor monitor) {
 		try {
 			// Connect to the sync set which will register us as a listener and give us a reset event
 			// in a background thread
 			getSyncInfoTree().connect(this, monitor);
+			return getRoot();
 		} catch (CoreException e) {
-			// Shouldn't happen
 			TeamPlugin.log(e);
 		}
+		return null;
 	}
 	
 	/**
@@ -189,7 +197,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			if (resource == null) {
 				resource = ResourcesPlugin.getWorkspace().getRoot();
 			}
-			IResource[] children = parentNode.getSyncInfoTree().members(resource);
+			IResource[] children = getSyncInfoTree().members(resource);
 			SyncInfoDiffNode[] nodes = new SyncInfoDiffNode[children.length];
 			for (int i = 0; i < children.length; i++) {
 				nodes[i] = createModelObject(parentNode, children[i]);
@@ -200,8 +208,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	}
 
 	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
-		SyncInfoTree set = parent instanceof SyncInfoDiffNode ? ((SyncInfoDiffNode) parent).getSyncInfoTree() : getSyncInfoTree();
-		SyncInfoDiffNode node = new SyncInfoDiffNode(parent, set, resource);
+		SyncInfoDiffNode node = new SyncInfoDiffNode(parent, getSyncInfoTree(), resource);
 		addToViewer(node);
 		return node;
 	}
@@ -246,7 +253,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 		return result;
 	}
 
-	protected void associateDiffNode(IResource childResource, SyncInfoDiffNode childNode) {
+	protected void associateDiffNode(IResource childResource, DiffNode childNode) {
 		resourceMap.put(childResource, childNode);
 	}
 
@@ -351,14 +358,14 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 		try {
 			refreshViewer = false;
 			resourceMap.clear();
-			clearModelObjects(this);
+			clearModelObjects(getRoot());
 			// remove all from tree viewer
-			IDiffElement[] elements = getChildren();
+			IDiffElement[] elements = getRoot().getChildren();
 			for (int i = 0; i < elements.length; i++) {
 				viewer.remove(elements[i]);
 			}
-			associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), this);
-			buildModelObjects(this);
+			associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), getRoot());
+			buildModelObjects(getRoot());
 		} finally {
 			refreshViewer = true;
 		}
@@ -372,6 +379,14 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 		});
 	}
 
+	protected DiffNode getRoot() {
+		return root;
+	}
+	
+	protected SyncInfoTree getSyncInfoTree() {
+		return set;
+	}
+	
 	protected void refreshInViewer(DiffNode diffNode) {
 		if (canUpdateViewer()) {
 			AbstractTreeViewer tree = getTreeViewer();
@@ -444,7 +459,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			parent = parent.getParent();
 		}
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -457,5 +472,12 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 */
 	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
 		// TODO Auto-generated method stub
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeController#getInput()
+	 */
+	public DiffNode getInput() {
+		return getRoot();
 	}
 }

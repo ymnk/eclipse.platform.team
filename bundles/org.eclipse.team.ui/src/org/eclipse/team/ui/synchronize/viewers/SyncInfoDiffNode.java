@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.*;
@@ -20,7 +17,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
@@ -52,9 +48,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	private SyncInfoTree syncSet;
 	private IResource resource;
 	
-	private Set workingChildren = new HashSet();
-	private boolean nodeIsBusy = false;
-	private ListenerList listeners;
+	private ITypedElement base;
 	
 	/**
 	 * Property constant indicating the mode of a page has changed. 

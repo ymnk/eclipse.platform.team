@@ -14,7 +14,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.viewers.CompressedFolderViewerInput;
+import org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerCompressedFolders;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;
 import org.eclipse.ui.*;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
@@ -52,7 +52,7 @@ public class ContentProviderTestView extends ViewPart {
 	}
 
 	public void setInput(SyncInfoTree set) {
-		CompressedFolderViewerInput root = new CompressedFolderViewerInput(set);
+		DiffNodeControllerCompressedFolders root = new DiffNodeControllerCompressedFolders(set);
 		viewer.setSorter(root.getViewerSorter());
 		viewer.setInput(root);
 	}

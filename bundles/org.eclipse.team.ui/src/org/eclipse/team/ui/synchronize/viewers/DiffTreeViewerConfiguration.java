@@ -20,7 +20,7 @@ import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
@@ -68,7 +68,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	private String menuID;
 	private AbstractTreeViewer viewer;
 	private ExpandAllAction expandAllAction;
-	private SyncInfoSetViewerInput viewerInput;
+	private DiffNodeController diffNodeController;
 
 	/**
 	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given
@@ -123,9 +123,9 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		
 		// The input may of been set already. In that case, don't change it and
 		// simply assign it to the view.
-		if(viewerInput == null) {
-			viewerInput = (SyncInfoSetViewerInput)getInput();
-			viewerInput.prepareInput(null);
+		if(diffNodeController == null) {
+			diffNodeController = getDiffNodeController();
+			diffNodeController.prepareInput(null);
 		}
 		setInput(viewer);
 	}
@@ -134,9 +134,9 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @param viewer
 	 */
 	private void setInput(AbstractTreeViewer viewer) {
-		viewerInput.setViewer(viewer);
-		viewer.setSorter(viewerInput.getViewerSorter());
-		viewer.setInput(viewerInput);
+		diffNodeController.setViewer(viewer);
+		viewer.setSorter(diffNodeController.getViewerSorter());
+		viewer.setInput(diffNodeController.getInput());
 	}
 
 	/**
@@ -147,12 +147,11 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * @return the input that can be shown in a viewer
 	 */
 	public Object prepareInput(IProgressMonitor monitor)throws TeamException {
-		if(viewerInput != null) {
-			viewerInput.dispose();
+		if(diffNodeController != null) {
+			diffNodeController.dispose();
 		}
-		viewerInput = (SyncInfoSetViewerInput) getInput();		
-		viewerInput.prepareInput(monitor);
-		return viewerInput;
+		diffNodeController = getDiffNodeController();		
+		return diffNodeController.prepareInput(monitor);
 	}
 
 	/**
@@ -160,11 +159,11 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * configuration. Subclass may override.
 	 * @return the viewer input
 	 */
-	protected Object getInput() {
+	protected DiffNodeController getDiffNodeController() {
 		if (getShowCompressedFolders()) {
-			return new CompressedFolderViewerInput(getSyncInfoTree());
+			return new DiffNodeControllerCompressedFolders(getSyncInfoTree());
 		}
-		return new SyncInfoSetViewerInput(getSyncInfoTree());
+		return new DiffNodeControllerHierarchical(getSyncInfoTree());
 	}
 
 	/**
@@ -300,8 +299,8 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * Cleanup listeners
 	 */
 	public void dispose() {
-		if(viewerInput != null) {
-			viewerInput.dispose();
+		if(diffNodeController != null) {
+			diffNodeController.dispose();
 		}
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 	}

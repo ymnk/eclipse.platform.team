@@ -13,6 +13,7 @@ package org.eclipse.team.ui.synchronize.viewers;
 import java.util.*;
 
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
@@ -98,8 +99,8 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	public Image getImage(Object element) {
 		Image base = workbenchLabelProvider.getImage(element);
 		if (base != null) {
-			if (element instanceof SyncInfoDiffNode) {
-				SyncInfoDiffNode syncNode = (SyncInfoDiffNode) element;
+			if (element instanceof DiffNode) {
+				DiffNode syncNode = (DiffNode) element;
 				int kind = syncNode.getKind();
 				Image decoratedImage;
 				decoratedImage = getCompareImage(base, kind);
@@ -122,11 +123,11 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 */
 	public String getText(Object element) {
 		String base = workbenchLabelProvider.getText(element);
-		if (element instanceof SyncInfoDiffNode) {
+		if (element instanceof DiffNode) {
 			if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
 				// if the folder is already conflicting then don't bother
 				// propagating the conflict
-				int kind = ((SyncInfoDiffNode) element).getKind();
+				int kind = ((DiffNode) element).getKind();
 				if (kind != SyncInfo.IN_SYNC) {
 					String syncKindString = SyncInfo.kindToString(kind);
 					return Policy.bind("TeamSubscriberSyncPage.labelWithSyncKind", base, syncKindString); //$NON-NLS-1$ 
@@ -148,7 +149,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 		return compareConfig.getImage(base, kind);
 	}
 
-	private Image propagateConflicts(Image base, SyncInfoDiffNode element) {
+	private Image propagateConflicts(Image base, DiffNode element) {
 		// if the folder is already conflicting then don't bother propagating
 		// the conflict
 		int kind = element.getKind();
@@ -173,19 +174,22 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 * Return whether this diff node has descendant conflicts in the view in which it appears.
 	 * @return whether the node has descendant conflicts
 	 */
-	private boolean hasDecendantConflicts(SyncInfoDiffNode node) {
-		IResource resource = node.getResource();
-		// If this node has no resource, we can't tell
-		// The subclass which created the node with no resource should have overridden this method
-		if (resource.getType() == IResource.FILE) return false;
-		// If the set has no conflicts then the node doesn't either
-		SyncInfoTree set = node.getSyncInfoTree();
-		if (set.hasConflicts()) {
-			SyncInfo[] infos = set.getSyncInfos(resource, IResource.DEPTH_INFINITE);
-			for (int i = 0; i < infos.length; i++) {
-				SyncInfo info = infos[i];
-				if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
-					return true;
+	private boolean hasDecendantConflicts(DiffNode node) {
+		if(node instanceof SyncInfoDiffNode) {
+			SyncInfoDiffNode diffNode = (SyncInfoDiffNode)node;
+			IResource resource = diffNode.getResource();
+			// If this node has no resource, we can't tell
+			// The subclass which created the node with no resource should have overridden this method
+			if (resource.getType() == IResource.FILE) return false;
+			// If the set has no conflicts then the node doesn't either
+			SyncInfoTree set = diffNode.getSyncInfoTree();
+			if (set.hasConflicts()) {
+				SyncInfo[] infos = set.getSyncInfos(resource, IResource.DEPTH_INFINITE);
+				for (int i = 0; i < infos.length; i++) {
+					SyncInfo info = infos[i];
+					if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
+						return true;
+					}
 				}
 			}
 		}

@@ -19,9 +19,9 @@ import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.core.synchronize.*;
 
-public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
+public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHierarchical {
 
-	public CompressedFolderViewerInput(SyncInfoTree set) {
+	public DiffNodeControllerCompressedFolders(SyncInfoTree set) {
 		super(set);
 	}
 	
@@ -32,7 +32,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 		return new SyncInfoDiffNodeSorter() {
 			protected int compareNames(IResource resource1, IResource resource2) {
 				if (resource1.getType() == IResource.FOLDER && resource2.getType() == IResource.FOLDER) {
-					return collator.compare(resource1.getParent().toString(), resource2.getProjectRelativePath().toString());
+					return collator.compare(resource1.getProjectRelativePath().toString(), resource2.getProjectRelativePath().toString());
 				}
 				return super.compareNames(resource1, resource2);
 			}
@@ -40,11 +40,11 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#createChildren(org.eclipse.compare.structuremergeviewer.IDiffContainer)
+	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#createChildren(org.eclipse.compare.structuremergeviewer.IDiffContainer)
 	 */
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput#createModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
+	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
 	 */
 	protected IDiffElement[] createModelObjects(DiffNode container) {
 		if (container instanceof SyncInfoDiffNode) {
@@ -100,11 +100,11 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#createChildNode(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#createChildNode(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
 	 */
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput#createModelObject(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObject(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
 	 */
 	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
 		if (resource.getType() == IResource.FOLDER) {
@@ -134,7 +134,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 					if (compressedNode == null) {
 						DiffNode projectNode = getModelObject(local.getProject());
 						if (projectNode == null) {
-							projectNode = createModelObject(this, local.getProject());
+							projectNode = createModelObject(getRoot(), local.getProject());
 						}
 						compressedNode = createModelObject(projectNode, local.getParent());
 					}
@@ -142,7 +142,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 				} else {
 					DiffNode projectNode = getModelObject(local.getProject());
 					if (projectNode == null) {
-						projectNode = createModelObject(this, local.getProject());
+						projectNode = createModelObject(getRoot(), local.getProject());
 					}
 					createModelObject(projectNode, local);
 				}

@@ -17,8 +17,8 @@ import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.ui.synchronize.subscriber.JobRunnableContext;
-import org.eclipse.team.ui.synchronize.subscriber.ITeamRunnableContext;
+import org.eclipse.team.internal.ui.actions.ITeamRunnableContext;
+import org.eclipse.team.internal.ui.actions.JobRunnableContext;
 
 public class HeadlessCVSRunnableContext implements ITeamRunnableContext {
 

@@ -10,13 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
@@ -28,24 +24,6 @@ public class CompressedFolderDiffNode extends SyncInfoDiffNode {
 
 	public CompressedFolderDiffNode(IDiffContainer parent, SyncInfoTree input, IResource resource) {
 		super(parent, input, resource);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getChildSyncInfos()
-	 */
-	public SyncInfo[] getDescendantSyncInfos() {
-		IResource[] children = getSyncInfoTree().members(getResource());
-		List result = new ArrayList();
-		for (int i = 0; i < children.length; i++) {
-			IResource child = children[i];
-			SyncInfo info = getSyncInfoTree().getSyncInfo(child);
-			if (info != null) {
-				if (child.getType() == IResource.FILE) {
-					result.add(info);
-				}
-			}
-		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
 	
 	/* (non-Javadoc)

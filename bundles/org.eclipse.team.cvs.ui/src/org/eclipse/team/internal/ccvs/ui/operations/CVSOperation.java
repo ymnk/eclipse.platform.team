@@ -24,7 +24,7 @@ import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.ui.synchronize.subscriber.*;
+import org.eclipse.team.internal.ui.actions.*;
 
 
 /**

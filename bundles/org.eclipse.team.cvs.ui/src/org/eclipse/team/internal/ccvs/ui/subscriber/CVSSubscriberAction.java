@@ -27,7 +27,7 @@ import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.subscriber.SubscriberAction;
+import org.eclipse.team.internal.ui.actions.SubscriberAction;
 
 public abstract class CVSSubscriberAction extends SubscriberAction {
 	

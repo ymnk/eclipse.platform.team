@@ -26,7 +26,7 @@ import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput;
+import org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.progress.UIJob;
 
@@ -42,7 +42,7 @@ import org.eclipse.ui.progress.UIJob;
  * 
  * {date/time, comment, user} -> {*files}
  */
-public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
+public class ChangeLogViewerInput extends DiffNodeControllerHierarchical {
 	
 	private Map commentRoots = new HashMap();
 	private PendingUpdateAdapter pendingItem;
@@ -175,10 +175,10 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SyncInfoSetViewerInput#buildModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
+	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#buildModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
 	 */
 	protected IDiffElement[] buildModelObjects(DiffNode node) {
-		if(node == this) {
+		/*if(node == this) {
 			UIJob job = new UIJob("") {
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					AbstractTreeViewer tree = getTreeViewer();			
@@ -211,13 +211,13 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 			fetchLogEntriesJob.schedule();						
 		} else {
 			return super.buildModelObjects(node);
-		}
+		}*/
 		return new IDiffElement[0];
 	}
 
 	private SyncInfoDiffNode[] calculateRoots(SyncInfoSet set, IProgressMonitor monitor) {
 		commentRoots.clear();
-		SyncInfo[] infos = set.getSyncInfos();
+		/*SyncInfo[] infos = set.getSyncInfos();
 		monitor.beginTask("fetching from server", set.size() * 100);
 		for (int i = 0; i < infos.length; i++) {
 			if(monitor.isCanceled()) {
@@ -234,7 +234,7 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 				changeRoot.add(infos[i]);
 			}
 			monitor.worked(100);
-		}		
+		}*/		
 		return (ChangeLogDiffNode[]) commentRoots.values().toArray(new ChangeLogDiffNode[commentRoots.size()]);
 	}
 	
@@ -282,14 +282,14 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#syncSetChanged(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
+	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#syncSetChanged(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
 	 */
 	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
 		reset();
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.SyncInfoSetViewerInput#dispose()
+	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#dispose()
 	 */
 	public void dispose() {
 		shutdown = true;
