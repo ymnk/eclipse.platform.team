@@ -10,15 +10,25 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync.actions.workingsets;
 
-import org.eclipse.jface.action.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.ActionContributionItem;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuCreator;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IStatusLineManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.swt.widgets.*;
-import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IKeyBindingService;
+import org.eclipse.ui.IWorkingSet;
 
 public class WorkingSetDropDownAction extends Action implements IMenuCreator, IPropertyChangeListener {
 	

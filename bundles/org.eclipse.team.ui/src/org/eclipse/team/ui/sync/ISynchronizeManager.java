@@ -55,9 +55,9 @@ public interface ISynchronizeManager {
 	public void removeSynchronizeParticipants(ISynchronizeParticipant[] consoles);
 	
 	/**
-	 * Returns a collection of consoles registered with the console manager.
+	 * Returns a collection of synchronize participants registered with the synchronize manager.
 	 * 
-	 * @return a collection of consoles registered with the console manager
+	 * @return a collection of synchronize participants registered with the synchronize manager.
 	 */
 	public ISynchronizeParticipant[] getSynchronizeParticipants();
 	
@@ -68,4 +68,13 @@ public interface ISynchronizeManager {
 	 * @return the opened synchronize view 
 	 */
 	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage page);
+	
+	/**
+	 * Returns a registered synchronize participant with the given id, io <code>null</code>
+	 * if one with that id is not registered.
+	 * 
+	 * @return a registered synchronize participant with the given id, io <code>null</code>
+	 * if one with that id is not registered.
+	 */
+	public ISynchronizeParticipant find(String id);
 }

@@ -18,7 +18,6 @@ import java.util.Map;
 
 import org.eclipse.core.resources.ISaveContext;
 import org.eclipse.core.resources.ISaveParticipant;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
@@ -97,16 +96,10 @@ public class SubscriberManager implements ISaveParticipant {
 
 	public void saving(ISaveContext context) throws CoreException {
 		// save subscribers during snapshot and at full save
-		saveSubscribers();
+		//saveSubscribers();
 	}
 	
-	public void startup() {
-		try {
-			ResourcesPlugin.getWorkspace().addSaveParticipant(TeamPlugin.getPlugin(), this);
-		} catch (CoreException e) {
-			TeamPlugin.log(e);
-		}
-		restoreSubscribers();
+	public void startup() {		
 	}
 	
 	/*
@@ -139,33 +132,33 @@ public class SubscriberManager implements ISaveParticipant {
 	}
 
 	synchronized void restoreSubscribers() {
-		try {
-			SaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamPlugin.getPlugin(), "subscribers"); //$NON-NLS-1$
-			if(root != null && root.getName().equals(SAVECTX_SUBSCRIBERS)) {
-				SaveContext[] contexts = root.getChildren();
-				for (int i = 0; i < contexts.length; i++) {
-					SaveContext context = contexts[i];
-					if(context.getName().equals(SAVECTX_SUBSCRIBER)) {
-						String qualifier = context.getAttribute(SAVECTX_QUALIFIER);
-						String localName = context.getAttribute(SAVECTX_LOCALNAME);
-						TeamSubscriberFactory factory = create(qualifier);
-						if(factory == null) {
-							TeamPlugin.log(new TeamException(Policy.bind("TeamProvider.10", qualifier.toString()))); //$NON-NLS-1$
-						}
-						SaveContext[] children = context.getChildren();
-						if(children.length == 1) {			
-							TeamSubscriber s = factory.restoreSubscriber(new QualifiedName(qualifier, localName), children[0]);								
-							if(s != null) {
-								//registerSubscriber(s);
-							}
-						}
-					}
-				}
-			
-			}
-		} catch (TeamException e) {
-			TeamPlugin.log(e);
-		}
+//		try {
+//			SaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamPlugin.getPlugin(), "subscribers"); //$NON-NLS-1$
+//			if(root != null && root.getName().equals(SAVECTX_SUBSCRIBERS)) {
+//				SaveContext[] contexts = root.getChildren();
+//				for (int i = 0; i < contexts.length; i++) {
+//					SaveContext context = contexts[i];
+//					if(context.getName().equals(SAVECTX_SUBSCRIBER)) {
+//						String qualifier = context.getAttribute(SAVECTX_QUALIFIER);
+//						String localName = context.getAttribute(SAVECTX_LOCALNAME);
+//						TeamSubscriberFactory factory = create(qualifier);
+//						if(factory == null) {
+//							TeamPlugin.log(new TeamException(Policy.bind("TeamProvider.10", qualifier.toString()))); //$NON-NLS-1$
+//						}
+//						SaveContext[] children = context.getChildren();
+//						if(children.length == 1) {			
+//							TeamSubscriber s = factory.restoreSubscriber(new QualifiedName(qualifier, localName), children[0]);								
+//							if(s != null) {
+//								//registerSubscriber(s);
+//							}
+//						}
+//					}
+//				}
+//			
+//			}
+//		} catch (TeamException e) {
+//			TeamPlugin.log(e);
+//		}
 	}
 
 	synchronized void saveSubscribers() {

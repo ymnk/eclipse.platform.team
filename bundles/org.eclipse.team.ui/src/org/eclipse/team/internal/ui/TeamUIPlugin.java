@@ -35,8 +35,10 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
+import org.eclipse.team.internal.ui.sync.pages.SynchronizeManager;
 import org.eclipse.team.internal.ui.sync.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -59,11 +61,6 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 	
 	// plugin id
 	public static final String PLUGIN_ID = "org.eclipse.team.ui"; //$NON-NLS-1$
-	
-	// extension points
-	public static final String PT_CONFIGURATION ="configurationWizards"; //$NON-NLS-1$
-	public static final String PT_TARGETCONFIG ="targetConfigWizards"; //$NON-NLS-1$
-	public static final String PT_DECORATORS = "decorators"; //$NON-NLS-1$	
 	
 	private static List propertyChangeListeners = new ArrayList(5);
 	
@@ -205,6 +202,7 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 			// start once the platform has started and stabilized
 			refreshJob.schedule(20000 /* 20 seconds */);
 		}
+		((SynchronizeManager)TeamUI.getSynchronizeManager()).restoreParticipants();
 	}
 	
 	/* (non-Javadoc)

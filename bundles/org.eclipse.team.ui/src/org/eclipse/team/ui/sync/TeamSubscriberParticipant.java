@@ -4,7 +4,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -60,8 +59,11 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public static final String MB_MODESGROUP = TeamUIPlugin.ID + ".modes";
 	
-	public TeamSubscriberParticipant(TeamSubscriber subscriber, String name, ImageDescriptor imageDescriptor) {
-		super(name, imageDescriptor);
+	public TeamSubscriberParticipant() {
+		super();
+	}
+	
+	protected void setSubscriber(TeamSubscriber subscriber) {
 		this.input = new SubscriberInput(subscriber);
 		this.currentMode = BOTH_MODE;
 	}

@@ -13,12 +13,14 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.ui.Utilities;
 import org.eclipse.team.ui.sync.actions.DirectionFilterActionGroup;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.PartInitException;
 
 public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipant {
 	
@@ -26,8 +28,8 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 	private Action commitAdapter;
 	private Action updateAdapter;
 	
-	public CVSWorkspaceSynchronizeParticipant(TeamSubscriber subscriber, String name, ImageDescriptor imageDescriptor, int num) {
-		super(subscriber, name, imageDescriptor);
+	protected void setSubscriber(TeamSubscriber subscriber) {
+		super.setSubscriber(subscriber);
 		modes = new DirectionFilterActionGroup(this, ALL_MODES);		
 		commitAdapter = new CVSActionDelegate(new SubscriberCommitAction(), this);
 		updateAdapter = new CVSActionDelegate(new WorkspaceUpdateAction(), this);
@@ -50,5 +52,20 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 		if(detailsToolbar != null) {
 			modes.fillToolBar(detailsToolbar);
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
+	 */
+	public void init(ISaveContext saveContext) throws PartInitException {
+		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
+		setSubscriber(subscriber);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#saveState(org.eclipse.team.core.ISaveContext)
+	 */
+	public void saveState(ISaveContext saveContext) {
+		// no state to save
 	}
 }

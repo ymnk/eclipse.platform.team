@@ -28,10 +28,18 @@
 <extension
          point="org.eclipse.team.ui.synchronizeParticipants">
       <participant
-            name="%CVSWorkspaceSynchronizeParticipant.name"
-            icon="icons/full/cview16/console_view.gif"
-            class="org.eclipse.team.internal.ccvs.ui.Console"
+            name="CVS Workspace"
+            icon="icons/full/cview16/rep_editors_view.gif"
+            class="org.eclipse.team.internal.ccvs.ui.subscriber.CVSWorkspaceSynchronizeParticipant"
+            type="static"
             id="org.eclipse.team.cvs.ui.cvsworkspace_syncparticipant">
+      </participant>
+      <participant
+            name="CVS Merge"
+            icon="icons/full/cview16/repo_rep.gif"
+            class="org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSynchronizeParticipant"
+            type="dynamic"
+            id="org.eclipse.team.cvs.ui.cvsmerge_syncparticipant">
       </participant>
 </extension>
 

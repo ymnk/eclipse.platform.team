@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
+import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.team.core.ISaveContext;
@@ -23,7 +24,14 @@ import org.eclipse.ui.part.IPageBookViewPage;
  * 
  * @since 3.0
  */
-public interface ISynchronizeParticipant {
+public interface ISynchronizeParticipant extends IExecutableExtension {
+	/**
+	 * Returns the unique id of this synchronize participant.
+	 * 
+	 * @return the unique id of this synchronize participant
+	 */
+	public String getId();
+	
 	/**
 	 * Returns the name of this synchronize participant.
 	 * 
@@ -64,7 +72,7 @@ public interface ISynchronizeParticipant {
 	 * @param saveContext the ISynchronizeParticipant state or null if there is no previous saved state
 	 * @exception PartInitException if this participant was not initialized successfully
 	 */
-	public void init(ISynchronizeView view, ISaveContext saveContext) throws PartInitException;
+	public void init(ISaveContext saveContext) throws PartInitException;
 	
 	/**
 	 * Saves the participants object state within a save context.

@@ -39,6 +39,7 @@ import org.eclipse.team.internal.ui.wizards.ConfigurationWizardElement;
 import org.eclipse.team.internal.ui.wizards.ConfigureProjectWizardMainPage;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.internal.model.AdaptableList;
 
@@ -71,7 +72,7 @@ public class ConfigureTargetWizard extends Wizard implements IConfigurationWizar
 	 * @see ConfigureProjectWizard#getExtensionPoint()
 	 */
 	protected String getExtensionPoint() {
-		return TeamUIPlugin.PT_TARGETCONFIG;
+		return ITeamUIConstants.PT_TARGETCONFIG;
 	}
 	
 	/**

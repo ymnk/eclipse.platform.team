@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -17,6 +19,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
+import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.TeamUI;
 
 public abstract class AbstractSynchronizeParticipant implements ISynchronizeParticipant {
@@ -24,10 +27,11 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	// property listeners
 	private ListenerList fListeners;
 	
-	private String fName = null;
-	
-	private ImageDescriptor fImageDescriptor = null;
-	
+	private String fName;	
+	private String fId;
+	private ImageDescriptor fImageDescriptor;
+	private IConfigurationElement configElement;
+		
 	/**
 	 * Used to notify this console of lifecycle methods <code>init()</code>
 	 * and <code>dispose()</code>.
@@ -43,10 +47,9 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 				if (console == AbstractSynchronizeParticipant.this) {
 					init();
 				}
-			}
-
+			}		
 		}
-
+		
 		/* (non-Javadoc)
 		 * @see org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui.console.IConsole[])
 		 */
@@ -77,14 +80,14 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 			//IStatus status = new Status(IStatus.ERROR, ConsolePlugin.getUniqueIdentifier(), IConsoleConstants.INTERNAL_ERROR, ConsoleMessages.getString("AbstractConsole.0"), exception); //$NON-NLS-1$
 			//ConsolePlugin.log(status);
 		}
-
+		
 		/**
 		 * @see org.eclipse.core.runtime.ISafeRunnable#run()
 		 */
 		public void run() throws Exception {
 			fListener.propertyChange(fEvent);
 		}
-
+		
 		/**
 		 * Notifies listeners of the property change
 		 * 
@@ -104,25 +107,17 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		}
 	}		
 	
-	/**
-	 * Constructs a new console with the given name and image.
-	 * 
-	 * @param name console name, cannot be <code>null</code>
-	 * @param imageDescriptor image descriptor, or <code>null</code> if none
-	 */
-	public AbstractSynchronizeParticipant(String name, ImageDescriptor imageDescriptor) {
-		setName(name);
-		setImageDescriptor(imageDescriptor);
+	public AbstractSynchronizeParticipant() {
 		TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(new Lifecycle());
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsole#getName()
 	 */
 	public String getName() {
 		return fName;
 	}
-
+	
 	/**
 	 * Sets the name of this console to the specified value and notifies
 	 * property listeners of the change.
@@ -153,7 +148,14 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		fImageDescriptor =imageDescriptor;
 		firePropertyChange(this, IBasicPropertyConstants.P_IMAGE, old, imageDescriptor);
 	}	
-
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#getId()
+	 */
+	public String getId() {
+		return fId;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsole#addPropertyChangeListener(org.eclipse.jface.util.IPropertyChangeListener)
 	 */
@@ -163,7 +165,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		}
 		fListeners.add(listener);		
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsole#removePropertyChangeListener(org.eclipse.jface.util.IPropertyChangeListener)
 	 */
@@ -172,7 +174,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 			fListeners.remove(listener);
 		}
 	}
-
+	
 	/**
 	 * Notify all listeners that the given property has changed.
 	 * 
@@ -193,7 +195,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * Called when this console is added to the console manager. Default
 	 * implementation does nothing. Subclasses may override.
 	 */
-	protected void init() {
+	protected void init() {		
 	}
 	
 	/**
@@ -201,5 +203,31 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * implementation does nothing. Subclasses may override.
 	 */
 	protected void dispose() {
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 */
+	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+		//	Save config element.
+		configElement = config;
+		
+		// Id
+		fId = config.getAttribute("id");
+		
+		// Title.
+		fName = config.getAttribute("name");//$NON-NLS-1$
+		if (config == null) {
+			fName = "Unknown";//$NON-NLS-1$
+		}
+		
+		// Icon.
+		String strIcon = config.getAttribute("icon");//$NON-NLS-1$
+		if (strIcon != null) {
+			fImageDescriptor = 
+			TeamImages.getImageDescriptorFromExtension(
+					configElement.getDeclaringExtension(), 
+					strIcon); 							
+		}
 	}
 }

@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
@@ -210,14 +211,14 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		CVSTag start = new CVSTag(saveContext.getString("startTag"), saveContext.getInteger("startTagType")); //$NON-NLS-1$ //$NON-NLS-2$
 		CVSTag end = new CVSTag(saveContext.getString("endTag"), saveContext.getInteger("endTagType")); //$NON-NLS-1$ //$NON-NLS-2$
 		
-		SaveContext[] ctxRoots = saveContext.getChildren();
+		ISaveContext[] ctxRoots = saveContext.getChildren();
 		if(ctxRoots == null || ctxRoots.length == 0) {
 			throw new CVSException(Policy.bind("CVSMergeSubscriber.19", id.toString())); //$NON-NLS-1$
 		}
 		
 		List resources = new ArrayList();
 		for (int i = 0; i < ctxRoots.length; i++) {
-			SaveContext context = ctxRoots[i];
+			ISaveContext context = ctxRoots[i];
 			IPath path = new Path(context.getString("fullpath")); //$NON-NLS-1$
 			IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(path, true /* include phantoms */);
 			if(resource != null) {

@@ -50,7 +50,6 @@ import org.eclipse.team.internal.ccvs.ui.subscriber.CVSWorkspaceSynchronizeParti
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
@@ -653,26 +652,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		// Commented out until we have fully ported the CVS console to the new API				
 		//ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] {new CVSOutputConsole()});
 		
-		cvsWorkspaceSynchronizeViewPage = new CVSWorkspaceSynchronizeParticipant(
-				CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
-				"CVS Workspace", 
-				CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 
-				6);
-		
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {cvsWorkspaceSynchronizeViewPage});
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {
-		   new CVSWorkspaceSynchronizeParticipant(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
-							  "CVS Workspace - 2", 
-							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 2)});
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {
-		   new CVSWorkspaceSynchronizeParticipant(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
-							  "CVS Workspace - 3", 
-							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 3)});
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {
-		   new CVSWorkspaceSynchronizeParticipant(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
-							  "CVS Workspace - 4", 
-							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 4)});
-
+		//TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {cvsWorkspaceSynchronizeViewPage});
 	}
 	
 	public static IWorkingSet getWorkingSet(IResource[] resources, String name) {
@@ -706,6 +686,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 * @return Returns the cvsWorkspaceSynchronizeViewPage.
 	 */
 	public CVSWorkspaceSynchronizeParticipant getCvsWorkspaceSynchronizeViewPage() {
-		return cvsWorkspaceSynchronizeViewPage;
+		return (CVSWorkspaceSynchronizeParticipant)TeamUI.getSynchronizeManager().find("org.eclipse.team.cvs.ui.cvsworkspace_syncparticipant");
 	}
 }

@@ -11,16 +11,26 @@
 package org.eclipse.team.internal.ui.sync.pages;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.util.ListenerList;
+import org.eclipse.team.core.ISaveContext;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.core.SaveContextXMLWriter;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
+import org.eclipse.team.internal.ui.registry.SynchronizePartnerDescriptor;
+import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.sync.ISynchronizeManager;
 import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 import org.eclipse.team.ui.sync.ISynchronizeParticipantListener;
@@ -40,14 +50,20 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/**
 	 * List of registered synchronize view pages
 	 */
-	private List synchronizeParticipants = new ArrayList(10); 
+	private Map synchronizeParticipants = new HashMap(10); 
+	private SynchronizeParticipantRegistry participantRegistry = new SynchronizeParticipantRegistry();
 	
 	// change notification constants
 	private final static int ADDED = 1;
 	private final static int REMOVED = 2;
 	
+	// save context constants
+	private final static String CTX_PARTICIPANTS = "syncparticipants";
+	private final static String CTX_PARTICIPANT = "participant";
+	private final static String CTX_ID = "id";
+	
 	/**
-	 * Notifies a console listener of additions or removals
+	 * Notifies a participant listeners of additions or removals
 	 */
 	class SynchronizeViewPageNotifier implements ISafeRunnable {
 		
@@ -61,7 +77,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		public void handleException(Throwable exception) {
 			TeamUIPlugin.log(IStatus.ERROR, "", exception);
 		}
-
+		
 		/* (non-Javadoc)
 		 * @see org.eclipse.core.runtime.ISafeRunnable#run()
 		 */
@@ -75,18 +91,18 @@ public class SynchronizeManager implements ISynchronizeManager {
 					break;
 			}
 		}
-
+		
 		/**
 		 * Notifies the given listener of the adds/removes
 		 * 
-		 * @param consoles the consoles that changed
+		 * @param participants the participants that changed
 		 * @param update the type of change
 		 */
-		public void notify(ISynchronizeParticipant[] consoles, int update) {
+		public void notify(ISynchronizeParticipant[] participants, int update) {
 			if (fListeners == null) {
 				return;
 			}
-			fChanged = consoles;
+			fChanged = participants;
 			fType = update;
 			Object[] copiedListeners= fListeners.getListeners();
 			for (int i= 0; i < copiedListeners.length; i++) {
@@ -99,7 +115,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	}	
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleManager#addConsoleListener(org.eclipse.ui.console.IConsoleListener)
+	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#addSynchronizeParticipantListener(org.eclipse.team.ui.sync.ISynchronizeParticipantListener)
 	 */
 	public void addSynchronizeParticipantListener(ISynchronizeParticipantListener listener) {
 		if (fListeners == null) {
@@ -107,66 +123,73 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 		fListeners.add(listener);
 	}
-
+	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleManager#removeConsoleListener(org.eclipse.ui.console.IConsoleListener)
+	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#removeSynchronizeParticipantListener(org.eclipse.team.ui.sync.ISynchronizeParticipantListener)
 	 */
 	public void removeSynchronizeParticipantListener(ISynchronizeParticipantListener listener) {
 		if (fListeners != null) {
 			fListeners.remove(listener);
 		}
 	}
-
+	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleManager#addConsoles(org.eclipse.ui.console.IConsole[])
+	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#addSynchronizeParticipants(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 	 */
-	public synchronized void addSynchronizeParticipants(ISynchronizeParticipant[] consoles) {
-		List added = new ArrayList(consoles.length);
-		for (int i = 0; i < consoles.length; i++) {
-			ISynchronizeParticipant console = consoles[i];
-			if (!synchronizeParticipants.contains(console)) {
-				synchronizeParticipants.add(console);
-				added.add(console);
+	public synchronized void addSynchronizeParticipants(ISynchronizeParticipant[] participants) {
+		List added = new ArrayList(participants.length);
+		for (int i = 0; i < participants.length; i++) {
+			ISynchronizeParticipant participant = participants[i];
+			if (!synchronizeParticipants.containsValue(participant)) {
+				synchronizeParticipants.put(participant.getId(), participant);
+				added.add(participant);
 			}
 		}
 		if (!added.isEmpty()) {
 			fireUpdate((ISynchronizeParticipant[])added.toArray(new ISynchronizeParticipant[added.size()]), ADDED);
 		}
 	}
-
+	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleManager#removeConsoles(org.eclipse.ui.console.IConsole[])
+	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#removeSynchronizeParticipants(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 	 */
-	public synchronized void removeSynchronizeParticipants(ISynchronizeParticipant[] consoles) {
-		List removed = new ArrayList(consoles.length);
-		for (int i = 0; i < consoles.length; i++) {
-			ISynchronizeParticipant console = consoles[i];
-			if (synchronizeParticipants.remove(console)) {
-				removed.add(console);
+	public synchronized void removeSynchronizeParticipants(ISynchronizeParticipant[] participants) {
+		List removed = new ArrayList(participants.length);
+		for (int i = 0; i < participants.length; i++) {
+			ISynchronizeParticipant participant = participants[i];
+			if (synchronizeParticipants.remove(participant.getId()) != null) {
+				removed.add(participant);
 			}
 		}
 		if (!removed.isEmpty()) {
 			fireUpdate((ISynchronizeParticipant[])removed.toArray(new ISynchronizeParticipant[removed.size()]), REMOVED);
 		}
 	}
-
+	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleManager#getConsoles()
+	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#getSynchronizeParticipants()
 	 */
 	public synchronized ISynchronizeParticipant[] getSynchronizeParticipants() {
-		return (ISynchronizeParticipant[])synchronizeParticipants.toArray(new ISynchronizeParticipant[synchronizeParticipants.size()]);
+		return (ISynchronizeParticipant[])synchronizeParticipants.values().toArray(new ISynchronizeParticipant[synchronizeParticipants.size()]);
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#find(java.lang.String)
+	 */
+	public ISynchronizeParticipant find(String id) {
+		return (ISynchronizeParticipant)synchronizeParticipants.get(id);
+	}
+	
 	/**
 	 * Fires notification.
 	 * 
-	 * @param consoles consoles added/removed
+	 * @param participants participants added/removed
 	 * @param type ADD or REMOVE
 	 */
-	private void fireUpdate(ISynchronizeParticipant[] consoles, int type) {
-		new SynchronizeViewPageNotifier().notify(consoles, type);
+	private void fireUpdate(ISynchronizeParticipant[] participants, int type) {
+		new SynchronizeViewPageNotifier().notify(participants, type);
 	}
-
+	
 	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage activePage) {
 		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
 		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
@@ -189,5 +212,54 @@ public class SynchronizeManager implements ISynchronizeManager {
 			Utils.handleError(window.getShell(), pe, Policy.bind("SynchronizeView.16"), pe.getMessage()); //$NON-NLS-1$
 			return null;
 		}
+	}
+	
+	public void restoreParticipants() throws PartInitException, TeamException, CoreException {
+		participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
+		boolean firstTime = restoreSynchronizeParticipants();
+		if(!firstTime) {
+			SynchronizePartnerDescriptor[] desc = participantRegistry.getSynchronizeParticipants();
+			for (int i = 0; i < desc.length; i++) {
+				SynchronizePartnerDescriptor descriptor = desc[i];
+				if(descriptor.isStatic()) {
+					createParticipant(null, null, descriptor);
+				}
+			}
+		}
+	}
+	
+	public void dispose() {
+	}
+	
+	private boolean restoreSynchronizeParticipants() throws TeamException, PartInitException, CoreException {
+		ISaveContext root = SaveContextXMLWriter.readXMLPluginMetaFile(TeamUIPlugin.getPlugin(), "subscribers"); //$NON-NLS-1$
+		if(root != null && root.getName().equals(CTX_PARTICIPANTS)) {
+			ISaveContext[] contexts = root.getChildren();
+			for (int i = 0; i < contexts.length; i++) {
+				ISaveContext context = contexts[i];
+				if(context.getName().equals(CTX_PARTICIPANT)) {
+					String id = context.getAttribute(CTX_ID);
+					ISaveContext[] children = context.getChildren();
+					SynchronizePartnerDescriptor desc = participantRegistry.find(id);
+					if(desc != null) {
+						IConfigurationElement cfgElement = desc.getConfigurationElement();
+						createParticipant(id, children, desc);
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private void createParticipant(String id, ISaveContext[] children, SynchronizePartnerDescriptor desc) throws CoreException, PartInitException {
+		ISynchronizeParticipant participant = (ISynchronizeParticipant)TeamUIPlugin.createExtension(desc.getConfigurationElement(), SynchronizePartnerDescriptor.ATT_CLASS);
+		participant.setInitializationData(desc.getConfigurationElement(), id, null);
+		if(children != null) {
+			participant.init(children[0]);
+		} else {
+			participant.init(null);
+		}			
+		addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 	}
 }

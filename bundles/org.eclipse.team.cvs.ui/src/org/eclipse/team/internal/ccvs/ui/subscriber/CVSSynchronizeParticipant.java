@@ -15,17 +15,15 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionDelegate;
 
-public class CVSSynchronizeParticipant extends TeamSubscriberParticipant implements ISyncSetChangedListener {
+public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipant implements ISyncSetChangedListener {
 	
 	private List delegates = new ArrayList(2); 
 	
@@ -36,7 +34,7 @@ public class CVSSynchronizeParticipant extends TeamSubscriberParticipant impleme
 		public CVSActionDelegate(IActionDelegate delegate, TeamSubscriberParticipant participant) {
 			this.delegate = delegate;
 			this.participant = participant;
-			addDelegate(this);
+			addDelegate(this);			
 		}
 		
 		public void run() {
@@ -53,14 +51,10 @@ public class CVSSynchronizeParticipant extends TeamSubscriberParticipant impleme
 		}
 	}
 	
-	public CVSSynchronizeParticipant(TeamSubscriber subscriber, String name, ImageDescriptor imageDescriptor) {
-		super(subscriber, name, imageDescriptor);
-		getInput().getFilteredSyncSet().addSyncSetChangedListener(this);
+	public CVSSynchronizeParticipant() {
 	}
+		
 	
-	private void addDelegate(CVSActionDelegate delagate) {
-		delegates.add(delagate);
-	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeParticipant#dispose()
@@ -83,5 +77,17 @@ public class CVSSynchronizeParticipant extends TeamSubscriberParticipant impleme
 				delegate.getDelegate().selectionChanged(delegate, selection);
 			}
 		}
+	}
+	
+	private void addDelegate(CVSActionDelegate delagate) {
+		delegates.add(delagate);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeParticipant#init()
+	 */
+	protected void init() {
+		super.init();
+		getInput().getFilteredSyncSet().addSyncSetChangedListener(this);
 	}
 }

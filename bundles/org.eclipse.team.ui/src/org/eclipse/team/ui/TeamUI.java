@@ -25,8 +25,7 @@ public class TeamUI {
 	
 	// property change types
 	public static String GLOBAL_IGNORES_CHANGED = "global_ignores_changed"; //$NON-NLS-1$
-	
-	
+		
 	public static ISynchronizeManager getSynchronizeManager() {
 	   if (synchronizeManager == null) {
 		synchronizeManager = new SynchronizeManager();

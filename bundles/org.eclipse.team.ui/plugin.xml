@@ -23,7 +23,7 @@
 
    <extension-point id="configurationWizards" name="%configurationWizards" schema="schema/configurationWizards.exsd"/>
    <extension-point id="targetConfigWizards" name="%targetWizards"/>
-   <extension-point id="synchronizePartners" name="%synchronizePartners"/>
+   <extension-point id="synchronizeParticipants" name="%synchronizeParticipants"/>
 
 <!-- **************** PREFERENCES ******************* -->
    <extension
