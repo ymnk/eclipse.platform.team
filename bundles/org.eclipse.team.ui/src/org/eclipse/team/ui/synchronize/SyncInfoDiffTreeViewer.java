@@ -10,19 +10,20 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.ui.synchronize.actions.INavigableTree;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
+import org.eclipse.team.internal.ui.synchronize.views.ITreeViewerAccessor;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 
-public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableTree {
+public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, ITreeViewerAccessor {
 
-	private SyncInfoSetCompareConfiguration configuration;
+	private DiffTreeViewerConfiguration configuration;
 	
-	public SyncInfoDiffTreeViewer(Composite parent, SyncInfoSetCompareConfiguration configuration) {
+	public SyncInfoDiffTreeViewer(Composite parent, DiffTreeViewerConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		this.configuration = configuration;
 		configuration.initializeViewer(parent, this);
@@ -50,16 +51,15 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableTree
 	protected void inputChanged(Object in, Object oldInput) {
 		super.inputChanged(in, oldInput);		
 		if (in != oldInput) {
-			configuration.getNavigator().navigate(false, true);
+			gotoDifference(true);
 		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.actions.INavigableControl#gotoDifference(int)
 	 */
-	public boolean gotoDifference(int direction) {
-		boolean next = direction == SyncInfoDiffTreeNavigator.NEXT ? true : false;
-		return configuration.getNavigator().navigate(next, false);
+	public boolean gotoDifference(boolean direction) {
+		return TreeViewerUtils.gotoDifference(this, direction);
 	}
 
 	/* (non-Javadoc)
@@ -75,5 +75,4 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableTree
 	public void createChildren(TreeItem item) {
 		super.createChildren(item);
 	}
-
 }

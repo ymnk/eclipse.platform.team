@@ -212,14 +212,4 @@
             id="org.eclipse.team.ui.actionSet">
       </actionSet>
    </extension>
-<!-- ***************** Logical views ********************** -->
-<extension
-         point="org.eclipse.team.ui.logicalViews">
-      <logicalView
-            name="%CompressFolderView.name"
-            description="%CompressFolderView.description"
-            class="org.eclipse.team.internal.ui.synchronize.views.CompressFolderView"
-            id="org.eclipse.team.ui.compressed-folder-view">
-      </logicalView>
-</extension>
 </plugin>

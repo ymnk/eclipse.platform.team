@@ -16,7 +16,7 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.views.ILogicalView;
+import org.eclipse.team.internal.ui.synchronize.views.ILogicalView;
 
 public class LogicalViewRegistry extends RegistryReader {
 

@@ -1,3 +1,17 @@
+======================================================================
+ EXAMPLE TEAM UI API USAGES
+======================================================================
+1. embeding sync viewer in dialog/wizard
+2. added a new content provider (logical views)
+3. adding custom label decorations
+4. actions/menus
+5. fetching sync info set without instantiating a participant
+6. fetch and wait for the event collector to finish processing the changes
+  
+======================================================================
+ PR LIST (07-01-2004)
+======================================================================
+
 x P3 schedule support by participant. 
 	this requires changing the refresh jobs to accept scheduling different jobs. Essentially being able to have an 
 	ordered queue of refreshes. Also, participant will need a schedule object to encapsulate the schedule logic.
@@ -40,23 +54,30 @@ x P2 need an event for adding roots to a subscriber to update the list shown
 x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 
 - overiding outgoing/incoming doesn't show the changes in the commit dialog because the filter is only configured to show in one direction.
-
-- example sync view api usages:
-  1. embeding sync viewer in dialog/wizard
-  2. added a new content provider
-  3. adding custom label decorations
-  4. actions/menus
-  5. fetching sync info set without instantiating a participant
-  6. fetch and wait for the event collector to finish processing the changes
   
-  
-  
-  To be PRd:
-  - progress monitoring in SyncSet.reset and such. there are many places where null progress monitors are passed along.
-  - showing sync view in commit dialog is complicated because there is no easy way of finding out exactly which resources will be committed at the
+======================================================================
+ PR LIST (16-01-2004)
+======================================================================
+- progress monitoring in SyncSet.reset and such. there are many places where null progress monitors are passed along.
+- showing sync view in commit dialog is complicated because there is no easy way of finding out exactly which resources will be committed at the
   point the commit comment dialog is shown. Need to provide new API on the commit dialog for this.
-  - convert details dialogs that show sync view into wizards, this allows more room to browse the changes. almost like the refactoring. Preview >> button instead of Next >>.
-  - can you have non-diff nodes in the sync view? there shouldn't be any assumptions about the type of diff nodes in the sync view. Basically, any type of diff node should be supported. 
-  This would allow adding logical elements to the view don't directly have an associated IResource or SyncInfo.
-  - workbenchadapter for SyncInfoSet, SyncInfo objects?
-  - job status handler API or not??
+- convert details dialogs that show sync view into wizards, this allows more room to browse the changes. almost like the refactoring. Preview >> button instead of Next >>.
+- job status handler API or not??
+
+
+======================================================================
+ PR LIST (26-01-2004)
+======================================================================
+- navigable APIs must be consolidated, sync view navigation
+- compare configuration review
+- logical view extensions
+  - based on project natures
+  - ui (e.g. layouts/context menu??)
+- content provider should not assume diff nodes have associated resources
+  - content provider input? Is it a diff node or sync set? diff node hack required for getting the
+    compare editor input working.
+- viewer input as a diffnode with a sync set seems wrong?
+- share reconciling with existing (e.g. using compare contents to resolve)
+- comment grouping logical view
+- target migration
+  

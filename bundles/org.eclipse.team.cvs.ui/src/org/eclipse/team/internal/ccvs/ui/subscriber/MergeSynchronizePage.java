@@ -34,9 +34,6 @@ public class MergeSynchronizePage extends CVSSynchronizeViewPage {
 		
 		Utils.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
 		getParticipant().setMode(TeamSubscriberParticipant.INCOMING_MODE);
-		
-		// force enablement to be update on action delegates
-		// syncSetChanged(null);
 	}
 	
 	/* (non-Javadoc)

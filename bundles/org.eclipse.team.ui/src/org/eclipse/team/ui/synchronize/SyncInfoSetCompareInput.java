@@ -31,7 +31,7 @@ import org.eclipse.team.internal.ui.Utils;
  */
 public class SyncInfoSetCompareInput extends CompareEditorInput {
 
-	private SyncInfoSetCompareConfiguration diffViewerConfiguration;
+	private DiffTreeViewerConfiguration diffViewerConfiguration;
 
 	/**
 	 * Create a <code>SyncInfoSetCompareInput</code> whose diff viewer is configured
@@ -39,7 +39,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * @param configuration the compare configuration 
 	 * @param diffViewerConfiguration the diff viewer configuration 
 	 */
-	public SyncInfoSetCompareInput(CompareConfiguration configuration, SyncInfoSetCompareConfiguration diffViewerConfiguration) {
+	public SyncInfoSetCompareInput(CompareConfiguration configuration, DiffTreeViewerConfiguration diffViewerConfiguration) {
 		super(configuration);
 		this.diffViewerConfiguration = diffViewerConfiguration;
 	}
@@ -60,7 +60,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * @param diffViewerConfiguration the configuration for the diff viewer
 	 * @return the created diff viewer
 	 */
-	protected StructuredViewer internalCreateDiffViewer(Composite parent, SyncInfoSetCompareConfiguration diffViewerConfiguration) {
+	protected StructuredViewer internalCreateDiffViewer(Composite parent, DiffTreeViewerConfiguration diffViewerConfiguration) {
 		return new SyncInfoDiffTreeViewer(parent, diffViewerConfiguration);
 	}
 
@@ -105,6 +105,5 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 			}
 		}
 		return null;
-	}
-	
+	}	
 }

@@ -10,21 +10,22 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.ui.synchronize.actions.INavigableTree;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
+import org.eclipse.team.internal.ui.synchronize.views.ITreeViewerAccessor;
+import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
 // TODO: This is an internal superclass
-public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer implements INavigableTree {
+public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer implements INavigatable, ITreeViewerAccessor {
 
-	private SyncInfoSetCompareConfiguration configuration;
+	private DiffTreeViewerConfiguration configuration;
 	
-	public SyncInfoDiffCheckboxTreeViewer(Composite parent, SyncInfoSetCompareConfiguration configuration) {
+	public SyncInfoDiffCheckboxTreeViewer(Composite parent, DiffTreeViewerConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		this.configuration = configuration;
 		configuration.initializeViewer(parent, this);
@@ -52,16 +53,15 @@ public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer i
 	protected void inputChanged(Object in, Object oldInput) {
 		super.inputChanged(in, oldInput);		
 		if (in != oldInput) {
-			configuration.getNavigator().navigate(false, true);
+			gotoDifference(true /*next*/);
 		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.actions.INavigableControl#gotoDifference(int)
 	 */
-	public boolean gotoDifference(int direction) {
-		boolean next = direction == SyncInfoDiffTreeNavigator.NEXT ? true : false;
-		return configuration.getNavigator().navigate(next, false);
+	public boolean gotoDifference(boolean next) {
+		return TreeViewerUtils.gotoDifference(this, next);
 	}
 
 	/* (non-Javadoc)
@@ -81,8 +81,7 @@ public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer i
 	/**
 	 * @return Returns the configuration.
 	 */
-	public SyncInfoSetCompareConfiguration getConfiguration() {
+	public DiffTreeViewerConfiguration getConfiguration() {
 		return configuration;
-	}
-	
+	}	
 }

@@ -18,7 +18,7 @@ import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.team.ui.synchronize.views.SyncInfoLabelProvider;
 
-public class CVSSynchronizeViewCompareConfiguration extends SynchronizeViewCompareConfiguration {
+public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDiffTreeViewerConfiguration {
 
 	private static class CVSLabelProvider extends SyncInfoDecoratingLabelProvider {
 		protected CVSLabelProvider(SyncInfoLabelProvider syncInfoLabelProvider) {

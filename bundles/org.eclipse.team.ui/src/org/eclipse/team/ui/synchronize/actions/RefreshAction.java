@@ -20,6 +20,7 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
+import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.views.SyncInfoSetContentProvider;
 
 /**

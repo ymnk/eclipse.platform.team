@@ -34,10 +34,10 @@ import org.eclipse.ui.internal.WorkbenchColors;
  * on the labels and icons of adaptable objects by overriding
  * <code>decorateText()</code> and <code>decorateImage</code>.
  * 
- * @see SyncInfoSetCompareConfiguration#getLabelProvider(SyncInfoLabelProvider)
+ * @see DiffTreeViewerConfiguration#getLabelProvider(SyncInfoLabelProvider)
  * @since 3.0
  */
-public class SyncInfoDecoratingLabelProvider extends LabelProvider implements ITableLabelProvider, IColorProvider {
+public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IColorProvider {
 	
 	//column constants
 	private static final int COL_RESOURCE = 0;
@@ -185,31 +185,6 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 				element.dispose();				
 			}
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-	 */
-	public Image getColumnImage(Object element, int columnIndex) {
-		if (columnIndex == COL_RESOURCE) {
-			return getImage(element);
-		} else if (columnIndex == COL_PARENT) {
-			return null;
-		}
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-	 */
-	public String getColumnText(Object element, int columnIndex) {
-		if (columnIndex == COL_RESOURCE) {
-			return getText(element);
-		} else if (columnIndex == COL_PARENT) {
-			IResource resource = syncInfoLabelProvider.getResource(element);
-			return resource.getParent().getFullPath().toString();
-		}
-		return null;
 	}
 
 	/* (non-Javadoc)

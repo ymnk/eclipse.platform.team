@@ -10,12 +10,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.team;
 
+import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration;
 import org.eclipse.team.ui.synchronize.views.*;
 
 /**
  * The Java logical view provider
  */
 public class JavaLogicalViewProvider extends LogicalViewProvider {
+
+	public JavaLogicalViewProvider(DiffTreeViewerConfiguration configuration) {
+		super(configuration);
+	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.content.LogicalViewProvider#getContentProvider()

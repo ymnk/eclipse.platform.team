@@ -30,7 +30,6 @@ import org.eclipse.ui.*;
 public class SyncViewerPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage, IPreferenceIds {
 	
 	private BooleanFieldEditor compressFolders = null;
-	private BooleanFieldEditor smartModeSwitch = null;
 	private BooleanFieldEditor showSyncInLabels = null;
 	private BooleanFieldEditor promptWithChanges = null;
 	private BooleanFieldEditor promptWhenNoChanges = null;
@@ -48,73 +47,6 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 				return Collator.getInstance().compare(id1, id2);
 			}
 			return 0;
-		}
-	}
-	
-	class IntegerFieldEditor2 extends IntegerFieldEditor {
-			/* (non-Javadoc)
-			 * @see org.eclipse.jface.preference.FieldEditor#createControl(org.eclipse.swt.widgets.Composite)
-			 */
-			protected void createControl(Composite parent) {
-				super.createControl(parent);
-			}
-
-			public IntegerFieldEditor2(String name, String labelText, Composite parent, int size) {
-				super(name, labelText, parent, size);
-			}
-
-			protected boolean checkState() {
-				Text control= getTextControl();
-				if (!control.isEnabled()) {
-					clearErrorMessage();
-					return true;
-				}
-				return super.checkState();
-			}
-		
-			/**
-			 * Overrode here to be package visible.
-			 */
-			protected void refreshValidState() {
-				super.refreshValidState();
-			}
-		
-			/**
-			 * Only store if the text control is enabled
-			 * @see FieldEditor#doStore()
-			 */
-			protected void doStore() {
-				Text text = getTextControl();
-				if (text.isEnabled()) {
-					super.doStore();
-				}
-			}
-			/**
-			 * Clears the error message from the message line if the error
-			 * message is the error message from this field editor.
-			 */
-			protected void clearErrorMessage() {
-				if (getPreferencePage() != null) {
-					String message= getPreferencePage().getErrorMessage();
-					if (message != null) {
-						if(getErrorMessage().equals(message)) {
-							super.clearErrorMessage();
-						}
-					
-					} else {
-						super.clearErrorMessage();
-					}
-				}
-			}
-		}
-	
-	class BooleanFieldEditor2 extends BooleanFieldEditor {
-		public BooleanFieldEditor2(String name, String labelText, int style, Composite parent) {
-			super(name, labelText, style, parent);
-		}
-
-		protected void refreshValidState() {
-			updateEnablements();
 		}
 	}
 	
@@ -137,16 +69,12 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 	 * @see org.eclipse.jface.preference.FieldEditorPreferencePage#createFieldEditors()
 	 */
 	public void createFieldEditors() {
-		
-		GridData data;
 		Group displayGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.8")); 		 //$NON-NLS-1$
 
 		compressFolders = new BooleanFieldEditor(SYNCVIEW_COMPRESS_FOLDERS, Policy.bind("SyncViewerPreferencePage.9"), SWT.NONE, displayGroup); //$NON-NLS-1$
 		addField(compressFolders);
 		showSyncInLabels = new BooleanFieldEditor(SYNCVIEW_VIEW_SYNCINFO_IN_LABEL, Policy.bind("SyncViewerPreferencePage.19"), SWT.NONE, displayGroup); //$NON-NLS-1$
 		addField(showSyncInLabels);
-		//smartModeSwitch = new BooleanFieldEditor(SYNCVIEW_VIEW_SMART_MODE_SWITCH, "Smart mode switch", SWT.NONE, displayGroup); //$NON-NLS-1$
-		//addField(smartModeSwitch);
 		
 		Group promptGroup = createGroup(getFieldEditorParent(), Policy.bind("SyncViewerPreferencePage.30")); //$NON-NLS-1$
 		
@@ -174,7 +102,6 @@ public class SyncViewerPreferencePage extends FieldEditorPreferencePage implemen
 		addField(comboEditor);
 
 		Dialog.applyDialogFont(getFieldEditorParent());
-		updateLayout(displayGroup);
 		updateLayout(perspectiveGroup);
 		getFieldEditorParent().layout(true);	
 	}

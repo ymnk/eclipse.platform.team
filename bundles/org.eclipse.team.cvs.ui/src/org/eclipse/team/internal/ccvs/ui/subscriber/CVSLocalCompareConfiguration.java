@@ -18,17 +18,15 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
-import org.eclipse.team.core.subscribers.TeamSubscriberSyncInfoCollector;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration;
+import org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration;
 import org.eclipse.team.ui.synchronize.actions.RefreshAction;
 
 /**
  * Provides compare specific support
  */
-public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguration {
+public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 
 	private CVSCompareSubscriber subscriber;
 	private TeamSubscriberSyncInfoCollector collector;
@@ -58,7 +56,7 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#dispose()
 	 */
-	protected void dispose() {
+	public void dispose() {
 		filteredSyncSet.dispose();
 		collector.dispose();
 		subscriber.dispose();

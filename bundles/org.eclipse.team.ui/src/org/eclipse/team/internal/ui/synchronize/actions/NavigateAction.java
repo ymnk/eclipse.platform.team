@@ -12,13 +12,13 @@ package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.ICompareNavigator;
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.actions.ActionFactory;
@@ -31,17 +31,23 @@ import org.eclipse.ui.actions.ActionFactory;
  * @since 3.0
  */
 public class NavigateAction extends Action {
-	private final int direction;
+	private final boolean next;
 	private ISynchronizeView view;
-	private SyncInfoDiffTreeNavigator navigator;
+	private INavigatable navigator;
 	
-	public NavigateAction(ISynchronizeView view, SyncInfoDiffTreeNavigator navigator, int direction) {
+	/**
+	 * Direction to navigate
+	 */
+	final public static int NEXT = 1;
+	final public static int PREVIOUS = 2;
+	
+	public NavigateAction(ISynchronizeView view, INavigatable navigator, boolean next) {
 		this.navigator = navigator;
 		this.view = view;
-		this.direction = direction;
+		this.next = next;
 
 		IKeyBindingService kbs = view.getSite().getKeyBindingService();		
-		if(direction == SyncInfoDiffTreeNavigator.NEXT) {
+		if(next) {
 			Utils.initAction(this, "action.navigateNext."); //$NON-NLS-1$
 			view.getViewSite().getActionBars().setGlobalActionHandler(ActionFactory.NEXT.getId(), this);			
 		} else {
@@ -57,7 +63,7 @@ public class NavigateAction extends Action {
 	private void navigate() {
 		SyncInfo info = getSyncInfoFromSelection();
 		if(info == null) {
-			if(navigator.gotoDifference(direction)) {
+			if(navigator.gotoDifference(next)) {
 				return;
 			} else {
 				info = getSyncInfoFromSelection();
@@ -66,7 +72,7 @@ public class NavigateAction extends Action {
 		}
 		
 		if(info.getLocal().getType() != IResource.FILE) {
-			if(! navigator.gotoDifference(direction)) {
+			if(! navigator.gotoDifference(next)) {
 				info = getSyncInfoFromSelection();
 				OpenInCompareAction.openCompareEditor(view, view.getParticipant(), info, true /* keep focus */);
 			}
@@ -83,8 +89,8 @@ public class NavigateAction extends Action {
 			input = (CompareEditorInput)editor.getEditorInput();
 			navigator = (ICompareNavigator)input.getAdapter(ICompareNavigator.class);
 			if(navigator != null) {
-				if(navigator.selectChange(direction == SyncInfoDiffTreeNavigator.NEXT)) {
-					if(! this.navigator.gotoDifference(direction)) {
+				if(navigator.selectChange(next)) {
+					if(! this.navigator.gotoDifference(next)) {
 						info = getSyncInfoFromSelection();
 						OpenInCompareAction.openCompareEditor(view, view.getParticipant(), info, true /* keep focus */);
 					}

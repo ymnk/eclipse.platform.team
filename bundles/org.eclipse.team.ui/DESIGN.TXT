@@ -1,27 +1,39 @@
 
+======================
+ core
+======================
 SyncInfo
 - represents relative sync of local and remote gives access to resources
 
 TeamSubscriber
 - creates sync infos
 
-SyncInfoSet (optimized collection of sync infos - immutable)
-MutableSyncInfoSet
+SyncInfoSet/MutableSyncInfoSet (optimized collection of sync infos - immutable)
 
 SyncInfoCollector (collects sync infos from subscriber, and optionally from workspace. Uses background thread to collect and calculate changes. Is updated automatically with changes)
 
 FilteredSyncInfoSet (filters a provided sync info set with a given filter and possible roots)
 
-SynchronizeParticipant (shows in the sync view, has a mode, working set, and creates a page with the UI pieces)
+======================
+ ui
+======================
 
-Mode
+ISynchronizeView
 
-WorkingSet
+ISynchronizeParticipant (shows in the sync view, has a mode, working set, and creates a page with the UI pieces)
+
+
+
+
+Mode (DirectionFilterActionGroup)
 
 SyncInfoFilter
 
-SyncInfoDiffTreeViewer
+SyncInfoSetCompareConfiguration (encapsulates navigation, menus, content, label providers)this
+                                is used to configure a viewer in different ways based on it's use.
 
-SyncInfoDiffNode -> DiffNode + ICompareInput
+SyncInfoDiffTreeViewer/SyncInfoDiffCheckboxViewer (shows diff nodes)
+
+SyncInfoDiffNode -> DiffNode
 
 SyncInfoSetCompareInput

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.views;
+package org.eclipse.team.internal.ui.synchronize.views;
 
 import org.eclipse.core.runtime.CoreException;
 

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -21,9 +22,9 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
-import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.ChangesSection;
+import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 
@@ -60,7 +61,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private Action collapseAll;
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
-	private SynchronizeViewCompareConfiguration configuration;
+	private TeamSubscriberPageDiffTreeViewerConfiguration configuration;
 		
 	/**
 	 * Constructs a new SynchronizeView.
@@ -93,8 +94,11 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		changesSection = new ChangesSection(composite, this);
 		
 		// toolbar
-		gotoNext = new NavigateAction(view, configuration.getNavigator(), SyncInfoDiffTreeNavigator.NEXT);		
-		gotoPrevious = new NavigateAction(view, configuration.getNavigator(), SyncInfoDiffTreeNavigator.PREVIOUS);
+		Viewer viewer = getChangesViewer();
+		if(viewer instanceof INavigatable) {
+			gotoNext = new NavigateAction(view, (INavigatable)viewer, true /*next*/);		
+			gotoPrevious = new NavigateAction(view, (INavigatable)viewer, false /*previous*/);
+		}
 		refreshAllAction = new TeamParticipantRefreshAction(getSite().getSelectionProvider(), getParticipant(), true /* refresh all */);
 		collapseAll = new Action() {
 			public void run() {
@@ -272,7 +276,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		return viewer;
 	}
 
-	protected SynchronizeViewCompareConfiguration createSyncInfoSetCompareConfiguration() {
-		return new SynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
+	protected TeamSubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
+		return new TeamSubscriberPageDiffTreeViewerConfiguration(getSynchronizeView(), getParticipant());
 	}
 }

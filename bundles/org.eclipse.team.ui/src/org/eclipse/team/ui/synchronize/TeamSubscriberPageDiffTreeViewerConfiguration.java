@@ -19,13 +19,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.actions.INavigableTree;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
 /**
  * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer for the synchroniza view
  */
-public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfiguration {
+public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewerConfiguration {
 
 	private ISynchronizeView view;
 	private TeamSubscriberParticipant participant;
@@ -34,7 +33,7 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 	private RefactorActionGroup refactorActions;
 	private TeamParticipantRefreshAction refreshSelectionAction;
 	
-	public SynchronizeViewCompareConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
+	public TeamSubscriberPageDiffTreeViewerConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
 		super(participant.getId(), participant.getFilteredSyncInfoCollector().getSyncInfoSet());
 		this.view = view;
 		this.participant = participant;
@@ -60,9 +59,6 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 		refactorActions.fillContextMenu(manager);
 		manager.add(refreshSelectionAction);
 		manager.add(new Separator());
-		addLogicalViewSelection(viewer, manager);
-		manager.add(new Separator());
-		getNavigator().fillContextMenu(viewer, manager);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
@@ -141,13 +137,4 @@ public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfi
 		}
 		return ""; //$NON-NLS-1$
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeNavigation(org.eclipse.swt.widgets.Control, org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator.INavigationTarget)
-	 */
-	protected void initializeNavigation(StructuredViewer viewer, INavigableTree target) {
-		super.initializeNavigation(viewer, target);
-		getNavigator().setShowOpenAction(false);
-	}
-
 }

@@ -27,7 +27,6 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.actions.IRefreshEvent;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
@@ -52,7 +51,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		
 		this.set = new FilteredSyncInfoCollector(participant.getTeamSubscriberSyncInfoCollector().getSyncInfoSet(), getResources(), null);
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
-				new SyncInfoSetCompareConfiguration(participant.getId(), set.getSyncInfoSet())); 
+				new DiffTreeViewerConfiguration(participant.getId(), set.getSyncInfoSet())); 
 		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$

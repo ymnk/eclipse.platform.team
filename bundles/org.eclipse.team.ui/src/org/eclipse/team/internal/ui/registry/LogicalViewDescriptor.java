@@ -11,8 +11,8 @@
 package org.eclipse.team.internal.ui.registry;
 
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.ui.synchronize.views.ILogicalView;
-import org.eclipse.team.ui.synchronize.views.LogicalViewProvider;
+import org.eclipse.team.internal.ui.synchronize.views.ILogicalView;
+import org.eclipse.team.internal.ui.synchronize.views.LogicalViewProvider;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 
 /**

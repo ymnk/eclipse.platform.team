@@ -115,7 +115,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#createSyncInfoSetCompareConfiguration()
 	 */
-	protected SynchronizeViewCompareConfiguration createSyncInfoSetCompareConfiguration() {
+	protected TeamSubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
 		return new CVSSynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
 	}
 }

@@ -18,9 +18,9 @@ import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.registry.*;
+import org.eclipse.team.internal.ui.synchronize.views.ILogicalView;
 import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.views.ILogicalView;
 import org.eclipse.ui.*;
 
 /**
