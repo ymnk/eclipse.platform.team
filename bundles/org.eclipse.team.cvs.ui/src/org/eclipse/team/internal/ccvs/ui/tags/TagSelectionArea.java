@@ -97,6 +97,8 @@ public class TagSelectionArea extends DialogArea {
     private TreeViewer tagTree;
     private TableViewer tagTable;
     private boolean treeVisible = true;
+    private boolean includeFilterInputArea = true;
+    private String filterPattern = ""; //$NON-NLS-1$
     
     public TagSelectionArea(Shell shell, TagSource tagSource, String message, int includeFlags, String helpContext) {
         this.shell = shell;
@@ -130,7 +132,9 @@ public class TagSelectionArea extends DialogArea {
 
     private void createTagDisplayArea(Composite parent) {
         Composite inner = createGrabbingComposite(parent, 1);
-        createFilterInput(inner);    
+        if (isIncludeFilterInputArea()) {
+            createFilterInput(inner);
+        }
 		if (message != null) {
 		    createWrappingLabel(inner, message, 1);
 		}
@@ -148,7 +152,7 @@ public class TagSelectionArea extends DialogArea {
         filterText = createText(inner, 1);
         filterText.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
-                updateTagDisplay(false);
+                setFilter(filterText.getText());
             }
         });
         filterText.addKeyListener(new KeyListener() {
@@ -178,9 +182,11 @@ public class TagSelectionArea extends DialogArea {
 	            FilteredTagList list = (FilteredTagList)tagTable.getInput();
 	            list.setPattern(filter);
 	            tagTable.refresh();
-	            if (filter == null || filter.length() == 0) {
+	            if (filterText == null || filter == null || filter.length() == 0) {
 	                setSelection(selection);
 	            } else {
+	                // Only set the top selection if there is a filter from the filter text
+	                // of this area. This is done to avoid selection loops
 	                selectTopElement();
 	            }
             } finally {
@@ -211,7 +217,7 @@ public class TagSelectionArea extends DialogArea {
     }
 
     private String getFilterString() {
-        return filterText.getText();
+        return filterPattern;
     }
 
     /*
@@ -471,6 +477,9 @@ public class TagSelectionArea extends DialogArea {
     public void setFocus() {
         if (filterText != null)
             filterText.setFocus();
+        else if (switcher != null)
+            switcher.setFocus();
+            
         // Refresh in case tags were added since the last time the area had focus
         refresh();
     }
@@ -515,7 +524,8 @@ public class TagSelectionArea extends DialogArea {
      * @param enabled the enablement state
      */
     public void setEnabled(boolean enabled) {
-        filterText.setEnabled(enabled);
+        if (filterText != null)
+            filterText.setEnabled(enabled);
         tagTree.getControl().setEnabled(enabled);
         tagTable.getControl().setEnabled(enabled);
     }
@@ -539,10 +549,10 @@ public class TagSelectionArea extends DialogArea {
         this.tagSource = tagSource;
         this.tagSource.addListener(listener);
         tagRefreshArea.setTagSource(this.tagSource);
-        setTreeAndtableInput();
+        setTreeAndTableInput();
     }
 
-    private void setTreeAndtableInput() {
+    private void setTreeAndTableInput() {
         if (tagTree != null) {
             tagTree.setInput(createUnfilteredInput());
         }
@@ -550,5 +560,34 @@ public class TagSelectionArea extends DialogArea {
             tagTable.setInput(createFilteredInput());
         }
         
+    }
+
+    /**
+     * Set whether the input filter text is to be included in the tag selection area.
+     * If excluded, clientscan still set the filter text directly using
+     * <code>setFilter</code>.
+     * @param include whether filter text input should be included
+     */
+    public void setIncludeFilterInputArea(boolean include) {
+        includeFilterInputArea = include;
+    }
+    
+    /**
+     * Return whether the input filter text is to be included in the tag selection area.
+     * If excluded, clientscan still set the filter text directly using
+     * <code>setFilter</code>.
+     * @return whether filter text input should be included
+     */
+    public boolean isIncludeFilterInputArea() {
+        return includeFilterInputArea;
+    }
+
+    /**
+     * Set the text used to filter the tag list.
+     * @param filter the filter pattern
+     */
+    public void setFilter(String filter) {
+        this.filterPattern = filter;
+        updateTagDisplay(false);
     }
 }

@@ -702,22 +702,6 @@ public class TagConfigurationDialog extends Dialog {
 		}
 	}
 	 
-	 public static void createTagDefinitionButtons(final Shell shell, Composite composite, final TagSource tagSource, int hHint, int wHint, final Runnable afterRefresh) {
-	    final TagSource.ITagSourceChangeListener listener = new TagSource.ITagSourceChangeListener() {
-            public void tagsChanged(TagSource source) {
-                shell.getDisplay().asyncExec(afterRefresh);
-            }
-        };
-	    tagSource.addListener(listener);
-	    composite.addDisposeListener(new DisposeListener() {
-            public void widgetDisposed(DisposeEvent e) {
-                tagSource.removeListener(listener);
-            }
-        });
-	    TagRefreshButtonArea area = new TagRefreshButtonArea(shell, tagSource);
-	    area.createArea(composite);
-	 }
-	 
     protected ICVSFolder getSingleFolder(TagSource tagSource, boolean bestEffort) {
         if (!bestEffort && tagSource instanceof MultiFolderTagSource)
             return null;

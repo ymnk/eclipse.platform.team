@@ -13,7 +13,8 @@ package org.eclipse.team.internal.ccvs.ui.tags;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.GridData;
@@ -25,11 +26,11 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.ui.help.WorkbenchHelp;
-import org.eclipse.ui.model.WorkbenchContentProvider;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class TagAsVersionDialog extends DetailsDialog {
 
+    private static final int TAG_AREA_HEIGHT_HINT = 200;
+    
 	private ITagOperation operation;
 	
 	private Text tagText;
@@ -37,12 +38,10 @@ public class TagAsVersionDialog extends DetailsDialog {
 	
 	private String tagName = ""; //$NON-NLS-1$
 	private boolean moveTag = false;
-	
-	private static final int TABLE_HEIGHT_HINT = 150;
-	
-	private TableViewer existingVersionTable;
 
     private TagSource tagSource;
+
+    private TagSelectionArea tagArea;
 	
 	public TagAsVersionDialog(Shell parentShell, String title, ITagOperation operation) {
 		super(parentShell, title);
@@ -59,7 +58,6 @@ public class TagAsVersionDialog extends DetailsDialog {
 		label.setText(Policy.bind("TagAction.enterTag")); //$NON-NLS-1$
 		GridData data = new GridData(
 			GridData.GRAB_HORIZONTAL |
-			GridData.GRAB_VERTICAL |
 			GridData.HORIZONTAL_ALIGN_FILL |
 			GridData.VERTICAL_ALIGN_CENTER);
 		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);;
@@ -80,11 +78,7 @@ public class TagAsVersionDialog extends DetailsDialog {
 		
 		moveTagButton = new Button(parent, SWT.CHECK);
 		moveTagButton.setText(Policy.bind("TagAction.moveTag")); //$NON-NLS-1$
-		moveTagButton.setLayoutData(new GridData(
-			GridData.GRAB_HORIZONTAL |
-			GridData.GRAB_VERTICAL |
-			GridData.HORIZONTAL_ALIGN_FILL |
-			GridData.VERTICAL_ALIGN_CENTER));
+		moveTagButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
 		moveTagButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -101,19 +95,6 @@ public class TagAsVersionDialog extends DetailsDialog {
 		return moveTag;
 	}
 	
-	protected TableViewer createTable(Composite parent) {
-		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
-		GridData data = new GridData(GridData.FILL_BOTH);
-		data.heightHint = TABLE_HEIGHT_HINT;
-		table.setLayoutData(data);
-		TableLayout layout = new TableLayout();
-		layout.addColumnData(new ColumnWeightData(100, true));
-		table.setLayout(layout);
-		TableColumn col = new TableColumn(table, SWT.NONE);
-		col.setResizable(true);
-		return new TableViewer(table);
-	}
-	
 	/**
 	 * @see DetailsDialog#createDropDownDialogArea(Composite)
 	 */
@@ -126,69 +107,29 @@ public class TagAsVersionDialog extends DetailsDialog {
 		layout.verticalSpacing = convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_SPACING);
 		layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
 		composite.setLayout(layout);
-		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		gridData.heightHint = TAG_AREA_HEIGHT_HINT;
+        composite.setLayoutData(gridData);
 		
-		Label label = new Label(composite, SWT.WRAP);
-		label.setText(Policy.bind("TagAction.existingVersions")); //$NON-NLS-1$
-		GridData data = new GridData(
-			GridData.GRAB_HORIZONTAL |
-			GridData.GRAB_VERTICAL |
-			GridData.HORIZONTAL_ALIGN_FILL |
-			GridData.VERTICAL_ALIGN_CENTER);
-		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);;
-		label.setLayoutData(data);
-		
-		existingVersionTable = createTable(composite);
-		existingVersionTable.setContentProvider(new WorkbenchContentProvider());
-		existingVersionTable.setLabelProvider(new WorkbenchLabelProvider());
-		existingVersionTable.setSorter(new ViewerSorter() {
-			public int compare(Viewer v, Object o1, Object o2) {
-				int result = super.compare(v, o1, o2);
-				if (o1 instanceof TagElement && o2 instanceof TagElement) {
-					return -result;
-				}
-				return result;
-			}
-		});
-		existingVersionTable.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				IStructuredSelection selection = (IStructuredSelection)existingVersionTable.getSelection();
-				if(!selection.isEmpty()) {
-					TagElement element = (TagElement)((IStructuredSelection)existingVersionTable.getSelection()).getFirstElement();
-					if(element!=null) {
-						tagText.setText(element.getTag().getName());
-					}
-				}
-			}
-		});
-
-		Runnable afterRefresh = new Runnable() {
-			public void run() {
-				getShell().getDisplay().syncExec(new Runnable() {
-					public void run() {
-						existingVersionTable.refresh();
-					}
-				});
-			}
-		};
-		
-        Runnable afterConfigure = new Runnable() {
-			public void run() {
-				getShell().getDisplay().syncExec(new Runnable() {
-					public void run() {
-						existingVersionTable.setInput(new TagRootElement(null, tagSource, CVSTag.VERSION));
-					}
-				});
-			}
-		};
-		
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, tagSource, 
-														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
-														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
-														  afterRefresh/* TODO, afterConfigure*/);
-		
-		existingVersionTable.setInput(new TagRootElement(null, tagSource, CVSTag.VERSION));
-		Dialog.applyDialogFont(parent);
+		tagArea = new TagSelectionArea(getShell(), tagSource, Policy.bind("TagAction.existingVersions"), TagSelectionArea.INCLUDE_VERSIONS, null); //$NON-NLS-1$
+		tagArea.setIncludeFilterInputArea(false);
+		tagArea.createArea(composite);
+		tagArea.addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getProperty().equals(TagSelectionArea.SELECTED_TAG)) {
+                    CVSTag tag = tagArea.getSelection();
+                    if (tag != null) {
+                        tagText.setText(tag.getName());
+                    }
+                } else if (event.getProperty().equals(TagSelectionArea.OPEN_SELECTED_TAG)) {
+                    CVSTag tag = tagArea.getSelection();
+                    if (tag != null) {
+                        tagText.setText(tag.getName());
+                        okPressed();
+                    }
+                }
+            }
+        });
 		return composite;
 	}
 	
@@ -207,6 +148,9 @@ public class TagAsVersionDialog extends DetailsDialog {
 		}
 		setPageComplete(message == null);
 		setErrorMessage(message);
+		if (tagArea != null) {
+		    tagArea.setFilter(tagName);
+		}
 	}
 	
 	/**
@@ -226,5 +170,12 @@ public class TagAsVersionDialog extends DetailsDialog {
 		}
 		return operation;
 	}
+	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#isMainGrabVertical()
+     */
+    protected boolean isMainGrabVertical() {
+        return false;
+    }
 
 }

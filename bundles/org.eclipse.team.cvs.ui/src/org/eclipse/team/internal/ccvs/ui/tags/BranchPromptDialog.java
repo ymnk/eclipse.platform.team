@@ -8,27 +8,22 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui;
+package org.eclipse.team.internal.ccvs.ui.tags;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.ui.repo.RepositorySorter;
-import org.eclipse.team.internal.ccvs.ui.tags.*;
-import org.eclipse.team.internal.ccvs.ui.tags.TagSourceWorkbenchAdapter;
-import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
+import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.ui.help.WorkbenchHelp;
-import org.eclipse.ui.model.WorkbenchContentProvider;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class BranchPromptDialog extends DetailsDialog {
 
@@ -42,11 +37,11 @@ public class BranchPromptDialog extends DetailsDialog {
 	private Text versionText;
 	private Text branchText;
 	
-	private static final int TABLE_HEIGHT_HINT = 150;
+	private static final int TAG_AREA_HEIGHT_HINT = 200;
 	
 	// widgets;
-	private TreeViewer tagTree;
     private TagSource tagSource;
+    private TagSelectionArea tagArea;
 	
 	public BranchPromptDialog(Shell parentShell, String title, ICVSResource[] resources, boolean allResourcesSticky, String versionName) {
 		super(parentShell, title);
@@ -70,10 +65,9 @@ public class BranchPromptDialog extends DetailsDialog {
 		label.setText(message);
 		GridData data = new GridData(
 			GridData.GRAB_HORIZONTAL |
-			GridData.GRAB_VERTICAL |
 			GridData.HORIZONTAL_ALIGN_FILL |
 			GridData.VERTICAL_ALIGN_CENTER);
-		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);;
+		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);
 		label.setLayoutData(data);
 		
 		CVSWizardPage.createLabel(composite, Policy.bind("BranchWizardPage.branchName")); //$NON-NLS-1$
@@ -101,9 +95,12 @@ public class BranchPromptDialog extends DetailsDialog {
 		
 		label = new Label(composite, SWT.WRAP);
 		label.setText(Policy.bind("BranchWizardPage.specifyVersion")); //$NON-NLS-1$
-		data = new GridData();
+		data = new GridData(
+				GridData.GRAB_HORIZONTAL |
+				GridData.HORIZONTAL_ALIGN_FILL |
+				GridData.VERTICAL_ALIGN_CENTER);
+		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);
 		data.horizontalSpan = 2;
-		data.widthHint = 350;
 		label.setLayoutData(data);
 			
 		CVSWizardPage.createLabel(composite, Policy.bind("BranchWizardPage.versionName")); //$NON-NLS-1$
@@ -148,54 +145,15 @@ public class BranchPromptDialog extends DetailsDialog {
 		layout.verticalSpacing = convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_SPACING);
 		layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
 		composite.setLayout(layout);
-		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		gridData.heightHint = TAG_AREA_HEIGHT_HINT;
+		composite.setLayoutData(gridData);
 		
-		Label label = new Label(composite, SWT.WRAP);
-		label.setText(Policy.bind("BranchWizardPage.existingVersionsAndBranches")); //$NON-NLS-1$
-		GridData data = new GridData(
-			GridData.GRAB_HORIZONTAL |
-			GridData.GRAB_VERTICAL |
-			GridData.HORIZONTAL_ALIGN_FILL |
-			GridData.VERTICAL_ALIGN_CENTER);
-		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);;
-		label.setLayoutData(data);
-		
-		tagTree = createTree(composite);
-		tagTree.setInput(new TagSourceWorkbenchAdapter(tagSource, TagSourceWorkbenchAdapter.INCLUDE_BRANCHES | TagSourceWorkbenchAdapter.INCLUDE_VERSIONS));
-		Runnable refresh = new Runnable() {
-			public void run() {
-				getShell().getDisplay().syncExec(new Runnable() {
-					public void run() {
-						tagTree.refresh();
-					}
-				});
-			}
-		};
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, tagSource, 
-														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
-														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
-														  refresh);
-		Dialog.applyDialogFont(parent);
+		tagArea = new TagSelectionArea(getShell(), tagSource, Policy.bind("BranchWizardPage.existingVersionsAndBranches"), TagSelectionArea.INCLUDE_VERSIONS | TagSelectionArea.INCLUDE_BRANCHES, null); //$NON-NLS-1$
+		tagArea.setIncludeFilterInputArea(false);
+		tagArea.createArea(composite);
+
 		return composite;
-	}
-	
-	/**
-	 * Creates the existing branch and version tree viewer in the details pane
-	 */
-	protected TreeViewer createTree(Composite parent) {
-		Tree tree = new Tree(parent, SWT.SINGLE | SWT.BORDER);
-		GridData data = new GridData(GridData.FILL_BOTH);		
-		data.heightHint = TABLE_HEIGHT_HINT;
-		tree.setLayoutData(data);	
-		TreeViewer result = new TreeViewer(tree);
-		result.setContentProvider(new WorkbenchContentProvider());
-		result.setLabelProvider(new WorkbenchLabelProvider());
-		result.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {			
-			}
-		});
-		result.setSorter(new RepositorySorter());
-		return result;
 	}
 	
 	/**
@@ -247,4 +205,12 @@ public class BranchPromptDialog extends DetailsDialog {
 	public boolean getUpdate() {
 		return update;
 	}
+	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#isMainGrabVertical()
+     */
+    protected boolean isMainGrabVertical() {
+        return false;
+    }
+
 }
