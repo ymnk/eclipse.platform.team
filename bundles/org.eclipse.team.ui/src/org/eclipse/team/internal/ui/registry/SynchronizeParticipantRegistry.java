@@ -35,7 +35,7 @@ public class SynchronizeParticipantRegistry extends RegistryReader {
 			SynchronizePartnerDescriptor desc;
 			try {
 				desc = new SynchronizePartnerDescriptor(element, descText);
-				participants.put(desc.getId(), desc);
+				participants.put(desc.getId().getQualifier(), desc);
 			} catch (CoreException e) {
 				TeamUIPlugin.log(e);
 			}

@@ -10,9 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.jface.action.*;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -26,6 +25,7 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 	private DirectionFilterActionGroup modes;
 	private Action commitAdapter;
 	private Action updateAdapter;
+	public final static QualifiedName ID = new QualifiedName("org.eclipse.team.cvs.ui.cvsworkspace-participant", "syncparticipant");
 	
 	protected void setSubscriber(TeamSubscriber subscriber) {
 		super.setSubscriber(subscriber);
@@ -56,7 +56,7 @@ public class CVSWorkspaceSynchronizeParticipant extends CVSSynchronizeParticipan
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
 	 */
-	public void init(String instance_id) throws PartInitException {
+	public void init(QualifiedName id) throws PartInitException {
 		TeamSubscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(); 
 		setSubscriber(subscriber);
 	}

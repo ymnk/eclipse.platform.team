@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.ui.IWorkbenchPage;
 
 /**
@@ -76,5 +77,5 @@ public interface ISynchronizeManager {
 	 * @return a registered synchronize participant with the given id, io <code>null</code>
 	 * if one with that id is not registered.
 	 */
-	public ISynchronizeParticipant find(String id);
+	public ISynchronizeParticipant find(QualifiedName id);
 }

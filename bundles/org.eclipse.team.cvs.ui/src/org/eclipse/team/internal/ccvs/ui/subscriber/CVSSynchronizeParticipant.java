@@ -22,6 +22,7 @@ import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionDelegate;
+import org.eclipse.ui.part.IPageBookViewPage;
 
 public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipant implements ISyncSetChangedListener {
 	
@@ -63,13 +64,16 @@ public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipan
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(SyncSetChangedEvent event) {
-		StructuredViewer viewer = getPage().getViewer();
-		if(viewer != null) {
-			IStructuredContentProvider cp = (IStructuredContentProvider)viewer.getContentProvider(); 
-			StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
-			for (Iterator it = delegates.iterator(); it.hasNext(); ) {
-				CVSActionDelegate delegate = (CVSActionDelegate) it.next();
-				delegate.getDelegate().selectionChanged(delegate, selection);
+		IPageBookViewPage page = getPage();
+		if(page != null) {
+			StructuredViewer viewer = getPage().getViewer();
+			if(viewer != null) {
+				IStructuredContentProvider cp = (IStructuredContentProvider)viewer.getContentProvider(); 
+				StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
+				for (Iterator it = delegates.iterator(); it.hasNext(); ) {
+					CVSActionDelegate delegate = (CVSActionDelegate) it.next();
+					delegate.getDelegate().selectionChanged(delegate, selection);
+				}
 			}
 		}
 	}

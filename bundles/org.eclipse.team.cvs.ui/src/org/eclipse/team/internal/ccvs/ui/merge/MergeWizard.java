@@ -65,14 +65,14 @@ public class MergeWizard extends Wizard {
 		CVSTag endTag = endPage.getTag();				
 		
 		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
-		CVSMergeSynchronizeParticipant page = new CVSMergeSynchronizeParticipant(s);
+		CVSMergeSynchronizeParticipant participant = new CVSMergeSynchronizeParticipant(s);
 		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
-		manager.addSynchronizeParticipants(new ISynchronizeParticipant[] {page});
+		manager.addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 		
 		ISynchronizeView view = manager.showSynchronizeViewInActivePage(null);
 		if(view != null) {
-			view.display(page);
-			page.refreshWithRemote(null /* all roots */);
+			view.display(participant);
+			participant.refreshWithRemote(s.roots());
 		} else {
 			CVSUIPlugin.openError(getShell(), Policy.bind("error"), Policy.bind("Error.unableToShowSyncView"), null); //$NON-NLS-1$ //$NON-NLS-2$
 			return false;

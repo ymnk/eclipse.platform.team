@@ -10,14 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.ISafeRunnable;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.ListenerList;
-import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.*;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.TeamUI;
@@ -28,7 +23,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	private ListenerList fListeners;
 	
 	private String fName;	
-	private String fId;
+	private QualifiedName fId;
 	private String fInstanceId;
 	private ImageDescriptor fImageDescriptor;
 	protected IConfigurationElement configElement;
@@ -153,11 +148,11 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#getId()
 	 */
-	public String getId() {
+	public QualifiedName getId() {
 		return fId;
 	}
 	
-	protected void setId(String id) {
+	protected void setId(QualifiedName id) {
 		this.fId = id;
 	}
 	
@@ -229,7 +224,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		configElement = config;
 		
 		// Id
-		fId = config.getAttribute("id");
+		fId  = new QualifiedName(config.getAttribute("qualified_name"), config.getAttribute("local_name"));
 		
 		// Title.
 		fName = config.getAttribute("name");//$NON-NLS-1$

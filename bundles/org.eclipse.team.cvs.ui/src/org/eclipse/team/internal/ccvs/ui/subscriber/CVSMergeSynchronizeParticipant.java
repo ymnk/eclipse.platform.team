@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.jface.action.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.core.SaveContext;
 import org.eclipse.team.internal.core.SaveContextXMLWriter;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -34,7 +31,7 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	private RemoveSynchronizeViewPageAction removeAction;
 	private DirectionFilterActionGroup modes;
 	private Action updateAdapter;
-	private final static String PARTICIPANT_ID = "org.eclipse.team.cvs.ui.cvsmerge_syncparticipant";
+	private final static String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant";
 	
 	public CVSMergeSynchronizeParticipant() {
 		super();
@@ -43,8 +40,6 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	public CVSMergeSynchronizeParticipant(CVSMergeSubscriber subscriber) {
 		super();
 		setSubscriber(subscriber);
-		setName(subscriber.getName());
-		setId(PARTICIPANT_ID);
 		setImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION));
 	}
 			
@@ -53,7 +48,8 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	 */
 	protected void setSubscriber(TeamSubscriber subscriber) {
 		super.setSubscriber(subscriber);
-		setInstanceId(subscriber.getId().toString());
+		setId(subscriber.getId());
+		setName(subscriber.getName());
 		makeActions();
 	}
 	
@@ -84,11 +80,11 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#init(org.eclipse.team.ui.sync.ISynchronizeView, org.eclipse.team.core.ISaveContext)
 	 */
-	public void init(String instance_id) throws PartInitException {
+	public void init(QualifiedName id) throws PartInitException {
 		SaveContext ctx; //$NON-NLS-1$
 		try {
-			ctx = SaveContextXMLWriter.readXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(instance_id));
-			setSubscriber(CVSMergeSubscriber.restore(instance_id, ctx));
+			ctx = SaveContextXMLWriter.readXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(id.getLocalName()));
+			setSubscriber(CVSMergeSubscriber.restore(id, ctx));
 		} catch (TeamException e) {
 			TeamUIPlugin.log(e);
 		}
@@ -102,19 +98,18 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 		CVSMergeSubscriber s =(CVSMergeSubscriber)input.getSubscriber(); 
 		SaveContext ctx = s.saveState();
 		try {
-			SaveContextXMLWriter.writeXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(getId()), ctx); //$NON-NLS-1$		
+			SaveContextXMLWriter.writeXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(getId().getLocalName()), ctx); //$NON-NLS-1$		
 		} catch (TeamException e) {
 			TeamUIPlugin.log(e);
 		}
 	}
-	
-	
+		
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeParticipant#dispose()
 	 */
 	protected void dispose() {
 		super.dispose();
-		SaveContextXMLWriter.deleteXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(getId())); //$NON-NLS-1$
+		SaveContextXMLWriter.deleteXMLPluginMetaFile(CVSUIPlugin.getPlugin(), getMetaFileName(getId().getLocalName())); //$NON-NLS-1$
 	}
 	
 	private String getMetaFileName(String id) {

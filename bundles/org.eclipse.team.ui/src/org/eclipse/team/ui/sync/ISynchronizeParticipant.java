@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.sync;
 
 import org.eclipse.core.runtime.IExecutableExtension;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.ui.PartInitException;
@@ -29,17 +30,8 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * 
 	 * @return the unique id that identified the <i>type<i> of this synchronize participant.
 	 */
-	public String getId();
-	
-	/**
-	 * Returns the dynamic instance id of this synchronize participant. For dynamic
-	 * participants (e.g. participants that support multiple instance of the same
-	 * type) this id is used to differentiate these dynamic instances.
-	 * 
-	 * @return the dynamic instance id of this synchronize participant
-	 */
-	public String getInstanceId();
-	
+	public QualifiedName getId();
+		
 	/**
 	 * Returns the name of this synchronize participant.
 	 * 
@@ -78,7 +70,7 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @param saveContext the ISynchronizeParticipant state or null if there is no previous saved state
 	 * @exception PartInitException if this participant was not initialized successfully
 	 */
-	public void init(String instance_id) throws PartInitException;
+	public void init(QualifiedName id) throws PartInitException;
 	
 	/**
 	 * Saves the participants object state.

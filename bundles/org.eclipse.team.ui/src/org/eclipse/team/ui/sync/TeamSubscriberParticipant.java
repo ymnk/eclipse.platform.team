@@ -111,8 +111,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public void refreshWithRemote(IResource[] resources) {
-		if(resources == null || resources.length == 0) {
-			//page.getRefreshAction().run();
+		if((resources == null || resources.length == 0) && page != null) {
+			page.getRefreshAction().run();
 		} else {
 			RefreshAction.run(resources, input.getSubscriber());
 		}

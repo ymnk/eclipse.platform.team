@@ -686,6 +686,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 * @return Returns the cvsWorkspaceSynchronizeViewPage.
 	 */
 	public CVSWorkspaceSynchronizeParticipant getCvsWorkspaceSynchronizeViewPage() {
-		return (CVSWorkspaceSynchronizeParticipant)TeamUI.getSynchronizeManager().find("org.eclipse.team.cvs.ui.cvsworkspace_syncparticipant");
+		return (CVSWorkspaceSynchronizeParticipant)TeamUI.getSynchronizeManager().find(CVSWorkspaceSynchronizeParticipant.ID);
 	}
 }

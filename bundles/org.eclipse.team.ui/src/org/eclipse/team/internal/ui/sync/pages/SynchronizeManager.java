@@ -10,39 +10,20 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.pages;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.ISafeRunnable;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.SaveContext;
-import org.eclipse.team.internal.core.SaveContextXMLWriter;
-import org.eclipse.team.internal.core.TeamPlugin;
-import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.core.*;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
 import org.eclipse.team.internal.ui.registry.SynchronizePartnerDescriptor;
 import org.eclipse.team.ui.ITeamUIConstants;
-import org.eclipse.team.ui.sync.ISynchronizeManager;
-import org.eclipse.team.ui.sync.ISynchronizeParticipant;
-import org.eclipse.team.ui.sync.ISynchronizeParticipantListener;
-import org.eclipse.team.ui.sync.ISynchronizeView;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.WorkbenchException;
+import org.eclipse.team.ui.sync.*;
+import org.eclipse.ui.*;
 
 public class SynchronizeManager implements ISynchronizeManager {
 	/**
@@ -63,8 +44,8 @@ public class SynchronizeManager implements ISynchronizeManager {
 	// save context constants
 	private final static String CTX_PARTICIPANTS = "syncparticipants";
 	private final static String CTX_PARTICIPANT = "participant";
-	private final static String CTX_ID = "id";
-	private final static String CTX_INSTANCE_ID = "instance_id";
+	private final static String CTX_QUALIFIED_NAME = "qualified_name";
+	private final static String CTX_LOCAL_NAME = "local_name";
 	private final static String FILENAME = "syncParticipants.xml";
 	
 	/**
@@ -187,7 +168,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeManager#find(java.lang.String)
 	 */
-	public ISynchronizeParticipant find(String id) {
+	public ISynchronizeParticipant find(QualifiedName id) {
 		return (ISynchronizeParticipant)synchronizeParticipants.get(id);
 	}
 	
@@ -235,7 +216,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		for (int i = 0; i < desc.length; i++) {
 			SynchronizePartnerDescriptor descriptor = desc[i];
 			if(descriptor.isStatic() && ! synchronizeParticipants.containsKey(descriptor.getId())) {
-				participants.add(createParticipant(descriptor.getId(), null, descriptor));
+				participants.add(createParticipant(descriptor.getId(), descriptor));
 			}
 		}
 		if(! participants.isEmpty()) {
@@ -251,12 +232,12 @@ public class SynchronizeManager implements ISynchronizeManager {
 			for (int i = 0; i < contexts.length; i++) {
 				ISaveContext context = contexts[i];
 				if(context.getName().equals(CTX_PARTICIPANT)) {
-					String id = context.getAttribute(CTX_ID);
-					String instance_id = context.getAttribute(CTX_INSTANCE_ID);
-					SynchronizePartnerDescriptor desc = participantRegistry.find(id);
+					String qualified_name = context.getAttribute(CTX_QUALIFIED_NAME);
+					String local_name = context.getAttribute(CTX_LOCAL_NAME);
+					SynchronizePartnerDescriptor desc = participantRegistry.find(qualified_name);
 					if(desc != null) {
 						IConfigurationElement cfgElement = desc.getConfigurationElement();
-						participants.add(createParticipant(id, instance_id, desc));
+						participants.add(createParticipant(new QualifiedName(qualified_name, local_name), desc));
 					}
 				}
 			}
@@ -266,10 +247,10 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 	}
 	
-	private ISynchronizeParticipant createParticipant(String id, String instance_id, SynchronizePartnerDescriptor desc) throws CoreException, PartInitException {
+	private ISynchronizeParticipant createParticipant(QualifiedName id, SynchronizePartnerDescriptor desc) throws CoreException, PartInitException {
 		ISynchronizeParticipant participant = (ISynchronizeParticipant)TeamUIPlugin.createExtension(desc.getConfigurationElement(), SynchronizePartnerDescriptor.ATT_CLASS);
-		participant.setInitializationData(desc.getConfigurationElement(), id, null);
-		participant.init(instance_id);
+		participant.setInitializationData(desc.getConfigurationElement(), id.toString(), id);
+		participant.init(id);
 		return participant;
 	}
 	
@@ -280,12 +261,12 @@ public class SynchronizeManager implements ISynchronizeManager {
 		try {
 			for (Iterator it = synchronizeParticipants.values().iterator(); it.hasNext();) {			
 				ISynchronizeParticipant participant = (ISynchronizeParticipant) it.next();			
-				String id = participant.getId();
+				QualifiedName id = participant.getId();
 				ISaveContext item = new SaveContext();				
 				item.setName(CTX_PARTICIPANT);
 				Map attributes = new HashMap();
-				attributes.put(CTX_ID, id);
-				attributes.put(CTX_INSTANCE_ID, participant.getInstanceId());
+				attributes.put(CTX_QUALIFIED_NAME, id.getQualifier());
+				attributes.put(CTX_LOCAL_NAME, id.getLocalName());
 				item.setAttributes(attributes);				
 				children.add(item);
 				participant.saveState();
