@@ -29,10 +29,10 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
-import org.eclipse.ui.dialogs.PropertyPage;
+import org.eclipse.team.internal.ccvs.core.util.Util;
 import org.eclipse.ui.help.WorkbenchHelp;
 
-public class CVSFolderPropertiesPage extends PropertyPage {
+public class CVSFolderPropertiesPage extends CVSPropertiesPage {
 
 	IFolder folder;
 	private Label root;
@@ -58,6 +58,10 @@ public class CVSFolderPropertiesPage extends PropertyPage {
 				} else {
 					createLabel(composite, Policy.bind("CVSFolderPropertiesPage.notManaged"), 2); //$NON-NLS-1$
 				}
+			} else if (!cvsResource.isCVSFolder()) {
+				// We have a managed folder which is not a cvs folder. 
+				// This is really an invalid state but it does happen once in a while
+				createLabel(composite, Policy.bind("CVSFolderPropertiesPage.notCVSFolder"), 2); //$NON-NLS-1$
 			} else {
 				FolderSyncInfo syncInfo = cvsResource.getFolderSyncInfo();
 				createLabel(composite, Policy.bind("CVSFolderPropertiesPage.root")); //$NON-NLS-1$
@@ -68,24 +72,12 @@ public class CVSFolderPropertiesPage extends PropertyPage {
 				// Tag
 				createLabel(composite, Policy.bind("CVSFilePropertiesPage.tag")); //$NON-NLS-1$
 				CVSTag tag = syncInfo.getTag();
-				if (tag == null) {
-					createLabel(composite, Policy.bind("CVSFilePropertiesPage.none")); //$NON-NLS-1$
-				} else {
-					switch (tag.getType()) {
-						case CVSTag.HEAD:
-							createLabel(composite, tag.getName());
-							break;
-						case CVSTag.VERSION:
-							createLabel(composite, Policy.bind("CVSFilePropertiesPage.version", tag.getName())); //$NON-NLS-1$
-							break;
-						case CVSTag.BRANCH:
-							createLabel(composite, Policy.bind("CVSFilePropertiesPage.branch", tag.getName())); //$NON-NLS-1$
-							break;
-						case CVSTag.DATE:
-							createLabel(composite, Policy.bind("CVSFilePropertiesPage.date", tag.getName())); //$NON-NLS-1$
-							break;
-					}
+
+				if (tag != null && tag.getType() == CVSTag.BRANCH) {
+					tag = Util.getAccurateFolderTag(folder, tag);				
 				}
+			
+				createLabel(composite, getTagLabel(tag));
 				
 				// Static-ness
 				if (syncInfo.getIsStatic()) {
@@ -118,7 +110,7 @@ public class CVSFolderPropertiesPage extends PropertyPage {
 			// Display error text
 			createLabel(composite, Policy.bind("CVSFilePropertiesPage.error"), 2); //$NON-NLS-1$
 		}
-		WorkbenchHelp.setHelp(composite, IHelpContextIds.FOLDER_PROPERTY_PAGE);
+		WorkbenchHelp.setHelp(getControl(), IHelpContextIds.FOLDER_PROPERTY_PAGE);
 		return composite;
 	}
 
