@@ -133,7 +133,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 		top.setLayoutData(data);
 		setControl(top);
 		
-		if (participant.getSubscriber().roots().length == 0) {
+		if (participant.getResources().length == 0) {
 			Label l = new Label(top, SWT.NULL);
 			l.setText(Policy.bind("GlobalRefreshResourceSelectionPage.4")); //$NON-NLS-1$
 			setPageComplete(false);
@@ -320,7 +320,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	
 	private void updateParticipantScope() {
 		if(participantScope.getSelection()) {
-			fViewer.setCheckedElements(participant.getSubscriber().roots());
+			fViewer.setCheckedElements(participant.getResources());
 			setPageComplete(true);
 		}
 	}

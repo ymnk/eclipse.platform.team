@@ -187,6 +187,9 @@ public class SynchronizeManager implements ISynchronizeManager {
 		 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference#getDisplayName()
 		 */
 		public String getDisplayName() {
+			if(descriptor.isStatic()) {
+				return descriptor.getName();
+			}
 			return displayName != null ? displayName : descriptor.getName();
 		}
 		

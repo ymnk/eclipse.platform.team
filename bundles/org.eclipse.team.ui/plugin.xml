@@ -131,6 +131,14 @@
             class="org.eclipse.team.internal.ui.synchronize.SynchronizeView"
             id="org.eclipse.team.sync.views.SynchronizeView">
       </view>
+    <!--  <view
+            name="%CompareView.name"
+            icon="icons/full/eview16/compare_view.gif"
+            fastViewWidthRatio="0.25"
+            category="org.eclipse.team.ui"
+            class="org.eclipse.team.internal.ui.synchronize.CompareView"
+            id="org.eclipse.team.sync.views.CompareView">
+      </view> -->
    </extension>
 <!-- **************** Synchronizing Perspective ******************* -->
    <extension

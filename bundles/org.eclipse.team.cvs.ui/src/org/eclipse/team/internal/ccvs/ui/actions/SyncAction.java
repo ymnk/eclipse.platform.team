@@ -16,9 +16,11 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CompareWithLatestParticipant;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 
 /**
  * Action to initiate a CVS workspace synchronize
@@ -29,10 +31,23 @@ public class SyncAction extends WorkspaceAction {
 		IResource[] resources = getResourcesToSync();
 		if (resources == null || resources.length == 0) return;
 		
-		WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		if(participant != null) {
-				participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$
+		//WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
+		//if(participant != null) {
+		//		participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$
+		//}
+		CompareWithLatestParticipant participant = null;
+		SubscriberParticipant[] participants = SubscriberParticipant.getMatchingParticipant(CompareWithLatestParticipant.ID, resources);
+		if(participants.length == 0) {
+			participant = new CompareWithLatestParticipant(resources);
+			TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+		} else {
+			participant = (CompareWithLatestParticipant)participants[0];
 		}
+		participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetail", participant.getName()), getTargetPart().getSite()); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+	
+	private boolean isSingleFile(IResource[] resources) {
+		return resources.length == 1 && resources[0].getType() == IResource.FILE;
 	}
 	
 	protected IResource[] getResourcesToSync() {

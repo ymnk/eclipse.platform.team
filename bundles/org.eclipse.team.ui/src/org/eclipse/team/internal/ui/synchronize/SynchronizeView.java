@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.dialogs.DialogSettings;
@@ -21,25 +21,13 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.ISynchronizePage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.part.IPage;
-import org.eclipse.ui.part.IPageBookViewPage;
-import org.eclipse.ui.part.MessagePage;
-import org.eclipse.ui.part.PageBook;
-import org.eclipse.ui.part.PageBookView;
+import org.eclipse.ui.part.*;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
@@ -114,13 +102,17 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void updateTitle() {
 		ISynchronizeParticipant participant = getParticipant();
 		if (participant == null) {
-			setTitle(Policy.bind("SynchronizeView.1")); //$NON-NLS-1$
+			setTitle(getViewName()); //$NON-NLS-1$
 		} else {
 			SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)fParticipantToPart.get(participant);
-			setTitle(Policy.bind("SynchronizeView.2", part.getParticipant().getName())); //$NON-NLS-1$
+			setTitle(Policy.bind("SynchronizeView.2", getViewName(), part.getParticipant().getName())); //$NON-NLS-1$
 		}
 	}
 
+	protected String getViewName() {
+		return Policy.bind("SynchronizeView.1"); //$NON-NLS-1$
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.PageBookView#doDestroyPage(org.eclipse.ui.IWorkbenchPart, org.eclipse.ui.part.PageBookView.PageRec)
 	 */
@@ -209,8 +201,8 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 */
 	public void participantsAdded(final ISynchronizeParticipant[] participants) {
 		for (int i = 0; i < participants.length; i++) {
-			if (isAvailable()) {
-				ISynchronizeParticipant participant = participants[i];
+			ISynchronizeParticipant participant = participants[i];
+			if (isAvailable() && select(TeamUI.getSynchronizeManager().get(participant.getId(), participant.getSecondaryId()))) {
 				SynchronizeViewWorkbenchPart part = new SynchronizeViewWorkbenchPart(participant, getSite());
 				fParticipantToPart.put(participant, part);
 				fPartToParticipant.put(part, participant);
@@ -226,8 +218,8 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 			Runnable r = new Runnable() {
 				public void run() {
 					for (int i = 0; i < participants.length; i++) {
+						ISynchronizeParticipant participant = participants[i];
 						if (isAvailable()) {
-							ISynchronizeParticipant participant = participants[i];
 							SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)fParticipantToPart.get(participant);
 							if (part != null) {
 								partClosed(part);
@@ -344,12 +336,12 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 */
 	private void updateForExistingParticipants() {
 		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
-		// create pages for consoles
-		ISynchronizeParticipantReference[] participants = manager.getSynchronizeParticipants();
+		List participants = Arrays.asList(getParticipants());
 		boolean errorOccurred = false;
-		for (int i = 0; i < participants.length; i++) {
+		for (int i = 0; i < participants.size(); i++) {
 			try {
-				participantsAdded(new ISynchronizeParticipant[] {participants[i].getParticipant()});
+				ISynchronizeParticipantReference ref = (ISynchronizeParticipantReference)participants.get(i);
+				participantsAdded(new ISynchronizeParticipant[] {ref.getParticipant()});
 			} catch (TeamException e) {
 				errorOccurred = true;
 				continue;
@@ -357,12 +349,12 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 			
 		}
 		if (errorOccurred) {
-			participants = manager.getSynchronizeParticipants();
+			participants = Arrays.asList(getParticipants());
 		}
 		try {
 			// decide which participant to show	on startup
-			if (participants.length > 0) {
-				ISynchronizeParticipantReference participantToSelect = participants[0];
+			if (participants.size() > 0) {
+				ISynchronizeParticipantReference participantToSelect = (ISynchronizeParticipantReference)participants.get(0);
 				IDialogSettings section = getDialogSettings();
 				String selectedParticipantId = section.get(KEY_LAST_ACTIVE_PARTICIPANT);
 				if(selectedParticipantId != null) {
@@ -379,6 +371,20 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		} catch (TeamException e) {
 			Utils.handle(e);
 		}
+	}
+	
+	private ISynchronizeParticipantReference[] getParticipants() {
+		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
+		// create pages
+		List participants = new ArrayList();
+		ISynchronizeParticipantReference[] refs = manager.getSynchronizeParticipants();
+		for (int i = 0; i < refs.length; i++) {
+			ISynchronizeParticipantReference ref =refs[i];
+			if(select(ref)) {
+				participants.add(ref);
+			}
+		}
+		return (ISynchronizeParticipantReference[]) participants.toArray(new ISynchronizeParticipantReference[participants.size()]);
 	}
 	
 	private boolean isAvailable() {
@@ -398,6 +404,10 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 			// before accessing the page.
 			return null;
 		}
+	}
+	
+	protected boolean select(ISynchronizeParticipantReference ref) {
+		return true;
 	}
 	
 	/*

@@ -11,15 +11,14 @@
 package org.eclipse.team.internal.ccvs.ui.actions;
  
 import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.*;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CompareWithLatestParticipant;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -37,8 +36,8 @@ public class CompareWithRemoteAction extends WorkspaceAction {
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
 		final IResource[] resources = getSelectedResources();		
 		// Show the 3-way comparison in a model dialog
-		WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		String taskName = Policy.bind("Participant.comparingDetail", participant.getName(), Utils.stripAmpersand(calculateActionTagValue()));
+		CompareWithLatestParticipant participant = new CompareWithLatestParticipant(resources);
+		String taskName = Policy.bind("Participant.comparingDetail", participant.getName(), Utils.stripAmpersand(calculateActionTagValue())); //$NON-NLS-1$
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 		boolean showInSyncView = store.getBoolean(ICVSUIConstants.PREF_SHOW_COMPARE_MERGE_IN_SYNCVIEW);
 		if(showInSyncView) {

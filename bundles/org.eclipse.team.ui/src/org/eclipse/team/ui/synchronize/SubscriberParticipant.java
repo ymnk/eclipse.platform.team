@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import java.util.*;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -17,6 +19,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
@@ -158,6 +161,32 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	public Subscriber getSubscriber() {
 		if (collector == null) return null;
 		return collector.getSubscriber();
+	}
+	
+	/**
+	 * Returns a participant that matches the scoping 
+	 */
+	public static SubscriberParticipant[] getMatchingParticipant(String ID, IResource[] resources) {
+		ISynchronizeParticipantReference[] refs = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		List participants = new ArrayList();
+		for (int i = 0; i < refs.length; i++) {
+			ISynchronizeParticipantReference reference = refs[i];
+			if(reference.getId().equals(ID)) {
+					SubscriberParticipant p;
+					try {
+						p = (SubscriberParticipant)reference.getParticipant();
+					} catch (TeamException e) {
+						continue;
+					}
+					IResource[] roots = p.getResources();
+					Arrays.sort(resources, Utils.resourceComparator);
+					Arrays.sort(roots, Utils.resourceComparator);
+					if (Arrays.equals(resources, roots)) {
+						participants.add(p);
+					}
+			}
+		}
+		return (SubscriberParticipant[]) participants.toArray(new SubscriberParticipant[participants.size()]);
 	}
 		
 	/* (non-Javadoc)
