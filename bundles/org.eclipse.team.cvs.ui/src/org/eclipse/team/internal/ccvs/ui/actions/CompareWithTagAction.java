@@ -30,7 +30,6 @@ import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 public class CompareWithTagAction extends WorkspaceAction {
 
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		final CVSTag tag;
 		final ICVSRemoteResource[] remoteResource = new ICVSRemoteResource[] { null };
 		final IResource[] resources = getSelectedResources();
 		
@@ -49,7 +48,7 @@ public class CompareWithTagAction extends WorkspaceAction {
 		if (result == Dialog.CANCEL || dialog.getResult() == null) {
 			return;
 		}
-		tag = dialog.getResult();
+		final CVSTag tag = dialog.getResult();
 		if (tag == null) return;
 		// Show the compare viewer
 		run(new IRunnableWithProgress() {
