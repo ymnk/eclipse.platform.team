@@ -44,6 +44,7 @@ import org.eclipse.ui.texteditor.WorkbenchChainedTextFontFieldEditor;
  * UI Plugin for CVS provider-specific workbench functionality.
  */
 public class CVSUIPlugin extends AbstractUIPlugin {
+	
 	/**
 	 * The id of the CVS plug-in
 	 */
@@ -53,6 +54,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	private Hashtable imageDescriptors = new Hashtable(20);
 
 	public final static String ICON_PATH;
+	
 	static {
 		if (Display.getCurrent().getIconDepth() > 4) {
 			ICON_PATH = ICVSUIConstants.ICON_PATH_FULL;
@@ -203,6 +205,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		store.setDefault(ICVSUIConstants.PREF_DIRTY_FLAG, CVSDecoratorConfiguration.DEFAULT_DIRTY_FLAG);
 		store.setDefault(ICVSUIConstants.PREF_CALCULATE_DIRTY, true);
 		store.setDefault(ICVSUIConstants.PREF_PROMPT_ON_MIXED_TAGS, true);
+		store.setDefault(ICVSUIConstants.PREF_SAVE_DIRTY_EDITORS, ICVSUIConstants.OPTION_PROMPT);
 		
 		// Forward the values to the CVS plugin
 		CVSProviderPlugin.getPlugin().setPruneEmptyDirectories(store.getBoolean(ICVSUIConstants.PREF_PRUNE_EMPTY_DIRECTORIES));

@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -33,6 +34,10 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.ui.actions.TeamAction;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * Contains helper methods for CVS actions.
@@ -43,6 +48,29 @@ import org.eclipse.team.ui.actions.TeamAction;
  * if they have failed.]
  */
 abstract public class CVSAction extends TeamAction {
+	
+	public static boolean saveAllDirtyEditors() {
+		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
+		int saveOption = store.getInt(ICVSUIConstants.PREF_SAVE_DIRTY_EDITORS);
+		boolean confirmWithUser = true;
+		boolean continueWithOperation = false;
+		
+		switch(saveOption) {
+			case ICVSUIConstants.OPTION_AUTOMATIC:
+				confirmWithUser = false;
+			case ICVSUIConstants.OPTION_PROMPT:
+				IWorkbench workbench = PlatformUI.getWorkbench();
+				IWorkbenchWindow activeWindow = workbench.getActiveWorkbenchWindow();				
+				IWorkbenchPage activePage = activeWindow.getActivePage();
+				continueWithOperation = activePage.saveAllEditors(confirmWithUser);		
+				break;
+			case ICVSUIConstants.OPTION_NEVER: 
+				continueWithOperation = true;
+				break;
+		}		
+		return continueWithOperation;
+	}
+	
 	/**
 	 * Answers <code>true</code> if the current selection contains resource that don't
 	 * have overlapping paths and <code>false</code> otherwise. 

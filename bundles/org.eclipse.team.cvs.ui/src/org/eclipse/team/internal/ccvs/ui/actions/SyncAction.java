@@ -19,11 +19,14 @@ import org.eclipse.ui.PartInitException;
 /**
  * Action for catchup/release in popup menus.
  */
-public class SyncAction extends TeamAction {
+public class SyncAction extends CVSAction {
 	/*
 	 * Method declared on IActionDelegate.
 	 */
 	public void run(IAction action) {
+		if(!saveAllDirtyEditors()) {
+			return;
+		}
 		IResource[] resources = getSelectedResources();
 		SyncView view = (SyncView)CVSUIPlugin.getActivePage().findView(SyncView.VIEW_ID);
 		if (view == null) {

@@ -77,5 +77,4 @@ public class AddAction extends TeamAction {
 		}
 		return true;
 	}
-
 }
