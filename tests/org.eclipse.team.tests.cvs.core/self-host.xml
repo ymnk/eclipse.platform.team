@@ -17,6 +17,7 @@
     <antcall target="org.eclipse.team.cvs.core"/>
     <antcall target="org.eclipse.team.cvs.ui"/>
     <antcall target="org.eclipse.team.cvs.ssh"/>
+    <antcall target="org.eclipse.team.cvs.ssh2"/>
 
     <zip zipfile="${basedir}/selfhost${DSTAMP}.zip"
        basedir="${temp}"
@@ -58,6 +59,13 @@
     <antcall target="buildPlugin">
       <param name="pluginName" value="org.eclipse.team.cvs.ssh" />
       <param name="jarName" value="teamcvsssh.jar" />
+    </antcall>
+  </target>
+  
+  <target name="org.eclipse.team.cvs.ssh2">
+    <antcall target="buildPlugin">
+      <param name="pluginName" value="org.eclipse.team.cvs.ssh2" />
+      <param name="jarName" value="teamcvsssh2.jar" />
     </antcall>
   </target>
           
