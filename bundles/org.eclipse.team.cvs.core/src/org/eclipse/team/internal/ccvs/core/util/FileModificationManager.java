@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
@@ -31,7 +30,6 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
@@ -42,9 +40,10 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
  * missed. Secondly, it listens for CVS resource state change events and uses
  * these to properly mark files and folders as modified.
  */
-public class FileModificationManager implements IResourceChangeListener, ISaveParticipant, IResourceStateChangeListener {
+public class FileModificationManager implements IResourceChangeListener, ISaveParticipant {
 	
 	private static final String IS_DIRTY_INDICATOR = new String();
+	private static final Object NOT_DIRTY_INDICATOR = new Object();
 	private static final QualifiedName IS_DIRTY = new QualifiedName(CVSProviderPlugin.ID, "is-dirty");
 	
 	/**
@@ -116,61 +115,62 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 	 */
 	public void saving(ISaveContext context) throws CoreException {
 	}
+
+	private boolean isModified(ICVSFile cvsFile, ResourceSyncInfo info) throws CVSException {
+		if (info == null) return false;
+		if(info.isMerged() || !cvsFile.exists()) return true;
+		return !cvsFile.getTimeStamp().equals(info.getTimeStamp());
+	}
 	
 	/**
-	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceSyncInfoChanged(org.eclipse.core.resources.IResource[])
+	 * Method setModified.
+	 * @param iFile
+	 * @param b
 	 */
-	public void resourceSyncInfoChanged(IResource[] changedResources) {
-		// nothing to do here
-	}
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModificationStateChanged(org.eclipse.core.resources.IResource[], int)
-	 */
-	public void resourceModificationStateChanged(IResource[] changedResources, int changeType) {
-		for (int i = 0; i < changedResources.length; i++) {
-			IResource resource = changedResources[i];
-			if (resource.getType() == IResource.FILE) {
-				IFile file = (IFile)resource;
-				ensureDirtyInfoCached(file);
-				if (changeType == NO_LONGER_MODIFIED) {
-					resetDirty(file);
-				} else {
-					if (isModified(file)) {
-					} else {
-					}
-				}
-			}
+	public void setModified(IFile file, boolean modified) {
+		// ensureDirtyInfoCached(file);
+		if (modified) {
+			//makeDirty(file);
+		} else {
+			//resetDirty(file);
 		}
 	}
 	/**
-	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectConfigured(org.eclipse.core.resources.IProject)
+	 * Method syncInfoChanged.
+	 * @param eclipseFile
+	 * @param info
 	 */
-	public void projectConfigured(IProject project) {
-		// nothing to do here
+	public void syncInfoChanged(ICVSFile mFile, ResourceSyncInfo info) throws CVSException {
+		IResource resource = mFile.getIResource();
+		if (resource == null) return;
+		setModified((IFile)resource, isModified(mFile, info));
 	}
 	/**
-	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectDeconfigured(org.eclipse.core.resources.IProject)
-	 */
-	public void projectDeconfigured(IProject project) {
-		// nothing to do here
-	}
-
-	/**
-	 * Method isModified returns true if the file is modified from a CVS
-	 * standpoint. This includes files whose timestamps differ from the
-	 * timestamp in the sync info, managed files that have been deleted and
-	 * managed files that have been merged. It does not included files that
-	 * are not under CVS control
+	 * Method updated flags the objetc as having been modfied by the updated
+	 * handler. This flag is read during the resource delta to determine whether
+	 * the modification made the file dirty or not.
 	 * 
-	 * @param file
-	 * @return boolean
+	 * @param mFile
 	 */
-	private boolean isModified(IFile file) throws CVSException {
-		ICVSFile cvsFile = CVSWorkspaceRoot.getCVSFileFor(file);
-		ResourceSyncInfo info = cvsFile.getSyncInfo();
-		// consider a merged file as always modified.
-		if(info.isMerged() || info.isDeleted()) return true;
-		return !cvsFile.getTimeStamp().equals(info.getTimeStamp());
+	public void updated(ICVSFile mFile) throws CVSException {
+		IResource resource = mFile.getIResource();
+		if (resource == null) return;
+		try {
+			resource.setSessionProperty(IS_DIRTY, NOT_DIRTY_INDICATOR);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	public void contentsChanged(IFile file) throws CoreException {
+		Object indicator = file.getSessionProperty(IS_DIRTY);
+		boolean dirty = true;
+		if (indicator == NOT_DIRTY_INDICATOR) {
+			// the file was changed die to an update so skip it
+			file.setSessionProperty(IS_DIRTY, null);
+			dirty = false;
+		}
+		setModified(file, dirty);
 	}
 	
 }

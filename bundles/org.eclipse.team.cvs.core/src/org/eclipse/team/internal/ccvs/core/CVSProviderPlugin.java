@@ -110,7 +110,7 @@ public class CVSProviderPlugin extends Plugin {
 	private IResourceChangeListener projectDescriptionListener;
 	private IResourceChangeListener metaFileSyncListener;
 	private AddDeleteMoveListener addDeleteMoveListener;
-	private FileModificationManager fileModificationListener;
+	private FileModificationManager fileModificationManager;
 
 	private static final String REPOSITORIES_STATE_FILE = ".cvsProviderState"; //$NON-NLS-1$
 	// version numbers for the state file (a positive number indicates version 1)
@@ -270,7 +270,7 @@ public class CVSProviderPlugin extends Plugin {
 		projectDescriptionListener = new ProjectDescriptionManager();
 		metaFileSyncListener = new SyncFileChangeListener();
 		addDeleteMoveListener = new AddDeleteMoveListener();
-		fileModificationListener = new FileModificationManager();
+		fileModificationManager = new FileModificationManager();
 		// Group the two PRE_AUTO_BUILD listeners together for efficiency
 		workspace.addResourceChangeListener(new IResourceChangeListener() {
 			public void resourceChanged(IResourceChangeEvent event) {
@@ -279,8 +279,8 @@ public class CVSProviderPlugin extends Plugin {
 			}
 		}, IResourceChangeEvent.PRE_AUTO_BUILD);
 		workspace.addResourceChangeListener(addDeleteMoveListener, IResourceChangeEvent.POST_AUTO_BUILD);
-		workspace.addResourceChangeListener(fileModificationListener, IResourceChangeEvent.POST_CHANGE);
-		fileModificationListener.registerSaveParticipant();
+		workspace.addResourceChangeListener(fileModificationManager, IResourceChangeEvent.POST_CHANGE);
+		fileModificationManager.registerSaveParticipant();
 		CVSProviderPlugin.addResourceStateChangeListener(addDeleteMoveListener);
 		
 		createCacheDirectory();
@@ -816,4 +816,12 @@ public class CVSProviderPlugin extends Plugin {
 	public boolean getResetTimestampOfFalseChange() {
 		return true;
 	}
+	/**
+	 * Returns the fileModificationManager.
+	 * @return FileModificationManager
+	 */
+	public FileModificationManager getFileModificationManager() {
+		return fileModificationManager;
+	}
+
 }

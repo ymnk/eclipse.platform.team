@@ -514,4 +514,12 @@ public class ResourceSyncInfo {
 		}
 		return result.toString();
 	}
+	
+	public boolean needsReporting() {
+		return false;
+	}
+	
+	public void reported() {
+		// do nothing
+	}
 }

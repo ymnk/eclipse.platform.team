@@ -1124,6 +1124,7 @@ public class EclipseSynchronizer {
 	/**
 	 * Method clearModificationState.
 	 * @param iFile
+	 * @deprecated
 	 */
 	public void clearModificationState(final IResource resource) throws CVSException {
 		run(new ICVSRunnable() {

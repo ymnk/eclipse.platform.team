@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
@@ -350,10 +351,11 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 				newInfo.setRevision(baserevInfo.getRevision());
 				newInfo.setTimeStamp(getTimeStamp());
 				newInfo.setDeleted(false);
+				newInfo.reported(); // We report the change below
 				setSyncInfo(newInfo);
 			}
-			// broadcast the modification state change
-			EclipseSynchronizer.getInstance().clearModificationState(getIFile());
+			// an unedited file is no longer modified
+			CVSProviderPlugin.getPlugin().getFileModificationManager().setModified(getIFile(), false);
 		}
 		setBaserevInfo(null);
 		
@@ -383,14 +385,16 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		if (newInfo==null) {
 			// cvs add of a file
 			newInfo = new ResourceSyncInfo(entryLine, null, null);
+			// an added file should show up as modified
+			CVSProviderPlugin.getPlugin().getFileModificationManager().setModified(getIFile(), true);
 		} else {
 			// commit of a changed file
 			newInfo = new ResourceSyncInfo(entryLine, newInfo.getPermissions(), getTimeStamp());
+			// a committed file is no longer modified
+			CVSProviderPlugin.getPlugin().getFileModificationManager().setModified(getIFile(), false);
 		}
 		setSyncInfo(newInfo);
 		clearCachedBase();
-		// broadcast the modification state change
-		EclipseSynchronizer.getInstance().clearModificationState(getIFile());
 	}
 	
 	private void clearCachedBase() throws CVSException {
@@ -407,12 +411,25 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	public void unmanage(IProgressMonitor monitor) throws CVSException {
 		super.unmanage(monitor);
 		clearCachedBase();
+		// Reset the modified state of any unmanaged file
+		CVSProviderPlugin.getPlugin().getFileModificationManager().setModified(getIFile(), false);
 	}
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#isEdited()
 	 */
 	public boolean isEdited() throws CVSException {
 		return EclipseSynchronizer.getInstance().isEdited(getIFile());
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#setSyncInfo(org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo)
+	 */
+	public void setSyncInfo(ResourceSyncInfo info) throws CVSException {
+		super.setSyncInfo(info);
+		if (info.needsReporting()) {
+			CVSProviderPlugin.getPlugin().getFileModificationManager().syncInfoChanged(this, info);
+			info.reported();
+		}
 	}
 
 }

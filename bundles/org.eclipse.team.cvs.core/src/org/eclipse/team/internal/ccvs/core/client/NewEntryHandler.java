@@ -7,6 +7,7 @@ package org.eclipse.team.internal.ccvs.core.client;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
@@ -41,5 +42,7 @@ public class NewEntryHandler extends ResponseHandler {
 		ResourceSyncInfo fileInfo = mFile.getSyncInfo();
 		ResourceSyncInfo newInfo = new ResourceSyncInfo(entryLine, fileInfo.getPermissions(), null);
 		mFile.setSyncInfo(newInfo);
+		// report the sync info change in case the modification status of the file changed
+		CVSProviderPlugin.getPlugin().getFileModificationManager().syncInfoChanged(mFile, newInfo);
 	}
 }

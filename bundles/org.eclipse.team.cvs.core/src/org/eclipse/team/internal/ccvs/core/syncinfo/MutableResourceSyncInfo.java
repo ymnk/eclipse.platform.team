@@ -32,6 +32,9 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
  */
 public class MutableResourceSyncInfo extends ResourceSyncInfo {
 	
+	boolean reported;
+	boolean changed;
+	
 	protected MutableResourceSyncInfo(ResourceSyncInfo info) {
 		this.name = info.getName();
 		setRevision(info.getRevision());
@@ -58,6 +61,8 @@ public class MutableResourceSyncInfo extends ResourceSyncInfo {
 		Assert.isNotNull(name);
 		this.name = name;
 		setRevision(revision);
+		this.reported = false;
+		this.changed = false;
 	}
 	
 	void setResourceInfoType(int type) {
@@ -78,6 +83,7 @@ public class MutableResourceSyncInfo extends ResourceSyncInfo {
 	 */
 	public void setTimeStamp(Date timeStamp) {
 		this.timeStamp = timeStamp;
+		this.changed = true;
 	}
 	
 	/**
@@ -86,6 +92,7 @@ public class MutableResourceSyncInfo extends ResourceSyncInfo {
 	 */
 	public void setKeywordMode(KSubstOption keywordMode) {
 		this.keywordMode = keywordMode;
+		this.changed = true;
 	}
 
 	/**
@@ -110,6 +117,7 @@ public class MutableResourceSyncInfo extends ResourceSyncInfo {
 	 */
 	public void setDeleted(boolean isDeleted) {
 		this.isDeleted = isDeleted;
+		this.changed = true;
 	}
 	
 	/**
@@ -117,6 +125,7 @@ public class MutableResourceSyncInfo extends ResourceSyncInfo {
 	 */
 	public void setAdded() {
 		setRevision(ADDED_REVISION);
+		this.changed = true;
 	}
 	
 	/**
@@ -126,6 +135,15 @@ public class MutableResourceSyncInfo extends ResourceSyncInfo {
 		// if already merged state then ignore
 		if(syncType==TYPE_REGULAR) {			
 			this.syncType = TYPE_MERGED;
+			this.changed = true;
 		}
+	}
+	
+	public boolean needsReporting() {
+		return changed && !reported;
+	}
+	
+	public void reported() {
+		this.reported = true;
 	}
 }
