@@ -60,8 +60,9 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * Superclass for all CVS actions. It provides helper enablement
- * methods and common pre-run and post-run hadling.
+ * CVSAction is the common superclass for all CVS actions. It provides
+ * facilities for enablement handling, standard error handling, selection
+ * retrieval and prompting.
  */
 abstract public class CVSAction extends TeamAction {
 	
@@ -69,11 +70,6 @@ abstract public class CVSAction extends TeamAction {
 	
 	/**
 	 * Common run method for all CVS actions.
-	 * 
-	 * [Note: it would be nice to have common CVS error handling
-	 * placed here and have all CVS actions subclass. For example
-	 * error handling UI could provide a retry facility for actions
-	 * if they have failed.]
 	 */
 	final public void run(IAction action) {
 		try {
@@ -108,6 +104,11 @@ abstract public class CVSAction extends TeamAction {
 		}
 		return true;
 	}
+
+	/**
+	 * Actions must override to do their work.
+	 */
+	abstract protected void execute(IAction action) throws InvocationTargetException, InterruptedException;
 
 	/**
 	 * This method gets invoked after <code>CVSAction#execute(IAction)</code>
@@ -230,11 +231,6 @@ abstract public class CVSAction extends TeamAction {
 		}
 		ErrorDialog.openError(getShell(), title, message, statusToDisplay);
 	}
-	
-	/**
-	 * Actions must override to do their work.
-	 */
-	abstract protected void execute(IAction action) throws InvocationTargetException, InterruptedException;
 
 	/**
 	 * Convenience method for running an operation with the appropriate progress.
