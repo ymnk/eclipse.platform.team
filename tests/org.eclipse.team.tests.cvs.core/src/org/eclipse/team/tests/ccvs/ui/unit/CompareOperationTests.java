@@ -18,7 +18,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.ui.operations.CompareOperation;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 
 public class CompareOperationTests extends CVSOperationTest {
@@ -44,6 +45,8 @@ public class CompareOperationTests extends CVSOperationTest {
 	public void testCompareWithLatest() throws TeamException, CoreException {
 		// Create a test project
 		IProject project = createProject(new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		CVSTag v1 = new CVSTag("v1", CVSTag.VERSION);
+		tagProject(project, v1, false);
 		
 		// Checkout and modify a copy (and commit the changes)
 		IProject copy = checkoutCopy(project, "-copy");
@@ -53,7 +56,8 @@ public class CompareOperationTests extends CVSOperationTest {
 		getProvider(copy).checkin(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 
 		// Run the compare operation
-		CompareOperation op = new CompareOperation(null, new IResource[] { project }, new CVSTag("HEAD", CVSTag.VERSION), null);
+		ICVSRemoteFolder remoteResource = (ICVSRemoteFolder)CVSWorkspaceRoot.getRemoteResourceFor(project);
+		RemoteCompareOperation op = new RemoteCompareOperation(null, remoteResource, v1, CVSTag.DEFAULT);
 		run(op);
 
 	}
