@@ -55,7 +55,7 @@ import org.eclipse.team.internal.ccvs.ui.operations.ShareProjectOperation;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
 import org.eclipse.ui.IWorkbench;
 
 /**

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.*;
 
@@ -19,7 +19,6 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**
  * A compressed folder appears under a project and contains out-of-sync resources

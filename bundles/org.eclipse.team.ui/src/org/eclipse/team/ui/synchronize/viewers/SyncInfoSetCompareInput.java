@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -21,7 +21,6 @@ import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
 
 /**
  * A <code>CompareEditorInput</code> whose diff viewer shows the resources contained
@@ -52,10 +51,15 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 		final StructuredViewer viewer = internalCreateDiffViewer(parent, diffViewerConfiguration);
 		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
 		
-		if(viewer instanceof TreeViewer) { 
+		/*
+		 * This viewer can participate in navigation support in compare editor inputs. Note that
+		 * it is currently accessing an internal compare interface that should be made public. See
+		 * the following bug report https://bugs.eclipse.org/bugs/show_bug.cgi?id=48795.
+		 */
+		if(viewer instanceof INavigatable) { 
 			INavigatable nav= new INavigatable() {
 				public boolean gotoDifference(boolean next) {
-					return TreeViewerUtils.navigate((TreeViewer)viewer, next, true /*fire open*/, false);
+					return ((INavigatable)viewer).gotoDifference(next);
 				}
 			};
 			viewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);

@@ -8,23 +8,28 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.jface.viewers.OpenEvent;
-import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.internal.ui.synchronize.views.ITreeViewerAccessor;
+import org.eclipse.team.internal.ui.synchronize.views.*;
 import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
+import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
-public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, ITreeViewerAccessor {
+/**
+ * [Note: the superclass is internal but contains much behavior that should
+ * be re-used instead of copied. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=48138
+ * for more details.]
+ */
+public final class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer implements INavigatable, ITreeViewerAccessor {
 
 	private DiffTreeViewerConfiguration configuration;
 	
-	public SyncInfoDiffTreeViewer(Composite parent, DiffTreeViewerConfiguration configuration) {
+	public SyncInfoDiffCheckboxTreeViewer(Composite parent, DiffTreeViewerConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		this.configuration = configuration;
 		configuration.initializeViewer(parent, this);
@@ -49,7 +54,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, 
 	 * @see org.eclipse.team.ui.synchronize.actions.INavigableControl#gotoDifference(int)
 	 */
 	public boolean gotoDifference(boolean next) {
-		return TreeViewerUtils.navigate(this, next, false /*don't fire open event*/, false /*set selection*/);
+		return TreeViewerUtils.navigate(this, next, true /*don't fire open event*/, false /*set selection*/);
 	}
 
 	/* (non-Javadoc)
@@ -65,4 +70,11 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, 
 	public void createChildren(TreeItem item) {
 		super.createChildren(item);
 	}
+	
+	/**
+	 * @return Returns the configuration.
+	 */
+	public DiffTreeViewerConfiguration getConfiguration() {
+		return configuration;
+	}	
 }

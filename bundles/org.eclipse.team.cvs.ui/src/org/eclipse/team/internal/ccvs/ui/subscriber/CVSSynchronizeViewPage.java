@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.subscriber.*;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IActionDelegate;
 

@@ -13,8 +13,8 @@ package org.eclipse.team.internal.ui.synchronize.actions;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.internal.ui.jobs.RefreshUserNotificationPolicy;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
-import org.eclipse.team.ui.synchronize.actions.RefreshAction;
+import org.eclipse.team.ui.synchronize.subscriber.RefreshAction;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
 
 /**
  * A specialized RefreshAction that extracts the required components from a 

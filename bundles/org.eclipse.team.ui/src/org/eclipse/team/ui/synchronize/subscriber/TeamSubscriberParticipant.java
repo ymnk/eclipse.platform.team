@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.subscriber;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -19,6 +19,8 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.TeamParticipantRefreshAction;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 

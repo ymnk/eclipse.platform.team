@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.subscriber;
 
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.runtime.IAdaptable;
@@ -26,6 +26,8 @@ import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.ChangesSection;
 import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.viewers.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 

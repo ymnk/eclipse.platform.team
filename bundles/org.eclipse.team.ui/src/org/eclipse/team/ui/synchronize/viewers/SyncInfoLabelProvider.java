@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,7 +39,6 @@ import org.eclipse.team.internal.ui.OverlayIcon;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.internal.WorkbenchColors;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 

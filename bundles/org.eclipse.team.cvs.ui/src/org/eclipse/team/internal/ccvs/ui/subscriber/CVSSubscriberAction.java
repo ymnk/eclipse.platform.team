@@ -30,7 +30,7 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberAction;
 
 public abstract class CVSSubscriberAction extends SubscriberAction {
 	

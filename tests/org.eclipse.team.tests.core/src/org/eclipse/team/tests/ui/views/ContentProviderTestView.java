@@ -14,7 +14,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.views.*;
+import org.eclipse.team.ui.synchronize.viewers.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.ViewPart;
 

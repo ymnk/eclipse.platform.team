@@ -8,11 +8,10 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 /**

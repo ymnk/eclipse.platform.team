@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -21,9 +21,8 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
 import org.eclipse.team.internal.ui.synchronize.views.TreeViewerUtils;
-import org.eclipse.team.ui.synchronize.actions.ExpandAllAction;
-import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
@@ -34,7 +33,7 @@ import org.eclipse.ui.internal.PluginAction;
  * provider, and label provider.
  * <p>
  * It provides extended viewer contributions by allowing them to be scoped
- * to a particular {@link ISynchronizeParticipant}. To enable declarative action
+ * to a particular id. To enable declarative action
  * contributions for a configuration there are two steps required:
  * <ul>
  * <li>Create a viewer contribution with a <code>targetID</code> that groups
@@ -58,8 +57,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	
 	private SyncInfoSet set;
 	private String menuID;
-	private StructuredViewer viewer;
-	
+	private StructuredViewer viewer;	
 	private ExpandAllAction expandAllAction;
 	
 	/**

@@ -24,7 +24,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSLocalCompareConfiguration;
-import org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetCompareInput;
 
 public class CompareWithTagAction extends WorkspaceAction {
 

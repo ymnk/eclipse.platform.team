@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.viewers;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.compare.CompareConfiguration;

@@ -26,8 +26,8 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.ui.TeamImages;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
 public class Utils {

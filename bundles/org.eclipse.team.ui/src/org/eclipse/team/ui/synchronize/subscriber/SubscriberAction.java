@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.actions;
+package org.eclipse.team.ui.synchronize.subscriber;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -8,13 +8,11 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
-import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder;
-import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeSorter;
 
 public class SyncInfoDiffNodeRoot extends SyncInfoDiffNode {
 

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.*;
 
@@ -22,8 +22,6 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.TeamPlugin;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 
 public class SyncInfoDiffNodeBuilder implements ISyncInfoSetChangeListener {
 

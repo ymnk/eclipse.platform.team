@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.*;
 
@@ -18,8 +18,6 @@ import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 
 public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 

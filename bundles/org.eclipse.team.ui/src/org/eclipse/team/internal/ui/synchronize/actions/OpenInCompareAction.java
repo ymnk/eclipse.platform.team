@@ -19,6 +19,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.viewers.*;
 import org.eclipse.ui.*;
 
 /**

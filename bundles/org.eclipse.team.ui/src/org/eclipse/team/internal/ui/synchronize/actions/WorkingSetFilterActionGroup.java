@@ -14,7 +14,7 @@ import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.*;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionGroup;
 

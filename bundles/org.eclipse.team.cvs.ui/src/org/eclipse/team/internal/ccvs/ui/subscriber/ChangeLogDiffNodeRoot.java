@@ -11,8 +11,8 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.team.core.subscribers.SyncInfoSet;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
-import org.eclipse.team.ui.synchronize.views.SyncInfoDiffNodeBuilder;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNodeBuilder;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNodeRoot;
 
 public class ChangeLogDiffNodeRoot extends SyncInfoDiffNodeRoot {
 

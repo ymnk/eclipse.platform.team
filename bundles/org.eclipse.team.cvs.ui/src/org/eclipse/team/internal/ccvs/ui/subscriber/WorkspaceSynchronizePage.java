@@ -14,8 +14,8 @@ import org.eclipse.jface.action.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
-import org.eclipse.team.ui.synchronize.actions.DirectionFilterActionGroup;
+import org.eclipse.team.ui.synchronize.subscriber.DirectionFilterActionGroup;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 
 public class WorkspaceSynchronizePage extends CVSSynchronizeViewPage {
