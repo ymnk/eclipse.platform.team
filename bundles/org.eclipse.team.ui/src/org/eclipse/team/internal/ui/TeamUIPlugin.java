@@ -77,6 +77,7 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		super(descriptor);
 		instance = this;
 		initializeImages();
+		initializePreferences();
 	}
 	/**
 	 * Creates an extension.  If the extension plugin has not
@@ -139,7 +140,9 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 	 */
 	protected void initializePreferences() {
 		IPreferenceStore store = getPreferenceStore();
-		store.setDefault(ISharedImages.PREF_ALWAYS_IN_INCOMING_OUTGOING, false);
+		store.setDefault(IPreferenceIds.SYNCVIEW_BACKGROUND_SYNC, false);
+		store.setDefault(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC, false);
+		store.setDefault(IPreferenceIds.SYNCVIEW_DELAY, 5 /* minutes */);
 	}
 	
 	/**

@@ -52,8 +52,7 @@ class RefreshAction extends Action {
 				if (refreshAll || resources.length == 0) {
 					// If no resources are selected, refresh all the subscriber roots
 					resources = input.roots();
-				}
-				scheduleRefresh(input.getSubscriber(), resources);			
+				}						
 			}
 		} catch(TeamException e) {
 			TeamUIPlugin.handle(e);
@@ -65,22 +64,5 @@ class RefreshAction extends Action {
 			return new IResource[0];
 		}
 		return (IResource[])TeamAction.getSelectedAdaptables(selection, IResource.class);					
-	}
-	
-	// concurreny: is anonymous class reference to containing classe's members safe? Are they copied?
-	private void scheduleRefresh(final TeamSubscriber subscriber, final IResource[] resources) {
-		Job job = new Job() {
-			public IStatus run(IProgressMonitor monitor) {
-				try {
-					System.out.println("starting refresh of: " + subscriber.getName());
-					subscriber.refresh(resources, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
-					System.out.println("finished refresh of: " + subscriber.getName());
-				} catch (TeamException e) {
-					return e.getStatus();
-				}				
-				return Status.OK_STATUS;
-			}
-		};
-		job.schedule();
-	}
+	}	
 }

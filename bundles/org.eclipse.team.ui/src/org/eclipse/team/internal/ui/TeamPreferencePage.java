@@ -93,7 +93,7 @@ public class TeamPreferencePage extends PreferencePage implements IWorkbenchPref
 	protected void performDefaults() {
 		super.performDefaults();
 		IPreferenceStore store = getPreferenceStore();
-		syncModeButton.setSelection(store.getDefaultBoolean(ISharedImages.PREF_ALWAYS_IN_INCOMING_OUTGOING));
+		//syncModeButton.setSelection(store.getDefaultBoolean(ISharedImages.PREF_ALWAYS_IN_INCOMING_OUTGOING));
 	}
 	/**
 	 * OK was clicked. Store the CVS preferences.
@@ -102,7 +102,7 @@ public class TeamPreferencePage extends PreferencePage implements IWorkbenchPref
 	 */
 	public boolean performOk() {
 		IPreferenceStore store = getPreferenceStore();
-		store.setValue(ISharedImages.PREF_ALWAYS_IN_INCOMING_OUTGOING, syncModeButton.getSelection());
+		//store.setValue(ISharedImages.PREF_ALWAYS_IN_INCOMING_OUTGOING, syncModeButton.getSelection());
 		TeamUIPlugin.getPlugin().savePluginPreferences();
 		return true;
 	}
@@ -111,7 +111,7 @@ public class TeamPreferencePage extends PreferencePage implements IWorkbenchPref
 	 */
 	private void initializeValues() {
 		IPreferenceStore store = getPreferenceStore();
-		syncModeButton.setSelection(store.getBoolean(ISharedImages.PREF_ALWAYS_IN_INCOMING_OUTGOING));
+		//syncModeButton.setSelection(store.getBoolean(ISharedImages.PREF_ALWAYS_IN_INCOMING_OUTGOING));
 	}
    /**
 	* @see IWorkbenchPreferencePage#init(IWorkbench)
