@@ -8,11 +8,13 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.subscribers.helpers;
+package org.eclipse.team.internal.ccvs.core.syncinfo;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.helpers.TeamSubscriberRefreshOperation;
+import org.eclipse.team.core.subscribers.helpers.SynchronizationCache;
 
 /**
  * A remote bytes sychronizer is a remote synchronizer that caches the 
@@ -73,5 +75,5 @@ public abstract class SyncBytesSubscriberResourceTree extends SubscriberResource
 	/**
 	 * @return
 	 */
-	protected abstract RefreshOperation getRefreshOperation();
+	protected abstract TeamSubscriberRefreshOperation getRefreshOperation();
 }

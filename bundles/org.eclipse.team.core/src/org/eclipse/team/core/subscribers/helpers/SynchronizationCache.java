@@ -14,7 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
 
 /**
- * This class defines the API for a sync bytes cache. Synchronization
+ * This class defines the API for a synchronization bytes cache. Synchronization
  * bytes are associated with a local resource handle.
  * It also has API that differentiates the case of no existing remote for
  * a local resource from that of the remote state never having been queried

@@ -19,8 +19,8 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Policy;
 
 /**
- * A specialized TeamSubscriber that ustilizes a RemoteSynchronizer to store the
- * base and remote sync information.
+ * A specialization of TeamSubscriber that uses the ISynchronizer to store the sync bytes
+ * for resources that do not exist locally.
  */
 public abstract class SyncTreeSubscriber extends TeamSubscriber {
 

@@ -25,7 +25,7 @@ import org.eclipse.team.internal.core.Policy;
 /**
  * This operation adjusts the cached synchronization bytes using the results of a refresh oepration
  */
-public abstract class RefreshOperation {
+public abstract class TeamSubscriberRefreshOperation {
 	
 	protected abstract SynchronizationCache getSynchronizationCache();
 	
