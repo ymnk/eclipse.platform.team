@@ -503,29 +503,37 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
     }
     
     public void runViewUpdate(final Runnable runnable) {
-        final Control ctrl = getViewer().getControl();
-        if (ctrl != null && !ctrl.isDisposed()) {
-        	ctrl.getDisplay().syncExec(new Runnable() {
-        		public void run() {
-        			if (!ctrl.isDisposed()) {
-        				BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
-        					public void run() {
-    						    StructuredViewer viewer = getViewer();
-        						try {
-        							viewer.getControl().setRedraw(false);
-            						runnable.run();
-        						} finally {
-        							viewer.getControl().setRedraw(true);
-        						}
-
-        						ISynchronizeModelElement root = provider.getModelRoot();
-        						if(root instanceof SynchronizeModelElement)
-        							((SynchronizeModelElement)root).fireChanges();
-        					}
-        				});
-        			}
-        		}
-        	});
+        if (Utils.canUpdateViewer(getViewer())) {
+            internalRunViewUpdate(runnable);
+        } else {
+	        final Control ctrl = getViewer().getControl();
+	        if (ctrl != null && !ctrl.isDisposed()) {
+	        	ctrl.getDisplay().syncExec(new Runnable() {
+	        		public void run() {
+	        			if (!ctrl.isDisposed()) {
+	        				BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
+	        					public void run() {
+	    						    internalRunViewUpdate(runnable);
+	        					}
+	        				});
+	        			}
+	        		}
+	        	});
+	        }
         }
+    }
+    
+    private void internalRunViewUpdate(final Runnable runnable) {
+        StructuredViewer viewer = getViewer();
+		try {
+			viewer.getControl().setRedraw(false);
+			runnable.run();
+		} finally {
+			viewer.getControl().setRedraw(true);
+		}
+
+		ISynchronizeModelElement root = provider.getModelRoot();
+		if(root instanceof SynchronizeModelElement)
+			((SynchronizeModelElement)root).fireChanges();
     }
 }

@@ -551,11 +551,15 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener#syncInfoChanged(org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-    public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+    public void syncInfoChanged(final ISyncInfoSetChangeEvent event, final IProgressMonitor monitor) {
 		if (! (event instanceof ISyncInfoTreeChangeEvent)) {
 			reset();
 		} else {
-		    handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
+		    updateHandler.runViewUpdate(new Runnable() {
+                public void run() {
+                    handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
+                }
+            });
 		}
     }
     
