@@ -137,15 +137,15 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 	}
 	
 	/**
-	 * Noarg contructor used to create workspace scope and for
-	 * creation of persisted particpant after startup
+	 * No arg contructor used to create workspace scope and for
+	 * creation of persisted participant after startup
 	 */
 	public WorkspaceSynchronizeParticipant() {
 	}
 	
 	public WorkspaceSynchronizeParticipant(IResource[] resources) {
 		this.resources = resources;
-		setSubscriber(CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant().getSubscriber());
+		setSubscriber(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
 	}
 	
 	/* (non-Javadoc)

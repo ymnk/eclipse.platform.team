@@ -22,6 +22,7 @@ import org.eclipse.jface.viewers.IBasicPropertyConstants;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.synchronize.actions.PinParticipantAction;
 import org.eclipse.team.internal.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
@@ -55,6 +56,11 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * Drop down action to switch between participants
 	 */
 	private SynchronizePageDropDownAction fPageDropDown;
+	
+	/**
+	 * Action to remove the selected participant
+	 */
+	private PinParticipantAction fPinAction;
 	
 	/**
 	 * Action to remove the selected participant
@@ -100,7 +106,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		super.showPageRec(pageRec);
 		activeParticipantRef = (ISynchronizeParticipant)fPartToParticipant.get(pageRec.part);
 		if (fRemoveAction != null)
-			fRemoveAction.setParticipant(activeParticipantRef);
+			updateActionEnablements();
 		updateTitle();		
 	}
 
@@ -271,7 +277,13 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 */
 	protected void createActions() {
 		fPageDropDown = new SynchronizePageDropDownAction(this);
+		fPinAction = new PinParticipantAction();
 		fRemoveAction = new RemoveSynchronizeParticipantAction(this);
+		updateActionEnablements();
+	}
+
+	private void updateActionEnablements() {
+		fPinAction.setParticipant(activeParticipantRef);
 		fRemoveAction.setParticipant(activeParticipantRef);
 	}
 
@@ -282,6 +294,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 */
 	protected void configureToolBar(IToolBarManager mgr) {
 		mgr.add(fPageDropDown);
+		mgr.add(fPinAction);
 		mgr.add(fRemoveAction);
 	}
 

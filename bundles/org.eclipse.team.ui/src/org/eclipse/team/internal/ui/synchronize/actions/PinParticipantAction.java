@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
+ * Copyright (c) 2000, 2004 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Common Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,38 +17,39 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * Action to remove the given participant from the synchronize manager.
- * @since 3.0 
+ * Action that toggles pinned state of a participant
  */
-public class RemoveSynchronizeParticipantAction extends Action {
-	private ISynchronizeParticipant participant;
-	private final ISynchronizeView view;
+public class PinParticipantAction extends Action {
 
-	/**
-	 * Creates the action to remove the participant from the synchronize
-	 * manager.
-	 * @param participant the participant to remove from the synchronize
-	 * manager.
-	 */
-	public RemoveSynchronizeParticipantAction(ISynchronizeView view) {
-		this.view = view;
-		Utils.initAction(this, "action.removePage.", Policy.getBundle()); //$NON-NLS-1$
+	private ISynchronizeParticipant participant;
+
+	public PinParticipantAction() {
+		super();
+		Utils.initAction(this, "action.pinParticipant.", Policy.getBundle()); //$NON-NLS-1$
+	}
+
+	public void setParticipant(ISynchronizeParticipant participant) {
+		this.participant = participant;
+		setEnabled(participant != null);
+		updateState();
 	}
 	
+	private void updateState() {
+		setChecked(participant != null && participant.isPinned());
+	}
+
 	public void run() {
 		if (participant != null) {
 			try {
 				PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
 					public void run(IProgressMonitor monitor)
 							throws InvocationTargetException, InterruptedException {
-						TeamUI.getSynchronizeManager().removeSynchronizeParticipants(
-								new ISynchronizeParticipant[] {participant});
+						participant.setPinned(!participant.isPinned());
+						updateState();
 					}
 				});
 			} catch (InvocationTargetException e) {
@@ -57,10 +58,5 @@ public class RemoveSynchronizeParticipantAction extends Action {
 				// Cancelled. Just ignore
 			}
 		}
-	}
-	
-	public void setParticipant(ISynchronizeParticipant participant) {
-		this.participant = participant;
-		setEnabled(participant != null);
 	}
 }

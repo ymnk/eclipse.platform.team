@@ -163,6 +163,13 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	}
 	
 	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	public int hashCode() {
+		return Utils.getKey(getId(), getSecondaryId()).hashCode();
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#doesSupportRefresh()
 	 */
 	public boolean doesSupportSynchronize() {
