@@ -303,6 +303,7 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 	}
 
 	protected void refreshViewer() {
+		if (viewer == null) return;
 		updateWorkingSetMenu();
 		viewer.refresh();
 	}
@@ -350,6 +351,7 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 	public void dispose() {
 		getSite().getWorkbenchWindow().getSelectionService().removePostSelectionListener(this);
 		super.dispose();
+		viewer = null;
 	}
 
 }

@@ -29,6 +29,13 @@ public class RemoteProjectsElement extends CVSTagElement {
 	}
 
 	/**
+	 * Constructor for RemoteProjectsElement.
+	 */
+	public RemoteProjectsElement(ICVSRepositoryLocation root) {
+		super(CVSTag.DEFAULT, root);
+	}
+	
+	/**
 	 * Sets the root.
 	 * @param root The root to set
 	 */

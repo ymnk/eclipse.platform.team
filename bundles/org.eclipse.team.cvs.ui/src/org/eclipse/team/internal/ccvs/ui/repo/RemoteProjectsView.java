@@ -34,6 +34,15 @@ public class RemoteProjectsView extends RemoteViewPart {
 	}
 	
 	/**
+	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
+	 */
+	public void dispose() {
+		getSite().getWorkbenchWindow().getSelectionService().removePostSelectionListener(RepositoriesView.VIEW_ID, this);
+		getSite().getWorkbenchWindow().getSelectionService().removePostSelectionListener(RemoteTagsView.VIEW_ID, this);
+		super.dispose();
+	}
+	
+	/**
 	 * @see org.eclipse.ui.ISelectionListener#selectionChanged(org.eclipse.ui.IWorkbenchPart, org.eclipse.jface.viewers.ISelection)
 	 */
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {

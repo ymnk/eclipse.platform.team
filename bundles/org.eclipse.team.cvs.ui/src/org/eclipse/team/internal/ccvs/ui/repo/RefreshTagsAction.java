@@ -32,35 +32,37 @@ public class RefreshTagsAction extends CVSAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#execute(org.eclipse.jface.action.IAction)
 	 */
 	protected void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		run(new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
-				RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
-				try {
-					monitor.beginTask(null, 100 * locations.length);
-					for (int j = 0; j < locations.length; j++) {
-						ICVSRepositoryLocation location = locations[j];
-						// todo: This omits defined modules when there is no current working set
-						ICVSRemoteResource[] resources = manager.getWorkingFoldersForTag(location, CVSTag.DEFAULT, Policy.subMonitorFor(monitor, 10));
-						if (promptToRefresh(location, resources)) {
-							IProgressMonitor subMonitor = Policy.subMonitorFor(monitor, 90);
-							subMonitor.beginTask(null, 100 * resources.length);
-							for (int i = 0; i < resources.length; i++) {
-								ICVSRemoteResource resource = resources[i];
-								if (resource instanceof ICVSFolder) {
-									manager.refreshDefinedTags((ICVSFolder)resource, true /* replace */, true, Policy.subMonitorFor(subMonitor, 100));
-								}
-							}
-							subMonitor.done();
-						}
-					}
-					manager.saveState();
-					monitor.done();
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				}
-			}
-		}, true, PROGRESS_DIALOG);
+		ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
+		RefreshRemoteProjectWizard.execute(getShell(), locations[0]);
+//		run(new IRunnableWithProgress() {
+//			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+//				ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
+//				RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+//				try {
+//					monitor.beginTask(null, 100 * locations.length);
+//					for (int j = 0; j < locations.length; j++) {
+//						ICVSRepositoryLocation location = locations[j];
+//						// todo: This omits defined modules when there is no current working set
+//						ICVSRemoteResource[] resources = manager.getWorkingFoldersForTag(location, CVSTag.DEFAULT, Policy.subMonitorFor(monitor, 10));
+//						if (promptToRefresh(location, resources)) {
+//							IProgressMonitor subMonitor = Policy.subMonitorFor(monitor, 90);
+//							subMonitor.beginTask(null, 100 * resources.length);
+//							for (int i = 0; i < resources.length; i++) {
+//								ICVSRemoteResource resource = resources[i];
+//								if (resource instanceof ICVSFolder) {
+//									manager.refreshDefinedTags((ICVSFolder)resource, true /* replace */, true, Policy.subMonitorFor(subMonitor, 100));
+//								}
+//							}
+//							subMonitor.done();
+//						}
+//					}
+//					manager.saveState();
+//					monitor.done();
+//				} catch (TeamException e) {
+//					throw new InvocationTargetException(e);
+//				}
+//			}
+//		}, true, PROGRESS_DIALOG);
 	}
 
 	/**
@@ -68,7 +70,7 @@ public class RefreshTagsAction extends CVSAction {
 	 */
 	protected boolean isEnabled() throws TeamException {
 		ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
-		if (locations.length == 0) return false;
+		if (locations.length != 1) return false;
 		return true;
 	}
 	
