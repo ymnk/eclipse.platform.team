@@ -26,6 +26,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Session;
@@ -169,22 +170,20 @@ public class RemoteFolderTreeBuilder {
 			monitor.beginTask(null, 100);
 	
 			Policy.checkCanceled(monitor);
-			Session session = new Session(repository, root, false);
-			session.open(Policy.subMonitorFor(monitor, 10));
-			try {
-				Policy.checkCanceled(monitor);
-				fetchDelta(session, Session.CURRENT_LOCAL_FOLDER, Policy.subMonitorFor(monitor, 50));
-				if (projectDoesNotExist) {
-					// We cannot handle the case where a project (i.e. the top-most CVS folder)
-					// has been deleted directly on the sever (i.e. deleted using rm -rf)
-					if (root.isCVSFolder() && ! root.isManaged()) {
-						throw new CVSException(Policy.bind("RemoteFolderTreeBuild.folderDeletedFromServer", root.getFolderSyncInfo().getRepository())); //$NON-NLS-1$
-					} else {
-						return null;
-					}
+			Session.run(repository, root, false, new ICVSRunnable() {
+				public void run(IProgressMonitor monitor) throws CVSException {
+					Policy.checkCanceled(monitor);
+					fetchDelta(new ICVSResource[] { root }, monitor);
 				}
-			} finally {
-				session.close();
+			}, Policy.subMonitorFor(monitor, 50));
+			if (projectDoesNotExist) {
+				// We cannot handle the case where a project (i.e. the top-most CVS folder)
+				// has been deleted directly on the sever (i.e. deleted using rm -rf)
+				if (root.isCVSFolder() && ! root.isManaged()) {
+					throw new CVSException(Policy.bind("RemoteFolderTreeBuild.folderDeletedFromServer", root.getFolderSyncInfo().getRepository())); //$NON-NLS-1$
+				} else {
+					return null;
+				}
 			}
 			// We need a second session because of the use of a different handle on the same remote resource
 			// Perhaps we could support the changing of a sessions root as long as
@@ -193,40 +192,36 @@ public class RemoteFolderTreeBuilder {
 				new RemoteFolderTree(null, root.getName(), repository,
 					new Path(root.getFolderSyncInfo().getRepository()),
 					tagForRemoteFolder(root, tag));
-			session = new Session(repository, remoteRoot, false);
-			session.open(Policy.subMonitorFor(monitor, 10));
-			try {
-				// Set up an infinite progress monitor for the recursive build
-				IProgressMonitor subProgress = Policy.infiniteSubMonitorFor(monitor, 30);
-				subProgress.beginTask(null, 512);
-				// Build the remote tree
-				buildRemoteTree(session, root, remoteRoot, Path.EMPTY, subProgress);
-				// we can only fecth the status for up to 1024 files in a single connection due to
-				// the server which has a limit on the number of "open" files.
-				if (!changedFiles.isEmpty() && changedFiles.size() <= MAX_REVISION_FETCHES_PER_CONNECTION) {
-					fetchFileRevisions(session, (String[])changedFiles.toArray(new String[changedFiles.size()]), Policy.subMonitorFor(monitor, 20));
+			Session.run(repository, remoteRoot, false, new ICVSRunnable() {
+				public void run(IProgressMonitor monitor) throws CVSException {
+					// Set up an infinite progress monitor for the recursive build
+					IProgressMonitor subProgress = Policy.infiniteSubMonitorFor(monitor, 30);
+					subProgress.beginTask(null, 512);
+					// Build the remote tree
+					buildRemoteTree(root, remoteRoot, Path.EMPTY, subProgress);
+					// we can only fetch the status for up to 1024 files in a single connection due to
+					// the server which has a limit on the number of "open" files.
+					if (!changedFiles.isEmpty() && changedFiles.size() <= MAX_REVISION_FETCHES_PER_CONNECTION) {
+						fetchFileRevisions((ICVSResource[])changedFiles.toArray(new ICVSResource[changedFiles.size()]), Policy.subMonitorFor(monitor, 20));
+					}
 				}
-			} finally {
-				session.close();
-			}
+			}, Policy.infiniteSubMonitorFor(monitor, 30));
 			
 			// If there were more than 1024 changed files, we need a connection per each 1024
 			if (!changedFiles.isEmpty() && changedFiles.size() > MAX_REVISION_FETCHES_PER_CONNECTION) {
-				String[] allChangedFiles = (String[])changedFiles.toArray(new String[changedFiles.size()]);
+				ICVSResource[] allChangedFiles = (ICVSResource[])changedFiles.toArray(new String[changedFiles.size()]);
 				int iterations = (allChangedFiles.length / MAX_REVISION_FETCHES_PER_CONNECTION) 
 					+ (allChangedFiles.length % MAX_REVISION_FETCHES_PER_CONNECTION == 0 ? 0 : 1);
 				for (int i = 0; i < iterations ; i++) {
 					int length = Math.min(MAX_REVISION_FETCHES_PER_CONNECTION, 
 						allChangedFiles.length - (MAX_REVISION_FETCHES_PER_CONNECTION * i));
-					String buffer[] = new String[length];
+					final ICVSResource buffer[] = new ICVSResource[length];
 					System.arraycopy(allChangedFiles, i * MAX_REVISION_FETCHES_PER_CONNECTION, buffer, 0, length);
-					session = new Session(repository, remoteRoot, false);
-					session.open(Policy.subMonitorFor(monitor, 1));
-					try {
-						fetchFileRevisions(session, buffer, Policy.subMonitorFor(monitor, 2));
-					} finally {
-						session.close();
-					}
+					Session.run(repository, remoteRoot, false, new ICVSRunnable() {
+						public void run(IProgressMonitor monitor) throws CVSException {
+							fetchFileRevisions(buffer, monitor);
+						}
+					}, Policy.subMonitorFor(monitor, 2));
 				}
 			}
 			
@@ -238,7 +233,7 @@ public class RemoteFolderTreeBuilder {
 		}
 	}
 	
-	private RemoteFile buildTree(ICVSFile file, IProgressMonitor monitor) throws CVSException {
+	private RemoteFile buildTree(final ICVSFile file, IProgressMonitor monitor) throws CVSException {
 		QuietOption quietness = CVSProviderPlugin.getPlugin().getQuietness();
 		try {
 			CVSProviderPlugin.getPlugin().setQuietness(Command.VERBOSE);
@@ -247,22 +242,21 @@ public class RemoteFolderTreeBuilder {
 	
 			// Query the server to see if there is a delta available
 			Policy.checkCanceled(monitor);
-			Session session = new Session(repository, root, false);
-			session.open(Policy.subMonitorFor(monitor, 10));
-			try {
-				Policy.checkCanceled(monitor);
-				fetchDelta(session, file.getName(), Policy.subMonitorFor(monitor, 50));
-				if (projectDoesNotExist) {
-					return null;
+			Session.run(repository, root, false, new ICVSRunnable() {
+				public void run(IProgressMonitor monitor) throws CVSException {
+					Policy.checkCanceled(monitor);
+					fetchDelta(new ICVSResource[] { file }, Policy.subMonitorFor(monitor, 50));
 				}
-			} finally {
-				session.close();
+			}, Policy.subMonitorFor(monitor, 50));
+			if (projectDoesNotExist) {
+				return null;
 			}
 			// Create a parent for the remote resource
 			remoteRoot =
 				new RemoteFolderTree(null, root.getName(), repository,
 					new Path(root.getFolderSyncInfo().getRepository()),
 					tagForRemoteFolder(root, tag));
+
 			// Create the remote resource (using the delta if there is one)
 			RemoteFile remoteFile;
 			Map deltas = (Map)fileDeltas.get(Path.EMPTY);
@@ -286,13 +280,11 @@ public class RemoteFolderTreeBuilder {
 			if (!changedFiles.isEmpty()) {
 				// Add the remote folder to the remote folder lookup table (used to update file revisions)
 				remoteFolderTable.put(new Path(remoteRoot.getFolderSyncInfo().getRemoteLocation()), remoteRoot);
-				session = new Session(repository, remoteRoot, false);
-				session.open(Policy.subMonitorFor(monitor, 10));
-				try {
-					fetchFileRevisions(session, (String[])changedFiles.toArray(new String[changedFiles.size()]), Policy.subMonitorFor(monitor, 20));
-				} finally {
-					session.close();
-				}
+				Session.run(repository, remoteRoot, false, new ICVSRunnable() {
+					public void run(IProgressMonitor monitor) throws CVSException {
+						fetchFileRevisions((ICVSResource[])changedFiles.toArray(new ICVSResource[changedFiles.size()]), monitor);
+					}
+				}, Policy.subMonitorFor(monitor, 20));
 			}
 			return remoteFile;
 			
@@ -363,7 +355,7 @@ public class RemoteFolderTreeBuilder {
 	 * 
 	 * Does 1 work for each file and folder delta processed
 	 */
-	private void buildRemoteTree(Session session, ICVSFolder local, RemoteFolderTree remote, IPath localPath, IProgressMonitor monitor) throws CVSException {
+	private void buildRemoteTree(ICVSFolder local, RemoteFolderTree remote, IPath localPath, IProgressMonitor monitor) throws CVSException {
 		
 		Policy.checkCanceled(monitor);
 		
@@ -375,7 +367,7 @@ public class RemoteFolderTreeBuilder {
 		
 		// If there's no corresponding local resource then we need to fetch its contents in order to populate the deltas
 		if (local == null) {
-			fetchNewDirectory(session, remote, localPath, monitor);
+			fetchNewDirectory(remote, monitor);
 		}
 		
 		// Fetch the delta's for the folder
@@ -390,7 +382,7 @@ public class RemoteFolderTreeBuilder {
 			for (int i=0;i<folders.length;i++) {
 				ICVSFolder folder = (ICVSFolder)folders[i];
 				DeltaNode d = (DeltaNode)deltas.get(folder.getName());
-				if (folder.isCVSFolder() && ! isOrphanedSubtree(session, folder) && (d==null || d.getRevision() != DELETED)) {
+				if (folder.isCVSFolder() && ! isOrphanedSubtree(folder) && (d==null || d.getRevision() != DELETED)) {
 					children.put(folders[i].getName(), 
 						new RemoteFolderTree(remote, folders[i].getName(), repository, 
 							new Path(folder.getFolderSyncInfo().getRepository()), 
@@ -469,7 +461,7 @@ public class RemoteFolderTreeBuilder {
 					localFolder = null;
 				else
 					localFolder = local.getFolder(name);
-				buildRemoteTree(session, localFolder, remoteFolder, localPath.append(name), monitor);
+				buildRemoteTree(localFolder, remoteFolder, localPath.append(name), monitor);
 				// Record any children that are empty
 				if (pruneEmptyDirectories() && remoteFolder.getChildren().length == 0) {
 					// Prune if the local folder is also empty.
@@ -501,11 +493,11 @@ public class RemoteFolderTreeBuilder {
 	 * 
 	 * Returns the list of changed files
 	 */
-	private List fetchDelta(Session session, String argument, final IProgressMonitor monitor) throws CVSException {
+	private List fetchDelta(final ICVSResource[] arguments, final IProgressMonitor monitor) throws CVSException {
 		
 		// Create an listener that will accumulate new and removed files and folders
 		final List newChildDirectories = new ArrayList();
-		IUpdateMessageListener listener = new IUpdateMessageListener() {
+		final IUpdateMessageListener listener = new IUpdateMessageListener() {
 			public void directoryInformation(ICVSFolder root, IPath path, boolean newDirectory) {
 				if (newDirectory) {
 					// Record new directory with parent so it can be retrieved when building the parent
@@ -543,7 +535,11 @@ public class RemoteFolderTreeBuilder {
 									break;
 					case Update.STATE_DELETED : // We have a locally removed file that still exists remotely
 					case Update.STATE_REMOTE_CHANGES : // We have an remote change to an unmodified local file
-								changedFiles.add(filename);
+								try {
+									changedFiles.add(root.getFile(filename));
+								} catch (CVSException e) {
+									CVSProviderPlugin.log(e.getStatus());
+								}
 								recordDelta(new Path(filename), UNKNOWN, type);
 								monitor.subTask(Policy.bind("RemoteFolderTreeBuilder.receivingDelta", filename)); //$NON-NLS-1$
 								break;
@@ -558,12 +554,16 @@ public class RemoteFolderTreeBuilder {
 		// Perform a "cvs -n update -d [-r tag] ." in order to get the
 		// messages from the server that will indicate what has changed on the 
 		// server.
-		IStatus status = Command.UPDATE.execute(session,
-			new GlobalOption[] { Command.DO_NOT_CHANGE },
-			updateLocalOptions,
-			new String[] { argument },
-			new UpdateListener(listener),
-			monitor);
+		Session.run(repository, root, false, new ICVSRunnable() {
+			public void run(IProgressMonitor monitor) throws CVSException {
+				IStatus status = Command.UPDATE.execute(
+					new GlobalOption[] { Command.DO_NOT_CHANGE },
+					updateLocalOptions,
+					arguments,
+					new UpdateListener(listener),
+					monitor);
+			}
+		}, monitor);
 		return changedFiles;
 	}
 	/*
@@ -571,10 +571,10 @@ public class RemoteFolderTreeBuilder {
 	 * 
 	 * The fetch may do up to 2 units of work in the provided monitor.
 	 */
-	private void fetchNewDirectory(Session session, RemoteFolderTree newFolder, IPath localPath, final IProgressMonitor monitor) throws CVSException {
+	private void fetchNewDirectory(final RemoteFolderTree newFolder, final IProgressMonitor monitor) throws CVSException {
 		
 		// Create an listener that will accumulate new files and folders
-		IUpdateMessageListener listener = new IUpdateMessageListener() {
+		final IUpdateMessageListener listener = new IUpdateMessageListener() {
 			public void directoryInformation(ICVSFolder root, IPath path, boolean newDirectory) {
 				if (newDirectory) {
 					// Record new directory with parent so it can be retrieved when building the parent
@@ -587,7 +587,11 @@ public class RemoteFolderTreeBuilder {
 			}
 			public void fileInformation(int type, ICVSFolder root, String filename) {
 				// NOTE: Check path prefix
-				changedFiles.add(filename);
+				try {
+					changedFiles.add(root.getFile(filename));
+				} catch (CVSException e) {
+					CVSProviderPlugin.log(e.getStatus());
+				}
 				recordDelta(new Path(filename), ADDED, type);
 				monitor.subTask(Policy.bind("RemoteFolderTreeBuilder.receivingDelta", filename)); //$NON-NLS-1$
 			}
@@ -595,42 +599,44 @@ public class RemoteFolderTreeBuilder {
 			}
 		};
 
-		// NOTE: Should use the path relative to the remoteRoot
-		IPath path = new Path(newFolder.getRepositoryRelativePath());
-		IStatus status = Command.UPDATE.execute(session,
-			new GlobalOption[] { Command.DO_NOT_CHANGE },
-			updateLocalOptions,
-			new String[] { localPath.toString() },
-			new UpdateListener(listener),
-			Policy.subMonitorFor(monitor, 1)); 
-		if (status.getCode() == CVSStatus.SERVER_ERROR) {
-			// FIXME: This should be refactored (maybe static methods on CVSException?)
-			CVSServerException e = new CVSServerException(status);
-			if ( ! e.isNoTagException() && e.containsErrors())
-				throw e;
-			// we now know that this is an exception caused by a cvs bug.
-			// if the folder has no files in it (just subfolders) cvs does not respond with the subfolders...
-			// workaround: retry the request with no tag to get the directory names (if any)
-			Policy.checkCanceled(monitor);
-			status = Command.UPDATE.execute(session,
-				new GlobalOption[] { Command.DO_NOT_CHANGE },
-				getOptionsWithoutTag(),
-				new String[] { localPath.toString() },
-				new UpdateListener(listener),
-				Policy.subMonitorFor(monitor, 1));
-			if (status.getCode() == CVSStatus.SERVER_ERROR) {
-				throw new CVSServerException(status);
+		Session.run(repository, remoteRoot, false, new ICVSRunnable() {
+			public void run(IProgressMonitor monitor) throws CVSException {
+				IStatus status = Command.UPDATE.execute(
+					new GlobalOption[] { Command.DO_NOT_CHANGE },
+					updateLocalOptions,
+					new ICVSResource[] { newFolder },
+					new UpdateListener(listener),
+					monitor); 
+				if (status.getCode() == CVSStatus.SERVER_ERROR) {
+					// FIXME: This should be refactored (maybe static methods on CVSException?)
+					CVSServerException e = new CVSServerException(status);
+					if ( ! e.isNoTagException() && e.containsErrors())
+						throw e;
+					// we now know that this is an exception caused by a cvs bug.
+					// if the folder has no files in it (just subfolders) cvs does not respond with the subfolders...
+					// workaround: retry the request with no tag to get the directory names (if any)
+					Policy.checkCanceled(monitor);
+					status = Command.UPDATE.execute(
+						new GlobalOption[] { Command.DO_NOT_CHANGE },
+						getOptionsWithoutTag(),
+						new ICVSResource[] { newFolder },
+						new UpdateListener(listener),
+						monitor);
+					if (status.getCode() == CVSStatus.SERVER_ERROR) {
+						throw new CVSServerException(status);
+					}
+				}
 			}
-		}
+		}, Policy.subMonitorFor(monitor, 1));
 	}
 	
 	// Get the file revisions for the given filenames
-	private void fetchFileRevisions(Session session, String[] fileNames, final IProgressMonitor monitor) throws CVSException {
+	private void fetchFileRevisions(final ICVSResource[] files, final IProgressMonitor monitor) throws CVSException {
 		
 		// Create a listener for receiving the revision info
 		final Map revisions = new HashMap();
 		final List exceptions = new ArrayList();
-		IStatusListener listener = new IStatusListener() {
+		final IStatusListener listener = new IStatusListener() {
 			public void fileStatus(ICVSFolder root, IPath path, String remoteRevision) {
 				try {
 					updateRevision(path, remoteRevision);
@@ -642,17 +648,22 @@ public class RemoteFolderTreeBuilder {
 		};
 			
 		// Perform a "cvs status..." with a custom message handler
-		IStatus status = Command.STATUS.execute(session,
-			Command.NO_GLOBAL_OPTIONS,
-			Command.NO_LOCAL_OPTIONS,
-			fileNames,
-			new StatusListener(listener),
-			monitor);
-		if (status.getCode() == CVSStatus.SERVER_ERROR) {
-			throw new CVSServerException(status);
-		}
+		Session.run(repository, remoteRoot, false, new ICVSRunnable() {
+			public void run(IProgressMonitor monitor) throws CVSException {
+				IStatus status = Command.STATUS.execute(
+					Command.NO_GLOBAL_OPTIONS,
+					Command.NO_LOCAL_OPTIONS,
+					files,
+					new StatusListener(listener),
+					monitor);
+				if (status.getCode() == CVSStatus.SERVER_ERROR) {
+					throw new CVSServerException(status);
+				}
+			}
+		}, monitor);
+
 		
-		// Report any exceptions that occured fecthing the revisions
+		// Report any exceptions that occured fetching the revisions
 		if ( ! exceptions.isEmpty()) {
 			if (exceptions.size() == 1) {
 				throw (CVSException)exceptions.get(0);
@@ -711,8 +722,8 @@ public class RemoteFolderTreeBuilder {
 		return tag == null ? folder.getFolderSyncInfo().getTag() : tag;
 	}
 	
-	private boolean isOrphanedSubtree(Session session, ICVSFolder mFolder) throws CVSException {
-		return mFolder.isCVSFolder() && ! mFolder.isManaged() && ! mFolder.equals(session.getLocalRoot()) && mFolder.getParent().isCVSFolder();
+	private boolean isOrphanedSubtree(ICVSFolder mFolder) throws CVSException {
+		return mFolder.isCVSFolder() && ! mFolder.isManaged() && ! mFolder.equals(remoteRoot) && mFolder.getParent().isCVSFolder();
 	}
 }
 
