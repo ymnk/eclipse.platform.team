@@ -14,14 +14,9 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
-import org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.internal.ui.ITeamUIImages;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -68,6 +63,12 @@ public class HierarchicalModelProvider extends SynchronizeModelProvider {
 		super(configuration, set);
 	}
 
+    public HierarchicalModelProvider(
+            AbstractSynchronizeModelProvider parentProvider,
+            ISynchronizeModelElement modelRoot,
+            ISynchronizePageConfiguration configuration, SyncInfoSet set) {
+        super(parentProvider, modelRoot, configuration, set);
+    }
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider#getDescriptor()
@@ -185,22 +186,6 @@ public class HierarchicalModelProvider extends SynchronizeModelProvider {
 			}
 		}
 		return children;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#doAdd(org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement, org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement)
-	 */
-	protected void doAdd(ISynchronizeModelElement parent, ISynchronizeModelElement element) {
-		AbstractTreeViewer viewer = (AbstractTreeViewer)getViewer();
-		viewer.add(parent, element);		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#doRemove(org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement)
-	 */
-	protected void doRemove(ISynchronizeModelElement element) {
-		AbstractTreeViewer viewer = (AbstractTreeViewer)getViewer();
-		viewer.remove(element);		
 	}
 
 	/* (non-Javadoc)

@@ -57,7 +57,7 @@ import org.eclipse.ui.progress.UIJob;
  * 
  * @since 3.0
  */
-public class ChangeLogModelProvider extends SynchronizeModelProvider implements ICommitSetChangeListener {
+public class ChangeLogModelProvider extends CompositeModelProvider implements ICommitSetChangeListener {
 	// Log operation that is used to fetch revision histories from the server. It also
 	// provides caching so we keep it around.
 	private RemoteLogOperation logOperation;
@@ -73,7 +73,10 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
 	// the history for the remote revision in the sync info is used.
 	private CVSTag tag1;
 	private CVSTag tag2;
-	private Map multipleResourceMap;
+	
+	private Set queuedAdditions = new HashSet(); // Set of SyncInfo
+	
+	private Map rootToProvider = new HashMap(); // Maps ISynchronizeModelElement -> AbstractSynchronizeModelProvider
 	
 	// Constants for persisting sorting options
 	private final static String SORT_ORDER_GROUP = "changelog_sort"; //$NON-NLS-1$
@@ -548,7 +551,7 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
 					localChanges.add(info);
 				}
 			}	
-			handleLocalChanges((SyncInfo[]) localChanges.toArray(new SyncInfo[localChanges.size()]));
+			handleLocalChanges((SyncInfo[]) localChanges.toArray(new SyncInfo[localChanges.size()]), monitor);
 			handleRemoteChanges((SyncInfo[]) remoteChanges.toArray(new SyncInfo[remoteChanges.size()]), monitor);
 		} catch (CVSException e) {
 			Utils.handle(e);
@@ -564,21 +567,33 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
      */
     private void handleRemoteChanges(SyncInfo[] infos, IProgressMonitor monitor) throws CVSException, InterruptedException {
         RemoteLogOperation logs = getSyncInfoComment(infos, Policy.subMonitorFor(monitor, 80));
-        addLogEntries(infos, logs, Policy.subMonitorFor(monitor, 20));
+        AbstractSynchronizeModelProvider[] providers = null;
+        try {
+            providers = beginInput();
+	        addLogEntries(infos, logs, Policy.subMonitorFor(monitor, 10));
+        } finally {
+            endInput(providers, Policy.subMonitorFor(monitor, 10));
+        }
     }
 
     /**
      * Use the commit set manager to determine the commit set that each local
      * change belongs to.
      */
-    private void handleLocalChanges(SyncInfo[] infos) {
-        if (infos.length != 0) {
-	        // Show elements that don't need their log histories retreived
-	        for (int i = 0; i < infos.length; i++) {
-	            SyncInfo info = infos[i];
-	            addLocalChange(info);
+    private void handleLocalChanges(SyncInfo[] infos, IProgressMonitor monitor) {
+        AbstractSynchronizeModelProvider[] providers = null;
+        try {
+            providers = beginInput();
+	        if (infos.length != 0) {
+		        // Show elements that don't need their log histories retreived
+		        for (int i = 0; i < infos.length; i++) {
+		            SyncInfo info = infos[i];
+		            addLocalChange(info);
+		        }
+		        refreshViewer(); // TODO: Why do we do a refresh viewer here?
 	        }
-	        refreshViewer();
+        } finally {
+            endInput(providers, monitor);
         }
     }
 
@@ -682,15 +697,14 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
     private void addLocalChange(SyncInfo info) {
         CommitSet set = getCommitSetFor(info);
         if (set == null) {
-            // TODO: What to do about local mods that are not in a set
-            addToViewer(new FullPathSyncInfoElement(getModelRoot(), info));
+            addToCommitSetProvider(info, getModelRoot());
         } else {
 	        CommitSetDiffNode node = getDiffNodeFor(set);
 	        if (node == null) {
 	            node = new CommitSetDiffNode(getModelRoot(), set);
 	            addToViewer(node);
 	        }
-	        addToViewer(new FullPathSyncInfoElement(node, info));
+	        addToCommitSetProvider(info, node);
         }
     }
 
@@ -712,12 +726,43 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
 	        		// this shouldn't happen, we've provided our own calculate kind
 	        	}
 	        }
-	        addToViewer(new FullPathSyncInfoElement(changeRoot, info));
+	        addToCommitSetProvider(info, changeRoot);
         } else {
             // The info was not retrieved for the remote change for some reason.
             // Add the node to the root
-            addToViewer(new FullPathSyncInfoElement(getModelRoot(), info));
+            addToCommitSetProvider(info, getModelRoot());
         }
+    }
+
+    /*
+     * Add the info to the commit set rooted at the given node.
+     */
+    private void addToCommitSetProvider(SyncInfo info, ISynchronizeModelElement parent) {
+        AbstractSynchronizeModelProvider provider = getProviderRootedAt(parent);
+        if (provider == null) {
+            // TODO: Will not get event batching for new providers
+            provider = createProviderRootedAt(parent);
+        }
+        provider.getSyncInfoSet().add(info);
+    }
+
+    private AbstractSynchronizeModelProvider createProviderRootedAt(ISynchronizeModelElement parent) {
+        AbstractSynchronizeModelProvider provider = new CompressedFoldersModelProvider(this, parent, getConfiguration(), new SyncInfoTree());
+        addProvider(provider);
+        rootToProvider.put(parent, provider);
+        return provider;
+    }
+
+    private AbstractSynchronizeModelProvider getProviderRootedAt(ISynchronizeModelElement parent) {
+        return (AbstractSynchronizeModelProvider)rootToProvider.get(parent);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.CompositeModelProvider#removeProvider(org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider)
+     */
+    protected void removeProvider(AbstractSynchronizeModelProvider provider) {
+        rootToProvider.remove(provider.getModelRoot());
+        super.removeProvider(provider);
     }
 
     private boolean requiresCustomSyncInfo(SyncInfo info, ICVSRemoteResource remoteResource, ILogEntry logEntry) {
@@ -903,110 +948,36 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#doAdd(org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement, org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement)
-	 */
-	protected void doAdd(ISynchronizeModelElement parent, ISynchronizeModelElement element) {
-		AbstractTreeViewer viewer = (AbstractTreeViewer)getViewer();
-		viewer.add(parent, element);		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#doRemove(org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement)
-	 */
-	protected void doRemove(ISynchronizeModelElement element) {
-		AbstractTreeViewer viewer = (AbstractTreeViewer)getViewer();
-		viewer.remove(element);		
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#handleResourceAdditions(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
-	 */
-	protected void handleResourceAdditions(ISyncInfoTreeChangeEvent event) {
-		startUpdateJob(new SyncInfoSet(event.getAddedResources()));
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#handleResourceChanges(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
-	 */
-	protected void handleResourceChanges(ISyncInfoTreeChangeEvent event) {
-		//	Refresh the viewer for each changed resource
-		SyncInfo[] infos = event.getChangedResources();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			IResource local = info.getLocal();
-			// TODO: This will cause the log to be refetched, even if it was a local change
-			removeFromViewer(local);
-		}
-		startUpdateJob(new SyncInfoSet(event.getChangedResources()));
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#handleResourceRemovals(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
-	 */
-	protected void handleResourceRemovals(ISyncInfoTreeChangeEvent event) {
-		IResource[] removedRoots = event.getRemovedSubtreeRoots();
-		for (int i = 0; i < removedRoots.length; i++) {
-			removeFromViewer(removedRoots[i]);
-		}
-		// We have to look for folders that may no longer be in the set
-		// (i.e. are in-sync) but still have descendants in the set
-		IResource[] removedResources = event.getRemovedResources();
-		for (int i = 0; i < removedResources.length; i++) {
-			removeFromViewer(removedResources[i]);
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelProvider#removeFromViewer(org.eclipse.core.resources.IResource)
-	 */
-	protected void removeFromViewer(IResource resource) {
-		// First clear the log history cache for the remote element
-		if (logOperation != null) {
-			ISynchronizeModelElement element = getModelObject(resource);
-			if (element instanceof FullPathSyncInfoElement) {
-				CVSSyncInfo info = (CVSSyncInfo) ((FullPathSyncInfoElement) element).getSyncInfo();
-				if (info != null) {
-					ICVSRemoteResource remote = getRemoteResource(info);
-					logOperation.clearEntriesFor(remote);
-				}
+     * @see org.eclipse.team.internal.ui.synchronize.CompositeModelProvider#handleChanges(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent, org.eclipse.core.runtime.IProgressMonitor)
+     */
+    protected void handleChanges(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
+        super.handleChanges(event, monitor);
+        SyncInfoSet syncInfoSet;
+        synchronized (queuedAdditions) {
+            syncInfoSet = new SyncInfoSet((SyncInfo[]) queuedAdditions.toArray(new SyncInfo[queuedAdditions.size()]));
+            queuedAdditions.clear();
+        }
+        startUpdateJob(syncInfoSet);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.CompositeModelProvider#nodeRemoved(org.eclipse.team.ui.synchronize.ISynchronizeModelElement, org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider)
+     */
+    protected void nodeRemoved(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
+        super.nodeRemoved(node, provider);
+        // TODO: This should be done using the proper API
+		if (node instanceof SynchronizeModelElement) {
+			CVSSyncInfo info = (CVSSyncInfo) ((SyncInfoModelElement) node).getSyncInfo();
+			if (info != null) {
+				ICVSRemoteResource remote = getRemoteResource(info);
+				logOperation.clearEntriesFor(remote);
 			}
 		}
-		// Clear the multiple element cache
-		if(multipleResourceMap != null) {
-			List elements = (List)multipleResourceMap.get(resource);
-			if(elements != null) {
-				for (Iterator it = elements.iterator(); it.hasNext();) {
-					ISynchronizeModelElement element = (ISynchronizeModelElement) it.next();
-					super.removeFromViewer(element);			
-				}
-				multipleResourceMap.remove(resource);
-			}
-		}	
-		// Remove the object now
-		super.removeFromViewer(resource);		
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelProvider#addToViewer(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
-	 */
-	protected void addToViewer(ISynchronizeModelElement node) {
-		// Save model elements in our own mapper so that we
-		// can support multiple elements for the same resource.
-		IResource r = node.getResource();
-		if(r != null) {
-			if(multipleResourceMap == null) {
-				multipleResourceMap = new HashMap(5);
-			}
-			List elements = (List)multipleResourceMap.get(r);
-			if(elements == null) {
-				elements = new ArrayList(2);
-				multipleResourceMap.put(r, elements);
-			}
-			elements.add(node);
+		if (provider.getSyncInfoSet().isEmpty()) {
+		    // The provider is empty so remove it
+		    removeProvider(provider);
 		}
-		// The super class will do all the interesting work.
-		super.addToViewer(node);
-	}
+    }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.ICommitSetChangeListener#setAdded(org.eclipse.team.internal.ccvs.ui.subscriber.CommitSet)
@@ -1042,11 +1013,12 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
                 List infos = new ArrayList();
                 for (int i = 0; i < resources.length; i++) {
                     IResource resource = resources[i];
-                    SyncInfo info = getSyncInfo(resource);
+                    SyncInfo info = getSyncInfoSet().getSyncInfo(resource);
                     if (info != null) {
                         infos.add(info);
-//                      TODO: This will cause the log to be refetched, even if it was a local change
-        				removeFromViewer(resource);
+                        // There is no need to batch these removals as there
+                        // is at most one change per sub-provider
+        				handleRemoval(resource);
                     }
         		}
         		startUpdateJob(new SyncInfoSet((SyncInfo[]) infos.toArray(new SyncInfo[infos.size()])));
@@ -1057,14 +1029,6 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
         } else {
             runnable.run();
         }
-    }
-
-    protected SyncInfo getSyncInfo(IResource resource) {
-        Object o = getMapping(resource);
-        if (o instanceof IAdaptable) {
-            return (SyncInfo)((IAdaptable)o).getAdapter(SyncInfo.class);
-        }
-        return null;
     }
 
     private void syncExec(final Runnable runnable) {
@@ -1102,4 +1066,14 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider implements 
         }
         
     }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.CompositeModelProvider#handleAdditions(org.eclipse.team.core.synchronize.SyncInfo[])
+     */
+    protected void handleAddition(SyncInfo info) {
+        synchronized (queuedAdditions) {
+	        queuedAdditions.add(info);
+        }
+    }
+
 }

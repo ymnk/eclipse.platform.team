@@ -16,13 +16,16 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
@@ -33,11 +36,8 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
  * is based on the synchronization information contained in the provided {@link SyncInfoSet}.
  */
 public abstract class AbstractSynchronizeModelProvider implements ISynchronizeModelProvider, ISyncInfoSetChangeListener {
-    
-	// The viewer this input is being displayed in
-	private StructuredViewer viewer;
 	
-	protected SynchronizeModelElement root;
+	private ISynchronizeModelElement root;
 	
 	private ISynchronizePageConfiguration configuration;
 	
@@ -47,7 +47,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	
 	private boolean disposed = false;
 	
-	protected AbstractSynchronizeModelProvider(AbstractSynchronizeModelProvider parentProvider, SynchronizeModelElement parentNode, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
+	protected AbstractSynchronizeModelProvider(AbstractSynchronizeModelProvider parentProvider, ISynchronizeModelElement parentNode, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
 		Assert.isNotNull(set);
 		Assert.isNotNull(parentNode);
 		this.root = parentNode;
@@ -100,17 +100,13 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * @return the structured viewer that is displaying the model managed by this provider
 	 */
 	public StructuredViewer getViewer() {
-		return viewer;
-	}
-
-	/**
-	 * Set the viewer that is being used to display the model created by this
-	 * provider.
-	 * @param viewer the structured viewer that is displaying the model managed by this provider
-	 */
-	public void setViewer(StructuredViewer viewer) {
-		Assert.isTrue(viewer instanceof AbstractTreeViewer);
-		this.viewer = (AbstractTreeViewer) viewer;
+		ISynchronizePage page = configuration.getPage();
+		if (page == null) return null;
+        Viewer viewer = page.getViewer();
+		if (viewer instanceof AbstractTreeViewer) {
+		    return (AbstractTreeViewer)viewer;
+		}
+		return null;
 	}
 
 	/**
@@ -204,9 +200,74 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
      * Throw away any old state associated with this provider and
      * rebuild the model from scratch.
      */
-	protected abstract void reset();
+	protected void reset() {
+		// save expansion state
+		if(hasViewerState()) {
+			saveViewerState();
+		}
+		
+		// Clear existing model, but keep the root node
+		clearModelObjects(getModelRoot());
+		
+		// Rebuild the model
+		buildModelObjects(getModelRoot());
+		
+		// Notify listeners that model has changed
+		ISynchronizeModelElement root = getModelRoot();
+		if(root instanceof SynchronizeModelElement) {
+			((SynchronizeModelElement)root).fireChanges();
+		}
+		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+			public void run() {
+				StructuredViewer viewer = getViewer();
+				if (viewer != null && !viewer.getControl().isDisposed()) {
+					viewer.refresh();
+					//	restore expansion state
+					restoreViewerState();
+				}
+			}
+		});
+	}
 	
 	/**
+	 * For each node create children based on the contents of
+	 * @param node
+	 * @return
+	 */
+	protected abstract IDiffElement[] buildModelObjects(ISynchronizeModelElement node);
+	
+	/**
+     * @return
+     */
+    protected boolean hasViewerState() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    /**
+     * 
+     */
+	protected void saveViewerState() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /**
+     * 
+     */
+    protected void restoreViewerState() {
+        // TODO Auto-generated method stub
+        
+    }
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider#saveState()
+	 */
+	public void saveState() {
+		saveViewerState();
+	}
+	
+    /**
 	 * Method invoked when a sync element is added or removed or its state changes.
 	 * This method can be invoked from the UI thread or a background thread.
 	 * @param element synchronize element
@@ -266,7 +327,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
      * @param resource the resource
      * @return one or more lowest level parents that could contain the resource
      */
-    protected abstract ISynchronizeModelElement[] getClosestExistingParents(IResource resource);
+    public abstract ISynchronizeModelElement[] getClosestExistingParents(IResource resource);
     
 	/**
 	 * Handle the changes made to the viewer's <code>SyncInfoSet</code>.
@@ -276,7 +337,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * @param event
 	 *            the event containing the changed resourcses.
 	 */
-	protected final void handleChanges(ISyncInfoTreeChangeEvent event) {
+	protected void handleChanges(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
 		handleResourceChanges(event);
 		handleResourceRemovals(event);
 		handleResourceAdditions(event);
@@ -313,7 +374,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		if (! (event instanceof ISyncInfoTreeChangeEvent)) {
 			reset();
 		} else {
-		    handleChanges((ISyncInfoTreeChangeEvent)event);
+		    handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
 		}
     }
     
@@ -333,7 +394,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
     }
     
 	protected void addToViewer(ISynchronizeModelElement node) {
-	    updateHandler.nodeAdded(node);
+	    updateHandler.nodeAdded(node, this);
 		propogateConflictState(node, false);
 		// Set the marker property on this node.
 		// There is no need to propogate this to the parents 
@@ -359,6 +420,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		if (Utils.canUpdateViewer(getViewer())) {
 			doRemove(node);
 		}
+		updateHandler.nodeRemoved(node, this);
 	}
 	
 	/**
@@ -395,7 +457,43 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
         return this;
     }
 
-    protected abstract void doAdd(ISynchronizeModelElement parent, ISynchronizeModelElement element);
+    /**
+     * Add the element to the viewer.
+     * @param parent the parent of the element which is already added to the viewer
+     * @param element the element to be added to the viewer
+     */
+	protected void doAdd(ISynchronizeModelElement parent, ISynchronizeModelElement element) {
+		AbstractTreeViewer viewer = (AbstractTreeViewer)getViewer();
+		viewer.add(parent, element);		
+	}
 	
-	protected abstract void doRemove(ISynchronizeModelElement element);
+	/**
+	 * Remove the element from the viewer
+	 * @param element the element to be removed
+	 */
+	protected void doRemove(ISynchronizeModelElement element) {
+		AbstractTreeViewer viewer = (AbstractTreeViewer)getViewer();
+		viewer.remove(element);		
+	}
+	
+	/**
+	 * This is a callback from the model update handler that gets invoked 
+	 * when a node is added to the viewer. It is only invoked for the
+	 * root level model provider.
+	 * @param node
+	 * @param provider TODO
+	 */
+	protected void nodeAdded(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
+	    // Default is to do nothing
+	}
+	
+	/**
+	 * This is a callback from the model update handler that gets invoked 
+	 * when a node is removed from the viewer. It is only invoked for the
+	 * root level model provider.
+	 * @param node
+	 */
+	protected void nodeRemoved(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
+	    // Default is to do nothing
+	}
 }

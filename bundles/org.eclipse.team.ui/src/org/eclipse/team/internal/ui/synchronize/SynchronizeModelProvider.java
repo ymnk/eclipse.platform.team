@@ -12,12 +12,10 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.*;
 
-import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -50,7 +48,7 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 	 *            input.
 	 */
 	public SynchronizeModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
-		this(new UnchangedResourceModelElement(null, ResourcesPlugin.getWorkspace().getRoot()) {
+		this(null, new UnchangedResourceModelElement(null, ResourcesPlugin.getWorkspace().getRoot()) {
 			/* 
 			 * Override to ensure that the diff viewer will appear in CompareEditorInputs
 			 */
@@ -60,8 +58,8 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 		}, configuration, set);
 	}
 
-	public SynchronizeModelProvider(SynchronizeModelElement parent, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
-		super(null, parent, configuration, set);
+	public SynchronizeModelProvider(AbstractSynchronizeModelProvider parentProvider, ISynchronizeModelElement modelRoot, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
+		super(parentProvider, modelRoot, configuration, set);
 	}
 	
 	/**
@@ -103,13 +101,6 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 	protected ISynchronizeModelElement getModelObject(IResource resource) {
 		return (ISynchronizeModelElement) resourceMap.get(resource);
 	}
-
-	/**
-	 * For each node create children based on the contents of
-	 * @param node
-	 * @return
-	 */
-	protected abstract IDiffElement[] buildModelObjects(ISynchronizeModelElement node);
 	
 	protected void associateDiffNode(ISynchronizeModelElement node) {
 		IResource resource = node.getResource();
@@ -120,42 +111,6 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 
 	protected void unassociateDiffNode(IResource resource) {
 		resourceMap.remove(resource);
-	}
-
-	protected void reset() {
-		// save expansion state
-		if(! resourceMap.isEmpty()) {
-			saveViewerState();
-		}
-		
-		// Clear existing model, but keep the root node
-		resourceMap.clear();
-		clearModelObjects(getModelRoot());
-		// remove all from tree viewer
-		IDiffElement[] elements = getModelRoot().getChildren();
-		for (int i = 0; i < elements.length; i++) {
-			doRemove((ISynchronizeModelElement)elements[i]);
-		}
-		
-		// Rebuild the model
-		associateDiffNode(getModelRoot());
-		buildModelObjects(getModelRoot());
-		
-		// Notify listeners that model has changed
-		ISynchronizeModelElement root = getModelRoot();
-		if(root instanceof SynchronizeModelElement) {
-			((SynchronizeModelElement)root).fireChanges();
-		}
-		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-			public void run() {
-				StructuredViewer viewer = getViewer();
-				if (viewer != null && !viewer.getControl().isDisposed()) {
-					viewer.refresh();
-					//	restore expansion state
-					restoreViewerState();
-				}
-			}
-		});
 	}
 	
 	/**
@@ -175,9 +130,17 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 	 */
 	protected void clearModelObjects(ISynchronizeModelElement node) {
 		super.clearModelObjects(node);
-		IResource resource = node.getResource();
-		if (resource != null) {
-			unassociateDiffNode(resource);
+		if (node == getModelRoot()) {
+	        // If we are clearing everything under the root
+	        // than just purge the resource map
+	        resourceMap.clear();
+	        // Reassociate the root node to allow the children to be readded
+	        associateDiffNode(getModelRoot());
+		} else {
+			IResource resource = node.getResource();
+			if (resource != null) {
+				unassociateDiffNode(resource);
+			}
 		}
 	}
 	
@@ -189,6 +152,13 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 		super.addToViewer(node);
 	}
 
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#hasViewerState()
+     */
+    protected boolean hasViewerState() {
+        return ! resourceMap.isEmpty();
+    }
+    
 	protected void saveViewerState() {
 		//	save visible expanded elements and selection
 	    final StructuredViewer viewer = getViewer();
@@ -273,15 +243,8 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 			}, viewer);
 		}
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider#saveState()
-	 */
-	public void saveState() {
-		saveViewerState();
-	}
 
-	protected ISynchronizeModelElement[] getClosestExistingParents(IResource resource) {
+	public ISynchronizeModelElement[] getClosestExistingParents(IResource resource) {
 		ISynchronizeModelElement element = getModelObject(resource);
 		if(element == null) {
 			do {
@@ -289,6 +252,16 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 				element = getModelObject(resource);
 			} while(element == null && resource != null);
 		}
+		if (element == null) {
+		    return new ISynchronizeModelElement[0];
+		}
 		return new ISynchronizeModelElement[] { element };
 	}
+	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#handleChanges(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
+     */
+    protected final void handleChanges(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
+        super.handleChanges(event, monitor);
+    }
 }

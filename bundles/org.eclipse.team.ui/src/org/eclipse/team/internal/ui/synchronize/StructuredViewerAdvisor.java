@@ -383,7 +383,6 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 			}
 		});
 		if (viewer != null) {
-			modelProvider.setViewer(viewer);
 			viewer.setSorter(modelProvider.getViewerSorter());
 			viewer.setInput(modelRoot);
 		}

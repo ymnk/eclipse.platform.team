@@ -137,10 +137,10 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 	 * @return a selection corresponding to the given objects
 	 */
 	public ISelection getSelection(Object[] objects) {
-		if (modelProvider != null) {
+		if (modelProvider != null && modelProvider instanceof SynchronizeModelProvider) {
 	 		Object[] viewerObjects = new Object[objects.length];
 			for (int i = 0; i < objects.length; i++) {
-				viewerObjects[i] = modelProvider.getMapping(objects[i]);
+				viewerObjects[i] = ((SynchronizeModelProvider)modelProvider).getMapping(objects[i]);
 			}
 			return new StructuredSelection(viewerObjects);
 		} else {

@@ -56,28 +56,10 @@ public interface ISynchronizeModelProvider {
 	public abstract StructuredViewer getViewer();
 
 	/**
-	 * Installed the viewer to be used to display the model.
-	 * @param viewer the viewer in which to diplay the model.
-	 */
-	public abstract void setViewer(StructuredViewer viewer);
-
-	/**
 	 * Builds the viewer model based on the contents of the sync set.
 	 * @return the root element of the generated model.
 	 */
 	public abstract ISynchronizeModelElement prepareInput(IProgressMonitor monitor);
-
-	/**
-	 * The provider can try and return a mapping for the provided object. Providers often use mappings
-	 * to store the source of a logical element they have created. For example, when displaying resource
-	 * based logical elements, a provider will cache the resource -> element mapping for quick retrieval
-	 * of the element when resource based changes are made.
-	 * 
-	 * @param object the object to query for a mapping
-	 * @return an object created by this provider that would be shown in a viewer, or <code>null</code>
-	 * if the provided object is not mapped by this provider.
-	 */
-	public abstract Object getMapping(Object object);
 
 	/**
 	 * Dispose of the builder

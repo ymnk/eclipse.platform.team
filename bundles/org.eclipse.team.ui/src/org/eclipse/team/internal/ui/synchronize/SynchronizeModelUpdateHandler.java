@@ -218,7 +218,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
             break;
         case SYNC_INFO_SET_CHANGED:
             // Handle the sync change immediately
-            handleChanges(((SyncInfoSetChangeEvent)event).getEvent());
+            handleChanges(((SyncInfoSetChangeEvent)event).getEvent(), monitor);
         default:
             break;
         }
@@ -392,12 +392,31 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
     }
 
     /**
-     * @param element
+     * This method is invoked whenever a node is added to the viewer
+     * by the provider or a sub-provider. The handler adds an update
+     * listener to the node and notifies the root provider that 
+     * a node was added.
+     * @param element the added element
+     * @param provider the provider that added the element
      */
-    public void nodeAdded(ISynchronizeModelElement element) {
+    public void nodeAdded(ISynchronizeModelElement element, AbstractSynchronizeModelProvider provider) {
         element.addPropertyChangeListener(listener);
+        provider.nodeAdded(element, provider);
     }
 
+    /**
+     * This method is invoked whenever a node is removed the viewer
+     * by the provider or a sub-provider. The handler removes any
+     * listener and notifies the root provider that 
+     * a node was removed.
+     * @param element the removed element
+     * @param provider the provider that added the element
+     */
+    public void nodeRemoved(ISynchronizeModelElement element, AbstractSynchronizeModelProvider provider) {
+        element.removePropertyChangeListener(listener);
+        provider.nodeRemoved(element, provider);
+    }
+    
     /* (non-Javadoc)
      * @see org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.synchronize.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
      */
@@ -423,7 +442,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
     /*
      * Handle the sync info set change event in the UI thread.
      */
-    private void handleChanges(final ISyncInfoSetChangeEvent event) {
+    private void handleChanges(final ISyncInfoSetChangeEvent event, final IProgressMonitor monitor) {
         final Control ctrl = getViewer().getControl();
         if (ctrl != null && !ctrl.isDisposed()) {
         	ctrl.getDisplay().syncExec(new Runnable() {
@@ -434,7 +453,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
     						    StructuredViewer viewer = getViewer();
         						try {
         							viewer.getControl().setRedraw(false);
-            						provider.handleChanges((ISyncInfoTreeChangeEvent)event);
+            						provider.handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
             						firePendingLabelUpdates();
         						} finally {
         							viewer.getControl().setRedraw(true);
