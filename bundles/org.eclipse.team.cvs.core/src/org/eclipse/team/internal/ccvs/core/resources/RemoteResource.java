@@ -22,6 +22,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.client.Update;
+import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -202,5 +203,14 @@ public abstract class RemoteResource extends PlatformObject implements ICVSRemot
 	public int hashCode() {
 		return getRepositoryRelativePath().hashCode();
 	}
+	
+	abstract public byte[] getSyncBytes();
 
+	public static RemoteResource fromBytes(IResource local, byte[] bytes) throws CVSException {
+		if(local.getType() == IResource.FILE) {
+			return new RemoteFile((RemoteFolder)CVSWorkspaceRoot.getRemoteResourceFor(local.getParent()), bytes);
+		} else {
+			return (RemoteResource)CVSWorkspaceRoot.getRemoteResourceFor(local);
+		}
+	}
 }

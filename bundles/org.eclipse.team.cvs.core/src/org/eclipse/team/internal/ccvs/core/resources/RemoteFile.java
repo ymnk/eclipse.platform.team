@@ -613,7 +613,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getSyncBytes()
 	 */
-	public byte[] getSyncBytes() throws CVSException {
+	public byte[] getSyncBytes() {
 		return syncBytes;
 	}
 	/**
