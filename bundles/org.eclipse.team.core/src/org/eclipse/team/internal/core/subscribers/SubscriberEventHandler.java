@@ -392,7 +392,6 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 						monitor);
 					break;
 				case SubscriberEvent.INITIALIZE :
-					//getEventHandlerJob().setSystem(false);
 					monitor.subTask(Policy.bind("SubscriberEventHandler.2", event.getResource().getFullPath().toString())); //$NON-NLS-1$
 					collectAll(
 							event.getResource(),

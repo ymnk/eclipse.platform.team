@@ -202,7 +202,6 @@ public class RepositoryRoot extends PlatformObject {
 			dateTags.remove(tag);
 		}
 	}
-	
 	/**
 	 * Return the list of date tags assocaiated with the repository.
 	 * @return the list of date tags
