@@ -25,7 +25,7 @@ import org.eclipse.team.core.synchronize.SyncInfoSet;
  * 
  * @since 3.1
  */
-public abstract class ChangeSetCollector implements ISyncInfoSetChangeListener {
+public abstract class ChangeSetCollector {
 
     private ListenerList listeners = new ListenerList();
     private Set sets = new HashSet();
@@ -85,7 +85,7 @@ public abstract class ChangeSetCollector implements ISyncInfoSetChangeListener {
     protected void add(final ChangeSet set) {
         if (!contains(set)) {
             sets.add(set);
-            set.getSyncInfoSet().addSyncSetChangedListener(this);
+            set.getSyncInfoSet().addSyncSetChangedListener(getChangeSetChangeListener());
             Object[] listeners = getListeners();
             for (int i = 0; i < listeners.length; i++) {
                 final IChangeSetChangeListener listener = (IChangeSetChangeListener)listeners[i];
@@ -107,7 +107,7 @@ public abstract class ChangeSetCollector implements ISyncInfoSetChangeListener {
      */
     public void remove(final ChangeSet set) {
         if (contains(set)) {
-            set.getSyncInfoSet().removeSyncSetChangedListener(this);
+            set.getSyncInfoSet().removeSyncSetChangedListener(getChangeSetChangeListener());
             sets.remove(set);
             Object[] listeners = getListeners();
             for (int i = 0; i < listeners.length; i++) {
@@ -124,6 +124,16 @@ public abstract class ChangeSetCollector implements ISyncInfoSetChangeListener {
         }
     }
     
+    /**
+     * Return the change listener that will be registered with each 
+     * <code>SyncInfoSet</code> associated with the <code>ChangeSets</code>
+     * added to this collector.
+     * @return the change listener that will be registered with each 
+     * <code>SyncInfoSet</code> associated with the <code>ChangeSets</code>
+     * added to this collector
+     */
+    protected abstract ISyncInfoSetChangeListener getChangeSetChangeListener();
+
     /**
      * Return whether the manager contains the given commit set
      * @param set the commit set being tested

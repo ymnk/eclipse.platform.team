@@ -28,7 +28,7 @@ import org.osgi.service.prefs.Preferences;
 /**
  * This class manages the active change sets associated with a subscriber.
  */
-public class SubscriberChangeSetCollector extends ChangeSetCollector {
+public class SubscriberChangeSetCollector extends ChangeSetCollector implements ISyncInfoSetChangeListener {
     
     private static final String PREF_CHANGE_SETS = "changeSets"; //$NON-NLS-1$
     private static final String CTX_DEFAULT_SET = "defaultSet"; //$NON-NLS-1$
@@ -501,5 +501,12 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector {
      */
     public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
         // Nothing to do
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.core.subscribers.ChangeSetCollector#getChangeSetSyncSetChangeListener()
+     */
+    protected ISyncInfoSetChangeListener getChangeSetChangeListener() {
+        return this;
     }
 }
