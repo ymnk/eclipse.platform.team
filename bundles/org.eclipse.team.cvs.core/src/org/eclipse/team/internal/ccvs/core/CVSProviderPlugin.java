@@ -861,4 +861,8 @@ public class CVSProviderPlugin extends Plugin {
 	public void setDebugProtocol(boolean value) {
 		Policy.DEBUG_CVS_PROTOCOL = value;		
 	}
+	
+	public boolean isDebugProtocol() {
+		return Policy.DEBUG_CVS_PROTOCOL;
+	}
 }
