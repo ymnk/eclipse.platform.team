@@ -192,6 +192,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected IPage createDefaultPage(PageBook book) {
 		MessagePage page = new MessagePage();
 		page.createControl(getPageBook());
+		page.setMessage("There are no created synchronize participants. TODO: add link to create one...");
 		initPage(page);
 		return page;
 	}

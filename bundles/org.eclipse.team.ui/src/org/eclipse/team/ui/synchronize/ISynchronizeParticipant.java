@@ -100,6 +100,22 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	public ImageDescriptor getImageDescriptor();
 	
 	/**
+	 * Returns if this participant is pinned. Pinned participants will only be removed from the
+	 * synchronize manager until they are un-pinned. 
+	 * 
+	 * @return <code>true</code> if this participant is pinned and <code>false</code>
+	 * otherwise.
+	 */
+	public boolean isPinned();
+	
+	/**
+	 * Sets whether this participant is pinned.
+	 * 
+	 * @param pinned sets if the participant is pinned. 
+	 */
+	public void setPinned(boolean pinned);
+	
+	/**
 	 * Creates the configuration for the participant page. The configuration controls the
 	 * options for displaying the participant. The configuration used to initialize the page
 	 * when {@link #createPage(ISynchronizePageConfiguration)} is called and as such

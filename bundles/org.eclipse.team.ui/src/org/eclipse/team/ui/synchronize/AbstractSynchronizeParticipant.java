@@ -46,6 +46,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	private String fName;
 	private String fId;
 	private String fSecondaryId;
+	private boolean pinned;
 	private ImageDescriptor fImageDescriptor;
 	protected IConfigurationElement configElement;
 
@@ -124,6 +125,31 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 */
 	public String getSecondaryId() {
 		return fSecondaryId;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#setPinned(boolean)
+	 */
+	public final void setPinned(boolean pinned) {
+		this.pinned = pinned;
+		pinned(pinned);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#isPinned()
+	 */
+	public final boolean isPinned() {
+		return pinned;
+	}
+	
+	/**
+	 * Called when the pinned state is changed.
+	 *  
+	 * @param pinned whether the participant is pinned.
+	 */
+	protected void pinned(boolean pinned) {
+		// Subclasses can re-act to changes in the pinned state
 	}
 	
 	/* (non-Javadoc)

@@ -484,17 +484,12 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 */
 	public void init() {
 		try {
-			// Initialize the participant registry - reads all participant
-			// extension descriptions.
+			// Initialize the participant registry - reads all participant extension descriptions.
 			participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
 
 			// Instantiate and register any dynamic participants saved from a
 			// previous session.
 			restoreSavedParticipants();
-
-			// Instantiate and register any static participant that has not
-			// already been created.
-			initializeStaticParticipants();
 		} catch (CoreException e) {
 			TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, Policy.bind("SynchronizeManager.8"), e)); //$NON-NLS-1$
 		}
@@ -517,18 +512,6 @@ public class SynchronizeManager implements ISynchronizeManager {
 			}
 		}
 		participantReferences = null;
-	}
-	
-	private void initializeStaticParticipants() throws CoreException {
-		SynchronizeParticipantDescriptor[] desc = participantRegistry.getSynchronizeParticipants();
-		List participants = new ArrayList();
-		for (int i = 0; i < desc.length; i++) {
-			SynchronizeParticipantDescriptor descriptor = desc[i];
-			String key = Utils.getKey(descriptor.getId(), null);
-			if (descriptor.isStatic() && !participantReferences.containsKey(key)) {
-				participantReferences.put(key, new ParticipantInstance(descriptor, null /* no secondary id */, null /* use type name */, null /* no saved state */));
-			}
-		}
 	}
 
 	/**
