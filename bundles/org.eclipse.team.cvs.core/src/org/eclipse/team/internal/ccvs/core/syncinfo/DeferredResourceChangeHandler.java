@@ -54,7 +54,7 @@ public class DeferredResourceChangeHandler extends BackgroundEventHandler {
 	}
 
 	public void ignoreFileChanged(IFile file) {
-		queueEvent(new Event(file, IGNORE_FILE_CHANGED, IResource.DEPTH_ZERO));
+		queueEvent(new Event(file, IGNORE_FILE_CHANGED, IResource.DEPTH_ZERO), false);
 	}
 	
 	/* (non-Javadoc)

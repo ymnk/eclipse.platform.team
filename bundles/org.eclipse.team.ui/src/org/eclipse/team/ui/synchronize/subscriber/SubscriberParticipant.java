@@ -41,6 +41,8 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	
 	private ISynchronizeView view;
 	
+	private boolean starting = true;
+	
 	/**
 	 * Key for settings in memento
 	 */
@@ -165,12 +167,8 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		// listen for global ignore changes
 		TeamUI.addPropertyChangeListener(this);
 		
-		if(workingSet != null) {
-			setWorkingSet(workingSet);
-		}
-		updateMode(getMode());
-		
 		preCollectingChanges();
+		
 		collector.start();
 		
 		// start the refresh now that a subscriber has been added
@@ -180,7 +178,18 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		}
 	}
 	
+	/**
+	 * This method is invoked just before the collector is started. 
+	 * This gives an opertunity to configure the collector parameters
+	 * before collection starts. The default implementation sets the working
+	 * set as returned by <code>getWorkingSet()</code> and sets the mode 
+	 * as returned by <code>getMode()</code>.
+	 */
 	protected void preCollectingChanges() {
+		if(workingSet != null) {
+			setWorkingSet(workingSet);
+		}
+		updateMode(getMode());
 	}
 	
 	/**

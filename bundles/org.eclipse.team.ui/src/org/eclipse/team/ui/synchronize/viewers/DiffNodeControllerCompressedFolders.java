@@ -189,15 +189,19 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		AdaptableDiffNode existingNode = getModelObject(local);
 		if (existingNode == null) {
 			if (local.getType() == IResource.FILE) {
-				AdaptableDiffNode compressedNode = getModelObject(local.getParent());
-				if (compressedNode == null) {
+				AdaptableDiffNode parentNode = getModelObject(local.getParent());
+				if (parentNode == null) {
 					AdaptableDiffNode projectNode = getModelObject(local.getProject());
 					if (projectNode == null) {
 						projectNode = createModelObject(getRoot(), local.getProject());
 					}
-					compressedNode = createModelObject(projectNode, local.getParent());
+					if (local.getParent().getType() == IResource.PROJECT) {
+						parentNode = projectNode;
+					} else {
+						parentNode = createModelObject(projectNode, local.getParent());
+					}
 				}
-				createModelObject(compressedNode, local);
+				createModelObject(parentNode, local);
 			} else {
 				AdaptableDiffNode projectNode = getModelObject(local.getProject());
 				if (projectNode == null) {

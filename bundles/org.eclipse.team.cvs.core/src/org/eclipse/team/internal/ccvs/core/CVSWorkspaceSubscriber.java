@@ -218,45 +218,5 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	protected SynchronizationCache getRemoteSynchronizationCache() {
 		return remoteSynchronizer;
 	}
-	
-//	/* (non-Javadoc)
-//	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
-//	 */
-//	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
-//		if (resource.getType() == IResource.FILE) {
-//			// Try to optimize the in-sync case using the cached deep folder dirty indicator
-//			IFile file = (IFile)resource;
-//			if (isKnownToBeInSync(file)) {
-//				CVSInSyncInfo info = new CVSInSyncInfo(file, this);
-//				info.init();
-//				return info;
-//			}
-//		}
-//		return super.getSyncInfo(resource);
-//	}
-//	
-//	/*
-//	 * Return true if the file is known to be in-sync and false if it must be calculated
-//	 */
-//	private boolean isKnownToBeInSync(IFile file) throws TeamException {
-//		return (!hasIncomingChange(file) && isKnownToBeClean(file));
-//	}
-//
-//	private boolean hasIncomingChange(IResource resource) throws TeamException {
-//		return remoteSynchronizer.isRemoteKnown(resource);
-//	}
-//	
-//	/*
-//	 * Return true if the file is known to be clean and false if it must be calculated
-//	 */
-//	private boolean isKnownToBeClean(IFile file) throws TeamException {
-//		int state = EclipseSynchronizer.getInstance().getModificationState(file.getParent());
-//		if (state == ICVSFile.CLEAN) {
-//			// if the parent is known to be clean then the file must also be clean
-//			return true;
-//		}
-//		// Otherwise, nothing is known
-//		return false;
-//	}
 
 }
