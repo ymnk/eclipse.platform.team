@@ -479,8 +479,10 @@ public class EclipseSynchronizer {
 			if (resource.getType() == IResource.FILE) {
 				byte[] syncBytes = getSyncBytes(resource);
 				if (syncBytes != null) {
-					syncBytes = convertToDeletion(syncBytes);
-					synchronizerCache.setCachedSyncBytes(resource, syncBytes);
+					if (!ResourceSyncInfo.isAddition(syncBytes)) {
+						syncBytes = convertToDeletion(syncBytes);
+						synchronizerCache.setCachedSyncBytes(resource, syncBytes);
+					}
 					changedResources.add(resource);
 				}
 			} else {

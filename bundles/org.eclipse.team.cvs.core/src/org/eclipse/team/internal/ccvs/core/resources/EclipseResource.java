@@ -178,14 +178,14 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	 * @see ICVSResource#isManaged()
 	 */
 	public boolean isManaged() throws CVSException {
-		return isManaged(getSyncInfo());
+		return isManaged(getSyncBytes());
 	}
 	
 	/*
 	 * Helper method that captures the sematics of isManaged given a ResourceSyncInfo
 	 */
-	public boolean isManaged(ResourceSyncInfo info) {
-		return info != null;
+	public boolean isManaged(byte[] syncBytes) {
+		return syncBytes != null;
 	}
 	
 	/**
@@ -214,7 +214,14 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	public boolean isFolder() {
 		return false;
 	}
-	
+
+	/*
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getSyncBytes()
+	 */
+	public byte[] getSyncBytes() throws CVSException {
+		return EclipseSynchronizer.getInstance().getSyncBytes(getIResource());
+	}
+		
 	/*
 	 * @see ICVSResource#getSyncInfo()
 	 */

@@ -551,6 +551,49 @@ public class ResourceSyncInfo {
 	}
 	
 	/**
+	 * Method getKeywordMode.
+	 * @param syncBytes
+	 * @return String
+	 */
+	public static KSubstOption getKeywordMode(byte[] syncBytes) throws CVSException {
+		String mode = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 4, false);
+		if (mode == null) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		return KSubstOption.fromMode(mode);
+	}
+	
+	/**
+	 * Method getKeywordMode.
+	 * @param syncBytes
+	 * @return String
+	 */
+	public static byte[] setKeywordMode(byte[] syncBytes, KSubstOption mode) throws CVSException {
+		return setKeywordMode(syncBytes, mode.toMode().getBytes());
+	}
+	
+	/**
+	 * Method getKeywordMode.
+	 * @param syncBytes
+	 * @return String
+	 */
+	public static byte[] setKeywordMode(byte[] syncBytes, byte[] modeBytes) throws CVSException {
+		return setSlot(syncBytes, 4, modeBytes);
+	}
+	
+	/**
+	 * Return whether the provided syncBytes represent a binary file.
+	 * @param syncBytes
+	 * @return boolean
+	 * @throws CVSException
+	 */
+	public static boolean isBinary(byte[] syncBytes)  throws CVSException {
+		// todo: can be optimized
+		if (syncBytes == null) return false;
+		return getKeywordMode(syncBytes).isBinary();
+	}
+	
+	/**
 	 * Method isFolder.
 	 * @param syncBytes
 	 * @return boolean
@@ -558,13 +601,39 @@ public class ResourceSyncInfo {
 	public static boolean isFolder(byte[] syncBytes) {
 		return syncBytes.length > 0 && syncBytes[0] == 'D';
 	}
+
+	/**
+	 * Method isAddition.
+	 * @param syncBytes
+	 * @return boolean
+	 */
+	public static boolean isAddition(byte[] syncBytes) throws CVSException {
+		int start = startOfSlot(syncBytes, 2);
+		if (start == -1 || start >= syncBytes.length) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		return syncBytes[start + 1] == '0';
+	}
 	
+	/**
+	 * Method isDeleted.
+	 * @param syncBytes
+	 * @return boolean
+	 */
+	public static boolean isDeletion(byte[] syncBytes) throws CVSException {
+		int start = startOfSlot(syncBytes, 2);
+		if (start == -1 || start >= syncBytes.length) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		return syncBytes[start + 1] == DELETED_PREFIX_BYTE;
+	}
+		
 	/**
 	 * Method convertToDeletion.
 	 * @param syncBytes
 	 * @return byte[]
 	 */
-	public static byte[] convertToDeletion(byte[] syncBytes) throws CVSException  {
+	public static byte[] convertToDeletion(byte[] syncBytes) throws CVSException {
 		int index = startOfSlot(syncBytes, 2);
 		if (index == -1) {
 			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
@@ -574,6 +643,7 @@ public class ResourceSyncInfo {
 			System.arraycopy(syncBytes, 0, newSyncBytes, 0, index + 1);
 			newSyncBytes[index + 1] = DELETED_PREFIX_BYTE;
 			System.arraycopy(syncBytes, index + 1, newSyncBytes, index + 2, syncBytes.length - index - 1);
+			return newSyncBytes;
 		}
 		return syncBytes;
 	}
@@ -592,6 +662,7 @@ public class ResourceSyncInfo {
 			byte[] newSyncBytes = new byte[syncBytes.length - 1];
 			System.arraycopy(syncBytes, 0, newSyncBytes, 0, index + 1);
 			System.arraycopy(syncBytes, index + 2, newSyncBytes, index + 1, newSyncBytes.length - index - 1);
+			return newSyncBytes;
 		}
 		return syncBytes;
 	}
@@ -615,4 +686,161 @@ public class ResourceSyncInfo {
 		}
 		return -1;
 	}
+	
+	/**
+	 * Method setSlot.
+	 * @param syncBytes
+	 * @param i
+	 * @param b
+	 * @return byte[]
+	 */
+	private static byte[] setSlot(byte[] syncBytes, int slot, byte[] newBytes) throws CVSException {
+		int start = startOfSlot(syncBytes, slot);
+		if (start == -1) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		int end = startOfSlot(syncBytes, slot + 1);
+		int totalLength = start + 1 + newBytes.length;
+		if (end != -1) {
+			totalLength += syncBytes.length - end;
+		}
+		byte[] result = new byte[totalLength];
+		System.arraycopy(syncBytes, 0, result, 0, start + 1);
+		System.arraycopy(newBytes, 0, result, start + 1, newBytes.length);
+		if (end != -1) {
+			System.arraycopy(syncBytes, end, result, start + 1 + newBytes.length, syncBytes.length - end);
+		}
+		return result;
+	}
+
+	/**
+	 * Return the timestamp portion of the sync info that is to be sent to the
+	 * server.
+	 * 
+	 * @param syncBytes
+	 * @param fileTimestamp
+	 * @return String
+	 */
+	public static String getTimestampToServer(byte[] syncBytes, Date fileTimestamp) {
+		if(fileTimestamp != null) {
+			String syncTimestamp = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 3, false);
+			int syncType = getSyncType(syncTimestamp);
+			if (syncType == TYPE_MERGED_WITH_CONFLICTS && fileTimestamp.equals(getTimestamp(syncTimestamp))) {
+				return TIMESTAMP_SERVER_MERGED_WITH_CONFLICT;
+			} else {
+				return TIMESTAMP_SERVER_MERGED;
+			}
+		}	
+		return null;
+	}
+	/**
+	 * Method getTimestamp.
+	 * @param syncTimestamp
+	 * @return Object
+	 */
+	private static Date getTimestamp(String syncTimestamp) {
+		String dateString= syncTimestamp;
+		if(syncTimestamp.indexOf(ResourceSyncInfo.TIMESTAMP_SERVER_MERGED) != -1) {
+			dateString = null;
+		} else if(syncTimestamp.indexOf(ResourceSyncInfo.TIMESTAMP_SERVER_MERGED_WITH_CONFLICT) != -1) {
+			dateString = null;
+		} else if(syncTimestamp.indexOf(TIMESTAMP_MERGED_WITH_CONFLICT)!=-1) {
+			dateString = syncTimestamp.substring(syncTimestamp.indexOf("+") + 1); //$NON-NLS-1$
+		} else if(syncTimestamp.indexOf(TIMESTAMP_MERGED)!=-1) {
+			dateString = null;
+		}
+		
+		if(dateString==null || "".equals(dateString)) { //$NON-NLS-1$
+			return null;	
+		} else {
+			try {	
+				return CVSDateFormatter.entryLineToDate(dateString);
+			} catch(ParseException e) {
+				// something we don't understand, just make this sync have no timestamp and
+				// never be in sync with the server.
+				return null;
+			}
+		}
+	}
+	
+	/**
+	 * Method getSyncType.
+	 * @param syncTimestamp
+	 * @return int
+	 */
+	private static int getSyncType(String date) {
+		if(date.indexOf(ResourceSyncInfo.TIMESTAMP_SERVER_MERGED) != -1) {
+			return TYPE_MERGED;
+		} else if(date.indexOf(ResourceSyncInfo.TIMESTAMP_SERVER_MERGED_WITH_CONFLICT) != -1) {
+			return TYPE_MERGED_WITH_CONFLICTS;
+		} else if(date.indexOf(TIMESTAMP_MERGED_WITH_CONFLICT)!=-1) {
+			return TYPE_MERGED_WITH_CONFLICTS;
+		} else if(date.indexOf(TIMESTAMP_MERGED)!=-1) {
+			return TYPE_MERGED;
+		}
+		return TYPE_REGULAR;
+	}
+	
+	/**
+	 * Method getTag.
+	 * @param syncBytes
+	 * @return String
+	 */
+	public static byte[] getTagBytes(byte[] syncBytes) throws CVSException {
+		byte[] tag = Util.getBytesForSlot(syncBytes, SEPARATOR_BYTE, 5, true);
+		if (tag == null) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		return tag;
+	}
+	
+	/**
+	 * Method setTag.
+	 * @param syncBytes
+	 * @param tagString
+	 * @return byte[]
+	 */
+	public static byte[] setTag(byte[] syncBytes, byte[] tagBytes) throws CVSException {
+		return setSlot(syncBytes, 5, tagBytes);
+	}
+	
+	/**
+	 * Method setTag.
+	 * @param syncBytes
+	 * @param tag
+	 * @return ResourceSyncInfo
+	 */
+	public static byte[] setTag(byte[] syncBytes, CVSTag tag) throws CVSException {
+		CVSEntryLineTag entryTag;
+		if (tag instanceof CVSEntryLineTag) {
+			entryTag = (CVSEntryLineTag)tag;
+		} else {
+			entryTag = new CVSEntryLineTag(tag);
+		}
+		return setTag(syncBytes, entryTag.toEntryLineFormat(true).getBytes());
+	}
+	
+	/**
+	 * Method getRevision.
+	 * @param syncBytes
+	 */
+	public static String getRevision(byte[] syncBytes) throws CVSException {
+		String revision = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 2, false);
+		if (revision == null) {
+			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes)));
+		}
+		return revision;
+	}
+	
+	/**
+	 * Method isMerge.
+	 * @param syncBytes1
+	 * @return boolean
+	 */
+	public static boolean isMerge(byte[] syncBytes) {
+		String timestamp = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 3, false);
+		int syncType = getSyncType(timestamp);
+		return syncType == TYPE_MERGED || syncType == TYPE_MERGED_WITH_CONFLICTS;
+	}
+
 }

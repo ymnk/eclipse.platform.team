@@ -147,11 +147,11 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 		sendFolder(mFile.getParent());
 		
 		// Send the file's entry line to the server
-		ResourceSyncInfo info = mFile.getSyncInfo();
-		boolean isManaged = info != null;
+		byte[] syncBytes = mFile.getSyncBytes();
+		boolean isManaged = syncBytes != null;
 		if (isManaged) {
 			sendPendingNotification(mFile);
-			session.sendEntry(info.getServerEntryLine(mFile.getTimeStamp()));
+			session.sendEntry(syncBytes, ResourceSyncInfo.getTimestampToServer(syncBytes, mFile.getTimeStamp()));
 		} else {
 			// If the file is not managed, send a questionable to the server if the file exists locally
 			// A unmanaged, locally non-existant file results from the explicit use of the file name as a command argument
@@ -167,7 +167,7 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 		// If the file exists, send the appropriate indication to the server
 		if (mFile.exists()) {
 			if (mFile.isModified()) {
-				boolean binary = info != null && info.getKeywordMode().isBinary();
+				boolean binary = ResourceSyncInfo.isBinary(syncBytes);
 				if (sendModifiedContents) {
 					session.sendModified(mFile, binary, monitor);
 				} else {

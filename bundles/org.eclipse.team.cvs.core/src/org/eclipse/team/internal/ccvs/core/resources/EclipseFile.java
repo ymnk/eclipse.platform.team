@@ -246,8 +246,8 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	 * @see ICVSFile#getLogEntries(IProgressMonitor)
 	 */
 	public ILogEntry[] getLogEntries(IProgressMonitor monitor)	throws TeamException {
-		ResourceSyncInfo info = getSyncInfo();
-		if(isManaged(info) && !info.isAdded()) {
+		byte[] syncBytes = getSyncBytes();
+		if(syncBytes != null && !ResourceSyncInfo.isAddition(syncBytes)) {
 			ICVSRemoteResource remoteFile = CVSWorkspaceRoot.getRemoteResourceFor(resource);
 			return ((ICVSRemoteFile)remoteFile).getLogEntries(monitor);
 		}
@@ -302,8 +302,8 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	 */
 	public void edit(int notifications, IProgressMonitor monitor) throws CVSException {
 		if (!isReadOnly()) return;
-		ResourceSyncInfo info = getSyncInfo();
-		if (info == null || info.isAdded()) return;
+		byte[] syncBytes = getSyncBytes();
+		if (syncBytes == null || ResourceSyncInfo.isAddition(syncBytes)) return;
 		
 		// convert the notifications to internal form
 		char[] internalFormat;
@@ -332,7 +332,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		// Only record the base if the file is not modified
 		if (!isModified()) {
 			EclipseSynchronizer.getInstance().copyFileToBaseDirectory(getIFile(), monitor);
-			setBaserevInfo(new BaserevInfo(getName(), info.getRevision()));
+			setBaserevInfo(new BaserevInfo(getName(), ResourceSyncInfo.getRevision(syncBytes)));
 		}
 		
 		// allow editing
@@ -548,12 +548,6 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	protected void flushModificationCache() throws CVSException {
 		EclipseSynchronizer.getInstance().flushDirtyCache(getIFile(), IResource.DEPTH_ZERO);
 
-	}
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getSyncBytes()
-	 */
-	public byte[] getSyncBytes() throws CVSException {
-		return EclipseSynchronizer.getInstance().getSyncBytes(getIFile());
 	}
 	/**
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#setSyncBytes(byte[])
