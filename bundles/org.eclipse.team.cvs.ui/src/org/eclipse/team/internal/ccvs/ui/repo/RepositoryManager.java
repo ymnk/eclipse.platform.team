@@ -226,6 +226,15 @@ public class RepositoryManager {
 				System.arraycopy(modules, 0, result, resources.length, modules.length);
 				return result;
 			}
+			if (tag.getType() == CVSTag.DATE) {
+				ICVSRemoteResource[] resources = location.members(tag, false, Policy.subMonitorFor(monitor, 60));
+				RepositoryRoot root = getRepositoryRootFor(location);
+				ICVSRemoteResource[] modules = root.getDefinedModules(tag, Policy.subMonitorFor(monitor, 40));
+				ICVSRemoteResource[] result = new ICVSRemoteResource[resources.length + modules.length];
+				System.arraycopy(resources, 0, result, 0, resources.length);
+				System.arraycopy(modules, 0, result, resources.length, modules.length);
+				return result;
+			}
 			Set result = new HashSet();
 			// Get the tags for the location
 			RepositoryRoot root = getRepositoryRootFor(location);
@@ -290,6 +299,11 @@ public class RepositoryManager {
 		broadcastRepositoryChange(root);
 	}
 	
+	public void addDateTag(ICVSRepositoryLocation location, CVSTag tag) {
+		RepositoryRoot root = getRepositoryRootFor(location);
+		root.addDateTag(tag);
+		broadcastRepositoryChange(root);
+	}
 	public void setAutoRefreshFiles(ICVSFolder project, String[] filePaths) throws CVSException {
 		RepositoryRoot root = getRepositoryRootFor(project);
 		String remotePath = RepositoryRoot.getRemotePathFor(project);

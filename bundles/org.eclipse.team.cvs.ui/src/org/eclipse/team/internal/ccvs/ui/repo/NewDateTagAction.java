@@ -10,23 +10,38 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.repo;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
+
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.window.Window;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.core.util.CVSDateFormatter;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ccvs.ui.DateTagDialog;
 
 /**
- * Action that refreshs the tags in the CVS repositories view.
+ * Action for creating a CVS Date tag.
  */
-public class RefreshTagsAction extends CVSRepoViewAction {
+public class NewDateTagAction extends CVSRepoViewAction {
 
-	/**
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#execute(org.eclipse.jface.action.IAction)
 	 */
-	protected void execute(IAction action) {
+	protected void execute(IAction action) throws InvocationTargetException, InterruptedException {
 		ICVSRepositoryLocation[] locations = getSelectedRepositoryLocations();
-		RefreshRemoteProjectWizard.execute(getShell(), locations[0]);
+		if (locations.length != 1) return;
+		DateTagDialog dialog = new DateTagDialog(getShell());
+		if (dialog.open() == Window.OK) {
+			Date date = dialog.getDate();
+			String dateString = CVSDateFormatter.dateToServerStamp(date);
+			CVSTag tag = new CVSTag(dateString, CVSTag.DATE);
+			CVSUIPlugin.getPlugin().getRepositoryManager().addDateTag(locations[0], tag);
+		}
 	}
 
-	/**
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.actions.TeamAction#isEnabled()
 	 */
 	protected boolean isEnabled() {
@@ -34,4 +49,5 @@ public class RefreshTagsAction extends CVSRepoViewAction {
 		if (locations.length != 1) return false;
 		return true;
 	}
+
 }

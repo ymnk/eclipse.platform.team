@@ -54,6 +54,8 @@ public class RepositoryRoot extends PlatformObject {
 	Map autoRefreshFiles = new HashMap();
 	// Map of String (module name) -> ICVSRemoteFolder (that is a defined module)
 	Map modulesCache;
+	// Lis of date tags
+	List dateTags = new ArrayList();
 	
 	public RepositoryRoot(ICVSRepositoryLocation root) {
 		this.root = root;
@@ -190,6 +192,24 @@ public class RepositoryRoot extends PlatformObject {
 		for (int i = 0; i < tags.length; i++) {
 			set.add(tags[i]);
 		}
+	}
+	
+	/**
+	 * Add the given date tag to the list of date tags associated with the repository.
+	 * @param tag a date tag
+	 */
+	public void addDateTag(CVSTag tag) {
+		if (!dateTags.contains(tag)) {
+			dateTags.add(tag);
+		}
+	}
+	
+	/**
+	 * Return the list of date tags assocaiated with the repository.
+	 * @return the list of date tags
+	 */
+	public CVSTag[] getDateTags() {
+		return (CVSTag[]) dateTags.toArray(new CVSTag[dateTags.size()]);
 	}
 	
 	/**
