@@ -20,8 +20,6 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.Policy;
@@ -29,6 +27,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.RefreshChangeListener;
 import org.eclipse.team.internal.ui.synchronize.RefreshEvent;
 import org.eclipse.team.ui.synchronize.ISynchronizeManager;
+import org.eclipse.ui.internal.progress.ProgressManager;
 
 /**
  * Job to refresh a {@link Subscriber} in the background. The job can be configured
@@ -110,7 +109,6 @@ public final class RefreshSubscriberJob extends WorkspaceJob {
 		this.subscriber = subscriber;
 		setPriority(Job.DECORATE);
 		setRefreshInterval(3600 /* 1 hour */);
-		setUser(true);
 		
 		// Handle restarting of job if it is configured as a scheduled refresh job.
 		addJobChangeListener(new JobChangeAdapter() {
@@ -142,9 +140,7 @@ public final class RefreshSubscriberJob extends WorkspaceJob {
 			group.beginTask(getName(), 100); //$NON-NLS-1$
 			setProgressGroup(group, 80);
 			collector.setProgressGroup(group, 20);
-			setProperty(new QualifiedName("org.eclipse.ui.workbench.progress", "keep"), Boolean.TRUE);
 		}
-		//setUser(getCollector() != null);
 		return shouldRun; 
 	}
 
@@ -205,13 +201,16 @@ public final class RefreshSubscriberJob extends WorkspaceJob {
 				monitor.done();
 			}
 			
+			Boolean modelProperty = (Boolean)getProperty(ProgressManager.PROPERTY_IN_DIALOG);
+			boolean isModal = modelProperty == null ? true : false;
+			setProperty(new QualifiedName("org.eclipse.ui.workbench.progress", "keep"), Boolean.valueOf(! isModal));
+			
 			// Post-Notify
 			event.setChanges(changeListener.getChanges());
 			event.setStopTime(System.currentTimeMillis());
 			event.setStatus(status.isOK() ? calculateStatus(event) : (IStatus) status);
 			notifyListeners(DONE, event);
 			changeListener.clear();
-			
 			return event.getStatus();
 		}
 	}
@@ -280,6 +279,7 @@ public final class RefreshSubscriberJob extends WorkspaceJob {
 	protected void start() {
 		if(getState() == Job.NONE) {
 			if(shouldReschedule()) {
+				setUser(collector != null);
 				schedule(getScheduleDelay());
 			}
 		}

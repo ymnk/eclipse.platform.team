@@ -45,6 +45,7 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.ui.*;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
@@ -287,6 +288,20 @@ public class Utils {
 		}
 	}
 
+	public static Shell findShell() {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		if(window != null) {
+			return window.getShell();
+		}
+		Display display= Display.getCurrent();
+		if (display == null) {
+			display= Display.getDefault();
+			return display.getActiveShell();
+		}
+		// worst case, just create our own.
+		return new Shell(TeamUIPlugin.getStandardDisplay());	
+	}
+	
 	public static IWorkbenchPartSite findSite(Control c) {
 		while (c != null && !c.isDisposed()) {
 			Object data = c.getData();

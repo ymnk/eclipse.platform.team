@@ -12,18 +12,12 @@
 package org.eclipse.team.internal.ccvs.ui;
 
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.*;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.IFileTypeInfo;
-import org.eclipse.team.core.IIgnoreInfo;
-import org.eclipse.team.core.Team;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.IUserAuthenticator;
-import org.eclipse.team.internal.ccvs.core.IUserInfo;
+import org.eclipse.team.core.*;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ui.Utils;
 
 /**
  * An authenticator that prompts the user for authentication info,
@@ -66,13 +60,14 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 		// ask the user for a password
 		final String[] result = new String[2];
 		Display display = Display.getCurrent();
+		final boolean allowCaching[] = {false};
 		if (display != null) {
-			promptForPassword(location, userinfo.getUsername(), message, userinfo.isUsernameMutable(), result);
+			allowCaching[0] = promptForPassword(location, userinfo.getUsername(), message, userinfo.isUsernameMutable(), result);
 		} else {
 			// sync exec in default thread
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
-					promptForPassword(location, userinfo.getUsername(), message, userinfo.isUsernameMutable(), result);
+					allowCaching[0] = promptForPassword(location, userinfo.getUsername(), message, userinfo.isUsernameMutable(), result);
 				}
 			});
 		}
@@ -81,9 +76,19 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 			throw new OperationCanceledException(Policy.bind("WorkbenchUserAuthenticator.cancelled")); //$NON-NLS-1$
 		}
 		
-		if (userinfo.isUsernameMutable())
+		if (userinfo.isUsernameMutable()) {
 			userinfo.setUsername(result[0]);
+		
+		}
 		userinfo.setPassword(result[1]);
+		
+		if(location != null) {
+			if (userinfo.isUsernameMutable()) {
+				location.setUsername(result[0]);
+			}
+			location.setPassword(result[1]);
+			location.setAllowCaching(allowCaching[0]);
+		}
 	}
 	
 	/**
@@ -98,17 +103,18 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 	 * @param userMutable  whether the user can be changed in the dialog
 	 * @param result  a String array of length two in which to put the result
 	 */
-	private void promptForPassword(final ICVSRepositoryLocation location, final String username, final String message, final boolean userMutable, final String[] result) {
-		Display display = Display.getCurrent();
-		Shell shell = new Shell(display);
+	private boolean promptForPassword(final ICVSRepositoryLocation location, final String username, final String message, final boolean userMutable, final String[] result) {
+		Shell shell = Utils.findShell();
+		if(shell == null) {
+			return false;
+		}
 		String domain = location == null ? null : location.getLocation();
 		UserValidationDialog dialog = new UserValidationDialog(shell, domain, (username==null)?"":username, message);//$NON-NLS-1$
 		dialog.setUsernameMutable(userMutable);
-		dialog.open();
-		shell.dispose();
-		
+		dialog.open();	
 		result[0] = dialog.getUsername();
 		result[1] = dialog.getPassword();
+		return dialog.getAllowCaching();
 	}
 
 	/**
@@ -150,8 +156,9 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 						   final String instruction,
 						   final String[] prompt,
 						   final boolean[] echo) {
-		Display display = Display.getCurrent();
-		Shell shell = new Shell(display);
+	
+		Shell shell = Utils.findShell();
+		if(shell == null) return new String[0];
 		String domain = location == null ? null : location.getLocation();
 		KeyboardInteractiveDialog dialog = new KeyboardInteractiveDialog(shell, 
 										 domain,
@@ -161,7 +168,6 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 										 prompt,
 										 echo);
 		dialog.open();
-		shell.dispose();
 		return dialog.getResult();
 	}
 	
@@ -169,12 +175,10 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 	 * Special alternate prompting. Returns the password. Username must be fixed.
 	 */
 	private String alternatePromptForPassword(final String username) {
-		Display display = Display.getCurrent();
-		Shell shell = new Shell(display);
+		Shell shell = Utils.findShell();
 		AlternateUserValidationDialog dialog = new AlternateUserValidationDialog(shell, (username == null) ? "" : username); //$NON-NLS-1$
 		dialog.setUsername(username);
 		int result = dialog.open();
-		shell.dispose();
 		if (result == Dialog.CANCEL) return null;
 		return dialog.getPassword();
 	}

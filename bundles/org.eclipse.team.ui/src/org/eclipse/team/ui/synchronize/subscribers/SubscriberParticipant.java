@@ -132,9 +132,10 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		return collector.getSubscriber().roots();
 	}
 	
-	private void internalRefresh(IResource[] resources, final IRefreshSubscriberListener listener, String taskName, IWorkbenchSite site) {
+private void internalRefresh(IResource[] resources, final IRefreshSubscriberListener listener, String taskName, IWorkbenchSite site) {
 		final Runnable[] gotoAction = new Runnable[] {null};
 		final RefreshSubscriberJob job = new RefreshSubscriberJob(taskName, resources, collector.getSubscriber());
+		job.setUser(true);
 		job.setSubscriberCollector(collector);
 		job.setProperty(new QualifiedName("org.eclipse.ui.workbench.progress", "icon"), getImageDescriptor());
 		job.setProperty(new QualifiedName("org.eclipse.ui.workbench.progress", "goto"), new Action() {
@@ -161,8 +162,8 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 					boolean isModal = true;
 					if(modelProperty != null) {
 						isModal = modelProperty.booleanValue();
-						job.setProperty(new QualifiedName("org.eclipse.ui.workbench.progress", "keep"), Boolean.valueOf(! isModal));
 					}
+
 					Runnable runnable = listener.refreshDone(event);
 					// If the job is being run modally then simply prompt the user immediatly
 					boolean newProgressSupport = WorkbenchPlugin.getDefault().getPreferenceStore().getBoolean("USE_NEW_PROGRESS");

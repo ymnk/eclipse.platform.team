@@ -59,7 +59,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 				try {
 					// If there are no changes
 					if (!areChanges()) {
-						MessageDialog.openInformation(Display.getCurrent().getActiveShell(), Policy.bind("OpenComparedDialog.noChangeTitle"), Policy.bind("OpenComparedDialog.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
+						MessageDialog.openInformation(shell, Policy.bind("OpenComparedDialog.noChangeTitle"), Policy.bind("OpenComparedDialog.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
 						return;
 					}
 					if (isSingleFileCompare(event.getResources())) {

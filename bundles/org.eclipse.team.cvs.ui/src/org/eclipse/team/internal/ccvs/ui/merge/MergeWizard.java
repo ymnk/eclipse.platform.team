@@ -19,6 +19,7 @@ import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.ui.*;
 
 public class MergeWizard extends Wizard {
@@ -58,7 +59,7 @@ public class MergeWizard extends Wizard {
 		
 		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
 		MergeSynchronizeParticipant participant = new MergeSynchronizeParticipant(s);
-		participant.refreshInDialog(wWindow.getShell(), s.roots(), Policy.bind("Participant.merging"), CVSMergeSubscriber.ID_MODAL, participant.getSyncInfoSet(), null); //$NON-NLS-1$
+		participant.refreshInDialog(Utils.findShell(), s.roots(), Policy.bind("Participant.merging"), CVSMergeSubscriber.ID_MODAL, participant.getSyncInfoSet(), null); //$NON-NLS-1$
 		return true;
 	}
 	
