@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
@@ -23,6 +24,10 @@ public class WorkspaceUpdateAction extends CVSParticipantAction {
 
 	public WorkspaceUpdateAction(ISynchronizePageConfiguration configuration) {
 		super(configuration);
+	}
+
+	public WorkspaceUpdateAction(ISynchronizePageConfiguration configuration, ISelectionProvider provider, String bundleKey) {
+		super(configuration, provider, bundleKey);
 	}
 
 	/* (non-Javadoc)

@@ -16,10 +16,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.util.ListenerList;
+import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionGroup;
@@ -64,7 +72,77 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	private ISynchronizePageConfiguration configuration;
 	
 	private Map menuContributions = new HashMap();
+	
+	private VisibleRootsSelectionProvider visibleRootSelectionProvider;
 
+	/**
+	 * A selection provider whose selection is the root elements
+	 * visible in the page. Selection changed events are sent out
+	 * when the model roots change or their visible children change
+	 */
+	private class VisibleRootsSelectionProvider extends SynchronizePageActionGroup implements ISelectionProvider {
+
+		private ListenerList selectionChangedListeners = new ListenerList();
+		private ISelection selection;
+
+		protected VisibleRootsSelectionProvider(ISynchronizeModelElement element) {
+			modelChanged(element);
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#modelChanged(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
+		 */
+		public void modelChanged(ISynchronizeModelElement root) {
+			if (root == null) {
+				setSelection(StructuredSelection.EMPTY);
+			} else {
+				setSelection(new StructuredSelection(root));
+			}
+		}
+		
+		/* (non-Javadoc)
+		 * Method declared on ISelectionProvider.
+		 */
+		public void addSelectionChangedListener(ISelectionChangedListener listener) {
+			selectionChangedListeners.add(listener);	
+		}
+		
+		/* (non-Javadoc)
+		 * Method declared on ISelectionProvider.
+		 */
+		public void removeSelectionChangedListener(ISelectionChangedListener listener) {
+			selectionChangedListeners.remove(listener);
+		}
+		
+		/* (non-Javadoc)
+		 * Method declared on ISelectionProvider.
+		 */
+		public ISelection getSelection() {
+			return selection;
+		}
+		
+		/* (non-Javadoc)
+		 * Method declared on ISelectionProvider.
+		 */
+		public void setSelection(ISelection selection) {
+			this.selection = selection;
+			selectionChanged(new SelectionChangedEvent(this, getSelection()));
+		}
+		
+		private void selectionChanged(final SelectionChangedEvent event) {
+			// pass on the notification to listeners
+			Object[] listeners = selectionChangedListeners.getListeners();
+			for (int i = 0; i < listeners.length; ++i) {
+				final ISelectionChangedListener l = (ISelectionChangedListener)listeners[i];
+				Platform.run(new SafeRunnable() {
+					public void run() {
+						l.selectionChanged(event);
+					}
+				});		
+			}
+		}
+	}
+	
 	/**
 	 * Initialize the actions of this contribution.
 	 * This method will be invoked once before any calls are
@@ -78,6 +156,9 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	 */
 	public void initialize(ISynchronizePageConfiguration configuration) {
 		this.configuration = configuration;
+		if (visibleRootSelectionProvider != null) {
+			configuration.addActionContribution(visibleRootSelectionProvider);
+		}
 	}
 	
 	/**
@@ -188,6 +269,28 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	 */
 	protected void appendToGroup(String menuId, String groupId, IContributionItem item) {
 		internalAppendToGroup(menuId, groupId, item);
+	}
+	
+	/**
+	 * Return a selection provider whose selection includes all roots
+	 * of the elements
+	 * visible in the page. Selection change events are fired when the
+	 * elements visible in the view change.
+	 * @return a selection provider whgose selection is the roots of all
+	 * elements visible in the page
+	 */
+	protected ISelectionProvider getVisibleRootsSelectionProvider() {
+		if (visibleRootSelectionProvider == null) {
+			ISynchronizeModelElement root = null;
+			if (configuration != null) {
+				root = (ISynchronizeModelElement)configuration.getProperty(SynchronizePageConfiguration.P_MODEL);
+			}
+			visibleRootSelectionProvider = new VisibleRootsSelectionProvider(root);
+			if (configuration != null) {
+				configuration.addActionContribution(visibleRootSelectionProvider);
+			}
+		}
+		return visibleRootSelectionProvider;
 	}
 	
 	/* (non-Javadoc)

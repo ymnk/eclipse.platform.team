@@ -30,7 +30,6 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
@@ -63,14 +62,10 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
 			
-			updateAction = new MergeUpdateAction(configuration) {
-				protected void initialize(ISynchronizePageConfiguration configuration) {
-					// Override to avoid registering a selection listener
-				}
-				protected String getBundleKeyPrefix() {
-					return "WorkspaceToolbarUpdateAction."; //$NON-NLS-1$
-				}
-			};
+			updateAction = new MergeUpdateAction(
+					configuration, 
+					getVisibleRootsSelectionProvider(), 
+					"WorkspaceToolbarUpdateAction."); //$NON-NLS-1$
 			updateAction.setPromptBeforeUpdate(true);
 			appendToGroup(
 					ISynchronizePageConfiguration.P_TOOLBAR_MENU,
@@ -97,11 +92,6 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 					new CVSActionDelegateWrapper(new ShowResourceInHistoryAction(), configuration));
 			}
 
-		}
-		public void modelChanged(ISynchronizeModelElement input) {
-			if (updateAction != null) {
-				updateAction.setSelection(input);
-			}
 		}
 	}
 	

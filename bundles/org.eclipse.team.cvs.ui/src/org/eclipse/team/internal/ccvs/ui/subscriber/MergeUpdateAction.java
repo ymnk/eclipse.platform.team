@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.OrSyncInfoFilter;
@@ -25,6 +26,10 @@ public class MergeUpdateAction extends CVSParticipantAction {
 		super(configuration);
 	}
 
+	public MergeUpdateAction(ISynchronizePageConfiguration configuration, ISelectionProvider provider, String bundleKey) {
+		super(configuration, provider, bundleKey);
+	}
+	
 	private boolean promptBeforeUpdate;
 
 	/* (non-Javadoc)

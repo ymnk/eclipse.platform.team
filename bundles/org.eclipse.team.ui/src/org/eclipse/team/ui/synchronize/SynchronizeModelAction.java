@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.events.DisposeEvent;
@@ -46,27 +47,41 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 	private ISynchronizePageConfiguration configuration;
 
 	/**
-	 * Create an action with the given text and configuration.
+	 * Create an action with the given text and configuration. By default,
+	 * the action registers for selection change with the selection provider 
+	 * from the configuration's site.
 	 * @param text the action's text
 	 * @param configuration the actions synchronize page configuration
 	 */
 	protected SynchronizeModelAction(String text, ISynchronizePageConfiguration configuration) {
-		super(text);
-		this.configuration = configuration;
-		initialize(configuration);
+		this(text, configuration, configuration.getSite().getSelectionProvider());
 	}
 	
 	/**
-	 * Method invoked from the constructor when a configuration is provided.
-	 * The default implementation registers the action as a selection change
-	 * listener. Subclass may override.
-	 * @param configuration the synchronize page configuration
+	 * Create an action with the given text and configuration. By default,
+	 * the action registers for selection change with the given selection provider.
+	 * @param text the action's text
+	 * @param configuration the actions synchronize page configuration
+	 * @param selectionProvider a selection provider
 	 */
-	protected void initialize(final ISynchronizePageConfiguration configuration) {
-		configuration.getSite().getSelectionProvider().addSelectionChangedListener(this);
+	protected SynchronizeModelAction(String text, ISynchronizePageConfiguration configuration, ISelectionProvider selectionProvider) {
+		super(text);
+		this.configuration = configuration;
+		initialize(configuration, selectionProvider);
+	}
+	
+	/**
+	 * Method invoked from the constructor.
+	 * The default implementation registers the action as a selection change
+	 * listener. Subclasses may override.
+	 * @param configuration the synchronize page configuration
+	 * @param selectionProvider a selection provider
+	 */
+	protected void initialize(final ISynchronizePageConfiguration configuration, final ISelectionProvider selectionProvider) {
+		selectionProvider.addSelectionChangedListener(this);
 		configuration.getPage().getViewer().getControl().addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
-				configuration.getSite().getSelectionProvider().removeSelectionChangedListener(SynchronizeModelAction.this);
+				selectionProvider.removeSelectionChangedListener(SynchronizeModelAction.this);
 			}
 		});
 	}
@@ -173,14 +188,5 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 	 */
 	public ISynchronizePageConfiguration getConfiguration() {
 		return configuration;
-	}
-
-	/**
-	 * Set the selection of the action to the given object
-	 * @param input the selected object
-	 */
-	public void setSelection(Object input) {
-		IStructuredSelection selection = new StructuredSelection(input);
-		selectionChanged(selection);
 	}
 }

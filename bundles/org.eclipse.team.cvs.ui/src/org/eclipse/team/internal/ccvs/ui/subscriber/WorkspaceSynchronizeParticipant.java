@@ -17,7 +17,6 @@ import org.eclipse.team.internal.ccvs.ui.actions.GenerateDiffFileAction;
 import org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction;
 import org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 import org.eclipse.ui.IMemento;
@@ -48,28 +47,20 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
 			
-			updateToolbar = new WorkspaceUpdateAction(configuration) {
-				protected void initialize(ISynchronizePageConfiguration configuration) {
-					// Override to prevent registering as a selection listener
-				}
-				protected String getBundleKeyPrefix() {
-					return "WorkspaceToolbarUpdateAction."; //$NON-NLS-1$
-				}
-			};
+			updateToolbar = new WorkspaceUpdateAction(
+					configuration, 
+					getVisibleRootsSelectionProvider(), 
+					"WorkspaceToolbarUpdateAction."); //$NON-NLS-1$
 			updateToolbar.setPromptBeforeUpdate(true);
 			appendToGroup(
 					ISynchronizePageConfiguration.P_TOOLBAR_MENU,
 					TOOLBAR_CONTRIBUTION_GROUP,
 					updateToolbar);
 			
-			commitToolbar = new WorkspaceCommitAction(configuration) {
-				protected void initialize(ISynchronizePageConfiguration configuration) {
-					// Override to prevent registering as a selection listener
-				}
-				protected String getBundleKeyPrefix() {
-					return "WorkspaceToolbarCommitAction."; //$NON-NLS-1$
-				}
-			};
+			commitToolbar = new WorkspaceCommitAction(
+					configuration, 
+					getVisibleRootsSelectionProvider(), 
+					"WorkspaceToolbarCommitAction."); //$NON-NLS-1$
 			appendToGroup(
 					ISynchronizePageConfiguration.P_TOOLBAR_MENU,
 					TOOLBAR_CONTRIBUTION_GROUP,
@@ -121,14 +112,6 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 					CONTEXT_MENU_CONTRIBUTION_GROUP_4,
 					new RefreshDirtyStateAction(configuration));
-		}
-		public void modelChanged(ISynchronizeModelElement element) {
-			if (commitToolbar != null) {
-				commitToolbar.setSelection(element);
-			}
-			if (updateToolbar != null) {
-				updateToolbar.setSelection(element);
-			}
 		}
 	}
 	

@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.wizards;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
@@ -18,7 +19,6 @@ import org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSActionDelegateWrapper;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSParticipantAction;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceCommitOperation;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
@@ -36,14 +36,8 @@ public class SharingWizardPageActionGroup extends SynchronizePageActionGroup {
 	 * Custom commit that includes outgoing and conflicting.
 	 */
 	class SharingCommitAction extends CVSParticipantAction {
-		protected SharingCommitAction(ISynchronizePageConfiguration configuration) {
-			super(configuration);
-		}
-		protected void initialize(ISynchronizePageConfiguration configuration) {
-			// Override to avoid being registered as a selection listener
-		}
-		protected String getBundleKeyPrefix() {
-			return "SharingCommitAction."; //$NON-NLS-1$
+		public SharingCommitAction(ISynchronizePageConfiguration configuration, ISelectionProvider provider) {
+			super(configuration, provider, "SharingCommitAction."); //$NON-NLS-1$
 		}
 		protected FastSyncInfoFilter getSyncInfoFilter() {
 			return new SyncInfoDirectionFilter(new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING});
@@ -61,7 +55,9 @@ public class SharingWizardPageActionGroup extends SynchronizePageActionGroup {
 		super.initialize(configuration);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ACTION_GROUP);
 		
-		commitAction = new SharingCommitAction(configuration);
+		commitAction = new SharingCommitAction(
+				configuration, 
+				getVisibleRootsSelectionProvider());
 		appendToGroup(
 				ISynchronizePageConfiguration.P_TOOLBAR_MENU, 
 				ACTION_GROUP,
@@ -75,12 +71,5 @@ public class SharingWizardPageActionGroup extends SynchronizePageActionGroup {
 						return "SharingWizardIgnore."; //$NON-NLS-1$
 					}
 				});
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.presentation.ISynchronizeModelChangeListener#inputChanged(org.eclipse.team.ui.synchronize.presentation.SynchronizeModelProvider)
-	 */
-	public void modelChanged(final ISynchronizeModelElement root) {
-		commitAction.setSelection(root);
 	}
 }

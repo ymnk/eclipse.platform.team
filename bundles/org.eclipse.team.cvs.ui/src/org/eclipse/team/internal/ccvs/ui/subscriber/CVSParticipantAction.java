@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -24,6 +25,11 @@ public abstract class CVSParticipantAction extends SynchronizeModelAction {
 	protected CVSParticipantAction(ISynchronizePageConfiguration configuration) {
 		super(null, configuration);
 		Utils.initAction(this, getBundleKeyPrefix(), Policy.getBundle());
+	}
+	
+	protected CVSParticipantAction(ISynchronizePageConfiguration configuration, ISelectionProvider provider, String bundleKey) {
+		super(null, configuration, provider);
+		Utils.initAction(this, bundleKey, Policy.getBundle());
 	}
 
 	/**
