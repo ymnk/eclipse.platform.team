@@ -23,6 +23,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
@@ -34,6 +35,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
@@ -53,6 +55,10 @@ public class CVSLightweightDecorator
 	extends LabelProvider
 	implements ILightweightLabelDecorator, IResourceStateChangeListener {
 
+	// remember exceptions that occur in the decorator for smart logging
+	// {plugin id -> list of status codes}
+	private static HashMap alreadyLoggedExceptions;
+	
 	// Images cached for better performance
 	private static ImageDescriptor dirty;
 	private static ImageDescriptor checkedIn;
@@ -92,6 +98,9 @@ public class CVSLightweightDecorator
 	public CVSLightweightDecorator() {
 		CVSProviderPlugin.addResourceStateChangeListener(this);
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
+		
+		// we don't expect many exceptions hence the small initial value
+		alreadyLoggedExceptions = new HashMap(2);
 	}
 
 	public static boolean isDirty(final ICVSResource cvsResource) {
@@ -99,7 +108,7 @@ public class CVSLightweightDecorator
 			return !cvsResource.isIgnored() && cvsResource.isModified(null);
 		} catch (CVSException e) {
 			//if we get an error report it to the log but assume dirty
-			CVSUIPlugin.log(e.getStatus());
+			handleException(e);
 			return true;
 		}
 	}
@@ -176,6 +185,7 @@ public class CVSLightweightDecorator
 		} catch (CVSException e) {
 			// The was an exception in isIgnored. Don't decorate
 			//todo should log this error
+			handleException(e);
 			return;
 		}
 
@@ -265,7 +275,7 @@ public class CVSLightweightDecorator
 		CVSDecoratorConfiguration.decorate(decoration, format, bindings);
 			
 		} catch (CVSException e) {
-			CVSUIPlugin.log(e.getStatus());
+			handleException(e);
 			return;
 		}
 	}
@@ -343,7 +353,7 @@ public class CVSLightweightDecorator
 					}
 				}
 			} catch (CVSException e) {
-				CVSUIPlugin.log(e.getStatus());
+				handleException(e);
 				return null;
 			}
 		}
@@ -372,7 +382,7 @@ public class CVSLightweightDecorator
 					}
 				}
 			} catch (CVSException e) {
-				CVSUIPlugin.log(e.getStatus());
+				handleException(e);
 				return null;
 			}
 		}
@@ -382,7 +392,7 @@ public class CVSLightweightDecorator
 		try {
 			decorateEdited = provider.isWatchEditEnabled();
 		} catch (CVSException e1) {
-			CVSUIPlugin.log(e1);
+			handleException(e1);
 			decorateEdited = false;
 		}
 		
@@ -403,7 +413,7 @@ public class CVSLightweightDecorator
 					}
 				} catch (CVSException e) {
 					// log the exception and show the shared overlay
-					CVSUIPlugin.log(e);
+					handleException(e);
 				}
 			}
 			return checkedIn;
@@ -449,7 +459,7 @@ public class CVSLightweightDecorator
 			});
 			postLabelEvent(new LabelProviderChangedEvent(this, resources.toArray()));
 		} catch (CoreException e) {
-			CVSProviderPlugin.log(e.getStatus());
+			handleException(e);
 		}
 	}
 	
@@ -521,5 +531,47 @@ public class CVSLightweightDecorator
 	public void dispose() {
 		super.dispose();
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(false /* disabled */);
+	}
+	
+	/**
+	 * Handle exceptions that occur in the decorator. 
+	 */
+	static private void handleException(Exception e) {
+		IStatus status = null;
+		if(e instanceof CoreException) {
+			status = ((CoreException)e).getStatus();
+		} else if(e instanceof CVSException) {
+			status = ((CVSException)e).getStatus();
+		}
+		if(status != null) {
+			logStatus(status);
+			IStatus[] children = status.getChildren();
+			for (int i = 0; i < children.length; i++) {
+				IStatus status2 = children[i];
+				logStatus(status2);
+			}
+		}
+	}
+	
+	/**
+	 * Log exceptions once for each {plugid,code} combination. This is to avoid
+	 * flooding the log. 
+	 * 
+	 * [Note: A better approach would be handle the specific out-of-sync with the file 
+	 * system case better and show an out-of-sync decorator.]  
+	 */
+	static private void logStatus(IStatus status) {
+		String pluginId = status.getPlugin();
+		List codes = (List)alreadyLoggedExceptions.get(pluginId);
+		Integer code = new Integer(status.getCode());
+		if(codes != null) {
+			if(codes.contains(code)) {
+				return;
+			}
+		} 
+		codes = new ArrayList(1);
+		codes.add(code);
+		alreadyLoggedExceptions.put(pluginId, codes);
+		CVSUIPlugin.log(new CVSStatus(status.getSeverity(), status.getCode(), Policy.bind("CVSDecorator.exceptionMessage", status.getMessage()))); //$NON-NLS-1$		
 	}
 }
