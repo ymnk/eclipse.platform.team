@@ -125,7 +125,7 @@
       </fileTypes>
       <fileTypes
             type="text"
-            extension="emsd">
+            extension="exsd">
       </fileTypes>
       <fileTypes
             type="text"
@@ -134,6 +134,10 @@
       <fileTypes
             type="text"
             extension="MF">
+      </fileTypes>
+      <fileTypes
+            type="text"
+            extension="prefs">
       </fileTypes>
    </extension>
    <extension
