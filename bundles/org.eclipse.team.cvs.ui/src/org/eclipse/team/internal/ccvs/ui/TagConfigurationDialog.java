@@ -540,23 +540,20 @@ public class TagConfigurationDialog extends Dialog {
 		CVSTag[] oldTags = manager.getKnownBranchTags(root);
 		manager.removeBranchTag(root, oldTags);
 		for(int i = 0; i < roots.length; i++) {
-			boolean notified = false;
 			if(branches.length>0) {
-				if(i == (roots.length - 1)) {
-					notified = true;
-					manager.notifyRepoView = true;
-				}
 				manager.addBranchTags(root, branches);
 			}
 			oldTags = manager.getKnownVersionTags(roots[i]);
 			manager.removeVersionTags(roots[i], oldTags);
 			if(versions.length>0) {
 				manager.addVersionTags(roots[i], versions);
-				if(i == (roots.length - 1) && !notified) {
-					manager.notifyRepoView = true;
-				}
 			}			
 		}
+		// XXX hack to force repo view to refresh only once
+		manager.notifyRepoView = true;
+		manager.addVersionTags(root, new CVSTag[0]);
+		// end hack
+		
 		super.okPressed();
 	}
 	
