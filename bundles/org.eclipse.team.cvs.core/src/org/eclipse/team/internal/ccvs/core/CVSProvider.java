@@ -77,42 +77,6 @@ public class CVSProvider implements ICVSProvider {
 	}
 	
 	/*
-	 * Build the repository instance from the given properties.
-	 * The supported properties are:
-	 * 
-	 *   connection The connection method to be used
-	 *   user The username for the connection
-	 *   password The password used for the connection (optional)
-	 *   host The host where the repository resides
-	 *   port The port to connect to (optional)
-	 *   root The server directory where the repository is located
-	 * 
-	 * Note: If there is a cahced entry for the location, it is returned.
-	 */
-	private CVSRepositoryLocation buildRepository(Properties configuration, boolean cachePassword) throws CVSException {
-		
-		// Create a new repository location
-		CVSRepositoryLocation location = CVSRepositoryLocation.fromProperties(configuration);
-		
-		// Check the cache for an equivalent instance and if there is one, use it instead of the new one
-		CVSRepositoryLocation existingLocation = (CVSRepositoryLocation)repositories.get(location.getLocation());
-		if (existingLocation != null) {
-			location = existingLocation;
-		}
-		
-		// Set or cahce the password
-		String password = configuration.getProperty("password"); //$NON-NLS-1$
-		if (password != null) {
-			if (cachePassword)
-				location.storePassword(password);
-			else
-				location.setPassword(password);
-		}
-		
-		return location;
-	}
-	
-	/*
 	 * Add the repository location to the cahced locations
 	 */
 	private void addToCache(ICVSRepositoryLocation repository) {
@@ -254,12 +218,25 @@ public class CVSProvider implements ICVSProvider {
 	 * @see ICVSProvider#createRepository(Properties)
 	 */
 	public ICVSRepositoryLocation createRepository(Properties configuration) throws CVSException {
-		ICVSRepositoryLocation repository = buildRepository(configuration, true);
-		if (! isCached(repository)) {
-			addToCache(repository);
-			repositoryAdded(repository);
+		// Create a new repository location
+		CVSRepositoryLocation location = CVSRepositoryLocation.fromProperties(configuration);
+		
+		// Check the cache for an equivalent instance and if there is one, throw an exception
+		CVSRepositoryLocation existingLocation = (CVSRepositoryLocation)repositories.get(location.getLocation());
+		if (existingLocation != null) {
+			throw new CVSException(new CVSStatus(CVSStatus.ERROR, Policy.bind("CVSProvider.alreadyExists")));
 		}
-		return repository;
+		
+		// Set or cache the password
+		String password = configuration.getProperty("password"); //$NON-NLS-1$
+		if (password != null) {
+			location.storePassword(password);
+		}
+		
+		addToCache(location);
+		repositoryAdded(location);
+
+		return location;
 	}
 
 	/**
@@ -329,20 +306,6 @@ public class CVSProvider implements ICVSProvider {
 			return System.out;
 		else
 			return printStream;
-	}
-
-	private String getRepositoryLocationString(Properties configuration) throws CVSException {
-		// Create a new repository location so we can get the location string for the properties
-		CVSRepositoryLocation location = CVSRepositoryLocation.fromProperties(configuration);
-		return location.getLocation();
-	}
-	
-	/**
-	 * @see ICVSProvider#getRepository(Properties)
-	 */
-	public ICVSRepositoryLocation getRepository(Properties configuration) throws CVSException {
-		// Return the cached repository for the properties, or null if there isn't one.
-		return (CVSRepositoryLocation)repositories.get(getRepositoryLocationString(configuration));
 	}
 	
 	/**
@@ -469,21 +432,20 @@ public class CVSProvider implements ICVSProvider {
 		printStream = out;
 	}
 	
-	public void setSharing(IProject project, ICVSRepositoryLocation location, String remotePath, CVSTag tag, IProgressMonitor monitor) throws TeamException {
+	public void setSharing(IProject project, FolderSyncInfo info, IProgressMonitor monitor) throws TeamException {
+		
+		// Ensure provided info matches that of the project
+		ICVSFolder folder = (ICVSFolder)Session.getManagedResource(project);
+		FolderSyncInfo folderInfo = folder.getFolderSyncInfo();
+		if ( ! info.equals(folderInfo)) {
+			throw new CVSException(new CVSStatus(CVSStatus.ERROR, "Provided CVS information does not match that on disk"));
+		}
 		
 		// Ensure that the provided location is managed
+		ICVSRepositoryLocation location = getRepository(info.getRoot());
 		if (! isCached(location)) {
 			addToCache(location);
 			repositoryAdded(location);
-		}
-		
-		// Set folder sync info
-		ICVSFolder folder = (ICVSFolder)Session.getManagedResource(project);
-		FolderSyncInfo info = folder.getFolderSyncInfo();
-		if (info == null) {
-			// Only set the info if there is none.
-			info = new FolderSyncInfo(remotePath, location.getLocation(), tag, false);
-			folder.setFolderSyncInfo(info);
 		}
 		
 		// Register the project with Team
