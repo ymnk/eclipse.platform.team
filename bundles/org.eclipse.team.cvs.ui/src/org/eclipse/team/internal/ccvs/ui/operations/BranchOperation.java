@@ -53,37 +53,40 @@ public class BranchOperation extends RepositoryProviderOperation {
 	 * @see org.eclipse.team.ui.TeamOperation#shouldRun()
 	 */
 	protected boolean shouldRun() {
-		try {
-            IResource[] resources = getTraversalRoots();
-            boolean allSticky = areAllResourcesSticky(resources);
-            final BranchPromptDialog dialog = new BranchPromptDialog(getShell(),
-            									Policy.bind("BranchWizard.title"), //$NON-NLS-1$
-            									resources, 
-            									allSticky, 
-            									calculateInitialVersionName(resources, allSticky));
-            if (dialog.open() != InputDialog.OK) return false;
-            // Capture the dialog info in local variables
-            final String tagString = dialog.getBranchTagName();
-            update = dialog.getUpdate();
-            final String versionString = dialog.getVersionTagName();
-            rootVersionTag = (versionString == null) ? null : new CVSTag(versionString, CVSTag.VERSION);
-            branchTag = new CVSTag(tagString, CVSTag.BRANCH);
-            // For non-projects determine if the tag being loaded is the same as the resource's parent
-            // If it's not, warn the user that they will be mixing tags
-            if (update) {
-            	try {
-            		if(!CVSAction.checkForMixingTags(getShell(), resources, branchTag)) {
-            			return false;
-            		}
-            	} catch (CVSException e) {
-            		CVSUIPlugin.log(e);
-            	}
-            }
-            return super.shouldRun();
-        } catch (CoreException e) {
-            CVSUIPlugin.openError(getShell(), null, null, e, CVSUIPlugin.PERFORM_SYNC_EXEC);
-            return false;
-        }
+        IResource[] resources = getTraversalRoots();
+		boolean allSticky = areAllResourcesSticky(resources);
+		String initialVersionName = calculateInitialVersionName(resources,allSticky);
+		final BranchPromptDialog dialog = new BranchPromptDialog(getShell(),
+											Policy.bind("BranchWizard.title"), //$NON-NLS-1$
+											getResources(), 
+											allSticky, 
+											initialVersionName);
+		if (dialog.open() != InputDialog.OK) return false;		
+		
+		// Capture the dialog info in local variables
+		final String tagString = dialog.getBranchTagName();
+		update = dialog.getUpdate();
+		branchTag = new CVSTag(tagString, CVSTag.BRANCH);
+		
+		// Only set the root version tag if the name from the dialog differs from the initial name
+		String versionString = dialog.getVersionTagName();
+		if (versionString != null 
+				&& (initialVersionName == null || !versionString.equals(initialVersionName))) {
+			rootVersionTag = new CVSTag(versionString, CVSTag.VERSION);
+		}
+								
+		// For non-projects determine if the tag being loaded is the same as the resource's parent
+		// If it's not, warn the user that they will be mixing tags
+		if (update) {
+			try {
+				if(!CVSAction.checkForMixingTags(getShell(), resources, branchTag)) {
+					return false;
+				}
+			} catch (CVSException e) {
+				CVSUIPlugin.log(e);
+			}
+		}
+		return super.shouldRun();
 	}
 
     /* (non-Javadoc)

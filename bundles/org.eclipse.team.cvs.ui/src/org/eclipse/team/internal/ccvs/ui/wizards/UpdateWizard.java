@@ -28,7 +28,7 @@ import org.eclipse.team.internal.ccvs.ui.operations.UpdateOperation;
 import org.eclipse.team.internal.ccvs.ui.tags.*;
 import org.eclipse.ui.IWorkbenchPart;
 
-public class UpdateWizard extends Wizard {
+public class UpdateWizard extends ResizableWizard {
 
 	private ResourceMapping[] mappers;
 	private final IWorkbenchPart part;
@@ -40,6 +40,11 @@ public class UpdateWizard extends Wizard {
 		setWindowTitle(Policy.bind("UpdateWizard.title")); //$NON-NLS-1$
 	}
 	
+    public static void run(IWorkbenchPart part, ResourceMapping[] mappers) {
+        final UpdateWizard wizard = new UpdateWizard(part, mappers);
+        open(part.getSite().getShell(), wizard);
+    }
+    
 	public void addPages() {
 		ImageDescriptor substImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_CHECKOUT);
         tagSelectionPage = new TagSelectionWizardPage("tagPage", Policy.bind("UpdateWizard.0"), substImage, Policy.bind("UpdateWizard.1"), TagSource.create(mappers), TagSourceWorkbenchAdapter.INCLUDE_ALL_TAGS); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -87,6 +92,7 @@ public class UpdateWizard extends Wizard {
 		} catch (InterruptedException e) {
 			return false;
 		}
-		return true;
+
+		return super.performFinish();
 	}
 }

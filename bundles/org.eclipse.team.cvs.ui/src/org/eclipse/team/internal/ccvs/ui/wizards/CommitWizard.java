@@ -15,12 +15,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jface.dialogs.*;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.wizard.*;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.IFileContentManager;
 import org.eclipse.team.core.Team;
@@ -31,49 +29,17 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
+import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoCollector;
+import org.eclipse.team.ui.synchronize.ResourceScope;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.Workbench;
 
 /**
  * A wizard to commit the resources whose synchronization state is given in form
  * of a set of <code>SyncInfo</code>.
  */
-public class CommitWizard extends Wizard {
-    
-    private static final String COMMIT_WIZARD_SECTION = "CommitWizard"; //$NON-NLS-1$
-    
-    /**
-     * Persists the size of the wizard dialog.
-     */
-    private static class SettingsSaver {
-        
-        private static final String BOUNDS_HEIGHT_KEY = "width"; //$NON-NLS-1$
-        private static final String BOUNDS_WIDTH_KEY = "height"; //$NON-NLS-1$
-        
-        private final IWizard fWizard;
-        
-        private SettingsSaver(IWizard wizard) {
-            fWizard= wizard;
-        }
-        
-        public void saveSize(int width, int height) {
-            final IDialogSettings settings= fWizard.getDialogSettings();
-            settings.addNewSection(COMMIT_WIZARD_SECTION);
-            settings.put(BOUNDS_WIDTH_KEY, width);
-            settings.put(BOUNDS_HEIGHT_KEY, height);
-        }
-        
-        public Point getSize() {
-            final Point size= new Point(300, 400);
-            final IDialogSettings settings= fWizard.getDialogSettings();
-            try {
-                size.x= settings.getInt(BOUNDS_WIDTH_KEY);
-                size.y= settings.getInt(BOUNDS_HEIGHT_KEY);
-            } catch (NumberFormatException e) {
-            }
-            return size;
-        }
-    }
+public class CommitWizard extends ResizableWizard {
     
     /**
      * An operation to add and commit resources to a CVS repository.
@@ -105,7 +71,6 @@ public class CommitWizard extends Wizard {
             fModesForNamesForOneTime= modes;
         }
         
-        
         public void setNewResources(IResource [] newResources) {
             this.fNewResources= newResources;
         }
@@ -131,67 +96,174 @@ public class CommitWizard extends Wizard {
         }
     }
     
+    private final IResource[] fResources;
     private final SyncInfoSet fOutOfSyncInfos;
     private final SyncInfoSet fUnaddedInfos;
+    private final CommitWizardParticipant fParticipant;
     
     private CommitWizardFileTypePage fFileTypePage;
     private CommitWizardCommitPage fCommitPage;
     
-    private IResource[] fResources;
-    private SettingsSaver fSettingsSaver;
-    
-
-    public CommitWizard(IResource [] resources) throws CVSException {
-        this(resources, getOutOfSyncInfos(resources));
-    }
-    
     public CommitWizard(SyncInfoSet infos) throws CVSException {
-        this(infos.getResources(), infos);
+        this(infos.getResources());
     }
     
-    private CommitWizard(IResource [] resources, SyncInfoSet syncInfos) throws CVSException {
-        super();
+    public CommitWizard(final IResource [] resources) throws CVSException {
+        
+        super(Policy.bind("CommitWizard.3"), CVSUIPlugin.getPlugin().getDialogSettings()); //$NON-NLS-1$
+        
         setWindowTitle(Policy.bind("CommitWizard.2")); //$NON-NLS-1$
         setDefaultPageImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION));
         
-        final IDialogSettings cvsSettings = CVSUIPlugin.getPlugin().getDialogSettings();
-        IDialogSettings section = cvsSettings.getSection(COMMIT_WIZARD_SECTION);
-        if (section == null) {
-            section = cvsSettings.addNewSection(COMMIT_WIZARD_SECTION);
-        }
-        setDialogSettings(section);
-
-        fSettingsSaver= new SettingsSaver(this);
-
         fResources= resources;
-        fOutOfSyncInfos= syncInfos;
-        fUnaddedInfos= getUnaddedInfos(syncInfos);
-
+        fParticipant= new CommitWizardParticipant(new ResourceScope(fResources), this);
+        
+        SyncInfoSet infos = getAllOutOfSync();
+        fOutOfSyncInfos= new SyncInfoSet(infos.getNodes(new FastSyncInfoFilter.SyncInfoDirectionFilter(new int [] { SyncInfo.OUTGOING, SyncInfo.CONFLICTING })));
+        fUnaddedInfos= getUnaddedInfos(fOutOfSyncInfos);
     }
+
+	private SyncInfoSet getAllOutOfSync() throws CVSException {
+		final SubscriberSyncInfoCollector syncInfoCollector = fParticipant.getSubscriberSyncInfoCollector();
+            try {
+				Workbench.getInstance().getProgressService().run(true, true, new IRunnableWithProgress() {
+				    public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+				    	monitor.beginTask(Policy.bind("CommitWizard.4"), IProgressMonitor.UNKNOWN); //$NON-NLS-1$
+				    	syncInfoCollector.waitForCollector(monitor);
+				    	monitor.done();
+				    }
+				});
+			} catch (InvocationTargetException e) {
+				throw CVSException.wrapException(e);
+			} catch (InterruptedException e) {
+				throw new OperationCanceledException();
+			} 
+		return fParticipant.getSyncInfoSet();
+	}
     
     public boolean hasOutgoingChanges() {
         return fOutOfSyncInfos.size() > 0;
     }
     
-    private static SyncInfoSet getOutOfSyncInfos(IResource [] resources) {
-        final CVSWorkspaceSubscriber subscriber= CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
-        final SyncInfoSet infos= new SyncInfoSet();
-        subscriber.collectOutOfSync(resources, IResource.DEPTH_INFINITE, infos, new NullProgressMonitor());
+    public CommitWizardFileTypePage getFileTypePage() {
+        return fFileTypePage;
+    }
+
+    public CommitWizardCommitPage getCommitPage() {
+        return fCommitPage;
+    }
+
+    public CommitWizardParticipant getParticipant() {
+        return fParticipant;
+    }
+
+    public boolean canFinish() {
+        final IWizardPage current= getContainer().getCurrentPage();
+        if (current == fFileTypePage && fCommitPage != null)
+            return false;
+        return super.canFinish();
+    }
+
+    public boolean performFinish() {
         
-        return new SyncInfoSet(infos.getNodes(new FastSyncInfoFilter.SyncInfoDirectionFilter(new int [] { SyncInfo.OUTGOING, SyncInfo.CONFLICTING })));
-    }
-    
-    private static SyncInfoSet getUnaddedInfos(SyncInfoSet infos) throws CVSException {
-        final SyncInfoSet unadded= new SyncInfoSet();        
-        for (final Iterator iter = infos.iterator(); iter.hasNext();) {
-            final SyncInfo info = (SyncInfo) iter.next();
-            final IResource file= info.getLocal();
-            if (!((file.getType() & IResource.FILE) == 0 || isAdded(file)))
-                unadded.add(info);
+        final String comment= fCommitPage.getComment(getShell());
+        if (comment == null)
+            return false;
+        
+        final SyncInfoSet infos= fCommitPage.getInfosToCommit();
+        if (infos.size() == 0)
+            return true;
+        
+        final SyncInfoSet unadded;
+        try {
+            unadded = getUnaddedInfos(infos);
+        } catch (CVSException e1) {
+            return false;
         }
-        return unadded;
+        
+        final AddAndCommitOperation operation= new AddAndCommitOperation(getPart(), infos.getResources(), comment);
+        
+        if (fFileTypePage != null) {
+            final Map extensionsToSave= new HashMap();
+            final Map extensionsNotToSave= new HashMap();
+            
+            fFileTypePage.getModesForExtensions(extensionsToSave, extensionsNotToSave);
+            saveExtensionMappings(extensionsToSave);
+            operation.setModesForExtensionsForOneTime(extensionsNotToSave);
+            
+            final Map namesToSave= new HashMap();
+            final Map namesNotToSave= new HashMap();
+            
+            fFileTypePage.getModesForNames(namesToSave, namesNotToSave);
+            saveNameMappings(namesToSave);
+            operation.setModesForNamesForOneTime(namesNotToSave);
+        }
+        
+        if (unadded.size() > 0) {
+            operation.setNewResources(unadded.getResources());
+        }
+        
+        try {
+            operation.run();
+        } catch (InvocationTargetException e) {
+            return false;
+        } catch (InterruptedException e) {
+            return false;
+        }
+        
+        return super.performFinish();
+    }
+
+    public void addPages() {
+        
+        final Collection names= new ArrayList();
+        final Collection extensions= new ArrayList();
+        getUnknownNamesAndExtension(fUnaddedInfos, names, extensions);
+        
+        if (names.size() + extensions.size() > 0) {
+            fFileTypePage= new CommitWizardFileTypePage(extensions, names); 
+            addPage(fFileTypePage);
+        }
+        
+        fCommitPage= new CommitWizardCommitPage(fResources, this);
+        addPage(fCommitPage);
+        
+        super.addPages();
+    }
+
+    public void dispose() {
+        fParticipant.dispose();
+        super.dispose();
+    }
+
+    public static void run(Shell shell, IResource [] resources) throws CVSException {
+        try {
+			run(shell, new CommitWizard(resources));
+		} catch (OperationCanceledException e) {
+			// Ignore
+		}
     }
     
+    public static void run(Shell shell, SyncInfoSet infos) throws CVSException {
+        try {
+			run(shell, new CommitWizard(infos));
+		} catch (OperationCanceledException e) {
+			// Ignore
+		}
+    }
+
+    private IWorkbenchPart getPart() {
+        return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getPartService().getActivePart();
+    }
+    
+    private static void run(Shell shell, CommitWizard wizard) {
+        if (!wizard.hasOutgoingChanges()) {
+            MessageDialog.openInformation(shell, Policy.bind("CommitWizard.6"), Policy.bind("CommitWizard.7")); //$NON-NLS-1$ //$NON-NLS-2$
+        } else {
+            open(shell, wizard);
+        }
+    }
+
     private static void getUnknownNamesAndExtension(SyncInfoSet infos, Collection names, Collection extensions) {
         
         final IFileContentManager manager= Team.getFileContentManager();
@@ -211,130 +283,17 @@ public class CommitWizard extends Wizard {
         }
     }
     
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.wizard.Wizard#addPages()
-     */
-    public void addPages() {
-        
-        final Collection names= new ArrayList();
-        final Collection extensions= new ArrayList();
-        getUnknownNamesAndExtension(fUnaddedInfos, names, extensions);
-        
-        if (names.size() + extensions.size() > 0) {
-            fFileTypePage= new CommitWizardFileTypePage(extensions, names); 
-            addPage(fFileTypePage);
+    private static SyncInfoSet getUnaddedInfos(SyncInfoSet infos) throws CVSException {
+        final SyncInfoSet unadded= new SyncInfoSet();        
+        for (final Iterator iter = infos.iterator(); iter.hasNext();) {
+            final SyncInfo info = (SyncInfo) iter.next();
+            final IResource file= info.getLocal();
+            if (!((file.getType() & IResource.FILE) == 0 || isAdded(file)))
+                unadded.add(info);
         }
-        
-        fCommitPage= new CommitWizardCommitPage(fResources, fFileTypePage);
-        addPage(fCommitPage);
-        
-        super.addPages();
+        return unadded;
     }
     
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.wizard.IWizard#performFinish()
-     */
-    public boolean performFinish() {
-        
-        final String comment= getComment();
-        if (comment == null)
-            return false;
-        
-        final SyncInfoSet infos= fCommitPage.getInfosToCommit();
-        if (infos.size() == 0)
-            return true;
-
-        final SyncInfoSet unadded;
-        try {
-            unadded = getUnaddedInfos(infos);
-        } catch (CVSException e1) {
-            return false;
-        }
-                    
-        final AddAndCommitOperation operation= new AddAndCommitOperation(getPart(), infos.getResources(), comment);
-        
-        if (fFileTypePage != null) {
-            final Map extensionsToSave= new HashMap();
-            final Map extensionsNotToSave= new HashMap();
-            
-            fFileTypePage.getModesForExtensions(extensionsToSave, extensionsNotToSave);
-            saveExtensionMappings(extensionsToSave);
-            operation.setModesForExtensionsForOneTime(extensionsNotToSave);
-            
-            final Map namesToSave= new HashMap();
-            final Map namesNotToSave= new HashMap();
-
-            fFileTypePage.getModesForNames(namesToSave, namesNotToSave);
-            saveNameMappings(namesToSave);
-            operation.setModesForNamesForOneTime(namesNotToSave);
-        }
-        
-        if (unadded.size() > 0) {
-            operation.setNewResources(unadded.getResources());
-        }
-        
-        try {
-            operation.run();
-        } catch (InvocationTargetException e) {
-            return false;
-        } catch (InterruptedException e) {
-            return false;
-        }
-
-        final Rectangle bounds= getContainer().getCurrentPage().getControl().getParent().getClientArea();
-        fSettingsSaver.saveSize(bounds.width, bounds.height);
-        
-        return true;
-    }
-    
-    private String getComment() {
-        final String comment= fCommitPage.getComment();
-        if (comment.length() == 0) {
-            
-            final IPreferenceStore store= CVSUIPlugin.getPlugin().getPreferenceStore();
-            final String value= store.getString(ICVSUIConstants.PREF_ALLOW_EMPTY_COMMIT_COMMENTS);
-            
-            if (MessageDialogWithToggle.NEVER.equals(value))
-                return null;
-            
-            if (MessageDialogWithToggle.PROMPT.equals(value)) {
-                
-                final String title= Policy.bind("CommitWizard.3"); //$NON-NLS-1$
-                final String message= Policy.bind("CommitWizard.4"); //$NON-NLS-1$
-                final String toggleMessage= Policy.bind("CommitWizard.5"); //$NON-NLS-1$
-                
-                final MessageDialogWithToggle dialog= MessageDialogWithToggle.openYesNoQuestion(getShell(), title, message, toggleMessage, false, store, ICVSUIConstants.PREF_ALLOW_EMPTY_COMMIT_COMMENTS);
-                if (dialog.getReturnCode() == IDialogConstants.NO_ID) {
-                    fCommitPage.setFocus();
-                    return null;
-                }
-            }
-        }
-        return comment;
-    }
-    
-    public static void run(Shell shell, IResource [] resources) throws CVSException {
-        run(shell, new CommitWizard(resources));
-    }
-    
-    public static void run(Shell shell, SyncInfoSet infos) throws CVSException {
-        run(shell, new CommitWizard(infos));
-    }
-    
-    private static void run(Shell shell, CommitWizard wizard) {
-        if (!wizard.hasOutgoingChanges()) {
-            MessageDialog.openInformation(shell, Policy.bind("CommitWizard.6"), Policy.bind("CommitWizard.7")); //$NON-NLS-1$ //$NON-NLS-2$
-        } else {
-            final WizardDialog dialog= new WizardDialog(shell, wizard);
-            dialog.setMinimumPageSize(wizard.loadSize());
-            dialog.open();
-        }
-    }
-
-    
-    /**
-     * @param modesToPersist
-     */
     private static void saveExtensionMappings(Map modesToPersist) {
         
         final String [] extensions= new String [modesToPersist.size()];
@@ -363,34 +322,12 @@ public class CommitWizard extends Wizard {
         Team.getFileContentManager().addNameMappings(names, modes);
     }
     
-    /**
-     * Get the current workbench part.
-     * @return The workbench part.
-     */
-    private IWorkbenchPart getPart() {
-        return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getPartService().getActivePart();
-    }
-    
     private static boolean isAdded(IResource resource) throws CVSException {
         final ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
         if (cvsResource.isFolder()) {
             return ((ICVSFolder)cvsResource).isCVSFolder();
         }
         return cvsResource.isManaged();
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.wizard.Wizard#canFinish()
-     */
-    public boolean canFinish() {
-        final IWizardPage current= getContainer().getCurrentPage();
-        if (current == fFileTypePage && fCommitPage != null)
-            return false;
-        return super.canFinish();
-    }
-    
-    public Point loadSize() {
-        return fSettingsSaver.getSize();
     }
 }    
 

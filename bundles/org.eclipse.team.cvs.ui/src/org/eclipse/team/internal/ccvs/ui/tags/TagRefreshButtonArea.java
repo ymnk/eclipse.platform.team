@@ -11,20 +11,29 @@
 package org.eclipse.team.internal.ccvs.ui.tags;
 
 import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
-import org.eclipse.team.internal.ccvs.ui.*;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
+import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ui.PixelConverter;
+import org.eclipse.team.internal.ui.SWTUtils;
 import org.eclipse.team.internal.ui.dialogs.DialogArea;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.help.WorkbenchHelp;
@@ -38,6 +47,7 @@ public class TagRefreshButtonArea extends DialogArea {
     private final Shell shell;
     private Button refreshButton;
     private IRunnableContext context;
+	private Label fMessageLabel;
 
     public TagRefreshButtonArea(Shell shell, TagSource tagSource) {
         Assert.isNotNull(shell);
@@ -50,28 +60,36 @@ public class TagRefreshButtonArea extends DialogArea {
      * @see org.eclipse.team.internal.ui.dialogs.DialogArea#createArea(org.eclipse.swt.widgets.Composite)
      */
     public void createArea(Composite parent) {
-	 	Composite buttonComp = new Composite(parent, SWT.NONE);
-		GridData data = new GridData ();
-		data.horizontalAlignment = GridData.END;		
-		buttonComp.setLayoutData(data);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		buttonComp.setLayout (layout);
+    	
+    	final String addButtonLabel= Policy.bind("TagConfigurationDialog.21"); //$NON-NLS-1$
+    	final String refreshButtonLabel= Policy.bind("TagConfigurationDialog.20"); //$NON-NLS-1$
+    	
+    	final PixelConverter converter= SWTUtils.createDialogPixelConverter(parent);
+    	
+    	final Composite buttonComp = new Composite(parent, SWT.NONE);
+	 	buttonComp.setLayoutData(SWTUtils.createHFillGridData());//SWT.DEFAULT, SWT.DEFAULT, SWT.END, SWT.TOP, false, false));
+	 	buttonComp.setLayout(SWTUtils.createGridLayout(3, converter, SWTUtils.MARGINS_NONE));
 	 	
-	 	refreshButton = createTagRefreshButton(buttonComp, Policy.bind("TagConfigurationDialog.20")); //$NON-NLS-1$
-		data = new GridData();
-		data.horizontalAlignment = GridData.END;
-		data.horizontalSpan = 1;
-		refreshButton.setLayoutData (data);		
-
-		Button addButton = new Button(buttonComp, SWT.PUSH);
-		addButton.setText (Policy.bind("TagConfigurationDialog.21")); //$NON-NLS-1$
-		data = new GridData ();
-		data.horizontalAlignment = GridData.END;
-		data.horizontalSpan = 1;
-		addButton.setLayoutData (data);
+		fMessageLabel= SWTUtils.createLabel(buttonComp, null);
+		fMessageLabel.setForeground(parent.getShell().getDisplay().getSystemColor(SWT.COLOR_RED));
+		refreshButton = new Button(buttonComp, SWT.PUSH);
+		refreshButton.setText (refreshButtonLabel);
+		
+		final Button addButton = new Button(buttonComp, SWT.PUSH);
+		addButton.setText (addButtonLabel);
+		
+		
+		Dialog.applyDialogFont(buttonComp);
+		final int buttonWidth= SWTUtils.calculateButtonSize(converter, new Button [] { addButton, refreshButton });
+		refreshButton.setLayoutData(SWTUtils.createGridData(buttonWidth, SWT.DEFAULT, SWT.END, SWT.CENTER, false, false));
+		addButton.setLayoutData(SWTUtils.createGridData(buttonWidth, SWT.DEFAULT, SWT.END, SWT.CENTER, false, false));
+		
+		refreshButton.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event event) {
+				refresh(false);						
+			}
+		});
+	 	
 		addButton.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
 					TagConfigurationDialog d = new TagConfigurationDialog(shell, tagSource);
@@ -84,15 +102,26 @@ public class TagRefreshButtonArea extends DialogArea {
 		Dialog.applyDialogFont(buttonComp);
     }
     
-    public void refresh() {
+    
+    public void refresh(final boolean background) {
 		try {
 			getRunnableContext().run(true, true, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
 						setBusy(true);
+						Display.getDefault().asyncExec(new Runnable() {
+							public void run() {
+								fMessageLabel.setText(Policy.bind("TagRefreshButtonArea.6")); //$NON-NLS-1$
+							}
+						});
 						monitor.beginTask(Policy.bind("TagRefreshButtonArea.5"), 100); //$NON-NLS-1$
-						CVSTag[] tags = tagSource.refresh(false, Policy.subMonitorFor(monitor, 70));
-						if (tags.length == 0 && promptForBestEffort()) {
+						final CVSTag[] tags = tagSource.refresh(false, Policy.subMonitorFor(monitor, 70));
+						Display.getDefault().asyncExec(new Runnable() {
+							public void run() {
+								fMessageLabel.setText(background && tags.length == 0 ? Policy.bind("TagRefreshButtonArea.7") : ""); //$NON-NLS-1$ //$NON-NLS-2$
+							}
+						});
+						if (!background && promptForBestEffort()) {
 							tagSource.refresh(true, Policy.subMonitorFor(monitor, 30));
 						}
 					} catch (TeamException e) {
@@ -130,7 +159,7 @@ public class TagRefreshButtonArea extends DialogArea {
 		refreshButton.setText (title);
 		refreshButton.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
-					refresh();						
+					refresh(false);						
 				}
 			});
 		return refreshButton;		

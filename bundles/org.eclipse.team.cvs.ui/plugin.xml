@@ -368,11 +368,11 @@
          <action
                helpContextId="org.eclipse.team.cvs.ui.team_synchronize_action_context"
                label="%Synchronize.label"
-               definitionId="org.eclipse.team.ui.synchronizeLast"
-               class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
                tooltip="%Synchronize.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
+               definitionId="org.eclipse.team.cvs.ui.sync"
                menubarPath="team.main/group1"
-               id="org.eclipse.team.ccvs.ui.sync">
+               id="org.eclipse.team.cvs.ui.sync">
          </action>
                   <action
                label="%RestoreFromRepositoryAction.label"
@@ -1027,11 +1027,11 @@
          <action
                helpContextId="org.eclipse.team.cvs.ui.team_synchronize_action_context"
                label="%Synchronize.label"
-               definitionId="org.eclipse.team.ui.synchronizeLast"
-               class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
                tooltip="%Synchronize.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
+               definitionId="org.eclipse.team.ui.synchronizeLast"
                menubarPath="cvs.main/group1"
-               id="org.eclipse.team.ui.synchronizeLast">
+               id="org.eclipse.team.cvs.ui.sync">
          </action>
       </actionSet>
    </extension>
@@ -1230,9 +1230,6 @@
       		handler="org.eclipse.team.internal.ccvs.ui.actions.UpdateSilentAction"
             commandId="org.eclipse.team.cvs.ui.update"/>
       <handlerSubmission
-      		commandId="org.eclipse.team.ui.synchronizeLast"
-            handler="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"/>
-      <handlerSubmission
             handler="org.eclipse.team.internal.ccvs.ui.actions.CheckoutWizardAction"
             commandId="org.eclipse.team.cvs.ui.checkout"/>
       <handlerSubmission
@@ -1240,7 +1237,7 @@
             commandId="org.eclipse.team.cvs.ui.compareWithRevision"/>
       <handlerSubmission
             handler="org.eclipse.team.internal.ccvs.ui.actions.CompareWithTagAction"
-            commandId="org.eclipse.team.ccvs.ui.compareWithTag"/>
+            commandId="org.eclipse.team.cvs.ui.compareWithTag"/>
       <handlerSubmission
             handler="org.eclipse.team.internal.ccvs.ui.actions.CompareWithRemoteAction"
             commandId="org.eclipse.team.cvs.ui.compareWithRemote"/>
@@ -1252,7 +1249,15 @@
             commandId="org.eclipse.team.cvs.ui.replaceWithRevision"/>
       <handlerSubmission
             handler="org.eclipse.team.internal.ccvs.ui.actions.ReplaceWithRemoteAction"
-            commandId="org.eclipse.team.cvs.ui.replace"/>      
+            commandId="org.eclipse.team.cvs.ui.replace"/>
+      <command
+            category="org.eclipse.team.cvs.ui.actionSet"
+            description="%Synchronize.tooltip"
+            name="%Synchronize.name"
+            id="org.eclipse.team.cvs.ui.sync"/>
+      <handlerSubmission
+            handler="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
+            commandId="org.eclipse.team.cvs.ui.sync"/>      
    </extension>
    
 <!-- ********** Color and Font Definitions ************** -->   
@@ -1290,7 +1295,7 @@
       <fontDefinition
         id="org.eclipse.team.cvs.ui.fontsandcolors.outgoing_change_font"
         categoryId="org.eclipse.team.cvs.ui.fontsandcolors"      
-        label="Outgoing Change Font">
+        label="%OutgoingChangeFont.label">
         <description>
         The font used to display outgoing changes.
         </description>
@@ -1298,7 +1303,7 @@
       <colorDefinition 
         id="org.eclipse.team.cvs.ui.fontsandcolors.ignored_resource_foreground_color"
         categoryId="org.eclipse.team.cvs.ui.fontsandcolors"
-        label="Ignored Resource (Foreground)"
+        label="%IgnoredResourceForegroundColor.label"
         value="COLOR_LIST_FOREGROUND">
         <description>
         This color is used for the foreground color for resources that are ignored from CVS.
@@ -1307,7 +1312,7 @@
       <colorDefinition 
         id="org.eclipse.team.cvs.ui.fontsandcolors.ignored_resource_background_color"
         categoryId="org.eclipse.team.cvs.ui.fontsandcolors"
-        label="Ignored Resource (Background)"
+        label="%IgnoredResourceBackgroundColor.label"
         value="COLOR_LIST_BACKGROUND">
         <description>
         This color is used for the background color for resources that are ignored from CVS.
@@ -1316,7 +1321,7 @@
       <fontDefinition
         id="org.eclipse.team.cvs.ui.fontsandcolors.ignored_resource_font"
         categoryId="org.eclipse.team.cvs.ui.fontsandcolors"      
-        label="Ignored Resource Font">
+        label="%IgnoredResourceFont.label">
         <description>
         The font used to display resources that are ignored from CVS.
         </description>
