@@ -53,7 +53,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ITeamResourceChangeListener;
-import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.core.sync.TeamProvider;
@@ -62,6 +61,7 @@ import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
@@ -69,7 +69,6 @@ import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.part.ViewPart;
 
 public class SyncViewer extends ViewPart implements ITeamResourceChangeListener {
-	
 	/*
 	 * The viewer thst is shown in the view. Currently this can be
 	 * either a table or tree viewer.
@@ -82,7 +81,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	 */
 	private Composite composite = null;
 	private IMemento memento;
-	
+
 	/*
 	 * viewer type constants
 	 */ 
@@ -256,6 +255,8 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	}
 
 	public void initializeSubscriberInput(final SubscriberInput input) {
+		// Only initialize if we have a runnable context
+		if (!hasRunnableContext()) return;
 		this.input = input;
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -375,6 +376,10 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		return PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 	}
 	
+	private boolean hasRunnableContext() {
+		return getRunnableContext() != null;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IViewPart#init(org.eclipse.ui.IViewSite, org.eclipse.ui.IMemento)
 	 */
@@ -419,7 +424,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		actions.addContext(context);
 		
 		// show the last registered subscriber in the view
-		if(getInput()== null) {
+		if (getInput() == null) {
 			initializeSubscriberInput(si);
 		}
 	}
@@ -449,4 +454,5 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		}
 		return selection;
 	}
+
 }

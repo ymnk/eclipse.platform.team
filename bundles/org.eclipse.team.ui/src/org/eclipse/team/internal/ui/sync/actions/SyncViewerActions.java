@@ -19,6 +19,8 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
@@ -28,8 +30,10 @@ import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
+import org.eclipse.ui.actions.WorkingSetFilterActionGroup;
 import org.eclipse.team.ui.sync.*;
 
 /**
@@ -37,7 +41,6 @@ import org.eclipse.team.ui.sync.*;
  */
 public class SyncViewerActions extends SyncViewerActionGroup {
 		
-	private CollapseAllAction collapseAll;
 	// action groups for view filtering
 	private SyncViewerDirectionFilters directionsFilters;
 	private SyncViewerChangeFilters changeFilters;
@@ -45,12 +48,18 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private SyncViewerSubscriberListActions subscriberInputs;
 	private SyncViewerSubscriberActions subscriberActions;
 	
+	private WorkingSetFilterActionGroup workingSetGroup;
+	
+	private SyncViewerToolbarDropDownAction chooseSubscriberAction;
+	private ChooseComparisonCriteriaAction chooseComparisonCriteriaAction;
+	
+	private IWorkingSet workingSet;
+	
 	// other view actions
+	private Action collapseAll;
 	private Action refreshAction;
 	private Action toggleViewerType;
 	private Action open;
-	
-	private IMenuManager actionBarMenu;
 	
 	class RefreshAction extends Action {
 		public RefreshAction() {
@@ -109,7 +118,26 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			getSyncView().switchViewerType(viewerType);
 		}
 	}
+	
+	class ChooseSubscriberAction extends SyncViewerToolbarDropDownAction {
+		public ChooseSubscriberAction(SyncViewerActionGroup actionGroup) {
+			super(actionGroup);
+			setText("Select Subscriber");
+			setToolTipText("Select Subscriber");
+			setImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_SITE_ELEMENT));
+		}
 		
+	}
+	
+	class ChooseComparisonCriteriaAction extends SyncViewerToolbarDropDownAction {
+		public ChooseComparisonCriteriaAction(SyncViewerActionGroup actionGroup) {
+			super(actionGroup);
+			setText("Select Comparison Criteria");
+			setToolTipText("Select Comparison Criteria");
+			setImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_CONTENTS));
+		}
+	}
+	
 	public SyncViewerActions(SyncViewer viewer) {
 		super(viewer);
 		createActions();
@@ -120,9 +148,15 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		SyncViewer syncView = getSyncView();
 		directionsFilters = new SyncViewerDirectionFilters(syncView, this);
 		changeFilters = new SyncViewerChangeFilters(syncView, this);
-		comparisonCriteria = new SyncViewerComparisonCriteria(syncView);
-		subscriberInputs = new SyncViewerSubscriberListActions(syncView);
 		subscriberActions = new SyncViewerSubscriberActions(syncView);
+		
+		// initialize the dropdown for choosing a subscriber
+		subscriberInputs = new SyncViewerSubscriberListActions(syncView);
+		chooseSubscriberAction = new ChooseSubscriberAction(subscriberInputs);
+		
+		// initialize the dropdown for choosing a comparison criteria
+		comparisonCriteria = new SyncViewerComparisonCriteria(syncView);
+		chooseComparisonCriteriaAction = new ChooseComparisonCriteriaAction(comparisonCriteria);
 		
 		// initialize other actions
 		refreshAction = new RefreshAction();
@@ -131,7 +165,28 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		
 		toggleViewerType = new ToggleViewAction(SyncViewer.TABLE_VIEW);
 		open = new OpenInCompareAction(syncView);
+		
+		IPropertyChangeListener workingSetUpdater = new IPropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent event) {
+				String property = event.getProperty();
+				
+				if (WorkingSetFilterActionGroup.CHANGE_WORKING_SET.equals(property)) {
+					SyncViewer syncView = getSyncView();
+					Object newValue = event.getNewValue();
+					
+					if (newValue instanceof IWorkingSet) {	
+						setWorkingSet((IWorkingSet) newValue);
+					}
+					else 
+					if (newValue == null) {
+						setWorkingSet(null);
+					}
+				}
+			}
+		};
+		workingSetGroup = new WorkingSetFilterActionGroup(syncView.getSite().getShell(), workingSetUpdater);
 	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
 	 */
@@ -139,16 +194,19 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		super.fillActionBars(actionBars);
 		
 		IToolBarManager manager = actionBars.getToolBarManager();
+		manager.add(chooseSubscriberAction);
 		directionsFilters.fillActionBars(actionBars);
 		manager.add(new Separator());
 		manager.add(refreshAction);
 		manager.add(new Separator());
 		manager.add(collapseAll);
 		manager.add(toggleViewerType);
+		manager.add(chooseComparisonCriteriaAction);
 		
-		actionBarMenu = actionBars.getMenuManager();
-		actionBarMenu.removeAll();
-		actionBarMenu.add(new Separator());
+		IMenuManager dropDownMenu = actionBars.getMenuManager();
+		workingSetGroup.fillActionBars(actionBars);
+		dropDownMenu.add(new Separator());
+		changeFilters.fillContextMenu(dropDownMenu);
 	}
 
 	/* (non-Javadoc)
@@ -160,9 +218,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(open);
 		manager.add(new Separator());
 		manager.add(refreshAction);
-		manager.add(new Separator());
-		manager.add(toggleViewerType);
-		// Subscriber menues go here
+		// Subscriber menus go here
 		subscriberActions.fillContextMenu(manager);
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator("Additions"));
@@ -221,21 +277,16 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	protected void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
 		refreshAction.setEnabled(input != null);
-		if(input == null) {
-			actionBarMenu.removeAll();
-			actionBarMenu.add(new Separator());
+		// This is invoked before the subscriber input is initialized
+		if (input.getWorkingSet() == null) {
+			// set the input to use the last selected working set
+			input.setWorkingSet(getWorkingSet());
 		} else {
-			updateDropDownMenu();
+			// set the menu to select the set from the input
+			// the callback will not prepare the input since the set
+			// for the input is the same as the one being passed to the menu
+			workingSetGroup.setWorkingSet(getWorkingSet());
 		}
-	}
-
-	private void updateDropDownMenu() {
-		actionBarMenu.removeAll();
-		subscriberInputs.fillContextMenu(actionBarMenu);
-		actionBarMenu.add(new Separator());
-		comparisonCriteria.fillContextMenu(actionBarMenu);
-		actionBarMenu.add(new Separator());
-		changeFilters.fillContextMenu(actionBarMenu);
 	}
 	
 	/* (non-Javadoc)
@@ -258,6 +309,53 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	 */
 	public void addContext(ActionContext context) {
 		subscriberInputs.addContext(context);
-		updateDropDownMenu();
+	}
+	
+	/*
+	 * Get the selected working set from the subscriber input
+	 * @return
+	 */
+	private IWorkingSet getWorkingSet() {
+		SubscriberInput input = getSubscriberContext();
+		// There's no subscriber input so use the last selected workingSet
+		if (input == null) return workingSet;
+		IWorkingSet set = input.getWorkingSet();
+		// There's no subscriber working set so use the last selected workingSet
+		if (set == null ) return workingSet;
+		return set;
+	}
+	
+	/**
+	 * @param set
+	 */
+	protected void setWorkingSet(IWorkingSet set) {
+		// Keep track of the last working set selected
+		if (set != null) workingSet = set;
+		final SubscriberInput input = getSubscriberContext();
+		if (input == null) return;
+		if (workingSetsEqual(input.getWorkingSet(), set)) return;
+		input.setWorkingSet(set);
+		getSyncView().run(new IRunnableWithProgress() {
+			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+				try {
+					// when the working set changes, recalculate the entire sync set based on
+					// the new input.
+					input.prepareInput(monitor);
+				} catch (TeamException e) {
+					throw new InvocationTargetException(e);
+				}
+			}
+		});
+	}
+
+	/**
+	 * @param set
+	 * @param set2
+	 * @return
+	 */
+	private boolean workingSetsEqual(IWorkingSet set, IWorkingSet set2) {
+		if (set == null && set2 == null) return true;
+		if (set == null || set2 == null) return false;
+		return set.equals(set2);
 	}
 }

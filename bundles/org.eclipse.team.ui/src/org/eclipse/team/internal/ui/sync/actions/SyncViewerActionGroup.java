@@ -67,4 +67,12 @@ public abstract class SyncViewerActionGroup extends ActionGroup {
 		}
 		return null;
 	}
+
+	/**
+	 * Method invoked from a SyncViewerToolbarDropDownAction
+	 * 
+	 * @param menu
+	 */
+	public void fillMenu(SyncViewerToolbarDropDownAction action) {
+	}
 }

@@ -49,6 +49,19 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.sync.actions.SyncViewerActionGroup#fillMenu(org.eclipse.team.internal.ui.sync.actions.SyncViewerToolbarDropDownAction)
+	 */
+	public void fillMenu(SyncViewerToolbarDropDownAction dropDown) {
+		super.fillMenu(dropDown);
+		if(getSubscriberContext() != null) {
+			for (int i = 0; i < actions.length; i++) {
+				ComparisonCriteriaAction action = actions[i];
+				dropDown.add(action);
+			}
+		}
+	}
+
 	public SyncViewerComparisonCriteria(SyncViewer syncView) {
 		super(syncView);
 		setContext(null);
@@ -68,7 +81,7 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 				try {
 					// when the comparison criteria changes, recalculate the entire sync set based on
 					// the new input.
-					view.getInput().prepareInput(monitor);
+					getSubscriberContext().prepareInput(monitor);
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
 				}

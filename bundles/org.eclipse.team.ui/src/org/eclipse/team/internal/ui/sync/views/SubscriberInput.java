@@ -15,18 +15,19 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
+import org.eclipse.ui.IWorkingSet;
 
 /**
  * SubscriberInput encapsulates the UI model for synchronization changes associated
  * with a SyncTreesubscriber. 
  */
 public class SubscriberInput {
-	
+
 	/*
 	 * The subscriberInput manages a sync set that contains all of the out-of-sync elements
 	 * of a subscriber.  
 	 */
-	private SyncSetInputFromSubscriber subscriberInput;
+	private SyncSetInputFromSubscriberWorkingSet subscriberInput;
 	
 	/*
 	 * The filteredInput manages a sync set that contains a filtered list of the out-of-sync
@@ -42,7 +43,7 @@ public class SubscriberInput {
 	
 	SubscriberInput(SyncTreeSubscriber subscriber) {
 		this.subscriber = subscriber;
-		subscriberInput = new SyncSetInputFromSubscriber();
+		subscriberInput = new SyncSetInputFromSubscriberWorkingSet();
 		filteredInput = new SyncSetInputFromSyncSet(); 
 	}
 	
@@ -75,5 +76,19 @@ public class SubscriberInput {
 	public void dispose() {
 		subscriberInput.disconnect();
 		filteredInput.disconnect();		
+	}
+
+	/**
+	 * @return
+	 */
+	public IWorkingSet getWorkingSet() {
+		return subscriberInput.getWorkingSet();
+	}
+
+	/**
+	 * @param set
+	 */
+	public void setWorkingSet(IWorkingSet set) {
+		subscriberInput.setWorkingSet(set);
 	}
 }

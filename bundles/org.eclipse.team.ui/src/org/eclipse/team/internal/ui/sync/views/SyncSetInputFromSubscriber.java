@@ -73,7 +73,7 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 	 * Initialize the sync set to contain all out-of-sync resources.
 	 */
 	protected void fetchInput(IProgressMonitor monitor) throws TeamException {
-		IResource[] roots = getSubscriber().roots();
+		IResource[] roots = getRoots();
 		monitor.beginTask(null, 100 * roots.length);
 		try {
 			SyncInfo[] outOfSync = getSubscriber().getAllOutOfSync(roots, IResource.DEPTH_INFINITE, Policy.infiniteSubMonitorFor(monitor, 100 * roots.length));
@@ -96,6 +96,10 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 		}
 	}
 	
+	protected IResource[] getRoots() throws TeamException {
+		return getSubscriber().roots();
+	}
+
 	private void collectMembers(IContainer container, IProgressMonitor monitor) throws TeamException {
 		IResource[] members = getSubscriber().members(container);
 		for (int i = 0; i < members.length; i++) {

@@ -31,8 +31,8 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	private SubscriberInput activeInput = null;
 
 	/**
-		* Action for filtering by change type.
-		*/
+	 * Action for filtering by change type.
+	 */
 	class SwitchSubscriberAction extends Action {
 		private SubscriberInput input;
 		public SwitchSubscriberAction(SubscriberInput input) {
@@ -107,4 +107,17 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	public void addContext(ActionContext context) {
 		actions.add(new SwitchSubscriberAction((SubscriberInput)context.getInput()));		
 	}
+	
+	/* 
+	 * Method to add menu items to a toolbar drop down action
+	 */
+	public void fillMenu(SyncViewerToolbarDropDownAction dropDown) {
+		super.fillMenu(dropDown);
+		if (! actions.isEmpty()) {
+			for (Iterator it = actions.iterator(); it.hasNext();) {
+				SwitchSubscriberAction action = (SwitchSubscriberAction) it.next();
+				dropDown.add(action);				
+			}
+		}
+	 }
 }
