@@ -197,7 +197,7 @@ public class DiffTreeViewer extends TreeViewer {
 		// register for notification with the Compare plugin's PreferenceStore 
 		fPreferenceChangeListener= new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
-				if (event.getProperty().equals(CompareConfiguration.SHOW_PSEUDO_CONFLICTS))
+				if (event.getProperty().equals(ComparePreferencePage.SHOW_PSEUDO_CONFLICTS))
 					syncShowPseudoConflictFilter();			
 			}
 		};
@@ -592,16 +592,20 @@ public class DiffTreeViewer extends TreeViewer {
 	
 	private void syncShowPseudoConflictFilter() {
 		
-		boolean showPseudoConflicts= Utilities.getBoolean(fCompareConfiguration, CompareConfiguration.SHOW_PSEUDO_CONFLICTS, false);
+		IPreferenceStore ps= CompareUIPlugin.getDefault().getPreferenceStore();
+		boolean showPseudoConflicts= ps.getBoolean(ComparePreferencePage.SHOW_PSEUDO_CONFLICTS);
 		
-		if (showPseudoConflicts) {
-			if (fViewerFilter != null) {
-				removeFilter(fViewerFilter);
+		Control tree= getControl();
+		if (!tree.isDisposed()) {
+			if (showPseudoConflicts) {
+				if (fViewerFilter != null) {
+					removeFilter(fViewerFilter);
+				}
+			} else {
+				if (fViewerFilter == null)
+					fViewerFilter= new FilterSame();	
+				addFilter(fViewerFilter);
 			}
-		} else {
-			if (fViewerFilter == null)
-				fViewerFilter= new FilterSame();	
-			addFilter(fViewerFilter);
 		}
 	}
 	
