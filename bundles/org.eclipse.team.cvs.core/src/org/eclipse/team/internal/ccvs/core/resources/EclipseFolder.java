@@ -5,19 +5,19 @@ package org.eclipse.team.internal.ccvs.core.resources;
  * All Rights Reserved.
  */
 
-import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
@@ -29,7 +29,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
  */
 public class EclipseFolder extends EclipseResource implements ICVSFolder {
 
-	public EclipseFolder(IContainer container) {
+	protected EclipseFolder(IContainer container) {
 		super(container);		
 	}
 
@@ -38,66 +38,72 @@ public class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSFolder#getFolders()
 	 */
 	public ICVSFolder[] getFolders() throws CVSException {
-		
-		IContainer folder = (IContainer)resource;
-		
-		if(!resource.exists()) {
-			return new ICVSFolder[0];
-		}
-		
-		final List folders = new ArrayList();
-		
-		ResourceSyncInfo[] syncDirs = CVSProviderPlugin.getSynchronizer().members(getIOFile());
-		for (int i = 0; i < syncDirs.length; i++) {
-			if(syncDirs[i].isDirectory()) {
-				folders.add(new EclipseFolder(folder.getFolder(new Path(syncDirs[i].getName()))));
-			}			
-		}
-		
-		IResource[] members = folder.members();
-		for (int i = 0; i < members.length; i++) {
-			IResource child = members[i];
-			if(child.getType()!=IResource.FILE) {
-				EclipseFolder childFolder = new EclipseFolder(child);
-				if(!childFolder.isIgnored() && !folders.contains(childFolder)) {
-					folders.add(childFolder);						
-				}		
+		try {
+			IContainer folder = (IContainer)resource;
+			
+			if(!resource.exists()) {
+				return new ICVSFolder[0];
 			}
+			
+			final List folders = new ArrayList();
+			
+			ResourceSyncInfo[] syncDirs = CVSProviderPlugin.getSynchronizer().members(getIOFile());
+			for (int i = 0; i < syncDirs.length; i++) {
+				if(syncDirs[i].isDirectory()) {
+					folders.add(new EclipseFolder(folder.getFolder(new Path(syncDirs[i].getName()))));
+				}			
+			}
+			
+			IResource[] members = folder.members();
+			for (int i = 0; i < members.length; i++) {
+				IResource child = members[i];
+				if(child.getType()!=IResource.FILE) {
+					EclipseFolder childFolder = new EclipseFolder((IContainer)child);
+					if(!childFolder.isIgnored() && !folders.contains(childFolder)) {
+						folders.add(childFolder);						
+					}		
+				}
+			}
+			return (ICVSFolder[]) folders.toArray(new ICVSFolder[folders.size()]);
+		} catch(CoreException e) {
+			throw new CVSException(e.getStatus());
 		}
-		return (ICVSFolder[]) folders.toArray(new ICVSFolder[folders.size()]);
 	}
 	
 	/**
 	 * @see ICVSFolder#getFiles()
 	 */
 	public ICVSFile[] getFiles() throws CVSException {
-		
-		IContainer folder = (IContainer)resource;
-		
-		if(!resource.exists()) {
-			return new ICVSFolder[0];
-		}
-		
-		final List files = new ArrayList();
-		
-		ResourceSyncInfo[] syncFiles = CVSProviderPlugin.getSynchronizer().members(getIOFile());
-		for (int i = 0; i < syncFiles.length; i++) {
-			if(!syncFiles[i].isDirectory()) {
-				files.add(new EclipseFolder(folder.getFile(new Path(syncFiles[i].getName()))));
-			}			
-		}
-		
-		IResource[] members = folder.members();
-		for (int i = 0; i < members.length; i++) {
-			IResource child = members[i];
-			if(child.getType()==IResource.FILE) {
-				EclipseFolder childFile = new EclipseFile(child);
-				if(!childFile.isIgnored() && !files.contains(childFile)) {
-					files.add(childFile);						
-				}		
+		try {
+			IContainer folder = (IContainer)resource;
+			
+			if(!resource.exists()) {
+				return new ICVSFile[0];
 			}
-		}				
-		return (ICVSFile[]) files.toArray(new ICVSFile[files.size()]);	
+			
+			final List files = new ArrayList();
+			
+			ResourceSyncInfo[] syncFiles = CVSProviderPlugin.getSynchronizer().members(getIOFile());
+			for (int i = 0; i < syncFiles.length; i++) {
+				if(!syncFiles[i].isDirectory()) {
+					files.add(new EclipseFile((IFile)folder.getFile(new Path(syncFiles[i].getName()))));
+				}			
+			}
+			
+			IResource[] members = folder.members();
+			for (int i = 0; i < members.length; i++) {
+				IResource child = members[i];
+				if(child.getType()==IResource.FILE) {
+					EclipseFile childFile = new EclipseFile((IFile)child);
+					if(!childFile.isIgnored() && !files.contains(childFile)) {
+						files.add(childFile);						
+					}		
+				}
+			}				
+			return (ICVSFile[]) files.toArray(new ICVSFile[files.size()]);	
+		} catch(CoreException e) {
+			throw new CVSException(e.getStatus());
+		}
 	}
 
 	/**
@@ -120,11 +126,15 @@ public class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSFolder#mkdir()
 	 */
 	public void mkdir() throws CVSException {
-		if(resource.getType()==IResource.PROJECT) {
-			((IProject)resource).create(null);
-		} else {
-			((IFolder)resource).create(false /*don't force*/, true /*make local*/, null);
-		}		
+		try {
+			if(resource.getType()==IResource.PROJECT) {
+				((IProject)resource).create(null);
+			} else {
+				((IFolder)resource).create(false /*don't force*/, true /*make local*/, null);
+			}				
+		} catch (CoreException e) {
+			throw new CVSException(e.getStatus());
+		} 
 	}
 		
 	/**
@@ -224,5 +234,20 @@ public class EclipseFolder extends EclipseResource implements ICVSFolder {
 			return false;
 		}		
 		return super.isIgnored();
+	}
+	
+	/*
+	 * @see ICVSFolder#getChild(String)
+	 */
+	public ICVSResource getChild(String path) throws CVSException {
+		IResource child = ((IContainer)resource).findMember(path);
+		if(child!=null) {
+			if(child.getType()==IResource.FILE) {
+				return new EclipseFile((IFile)child);
+			} else {
+				return new EclipseFolder((IContainer)child);
+			}
+		}
+		return null;
 	}
 }

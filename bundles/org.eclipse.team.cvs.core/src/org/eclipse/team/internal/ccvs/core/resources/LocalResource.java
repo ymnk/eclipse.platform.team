@@ -42,7 +42,7 @@ public abstract class LocalResource implements ICVSResource {
 	/**
 	 * A local handle 
 	 */
-	public LocalResource(File ioResource) {
+	protected LocalResource(File ioResource) {
 		Assert.isNotNull(ioResource);
 		this.ioResource = ioResource;
 	}

@@ -5,10 +5,8 @@ package org.eclipse.team.internal.ccvs.core.resources;
  * All Rights Reserved.
  */
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,31 +14,29 @@ import java.text.ParseException;
 import java.util.Date;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
-import org.eclipse.team.internal.ccvs.core.syncinfo.*;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.EntryFileDateFormat;
-import org.eclipse.team.internal.ccvs.core.util.Util;
 
 /**
  * Represents handles to CVS resource on the local file system. Synchronization
  * information is taken from the CVS subdirectories. 
- * 
- * @see LocalFolder
- * @see LocalFile
  */
 public class EclipseFile extends EclipseResource implements ICVSFile {
 
 	/**
 	 * Create a handle based on the given local resource.
 	 */
-	public EclipseFile(IFile file) {
+	protected EclipseFile(IFile file) {
 		super(file);
 	}
 
-	public long getSize() {		
+	public long getSize() {
+		return getIOFile().length();	
 	}
 
 	public InputStream getInputStream() throws CVSException {
@@ -52,6 +48,16 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
  	}
 	
 	public OutputStream getOutputStream() throws CVSException {
+		return new ByteArrayOutputStream() {
+			public void close() throws IOException {
+				try {
+					getIFile().setContents(new ByteArrayInputStream(toByteArray()), true /*force*/, true /*keep history*/, null);
+					super.close();
+				} catch(CoreException e) {
+					throw new IOException("Error setting file contents: " + e.getMessage());
+				}
+			}
+		};
 	}
 	
 	/*
@@ -125,27 +131,10 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	 * This is to be used by the Copy handler. The filename of the form .#filename
 	 */
 	public void moveTo(String filename) throws CVSException {
-		getIFile().m
-		
-		// Move the file to newFile (we know we do not need the
-		// original any more anyway)
-		// If this file exists then overwrite it
-		LocalFile file;
 		try {
-			file = (LocalFile)getParent().getFile(filename);
-		} catch(ClassCastException e) {
-			throw CVSException.wrapException(e);
-		}
-		
-		// We are deleting the old .#filename if it exists
-		if (file.exists()) {
-			file.delete();
-		}
-		
-		boolean success = ioResource.renameTo(file.getFile());
-		
-		if (!success) {
-			throw new CVSException(Policy.bind("LocalFile.moveFailed", ioResource.toString(), file.toString())); //$NON-NLS-1$
+			getIFile().move(new Path(filename), true /*force*/, true /*keep history*/, null);
+		} catch(CoreException e) {
+			throw new CVSException(e.getStatus());
 		}
 	}
 
@@ -163,13 +152,17 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		CVSProviderPlugin.getSynchronizer().deleteResourceSync(getIOFile());
 	}
 	
-	private IFile getIFile() {
-		return (IFile)resource;
-	}
 	/*
 	 * @see ICVSFile#setReadOnly()
 	 */
 	public void setReadOnly(boolean readOnly) throws CVSException {
 		getIFile().setReadOnly(readOnly);
+	}
+	
+	/*
+	 * Typecasting helper
+	 */
+	private IFile getIFile() {
+		return (IFile)resource;
 	}
 }

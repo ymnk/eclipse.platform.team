@@ -320,7 +320,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 		};
  	}
  
-	public void setReadOnly() throws CVSException {
+	public void setReadOnly(boolean readOnly) throws CVSException {
  	}
 
 	/**

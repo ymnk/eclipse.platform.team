@@ -9,6 +9,7 @@ import java.io.File;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.core.IIgnoreInfo;
 import org.eclipse.team.core.TeamPlugin;
@@ -44,7 +45,7 @@ public abstract class EclipseResource implements ICVSResource {
 	/*
 	 * Creates a CVS handle to the provided resource
 	 */
-	public EclipseResource(IResource resource) {
+	protected EclipseResource(IResource resource) {
 		Assert.isNotNull(resource);
 		this.resource = resource;
 	}
@@ -56,7 +57,7 @@ public abstract class EclipseResource implements ICVSResource {
 	 */
 	public String getRelativePath(ICVSFolder root) throws CVSException {
 		try {
-			LocalResource rootFolder;
+			EclipseResource rootFolder;
 			String result;
 			rootFolder = (EclipseResource)root;
 			result = Util.getRelativePath(rootFolder.getPath(), getPath()); 
@@ -69,8 +70,12 @@ public abstract class EclipseResource implements ICVSResource {
 	/*
 	 * @see ICVSResource#delete()
 	 */
-	public void delete() {
-		resource.delete(true /*force*/, null);
+	public void delete() throws CVSException {
+		try {
+			resource.delete(true /*force*/, null);
+		} catch(CoreException e) {
+			throw new CVSException(e.getStatus());
+		}
 	}
 
 	/*
@@ -180,7 +185,7 @@ public abstract class EclipseResource implements ICVSResource {
 	 * @see ICVSResource#getPath()
 	 */
 	public String getPath() {
-		return resource.getFullPath();
+		return resource.getFullPath().toString();
 	}	
 	
 	/*

@@ -970,10 +970,6 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 		return new TeamException(statusFor(e));
 	}
 	
-	public static TeamException wrapException(CVSException e, List errors) {
-		// NOTE: Need to find out how to pass MultiStatus. Is it up to me to subclass?
-		return e;
-	}
 	
 	private static IStatus statusFor(CoreException e) {
 		// We should be taking out any status from the CVSException

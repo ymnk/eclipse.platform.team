@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
  */
 public class LocalFolder extends LocalResource implements ICVSFolder {
 
-	public LocalFolder(File ioResource) {
+	protected LocalFolder(File ioResource) {
 		super(ioResource);		
 	}
 

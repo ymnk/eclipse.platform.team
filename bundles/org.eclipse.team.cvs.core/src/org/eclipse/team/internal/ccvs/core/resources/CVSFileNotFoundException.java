@@ -5,13 +5,8 @@ package org.eclipse.team.internal.ccvs.core.resources;
  * All Rights Reserved.
  */
 
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.connection.CVSAuthenticationException;
-import org.eclipse.team.internal.ccvs.core.connection.ResourceStatus;
-import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 
 /**
  * This exception represents the attemp to access a file/folder

@@ -34,7 +34,7 @@ public class LocalFile extends LocalResource implements ICVSFile {
 	/**
 	 * Create a handle based on the given local resource.
 	 */
-	public LocalFile(File file) {
+	protected LocalFile(File file) {
 		super(file);
 	}
 
@@ -58,8 +58,10 @@ public class LocalFile extends LocalResource implements ICVSFile {
 		}
 	}
 	
-	public void setReadOnly() throws CVSException {
-		ioResource.setReadOnly();
+	public void setReadOnly(boolean readOnly) throws CVSException {
+		if(readOnly) {
+			ioResource.setReadOnly();
+		}
 	}	
 
 	public String getTimeStamp() throws CVSFileNotFoundException {						
