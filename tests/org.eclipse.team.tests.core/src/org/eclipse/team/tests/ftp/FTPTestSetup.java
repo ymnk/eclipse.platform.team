@@ -22,9 +22,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.internal.ftp.FTPException;
-import org.eclipse.team.internal.ftp.FTPServerLocation;
 import org.eclipse.team.internal.ftp.client.FTPClient;
 import org.eclipse.team.internal.ftp.client.FTPDirectoryEntry;
+import org.eclipse.team.internal.ftp.client.FTPServerLocation;
 import org.eclipse.team.internal.ftp.client.IFTPClientListener;
 
 /**
