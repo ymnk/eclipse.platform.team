@@ -16,9 +16,11 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.IResourceVariant;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.core.subscribers.caches.SessionResourceVariantTree;
-import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSBaseSynchronizationCache;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantByteStore;
+import org.eclipse.team.internal.core.subscribers.caches.SessionResourceVariantByteStore;
 
 /**
  * This subscriber is used when comparing the local workspace with its
@@ -30,7 +32,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	private static final String UNIQUE_ID_PREFIX = "compare-"; //$NON-NLS-1$
 	
 	private CVSTag tag;
-	private SessionResourceVariantTree remoteSynchronizer;
+	private SessionResourceVariantByteStore remoteSynchronizer;
 	private IResource[] resources;
 	
 	public CVSCompareSubscriber(IResource[] resources, CVSTag tag) {
@@ -41,7 +43,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	}
 
 	private void initialize() {
-		remoteSynchronizer = new SessionResourceVariantTree();
+		remoteSynchronizer = new SessionResourceVariantByteStore();
 		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().addListener(this);
 	}
 
@@ -73,7 +75,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizationCache()
 	 */
-	protected ResourceVariantTree getBaseSynchronizationCache() {
+	protected ResourceVariantByteStore getBaseSynchronizationCache() {
 		// No base cache needed since it's a two way compare
 		return null;
 	}
@@ -81,7 +83,7 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizationCache()
 	 */
-	protected ResourceVariantTree getRemoteSynchronizationCache() {
+	protected ResourceVariantByteStore getRemoteSynchronizationCache() {
 		return remoteSynchronizer;
 	}
 	
@@ -182,9 +184,16 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
 	 */
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
+		// TODO: Temporary measure to avoid showing all local as additions before the refresh completes
 		if (remoteSynchronizer.isEmpty()) {
-			return null;
+			// Use the base as the remote so that outgoing changes are included
+			return new CVSSyncInfo(resource, null, getBase(resource), this);
 		}
 		return super.getSyncInfo(resource);
+	}
+
+	private CVSBaseSynchronizationCache baseCache = new CVSBaseSynchronizationCache();
+	private IResourceVariant getBase(IResource resource) throws TeamException {
+		return getRemoteResource(resource, baseCache);
 	}
 }
