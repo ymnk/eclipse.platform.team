@@ -17,12 +17,14 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.client.Update;
+import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -204,14 +206,20 @@ public abstract class RemoteResource extends PlatformObject implements ICVSRemot
 		return getRepositoryRelativePath().hashCode();
 	}
 	
+	/**
+	 * Method which returns an array of bytes that can be used to recreate the remote handle.
+	 * To recreate the remote handle, invoke the <code>fromBytes</code> method on either
+	 * RemoteFolder or RemoteFile.
+	 * 
+	 * TODO: It would be nice to have a method on RmeoteResource to recreate the handles
+	 * but the file requires the bytes for the parent folder since this folder may not
+	 * exist locally.
+	 * 
+	 * @return
+	 */
 	abstract public byte[] getSyncBytes();
 
-	public static RemoteResource fromBytes(IResource local, byte[] bytes) throws CVSException {
-		if(local.getType() == IResource.FILE) {
-			return RemoteFile.getRemote((IFile)local, bytes);
-		} else {
-			return (RemoteResource)CVSWorkspaceRoot.getRemoteResourceFor(local);
-		}
+	public String toString() {
+		return "Remote " + (isContainer() ? "Folder: " : "File: ") + getName();
 	}
-
 }

@@ -309,7 +309,7 @@ public class CVSProviderPlugin extends Plugin {
 		
 		createCacheDirectory();
 		
-		cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber(ID, "CVS", "Synchronizes the CVS managed resources in your workspace with their associated remote location");
+		cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber("CVS", "Synchronizes the CVS managed resources in your workspace with their associated remote location");
 		TeamProvider.registerSubscriber(cvsWorkspaceSubscriber);
 	}
 	

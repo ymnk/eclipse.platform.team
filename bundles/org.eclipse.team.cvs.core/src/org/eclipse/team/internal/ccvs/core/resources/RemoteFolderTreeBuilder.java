@@ -11,15 +11,26 @@
 package org.eclipse.team.internal.ccvs.core.resources;
 
  
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.ICVSFile;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.client.Update;
@@ -211,7 +222,7 @@ public class RemoteFolderTreeBuilder {
 				IProgressMonitor subProgress = Policy.infiniteSubMonitorFor(monitor, 30);
 				subProgress.beginTask(null, 512);
 				// Build the remote tree
-				buildRemoteTree(session, root, root, remoteRoot, "", subProgress); //$NON-NLS-1$
+				buildRemoteTree(session, root, remoteRoot, "", subProgress); //$NON-NLS-1$
 			} finally {
 				session.close();
 			}
@@ -367,7 +378,7 @@ public class RemoteFolderTreeBuilder {
 	 * 
 	 * Does 1 work for each file and folder delta processed
 	 */
-	private void buildRemoteTree(Session session, ICVSFolder commandRoot, ICVSFolder local, RemoteFolderTree remote, String localPath, IProgressMonitor monitor) throws CVSException {
+	private void buildRemoteTree(Session session, ICVSFolder local, RemoteFolderTree remote, String localPath, IProgressMonitor monitor) throws CVSException {
 		
 		Policy.checkCanceled(monitor);
 		
@@ -379,14 +390,6 @@ public class RemoteFolderTreeBuilder {
 		
 		// If there's no corresponding local resource then we need to fetch its contents in order to populate the deltas
 		if (local == null) {
-			
-			// create a phantom for the incoming directory
-			IResource root = commandRoot.getIResource();
-			if(root != null) {
-				IContainer localFolder = ((IContainer)root).getFolder(new Path(localPath));
-				ICVSFolder localCVSFolder = CVSWorkspaceRoot.getCVSFolderFor(localFolder);
-				localCVSFolder.setFolderSyncInfo(remote.getFolderSyncInfo());
-			}
 			fetchNewDirectory(session, remote, localPath, monitor);
 		}
 		
@@ -480,7 +483,7 @@ public class RemoteFolderTreeBuilder {
 					localFolder = null;
 				else
 					localFolder = local.getFolder(name);
-				buildRemoteTree(session, commandRoot, localFolder, remoteFolder, Util.appendPath(localPath, name), monitor);
+				buildRemoteTree(session, localFolder, remoteFolder, Util.appendPath(localPath, name), monitor);
 				// Record any children that are empty
 				if (pruneEmptyDirectories() && remoteFolder.getChildren().length == 0) {
 					// Prune if the local folder is also empty.
