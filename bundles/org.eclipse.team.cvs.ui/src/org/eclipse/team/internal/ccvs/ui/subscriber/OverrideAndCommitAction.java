@@ -11,9 +11,9 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
-import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
-import org.eclipse.team.ui.sync.actions.SyncInfoSet;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 
 public class OverrideAndCommitAction extends SubscriberCommitAction {
 	

@@ -21,7 +21,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 
 /**
  * Job to refresh a subscriber with its remote state.

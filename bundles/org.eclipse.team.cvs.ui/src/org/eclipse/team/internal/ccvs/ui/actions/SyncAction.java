@@ -24,7 +24,7 @@ import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncView;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.IWorkingSet;
 
 /**

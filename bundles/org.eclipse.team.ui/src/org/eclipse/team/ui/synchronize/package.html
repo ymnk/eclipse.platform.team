@@ -1,0 +1,32 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="IBM">
+   <title>Package-level Javadoc</title>
+</head>
+<body>
+<p>Application programming interfaces for interaction
+with the Eclipse Synchronize View.</p>
+<h2>Package Specification</h2>
+<p>The Eclipse Team UI plug-in provides a set of classes and interfaces to
+support a generic synchronize view that can show multiple synchronize 
+participants. This package contains a generic abstract synchronize participant 
+that provides the common functionality for synchronize participants.
+Clients implementing synchronize participants should subclass this 
+<b>AbstractSynchronizeParticipant</b>.</p>
+<p>Synchronize participants must be declared by extending the <strong>synchronizeParticipants 
+  </strong>extension point. There are two classes of synchronize participants: 
+  static participants will be created when the synchronize view is created, and 
+  dynamic participants are created by user code at some other time. </p>
+<p>A synchronize manager (<b>ISynchronizeManager</b>) manages all active synchronize 
+  participants, and provides notification of participants which are added and 
+  removed. Participants are displayed in a page book view. Each participant implementation 
+  is reponsible for creating its page (<b>IPageBookView</b>), which provides freedom 
+  of presentation to the synchronize view implementation. A single participant 
+  may be displayed simultaneously in multiple synchronize views, in different 
+  workbench windows.</p>
+<p>The class <b>TeamSubscriberParticipant</b> provides an implementation of a 
+  synchronize participant that enables synchronization for a <b>TeamSubscriber</b>.</p>
+</body>
+</html>

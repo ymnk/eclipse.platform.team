@@ -31,10 +31,10 @@ import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.ui.sync.actions.OrSyncInfoFilter;
-import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
-import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
-import org.eclipse.team.ui.sync.actions.SyncInfoSet;
+import org.eclipse.team.ui.synchronize.actions.OrSyncInfoFilter;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 
 /**
  * This action performs a "cvs update -j start -j end ..." to merge changes

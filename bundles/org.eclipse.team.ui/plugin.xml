@@ -209,7 +209,7 @@
             icon="icons/full/cview16/synch_synch.gif"
             fastViewWidthRatio="0.25"
             category="org.eclipse.team.ui"
-            class="org.eclipse.team.internal.ui.sync.pages.NewSynchronizeView"
+            class="org.eclipse.team.internal.ui.synchronize.SynchronizeView"
             id="org.eclipse.team.sync.views.SynchronizeView">
       </view>
    </extension>
@@ -301,36 +301,6 @@
             description="%Command.category.description"
             id="org.eclipse.team.ui.commands.category">
       </category>
-      <command
-            name="%Command.incomingFilter.name"
-            description="%Command.incomingFilter.description"
-            category="org.eclipse.team.ui.commands.category"
-            id="org.eclipse.team.ui.syncview.incomingFilter">
-      </command>
-      <command
-            name="%Command.outgoingFilter.name"
-            description="%Command.outgoingFilter.description"
-            category="org.eclipse.team.ui.commands.category"
-            id="org.eclipse.team.ui.syncview.outgoingFilter">
-      </command>
-      <command
-            name="%Command.bothFilter.name"
-            description="%Command.bothFilter.description"
-            category="org.eclipse.team.ui.commands.category"
-            id="org.eclipse.team.ui.syncview.bothFilter">
-      </command>
-      <command
-            name="%Command.conflictsFilter.name"
-            description="%Command.conflictsFilter.description"
-            category="org.eclipse.team.ui.commands.category"
-            id="org.eclipse.team.ui.syncview.conflictsFilter">
-      </command>
-      <command
-            name="%Command.syncAll.name"
-            description="%Command.syncAll.description"
-            category="org.eclipse.team.ui.commands.category"
-            id="org.eclipse.team.ui.syncview.syncAll">
-      </command>
    </extension>
 <!-- ***************** Action sets ********************** -->
    <extension

@@ -51,8 +51,8 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISynchronizeView;
-import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkingSet;
 

@@ -48,7 +48,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
-import org.eclipse.team.ui.sync.ISynchronizeViewNode;
+import org.eclipse.team.ui.synchronize.ISynchronizeViewNode;
 import org.eclipse.ui.PlatformUI;
 
 /**

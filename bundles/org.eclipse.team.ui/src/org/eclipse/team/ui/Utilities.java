@@ -16,16 +16,8 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.ui.IKeyBindingService;
 
 public class Utilities {
-	
-	public static void registerAction(IKeyBindingService kbs, IAction a, String id) {
-		if (kbs != null) {
-			a.setActionDefinitionId(id);
-			kbs.registerAction(a);
-		}
-	}
 	
 	/**
 	 * Initialize the given Action from a ResourceBundle.

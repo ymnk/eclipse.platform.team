@@ -11,9 +11,9 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
-import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
+import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 import org.eclipse.ui.actions.ActionDelegate;
 
 public abstract class SynchronizeViewActionDelagate extends Action implements ISyncSetChangedListener {

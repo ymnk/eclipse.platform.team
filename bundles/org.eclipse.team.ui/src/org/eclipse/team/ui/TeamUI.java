@@ -12,8 +12,8 @@ package org.eclipse.team.ui;
 
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.sync.pages.SynchronizeManager;
-import org.eclipse.team.ui.sync.ISynchronizeManager;
+import org.eclipse.team.internal.ui.synchronize.SynchronizeManager;
+import org.eclipse.team.ui.synchronize.ISynchronizeManager;
 
 /**
  * TeamUI contains public API for generic UI-based Team functionality

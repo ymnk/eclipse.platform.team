@@ -18,9 +18,9 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
-import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
-import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
+import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -45,6 +45,23 @@ public abstract class CVSSynchronizeParticipant extends TeamSubscriberParticipan
 				delegate.selectionChanged(this, selection);
 				delegate.run(this);
 			}
+		}
+
+		public IActionDelegate getDelegate() {
+			return delegate;
+		}
+	}
+	
+	protected class CVSActionDelegate2 extends Action {
+		private IActionDelegate delegate;
+	
+		public CVSActionDelegate2(IActionDelegate delegate) {
+			this.delegate = delegate;
+		}
+	
+		public void run() {			
+			delegate.selectionChanged(this, CVSSynchronizeParticipant.this.getPage().getSite().getSelectionProvider().getSelection());
+			delegate.run(this);
 		}
 
 		public IActionDelegate getDelegate() {

@@ -19,10 +19,10 @@ import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.core.SaveContext;
 import org.eclipse.team.internal.core.SaveContextXMLWriter;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.Utilities;
-import org.eclipse.team.ui.sync.actions.DirectionFilterActionGroup;
-import org.eclipse.team.ui.sync.actions.RemoveSynchronizeViewPageAction;
+import org.eclipse.team.ui.synchronize.actions.DirectionFilterActionGroup;
+import org.eclipse.team.ui.synchronize.actions.RemoveSynchronizeViewPageAction;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.PartInitException;
 
@@ -31,7 +31,6 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	private RemoveSynchronizeViewPageAction removeAction;
 	private DirectionFilterActionGroup modes;
 	private Action updateAdapter;
-	private final static String QUALIFIED_NAME = "org.eclipse.team.cvs.ui.cvsmerge-participant";
 	
 	public CVSMergeSynchronizeParticipant() {
 		super();
@@ -55,8 +54,8 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 	
 	private void makeActions() {
 		removeAction = new RemoveSynchronizeViewPageAction(this);
-		modes = new DirectionFilterActionGroup(this, INCOMING_MODE | CONFLICTING_MODE | BOTH_MODE);
-		updateAdapter = new CVSActionDelegate(new WorkspaceUpdateAction(), this);
+		modes = new DirectionFilterActionGroup(this, INCOMING_MODE | CONFLICTING_MODE);
+		updateAdapter = new CVSActionDelegate(new MergeUpdateAction(), this);
 		Utilities.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle());
 		setMode(INCOMING_MODE);
 	}
@@ -68,13 +67,13 @@ public class CVSMergeSynchronizeParticipant extends CVSSynchronizeParticipant {
 		if(actionBars != null) {
 			IToolBarManager toolbar = actionBars.getToolBarManager();
 			toolbar.add(new Separator());
+			if(detailsToolbar != null) {
+				modes.fillToolBar(detailsToolbar);
+			}
 			toolbar.add(new Separator());
 			actionBars.getToolBarManager().add(updateAdapter);
 			actionBars.getToolBarManager().add(removeAction);
-		}
-		if(detailsToolbar != null) {
-			modes.fillToolBar(detailsToolbar);
-		}
+		}		
 	}
 	
 	/* (non-Javadoc)
