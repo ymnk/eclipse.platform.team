@@ -119,7 +119,7 @@ public class GetAsProjectAction extends TargetAction {
 			}
 			TargetManager.map(project, site, UrlUtil.getTrailingPath(remote.getURL(), site.getURL()));
 			provider = TargetManager.getProvider(project);
-			provider.get(project, remote, true /* delete local resources */, Policy.subMonitorFor(monitor, 90));
+			provider.get(project, remote, Policy.subMonitorFor(monitor, 90));
 		} finally {
 			monitor.done();
 		}

@@ -80,8 +80,8 @@ public class UploadAction extends TargetAction {
 								new Runnable() {
 									public void run() {
 										MessageDialog.openInformation(getShell(), 
-											Policy.bind("UploadAction.noDirtyTitle"), 
-											Policy.bind("UploadAction.noDirtyMessage"));
+											Policy.bind("UploadAction.noDirtyTitle"),  //$NON-NLS-1$
+											Policy.bind("UploadAction.noDirtyMessage")); //$NON-NLS-1$
 									}
 								});
 							return;
@@ -96,7 +96,7 @@ public class UploadAction extends TargetAction {
 									return ! resource.exists();
 								}
 								public String promptMessage(IResource resource) {
-									return Policy.bind("UploadAction.confirmFileDeletionMessage", resource.getFullPath().toString());
+									return Policy.bind("UploadAction.confirmFileDeletionMessage", resource.getFullPath().toString()); //$NON-NLS-1$
 								}
 							}, 
 							Policy.bind("UploadAction.confirmDeletionTitle"));//$NON-NLS-1$

@@ -57,7 +57,7 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 		try {
 			targetURL = UrlUtil.concat(root, intrasitePath);
 		} catch (MalformedURLException e) {
-			throw new TeamException(Policy.bind("SynchronizedTargetProvider.invalid_url_combination", root, intrasitePath.toString()), e);
+			throw new TeamException(Policy.bind(Policy.bind("SynchronizedTargetProvider.invalidURLCombination"), root, intrasitePath.toString()), e); //$NON-NLS-1$
 		}
 	}
 	
@@ -112,14 +112,14 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	 * 
 	 * @see TargetProvider.get(IResource[], int, IProgressMonitor)
 	 */
-	public void get(final IResource[] resources, final boolean deleteLocal, IProgressMonitor progress) throws TeamException {
+	public void get(final IResource[] resources, IProgressMonitor progress) throws TeamException {
 		run(new ITargetRunnable() {
 			public void run(IProgressMonitor monitor) throws TeamException {
 				monitor = Policy.monitorFor(monitor);
 				try {
 					monitor.beginTask(null, resources.length * 100);
 					for (int i = 0; i < resources.length; i++) {
-						getState(resources[i]).get(IResource.DEPTH_INFINITE, deleteLocal, monitor);
+						getState(resources[i]).get(IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
 					}
 				} finally {
 					monitor.done();
@@ -134,10 +134,10 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	 * 
 	 * @see TargetProvider.get(IResource, IRemoteTargetResource, IProgressMonitor)
 	 */
-	public void get(final IResource resource, final IRemoteTargetResource remote, final boolean deleteLocal, IProgressMonitor progress) throws TeamException {
+	public void get(final IResource resource, final IRemoteTargetResource remote, IProgressMonitor progress) throws TeamException {
 		run(new ITargetRunnable() {
 			public void run(IProgressMonitor monitor) throws TeamException {
-				getState(resource, remote).get(IResource.DEPTH_INFINITE, deleteLocal, monitor);
+				getState(resource, remote).get(IResource.DEPTH_INFINITE, monitor);
 			}
 		}, Policy.monitorFor(progress));
 	}

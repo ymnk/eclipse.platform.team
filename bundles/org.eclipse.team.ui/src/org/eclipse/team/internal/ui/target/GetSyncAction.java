@@ -100,7 +100,7 @@ public class GetSyncAction extends TargetSyncAction {
 				monitor.setTaskName(Policy.bind("GetAction.working", provider.getURL().toExternalForm()));  //$NON-NLS-1$
 				List list = (List)table.get(provider);
 				IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);
-				provider.get(providerResources, false /* don't delete local resources */, subMonitor);
+				provider.get(providerResources, subMonitor);
 			}
 		} finally {
 			monitor.done();

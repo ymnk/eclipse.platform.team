@@ -126,17 +126,16 @@ public class GetAction extends TargetAction {
 					try {
 						Hashtable table = getTargetProviderMapping();
 						Set keySet = table.keySet();
-						monitor.beginTask("", keySet.size() * 1000); //$NON-NLS-1$
+						monitor.beginTask(null, keySet.size() * 1000);
 						
 						// perform the get on each provider
 						Iterator iterator = keySet.iterator();
 						while (iterator.hasNext()) {					
-							IProgressMonitor subMonitor = new InfiniteSubProgressMonitor(monitor, 1000);
 							TargetProvider provider = (TargetProvider)iterator.next();
 							monitor.setTaskName(Policy.bind("GetAction.working", provider.getURL().toExternalForm()));  //$NON-NLS-1$
 							List list = (List)table.get(provider);
 							IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);
-							provider.get(providerResources, true /* delete local resources */, subMonitor);
+							provider.get(providerResources, Policy.subInfiniteMonitorFor(monitor, 1000));
 						}
 					} catch (TeamException e) {
 						throw new InvocationTargetException(e);

@@ -241,8 +241,8 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 		
 		folderTree.setSorter(new ViewerSorter() {
 			public int compare(Viewer viewer, Object e1, Object e2) {
-				String name1 = "";
-				String name2 = "";
+				String name1 = ""; //$NON-NLS-1$
+				String name2 = ""; //$NON-NLS-1$
 				if(e1 instanceof RemoteResourceElement) {
 					name1 = ((RemoteResourceElement)e1).getRemoteResource().getName();
 				} else if(e1 instanceof SiteElement) {
@@ -408,7 +408,7 @@ public class SiteExplorerView extends ViewPart implements ISiteListener {
 						selectedFolder = (RemoteResourceElement)folderContentsTable.getInput();
 					}
 										
-					IRemoteTargetResource newFolder = CreateNewFolderAction.createDir(shell, selectedFolder.getRemoteResource(), Policy.bind("CreateNewFolderAction.newFolderName"));
+					IRemoteTargetResource newFolder = CreateNewFolderAction.createDir(shell, selectedFolder.getRemoteResource(), Policy.bind("CreateNewFolderAction.newFolderName")); //$NON-NLS-1$
 					if (newFolder == null)
 						return;
 
