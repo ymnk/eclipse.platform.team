@@ -109,6 +109,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	public void propertyChange(PropertyChangeEvent event) {
 		if (event.getProperty().equals(SubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
 			updateWorkingSetText();
+			updateCounts();
 		}
 	}
 	

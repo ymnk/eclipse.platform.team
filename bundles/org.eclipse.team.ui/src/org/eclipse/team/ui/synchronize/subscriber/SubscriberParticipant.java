@@ -124,11 +124,9 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		if(collector != null) {
 			IResource[] resources = set != null ? Utils.getResources(set.getElements()) : new IResource[0];
 			collector.setWorkingSet(resources);
-			workingSet = null;
-		} else {
-			workingSet = set;
-		}
-		firePropertyChange(this, P_SYNCVIEWPAGE_WORKINGSET, oldSet, set);
+			firePropertyChange(this, P_SYNCVIEWPAGE_WORKINGSET, oldSet, set);
+		} 
+		workingSet = set;
 	}
 	
 	public IWorkingSet getWorkingSet() {

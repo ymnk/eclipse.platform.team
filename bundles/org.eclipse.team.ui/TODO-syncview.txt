@@ -169,3 +169,5 @@ x status line doesn't show?
   - most sync state stuff must be tested by automated tests
   - progress should have scenarios (expected feedback, init case)
   - errors
+- resource filtering as seen in Refreshcompletedialog is very ineficient
+- can you call start on the collector multiple times? 

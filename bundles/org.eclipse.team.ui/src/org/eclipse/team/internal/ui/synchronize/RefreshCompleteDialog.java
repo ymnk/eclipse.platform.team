@@ -18,6 +18,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.GridData;
@@ -32,6 +34,7 @@ import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetCompareInput;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
@@ -54,6 +57,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
 		
+		// Set-up a sync info set that contains the resources that where found
+		// when the refresh occured.
 		SyncInfoFilter filter = new SyncInfoFilter() {
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
 				IResource[] resources = getResources();
@@ -71,8 +76,6 @@ public class RefreshCompleteDialog extends DetailsDialog {
 				(SubscriberSyncInfoSet)participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
 				filter);
 		this.collector.start();
-		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
-				new DiffTreeViewerConfiguration(participant.getId(), collector.getSyncInfoTree())); 
 		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$
@@ -81,8 +84,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		}	
 	}
 
-	/**
-	 * @see Window#getInitialSize()
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.window.Window#getInitialSize()
 	 */
 	protected Point getInitialSize() {
 		int width, height;
@@ -125,21 +128,24 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		text.append(Policy.bind("RefreshCompleteDialog.7", Integer.toString(resources.length)));		 //$NON-NLS-1$ //$NON-NLS-2$
 		createLabel(parent, text.toString(), 2);
 		
-		StringBuffer resourcesLabel = new StringBuffer();
-		StringBuffer resourcesFullListLabel = new StringBuffer();
-		for (int i = 0; i < resources.length; i++) {
-			if(i < RESOURCE_LIST_SIZE) {
-				String EOL = i < RESOURCE_LIST_SIZE - 1 ? "\n" : "..."; //$NON-NLS-1$ //$NON-NLS-2$
-				resourcesLabel.append(resources[i].getFullPath() + EOL);
-			}
-			resourcesFullListLabel.append(resources[i].getFullPath() + "\n"); //$NON-NLS-1$
-		}
-		Label l = createLabel(parent, resourcesLabel.toString(), 2);
-		l.setToolTipText(resourcesFullListLabel.toString());
-		
+		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		GridData data = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL);
+		data.horizontalSpan = 2;
+		data.widthHint = 200;
+		table.setLayoutData(data);
+		/*TableLayout layout = new TableLayout();
+		layout.addColumnData(new ColumnWeightData(100, true));
+		table.setLayout(layout);
+		TableColumn col = new TableColumn(table, SWT.NONE);
+		col.setResizable(true);	*/
+		TableViewer resourceList = new TableViewer(table);
+		resourceList.setContentProvider(new ArrayContentProvider());
+		resourceList.setLabelProvider(new WorkbenchLabelProvider());
+		resourceList.setInput(resources);
+				
 		createLabel(parent, "", 2); //$NON-NLS-1$
 		promptWhenNoChanges = new Button(parent, SWT.CHECK);
-		GridData data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
+		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
 		data.horizontalSpan = 2;
 		promptWhenNoChanges.setLayoutData(data);
 		
@@ -170,9 +176,20 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 */
 	protected Composite createDropDownDialogArea(Composite parent) {
 		try {
+			CompareConfiguration compareConfig = new CompareConfiguration();
+			DiffTreeViewerConfiguration viewerAdvisor = new DiffTreeViewerConfiguration(participant.getId(), collector.getSyncInfoTree());
+			compareEditorInput = new SyncInfoSetCompareInput(compareConfig, viewerAdvisor) {
+				public String getTitle() {
+					return "Resources found during last refresh";
+				}
+			};
+			// We don't need a progress monitor because the actualy model will be built
+			// by the event processing thread.
 			compareEditorInput.run(new NullProgressMonitor());
 		} catch (InterruptedException e) {
+			Utils.handle(e);
 		} catch (InvocationTargetException e) {
+			Utils.handle(e);
 		}
 		
 		Composite result= new Composite(parent, SWT.NONE);

@@ -583,7 +583,7 @@ public class RepositoryManager {
 	 */
 	public String promptForComment(final Shell shell, IResource[] resourcesToCommit) {
 		final int[] result = new int[1];
-		final ReleaseCommentDialog dialog = new ReleaseCommentDialog(shell, resourcesToCommit); 
+		final ReleaseCommentDialog dialog = new ReleaseCommentDialog(shell, resourcesToCommit, IResource.DEPTH_INFINITE); 
 		shell.getDisplay().syncExec(new Runnable() {
 			public void run() {
 				result[0] = dialog.open();
