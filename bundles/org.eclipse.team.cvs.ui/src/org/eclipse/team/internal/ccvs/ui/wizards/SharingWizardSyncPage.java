@@ -17,6 +17,8 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -69,7 +71,7 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
-		Composite composite = createComposite(parent, 1);
+		Composite composite = createComposite(parent, 1, false);
 		setControl(composite);
 		
 		// set F1 help
@@ -99,7 +101,7 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 	}
 	
 	private Control createNoChangesPage(PageBook pageBook) {
-		Composite composite = createComposite(pageBook, 1);
+		Composite composite = createComposite(pageBook, 1, false);
 		createWrappingLabel(composite, Policy.bind("SharingWizardSyncPage.3", project.getName()), 0); //$NON-NLS-1$
 		return composite;
 	}
@@ -151,7 +153,7 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 		cc.setLeftEditable(false);
 		cc.setRightEditable(false);
 		ParticipantPageSaveablePart part = new ParticipantPageSaveablePart(getShell(), cc, configuration, participant);
-		
+		part.setShowContentPanes(false);
 		return part;
 	}
 	
@@ -225,6 +227,12 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 		if (syncPage.isVisible()) {
 			initializeSize();
 			getShell().setSize(Math.max(width, 300), Math.max(height, 300));
+			if(input != null) {
+				Viewer viewer = input.getPageConfiguration().getPage().getViewer();
+				if(viewer instanceof AbstractTreeViewer) {
+					((AbstractTreeViewer)viewer).expandToLevel(2);
+				}
+			}
 		}
 	}
 	

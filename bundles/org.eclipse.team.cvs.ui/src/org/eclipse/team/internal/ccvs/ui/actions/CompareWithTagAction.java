@@ -12,13 +12,12 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CompareParticipant;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSelectionDialog;
+import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 
@@ -47,16 +46,12 @@ public class CompareWithTagAction extends WorkspaceAction {
 				participant = new CompareParticipant(s);
 				TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[]{participant});
 			}
-			participant.refresh(resources, Policy.bind("Participant.comparing"), participant.getName(), null); //$NON-NLS-1$
+			participant.refresh(resources, null, null, null); //$NON-NLS-1$
 		}
 	}
 	
 	protected CVSTag promptForTag(IResource[] resources) {
-		IProject[] projects = new IProject[resources.length];
-		for (int i = 0; i < resources.length; i++) {
-			projects[i] = resources[i].getProject();
-		}
-		CVSTag tag = TagSelectionDialog.getTagToCompareWith(getShell(), projects);
+		CVSTag tag = TagSelectionDialog.getTagToCompareWith(getShell(), TagSource.create(resources), TagSelectionDialog.INCLUDE_ALL_TAGS);
 		return tag;
 	}
 
