@@ -1,0 +1,52 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2003 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Common Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.team.core;
+
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.runtime.*;
+
+/**
+ * A deployment provider allows synchronization of workspace resources with a remote location. At a minimum
+ * it allows pushing resources in the workspace to a remote location and pulling resources from a
+ * remote location into the workspace.
+ * <p>
+ * The difference between a deployment provider and repository provider is the following:
+ * <ul>
+ * <li>a deployment provider doesn't have full control of workspace resources whereas the repository
+ * provider can hook into the IMoveDeleteHook and IFileModificationValidator.
+ * <li>multiple team providers can be mapped to the same folder whereas there is only one
+ * repository provider per project.
+ * <li>a deployment provider can be mapped to any folder as long as the mapping is not self overlapping
+ * whereas the repository provider must be mapped at the project.
+ * </ul>
+ * </p><p>
+ * Mapping of a deployment provider and a container is always deep. This is why overlapping team providers
+ * of the same type is not allowed.
+ * </p>
+ * @see RepositoryProvider
+ * @since 3.0
+ */
+public abstract class DeploymentProvider implements IExecutableExtension {
+	abstract public String getID();
+	
+	abstract public IContainer getMappedContainer();	
+	abstract protected void init(IContainer container);
+	abstract protected void dispose();
+	
+	abstract public void saveState(IMemento memento);
+	abstract public void restoreState(IMemento memento);
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 */
+	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {		
+	}
+}

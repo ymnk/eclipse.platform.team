@@ -11,7 +11,7 @@
 package org.eclipse.team.internal.registry;
 
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.core.TeamProvider;
+import org.eclipse.team.core.DeploymentProvider;
 
 public class TeamProviderDescriptor {
 		
@@ -40,8 +40,8 @@ public class TeamProviderDescriptor {
 		return configElement;
 	}
 
-	public TeamProvider createProvider() throws CoreException {
-		return (TeamProvider)configElement.createExecutableExtension(ATT_CLASS);
+	public DeploymentProvider createProvider() throws CoreException {
+		return (DeploymentProvider)configElement.createExecutableExtension(ATT_CLASS);
 	}
 	
 	public String getDescription() {
