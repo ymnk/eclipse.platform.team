@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
@@ -27,7 +28,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
  * 
  * @see ICVSFolder
  */
-public class EclipseFolder extends EclipseResource implements ICVSFolder {
+class EclipseFolder extends EclipseResource implements ICVSFolder {
 
 	protected EclipseFolder(IContainer container) {
 		super(container);		
@@ -206,6 +207,9 @@ public class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 */
 	public void setFolderSyncInfo(FolderSyncInfo folderInfo) throws CVSException {
 		CVSProviderPlugin.getSynchronizer().setFolderSync(getIOFile(), folderInfo);
+		// the server won't add directories as sync info, therefore it must be done when
+		// a directory is shared with the repository.
+		setSyncInfo(new ResourceSyncInfo(getName()));
 	}
 
 	/*

@@ -19,17 +19,15 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.resources.ICVSSynchronizer;
-import org.eclipse.team.internal.ccvs.core.resources.LocalFolder;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.FileNameMatcher;
 import org.eclipse.team.internal.ccvs.core.util.FileUtil;
 import org.eclipse.team.internal.ccvs.core.util.ResourceDeltaVisitor;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileUtil;
-import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * The FileSystemSynchronizer stores sync information to be compatible with CVS command line
@@ -244,7 +242,6 @@ public class FileSystemSynchronizer implements ICVSSynchronizer {
 	 */
 	public FolderSyncInfo getFolderSync(File file) throws CVSException {
 		if(file.exists() && file.isDirectory()) {
-			LocalFolder folder = new LocalFolder(file);
 			if(SyncFileUtil.getCVSSubdirectory(file).exists()) {
 				CacheData data = (CacheData)folderSyncCache.get(file, null);
 				if(data!=null) {
@@ -261,12 +258,9 @@ public class FileSystemSynchronizer implements ICVSSynchronizer {
 	public ResourceSyncInfo getResourceSync(File file) throws CVSException {
 		File parentFile = file.getParentFile();
 		if (parentFile != null) {
-			LocalFolder parent = new LocalFolder(parentFile);
-			if(parent.exists() && parent.isCVSFolder()) {
-				CacheData data = (CacheData)resourceSyncCache.get(file, null);
-				if(data!=null) {
-					return (ResourceSyncInfo)data.getData();
-				}
+			CacheData data = (CacheData)resourceSyncCache.get(file, null);
+			if(data!=null) {
+				return (ResourceSyncInfo)data.getData();
 			}
 		}
 		return null;
@@ -277,12 +271,7 @@ public class FileSystemSynchronizer implements ICVSSynchronizer {
 	 */
 	public void setFolderSync(File file, FolderSyncInfo info) throws CVSException {
 		SyncFileUtil.writeFolderConfig(file, info);
-		folderSyncCache.put(new CacheData(file, info, CACHE_EXPIRATION_MINUTES));
-	
-		// the server won't add directories as sync info, therefore it must be done when
-		// a directory is shared with the repository.
-		setResourceSync(file, new ResourceSyncInfo(file.getName()));
-				
+		folderSyncCache.put(new CacheData(file, info, CACHE_EXPIRATION_MINUTES));	
 	}
 	
 	/*
@@ -292,14 +281,7 @@ public class FileSystemSynchronizer implements ICVSSynchronizer {
 		Assert.isNotNull(info);
 		Assert.isTrue(file.getName().equals(info.getName()));
 		
-		try {
-			LocalFolder parent = new LocalFolder(file.getParentFile());
-			if(parent.exists() && parent.isCVSFolder()) {
-				SyncFileUtil.writeResourceSync(file, info);
-			}
-		} catch(CVSException e) {
-			// XXX Bad eating of exception
-		}
+		SyncFileUtil.writeResourceSync(file, info);
 		resourceSyncCache.put(new CacheData(file, info, CACHE_EXPIRATION_MINUTES));
 	}
 	

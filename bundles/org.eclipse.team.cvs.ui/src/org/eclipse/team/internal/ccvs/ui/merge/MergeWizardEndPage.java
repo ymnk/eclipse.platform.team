@@ -6,10 +6,7 @@ package org.eclipse.team.internal.ccvs.ui.merge;
  */
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -24,12 +21,9 @@ import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
@@ -92,7 +86,7 @@ public class MergeWizardEndPage extends CVSWizardPage {
 		this.project = project;
 		try {
 			this.provider = ((CVSTeamProvider)TeamPlugin.getManager().getProvider(project));
-			this.remote = (ICVSRemoteFolder)provider.getRemoteResource(project);
+			this.remote = (ICVSRemoteFolder) CVSWorkspaceRoot.getRemoteResourceFor(project);
 		} catch (TeamException e) {
 			// To do
 		}

@@ -10,7 +10,10 @@ import java.io.File;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.IIgnoreInfo;
 import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -19,7 +22,6 @@ import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.FileNameMatcher;
-import org.eclipse.team.internal.ccvs.core.util.FileUtil;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileUtil;
 import org.eclipse.team.internal.ccvs.core.util.Util;
 
@@ -30,7 +32,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
  * @see LocalFolder
  * @see LocalFile
  */
-public abstract class EclipseResource implements ICVSResource {
+abstract class EclipseResource implements ICVSResource {
 
 	 // The seperator that must be used when creating CVS resource paths. Never use
 	 // the platform default seperator since it is not compatible with CVS resources.
@@ -206,7 +208,9 @@ public abstract class EclipseResource implements ICVSResource {
 	 * @see ICVSResource#setSyncInfo(ResourceSyncInfo)
 	 */
 	public void setSyncInfo(ResourceSyncInfo info) throws CVSException {
-		CVSProviderPlugin.getSynchronizer().setResourceSync(getIOFile(), info);		
+		if (getParent().isCVSFolder()) {
+			CVSProviderPlugin.getSynchronizer().setResourceSync(getIOFile(), info);		
+		}
 	}
 	
 	/*
@@ -229,5 +233,19 @@ public abstract class EclipseResource implements ICVSResource {
 	 */
 	protected File getIOFile() {
 		return resource.getLocation().toFile();
+	}
+	
+		/*
+	 * @see ICVSResource#reloadSyncInfo(IProgressMonitor)
+	 */
+	public void reloadSyncInfo(IProgressMonitor monitor) throws CVSException {
+		CVSProviderPlugin.getSynchronizer().reload(getIOFile(), monitor);
+	}
+
+	/*
+	 * @see ICVSResource#saveSyncInfo(IProgressMonitor)
+	 */
+	public void saveSyncInfo(IProgressMonitor monitor) throws CVSException {
+		CVSProviderPlugin.getSynchronizer().save(getIOFile(), monitor);
 	}
 }

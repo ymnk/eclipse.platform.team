@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSStatus;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.ICVSRemoteFile;
@@ -326,7 +327,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	/**
 	 * @see IManagedFile#getTimeStamp()
 	 */
-	public String getTimeStamp() throws CVSFileNotFoundException {
+	public String getTimeStamp() {
 		return info.getTimeStamp();
 	}
 

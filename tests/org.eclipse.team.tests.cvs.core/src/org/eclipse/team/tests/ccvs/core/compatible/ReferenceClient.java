@@ -10,9 +10,11 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.ccvs.core.*;
+import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Session;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileUtil;
 
 /**
@@ -69,7 +71,7 @@ public class ReferenceClient {
 		String commandLine;
 
 		globalOptions = (String[]) globalOptions.clone();
-		mRoot = Session.getManagedFolder(ioRoot);
+		mRoot = CVSWorkspaceRoot.getCVSFolderFor(ioRoot);
 		
 		runtime = Runtime.getRuntime();
 		global = flatenOptions(globalOptions);

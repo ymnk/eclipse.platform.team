@@ -21,9 +21,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSStatus;
+import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Session;
@@ -31,8 +34,7 @@ import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.LocalResource;
 import org.eclipse.team.internal.ccvs.core.util.FileUtil;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -107,7 +109,7 @@ public abstract class JUnitTestCase extends TestCase {
 				locals.add(new CustomLocalOption(localOptions[i], null));
 			}
 		}
-		Session s = new Session(getRepository(globalOptions, Session.getManagedFolder(root)), Session.getManagedFolder(root));
+		Session s = new Session(getRepository(globalOptions, CVSWorkspaceRoot.getCVSFolderFor(root)), CVSWorkspaceRoot.getCVSFolderFor(root));
 		s.open(monitor);
 		try {
 			IStatus status = ((Command)commandPool.get(request)).execute(s,
@@ -189,7 +191,7 @@ public abstract class JUnitTestCase extends TestCase {
 	 */
 	protected static ICVSFolder getManagedFolder(String relativePath) {
 		try {
-			return Session.getManagedFolder(getFile(relativePath));
+			return CVSWorkspaceRoot.getCVSFolderFor(getFile(relativePath));
 		} catch (CVSException e) {
 			fail(e.getMessage());
 			return null;

@@ -23,7 +23,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProvider;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSSynchronizer;
+import org.eclipse.team.internal.ccvs.core.resources.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FileSystemSynchronizer;
 import org.eclipse.team.internal.ccvs.core.util.OrphanedFolderListener;

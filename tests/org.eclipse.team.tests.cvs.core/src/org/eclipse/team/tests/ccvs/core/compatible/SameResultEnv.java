@@ -11,14 +11,16 @@ import java.io.PrintStream;
 import java.text.ParseException;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.resources.LocalResource;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.EntryFileDateFormat;

@@ -18,13 +18,12 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSStatus;
 import org.eclipse.team.ccvs.core.CVSTag;
+import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener;
 import org.eclipse.team.internal.ccvs.core.resources.CVSFileNotFoundException;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.resources.LocalResource;
 
 /**
  * Abstract base class for the commands which implements the ICommand 
@@ -312,9 +311,7 @@ public abstract class Command {
 			monitor = Policy.monitorFor(monitor);
 			monitor.beginTask(Policy.bind("Command.loadingSyncInfo"), 100 * resources.length);//$NON-NLS-1$
 			for (int i = 0; i < resources.length; i++) {
-				if(resources[i] instanceof LocalResource && resources[i].exists()) {
-					CVSProviderPlugin.getSynchronizer().reload(((LocalResource)resources[i]).getLocalFile(), Policy.subMonitorFor(monitor, 100));				
-				}
+				resources[i].reloadSyncInfo(Policy.subMonitorFor(monitor, 100));			
 			}
 		} finally {
 			monitor.done();
@@ -332,9 +329,7 @@ public abstract class Command {
 			monitor = Policy.monitorFor(monitor);
 			monitor.beginTask(Policy.bind("Command.savingSyncInfo"), 100 * resources.length);//$NON-NLS-1$
 			for (int i = 0; i < resources.length; i++) {
-				if(resources[i] instanceof LocalResource) {
-					CVSProviderPlugin.getSynchronizer().save(((LocalResource)resources[i]).getLocalFile(), Policy.subMonitorFor(monitor, 100));				
-				}
+				resources[i].saveSyncInfo(Policy.subMonitorFor(monitor, 100));
 			}
 		} finally {
 			monitor.done();

@@ -7,11 +7,13 @@ package org.eclipse.team.internal.ccvs.core.util;
  
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.Session;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 
 /**
  * Listen for the addition of orphaned subtrees as a result of a copy or move.
@@ -24,7 +26,7 @@ public class OrphanedFolderListener extends ResourceDeltaVisitor {
 	private void handleOrphanedSubtree(IResource resource) {
 		if (resource.getType() == IResource.FOLDER) {
 			try {
-				ICVSFolder mFolder = (ICVSFolder)Session.getManagedResource(resource);
+				ICVSFolder mFolder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(resource);
 				if (mFolder.isCVSFolder() && ! mFolder.isManaged() && mFolder.getParent().isCVSFolder()) {
 					mFolder.unmanage();
 					CVSProviderPlugin.getSynchronizer().reload(resource.getLocation().toFile(), Policy.monitorFor(null));

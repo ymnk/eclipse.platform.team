@@ -11,10 +11,12 @@ import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Session;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.util.FileUtil;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 import org.eclipse.team.tests.ccvs.core.JUnitTestCase;
@@ -358,7 +360,7 @@ public class CommandsTest extends JUnitTestCase {
 		// check that the resource has acctually a new timestamp
 		waitMsec(4000);
 		writeToFile(file2,fileContent2);
-		assertEquals(true, Session.getManagedFolder(ioFolder4).getFile("c.txt").isModified());
+		assertEquals(true, CVSWorkspaceRoot.getCVSFolderFor(ioFolder4).getFile("c.txt").isModified());
 		
 		// Should be able to set globalOptions to new String[0]
 		execute("ci",new String[0], 
@@ -459,7 +461,7 @@ public class CommandsTest extends JUnitTestCase {
 	
 	public void testImport() throws Exception {
 		File ioFolder = ioFolder1;
-		ICVSFolder mFolder = Session.getManagedFolder(ioFolder);
+		ICVSFolder mFolder = CVSWorkspaceRoot.getCVSFolderFor(ioFolder);
 		
 		String[] fileStructure = new String[]{"im/a.txt","im/f1/a.txt","im/f1/b.txt"};
 		createRandomFile(ioFolder,fileStructure);

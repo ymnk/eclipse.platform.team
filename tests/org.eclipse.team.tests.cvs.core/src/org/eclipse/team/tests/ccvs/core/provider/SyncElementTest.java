@@ -16,7 +16,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSTag;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ILocalSyncElement;
 import org.eclipse.team.core.sync.IRemoteResource;
@@ -25,7 +27,7 @@ import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSRemoteSyncElement;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.JUnitTestCase;
@@ -719,7 +721,7 @@ public class SyncElementTest extends EclipseTest {
 		
 		// Get the sync tree for the project
 		IRemoteSyncElement tree = getProvider(project).getRemoteSyncTree(project, CVSTag.DEFAULT, DEFAULT_MONITOR);
-		assertEquals(Path.EMPTY, (ICVSResource)tree.getBase(), Session.getManagedResource(copy), false, false);
+		assertEquals(Path.EMPTY, (ICVSResource)tree.getBase(), CVSWorkspaceRoot.getCVSResourceFor(copy), false, false);
 
 	 }
 	 
@@ -778,6 +780,6 @@ public class SyncElementTest extends EclipseTest {
 		
 		// Sync on the original and assert the result equals the copy
 		IRemoteSyncElement tree = getProvider(project).getRemoteSyncTree(project, null, DEFAULT_MONITOR);
-		assertEquals(Path.EMPTY, (ICVSResource)tree.getRemote(), Session.getManagedResource(copy), false, false);
+		assertEquals(Path.EMPTY, (ICVSResource)tree.getRemote(), CVSWorkspaceRoot.getCVSResourceFor(copy), false, false);
 	 }
 }

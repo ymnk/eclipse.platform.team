@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -30,11 +31,12 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.core.ITeamManager;
 import org.eclipse.team.core.ITeamProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
-import org.eclipse.team.internal.ccvs.core.resources.LocalFolder;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSDecorator;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.ui.actions.TeamAction;
@@ -144,10 +146,10 @@ public class UnmanageAction extends TeamAction {
 							IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);
 							for (int i = 0; i < providerResources.length; i++) {
 								IResource resource = providerResources[i];
-								LocalFolder folder = new LocalFolder(resource.getLocation().toFile());
+								ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor((IContainer) resource);
 								if(deleteContent) {
 									folder.unmanage();
-									CVSProviderPlugin.getSynchronizer().reload(folder.getLocalFile(), Policy.subMonitorFor(subMonitor, 90));
+									folder.reloadSyncInfo(Policy.subMonitorFor(subMonitor, 90));
 								}
 								TeamPlugin.getManager().removeProvider((IProject)resource, Policy.subMonitorFor(subMonitor, 10));							
 								CVSDecorator.refresh(resource);

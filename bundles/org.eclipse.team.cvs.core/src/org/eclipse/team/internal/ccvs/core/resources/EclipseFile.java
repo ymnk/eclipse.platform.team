@@ -15,8 +15,12 @@ import java.util.Date;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.ccvs.core.ICVSFile;
+import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResourceVisitor;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
@@ -26,7 +30,7 @@ import org.eclipse.team.internal.ccvs.core.util.EntryFileDateFormat;
  * Represents handles to CVS resource on the local file system. Synchronization
  * information is taken from the CVS subdirectories. 
  */
-public class EclipseFile extends EclipseResource implements ICVSFile {
+class EclipseFile extends EclipseResource implements ICVSFile {
 
 	/**
 	 * Create a handle based on the given local resource.
@@ -63,7 +67,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	/*
 	 * @see ICVSFile#getTimeStamp()
 	 */
-	public String getTimeStamp() throws CVSFileNotFoundException {						
+	public String getTimeStamp() {						
 		EntryFileDateFormat timestamp = new EntryFileDateFormat();		
 		return timestamp.format(new Date(getIOFile().lastModified()));
 	}

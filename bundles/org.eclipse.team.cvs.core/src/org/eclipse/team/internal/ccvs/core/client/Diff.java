@@ -7,12 +7,13 @@ package org.eclipse.team.internal.ccvs.core.client;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.team.ccvs.core.*;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
 
 /**
  * Runs the CVS diff command.

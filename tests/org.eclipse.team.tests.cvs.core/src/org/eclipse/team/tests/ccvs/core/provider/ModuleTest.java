@@ -16,14 +16,16 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSTag;
+import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteModule;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
@@ -97,7 +99,7 @@ public class ModuleTest extends EclipseTest {
 		}
 		
 		// Import the project into CVS
-		Session s = new Session(getRepository(), Session.getManagedFolder(new File(url.getPath())));
+		Session s = new Session(getRepository(), CVSWorkspaceRoot.getCVSFolderFor(new File(url.getPath())));
 		s.open(DEFAULT_MONITOR);
 		try {
 			Command.IMPORT.execute(s, Command.NO_GLOBAL_OPTIONS, 
@@ -113,8 +115,8 @@ public class ModuleTest extends EclipseTest {
 	// XXX Temporary method of checkout (i.e. with vcm_meta
 	protected IProject checkoutProject(String projectName, CVSTag tag) throws TeamException {
 		IProject project = super.checkoutProject(getWorkspace().getRoot().getProject(projectName), null, tag);
-		ICVSFolder parent = (ICVSFolder)Session.getManagedResource(project);
-		ICVSResource vcmmeta = Session.getManagedResource(project.getFile(".vcm_meta"));
+		ICVSFolder parent = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(project);
+		ICVSResource vcmmeta = CVSWorkspaceRoot.getCVSResourceFor(project.getFile(".vcm_meta"));
 		if ( ! vcmmeta.isManaged() && ! parent.getFolderSyncInfo().getIsStatic()) {
 			getProvider(project).add(new IResource[] {project.getFile(".vcm_meta")}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 			waitMsec(1000);
@@ -144,7 +146,7 @@ public class ModuleTest extends EclipseTest {
 		uploadProject("project1");
 		IProject project1 = checkoutProject("project1", null);
 		IRemoteSyncElement tree = getProvider(project1).getRemoteSyncTree(project1, CVSTag.DEFAULT, DEFAULT_MONITOR);
-		assertEquals(Path.EMPTY, Session.getManagedResource(project1), (ICVSResource)tree.getRemote(), false, false);
+		assertEquals(Path.EMPTY, CVSWorkspaceRoot.getCVSResourceFor(project1), (ICVSResource)tree.getRemote(), false, false);
 		RemoteModule module = getRemoteModule("project1");
 		assertEquals(Path.EMPTY, (RemoteFolder)tree.getRemote(), module, false);
 	}
@@ -160,13 +162,13 @@ public class ModuleTest extends EclipseTest {
 		
 		IProject docs = checkoutProject("docs", null);
 		IRemoteSyncElement tree = getProvider(docs).getRemoteSyncTree(docs, CVSTag.DEFAULT, DEFAULT_MONITOR);
-		assertEquals(Path.EMPTY, Session.getManagedResource(docs), (ICVSResource)tree.getRemote(), false, false);
+		assertEquals(Path.EMPTY, CVSWorkspaceRoot.getCVSResourceFor(docs), (ICVSResource)tree.getRemote(), false, false);
 		RemoteModule module = getRemoteModule("docs");
 		assertEquals(Path.EMPTY, (RemoteFolder)tree.getRemote(), module, false);
 		
 		IProject macros = checkoutProject("macros", null);
 		tree = getProvider(macros).getRemoteSyncTree(macros, CVSTag.DEFAULT, DEFAULT_MONITOR);
-		assertEquals(Path.EMPTY, Session.getManagedResource(macros), (ICVSResource)tree.getRemote(), false, false);
+		assertEquals(Path.EMPTY, CVSWorkspaceRoot.getCVSResourceFor(macros), (ICVSResource)tree.getRemote(), false, false);
 		module = getRemoteModule("macros");
 		assertEquals(Path.EMPTY, (RemoteFolder)tree.getRemote(), module, false);
 
@@ -184,14 +186,14 @@ public class ModuleTest extends EclipseTest {
 		uploadProject("project2");
 		IProject project2 = checkoutProject("project2", null);
 		IRemoteSyncElement tree = getProvider(project2).getRemoteSyncTree(project2, CVSTag.DEFAULT, DEFAULT_MONITOR);
-		assertEquals(Path.EMPTY, Session.getManagedResource(project2), (ICVSResource)tree.getRemote(), false, false);
+		assertEquals(Path.EMPTY, CVSWorkspaceRoot.getCVSResourceFor(project2), (ICVSResource)tree.getRemote(), false, false);
 
 		RemoteModule module = getRemoteModule("project2");
 		assertEquals(Path.EMPTY, (RemoteFolder)tree.getRemote(), module, false);
 
 		project2 = checkoutProject("project2-only", null);
 		tree = getProvider(project2).getRemoteSyncTree(project2, CVSTag.DEFAULT, DEFAULT_MONITOR);
-		assertEquals(Path.EMPTY, Session.getManagedResource(project2), (ICVSResource)tree.getRemote(), false, false);
+		assertEquals(Path.EMPTY, CVSWorkspaceRoot.getCVSResourceFor(project2), (ICVSResource)tree.getRemote(), false, false);
 
 		module = getRemoteModule("project2-only");
 		assertEquals(Path.EMPTY, (RemoteFolder)tree.getRemote(), module, false);

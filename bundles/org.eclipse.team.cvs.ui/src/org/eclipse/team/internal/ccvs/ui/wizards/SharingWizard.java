@@ -19,8 +19,10 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTag;
+import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.core.TeamException;
@@ -28,7 +30,7 @@ import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSProvider;
 import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSDecorator;
@@ -296,7 +298,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 		// Determine if there is an existing CVS/ directory from which configuration
 		// information can be retrieved.
 		try {
-			ICVSFolder folder = (ICVSFolder)Session.getManagedResource(project);
+			ICVSFolder folder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(project);
 			FolderSyncInfo info = folder.getFolderSyncInfo();
 			return info != null;
 		} catch (TeamException e) {

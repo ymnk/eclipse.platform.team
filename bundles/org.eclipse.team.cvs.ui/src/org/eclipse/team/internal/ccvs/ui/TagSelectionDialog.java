@@ -55,7 +55,7 @@ import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
 import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
-import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 
 /**
  * Dialog to prompt the user to choose a tag for a selected resource
@@ -208,7 +208,7 @@ public class TagSelectionDialog extends Dialog {
 		// initialize the table contents
 		try {
 			CVSTeamProvider provider = (CVSTeamProvider)TeamPlugin.getManager().getProvider(resource);
-			tagTree.setInput(new ProjectElement((ICVSRemoteFolder)provider.getRemoteResource(resource)));
+			tagTree.setInput(new ProjectElement((ICVSRemoteFolder)CVSWorkspaceRoot.getRemoteResourceFor(resource)));
 		} catch (TeamException e) {
 			// To do: error dialog
 		}
