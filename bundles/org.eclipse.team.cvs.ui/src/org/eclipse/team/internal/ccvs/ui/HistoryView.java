@@ -233,8 +233,6 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 			}
 		});
 		
-
-
 		// Toggle text visible action
 		final IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 		toggleTextAction = new Action(Policy.bind("HistoryView.showComment")) { //$NON-NLS-1$
@@ -712,6 +710,14 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 				} catch (InterruptedException e) {
 					// Do nothing
 				}
+			}
+			
+			public boolean isEnabled() {
+				ISelection selection = tableViewer.getSelection();
+				if (!(selection instanceof IStructuredSelection)) return false;
+				IStructuredSelection ss = (IStructuredSelection)selection;
+				if(ss.size() != 1) return false;
+				return true;
 			}
 		};
 	}

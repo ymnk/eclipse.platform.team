@@ -86,7 +86,30 @@ public class BranchWizard extends Wizard {
 						if (versionString != null) {
 							rootVersionTag = new CVSTag(versionString, CVSTag.VERSION);
 						}
-						
+												
+						// For non-projects determine if the tag being loaded is the same as the resource's parent
+						// If it's not, warn the user that they will have strange sync behavior
+						if (update) {
+							for (int i = 0; i < resources.length; i++) {
+								IResource resource = resources[i];
+								if (resource.getType() != IResource.PROJECT) {
+									ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+									CVSTag parentTag = cvsResource.getParent().getFolderSyncInfo().getTag();
+									if (!equalTags(branchTag, parentTag)) {
+										final Shell shell = getShell();
+										final boolean[] result = new boolean[] { false };
+										shell.getDisplay().syncExec(new Runnable() {
+											public void run() {
+												result[0] = MessageDialog.openQuestion(getShell(), Policy.bind("question"), Policy.bind("BranchWizard.mixingTags", branchTag.getName())); //$NON-NLS-1$ //$NON-NLS-2$
+											}
+										});
+										if (!result[0]) return;										
+									}
+								}
+								
+							}
+						}
+										
 						RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 						Hashtable table = getProviderMapping(resources);
 						Set keySet = table.keySet();
@@ -97,31 +120,7 @@ public class BranchWizard extends Wizard {
 							IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 1000);
 							CVSTeamProvider provider = (CVSTeamProvider)iterator.next();
 							List list = (List)table.get(provider);
-							IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);
-							// For non-projects determine if the tag being loaded is the same as the resource's parent
-							// If it's not, warn the user that they will have strange sync behavior
-							if (update) {
-								for (int i = 0; i < resources.length; i++) {
-									if (providerResources[i].getType() != IResource.PROJECT) {
-										ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
-										CVSTag parentTag = cvsResource.getParent().getFolderSyncInfo().getTag();
-										if (!equalTags(branchTag, parentTag)) {
-											final Shell shell = getShell();
-											final boolean[] result = new boolean[] { false };
-											shell.getDisplay().syncExec(new Runnable() {
-												public void run() {
-													result[0] = MessageDialog.openQuestion(getShell(), Policy.bind("question"), Policy.bind("BranchWizard.mixingTags", branchTag.getName())); //$NON-NLS-1$ //$NON-NLS-2$
-												}
-											});
-											if (!result[0]) return;
-											// Only ask once!
-											break;
-										}
-									}
-									
-								}
-							}
-				
+							IResource[] providerResources = (IResource[])list.toArray(new IResource[list.size()]);											
 							ICVSRepositoryLocation root = provider.getCVSWorkspaceRoot().getRemoteLocation();
 							try {
 								if (!areAllResourcesSticky(resources)) {													

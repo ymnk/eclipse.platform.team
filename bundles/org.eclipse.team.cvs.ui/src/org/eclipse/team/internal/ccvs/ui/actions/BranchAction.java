@@ -37,21 +37,34 @@ public class BranchAction extends TeamAction {
 			}
 		});
 	}
+	
 	/*
 	 * @see TeamAction#isEnabled()
 	 */
 	protected boolean isEnabled() throws TeamException {
 		IResource[] resources = getSelectedResources();
-		if (resources.length == 0) return false;
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
-			if (provider == null) return false;
-			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-			if (resource.getType() == IResource.PROJECT && ((ICVSFolder)cvsResource).isCVSFolder()) return true;
-			if (!cvsResource.isManaged()) return false;
+		// allow operation for homegeneous multiple selections
+		if(resources.length>0) {
+			int type = -1;
+			for (int i = 0; i < resources.length; i++) {
+				IResource resource = resources[i];
+				if(type!=-1) {
+					if(type!=resource.getType()) return false;
+				}
+				if(RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId()) == null) {
+					return false;
+				}
+				type = resource.getType();
+				ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+				if(cvsResource.isFolder()) {
+					if( ! ((ICVSFolder)cvsResource).isCVSFolder()) return false;
+				} else {
+					if( ! cvsResource.isManaged()) return false;
+				}
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 }
 
