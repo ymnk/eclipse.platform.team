@@ -25,6 +25,11 @@ import org.eclipse.team.internal.ccvs.core.client.CommandOutputListener;
  */
 public class RDiffSummaryListener extends CommandOutputListener {
 
+	private static final String RIGHT_REVISION_VARIABLE_NAME = "rightRevision"; //$NON-NLS-1$
+	private static final String LEFT_REVISION_VARIABLE_NAME = "leftRevision"; //$NON-NLS-1$
+	private static final String REMOTE_FILE_PATH_VARIABLE_NAME = "remoteFilePath"; //$NON-NLS-1$
+	private static final String REMOTE_FOLDER_PATH_VARIABLE_NAME = "remoteFolderPath"; //$NON-NLS-1$
+	
 	private IFileDiffListener listener;
 	private static ServerMessageLineMatcher DIRECTORY_MATCHER;
 	private static ServerMessageLineMatcher FILE_DIFF_MATCHER;
@@ -38,13 +43,13 @@ public class RDiffSummaryListener extends CommandOutputListener {
 	public static void initializePatterns() {
 		try {
 			DIRECTORY_MATCHER = new ServerMessageLineMatcher(
-				IMessagePatterns.RDIFF_DIRECTORY, new String[] {"remoteFolderPath"});
+				IMessagePatterns.RDIFF_DIRECTORY, new String[] {REMOTE_FOLDER_PATH_VARIABLE_NAME});
 			FILE_DIFF_MATCHER = new ServerMessageLineMatcher(
-				IMessagePatterns.RDIFF_SUMMARY_FILE_DIFF, new String[] {"remoteFilePath", "leftRevision", "rightRevision"});
+				IMessagePatterns.RDIFF_SUMMARY_FILE_DIFF, new String[] {REMOTE_FILE_PATH_VARIABLE_NAME, LEFT_REVISION_VARIABLE_NAME, RIGHT_REVISION_VARIABLE_NAME});
 			NEW_FILE_MATCHER = new ServerMessageLineMatcher(
-				IMessagePatterns.RDIFF_SUMMARY_NEW_FILE, new String[] {"remoteFilePath", "rightRevision"});
+				IMessagePatterns.RDIFF_SUMMARY_NEW_FILE, new String[] {REMOTE_FILE_PATH_VARIABLE_NAME, RIGHT_REVISION_VARIABLE_NAME});
 			DELETED_FILE_MATCHER = new ServerMessageLineMatcher(
-				IMessagePatterns.RDIFF_SUMMARY_DELETED_FILE, new String[] {"remoteFilePath"});
+				IMessagePatterns.RDIFF_SUMMARY_DELETED_FILE, new String[] {REMOTE_FILE_PATH_VARIABLE_NAME});
 		} catch (CVSException e) {
 			// This is serious as the listener will not function properly
 			CVSProviderPlugin.log(e);
@@ -78,19 +83,25 @@ public class RDiffSummaryListener extends CommandOutputListener {
 		
 		Map variables = FILE_DIFF_MATCHER.processServerMessage(line);
 		if (variables != null) {
-			listener.fileDiff((String)variables.get("remoteFilePath"), (String)variables.get("leftRevision"), (String)variables.get("rightRevision"));
+			listener.fileDiff(
+					(String)variables.get(REMOTE_FILE_PATH_VARIABLE_NAME), 
+					(String)variables.get(LEFT_REVISION_VARIABLE_NAME), 
+					(String)variables.get(RIGHT_REVISION_VARIABLE_NAME));
 			return OK;
 		}
 		
 		variables = NEW_FILE_MATCHER.processServerMessage(line);
 		if (variables != null) {
-			listener.newFile((String)variables.get("remoteFilePath"), (String)variables.get("rightRevision"));
+			listener.newFile(
+					(String)variables.get(REMOTE_FILE_PATH_VARIABLE_NAME), 
+					(String)variables.get(RIGHT_REVISION_VARIABLE_NAME));
 			return OK;
 		}
 		
 		variables = DELETED_FILE_MATCHER.processServerMessage(line);
 		if (variables != null) {
-			listener.deletedFile((String)variables.get("remoteFilePath"));
+			listener.deletedFile(
+					(String)variables.get(REMOTE_FILE_PATH_VARIABLE_NAME));
 			return OK;
 		}
 		
@@ -108,7 +119,8 @@ public class RDiffSummaryListener extends CommandOutputListener {
 		
 		Map variables = DIRECTORY_MATCHER.processServerMessage(line);
 		if (variables != null) {
-			listener.directory((String)variables.get("remoteFolderPath"));
+			listener.directory(
+					(String)variables.get(REMOTE_FOLDER_PATH_VARIABLE_NAME));
 			return OK;
 		}
 			

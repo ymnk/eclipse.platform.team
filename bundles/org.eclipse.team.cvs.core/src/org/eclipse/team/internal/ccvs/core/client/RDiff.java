@@ -29,6 +29,7 @@ public class RDiff extends RemoteCommand {
 	 * Valid for: checkout export history rdiff update
 	 */
 	public static LocalOption makeTagOption(CVSTag tag) {
+		if (tag == null) tag = CVSTag.DEFAULT;
 		int type = tag.getType();
 		switch (type) {
 			case CVSTag.BRANCH:

@@ -39,8 +39,8 @@ public class CompareOperationTests extends CVSOperationTest {
 	public class TestRemoteCompareOperation extends RemoteCompareOperation {
 		private ICVSRemoteFolder leftTree, rightTree;
 
-		public TestRemoteCompareOperation(Shell shell, ICVSRemoteFolder[] remoteFolders, CVSTag left, CVSTag right) {
-			super(shell, remoteFolders, left, right);
+		public TestRemoteCompareOperation(Shell shell, ICVSRemoteResource resource, CVSTag tag) {
+			super(shell, resource, tag);
 		}
 		
 		/*
@@ -149,12 +149,27 @@ public class CompareOperationTests extends CVSOperationTest {
 		deleteResources(copy, new String[] {"folder1/b.txt"}, false);
 		getProvider(copy).checkin(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 
-		// Run the compare operation
-		ICVSRemoteFolder remoteResource = (ICVSRemoteFolder)CVSWorkspaceRoot.getRemoteResourceFor(project);
-		TestRemoteCompareOperation op = new TestRemoteCompareOperation(null, new ICVSRemoteFolder[] { remoteResource }, v1, CVSTag.DEFAULT);
+		// Run the compare operation of the project folder
+		ICVSRemoteResource remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(project);
+		TestRemoteCompareOperation op = new TestRemoteCompareOperation(null, remoteResource, v1);
 		run(op);
 		assertRevisionsMatch(op.getLeftTree(), project, new String[] {"folder1/a.txt"}, new String[] {"folder1/b.txt"});
 		assertRevisionsMatch(op.getRightTree(), copy, new String[] {"folder1/a.txt", "folder1/newFile", "folder2/folder3/add.txt" }, null /* files with no revision */);
+		
+		// Run the compare operation of a subfolder
+		remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(project.getFolder("folder1"));
+		op = new TestRemoteCompareOperation(null, remoteResource, v1);
+		run(op);
+		assertRevisionsMatch(op.getLeftTree(), project, new String[] {"folder1/a.txt"}, new String[] {"folder1/b.txt"});
+		assertRevisionsMatch(op.getRightTree(), copy, new String[] {"folder1/a.txt", "folder1/newFile" }, null /* files with no revision */);
+		
+		// Run the operation on a single file
+		remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(project.getFile("folder1/a.txt"));
+		op = new TestRemoteCompareOperation(null, remoteResource, v1);
+		run(op);
+		assertRevisionsMatch(op.getLeftTree(), project, new String[] {"folder1/a.txt"}, null);
+		assertRevisionsMatch(op.getRightTree(), copy, new String[] {"folder1/a.txt" }, null /* files with no revision */);
+		
 	}
 
 }

@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
+import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
  * This class extracts matches server lines to expected patterns and extracts
@@ -27,7 +28,7 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
  */
 public class ServerMessageLineMatcher {
 
-	protected static final Pattern VARIABLE_MATCHING_PATTERN = Pattern.compile("(\\((\\w*):.*:\\2\\))");
+	protected static final Pattern VARIABLE_MATCHING_PATTERN = Pattern.compile("(\\((\\w*):.*:\\2\\))"); //$NON-NLS-1$
 	
 	Pattern pattern;
 	String[] variables;
@@ -38,7 +39,7 @@ public class ServerMessageLineMatcher {
 		List variables = new ArrayList();
 		while (matcher.find()) {
 			if (matcher.groupCount() != 2) {
-				throw new CVSException("Variable in template is not of the correct format: {0}" + template);
+				throw new CVSException(Policy.bind("ServerMessageLineMatcher.5", template)); //$NON-NLS-1$
 			}
 			variables.add(matcher.group(2));
 		}
@@ -49,8 +50,8 @@ public class ServerMessageLineMatcher {
 		// (i.e. remove the variable markup)
 		for (Iterator iter = variables.iterator(); iter.hasNext();) {
 				String element = (String) iter.next();
-				template = template.replaceAll(element + ":", "");
-				template = template.replaceAll(":" + element, "");
+				template = template.replaceAll(element + ":", ""); //$NON-NLS-1$ //$NON-NLS-2$
+				template = template.replaceAll(":" + element, ""); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		// Ensure that the number of groups in the pattern match the number of variables
@@ -60,7 +61,7 @@ public class ServerMessageLineMatcher {
 			count++;
 		}
 		if (count != variables.size()) {
-			throw new CVSException("There are additional groups above those defining variables in template: {0}" + template);
+			throw new CVSException(Policy.bind("ServerMessageLineMatcher.6", template)); //$NON-NLS-1$
 		}
 
 		// Create the pattern fir matching lines from the server
@@ -74,7 +75,7 @@ public class ServerMessageLineMatcher {
 		for (int i = 0; i < expectedVariables.length; i++) {
 			String expected = expectedVariables[i];
 			if (!variables.contains(expected)) {
-				throw new CVSException("Expected variable {0} in {1} but it is not present." + expected + template);
+				throw new CVSException(Policy.bind("ServerMessageLineMatcher.7", expected, template)); //$NON-NLS-1$
 			}
 		}
 	}
