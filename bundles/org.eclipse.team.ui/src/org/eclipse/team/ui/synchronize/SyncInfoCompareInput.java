@@ -26,8 +26,7 @@ import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IReusableEditor;
+import org.eclipse.ui.*;
 import org.eclipse.ui.progress.UIJob;
 
 /**
@@ -49,8 +48,24 @@ public final class SyncInfoCompareInput extends CompareEditorInput implements IR
 	private MyDiffNode node;
 	private String description;
 	private IResource resource;
-	private IEditorPart editor;
-	private Image inputImage;
+	private IWorkbenchPart part;
+	
+	// Hook the compare input into it's containing workbench parts lifecycle.
+	private IPartListener partListener = new IPartListener() {
+		public void partActivated(IWorkbenchPart part) {
+		}
+		public void partBroughtToTop(IWorkbenchPart part) {
+		}
+		public void partClosed(IWorkbenchPart part) {
+			if(SyncInfoCompareInput.this.part == part) {
+				dispose();
+			}
+		}
+		public void partDeactivated(IWorkbenchPart part) {
+		}
+		public void partOpened(IWorkbenchPart part) {
+		}
+	};
 
 	/*
 	 * This class exists so that we can force the text merge viewers to update by
@@ -84,6 +99,13 @@ public final class SyncInfoCompareInput extends CompareEditorInput implements IR
 		initializeContentChangeListeners();
 	}
 	
+	public void init(IWorkbenchPart part) {
+		Assert.isNotNull(part);
+		this.part = part;
+		part.getSite().getPage().addPartListener(partListener);
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+	}
+	
 	private static CompareConfiguration getDefaultCompareConfiguration() {
 		CompareConfiguration cc = new CompareConfiguration();
 		//cc.setProperty(CompareConfiguration.USE_OUTLINE_VIEW, true);
@@ -113,17 +135,27 @@ public final class SyncInfoCompareInput extends CompareEditorInput implements IR
 		if (delta != null) {
 			IResourceDelta resourceDelta = delta.findMember(resource.getFullPath());
 			if (resourceDelta != null) {
-				if (editor != null && editor instanceof IReusableEditor) {
-					UIJob job = new UIJob("") { //$NON-NLS-1$
-						public IStatus runInUIThread(IProgressMonitor monitor) {
-							node.update(node.getSyncInfo());
-							return Status.OK_STATUS;
-						}
-					};
-					job.setSystem(true);
-					job.schedule();						
+				if (part != null && part instanceof IReusableEditor) {
+						UIJob job = new UIJob("") { //$NON-NLS-1$
+							public IStatus runInUIThread(IProgressMonitor monitor) {
+								if(! isSaveNeeded()) {
+									node.update(node.getSyncInfo());
+								}
+								return Status.OK_STATUS;
+							}
+						};
+						job.setSystem(true);
+						job.schedule();
 				}
 			}
+		}
+	}
+	
+	public void dispose() {
+		if(part != null) {
+			part.getSite().getPage().removePartListener(partListener);
+			ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+			part = null;
 		}
 	}
 	
