@@ -93,8 +93,8 @@ public abstract class RemoteResource extends PlatformObject implements ICVSRemot
 	 * @see ICVSResource#getParent()
 	 */
 	public ICVSFolder getParent() {
-		throw new UnsupportedOperationException(Policy.bind("RemoteResource.invalidOperation")); //$NON-NLS-1$
-	}
+		return parent;
+ 	}
 
 	/*
 	 * @see ICVSResource#isIgnored()

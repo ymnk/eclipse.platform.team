@@ -427,7 +427,20 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 			throw new CVSException(Policy.bind("RemoteResource.invalidResourceClass"),e); //$NON-NLS-1$
 		}
 		
-		return Util.getRelativePath(rootFolder.getLocalPath(), getLocalPath());	
+		try {
+			return Util.getRelativePath(rootFolder.getLocalPath(), getLocalPath());
+		} catch (UnsupportedOperationException e) {
+			if (parent != null) {
+				String parentPath = parent.getRelativePath(ancestor);
+				if (parentPath.equals(Session.CURRENT_LOCAL_FOLDER)) {
+					return getName();
+				} else {
+					return parentPath + Session.SERVER_SEPARATOR + getName();
+				}
+			} else {
+				throw e;
+			}
+		}
 	}
 	
 	public ICVSRepositoryLocation getRepository() {
@@ -446,6 +459,13 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	 */
 	public boolean isFolder() {
 		return true;
+	}
+	
+	/*
+	 * @see ICVSResource#isManaged()
+	 */
+	public boolean isManaged() {
+		return parent != null;
 	}
 	
 	/**
@@ -473,7 +493,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	 * does not exist, an exception is thrown.
 	 */
 	public ICVSResource getChild(String path) throws CVSException {
-		if (path.equals(Session.CURRENT_LOCAL_FOLDER))
+		if (path.equals(Session.CURRENT_LOCAL_FOLDER) || path.length() == 0)
 			return this;
 		ICVSRemoteResource[] children = getChildren();
 		if (children == null) 
@@ -692,5 +712,15 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		} catch(TeamException e) {
 			throw new CVSException(e.getStatus());
 		}
+	}
+	
+	public boolean equals(Object target) {
+		if ( ! super.equals(target)) return false;
+		RemoteFolder folder = (RemoteFolder)target;
+		CVSTag tag1 = getTag();
+		CVSTag tag2 = folder.getTag();
+		if (tag1 == null) tag1 = CVSTag.DEFAULT;
+		if (tag2 == null) tag2 = CVSTag.DEFAULT;
+		return tag1.equals(tag2);
 	}
 }
