@@ -111,7 +111,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		// Refresh the viewer for each changed resource
 		SyncInfo[] infos = event.getChangedResources();
 		for (int i = 0; i < infos.length; i++) {			
-			((StructuredViewer) viewer).refresh(infos[i], true);
+			((StructuredViewer) viewer).refresh(SyncSet.getModelObject(getSyncSet(), infos[i].getLocal()), true);
 		}
 	}
 
@@ -150,5 +150,29 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 */
 	public StructuredViewer getViewer() {
 		return (StructuredViewer)viewer;
+	}
+	
+	/**
+	 * @param info
+	 * @return
+	 */
+	protected Object getModelObject(IResource resource) {
+		return SyncSet.getModelObject(getSyncSet(), resource);
+	}
+	
+	/**
+	 * @param info
+	 * @return
+	 */
+	protected Object getModelObject(SyncInfo info) {
+		return getModelObject(info.getLocal());
+	}
+	
+	protected Object[] getModelObjects(SyncInfo[] infos) {
+		Object[] resources = new Object[infos.length];
+		for (int i = 0; i < resources.length; i++) {
+			resources[i] = getModelObject(infos[i]);
+		}
+		return resources;
 	}
 }

@@ -18,6 +18,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.ui.sync.compare.SyncInfoCompareInput;
+import org.eclipse.team.internal.ui.sync.views.SyncSet;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
@@ -53,11 +54,9 @@ public class OpenInCompareAction extends Action {
 	private CompareEditorInput getCompareInput() {
 		ISelection selection = viewer.getViewer().getSelection();
 		Object obj = ((IStructuredSelection)selection).getFirstElement();
-		if(obj instanceof SyncInfo) {
-			SyncInfo info = (SyncInfo)obj;
-			if(info.getLocal() instanceof IFile) {
-				return new SyncInfoCompareInput(info);
-			}								
+		SyncInfo info = SyncSet.getSyncInfo(obj);
+		if (info != null && info.getLocal() instanceof IFile) {
+			return new SyncInfoCompareInput(info);								
 		}
 		return null;
 	}				

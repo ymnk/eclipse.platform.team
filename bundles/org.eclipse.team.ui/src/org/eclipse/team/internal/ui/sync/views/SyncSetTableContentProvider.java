@@ -22,7 +22,8 @@ public class SyncSetTableContentProvider extends SyncSetContentProvider {
 	 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 	 */
 	public Object[] getElements(Object element) {
-		return getSyncSet().allMembers();
+		SyncInfo[] infos = getSyncSet().allMembers();
+		return getModelObjects(infos);
 	}
 
 	public TableViewer getTableViewer() {
@@ -39,7 +40,7 @@ public class SyncSetTableContentProvider extends SyncSetContentProvider {
 		TableViewer table = getTableViewer();
 		if (table != null) {
 			SyncInfo[] infos = event.getAddedResources();
-			table.add(infos);
+			table.add(getModelObjects(infos));
 		} else {
 			super.handleResourceAdditions(event);
 		}
@@ -53,7 +54,7 @@ public class SyncSetTableContentProvider extends SyncSetContentProvider {
 		TableViewer table = getTableViewer();
 		if (table != null) {
 			SyncInfo[] infos = event.getRemovedResources();
-			table.remove(infos);
+			table.remove(getModelObjects(infos));
 		} else {
 			super.handleResourceRemovals(event);
 		}

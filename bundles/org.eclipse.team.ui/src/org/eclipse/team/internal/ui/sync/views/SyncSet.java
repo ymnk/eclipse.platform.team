@@ -104,6 +104,16 @@ public class SyncSet {
 		return null;
 	}
 	
+	public static SyncInfo getSyncInfo(Object element) {
+		if (element instanceof SyncInfo) {
+			return ((SyncInfo) element);
+		}  else if (element instanceof SyncResource) {
+			SyncResource syncResource = (SyncResource)element;
+			return syncResource.getSyncInfo();
+		}
+		return null;
+	}
+	
 	/**
 	 * Get the model object (SyncSet, SyncInfo or SyncContainer) that is the
 	 * parent of the given model object.
