@@ -34,9 +34,10 @@ public interface IProjectSetSerializer {
 	 * @param providerProjects  an array of projects that the serializer should create
 	 *   text references for
 	 * @param context  a UI context object
+	 * @param monitor  a progress monitor
 	 * @return an array of serialized reference strings uniquely identifying the projects
 	 */
-	public String[] asReference(IProject[] providerProjects, Object context) throws TeamException;
+	public String[] asReference(IProject[] providerProjects, Object context, IProgressMonitor monitor) throws TeamException;
 	
 	/**
 	 * For every String in referenceStrings, create in the workspace a

@@ -40,7 +40,7 @@ public class CVSProjectSetSerializer implements IProjectSetSerializer {
 	 * 
 	 * "1.0,repoLocation,module,projectName[,tag]"
 	 */
-	public String[] asReference(IProject[] providerProjects, Object context) throws TeamException {
+	public String[] asReference(IProject[] providerProjects, Object context, IProgressMonitor monitor) throws TeamException {
 		String[] result = new String[providerProjects.length];
 		for (int i = 0; i < providerProjects.length; i++) {
 			StringBuffer buffer = new StringBuffer();

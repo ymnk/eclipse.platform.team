@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -106,6 +107,7 @@ public class ProjectSetExportWizard extends Wizard implements IExportWizard {
 						// For each provider id, do the writing
 						Shell shell = getShell();
 						Iterator it = map.keySet().iterator();
+						monitor.beginTask(null, 1000 * map.keySet().size());
 						while (it.hasNext()) {
 							String id = (String)it.next();
 							writer.write("\t<provider id=\""); //$NON-NLS-1$
@@ -115,7 +117,7 @@ public class ProjectSetExportWizard extends Wizard implements IExportWizard {
 							IProject[] projectArray = (IProject[])list.toArray(new IProject[list.size()]);
 							IProjectSetSerializer serializer = Team.getProjectSetSerializer(id);
 							if (serializer != null) {
-								String[] references = serializer.asReference(projectArray, shell);
+								String[] references = serializer.asReference(projectArray, shell, new SubProgressMonitor(monitor, 1000));
 								for (int i = 0; i < references.length; i++) {
 									writer.write("\t\t<project reference=\""); //$NON-NLS-1$
 									writer.write(references[i]);
@@ -133,6 +135,8 @@ public class ProjectSetExportWizard extends Wizard implements IExportWizard {
 						throw new InvocationTargetException(e);
 					} catch (TeamException e) {
 						throw new InvocationTargetException(e);
+					} finally {
+						monitor.done();
 					}
 				}
 			});
