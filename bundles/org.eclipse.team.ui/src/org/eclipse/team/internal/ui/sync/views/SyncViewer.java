@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -452,33 +451,21 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 		this.lastInput = this.input;
 		this.input = input;
 		
+		// listen to sync set changes in order to update state relating to the
+		// size of the sync sets and update the title
 		if(lastInput != null) {
 			lastInput.getFilteredSyncSet().removeSyncSetChangedListener(this);
 			lastInput.getSubscriberSyncSet().removeSyncSetChangedListener(this);
 		}
-		
 		input.getFilteredSyncSet().addSyncSetChangedListener(this);
 		input.getSubscriberSyncSet().addSyncSetChangedListener(this);
 
-		final IRunnableWithProgress runnable = new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				try {
-					ActionContext context = new ActionContext(null);
-					context.setInput(input);				
-					input.prepareInput(monitor);
-					// important to set the context after the input has been initialized. There
-					// are some actions that depend on the sync set to be initialized.
-					actions.setContext(context);
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				}
-			}
-		};
-
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
+				ActionContext context = new ActionContext(null);
+				context.setInput(input);
+				actions.setContext(context);
 				if (!hasRunnableContext()) return;				
-				SyncViewer.this.run(runnable);
 				viewer.setInput(input.getFilteredSyncSet());
 				RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
 				refreshJob.setSubscriberInput(input);

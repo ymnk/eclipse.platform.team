@@ -298,7 +298,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	 */
 	protected void changeWorkingSet(IWorkingSet set) {
 		// Keep track of the last working set selected
-		if (set != getWorkingSet() && set != null) {
+		if (set != getWorkingSet()) {
 			workingSetFilter.setWorkingSet(set);
 		}
 		refreshFilters();
