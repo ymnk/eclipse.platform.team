@@ -159,7 +159,6 @@ public class UpdateSyncAction extends MergeAction {
 			}
 			ITeamNode changedNode = changed[i];
 			int kind = changedNode.getKind();
-			IResource resource = changedNode.getResource();
 			switch (kind & Differencer.DIRECTION_MASK) {
 				case ITeamNode.INCOMING:
 					switch (kind & Differencer.CHANGE_TYPE_MASK) {

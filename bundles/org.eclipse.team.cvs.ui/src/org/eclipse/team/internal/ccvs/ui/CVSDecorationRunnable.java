@@ -28,8 +28,8 @@ import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.ccvs.core.ICVSResource;
-import org.eclipse.team.core.ITeamProvider;
-import org.eclipse.team.core.TeamPlugin;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
@@ -93,8 +93,8 @@ public class CVSDecorationRunnable implements Runnable {
 			// with a CVS provider. This could happen if the team nature was removed
 			// between the time the decoration event was posted to the thread and the time
 			// the thread processes the decoration.
-			ITeamProvider provider = TeamPlugin.getManager().getProvider(resource);
-			if(!resource.exists() || provider==null || !(provider instanceof CVSTeamProvider)) {
+			RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject());
+			if(!resource.exists() || provider==null || !provider.isOfType(CVSProviderPlugin.getTypeId())) {
 				continue;
 			}
 			
@@ -108,15 +108,15 @@ public class CVSDecorationRunnable implements Runnable {
 			}
 
 			// compute decorations						
-			CVSDecoration decoration = computeTextLabelFor(resource, isDirty, provider);
-			decoration.setOverlays(computeLabelOverlaysFor(resource, isDirty, provider));
+			CVSDecoration decoration = computeTextLabelFor(resource, isDirty);
+			decoration.setOverlays(computeLabelOverlaysFor(resource, isDirty, (CVSTeamProvider)provider));
 			
 			// notify that decoration is ready
 			notifier.decorated(resource, decoration);
 		}
 	}
 
-	private CVSDecoration computeTextLabelFor(IResource resource, boolean isDirty, ITeamProvider provider) {
+	private CVSDecoration computeTextLabelFor(IResource resource, boolean isDirty) {
 		Map bindings = new HashMap(3);
 		String format = ""; //$NON-NLS-1$
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
@@ -188,7 +188,7 @@ public class CVSDecorationRunnable implements Runnable {
 		}
 	}
 
-	private List computeLabelOverlaysFor(IResource resource, boolean isDirty, ITeamProvider provider) {
+	private List computeLabelOverlaysFor(IResource resource, boolean isDirty, CVSTeamProvider provider) {
 		List overlays = new ArrayList(3);
 		
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();

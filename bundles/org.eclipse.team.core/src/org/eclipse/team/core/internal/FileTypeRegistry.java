@@ -29,6 +29,9 @@ import org.eclipse.team.core.TeamPlugin;
 public class FileTypeRegistry implements IFileTypeRegistry {
 	// Constant for the saved state file name
 	private static final String STATE_FILE = ".fileTypes";
+	
+	// The id of the file types extension point
+	private static final String FILE_TYPES_EXTENSION = "fileTypes";
 
 	// Keys: file extensions. Values: Integers
 	private Hashtable table;
@@ -90,7 +93,7 @@ public class FileTypeRegistry implements IFileTypeRegistry {
 	private void initializePluginPatterns() {
 		TeamPlugin plugin = TeamPlugin.getPlugin();
 		if (plugin != null) {
-			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.FILE_TYPES_EXTENSION);
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(FILE_TYPES_EXTENSION);
 			if (extension != null) {
 				IExtension[] extensions =  extension.getExtensions();
 				for (int i = 0; i < extensions.length; i++) {

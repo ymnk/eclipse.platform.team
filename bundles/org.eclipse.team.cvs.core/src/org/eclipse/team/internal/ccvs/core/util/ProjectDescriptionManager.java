@@ -30,7 +30,7 @@ import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.internal.TeamManager;
+import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.xml.sax.InputSource;
@@ -148,9 +148,9 @@ public class ProjectDescriptionManager {
 					Util.logError(Policy.bind("ProjectDescriptionManager.unableToSetDescription"), ex); //$NON-NLS-1$
 				}
 				// Make sure we have the cvs nature (the above read may have removed it)
-				if (!project.getDescription().hasNature(CVSProviderPlugin.NATURE_ID)) {
+				if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId())) {
 					try {
-						TeamManager.addNatureToProject(project, CVSProviderPlugin.NATURE_ID, progress);
+						TeamPlugin.addNatureToProject(project, CVSProviderPlugin.getTypeId(), progress);
 					}  catch (TeamException ex) {
 						// Failing to set the provider is probably due to a missing nature.
 						// Other natures are still set
@@ -198,7 +198,7 @@ public class ProjectDescriptionManager {
 						if (resource.getType() == IResource.PROJECT) {
 							IProject project = (IProject)resource;
 							RepositoryProvider provider = RepositoryProviderType.getProvider(project);
-							if (! provider.isOfType(CVSProviderPlugin.NATURE_ID)) continue;
+							if (! provider.isOfType(CVSProviderPlugin.getTypeId())) continue;
 							// First, check if the .vcm_meta file for the project is in the delta.
 							IResourceDelta[] children = delta.getAffectedChildren(IResourceDelta.REMOVED | IResourceDelta.ADDED | IResourceDelta.CHANGED);
 							boolean inSync = false;

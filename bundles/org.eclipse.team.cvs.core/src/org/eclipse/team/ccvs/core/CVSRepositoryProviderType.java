@@ -26,6 +26,6 @@ public class CVSRepositoryProviderType extends RepositoryProviderType {
 	 * @see RepositoryProviderType#getID()
 	 */
 	public String getID() {
-		return CVSProviderPlugin.NATURE_ID;
+		return CVSProviderPlugin.getTypeId();
 	}
 }

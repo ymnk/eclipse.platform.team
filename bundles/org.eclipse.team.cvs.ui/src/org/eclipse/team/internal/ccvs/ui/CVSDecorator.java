@@ -9,12 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -29,13 +27,12 @@ import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.team.ccvs.core.*;
+import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.ccvs.core.IResourceStateChangeListener;
-import org.eclipse.team.core.ITeamProvider;
-import org.eclipse.team.core.TeamPlugin;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.internal.ccvs.core.CVSProvider;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.ResourceDeltaVisitor;
 
@@ -99,7 +96,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 		
 		decoratorUpdateThread = new Thread(new CVSDecorationRunnable(this), "CVS"); //$NON-NLS-1$
 		decoratorUpdateThread.start();
-		TeamPlugin.getManager().addResourceStateChangeListener(this);
+		CVSProviderPlugin.addResourceStateChangeListener(this);
 		changeListener = new ChangeListener();
 		changeListener.register();
 	}
@@ -259,7 +256,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 					return true;
 				}
 			});
-			TeamPlugin.getManager().broadcastResourceStateChanges((IResource[]) resources.toArray(new IResource[resources.size()]));	
+			CVSProviderPlugin.broadcastResourceStateChanges((IResource[]) resources.toArray(new IResource[resources.size()]));	
 		} catch (CoreException e) {
 		}
 	}
@@ -293,8 +290,8 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 	 * will be ignored by the decorator.
 	 */
 	private static CVSTeamProvider getCVSProviderFor(IResource resource) {
-		ITeamProvider p = TeamPlugin.getManager().getProvider(resource);
-		if (p == null || !(p instanceof CVSTeamProvider)) {
+		RepositoryProvider p = RepositoryProviderType.getProvider(resource.getProject());
+		if (p == null || !p.isOfType(CVSProviderPlugin.getTypeId())) {
 			return null;
 		}
 		return (CVSTeamProvider) p;
@@ -387,7 +384,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 		
 		// unregister change listeners
 		changeListener.register();
-		TeamPlugin.getManager().removeResourceStateChangeListener(this);
+		CVSProviderPlugin.removeResourceStateChangeListener(this);
 		
 		// dispose of images created as overlays
 		decoratorNeedsUpdating.clear();
