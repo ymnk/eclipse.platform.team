@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.compare.internal.ExceptionHandler;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.QualifiedName;
@@ -60,7 +59,6 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamDelta;
@@ -857,8 +855,6 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			table.getTable().selectAll();
 		} else {
 			// Select All in a tree doesn't really work well
-//			TreeViewer tree = (TreeViewer)getViewer();
-//			tree.getTree().selectAll();
 		}
 	}
 	

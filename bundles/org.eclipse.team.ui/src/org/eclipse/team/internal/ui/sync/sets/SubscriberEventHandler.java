@@ -18,11 +18,12 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ui.ExceptionCollector;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**
  * This handler collects changes and removals to resources and calculates their
@@ -46,6 +47,8 @@ public class SubscriberEventHandler {
 
 	// The job that runs when events need to be processed
 	 Job eventHandlerJob;
+	 
+	private ExceptionCollector errors;
 	
 	/**
 	 * Internal resource synchronization event. Can contain a result.
@@ -88,6 +91,7 @@ public class SubscriberEventHandler {
 	 */
 	public SubscriberEventHandler(SyncSetInputFromSubscriber set) {
 		this.set = set;
+		errors = new ExceptionCollector(Policy.bind("SubscriberEventHandler.errors"), TeamUIPlugin.ID, IStatus.ERROR, null /* don't log */); //$NON-NLS-1$
 		reset(Event.INITIALIZE);
 		createEventHandlingJob();
 		eventHandlerJob.schedule();
@@ -155,19 +159,20 @@ public class SubscriberEventHandler {
 			 eventHandlerJob = new Job(Policy.bind("SubscriberEventHandler.jobName")) { //$NON-NLS-1$
 	
 			 public IStatus run(IProgressMonitor monitor) {
-				 monitor.beginTask(null, 100); //$NON-NLS-1$
+				monitor.beginTask(null, 100); //$NON-NLS-1$
 				List resultCache = new ArrayList();
-				 Event event;
-				 while ((event = nextElement()) != null) {
-				 	
-				 	// cancellation is dangerous because this will leave the sync info in a bad state.
-				 	// purposely not checking
-				 	
-				 	try {
+				
+				Event event;				
+				errors.clear();
+				
+				while ((event = nextElement()) != null) {			 	
+					// cancellation is dangerous because this will leave the sync info in a bad state.
+					// purposely not checking				 	
+					try {
 						int type = event.getType();
 						switch(type) {
 							case Event.REMOVAL : 
-								resultCache.add(new Event(event.getResource(), event.getType(), event.getDepth()));
+								resultCache.add(event);
 								break;
 							case Event.CHANGE :
 								List results = new ArrayList();
@@ -180,17 +185,16 @@ public class SubscriberEventHandler {
 								break;				 										
 						}
 					} catch (TeamException e) {
-						// TODO: 
-						// accumulate but keep processing the other events.
-						// the user may need a way to revalidate 
+						// handle exception but keep going
+						errors.handleException(e);
 					}
-				 	
-					 if (awaitingProcessing.isEmpty() || resultCache.size() > NOTIFICATION_BATCHING_NUMBER) {
-						 dispatchEvents((Event[])resultCache.toArray(new Event[resultCache.size()]));
-						 resultCache.clear();
-					 }
-				 }
-				 return Status.OK_STATUS;
+					 	
+					if (awaitingProcessing.isEmpty() || resultCache.size() > NOTIFICATION_BATCHING_NUMBER) {
+						dispatchEvents((Event[])resultCache.toArray(new Event[resultCache.size()]));
+						resultCache.clear();
+					}
+				}
+				return errors.getStatus();
 			 }
 		 };
 		eventHandlerJob.setPriority(Job.SHORT);
@@ -284,5 +288,5 @@ public class SubscriberEventHandler {
 		for (int i = 0; i < resources.length; i++) {
 			queueEvent(new Event(resources[i], type, IResource.DEPTH_INFINITE));			
 		}
-	}
+	}	
 }

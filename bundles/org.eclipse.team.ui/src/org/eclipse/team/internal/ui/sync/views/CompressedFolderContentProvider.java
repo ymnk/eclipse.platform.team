@@ -38,7 +38,7 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 			IResource[] roots = event.getAddedRoots();
 			refreshProjects(tree, roots);
 		} else {
-			super.handleResourceRemovals(event);
+			super.handleResourceAdditions(event);
 		}
 	}
 

@@ -80,9 +80,11 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 				if (resource.getType() == IResource.PROJECT) {
 					parent = getSyncSet();
 				} else {
-					parent = getModelParent(resource);
+					parent = getModelParent(resource);				
 				}
-				tree.add(parent, getModelObject(resource));
+				Object element = getModelObject(resource);				
+				tree.add(parent, element);
+				tree.expandToLevel(element, AbstractTreeViewer.ALL_LEVELS);				
 			}
 		} else {
 			super.handleResourceAdditions(event);
