@@ -44,8 +44,8 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.BaserevInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
-import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.FileNameMatcher;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
@@ -60,16 +60,13 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  * @see ResourceSyncInfo
  * @see FolderSyncInfo
  */
-public class EclipseSynchronizer {	
+public class EclipseSynchronizer extends ResourceSynchronizer {	
 	private static final String IS_DIRTY_INDICATOR = SyncInfoCache.IS_DIRTY_INDICATOR;
 	private static final String NOT_DIRTY_INDICATOR = SyncInfoCache.NOT_DIRTY_INDICATOR;
 	private static final String RECOMPUTE_INDICATOR = SyncInfoCache.RECOMPUTE_INDICATOR; 
 		
 	// the cvs eclipse synchronizer is a singleton
 	private static EclipseSynchronizer instance;
-	
-	// track resources that have changed in a given operation
-	private ReentrantLock lock = new ReentrantLock();
 	
 	private Set changedResources = new HashSet();
 	private Set changedFolders = new HashSet();
@@ -402,9 +399,9 @@ public class EclipseSynchronizer {
 	 * @param monitor the progress monitor, may be null
 	 */
 	public void beginOperation(IProgressMonitor monitor) throws CVSException {
-		lock.acquire();
+		super.beginOperation(monitor);
 
-		if (lock.getNestingCount() == 1) {
+		if (isOuterOperation()) {
 			prepareCache(monitor);
 		}		
 	}
@@ -424,14 +421,14 @@ public class EclipseSynchronizer {
 	public void endOperation(IProgressMonitor monitor) throws CVSException {		
 		try {
 			IStatus status = SyncInfoCache.STATUS_OK;
-			if (lock.getNestingCount() == 1) {
+			if (isOuterOperation()) {
 				status = commitCache(monitor);
 			}
 			if (!status.isOK()) {
 				throw new CVSException(status);
 			}
 		} finally {
-			lock.release();
+			super.endOperation(monitor);
 		}
 	}
 	
@@ -1269,24 +1266,6 @@ public class EclipseSynchronizer {
 	}
 	
 	/**
-	 * Obtain the CVS sync lock while running the given ICVSRunnable.
-	 * @param job
-	 * @param monitor
-	 * @throws CVSException
-	 */
-	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException {
-		monitor = Policy.monitorFor(monitor);
-		monitor.beginTask(null, 100);
-		try {
-			beginOperation(Policy.subMonitorFor(monitor, 5));
-			job.run(Policy.subMonitorFor(monitor, 60));
-		} finally {
-			endOperation(Policy.subMonitorFor(monitor, 35));
-			monitor.done();
-		}
-	}
-	
-	/**
 	 * Method isEdited returns true if a "cvs edit" was performed on the given
 	 * file and no commit or unedit has yet been performed.
 	 * @param iResource
@@ -1431,26 +1410,6 @@ public class EclipseSynchronizer {
 		} else {
 			return ICVSFile.UNKNOWN;
 		}
-	}
-	
-	/**
-	 * If this method return false, the caller should not perform any workspace modification
-	 * operations. The danger of performing such an operation is deadlock.
-	 * 
-	 * @return boolean
-	 */
-	protected boolean isWorkspaceModifiable() {
-		return !lock.isReadOnly();
-	}
-	
-	/**
-	 * Register the given thread as a thread that should be resitricted to having read-only access.
-	 * If a thread is not registered, it is expected that they obtain the workspace lock before
-	 * accessing any CVS sync information.
-	 * @param thread
-	 */
-	public void addReadOnlyThread(Thread thread) {
-		lock.addReadOnlyThread(thread);
 	}
 
 }

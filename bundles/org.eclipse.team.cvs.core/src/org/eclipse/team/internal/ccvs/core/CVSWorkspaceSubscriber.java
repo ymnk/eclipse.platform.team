@@ -12,21 +12,14 @@ package org.eclipse.team.internal.ccvs.core;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ISynchronizer;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -37,11 +30,8 @@ import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
-import org.eclipse.team.internal.ccvs.core.util.Util;
-import org.eclipse.team.internal.core.Assert;
+import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
+import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteSynchronizer;
 
 /**
  * CVSWorkspaceSubscriber
@@ -59,8 +49,10 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	protected Map comparisonCriterias = new HashMap();
 	protected String defaultCriteria;
 	
+	private RemoteSynchronizer remoteSynchronizer;
+	
 	// qualified name for remote sync info
-	private QualifiedName REMOTE_RESOURCE_KEY = new QualifiedName("org.eclipse.team.cvs", "remote-resource-key");
+	private static final String REMOTE_RESOURCE_KEY = "remote-resource-key";
 	
 	CVSWorkspaceSubscriber() {
 	}
@@ -71,7 +63,7 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 		this.description = description;
 		
 		// install sync info participant
-		getSynchronizer().add(getRemoteSyncName());
+		remoteSynchronizer = new OptimizedRemoteSynchronizer(REMOTE_RESOURCE_KEY);
 		
 		// setup comparison criteria
 		ComparisonCriteria revisionNumberComparator = new CVSRevisionNumberCompareCriteria();
@@ -146,7 +138,7 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	 */
 	public IResource[] members(IResource resource) throws TeamException {
 		try {
-			return doMembers(resource);
+			return remoteSynchronizer.members(resource);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -155,33 +147,8 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
 	 */
-	public IRemoteResource getRemoteResource(IResource resource)	throws TeamException {
-		try {
-			byte[] remoteBytes = getRemoteSyncBytes(resource);
-			if (remoteBytes == null) {
-				// The remote has never been fetched so use the base
-				if(resource.getType() != IResource.FILE && !resource.exists()) {
-					// In CVS, a folder with no local or remote cannot have a base either
-					return null;
-				}
-				// return the base handle taken from the Entries file
-				return CVSWorkspaceRoot.getBaseFor(resource);	
-			} else if (remoteDoesNotExist(remoteBytes)) {
-				// The remote is known to not exist
-				return null;
-			} else {
-				// TODO: This code assumes that the type of the remote resource
-				// matches that of the local resource. This may not be true.
-				// TODO: This is rather complicated. There must be a better way!
-				if (resource.getType() == IResource.FILE) {
-					return RemoteFile.fromBytes(resource, remoteBytes, getRemoteSyncBytes(resource.getParent()));
-				} else {
-					return RemoteFolder.fromBytes((IContainer)resource, remoteBytes);
-				}
-			}
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
+	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
+		return remoteSynchronizer.getRemoteResource(resource);
 	}
 
 	/* (non-Javadoc)
@@ -192,6 +159,7 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 		if(resource.getType() == IResource.FILE) {
 			return new CVSSyncInfo(resource, CVSWorkspaceRoot.getBaseFor(resource), remoteResource, this, monitor);
 		} else {
+			// In CVS, folders do not have a base. Hence, the remotge is used as the base.
 			return new CVSSyncInfo(resource, remoteResource, remoteResource, this, monitor);
 		}
 	}
@@ -219,43 +187,13 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
 				try {
 					sub.beginTask(null, 512);
-					collectChanges(resource, trees[i], depth, sub);
+					remoteSynchronizer.collectChanges(resource, trees[i], depth, sub);
 				} finally {
 					sub.done();			 
 				}
 			}
 		} finally {
 			monitor.done();
-		}
-	}
-
-	/**
-	 * @param resource
-	 */
-	private void collectChanges(IResource local, ICVSRemoteResource remote, int depth, IProgressMonitor monitor) throws TeamException {
-		byte[] remoteBytes;
-		if (remote != null) {
-			remoteBytes = ((RemoteResource)remote).getSyncBytes();
-		} else {
-			remoteBytes = NO_REMOTE;
-		}
-		try {
-				
-			// TODO: when does sync information get updated? For example, on commit. And
-			// when does it get cleared.
-			getSynchronizer().setSyncInfo(getRemoteSyncName(), local, remoteBytes);
-			
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-		if (depth == IResource.DEPTH_ZERO) return;
-		Map children = mergedMembers(local, remote, monitor);	
-		for (Iterator it = children.keySet().iterator(); it.hasNext();) {
-			IResource localChild = (IResource) it.next();
-			ICVSRemoteResource remoteChild = (ICVSRemoteResource)children.get(localChild);
-			collectChanges(localChild, remoteChild, 
-				depth == IResource.DEPTH_INFINITE ? IResource.DEPTH_INFINITE : IResource.DEPTH_ZERO, 
-				monitor);
 		}
 	}
 
@@ -306,149 +244,6 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 		// noop
 	}
 	
-	protected IResource[] doMembers(IResource resource) throws TeamException, CoreException {
-		if(resource.getType() == IResource.FILE) {
-			return new IResource[0];
-		}	
-		
-		// TODO: will have to filter and return only the CVS phantoms.
-		IResource[] members = ((IContainer)resource).members(true /* include phantoms */);
-		List filteredMembers = new ArrayList(members.length);
-		for (int i = 0; i < members.length; i++) {
-			IResource r = members[i];
-			
-			// TODO: consider that there may be several sync states on this resource. There
-			// should instead be a method to check for the existance of a set of sync types on
-			// a resource.
-			if(! r.exists()) {
-				if(CVSWorkspaceRoot.getCVSResourceFor(r).getSyncInfo() == null) { 
-					if(getRemoteSyncBytes(r) == null) {
-						continue;
-					}
-				}
-			}
-			
-			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(r);
-			if( !cvsThing.isIgnored()) {
-				filteredMembers.add(r);
-			}
-		}
-		return (IResource[]) filteredMembers.toArray(new IResource[filteredMembers.size()]);
-	}
-
-	protected QualifiedName getRemoteSyncName() {
-		return REMOTE_RESOURCE_KEY;
-	}
-	
-	protected ISynchronizer getSynchronizer() {
-		return ResourcesPlugin.getWorkspace().getSynchronizer();
-	}
-	
-	/*
-	 * Get the sync bytes for the remote resource
-	 */
-	private byte[] getRemoteSyncBytes(IResource r) throws CoreException {
-		return getSynchronizer().getSyncInfo(getRemoteSyncName(), r);
-	}
-	
-	/*
-	 * Return true if the given bytes indocate that the remote does not exist.
-	 * The provided byte array must not be null;
-	 */
-	private boolean remoteDoesNotExist(byte[] remoteBytes) {
-		Assert.isNotNull(remoteBytes);
-		return Util.equals(remoteBytes, NO_REMOTE);
-	}
-	
-	protected Map mergedMembers(IResource local, IRemoteResource remote, IProgressMonitor progress) throws TeamException {
-	
-		// {IResource -> IRemoteResource}
-		Map mergedResources = new HashMap();
-		
-		IRemoteResource[] remoteChildren =
-			remote != null ? remote.members(progress) : new IRemoteResource[0];
-		
-		IResource[] localChildren;			
-		try {	
-			if( local.getType() != IResource.FILE && local.exists() ) {
-				// TODO: This should be a list of all non-ignored resources including outgoing deletions
-				localChildren = ((IContainer)local).members(true /* include phantoms */);
-			} else {
-				localChildren = new IResource[0];
-			}
-		} catch(CoreException e) {
-			throw new TeamException(e.getStatus());
-		}
-		
-		if (remoteChildren.length > 0 || localChildren.length > 0) {
-			List syncChildren = new ArrayList(10);
-			Set allSet = new HashSet(20);
-			Map localSet = null;
-			Map remoteSet = null;
-
-			if (localChildren.length > 0) {
-				localSet = new HashMap(10);
-				for (int i = 0; i < localChildren.length; i++) {
-					IResource localChild = localChildren[i];
-					String name = localChild.getName();
-					localSet.put(name, localChild);
-					allSet.add(name);
-				}
-			}
-
-			if (remoteChildren.length > 0) {
-				remoteSet = new HashMap(10);
-				for (int i = 0; i < remoteChildren.length; i++) {
-					IRemoteResource remoteChild = remoteChildren[i];
-					String name = remoteChild.getName();
-					remoteSet.put(name, remoteChild);
-					allSet.add(name);
-				}
-			}
-		
-			Iterator e = allSet.iterator();
-			while (e.hasNext()) {
-				String keyChildName = (String) e.next();
-
-				if (progress != null) {
-					if (progress.isCanceled()) {
-						throw new OperationCanceledException();
-					}
-					// XXX show some progress?
-				}
-
-				IResource localChild =
-					localSet != null ? (IResource) localSet.get(keyChildName) : null;
-
-				IRemoteResource remoteChild =
-					remoteSet != null ? (IRemoteResource) remoteSet.get(keyChildName) : null;
-				
-				if (localChild == null) {
-					// there has to be a remote resource available if we got this far
-					Assert.isTrue(remoteChild != null);
-					boolean isContainer = remoteChild.isContainer();				
-					localChild = getResourceChild(local /* parent */, keyChildName, isContainer);
-				}
-				mergedResources.put(localChild, remoteChild);				
-			}
-		}
-		return mergedResources;
-	}
-	
-	/*
-	 * Returns a handle to a non-existing resource.
-	 */
-	private IResource getResourceChild(IResource parent, String childName, boolean isContainer) {
-		if (parent.getType() == IResource.FILE) {
-			return null;
-		}
-		if (isContainer) {
-			return ((IContainer) parent).getFolder(new Path(childName));
-		} else {
-			return ((IContainer) parent).getFile(new Path(childName));
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceSyncInfoChanged(org.eclipse.core.resources.IResource[])
 	 */
@@ -464,10 +259,10 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 				// TODO should use revision and tag to determine if remote is stale
 				if (resource.getType() == IResource.FILE
 						&& (resource.exists() || resource.isPhantom())) {
-					getSynchronizer().flushSyncInfo(getRemoteSyncName(), resource, IResource.DEPTH_ZERO);
+					remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_ZERO);
 				}
-			} catch (CoreException e) {
-				CVSProviderPlugin.log(CVSException.wrapException(e));
+			} catch (CVSException e) {
+				CVSProviderPlugin.log(e);
 			}
 		}		
 		
@@ -503,6 +298,11 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectDeconfigured(org.eclipse.core.resources.IProject)
 	 */
 	public void projectDeconfigured(IProject project) {
+		try {
+			remoteSynchronizer.removeSyncBytes(project, IResource.DEPTH_INFINITE);
+		} catch (CVSException e) {
+			CVSProviderPlugin.log(e);
+		}
 		TeamDelta delta = new TeamDelta(this, TeamDelta.PROVIDER_DECONFIGURED, project);
 		fireTeamResourceChange(new TeamDelta[] {delta});
 	}

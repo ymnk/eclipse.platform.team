@@ -11,6 +11,11 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -22,18 +27,23 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.ITeamResourceChangeListener;
 import org.eclipse.team.core.sync.RemoteSyncElement;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
+import org.eclipse.team.core.sync.TeamDelta;
 import org.eclipse.team.core.sync.TeamProvider;
+import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -45,6 +55,9 @@ import org.eclipse.team.tests.ccvs.core.EclipseTest;
  */
 public class CVSSubscriberTest extends EclipseTest {
 
+	ITeamResourceChangeListener listener;
+	List accumulatedTeamDeltas = new ArrayList();
+	
 	/**
 	 * Constructor for CVSProviderTest
 	 */
@@ -87,22 +100,55 @@ public class CVSSubscriberTest extends EclipseTest {
 	 * Assert that the specified resources in the subscriber have the specified sync kind
 	 * Ignore conflict types if they are not specified in the assert statement
 	 */
-	protected void assertSyncEquals(String message, IContainer root, String[] resourcePaths, int[] syncKinds) throws CoreException, TeamException {
+	protected void assertSyncEquals(String message, IContainer root, String[] resourcePaths, boolean refresh, int[] syncKinds) throws CoreException, TeamException {
 		assertTrue(resourcePaths.length == syncKinds.length);
-		refresh(root);
+		if (refresh) refresh(root);
 		IResource[] resources = getResources(root, resourcePaths);
 		SyncTreeSubscriber subscriber = getSubscriber();
 		for (int i=0;i<resources.length;i++) {
-			int conflictTypeMask = 0x0F; // ignore manual and auto merge sync types for now.
-			IResource resource = resources[i];
-			SyncInfo info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
-			int kind = info.getKind() & conflictTypeMask;
-			int kindOther = syncKinds[i] & conflictTypeMask;
-			assertTrue(message + ": improper sync state for " + resources[i] + " expected " + 
-					   RemoteSyncElement.kindToString(kindOther) + " but was " +
-					   RemoteSyncElement.kindToString(kind), kind == kindOther);
+			assertSyncEquals(message, resources[i], syncKinds[i]);
 		}
 		
+	}
+	
+	protected void assertSyncEquals(String message, IResource resource, int syncKind) throws TeamException {
+		SyncTreeSubscriber subscriber = getSubscriber();
+		int conflictTypeMask = 0x0F; // ignore manual and auto merge sync types for now.
+		SyncInfo info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
+		int kind = info.getKind() & conflictTypeMask;
+		int kindOther = syncKind & conflictTypeMask;
+		assertTrue(message + ": improper sync state for " + resource + " expected " + 
+				   RemoteSyncElement.kindToString(kindOther) + " but was " +
+				   RemoteSyncElement.kindToString(kind), kind == kindOther);
+	}
+	
+	/**
+	 * @param changes
+	 * @param resources
+	 */
+	private void assertSyncChangesMatch(TeamDelta[] changes, IResource[] resources) {
+		// First, ensure that all the resources appear in the delta
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			boolean found = false;
+			for (int j = 0; j < changes.length; j++) {
+				TeamDelta delta = changes[j];
+				if (delta.getResource().equals(resource)) {
+					found = true;
+					break;
+				}
+			}
+			assertTrue("No change reported for " + resource, found);
+		}
+		// TODO: We'll worry about extra deltas later
+//		// Next, ensure there are no extra deltas
+//		List changedResources = new ArrayList(resources.length);
+//		changedResources.addAll(Arrays.asList(resources));
+//		for (int i = 0; i < changes.length; i++) {
+//			TeamDelta change = changes[i];
+//			IResource resource = change.getResource();
+//			assertTrue("Unanticipated change reported for " + resource, changedResources.contains(resource));
+//		}
 	}
 	
 	/* 
@@ -148,6 +194,184 @@ public class CVSSubscriberTest extends EclipseTest {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * 
+	 * Override to check that the proper sync state is achieved.
+	 * 
+	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#setContentsAndEnsureModified(org.eclipse.core.resources.IFile)
+	 */
+	protected void setContentsAndEnsureModified(IFile file) throws CoreException, TeamException {
+		// The delta will indicate to any interested parties that the sync state of the
+		// file has changed
+		super.setContentsAndEnsureModified(file);
+		assertSyncEquals("Setting contents: ", file, SyncInfo.OUTGOING | SyncInfo.CHANGE);
+	}
+
+	public static class ResourceCondition {
+		public boolean matches(IResource resource) throws CoreException, TeamException {
+			return true;
+		}
+	}
+	
+	private IResource[] collect(IResource[] resources, final ResourceCondition condition, int depth) throws CoreException, TeamException {
+		final Set affected = new HashSet();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if (resource.exists() || resource.isPhantom()) {
+				resource.accept(new IResourceVisitor() {
+					public boolean visit(IResource r) throws CoreException {
+						try {
+							if (condition.matches(r)) {
+								affected.add(r);
+							}
+						} catch (TeamException e) {
+							throw new CoreException(e.getStatus());
+						}
+						return true;
+					}
+				}, depth, true /* include phantoms */);
+			} else {
+				if (condition.matches(resource)) {
+					affected.add(resource);
+				}
+			}
+		}
+		return (IResource[]) affected.toArray(new IResource[affected.size()]);
+	}
+	
+	/**
+	 * @param resources
+	 * @param condition
+	 * @return
+	 */
+	private IResource[] collectAncestors(IResource[] resources, ResourceCondition condition) throws CoreException, TeamException {
+		Set affected = new HashSet();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			while (resource.getType() != IResource.ROOT) {
+				if (condition.matches(resource)) {
+					affected.add(resource);
+				} else {
+					break;
+				}
+				resource = resource.getParent();
+			}
+		}
+		return (IResource[]) affected.toArray(new IResource[affected.size()]);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#addResources(org.eclipse.core.resources.IResource[])
+	 */
+	protected void addResources(IResource[] resources) throws TeamException, CVSException, CoreException {
+		// first, get affected children
+		IResource[] affectedChildren = collect(resources, new ResourceCondition() {
+			public boolean matches(IResource resource) throws CoreException, TeamException {
+				ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+				return (!cvsResource.isManaged() && !cvsResource.isIgnored());
+			}
+		}, IResource.DEPTH_INFINITE);
+		// also get affected parents
+		IResource[] affectedParents = collectAncestors(resources, new ResourceCondition() {
+			public boolean matches(IResource resource) throws CoreException, TeamException {
+				if (resource.getType() == IResource.PROJECT) return false;
+				ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+				return (!cvsResource.isManaged() && !cvsResource.isIgnored());
+			}
+		});
+		Set affected = new HashSet();
+		affected.addAll(Arrays.asList(affectedChildren));
+		affected.addAll(Arrays.asList(affectedParents));
+		
+		registerSubscriberListener();
+		super.addResources(resources);
+		TeamDelta[] changes = deregisterSubscriberListener();
+		assertSyncChangesMatch(changes, (IResource[]) affected.toArray(new IResource[affected.size()]));
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if (resource.getType() == IResource.FILE) {
+				assertSyncEquals("Add", resource, SyncInfo.OUTGOING | SyncInfo.ADDITION);
+			} else {
+				// TODO: a folder should be in sync but isn't handled properly
+				assertSyncEquals("Add", resource, SyncInfo.IN_SYNC);
+			}
+			
+		}
+	}
+
+	private TeamDelta[] deregisterSubscriberListener() throws TeamException {
+		getSubscriber().removeListener(listener);
+		return (TeamDelta[]) accumulatedTeamDeltas.toArray(new TeamDelta[accumulatedTeamDeltas.size()]);
+	}
+
+	private ITeamResourceChangeListener registerSubscriberListener() throws TeamException {
+		listener = new ITeamResourceChangeListener() {
+			public void teamResourceChanged(TeamDelta[] deltas) {
+				accumulatedTeamDeltas.addAll(Arrays.asList(deltas));
+			}
+		};
+		accumulatedTeamDeltas.clear();
+		getSubscriber().addListener(listener);
+		return listener;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#deleteResources(org.eclipse.core.resources.IResource[])
+	 */
+	protected void deleteResources(IResource[] resources) throws TeamException, CoreException {
+		IResource[] affected = collect(resources, new ResourceCondition(), IResource.DEPTH_INFINITE);
+		registerSubscriberListener();
+		super.deleteResources(resources);
+		TeamDelta[] changes = deregisterSubscriberListener();
+		assertSyncChangesMatch(changes, affected);
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			assertSyncEquals("Delete", resource, SyncInfo.OUTGOING | SyncInfo.DELETION);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#commitResources(org.eclipse.core.resources.IResource[])
+	 */
+	protected void commitResources(IResource[] resources, int depth) throws TeamException, CVSException, CoreException {
+		IResource[] affected = collect(resources, new ResourceCondition() {
+				public boolean matches(IResource resource) throws CoreException, TeamException {
+					ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+					return (!cvsResource.isFolder() && cvsResource.isManaged() && cvsResource.isModified(DEFAULT_MONITOR));
+				}
+			}, IResource.DEPTH_INFINITE);
+		registerSubscriberListener();
+		super.commitResources(resources, depth);
+		TeamDelta[] changes = deregisterSubscriberListener();
+		assertSyncChangesMatch(changes, affected);
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if (resource.exists())
+				assertSyncEquals("Commit", resource, SyncInfo.IN_SYNC);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#unmanageResources(org.eclipse.core.resources.IResource[])
+	 */
+	protected void unmanageResources(IResource[] resources) throws CoreException, TeamException {
+		IResource[] affected = collect(resources, new ResourceCondition() {
+				public boolean matches(IResource resource) throws CoreException, TeamException {
+					ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+					return (cvsResource.isManaged());
+				}
+			}, IResource.DEPTH_INFINITE);
+		registerSubscriberListener();
+		super.unmanageResources(resources);
+		TeamDelta[] changes = deregisterSubscriberListener();
+		assertSyncChangesMatch(changes, affected);
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			if (resource.exists())
+				assertSyncEquals("Unmanage", resource, SyncInfo.IN_SYNC);
+		}
+	}
+	
 	/*
 	 * Perform a simple test that checks for the different types of incoming changes
 	 */
@@ -160,12 +384,12 @@ public class CVSSubscriberTest extends EclipseTest {
 		setContentsAndEnsureModified(copy.getFile("folder1/a.txt"));
 		addResources(copy, new String[] { "folder2/folder3/add.txt" }, false);
 		deleteResources(copy, new String[] {"folder1/b.txt"}, false);
-		getProvider(copy).checkin(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		commitProject(copy);
 
 		// Get the sync tree for the project
 		assertSyncEquals("testIncomingChanges", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.INCOMING | SyncInfo.CHANGE,
@@ -182,7 +406,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Verify that we are in sync (except for "folder1/b.txt", which was deleted)
 		assertSyncEquals("testIncomingChanges", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
@@ -212,7 +436,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Get the sync tree for the project
 		assertSyncEquals("testOutgoingChanges", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.OUTGOING | SyncInfo.CHANGE,
@@ -227,7 +451,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Ensure we're in sync
 		assertSyncEquals("testOutgoingChanges", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
@@ -254,7 +478,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Get the sync tree for the project
 		assertSyncEquals("testOutgoingQuestionables", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
@@ -272,7 +496,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Ensure we are in sync
 		assertSyncEquals("testOutgoingQuestionables", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
@@ -295,7 +519,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		IProject copy = checkoutCopy(project, "-copy");
 		appendText(copy.getFile("file1.txt"), "prefix\n", true);
 		setContentsAndEnsureModified(copy.getFile("folder1/a.txt"), "Use a custom string to avoid intermitant errors!");
-		getProvider(copy).checkin(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		commitProject(copy);
 
 		// Make the same modifications to the original (We need to test both M and C!!!)
 		appendText(project.getFile("file1.txt"), "\npostfix", false); // This will test merges (M)
@@ -304,7 +528,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Get the sync tree for the project
 		assertSyncEquals("testFileConflict", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
 				SyncInfo.IN_SYNC,
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE });
@@ -315,7 +539,7 @@ public class CVSSubscriberTest extends EclipseTest {
 			null, true /*createBackups*/, DEFAULT_MONITOR);					 
 		assertSyncEquals("testFileConflict", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE });
@@ -324,14 +548,14 @@ public class CVSSubscriberTest extends EclipseTest {
 		makeOutgoing(project, new String[] {"folder1/a.txt"});
 		assertSyncEquals("testFileConflict", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.OUTGOING | SyncInfo.CHANGE });
-		getProvider(project).checkin(new IResource[] {project.getFile("folder1/a.txt")}, IResource.DEPTH_ZERO, DEFAULT_MONITOR);
+		commitResources(new IResource[] {project.getFile("folder1/a.txt")}, IResource.DEPTH_ZERO);
 		assertSyncEquals("testFileConflict", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC });
@@ -366,7 +590,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Get the sync tree for the project
 		assertSyncEquals("testAdditionConflicts", project, 
 			new String[] { "file.txt", "add1a.txt", "add1b.txt", "add2a.txt", "add2b.txt", "add3.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.CONFLICTING | SyncInfo.ADDITION,
 				SyncInfo.CONFLICTING | SyncInfo.ADDITION,
@@ -378,15 +602,15 @@ public class CVSSubscriberTest extends EclipseTest {
 		makeOutgoing(project, new String[]{"add1b.txt", "add2b.txt", "add3.txt"});
 		assertSyncEquals("testAdditionConflicts", project, 
 			new String[] { "file.txt", "add1b.txt", "add2b.txt", "add3.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.OUTGOING | SyncInfo.CHANGE,
 				SyncInfo.OUTGOING | SyncInfo.CHANGE,
 				SyncInfo.OUTGOING | SyncInfo.ADDITION });
-		getProvider(project).checkin(new IResource[] {project.getFile("add1b.txt"), project.getFile("add2b.txt"), project.getFile("add3.txt")}, IResource.DEPTH_ZERO, DEFAULT_MONITOR);
+		commitResources(new IResource[] {project.getFile("add1b.txt"), project.getFile("add2b.txt"), project.getFile("add3.txt")}, IResource.DEPTH_ZERO);
 		assertSyncEquals("testAdditionConflicts", project, 
 			new String[] { "file.txt", "add1b.txt", "add2b.txt", "add3.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
@@ -404,7 +628,7 @@ public class CVSSubscriberTest extends EclipseTest {
 			null, true /*createBackups*/, DEFAULT_MONITOR);
 		assertSyncEquals("testAdditionConflicts", project, 
 			new String[] { "add1a.txt", "add2a.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC });
 	}
@@ -447,12 +671,12 @@ public class CVSSubscriberTest extends EclipseTest {
 		setContentsAndEnsureModified(copy.getFile("delete1.txt"));
 		setContentsAndEnsureModified(copy.getFile("delete2.txt"));
 		deleteResources(copy, new String[] {"delete3.txt", "delete4.txt", "delete5.txt"}, false);
-		getProvider(copy).checkin(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		commitProject(copy);
 		
 		// Get the sync tree for the project
 		assertSyncEquals("testDeletionConflictsA", project, 
 			new String[] { "delete1.txt", "delete2.txt", "delete3.txt", "delete4.txt", "delete5.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
@@ -470,7 +694,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		updateResources(project, new String[] {"delete1.txt", "delete2.txt", "delete3.txt", "delete4.txt", "delete5.txt"}, true);
 		assertSyncEquals("testDeletionConflictsA", project, 
 			new String[] { "delete1.txt", "delete2.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC });
 		assertDeleted("testDeletionConflictsA", project, new String[] {"delete3.txt", "delete4.txt", "delete5.txt"});
@@ -492,12 +716,12 @@ public class CVSSubscriberTest extends EclipseTest {
 		setContentsAndEnsureModified(copy.getFile("delete1.txt"));
 		setContentsAndEnsureModified(copy.getFile("delete2.txt"));
 		deleteResources(copy, new String[] {"delete3.txt", "delete4.txt", "delete5.txt"}, false);
-		getProvider(copy).checkin(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		commitProject(copy);
 
 		// Get the sync tree for the project
 		assertSyncEquals("testDeletionConflictsB", project, 
 			new String[] { "delete1.txt", "delete2.txt", "delete3.txt", "delete4.txt", "delete5.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
@@ -512,7 +736,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		commitResources(project, new String[] { "delete1.txt", "delete2.txt", "delete3.txt", "delete4.txt", "delete5.txt"});
 		assertSyncEquals("testDeletionConflictsB", project, 
 			new String[] { "delete3.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC });
 		assertDeleted("testDeletionConflictsB", project, new String[] {"delete1.txt", "delete2.txt", "delete4.txt", "delete5.txt"});
 	}
@@ -559,7 +783,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		
 		assertSyncEquals("testFolderConflict", project, 
 			new String[] { "file.txt", "folder1/", "folder1/file.txt", "folder2/", "folder2/file.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.CONFLICTING | SyncInfo.ADDITION,
 				SyncInfo.INCOMING | SyncInfo.ADDITION,
@@ -569,7 +793,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		makeInSync(project, new String[] {"folder1/"});
 		assertSyncEquals("testFolderConflict", project, 
 			new String[] { "file.txt", "folder1/", "folder1/file.txt", "folder2/", "folder2/file.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.INCOMING | SyncInfo.ADDITION,
@@ -592,19 +816,19 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Get the sync tree for the project
 		assertSyncEquals("testOutgoingDeletion", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.OUTGOING | SyncInfo.DELETION});
 				
 		// Commit the deletion
-		getProvider(file).checkin(new IResource[] {file}, IResource.DEPTH_ZERO, DEFAULT_MONITOR);
+		commitResources(new IResource[] {file}, IResource.DEPTH_ZERO);
 		
 		// Get the sync tree again for the project and ensure others aren't effected
 		assertSyncEquals("testOutgoingDeletion", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC});
@@ -627,7 +851,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Get the sync tree for the project
 		assertSyncEquals("testIncomingAddition", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
@@ -640,7 +864,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Get the sync tree again for the project and ensure the added resource is in sync
 		assertSyncEquals("testIncomingAddition", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/add.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
@@ -658,7 +882,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		IProject copy = checkoutCopy(project, "-copy");
 		appendText(copy.getFile("file1.txt"), "", true);
 		setContentsAndEnsureModified(copy.getFile("folder1/a.txt"));
-		getProvider(copy).checkin(new IResource[] {copy}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		commitProject(copy);
 
 		// Make the same modifications to the original
 		appendText(project.getFile("file1.txt"), "", false);
@@ -670,7 +894,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		getSubscriber().setCurrentComparisonCriteria("org.eclipse.team.comparisoncriteria.content");
 		assertSyncEquals("testGranularityContents", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-			new int[] {
+			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC,
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE });
@@ -760,14 +984,14 @@ public class CVSSubscriberTest extends EclipseTest {
 		int[] inSync = new int[] {SyncInfo.IN_SYNC, SyncInfo.IN_SYNC, SyncInfo.IN_SYNC};
 		IProject project = createProject("testRenameProject", new String[] { "changed.txt", "folder1/", "folder1/a.txt" });
 		
-		assertSyncEquals("sync should be in sync", project, resourceNames, inSync);
+		assertSyncEquals("sync should be in sync", project, resourceNames, true, inSync);
 		IProjectDescription desc = project.getDescription();
 		String newName = project.getName() + "_renamed";
 		desc.setName(newName);
 		project.move(desc, false, null);
 		project = ResourcesPlugin.getWorkspace().getRoot().getProject(newName);
 		assertTrue(project.exists());
-		assertSyncEquals("sync should be in sync", project, resourceNames, inSync);
+		assertSyncEquals("sync should be in sync", project, resourceNames, true, inSync);
 	}
 	
 	public void testFolderDeletion() throws TeamException, CoreException {
@@ -783,7 +1007,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// The files should show up as outgoing deletions
 		assertSyncEquals("testFolderDeletion sync check", project,
 						 new String[] { "folder1/", "folder1/a.txt", "folder1/folder2/", "folder1/folder2/file.txt"},
-						 new int[] { SyncInfo.IN_SYNC,
+						 true, new int[] { SyncInfo.IN_SYNC,
 									  SyncInfo.OUTGOING | SyncInfo.DELETION,
 									  SyncInfo.IN_SYNC,
 									  SyncInfo.OUTGOING | SyncInfo.DELETION});
@@ -794,7 +1018,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Resync and verify that above file is gone and others remain the same
 		assertSyncEquals("testFolderDeletion sync check", project,
 						 new String[] { "folder1/", "folder1/folder2/", "folder1/folder2/file.txt"},
-						 new int[] { SyncInfo.IN_SYNC,
+						 true, new int[] { SyncInfo.IN_SYNC,
 									  SyncInfo.IN_SYNC,
 									  SyncInfo.OUTGOING | SyncInfo.DELETION});
 		assertDeleted("testFolderDeletion", project, new String[] {"folder1/a.txt"});
@@ -822,4 +1046,5 @@ public class CVSSubscriberTest extends EclipseTest {
 		// XXX This will fail for CVSNT with directory pruning on
 		refresh(project);
 	 }
+
 }
