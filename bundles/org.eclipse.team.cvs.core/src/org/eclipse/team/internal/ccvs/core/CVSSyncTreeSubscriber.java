@@ -151,15 +151,19 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 
 	protected IResource[] refreshBase(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
 		if (isThreeWay()) {
-			return new CVSRefreshOperation(getBaseSynchronizationCache(), null, getBaseTag(),  getCacheFileContentsHint())
-				.refresh(resources, depth, monitor);
+			return new ResourceVariantTreeRefresh(
+					new CVSResourceVariantFactory(null, getBaseTag(), getCacheFileContentsHint()), 
+					getBaseSynchronizationCache())
+			.refresh(resources, depth, monitor);
 		} else {
 			return new IResource[0];
 		}
 	}
 
 	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		return new CVSRefreshOperation(getRemoteSynchronizationCache(), getBaseSynchronizationCache(), getRemoteTag(), getCacheFileContentsHint())
+		return new ResourceVariantTreeRefresh(
+				new CVSResourceVariantFactory(getBaseSynchronizationCache(), getBaseTag(), getCacheFileContentsHint()), 
+				getRemoteSynchronizationCache())
 			.refresh(resources, depth, monitor);
 	}
 

@@ -13,7 +13,9 @@ package org.eclipse.team.internal.ccvs.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
@@ -21,10 +23,14 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 import org.eclipse.team.core.synchronize.IResourceVariant;
-import org.eclipse.team.internal.ccvs.core.syncinfo.*;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSBaseSynchronizationCache;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSDescendantSynchronizationCache;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSResourceVariantFactory;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
-import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
 import org.eclipse.team.internal.core.subscribers.caches.PersistantResourceVariantTree;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTree;
+import org.eclipse.team.internal.core.subscribers.caches.ResourceVariantTreeRefresh;
 
 /**
  * CVSWorkspaceSubscriber
@@ -176,7 +182,10 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	public void setRemote(IProject project, IResourceVariant remote, IProgressMonitor monitor) throws TeamException {
 		// TODO: This exposes internal behavior to much
 		IResource[] changedResources = 
-			new CVSRefreshOperation(remoteSynchronizer, baseSynchronizer, null, false).collectChanges(project, remote, IResource.DEPTH_INFINITE, monitor);
+			 new ResourceVariantTreeRefresh(
+					new CVSResourceVariantFactory(baseSynchronizer, null, false), 
+					remoteSynchronizer)
+				.collectChanges(project, remote, IResource.DEPTH_INFINITE, monitor);
 		if (changedResources.length != 0) {
 			fireTeamResourceChange(SubscriberChangeEvent.asSyncChangedDeltas(this, changedResources));
 		}

@@ -51,11 +51,6 @@ public abstract class SyncTreeSubscriber extends Subscriber {
 	}
 
 	/**
-	 * @return
-	 */
-	public abstract IResourceVariantComparator getResourceComparator();
-
-	/**
 	 * Method that creates an instance of SyncInfo for the provider local, base and remote.
 	 * Can be overiden by subclasses.
 	 * @param local

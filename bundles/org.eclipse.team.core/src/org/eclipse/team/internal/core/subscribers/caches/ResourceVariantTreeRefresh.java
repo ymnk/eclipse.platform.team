@@ -28,7 +28,19 @@ import org.eclipse.team.internal.core.Policy;
  * a <code>ResourceVariantTree</code>. It also accumulates and returns all local resources 
  * for which the corresponding resource variant has changed.
  */
-public abstract class ResourceVariantTreeRefresh {
+public class ResourceVariantTreeRefresh {
+	
+	private IResourceVariantFactory factory;
+	private ResourceVariantTree tree;
+	
+	/**
+	 * Create the refresh operation with the give variant factory.
+	 * @param factory
+	 */
+	public ResourceVariantTreeRefresh(IResourceVariantFactory factory, ResourceVariantTree tree) {
+		this.factory = factory;
+		this.tree = tree;
+	}
 	
 	/**
 	 * Refreshes the resource variant tree for the specified resources and possibly their descendants,
@@ -88,13 +100,13 @@ public abstract class ResourceVariantTreeRefresh {
 			monitor.setTaskName(Policy.bind("SynchronizationCacheRefreshOperation.0", resource.getFullPath().makeRelative().toString())); //$NON-NLS-1$
 			
 			// build the remote tree only if an initial tree hasn't been provided
-			IResourceVariant tree = fetchVariant(resource, depth, Policy.subMonitorFor(monitor, 70));
+			IResourceVariant root = factory.fetchVariant(resource, depth, Policy.subMonitorFor(monitor, 70));
 			
 			// update the known remote handles 
 			IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
 			try {
 				sub.beginTask(null, 64);
-				changedResources = collectChanges(resource, tree, depth, sub);
+				changedResources = collectChanges(resource, root, depth, sub);
 			} finally {
 				sub.done();	 
 			}
@@ -116,61 +128,11 @@ public abstract class ResourceVariantTreeRefresh {
 	 * @return the resource's whose variants have changed
 	 * @throws TeamException
 	 */
-	protected IResource[] collectChanges(IResource local, IResourceVariant remote, int depth, IProgressMonitor monitor) throws TeamException {
+	public IResource[] collectChanges(IResource local, IResourceVariant remote, int depth, IProgressMonitor monitor) throws TeamException {
 		List changedResources = new ArrayList();
 		collectChanges(local, remote, changedResources, depth, monitor);
 		return (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
 	}
-	
-	/**
-	 * Returns the resource variant tree that is being refreshed.
-	 * @return the resource variant tree that is being refreshed.
-	 */
-	protected abstract ResourceVariantTree getResourceVariantTree();
-	
-	/**
-	 * Get the bytes to be stored in the <code>ResourceVariantTree</code> 
-	 * from the given resource variant.
-	 * @param local the local resource
-	 * @param remote the corresponding resource variant handle
-	 * @return the bytes for the resource variant.
-	 */
-	protected abstract byte[] getBytes(IResource local, IResourceVariant remote) throws TeamException;
-	
-	/**
-	 * Fetch the members of the given resource variant handle. This method may
-	 * return members that were fetched when <code>getRemoteTree</code> was called or
-	 * may fetch the children directly. 
-	 * @param variant the resource variant
-	 * @param progress a progress monitor
-	 * @return the members of the resource variant.
-	 */
-	protected abstract IResourceVariant[] fetchMembers(IResourceVariant variant, IProgressMonitor progress) throws TeamException;
-
-	/**
-	 * Returns the members of the local resource. This may include all the members of
-	 * the local resource or a subset that is of ineterest to the implementor.
-	 * @param parent the local resource
-	 * @return the members of the local resource
-	 */
-	protected abstract IResource[] members(IResource parent) throws TeamException;
-
-	/**
-	 * Fetch the resource variant corresponding to the given resource.
-	 * The depth
-	 * parameter indicates the depth of the refresh operation and also indicates the
-	 * depth to which the resource variant's desendants will be traversed. 
-	 * This method may prefetch the descendants to the provided depth
-	 * or may just return the variant handle corresponding to the given 
-	 * local resource, in which case
-	 * the descendant variants will be fetched by <code>fecthMembers(IResourceVariant, IProgressMonitor)</code>.
-	 * @param resource the local resource
-	 * @param depth the depth of the refresh  (one of <code>IResource.DEPTH_ZERO</code>,
-	 * <code>IResource.DEPTH_ONE</code>, or <code>IResource.DEPTH_INFINITE</code>)
-	 * @param monitor a progress monitor
-	 * @return the resource variant corresponding to the given local resource
-	 */
-	protected abstract IResourceVariant fetchVariant(IResource resource, int depth, IProgressMonitor monitor) throws TeamException;
 	
 	/**
 	 * Return the scheduling rule that should be obtained for the given resource.
@@ -184,13 +146,12 @@ public abstract class ResourceVariantTreeRefresh {
 	}
 	
 	private void collectChanges(IResource local, IResourceVariant remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
-		ResourceVariantTree cache = getResourceVariantTree();
-		byte[] newRemoteBytes = getBytes(local, remote);
+		byte[] newRemoteBytes = factory.getBytes(local, remote);
 		boolean changed;
 		if (newRemoteBytes == null) {
-			changed = cache.setVariantDoesNotExist(local);
+			changed = tree.setVariantDoesNotExist(local);
 		} else {
-			changed = cache.setBytes(local, newRemoteBytes);
+			changed = tree.setBytes(local, newRemoteBytes);
 		}
 		if (changed) {
 			changedResources.add(local);
@@ -210,13 +171,12 @@ public abstract class ResourceVariantTreeRefresh {
 
 	private void removeStaleBytes(IResource local, Map children, Collection changedResources) throws TeamException {
 		// Look for resources that have sync bytes but are not in the resources we care about
-		ResourceVariantTree cache = getResourceVariantTree();
 		IResource[] resources = getChildrenWithBytes(local);
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
 			if (!children.containsKey(resource)) {
 				// These sync bytes are stale. Purge them
-				cache.removeBytes(resource, IResource.DEPTH_INFINITE);
+				tree.removeBytes(resource, IResource.DEPTH_INFINITE);
 				changedResources.add(resource);
 			}
 		}
@@ -236,7 +196,7 @@ public abstract class ResourceVariantTreeRefresh {
 				List childrenWithSyncBytes = new ArrayList();
 				for (int i = 0; i < allChildren.length; i++) {
 					IResource resource = allChildren[i];
-					if (getResourceVariantTree().getBytes(resource) != null) {
+					if (tree.getBytes(resource) != null) {
 						childrenWithSyncBytes.add(resource);
 					}
 				}
@@ -258,11 +218,11 @@ public abstract class ResourceVariantTreeRefresh {
 		if (remote == null) {
 			remoteChildren = new IResourceVariant[0];
 		} else {
-			remoteChildren = fetchMembers(remote, progress);
+			remoteChildren = factory.fetchMembers(remote, progress);
 		}
 		
 		
-		IResource[] localChildren = members(local);		
+		IResource[] localChildren = tree.members(local);		
 
 		if (remoteChildren.length > 0 || localChildren.length > 0) {
 			Set allSet = new HashSet(20);
