@@ -24,6 +24,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.operations.CheckoutIntoOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutMultipleProjectsOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutSingleProjectOperation;
 import org.eclipse.ui.PlatformUI;
@@ -203,9 +204,16 @@ public class CheckoutAsWizard extends Wizard {
 	/**
 	 * @return
 	 */
-	private boolean performCheckoutInto() {
-		// TODO Auto-generated method stub
-		return false;
+	private boolean performCheckoutInto() throws CVSException, InterruptedException {
+		CheckoutIntoOperation operation;
+		boolean recursive = projectSelectionPage.isRecurse();
+		if (isSingleFolder()) {
+			operation = new CheckoutIntoOperation(getShell(), remoteFolders[0] , projectSelectionPage.getLocalFolder(), recursive);
+		} else {
+			operation = new CheckoutIntoOperation(getShell(), remoteFolders, projectSelectionPage.getParentFolder(), recursive);
+		}
+		operation.execute(getContainer());
+		return true;
 	}
 
 	/**

@@ -266,6 +266,10 @@ public class CheckoutAsProjectSelectionPage extends CVSWizardPage {
 		}
 	}
 	
+	public IContainer getParentFolder() {
+		return ((IContainer)getSelection());
+	}
+	
 	/**
 	 * Returns the recurse.
 	 * @return boolean
