@@ -118,7 +118,7 @@ public class CompressedFolderContentProvider extends SyncInfoSetTreeContentProvi
 			if (roots.length > 0) {
 				for (int i = 0; i < resources.length; i++) {
 					IResource resource = resources[i];
-					if (isChildOfRoot(resource, roots)) {
+					if (isChildOfRoot(resource, roots) || isCompressedParentEmpty(resource)) {
 						// A root of the resource has also been removed.
 						// However, the resource's model parent would be a 
 						// compressed folder on the resource's parent folder.
@@ -136,6 +136,25 @@ public class CompressedFolderContentProvider extends SyncInfoSetTreeContentProvi
 		} else {
 			super.handleResourceRemovals(event);
 		}
+	}
+
+	private boolean isCompressedParentEmpty(IResource resource) {
+		IContainer parent = resource.getParent();
+		if (parent == null 
+				|| parent.getType() == IResource.ROOT
+				|| parent.getType() == IResource.PROJECT) {
+			return false;
+		}
+		// Check if the sync set has any file children of the parent
+		IResource[] members = getSyncInfoSet().members(parent);
+		for (int i = 0; i < members.length; i++) {
+			IResource member = members[i];
+			if (member.getType() == IResource.FILE) {
+				return false;
+			}
+		}
+		// The parent does not contain any files
+		return true;
 	}
 
 	private boolean isChildOfRoot(IResource resource, IResource[] roots) {

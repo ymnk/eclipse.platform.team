@@ -33,7 +33,11 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		SyncInfo info = (SyncInfo)resources.remove(path);
 		changes.removed(local);
 		statistics.remove(info);
-		removeFromParents(local, local);
+		if (local.getType() == IResource.FILE 
+				|| members(local).length == 0) {
+			removeFromParents(local, local);
+		}
+		
 	}
 	
 	public void removeAll(IResource[] resources) {

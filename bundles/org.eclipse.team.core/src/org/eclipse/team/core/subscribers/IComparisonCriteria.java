@@ -10,12 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.core.subscribers;
 
+import org.eclipse.core.resources.IResource;
 
 /**
- * A ComparisonCriteria used by a <code>TeamSubscriber</code> to calculate the sync
- * state of the workspace resources. Subscribers are free to use the criteria
+ * An <code>IComparisonCriteria</code> is provided by a <code>TeamSubscriber</code> 
+ * and used by a <code>SyncInfo</code> to calculate the sync
+ * state of the workspace resources. Subscribers should provide a criteria
  * best suited for their environment. For example, an FTP subscriber could choose to use file
- * size or file timestamps as compasison criterias whereas a CVS workspace subscriber would
+ * size or file timestamps as comparison criterias whereas a CVS workspace subscriber would
  * use file revision numbers.
  * 
  * @see SyncInfo
@@ -23,14 +25,28 @@ package org.eclipse.team.core.subscribers;
  * @since 3.0
  */
 public interface IComparisonCriteria {
+	
 	/**
-	 * Returns <code>true</code> if e1 and e2 are equal based on this criteria and <code>false</code>
+	 * Returns <code>true</code> if the local resource
+	 * matches the remote resource based on this criteria and <code>false</code>
 	 * otherwise. Comparing should be fast and based on cached information.
 	 *  
-	 * @param e1 object to be compared
-	 * @param e2 object to be compared
-	 * @return <code>true</code> if e1 and e2 are equal based on this criteria and <code>false</code>
+	 * @param resource the local resource to be compared
+	 * @param remote the remote resources to be compared
+	 * @return <code>true</code> if local and remote are equal based on this criteria and <code>false</code>
 	 * otherwise.
 	 */
-	public boolean compare(Object e1, Object e2);
+	public boolean compare(IResource local, ISubscriberResource remote);
+	
+	/**
+	 * Returns <code>true</code> if the base resource
+	 * matches the remote resource based on this criteria and <code>false</code>
+	 * otherwise. Comparing should be fast and based on cached information.
+	 *  
+	 * @param base the base resource to be compared
+	 * @param remote the remote resources to be compared
+	 * @return <code>true</code> if base and remote are equal based on this criteria and <code>false</code>
+	 * otherwise.
+	 */
+	public boolean compare(ISubscriberResource base, ISubscriberResource remote);
 }

@@ -76,7 +76,10 @@ public class TestSubscriber extends TeamSubscriber {
 	 */
 	public IComparisonCriteria getDefaultComparisonCriteria() {
 		return new IComparisonCriteria() {
-			public boolean compare(Object e1, Object e2) {
+			public boolean compare(IResource local, ISubscriberResource remote) {
+				return false;
+			}
+			public boolean compare(ISubscriberResource base, ISubscriberResource remote) {
 				return false;
 			}
 		};

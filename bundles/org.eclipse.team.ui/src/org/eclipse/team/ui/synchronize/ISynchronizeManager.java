@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.team.ui.synchronize.views.ILogicalView;
 import org.eclipse.ui.IWorkbenchPage;
 
 /**
@@ -87,4 +88,23 @@ public interface ISynchronizeManager {
 	 * <code>null</code> if a descriptor is not found for that id.
 	 */
 	public ISynchronizeParticipantDescriptor getParticipantDescriptor(String id);
+	
+	/**
+	 * Return all the logical views that have been registered with Team.
+	 * The providers associated with the views will not be instantiated until
+	 * they are accessed so this list can be retrieved without fear of loading
+	 * client plugins.
+	 * @return the regisitered logical views
+	 */
+	public ILogicalView[] getLogicalViews();
+	
+	/**
+	 * Return the registered view with the given id or <code>null</code> if no view
+	 * exists for the given id. The provider associated with the view will not be instantiated until
+	 * it is accessed so the logical view can be retrieved without fear of loading
+	 * client plugins.
+	 * @param id the id of the logical view
+	 * @return the logical view with the given id or <code>null</code>
+	 */
+	public ILogicalView getLogicalView(String id);
 }

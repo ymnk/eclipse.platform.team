@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.core;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.IComparisonCriteria;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
@@ -71,5 +72,19 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 			CVSProviderPlugin.log(e);
 			return false;
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.IComparisonCriteria#compare(org.eclipse.core.resources.IResource, org.eclipse.team.core.subscribers.ISubscriberResource)
+	 */
+	public boolean compare(IResource local, ISubscriberResource remote) {
+		return compare(local, (ICVSRemoteResource)remote);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.IComparisonCriteria#compare(org.eclipse.team.core.subscribers.ISubscriberResource, org.eclipse.team.core.subscribers.ISubscriberResource)
+	 */
+	public boolean compare(ISubscriberResource base, ISubscriberResource remote) {
+		return compare((ICVSRemoteResource)base, (ICVSRemoteResource)remote);
 	}
 }

@@ -17,10 +17,10 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.registry.SynchronizeParticipantDescriptor;
-import org.eclipse.team.internal.ui.registry.SynchronizeParticipantRegistry;
+import org.eclipse.team.internal.ui.registry.*;
 import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.views.ILogicalView;
 import org.eclipse.ui.*;
 
 /**
@@ -30,6 +30,7 @@ import org.eclipse.ui.*;
  * 
  * @see ISynchronizeView
  * @see ISynchronizeParticipant
+ * @see ILogicalView
  * @since 3.0
  */
 public class SynchronizeManager implements ISynchronizeManager {
@@ -56,6 +57,8 @@ public class SynchronizeManager implements ISynchronizeManager {
 	private final static String CTX_PARTICIPANT_DATA = "data"; //$NON-NLS-1$
 	private final static String FILENAME = "syncParticipants.xml"; //$NON-NLS-1$
 
+	private LogicalViewRegistry logicalViewRegistry;
+	
 	/**
 	 * Notifies a participant listeners of additions or removals
 	 */
@@ -501,5 +504,21 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 */
 	private void fireUpdate(ISynchronizeParticipant[] participants, int type) {
 		new SynchronizeViewPageNotifier().notify(participants, type);
+	}
+	
+	private synchronized LogicalViewRegistry getLogicalViewRegistry() {
+		if (logicalViewRegistry == null) {
+			logicalViewRegistry = new LogicalViewRegistry();
+			logicalViewRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_LOGICAL_VIEWS);
+		}
+		return logicalViewRegistry;
+	}
+	
+	public ILogicalView[] getLogicalViews() {
+		return getLogicalViewRegistry().getLogicalViews();
+	}
+	
+	public ILogicalView getLogicalView(String id) {
+		return getLogicalViewRegistry().getLogicalView(id);
 	}
 }

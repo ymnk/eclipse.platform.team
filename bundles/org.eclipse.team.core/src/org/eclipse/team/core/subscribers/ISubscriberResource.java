@@ -15,15 +15,18 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 
 /**
- * This interface provides access to a resource that is controlled
- * by a particular subscriber. The resource may be local or remote.
+ * This interface provides access to a remote resource that is controlled
+ * by a particular subscriber. It is used by <code>SyncInfo</code> instances
+ * to provide access to the base and remote resources that correspond to 
+ * a locla resource.
  * 
+ * @see SyncInfo
  * @since 3.0
  */
 public interface ISubscriberResource {
 	
 	/**
-	 * Answers a string that describes the name of the subscriber resource. The name may be
+	 * Answers the name of the subscriber resource. The name may be
 	 * displayed to the user.
 	 * 
 	 * @return name of the subscriber resource.
@@ -42,9 +45,8 @@ public interface ISubscriberResource {
 	 * Return an instance of IStorage or <code>null</code> if the subscriber resource
 	 * does not have contents (i.e. is a folder). Since the <code>ISorage#getContents()</code>
 	 * method does not accept an IProgressMonitor, this method must ensure that the contents
-	 * access by the resulting IStorage is cahced locally (hence the IProgressMonitor 
-	 * argument to this method). If the subscriber resource is local, this is not an issue
-	 * but if the subscriber resource is remote, then implementations of this method should
+	 * access by the resulting IStorage is cached locally (hence the IProgressMonitor 
+	 * argument to this method). Implementations of this method should
 	 * ensure that the resulting IStorage is accessing locally cached contents and is not
 	 * contacting the server.
 	 * @return

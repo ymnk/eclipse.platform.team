@@ -17,7 +17,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.views.ILogicalView;
 import org.eclipse.ui.actions.ActionGroup;
 
@@ -26,7 +26,7 @@ import org.eclipse.ui.actions.ActionGroup;
  */
 public class LogicalViewActionGroup extends ActionGroup {
 
-	public static final String SELECTED_VIEW = "selected-view";
+	public static final String SELECTED_VIEW = "selected-view"; //$NON-NLS-1$
 	
 	Action noLogicalView;
 	List actions = new ArrayList();
@@ -44,7 +44,7 @@ public class LogicalViewActionGroup extends ActionGroup {
 			}
 		};
 		Utils.initAction(noLogicalView, "action.noLogicalView.", Policy.getBundle());
-		ILogicalView[] views = SyncInfoSetCompareConfiguration.getLogicalViews();
+		ILogicalView[] views = TeamUI.getSynchronizeManager().getLogicalViews();
 		for (int i = 0; i < views.length; i++) {
 			ILogicalView view = views[i];
 			actions.add(new LogicalViewAction(view, this));

@@ -207,7 +207,7 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 		fail("Project " + project.getName() + " should not be visible but is.");
 	}
 
-	public void testSimple() throws CoreException {
+	public void testNestedCompressedFolder() throws CoreException {
 		IProject project = createProject(new String[] { "file.txt", "folder1/file2.txt", "folder1/folder2/file3.txt"});
 		adjustSet(
 			set,
@@ -232,8 +232,27 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 			new int[] {
 				SyncInfo.IN_SYNC,
 			});
-		assertProperVisibleItems();
-			
+		assertProperVisibleItems();	
 	}
 
+	public void testParentRemovalWithChildRemaining() throws CoreException {
+		IProject project = createProject(new String[] { "file.txt", "folder1/file2.txt", "folder1/folder2/file3.txt"});
+		adjustSet(
+			set,
+			project, 
+			new String[] { "folder1/folder2/", "folder1/folder2/file3.txt" },
+			new int[] {
+				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+				SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+		assertProperVisibleItems();
+		
+		adjustSet(
+			set,
+			project,
+			new String[] { "folder1/folder2/", "folder1/folder2/file3.txt" },
+			new int[] {
+				SyncInfo.IN_SYNC,
+				SyncInfo.OUTGOING | SyncInfo.CHANGE});
+		assertProperVisibleItems();
+	}
 }

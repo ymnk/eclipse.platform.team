@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.views;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -17,6 +21,10 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
  * Implementations can be contributed via extension point and used by team participants.
+ * 
+ * TODO: Add project nature filter to extension point
+ * 
+ * @since 3.0
  */
 public abstract class LogicalViewProvider {
 
@@ -59,11 +67,31 @@ public abstract class LogicalViewProvider {
 	 * by the subscriber (e.g. ignored from version contgrol). The significance of this is that the 
 	 * logical view provider can prepare a team operation input that includes resources that need to 
 	 * be created locally or deleted remotely and excludes unnecessay resources. 
-	 * 
+	 * <p>
+	 * By default, this method returns a deep (<code>IResource.DEPTH_INFINITE</code>) operations
+	 * on any resources that can be obtained from he given elements. Subclasses should override
+	 * to provide the proper mapping from their logical elements to a set of 
+	 * <code>TeamOperationInput</code>.
 	 * @param elements the logical elements
 	 * @param subscriber the team subscriber for which the input is being prepared
 	 * @param monitor a progress monitor
 	 * @return the input to a team operation
 	 */
-	public abstract TeamOperationInput[] getTeamOperationInput(Object[] elements, TeamSubscriber subscriber, IProgressMonitor monitor) throws CoreException;
+	public TeamOperationInput[] getTeamOperationInput(Object[] elements, TeamSubscriber subscriber, IProgressMonitor monitor) throws CoreException {
+		Set resources = new HashSet();
+		for (int i = 0; i < elements.length; i++) {
+			Object object = elements[i];
+			IResource resource = SyncInfoSetContentProvider.getResource(object);
+			if (resource != null) {
+				resources.add(resource);
+			}
+		}
+		if (resources.isEmpty()) {
+			return new TeamOperationInput[0];
+		}
+		return new TeamOperationInput[] { 
+				new TeamOperationInput(
+					(IResource[]) resources.toArray(new IResource[resources.size()]), 
+					IResource.DEPTH_INFINITE) };
+	}
 }

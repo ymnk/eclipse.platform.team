@@ -12,11 +12,13 @@ package org.eclipse.team.ui.synchronize;
 
 import java.util.ArrayList;
 
-import org.eclipse.compare.*;
+import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.CompareViewerPane;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -30,10 +32,9 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.registry.LogicalViewRegistry;
 import org.eclipse.team.internal.ui.synchronize.actions.LogicalViewActionGroup;
-import org.eclipse.team.internal.ui.synchronize.views.*;
-import org.eclipse.team.ui.ITeamUIConstants;
+import org.eclipse.team.internal.ui.synchronize.views.CompressFolderView;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.actions.INavigableTree;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoDiffTreeNavigator;
 import org.eclipse.team.ui.synchronize.views.*;
@@ -56,7 +57,11 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
  */
 public class SyncInfoSetCompareConfiguration {
 	
-	private static LogicalViewRegistry logicalViewRegistry;
+	/**
+	 * Id of the compressed folder <code>ILogicalVieww</code> that can be used to
+	 * access the view using <code>ISynchronizeManager#getLogicalView(String)</code>.
+	 */
+	public static final String COMPRESSED_FOLDER_LOGICAL_VIEW_ID = CompressFolderView.ID;
 	
 	private SyncInfoSet set;
 	private String menuId;
@@ -68,37 +73,6 @@ public class SyncInfoSetCompareConfiguration {
 	private IPropertyChangeListener propertyListener;
 	
 	private LogicalViewActionGroup logicalViews;
-	
-	private static synchronized LogicalViewRegistry getLogicalViewRegistry() {
-		if (logicalViewRegistry == null) {
-			logicalViewRegistry = new LogicalViewRegistry();
-			logicalViewRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_LOGICAL_VIEWS);
-		}
-		return logicalViewRegistry;
-	}
-	
-	/**
-	 * Return all the logical views that have been registered with Team.
-	 * The providers associated with the views will not be instantiated until
-	 * they are accessed so this list can be retrieved without fear of loading
-	 * client plugins.
-	 * @return the regisitered logical views
-	 */
-	public static ILogicalView[] getLogicalViews() {
-		return getLogicalViewRegistry().getLogicalViews();
-	}
-	
-	/**
-	 * Return the registered view with the given id or <code>null</code> if no view
-	 * exists for the given id. The provider associated with the view will not be instantiated until
-	 * it is accessed so the logical view can be retrieved without fear of loading
-	 * client plugins.
-	 * @param id the id of the logical view
-	 * @return the logical view with the given id or <code>null</code>
-	 */
-	public static ILogicalView getLogicalView(String id) {
-		return getLogicalViewRegistry().getLogicalView(id);
-	}
 	
 	/**
 	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given sync set
@@ -256,7 +230,7 @@ public class SyncInfoSetCompareConfiguration {
 	 */
 	protected ILogicalView getDefaultLogicalView() {
 		if (getStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			return getLogicalView(CompressFolderView.ID);
+			return TeamUI.getSynchronizeManager().getLogicalView(COMPRESSED_FOLDER_LOGICAL_VIEW_ID);
 		} else {
 			return null;
 		}

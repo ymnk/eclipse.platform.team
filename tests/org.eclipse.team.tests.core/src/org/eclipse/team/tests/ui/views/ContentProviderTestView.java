@@ -18,7 +18,7 @@ import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.views.CompressedFolderContentProvider;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.content.SyncInfoDecoratingLabelProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoDecoratingLabelProvider;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.ViewPart;
 

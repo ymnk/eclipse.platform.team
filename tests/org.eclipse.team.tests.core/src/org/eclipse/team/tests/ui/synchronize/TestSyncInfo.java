@@ -29,4 +29,11 @@ public class TestSyncInfo extends SyncInfo {
 	protected int calculateKind() throws TeamException {
 		return this.kind;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncInfo#getKind()
+	 */
+	public int getKind() {
+		return kind;
+	}
 }
