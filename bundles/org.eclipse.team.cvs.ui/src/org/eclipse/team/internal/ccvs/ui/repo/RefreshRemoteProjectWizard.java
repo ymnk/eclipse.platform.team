@@ -101,7 +101,7 @@ public class RefreshRemoteProjectWizard extends Wizard {
 			Policy.bind("RefreshRemoteProjectSelectionPage.pageTitle"), //$NON-NLS-1$
 			substImage,
 			Policy.bind("RefreshRemoteProjectSelectionPage.pageDescription"), //$NON-NLS-1$
-			parentDialog, settings, root, rootFolders);
+			settings, root, rootFolders);
 		addPage(projectSelectionPage);
 	}
 	

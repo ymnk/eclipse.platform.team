@@ -70,9 +70,11 @@ public class TagSelectionArea extends DialogArea {
     private Text filterText;
 
     private TagSource tagSource;
+
+    private final Shell shell;
     
-    public TagSelectionArea(Dialog parentDialog, IDialogSettings settings, TagSource tagSource, String message, int includeFlags, String helpContext) {
-        super(parentDialog, settings);
+    public TagSelectionArea(Shell shell, TagSource tagSource, String message, int includeFlags, String helpContext) {
+        this.shell = shell;
         this.message = message;
         this.includeFlags = includeFlags;
         this.helpContext = helpContext;
@@ -185,8 +187,8 @@ public class TagSelectionArea extends DialogArea {
 			}
 		};
         TagConfigurationDialog.createTagDefinitionButtons(getShell(), parent, tagSource, 
-														  Dialog.convertVerticalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_HEIGHT), 
-														  Dialog.convertHorizontalDLUsToPixels(fontMetrics, IDialogConstants.BUTTON_WIDTH),
+														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
+														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
 														  refresh, refresh);
     }
 
@@ -371,5 +373,8 @@ public class TagSelectionArea extends DialogArea {
 	}
     public CVSTag getSelection() {
         return selection;
+    }
+    public Shell getShell() {
+        return shell;
     }
 }

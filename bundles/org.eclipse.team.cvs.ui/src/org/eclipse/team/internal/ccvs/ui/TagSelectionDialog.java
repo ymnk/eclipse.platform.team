@@ -95,7 +95,7 @@ public class TagSelectionDialog extends Dialog implements IPropertyChangeListene
 		super(parentShell);
 		
 		// Create a tag selection area with a custom recurse option
-		tagSelectionArea = new TagSelectionArea(this, null, TagSource.create(folders), message, includeFlags, helpContext) {
+		tagSelectionArea = new TagSelectionArea(getShell(), TagSource.create(folders), message, includeFlags, helpContext) {
 			protected void createCustomArea(Composite parent) {
 				if(showRecurse) {
 					final Button recurseCheck = new Button(parent, SWT.CHECK);
