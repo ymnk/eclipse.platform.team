@@ -13,6 +13,8 @@ import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
 public class ResourceSyncInfoTest extends EclipseTest {
 
+	private final static String GOOD_TIMESTAMP = "Mon Feb 25 21:44:02 2002";
+
 	public ResourceSyncInfoTest() {
 		super();
 	}
@@ -34,22 +36,22 @@ public class ResourceSyncInfoTest extends EclipseTest {
 		
 		// testing malformed entry lines first
 		try {
-			new ResourceSyncInfo("//////", null, null);			
+			new ResourceSyncInfo("//////", null, 0, 0);			
 			fail();
 		} catch(CVSException e) {
 		}
 		try {
-			new ResourceSyncInfo("//1.1///", null, null);			
+			new ResourceSyncInfo("//1.1///", null, 0, 0);			
 			fail();
 		} catch(CVSException e) {
 		}
 		try {
-			new ResourceSyncInfo("/file.txt////", null, null);			
+			new ResourceSyncInfo("/file.txt////", null, 0, 0);			
 			fail();
 		} catch(CVSException e) {
 		}
 		try {
-			new ResourceSyncInfo("/file.txt//////////", null, null);			
+			new ResourceSyncInfo("/file.txt//////////", null, 0, 0);			
 			fail();
 		} catch(CVSException e) {
 		}
@@ -61,28 +63,27 @@ public class ResourceSyncInfoTest extends EclipseTest {
 	public void testEntryLineConstructor() {		
 		try {
 			ResourceSyncInfo info;
-			info = new ResourceSyncInfo("/file.java/1.1/27 Sep 2001 18:00:16/-k/", null, null);
-			info = new ResourceSyncInfo("/file.java/-1.1/27 Sep 2001 18:00:16/-k/", null, null);
+			info = new ResourceSyncInfo("/file.java/-1.1/Mon Feb 25 21:44:02 2002/-k/", null, 0);
 			assertTrue(info.isDeleted());
 			
-			info = new ResourceSyncInfo("/file.java/0/27 Sep 2001 18:00:16/-k/", null, null);
+			info = new ResourceSyncInfo("/file.java/0/something/-k/", null, 0);
 			assertTrue(info.isAdded());
 			
-			info = new ResourceSyncInfo("/file.java/1.0/27 Sep 2001 18:00:16/-k/Tv1", null, null);
+			info = new ResourceSyncInfo("/file.java/1.0/Mon Feb 25 21:44:02 2002/-k/Tv1", null, 0);
 			assertTrue(info.getTag() != null);
 			
-			String timestamp = "10 Sep 2000 18:00:16";
-			info = new ResourceSyncInfo("/file.java/1.0/27 Sep 2001 18:00:16/-k/Tv1", null, timestamp);
-			assertTrue(info.getTimeStamp().equals(timestamp));
+			long timestamp = 123456;
+			info = new ResourceSyncInfo("/file.java/1.0/Mon Feb 25 21:44:02 2002/-k/Tv1", null, timestamp);
+			assertTrue(info.getTimeStamp() == timestamp);
 			
-			info = new ResourceSyncInfo("/file.java/0/27 Sep 2001 18:00:16/-k/", null, timestamp);
-			assertTrue(info.getTimeStamp().equals(ResourceSyncInfo.DUMMY_TIMESTAMP));
+			info = new ResourceSyncInfo("/file.java/0/Mon Feb 25 21:44:02 2002/-k/", null, timestamp);
+			assertTrue(info.getTimeStamp() == timestamp);
 			
 			String permissions = "u=rwx,g=rwx,o=rwx";
-			info = new ResourceSyncInfo("/file.java/2.0/27 Sep 2001 18:00:16/-k/Tv1", permissions, null);
+			info = new ResourceSyncInfo("/file.java/2.0/Mon Feb 25 21:44:02 2002/-k/Tv1", permissions, 0);
 			assertTrue(info.getPermissions().equals(permissions));
 			
-			info = new ResourceSyncInfo("D/file.java////", null, null);
+			info = new ResourceSyncInfo("D/file.java////", null, 0);
 			assertTrue(info.isDirectory());
 			
 		} catch(CVSException e) {
@@ -93,24 +94,71 @@ public class ResourceSyncInfoTest extends EclipseTest {
 	/**
 	 * Testing the parameter constructor
 	 */
-	public void testConstructor() {
+	public void testConstructor() throws CVSException {
 		ResourceSyncInfo info;
 		
 		info = new ResourceSyncInfo("folder");
 		assertTrue(info.isDirectory());
 		
-		info = new ResourceSyncInfo("file.txt", "-2.34", "27 Sep 2001 18:00:16", "", null, "");
+		long timestamp = 123456;
+		info = new ResourceSyncInfo("file.txt", "-2.34", timestamp, "", null, "", 0);
 		assertTrue(info.isDeleted());
 		assertTrue(info.getRevision().equals("2.34"));
 		
-		info = new ResourceSyncInfo("file.txt", "0", "27 Sep 2001 18:00:16", "", null, "");
+		info = new ResourceSyncInfo("file.txt", "0", 0, "", null, "", 0);
 		assertTrue(info.isAdded());
 		
+		info = new ResourceSyncInfo("file.txt", "0", 0, "", null, "", ResourceSyncInfo.DUMMY_SYNC);
+		String entry = info.getEntryLine(true);
+		info = new ResourceSyncInfo(entry, null, 0);
+		assertTrue(info.getTimeStamp() == ResourceSyncInfo.NULL_TIMESTAMP);
+		assertTrue(entry.indexOf("dummy") != -1);
+		
 		CVSTag tag = new CVSTag("v1", CVSTag.VERSION);
-		info = new ResourceSyncInfo("file.txt", "1.1", "27 Sep 2001 18:00:16", "", tag, "");
+		info = new ResourceSyncInfo("file.txt", "1.1", timestamp, "", tag, "", 0);
 		CVSTag newTag = info.getTag();
 		assertTrue(newTag.getName().equals(tag.getName()) && newTag.getType() == tag.getType());
 		assertTrue(info.getRevision().equals("1.1"));
 	}
-}
+	
+	public void testMergeTimestamps() throws CVSException {
+		ResourceSyncInfo info, info2;
+		long timestamp = 123000;
+		long timestamp2 = 654000;
+				
+		info = new ResourceSyncInfo("/file.java/1.1//-kb/", null, timestamp);
+		assertTrue(!info.isMerged());
+		assertTrue(!info.isNeedsMerge(timestamp));		
+		
+		// entry lines the server can send
+		info = new ResourceSyncInfo("/file.java/1.1/+=/-kb/", null, timestamp);
+		String entryLine = info.getEntryLine(true);
+		info2 = new ResourceSyncInfo(entryLine, null, 0);
+		assertTrue(info.isMerged());
+		assertTrue(info.isNeedsMerge(timestamp));
+		assertTrue(!info.isNeedsMerge(timestamp2));
+		assertTrue(info.getTimeStamp() == timestamp);		
 
+		assertTrue(info2.isMerged());
+		assertTrue(info2.isNeedsMerge(timestamp));
+		assertTrue(!info2.isNeedsMerge(timestamp2));
+		assertTrue(info2.getTimeStamp() == timestamp);		
+		
+		info = new ResourceSyncInfo("/file.java/1.1/+modified/-kb/", null, 0);
+		entryLine = info.getEntryLine(true);
+		info2 = new ResourceSyncInfo(entryLine, null, 0);
+		
+		assertTrue(info.isMerged());
+		assertTrue(!info.isNeedsMerge(timestamp));
+		assertTrue(!info.isNeedsMerge(timestamp2));
+		assertTrue(info.getTimeStamp() == ResourceSyncInfo.NULL_TIMESTAMP);		
+		
+		assertTrue(info2.isMerged());
+		assertTrue(!info2.isNeedsMerge(timestamp));
+		assertTrue(!info2.isNeedsMerge(timestamp2));
+		assertTrue(info2.getTimeStamp() == ResourceSyncInfo.NULL_TIMESTAMP);
+	}
+	
+	public void testTimestampCompatibility() throws CVSException {		
+	}
+}

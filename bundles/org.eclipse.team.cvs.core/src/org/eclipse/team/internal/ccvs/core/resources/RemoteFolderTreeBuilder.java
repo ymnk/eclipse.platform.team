@@ -236,7 +236,7 @@ public class RemoteFolderTreeBuilder {
 				continue;
 			// If the file was deleted locally, we need to generate a new sync info without the delete flag
 			if (info.isDeleted())
-				info = new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions());
+				info = new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType());
 			children.add(new RemoteFile(remote, info));
 			monitor.worked(1);
 		}

@@ -14,7 +14,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
-import org.eclipse.team.internal.ccvs.core.util.EntryFileDateFormat;
+import org.eclipse.team.internal.ccvs.core.util.CVSDateFormatter;
 
 /**
  * Handles any "Updated" and "Merged" responses
@@ -49,7 +49,6 @@ class UpdatedHandler extends ResponseHandler {
 	protected static final int HANDLE_UPDATE_EXISTING = ICVSFile.UPDATE_EXISTING;
 	protected static final int HANDLE_CREATED = ICVSFile.CREATED;
 	
-	private static final EntryFileDateFormat dateFormatter = new EntryFileDateFormat();
 	private static final String READ_ONLY_FLAG = "u=rw"; //$NON-NLS-1$
 	
 	public UpdatedHandler(int handlerType) {
@@ -72,7 +71,8 @@ class UpdatedHandler extends ResponseHandler {
 		String repositoryFile = session.readLine();
 		String entryLine = session.readLine();
 		String permissionsLine = session.readLine();
-		ResourceSyncInfo info = new ResourceSyncInfo(entryLine, permissionsLine, null);
+		// temporary sync info for parsing the line received from the server
+		ResourceSyncInfo info = new ResourceSyncInfo(entryLine, permissionsLine, ResourceSyncInfo.NULL_TIMESTAMP, ResourceSyncInfo.REGULAR_SYNC);
 
 		// clear file update modifiers
 		Date modTime = session.getModTime();
@@ -92,26 +92,12 @@ class UpdatedHandler extends ResponseHandler {
 		if (readOnly) mFile.setReadOnly(true);
 		
 		// Set the timestamp in the file, set the result in the fileInfo
-		String timestamp = null;
-		if (modTime != null) timestamp = dateFormatter.formatDate(modTime);
-		mFile.setTimeStamp(timestamp);
-		if (handlerType == HANDLE_MERGED) {
-			// This is to handle the Merged response. The server will send a timestamp of "+=" if
-			// the file was merged with conflicts. The '+' indicates that there are conflicts and the
-			// '=' indicate that the timestamp for the file should be used. If the merge does not
-			// have conflicts, simply add a text only timestamp and the file will be regarded as
-			// having outgoing changes.
-			// The purpose for having the two different timestamp options for merges is to 
-			// dissallow commit of files that have conflicts until they have been manually edited.			
-			if(info.getTimeStamp().indexOf(ResourceSyncInfo.MERGE_UNMODIFIED) != -1) {
-				timestamp = ResourceSyncInfo.RESULT_OF_MERGE_CONFLICT + mFile.getTimeStamp();
-			} else {
-				timestamp = ResourceSyncInfo.RESULT_OF_MERGE;
-			}
-		} else {
-			timestamp = mFile.getTimeStamp();
+		long timestamp = ICVSFile.NULL_TIMESTAMP;
+		if (modTime != null) {
+			timestamp = modTime.getTime();
 		}
+		mFile.setTimeStamp(timestamp);
 		mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(),
-			timestamp, info.getKeywordMode(), info.getTag(), info.getPermissions()));
+			timestamp, info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType()));
 	}
 }

@@ -160,8 +160,8 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 				// We could have an incoming change or deletion
 				if (remote == null) {
 					String mode = KSubstOption.fromPattern(local.getName()).toMode();
-					info =  new ResourceSyncInfo(local.getName(), ResourceSyncInfo.ADDED_REVISION, ResourceSyncInfo.DUMMY_TIMESTAMP,
-						mode, local.getParent().getFolderSyncInfo().getTag(), null);
+					info =  new ResourceSyncInfo(local.getName(), ResourceSyncInfo.ADDED_REVISION, ResourceSyncInfo.NULL_TIMESTAMP,
+						mode, local.getParent().getFolderSyncInfo().getTag(), null, ResourceSyncInfo.REGULAR_SYNC);
 					revision = info.getRevision();
 				} else {
 					info = remote.getSyncInfo();
@@ -206,7 +206,9 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 				return;
 			}
 		}
-		info = new ResourceSyncInfo(info.getName(), revision, ResourceSyncInfo.DUMMY_TIMESTAMP, info.getKeywordMode(), local.getParent().getFolderSyncInfo().getTag(), info.getPermissions());
+		info = new ResourceSyncInfo(info.getName(), revision, ResourceSyncInfo.NULL_TIMESTAMP, 
+														 info.getKeywordMode(), local.getParent().getFolderSyncInfo().getTag(), 
+														 info.getPermissions(), ResourceSyncInfo.DUMMY_SYNC);
 		local.setSyncInfo(info);
 	}
 	

@@ -68,7 +68,7 @@ public class AdminKSubstListener implements ICommandOutputListener {
 					// only update sync info if we have it locally
 					ResourceSyncInfo newInfo = new ResourceSyncInfo(
 						info.getName(), info.getRevision(), info.getTimeStamp(),
-						ksubstMode, info.getTag(), info.getPermissions());
+						ksubstMode, info.getTag(), info.getPermissions(), info.getType());
 					file.setSyncInfo(newInfo);
 				}
 			} catch (CVSException e) {

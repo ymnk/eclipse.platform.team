@@ -39,7 +39,6 @@ import org.eclipse.team.internal.ccvs.core.client.listeners.LogListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
-import org.eclipse.team.internal.ccvs.core.util.FileUtil;
 
 /**
  * This class provides the implementation of ICVSRemoteFile and IManagedFile for
@@ -120,7 +119,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	}
 	
 	public RemoteFile(RemoteFolder parent, int workspaceSyncState, String name, String revision, CVSTag tag) {
-		this(parent, workspaceSyncState, new ResourceSyncInfo(name, revision, ResourceSyncInfo.DUMMY_TIMESTAMP, ResourceSyncInfo.USE_SERVER_MODE, tag, ResourceSyncInfo.DEFAULT_PERMISSIONS));
+		this(parent, workspaceSyncState, new ResourceSyncInfo(name, revision, ResourceSyncInfo.NULL_TIMESTAMP, ResourceSyncInfo.USE_SERVER_MODE, tag, ResourceSyncInfo.DEFAULT_PERMISSIONS, ResourceSyncInfo.REGULAR_SYNC));
 	}
 	
 	public RemoteFile(RemoteFolder parent, ResourceSyncInfo info) {
@@ -294,7 +293,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	 * @param revision to associated with this remote file
 	 */
 	public void setRevision(String revision) {
-		info = new ResourceSyncInfo(info.getName(), revision, info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions());
+		info = new ResourceSyncInfo(info.getName(), revision, info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType());
 	}		
 	
 	/*
@@ -332,14 +331,14 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	/**
 	 * @see IManagedFile#getTimeStamp()
 	 */
-	public String getTimeStamp() {
+	public long getTimeStamp() {
 		return info.getTimeStamp();
 	}
 
 	/**
 	 * @see IManagedFile#setTimeStamp(String)
 	 */
-	public void setTimeStamp(String date) throws CVSException {
+	public void setTimeStamp(long date) throws CVSException {
 	}
 
 	/**

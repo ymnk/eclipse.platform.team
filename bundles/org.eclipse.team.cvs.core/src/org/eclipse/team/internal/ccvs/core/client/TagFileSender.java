@@ -34,7 +34,7 @@ class TagFileSender extends FileStructureVisitor {
 			// Send the file if appropriate
 			ResourceSyncInfo info = mFile.getSyncInfo();
 			if (info.isDeleted()) {
-				info = new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions());
+				info = new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType());
 			}
 			if (! info.isAdded()) {
 				session.sendEntry(info.getEntryLine(false, mFile.getTimeStamp()));

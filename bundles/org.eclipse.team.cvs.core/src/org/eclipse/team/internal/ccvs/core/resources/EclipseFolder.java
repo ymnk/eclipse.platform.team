@@ -115,6 +115,9 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 				project.open(null);				
 			} else {
 				((IFolder)resource).create(false /*don't force*/, true /*make local*/, null);
+				if(resource.getName().equals("CVS")) {
+					System.out.println("CVS fond and");
+				}
 			}				
 		} catch (CoreException e) {
 			throw CVSException.wrapException(resource, Policy.bind("EclipseFolder_problem_creating", resource.getFullPath().toString(), e.getStatus().getMessage()), e); //$NON-NLS-1$
@@ -208,14 +211,18 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 */
 	public void unmanage(IProgressMonitor monitor) throws CVSException {
 		monitor = Policy.monitorFor(monitor);
-		monitor.beginTask("", 100);
-		run(new ICVSRunnable() {
-			public void run(IProgressMonitor monitor) throws CVSException {
-				recursiveUnmanage((IContainer) resource, monitor);				
-			}
-		}, Policy.subMonitorFor(monitor, 99));
-		// unmanaged from parent
-		super.unmanage(Policy.subMonitorFor(monitor, 1));
+		try {
+			monitor.beginTask("", 100);
+			run(new ICVSRunnable() {
+				public void run(IProgressMonitor monitor) throws CVSException {
+					recursiveUnmanage((IContainer) resource, monitor);				
+				}
+			}, Policy.subMonitorFor(monitor, 99));
+			// unmanaged from parent
+			super.unmanage(Policy.subMonitorFor(monitor, 1));
+		} finally {
+			monitor.done();
+		}
 	}
 	
 	private static void recursiveUnmanage(IContainer container, IProgressMonitor monitor) throws CVSException {

@@ -34,7 +34,7 @@ class DiffStructureVisitor extends FileStructureVisitor {
 		if (mFile.isManaged()) {
 			session.sendEntry(mFile.getSyncInfo().getEntryLine(false));
 		} else {
-			ResourceSyncInfo info = new ResourceSyncInfo(mFile.getName(), ResourceSyncInfo.ADDED_REVISION, null, null, null, null);
+			ResourceSyncInfo info = new ResourceSyncInfo(mFile.getName(), ResourceSyncInfo.ADDED_REVISION, 0, null, null, null, ResourceSyncInfo.REGULAR_SYNC);
 			session.sendEntry(info.getEntryLine(false));
 			newFile = true;
 		}

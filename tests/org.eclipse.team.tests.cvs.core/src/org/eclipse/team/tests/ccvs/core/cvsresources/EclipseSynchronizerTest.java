@@ -417,7 +417,7 @@ public class EclipseSynchronizerTest extends EclipseTest {
 
 	private ResourceSyncInfo dummyResourceSync(IResource resource) {
 		if (resource.getType() == IResource.FILE) {
-			return new ResourceSyncInfo(resource.getName(), "1.1", ResourceSyncInfo.DUMMY_TIMESTAMP, "", CVSTag.DEFAULT, "");
+			return new ResourceSyncInfo(resource.getName(), "1.1", ResourceSyncInfo.NULL_TIMESTAMP, "", CVSTag.DEFAULT, "", ResourceSyncInfo.DUMMY_SYNC);
 		} else {
 			return new ResourceSyncInfo(resource.getName());
 		}

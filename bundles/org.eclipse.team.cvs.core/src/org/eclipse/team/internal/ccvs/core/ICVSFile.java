@@ -27,6 +27,7 @@ public interface ICVSFile extends ICVSResource {
 	public static final int UPDATE_EXISTING = 3;
 	public static final int CREATED = 4;
 	
+	public static final long NULL_TIMESTAMP = 0;
 	
 	/**
 	 * Answers the size of the file. 
@@ -39,12 +40,6 @@ public interface ICVSFile extends ICVSResource {
  	 */
 	InputStream getInputStream() throws CVSException;
 	
-	/**
-	 * Gets an appending output stream for writing to the file.
-	 * It is the responsibility of the caller to close the stream when finished.
- 	 */
-	OutputStream getAppendingOutputStream() throws CVSException;
-
 	/**
 	 * Set the contents of the file to the contents of the provided input stream
 	 * 
@@ -81,7 +76,7 @@ public interface ICVSFile extends ICVSResource {
 	 * 
 	 * @throws CVSFileNotFoundException if exists() = false
 	 */
-	String getTimeStamp();
+	long getTimeStamp();
 
 	/**
 	 * Sets the current timestamp for this file. The supplied date must be in the
@@ -92,7 +87,7 @@ public interface ICVSFile extends ICVSResource {
 	 * If the date is <code>null</code> then the current time is used as 
 	 * the timestamp.
 	 */
-	void setTimeStamp(String date) throws CVSException;
+	void setTimeStamp(long date) throws CVSException;
 	
 	/**
 	 * Answers <code>true</code> if the file differs from its base. If the file has no

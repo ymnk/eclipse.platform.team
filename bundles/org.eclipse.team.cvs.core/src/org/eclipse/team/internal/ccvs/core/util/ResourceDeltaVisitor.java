@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -56,7 +57,7 @@ public abstract class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 							}
 							
 							if(provider != null) {
-								delta.accept(visitor);
+								delta.accept(visitor, getMemberTypeFlags());
 							}
 						}
 						visitor.handle();
@@ -230,6 +231,13 @@ public abstract class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	 */
 	protected int getEventMask() {
 		return IResourceChangeEvent.POST_CHANGE;
+	}
+	
+	/**
+	 * Return the type of resources to visit
+	 */
+	protected int getMemberTypeFlags() {
+		return IResource.NONE;
 	}
 }
 
