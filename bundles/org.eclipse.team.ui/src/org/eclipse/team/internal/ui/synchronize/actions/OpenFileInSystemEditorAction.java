@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
+import org.eclipse.team.ui.synchronize.content.SyncInfoSetContentProvider;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.actions.OpenFileAction;
 
@@ -35,7 +35,7 @@ public class OpenFileInSystemEditorAction extends OpenFileAction {
 		IStructuredSelection selection = getStructuredSelection();
 		for (Iterator e = selection.iterator(); e.hasNext();) {
 			Object next = e.next();
-			IResource resource = SyncSetContentProvider.getResource(next);
+			IResource resource = SyncInfoSetContentProvider.getResource(next);
 			if(resource != null) {
 				resources.add(resource);
 			}

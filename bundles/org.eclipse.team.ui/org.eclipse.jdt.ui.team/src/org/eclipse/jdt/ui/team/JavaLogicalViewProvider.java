@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.team;
 
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
+import org.eclipse.team.ui.synchronize.content.*;
 import org.eclipse.team.ui.synchronize.content.LogicalViewProvider;
 import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
 
@@ -22,7 +22,7 @@ public class JavaLogicalViewProvider extends LogicalViewProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.content.LogicalViewProvider#getContentProvider()
 	 */
-	public SyncSetContentProvider getContentProvider() {
+	public SyncInfoSetContentProvider getContentProvider() {
 		return new JavaSyncInfoSetContentProvider();
 	}
 

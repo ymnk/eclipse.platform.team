@@ -217,6 +217,10 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 		}
 	}
 	
+	/**
+	 * Return the <code>SyncInfoSet</code> from which this diff node was derived.
+	 * @return a <code>SyncInfoSet</code>
+	 */
 	public SyncInfoSet getSyncInfoSet() {
 		return input;
 	}
@@ -241,6 +245,28 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	 * @return whether the node represents a resource path
 	 */
 	public boolean isResourcePath() {
+		return false;
+	}
+	
+	/**
+	 * Return whether this diff node has descendant conflicts in the view in which it appears.
+	 * @return whether the node has descendant conflicts
+	 */
+	public boolean hasDecendantConflicts() {
+		// If this node has no resource, we can't tell
+		// The subclass which created the node with no resource should have overridden this method
+		if (resource == null || resource.getType() == IResource.FILE) return false;
+		// If the set has no conflicts then the node doesn't either
+		if (getSyncInfoSet().countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK) == 0) {
+			return false;
+		}
+		SyncInfo[] infos = getDescendantSyncInfos();
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
+				return true;
+			}
+		}
 		return false;
 	}
 }

@@ -18,11 +18,12 @@ import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.content.*;
 
 /**
  * The contents provider compressed in-sync folder paths
  */
-public class CompressedFolderContentProvider extends SyncSetTreeContentProvider {
+public class CompressedFolderContentProvider extends SyncInfoSetTreeContentProvider {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider#handleResourceChanges(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)

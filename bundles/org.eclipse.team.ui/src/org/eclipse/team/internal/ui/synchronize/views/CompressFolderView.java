@@ -8,9 +8,9 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.content;
+package org.eclipse.team.internal.ui.synchronize.views;
 
-import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.ui.synchronize.content.*;
 
 /**
  * This implementation compresses folder paths that do not contain out-of-sync resource.
@@ -22,7 +22,7 @@ public class CompressFolderView extends LogicalViewProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.content.ILogicalSyncInfoSetView#getContentProvider()
 	 */
-	public SyncSetContentProvider getContentProvider() {
+	public SyncInfoSetContentProvider getContentProvider() {
 		return new CompressedFolderContentProvider();
 	}
 

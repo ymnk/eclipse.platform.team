@@ -15,8 +15,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.content.SyncInfoSetContentProvider;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.OpenWithMenu;
 import org.eclipse.ui.views.navigator.ResourceNavigatorMessages;
@@ -92,7 +92,7 @@ public class OpenWithActionGroup extends ActionGroup {
 	}
 	
 	private IResource getResource(Object obj) {
-		return SyncSetContentProvider.getResource(obj);
+		return SyncInfoSetContentProvider.getResource(obj);
 	}
 
 	public void openInCompareEditor() {

@@ -28,6 +28,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.registry.LogicalViewRegistry;
 import org.eclipse.team.internal.ui.synchronize.actions.LogicalViewActionGroup;
@@ -54,7 +55,8 @@ public class SyncInfoSetCompareConfiguration {
 	
 	private SyncInfoSet set;
 	private String menuId;
-	private boolean acceptParticipantMenuContributions = false;
+	
+	private StructuredViewer viewer;
 	
 	// fields that are tied to a single viewer
 	private SyncInfoDiffTreeNavigator navigator;
@@ -114,6 +116,10 @@ public class SyncInfoSetCompareConfiguration {
 	 * @param viewer the viewer being initialized
 	 */
 	public void initializeViewer(Composite parent, final StructuredViewer viewer) {
+		Assert.isTrue(this.viewer == null, "A SyncInfoSetCompareConfiguration can only be used with a single viewer."); //$NON-NLS-1$
+		this.viewer = viewer;
+		
+		// Use a logical view to set the content provider, label provider and sorter
 		ILogicalView view = getDefaultLogicalView();
 		setLogicalViewProvider(viewer, view);
 		logicalViews = new LogicalViewActionGroup();
@@ -121,21 +127,25 @@ public class SyncInfoSetCompareConfiguration {
 		
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(data);
+		
+		// Listen to the glocal prefernce for content provider changes
+		// TODO: Related to logocal view
 		propertyListener = getPropertyListener(viewer);
 		getStore().addPropertyChangeListener(propertyListener);
 		
 		initializeListeners(viewer);
-		
+		initializeNavigator(viewer);
+		hookContextMenu(viewer);
+		createToolBarActions(parent);
+		viewer.setInput(getInput());
+	}
+
+	protected void initializeNavigator(final StructuredViewer viewer) {
 		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
 		if (viewer instanceof INavigableTree) {
 			initializeNavigation(viewer.getControl(), (INavigableTree)viewer);
 			navigator.createActions(viewer);
 		}
-		hookContextMenu(viewer);
-		
-		createToolBarActions(parent);
-		// TODO: This relates to the content provider (i.e. the use of SyncInfoDiffNode)
-		viewer.setInput(getInput());
 	}
 
 	/**
@@ -184,9 +194,7 @@ public class SyncInfoSetCompareConfiguration {
 		ToolBarManager tbm= CompareViewerPane.getToolBarManager(parent);
 		if (tbm != null) {
 			tbm.removeAll();
-			
 			tbm.add(new Separator("navigation")); //$NON-NLS-1$
-			
 			navigator.createToolItems(tbm);
 			tbm.update(true);
 		}
@@ -200,8 +208,8 @@ public class SyncInfoSetCompareConfiguration {
 		return new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
 				if (event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-					// TODO: 
-					//viewer.setContentProvider(getContentProvider());
+					ILogicalView view = getDefaultLogicalView();
+					setLogicalViewProvider(viewer, view);
 				}
 			}
 		};
@@ -305,7 +313,7 @@ public class SyncInfoSetCompareConfiguration {
 			}
 		}
 		if (view == null) {
-			viewer.setContentProvider(new SyncSetTreeContentProvider());
+			viewer.setContentProvider(new SyncInfoSetTreeContentProvider());
 			viewer.setLabelProvider(getLabelProvider(new SyncInfoLabelProvider()));
 			viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
 		}
@@ -349,8 +357,8 @@ public class SyncInfoSetCompareConfiguration {
 				Object curr = changed[i];
 				if (curr instanceof IResource) {
 					IContentProvider provider = viewer.getContentProvider();
-					if (provider != null && provider instanceof SyncSetContentProvider) {
-						curr = ((SyncSetContentProvider)provider).getModelObject((IResource)curr);
+					if (provider != null && provider instanceof SyncInfoSetContentProvider) {
+						curr = ((SyncInfoSetContentProvider)provider).getModelObject((IResource)curr);
 					}
 				}
 				others.add(curr);

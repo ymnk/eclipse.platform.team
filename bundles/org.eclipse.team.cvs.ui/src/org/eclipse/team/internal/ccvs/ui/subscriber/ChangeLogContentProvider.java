@@ -20,13 +20,13 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetTreeContentProvider;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.content.SyncInfoSetTreeContentProvider;
 
 /**
  * Seeing change comments makes sense it two ways.
  */
-public class ChangeLogContentProvider extends SyncSetTreeContentProvider {
+public class ChangeLogContentProvider extends SyncInfoSetTreeContentProvider {
 	
 	private Map commentRoots = new HashMap();
 	

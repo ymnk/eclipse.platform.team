@@ -23,9 +23,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
+import org.eclipse.team.ui.synchronize.content.SyncInfoSetContentProvider;
 import org.eclipse.ui.internal.WorkbenchColors;
 
 /**
@@ -63,6 +63,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 				working = true;
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
+						// TODO: What this is this supposed to be?
 						synchronized (this) {
 							fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
 						}
@@ -98,7 +99,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	public String getText(Object element) {
 		String name = syncInfoLabelProvider.getText(element);
 		if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
-			SyncInfo info = SyncSetContentProvider.getSyncInfo(element);
+			SyncInfo info = SyncInfoSetContentProvider.getSyncInfo(element);
 			if (info != null && info.getKind() != SyncInfo.IN_SYNC) {
 				String syncKindString = SyncInfo.kindToString(info.getKind());
 				name = Policy.bind("TeamSubscriberSyncPage.labelWithSyncKind", name, syncKindString); //$NON-NLS-1$
@@ -115,7 +116,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	 */
 	public Image getImage(Object element) {
 		Image decoratedImage = null;
-		IResource resource = SyncSetContentProvider.getResource(element);
+		IResource resource = SyncInfoSetContentProvider.getResource(element);
 		Image image = syncInfoLabelProvider.getImage(element);
 		decoratedImage = getCompareImage(image, element);	
 		decoratedImage = propagateConflicts(decoratedImage, element, resource);
@@ -123,7 +124,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	}
 	
 	private Image getCompareImage(Image base, Object element) {
-		int kind = SyncSetContentProvider.getSyncKind(element);
+		int kind = SyncInfoSetContentProvider.getSyncKind(element);
 		switch (kind & SyncInfo.DIRECTION_MASK) {
 			case SyncInfo.OUTGOING:
 				kind = (kind &~ SyncInfo.OUTGOING) | SyncInfo.INCOMING;
@@ -138,12 +139,9 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	private Image propagateConflicts(Image base, Object element, IResource resource) {
 		if(element instanceof SyncInfoDiffNode && resource.getType() != IResource.FILE) {
 			// if the folder is already conflicting then don't bother propagating the conflict
-			int kind = SyncSetContentProvider.getSyncKind(element);
+			int kind = SyncInfoSetContentProvider.getSyncKind(element);
 			if((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
-				SyncInfo[] infos = ((SyncInfoDiffNode)element).getDescendantSyncInfos();
-				SyncInfoSet set = new SyncInfoSet(infos);
-				long count = set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
-				if(count > 0) {
+				if(((SyncInfoDiffNode)element).hasDecendantConflicts()) {
 					ImageDescriptor overlay = new OverlayIcon(
 	   					base, 
 	   					new ImageDescriptor[] { TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CONFLICT_OVR)}, 
@@ -188,7 +186,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 		if (columnIndex == COL_RESOURCE) {
 			return getImage(element);
 		} else if (columnIndex == COL_PARENT) {
-			IResource resource = SyncSetContentProvider.getResource(element);
+			IResource resource = SyncInfoSetContentProvider.getResource(element);
 			return null;
 		}
 		return null;
@@ -201,7 +199,7 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 		if (columnIndex == COL_RESOURCE) {
 			return getText(element);
 		} else if (columnIndex == COL_PARENT) {
-			IResource resource = SyncSetContentProvider.getResource(element);
+			IResource resource = SyncInfoSetContentProvider.getResource(element);
 			return resource.getParent().getFullPath().toString();
 		}
 		return null;

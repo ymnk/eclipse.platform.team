@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.content;
 
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
-import org.eclipse.team.internal.ui.synchronize.views.SyncViewerSorter;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
@@ -19,7 +17,7 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
  */
 public abstract class LogicalViewProvider {
 
-	public abstract SyncSetContentProvider getContentProvider();
+	public abstract SyncInfoSetContentProvider getContentProvider();
 	
 	public abstract SyncInfoLabelProvider getLabelProvider();
 	

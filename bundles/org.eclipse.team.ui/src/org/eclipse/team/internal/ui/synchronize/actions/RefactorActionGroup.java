@@ -22,7 +22,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
+import org.eclipse.team.ui.synchronize.content.SyncInfoSetContentProvider;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.ISharedImages;
@@ -80,7 +80,7 @@ public class RefactorActionGroup extends ActionGroup {
 		List resources = new ArrayList();
 		Iterator it = selection.iterator();
 		while(it.hasNext()) {
-			IResource resource = SyncSetContentProvider.getResource(it.next());
+			IResource resource = SyncInfoSetContentProvider.getResource(it.next());
 			if(resource != null) {
 				resources.add(resource);
 			}
@@ -140,7 +140,7 @@ public class RefactorActionGroup extends ActionGroup {
 				resource = (IResource)adaptable.getAdapter(IResource.class);
 			}
 			if(resource == null) {
-				resource = SyncSetContentProvider.getResource(next);
+				resource = SyncInfoSetContentProvider.getResource(next);
 			}
 			if (resource == null || (resource.getType() & resourceMask) == 0) {
 				return false;

@@ -13,7 +13,6 @@ package org.eclipse.team.ui.synchronize.content;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
@@ -36,7 +35,7 @@ public class SyncInfoLabelProvider extends LabelProvider {
 	 * @see org.eclipse.jface.viewers.ILabelProvider#getImage(java.lang.Object)
 	 */
 	public Image getImage(Object element) {
-		IResource resource = SyncSetContentProvider.getResource(element);
+		IResource resource = SyncInfoSetContentProvider.getResource(element);
 		if (resource != null) {
 			return workbenchLabelProvider.getImage(resource);
 		}
@@ -47,7 +46,7 @@ public class SyncInfoLabelProvider extends LabelProvider {
 	 * @see org.eclipse.jface.viewers.ILabelProvider#getText(java.lang.Object)
 	 */
 	public String getText(Object element) {
-		IResource resource = SyncSetContentProvider.getResource(element);
+		IResource resource = SyncInfoSetContentProvider.getResource(element);
 		if (resource != null) {
 			return workbenchLabelProvider.getText(resource);
 		}

@@ -17,14 +17,14 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.*;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
-import org.eclipse.team.internal.ui.synchronize.views.SyncSetTreeContentProvider;
+import org.eclipse.team.ui.synchronize.content.SyncInfoSetTreeContentProvider;
 
 /**
  * Extend the SyncSetTreeContentProvider to show a Java model elements in the view.
  * 
  * TODO: Refresh behavior needs to be added
  */
-public class JavaSyncInfoSetContentProvider extends SyncSetTreeContentProvider {
+public class JavaSyncInfoSetContentProvider extends SyncInfoSetTreeContentProvider {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider#getModelObject(org.eclipse.core.resources.IResource)

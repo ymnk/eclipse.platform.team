@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.content;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.Viewer;
@@ -65,6 +65,6 @@ public class SyncViewerSorter extends ResourceSorter {
 	}
 
 	protected IResource getResource(Object obj) {
-		return SyncSetContentProvider.getResource(obj);
+		return SyncInfoSetContentProvider.getResource(obj);
 	}
 }

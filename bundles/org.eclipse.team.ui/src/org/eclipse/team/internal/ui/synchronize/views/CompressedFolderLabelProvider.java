@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.synchronize.content.*;
 import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
 
 /**
@@ -55,7 +56,7 @@ public class CompressedFolderLabelProvider extends SyncInfoLabelProvider {
 	 */
 	public String getText(Object element) {
 		if (element instanceof CompressedFolder) {
-			IResource resource = SyncSetContentProvider.getResource(element);
+			IResource resource = SyncInfoSetContentProvider.getResource(element);
 			return resource.getProjectRelativePath().toString();
 		}
 		return super.getText(element);
