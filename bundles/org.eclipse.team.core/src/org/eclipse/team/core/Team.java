@@ -10,45 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.core;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.SortedMap;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.IResourceChangeListener;
-import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtension;
-import org.eclipse.core.runtime.IExtensionPoint;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.Preferences;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.StringMatcher;
-import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
+import org.eclipse.team.internal.core.*;
 
 /**
  * The Team class provides a global point of reference for the global ignore set
@@ -294,55 +261,6 @@ public final class Team {
 			
 		}
 		TeamPlugin.getPlugin().getPluginPreferences().setValue(PREF_TEAM_IGNORES, buf.toString());
-	}
-	
-	/**
-	 * Utility method for removing a project nature from a project.
-	 * 
-	 * @param proj the project to remove the nature from
-	 * @param natureId the nature id to remove
-	 * @param monitor a progress monitor to indicate the duration of the operation, or
-	 * <code>null</code> if progress reporting is not required.
-	 * 
-	 * @deprecated
-	 */
-	public static void removeNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
-		try {
-			IProjectDescription description = proj.getDescription();
-			String[] prevNatures= description.getNatureIds();
-			List newNatures = new ArrayList(Arrays.asList(prevNatures));
-			newNatures.remove(natureId);
-			description.setNatureIds((String[])newNatures.toArray(new String[newNatures.size()]));
-			proj.setDescription(description, monitor);
-		} catch(CoreException e) {
-			throw wrapException(Policy.bind("manager.errorRemovingNature", proj.getName(), natureId), e); //$NON-NLS-1$
-		}
-	}
-	
-	/**
-	 * Utility method for adding a nature to a project.
-	 * 
-	 * @param proj the project to add the nature
-	 * @param natureId the id of the nature to assign to the project
-	 * @param monitor a progress monitor to indicate the duration of the operation, or
-	 * <code>null</code> if progress reporting is not required.
-	 * 
-	 * @exception TeamException if a problem occured setting the nature
-	 * 
-	 * @deprecated
-	 */
-	public static void addNatureToProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
-		try {
-			IProjectDescription description = proj.getDescription();
-			String[] prevNatures= description.getNatureIds();
-			String[] newNatures= new String[prevNatures.length + 1];
-			System.arraycopy(prevNatures, 0, newNatures, 0, prevNatures.length);
-			newNatures[prevNatures.length]= natureId;
-			description.setNatureIds(newNatures);
-			proj.setDescription(description, monitor);
-		} catch(CoreException e) {
-			throw wrapException(Policy.bind("manager.errorSettingNature", proj.getName(), natureId), e); //$NON-NLS-1$
-		}
 	}
 	
 	/*

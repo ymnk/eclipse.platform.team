@@ -10,33 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.core;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.eclipse.core.resources.IFileModificationValidator;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
-import org.eclipse.core.resources.IProjectNature;
-import org.eclipse.core.resources.IProjectNatureDescriptor;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtension;
-import org.eclipse.core.runtime.IExtensionPoint;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
-import org.eclipse.team.internal.core.simpleAccess.SimpleAccessOperations;
 
 /**
  * A concrete subclass of <code>RepositoryProvider</code> is created for each
@@ -463,24 +443,6 @@ public abstract class RepositoryProvider implements IProjectNature {
 			return false;
 		}
 	}
-	
-	/**
-	 * Provisional non-API method.
-	 *
-	 * This method is here to allow experimentation with 3rd party tools
-	 * calling providers in a repository neutral manner.
-     *
- 	 * Returns an object which implements a set of provider neutral operations for this 
- 	 * provider. Answers <code>null</code> if the provider does not wish to support these 
- 	 * operations.
- 	 * 
- 	 * @return the repository operations or <code>null</code> if the provider does not
- 	 * support provider neutral operations.
- 	 * @see SimpleAccessOperations
- 	 */
-	public SimpleAccessOperations getSimpleAccess() {
- 		return null;
- 	}
  	
 	/*
 	 * @see IProjectNature#getProject()
@@ -543,27 +505,6 @@ public abstract class RepositoryProvider implements IProjectNature {
 		}
 		return null;
 	}	
-	
-	/**
-	 * Convert a project that are using natures to mark them as Team projects
-	 * to instead use persistent properties. Optionally remove the nature from the project.
-	 * Do nothing if the project has no Team nature.
-	 * Assume that the same ID is used for both the nature and the persistent property.
-	 * 
-	 * @deprecated
-	 */
-	public static void convertNatureToProperty(IProject project, boolean removeNature) throws TeamException {
-		RepositoryProvider provider = RepositoryProvider.getProvider(project);
-		if(provider == null)
-			return;
-			
-		String providerId = provider.getID();	
-		
-		RepositoryProvider.map(project, providerId);
-		if(removeNature) {
-			Team.removeNatureFromProject(project, providerId, new NullProgressMonitor());
-		}
-	}
 	
 	/**
 	 * Method validateCreateLink is invoked by the Platform Core TeamHook when a
