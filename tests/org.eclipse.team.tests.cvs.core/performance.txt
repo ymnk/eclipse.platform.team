@@ -1,0 +1,243 @@
+Connecting to: fiji:extssh
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Update4' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 3.6 s
+  Working Set Peak: 0
+  Working Set: 25K
+  Used Java Heap: 1.34M
+  Committed: -40960
+  Elapsed Process: 8.64 s
+  Kernel time: 510 ms
+  Page Faults: 185
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Replace3' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 2.6 s
+  Working Set Peak: 0
+  Working Set: 56K
+  Used Java Heap: 5.29M
+  Committed: 1.6M
+  Elapsed Process: 3.82 s
+  Kernel time: 552 ms
+  Page Faults: 271
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Share' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 21.97 s
+  Working Set Peak: 6.39M
+  Working Set: 4.64M
+  Used Java Heap: 3.85M
+  Committed: 4.23M
+  Elapsed Process: 35.77 s
+  Kernel time: 5.54 s
+  Page Faults: 106K
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Commit2' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 1.74 s
+  Working Set Peak: 25K
+  Working Set: 45K
+  Used Java Heap: -6227077
+  Committed: 53K
+  Elapsed Process: 4.11 s
+  Kernel time: 62 ms
+  Page Faults: 255
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Update3' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 3.29 s
+  Working Set Peak: 0
+  Working Set: 44K
+  Used Java Heap: 3.49M
+  Committed: -1365
+  Elapsed Process: 8.22 s
+  Kernel time: 177 ms
+  Page Faults: 301
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Replace2' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 3.44 s
+  Working Set Peak: 0
+  Working Set: -648533
+  Used Java Heap: 9.01M
+  Committed: -1660245
+  Elapsed Process: 7.75 s
+  Kernel time: 578 ms
+  Page Faults: 149
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Commit3' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 2.41 s
+  Working Set Peak: 0
+  Working Set: 25K
+  Used Java Heap: -591608
+  Committed: -30037
+  Elapsed Process: 6.2 s
+  Kernel time: 344 ms
+  Page Faults: 1K
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Update2' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 2.48 s
+  Working Set Peak: 0
+  Working Set: -281258
+  Used Java Heap: 5.19M
+  Committed: -315392
+  Elapsed Process: 6.7 s
+  Kernel time: 98 ms
+  Page Faults: 36
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Commit4' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 3.33 s
+  Working Set Peak: 0
+  Working Set: -401408
+  Used Java Heap: 1.58M
+  Committed: -218453
+  Elapsed Process: 7.47 s
+  Kernel time: 614 ms
+  Page Faults: 2K
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Checkout' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 13.39 s
+  Working Set Peak: 56K
+  Working Set: 321K
+  Used Java Heap: 3.2M
+  Committed: 5K
+  Elapsed Process: 22.43 s
+  Kernel time: 5.38 s
+  Page Faults: 8K
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Update1' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 3.94 s
+  Working Set Peak: 784K
+  Working Set: 217K
+  Used Java Heap: 4.39M
+  Committed: -79189
+  Elapsed Process: 8.08 s
+  Kernel time: 224 ms
+  Page Faults: 1K
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Replace1' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 1.95 s
+  Working Set Peak: 0
+  Working Set: 8K
+  Used Java Heap: -3417498
+  Committed: 37K
+  Elapsed Process: 3.51 s
+  Kernel time: 83 ms
+  Page Faults: 27
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Tag1' (average over 3 samples):
+  GDI Objects: 0
+  CPU Time: 921 ms
+  Working Set Peak: 0
+  Working Set: 24K
+  Used Java Heap: -5212554
+  Committed: 1,002K
+  Elapsed Process: 3.06 s
+  Kernel time: 98 ms
+  Page Faults: 31
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflow()Commit1' (average over 3 samples):
+  GDI Objects: 18
+  CPU Time: 6.11 s
+  Working Set Peak: 1.85M
+  Working Set: 4.65M
+  Used Java Heap: -1832648
+  Committed: 3.88M
+  Elapsed Process: 7.64 s
+  Kernel time: 359 ms
+  Page Faults: 5K
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests#testBigWorkflowForSummary()' (average over 42 samples):
+  GDI Objects: 0
+  CPU Time: 4.7 s
+  Working Set Peak: 49K
+  Working Set: 161K
+  Used Java Heap: 139K
+  Committed: 110K
+  Elapsed Process: 9.63 s
+  Kernel time: 1.08 s
+  Page Faults: 7K
+  
+  Connecting to: fiji:extssh
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests#testSync10()RemovedFiles' (average over 3 samples):
+  Committed: 68K
+  Kernel time: 271 ms
+  Elapsed Process: 8.12 s
+  Used Java Heap: -1431114
+  Page Faults: 212
+  Working Set: 106K
+  GDI Objects: 0
+  Working Set Peak: 0
+  CPU Time: 2.02 s
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests#testSync10()AddedFiles' (average over 3 samples):
+  Committed: 1.43M
+  Kernel time: 338 ms
+  Elapsed Process: 11.18 s
+  Used Java Heap: -4377458
+  Page Faults: 3K
+  Working Set: 2.2M
+  GDI Objects: 22
+  Working Set Peak: 1.15M
+  CPU Time: 4.46 s
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests#testSync10()ModifiedFiles' (average over 3 samples):
+  Committed: 84K
+  Kernel time: 281 ms
+  Elapsed Process: 8.32 s
+  Used Java Heap: 4.64M
+  Page Faults: 2K
+  Working Set: 173K
+  GDI Objects: 0
+  Working Set Peak: 238K
+  CPU Time: 2.33 s
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests#testSync100()RemovedFiles' (average over 3 samples):
+  Committed: 32K
+  Kernel time: 651 ms
+  Elapsed Process: 9.6 s
+  Used Java Heap: 418K
+  Page Faults: 665
+  Working Set: 94K
+  GDI Objects: 0
+  Working Set Peak: 609K
+  CPU Time: 3.34 s
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests#testSync100()AddedFiles' (average over 3 samples):
+  Committed: 2.78M
+  Kernel time: 437 ms
+  Elapsed Process: 11.69 s
+  Used Java Heap: 1.98M
+  Page Faults: 1K
+  Working Set: 2.61M
+  GDI Objects: 1
+  Working Set Peak: 1.63M
+  CPU Time: 4.36 s
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests#testSync100()ModifiedFiles' (average over 3 samples):
+  Committed: 176K
+  Kernel time: 1.49 s
+  Elapsed Process: 10.29 s
+  Used Java Heap: 2.34M
+  Page Faults: 1K
+  Working Set: 165K
+  GDI Objects: 0
+  Working Set Peak: 186K
+  CPU Time: 4.24 s
+
+Scenario 'org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests#testSync100Global()' (average over 9 samples):
+  Committed: 322K
+  Kernel time: 812 ms
+  Elapsed Process: 10.45 s
+  Used Java Heap: -333446
+  Page Faults: 976
+  Working Set: 285K
+  GDI Objects: 0
+  Working Set Peak: 260K
+  CPU Time: 3.81 s
