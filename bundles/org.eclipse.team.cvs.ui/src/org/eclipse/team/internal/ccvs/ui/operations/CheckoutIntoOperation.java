@@ -44,6 +44,7 @@ import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 
 /**
@@ -81,7 +82,13 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 	 */
 	protected String getTaskName() {
 		ICVSRemoteFolder[] remoteFolders = getRemoteFolders();
-		return Policy.bind("CheckoutIntoOperation.taskname", new Integer(remoteFolders.length).toString()); 
+		String localFolderName = "";
+		try {
+			localFolderName = getLocalFolder().getIResource().getFullPath().toString();
+		} catch (CVSException e) {
+			CVSUIPlugin.log(e);
+		}
+		return Policy.bind("CheckoutIntoOperation.taskname", new Integer(remoteFolders.length).toString(), localFolderName); 
 	}
 
 	/**
@@ -137,7 +144,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 				ICVSResource resource = parentFolder.getChild(childPath);
 				if (resource != null && !resource.isFolder()) {
 					// The target folder conflicts with an existing file
-					addError(new CVSStatus(IStatus.ERROR, "A file exists at the target folder location")); /* TODO: need more detail is status */
+					addError(new CVSStatus(IStatus.ERROR, Policy.bind("CheckoutIntoOperation.targetIsFile", remoteFolder.getName(), resource.getIResource().getFullPath().toString())));
 					return null;
 				}
 				targetFolderSet.add(parentFolder.getFolder(childPath));
@@ -157,7 +164,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 		}
 		
 		// Prepare the target projects to receive resources
-		status = scrubFolders(targetFolders, Policy.subMonitorFor(monitor, 10));
+		status = scrubFolders(remoteFolder, targetFolders, Policy.subMonitorFor(monitor, 10));
 		// return the target projects if the scrub succeeded
 		if (status.isOK()) {
 			return targetFolders;
@@ -181,11 +188,17 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 					if (isRemoteChildOfParent(targetFolder)) {
 						// if the local folder is child of it's parent remotely (i.e. path of child is parent/child)
 						// then the remote cannot be loaded.
-						return new CVSStatus(IStatus.ERROR, "The remote folder conflicts with a local folder");
+						String message;
+						if (targetFolder.exists()) {
+							message = Policy.bind("CheckoutIntoOperation.targetIsFolder", remoteFolder.getName(), targetFolder.getIResource().getFullPath().toString());
+						} else {
+							message = Policy.bind("CheckoutIntoOperation.targetIsPrunedFolder", remoteFolder.getName(), targetFolder.getFolderSyncInfo().getRepository());
+						}
+						return new CVSStatus(IStatus.ERROR, message);
 					}
 				}
 				// Verify that no other folders in the local workspace are mapped to the remote folder
-				IStatus status = validateUniqueMapping(remoteFolder, getLocalRoot(targetFolder), Policy.subMonitorFor(monitor, 10));
+				IStatus status = validateUniqueMapping(remoteFolder, targetFolder, Policy.subMonitorFor(monitor, 10));
 				if (!status.isOK()) return status;
 			}
 		}
@@ -217,8 +230,9 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 	/*
 	 * Ensure that there is no equivalent mapping alreay in the local workspace
 	 */
-	private IStatus validateUniqueMapping(final ICVSRemoteFolder remoteFolder,final IContainer root, IProgressMonitor iProgressMonitor) throws CVSException {
+	private IStatus validateUniqueMapping(final ICVSRemoteFolder remoteFolder, final ICVSFolder targetFolder, IProgressMonitor iProgressMonitor) throws CVSException {
 		
+		final IContainer root = getLocalRoot(targetFolder);
 		final FolderSyncInfo remoteInfo = remoteFolder.getFolderSyncInfo();
 		if (remoteInfo.equals(FolderSyncInfo.VIRTUAL_DIRECTORY)) {
 			// We can't really check the mapping ahead of time
@@ -237,7 +251,12 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 					if (resource == null) return;
 					FolderSyncInfo info = folder.getFolderSyncInfo();
 					if (info.isSameMapping(remoteInfo)) {
-							throw new CVSException("There is already a local folder mapped to the same remote folder"); /* TODO: need to give more info */
+							throw new CVSException(Policy.bind("CheckoutIntoOperation.targetIsPrunedFolder", 
+								new Object[] {
+									remoteFolder.getName(), 
+									targetFolder.getIResource().getFullPath().toString(),
+									resource.getFullPath().toString()
+								}));
 					}
 					folder.acceptChildren(this);
 				}
@@ -251,7 +270,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 	/*
 	 * Purge the local contents of the given folders
 	 */
-	private IStatus scrubFolders(ICVSFolder[] targetFolders, IProgressMonitor monitor) throws CVSException {
+	private IStatus scrubFolders(ICVSRemoteFolder remoteFolder, ICVSFolder[] targetFolders, IProgressMonitor monitor) throws CVSException {
 		monitor.beginTask(null, 100 * targetFolders.length);
 		
 		// Prompt first before any work is done
@@ -261,7 +280,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 		for (int i=0;i<targetFolders.length;i++) {
 			ICVSFolder targetFolder = targetFolders[i];
 			if (needsPromptForOverwrite(targetFolder, Policy.subMonitorFor(monitor, 50)) && !promptToOverwrite(targetFolder)) {
-				return new CVSStatus(IStatus.INFO, "Checkout cancelled");
+				return new CVSStatus(IStatus.INFO, Policy.bind("CheckoutIntoOperation.cancelled", remoteFolder.getName()));
 			}
 		}
 		
@@ -278,7 +297,9 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 	}
 
 	private boolean promptToOverwrite(ICVSFolder folder) {
-		return promptToOverwrite("Overwrite Folder?", "Folder " + folder.getName() + " already exists and will be deleted. Continue?"); //$NON-NLS-1$
+		return promptToOverwrite(
+			Policy.bind("CheckoutOperation.confirmOverwrite"), 
+			Policy.bind("CheckoutIntoOperation.overwriteMessage", folder.getName()));
 	}
 	
 	private IStatus scrubFolder(ICVSFolder folder, IProgressMonitor monitor) throws CVSException {
@@ -313,7 +334,6 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 			}
 			
 			// Perform the checkout
-			// TODO: This probably won't work since the local parent mapping will effect the arguments
 			IStatus status = Command.CHECKOUT.execute(session,
 				Command.NO_GLOBAL_OPTIONS,
 				(LocalOption[])localOptions.toArray(new LocalOption[localOptions.size()]),

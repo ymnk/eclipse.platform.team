@@ -17,6 +17,7 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -26,6 +27,7 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.ui.PlatformUI;
 
@@ -109,12 +111,14 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 			} else {
 				execute(monitor);
 			}
+			endOperation();
 		} catch (CVSException e) {
+			// TODO: errors may not be empty
 			throw new InvocationTargetException(e);
 		} catch (CoreException e) {
+			// TODO: errors may not be empty
 			throw new InvocationTargetException(e);
 		}
-		endOperation();
 	}
 
 	protected void startOperation() {
@@ -122,7 +126,7 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 		confirmOverwrite = true;
 	}
 	
-	protected void endOperation() {
+	protected void endOperation() throws CVSException {
 		handleErrors((IStatus[]) errors.toArray(new IStatus[errors.size()]));
 	}
 
@@ -210,8 +214,26 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 	/**
 	 * @param statuses
 	 */
-	protected void handleErrors(IStatus[] status) {
-		// TODO Auto-generated method stub
+	protected void handleErrors(IStatus[] status) throws CVSException {
+		if (status.length == 0) return;
+		MultiStatus result = new MultiStatus(CVSUIPlugin.ID, 0, getErrorTitle(), null);
+		for (int i = 0; i < status.length; i++) {
+			IStatus s = status[i];
+			if (s.isMultiStatus()) {
+				result.add(new CVSStatus(s.getSeverity(), s.getMessage(), s.getException()));
+				result.addAll(s);
+			} else {
+				result.add(s);
+			}
+		}
+	}
+
+	/**
+	 * Provide the message used in the error status if an error occurs.
+	 * Should be overriden by subclasses.
+	 */
+	protected String getErrorTitle() {
+		return "Errors occured during this operation";
 	}
 
 	/**
