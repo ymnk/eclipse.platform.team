@@ -113,7 +113,7 @@ public class TagSelectionArea extends DialogArea {
     }
 
     private void createFilterInput(Composite inner) {
-        createWrappingLabel(inner, "Filter &tag list (? = any character, * = any Strung):", 1);
+        createWrappingLabel(inner, "Filter &tag list (? = any character, * = any String):", 1);
         filterText = createText(inner, 1);
         filterText.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -406,5 +406,40 @@ public class TagSelectionArea extends DialogArea {
         // Refresh in case tags were added since the last time the area had focus
         if (tagTree != null)
             tagTree.refresh();
+    }
+
+    /**
+     * Select the given tag
+     * @param selectedTag the tag to be selected
+     */
+    public void setSelection(CVSTag selectedTag) {
+		if (tagTree != null && !tagTree.getControl().isDisposed()) {
+			// TODO: Hack to instantiate the model before revealing the selection
+			tagTree.expandToLevel(2);
+			tagTree.collapseAll();
+			// Reveal the selection
+			tagTree.reveal(new TagElement(selectedTag));
+			tagTree.setSelection(new StructuredSelection(new TagElement(selectedTag)));
+		}
+    }
+
+    /**
+     * Refresh the state of the tag selection area
+     */
+    public void refresh() {
+        if (tagTree != null && !tagTree.getControl().isDisposed()) {
+            tagTree.refresh();
+            // TODO: How can we update the enablement of the refresh button?
+        }
+    }
+
+    /**
+     * Set the enablement state of the area
+     * @param enabled the enablement state
+     */
+    public void setEnabled(boolean enabled) {
+        filterText.setEnabled(enabled);
+        tagTree.getControl().setEnabled(enabled);
+        
     }
 }

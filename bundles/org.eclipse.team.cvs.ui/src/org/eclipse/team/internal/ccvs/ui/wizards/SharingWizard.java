@@ -126,7 +126,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 			Policy.bind("SharingWizard.selectTagTitle"),  //$NON-NLS-1$
 			sharingImage,
 			Policy.bind("SharingWizard.selectTag"), //$NON-NLS-1$
-			Policy.bind("SharingWizard.selectTag"), //$NON-NLS-1$
 			ProjectElement.INCLUDE_HEAD_TAG | ProjectElement.INCLUDE_BRANCHES); //$NON-NLS-1$
 		tagPage.setCVSWizard(this);
 		tagPage.setHelpContxtId(IHelpContextIds.SHARING_TAG_SELETION_PAGE);

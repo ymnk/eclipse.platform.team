@@ -11,24 +11,17 @@
 package org.eclipse.team.internal.ccvs.ui.wizards;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.SWT;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.events.*;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.merge.*;
-import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
-import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
-import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement.ProjectElementSorter;
-import org.eclipse.team.internal.ccvs.ui.repo.RepositorySorter;
+import org.eclipse.team.internal.ccvs.ui.merge.MultiFolderTagSource;
 import org.eclipse.ui.help.WorkbenchHelp;
-import org.eclipse.ui.model.WorkbenchContentProvider;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
  * General tag selection page that allows the selection of a tag
@@ -36,15 +29,11 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
  */
 public class TagSelectionWizardPage extends CVSWizardPage {
 
-	private TreeViewer tagTree;
-	private ICVSFolder[] remoteFolders;
 	private CVSTag selectedTag;
 	
 	// Needed to dynamicaly create refresh buttons
 	private Composite composite;
-	private Control buttons;
 	
-	private String label;
 	private int includeFlags;
 	
 	// Fields for allowing the use of the tag from the local workspace
@@ -53,10 +42,11 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 	private Button selectTagButton;
 	private boolean useResourceTag = false;
 	private String helpContextId;
+    private TagSelectionArea tagArea;
+    private MultiFolderTagSource tagSource;
 	
-	public TagSelectionWizardPage(String pageName, String title, ImageDescriptor titleImage, String description, String label, int includeFlags) {
+	public TagSelectionWizardPage(String pageName, String title, ImageDescriptor titleImage, String description, int includeFlags) {
 		super(pageName, title, titleImage, description);
-		this.label = label;
 		this.includeFlags = includeFlags;
 	}
 
@@ -89,97 +79,41 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 			selectTagButton.setSelection(!useResourceTag);
 			useResourceTagButton.addSelectionListener(listener);
 			selectTagButton.addSelectionListener(listener);
-		} else if (label != null) {
-			createWrappingLabel(composite, label, 0);
 		}
 		
-		tagTree = createTree(composite);
-		tagTree.setSorter(new ProjectElementSorter());
-		setInput();
+		createTagArea();
 		
 		Dialog.applyDialogFont(parent);	
 	}
 	
-	private void setInput() {
-		if (remoteFolders != null 
-				&& remoteFolders.length > 0 
-				&& tagTree != null 
-				&& !tagTree.getControl().isDisposed()) {
-			tagTree.setInput(new ProjectElement(new MultiFolderTagSource(remoteFolders), includeFlags));
-			try {
-				selectedTag = remoteFolders[0].getFolderSyncInfo().getTag();
-			} catch (CVSException e) {
-				CVSUIPlugin.log(e);
-			}
-			if (selectedTag == null) {
-				selectedTag = CVSTag.DEFAULT;
-			}
-			// TODO: Hack to instantiate the model before revealing the selection
-			tagTree.expandToLevel(2);
-			tagTree.collapseAll();
-			// Reveal the selection
-			tagTree.reveal(new TagElement(selectedTag));
-			tagTree.setSelection(new StructuredSelection(new TagElement(selectedTag)));
-			if (buttons != null) {
-				buttons.dispose();
-				buttons = null;
-			}
-			Runnable refresh = new Runnable() {
-				public void run() {
-					getShell().getDisplay().syncExec(new Runnable() {
-						public void run() {
-							tagTree.refresh();
-						}
-					});
-				}
-			};
-			buttons = TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, TagSource.create(remoteFolders), 
-														  convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
-														  convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
-														  refresh, refresh);
-			composite.layout();
-		}
-	}
+	private void createTagArea() {
+		tagArea = new TagSelectionArea(getShell(), tagSource, "&Select tag:", includeFlags, null);
+		tagArea.createArea(composite);
+		tagArea.addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getProperty().equals(TagSelectionArea.SELECTED_TAG)) {
+                    selectedTag = tagArea.getSelection();
+    				updateEnablement();
+                } else if (event.getProperty().equals(TagSelectionArea.OPEN_SELECTED_TAG)) {
+                    if (selectedTag != null)
+                        gotoNextPage();
+                }
 
-	private TreeViewer createTree(Composite parent) {
-		Tree tree = new Tree(parent, SWT.SINGLE | SWT.BORDER);
-		GridData gridData = new GridData(GridData.FILL_BOTH);
-		tree.setLayoutData(gridData);
-		gridData.heightHint = 150;
-		TreeViewer result = new TreeViewer(tree);
-		result.setContentProvider(new WorkbenchContentProvider());
-		result.setLabelProvider(new WorkbenchLabelProvider());
-		result.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
-				if (selection.isEmpty() || !(selection.getFirstElement() instanceof TagElement)) {
-					selectedTag = null;
-				} else {
-					selectedTag = ((TagElement)selection.getFirstElement()).getTag();
-				}
-				updateEnablement();
-			}
-		});
-		result.getTree().addMouseListener(new MouseAdapter() {
-			public void mouseDoubleClick(MouseEvent e) {
-				IStructuredSelection selection = (IStructuredSelection)tagTree.getSelection();
-				if (!selection.isEmpty() && (selection.getFirstElement() instanceof TagElement)) {
-					gotoNextPage();
-				}
-			}
-		});
-		result.setSorter(new RepositorySorter());
-		
-		return result;
+            }
+        });
+		setInput();
+    }
+
+    private void setInput() {
+        if (tagArea != null) {
+            tagArea.refresh();
+            tagArea.setSelection(selectedTag);
+        }
 	}
 	
 	private void updateEnablement() {
-		tagTree.getControl().setEnabled(!useResourceTag);
+		tagArea.setEnabled(!useResourceTag);
 		setPageComplete(useResourceTag || selectedTag != null);
-	}
-	
-	public ICVSFolder getFolder() {
-		return remoteFolders[0];
 	}
 	
 	public void setFolder(ICVSFolder remote) {
@@ -197,11 +131,30 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 	}
 
 	public void setFolders(ICVSFolder[] remoteFolders) {
-		this.remoteFolders = remoteFolders;
+	    if (tagSource == null) {
+	        tagSource = new MultiFolderTagSource(remoteFolders);
+	    } else {
+	        tagSource.setFolders(remoteFolders);
+	    }
+		try {
+			selectedTag = remoteFolders[0].getFolderSyncInfo().getTag();
+		} catch (CVSException e) {
+			CVSUIPlugin.log(e);
+		}
+		if (selectedTag == null) {
+			selectedTag = CVSTag.DEFAULT;
+		}
 		setInput();
 	}
 	
 	public void setAllowNoTag(boolean b) {
 		allowNoTag = b;
+	}
+	
+	public void setVisible(boolean visible) {
+		super.setVisible(visible);
+		if (visible && tagArea != null) {
+			tagArea.setFocus();
+		}
 	}
 }

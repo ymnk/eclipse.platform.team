@@ -21,7 +21,7 @@ import org.eclipse.team.internal.ccvs.ui.model.CVSFolderElement;
  */
 public class MultiFolderTagSource extends SingleFolderTagSource {
 
-    private final ICVSFolder[] folders;
+    private ICVSFolder[] folders;
 
     public MultiFolderTagSource(ICVSFolder[] folders) {
         super(folders[0]);
@@ -44,6 +44,14 @@ public class MultiFolderTagSource extends SingleFolderTagSource {
 			elements[i] = new CVSFolderElement(folders[i], false);
 		}
 		return elements;
+    }
+
+    /**
+     * Set the folders of this tag source
+     * @param remoteFolders
+     */
+    public void setFolders(ICVSFolder[] remoteFolders) {
+        folders = remoteFolders;
     }
 
 }
