@@ -15,30 +15,34 @@ import java.io.InputStream;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.*;
+import org.eclipse.team.internal.core.*;
 
 /**
  * A resource variant is a partial implementation of a remote resource
- * that caches any fetched contents in a <code>ResourceVariantCache</code>.
+ * whose contents and handle are cached locally. It is assumed that a
+ * resource varant is an immutable version or revision of a resource.
+ * Therefore, once the contents are cached they cannot be replaced.
+ * However, the cached handle can be replaced to allow clients to
+ * cache addition state or properties for a resource variant.
+ * <p>
+ * Overriding subclasses need to provide a cache Id for al there resource variants
+ * and a cache path for each resource variant that uniquely identifies it. In addition,
+ * they must implement <code>fetchContents</code> to retrieve the contents of the
+ * resource variant and then call <code>setContents</code> to place these contents in the cache.
+ * Subclasses may also call <code>cacheHandle</code> in order to place the handle in the
+ * cacheso that it can be retrieved later by calling <code>getCachedHandle</code> on any
+ * resource variant whose cache path is the same as the cached handle. This allows subclasses to
+ * cache additional resource variant properties such as author, comment, etc.
+ * </p>
+ * <p>
+ * The cache in which the resource variants reside will occasionally clear
+ * cached entries if they have not been accessed for a certain amount of time.
+ * </p>
  */
 public abstract class ResourceVariant extends PlatformObject implements IRemoteResource {
 	
 	// holds the storage instance for this resource variant
 	private IStorage storage;
-	
-
-	
-	/**
-	 * Get the resource variant with the given unique path from the cache.
-	 * If the resource is not cached, <code>null</code> is returned.
-	 * @param cache the resource variant cache
-	 * @param id the unique path of the desired resource variant
-	 * @return the cached resource variant or <code>null</code>
-	 */
-	public static ResourceVariant getResourceVariant(ResourceVariantCache cache, String id) {
-		if (!cache.hasEntry(id)) return null;
-		ResourceVariantCacheEntry entry = cache.getCacheEntry(id);
-		return entry.getResourceVariant();
-	}
 	
 	/*
 	 * Internal class which provides access to the cached contents
@@ -49,7 +53,7 @@ public abstract class ResourceVariant extends PlatformObject implements IRemoteR
 			if (!isContentsCached()) {
 				// The cache may have been cleared if someone held
 				// on to the storage too long
-				throw new TeamException("There is no cached contents for resource {0}." + getUniquePath());
+				throw new TeamException("There is no cached contents for resource {0}." + getCachePath());
 			}
 			return getCachedContents();
 		}
@@ -88,7 +92,9 @@ public abstract class ResourceVariant extends PlatformObject implements IRemoteR
 	
 	/**
 	 * Method that is invoked when the contents of the resource variant need to 
-	 * be fetched. Subclasses should override this method and invoke <code>setContents</code>
+	 * be fetched. This method will only be invoked for files (i.e.
+	 * <code>isContainer()</code> returns <code>false</code>.
+	 * Subclasses should override this method and invoke <code>setContents</code>
 	 * with a stream containing the fetched contents.
 	 * @param monitor a progress monitor
 	 */
@@ -102,49 +108,54 @@ public abstract class ResourceVariant extends PlatformObject implements IRemoteR
 	 * @throws TeamException
 	 */
 	protected void setContents(InputStream stream, IProgressMonitor monitor) throws TeamException {
+		// Ensure that there is a cache entry to receive the contents
+		Assert.isTrue(!isContainer());
+		if (!isHandleCached()) cacheHandle();
 		getCacheEntry().setContents(stream, monitor);
 	}
 	
 	private ResourceVariantCacheEntry getCacheEntry() {
-		return getCache().getCacheEntry(this);
+		return getCache().getCacheEntry(this.getCachePath());
 	}
 	
 	/**
-	 * Return whether there are already contents cached for ths resource variant.
+	 * Return whether there are already contents cached for this resource variant.
 	 * This method will return <code>false</code> even if the contents are currently
 	 * being cached by another thread. The consequence of this is that the contents
 	 * may be fetched twice in the rare case where two threads request the same contents
-	 * at the same time.
+	 * at the same time. For containers, this method will always return <code>false</code>.
 	 */
 	protected boolean isContentsCached() {
-		if (!isHandleCached()) {
+		if (isContainer() || !isHandleCached()) {
 			return false;
 		}
-		ResourceVariantCacheEntry entry = getCache().getCacheEntry(getUniquePath());
+		ResourceVariantCacheEntry entry = getCache().getCacheEntry(getCachePath());
 		return entry.getState() == ResourceVariantCacheEntry.READY;
 	}
 	
 	/**
 	 * Return the cached contents for this resource variant or <code>null</code>
 	 * if the contents have not been cached.
+	 * For containers, this method will always return <code>null</code>.
 	 * @return the cached contents or <code>null</code>
 	 * @throws TeamException
 	 */
 	protected InputStream getCachedContents() throws TeamException {
-		if (!isContentsCached()) return null;
-		return getCache().getCacheEntry(getUniquePath()).getContents();
+		if (isContainer() || !isContentsCached()) return null;
+		return getCache().getCacheEntry(getCachePath()).getContents();
 	}
 	
 	/**
 	 * Return <code>true</code> if the cache contains an entry for this resource
 	 * variant. It is possible that another instance of this variant is cached.
-	 * To get the cached instance, call <code>getCachedVariant()</code>. Note that 
-	 * cached contents can be retrieved from any handle to a resource variant but other
-	 * satte information may only be accessible from the cached copy.
+	 * To get the cached instance, call <code>getCachedHandle()</code>. Note that 
+	 * cached contents can be retrieved from any handle to a resource variant whose
+	 * cache path (as returned by <code>getCachePath()</code>) match but other
+	 * state information may only be accessible from the cached copy.
 	 * @return whether the variant is cached
 	 */
 	protected boolean isHandleCached() {
-		return (getCache().hasEntry(getUniquePath()));
+		return (getCache().hasEntry(getCachePath()));
 	}
 
 	/**
@@ -155,15 +166,16 @@ public abstract class ResourceVariant extends PlatformObject implements IRemoteR
 	 * resource variant when it is stored in the resource variant cache.
 	 * @return the full path of the remote resource variant
 	 */
-	public abstract String getUniquePath();
+	protected abstract String getCachePath();
 	
 	/**
 	 * Return the size (in bytes) of the contents of this resource variant.
 	 * The method will return 0 if the contents have not yet been cached
-	 * locally
+	 * locally.
+	 * For containers, this method will always return 0.
 	 */
 	public long getSize() {
-		if (!isContentsCached()) return 0;
+		if (isContainer() || !isContentsCached()) return 0;
 		ResourceVariantCacheEntry entry = getCacheEntry();
 		if (entry == null || entry.getState() != ResourceVariantCacheEntry.READY) {
 			return 0;
@@ -171,19 +183,49 @@ public abstract class ResourceVariant extends PlatformObject implements IRemoteR
 		return entry.getSize();
 	}
 	
-	/**
+	/*
 	 * Return the cache that is used to cache this resource variant and its contents.
 	 * @return Returns the cache.
 	 */
-	protected abstract ResourceVariantCache getCache();
+	private ResourceVariantCache getCache() {
+		ResourceVariantCache.enableCaching(getCacheId());
+		return ResourceVariantCache.getCache(getCacheId());
+	}
 	
 	/**
+	 * Return the ID that uniquely identifies the cache in which this resource variant
+	 * is to be cache. The ID of the plugin that provides the resource variant subclass
+	 * is a good candidate for this ID. The creation, management and disposal of the cache
+	 * is managed by Team.
+	 * @return the cache ID
+	 */
+	protected abstract String getCacheId();
+
+	/**
 	 * Return the cached handle for this resource variant if there is
-	 * one. If there isn't one, then this handle will be cached.
-	 * @return a cached copy of this resource variant
+	 * one. If there isn't one, then <code>null</code> is returned.
+	 * If there is no cached handle and one is desired, then <code>cacheHandle()</code>
+	 * should be called.
+	 * @return a cached copy of this resource variant or <code>null</code>
 	 */
 	protected ResourceVariant getCachedHandle() {
-		return getCache().getCacheEntry(this).getResourceVariant();
+		ResourceVariantCacheEntry entry = getCacheEntry();
+		if (entry == null) return null;
+		return entry.getResourceVariant();
+	}
+	
+	/**
+	 * Cache this handle in the cache, replacing any previously cached handle.
+	 * Note that caching this handle will replace any state associated with a 
+	 * previously cached handle, if there is one, but the contents will remain.
+	 * The reason for this is the assumption that the cache path for a resource
+	 * variant (as returned by <code>getCachePath()</code> identifies an immutable
+	 * resource version (or revision). The ability to replace the handle itself
+	 * is provided so that additional state may be cached before or after the contents
+	 * are fetched.
+	 */
+	protected void cacheHandle() {
+		getCache().add(getCachePath(), this);
 	}
 	
 }

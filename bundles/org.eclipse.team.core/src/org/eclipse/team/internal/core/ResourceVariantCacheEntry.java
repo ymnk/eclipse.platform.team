@@ -8,15 +8,15 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core;
+package org.eclipse.team.internal.core;
 
 import java.io.*;
 import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.ResourceVariant;
-import org.eclipse.team.internal.core.Policy;
 
 /**
  * This class provides the implementation for the ICacheEntry

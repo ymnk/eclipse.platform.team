@@ -16,7 +16,6 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.core.ResourceVariantCacheEntry;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.*;
@@ -536,13 +535,13 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	public void setSyncBytes(byte[] syncBytes, int modificationState) {
 		if (fetching) {
 			RemoteFile file = (RemoteFile)getCachedHandle();
-			file.setSyncBytes(syncBytes, modificationState);	
+			if (file == null) {
+				cacheHandle();
+			} else if (file != this) {
+				file.setSyncBytes(syncBytes, modificationState);
+			}
 		}
 		this.syncBytes = syncBytes;
-	}
-
-	private ResourceVariantCacheEntry getCacheEntry() {
-		return getCache().getCacheEntry(getUniquePath());
 	}
 
 	public String toString() {

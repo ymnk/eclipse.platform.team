@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core;
+package org.eclipse.team.internal.core;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,9 +21,8 @@ import java.util.Map;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.ResourceVariant;
-import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * This class implements a caching facility that can be used by TeamProviders to cache contents
@@ -105,6 +104,13 @@ public class ResourceVariantCache {
 	 */
 	public static synchronized ResourceVariantCache getCache(String cacheId) {
 		return (ResourceVariantCache)caches.get(cacheId);
+	}
+	
+	public static synchronized void shutdown() {
+		for (Iterator iter = caches.keySet().iterator(); iter.hasNext();) {
+			String id = (String) iter.next();
+			disableCache(id);
+		}
 	}
 	
 	private ResourceVariantCache(String name) {
@@ -225,40 +231,14 @@ public class ResourceVariantCache {
 	 * @return
 	 */
 	public ResourceVariantCacheEntry getCacheEntry(String id) {
-		ResourceVariantCacheEntry entry = internalGetCacheEntry(id);
-		if (entry == null) {
-			// cache miss
-			synchronized(this) {
-				// recheck inside the lock in case another thread created the entry
-				entry = internalGetCacheEntry(id);
-				if (entry == null) {
-					entry = createCacheEntry(id);
-				}
-			}
-		}
-		return entry;
+		return internalGetCacheEntry(id);
 	}
 	
-	public ResourceVariantCacheEntry getCacheEntry(ResourceVariant resource) {
-		String id = resource.getUniquePath();
-		if (hasEntry(id)) {
-			return getCacheEntry(id);
-		} else {
-			synchronized(this) {
-				ResourceVariantCacheEntry entry = getCacheEntry(id);
-				if (entry.getResourceVariant() == null) {
-					// It's possible that another thread created the entry while we didn't hold the lock
-					entry.setResourceVariant(resource);
-				}
-				return entry;
-			}
-		}
-	}
-	
-	private synchronized ResourceVariantCacheEntry createCacheEntry(String id) {
+	public synchronized ResourceVariantCacheEntry add(String id, ResourceVariant resource) {
 		clearOldCacheEntries();
 		String filePath = String.valueOf(cacheDirSize++);
 		ResourceVariantCacheEntry entry = new ResourceVariantCacheEntry(this, lock, id, filePath);
+		entry.setResourceVariant(resource);
 		cacheEntries.put(id, entry);
 		return entry;
 	}

@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.core.resources;
  
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.core.ResourceVariantCache;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.ResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -212,7 +211,7 @@ public abstract class RemoteResource extends ResourceVariant implements ICVSRemo
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.synchronize.ResourceVariant#getUniquePath()
 	 */
-	public String getUniquePath() {
+	public String getCachePath() {
 		ICVSRepositoryLocation location = getRepository();
 		IPath path = new Path(location.getHost());
 		path = path.append(location.getRootDirectory());
@@ -222,9 +221,9 @@ public abstract class RemoteResource extends ResourceVariant implements ICVSRemo
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.synchronize.ResourceVariant#getCache()
+	 * @see org.eclipse.team.core.synchronize.ResourceVariant#getCacheId()
 	 */
-	protected ResourceVariantCache getCache() {
-		return CVSProviderPlugin.getPlugin().getRemoteContentsCache();
+	protected String getCacheId() {
+		return CVSProviderPlugin.ID;
 	}
 }

@@ -37,7 +37,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	}
 	
 	public SyncInfo getSyncInfo(Subscriber subscriber, IResource resource) throws TeamException {
-		SyncInfoSet set = getCollector(subscriber).getSyncInfoTree();
+		SyncInfoSet set = getCollector(subscriber).getWorkingSetSyncInfoSet();
 		SyncInfo info = set.getSyncInfo(resource);
 		if (info == null) {
 			info = subscriber.getSyncInfo(resource);
