@@ -14,8 +14,9 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.resources.CVSCompareSyncElement;
+import org.eclipse.team.internal.ccvs.core.resources.CVSRemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
 import org.eclipse.team.ui.sync.SyncView;
 
@@ -24,11 +25,13 @@ public class CVSLocalCompareEditorInput extends CVSSyncCompareInput {
 	
 	public CVSLocalCompareEditorInput(IResource[] resources, CVSTag[] tags) {
 		super(resources);
+		Assert.isTrue(resources.length == tags.length);
 		this.tags = tags;
 	}
 	
 	public CVSLocalCompareEditorInput(IResource[] resources, CVSTag tag) {
 		super(resources);
+		Assert.isTrue(tag != null);
 		this.tags = new CVSTag[] {tag};
 	}
 	
@@ -45,10 +48,15 @@ public class CVSLocalCompareEditorInput extends CVSSyncCompareInput {
 		monitor.beginTask(null, work);
 		try {
 			for (int i = 0; i < trees.length; i++) {
-				IResource resource = resources[i];
-				CVSTag tag = i > tags.length ? tags[0] : tags[i];
+				IResource resource = resources[i];	
+				CVSTag tag;			
+				if(tags.length != resources.length) {
+					tag = tags[0];
+				} else {
+					tag = tags[i];
+				}
 				IRemoteResource remote = CVSWorkspaceRoot.getRemoteTree(resource, tag, Policy.subMonitorFor(monitor, 50));
-				trees[i] = new CVSCompareSyncElement(resource, remote);				 
+				trees[i] = new CVSRemoteSyncElement(false /* two-way */, resource, null, remote);				 
 			}
 		} finally {
 			monitor.done();

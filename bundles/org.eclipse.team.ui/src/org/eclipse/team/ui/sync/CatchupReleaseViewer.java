@@ -400,23 +400,29 @@ public abstract class CatchupReleaseViewer extends DiffTreeViewer implements ISe
 			}
 		} else if(element instanceof TeamFile) {
 			TeamFile file = (TeamFile)element;
-			file.setProgressMonitor(monitor);
-			if(file.getKind() != IRemoteSyncElement.IN_SYNC) {
-				if(file.getRight() == null || file.getLeft() == null) {
-					file.copy(false /* right to left */);
-				} 
-				ITypedElement te = file.getLeft();
-				ITypedElement rte = file.getRight();
-				if(te instanceof IEditableContent) {
-					IEditableContent editable = (IEditableContent)te;
-					if(editable.isEditable()) {
-						if(rte instanceof BufferedContent) {
-							editable.setContent(((BufferedContent)rte).getContent());
+			try {
+				monitor = Policy.monitorFor(monitor);
+				monitor.beginTask(null, 1);
+				file.setProgressMonitor(Policy.subMonitorFor(monitor, 1));
+				if(file.getKind() != IRemoteSyncElement.IN_SYNC) {
+					if(file.getRight() == null || file.getLeft() == null) {
+						file.copy(false /* right to left */);
+					} 
+					ITypedElement te = file.getLeft();
+					ITypedElement rte = file.getRight();
+					if(te instanceof IEditableContent) {
+						IEditableContent editable = (IEditableContent)te;
+						if(editable.isEditable()) {
+							if(rte instanceof BufferedContent) {
+								editable.setContent(((BufferedContent)rte).getContent());
+							}
 						}
 					}
 				}
+				file.setProgressMonitor(null);
+			} finally {
+				monitor.done();
 			}
-			file.setProgressMonitor(null);
 		}
 	}
 	

@@ -259,11 +259,6 @@ public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 				manager.add(updateMergeAction);
 				manager.add(forceUpdateMergeAction);
 				manager.add(updateWithJoinAction);
-				manager.add(new Separator());
-				manager.add(confirmMerge);
-				break;
-			case SyncView.SYNC_COMPARE:
-				// no cvs specific actions
 				break;
 		}
 	}
