@@ -58,7 +58,7 @@ public class MergeWizardPage extends CVSWizardPage {
     }
 
     private void createEndTagArea(Composite parent) {
-        createWrappingLabel(parent, "Enter the branch or version being merged (end tag):", 0, 2);
+        createWrappingLabel(parent, "Enter the &branch or version being merged (end tag):", 0, 2);
         endTagField = createTextField(parent);
         endTagField.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -66,7 +66,7 @@ public class MergeWizardPage extends CVSWizardPage {
             }
         });
         TagContentAssistProcessor.createContentAssistant(endTagField, tagSource, TagSelectionArea.INCLUDE_ALL_TAGS);
-        endTagBrowseButton = createPushButton(parent, "Browse...");
+        endTagBrowseButton = createPushButton(parent, "Br&owse...");
         endTagBrowseButton.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
                 TagSelectionDialog dialog = new TagSelectionDialog(getShell(), getTagSource(), 
@@ -83,7 +83,7 @@ public class MergeWizardPage extends CVSWizardPage {
     }
 
     private void createStartTagArea(Composite parent) {
-        createWrappingLabel(parent, "Enter the version that is the common base (start tag):", 0, 2);
+        createWrappingLabel(parent, "Enter the &version that is the common base (start tag):", 0, 2);
         startTagField = createTextField(parent);
         startTagField.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -91,7 +91,7 @@ public class MergeWizardPage extends CVSWizardPage {
             }
         });
         TagContentAssistProcessor.createContentAssistant(startTagField, tagSource, TagSelectionArea.INCLUDE_VERSIONS | TagSelectionArea.INCLUDE_DATES);
-        startTagBrowseButton = createPushButton(parent, "Browse...");
+        startTagBrowseButton = createPushButton(parent, "Bro&wse...");
         startTagBrowseButton.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
                 TagSelectionDialog dialog = new TagSelectionDialog(getShell(), getTagSource(), 
@@ -110,9 +110,7 @@ public class MergeWizardPage extends CVSWizardPage {
     protected void updateEndTag(String text) {
         if (endTag == null || !endTag.getName().equals(text)) {
             CVSTag tag = getTagFor(text, false);
-            if (tag != null) {
-                endTag = tag;
-            }
+            setEndTag(tag);
         }
         updateEnablements();
     }
@@ -120,9 +118,7 @@ public class MergeWizardPage extends CVSWizardPage {
     protected void updateStartTag(String text) {
         if (startTag == null || !startTag.getName().equals(text)) {
             CVSTag tag = getTagFor(text, true);
-            if (tag != null) {
-                startTag = tag;
-            }
+            setStartTag(tag);
         }
         updateEnablements();
     }
@@ -155,8 +151,12 @@ public class MergeWizardPage extends CVSWizardPage {
         if (selectedTag == null || endTag == null || !endTag.equals(selectedTag)) {
 	        endTag = selectedTag;
 	        if (endTagField != null) {
-	            endTagField.setText(endTag.getName());
-	            if (startTag == null && endTag.getType() == CVSTag.BRANCH) {
+	            String name = endTagField.getText();
+	            if (endTag != null)
+	                name = endTag.getName();
+	            if (!endTagField.getText().equals(name))
+	                endTagField.setText(name);
+	            if (startTag == null && endTag != null && endTag.getType() == CVSTag.BRANCH) {
 	                CVSTag tag = findCommonBaseTag(endTag);
 	                if (tag != null) {
 	                    setStartTag(tag);
@@ -171,7 +171,11 @@ public class MergeWizardPage extends CVSWizardPage {
         if (selectedTag == null || startTag != null || !endTag.equals(selectedTag)) {
 	        startTag = selectedTag;
 	        if (startTagField != null) {
-	            startTagField.setText(startTag.getName());
+	            String name = startTagField.getText();
+	            if (startTag != null)
+	                name = startTag.getName();
+	            if (!startTagField.getText().equals(name))
+	                startTagField.setText(name);
 	        }
 	        updateEnablements();
         }
