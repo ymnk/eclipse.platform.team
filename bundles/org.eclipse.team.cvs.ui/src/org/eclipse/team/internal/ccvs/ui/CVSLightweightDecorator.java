@@ -7,7 +7,6 @@ package org.eclipse.team.internal.ccvs.ui;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,6 +19,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
@@ -33,10 +33,45 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.TeamImages;
 
 public class CVSLightweightDecorator
 	extends LabelProvider
 	implements ILightweightLabelDecorator {
+
+	// Images cached for better performance
+	private static ImageDescriptor dirty;
+	private static ImageDescriptor checkedIn;
+	private static ImageDescriptor checkedOut;
+	private static ImageDescriptor merged;
+	private static ImageDescriptor newResource;
+
+	/*
+	 * Define a cached image descriptor which only creates the image data once
+	 */
+	public static class CachedImageDescriptor extends ImageDescriptor {
+		ImageDescriptor descriptor;
+		ImageData data;
+		public CachedImageDescriptor(ImageDescriptor descriptor) {
+			this.descriptor = descriptor;
+		}
+		public ImageData getImageData() {
+			if (data == null) {
+				data = descriptor.getImageData();
+			}
+			return data;
+		}
+	}
+
+	static {
+		dirty = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_DIRTY_OVR));
+		checkedIn = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
+		//checkedOut = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDOUT_OVR));
+		checkedOut = new CachedImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_CHECKEDIN_OVR));
+		merged = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_MERGED));
+		newResource = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_QUESTIONABLE));
+	}
 		
 /*	public CVSLightweightDecorator() {
 		CVSProviderPlugin.addResourceStateChangeListener(this);
@@ -47,72 +82,10 @@ public class CVSLightweightDecorator
 	// Keep track of deconfigured projects
 	private Set deconfiguredProjects = new HashSet();
 
-	public ImageDescriptor getOverlay(Object element) {
-		IResource resource = getResource(element);
-		if (resource == null || resource.getType() == IResource.ROOT)
-			return null;
-		if (getCVSProviderFor(resource) == null)
-			return null;
-
-		CVSDecoration decoration = decorate(resource);
-
-		List overlays = decoration.getOverlays();
-		if(overlays.isEmpty())
-			return null;
-		else
-			return (ImageDescriptor) overlays.get(0);
-	}
-
-	public CVSDecoration decorate(IResource resource) {
-		// it is possible that the resource to be decorated is no longer associated
-		// with a CVS provider. This could happen if the team nature was removed
-		// between the time the decoration event was posted to the thread and the time
-		// the thread processes the decoration.
-		RepositoryProvider provider =
-			RepositoryProvider.getProvider(
-				resource.getProject(),
-				CVSProviderPlugin.getTypeId());
-		if (!resource.exists() || provider == null) {
-			return null;
-		}
-
-		// if the resource is ignored return an empty decoration. This will
-		// force a decoration update event and clear the existing CVS decoration.
-		ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-		try {
-			if (cvsResource.isIgnored()) {
-				return new CVSDecoration();
-			}
-		} catch (CVSException e) {
-			// The was an exception in isIgnored. Don't decorate
-			return new CVSDecoration();
-		}
-
-		// determine a if resource has outgoing changes (e.g. is dirty).
-		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
-		boolean isDirty = false;
-		boolean computeDeepDirtyCheck =
-			store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
-		int type = resource.getType();
-		if (type == IResource.FILE || computeDeepDirtyCheck) {
-			isDirty = CVSDecorator.isDirty(resource);
-		}
-
-		// compute decorations
-		CVSDecoration decoration =
-			CVSDecorationRunnable.computeTextLabelFor(resource, isDirty);
-		CVSDecorationRunnable.computeLabelOverlaysFor(
-			resource,
-			decoration,
-			isDirty,
-			(CVSTeamProvider) provider);
-		return decoration;
-	}
-
 	/*
-		 * Answers null if a provider does not exist or the provider is not a CVS provider. These resources
-		 * will be ignored by the decorator.
-		 */
+	 * Answers null if a provider does not exist or the provider is not a CVS provider. These resources
+	 * will be ignored by the decorator.
+	 */
 	private CVSTeamProvider getCVSProviderFor(IResource resource) {
 		RepositoryProvider p =
 			RepositoryProvider.getProvider(
@@ -145,11 +118,13 @@ public class CVSLightweightDecorator
 	 * @see org.eclipse.jface.viewers.ILightweightLabelDecorator#decorate(java.lang.Object, org.eclipse.jface.viewers.IDecoration)
 	 */
 	public void decorate(Object element, IDecoration decoration) {
-
+		
 		IResource resource = getResource(element);
 		if (resource == null || resource.getType() == IResource.ROOT)
 			return;
-		if (getCVSProviderFor(resource) == null)
+			
+		CVSTeamProvider cvsProvider = getCVSProviderFor(resource);
+		if (cvsProvider == null)
 			return;
 
 
@@ -177,9 +152,14 @@ public class CVSLightweightDecorator
 		}
 		
 		decorateTextLabel(resource, decoration, isDirty);
+		
+		ImageDescriptor overlay = getOverlay(resource, isDirty, cvsProvider);
+		if(overlay != null) { //actually sending null arg would work but this makes logic clearer
+			decoration.addOverlay(overlay);
+		}
 	}
 
-	public void decorateTextLabel(IResource resource, IDecoration decoration, boolean isDirty) {
+	private void decorateTextLabel(IResource resource, IDecoration decoration, boolean isDirty) {
 		try {
 			Map bindings = new HashMap(3);
 			String format = ""; //$NON-NLS-1$
@@ -292,5 +272,79 @@ public class CVSLightweightDecorator
 			}
 		}
 		return tag;
+	}
+	
+	/* Determine and return the overlay icon to use.
+	 * We only get to use one, so if many are applicable at once we chose the
+	 * one we think is the most important to show.
+	 * Return null if no overlay is to be used.
+	 */	
+	private ImageDescriptor getOverlay(IResource resource, boolean isDirty, CVSTeamProvider provider) {
+
+		// for efficiency don't look up a pref until its needed
+		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
+		boolean showNewResources = store.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION);
+
+		// show newResource icon
+		if (showNewResources) {
+			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+			try {
+				if (cvsResource.exists()) {
+					boolean isNewResource = false;
+					if (cvsResource.isFolder()) {
+						if (!((ICVSFolder)cvsResource).isCVSFolder()) {
+							isNewResource = true;
+						}
+					} else if (!cvsResource.isManaged()) {
+						isNewResource = true;
+					}
+					if (isNewResource) {
+						return newResource;
+					}
+				}
+			} catch (CVSException e) {
+				CVSUIPlugin.log(e.getStatus());
+				return null;
+			}
+		}
+		
+		boolean showDirty = store.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION);
+
+		// show dirty icon
+		if(showDirty && isDirty) {
+			 return dirty;
+		}
+				
+		boolean showAdded = store.getBoolean(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION);
+
+		if (showAdded && resource.getType() == IResource.FILE) {
+			try {
+				if (resource.getLocation() != null) {
+					ICVSFile cvsFile = CVSWorkspaceRoot.getCVSFileFor((IFile) resource);
+					ResourceSyncInfo info = cvsFile.getSyncInfo();
+					// show merged icon if file has been merged but has not been edited (e.g. on commit it will be ignored)
+					if (info != null && info.isNeedsMerge(cvsFile.getTimeStamp())) {
+						return merged;
+					// show added icon if file has been added locally.
+					} else if (info != null && info.isAdded()) {
+						return checkedOut;
+					}
+				}
+			} catch (CVSException e) {
+				CVSUIPlugin.log(e.getStatus());
+				return null;
+			}
+		}
+
+		boolean showHasRemote = store.getBoolean(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION);
+		
+		// Simplest is that is has remote.
+		if (showHasRemote && CVSWorkspaceRoot.hasRemote(resource)) {
+			return checkedIn;
+		}
+
+		//nothing matched
+		return null;
+
 	}
 }
