@@ -39,6 +39,7 @@ public class AllTestsSynchronizeView extends EclipseTest {
 		CVSSyncSubscriberTest.setSyncSource(new SyncInfoFromSyncSet());
 		
 		// place other ui tests here
+		
 				
 		return new CVSUITestCase(suite);
 	}
