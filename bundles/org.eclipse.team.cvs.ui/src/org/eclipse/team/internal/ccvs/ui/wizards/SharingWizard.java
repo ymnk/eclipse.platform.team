@@ -256,7 +256,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	}
 
 	private boolean promptToKeepMapping() {
-		return (MessageDialog.openQuestion(getShell(), "Keep Sharing?", "Project {0} has been mapped to a remote module. Should this mapping be kept?" + project.getName()));
+		return (MessageDialog.openQuestion(getShell(), Policy.bind("SharingWizard.26"), Policy.bind("SharingWizard.27", project.getName()))); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	private void reconcileProject(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {

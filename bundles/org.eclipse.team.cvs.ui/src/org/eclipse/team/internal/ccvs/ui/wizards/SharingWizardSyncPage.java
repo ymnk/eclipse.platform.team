@@ -96,15 +96,15 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 	
 	private Control createNoChangesPage(PageBook pageBook) {
 		Composite composite = createComposite(pageBook, 1);
-		createWrappingLabel(composite, "The resources of project {0} are in-sync with the repository." + project.getName(), 0);
+		createWrappingLabel(composite, Policy.bind("SharingWizardSyncPage.3", project.getName()), 0); //$NON-NLS-1$
 		return composite;
 	}
 	
 	private Control createErrorPage(PageBook pageBook) {
 		Composite composite = createComposite(pageBook, 1);
-		createWrappingLabel(composite, "An error has occurred populating this view.", 0);
+		createWrappingLabel(composite, Policy.bind("SharingWizardSyncPage.4"), 0); //$NON-NLS-1$
 		Button showErrors = new Button(composite, SWT.PUSH);
-		showErrors.setText("Show Errors");
+		showErrors.setText(Policy.bind("SharingWizardSyncPage.5")); //$NON-NLS-1$
 		showErrors.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				showErrors();
