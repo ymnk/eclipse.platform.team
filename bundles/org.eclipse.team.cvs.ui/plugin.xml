@@ -221,6 +221,12 @@
 				label="%RemoveModuleVersionAction.label"
 				tooltip="%RemoveModuleVersionAction.tooltip"
 				class="org.eclipse.team.internal.ccvs.ui.actions.RemoveModuleVersionAction"/>
+			<action
+				id="org.eclipse.team.ccvs.ui.configureTagsOnProjects"
+				label="%ConfigureTags.label"
+				tooltip="%ConfigureTags.label"
+				icon="icons/full/clcl16/newstream_wiz.gif"
+				class="org.eclipse.team.internal.ccvs.ui.actions.ConfigureTagsFromRepoViewOnFolder"/>				
 		</objectContribution>
 		<objectContribution 
 			id="org.eclipse.team.ccvs.ui.RemoteFileContributions" 
@@ -259,6 +265,12 @@
 				label="%DefineVersionAction.label"
 				tooltip="%DefineVersionAction.tooltip"
 				class="org.eclipse.team.internal.ccvs.ui.actions.DefineVersionAction"/>
+			<action
+				id="org.eclipse.team.ccvs.ui.configureTagsOnProjects"
+				label="%ConfigureTags.label"
+				tooltip="%ConfigureTags.label"
+				icon="icons/full/clcl16/newstream_wiz.gif"
+				class="org.eclipse.team.internal.ccvs.ui.actions.ConfigureTagsFromRepoViewOnFolder"/>	
 		</objectContribution>
 		<objectContribution
 			id="org.eclipse.team.ccvs.ui.ProjectVersionContributions"
@@ -297,6 +309,12 @@
 				tooltip="%DefineBranchAction.tooltip"
 				icon="icons/full/clcl16/newstream_wiz.gif"
 				class="org.eclipse.team.internal.ccvs.ui.actions.DefineBranchAction"/>
+			<action
+				id="org.eclipse.team.ccvs.ui.configureTagsOnBranchCategory"
+				label="%ConfigureTags.label"
+				tooltip="%ConfigureTags.label"
+				icon="icons/full/clcl16/newstream_wiz.gif"
+				class="org.eclipse.team.internal.ccvs.ui.actions.ConfigureTagsFromRepoView"/>
 		</objectContribution>			
 		<objectContribution
 			id="org.eclipse.team.ccvs.ui.BranchTagContributions"

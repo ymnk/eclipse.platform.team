@@ -135,7 +135,7 @@ public class TagConfigurationDialog extends Dialog {
 		shell.setLayout (gridLayout);
 
 		Label description = new Label(shell,SWT.WRAP);
-		description.setText("Use this dialog to configure the branch and version tags you will see in the workbench. Browse the CVS files and select the subset of tags that you want remembered. In addition, you can configure which files are automatically examined for new tags when tag lists are refreshed.");
+		description.setText("Use this dialog to configure the branch and version tags you will see in the workbench for these projects. Browse the CVS files and select the subset of tags that you want remembered. In addition, you can configure which files are automatically examined for new tags when tag lists are refreshed.");
 		data = new GridData (GridData.FILL_BOTH);
 		data.widthHint = 300;
 		data.horizontalSpan = 2;
@@ -203,7 +203,7 @@ public class TagConfigurationDialog extends Dialog {
 				if (type1 != type2) {
 					return type2 - type1;
 				}
-				return super.compare(viewer, tag1, tag2);
+				return -tag1.compareTo(tag2);
 			}
 		});
 		
@@ -218,7 +218,7 @@ public class TagConfigurationDialog extends Dialog {
 		rememberedTags.setLayout (gridLayout);
 
 		Label rememberedTagsLabel = new Label (rememberedTags, SWT.NONE);
-		rememberedTagsLabel.setText ("Remembered Tags:");
+		rememberedTagsLabel.setText ("Remembered Tags for these projects:");
 		data = new GridData ();
 		data.horizontalSpan = 2;
 		rememberedTagsLabel.setLayoutData (data);
@@ -536,17 +536,26 @@ public class TagConfigurationDialog extends Dialog {
 		
 		// update all project with the same version tags
 		RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();				
+		manager.notifyRepoView = false;
 		CVSTag[] oldTags = manager.getKnownBranchTags(root);
 		manager.removeBranchTag(root, oldTags);
 		for(int i = 0; i < roots.length; i++) {
-				if(branches.length>0) {
-					manager.addBranchTags(root, branches);
+			boolean notified = false;
+			if(branches.length>0) {
+				if(i == (roots.length - 1)) {
+					notified = true;
+					manager.notifyRepoView = true;
 				}
-				oldTags = manager.getKnownVersionTags(roots[i]);
-				manager.removeVersionTags(roots[i], oldTags);
-				if(versions.length>0) {
-					manager.addVersionTags(roots[i], versions);
+				manager.addBranchTags(root, branches);
+			}
+			oldTags = manager.getKnownVersionTags(roots[i]);
+			manager.removeVersionTags(roots[i], oldTags);
+			if(versions.length>0) {
+				manager.addVersionTags(roots[i], versions);
+				if(i == (roots.length - 1) && !notified) {
+					manager.notifyRepoView = true;
 				}
+			}			
 		}
 		super.okPressed();
 	}
@@ -584,7 +593,7 @@ public class TagConfigurationDialog extends Dialog {
 		for (int i = 0; i < autoFiles.length; i++) {
 			tooltip.append("-  " + autoFiles[i] + "\n");
 		}
-		tooltip.append("If expected tags do not appear try configuring tags for this project");
+		tooltip.append("If expected tags do not appear try using the configure tags dialogs to customize the tags associated with this project");
 		button.setToolTipText(tooltip.toString());
 	 }
 	 

@@ -69,6 +69,8 @@ public class RepositoryManager {
 	// The previously remembered comment
 	private static String previousComment = "";
 	
+	public static boolean notifyRepoView = true;
+	
 	/**
 	 * Answer an array of all known remote roots.
 	 */
@@ -117,13 +119,31 @@ public class RepositoryManager {
 			ICVSRepositoryLocation location = CVSProvider.getInstance().getRepository(project.getFolderSyncInfo().getRoot());
 			ICVSRemoteFile vcmMeta = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(".vcm_meta"));
 			ICVSRemoteFile dotProject = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(".project"));
-			addDefinedTagsFor(vcmMeta, project, location);
-			addDefinedTagsFor(dotProject, project, location);
+			
+			List tags = new ArrayList();
+			tags.addAll(Arrays.asList(fetchDefinedTagsFor(vcmMeta, project, location)));
+			tags.addAll(Arrays.asList(fetchDefinedTagsFor(dotProject, project, location)));
 			String[] relativePaths = getAutoRefreshFiles(project);
 			for (int i = 0; i < relativePaths.length; i++) {
 				ICVSRemoteFile remoteFile =  (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(relativePaths[i]));
-				addDefinedTagsFor(remoteFile, project, location);
+				tags.addAll(Arrays.asList(fetchDefinedTagsFor(remoteFile, project, location)));
 			}
+			// add all tags in one pass so that the listeners only get one notification for
+			// versions and another for branches
+			List branches = new ArrayList();
+			List versions = new ArrayList();
+			for (Iterator it = tags.iterator(); it.hasNext();) {
+				CVSTag element = (CVSTag) it.next();
+				if(element.getType()==CVSTag.BRANCH) {
+					branches.add(element);
+				} else {
+					versions.add(element);
+				}
+			}
+			notifyRepoView = false;
+			addBranchTags(project, (CVSTag[]) branches.toArray(new CVSTag[branches.size()]));
+			notifyRepoView = true;
+			addVersionTags(project, (CVSTag[]) versions.toArray(new CVSTag[versions.size()]));
 		} catch(CVSException e) {
 			throw new TeamException(e.getStatus());
 		}
@@ -148,7 +168,7 @@ public class RepositoryManager {
 			set.add(tags[i]);
 		}
 		Iterator it = listeners.iterator();
-		while (it.hasNext()) {
+		while (it.hasNext() && notifyRepoView) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
 			listener.branchTagsAdded(tags, location);
 		}
@@ -212,7 +232,7 @@ public class RepositoryManager {
 			set.add(tags[i]);
 		}
 		Iterator it = listeners.iterator();
-		while (it.hasNext()) {
+		while (it.hasNext() && notifyRepoView) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
 			listener.versionTagsAdded(tags, location);
 		}
@@ -277,7 +297,7 @@ public class RepositoryManager {
 			set.remove(tags[i]);
 		}
 		Iterator it = listeners.iterator();
-		while (it.hasNext()) {
+		while (it.hasNext() && notifyRepoView) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
 			listener.branchTagsRemoved(tags, location);
 		}
@@ -297,7 +317,7 @@ public class RepositoryManager {
 			set.remove(tags[i]);
 		}
 		Iterator it = listeners.iterator();
-		while (it.hasNext()) {
+		while (it.hasNext() && notifyRepoView) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
 			listener.versionTagsRemoved(tags, location);
 		}
@@ -658,18 +678,11 @@ public class RepositoryManager {
 	/*
 	 * Fetches and caches the tags found on the provided remote file.
 	 */
-	private void addDefinedTagsFor(ICVSRemoteFile remoteFile, ICVSFolder project, ICVSRepositoryLocation location) throws TeamException {
+	private CVSTag[] fetchDefinedTagsFor(ICVSRemoteFile remoteFile, ICVSFolder project, ICVSRepositoryLocation location) throws TeamException {
 		if(remoteFile != null && remoteFile.exists(null)) {
-			CVSTag[] tags = getTags(remoteFile, null);
-			for (int i = 0; i < tags.length; i++) {
-				CVSTag tag = tags[i];				
-				if(tag.getType()==CVSTag.BRANCH) {
-					addBranchTags(location, new CVSTag[] {tags[i]});
-				} else if(tag.getType()==CVSTag.VERSION) {
-					addVersionTags(project, new CVSTag[] {tags[i]});
-				}					
-			}
-		}	
+			return getTags(remoteFile, null);
+		}
+		return new CVSTag[0];
 	}
 	
 	private ICVSProvider getCVSProvider() {

@@ -37,6 +37,10 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 			if(r instanceof RemoteResource) {
 				return r.isFolder();
 			}
+		} else if(element instanceof VersionCategory) {
+			return true;
+		} else if(element instanceof BranchTag) {
+			return true;
 		}
 		return super.hasChildren(element);
 	}
