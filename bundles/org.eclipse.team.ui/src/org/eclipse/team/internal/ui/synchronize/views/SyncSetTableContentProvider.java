@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ui.synchronize.views;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
+import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
 
 /**
  * This class provides the contents for a TableViewer using a SyncSet as the model
@@ -38,7 +38,7 @@ public class SyncSetTableContentProvider extends SyncSetContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetContentProvider#handleResourceAdditions(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	protected void handleResourceAdditions(SyncSetChangedEvent event) {
+	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
 		TableViewer table = getTableViewer();
 		if (table != null) {
 			SyncInfo[] infos = event.getAddedResources();
@@ -52,7 +52,7 @@ public class SyncSetTableContentProvider extends SyncSetContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetContentProvider#handleResourceRemovals(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	protected void handleResourceRemovals(SyncSetChangedEvent event) {
+	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
 		TableViewer table = getTableViewer();
 		if (table != null) {
 			IResource[] resources = event.getRemovedResources();

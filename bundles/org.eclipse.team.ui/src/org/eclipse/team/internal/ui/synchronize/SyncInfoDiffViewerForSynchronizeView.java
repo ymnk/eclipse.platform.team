@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.Iterator;
-
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
@@ -22,40 +22,35 @@ import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
-public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
+public class SyncInfoDiffViewerForSynchronizeView extends SyncInfoDiffTreeViewer {
 
 	private TeamSubscriberParticipant participant;
+	private SyncSet set;
+	
 	//private ISynchronizeView view;
 	
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
 	private RefreshAction refreshSelectionAction;
 	private Action expandAll;
+	private ISynchronizeView view;
 	
-	public SyncChangesStructuredViewer(TeamSubscriberParticipant participant, SyncSet set) {
-		super(participant, set);
-		this.participant = participant;		
-	}
-	
-	protected void createActions() {
-		// context menus
-		//openWithActions = new OpenWithActionGroup(view, participant);
-		//refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
-		//refreshSelectionAction = new RefreshAction(view.getSite().getPage(), participant, false /* refresh all */);
+	public SyncInfoDiffViewerForSynchronizeView(Composite parent, ISynchronizeView view, TeamSubscriberParticipant participant, SyncSet set) {
+		super(parent, participant, set);
+		this.view = view;
+		this.set = set;
+		this.participant = participant;
+		
+		openWithActions = new OpenWithActionGroup(view, participant);
+		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
+		refreshSelectionAction = new RefreshAction(view.getSite().getPage(), participant, false /* refresh all */);	
 		expandAll = new Action() {
 			public void run() {
-				Viewer viewer = getViewer();
-				ISelection selection = viewer.getSelection();
-				if(viewer instanceof AbstractTreeViewer && ! selection.isEmpty()) {
-					Iterator elements = ((IStructuredSelection)selection).iterator();
-					while (elements.hasNext()) {
-						Object next = elements.next();
-						((AbstractTreeViewer) viewer).expandToLevel(next, AbstractTreeViewer.ALL_LEVELS);
-					}
-				}
+				expandAllFromSelection();
 			}
 		};
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
+		
 	}
 	
 	private void handleOpen(OpenEvent event) {
@@ -63,54 +58,33 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 	}
 	
 	protected void fillContextMenu(IMenuManager manager) {	
-		//openWithActions.fillContextMenu(manager);
-		//refactorActions.fillContextMenu(manager);
-		//manager.add(refreshSelectionAction);
+		openWithActions.fillContextMenu(manager);
+		refactorActions.fillContextMenu(manager);
+		manager.add(refreshSelectionAction);
 		manager.add(new Separator());
 		manager.add(expandAll);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
 	protected void initializeListeners() {
-		Viewer viewer = getViewer();
-		getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
+	addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				updateStatusLine((IStructuredSelection)event.getSelection());
 			}
 		});
-		if(viewer instanceof StructuredViewer) {
-			StructuredViewer structuredViewer = (StructuredViewer)viewer;
-			structuredViewer.addDoubleClickListener(new IDoubleClickListener() {
-				public void doubleClick(DoubleClickEvent event) {
-					handleDoubleClick(event);
-				}
-			});
-			structuredViewer.addOpenListener(new IOpenListener() {
+	addOpenListener(new IOpenListener() {
 				public void open(OpenEvent event) {
 					handleOpen(event);
 				}
 			});
+	addDoubleClickListener(new IDoubleClickListener() {
+		public void doubleClick(DoubleClickEvent event) {
+			handleDoubleClick(event);
 		}
+	});
 	}
+		
 	
-	/**
-	 * Handles a double-click event from the viewer.
-	 * Expands or collapses a folder when double-clicked.
-	 * 
-	 * @param event the double-click event
-	 */
-	private void handleDoubleClick(DoubleClickEvent event) {
-		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-		Object element = selection.getFirstElement();	
-		// Double-clicking should expand/collapse containers
-		Viewer viewer = getViewer();
-		if (viewer instanceof TreeViewer) {
-			TreeViewer tree = (TreeViewer)viewer;
-			if (tree.isExpandable(element)) {
-				tree.setExpandedState(element, !tree.getExpandedState(element));
-			}
-		}		
-	}
 	
 	/**
 	 * Updates the message shown in the status line.
@@ -119,7 +93,7 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 	 */
 	private void updateStatusLine(IStructuredSelection selection) {
 		String msg = getStatusLineMessage(selection);
-		//view.getViewSite().getActionBars().getStatusLineManager().setMessage(msg);
+		view.getViewSite().getActionBars().getStatusLineManager().setMessage(msg);
 	}
 	
 	/**
@@ -132,8 +106,8 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 	private String getStatusLineMessage(IStructuredSelection selection) {
 		if (selection.size() == 1) {
 			Object first = selection.getFirstElement();
-			if(first instanceof ITeamSubscriberParticipantNode) {
-				SyncInfo info = ((ITeamSubscriberParticipantNode)first).getSyncInfo();
+			if(first instanceof SyncInfoDiffNode) {
+				SyncInfo info = ((SyncInfoDiffNode)first).getSyncInfo();
 				if (info == null) {
 					return Policy.bind("SynchronizeView.12"); //$NON-NLS-1$
 				} else {
@@ -145,5 +119,21 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 			return selection.size() + Policy.bind("SynchronizeView.13"); //$NON-NLS-1$
 		}
 		return ""; //$NON-NLS-1$
+	}	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewer#handleDoubleClick(org.eclipse.jface.viewers.DoubleClickEvent)
+	 */
+	protected void handleDoubleClick(DoubleClickEvent event) {
+		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+		SyncInfoDiffNode node = (SyncInfoDiffNode)selection.getFirstElement();
+		if(node != null) {
+			if(node.getResource().getType() == IResource.FILE) {
+				openWithActions.openInCompareEditor();
+				return;
+			}
+		}
+		// Double-clicking should expand/collapse containers
+		super.handleDoubleClick(event);
 	}
+
 }

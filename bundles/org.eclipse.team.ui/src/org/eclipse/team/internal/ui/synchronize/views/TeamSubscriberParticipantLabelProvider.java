@@ -25,8 +25,10 @@ import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.IJobListener;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.internal.WorkbenchColors;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
@@ -149,11 +151,11 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	}
 	
 	private Image propagateConflicts(Image base, Object element, IResource resource) {
-		if(element instanceof SynchronizeViewNode && resource.getType() != IResource.FILE) {
+		if(element instanceof SyncInfoDiffNode && resource.getType() != IResource.FILE) {
 			// if the folder is already conflicting then don't bother propagating the conflict
 			int kind = SyncSetContentProvider.getSyncKind(element);
 			if((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
-				SyncInfo[] infos = ((SynchronizeViewNode)element).getChildSyncInfos();
+				SyncInfo[] infos = ((SyncInfoDiffNode)element).getChildSyncInfos();
 				SyncSet set = new SyncSet();
 				for (int i = 0; i < infos.length; i++) {
 					set.add(infos[i]);

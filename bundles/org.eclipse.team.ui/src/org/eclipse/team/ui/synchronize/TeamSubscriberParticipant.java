@@ -146,7 +146,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public void setWorkingSet(IWorkingSet set) {
-		SubscriberInput input = getInput();
+		ITeamSubscriberSyncInfoSets input = getInput();
 		IWorkingSet oldSet = null;
 		if(input != null) {
 			oldSet = input.getWorkingSet();
@@ -159,7 +159,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public IWorkingSet getWorkingSet() {
-		SubscriberInput input = getInput();
+		ITeamSubscriberSyncInfoSets input = getInput();
 		if(input != null) {
 			return getInput().getWorkingSet();
 		} else {
@@ -188,7 +188,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	/*
 	 * For testing only!
 	 */
-	public SubscriberInput getInput() {
+	public ITeamSubscriberSyncInfoSets getInput() {
 		return input;
 	}
 	

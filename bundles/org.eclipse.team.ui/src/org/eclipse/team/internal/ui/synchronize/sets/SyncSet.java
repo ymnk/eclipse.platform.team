@@ -29,12 +29,13 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.ui.synchronize.*;
 
 /**
  * This class keeps track of a set of resources and their associated synchronization
  * information. It is optimized so that retrieving out-of-sync children is fast. 
  */
-public class SyncSet {
+public class SyncSet implements ISyncInfoSet {
 	// fields used to hold resources of interest
 	// {IPath -> SyncInfo}
 	protected Map resources = Collections.synchronizedMap(new HashMap());

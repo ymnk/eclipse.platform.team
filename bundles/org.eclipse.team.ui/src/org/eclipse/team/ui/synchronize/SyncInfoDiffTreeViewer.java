@@ -8,30 +8,35 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.*;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.*;
+import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.synchronize.views.*;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.internal.PluginAction;
+import org.eclipse.ui.views.navigator.ResourceSorter;
 
-/**
- * Subclass of TreeViewer which handles decorator events properly. We should not need to create 
- * a subclass just for this!
- */
-public class SyncTreeViewer extends TreeViewer implements INavigableControl {
-	
+public class SyncInfoDiffTreeViewer extends TreeViewer {
+
+	private TeamSubscriberParticipant participant;
+	private ISyncInfoSet set;
+	private Action expandAll;
+		
 	/**
 	 * Change the tree layout between using compressed folders and regular folders
 	 * when the user setting is changed.
@@ -43,11 +48,55 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 			}
 		}
 	};
-		
-	public SyncTreeViewer(Composite parent, int style) {
-		super(parent, style);
+	
+	public SyncInfoDiffTreeViewer(Composite parent, TeamSubscriberParticipant participant, ISyncInfoSet set) {
+		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		this.participant = participant;
+		this.set = set;
+		GridData data = new GridData(GridData.FILL_BOTH);
+		setSorter(new SyncViewerSorter(ResourceSorter.NAME));
+		setLabelProvider(new TeamSubscriberParticipantLabelProvider());
+		getTree().setLayoutData(data);
 		getStore().addPropertyChangeListener(propertyListener);
 		setTreeViewerContentProvider();
+		
+		addDoubleClickListener(new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				handleDoubleClick(event);
+			}
+		});
+		createActions();
+		hookContextMenu();
+		setInput(getSyncSet());
+	}
+
+	protected ISyncInfoSet getSyncSet() {
+		return set;
+	}
+
+	private void createActions() {
+		expandAll = new Action() {
+			public void run() {
+				expandAllFromSelection();
+			}
+		};
+		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
+	}
+	
+	protected void expandAllFromSelection() {
+		ISelection selection = getSelection();
+		if(! selection.isEmpty()) {
+			Iterator elements = ((IStructuredSelection)selection).iterator();
+			while (elements.hasNext()) {
+				Object next = elements.next();
+				expandToLevel(next, AbstractTreeViewer.ALL_LEVELS);
+			}
+		}
+	}
+	
+	protected void fillContextMenu(IMenuManager manager) {	
+		manager.add(expandAll);
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
 	private void setTreeViewerContentProvider() {
@@ -97,6 +146,57 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 	}
 	
 	/**
+	 * Handles a double-click event from the viewer.
+	 * Expands or collapses a folder when double-clicked.
+	 * 
+	 * @param event the double-click event
+	 */
+	protected void handleDoubleClick(DoubleClickEvent event) {
+		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+		Object element = selection.getFirstElement();	
+		// Double-clicking should expand/collapse containers
+		if(isExpandable(element)) {
+			setExpandedState(element, ! getExpandedState(element));
+		}
+	}
+	
+	protected void hookContextMenu() {
+		final MenuManager menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
+		menuMgr.setRemoveAllWhenShown(true);
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager manager) {
+				fillContextMenu(manager);
+			}
+		});
+		Menu menu = menuMgr.createContextMenu(getControl());
+		menu.addMenuListener(new MenuListener() {
+			public void menuHidden(MenuEvent e) {
+			}
+			// Hack to allow action contributions to update their
+			// state before the menu is shown. This is required when
+			// the state of the selection changes and the contributions
+			// need to update enablement based on this. 
+			public void menuShown(MenuEvent e) {
+				IContributionItem[] items = menuMgr.getItems();
+				for (int i = 0; i < items.length; i++) {
+					IContributionItem item = items[i];
+					if(item instanceof ActionContributionItem) {
+						IAction actionItem = ((ActionContributionItem)item).getAction();
+						if(actionItem instanceof PluginAction) {
+							((PluginAction)actionItem).selectionChanged(getSelection());
+						}
+					}
+				}
+			}
+		});
+		getControl().setMenu(menu);
+		IWorkbenchPartSite site = Utils.findSite(getControl());
+		if(site != null) {
+			site.registerContextMenu(participant.getId(), menuMgr, this);
+		}
+	}
+	
+	/**
 	 * Selects the next (or previous) node of the current selection.
 	 * If there is no current selection the first (last) node in the tree is selected.
 	 * Wraps around at end or beginning.
@@ -123,7 +223,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 		Control c= getControl();
 		if (!(c instanceof Tree))
 			return false;
-			
+		
 		Tree tree= (Tree) c;
 		TreeItem item= null;
 		TreeItem children[]= tree.getSelection();
@@ -139,7 +239,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 				}
 			}
 		}
-			
+		
 		while (true) {
 			item= findNextPrev(item, next);
 			if (item == null)
@@ -163,7 +263,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 		TreeItem children[]= null;
 
 		if (!next) {
-		
+			
 			TreeItem parent= item.getParentItem();
 			if (parent != null)
 				children= parent.getItems();
@@ -176,7 +276,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 				for (; index < children.length; index++)
 					if (children[index] == item)
 						break;
-				
+					
 				if (index > 0) {
 					
 					item= children[index-1];
@@ -186,7 +286,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 						int n= item.getItemCount();
 						if (n <= 0)
 							break;
-							
+						
 						item.setExpanded(true);
 						item= item.getItems()[n-1];
 					}
@@ -198,7 +298,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 			
 			// go up
 			return parent;
-					
+			
 		} else {
 			item.setExpanded(true);
 			createChildren(item);
@@ -223,7 +323,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 					for (; index < children.length; index++)
 						if (children[index] == item)
 							break;
-					
+						
 					if (index < children.length-1) {
 						// next
 						return children[index+1];
@@ -234,7 +334,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 				item= parent;
 			}
 		}
-				
+		
 		return item;
 	}
 	
@@ -252,4 +352,7 @@ public class SyncTreeViewer extends TreeViewer implements INavigableControl {
 			}
 		}
 	}
+
+	
+	
 }

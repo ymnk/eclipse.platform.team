@@ -18,7 +18,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.IViewActionDelegate;
 
 /**
@@ -48,8 +48,8 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		Set result = new HashSet();
 		for (int i = 0; i < selected.length; i++) {
 			Object object = selected[i];
-			if (object instanceof ITeamSubscriberParticipantNode) {
-				ITeamSubscriberParticipantNode syncResource = (ITeamSubscriberParticipantNode) object;
+			if (object instanceof SyncInfoDiffNode) {
+				SyncInfoDiffNode syncResource = (SyncInfoDiffNode) object;
 				SyncInfo[] infos = syncResource.getChildSyncInfos();
 				result.addAll(Arrays.asList(infos));
 			}

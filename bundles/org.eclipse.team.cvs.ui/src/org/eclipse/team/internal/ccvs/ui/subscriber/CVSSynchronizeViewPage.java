@@ -21,7 +21,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionDelegate;
 
@@ -39,7 +38,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		}
 
 		public void run() {
-			IStructuredContentProvider cp = (IStructuredContentProvider) getChangesViewer().getContentProvider();
+			IStructuredContentProvider cp = (IStructuredContentProvider) ((StructuredViewer)getChangesViewer()).getContentProvider();
 			StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
 			if (!selection.isEmpty()) {
 				delegate.selectionChanged(this, selection);
@@ -52,7 +51,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		}
 	}
 
-	public CVSSynchronizeViewPage(TeamSubscriberParticipant page, ISynchronizeView view, SubscriberInput input) {
+	public CVSSynchronizeViewPage(TeamSubscriberParticipant page, ISynchronizeView view, ITeamSubscriberSyncInfoSets input) {
 		super(page, view, input);
 	}	
 	
@@ -72,8 +71,8 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 * 
 	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(SyncSetChangedEvent event) {
-		StructuredViewer viewer = getChangesViewer();
+	public void syncSetChanged(ISyncInfoSetChangeEvent event) {
+		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		if (viewer != null && getInput() != null) {
 			IStructuredContentProvider cp = (IStructuredContentProvider) viewer.getContentProvider();
 			StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
@@ -100,8 +99,8 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 			}
 			public String getText(Object element) {
 				String text = proxy.getText(element);
-				if (element instanceof ITeamSubscriberParticipantNode) {
-					SyncInfo info =  ((ITeamSubscriberParticipantNode)element).getSyncInfo();
+				if (element instanceof SyncInfoDiffNode) {
+					SyncInfo info =  ((SyncInfoDiffNode)element).getSyncInfo();
 					if(info != null) {
 						IResource resource = info.getLocal();
 						CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
@@ -129,7 +128,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		super.propertyChange(event);
 		String prop = event.getProperty();
 		if(prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getChangesViewer() != null && getInput() != null) {
-			getChangesViewer().refresh(true /* update labels */);
+			((StructuredViewer)getChangesViewer()).refresh(true /* update labels */);
 		}
 	}
 	
@@ -149,7 +148,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		// view. We aren't using the global adaptable decorators because we don't
 		// want all outgoing/repository icons in this view. Instead, we add 
 		// CVS specific information that is useful in the synchronizing context.
-		StructuredViewer viewer = getChangesViewer();
+		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
 		viewer.setLabelProvider(getLabelProvider(oldLabelProvider));		
 	}

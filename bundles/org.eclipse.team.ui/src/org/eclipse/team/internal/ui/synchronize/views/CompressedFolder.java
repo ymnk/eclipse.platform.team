@@ -15,11 +15,12 @@ import java.util.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**
  * A compressed folder appears under a project and contains out-of-sync resources
  */
-public class CompressedFolder extends SynchronizeViewNode {
+public class CompressedFolder extends SyncInfoDiffNode {
 
 	public CompressedFolder(SyncSet input, IResource resource) {
 		super(input, resource);

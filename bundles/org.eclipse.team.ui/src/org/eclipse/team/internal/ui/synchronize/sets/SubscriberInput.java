@@ -20,6 +20,7 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.IWorkingSet;
@@ -28,7 +29,7 @@ import org.eclipse.ui.IWorkingSet;
  * SubscriberInput encapsulates the UI model for synchronization changes associated
  * with a TeamSubscriber. 
  */
-public class SubscriberInput implements IPropertyChangeListener, ITeamResourceChangeListener, IResourceChangeListener {
+public class SubscriberInput implements IPropertyChangeListener, ITeamResourceChangeListener, IResourceChangeListener, ITeamSubscriberSyncInfoSets {
 
 	/*
 	 * The subscriberInput manages a sync set that contains all of the out-of-sync elements

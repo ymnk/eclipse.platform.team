@@ -26,6 +26,7 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 /**
  * Job to refresh a subscriber with its remote state.
@@ -62,7 +63,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * is running the job is cancelled.
 	 */
 	private IResource[] resources;
-	private SubscriberInput input;
+	private ITeamSubscriberSyncInfoSets input;
 	
 	protected class MD extends MessageDialog {
 		public MD(Shell parentShell, String dialogTitle, Image dialogTitleImage, String dialogMessage, int dialogImageType, String[] dialogButtonLabels, int defaultIndex) {
@@ -73,8 +74,8 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	
 	protected class ChangeListener implements ITeamResourceChangeListener {
 		private List changes = new ArrayList();
-		private SubscriberInput input;
-		ChangeListener(SubscriberInput input) {
+		private ITeamSubscriberSyncInfoSets input;
+		ChangeListener(ITeamSubscriberSyncInfoSets input) {
 			this.input = input;
 		}
 		public void teamResourceChanged(TeamDelta[] deltas) {
@@ -88,7 +89,9 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		public SyncInfo[] getChanges() {
 			try {
 				// wait for inputs to stop processing changes
-				input.getEventHandler().getEventHandlerJob().join();
+				if(input instanceof SubscriberInput) {
+					((SubscriberInput)input).getEventHandler().getEventHandlerJob().join();
+				}
 			} catch (InterruptedException e) {
 				// continue
 			}
@@ -107,7 +110,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 		}
 	}
 		
-	public RefreshSubscriberJob(String name, IResource[] resources, SubscriberInput input) {
+	public RefreshSubscriberJob(String name, IResource[] resources, ITeamSubscriberSyncInfoSets input) {
 		super(name);
 		
 		this.resources = resources;
@@ -176,7 +179,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 					TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 							public void run() {
 								RefreshCompleteDialog d = new RefreshCompleteDialog(
-									new Shell(TeamUIPlugin.getStandardDisplay()), listener.getChanges(), new SubscriberInput[] {input});
+									new Shell(TeamUIPlugin.getStandardDisplay()), listener.getChanges(), new  ITeamSubscriberSyncInfoSets[] {input});
 								d.setBlockOnOpen(false);
 								d.open();
 							}

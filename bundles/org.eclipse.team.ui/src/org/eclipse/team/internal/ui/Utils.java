@@ -19,12 +19,11 @@ import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
-import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.*;
 
 public class Utils {
 
@@ -232,6 +231,16 @@ public class Utils {
 		if (!(t instanceof TeamException)) {
 			TeamUIPlugin.log(error.getSeverity(), error.getMessage(), t);
 		}
+	}
+	
+	public static IWorkbenchPartSite findSite(Control c) {
+		while (c != null && !c.isDisposed()) {
+			Object data= c.getData();
+			if (data instanceof IWorkbenchPart)
+				return ((IWorkbenchPart)data).getSite();
+			c= c.getParent();
+		}
+		return null;
 	}
 	
 	public static void initAction(IAction a, String prefix) {

@@ -85,7 +85,7 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	 */
 	public void saveState(IMemento memento) {
 		super.saveState(memento);
-		SubscriberInput input = getInput();
+		ITeamSubscriberSyncInfoSets input = getInput();
 		CVSMergeSubscriber s = (CVSMergeSubscriber)input.getSubscriber();
 		QualifiedName sId = s.getId();
 		memento.putString(CTX_QUALIFIER, sId.getQualifier());

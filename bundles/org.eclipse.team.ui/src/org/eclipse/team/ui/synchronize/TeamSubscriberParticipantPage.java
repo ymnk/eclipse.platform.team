@@ -24,9 +24,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.ChangesSection;
+import org.eclipse.team.internal.ui.synchronize.SummarySection;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.views.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.team.internal.ui.widgets.ControlFactory;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
@@ -56,7 +56,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private int layout;
 	
 	// Remembering the current input and the previous.
-	private SubscriberInput input = null;
+	private ITeamSubscriberSyncInfoSets input = null;
 	
 	private JobBusyCursor busyCursor;
 	private ISynchronizeView view;
@@ -74,12 +74,11 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private ComparisonCriteriaActionGroup comparisonCriteriaGroup;
 	private Action collapseAll;
 	private WorkingSetFilterActionGroup workingSetGroup;
-	private StatusLineContributionGroup statusLine;
 		
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public TeamSubscriberParticipantPage(TeamSubscriberParticipant page, ISynchronizeView view, SubscriberInput input) {
+	public TeamSubscriberParticipantPage(TeamSubscriberParticipant page, ISynchronizeView view, ITeamSubscriberSyncInfoSets input) {
 		this.participant = page;
 		this.view = view;
 		this.input = input;
@@ -125,7 +124,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		toggleLayoutTree = new ToggleViewLayoutAction(participant, TeamSubscriberParticipant.TREE_LAYOUT);
 		workingSetGroup = new WorkingSetFilterActionGroup(getSite().getShell(), this, view, participant);		
 		showPreferences = new SyncViewerShowPreferencesAction(view.getSite().getShell());		
-		statusLine = new StatusLineContributionGroup(getSite().getShell(), workingSetGroup, getParticipant());
 		
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
@@ -153,8 +151,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		control.setLayoutData(gd);
 	}
 	
-	protected StructuredViewer getChangesViewer() {
-		return changesSection.getChangesViewer().getViewer();
+	protected Viewer getChangesViewer() {
+		return changesSection.getChangesViewer();
 	}
 	
 	/* (non-Javadoc)
@@ -169,7 +167,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 */
 	public void dispose() {
 		busyCursor.dispose();
-		statusLine.dispose();
 		changesSection.dispose();
 		participantSection.dispose();
 	}
@@ -177,7 +174,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	/*
 	 * Return the current input for the view.
 	 */
-	public SubscriberInput getInput() {
+	public ITeamSubscriberSyncInfoSets getInput() {
 		return input;
 	}
 
@@ -189,8 +186,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	public Object getAdapter(Class key) {
 		if (key == IShowInSource.class) {
 			return new IShowInSource() {
-				public ShowInContext getShowInContext() {
-					StructuredViewer v = getChangesViewer();
+				public ShowInContext getShowInContext() {					
+					StructuredViewer v = (StructuredViewer)getChangesViewer();
 					if (v == null) return null;
 					return new ShowInContext(null, v.getSelection());
 				}
@@ -234,9 +231,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			menu.add(layoutMenu);
 			menu.add(new Separator());
 			menu.add(showPreferences);
-			
-			// status line
-			statusLine.fillActionBars(actionBars);
 		}		
 	}
 
@@ -274,7 +268,10 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			settingWorkingSet = false;
 		// Change to showing of sync state in text labels preference
 		} else if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
-			getChangesViewer().refresh(true /* update labels */);
+			Viewer viewer = getChangesViewer();
+			if(viewer instanceof StructuredViewer) {
+				((StructuredViewer)viewer).refresh(true /* update labels */);
+			}
 		}
 	}
 	
@@ -292,10 +289,10 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		return view;
 	}
 	
-	public SyncChangesViewer createChangesViewer(Composite parent) {
-		SyncChangesViewer viewer =  new SyncChangesTreeViewer(parent, getParticipant(), getInput().getFilteredSyncSet());
-		getSite().setSelectionProvider(viewer.getViewer());
-		viewer.getViewer().setLabelProvider(new TeamSubscriberParticipantLabelProvider());
+	public Viewer createChangesViewer(Composite parent) {
+		parent.setData(getSynchronizeView());
+		Viewer viewer =  new SyncInfoDiffViewerForSynchronizeView(parent, getSynchronizeView(), getParticipant(), getInput().getFilteredSyncSet());
+		getSite().setSelectionProvider(viewer);		
 		return viewer;
 	}
 }

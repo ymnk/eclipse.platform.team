@@ -34,7 +34,7 @@ public class RemoteResourceTypedElement extends BufferedContent implements IType
 	/**
 	 * Creates a new content buffer for the given team node.
 	 */
-	RemoteResourceTypedElement(IRemoteResource remote) {
+	public RemoteResourceTypedElement(IRemoteResource remote) {
 		this.remote = remote;
 	}
 

@@ -16,11 +16,12 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.ui.synchronize.*;
 
 /**
  * This event keeps track of the changes in a sync set
  */
-public class SyncSetChangedEvent {
+public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	
 	private SyncSet set;
 	

@@ -10,13 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
-import org.eclipse.team.internal.ui.synchronize.sets.ISyncSetChangedListener;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 import org.eclipse.team.internal.ui.widgets.FormSection;
 import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.*;
@@ -27,10 +25,10 @@ public class ChangesSection extends FormSection {
 	private Composite parent;
 	private ParticipantComposite participantComposite;
 	private ISynchronizeView view;
-	private SyncChangesViewer changesViewer;
+	private Viewer changesViewer;
 
 	private ISyncSetChangedListener changedListener = new ISyncSetChangedListener() {
-		public void syncSetChanged(SyncSetChangedEvent event) {
+		public void syncSetChanged(ISyncInfoSetChangeEvent event) {
 			calculateDescription();
 		}
 	};
@@ -103,7 +101,7 @@ public class ChangesSection extends FormSection {
 	}
 	
 	private String getEmptyChangesText() {
-		SubscriberInput input = participant.getInput();
+		ITeamSubscriberSyncInfoSets input = participant.getInput();
 		int changesInWorkspace = input.getSubscriberSyncSet().size();
 		int changesInWorkingSet = input.getWorkingSetSyncSet().size();
 		int changesInFilter = input.getFilteredSyncSet().size();		
@@ -116,7 +114,7 @@ public class ChangesSection extends FormSection {
 		}
 	}
 	
-	public SyncChangesViewer getChangesViewer() {
+	public Viewer getChangesViewer() {
 		return changesViewer;
 	}
 	
@@ -125,7 +123,6 @@ public class ChangesSection extends FormSection {
 	 */
 	public void dispose() {
 		super.dispose();
-		changesViewer.dispose();
 		participant.getInput().deregisterListeners(changedListener);
 	}
 }

@@ -18,7 +18,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.*;
+import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
+import org.eclipse.team.ui.synchronize.*;
 
 /**
  * This class provides the contents for a StructuredViewer using a SyncSet as the model
@@ -31,6 +32,9 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		if(viewer == null || viewer.getControl().isDisposed()) {
 			return null;	
 		}
+		if(viewer.getInput() instanceof SyncInfoDiffNode) {
+			return (SyncSet)((SyncInfoDiffNode)viewer.getInput()).getSyncInfoSet();
+		}
 		return (SyncSet)viewer.getInput();
 	}
 	
@@ -42,6 +46,10 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		this.viewer = v;
 		SyncSet oldSyncSet = null;
 		SyncSet newSyncSet = null;
+		
+		if(newInput instanceof SyncInfoDiffNode) {
+			newInput = ((SyncInfoDiffNode)newInput).getSyncInfoSet();
+		}
 		
 		if (oldInput instanceof SyncSet) {
 			oldSyncSet = (SyncSet) oldInput;
@@ -77,7 +85,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(final SyncSetChangedEvent event) {
+	public void syncSetChanged(final ISyncInfoSetChangeEvent event) {
 		final Control ctrl = viewer.getControl();
 		if (ctrl != null && !ctrl.isDisposed()) {
 			ctrl.getDisplay().asyncExec(new Runnable() {
@@ -94,7 +102,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * in the given event. This method is invoked from within the UI thread.
 	 * @param event
 	 */
-	protected void handleSyncSetChanges(SyncSetChangedEvent event) {
+	protected void handleSyncSetChanges(ISyncInfoSetChangeEvent event) {
 		viewer.getControl().setRedraw(false);
 		if (event.isReset()) {
 			// On a reset, refresh the entire view
@@ -114,7 +122,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @param event
 	 * @see #handleSyncSetChanges(SyncSetChangedEvent)
 	 */
-	protected void handleResourceChanges(SyncSetChangedEvent event) {
+	protected void handleResourceChanges(ISyncInfoSetChangeEvent event) {
 		// Refresh the viewer for each changed resource
 		SyncInfo[] infos = event.getChangedResources();
 		for (int i = 0; i < infos.length; i++) {
@@ -130,7 +138,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * Subclasses may override.
 	 * @param event
 	 */
-	protected void handleResourceRemovals(SyncSetChangedEvent event) {
+	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
 		// Update the viewer for each removed resource
 		IResource[] removed = event.getRemovedRoots();
 		for (int i = 0; i < removed.length; i++) {
@@ -146,7 +154,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * Subclasses may override.
 	 * @param event
 	 */
-	protected void handleResourceAdditions(SyncSetChangedEvent event) {
+	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
 		// Update the viewer for each of the added resource's parents
 		IResource[] added = event.getAddedRoots();
 		for (int i = 0; i < added.length; i++) {
@@ -185,8 +193,8 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	public static SyncInfo getSyncInfo(Object element) {
 		if (element instanceof SyncInfo) {
 			return ((SyncInfo) element);
-		}  else if (element instanceof SynchronizeViewNode) {
-			SynchronizeViewNode syncResource = (SynchronizeViewNode)element;
+		}  else if (element instanceof SyncInfoDiffNode) {
+			SyncInfoDiffNode syncResource = (SyncInfoDiffNode)element;
 			return syncResource.getSyncInfo();
 		}
 		throw new NullPointerException();
@@ -203,8 +211,8 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	public static IResource getResource(Object obj) {
 		if (obj instanceof SyncInfo) {
 			return ((SyncInfo) obj).getLocal();
-		}  else if (obj instanceof SynchronizeViewNode) {
-			return ((SynchronizeViewNode)obj).getResource();
+		}  else if (obj instanceof SyncInfoDiffNode) {
+			return ((SyncInfoDiffNode)obj).getResource();
 		}
 		return null;
 	}
@@ -248,7 +256,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		if (resource.getType() == IResource.ROOT) {
 			return getSyncSet();
 		} else {
-			return new SynchronizeViewNode(getSyncSet(), resource);
+			return new SyncInfoDiffNode(getSyncSet(), resource);
 		}
 	}
 	
@@ -273,7 +281,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 			parent = parent.getParent();
 		}
 		getViewer().update(
-				(SynchronizeViewNode[])parents.toArray(new SynchronizeViewNode[parents.size()]),
+				(SyncInfoDiffNode[])parents.toArray(new SyncInfoDiffNode[parents.size()]),
 				null 
 				);		
 	}

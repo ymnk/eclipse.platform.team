@@ -14,40 +14,41 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
-import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.internal.ui.synchronize.views.SyncTableViewer;
+import org.eclipse.team.internal.ui.synchronize.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
-public class SyncChangesTableViewer extends SyncChangesStructuredViewer {
+public class SyncInfoDiffTableViewer extends TreeViewer {
 	
 	private SyncTableViewer viewer;
 	
-	public SyncChangesTableViewer(Composite parent, TeamSubscriberParticipant participant, SyncSet set) {
-		super(participant, set);
+	public SyncInfoDiffTableViewer(Composite parent, TeamSubscriberParticipant participant, SyncSet set) {
+		super(parent);
+		//super(participant, set);
 		// Create the table
-		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
-		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
-		GridData data = new GridData(GridData.FILL_BOTH);
-		table.setLayoutData(data);
-		
-		// Set the table layout
-		TableLayout layout = new TableLayout();
-		table.setLayout(layout);
-		
-		// Create the viewer
-		viewer = new SyncTableViewer(table);
-		
-		// Create the table columns
-		createColumns(table, layout, viewer);
-		
-		// Set the table contents
-		viewer.setContentProvider(new SyncSetTableContentProvider());
-		viewer.setSorter(new SyncViewerTableSorter());
-		viewer.setInput(getSyncSet());
+//		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
+//		table.setHeaderVisible(true);
+//		table.setLinesVisible(true);
+//		GridData data = new GridData(GridData.FILL_BOTH);
+//		table.setLayoutData(data);
+//		
+//		// Set the table layout
+//		TableLayout layout = new TableLayout();
+//		table.setLayout(layout);
+//		
+//		// Create the viewer
+//		viewer = new SyncTableViewer(table);
+//		
+//		// Create the table columns
+//		createColumns(table, layout, viewer);
+//		
+//		// Set the table contents
+//		viewer.setContentProvider(new SyncSetTableContentProvider());
+//		viewer.setSorter(new SyncViewerTableSorter());
+//		viewer.setInput(getSyncSet());
 	}
 	
 	/**

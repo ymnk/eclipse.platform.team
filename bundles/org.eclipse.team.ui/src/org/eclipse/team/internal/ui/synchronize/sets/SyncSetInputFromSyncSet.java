@@ -14,6 +14,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
+import org.eclipse.team.ui.synchronize.ISyncSetChangedListener;
 
 /**
  * Ths class uses the contents of one sync set as the input of another.
@@ -51,7 +53,7 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncSetCha
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	public void syncSetChanged(SyncSetChangedEvent event) {
+	public void syncSetChanged(ISyncInfoSetChangeEvent event) {
 		SyncSet syncSet = getSyncSet();
 		try {
 			syncSet.beginInput();

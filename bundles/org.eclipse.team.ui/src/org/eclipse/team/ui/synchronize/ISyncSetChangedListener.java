@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.sets;
+package org.eclipse.team.ui.synchronize;
 
 /**
  * This interface is used to receive SyncSetChangedEvents from a sync set.
@@ -18,5 +18,5 @@ public interface ISyncSetChangedListener {
 	/**
 	 * The sync set has changed and the event contains the details.
 	 */
-	public void syncSetChanged(SyncSetChangedEvent event);
+	public void syncSetChanged(ISyncInfoSetChangeEvent event);
 }

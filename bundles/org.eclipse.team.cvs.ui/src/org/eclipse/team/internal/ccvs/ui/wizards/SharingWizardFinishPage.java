@@ -13,9 +13,10 @@ package org.eclipse.team.internal.ccvs.ui.wizards;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -29,18 +30,33 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
-import org.eclipse.team.internal.ui.synchronize.SyncChangesTreeViewer;
-import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoCompareInput;
-import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoDiffNode;
-import org.eclipse.team.internal.ui.synchronize.views.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.team.internal.ui.widgets.*;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberParticipantNode;
-import org.eclipse.team.ui.synchronize.SyncChangesViewer;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.part.PageBook;
 
 public class SharingWizardFinishPage extends CVSWizardPage {
 	private WorkspaceSynchronizeParticipant participant;
 
+	private static class SyncInfoCompareEditorInput extends CompareEditorInput {
+		private TeamSubscriberParticipant participant2;
+
+		/**
+		 * @param configuration
+		 */
+		public SyncInfoCompareEditorInput(CompareConfiguration configuration, TeamSubscriberParticipant participant) {
+			super(configuration);
+			participant2 = participant;
+		}
+
+		public Viewer createDiffViewer(Composite parent) {
+			return new SyncInfoDiffTreeViewer(parent, participant2, participant2.getInput().getFilteredSyncSet());
+		}
+
+		protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+			return null; //new SyncInfoDiffNode(participant2.getInput().getFilteredSyncSet(), participant2.getInput().getFilteredSyncSet().g);
+		}
+	};
+	
 	public SharingWizardFinishPage(String pageName, String title, WorkspaceSynchronizeParticipant participant, ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
 		this.participant = participant;
@@ -81,12 +97,29 @@ public class SharingWizardFinishPage extends CVSWizardPage {
 		}
 	}
 	
+	public Composite createFullCompareControl(Composite parent) {
+		CompareEditorInput input = new SyncInfoCompareEditorInput(new CompareConfiguration(), participant);
+		try {
+			input.run(new NullProgressMonitor());
+		} catch (InterruptedException e) {
+		} catch (InvocationTargetException e) {
+		}
+		
+		Composite result= new Composite(parent, SWT.NONE);
+		GridLayout layout= new GridLayout();
+		layout.marginHeight= 0; layout.marginWidth= 0;
+		result.setLayout(layout);
+		
+		input.createContents(result);
+		return result;
+	}
+	
 	private PageBook fPreviewContainer;
 	private IChangePreviewViewer fNullPreviewer;
 	private IChangePreviewViewer fChangePreviewViewer;
 	private IChangePreviewViewer fCurrentPreviewViewer;
 	private Viewer fTreeViewer;
-	private ITeamSubscriberParticipantNode fCurrentSelection = null;
+	private SyncInfoDiffNode fCurrentSelection = null;
 	
 	public Composite createCoolControl(Composite parent) {
 		Composite result= new Composite(parent, SWT.NONE);
@@ -134,9 +167,8 @@ public class SharingWizardFinishPage extends CVSWizardPage {
 	 * @return
 	 */
 	private Viewer createTreeViewer(ViewerPane pane) {
-		SyncChangesViewer viewer =  new SyncChangesTreeViewer(pane, this.participant, participant.getInput().getFilteredSyncSet());
-		viewer.getViewer().setLabelProvider(new TeamSubscriberParticipantLabelProvider());
-		return viewer.getViewer(); 
+		Viewer viewer =  new SyncInfoDiffTreeViewer(pane, this.participant, participant.getInput().getFilteredSyncSet());
+		return viewer; 
 	}
 	
 	private ISelectionChangedListener createSelectionChangedListener() {
@@ -144,14 +176,13 @@ public class SharingWizardFinishPage extends CVSWizardPage {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection sel= (IStructuredSelection) event.getSelection();
 				if (sel.size() == 1) {
-					ITeamSubscriberParticipantNode newSelection= (ITeamSubscriberParticipantNode)sel.getFirstElement();
+					SyncInfoDiffNode newSelection= (SyncInfoDiffNode)sel.getFirstElement();
 					if (newSelection != fCurrentSelection) {
 						fCurrentSelection= newSelection;
 						SyncInfo info = fCurrentSelection.getSyncInfo();						
 						if(info != null && info.getLocal().getType() == IResource.FILE) {
-							SyncInfoDiffNode node = SyncInfoCompareInput.createSyncInfoDiffNode(participant, info);
-							fetchContents(node);
-							showPreview(node);
+							fetchContents(fCurrentSelection);
+							showPreview(fCurrentSelection);
 						} else {
 							showPreview(null);
 						}

@@ -25,8 +25,8 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
+import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.IWorkbenchPage;
@@ -47,7 +47,7 @@ public class RefreshAction extends Action {
 		ISelection selection = page.getSelection();
 		if(selection instanceof IStructuredSelection) {
 			IResource[] resources = getResources((IStructuredSelection)selection);
-			SubscriberInput input = participant.getInput();
+			ITeamSubscriberSyncInfoSets input = participant.getInput();
 			if (refreshAll || resources.length == 0) {
 				// If no resources are selected, refresh all the subscriber roots
 				resources = input.workingSetRoots();

@@ -14,7 +14,7 @@ import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
+import org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent;
 
 /**
  * This class provides the contents for a AbstractTreeViewer using a SyncSet as the model
@@ -68,7 +68,7 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetContentProvider#handleResourceAdditions(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	protected void handleResourceAdditions(SyncSetChangedEvent event) {
+	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
 			IResource[] added = event.getAddedRoots();
@@ -93,7 +93,7 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetContentProvider#handleResourceRemovals(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
-	protected void handleResourceRemovals(SyncSetChangedEvent event) {
+	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
 			IResource[] roots = event.getRemovedRoots();

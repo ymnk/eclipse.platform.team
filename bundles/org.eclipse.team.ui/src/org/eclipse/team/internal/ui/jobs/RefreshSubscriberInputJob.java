@@ -10,22 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.jobs;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 /**
  * Job that refreshes a registered list of subscriber inputs. Each input
@@ -40,13 +34,13 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 		super(name, null, null);
 	}
 
-	public synchronized void addSubscriberInput(SubscriberInput input) {
+	public synchronized void addSubscriberInput(ITeamSubscriberSyncInfoSets input) {
 		stop();
 		inputs.add(input);
 		start();
 	}
 
-	public synchronized void removeSubscriberInput(SubscriberInput input) {
+	public synchronized void removeSubscriberInput(ITeamSubscriberSyncInfoSets input) {
 		stop();
 		inputs.remove(input);
 		start();
@@ -89,7 +83,7 @@ public class RefreshSubscriberInputJob extends RefreshSubscriberJob {
 				}
 				try {
 					for (Iterator it = inputs.iterator(); it.hasNext();) {
-						SubscriberInput input = (SubscriberInput) it.next();
+						ITeamSubscriberSyncInfoSets input = (ITeamSubscriberSyncInfoSets) it.next();
 						monitor.setTaskName(Policy.bind(Policy.bind("RefreshSubscriberInputJob.1"), input.getParticipant().getName(), new Integer(input.workingSetRoots().length).toString())); //$NON-NLS-1$
 						TeamSubscriber subscriber = input.getSubscriber();
 						subscriber.refresh(input.workingSetRoots(), IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));

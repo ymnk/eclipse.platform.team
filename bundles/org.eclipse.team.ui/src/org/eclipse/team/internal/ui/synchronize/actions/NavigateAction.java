@@ -15,11 +15,11 @@ import org.eclipse.compare.ICompareNavigator;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.SyncChangesViewer;
-import org.eclipse.team.ui.synchronize.actions.*;
+import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.actions.ActionFactory;
@@ -34,9 +34,9 @@ import org.eclipse.ui.actions.ActionFactory;
 public class NavigateAction extends Action {
 	private final int direction;
 	private ISynchronizeView view;
-	private SyncChangesViewer viewer;
+	private Viewer viewer;
 	
-	public NavigateAction(ISynchronizeView view, SyncChangesViewer viewer, int direction) {
+	public NavigateAction(ISynchronizeView view, Viewer viewer, int direction) {
 		this.viewer = viewer;
 		this.view = view;
 		this.direction = direction;

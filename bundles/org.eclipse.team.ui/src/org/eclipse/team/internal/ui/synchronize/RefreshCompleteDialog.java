@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
@@ -20,15 +19,15 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
 	private SyncInfo[] changes;
-	private SubscriberInput[] inputs;
+	private ITeamSubscriberSyncInfoSets[] inputs;
 	private Button openSyncButton;
 
-	public RefreshCompleteDialog(Shell parentShell, SyncInfo[] changes, SubscriberInput[] inputs) {
+	public RefreshCompleteDialog(Shell parentShell, SyncInfo[] changes, ITeamSubscriberSyncInfoSets[] inputs) {
 		super(parentShell, "Synchronization Complete");
 		setImageKey(DLG_IMG_INFO);
 		this.changes = changes;
