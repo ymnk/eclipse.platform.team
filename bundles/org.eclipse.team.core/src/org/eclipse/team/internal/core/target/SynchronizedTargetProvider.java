@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.*;
+import org.eclipse.team.core.target.*;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.Assert;
 
@@ -48,11 +49,9 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	}
 
 	/**
-	 * Create a target provider, with given storage key.
-	 * The key is the localName of the QualifiedName for state lookup.
-	 * @see QualifiedName
+	 * Create a target provider.
 	 */
-	public SynchronizedTargetProvider(String key) {
+	public SynchronizedTargetProvider() {
 		super();
 	}
 	 
@@ -94,7 +93,7 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	 * thrown.  Subclasses should override this method (and call <code>
 	 * super.configureProvider(Properties)</code>).
 	 */
-	abstract public void configure(Properties properties) throws TeamException;
+//	abstract public void configure(Properties properties) throws TeamException;
 
 
 
@@ -340,12 +339,6 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 		return new String[] {"org.eclipse.team.webdav"};
 	}
 
-	private static SynchronizedTargetProvider newProvider(IProject project, String type, String key) {
-		// look up class via extension point
-		SynchronizedTargetProvider provider; //=  new SomeClassWeLookedUp(key)
-		provider.setProject(project);
-		provider.restoreConfiguration();
-	}
 	
 	/*************** Synchronizer/Configuration ***************/
 
