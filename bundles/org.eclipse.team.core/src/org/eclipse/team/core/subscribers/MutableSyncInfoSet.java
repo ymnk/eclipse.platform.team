@@ -35,10 +35,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 		if (info != null) {
 			statistics.remove(info);
 		}
-		if (local.getType() == IResource.FILE 
-				|| members(local).length == 0) {
-			removeFromParents(local, local);
-		}
+		removeFromParents(local, local);
 	}
 	
 	public void removeAll(IResource[] resources) {

@@ -40,7 +40,7 @@ public class SyncInfoSet {
 	protected Map resources = Collections.synchronizedMap(new HashMap());
 	
 	// {IPath -> Set of deep out of sync child IResources}
-	// weird thing is that the child set will include the parent if the parent is out of sync
+	// Weird thing is that the child set will include the parent if the parent is out of sync
 	protected Map parents = Collections.synchronizedMap(new HashMap());
 
 	// fields used for change notification

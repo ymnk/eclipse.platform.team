@@ -303,7 +303,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 						&& localBytes != null
 						&& local.exists()
 						&& !ResourceSyncInfo.getRevision(remoteBytes).equals(ResourceSyncInfo.getRevision(localBytes))
-						&& contentFilter.select(getSyncInfo(resource), Policy.subMonitorFor(monitor, 100))) {
+						&& ! contentFilter.select(getSyncInfo(resource), Policy.subMonitorFor(monitor, 100))) {
 					// The contents are equals so mark the file as merged
 					internalMerged(resource);
 				}
