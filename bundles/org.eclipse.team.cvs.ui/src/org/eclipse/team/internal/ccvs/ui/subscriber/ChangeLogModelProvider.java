@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.util.*;
 
+import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
@@ -131,6 +132,38 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider {
 	}
 	
 	/* *****************************************************************************
+	 * Action that allows comparing two remote resources (e.g. compare with predecessor)
+	 */
+	private class CompareWithPredecessorAction extends Action {
+		
+		protected CompareWithPredecessorAction() {
+			super("Compare with Predecessor");		
+		}
+
+		public void run() {
+			StructuredViewer viewer = getViewer();
+			if (viewer != null && !viewer.getControl().isDisposed()) {
+				IDiffElement[] objects = Utils.getDiffNodes(((IStructuredSelection)viewer.getSelection()).toArray());
+				if(objects.length == 1 && objects[0] instanceof SyncInfoModelElement) {
+					SyncInfo info = ((SyncInfoModelElement)objects[0]).getSyncInfo();
+					ResourceEditionNode left = new ResourceEditionNode((ICVSRemoteResource) info.getBase());
+					ResourceEditionNode right = new ResourceEditionNode((ICVSRemoteResource) info.getRemote());
+					CompareUI.openCompareEditor(new CVSCompareEditorInput(left, right));
+				}
+			}
+		}
+		
+		public boolean isEnabled() {
+			StructuredViewer viewer = getViewer();
+			if (viewer != null && !viewer.getControl().isDisposed()) {
+				IDiffElement[] objects = Utils.getDiffNodes(((IStructuredSelection)viewer.getSelection()).toArray());
+				return objects.length == 1 && objects[0] instanceof SyncInfoModelElement;
+			}
+			return false;
+		}
+	}
+	
+	/* *****************************************************************************
 	 * Action group for this layout. It is added and removed for this layout only.
 	 */
 	public class ChangeLogActionGroup extends SynchronizePageActionGroup {
@@ -149,6 +182,10 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider {
 					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 					SORT_ORDER_GROUP, 
 					sortByResource);
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					SORT_ORDER_GROUP, 
+					new CompareWithPredecessorAction());
 			
 			ChangeLogModelSorter sorter = (ChangeLogModelSorter)getViewerSorter();
 			
