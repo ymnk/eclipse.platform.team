@@ -17,7 +17,7 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
  */
 public abstract class LogicalViewProvider {
 
-	public abstract SyncInfoSetContentProvider getContentProvider();
+	public abstract SyncInfoSetTreeContentProvider getContentProvider();
 	
 	public abstract SyncInfoLabelProvider getLabelProvider();
 	

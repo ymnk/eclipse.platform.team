@@ -22,7 +22,7 @@ public class CompressFolderView extends LogicalViewProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.content.ILogicalSyncInfoSetView#getContentProvider()
 	 */
-	public SyncInfoSetContentProvider getContentProvider() {
+	public SyncInfoSetTreeContentProvider getContentProvider() {
 		return new CompressedFolderContentProvider();
 	}
 

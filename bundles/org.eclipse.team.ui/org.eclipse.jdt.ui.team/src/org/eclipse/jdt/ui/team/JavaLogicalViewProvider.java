@@ -11,8 +11,6 @@
 package org.eclipse.jdt.ui.team;
 
 import org.eclipse.team.ui.synchronize.content.*;
-import org.eclipse.team.ui.synchronize.content.LogicalViewProvider;
-import org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider;
 
 /**
  * The Java logical view provider
@@ -22,7 +20,7 @@ public class JavaLogicalViewProvider extends LogicalViewProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.content.LogicalViewProvider#getContentProvider()
 	 */
-	public SyncInfoSetContentProvider getContentProvider() {
+	public SyncInfoSetTreeContentProvider getContentProvider() {
 		return new JavaSyncInfoSetContentProvider();
 	}
 
