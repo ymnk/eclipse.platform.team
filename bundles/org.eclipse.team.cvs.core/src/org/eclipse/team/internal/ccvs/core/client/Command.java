@@ -213,7 +213,7 @@ public abstract class Command {
 				try {
 					resources[i] = localRoot.getChild(arguments[i]);
 				} catch (CVSFileNotFoundException e) {
-					// Done to allow non-managed resources to be used as arguments
+					// XXX Temporary fix to allow non-managed resources to be used as arguments
 					resources[i] = localRoot.getFile(arguments[i]);
 				}
 			}
@@ -484,7 +484,7 @@ public abstract class Command {
 		}
 		public void send(Session session) throws CVSException {
 			if (option.length() != 0) super.send(session);
-		}		
+		}
 	}
 	/**
 	 * Option subtype for local options that vary from command to command.
@@ -516,13 +516,16 @@ public abstract class Command {
 	 */
 	public static LocalOption makeTagOption(CVSTag tag) {
 		int type = tag.getType();
-		if (type == CVSTag.BRANCH || type == CVSTag.VERSION || type == CVSTag.HEAD) {
-			return new LocalOption("-r", tag.getName());
-		} else if (type == CVSTag.DATE) {
-			return new LocalOption("-D", tag.getName());
-		} else {
-			// FIXME: can this ever happen??? throw an exception?
-			return null;
+		switch (type) {
+			case CVSTag.BRANCH:
+			case CVSTag.VERSION:
+				return new LocalOption("-r", tag.getName());
+			case CVSTag.DATE:
+				return new LocalOption("-D", tag.getName());
+			default:
+				// tag must not be HEAD
+				throw new IllegalArgumentException("Sticky tag not " +
+					"valid for trunk (HEAD).");
 		}
 	}
 

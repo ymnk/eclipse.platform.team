@@ -45,6 +45,7 @@ import org.eclipse.team.internal.ccvs.core.client.Tag;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
+import org.eclipse.team.internal.ccvs.core.client.listeners.DiffListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.resources.CVSRemoteSyncElement;
@@ -502,11 +503,11 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 		s.open(progress);
 		try {
 			status = Command.DIFF.execute(s,
-			Command.NO_GLOBAL_OPTIONS,
-			options,
-			arguments,
-			null, // FIXME new DiffListener(stream),
-			progress);
+				Command.NO_GLOBAL_OPTIONS,
+				options,
+				arguments,
+				new DiffListener(stream),
+				progress);
 		} finally {
 			s.close();
 		}

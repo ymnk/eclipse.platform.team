@@ -164,7 +164,7 @@ public class CVSProvider implements ICVSProvider {
 		if (CVSProviderPlugin.getPlugin().getPruneEmptyDirectories()) 
 			localOptions.add(Checkout.PRUNE_EMPTY_DIRECTORIES);
 		// Add the options related to the CVSTag
-		if (tag != null) {
+		if (tag != null && tag.getType() != CVSTag.HEAD) {
 			localOptions.add(Checkout.makeTagOption(tag));
 		}
 		

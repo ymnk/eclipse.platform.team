@@ -6,6 +6,7 @@ package org.eclipse.team.internal.ccvs.core.client;
  */
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
@@ -18,6 +19,20 @@ public class Update extends Command {
 	public static final LocalOption IGNORE_LOCAL_CHANGES = new LocalOption("-C");
 	public static final LocalOption RETRIEVE_ABSENT_DIRECTORIES = new LocalOption("-d");
 
+	/**
+	 * Makes a -r or -D or -A option for a tag.
+	 * Valid for: checkout export history rdiff update
+	 */
+	public static LocalOption makeTagOption(CVSTag tag) {
+		int type = tag.getType();
+		switch (type) {
+			case CVSTag.HEAD:
+				return CLEAR_STICKY;
+			default:
+				return Command.makeTagOption(tag);
+		}
+	}
+	
 	protected Update() { }
 	protected String getCommandId() {
 		return "update";
