@@ -730,7 +730,6 @@
          point="org.eclipse.ui.decorators">
       <decorator
             lightweight="true"
-            objectClass="org.eclipse.core.resources.IResource"
             adaptable="true"
             location="BOTTOM_RIGHT"
             label="%DecoratorStandard.name"
@@ -740,6 +739,9 @@
          <description>
             %DecoratorStandard.desc
          </description>
+         <enablement>
+             <objectClass name="org.eclipse.core.resources.mapping.ResourceMapping"/> 
+         </enablement>
       </decorator>
    </extension>
 <!-- *************** View Actions **************** -->

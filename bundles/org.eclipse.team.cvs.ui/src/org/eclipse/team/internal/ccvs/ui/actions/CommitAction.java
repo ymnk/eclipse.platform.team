@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
@@ -85,13 +84,17 @@ public class CommitAction extends WorkspaceTraversalAction {
                     for (int k = 0; k < resources.length; k++) {
                         IResource resource = resources[k];
                         if (resource.getType() != IResource.FILE) {
-                            collectShallowFiles(((IContainer)resource).members(), roots);
+                            collectShallowFiles(getMembers(resource), roots);
                         }
                     }
                 }
             }
         }
         return (IResource[]) roots.toArray(new IResource[roots.size()]);
+    }
+
+    private IResource[] getMembers(IResource resource) throws CoreException {
+        return getWorkspaceSubscriber().members(resource);
     }
 
     private void collectShallowFiles(IResource[] resources, List roots) {
