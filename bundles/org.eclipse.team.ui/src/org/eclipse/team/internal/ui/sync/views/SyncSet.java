@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**
  * This class keeps track of a set of resources that are associated with 
@@ -268,8 +269,6 @@ public class SyncSet {
 	 * Return the children of the given container who are either out-of-sync or contain
 	 * out-of-sync resources.
 	 * 
-	 * The children will either be SyncInfo or SyncContainer.
-	 * 
 	 * TODO: How does an IWorkbecnhAdapter fit into this picture (i.e. should
 	 * the adapter be converting SyncInfo to SyncResource
 	 * 
@@ -339,6 +338,7 @@ public class SyncSet {
 	 */
 	protected void log(TeamException e) {
 		// TODO: log or throw
+		TeamUIPlugin.log(e);
 	}
 	
 	protected void removeAllChildren(IResource resource) {
