@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +36,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ILock;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
@@ -82,52 +79,12 @@ public class EclipseSynchronizer {
 	
 	// track resources that have changed in a given operation
 	private ILock lock = Platform.getJobManager().newLock();
-	private final Hashtable lockJobs = new Hashtable(5);
 	
 	private Set changedResources = new HashSet();
 	private Set changedFolders = new HashSet();
 	
 	private SessionPropertySyncInfoCache sessionPropertyCache = new SessionPropertySyncInfoCache();
 	private SynchronizerSyncInfoCache synchronizerCache = new SynchronizerSyncInfoCache();
-	private boolean DEBUG = true;
-	
-	class ResourceLockingJob extends Job {
-		// the operation depth within this thread
-		int depth;
-		private boolean running = false;
-		
-		ResourceLockingJob() {
-			super(""); //$NON-NLS-1$
-			setSystem(true);
-			setPriority(INTERACTIVE);
-			depth = 1;
-		}
-		int decrement() {
-			return --depth;
-		}
-		void increment() {
-			depth++;
-		}
-		/**
-		 * Block the calling thread until the job starts running
-		 */
-		synchronized void joinRun() {
-			while (!running) {
-				try {
-					wait();
-				} catch (InterruptedException e) {
-				}
-			}
-		}
-		public IStatus run(IProgressMonitor monitor) {
-			synchronized (this) {
-				running = true;
-				notifyAll();
-			}
-			return Job.ASYNC_FINISH;
-		}
-	}
-
 	
 	/*
 	 * Package private contructor to allow specialized subclass for handling folder deletions
@@ -454,26 +411,7 @@ public class EclipseSynchronizer {
 	 */
 	public void beginOperation(IResource resource, IProgressMonitor monitor) throws CVSException {
 		
-		ResourceLockingJob running = (ResourceLockingJob) lockJobs.get(Thread.currentThread());
-		if (running == null) {
-			if(DEBUG) {
-				System.out.println("[" + Thread.currentThread() + "] CVS operation waiting to be executed locking " + resource.getFullPath().toString()); //$NON-NLS-1$ //$NON-NLS-2$
-			}		
-			//create an implicit job for this thread
-			running = new ResourceLockingJob();
-			lockJobs.put(Thread.currentThread(), running);
-			//run the implicit job if there is no real job running
-			running.setRule(ResourcesPlugin.getWorkspace().newSchedulingRule(resource));
-			running.schedule();			
-			//this will block until this thread can acquire the resource lock
-			running.joinRun();
-			if(DEBUG) {
-				System.out.println("[" + Thread.currentThread() + "] CVS operation started"); //$NON-NLS-1$ //$NON-NLS-2$
-			}			
-		} else {
-			running.increment();
-		}
-		
+		Platform.getJobManager().beginRule(resource);					
 		lock.acquire();
 
 		if (lock.getDepth() == 1) {
@@ -503,13 +441,8 @@ public class EclipseSynchronizer {
 				throw new CVSException(status);
 			}
 		} finally {
-			lock.release();
-			
-			ResourceLockingJob running = (ResourceLockingJob) lockJobs.get(Thread.currentThread());
-			if (running.decrement() == 0) {
-				running.done(Status.OK_STATUS);
-				lockJobs.remove(Thread.currentThread());
-			}		
+			lock.release();			
+			Platform.getJobManager().endRule();
 		}
 	}
 	
