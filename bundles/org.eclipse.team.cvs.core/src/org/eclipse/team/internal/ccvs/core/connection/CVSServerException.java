@@ -63,7 +63,7 @@ public class CVSServerException extends CVSException {
 		}
 	}
 	
-	private CVSServerException(IStatus status) {
+	public CVSServerException(IStatus status) {
 		super(status);
 	}
 	

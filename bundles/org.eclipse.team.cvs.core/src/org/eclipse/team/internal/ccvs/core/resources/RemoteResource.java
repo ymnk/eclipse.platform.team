@@ -97,10 +97,6 @@ public abstract class RemoteResource extends PlatformObject implements ICVSRemot
 		throw new CVSException(Policy.bind("RemoteManagedResource.invalidOperation"));
 	}
 
-	protected PrintStream getPrintStream() {
-		return NullOutputStream.DEFAULT;
-	}
-	
 	/*
 	 * @see ICVSResource#getSyncInfo()
 	 */

@@ -90,7 +90,9 @@ public interface ICVSRepositoryLocation  extends IAdaptable {
 	/**
 	 * Validate that the receiver can be used to connect to a repository.
 	 * An exception is thrown if connection fails
+	 * 
+	 * @param monitor the progress monitor used while validating
 	 */
-	public void validateConnection() throws CVSException;
+	public void validateConnection(IProgressMonitor monitor) throws CVSException;
 }
 

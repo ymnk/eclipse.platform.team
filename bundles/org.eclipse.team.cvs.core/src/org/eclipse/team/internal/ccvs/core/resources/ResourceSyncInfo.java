@@ -34,7 +34,7 @@ public class ResourceSyncInfo {
 	
 	// safe default permissions. Permissions are saved separatly so that the correct permissions
 	// can be sent back to the server on systems that don't save execute bits (e.g. windows).
-	private static final String DEFAULT_PERMISSIONS = "u=rw,g=rw,o=r";
+	public static final String DEFAULT_PERMISSIONS = "u=rw,g=rw,o=r";
 	
 	// file sync information can be associated with a local resource that has been deleted. This is
 	// noted by prefixing the revision with this character.

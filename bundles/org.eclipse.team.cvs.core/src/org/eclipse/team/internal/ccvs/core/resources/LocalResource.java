@@ -9,7 +9,7 @@ import java.io.File;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.commands.FileNameMatcher;
+import org.eclipse.team.internal.ccvs.core.util.FileNameMatcher;
 import org.eclipse.team.internal.ccvs.core.util.FileUtil;
 import org.eclipse.team.internal.ccvs.core.util.Util;
 
