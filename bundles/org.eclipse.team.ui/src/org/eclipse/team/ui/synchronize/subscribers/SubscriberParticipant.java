@@ -115,7 +115,9 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * a chance to validate those changes before the page is created.
 	 * @param configuration the page configuration that is about to be used to create a page.
 	 */
-	protected abstract void validateConfiguration(ISynchronizePageConfiguration configuration);
+	protected void validateConfiguration(ISynchronizePageConfiguration configuration) {
+		// Do nothing by default
+	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createRefreshPage()

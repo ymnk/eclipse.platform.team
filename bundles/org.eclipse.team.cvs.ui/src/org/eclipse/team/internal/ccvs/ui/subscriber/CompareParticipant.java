@@ -10,22 +10,17 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.*;
-import org.eclipse.ui.IActionBars;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 
 public class CompareParticipant extends SubscriberParticipant {
 	
@@ -37,32 +32,7 @@ public class CompareParticipant extends SubscriberParticipant {
 		}
 	};
 	
-	private class CompareParticipantAdvisor extends CVSSynchronizeViewerAdvisor {
-		private RemoveSynchronizeParticipantAction removeAction;
-		
-		public CompareParticipantAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
-			super(configuration, syncInfoTree);
-		}
-		
-		protected void initializeActions(StructuredViewer treeViewer) {
-			super.initializeActions(treeViewer);
-			removeAction = new RemoveSynchronizeParticipantAction(getParticipant());
-		}
-		
-		public void setActionBars(IActionBars actionBars) {
-			super.setActionBars(actionBars);
-			if(actionBars != null) {
-				IToolBarManager toolbar = actionBars.getToolBarManager();
-				if(toolbar != null) {
-					toolbar.add(new Separator());
-					toolbar.add(removeAction);
-				}
-			}		
-		}
-	}
-	
 	public CompareParticipant(CVSCompareSubscriber subscriber) {
-		super();
 		setSubscriber(subscriber);
 	}
 		
@@ -89,13 +59,6 @@ public class CompareParticipant extends SubscriberParticipant {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#updateMode(int)
-	 */
-	protected void updateMode(int mode) {
-		// Don't allow modes to be used with this participant
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#preCollectingChanges()
 	 */
 	protected void preCollectingChanges() {
@@ -110,11 +73,11 @@ public class CompareParticipant extends SubscriberParticipant {
 	public boolean isPersistent() {
 		return false;
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#createSynchronizeViewerAdvisor(org.eclipse.team.ui.synchronize.ISynchronizeView)
+	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
-		return new CompareParticipantAdvisor(configuration, syncInfoTree);
+	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+		configuration.addActionContribution(new CompareParticipantActionContribution());
 	}
 }

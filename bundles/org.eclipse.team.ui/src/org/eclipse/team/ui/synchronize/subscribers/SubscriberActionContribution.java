@@ -60,7 +60,7 @@ public class SubscriberActionContribution implements IActionContribution {
 				public void run() {
 					IStructuredSelection selection = (IStructuredSelection)site.getSelectionProvider().getSelection();
 					IResource[] resources = Utils.getResources(selection.toArray());
-					participant.refresh(resources, participant.getRefreshListeners().createSynchronizeViewListener(participant), Policy.bind("Participant.synchronizing"), site.getWorkbenchSite()); //$NON-NLS-1$
+					participant.refresh(resources, Policy.bind("Participant.synchronizing"), site.getWorkbenchSite()); //$NON-NLS-1$
 				}
 			};
 			Utils.initAction(refreshSelectionAction, "action.refreshWithRemote."); //$NON-NLS-1$

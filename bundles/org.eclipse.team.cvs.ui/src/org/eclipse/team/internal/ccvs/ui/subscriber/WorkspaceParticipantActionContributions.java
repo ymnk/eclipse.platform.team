@@ -10,31 +10,22 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.compare.structuremergeviewer.*;
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.IActionBars;
 
 /**
  * Actions for the CVS workspace participant toolbar menu
  */
-public class WorkspaceParticipantActionContributions implements IActionContribution {
+public class WorkspaceParticipantActionContributions extends CVSParticipantActionContribution {
 
 	private ActionDelegateWrapper commitToolbar;
 	private ActionDelegateWrapper updateToolbar;
-	private IPropertyChangeListener listener = new IPropertyChangeListener() {
-		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().equals(ISynchronizePageConfiguration.P_MODEL)) {
-				Object o = event.getNewValue();
-				inputChanged(o);
-			}
-		}
-	};
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IContextMenuContribution#initialize(org.eclipse.jface.viewers.StructuredViewer)
@@ -48,55 +39,22 @@ public class WorkspaceParticipantActionContributions implements IActionContribut
 		Utils.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle()); //$NON-NLS-1$
 		Utils.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
 
-		configuration.addPropertyChangeListener(listener);		
-		Object o = configuration.getProperty(ISynchronizePageConfiguration.P_MODEL);
-		if (o != null) {
-			inputChanged(o);
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IContextMenuContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
-	 */
-	public void fillContextMenu(IMenuManager manager) {
-		// Nothing to add to context menu
+		super.initialize(configuration);
 	}
 	
 	public void setActionBars(IActionBars actionBars) {
 		IToolBarManager toolbar = actionBars.getToolBarManager();
-		if (toolbar != null) {
+		if (toolbar != null && toolbar.find(WorkspaceSynchronizeParticipant.ACTION_GROUP) != null) {
 			toolbar.add(new Separator());
-			toolbar.add(updateToolbar);
-			toolbar.add(commitToolbar);
+			toolbar.appendToGroup(WorkspaceSynchronizeParticipant.ACTION_GROUP, updateToolbar);
+			toolbar.appendToGroup(WorkspaceSynchronizeParticipant.ACTION_GROUP, commitToolbar);
 		}
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IContextMenuContribution#dispose()
+	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSParticipantActionContribution#modelChanged(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
 	 */
-	public void dispose() {
-		// Nothing needs to be disposed
-	}
-
-	/**
-	 * Invoked when the model shown by the page's view changes
-	 */
-	protected void inputChanged(Object o) {
-		if (o instanceof ISynchronizeModelElement) {
-			final ISynchronizeModelElement input = (ISynchronizeModelElement)o;
-			input.addCompareInputChangeListener(new ICompareInputChangeListener() {
-				public void compareInputChanged(ICompareInput source) {
-					modelChanged(input);
-				}
-			});
-			modelChanged(input);
-		}
-	}
-	
-	/**
-	 * @param element
-	 */
-	public void modelChanged(ISynchronizeModelElement element) {
+	protected void modelChanged(ISynchronizeModelElement element) {
 		commitToolbar.setSelection(element);
 		updateToolbar.setSelection(element);
 	}

@@ -16,17 +16,24 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.*;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 
 public class MergeSynchronizeParticipant extends SubscriberParticipant {
+	
+	/**
+	 * The id of a workspace action group to which additions actions can 
+	 * be added.
+	 */
+	public static final String ACTION_GROUP = "cvs_merge_actions"; //$NON-NLS-1$
+	
 	
 	private final static String CTX_ROOT = "root"; //$NON-NLS-1$
 	private final static String CTX_ROOT_PATH = "root_resource"; //$NON-NLS-1$
@@ -40,15 +47,7 @@ public class MergeSynchronizeParticipant extends SubscriberParticipant {
 	}
 	
 	public MergeSynchronizeParticipant(CVSMergeSubscriber subscriber) {
-		super();
 		setSubscriber(subscriber);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#createSynchronizeViewerAdvisor(org.eclipse.team.ui.synchronize.ISynchronizeView)
-	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
-		return new MergeSynchronizeAdvisor(configuration, syncInfoTree);
 	}
 	
 	/* (non-Javadoc)
@@ -162,5 +161,17 @@ public class MergeSynchronizeParticipant extends SubscriberParticipant {
 	
 	private void flushStateCache() {
 		((CVSMergeSubscriber)getSubscriber()).cancel();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
+	 */
+	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] { 
+				ISynchronizePageConfiguration.SYNCHRONIZE_GROUP,  
+				ISynchronizePageConfiguration.NAVIGATE_GROUP, 
+				ISynchronizePageConfiguration.MODE_GROUP, 
+				ACTION_GROUP});
+		configuration.addActionContribution(new MergeParticipantActionContribution());
 	}
 }

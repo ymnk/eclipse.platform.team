@@ -1,7 +1,6 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.*;
-
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
@@ -9,9 +8,11 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.progress.UIJob;
 
 /**
@@ -48,7 +49,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 	 */
 	public Runnable refreshDone(final IRefreshEvent event) {
 		// Ensure that this event was generated for this participant
-		if (event.getSubscriber() != participant.getSubscriber()) return;
+		if (event.getSubscriber() != participant.getSubscriber()) return null;
 		// If the event is for a cancelled operation, there's nothing to do
 		int severity = event.getStatus().getSeverity();
 		if(severity == Status.CANCEL || severity == Status.ERROR) return null;
