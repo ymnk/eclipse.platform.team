@@ -23,19 +23,12 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoCompareInput;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IEditorReference;
-import org.eclipse.ui.IReusableEditor;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.ui.*;
 
 /**
  * Action to open a compare editor from a SyncInfo object.
@@ -45,24 +38,26 @@ import org.eclipse.ui.IWorkbenchPartSite;
  */
 public class OpenInCompareAction extends Action {
 	
-	private TeamSubscriberParticipantPage part;
+	private ISynchronizeView view;
+	private ISynchronizeParticipant participant;
 	
-	public OpenInCompareAction(TeamSubscriberParticipantPage part) {
-		this.part = part;
+	public OpenInCompareAction(ISynchronizeView view, ISynchronizeParticipant participant) {
+		this.participant = participant;
+		this.view = view;
 		Utils.initAction(this, "action.openInCompareEditor."); //$NON-NLS-1$
 	}
 
 	public void run() {
-		ISelection selection = part.getSite().getPage().getSelection();
+		ISelection selection = view.getSite().getPage().getSelection();
 		Object obj = ((IStructuredSelection)selection).getFirstElement();
 		SyncInfo info = getSyncInfo(obj);
 		if(info != null) {
-			openCompareEditor(part, info, true /* keep focus */);
+			openCompareEditor(view, participant, info, true /* keep focus */);
 		}
 	}
 	
-	public static SyncInfoCompareInput openCompareEditor(TeamSubscriberParticipantPage page, SyncInfo info, boolean keepFocus) {		
-		SyncInfoCompareInput input = getCompareInput(page.getParticipant(), info);
+	public static SyncInfoCompareInput openCompareEditor(IWorkbenchPart page, ISynchronizeParticipant participant, SyncInfo info, boolean keepFocus) {		
+		SyncInfoCompareInput input = getCompareInput(participant, info);
 		if(input != null) {
 			IWorkbenchPage wpage = page.getSite().getPage();
 			IEditorPart editor = findReusableCompareEditor(wpage);			
@@ -85,7 +80,7 @@ public class OpenInCompareAction extends Action {
 			}
 			
 			if(keepFocus) {
-				wpage.activate(page.getSynchronizeView());
+				wpage.activate(page);
 			}
 			return input;
 		}			

@@ -34,5 +34,4 @@ public interface ISynchronizeParticipantListener {
 	 * @param participants removed participants
 	 */
 	public void participantsRemoved(ISynchronizeParticipant[] participants);
-
 }

@@ -10,22 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.sets;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.IResourceChangeListener;
-import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
-import org.eclipse.team.core.subscribers.TeamDelta;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
@@ -60,7 +53,18 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 	 */
 	private SubscriberEventHandler eventHandler;
 
+	/*
+	 * The participant that owns this input 
+	 */
 	private TeamSubscriberParticipant participant;
+	
+	/*
+	 * Mode filters that can be applied to the input
+	 */
+	public final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
+	public final static int[] OUTGOING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING};
+	public final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
+	public final static int[] CONFLICTING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING};
 	
 	public SubscriberInput(TeamSubscriberParticipant participant, TeamSubscriber subscriber) {
 		this.participant = participant;
@@ -142,7 +146,10 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 			} catch (TeamException e) {
 				TeamUIPlugin.log(e);
 			}
-		}
+		// Direction mode change
+		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE)) {
+			updateMode(((Integer)event.getNewValue()).intValue());
+		}		
 	}
 
 	public void reset() throws TeamException {
@@ -152,6 +159,31 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 		eventHandler.initialize();
 	}
 
+	private void updateMode(int mode) {
+		int[] modeFilter = BOTH_MODE_FILTER;
+		switch(mode) {
+		case TeamSubscriberParticipant.INCOMING_MODE:
+			modeFilter = INCOMING_MODE_FILTER; break;
+		case TeamSubscriberParticipant.OUTGOING_MODE:
+			modeFilter = OUTGOING_MODE_FILTER; break;
+		case TeamSubscriberParticipant.BOTH_MODE:
+			modeFilter = BOTH_MODE_FILTER; break;
+		case TeamSubscriberParticipant.CONFLICTING_MODE:
+			modeFilter = CONFLICTING_MODE_FILTER; break;
+		}
+		try {
+			setFilter(
+					new SyncInfoFilter.AndSyncInfoFilter(
+							new SyncInfoFilter[] {
+									new SyncInfoFilter.SyncInfoDirectionFilter(modeFilter), 
+									new SyncInfoFilter.SyncInfoChangeTypeFilter(new int[] {SyncInfo.ADDITION, SyncInfo.DELETION, SyncInfo.CHANGE}),
+									new SyncInfoFilter.PseudoConflictFilter()
+							}), new NullProgressMonitor());
+		} catch (TeamException e) {
+			Utils.handleError(TeamUIPlugin.getStandardDisplay().getActiveShell(), e, Policy.bind("SynchronizeView.16"), e.getMessage()); //$NON-NLS-1$
+		}
+	}
+	
 	/**
 	 * Process the resource delta
 	 * 

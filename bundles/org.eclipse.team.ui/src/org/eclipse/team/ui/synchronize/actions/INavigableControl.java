@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.actions;
+package org.eclipse.team.ui.synchronize.actions;
 
 public interface INavigableControl {
 

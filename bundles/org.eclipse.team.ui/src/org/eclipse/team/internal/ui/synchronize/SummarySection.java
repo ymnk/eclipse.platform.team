@@ -6,14 +6,14 @@ import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
-public class DropDownParticipantSection extends FormSection {
+public class SummarySection extends FormSection {
 	
 	private TeamSubscriberParticipant participant;
 	private Composite parent;
 	private ParticipantComposite participantComposite;
 	private ISynchronizeView view;
 	
-	public DropDownParticipantSection(Composite parent, TeamSubscriberParticipant participant, ISynchronizeView view) {
+	public SummarySection(Composite parent, TeamSubscriberParticipant participant, ISynchronizeView view) {
 		this.participant = participant;
 		this.parent = parent;
 		this.view = view;

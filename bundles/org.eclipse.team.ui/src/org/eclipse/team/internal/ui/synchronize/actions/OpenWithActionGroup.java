@@ -16,8 +16,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
-import org.eclipse.ui.IViewPart;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.OpenWithMenu;
 import org.eclipse.ui.views.navigator.ResourceNavigatorMessages;
@@ -31,21 +30,22 @@ public class OpenWithActionGroup extends ActionGroup {
 	private OpenFileInSystemEditorAction openFileAction;
 	private OpenInCompareAction openInCompareAction;
 	private TeamSubscriberParticipantPage page;
-	private IViewPart part;
+	private ISynchronizeView view;
+	private ISynchronizeParticipant participant;
 
-	public OpenWithActionGroup(TeamSubscriberParticipantPage page) {
-		this.page = page;
-		this.part = page.getSynchronizeView();
+	public OpenWithActionGroup(ISynchronizeView part, ISynchronizeParticipant participant) {
+		this.participant = participant;
+		this.view = part;
 		makeActions();
 	}
 
 	protected void makeActions() {
-		openFileAction = new OpenFileInSystemEditorAction(part.getSite().getPage());
-		openInCompareAction = new OpenInCompareAction(page);		
+		openFileAction = new OpenFileInSystemEditorAction(view.getSite().getPage());
+		openInCompareAction = new OpenInCompareAction(view, participant);		
 	}
 
 	public void fillContextMenu(IMenuManager menu) {
-		fillOpenWithMenu(menu, (IStructuredSelection)part.getSite().getPage().getSelection());
+		fillOpenWithMenu(menu, (IStructuredSelection)view.getSite().getPage().getSelection());
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class OpenWithActionGroup extends ActionGroup {
 		
 		MenuManager submenu =
 			new MenuManager(ResourceNavigatorMessages.getString("ResourceNavigator.openWith")); //$NON-NLS-1$
-		submenu.add(new OpenWithMenu(part.getSite().getPage(), (IFile) resource));
+		submenu.add(new OpenWithMenu(view.getSite().getPage(), (IFile) resource));
 		menu.add(submenu);
 	}
 

@@ -17,8 +17,11 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.SyncChangesViewer;
+import org.eclipse.team.ui.synchronize.actions.*;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.actions.ActionFactory;
 
 /**
@@ -30,19 +33,21 @@ import org.eclipse.ui.actions.ActionFactory;
  */
 public class NavigateAction extends Action {
 	private final int direction;
-	private TeamSubscriberParticipantPage page;
+	private ISynchronizeView view;
+	private SyncChangesViewer viewer;
 	
-	public NavigateAction(IViewPart part, TeamSubscriberParticipantPage page, int direction) {
-		this.page = page;
+	public NavigateAction(ISynchronizeView view, SyncChangesViewer viewer, int direction) {
+		this.viewer = viewer;
+		this.view = view;
 		this.direction = direction;
 
-		IKeyBindingService kbs = part.getSite().getKeyBindingService();		
+		IKeyBindingService kbs = view.getSite().getKeyBindingService();		
 		if(direction == INavigableControl.NEXT) {
 			Utils.initAction(this, "action.navigateNext."); //$NON-NLS-1$
-			page.getSite().getActionBars().setGlobalActionHandler(ActionFactory.NEXT.getId(), this);			
+			view.getViewSite().getActionBars().setGlobalActionHandler(ActionFactory.NEXT.getId(), this);			
 		} else {
 			Utils.initAction(this, "action.navigatePrevious."); //$NON-NLS-1$
-			page.getSite().getActionBars().setGlobalActionHandler(ActionFactory.PREVIOUS.getId(), this);			
+			view.getViewSite().getActionBars().setGlobalActionHandler(ActionFactory.PREVIOUS.getId(), this);			
 		}
 	}
 	
@@ -52,7 +57,7 @@ public class NavigateAction extends Action {
 	
 	private void navigate() {
 		SyncInfo info = getSyncInfoFromSelection();
-		INavigableControl navigable = (INavigableControl)page.getViewer();
+		INavigableControl navigable = (INavigableControl)viewer;
 		if(info == null) {
 			if(navigable.gotoDifference(direction)) {
 				return;
@@ -65,12 +70,12 @@ public class NavigateAction extends Action {
 		if(info.getLocal().getType() != IResource.FILE) {
 			if(! navigable.gotoDifference(direction)) {
 				info = getSyncInfoFromSelection();
-				OpenInCompareAction.openCompareEditor(page, info, true /* keep focus */);
+				OpenInCompareAction.openCompareEditor(view, view.getParticipant(), info, true /* keep focus */);
 			}
 			return;
 		}
 		
-		IEditorPart editor = OpenInCompareAction.findOpenCompareEditor(page.getSynchronizeView().getSite(), info.getLocal());			
+		IEditorPart editor = OpenInCompareAction.findOpenCompareEditor(view.getSite(), info.getLocal());			
 		boolean atEnd = false;
 		CompareEditorInput input;
 		ICompareNavigator navigator;
@@ -83,19 +88,19 @@ public class NavigateAction extends Action {
 				if(navigator.selectChange(direction == INavigableControl.NEXT)) {
 					if(! navigable.gotoDifference(direction)) {
 						info = getSyncInfoFromSelection();
-						OpenInCompareAction.openCompareEditor(page, info, true /* keep focus */);
+						OpenInCompareAction.openCompareEditor(view, view.getParticipant(), info, true /* keep focus */);
 					}
 				}				
 			}
 		} else {
 			// otherwise, select the next change and open a compare editor which will automatically
 			// show the first change.
-			OpenInCompareAction.openCompareEditor(page, info, true /* keep focus */);
+			OpenInCompareAction.openCompareEditor(view, view.getParticipant(), info, true /* keep focus */);
 		}
 	}
 
 	private SyncInfo getSyncInfoFromSelection() {
-		IStructuredSelection selection = (IStructuredSelection)page.getSynchronizeView().getSite().getPage().getSelection();
+		IStructuredSelection selection = (IStructuredSelection)view.getSite().getPage().getSelection();
 		if(selection == null) return null;
 		Object obj = selection.getFirstElement();
 		SyncInfo info = OpenInCompareAction.getSyncInfo(obj);

@@ -11,11 +11,7 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -24,10 +20,7 @@ import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantComposi
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.controls.IControlFactory;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -151,7 +144,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 */
 	public void dispose() {
 		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
-		refreshJob.removeSubscriberInput(input);		
+		refreshJob.removeSubscriberInput(input);
+		removePropertyChangeListener(input);
 		input.dispose();
 	}
 	
@@ -164,13 +158,12 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	protected void setSubscriber(TeamSubscriber subscriber) {
 		this.input = new SubscriberInput(this, subscriber);
+		addPropertyChangeListener(input);
 		if(workingSet != null) {
 			setWorkingSet(workingSet);
 		}
 	}
-	
-	
-	
+		
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#init(org.eclipse.ui.IMemento)
 	 */

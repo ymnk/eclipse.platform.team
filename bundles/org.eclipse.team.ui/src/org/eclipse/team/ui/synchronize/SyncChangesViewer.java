@@ -10,6 +10,19 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-public class TeamSubscriberOverviewComposite {
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 
+public abstract class SyncChangesViewer implements INavigableControl {
+
+	private TeamSubscriberParticipant participant;
+	private ISynchronizeView view;
+	
+	public SyncChangesViewer(TeamSubscriberParticipant participant, ISynchronizeView view) {
+		this.view = view;
+		this.participant = participant;		
+	}
+	
+	public abstract StructuredViewer getViewer();
+	public abstract void dispose();
 }
