@@ -422,10 +422,10 @@ abstract public class CVSAction extends TeamAction {
 	/**
 	 * A helper prompt condition for prompting for CVS dirty state.
 	 */
-	public static IPromptCondition getOverwriteLocalChangesPrompt() {
+	public static IPromptCondition getOverwriteLocalChangesPrompt(final List dirtyResources) {
 		return new IPromptCondition() {
 			public boolean needsPrompt(IResource resource) {
-				return CVSLightweightDecorator.isDirty(resource);
+				return dirtyResources.contains(resource);
 			}
 			public String promptMessage(IResource resource) {
 				return Policy.bind("ReplaceWithAction.localChanges", resource.getName());//$NON-NLS-1$

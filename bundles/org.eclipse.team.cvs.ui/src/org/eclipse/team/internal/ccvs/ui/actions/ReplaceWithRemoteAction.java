@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.actions;
  
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -24,24 +25,21 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ui.IPromptCondition;
 import org.eclipse.team.internal.ui.PromptingDialog;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 
 public class ReplaceWithRemoteAction extends WorkspaceAction {
 	public void execute(IAction action)  throws InvocationTargetException, InterruptedException {
-		PromptingDialog dialog = new PromptingDialog(getShell(), getSelectedResources(), 
-			getPromptCondition(), Policy.bind("ReplaceWithAction.confirmOverwrite"));//$NON-NLS-1$
-		final IResource[] resources = dialog.promptForMultiple();
-		if(resources.length == 0) {
-			// nothing to do
-			return;
-		}
+		
 		run(new WorkspaceModifyOperation() {
 			public void execute(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
 				try {
+					
+					IResource resources[] = checkOverwriteOfDirtyResources(getSelectedResources());
+					
 					// Do the replace
 					Hashtable table = getProviderMapping(resources);
 					Set keySet = table.keySet();
@@ -61,15 +59,34 @@ public class ReplaceWithRemoteAction extends WorkspaceAction {
 					monitor.done();
 				}
 			}
+
+			
 		}, true /* cancelable */, PROGRESS_DIALOG);
 	}
-
-	/**
-	 * Note: This method is designed to be overridden by test cases.
-	 */
-	protected IPromptCondition getPromptCondition() {
-		return getOverwriteLocalChangesPrompt();
+	
+	private IResource[] checkOverwriteOfDirtyResources(IResource[] resources, IProgressMonitor monitor) throws CVSException, InterruptedException {
+		List dirtyResources = new ArrayList();
+		IResource[] selectedResources = getSelectedResources();
+		
+		try {
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(null, selectedResources.length * 1000);
+			for (int i = 0; i < selectedResources.length; i++) {
+				IResource resource = selectedResources[i];
+				ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+				if(cvsResource.isModified(Policy.subMonitorFor(monitor, 1000))) {
+					dirtyResources.add(resource);
+				}			
+			}
+		} finally {
+			monitor.done();		
+		}
+		
+		PromptingDialog dialog = new PromptingDialog(getShell(), selectedResources, 
+				getOverwriteLocalChangesPrompt(dirtyResources), Policy.bind("ReplaceWithAction.confirmOverwrite"));//$NON-NLS-1$
+		return dialog.promptForMultiple();
 	}
+	
 	/**
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getErrorTitle()
 	 */
