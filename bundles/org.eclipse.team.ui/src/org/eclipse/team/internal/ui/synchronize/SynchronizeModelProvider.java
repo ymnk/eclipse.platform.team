@@ -12,11 +12,11 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.*;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
@@ -94,6 +94,17 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 		return (ISynchronizeModelElement) resourceMap.get(resource);
 	}
 	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#getModelObjects(org.eclipse.core.resources.IResource)
+     */
+    protected ISynchronizeModelElement[] getModelObjects(IResource resource) {
+        ISynchronizeModelElement element = getModelObject(resource);
+        if (element == null) {
+            return new ISynchronizeModelElement[0];
+        }
+        return new ISynchronizeModelElement[] { element };
+    }
+    
 	protected void associateDiffNode(ISynchronizeModelElement node) {
 		IResource resource = node.getResource();
 		if(resource != null) {
@@ -150,91 +161,6 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
     protected boolean hasViewerState() {
         return ! resourceMap.isEmpty();
     }
-    
-	protected void saveViewerState() {
-		//	save visible expanded elements and selection
-	    final StructuredViewer viewer = getViewer();
-		if (viewer != null && !viewer.getControl().isDisposed() && viewer instanceof AbstractTreeViewer) {
-			final Object[][] expandedElements = new Object[1][1];
-			final Object[][] selectedElements = new Object[1][1];
-			viewer.getControl().getDisplay().syncExec(new Runnable() {
-				public void run() {
-					if (viewer != null && !viewer.getControl().isDisposed()) {
-						expandedElements[0] = ((AbstractTreeViewer) viewer).getVisibleExpandedElements();
-						selectedElements[0] = ((IStructuredSelection) viewer.getSelection()).toArray();
-					}
-				}
-			});
-			//
-			// Save expansion
-			//
-			if (expandedElements[0].length > 0) {
-				ISynchronizePageConfiguration config = getConfiguration();
-				ArrayList savedExpansionState = new ArrayList();
-				for (int i = 0; i < expandedElements[0].length; i++) {
-					if (expandedElements[0][i] instanceof ISynchronizeModelElement) {
-						IResource resource = ((ISynchronizeModelElement) expandedElements[0][i]).getResource();
-						if(resource != null)
-							savedExpansionState.add(resource.getFullPath().toString());
-					}
-				}
-				config.setProperty(P_VIEWER_EXPANSION_STATE, savedExpansionState);
-			}
-			//
-			// Save selection
-			//
-			if (selectedElements[0].length > 0) {
-				ISynchronizePageConfiguration config = getConfiguration();
-				ArrayList savedSelectedState = new ArrayList();
-				for (int i = 0; i < selectedElements[0].length; i++) {
-					if (selectedElements[0][i] instanceof ISynchronizeModelElement) {
-						IResource resource = ((ISynchronizeModelElement) selectedElements[0][i]).getResource();
-						if(resource != null)
-							savedSelectedState.add(resource.getFullPath().toString());
-					}
-				}
-				config.setProperty(P_VIEWER_SELECTION_STATE, savedSelectedState);
-			}
-		}
-	}
-	
-	protected void restoreViewerState() {
-		// restore expansion state and selection state
-	    final StructuredViewer viewer = getViewer();
-		if (viewer != null && !viewer.getControl().isDisposed() && viewer instanceof AbstractTreeViewer) {
-			List savedExpansionState = (List)getConfiguration().getProperty(P_VIEWER_EXPANSION_STATE);
-			List savedSelectionState = (List)getConfiguration().getProperty(P_VIEWER_SELECTION_STATE);
-			IContainer container = ResourcesPlugin.getWorkspace().getRoot();
-			final ArrayList expandedElements = new ArrayList();
-			if (savedExpansionState != null) {
-				for (Iterator it = savedExpansionState.iterator(); it.hasNext();) {
-					String path = (String) it.next();
-					IResource resource = container.findMember(path, true /* include phantoms */);
-					ISynchronizeModelElement element = getModelObject(resource);
-					if (element != null) {
-						expandedElements.add(element);
-					}
-				}
-			}
-			final ArrayList selectedElements = new ArrayList();
-			if (savedSelectionState != null) {
-				for (Iterator it = savedSelectionState.iterator(); it.hasNext();) {
-					String path = (String) it.next();
-					IResource resource = container.findMember(path, true /* include phantoms */);
-					ISynchronizeModelElement element = getModelObject(resource);
-					if (element != null) {
-						selectedElements.add(element);
-					}
-				}
-			}
-			Utils.asyncExec(new Runnable() {
-				public void run() {
-					((AbstractTreeViewer) viewer).setExpandedElements(expandedElements.toArray());
-					viewer.setSelection(new StructuredSelection(selectedElements));
-				}
-			}, viewer);
-		}
-	}
 
 	public ISynchronizeModelElement[] getClosestExistingParents(IResource resource) {
 		ISynchronizeModelElement element = getModelObject(resource);

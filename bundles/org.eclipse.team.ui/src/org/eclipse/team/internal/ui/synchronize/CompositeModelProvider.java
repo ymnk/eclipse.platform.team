@@ -319,4 +319,22 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
         clearProviders();
         super.dispose();
     }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#hasViewerState()
+     */
+    protected boolean hasViewerState() {
+        return !resourceToElements.isEmpty();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#getModelObjects(org.eclipse.core.resources.IResource)
+     */
+    protected ISynchronizeModelElement[] getModelObjects(IResource resource) {
+        List elements = (List)resourceToElements.get(resource);
+        if (elements == null) {
+            return new ISynchronizeModelElement[0];
+        }
+        return (ISynchronizeModelElement[]) elements.toArray(new ISynchronizeModelElement[elements.size()]);
+    }
 }
