@@ -43,10 +43,13 @@ public class ChangeLogModelSorter extends ViewerSorter {
 	}
 	
 	protected int classComparison(Object element) {
-		if (element instanceof ChangeLogDiffNode) {
+		if (element instanceof CommitSetDiffNode) {
 			return 0;
 		}
-		return 1;
+		if (element instanceof ChangeLogDiffNode) {
+			return 1;
+		}
+		return 2;
 	}
 	
 	protected int compareClass(Object element1, Object element2) {
@@ -64,6 +67,12 @@ public class ChangeLogModelSorter extends ViewerSorter {
 		//have to deal with non-resources in navigator
 		//if one or both objects are not resources, returned a comparison 
 		//based on class.
+		if (o1 instanceof  CommitSetDiffNode && o2 instanceof CommitSetDiffNode) {
+		    CommitSet s1 = ((CommitSetDiffNode) o1).getSet();
+		    CommitSet s2 = ((CommitSetDiffNode) o2).getSet();
+			return compareNames(s1.getTitle(), s2.getTitle());
+		}
+		
 		if (o1 instanceof  ChangeLogDiffNode && o2 instanceof ChangeLogDiffNode) {
 			ILogEntry r1 = ((ChangeLogDiffNode) o1).getComment();
 			ILogEntry r2 = ((ChangeLogDiffNode) o2).getComment();

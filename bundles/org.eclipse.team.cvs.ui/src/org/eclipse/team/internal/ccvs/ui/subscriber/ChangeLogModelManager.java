@@ -73,7 +73,7 @@ public class ChangeLogModelManager extends SynchronizeModelManager implements IP
 		} else if(id.endsWith(HierarchicalModelProvider.HierarchicalModelProviderDescriptor.ID)) {
 			return new HierarchicalModelProvider(getConfiguration(), getSyncInfoSet());
 		} else {
-				return new ChangeLogModelProvider(getConfiguration(), getSyncInfoSet(), tag1, tag2);
+			return new ChangeLogModelProvider(getConfiguration(), getSyncInfoSet(), tag1, tag2);
 		}
 	}
 
