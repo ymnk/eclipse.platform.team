@@ -35,8 +35,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	}
 	
 	public SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
-		TeamSubscriberParticipant input = getParticipant(subscriber);
-		SyncInfoSet set = input.getSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet set = getCollector(subscriber).getSyncInfoSet();
 		SyncInfo info = set.getSyncInfo(resource);
 		if (info == null) {
 			info = subscriber.getSyncInfo(resource);
@@ -64,7 +63,9 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	private TeamSubscriberSyncInfoCollector getCollector(TeamSubscriber subscriber) {
 		TeamSubscriberParticipant participant = getParticipant(subscriber);
 		if (participant == null) return null;
-		return participant.getSyncInfoCollector();
+		TeamSubscriberSyncInfoCollector syncInfoCollector = participant.getSyncInfoCollector();
+		EclipseTest.waitForSubscriberInputHandling(syncInfoCollector);
+		return syncInfoCollector;
 	}
 
 	/* (non-Javadoc)
