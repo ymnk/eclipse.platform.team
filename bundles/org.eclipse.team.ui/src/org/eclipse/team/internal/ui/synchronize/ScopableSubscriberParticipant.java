@@ -108,9 +108,11 @@ public abstract class ScopableSubscriberParticipant extends SubscriberParticipan
 		try {
 			ISynchronizeParticipantDescriptor descriptor = getDescriptor();
 			setInitializationData(descriptor);
-			setSecondaryId(Long.toString(System.currentTimeMillis()));
 		} catch (CoreException e) {
 			TeamUIPlugin.log(e);
+		}
+		if (getSecondaryId() == null) {
+			setSecondaryId(Long.toString(System.currentTimeMillis()));
 		}
 	}
 	
