@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.helpers.SynchronizationCache;
-import org.eclipse.team.core.subscribers.helpers.TeamSubscriberRefreshOperation;
+import org.eclipse.team.core.subscribers.helpers.SynchronizationCacheRefreshOperation;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -28,7 +28,7 @@ import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 /**
  * CVS Specific refresh operation
  */
-public class CVSRefreshOperation extends TeamSubscriberRefreshOperation {
+public class CVSRefreshOperation extends SynchronizationCacheRefreshOperation {
 
 	private SynchronizationCache cache, baseCache;
 	private CVSTag tag;

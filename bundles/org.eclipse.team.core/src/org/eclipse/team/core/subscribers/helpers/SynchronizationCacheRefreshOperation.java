@@ -29,7 +29,7 @@ import org.eclipse.team.internal.core.Policy;
  * a <code>SynchronizationCache</code>. It also accumulates and returns all local resources 
  * for which the corresponding remote has changed.
  */
-public abstract class TeamSubscriberRefreshOperation {
+public abstract class SynchronizationCacheRefreshOperation {
 	
 	protected abstract SynchronizationCache getSynchronizationCache();
 	
