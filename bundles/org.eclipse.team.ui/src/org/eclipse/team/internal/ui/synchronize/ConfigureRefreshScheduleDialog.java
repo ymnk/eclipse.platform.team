@@ -121,6 +121,9 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 		}
 		schedule.setRefreshInterval(seconds);
 		schedule.setEnabled(enableBackgroundRefresh.getSelection());
+		
+		// update schedule
+		schedule.getParticipant().setRefreshSchedule(schedule);
 		super.okPressed();
 	}
 		

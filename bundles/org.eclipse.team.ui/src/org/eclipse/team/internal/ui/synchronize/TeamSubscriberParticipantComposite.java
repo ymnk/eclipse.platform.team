@@ -131,7 +131,7 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 				label.setLayoutData(gridData);
 			}
 			{
-				scheduleLabel = factory.createLabel(composite_1, "Every Hour");
+				scheduleLabel = factory.createLabel(composite_1, "");
 				gridData = new GridData(GridData.FILL_HORIZONTAL);
 				gridData.grabExcessHorizontalSpace = true;
 				scheduleLabel.setLayoutData(gridData);
@@ -204,6 +204,10 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 	}
 
 	private void updateLastRefreshLabel() {
+	}
+	
+	private void updateScheduleLabel() {
+		scheduleLabel.setText(participant.getRefreshSchedule().getScheduleAsString());
 	}
 	
 	protected void hookContextMenu() {

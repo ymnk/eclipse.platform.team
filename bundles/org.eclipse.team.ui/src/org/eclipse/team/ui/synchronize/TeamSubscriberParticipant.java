@@ -47,6 +47,11 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	private static final String CTX_SUBSCRIBER_PARTICIPANT_SETTINGS = TeamUIPlugin.ID + ".TEAMSUBSRCIBERSETTINGS"; //$NON-NLS-1$
 	
 	/**
+	 * Key for schedule in memento
+	 */
+	private static final String CTX_SUBSCRIBER_SCHEDULE_SETTINGS = TeamUIPlugin.ID + ".TEAMSUBSRCIBER_REFRESHSCHEDULE"; //$NON-NLS-1$
+	
+	/**
 	 * Property constant indicating the mode of a page has changed. 
 	 */
 	public static final String P_SYNCVIEWPAGE_WORKINGSET = TeamUIPlugin.ID  + ".P_SYNCVIEWPAGE_WORKINGSET";	 //$NON-NLS-1$
@@ -211,6 +216,8 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 				String set = settings.getString(P_SYNCVIEWPAGE_WORKINGSET);
 				String mode = settings.getString(P_SYNCVIEWPAGE_MODE);
 				String layout = settings.getString(P_SYNCVIEWPAGE_LAYOUT);
+				RefreshSchedule schedule = RefreshSchedule.init(memento.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
+				setRefreshSchedule(schedule);
 				
 				if(set != null) {
 					IWorkingSet workingSet = PlatformUI.getWorkbench().getWorkingSetManager().getWorkingSet(set);
@@ -238,6 +245,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		}
 		settings.putString(P_SYNCVIEWPAGE_LAYOUT, Integer.toString(getLayout()));
 		settings.putString(P_SYNCVIEWPAGE_MODE, Integer.toString(getMode()));
+		refreshSchedule.saveState(settings);
 	}
 	
 	/* (non-Javadoc)
