@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.widgets.Shell;
@@ -152,6 +153,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @see org.eclipse.team.ui.sync.AbstractSynchronizeViewPage#dispose()
 	 */
 	public void dispose() {
+		Platform.getJobManager().cancel(this);
 		refreshSchedule.dispose();				
 		TeamUI.removePropertyChangeListener(this);
 		collector.dispose();
@@ -162,10 +164,10 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 */
 	public String getName() {
 		String name = super.getName();
-		IResource[] resources = collector.getRoots();
-		if (resources == null) {
+		if (collector.isAllRootsIncluded()) {
 			return name + " (Workspace)";
 		} else {
+			IResource[] resources = collector.getRoots();
 			return name + " " + Utils.convertSelection(resources, 4);
 		}
 	}

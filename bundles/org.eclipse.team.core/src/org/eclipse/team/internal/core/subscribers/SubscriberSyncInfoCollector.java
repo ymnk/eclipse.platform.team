@@ -241,7 +241,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * @return <code>true</code> if the collector is considering all 
 	 * roots of the subscriber and <code>false</code> otherwise
 	 */
-	private boolean isAllRootsIncluded() {
+	public boolean isAllRootsIncluded() {
 		return roots == null;
 	}
 

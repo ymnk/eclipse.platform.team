@@ -292,6 +292,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#init(org.eclipse.ui.IMemento)
 	 */
 	public void init(String secondaryId, IMemento memento) throws PartInitException {
+		setSecondaryId(secondaryId);
 		pinned = Boolean.getBoolean(memento.getString(CTX_PINNED));
 	}
 
