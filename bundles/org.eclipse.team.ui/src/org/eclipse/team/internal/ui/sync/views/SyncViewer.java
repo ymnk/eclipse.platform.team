@@ -32,10 +32,8 @@ import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -48,6 +46,7 @@ import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -70,7 +69,6 @@ import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
-import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.part.IShowInSource;
 import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.part.ViewPart;
@@ -154,20 +152,10 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		}
 	}
 
-	protected ILabelProvider getLabelProvider() {
-		return new DecoratingLabelProvider(
-					new SyncViewerLabelProvider(),
-					WorkbenchPlugin
-						.getDefault()
-						.getWorkbench()
-						.getDecoratorManager()
-						.getLabelDecorator());
-	}
-
 	private void createTreeViewerPartControl(Composite parent) {
 		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setContentProvider(new SyncSetTreeContentProvider());
-		viewer.setLabelProvider(getLabelProvider());
+		viewer.setLabelProvider(SyncViewerLabelProvider.getDecoratingLabelProvider());
 		viewer.setSorter(new SyncViewerSorter());
 	}
 	
@@ -193,26 +181,26 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		viewer = tableViewer;
 		viewer.setContentProvider(new SyncSetTableContentProvider());
 		viewer.setLabelProvider(new SyncViewerLabelProvider());
-		viewer.setSorter(new SyncViewerSorter());
+		viewer.setSorter(new SyncViewerTableSorter(SyncViewerTableSorter.COL_NAME));
 	}
 	
 	/**
 	 * Creates the columns for the sync viewer table.
 	 */
 	private void createColumns(Table table, TableLayout layout, TableViewer viewer) {
-		//SelectionListener headerListener = getColumnListener(viewer);
+		SelectionListener headerListener = SyncViewerTableSorter.getColumnListener(viewer);
 		// revision
 		TableColumn col = new TableColumn(table, SWT.NONE);
 		col.setResizable(true);
 		col.setText("Resource"); //$NON-NLS-1$
-		//col.addSelectionListener(headerListener);
+		col.addSelectionListener(headerListener);
 		layout.addColumnData(new ColumnWeightData(30, true));
 	
 		// tags
 		col = new TableColumn(table, SWT.NONE);
 		col.setResizable(true);
 		col.setText("In Folder"); //$NON-NLS-1$
-		//col.addSelectionListener(headerListener);
+		col.addSelectionListener(headerListener);
 		layout.addColumnData(new ColumnWeightData(50, true));
 	}
 	

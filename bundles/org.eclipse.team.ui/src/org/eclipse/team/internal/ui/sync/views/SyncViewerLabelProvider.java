@@ -2,10 +2,13 @@ package org.eclipse.team.internal.ui.sync.views;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.viewers.DecoratingLabelProvider;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
+import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
@@ -21,6 +24,23 @@ public class SyncViewerLabelProvider extends LabelProvider implements ITableLabe
 	// so they can be properly disposed
 	CompareConfiguration compareConfig = new CompareConfiguration();
 	WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
+	
+	/**
+	 * Returns a sync view label provider that is hooked up to the decorator
+	 * mechanism.
+	 * 
+	 * @return a new <code>DecoratingLabelProvider</code> which wraps a <code>
+	 *   new <code>WorkbenchLabelProvider</code>
+	 */
+	public static ILabelProvider getDecoratingLabelProvider() {
+		return new DecoratingLabelProvider(
+			new SyncViewerLabelProvider(),
+			WorkbenchPlugin
+				.getDefault()
+				.getWorkbench()
+				.getDecoratorManager()
+				.getLabelDecorator());
+	}
 	
 	public SyncViewerLabelProvider() {
 	}

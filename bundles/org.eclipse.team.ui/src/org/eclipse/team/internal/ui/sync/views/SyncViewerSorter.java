@@ -12,7 +12,6 @@ package org.eclipse.team.internal.ui.sync.views;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ViewerSorter;
-import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * This class sorts the model elements that appear in the SyncViewer
@@ -23,21 +22,19 @@ public class SyncViewerSorter extends ViewerSorter {
 	 * @see org.eclipse.jface.viewers.ViewerSorter#category(java.lang.Object)
 	 */
 	public int category(Object element) {
-		IResource resource = SyncSet.getIResource(element);
-		if (element instanceof SyncInfo) {
-			SyncInfo info = (SyncInfo)element;
+		IResource resource = getResource(element);
+		if (resource != null) {
 			switch(resource.getType()) {
 				case IResource.PROJECT: return 1;
 				case IResource.FOLDER: return 2;
 				case IResource.FILE: return 3;
 			}
-		} else {
-			switch(resource.getType()) {
-				case IResource.PROJECT: return 1;
-				case IResource.FOLDER: return 2;
-			}
 		}
 		return super.category(element);
+	}
+
+	protected IResource getResource(Object element) {
+		return SyncSet.getIResource(element);
 	}
 
 }
