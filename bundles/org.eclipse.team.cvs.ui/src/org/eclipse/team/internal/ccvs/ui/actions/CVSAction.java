@@ -471,7 +471,7 @@ abstract public class CVSAction extends TeamAction implements IEditorActionDeleg
 			Object element = it.next();
 			if(element instanceof SyncInfoDiffNode) {
 				IResource resource = ((SyncInfoDiffNode)element).getResource();
-				if (resource != null) {
+				if (resource != null && resource.getType() != IResource.ROOT) {
 					resources.add(resource);
 				}
 			} else {

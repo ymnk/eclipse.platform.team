@@ -115,10 +115,10 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * subclass of <code>TeamSubscriberParticipantLabelProvider</code>.
 	 * @param logicalProvider the label provider for the selected logical view
 	 * @return a label provider
-	 * @see SyncInfoLabelDecorator
+	 * @see SyncInfoLabelProvider
 	 */
 	protected ILabelProvider getLabelProvider() {
-		return new SyncInfoLabelDecorator();
+		return new SyncInfoLabelProvider();
 	}
 	
 	protected IStructuredContentProvider getContentProvider() {

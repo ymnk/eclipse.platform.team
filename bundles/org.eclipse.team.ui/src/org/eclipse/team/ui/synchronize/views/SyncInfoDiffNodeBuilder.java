@@ -24,12 +24,6 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot;
 
-/**
- * @author Administrator
- *
- * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
- */
 public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 
 	private AbstractTreeViewer viewer;
@@ -38,7 +32,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	// parents who need a label update accumulated while handling sync set changes
 	private Set parentsToUpdate = new HashSet();
 	
-	private Map resourceMap = new HashMap();
+	private Map resourceMap = Collections.synchronizedMap(new HashMap());
 	
 	public SyncInfoDiffNodeBuilder(SyncInfoDiffNodeRoot root) {
 		this.root = root;
@@ -94,7 +88,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		for (Iterator iter = resourceMap.keySet().iterator(); iter.hasNext();) {
 			IResource r = (IResource) iter.next();
 			if (parentResource.getFullPath().isPrefixOf(r.getFullPath())) {
-				unassociateDiffNode(r);
+				iter.remove();
 			}
 		}
 	}
@@ -134,11 +128,25 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
 		viewer.getControl().setRedraw(false);
 		if (event.isReset()) {
-			// On a reset, refresh the entire view
+			// On a reset, clear the diff node model and rebuild it. Then refresh the 
+			// viewer.
+			clearModelObjects(getRoot());
+			resourceMap.clear();
+			buildTree(getRoot());
 			((StructuredViewer) viewer).refresh();
 		} else {
 			handleChanges(event);
 		}
+		viewer.getControl().setRedraw(true);
+	}
+	
+	protected void reset() {
+		viewer.getControl().setRedraw(false);
+		((AbstractTreeViewer) viewer).remove(getRoot());
+		clearModelObjects(getRoot());
+		resourceMap.clear();
+		buildTree(getRoot());
+		((StructuredViewer) viewer).refresh();
 		viewer.getControl().setRedraw(true);
 	}
 	
@@ -243,7 +251,8 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	}
 
 	protected SyncInfoDiffNode createChildNode(DiffNode parent, IResource resource) {
-		SyncInfoDiffNode node = new SyncInfoDiffNode(parent, root.getSyncInfoSet(), resource);
+		SyncInfoSet set = parent instanceof SyncInfoDiffNode ? ((SyncInfoDiffNode)parent).getSyncInfoSet() : getRoot().getSyncInfoSet();
+		SyncInfoDiffNode node = new SyncInfoDiffNode(parent, set, resource);
 		associateDiffNode(resource, node);
 		addToViewer(node);
 		return node;
@@ -336,5 +345,19 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 	 */
 	protected SyncInfoDiffNodeRoot getRoot() {
 		return root;
+	}
+	
+	protected void clearModelObjects(DiffNode node) {
+		IDiffElement[] children = node.getChildren();
+		for (int i = 0; i < children.length; i++) {
+			IDiffElement element = children[i];
+			if(element instanceof DiffNode) {
+				clearModelObjects((DiffNode)element);
+			}
+		}
+		IDiffContainer parent = node.getParent();
+		if(parent != null) {
+			parent.removeToRoot(node);
+		}
 	}
 }

@@ -146,6 +146,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewNode#getSyncInfo()
 	 */
 	public SyncInfo getSyncInfo() {
+		SyncInfoSet input = getSyncInfoSet();
 		if(info != null) {
 			return info;
 		} else if(input != null && resource != null) {
@@ -159,6 +160,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * that are descendants of this node in the diff viewer.
 	 */
 	public SyncInfo[] getDescendantSyncInfos() {
+		SyncInfoSet input = getSyncInfoSet();
 		if(input != null && getResource() != null) {
 			return input.getOutOfSyncDescendants(resource);
 		} else if(info != null) {
@@ -173,13 +175,11 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @return true has the same subsriber and resource
 	 */
 	public boolean equals(Object object) {
-		if (object == this) {
-			return true;
-		}
-		if (!object.getClass().equals(this.getClass())) {
+		if(object == null) return false;
+		if (object != null || !object.getClass().equals(this.getClass())) {
 			return false;
 		}
-		return super.equals(object);
+		return this==object;
 	}
 
 	/* (non-Javadoc)
@@ -204,7 +204,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return getName();
+		return getResource() != null ? getResource().getFullPath().toString() : getName();
 	}
 	
 	/**

@@ -33,7 +33,7 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 /**
  * @since 3.0
  */
-public class SyncInfoLabelDecorator extends LabelProvider implements IColorProvider {
+public class SyncInfoLabelProvider extends LabelProvider implements IColorProvider {
 	
 	private boolean working = false;
 	// cache for folder images that have been overlayed with conflict icon
@@ -41,7 +41,40 @@ public class SyncInfoLabelDecorator extends LabelProvider implements IColorProvi
 	CompareConfiguration compareConfig = new CompareConfiguration();
 	private WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
 	
-	public SyncInfoLabelDecorator() {
+	/**
+	 * Decorating label provider that also support color providers
+	 */
+	public static class DecoratingColorLabelProvider extends DecoratingLabelProvider implements IColorProvider {
+
+		public DecoratingColorLabelProvider(ILabelProvider provider, ILabelDecorator decorator) {
+			super(provider, decorator);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
+		 */
+		public Color getForeground(Object element) {
+			ILabelProvider p = getLabelProvider();
+			if(p instanceof IColorProvider) {
+				return ((IColorProvider)p).getForeground(element);
+			}
+			return null;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.IColorProvider#getBackground(java.lang.Object)
+		 */
+		public Color getBackground(Object element) {
+			ILabelProvider p = getLabelProvider();
+			if(p instanceof IColorProvider) {
+				return ((IColorProvider)p).getBackground(element);
+			}
+			return null;
+		}
+	}
+
+	
+	public SyncInfoLabelProvider() {
 		JobStatusHandler.addJobListener(new IJobListener() {
 			public void started(QualifiedName jobType) {
 				working = true;
@@ -49,7 +82,7 @@ public class SyncInfoLabelDecorator extends LabelProvider implements IColorProvi
 					public void run() {
 						// TODO: What this is this supposed to be?
 						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelDecorator.this));
+							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelProvider.this));
 						}
 					}
 				});
@@ -59,7 +92,7 @@ public class SyncInfoLabelDecorator extends LabelProvider implements IColorProvi
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelDecorator.this));
+							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelProvider.this));
 						}
 					}
 				});

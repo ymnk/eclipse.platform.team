@@ -55,5 +55,4 @@ public class SyncInfoDiffNodeRoot extends SyncInfoDiffNode {
 	public void setViewer(AbstractTreeViewer viewer) {
 		builder.setViewer(viewer);
 	}
-
 }
