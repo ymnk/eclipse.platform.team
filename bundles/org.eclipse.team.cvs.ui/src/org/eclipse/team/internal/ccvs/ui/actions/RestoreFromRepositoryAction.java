@@ -62,9 +62,9 @@ public class RestoreFromRepositoryAction extends CVSAction {
 	 * contains files that exist on a branch but not in HEAD
 	 */
 	class AtticLogListener extends CommandOutputAdapter {
-		private static final String ATTIC = "Attic";
-		private static final String RCS_FILE_POSTFIX = ",v";
-		private static final String LOGGING_PREFIX = "Logging ";
+		private static final String ATTIC = "Attic"; //$NON-NLS-1$
+		private static final String RCS_FILE_POSTFIX = ",v"; //$NON-NLS-1$
+		private static final String LOGGING_PREFIX = "Logging "; //$NON-NLS-1$
 		ICVSFolder currentFolder;
 		List atticFiles = new ArrayList();
 		
@@ -127,7 +127,7 @@ public class RestoreFromRepositoryAction extends CVSAction {
 		ICVSFile[] files = fetchDeletedFiles(resource);
 		if (files == null) return;
 		if (files.length == 0) {
-			MessageDialog.openInformation(getShell(), Policy.bind("RestoreFromRepositoryAction.noFilesTitle"), Policy.bind("RestoreFromRepositoryAction.noFilesMessage", resource.getName()));
+			MessageDialog.openInformation(getShell(), Policy.bind("RestoreFromRepositoryAction.noFilesTitle"), Policy.bind("RestoreFromRepositoryAction.noFilesMessage", resource.getName())); //$NON-NLS-1$ //$NON-NLS-2$
 			return;
 		}
 		RestoreFromRepositoryWizard wizard = new RestoreFromRepositoryWizard(resource, files);

@@ -188,7 +188,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		revisionSelectionPane.setLayoutData(data);
 		historyTableProvider = new HistoryTableProvider();
 		revisionsTable = createRevisionSelectionTable(revisionSelectionPane, historyTableProvider);
-		revisionSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.emptyRevisionPane"));
+		revisionSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.emptyRevisionPane")); //$NON-NLS-1$
 		
 		// Bottom: File content viewer
 		fileContentPane = new CompareViewerSwitchingPane(vsplitter, SWT.BORDER | SWT.FLAT) {
@@ -199,7 +199,6 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 						
 		initializeValues();
 		updateWidgetEnablements();
-		//fileTree.getControl().setFocus();
 	}
 
 	protected CheckboxTableViewer createRevisionSelectionTable(CompareViewerPane composite, HistoryTableProvider tableProvider) {
@@ -242,10 +241,15 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 			new DecoratingLabelProvider(
 				new WorkbenchLabelProvider() {
 					protected String decorateText(String input, Object element) {
-						ILogEntry entry = (ILogEntry)filesToRestore.get(element);
-						String text = super.decorateText(input, element);
-						if (entry != null) {
-							text = Policy.bind("RestoreFromRepositoryFileSelectionPage.fileToRestore", text, entry.getRevision());
+						String text;
+						if (element instanceof IFolder && element.equals(folder)) {
+							text = super.decorateText(folder.getProjectRelativePath().toString(), element);
+						} else {
+							ILogEntry entry = (ILogEntry)filesToRestore.get(element);
+							text = super.decorateText(input, element);
+							if (entry != null) {
+								text = Policy.bind("RestoreFromRepositoryFileSelectionPage.fileToRestore", text, entry.getRevision()); //$NON-NLS-1$
+							}
 						}
 						return text;
 					}
@@ -278,7 +282,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 			IFile file = (IFile) iter.next();
 			if (file.exists()) {
 				setPageComplete(false);
-				setErrorMessage(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileExists", file.getName()));
+				setErrorMessage(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileExists", file.getName())); //$NON-NLS-1$
 				return;
 			}
 		}
@@ -344,8 +348,15 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		if (folder == null) return;
 		
 		if (fileSelectionPane != null && !fileSelectionPane.isDisposed()) {
-			fileSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileSelectionPaneTitle", folder.getProject().getName()));
+			fileSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileSelectionPaneTitle", folder.getProject().getName())); //$NON-NLS-1$
 			fileSelectionPane.setImage(CompareUI.getImage(folder.getProject()));
+		}
+		
+		if (revisionSelectionPane != null && !revisionSelectionPane.isDisposed()) {
+			if (selectedFile == null) {
+				revisionSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.emptyRevisionPane")); //$NON-NLS-1$
+				revisionSelectionPane.setImage(null);
+			}
 		}
 		
 		// Empty the file content viewer
@@ -368,6 +379,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	 * Set the log entry table input to the fetched entries  in response to a file selection
 	 */
 	private void setLogEntryTableInput(ILogEntry[] entries) {
+		this.selectedRevision = null;
 		// Refresh the table so it picks up the selected entries through its content provider
 		revisionsTable.refresh();
 		// Check the previously checked entry if one exists
@@ -383,7 +395,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 			}
 		}
 		// Set the titlebar text for the revisions table
-		revisionSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.revisionSelectionPaneTitle", selectedFile.getName()));
+		revisionSelectionPane.setText(Policy.bind("RestoreFromRepositoryFileSelectionPage.revisionSelectionPaneTitle", selectedFile.getName())); //$NON-NLS-1$
 		revisionSelectionPane.setImage(CompareUI.getImage(selectedFile));
 		// Clear the file content pane
 		fileContentPane.setInput(null);
@@ -394,13 +406,15 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	private void handleFileSelection(SelectionChangedEvent event) {
 		ISelection selection = event.getSelection();
 		if (selection == null || selection.isEmpty()) {
-			// XXX clear entries table?
+			clearSelection();
 		} else {
 			if (selection instanceof StructuredSelection) {
 				StructuredSelection structuredSelection = (StructuredSelection) selection;
 				IResource resource = (IResource)structuredSelection.getFirstElement();
 				if (resource instanceof IFile) {
 					handleFileSelection((IFile) resource);
+				} else {
+					clearSelection();
 				}
 			}
 		}
@@ -538,8 +552,8 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	 * @return String
 	 */
 	private String getEditionLabel(IFile selectedFile, ILogEntry selected) {
-		return Policy.bind("RestoreFromRepositoryFileSelectionPage.fileContentPaneTitle",
-			new Object[] { selectedFile.getName(), selected.getRevision(), selectedFile.getFullPath().removeLastSegments(1).toString() });
+		return Policy.bind("RestoreFromRepositoryFileSelectionPage.fileContentPaneTitle", //$NON-NLS-1$
+			new Object[] { selectedFile.getName(), selected.getRevision(), selectedFile.getFullPath().makeRelative().removeLastSegments(1).toString() });
 	}
 	
 	public boolean restoreSelectedFiles() {
@@ -586,4 +600,9 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		}
 	}
 
+	private void clearSelection() {
+		this.selectedFile = null;
+		this.selectedRevision = null;
+		refresh();
+	}
 }

@@ -49,7 +49,7 @@ public class RestoreFromRepositoryWizard extends Wizard {
 		setNeedsProgressMonitor(true);
 		ImageDescriptor substImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_CHECKOUT);
 		
-		fileSelectionPage = new RestoreFromRepositoryFileSelectionPage("FileSelectionPage", Policy.bind("RestoreFromRepositoryWizard.fileSelectionPageTitle"), substImage, Policy.bind("RestoreFromRepositoryWizard.fileSelectionPageDescription"));
+		fileSelectionPage = new RestoreFromRepositoryFileSelectionPage("FileSelectionPage", Policy.bind("RestoreFromRepositoryWizard.fileSelectionPageTitle"), substImage, Policy.bind("RestoreFromRepositoryWizard.fileSelectionPageDescription")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		fileSelectionPage.setInput(parent, files);
 		addPage(fileSelectionPage);
 	}
