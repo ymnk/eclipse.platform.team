@@ -43,10 +43,10 @@ public class NavigateAction extends Action {
 		IKeyBindingService kbs = part.getSite().getKeyBindingService();		
 		if(direction == INavigableControl.NEXT) {
 			Utils.initAction(this, "action.navigateNext."); //$NON-NLS-1$
-			part.getViewSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.NEXT, this);			
+			page.getSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.NEXT, this);			
 		} else {
 			Utils.initAction(this, "action.navigatePrevious."); //$NON-NLS-1$
-			part.getViewSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.PREVIOUS, this);			
+			page.getSite().getActionBars().setGlobalActionHandler(IWorkbenchActionConstants.PREVIOUS, this);			
 		}
 	}
 	
