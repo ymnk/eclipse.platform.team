@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.repo;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -368,7 +367,7 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 
 	protected void refreshViewer() {
 		if (viewer == null) return;
-		((RemoteContentProvider)viewer.getContentProvider()).clearCache();
+		//((RemoteContentProvider)viewer.getContentProvider()).clearCache();
 		CVSUIPlugin.getPlugin().getRepositoryManager().purgeCache();
 		updateWorkingSetMenu();
 		viewer.refresh();
@@ -377,10 +376,6 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 	public void collapseAll() {
 		if (viewer == null) return;
 		viewer.getControl().setRedraw(false);
-		
-		final String familyName = "org.eclipse.team.cvs.ui";
-		Platform.getJobManager().cancel(familyName);		
-		
 		viewer.collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
 		viewer.getControl().setRedraw(true);
 	}

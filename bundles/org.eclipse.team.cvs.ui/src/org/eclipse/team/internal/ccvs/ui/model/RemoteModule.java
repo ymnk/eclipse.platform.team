@@ -105,7 +105,7 @@ public class RemoteModule extends CVSModelElement implements IAdaptable {
 	 *
 	 * @see org.eclipse.team.internal.ccvs.ui.model.CVSModelElement#internalGetChildren(java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
+	public Object[] fetchChildren(Object o, IProgressMonitor monitor) throws TeamException {
 		RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 		try {
 			manager.refreshDefinedTags(folder, false /* replace */, false, monitor);

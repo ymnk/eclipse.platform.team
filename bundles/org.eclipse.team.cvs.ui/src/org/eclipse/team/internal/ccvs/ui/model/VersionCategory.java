@@ -54,24 +54,19 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 	 * element's children.  Returns an empty enumeration if this
 	 * object has no children.
 	 */
-	public Object[] internalGetChildren(Object o, IWorkingSet set, IProgressMonitor monitor) throws TeamException {
+	public Object[] fetchChildren(Object o, IProgressMonitor monitor) throws TeamException {
 		if (CVSUIPlugin.getPlugin().getRepositoryManager().isDisplayingProjectVersions(repository)) {
-			return getProjectVersionChildren(o, set, monitor);
+			return getProjectVersionChildren(o, monitor);
 		} else {
-			return getVersionTagChildren(o, set, monitor);
+			return getVersionTagChildren(o, monitor);
 		}
 	}
 	
-	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) throws TeamException {
-		return internalGetChildren(o, null, monitor);
-	}
-	
-
 	/*
 	 * Return the children as a list of versions whose children are projects
 	 */
-	private Object[] getVersionTagChildren(Object o, IWorkingSet set, IProgressMonitor monitor) throws CVSException {
-		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, set, CVSTag.VERSION, monitor);
+	private Object[] getVersionTagChildren(Object o, IProgressMonitor monitor) throws CVSException {
+		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, getWorkingSet(), CVSTag.VERSION, monitor);
 		CVSTagElement[] versionElements = new CVSTagElement[tags.length];
 		for (int i = 0; i < tags.length; i++) {
 			versionElements[i] = new CVSTagElement(tags[i], repository);
@@ -82,14 +77,14 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 	/*
 	 * Return the children as a list of projects whose children ar project versions
 	 */
-	private Object[] getProjectVersionChildren(Object o, IWorkingSet set, IProgressMonitor monitor) throws TeamException {
+	private Object[] getProjectVersionChildren(Object o, IProgressMonitor monitor) throws TeamException {
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 		ICVSRemoteResource[] resources = CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(
 			repository,
 			CVSTag.DEFAULT,
 			monitor);
-		if (set != null)
-			resources = CVSUIPlugin.getPlugin().getRepositoryManager().filterResources(set, resources);
+		if (getWorkingSet() != null)
+			resources = CVSUIPlugin.getPlugin().getRepositoryManager().filterResources(getWorkingSet(), resources);
 		Object[] modules = new Object[resources.length];
 		for (int i = 0; i < resources.length; i++) {
 			modules[i] = new RemoteModule((ICVSRemoteFolder)resources[i], VersionCategory.this);

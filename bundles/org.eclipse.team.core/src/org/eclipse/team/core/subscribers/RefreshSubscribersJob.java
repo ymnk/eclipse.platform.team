@@ -21,10 +21,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 
@@ -39,7 +38,7 @@ import org.eclipse.team.internal.core.Policy;
  * [Note: this job currently updates all roots of every subscriber. It may be better to have API 
  * to specify a more constrained set of resources and subscribers to refresh.] 
  */
-public class RefreshSubscribersJob extends Job implements ITeamResourceChangeListener, IJobChangeListener {
+public class RefreshSubscribersJob extends Job implements ITeamResourceChangeListener {
 	
 	private final static boolean DEBUG = Policy.DEBUG_REFRESH_JOB;
 	private static long refreshInterval = 20000; //5 /* minutes */ * (60 * 1000); 
@@ -51,12 +50,18 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 	
 	public RefreshSubscribersJob() {
 		TeamProvider.addListener(this);
-		Platform.getJobManager().addJobChangeListener(this);
+		addJobChangeListener(new JobChangeAdapter() {
+			public void done(Job job, IStatus result) {
+				startup();
+			}
+		});
 		setPriority(Job.DECORATE);
 		if(! subscribers.isEmpty()) {
 			if(DEBUG) System.out.println("refreshJob: starting job in constructor");
 			startup();
 		}
+		
+		
 		
 		instance = this;
 	}
@@ -174,26 +179,5 @@ public class RefreshSubscribersJob extends Job implements ITeamResourceChangeLis
 
 	private void startup() {
 		schedule(refreshInterval);
-	}
-
-	/**
-	 * IJobChangeListener overrides. The only one of interest is done so that we can
-	 * restart this job.
-	 */
-	public void done(Job job, IStatus result) {
-		if(job == this) {
-			if(DEBUG) System.out.println("refreshJob: restarting job");
-			startup();
-		}
-	}
-	public void aboutToRun(Job job) {
-	}
-	public void awake(Job job) {
-	}
-	public void running(Job job) {
-	}
-	public void scheduled(Job job) {
-	}
-	public void sleeping(Job job) {
 	}
 }
