@@ -14,12 +14,8 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
@@ -72,7 +68,7 @@ public class SyncSetTests extends CVSSyncSubscriberTest {
 							set.add(new TestSyncInfo());
 							set.getOutOfSyncDescendants(ResourcesPlugin.getWorkspace().getRoot());
 							set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot());
-							set.allMembers();
+							set.members();
 						} catch (Exception e) {
 							error[0] = new Status(IStatus.ERROR, "this", 1, "", e);
 							return error[0];						
@@ -97,7 +93,7 @@ public class SyncSetTests extends CVSSyncSubscriberTest {
 			set.add(new TestSyncInfo());
 			set.getOutOfSyncDescendants(ResourcesPlugin.getWorkspace().getRoot());
 			set.getSyncInfo(ResourcesPlugin.getWorkspace().getRoot());
-			set.allMembers();
+			set.members();
 			set.members(ResourcesPlugin.getWorkspace().getRoot());
 			set.reset();		
 		}

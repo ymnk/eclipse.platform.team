@@ -19,10 +19,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSRemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
@@ -54,7 +51,7 @@ public class ReconcileProjectOperation extends CVSOperation {
 			CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().setRemote(project, remote,Policy.subMonitorFor(monitor, 100));
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
-					CVSUIPlugin.showInSyncView(getShell(), null, null, 0 /* no mode in particular */);
+					CVSUIPlugin.showInSyncView(getShell(), null, 0 /* no mode in particular */);
 				}
 			});
 		} catch (InvocationTargetException e) {

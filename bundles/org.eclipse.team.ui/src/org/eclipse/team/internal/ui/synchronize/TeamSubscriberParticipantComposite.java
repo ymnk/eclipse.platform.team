@@ -16,6 +16,8 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -86,21 +88,23 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 		//layout.marginHeight = 0;
 		//layout.marginWidth = 0;
 		area.setLayout(layout);
-		area.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		GridData data = new GridData(GridData.FILL_HORIZONTAL);
+		data.widthHint = 75;
+		area.setLayoutData(data);
 		setBackground(factory.getBackgroundColor());					
 		{
 			final Composite composite_1 = factory.createComposite(area, SWT.NONE);
 			GridData gridData = new GridData(GridData.VERTICAL_ALIGN_FILL);
 			final GridLayout gridLayout_1 = new GridLayout();
-			gridLayout_1.numColumns = 2;
+			gridLayout_1.numColumns = 3;
 			gridLayout_1.marginHeight = 0;
 			gridLayout_1.marginWidth = 0;
 			composite_1.setLayout(gridLayout_1);
 			composite_1.setLayoutData(gridData);
 			{
-				final Label label = factory.createLabel(composite_1, participant.getInput().getSubscriber().getDescription());
+				final Label label = factory.createLabel(composite_1, participant.getInput().getSubscriber().getDescription(), SWT.WRAP);
 				gridData = new GridData();
-				gridData.horizontalSpan = 2;
+				gridData.horizontalSpan = 3;
 				label.setLayoutData(gridData);
 			}			
 			{
@@ -112,31 +116,33 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 				lastSyncLabel = factory.createLabel(composite_1, Policy.bind("SyncViewPreferencePage.lastRefreshRunNever")); //$NON-NLS-1$);
 				gridData = new GridData(GridData.FILL_HORIZONTAL);
 				gridData.grabExcessHorizontalSpace = true;
+				gridData.horizontalSpan = 2;
 				lastSyncLabel.setLayoutData(gridData);
 			}
 			{
-				final Label label = factory.createLabel(composite_1, "Refresh Schedule:");
-				gridData = new GridData();
-				factory.turnIntoHyperlink(label, new IHyperlinkListener() {
-					public void linkActivated(Control linkLabel) {
-						ConfigureRefreshScheduleDialog d = new ConfigureRefreshScheduleDialog(
-								new Shell(TeamUIPlugin.getStandardDisplay()), participant.getRefreshSchedule());
-						d.setBlockOnOpen(false);
-						d.open();
-					}
-					public void linkEntered(Control linkLabel) {
-					}
-					public void linkExited(Control linkLabel) {
-					}
-				});
-				label.setLayoutData(gridData);
+				factory.createLabel(composite_1, "Refresh Schedule:");
 			}
 			{
 				scheduleLabel = factory.createLabel(composite_1, "");
 				gridData = new GridData(GridData.FILL_HORIZONTAL);
 				gridData.grabExcessHorizontalSpace = true;
 				scheduleLabel.setLayoutData(gridData);
-			}
+			}			
+			{
+				Button config = factory.createButton(composite_1, "More...", SWT.FLAT);
+				gridData = new GridData(GridData.HORIZONTAL_ALIGN_END);
+				config.setLayoutData(gridData);
+				config.addSelectionListener(new SelectionListener() {
+					public void widgetSelected(SelectionEvent e) {
+						ConfigureRefreshScheduleDialog d = new ConfigureRefreshScheduleDialog(
+								getShell(), participant.getRefreshSchedule());
+						d.setBlockOnOpen(false);
+						d.open();
+					}
+					public void widgetDefaultSelected(SelectionEvent e) {
+					}
+				});
+			}			
 		}
 		
 		createSynchronizeResourcesComposite(area);
@@ -156,7 +162,7 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 			composite_1.setLayoutData(gridData);
 			{
 				final Label label = factory.createLabel(composite_1, "Synchronized Folders:");
-				rootsList = new TableViewer(composite_1, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL);
+				rootsList = new TableViewer(composite_1, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 				gridData = new GridData(GridData.FILL_BOTH);
 				gridData.heightHint = 80;
 				rootsList.getTable().setLayoutData(gridData);
@@ -200,7 +206,7 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 	
 	protected void hookContextMenu() {
 		if(rootsList != null) {
-			final MenuManager menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
+			final MenuManager menuMgr = new MenuManager(); //$NON-NLS-1$
 			menuMgr.setRemoveAllWhenShown(true);
 			menuMgr.addMenuListener(new IMenuListener() {
 				public void menuAboutToShow(IMenuManager manager) {
@@ -209,7 +215,6 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 			});
 			Menu menu = menuMgr.createContextMenu(rootsList.getControl());			
 			rootsList.getControl().setMenu(menu);			
-			view.getSite().registerContextMenu(participant.getId(), menuMgr, rootsList);
 		}
 	}
 	

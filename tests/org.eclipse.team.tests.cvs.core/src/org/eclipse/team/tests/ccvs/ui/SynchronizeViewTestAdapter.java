@@ -22,7 +22,6 @@ import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 import org.eclipse.team.ui.TeamUI;
@@ -39,7 +38,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	
 	public SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
 		SubscriberInput input = getInput(subscriber);
-		SyncSet set = input.getWorkingSetSyncSet();
+		ISyncInfoSet set = input.getWorkingSetSyncSet();
 		SyncInfo info = set.getSyncInfo(resource);
 		if (info == null) {
 			info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
@@ -56,7 +55,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
 			if(participant instanceof TeamSubscriberParticipant) {
-				SubscriberInput input = ((TeamSubscriberParticipant)participant).getInput();
+				SubscriberInput input = (SubscriberInput)((TeamSubscriberParticipant)participant).getInput();
 				TeamSubscriber s = input.getSubscriber();
 				if(s == subscriber) {
 					EclipseTest.waitForSubscriberInputHandling(input);
@@ -73,7 +72,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	protected void assertProjectRemoved(TeamSubscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
 		SubscriberInput input = getInput(subscriber);
-		SyncSet set = input.getFilteredSyncSet();
+		ISyncInfoSet set = input.getFilteredSyncSet();
 		if (set.getOutOfSyncDescendants(project).length != 0) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
 		}

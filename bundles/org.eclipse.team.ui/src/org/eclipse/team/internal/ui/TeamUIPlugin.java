@@ -45,7 +45,6 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 	public static final String ICON_PATH = "icons/full/"; //$NON-NLS-1$
 	
 	public static final String ID = "org.eclipse.team.ui"; //$NON-NLS-1$
-	public static final String PT_SUBSCRIBER_MENUS = "subscriberMenus"; //$NON-NLS-1$
 	
 	// plugin id
 	public static final String PLUGIN_ID = "org.eclipse.team.ui"; //$NON-NLS-1$
@@ -53,7 +52,6 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 	private static List propertyChangeListeners = new ArrayList(5);
 	
 	private Hashtable imageDescriptors = new Hashtable(20);
-	private static List disposeOnShutdownImages= new ArrayList();
 	
 	/**
 	 * Creates a new TeamUIPlugin.
@@ -188,7 +186,6 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 	 */
 	public void shutdown() throws CoreException {
 		super.shutdown();
-		disposeImages();
 		((SynchronizeManager)TeamUI.getSynchronizeManager()).dispose();
 	}
 
@@ -215,16 +212,6 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 			listener.propertyChange(event);
 		}
 	}
-
-	/**
-	 * Registers the given image for being disposed when this plug-in is shutdown.
-	 *
-	 * @param image the image to register for disposal
-	 */
-	public static void disposeOnShutdown(Image image) {
-		if (image != null)
-			disposeOnShutdownImages.add(image);
-	}
 	
 	/**
 	 * Creates an image and places it in the image registry.
@@ -245,6 +232,7 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		ImageDescriptor desc = ImageDescriptor.createFromURL(url);
 		imageDescriptors.put(id, desc);
 	}
+	
 	/**
 	 * Returns the image descriptor for the given image ID.
 	 * Returns null if there is no such image.
@@ -263,6 +251,7 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		}
 		return (ImageDescriptor)imageDescriptors.get(id);
 	}	
+
 	/**
 	 * Convenience method to get an image descriptor for an extension
 	 * 
@@ -281,6 +270,7 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		}
 		return null;
 	}
+
 	/**
 	 * Initializes the table of images used in this plugin.
 	 */
@@ -344,27 +334,8 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		createImageDescriptor(ISharedImages.IMG_PROJECTSET_IMPORT_BANNER, baseURL);
 		createImageDescriptor(ISharedImages.IMG_PROJECTSET_EXPORT_BANNER, baseURL);	
 		
-		// Live Sync View icons
-		createImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER, baseURL);	
-	}
-
-	/**
-	 * Dispose of images
-	 */
-	public static void disposeImages() {
-		// Delegate to the plugin instance to avoid concurrent class loading problems
-		getPlugin().privateDisposeImages();
-	}
-	private void privateDisposeImages() {
-		if (disposeOnShutdownImages != null) {
-			Iterator i= disposeOnShutdownImages.iterator();
-			while (i.hasNext()) {
-				Image img= (Image) i.next();
-				if (!img.isDisposed())
-					img.dispose();
-			}
-			imageDescriptors= null;
-		}
+		createImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER, baseURL);
+		createImageDescriptor(ISharedImages.IMG_WARNING, baseURL);		
 	}
 
 	/**
@@ -378,6 +349,16 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 			display= Display.getDefault();
 		}
 		return display;		
+	}
+	
+	public Image getImage(String key) {
+		Image image = getImageRegistry().get(key);
+		if(image == null) {
+			ImageDescriptor d = getImageDescriptor(key);
+			image = d.createImage();
+			getImageRegistry().put(key, image);
+		}
+		return image;
 	}
 	
 	public static void run(IRunnableWithProgress runnable) {

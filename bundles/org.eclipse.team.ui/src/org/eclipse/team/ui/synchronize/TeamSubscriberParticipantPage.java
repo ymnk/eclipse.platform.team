@@ -15,13 +15,11 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
@@ -51,9 +49,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private ChangesSection changesSection;
 	private boolean settingWorkingSet = false;
 	
-	// Viewer type constants
-	private int layout;
-	
 	// Remembering the current input and the previous.
 	private ITeamSubscriberSyncInfoSets input = null;
 	
@@ -62,8 +57,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private TeamSubscriberParticipant participant;
 	private IPageSite site;
 	
-	// Actions
-	private OpenWithActionGroup openWithActions;
+	// Toolbar and status line actions for this page, note that context menu actions shown in 
+	// the changes viewer are contributed via the viewer and not the page.
 	private NavigateAction gotoNext;
 	private NavigateAction gotoPrevious;
 	private SyncViewerShowPreferencesAction showPreferences;
@@ -71,6 +66,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private ComparisonCriteriaActionGroup comparisonCriteriaGroup;
 	private Action collapseAll;
 	private WorkingSetFilterActionGroup workingSetGroup;
+	private StatusLineContributionGroup statusLine;
 		
 	/**
 	 * Constructs a new SynchronizeView.
@@ -119,13 +115,18 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		
 		// view menu
 		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(input);		
-		workingSetGroup = new WorkingSetFilterActionGroup(getSite().getShell(), this, view, participant);		
-		showPreferences = new SyncViewerShowPreferencesAction(view.getSite().getShell());		
+		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), this, view, participant);		
+		showPreferences = new SyncViewerShowPreferencesAction(getShell());		
+		statusLine = new StatusLineContributionGroup(getShell(), getParticipant());
 		
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 	}
 	
+	private Shell getShell() {
+		return view.getSite().getShell();
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IViewPart#init(org.eclipse.ui.IViewSite, org.eclipse.ui.IMemento)
 	 */
@@ -226,6 +227,9 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			menu.add(layoutMenu);
 			menu.add(new Separator());
 			menu.add(showPreferences);
+			
+			// status line
+			statusLine.fillActionBars(actionBars);
 		}		
 	}
 

@@ -186,6 +186,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 							SynchronizeViewWorkbenchPart part = new SynchronizeViewWorkbenchPart(participant, getSite());
 							fPageToPart.put(participant, part);
 							fPartToPage.put(part, participant);
+							display(participant);
 						}
 					}
 				}
@@ -315,7 +316,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		ISynchronizeParticipant[] consoles = manager.getSynchronizeParticipants();
 		participantsAdded(consoles);
 		// add as a listener
-		manager.addSynchronizeParticipantListener(this);		
+		manager.addSynchronizeParticipantListener(this);
 	}
 	
 	private boolean isAvailable() {

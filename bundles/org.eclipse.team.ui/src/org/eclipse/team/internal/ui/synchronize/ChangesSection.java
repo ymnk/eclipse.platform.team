@@ -19,6 +19,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
 import org.eclipse.team.internal.ui.widgets.*;
+import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.part.PageBook;
@@ -33,10 +34,8 @@ public class ChangesSection extends FormSection {
 	
 	private TeamSubscriberParticipant participant;
 	private Composite parent;
-	private final ISynchronizeView view;
 	private IControlFactory factory;
 	private TeamSubscriberParticipantPage page;
-	private Button smartModeSwitchButton;
 			
 	/**
 	 * Page book either shows the diff tree viewer if there are changes or
@@ -73,8 +72,7 @@ public class ChangesSection extends FormSection {
 			updateChangeTotals(true);
 		}
 	};
-	
-	
+		
 	/**
 	 * Create a changes section on the following page.
 	 * 
@@ -85,7 +83,6 @@ public class ChangesSection extends FormSection {
 		this.page = page;
 		this.participant = page.getParticipant();
 		this.parent = parent;
-		this.view = page.getSynchronizeView();
 		setCollapsable(true);
 		setCollapsed(false);
 		setDescription("");
@@ -133,7 +130,9 @@ public class ChangesSection extends FormSection {
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
 		top.setLayout(layout);
-		top.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		GridData data = new GridData(GridData.FILL_HORIZONTAL);
+		data.widthHint = 200;
+		top.setLayoutData(data);
 		changeTotalsLabel = factory.createLabel(top, "", 20);
 		int newChanges = participant.getInput().getSubscriberSyncSet().size();
 		changeTotalsLabel.setText(Integer.toString(newChanges) + " Total");
@@ -176,6 +175,7 @@ public class ChangesSection extends FormSection {
 	private Composite getEmptyChangesComposite(Composite parent, IControlFactory factory) {
 		Composite composite = factory.createComposite(parent);
 		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
 		composite.setLayout(layout);
 		
 		ITeamSubscriberSyncInfoSets input = participant.getInput();
@@ -187,60 +187,48 @@ public class ChangesSection extends FormSection {
 		long outgoingChanges = stats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
 		long incomingChanges = stats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);		
 		
-		Label l;
-		
 		if(changesInFilter == 0 && changesInWorkingSet != 0) {
 			int mode = participant.getMode();
 			final int newMode = outgoingChanges != 0 ? TeamSubscriberParticipant.OUTGOING_MODE : TeamSubscriberParticipant.INCOMING_MODE;
 			long numChanges = outgoingChanges != 0 ? outgoingChanges : incomingChanges;
-			String text;
+			StringBuffer text = new StringBuffer();
+			text.append(Policy.bind("ChangesSection.filterHides", Utils.modeToString(participant.getMode()))); //$NON-NLS-1$
 			if(numChanges > 1) {
-				text = Policy.bind("ChangesSection.filterHides", Utils.modeToString(participant.getMode())) +
-				Policy.bind("ChangesSection.filterHidesPlural", Long.toString(numChanges), Utils.modeToString(newMode));
+				text.append(Policy.bind("ChangesSection.filterHidesPlural", Long.toString(numChanges), Utils.modeToString(newMode))); //$NON-NLS-1$
 			} else {
-				text = Policy.bind("ChangesSection.filterHidesSingular", Utils.modeToString(participant.getMode()), Long.toString(numChanges), Utils.modeToString(newMode));
-			}													
-			createHyperlink(factory, composite, Policy.bind("ChangesSection.filterChange", Utils.modeToString(newMode)), new HyperlinkAdapter() {
+				text.append(Policy.bind("ChangesSection.filterHidesSingular", Long.toString(numChanges), Utils.modeToString(newMode))); //$NON-NLS-1$
+			}
+			Label warning = new Label(composite, SWT.NONE);
+			warning.setImage(TeamUIPlugin.getPlugin().getImage(ISharedImages.IMG_WARNING));
+			createHyperlink(factory, composite, Policy.bind("ChangesSection.filterChange", Utils.modeToString(newMode)), new HyperlinkAdapter() { //$NON-NLS-1$
 				public void linkActivated(Control linkLabel) {
 					participant.setMode(newMode);
 				}
 			});
-			l = factory.createLabel(composite, text , SWT.WRAP);
-			
-//			smartModeSwitchButton = new Button(composite, SWT.CHECK | SWT.FLAT | SWT.WRAP);
-//			smartModeSwitchButton.setText("Enable smart mode switching.");
-//			smartModeSwitchButton.setBackground(factory.getBackgroundColor());
-//			Label description = factory.createLabel(composite, "Smart mode switching will detect when there are changes that aren't displayed with the given mode selected and automatically change the mode that would show the changes.", SWT.WRAP);
-//			GridData data = new GridData(GridData.FILL_HORIZONTAL);
-//			data.widthHint = 100;
-//			description.setLayoutData(data);
-//			smartModeSwitchButton.addSelectionListener(new SelectionListener() {
-//				public void widgetSelected(SelectionEvent e) {
-//					TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_SMART_MODE_SWITCH, smartModeSwitchButton.getSelection());
-//				}
-//				public void widgetDefaultSelected(SelectionEvent e) {
-//				}
-//			});
-		} else if(changesInFilter == 0 && changesInWorkingSet == 0 && changesInWorkspace != 0) {			
-			createHyperlink(factory, composite, Policy.bind("ChangesSection.workingSetRemove"), new HyperlinkAdapter() {
+			Label description = factory.createLabel(composite, text.toString(), SWT.WRAP);
+			GridData data = new GridData(GridData.FILL_HORIZONTAL);
+			data.horizontalSpan = 2;
+			data.widthHint = 100;
+			description.setLayoutData(data);	
+		} else if(changesInFilter == 0 && changesInWorkingSet == 0 && changesInWorkspace != 0) {
+			Label warning = new Label(composite, SWT.NONE);
+			warning.setImage(TeamUIPlugin.getPlugin().getImage(ISharedImages.IMG_WARNING));
+			createHyperlink(factory, composite, Policy.bind("ChangesSection.workingSetRemove"), new HyperlinkAdapter() { //$NON-NLS-1$
 				public void linkActivated(Control linkLabel) {
 					participant.setWorkingSet(null);
 				}
 			});
-			l = factory.createLabel(composite, Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)), SWT.WRAP);
+			Label description = factory.createLabel(composite, Policy.bind("ChangesSection.workingSetHiding", Utils.workingSetToString(participant.getWorkingSet(), 50)), SWT.WRAP);
+			GridData data = new GridData(GridData.FILL_HORIZONTAL);
+			data.horizontalSpan = 2;
+			data.widthHint = 100;
+			description.setLayoutData(data);	
 		} else {
-			l= factory.createLabel(composite, Policy.bind("ChangesSection.noChanges"), SWT.WRAP);
-		}
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		data.widthHint = 100;
-		l.setLayoutData(data);	
+			factory.createLabel(composite, Policy.bind("ChangesSection.noChanges"), SWT.WRAP);
+		}		
 		return composite;
 	}
 	
-	/**
-	 * @param factory
-	 * @param composite
-	 */
 	private void createHyperlink(IControlFactory factory, Composite composite, String text, HyperlinkAdapter adapter) {
 		final Label label = factory.createLabel(composite, text, SWT.WRAP);
 		GridData data = new GridData();
@@ -252,23 +240,9 @@ public class ChangesSection extends FormSection {
 		return changesViewer;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.widgets.FormSection#dispose()
-	 */
 	public void dispose() {
 		super.dispose();
 		participant.getInput().deregisterListeners(changedListener);
-	}
-	
-	private int getSmartMode() {
-		ISyncInfoSet set = participant.getInput().getWorkingSetSyncSet();
-		if(set.size() == 0) {
-			return -1;
-		}		
-		SyncInfoStatistics stats = set.getStatistics();
-		long outgoingChanges = stats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
-		long incomingChanges = stats.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);
-		return incomingChanges != 0 ?  TeamSubscriberParticipant.INCOMING_MODE : TeamSubscriberParticipant.OUTGOING_MODE;
 	}
 	
 	public void updateChangeTotals(final boolean reflow) {

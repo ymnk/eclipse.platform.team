@@ -16,6 +16,7 @@ import org.eclipse.compare.*;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
@@ -27,7 +28,6 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 
 	private SyncInfo sync;
 	private SyncInfoDiffNode node;
-	private static Image titleImage;
 
 	public SyncInfoCompareInput(SyncInfo sync) {
 		super(new CompareConfiguration());
@@ -56,11 +56,13 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	 * @see org.eclipse.compare.CompareEditorInput#getTitleImage()
 	 */
 	public Image getTitleImage() {
-		if (titleImage == null) {
-			titleImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_SYNC_VIEW).createImage();
-			TeamUIPlugin.disposeOnShutdown(titleImage);
+		ImageRegistry reg = TeamUIPlugin.getPlugin().getImageRegistry();
+		Image image = reg.get(ISharedImages.IMG_SYNC_VIEW);
+		if (image == null) {
+			image = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_SYNC_VIEW).createImage();
+			reg.put(ISharedImages.IMG_SYNC_VIEW, image);
 		}
-		return titleImage;
+		return image;
 	}
 
 	/*
