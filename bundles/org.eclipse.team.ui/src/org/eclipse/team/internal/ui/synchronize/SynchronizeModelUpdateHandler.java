@@ -444,31 +444,12 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
      * Handle the sync info set change event in the UI thread.
      */
     private void handleChanges(final ISyncInfoSetChangeEvent event, final IProgressMonitor monitor) {
-        final Control ctrl = getViewer().getControl();
-        if (ctrl != null && !ctrl.isDisposed()) {
-        	ctrl.getDisplay().syncExec(new Runnable() {
-        		public void run() {
-        			if (!ctrl.isDisposed()) {
-        				BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
-        					public void run() {
-    						    StructuredViewer viewer = getViewer();
-        						try {
-        							viewer.getControl().setRedraw(false);
-            						provider.handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
-            						firePendingLabelUpdates();
-        						} finally {
-        							viewer.getControl().setRedraw(true);
-        						}
-
-        						ISynchronizeModelElement root = provider.getModelRoot();
-        						if(root instanceof SynchronizeModelElement)
-        							((SynchronizeModelElement)root).fireChanges();
-        					}
-        				});
-        			}
-        		}
-        	});
-        }
+        runViewUpdate(new Runnable() {
+            public void run() {
+				provider.handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
+				firePendingLabelUpdates();
+            }
+        });
     }
 
     /* (non-Javadoc)
@@ -488,5 +469,32 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
      */
     public void connect(IProgressMonitor monitor) {
         getProvider().getSyncInfoSet().connect(this, monitor);
+    }
+    
+    public void runViewUpdate(final Runnable runnable) {
+        final Control ctrl = getViewer().getControl();
+        if (ctrl != null && !ctrl.isDisposed()) {
+        	ctrl.getDisplay().syncExec(new Runnable() {
+        		public void run() {
+        			if (!ctrl.isDisposed()) {
+        				BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
+        					public void run() {
+    						    StructuredViewer viewer = getViewer();
+        						try {
+        							viewer.getControl().setRedraw(false);
+            						runnable.run();
+        						} finally {
+        							viewer.getControl().setRedraw(true);
+        						}
+
+        						ISynchronizeModelElement root = provider.getModelRoot();
+        						if(root instanceof SynchronizeModelElement)
+        							((SynchronizeModelElement)root).fireChanges();
+        					}
+        				});
+        			}
+        		}
+        	});
+        }
     }
 }

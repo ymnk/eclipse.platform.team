@@ -536,38 +536,51 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 * Fetch the log histories for the remote changes and use this information
 	 * to add each resource to an appropriate commit set.
      */
-    private void handleRemoteChanges(SyncInfo[] infos, IProgressMonitor monitor) throws CVSException, InterruptedException {
-        RemoteLogOperation logs = getSyncInfoComment(infos, Policy.subMonitorFor(monitor, 80));
-        ISynchronizeModelProvider[] providers = null;
-        try {
-            providers = beginInput();
-	        addLogEntries(infos, logs, Policy.subMonitorFor(monitor, 10));
-        } finally {
-            endInput(providers, Policy.subMonitorFor(monitor, 10));
-        }
+    private void handleRemoteChanges(final SyncInfo[] infos, final IProgressMonitor monitor) throws CVSException, InterruptedException {
+        final RemoteLogOperation logs = getSyncInfoComment(infos, Policy.subMonitorFor(monitor, 80));
+        runViewUpdate(new Runnable() {
+            public void run() {
+                addLogEntries(infos, logs, Policy.subMonitorFor(monitor, 10));
+            }
+        }, monitor);
     }
 
     /**
      * Use the commit set manager to determine the commit set that each local
      * change belongs to.
      */
-    private void handleLocalChanges(SyncInfo[] infos, IProgressMonitor monitor) {
-        ISynchronizeModelProvider[] providers = null;
-        try {
-            providers = beginInput();
-	        if (infos.length != 0) {
-		        // Show elements that don't need their log histories retreived
-		        for (int i = 0; i < infos.length; i++) {
-		            SyncInfo info = infos[i];
-		            addLocalChange(info);
-		        }
-		        refreshViewer(); // TODO: Why do we do a refresh viewer here?
-	        }
-        } finally {
-            endInput(providers, monitor);
-        }
+    private void handleLocalChanges(final SyncInfo[] infos, IProgressMonitor monitor) {
+        runViewUpdate(new Runnable() {
+            public void run() {
+    	        if (infos.length != 0) {
+    		        // Show elements that don't need their log histories retrieved
+    		        for (int i = 0; i < infos.length; i++) {
+    		            SyncInfo info = infos[i];
+    		            addLocalChange(info);
+    		        }
+    		        //refreshViewer(); // TODO: Why do we do a refresh viewer here?
+    	        }
+            }
+        }, monitor);
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#runViewUpdate(java.lang.Runnable)
+     */
+    protected void runViewUpdate(final Runnable runnable, final IProgressMonitor monitor) {
+        super.runViewUpdate(new Runnable() {
+            public void run() {
+                ISynchronizeModelProvider[] providers = null;
+                try {
+                    providers = beginInput();
+        	        runnable.run();
+                } finally {
+                    endInput(providers, monitor);
+                }
+            }
+        });
+    }
+    
     /**
 	 * Add the following sync info elements to the viewer. It is assumed that these elements have associated
 	 * log entries cached in the log operation.

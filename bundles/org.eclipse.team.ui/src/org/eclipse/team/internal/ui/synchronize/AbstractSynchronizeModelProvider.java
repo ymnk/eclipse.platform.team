@@ -715,4 +715,8 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		}
 		monitor.worked(1);
     }
+    
+    protected void runViewUpdate(final Runnable runnable) {
+        updateHandler.runViewUpdate(runnable);
+    }
 }
