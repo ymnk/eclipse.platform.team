@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.synchronize.actions;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -24,7 +25,6 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetModelProvider;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetModelSorter;
 import org.eclipse.team.ui.synchronize.*;
@@ -102,7 +102,12 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
             IStructuredSelection selection = getStructuredSelection();
             if (selection.size() == 1) {
                 Object first = selection.getFirstElement();
-                return (ActiveChangeSet)TeamAction.getAdapter(first, ActiveChangeSet.class); 
+                if (first instanceof IAdaptable) {
+	                Object adapter = ((IAdaptable)first).getAdapter(ChangeSet.class);
+	                if (adapter instanceof ActiveChangeSet) {
+	                    return (ActiveChangeSet)adapter; 
+	                }
+                }
             }
             return null;
         }
@@ -375,11 +380,11 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 	}
 	
     private ActiveChangeSet createChangeSet(SyncInfo[] infos) {
-        return getChangeSetCapability().createChangeSet(null, infos);
+        return getChangeSetCapability().createChangeSet(getConfiguration(), infos);
     }
     
     private void editChangeSet(ActiveChangeSet set) {
-        getChangeSetCapability().editChangeSet(null, set);
+        getChangeSetCapability().editChangeSet(getConfiguration(), set);
     }
 
     private ChangeSetCapability getChangeSetCapability() {
