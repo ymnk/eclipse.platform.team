@@ -98,7 +98,7 @@ public class CVSTagElement extends CVSModelElement implements IDeferredWorkbench
 	}
 	
 	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
-		if (tag.getType() == CVSTag.HEAD) {
+		if (tag.getType() == CVSTag.HEAD || tag.getType() == CVSTag.DATE) {
 			try {
 				monitor = Policy.monitorFor(monitor);
 				RemoteFolder folder = new RemoteFolder(null, root, ICVSRemoteFolder.REPOSITORY_ROOT_FOLDER_NAME, tag);

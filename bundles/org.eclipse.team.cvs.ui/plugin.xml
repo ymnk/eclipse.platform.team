@@ -538,6 +538,14 @@
                menubarPath="tagGroup"
                id="org.eclipse.team.ccvs.ui.refreshTags">
          </action>
+          <action
+               label="%NewDateTagAction.label"
+               tooltip="%NewDateTagAction.tooltip"
+               menubarPath="group.add/group1"
+               class="org.eclipse.team.internal.ccvs.ui.repo.NewDateTagAction"
+               helpContextId="org.eclipse.team.cvs.ui.new_date_tag_action_context"
+               id="org.eclipse.team.ccvs.ui.newDateTag">
+         </action>   
       </objectContribution>
       <objectContribution
             objectClass="org.eclipse.team.internal.ccvs.ui.model.BranchCategory"
