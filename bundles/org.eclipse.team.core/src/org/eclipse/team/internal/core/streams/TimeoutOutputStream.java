@@ -44,9 +44,6 @@ public class TimeoutOutputStream extends FilterOutputStream {
 	private Thread thread;
 	private boolean waitingForClose = false; // if true, the thread is waiting for close()
 	private IOException ioe = null;
-	
-	// Temporary
-	private byte[] copiedBuffer;
 
 	/**
 	 * Creates a timeout wrapper for an output stream.
@@ -63,7 +60,6 @@ public class TimeoutOutputStream extends FilterOutputStream {
 		this.writeTimeout = writeTimeout;
 		this.closeTimeout = closeTimeout;
 		this.iobuffer = new byte[bufferSize];
-		this.copiedBuffer = new byte[bufferSize]; /* Temporary */
 		thread = new Thread(new Runnable() {
 			public void run() {
 				runThread();
@@ -252,15 +248,13 @@ public class TimeoutOutputStream extends FilterOutputStream {
 					flushRequested = false;
 					bytesUntilFlush = length;
 				}
-				// Temporary: Copy the buffer so the srite doesn't overwrite it
-				System.arraycopy(iobuffer, 0, copiedBuffer, 0, iobuffer.length);
 			}
 			if (len != 0) {
 				// write out all remaining bytes from the buffer before flushing
 				try {
 					// the i/o operation might block without releasing the lock,
 					// so we do this outside of the synchronized block
-					out.write(copiedBuffer, off, len);
+					out.write(iobuffer, off, len);
 				} catch (InterruptedIOException e) {
 					len = e.bytesTransferred;
 				}
