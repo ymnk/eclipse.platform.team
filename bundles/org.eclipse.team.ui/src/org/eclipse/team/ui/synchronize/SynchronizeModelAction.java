@@ -13,9 +13,12 @@ package org.eclipse.team.ui.synchronize;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
@@ -44,15 +47,30 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 	private IWorkbenchPart part;
 	
 	/**
-	 * Creates a new action with the given text.
-	 *
-	 * @param text the string used as the text for the action, 
-	 *   or <code>null</code> if there is no text
+	 * Create an action with the given text and configuration.
+	 * @param text the action's text
+	 * @param configuration the actions synchronize page configuration
 	 */
-	protected SynchronizeModelAction(String text) {
+	protected SynchronizeModelAction(String text, ISynchronizePageConfiguration configuration) {
 		super(text);
+		initialize(configuration);
 	}
 	
+	/**
+	 * Method invoked from the constructor when a configuration is provided.
+	 * The default implementation registers the action as a selection change
+	 * listener. Subclass may override.
+	 * @param configuration the synchronize page configuration
+	 */
+	protected void initialize(final ISynchronizePageConfiguration configuration) {
+		configuration.getSite().getSelectionProvider().addSelectionChangedListener(this);
+		configuration.getPage().getViewer().getControl().addDisposeListener(new DisposeListener() {
+			public void widgetDisposed(DisposeEvent e) {
+				configuration.getSite().getSelectionProvider().removeSelectionChangedListener(SynchronizeModelAction.this);
+			}
+		});
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.action.Action#run()
 	 */
@@ -133,5 +151,18 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 			}
 		}
 		return (IDiffElement[]) filtered.toArray(new IDiffElement[filtered.size()]);
+	}
+
+	/**
+	 * Set the selection of this action to the given selection
+	 * @param selection the selection
+	 */
+	public void selectionChanged(ISelection selection) {
+		if (selection instanceof IStructuredSelection) {
+			selectionChanged((IStructuredSelection)selection);
+		} else {
+			selectionChanged(StructuredSelection.EMPTY);
+		}
+		
 	}
 }

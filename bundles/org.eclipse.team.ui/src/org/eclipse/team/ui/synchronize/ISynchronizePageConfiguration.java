@@ -14,7 +14,6 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkingSet;
 
 /**
@@ -73,14 +72,6 @@ public interface ISynchronizePageConfiguration {
 	 * included.
 	 */
 	public static final String P_VIEW_MENU = TeamUIPlugin.ID + ".P_VIEW_MENU"; //$NON-NLS-1$
-	
-	/**
-	 * The configuration property that defines the filter id that
-	 * determines which object contribution actions appear in the 
-	 * context menu for the page. This defaults to the id of the
-	 * participant but can be set to another id or <code>null</code>
-	 */
-	public static final String P_OBJECT_CONTRIBUTION_ID = TeamUIPlugin.ID +  ".P_OBJECT_CONTRIBUTION_ID"; //$NON-NLS-1$
 	
 	/**
 	 * Property constant for the working set used to filter the visible
@@ -175,7 +166,7 @@ public interface ISynchronizePageConfiguration {
 	 * Clients can remove, add and change the ordering for groups in
 	 * the context menu.
 	 */
-	public static final String[] DEFAULT_CONTEXT_MENU = new String[] { FILE_GROUP,  EDIT_GROUP, SYNCHRONIZE_GROUP, NAVIGATE_GROUP, OBJECT_CONTRIBUTIONS_GROUP};
+	public static final String[] DEFAULT_CONTEXT_MENU = new String[] { FILE_GROUP,  EDIT_GROUP, SYNCHRONIZE_GROUP, NAVIGATE_GROUP};
 
 	/**
 	 * These are the default groups used for the toolbar of a page.

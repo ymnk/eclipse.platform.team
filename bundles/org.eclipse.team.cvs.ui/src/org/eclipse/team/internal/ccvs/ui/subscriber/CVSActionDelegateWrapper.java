@@ -10,21 +10,20 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
+import org.eclipse.ui.IActionDelegate;
 
 /**
- * Superclass of CVS participant actions that uses the classname as the key
+ * Superclass of CVS participant action delegates that uses the classname as the key
  * to access the text from the resource bundle
  */
-public abstract class CVSParticipantAction extends SynchronizeModelAction {
+public class CVSActionDelegateWrapper extends ActionDelegateWrapper {
 
-	protected CVSParticipantAction(ISynchronizePageConfiguration configuration) {
-		super(null, configuration);
+	public CVSActionDelegateWrapper(IActionDelegate delegate, ISynchronizePageConfiguration configuration) {
+		super(delegate, configuration);
 		Utils.initAction(this, getBundleKeyPrefix(), Policy.getBundle());
 	}
 
@@ -34,20 +33,11 @@ public abstract class CVSParticipantAction extends SynchronizeModelAction {
 	 * @return the bundle key prefix
 	 */
 	protected String getBundleKeyPrefix() {
-		String name = getClass().getName();
+		String name = getDelegate().getClass().getName();
 		int lastDot = name.lastIndexOf("."); //$NON-NLS-1$
 		if (lastDot == -1) {
 			return name;
 		}
 		return name.substring(lastDot + 1)  + "."; //$NON-NLS-1$
-	}
-	
-	/**
-	 * Set the selection of the action to the given object
-	 * @param input the selected object
-	 */
-	public void setSelection(Object input) {
-		IStructuredSelection selection = new StructuredSelection(input);
-		selectionChanged(selection);
 	}
 }

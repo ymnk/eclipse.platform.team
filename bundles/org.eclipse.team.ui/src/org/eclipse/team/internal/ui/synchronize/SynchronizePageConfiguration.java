@@ -109,7 +109,6 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 	 */
 	public SynchronizePageConfiguration(ISynchronizeParticipant participant) {
 		this.participant = participant;
-		setProperty(P_OBJECT_CONTRIBUTION_ID, participant.getId());
 		setProperty(P_CONTEXT_MENU, DEFAULT_CONTEXT_MENU);
 		setProperty(P_TOOLBAR_MENU, DEFAULT_TOOLBAR_MENU);
 		setProperty(P_VIEW_MENU, DEFAULT_VIEW_MENU);

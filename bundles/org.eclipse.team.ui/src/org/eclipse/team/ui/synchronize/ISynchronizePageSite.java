@@ -97,4 +97,12 @@ public interface ISynchronizePageSite {
 	 * @return the action bars
 	 */
 	IActionBars getActionBars();
+
+	/**
+	 * Returns whether the site is associated with a page being
+	 * shown in a modal dialog
+	 * @return whether the site is associated with a page being
+	 * shown in a modal dialog
+	 */
+	boolean isModal();
 }

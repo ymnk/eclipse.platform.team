@@ -14,11 +14,16 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
 public class OverrideAndCommitAction extends CVSParticipantAction {
 	
+	public OverrideAndCommitAction(ISynchronizePageConfiguration configuration) {
+		super(configuration);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.actions.SubscriberAction#getSyncInfoFilter()
 	 */

@@ -15,12 +15,17 @@ import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.OrSyncInfoFilter;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
 
 public class MergeUpdateAction extends CVSParticipantAction {
 	
+	public MergeUpdateAction(ISynchronizePageConfiguration configuration) {
+		super(configuration);
+	}
+
 	private boolean promptBeforeUpdate;
 
 	/* (non-Javadoc)
