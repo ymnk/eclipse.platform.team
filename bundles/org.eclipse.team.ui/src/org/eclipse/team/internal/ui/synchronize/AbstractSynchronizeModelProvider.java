@@ -14,8 +14,12 @@ import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.util.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.StructuredViewer;
@@ -37,6 +41,18 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
  */
 public abstract class AbstractSynchronizeModelProvider implements ISynchronizeModelProvider, ISyncInfoSetChangeListener {
 	
+	/**
+	 * Property constant for the expansion state for the elements displayed by the page. The
+	 * expansion state is a List of resource paths.
+	 */
+	public static final String P_VIEWER_EXPANSION_STATE = TeamUIPlugin.ID  + ".P_VIEWER_EXPANSION_STATE"; //$NON-NLS-1$
+	
+	/**
+	 * Property constant for the selection state for the elements displayed by the page. The
+	 * selection state is a List of resource paths.
+	 */
+	public static final String P_VIEWER_SELECTION_STATE = TeamUIPlugin.ID  + ".P_VIEWER_SELECTION_STATE"; //$NON-NLS-1$
+	
 	private ISynchronizeModelElement root;
 	
 	private ISynchronizePageConfiguration configuration;
@@ -46,7 +62,18 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	private SynchronizeModelUpdateHandler updateHandler;
 	
 	private boolean disposed = false;
+
+    private SynchronizePageActionGroup actionGroup;
+
+    private ListenerList listeners;
 	
+	/**
+	 * Constructor for creating a sub-provider
+	 * @param parentProvider the parent provider
+	 * @param parentNode the root node of the model built by this provider
+	 * @param configuration the sync page configuration
+	 * @param set the sync info set from which the model is built
+	 */
 	protected AbstractSynchronizeModelProvider(AbstractSynchronizeModelProvider parentProvider, ISynchronizeModelElement parentNode, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
 		Assert.isNotNull(set);
 		Assert.isNotNull(parentNode);
@@ -65,6 +92,57 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	}
 	
 	/**
+	 * Cosntructor for creating a root model provider.
+	 * @param configuration the sync page configuration
+	 * @param set the sync info set from which the model is built
+	 */
+	protected AbstractSynchronizeModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
+		this(null, new UnchangedResourceModelElement(null, ResourcesPlugin.getWorkspace().getRoot()) {
+			/* 
+			 * Override to ensure that the diff viewer will appear in CompareEditorInputs
+			 */
+			public boolean hasChildren() {
+				return true;
+			}
+		}, configuration, set);
+		// Register the action group for this provider, since it is the root provider
+		SynchronizePageActionGroup actionGroup = getActionGroup();
+		if (actionGroup != null) {
+		    configuration.addActionContribution(actionGroup);
+		}
+	}
+	
+	/**
+	 * Return the action group for this provider or <code>null</code>
+     * if there are no actions associated with this provider. The action
+     * group will be registered with the configuration if this is
+     * the root provider. If this provider is a sub-provider, it
+     * is up to the parent provider to register the action group.
+     * <p>
+     * The action group for a provider is created by calling the
+     * <code>createdActionGroup</code> method. If this method returns
+     * a non-null group, it is cached so it can be disposed
+     * when the provider is disposed.
+     * @return the action group for this provider or <code>null</code>
+     * if there are no actions associated with this provider
+     */
+    public final synchronized SynchronizePageActionGroup getActionGroup() {
+        if (actionGroup == null) {
+            actionGroup = createActionGroup();
+        }
+        return actionGroup;
+    }
+
+    /**
+     * Create the action group for this provider. By default,
+     * a <code>null</code> is returned. Subclasses may override.
+     * @return the action group for this provider or <code>null</code>
+     */
+    protected SynchronizePageActionGroup createActionGroup() {
+        return null;
+    }
+    
+    /**
 	 * Return the set that contains the elements this provider is using as
 	 * a basis for creating a presentation model. This cannot be null.
 	 * 
@@ -304,6 +382,13 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	    } else {
 	        set.removeSyncSetChangedListener(this);
 	    }
+	    if (actionGroup != null) {
+	        Utils.syncExec(new Runnable() {
+                public void run() {
+                    actionGroup.dispose();
+                }
+            }, getViewer());
+	    }
 		this.disposed = true;
 	}
 	
@@ -436,9 +521,9 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 			IDiffElement element = children[i];
 			if (element instanceof ISynchronizeModelElement) {
 			    ISynchronizeModelElement sme = (ISynchronizeModelElement) element;
-                AbstractSynchronizeModelProvider provider = getProvider(sme);
-                if (provider != null) {
-                    provider.clearModelObjects(sme);
+                ISynchronizeModelProvider provider = getProvider(sme);
+                if (provider != null && provider instanceof AbstractSynchronizeModelProvider) {
+                    ((AbstractSynchronizeModelProvider)provider).clearModelObjects(sme);
                 } else {
                     clearModelObjects(sme);
                 }
@@ -457,7 +542,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
      * @param element the synchronizew model element
      * @return the provider that created the element
      */
-    protected AbstractSynchronizeModelProvider getProvider(ISynchronizeModelElement element) {
+    protected ISynchronizeModelProvider getProvider(ISynchronizeModelElement element) {
         return this;
     }
 
@@ -485,7 +570,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * when a node is added to the viewer. It is only invoked for the
 	 * root level model provider.
 	 * @param node
-	 * @param provider TODO
+	 * @param provider the provider that added the node
 	 */
 	protected void nodeAdded(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
 	    // Default is to do nothing
@@ -499,5 +584,44 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 */
 	protected void nodeRemoved(ISynchronizeModelElement node, AbstractSynchronizeModelProvider provider) {
 	    // Default is to do nothing
+	}
+	
+    public void addPropertyChangeListener(IPropertyChangeListener listener) {
+        synchronized (this) {
+            if (listeners == null) {
+                listeners = new ListenerList();
+            }
+            listeners.add(listener);
+        }
+
+    }
+    public void removePropertyChangeListener(IPropertyChangeListener listener) {
+        if (listeners != null) {
+            synchronized (this) {
+                listeners.remove(listener);
+                if (listeners.isEmpty()) {
+                    listeners = null;
+                }
+            }
+        }
+    }
+    
+	protected void firePropertyChange(String key, Object oldValue, Object newValue) {
+		Object[] allListeners;
+		synchronized(this) {
+		    allListeners = listeners.getListeners();
+		}
+		final PropertyChangeEvent event = new PropertyChangeEvent(this, key, oldValue, newValue);
+		for (int i = 0; i < allListeners.length; i++) {
+			final IPropertyChangeListener listener = (IPropertyChangeListener)allListeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Error is logged by platform
+				}
+				public void run() throws Exception {
+					listener.propertyChange(event);
+				}
+			});
+		}
 	}
 }

@@ -47,7 +47,7 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 	
 	private static final String P_LAST_RESOURCESORT = TeamUIPlugin.ID + ".P_LAST_RESOURCE_SORT"; //$NON-NLS-1$
 
-    private FlatActionGroup sortGroup;
+	private int sortCriteria = FlatSorter.PATH;
 	
 	/* *****************************************************************************
 	 * Model element for the resources in this layout. They are displayed with filename and path
@@ -128,45 +128,27 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 	 */
 	private class ToggleSortOrderAction extends Action {
 		private int criteria;
-		protected ToggleSortOrderAction(String name, int criteria, int defaultCriteria) {
+		protected ToggleSortOrderAction(String name, int criteria) {
 			super(name, Action.AS_RADIO_BUTTON);
 			this.criteria = criteria;
-			setChecked(criteria == defaultCriteria);		
+			update();	
 		}
 
 		public void run() {
-			StructuredViewer viewer = getViewer();
-			if (viewer != null && !viewer.getControl().isDisposed()) {
-			    // TODO: This is no good for embedded sorters
-			    FlatSorter sorter = (FlatSorter) viewer.getSorter();
-				if (isChecked() && sorter != null && getCriteria(sorter) != criteria) {
-					viewer.setSorter(createSorter());
-					String key = getSettingsKey();
-					IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-					if(pageSettings != null) {
-						pageSettings.put(key, criteria);
-					}
-					update();
+			if (isChecked() && sortCriteria != criteria) {
+			    sortCriteria = criteria;
+				String key = getSettingsKey();
+				IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+				if(pageSettings != null) {
+					pageSettings.put(key, criteria);
 				}
+				update();
+				FlatModelProvider.this.firePropertyChange(P_VIEWER_SORTER, null, null);
 			}
 		}
 		
 		public void update() {
-			StructuredViewer viewer = getViewer();
-			if (viewer != null && !viewer.getControl().isDisposed()) {
-			    FlatSorter sorter = (FlatSorter) viewer.getSorter();
-				if (sorter != null) {
-					setChecked(getCriteria(sorter) == criteria);		
-				}
-			}	
-		}
-		
-		protected FlatSorter createSorter() {
-			return new FlatSorter(criteria);
-		}
-		
-		protected int getCriteria(FlatSorter sorter) {
-			return sorter.getResourceCriteria();
+			setChecked(sortCriteria == criteria);			
 		}
 		
 		protected String getSettingsKey() {
@@ -188,11 +170,12 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 					ISynchronizePageConfiguration.SORT_GROUP, 
 					sortByResource);
 			
-			FlatSorter sorter = (FlatSorter)getViewerSorter();
+			// Ensure that the sort criteria of the provider is properly initialized
+			FlatModelProvider.this.initialize(configuration);
 			
-			sortByResource.add( new ToggleSortOrderAction(Policy.bind("FlatModelProvider.8"), FlatSorter.PATH, sorter.getResourceCriteria())); //$NON-NLS-1$
-			sortByResource.add(new ToggleSortOrderAction(Policy.bind("FlatModelProvider.7"), FlatSorter.NAME, sorter.getResourceCriteria())); //$NON-NLS-1$
-			sortByResource.add(new ToggleSortOrderAction(Policy.bind("FlatModelProvider.9"), FlatSorter.PARENT_NAME, sorter.getResourceCriteria())); //$NON-NLS-1$
+			sortByResource.add( new ToggleSortOrderAction(Policy.bind("FlatModelProvider.8"), FlatSorter.PATH)); //$NON-NLS-1$
+			sortByResource.add(new ToggleSortOrderAction(Policy.bind("FlatModelProvider.7"), FlatSorter.NAME)); //$NON-NLS-1$
+			sortByResource.add(new ToggleSortOrderAction(Policy.bind("FlatModelProvider.9"), FlatSorter.PARENT_NAME)); //$NON-NLS-1$
 		}
 
         /* (non-Javadoc)
@@ -209,35 +192,35 @@ public class FlatModelProvider extends SynchronizeModelProvider {
         super(configuration, set);
         initialize(configuration);
     }
-    
+
     public FlatModelProvider(AbstractSynchronizeModelProvider parentProvider, ISynchronizeModelElement modelRoot, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
         super(parentProvider, modelRoot, configuration, set);
-        // TODO: How do we add the action group once?
-        //initialize(configuration);
+        initialize(configuration);
     }
     
-    /*
-     * Add the resource sorting actions
-     */
     private void initialize(ISynchronizePageConfiguration configuration) {
-        this.sortGroup = new FlatActionGroup();
-		configuration.addActionContribution(sortGroup);
+		try {
+			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+			if(pageSettings != null) {
+				sortCriteria = pageSettings.getInt(P_LAST_RESOURCESORT);
+			}
+		} catch(NumberFormatException e) {
+			// ignore and use the defaults.
+		} 
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#createActionGroup()
+     */
+    protected SynchronizePageActionGroup createActionGroup() {
+        return new FlatActionGroup();
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider#getViewerSorter()
      */
     public ViewerSorter getViewerSorter() {
-		int resourceSort = FlatSorter.PATH;
-		try {
-			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-			if(pageSettings != null) {
-				resourceSort = pageSettings.getInt(P_LAST_RESOURCESORT);
-			}
-		} catch(NumberFormatException e) {
-			// ignore and use the defaults.
-		}
-		return new FlatSorter(resourceSort);
+		return new FlatSorter(sortCriteria);
     }
 
     /* (non-Javadoc)
@@ -298,12 +281,4 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 		addToViewer(newNode);
 		return newNode;
 	}
-	
-	/* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelProvider#dispose()
-     */
-    public void dispose() {
-        sortGroup.dispose();
-        super.dispose();
-    }
 }

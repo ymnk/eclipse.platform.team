@@ -656,4 +656,18 @@ public class Utils {
 			});
 		}
 	}
+
+    public static void syncExec(final Runnable r, StructuredViewer v) {
+		if(v == null) return;
+		final Control ctrl = v.getControl();
+		if (ctrl != null && !ctrl.isDisposed()) {
+			ctrl.getDisplay().syncExec(new Runnable() {
+				public void run() {
+					if (!ctrl.isDisposed()) {
+						BusyIndicator.showWhile(ctrl.getDisplay(), r);
+					}
+				}
+			});
+		}
+    }
 }

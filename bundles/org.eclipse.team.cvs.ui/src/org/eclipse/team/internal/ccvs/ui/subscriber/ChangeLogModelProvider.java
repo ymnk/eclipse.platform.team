@@ -23,6 +23,7 @@ import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -67,9 +68,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	private boolean shutdown = false;
 	private FetchLogEntriesJob fetchLogEntriesJob;
 	
-	// Sorters for the commit sets and resources
-	private ChangeLogActionGroup sortGroup;
-	
 	// Tag ranges for fetching revision histories. If no tags are specified then
 	// the history for the remote revision in the sync info is used.
 	private CVSTag tag1;
@@ -81,6 +79,10 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	private Set queuedAdditions = new HashSet(); // Set of SyncInfo
 	
 	private Map rootToProvider = new HashMap(); // Maps ISynchronizeModelElement -> AbstractSynchronizeModelProvider
+	
+	private int sortCriteria = ChangeLogModelSorter.DATE;
+	
+	private ViewerSorter embeddedSorter;
 	
 	// Constants for persisting sorting options
 	private final static String COMMIT_SET_GROUP = "commit_set"; //$NON-NLS-1$
@@ -100,44 +102,27 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 */
 	private class ToggleSortOrderAction extends Action {
 		private int criteria;
-		protected ToggleSortOrderAction(String name, int criteria, int defaultCriteria) {
+		protected ToggleSortOrderAction(String name, int criteria) {
 			super(name, Action.AS_RADIO_BUTTON);
 			this.criteria = criteria;
-			setChecked(criteria == defaultCriteria);		
+			update();		
 		}
 
 		public void run() {
-			StructuredViewer viewer = getViewer();
-			if (viewer != null && !viewer.getControl().isDisposed()) {
-				ChangeLogModelSorter sorter = (ChangeLogModelSorter) viewer.getSorter();
-				if (isChecked() && sorter != null && getCriteria(sorter) != criteria) {
-					viewer.setSorter(createSorter());
-					String key = getSettingsKey();
-					IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-					if(pageSettings != null) {
-						pageSettings.put(key, criteria);
-					}
-					update();
+			if (isChecked() && sortCriteria != criteria) {
+			    sortCriteria = criteria;
+				String key = getSettingsKey();
+				IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+				if(pageSettings != null) {
+					pageSettings.put(key, criteria);
 				}
+				update();
+				ChangeLogModelProvider.this.firePropertyChange(P_VIEWER_SORTER, null, null);
 			}
 		}
 		
 		public void update() {
-			StructuredViewer viewer = getViewer();
-			if (viewer != null && !viewer.getControl().isDisposed()) {
-				ChangeLogModelSorter sorter = (ChangeLogModelSorter) viewer.getSorter();
-				if (sorter != null) {
-					setChecked(getCriteria(sorter) == criteria);		
-				}
-			}	
-		}
-		
-		protected ChangeLogModelSorter createSorter() {
-			return new ChangeLogModelSorter(ChangeLogModelProvider.this, criteria);
-		}
-		
-		protected int getCriteria(ChangeLogModelSorter sorter) {
-			return sorter.getCommentCriteria();
+		    setChecked(criteria == sortCriteria);
 		}
 		
 		protected String getSettingsKey() {
@@ -322,11 +307,11 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 					COMMIT_SET_GROUP, 
 					makeDefault);
 			
-			ChangeLogModelSorter sorter = (ChangeLogModelSorter)getViewerSorter();
+			ChangeLogModelProvider.this.initialize(configuration);
 			
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1"), ChangeLogModelSorter.COMMENT, sorter.getCommentCriteria())); //$NON-NLS-1$
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2"), ChangeLogModelSorter.DATE, sorter.getCommentCriteria())); //$NON-NLS-1$
-			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3"), ChangeLogModelSorter.USER, sorter.getCommentCriteria())); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1"), ChangeLogModelSorter.COMMENT)); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2"), ChangeLogModelSorter.DATE)); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3"), ChangeLogModelSorter.USER)); //$NON-NLS-1$
 		}
 		
         protected void addCommitSets(IMenuManager manager) {
@@ -440,13 +425,30 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		this.tag2 = tag2;
         this.id = id;
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, COMMIT_SET_GROUP);
-		this.sortGroup = new ChangeLogActionGroup();
-		configuration.addActionContribution(sortGroup);
 		if (configuration.getComparisonType() == ISynchronizePageConfiguration.THREE_WAY) {
 		    CommitSetManager.getInstance().addListener(this);
 		}
+		initialize(configuration);
 	}
 	
+    private void initialize(ISynchronizePageConfiguration configuration) {
+		try {
+			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
+			if(pageSettings != null) {
+				sortCriteria = pageSettings.getInt(P_LAST_COMMENTSORT);
+			}
+		} catch(NumberFormatException e) {
+			// ignore and use the defaults.
+		}
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#createActionGroup()
+     */
+    protected SynchronizePageActionGroup createActionGroup() {
+        return new ChangeLogActionGroup();
+    }
+    
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider#getDescriptor()
 	 */
@@ -536,7 +538,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
      */
     private void handleRemoteChanges(SyncInfo[] infos, IProgressMonitor monitor) throws CVSException, InterruptedException {
         RemoteLogOperation logs = getSyncInfoComment(infos, Policy.subMonitorFor(monitor, 80));
-        AbstractSynchronizeModelProvider[] providers = null;
+        ISynchronizeModelProvider[] providers = null;
         try {
             providers = beginInput();
 	        addLogEntries(infos, logs, Policy.subMonitorFor(monitor, 10));
@@ -550,7 +552,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
      * change belongs to.
      */
     private void handleLocalChanges(SyncInfo[] infos, IProgressMonitor monitor) {
-        AbstractSynchronizeModelProvider[] providers = null;
+        ISynchronizeModelProvider[] providers = null;
         try {
             providers = beginInput();
 	        if (infos.length != 0) {
@@ -722,14 +724,14 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
         return provider;
     }
 
-    private AbstractSynchronizeModelProvider getProviderRootedAt(ISynchronizeModelElement parent) {
-        return (AbstractSynchronizeModelProvider)rootToProvider.get(parent);
+    private ISynchronizeModelProvider getProviderRootedAt(ISynchronizeModelElement parent) {
+        return (ISynchronizeModelProvider)rootToProvider.get(parent);
     }
     
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.CompositeModelProvider#removeProvider(org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider)
      */
-    protected void removeProvider(AbstractSynchronizeModelProvider provider) {
+    protected void removeProvider(ISynchronizeModelProvider provider) {
         rootToProvider.remove(provider.getModelRoot());
         super.removeProvider(provider);
     }
@@ -893,7 +895,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 		if(fetchLogEntriesJob != null && fetchLogEntriesJob.getState() != Job.NONE) {
 			fetchLogEntriesJob.cancel();
 		}
-		sortGroup.dispose();
 		CommitSetManager.getInstance().removeListener(this);
 		super.dispose();
 	}
@@ -902,16 +903,7 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#getViewerSorter()
 	 */
 	public ViewerSorter getViewerSorter() {
-		int commentSort = ChangeLogModelSorter.DATE;
-		try {
-			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-			if(pageSettings != null) {
-				commentSort = pageSettings.getInt(P_LAST_COMMENTSORT);
-			}
-		} catch(NumberFormatException e) {
-			// ignore and use the defaults.
-		}
-		return new ChangeLogModelSorter(this, commentSort);
+		return new ChangeLogModelSorter(this, sortCriteria);
 	}
 
 	/* (non-Javadoc)
@@ -940,8 +932,10 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 				logOperation.clearEntriesFor(remote);
 			}
 		}
-		if (provider.getSyncInfoSet().isEmpty()) {
-		    // The provider is empty so remove it
+		if (provider.getSyncInfoSet().isEmpty() && provider.getModelRoot() != getModelRoot()) {
+		    // The provider is empty so remove it 
+		    // (but keep it if it is a direct child of the root
+		    // since that's where we get the sorter and action group)
 		    removeProvider(provider);
 		}
     }
@@ -1050,6 +1044,36 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
         super.clearModelObjects(node);
         if (node == getModelRoot()) {
             rootToProvider.clear();
+            // Throw away the embedded sorter
+            embeddedSorter = null;
+            createRootProvider();
+        }
+    }
+
+    /*
+     * Create the root subprovider which is used to display resources
+     * that are not in a commit set. This provider is created even if
+     * it is empty so we can have access to the appropriate sorter 
+     * and action group 
+     */
+    private void createRootProvider() {
+        // Recreate the sub-provider at the root and use it's viewer sorter and action group
+        final ISynchronizeModelProvider provider = createProviderRootedAt(getModelRoot());
+        embeddedSorter = provider.getViewerSorter();
+        if (provider instanceof AbstractSynchronizeModelProvider) {
+            SynchronizePageActionGroup actionGroup = ((AbstractSynchronizeModelProvider)provider).getActionGroup();
+            if (actionGroup != null) {
+                // This action group will be disposed when the provider is disposed
+                getConfiguration().addActionContribution(actionGroup);
+                provider.addPropertyChangeListener(new IPropertyChangeListener() {
+                    public void propertyChange(PropertyChangeEvent event) {
+                        if (event.getProperty().equals(P_VIEWER_SORTER)) {
+                            embeddedSorter = provider.getViewerSorter();
+                            ChangeLogModelProvider.this.firePropertyChange(P_VIEWER_SORTER, null, null);
+                        }
+                    }
+                });
+            }
         }
     }
 
@@ -1068,4 +1092,5 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
     public ViewerSorter getEmbeddedSorter() {
         return embeddedSorter;
     }
+    
 }

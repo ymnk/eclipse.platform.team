@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ui.synchronize;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
@@ -34,14 +33,7 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
     Map elementToProvider = new HashMap(); // Map ISynchronizeModelElement -> AbstractSynchronizeModelProvider
 	
     protected CompositeModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
-        super(null, new UnchangedResourceModelElement(null, ResourcesPlugin.getWorkspace().getRoot()) {
-			/* 
-			 * Override to ensure that the diff viewer will appear in CompareEditorInputs
-			 */
-			public boolean hasChildren() {
-				return true;
-			}
-		}, configuration, set);
+        super(configuration, set);
     }
     
     /**
@@ -56,7 +48,7 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      * Remove the provider from the list of providers.
      * @param provider the provider to be removed
      */
-    protected void removeProvider(AbstractSynchronizeModelProvider provider) {
+    protected void removeProvider(ISynchronizeModelProvider provider) {
         providers.remove(provider);
         provider.dispose();
     }
@@ -64,28 +56,30 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#getProvider(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
      */
-    protected AbstractSynchronizeModelProvider getProvider(ISynchronizeModelElement element) {
-        return (AbstractSynchronizeModelProvider)elementToProvider.get(element);
+    protected ISynchronizeModelProvider getProvider(ISynchronizeModelElement element) {
+        return (ISynchronizeModelProvider)elementToProvider.get(element);
     }
     
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#getClosestExistingParents(org.eclipse.core.resources.IResource)
      */
     public ISynchronizeModelElement[] getClosestExistingParents(IResource resource) {
-        AbstractSynchronizeModelProvider[] providers = getProviders();
+        ISynchronizeModelProvider[] providers = getProviders();
         if (providers.length == 0) {
             return new ISynchronizeModelElement[0];
         }
-        if (providers.length == 1) {
-            return providers[0].getClosestExistingParents(resource);
+        if (providers.length == 1 && providers[0] instanceof AbstractSynchronizeModelProvider) {
+            return ((AbstractSynchronizeModelProvider)providers[0]).getClosestExistingParents(resource);
         }
         List result = new ArrayList();
         for (int i = 0; i < providers.length; i++) {
-            AbstractSynchronizeModelProvider provider = providers[i];
-            ISynchronizeModelElement[] elements = provider.getClosestExistingParents(resource);
-            for (int j = 0; j < elements.length; j++) {
-                ISynchronizeModelElement element = elements[j];
-                result.add(element);
+            ISynchronizeModelProvider provider = providers[i];
+            if (provider instanceof AbstractSynchronizeModelProvider) {
+	            ISynchronizeModelElement[] elements = ((AbstractSynchronizeModelProvider)provider).getClosestExistingParents(resource);
+	            for (int j = 0; j < elements.length; j++) {
+	                ISynchronizeModelElement element = elements[j];
+	                result.add(element);
+	            }
             }
         }
         return (ISynchronizeModelElement[]) result.toArray(new ISynchronizeModelElement[result.size()]);
@@ -95,8 +89,8 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      * Return all the sub-providers of this composite.
      * @return the sub-providers of this composite
      */
-    protected AbstractSynchronizeModelProvider[] getProviders() {
-        return (AbstractSynchronizeModelProvider[]) providers.toArray(new AbstractSynchronizeModelProvider[providers.size()]);
+    protected ISynchronizeModelProvider[] getProviders() {
+        return (ISynchronizeModelProvider[]) providers.toArray(new ISynchronizeModelProvider[providers.size()]);
     }
     
     /**
@@ -104,24 +98,24 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      * @param resource the resource
      * @return the providers displaying the resource
      */
-    protected AbstractSynchronizeModelProvider[] getProvidersContaining(IResource resource) {
+    protected ISynchronizeModelProvider[] getProvidersContaining(IResource resource) {
         List elements = (List)resourceToElements.get(resource);
         if (elements == null || elements.isEmpty()) {
-            return new AbstractSynchronizeModelProvider[0];
+            return new ISynchronizeModelProvider[0];
         }
         List result = new ArrayList();
         for (Iterator iter = elements.iterator(); iter.hasNext();) {
             ISynchronizeModelElement element = (ISynchronizeModelElement)iter.next();
             result.add(getProvider(element));
         }
-        return (AbstractSynchronizeModelProvider[]) result.toArray(new AbstractSynchronizeModelProvider[result.size()]);
+        return (ISynchronizeModelProvider[]) result.toArray(new ISynchronizeModelProvider[result.size()]);
     }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#handleChanges(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
      */
     protected void handleChanges(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
-        AbstractSynchronizeModelProvider[] providers = null;
+        ISynchronizeModelProvider[] providers = null;
         try {
             monitor.beginTask(null, 100);
             providers = beginInput();
@@ -135,10 +129,10 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
     /**
      * Begin inputing changes to the syncsets of the sub-providers
      */
-    protected AbstractSynchronizeModelProvider[] beginInput() {
-        AbstractSynchronizeModelProvider[] providers = getProviders();
+    protected ISynchronizeModelProvider[] beginInput() {
+        ISynchronizeModelProvider[] providers = getProviders();
         for (int i = 0; i < providers.length; i++) {
-            AbstractSynchronizeModelProvider provider = providers[i];
+            ISynchronizeModelProvider provider = providers[i];
             provider.getSyncInfoSet().beginInput();
         }
         return providers;
@@ -147,10 +141,10 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
     /**
      * End inputing to sub-provider sync sets
      */
-    protected void endInput(AbstractSynchronizeModelProvider[] providers, IProgressMonitor monitor) {
+    protected void endInput(ISynchronizeModelProvider[] providers, IProgressMonitor monitor) {
         RuntimeException exception = null;
         for (int i = 0; i < providers.length; i++) {
-            AbstractSynchronizeModelProvider provider = providers[i];
+            ISynchronizeModelProvider provider = providers[i];
             try {
                 provider.getSyncInfoSet().endInput(monitor);
             } catch (RuntimeException e) {
@@ -225,9 +219,9 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      * @param resource the resource to be removed
      */
     protected void handleRemoval(IResource resource) {
-        AbstractSynchronizeModelProvider[] providers = getProvidersContaining(resource);
+        ISynchronizeModelProvider[] providers = getProvidersContaining(resource);
         for (int i = 0; i < providers.length; i++) {
-            AbstractSynchronizeModelProvider provider = providers[i];
+            ISynchronizeModelProvider provider = providers[i];
             removeFromProvider(resource, provider);
         }
     }
@@ -239,7 +233,7 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
      * @param resource the resource to be removed
      * @param provider the provider from which to remove the resource
      */
-    protected void removeFromProvider(IResource resource, AbstractSynchronizeModelProvider provider) {
+    protected void removeFromProvider(IResource resource, ISynchronizeModelProvider provider) {
         if (provider != this) {
             provider.getSyncInfoSet().remove(resource);
         }
@@ -288,16 +282,20 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
     protected void clearModelObjects(ISynchronizeModelElement node) {
         super.clearModelObjects(node);
         if (node == getModelRoot()) {
-            for (Iterator iter = providers.iterator(); iter.hasNext();) {
-                AbstractSynchronizeModelProvider provider = (AbstractSynchronizeModelProvider) iter.next();
-                provider.dispose();
-            }
-            providers.clear();
-            resourceToElements.clear();
-            elementToProvider.clear();
+            clearProviders();
         }
     }
     
+    private void clearProviders() {
+        for (Iterator iter = providers.iterator(); iter.hasNext();) {
+            ISynchronizeModelProvider provider = (ISynchronizeModelProvider) iter.next();
+            provider.dispose();
+        }
+        providers.clear();
+        resourceToElements.clear();
+        elementToProvider.clear();
+    }
+
     /**
      * Helper method for creating a provider for the given id.
      * @param parent the root node for the new provider
@@ -313,4 +311,12 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
 			return new HierarchicalModelProvider(this, parent, getConfiguration(), new SyncInfoTree());
 		}
 	}
+	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#dispose()
+     */
+    public void dispose() {
+        clearProviders();
+        super.dispose();
+    }
 }

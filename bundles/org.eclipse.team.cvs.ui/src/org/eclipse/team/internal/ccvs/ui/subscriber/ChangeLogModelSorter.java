@@ -91,7 +91,12 @@ public class ChangeLogModelSorter extends ViewerSorter {
 			return -1;
 
 		if (o1 instanceof ISynchronizeModelElement && o2 instanceof ISynchronizeModelElement) {
-			return provider.getEmbeddedSorter().compare(viewer, o1, o2);
+			ViewerSorter embeddedSorter = provider.getEmbeddedSorter();
+			if (embeddedSorter != null) {
+			    return embeddedSorter.compare(viewer, o1, o2);
+			} else {
+			    compareNames(((ISynchronizeModelElement)o1).getName(), ((ISynchronizeModelElement)o2).getName());
+			}
 		} else if (o1 instanceof ISynchronizeModelElement)
 			return 1;
 		else if (o2 instanceof ISynchronizeModelElement)

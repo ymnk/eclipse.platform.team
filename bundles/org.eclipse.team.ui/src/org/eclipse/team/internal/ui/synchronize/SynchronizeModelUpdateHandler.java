@@ -479,7 +479,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
 		// elements in the model with errors, but currently we prefer to let ignore and except
 		// another listener to display them. 
     }
-    public AbstractSynchronizeModelProvider getProvider() {
+    public ISynchronizeModelProvider getProvider() {
         return provider;
     }
 

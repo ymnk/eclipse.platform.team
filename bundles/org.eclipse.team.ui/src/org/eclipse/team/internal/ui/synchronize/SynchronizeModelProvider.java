@@ -40,29 +40,21 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 
     protected static final boolean DEBUG = false;
 	
-	/**
-	 * Create an input based on the provide sync set. The input is not
-	 * initialized until <code>prepareInput</code> is called.
-	 * @param set
-	 *            the sync set used as the basis for the model created by this
-	 *            input.
-	 */
 	public SynchronizeModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
-		this(null, new UnchangedResourceModelElement(null, ResourcesPlugin.getWorkspace().getRoot()) {
-			/* 
-			 * Override to ensure that the diff viewer will appear in CompareEditorInputs
-			 */
-			public boolean hasChildren() {
-				return true;
-			}
-		}, configuration, set);
+		super(configuration, set);
 	}
 
 	public SynchronizeModelProvider(AbstractSynchronizeModelProvider parentProvider, ISynchronizeModelElement modelRoot, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
 		super(parentProvider, modelRoot, configuration, set);
+		associateRoot(modelRoot);
 	}
 	
-	/**
+    private void associateRoot(ISynchronizeModelElement modelRoot) {
+        // associate the root resource with the provider's root element
+		resourceMap.put(ResourcesPlugin.getWorkspace().getRoot(), modelRoot);
+    }
+
+    /**
 	 * The provider can try and return a mapping for the provided object. Providers often use mappings
 	 * to store the source of a logical element they have created. For example, when displaying resource
 	 * based logical elements, a provider will cache the resource -> element mapping for quick retrieval
@@ -135,7 +127,7 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 	        // than just purge the resource map
 	        resourceMap.clear();
 	        // Reassociate the root node to allow the children to be readded
-	        associateDiffNode(getModelRoot());
+	        associateRoot(getModelRoot());
 		} else {
 			IResource resource = node.getResource();
 			if (resource != null) {
