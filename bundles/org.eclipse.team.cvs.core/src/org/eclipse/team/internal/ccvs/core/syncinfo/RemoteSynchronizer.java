@@ -53,12 +53,18 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 	private QualifiedName syncName;
 	private Set changedResources = new HashSet();
 	private CVSTag tag;
+	private ICVSRemoteResource initialRemoteTree;
 	
 	public RemoteSynchronizer(String id, CVSTag tag) {
 		syncName = new QualifiedName(SYNC_KEY_QUALIFIER, id);
 		getSynchronizer().add(syncName);
 		this.tag = tag;
 	}
+	
+	public RemoteSynchronizer(String id, CVSTag tag, ICVSRemoteResource initialRemoteTree) {
+			this(id, tag);
+			this.initialRemoteTree = initialRemoteTree;
+		}
 
 	/**
 	 * Dispose of any cached remote sync info.
@@ -284,8 +290,13 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 			for (int i = 0; i < resources.length; i++) {
 				IResource resource = resources[i];	
 				
-				// build the remote tree
-				ICVSRemoteResource tree = buildRemoteTree(resource, depth, Policy.subMonitorFor(monitor, 70));
+				// build the remote tree only if an initial tree hasn't been provided
+				ICVSRemoteResource tree = initialRemoteTree;
+				if(tree == null) {
+					tree = buildRemoteTree(resource, depth, Policy.subMonitorFor(monitor, 70));
+				} else {
+					initialRemoteTree = null;
+				}
 				
 				// update the known remote handles 
 				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
@@ -307,11 +318,6 @@ public class RemoteSynchronizer extends ResourceSynchronizer {
 	
 	/**
 	 * Build a remote tree for the given parameters.
-	 * @param resource
-	 * @param tag
-	 * @param monitor
-	 * @return
-	 * @throws TeamException
 	 */
 	protected ICVSRemoteResource buildRemoteTree(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
 		// TODO: we are currently ignoring the depth parameter because the build remote tree is

@@ -27,13 +27,20 @@ import org.eclipse.team.internal.core.Policy;
 public class ContentComparisonCriteria extends ComparisonCriteria {
 
 	private boolean ignoreWhitespace = false;
+	
+	final public static String ID_IGNORE_WS = "org.eclipse.team.comparisoncriteria.content.ignore";
+	final public static String ID_DONTIGNORE_WS = "org.eclipse.team.comparisoncriteria.content";
 
 	public String getName() {
 		return "Comparing content"  + (ignoreWhitespace ? " ignore whitespace": "");
 	}
 
 	public String getId() {
-		return "org.eclipse.team.comparisoncriteria.content" + (ignoreWhitespace ? ".ignore": "");
+		if(ignoreWhitespace) {
+			return ID_IGNORE_WS;
+		} else {
+			return ID_DONTIGNORE_WS;
+		}
 	}
 	
 	public ContentComparisonCriteria(ComparisonCriteria[] preConditions, boolean ignoreWhitespace) {

@@ -11,16 +11,26 @@
 package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ISynchronizer;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
 import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 import org.eclipse.team.internal.core.VestigeConfigurationItem;
 
 /**
- * CVSMergeSubscriber
+ * A CVSMergeSubscriber is responsible for maintaining the remote trees for a merge into
+ * the workspace. The remote trees represent the CVS revisions of the start and end
+ * points (version or branch) of the merge.
+ * 
+ * This subscriber stores the remote handles in the resource tree sync info slot. When
+ * the merge is cancelled this sync info is cleared.
+ * 
+ * A merge can persist between workbench sessions and thus can be used as an
+ * ongoing merge.
+ * 
+ * TODO: Is the merge subscriber interested in workspace sync info changes?
+ *	TODO: Do certain operations (e.g. replace with) invalidate a merge subscriber?
  */
 public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 
@@ -32,57 +42,43 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	private RemoteSynchronizer remoteSynchronizer;
 	private RemoteSynchronizer baseSynchronizer;
 
-	static {
-		// TODO: Temporary measure until pesistance of merge is provided
-		flushOldMerges();
-	}
-	
-	public static void flushOldMerges() {
-		// XXX flush sync info for merge managers. This does not
-		// support ongoing merges (subscriptions); we would need
-		// some kind of lifecycle management that only flushes sync
-		// info for merge managers that are not ongoing merges.
-		ISynchronizer synchronizer = ResourcesPlugin.getWorkspace().getSynchronizer();
-		QualifiedName[] syncPartners = synchronizer.getPartners();
-		for(int i=0; i<syncPartners.length; i++) {
-			if(syncPartners[i].getQualifier().equals(RemoteSynchronizer.SYNC_KEY_QUALIFIER)) {
-				// this sync partner belongs to the VCM plug-in
-				if(syncPartners[i].getLocalName().startsWith(UNIQUE_ID_PREFIX)) {
-					// this sync partner does not belong to the sharing manager,
-					// it must be a merge manager. Remove this sync partner,
-					// which gets rid of its sync info.
-					synchronizer.remove(syncPartners[i]);
-				}
-			}
-		}
-	}
-	
-	/**
-	 * 
-	 */
 	private static QualifiedName getUniqueId() {
 		String uniqueId = Long.toString(System.currentTimeMillis());
 		return new QualifiedName(ID_QUALIFIER, UNIQUE_ID_PREFIX + uniqueId);
 	}
 	
 	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		
-		super(getUniqueId(), "CVS Merge: " + start.getName() + " - " + end.getName(), "CVS Merge");
+		super(getUniqueId(), "CVS Merge: " + start.getName() + " to " + end.getName(), "CVS Merge");
 		this.start = start;
 		this.end = end;
 		this.roots = roots;
-		initializeSynchronizers();
-		// TODO: Is the merge subscriber interested in workspace sync info changes?
-		// TODO: Do certain operations (e.g. replace with) invalidate a merge subscriber?
+		initialize(null /* no default base */, null /* no default remote */);
+	}
+	
+	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end, ICVSRemoteResource base, ICVSRemoteResource remote) {		
+		super(getUniqueId(), "CVS Merge: " + start.getName() + " to " + end.getName(), "CVS Merge");
+		this.start = start;
+		this.end = end;
+		this.roots = roots;
+		initialize(base, remote);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber#initialize()
 	 */
-	private void initializeSynchronizers() {				
+	private void initialize(ICVSRemoteResource base, ICVSRemoteResource remote) {				
 		QualifiedName id = getId();
 		String syncKeyPrefix = id.getLocalName();
-		remoteSynchronizer = new RemoteSynchronizer(syncKeyPrefix + end.getName(), end);
-		baseSynchronizer = new RemoteSynchronizer(syncKeyPrefix + start.getName(), start);
+		remoteSynchronizer = new RemoteSynchronizer(syncKeyPrefix + end.getName(), end, base);
+		baseSynchronizer = new RemoteSynchronizer(syncKeyPrefix + start.getName(), start, remote);
+		
+		try {
+			setCurrentComparisonCriteria(ContentComparisonCriteria.ID_IGNORE_WS);
+		} catch (TeamException e) {
+			// use the default but log an exception because the content comparison should
+			// always be available.
+			CVSProviderPlugin.log(e);
+		}
 	}
 
 	/* (non-Javadoc)

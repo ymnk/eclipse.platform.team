@@ -70,6 +70,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private Action toggleViewerType;
 	private Action open;
 	private ExpandAllAction expandAll;
+	private Action cancelSubscription;
 	
 	class RefreshAction extends Action {
 		public RefreshAction() {
@@ -110,6 +111,18 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			});
 		}
 	}
+	
+	class CancelSubscription extends Action {
+			public CancelSubscription() {
+				setText("Cancel");
+				setToolTipText("Cancel the active synchronization target");
+			}
+			public void run() {
+				ActionContext context = getContext();
+				SubscriberInput input = (SubscriberInput)context.getInput();
+				getSyncView().removeSubscriber(input.getSubscriber());
+			}
+		}
 	
 	class ExpandAllAction extends Action {
 		public ExpandAllAction() {
@@ -188,8 +201,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 			setText("Select Subscriber");
 			setToolTipText("Select Subscriber");
 			setImageDescriptor(TeamImages.getImageDescriptor(UIConstants.IMG_SITE_ELEMENT));
-		}
-		
+		}		
 	}
 	
 	class ChooseComparisonCriteriaAction extends SyncViewerToolbarDropDownAction {
@@ -240,6 +252,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		refreshAction.setEnabled(false);
 		collapseAll = new CollapseAllAction();
 		expandAll = new ExpandAllAction();
+		cancelSubscription = new CancelSubscription();
 		
 		toggleViewerType = new ToggleViewAction(SyncViewer.TABLE_VIEW);
 		open = new OpenInCompareAction(syncView);
@@ -284,6 +297,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		workingSetGroup.fillActionBars(actionBars);
 		dropDownMenu.add(new Separator());
 		changeFilters.fillContextMenu(dropDownMenu);
+		dropDownMenu.add(new Separator());
+		dropDownMenu.add(cancelSubscription);
 	}
 
 	/* (non-Javadoc)
@@ -356,6 +371,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	protected void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
 		refreshAction.setEnabled(input != null);
+		cancelSubscription.setEnabled(input.getSubscriber().isCancellable());
 		// This is invoked before the subscriber input is initialized
 		if (input.getWorkingSet() == null) {
 			// set the input to use the last selected working set
@@ -388,6 +404,10 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	 */
 	public void addContext(ActionContext context) {
 		subscriberInputs.addContext(context);
+	}
+	
+	public void removeContext(ActionContext context) {
+		subscriberInputs.removeContext(context);	
 	}
 	
 	/*

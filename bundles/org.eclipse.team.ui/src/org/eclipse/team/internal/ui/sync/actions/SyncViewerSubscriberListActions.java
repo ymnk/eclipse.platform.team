@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.actions;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
@@ -27,7 +27,8 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 
 	private static final String MEMENTO_KEY = "SelectedComparisonCriteria";
 
-	private List actions = new ArrayList();
+	// {QualifiedName:subscriber id -> SubscriberInput}
+	private Map actions = new HashMap();
 	private SubscriberInput activeInput = null;
 
 	/**
@@ -54,9 +55,8 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 
 	public void activate(SwitchSubscriberAction activatedAction) {
 		if(activeInput == null || ! activatedAction.getSubscriberInput().getSubscriber().getId().equals(activeInput.getSubscriber().getId())) {
-			for (int i = 0; i < actions.size(); i++) {
-				SwitchSubscriberAction action =
-					(SwitchSubscriberAction) actions.get(i);
+			for (Iterator it = actions.values().iterator(); it.hasNext();) {
+				SwitchSubscriberAction action = (SwitchSubscriberAction) it.next();
 				action.setChecked(activatedAction == action);
 			}
 			final SyncViewer view = getSyncView();
@@ -72,7 +72,7 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	public void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
 		if (input != null) {
-			for (Iterator it = actions.iterator(); it.hasNext();) {
+			for (Iterator it = actions.values().iterator(); it.hasNext();) {
 				SwitchSubscriberAction action =
 					(SwitchSubscriberAction) it.next();
 				boolean checked = action.getSubscriberInput().getSubscriber().getId().equals(
@@ -94,7 +94,7 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
 		if (! actions.isEmpty()) {
-			for (Iterator it = actions.iterator(); it.hasNext();) {
+			for (Iterator it = actions.values().iterator(); it.hasNext();) {
 				SwitchSubscriberAction action = (SwitchSubscriberAction) it.next();
 				menu.add(action);				
 			}
@@ -105,7 +105,8 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	 * @see org.eclipse.team.internal.ui.sync.actions.SyncViewerActionGroup#addContext(org.eclipse.ui.actions.ActionContext)
 	 */
 	public void addContext(ActionContext context) {
-		actions.add(new SwitchSubscriberAction((SubscriberInput)context.getInput()));		
+		SubscriberInput input = (SubscriberInput)context.getInput();
+		actions.put(input.getSubscriber().getId(), new SwitchSubscriberAction(input));		
 	}
 	
 	/* 
@@ -114,10 +115,17 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	public void fillMenu(SyncViewerToolbarDropDownAction dropDown) {
 		super.fillMenu(dropDown);
 		if (! actions.isEmpty()) {
-			for (Iterator it = actions.iterator(); it.hasNext();) {
+			for (Iterator it = actions.values().iterator(); it.hasNext();) {
 				SwitchSubscriberAction action = (SwitchSubscriberAction) it.next();
 				dropDown.add(action);				
 			}
 		}
 	 }
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.sync.actions.SyncViewerActionGroup#removeContext(org.eclipse.ui.actions.ActionContext)
+	 */
+	public void removeContext(ActionContext context) {
+		SubscriberInput input = (SubscriberInput)context.getInput();
+		actions.remove(input.getSubscriber().getId());
+	}
 }

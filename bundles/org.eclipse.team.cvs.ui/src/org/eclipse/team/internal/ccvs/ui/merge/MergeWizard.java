@@ -14,8 +14,10 @@ package org.eclipse.team.internal.ccvs.ui.merge;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -66,8 +68,13 @@ public class MergeWizard extends Wizard {
 		  activePage);
 		  
 		// TODO: also register a merge subscriber. This is required to test the new
-		// experimental merge subscriber;
+		// experimental merge subscriber and still allow the old mrege editor to appear.
 		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
+		try {
+			s.refresh(resources, IResource.DEPTH_INFINITE, new NullProgressMonitor());
+		} catch (TeamException e) {
+			// ignore for now
+		}
 		TeamProvider.registerSubscriber(s);
 		return true;
 	}

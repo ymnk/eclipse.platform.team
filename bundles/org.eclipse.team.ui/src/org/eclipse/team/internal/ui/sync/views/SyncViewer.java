@@ -101,6 +101,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	 */
 	private Map subscriberInputs = new HashMap(1);
 	private SubscriberInput input = null;
+	private SubscriberInput lastInput = null;
 	
 	/*
 	 * A set of common actions. They are hooked to the active SubscriberInput and
@@ -338,6 +339,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	public void initializeSubscriberInput(final SubscriberInput input) {
 		// Only initialize if we have a runnable context
 		if (!hasRunnableContext()) return;
+		this.lastInput = input;
 		this.input = input;
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -357,7 +359,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 			}
 		});
 	}
-
+	
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
@@ -502,13 +504,17 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		subscriberInputs.put(s.getId(), si);
 		ActionContext context = new ActionContext(null);
 		context.setInput(si);
-		actions.addContext(context);
-		
-		// show the last registered subscriber in the view
-		if (getInput() == null) {
-			initializeSubscriberInput(si);
-		}
+		actions.addContext(context);	
+		initializeSubscriberInput(si);
 	}
+	
+	public void removeSubscriber(SyncTreeSubscriber s) {
+			SubscriberInput si = (SubscriberInput)subscriberInputs.get(s.getId());
+			ActionContext context = new ActionContext(null);
+			context.setInput(si);
+			actions.removeContext(context);	
+			initializeSubscriberInput(lastInput);
+		}
 	
 	public void collapseAll() {
 		if (viewer == null || !(viewer instanceof AbstractTreeViewer)) return;
