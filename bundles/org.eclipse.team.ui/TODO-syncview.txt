@@ -97,7 +97,7 @@ x actions in sync view all assume that selection will have a resource (e.g refre
   - this is a bit confusing as the name implies otherwise
   - should either consider a name change or a spec change
   [jm] I never understood why is was spec'd like that :) You can decide...
-- compare input requires root node to have children or diff viewer is not added
+x compare input requires root node to have children or diff viewer is not added
   - this is problematic when creating a wizard page that is dynamically populated
   - not sure if there's problems caused by returning true when there are no children
   [jm] I think this it's fine to have root nodes return true to hasChildren. I don't like
@@ -120,17 +120,17 @@ x actions in sync view all assume that selection will have a resource (e.g refre
   - although less likely in UI, can still happen
   - need tests for these scenarios to ensure generated event is correct after addition and removal
 - there are several places in SyncInfoSet and in the DiffNodes where we must use the workspace root
-as the input resource to imply get all members? Maybe this should be cleaned up a bit.
+  as the input resource to imply get all members? Maybe this should be cleaned up a bit.
 - SyncInfoSet must be cleaned up a lot, the API is vague and method names are not clear.
   x we need a way to ensure that the sync set does not change while we are building a diff tree
   x events are only fired from endInput(). It should work in both batching and non-batching mode  
 x SyncInfoDiffNode doesn't have to return a resource or a syncinfo. By definition a diff node already has API
-for returning a sync kind getKind() and access to all three resources getRight(), getLeft(), getAncestor().
+  for returning a sync kind getKind() and access to all three resources getRight(), getLeft(), getAncestor().
 
 ======================================================================
  PR LIST (02-02-2004) MV
 ======================================================================
-- sync view title says "Summary" when first opened
+x sync view title says "Summary" when first opened
 - would like to show subscriber roots as compressed folders at root of sync view
   - sync set needs to have the concept of roots
 - How is a reset propogated through the sync set chain. 

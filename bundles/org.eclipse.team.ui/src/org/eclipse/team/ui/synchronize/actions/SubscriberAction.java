@@ -10,15 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.actions;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.FastSyncInfoFilter;
+import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
 /**
@@ -34,27 +35,14 @@ import org.eclipse.ui.*;
 public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate, IEditorActionDelegate {
 	
 	/**
-	 * This method returns all instances of SynchronizeViewNode that are in the current
-	 * selection. For a table view, this is any resource that is directly selected.
-	 * For a tree view, this is any descendants of the selected resource that are
+	 * This method returns all instances of SyncInfo that are in the current
+	 * selection. For a tree view, this is any descendants of the selected resource that are
 	 * contained in the view.
 	 * 
 	 * @return the selected resources
 	 */
 	protected SyncInfo[] getSyncInfos() {
-		Object[] selected = ((IStructuredSelection)selection).toArray();
-		Set result = new HashSet();
-		for (int i = 0; i < selected.length; i++) {
-			Object object = selected[i];
-			if (object instanceof SyncInfoDiffNode) {
-				SyncInfoDiffNode syncResource = (SyncInfoDiffNode) object;
-				SyncInfo[] infos = syncResource.getDescendantSyncInfos();
-				result.addAll(Arrays.asList(infos));
-			} else if(object instanceof SyncInfo) {
-				result.add(object);
-			}
-		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+		return Utils.getSyncInfos(((IStructuredSelection)selection).toArray());
 	}
 
 	/**

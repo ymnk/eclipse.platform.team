@@ -24,8 +24,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ISubscriberResource;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
@@ -378,6 +377,11 @@ public class Utils {
 		return text;
 	}
 
+	/**
+	 * Returns the list of resources contained in the given elements.
+	 * @param elements
+	 * @return the list of resources contained in the given elements.
+	 */
 	public static IResource[] getResources(Object[] elements) {
 		List resources = new ArrayList();
 		for (int i = 0; i < elements.length; i++) {
@@ -395,5 +399,34 @@ public class Utils {
 			}
 		}
 		return (IResource[]) resources.toArray(new IResource[resources.size()]);
+	}
+	
+	/**
+	 * This method returns all out-of-sync SyncInfos that are in the current
+	 * selection.
+	 * 
+	 * @return the list of selected sync infos
+	 */
+	public static SyncInfo[] getSyncInfos(Object[] selected) {
+		Set result = new HashSet();
+		for (int i = 0; i < selected.length; i++) {
+			Object object = selected[i];
+			if (object instanceof SyncInfoDiffNode) {
+				SyncInfoDiffNode syncResource = (SyncInfoDiffNode) object;
+				if(syncResource.hasChildren()) {
+					SyncInfoSet set = syncResource.getSyncInfoSet();
+					SyncInfo[] infos = set.getOutOfSyncDescendants(syncResource.getResource());
+					result.addAll(Arrays.asList(infos));
+				} else {
+					SyncInfo info = syncResource.getSyncInfo();
+					if(info != null && info.getKind() != SyncInfo.IN_SYNC) {
+						result.add(info);
+					}
+				}
+			} else if(object instanceof SyncInfo) {
+				result.add(object);
+			}
+		}
+		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
 }

@@ -145,7 +145,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		}
 	}
 	
-	private void removeAllFromTree() {
+	protected void removeAllFromTree() {
 		IDiffElement[] elements = getRoot().getChildren();
 		for (int i = 0; i < elements.length; i++) {
 			viewer.remove(elements[i]);			
@@ -278,7 +278,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		return node;
 	}
 
-	protected void addToViewer(SyncInfoDiffNode node) {
+	public void addToViewer(SyncInfoDiffNode node) {
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
 			tree.add(node.getParent(), node);
@@ -360,6 +360,7 @@ public class SyncInfoDiffNodeBuilder implements ISyncSetChangedListener {
 		resourceMap.clear();
 		root.getSyncInfoSet().removeSyncSetChangedListener(this);
 	}
+	
 	/**
 	 * @return Returns the root.
 	 */

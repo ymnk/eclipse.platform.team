@@ -20,11 +20,29 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.compare.RemoteResourceTypedElement;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
+/**
+ * A diff node used to display the synchronization state for resources described by
+ * existing {@link SyncInfo} objects. The synchronization state for a node can
+ * change after it has been created. Since it implements the <code>ITypedElement</code>
+ * and <code>ICompareInput</code> interfaces it can be used directly to
+ * display the compare result in a <code>DiffTreeViewer</code> and as the
+ * input to any other compare/merge viewer.
+ * <p>
+ * You can access the {@link SyncInfoSet} this node was created from for quick access
+ * to the underlying sync state model.
+ * </p>
+ * <p>
+ * TODO: mention node builders and syncinfocompareinput and syncinfodifftree viewer
+ * Clients typically use this class as is, but may subclass if required.
+ * @see DiffTreeViewer
+ * @see Differencer
+ */
 public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
 	
 	private SyncInfoSet syncSet;
@@ -105,26 +123,20 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	}
 	
 	/**
-	 * Construct a <code>SyncInfoDiffNode</code> for a resource for use in a diff tree viewer.
+	 * Construct a <code>SyncInfoDiffNode</code> for the given resource. The {@link SyncInfoSet} 
+	 * that contains sync states for this resource must also be provided. This set is used
+	 * to access the underlying sync state model that is the basis for this node this helps for
+	 * providing quick access to the logical containment
+	 * 
 	 * @param set The set associated with the diff tree veiwer
 	 * @param resource The resource for the node
 	 */
 	public SyncInfoDiffNode(IDiffContainer parent, SyncInfoSet set, IResource resource) {
 		this(parent, createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
+		Assert.isNotNull(resource);
+		Assert.isNotNull(set);
 		this.syncSet = set;
 		this.resource = resource;
-	}
-	
-	/**
-	 * Construct a <code>SyncInfoDiffNode</code> for use in a compare input that does not 
-	 * make use of a diff tree viewer.
-	 * TODO: Create subclass for SyncInfoCompareInput
-	 * @param info The <code>SyncInfo</code> for a resource
-	 */
-	public SyncInfoDiffNode(SyncInfo info) {
-		this(null, createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
-		this.syncSet = new SyncInfoSet(new SyncInfo[] {info});
-		this.resource = info.getLocal();
 	}
 
 	/* (non-Javadoc)
@@ -187,22 +199,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	}
 	
 	/**
-	 * Return the <code>SyncInfo</code> for all visible out-of-sync resources
-	 * that are descendants of this node in the diff viewer.
-	 */
-	public SyncInfo[] getDescendantSyncInfos() {
-		SyncInfoSet input = getSyncInfoSet();
-		IResource resource = getResource();
-		SyncInfo info = getSyncInfo();
-		if(input != null && resource != null) {
-			return input.getOutOfSyncDescendants(resource);
-		} else if(info != null) {
-			return new SyncInfo[] {info};
-		}
-		return new SyncInfo[0];
-	}
-	
-	/**
 	 * Return true if the receiver's TeamSubscriber and Resource are equal to that of object.
 	 * @param object The object to test
 	 * @return true has the same subsriber and resource
@@ -250,28 +246,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 		}
 	}
 	
-	/**
-	 * Return whether this diff node has descendant conflicts in the view in which it appears.
-	 * @return whether the node has descendant conflicts
-	 */
-	public boolean hasDecendantConflicts() {
-		IResource resource = getResource();
-		// If this node has no resource, we can't tell
-		// The subclass which created the node with no resource should have overridden this method
-		if (resource != null && resource.getType() == IResource.FILE) return false;
-		// If the set has no conflicts then the node doesn't either
-		if (getSyncInfoSet().hasConflicts()) {
-			SyncInfo[] infos = getDescendantSyncInfos();
-			for (int i = 0; i < infos.length; i++) {
-				SyncInfo info = infos[i];
-				if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
 	public SyncInfo getSyncInfo() {
 		IResource resource = getResource();
 		if(resource != null) {

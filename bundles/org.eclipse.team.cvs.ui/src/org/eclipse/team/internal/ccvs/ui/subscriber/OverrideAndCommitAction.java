@@ -11,8 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
 
 public class OverrideAndCommitAction extends SubscriberCommitAction {
@@ -24,7 +22,7 @@ public class OverrideAndCommitAction extends SubscriberCommitAction {
 		return new SyncInfoDirectionFilter(new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING});
 	}
 	
-	protected boolean promptForConflictHandling(SyncInfoSet syncSet) {
+	protected boolean promptForConflictHandling(SelectionSyncInfoSet syncSet) {
 		// If there is a conflict in the syncSet, we need to prompt the user before proceeding.
 		if (syncSet.hasConflicts() || syncSet.hasIncomingChanges()) {
 			switch (promptForConflicts(syncSet)) {

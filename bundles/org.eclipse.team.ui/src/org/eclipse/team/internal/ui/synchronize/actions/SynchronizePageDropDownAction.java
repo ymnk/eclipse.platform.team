@@ -10,28 +10,19 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.actions;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.IMenuCreator;
+import org.eclipse.jface.action.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.SynchronizeView;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.actions.*;
+import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.actions.ShowSynchronizeParticipantAction;
 import org.eclipse.ui.texteditor.IUpdate;
 
 public class SynchronizePageDropDownAction extends Action implements IMenuCreator, ISynchronizeParticipantListener, IUpdate {
 
 		private ISynchronizeView fView;
-		private Action overviewPageAction;
 		private Menu fMenu;
 	
 		/* (non-Javadoc)
@@ -46,13 +37,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			fView= view;
 			Utils.initAction(this, "action.refreshSubscriber."); //$NON-NLS-1$
 			setMenuCreator(this);
-			TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(this);
-			overviewPageAction = new Action("Overview Page") {
-				public void run() {
-					fView.displayOverviewPage();
-				}
-			};
-			
+			TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(this);			
 			update();
 		}
 
@@ -90,12 +75,6 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 				Action action = new ShowSynchronizeParticipantAction(fView, page);  
 				action.setChecked(page.equals(current));
 				addActionToMenu(fMenu, action);
-			}
-			if(SynchronizeView.INCLUDE_OVERVIEWPAGE) {
-				// 	Add Overview Page
-				addMenuSeparator();
-				addActionToMenu(fMenu, overviewPageAction);
-				overviewPageAction.setChecked(current == null);
 			}
 			return fMenu;
 		}

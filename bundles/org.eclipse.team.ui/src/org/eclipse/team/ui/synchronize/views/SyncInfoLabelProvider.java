@@ -13,6 +13,7 @@ package org.eclipse.team.ui.synchronize.views;
 import java.util.*;
 
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
@@ -187,7 +188,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 		// the conflict
 		int kind = element.getKind();
 		if ((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
-			if (element.hasDecendantConflicts()) {
+			if (hasDecendantConflicts(element)) {
 				ImageDescriptor overlay = new OverlayIcon(base, new ImageDescriptor[]{TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_CONFLICT_OVR)}, new int[]{OverlayIcon.BOTTOM_LEFT}, new Point(base.getBounds().width, base.getBounds().height));
 				if (fgImageCache == null) {
 					fgImageCache = new HashMap(10);
@@ -201,6 +202,29 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 			}
 		}
 		return base;
+	}
+	
+	/**
+	 * Return whether this diff node has descendant conflicts in the view in which it appears.
+	 * @return whether the node has descendant conflicts
+	 */
+	private boolean hasDecendantConflicts(SyncInfoDiffNode node) {
+		IResource resource = node.getResource();
+		// If this node has no resource, we can't tell
+		// The subclass which created the node with no resource should have overridden this method
+		if (resource.getType() == IResource.FILE) return false;
+		// If the set has no conflicts then the node doesn't either
+		SyncInfoSet set = node.getSyncInfoSet();
+		if (set.hasConflicts()) {
+			SyncInfo[] infos = set.getOutOfSyncDescendants(resource);
+			for (int i = 0; i < infos.length; i++) {
+				SyncInfo info = infos[i];
+				if ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/*
