@@ -13,50 +13,57 @@ package org.eclipse.team.ui.synchronize;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
 
 /**
- * Configuration that provides a <code>CheckboxTreeViewer</code> as the diff viewer.
+ * This compare input supports selection of multiple sync info using checkboxes.
+ * 
+ * @since 3.0
  */
-public class SyncInfoDiffCheckboxTreeViewerConfiguration extends SyncInfoDiffTreeViewerConfiguration {
+public class SyncInfoSetCheckboxCompareInput extends SyncInfoSetCompareInput {
 
 	private Object[] checked;
 	private ICheckStateListener listener;
 	
 	/**
-	 * Create a <code>SyncInfoDiffCheckboxTreeViewerConfiguration</code> on the given sync set.
-	 * @param menuId the id of objectContributions to be shown in the viewer
-	 * @param set the set containing the resources to be shown
+	 * Create a <code>SyncInfoSetCheckboxCompareInput</code> whose diff viewer is configured
+	 * using the provided <code>SyncInfoDiffTreeViewerConfiguration</code>.
+	 * @param configuration the compare configuration 
+	 * @param diffViewerConfiguration the diff viewer configuration
+	 * @param listener listener taht is notified whenever the selection changes
 	 */
-	public SyncInfoDiffCheckboxTreeViewerConfiguration(String menuId, SyncInfoSet set, ICheckStateListener listener) {
-		super(menuId, set);
+	public SyncInfoSetCheckboxCompareInput(CompareConfiguration configuration, SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration, ICheckStateListener listener) {
+		super(configuration, diffViewerConfiguration);
 		this.listener = listener;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewerConfiguration#createViewer(org.eclipse.swt.widgets.Composite)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput#internalCreateDiffViewer(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewerConfiguration)
 	 */
-	public StructuredViewer createViewer(Composite parent) {
-		final SyncInfoDiffCheckboxTreeViewer treeViewer = new SyncInfoDiffCheckboxTreeViewer(parent, this);
-		initializeViewer(parent, treeViewer);
+	protected StructuredViewer internalCreateDiffViewer(
+			Composite parent,
+			SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration) {
+		final SyncInfoDiffCheckboxTreeViewer treeViewer = new SyncInfoDiffCheckboxTreeViewer(parent, diffViewerConfiguration);
 		treeViewer.addCheckStateListener(new ICheckStateListener() {
 			public void checkStateChanged(CheckStateChangedEvent event) {
 				checked = treeViewer.getCheckedElements();
-				listener.checkStateChanged(event);
+				if (listener != null) {
+					listener.checkStateChanged(event);
+				}
 			}
 		});
 		return treeViewer;
 	}
-	
+
 	/**
 	 * Return the resources that were checked in the diff viewer.
-	 * @return an array of resoruces
+	 * @return an array of resources
 	 */
-	public IResource[] getChecked() {
+	public IResource[] getSelection() {
 		List result = new ArrayList();
 		if (checked != null) {
 			for (int i = 0; i < checked.length; i++) {
@@ -73,5 +80,4 @@ public class SyncInfoDiffCheckboxTreeViewerConfiguration extends SyncInfoDiffTre
 		}
 		return (IResource[]) result.toArray(new IResource[result.size()]);
 	}
-
 }

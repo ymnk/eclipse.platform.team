@@ -27,8 +27,6 @@ import org.eclipse.team.internal.ui.Utils;
  * in a <code>SyncInfoSet</code>. The configuration of the diff viewer is determined by the 
  * <code>SyncInfoDiffTreeViewerConfiguration</code> that is used to create the 
  * <code>SyncInfoSetCompareInput</code>.
- * <p>
- * This class is not intended to be overriden by clients.
  * 
  * @since 3.0
  */
@@ -47,10 +45,34 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 		this.diffViewerConfiguration = diffViewerConfiguration;
 	}
 
-	public Viewer createDiffViewer(Composite parent) {
-		StructuredViewer v = diffViewerConfiguration.createViewer(parent);
+	public final Viewer createDiffViewer(Composite parent) {
+		StructuredViewer v = internalCreateDiffViewer(parent, diffViewerConfiguration);
 		diffViewerConfiguration.updateCompareEditorInput(this);
-		v.addOpenListener(new IOpenListener() {
+		initializeDiffViewer(v);
+		return v;
+	}
+
+	/**
+	 * Create the diff viewer for this compare input. This method simply creates the widget.
+	 * Any initialization is performed in the <code>initializeDiffViewer(StructuredViewer)</code>
+	 * method. The default diff viewer is a <code>SyncInfoDiffTreeViewer</code>. Subclass may override.
+	 * @param parent the parent <code>Composite</code> of the diff viewer to be created
+	 * @param diffViewerConfiguration the configuration for the diff viewer
+	 * @return the created diff viewer
+	 */
+	protected StructuredViewer internalCreateDiffViewer(Composite parent, SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration) {
+		return new SyncInfoDiffTreeViewer(parent, diffViewerConfiguration);
+	}
+
+	/**
+	 * Initialize the diff viewer created for this compare input. If a subclass
+	 * overrides the <code>createDiffViewer(Composite)</code> method, it should
+	 * invoke this method on the created viewer in order to get the proper
+	 * labelling in the compare input's contents viewers.
+	 * @param viewer the diff viewer created by the compare input
+	 */
+	protected void initializeDiffViewer(StructuredViewer viewer) {
+		viewer.addOpenListener(new IOpenListener() {
 			public void open(OpenEvent event) {
 				ISelection s = event.getSelection();
 				SyncInfoDiffNode node = getElement(s);
@@ -62,7 +84,6 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 				}
 			}
 		});
-		return v;
 	}
 
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {

@@ -39,11 +39,9 @@ public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffTreeVie
 		this.view = view;
 		this.participant = participant;
 	}
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffViewerConfiguration#createDiffTreeViewer(org.eclipse.swt.widgets.Composite)
-	 */
+	
 	public StructuredViewer createViewer(Composite parent) {
-		final StructuredViewer treeViewer = super.createViewer(parent);
+		final StructuredViewer treeViewer = new SyncInfoDiffTreeViewer(parent, this);
 
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());

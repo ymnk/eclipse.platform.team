@@ -61,23 +61,12 @@ public class SyncInfoDiffTreeViewerConfiguration {
 		this.menuId = menuId;
 		this.set = set;
 	}
-	
-	/**
-	 * Create the viewer for this configuration. Only one viewer can be created from a configuration.
-	 * @param parent the parent of the diff viewer
-	 * @return a diff viewer
-	 */
-	public StructuredViewer createViewer(Composite parent) {
-		final SyncInfoDiffTreeViewer treeViewer = new SyncInfoDiffTreeViewer(parent, this);
-		initializeViewer(parent, treeViewer);
-		return treeViewer;
-	}
 
 	/**
 	 * @param parent
 	 * @param treeViewer
 	 */
-	protected void initializeViewer(Composite parent, final StructuredViewer viewer) {
+	public void initializeViewer(Composite parent, final StructuredViewer viewer) {
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
 		viewer.setLabelProvider(new TeamSubscriberParticipantLabelProvider());

@@ -15,7 +15,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
@@ -25,22 +24,10 @@ public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer i
 
 	private SyncInfoDiffTreeViewerConfiguration configuration;
 	
-	/**
-	 * Create a <code>SyncInfoDiffCheckboxTreeViewer</code> that uses trhe default configuration for
-	 * the given menuId and <code>SyncInfoSet</code>.
-	 * @param parent the parent composite
-	 * @param menuId the menuId used to determine which objectContributions appear in the popup menu
-	 * @param set the set which contains the resources to be displayed by the viewer
-	 * @return a <code>SyncInfoDiffTreeViewer</code>
-	 */
-	public static StructuredViewer createViewer(Composite parent, String menuId, SyncInfoSet set) {
-		SyncInfoDiffTreeViewerConfiguration configuration = new SyncInfoDiffTreeViewerConfiguration(menuId, set);
-		return configuration.createViewer(parent);
-	}
-	
 	public SyncInfoDiffCheckboxTreeViewer(Composite parent, SyncInfoDiffTreeViewerConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		this.configuration = configuration;
+		configuration.initializeViewer(parent, this);
 	}
 
 	protected void handleLabelProviderChanged(LabelProviderChangedEvent event) {
