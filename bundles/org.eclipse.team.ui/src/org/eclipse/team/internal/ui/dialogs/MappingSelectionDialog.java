@@ -28,10 +28,12 @@ public abstract class MappingSelectionDialog extends DetailsDialog implements IP
     private ResourceMapping[] checkedMappings;
     private ResourceMappingSelectionArea mappingArea;
     private ResourceMappingResourceDisplayArea resourceArea;
+    private final IResourceMappingResourceFilter filter;
 
-    public MappingSelectionDialog(Shell parentShell, String dialogTitle, ResourceMapping[] mappings) {
+    public MappingSelectionDialog(Shell parentShell, String dialogTitle, ResourceMapping[] mappings, IResourceMappingResourceFilter filter) {
         super(parentShell, dialogTitle);
         this.mappings = mappings;
+        this.filter = filter;
     }
 
     /* (non-Javadoc)
@@ -66,7 +68,7 @@ public abstract class MappingSelectionDialog extends DetailsDialog implements IP
      */
     protected Composite createDropDownDialogArea(Composite parent) {
         if (resourceArea == null) {
-            resourceArea = new ResourceMappingResourceDisplayArea(getSelectedMapping());
+            resourceArea = new ResourceMappingResourceDisplayArea(getSelectedMapping(), filter);
         }
         Composite c = createComposite(parent);
         resourceArea.createArea(c);

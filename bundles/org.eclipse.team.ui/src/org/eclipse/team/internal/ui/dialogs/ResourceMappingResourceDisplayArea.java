@@ -10,27 +10,25 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.dialogs;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
+import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.*;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.model.*;
-import org.eclipse.ui.model.IWorkbenchAdapter;
-import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
@@ -42,13 +40,15 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
     private ResourceMappingContext context;
     private TreeViewer viewer;
     private Label label;
+    private IResourceMappingResourceFilter filter;
+    private Map cachedFiltering = new HashMap(); // String(mapping)-> Map: Resource -> List(IResource)
     
     private static IWorkbenchAdapter getWorkbenchAdapter(IAdaptable o) {
         return (IWorkbenchAdapter)o.getAdapter(IWorkbenchAdapter.class);
     }
     
     /**
-     * Return the label that shgould be used for the given mapping
+     * Return the label that should be used for the given mapping
      * as determined using the IWorkbnchAdaptable for the mapping
      * or it's model object.
      * @param mapping the mappings
@@ -89,22 +89,16 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
                 ResourceTraversal traversal = traversals[i];
                 IResource[] resources = traversal.getResources();
                 for (int j = 0; j < resources.length; j++) {
-                    IResource resource = resources[j];               
-                    result.add(new ResourceTraversalElement(this, traversal, resource, context));
+                    IResource resource = resources[j];
+                    if (isIncludedInFilter(resource, traversal))
+                        result.add(new ResourceTraversalElement(this, traversal, resource, context));
                 }
             }
             return result.toArray(new Object[result.size()]);
         }
 
         private ResourceTraversal[] getTraversals() {
-            try {
-                IProgressMonitor monitor = new NullProgressMonitor(); // TODO
-                ResourceTraversal[] traversals = mapping.getTraversals(context, monitor);
-                return traversals;
-            } catch (CoreException e) {
-                TeamUIPlugin.log(IStatus.ERROR, "An error occurred fetching the traversals of " + getLabel(mapping), e); //$NON-NLS-1$
-                return new ResourceTraversal[0];
-            }
+            return ResourceMappingResourceDisplayArea.getTraversals(mapping, context);
         }
 
         /* (non-Javadoc)
@@ -185,7 +179,8 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
                     List result = new ArrayList();
                     for (int i = 0; i < members.length; i++) {
                         IResource child = members[i];
-                        if (includeFolders || child.getType() == IResource.FILE)
+                        if ((includeFolders || child.getType() == IResource.FILE) 
+                                && isIncludedInFilter(child, traversal))
                             result.add(new ResourceTraversalElement(this, traversal, child, context));
                     }
                     return result.toArray(new Object[result.size()]);
@@ -199,7 +194,7 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
         private IResource[] members(IContainer container) throws CoreException {
             if (context == null)
                 return container.members();
-            return context.fetchMembers(container, null); // TODO progress
+            return ResourceMappingResourceDisplayArea.members(container, context);
         }
         
         /* (non-Javadoc)
@@ -222,14 +217,7 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
         }
         
         private boolean isTraversalRoot(IResource resource) {
-            IResource[] resources = traversal.getResources();
-            for (int i = 0; i < resources.length; i++) {
-                IResource root = resources[i];
-                if (root.equals(resource)) {
-                    return true;
-                }
-            }
-            return false;
+            return ResourceMappingResourceDisplayArea.isTraversalRoot(traversal, resource);
         }
 
         /* (non-Javadoc)
@@ -252,9 +240,11 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
     /**
      * Create a dialog area tht will display the resources contained in the 
      * given mapping
+     * @param filter 
      */
-    public ResourceMappingResourceDisplayArea(ResourceMapping mapping) {
+    public ResourceMappingResourceDisplayArea(ResourceMapping mapping, IResourceMappingResourceFilter filter) {
         this.mapping = mapping;
+        this.filter = filter;
     }
     
     /* (non-Javadoc)
@@ -291,5 +281,121 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
     public void setMapping(ResourceMapping mapping, String labelText) {
         this.mapping = mapping;
         setInput(labelText);
+    }
+    
+    private boolean isIncludedInFilter(IResource resource, ResourceTraversal traversal) {
+        if (filter == null)
+            return true;
+        Map mappingResources = (Map)cachedFiltering.get(mapping);
+        if (mappingResources == null) {
+            mappingResources = buildFilteredResourceMap(mapping, context);
+            cachedFiltering.put(mapping, mappingResources);
+        }
+        return mappingResources.containsKey(resource);
+    }
+
+    private Map buildFilteredResourceMap(final ResourceMapping mapping, final ResourceMappingContext context) {
+        final Map result = new HashMap();
+        try {
+            PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
+                public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                    try {
+                        monitor.beginTask(null, IProgressMonitor.UNKNOWN);
+                        ResourceTraversal[] traversals = mapping.getTraversals(context, Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
+                        for (int i = 0; i < traversals.length; i++) {
+                            ResourceTraversal traversal = traversals[i];
+                            buildFilteredResourceMap(mapping, traversal, Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN), result);
+                        }
+                    } catch (CoreException e) {
+                        throw new InvocationTargetException(e);
+                    } finally {
+                        monitor.done();
+                    }
+                }
+
+                private void buildFilteredResourceMap(final ResourceMapping mapping, final ResourceTraversal traversal, IProgressMonitor monitor, final Map result) throws CoreException {
+                    traversal.visit(new IResourceVisitor() {
+                        public boolean visit(IResource resource) throws CoreException {
+                            if (filter.select(resource, mapping, traversal)) {
+                                // Add the resource to the result
+                                result.put(resource, new ArrayList());
+                                // Make sure that there are parent folders for the resource up to the traversal root
+                                IResource child = resource;
+                                while (!isTraversalRoot(traversal, child)) {
+                                    IContainer parent = child.getParent();
+                                    List children = (List)result.get(parent);
+                                    if (children == null) {
+                                        children = new ArrayList();
+                                        result.put(parent, children);
+                                    }
+                                    children.add(child);
+                                    child = parent;
+                                }
+                            }
+                            return true;
+                        }
+                    });
+                    
+                }
+            });
+        } catch (InvocationTargetException e) {
+            TeamUIPlugin.log(IStatus.ERROR, "An error occurred while filtering " + getLabel(mapping), e); //$NON-NLS-1$
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+        return result;
+    }
+    
+    /* private */ static ResourceTraversal[] getTraversals(final ResourceMapping mapping, final ResourceMappingContext context) {
+        final List traversals = new ArrayList();
+        try {
+            PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
+                public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                    try {
+                        traversals.add(mapping.getTraversals(context, monitor));
+                    } catch (CoreException e) {
+                        throw new InvocationTargetException(e);
+                    }
+                }
+            });
+            return (ResourceTraversal[])traversals.get(0);
+        } catch (InvocationTargetException e) {
+            TeamUIPlugin.log(IStatus.ERROR, "An error occurred while traversing " + getLabel(mapping), e); //$NON-NLS-1$
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+        return new ResourceTraversal[0];
+    }
+    
+    /* private */ static IResource[] members(final IContainer container, final ResourceMappingContext context) {
+        final List members = new ArrayList();
+        try {
+            PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
+                public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                    try {
+                        members.add(context.fetchMembers(container, monitor));
+                    } catch (CoreException e) {
+                        throw new InvocationTargetException(e);
+                    }
+                }
+            });
+            return (IResource[])members.get(0);
+        } catch (InvocationTargetException e) {
+            TeamUIPlugin.log(IStatus.ERROR, "An error occurred while fetching the members of" + container.getFullPath(), e); //$NON-NLS-1$
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+        return new IResource[0];
+    }
+    
+    /* private */ static boolean isTraversalRoot(ResourceTraversal traversal, IResource resource) {
+        IResource[] resources = traversal.getResources();
+        for (int i = 0; i < resources.length; i++) {
+            IResource root = resources[i];
+            if (root.equals(resource)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

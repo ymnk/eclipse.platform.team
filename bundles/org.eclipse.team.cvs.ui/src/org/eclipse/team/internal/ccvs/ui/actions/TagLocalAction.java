@@ -15,6 +15,7 @@ import java.util.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Shell;
@@ -28,18 +29,28 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.TagOperation;
+import org.eclipse.team.internal.ui.dialogs.*;
 import org.eclipse.team.internal.ui.dialogs.MappingSelectionDialog;
 import org.eclipse.team.internal.ui.dialogs.ResourceMappingResourceDisplayArea;
 
 public class TagLocalAction extends TagAction {
 
+    private final class UncommittedFilter implements IResourceMappingResourceFilter {
+        public boolean select(IResource resource,
+                ResourceMapping mapping, ResourceTraversal traversal)
+                throws CoreException {
+            SyncInfo info = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().getSyncInfo(resource);
+            return (info != null && getResourceFilter().select(info));
+        }
+    }
+    
     private final class UncommittedChangesDialog extends MappingSelectionDialog {
+
         private final Subscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
-
         private final FastSyncInfoFilter resourceFilter = getResourceFilter();
-
+        
         private UncommittedChangesDialog(Shell parentShell, String dialogTitle, ResourceMapping[] mappings) {
-            super(parentShell, dialogTitle, mappings);
+            super(parentShell, dialogTitle, mappings, new UncommittedFilter());
         }
 
         protected String getSingleMappingMessage(ResourceMapping mapping) {
