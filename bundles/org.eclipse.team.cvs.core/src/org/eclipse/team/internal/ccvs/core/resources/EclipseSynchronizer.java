@@ -69,7 +69,6 @@ public class EclipseSynchronizer {
 	
 	private Set changedResources = new HashSet();
 	private Set changedFolders = new HashSet();
-	private Set unmodifiedResources = new HashSet();
 	
 	/*
 	 * Package private contructor to allow specialized subclass for handling folder deletions
@@ -349,7 +348,6 @@ public class EclipseSynchronizer {
 			IStatus status = STATUS_OK;
 			if (lock.getNestingCount() == 1) {
 				status = commitCache(monitor);
-				broadcastModificationStateChanges();
 			}
 			if (status != STATUS_OK) {
 				throw new CVSException(status);
@@ -418,7 +416,7 @@ public class EclipseSynchronizer {
 				changedPeers.addAll(Arrays.asList(root.members()));
 				IResource[] resources = (IResource[]) changedPeers.toArray(new IResource[changedPeers.size()]);
 				CVSProviderPlugin.broadcastSyncInfoChanges(resources);
-				broadcastModificationChangesForSyncChanges(resources);
+				CVSProviderPlugin.getPlugin().getFileModificationManager().syncInfoChanged(resources);
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -1122,19 +1120,6 @@ public class EclipseSynchronizer {
 	}
 	
 	/**
-	 * Method clearModificationState.
-	 * @param iFile
-	 * @deprecated
-	 */
-	public void clearModificationState(final IResource resource) throws CVSException {
-		run(new ICVSRunnable() {
-			public void run(IProgressMonitor monitor) throws CVSException {
-				unmodifiedResources.add(resource);
-			}
-		}, null);	
-	}
-	
-	/**
 	 * Broadcast the modification changes for all files whose sync info may have
 	 * been changed by an external tool.
 	 * 
@@ -1152,19 +1137,6 @@ public class EclipseSynchronizer {
 			CVSProviderPlugin.broadcastModificationStateChanges(
 				(IResource[]) files.toArray(new IResource[files.size()]),
 				IResourceStateChangeListener.SYNC_INFO_EXTERNALLY_MODIFIED);
-		}
-	}
-
-	/**
-	 * Broadcast the modification changes for all committed or reverted files
-	 */
-	private void broadcastModificationStateChanges() {
-		// Provide notification for files whose modification state changed
-		if (!unmodifiedResources.isEmpty()) {
-			CVSProviderPlugin.broadcastModificationStateChanges(
-				(IResource[]) unmodifiedResources.toArray(new IResource[unmodifiedResources.size()]),
-				IResourceStateChangeListener.NO_LONGER_MODIFIED);
-			unmodifiedResources.clear();
 		}
 	}
 }
