@@ -124,7 +124,10 @@ public class RemoteFolderTreeBuilder {
 		// FIXME: We need a second session because of the use of a different handle on the same remote resource
 		// We didn't need one before!!! Perhaps we could support the changing of a sessions root as long as
 		// the folder sync info is the same 
-		remoteRoot = new RemoteFolderTree(null, repository, new Path(root.getFolderSyncInfo().getRepository()), tag);
+		remoteRoot =
+			new RemoteFolderTree(null,repository,
+				new Path(root.getFolderSyncInfo().getRepository()),
+				tagForRemoteFolder(root, tag));
 		session = new Session(repository, remoteRoot, false);
 		session.open(monitor);
 		try {
@@ -146,7 +149,7 @@ public class RemoteFolderTreeBuilder {
 	private RemoteFolderTree buildBaseTree(RemoteFolderTree parent, ICVSFolder local, IProgressMonitor monitor) throws CVSException {
 		
 		// Create a remote folder tree corresponding to the local resource
-		RemoteFolderTree remote = new RemoteFolderTree(parent, repository, new Path(local.getFolderSyncInfo().getRepository()), tag);
+		RemoteFolderTree remote = new RemoteFolderTree(parent, repository, new Path(local.getFolderSyncInfo().getRepository()), local.getFolderSyncInfo().getTag());
 		
 		// Create a List to contain the created children
 		List children = new ArrayList();
@@ -202,6 +205,8 @@ public class RemoteFolderTreeBuilder {
 		Map deltas = (Map)fileDeltas.get(localPath);
 		if (deltas == null)
 			deltas = EMPTY_MAP;
+			
+		
 		
 		// If there is a local, use the local children to start buidling the remote children
 		if (local != null) {
@@ -209,7 +214,10 @@ public class RemoteFolderTreeBuilder {
 			ICVSFolder[] folders = local.getFolders();
 			for (int i=0;i<folders.length;i++) {
 				if (folders[i].isCVSFolder() && (deltas.get(folders[i].getName()) != DELETED))
-					children.put(folders[i].getName(), new RemoteFolderTree(remote, repository, new Path(folders[i].getFolderSyncInfo().getRepository()), tag));
+					children.put(folders[i].getName(), 
+						new RemoteFolderTree(remote, repository, 
+							new Path(folders[i].getFolderSyncInfo().getRepository()), 
+							tagForRemoteFolder(folders[i],tag)));
 			}
 			// Build the child files corresponding to local files
 			ICVSFile[] files = local.getFiles();
@@ -240,7 +248,9 @@ public class RemoteFolderTreeBuilder {
 			String revision = (String)deltas.get(name);
 			if (revision == FOLDER) {
 				// XXX should getRemotePath() return an IPath instead of a String?
-				children.put(name, new RemoteFolderTree(remote, repository, new Path(remote.getRemotePath()).append(name), tag));
+				children.put(name, new RemoteFolderTree(remote, repository, 
+					new Path(remote.getRemotePath()).append(name), 
+					tagForRemoteFolder(remote, tag)));
 			} else if (revision == ADDED) {
 				children.put(name, new RemoteFile(remote, name, tag));
 			} else if (revision == UNKNOWN) {
@@ -477,6 +487,21 @@ public class RemoteFolderTreeBuilder {
 	
 	private void updateRevision(RemoteFolder root, IPath path, String revision) throws CVSException {
 		((RemoteFile)root.getFile(path.toString())).setRevision(revision);
+	}
+	
+	/*
+	 * Return the tag that should be associated with a remote folder.
+	 * 
+	 * This method is used to ensure that new directories contain the tag
+	 * derived from the parant local folder when appropriate. For instance,
+	 * 
+	 * The tag should be the provided tag. However, if tag is null, the 
+	 * tag for the folder should be derived from the provided reference folder
+	 * which could be the local resource corresponding to the remote or the parent
+	 * of the remote.
+	 */
+	private CVSTag tagForRemoteFolder(ICVSFolder folder, CVSTag tag) throws CVSException {
+		return tag == null ? folder.getFolderSyncInfo().getTag() : tag;
 	}
 }
 
