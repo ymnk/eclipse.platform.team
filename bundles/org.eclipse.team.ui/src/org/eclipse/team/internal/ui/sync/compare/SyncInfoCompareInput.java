@@ -245,20 +245,4 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	public SyncInfo getSyncInfo() {
 		return sync;
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.IPropertyChangeNotifier#removePropertyChangeListener(org.eclipse.jface.util.IPropertyChangeListener)
-	 */
-	public void removePropertyChangeListener(IPropertyChangeListener listener) {
-		super.removePropertyChangeListener(listener);
-	}
-
-	
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.IPropertyChangeNotifier#addPropertyChangeListener(org.eclipse.jface.util.IPropertyChangeListener)
-	 */
-	public void addPropertyChangeListener(IPropertyChangeListener listener) {
-		super.addPropertyChangeListener(listener);
-	}
 }
