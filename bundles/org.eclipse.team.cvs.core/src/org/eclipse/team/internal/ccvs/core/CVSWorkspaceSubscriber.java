@@ -20,7 +20,6 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.TeamDelta;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 
@@ -42,18 +41,6 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		
 		// TODO: temporary proxy for CVS events
 		CVSProviderPlugin.addResourceStateChangeListener(this); 
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#isSupervised(org.eclipse.core.resources.IResource)
-	 */
-	public boolean isSupervised(IResource resource) throws TeamException {
-		RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
-		if (provider == null) return false;
-		// TODO: what happens for resources that don't exist?
-		// TODO: is it proper to use ignored here?
-		ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(resource);
-		return (!cvsThing.isIgnored());
 	}
 
 	/* 
@@ -102,7 +89,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 			}
 		}		
 		
-		fireSyncChanged(changedResources); 
+		fireTeamResourceChange(asSyncChangedDeltas(changedResources)); 
 	}
 
 	/* (non-Javadoc)

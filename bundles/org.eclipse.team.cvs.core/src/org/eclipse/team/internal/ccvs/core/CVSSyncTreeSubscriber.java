@@ -23,12 +23,14 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ComparisonCriteria;
 import org.eclipse.team.core.sync.ContentComparisonCriteria;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 
 /**
@@ -199,7 +201,8 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		Set allChanges = new HashSet();
 		allChanges.addAll(Arrays.asList(remoteChanges));
 		allChanges.addAll(Arrays.asList(baseChanges));
-		fireSyncChanged((IResource[]) allChanges.toArray(new IResource[allChanges.size()]));
+		IResource[] changedResources = (IResource[]) allChanges.toArray(new IResource[allChanges.size()]);
+		fireTeamResourceChange(asSyncChangedDeltas(changedResources)); 
 	}
 
 	/* (non-Javadoc)
@@ -226,6 +229,22 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		return (ComparisonCriteria[]) comparisonCriterias.values().toArray(new ComparisonCriteria[comparisonCriterias.size()]);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#isSupervised(org.eclipse.core.resources.IResource)
+	 */
+	public boolean isSupervised(IResource resource) throws TeamException {
+		RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
+		if (provider == null) return false;
+		// TODO: what happens for resources that don't exist?
+		// TODO: is it proper to use ignored here?
+		ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(resource);
+		if (cvsThing.isIgnored()) {
+			// An ignored resource could have an incoming addition (conflict)
+			return getRemoteSynchronizer().getSyncBytes(resource) != null;
+		}
+		return true;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.SyncTreeSubscriber#isThreeWay()
 	 */

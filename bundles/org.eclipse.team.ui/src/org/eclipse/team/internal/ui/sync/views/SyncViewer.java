@@ -31,6 +31,7 @@ import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableLayout;
@@ -422,5 +423,9 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		viewer.getControl().setRedraw(false);		
 		((AbstractTreeViewer)viewer).collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
 		viewer.getControl().setRedraw(true);
+	}
+	
+	public ISelection getSelection() {
+		return getViewer().getSelection();
 	}
 }

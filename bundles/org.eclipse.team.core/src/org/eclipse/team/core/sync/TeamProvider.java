@@ -20,7 +20,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
 /**
  * TeamProvider
  */
-public class TeamProvider {
+public abstract class TeamProvider {
 	
 	static private Map subscribers = new HashMap();
 	static private List listeners = new ArrayList(1);
@@ -77,36 +77,44 @@ public class TeamProvider {
 	}	
 	
 	private static ISyncTreeSubscriberFactory create(QualifiedName id) {
-			TeamPlugin plugin = TeamPlugin.getPlugin();
-			if (plugin != null) {
-				IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORY_EXTENSION);
-				if (extension != null) {
-					IExtension[] extensions =  extension.getExtensions();
-					for (int i = 0; i < extensions.length; i++) {
-						IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
-						for (int j = 0; j < configElements.length; j++) {
-							String extensionId = configElements[j].getAttribute("id"); //$NON-NLS-1$
-						
-							if (extensionId != null && extensionId.equals(id.getQualifier())) {
-								try {
-									ISyncTreeSubscriberFactory sFactory = null;
-									//Its ok not to have a typeClass extension.  In this case, a default instance will be created.
-									if(configElements[j].getAttribute("class") != null) { //$NON-NLS-1$
-										sFactory = (ISyncTreeSubscriberFactory) configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
-									}
-									return sFactory;
-								} catch (CoreException e) {
-									TeamPlugin.log(e.getStatus());
-								} catch (ClassCastException e) {
-									String className = configElements[j].getAttribute("class"); //$NON-NLS-1$
-									TeamPlugin.log(IStatus.ERROR, Policy.bind("RepositoryProviderType.invalidClass", id.toString(), className), e); //$NON-NLS-1$
+		TeamPlugin plugin = TeamPlugin.getPlugin();
+		if (plugin != null) {
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORY_EXTENSION);
+			if (extension != null) {
+				IExtension[] extensions =  extension.getExtensions();
+				for (int i = 0; i < extensions.length; i++) {
+					IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
+					for (int j = 0; j < configElements.length; j++) {
+						String extensionId = configElements[j].getAttribute("id"); //$NON-NLS-1$
+					
+						if (extensionId != null && extensionId.equals(id.getQualifier())) {
+							try {
+								ISyncTreeSubscriberFactory sFactory = null;
+								//Its ok not to have a typeClass extension.  In this case, a default instance will be created.
+								if(configElements[j].getAttribute("class") != null) { //$NON-NLS-1$
+									sFactory = (ISyncTreeSubscriberFactory) configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
 								}
-								return null;
+								return sFactory;
+							} catch (CoreException e) {
+								TeamPlugin.log(e.getStatus());
+							} catch (ClassCastException e) {
+								String className = configElements[j].getAttribute("class"); //$NON-NLS-1$
+								TeamPlugin.log(IStatus.ERROR, Policy.bind("RepositoryProviderType.invalidClass", id.toString(), className), e); //$NON-NLS-1$
 							}
+							return null;
 						}
 					}
-				}		
-			}
-			return null;
-		}	
+				}
+			}		
+		}
+		return null;
+	}
+	
+	/**
+	 * TODO: It would be nice to be able to use IMemento here but we can't because it's
+	 * a UI class.
+	 */
+	public abstract String saveSubscriber(SyncTreeSubscriber subscriber) throws TeamException;
+	public abstract SyncTreeSubscriber restoreSubscriber(String storeString) throws TeamException;
+	
 }

@@ -45,6 +45,7 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 
 	private static TeamUIPlugin instance;
 	public static final String ID = "org.eclipse.team.ui"; //$NON-NLS-1$
+	public static final String PT_SUBSCRIBER_MENUS = "subscriberMenus"; //$NON-NLS-1$
 	
 	private static List propertyChangeListeners = new ArrayList(5);
 

@@ -248,12 +248,18 @@ abstract public class SyncTreeSubscriber {
 		}
 	}
 
-	protected void fireSyncChanged(IResource[] changedResources) {
-		TeamDelta[] deltas = new TeamDelta[changedResources.length];
-		for (int i = 0; i < changedResources.length; i++) {
-			IResource resource = changedResources[i];
+	/**
+	 * Returns an array of deltas for the resources with TeamDelta.SYNC_CHANGED
+	 * as the change type.
+	 * @param resources the resources whose sync info has changed
+	 * @return
+	 */
+	protected TeamDelta[] asSyncChangedDeltas(IResource[] resources) {
+		TeamDelta[] deltas = new TeamDelta[resources.length];
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
 			deltas[i] = new TeamDelta(this, TeamDelta.SYNC_CHANGED, resource);
 		}
-		fireTeamResourceChange(deltas);
-	}	
+		return deltas;
+	}
 }

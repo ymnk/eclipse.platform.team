@@ -11,11 +11,15 @@
 package org.eclipse.team.internal.ui.actions;
 
 
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -36,11 +40,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.target.TargetManager;
 import org.eclipse.team.internal.core.target.TargetProvider;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.sync.views.SyncResource;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
@@ -72,72 +78,112 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	private IWorkbenchPart targetPart;
 
 	/**
+	 * Creates an array of the given class type containing all the
+	 * objects in the selection that adapt to the given class.
+	 * 
+	 * @param selection
+	 * @param c
+	 * @return
+	 */
+	public static Object[] getSelectedAdaptables(ISelection selection, Class c) {
+		ArrayList result = null;
+		if (!selection.isEmpty()) {
+			result = new ArrayList();
+			Iterator elements = ((IStructuredSelection) selection).iterator();
+			while (elements.hasNext()) {
+				Object adapter = getAdapter(elements.next(), c);
+				if (c.isInstance(adapter)) {
+					result.add(adapter);
+				}
+			}
+		}
+		if (result != null && !result.isEmpty()) {
+			return (Object[])result.toArray((Object[])Array.newInstance(c, result.size()));
+		}
+		return (Object[])Array.newInstance(c, 0);
+	}
+	
+	/**
+	 * Find the object associated with the given object when it is adapted to
+	 * the provided class. Null is returned if the given object does not adapt
+	 * to the given class
+	 * 
+	 * @param selection
+	 * @param c
+	 * @return Object
+	 */
+	public static Object getAdapter(Object adaptable, Class c) {
+		if (c.isInstance(adaptable)) {
+			return adaptable;
+		}
+		if (adaptable instanceof IAdaptable) {
+			IAdaptable a = (IAdaptable) adaptable;
+			Object adapter = a.getAdapter(c);
+			if (c.isInstance(adapter)) {
+				return adapter;
+			}
+		}
+		return null;
+	}
+	
+	/**
 	 * Returns the selected projects.
 	 * 
 	 * @return the selected projects
 	 */
 	protected IProject[] getSelectedProjects() {
-		ArrayList projects = null;
-		if (!selection.isEmpty()) {
-			projects = new ArrayList();
-			Iterator elements = ((IStructuredSelection) selection).iterator();
-			while (elements.hasNext()) {
-				Object next = elements.next();
-				if (next instanceof IProject) {
-					projects.add(next);
-					continue;
-				}
-				if (next instanceof IAdaptable) {
-					IAdaptable a = (IAdaptable) next;
-					Object adapter = a.getAdapter(IResource.class);
-					if (adapter instanceof IProject) {
-						projects.add(adapter);
-						continue;
-					}
-				}
+		IResource[] selectedResources = getSelectedResources();
+		if (selectedResources.length == 0) return new IProject[0];
+		ArrayList projects = new ArrayList();
+		for (int i = 0; i < selectedResources.length; i++) {
+			IResource resource = selectedResources[i];
+			if (resource.getType() == IResource.PROJECT) {
+				projects.add(resource);
 			}
 		}
-		if (projects != null && !projects.isEmpty()) {
-			IProject[] result = new IProject[projects.size()];
-			projects.toArray(result);
-			return result;
-		}
-		return new IProject[0];
+		return (IProject[]) projects.toArray(new IProject[projects.size()]);
 	}
+	
+	/**
+	 * Returns an array of the given class type c that contains all
+	 * instances of c that are either contained in the selection or
+	 * are adapted from objects contained in the selection.
+	 * 
+	 * @param c
+	 * @return
+	 */
+	protected Object[] getSelectedResources(Class c) {
+		return getSelectedAdaptables(selection, c);
+	}
+	
 	/**
 	 * Returns the selected resources.
 	 * 
 	 * @return the selected resources
 	 */
 	protected IResource[] getSelectedResources() {
-		ArrayList resources = null;
-		if (!selection.isEmpty()) {
-			resources = new ArrayList();
-			Iterator elements = ((IStructuredSelection) selection).iterator();
-			while (elements.hasNext()) {
-				Object next = elements.next();
-				if (next instanceof IResource) {
-					resources.add(next);
-					continue;
-				}
-				if (next instanceof IAdaptable) {
-					IAdaptable a = (IAdaptable) next;
-					Object adapter = a.getAdapter(IResource.class);
-					if (adapter instanceof IResource) {
-						resources.add(adapter);
-						continue;
-					}
-				}
-			}
-		}
-		if (resources != null && !resources.isEmpty()) {
-			IResource[] result = new IResource[resources.size()];
-			resources.toArray(result);
-			return result;
-		}
-		return new IResource[0];
+		return (IResource[])getSelectedResources(IResource.class);
 	}
 
+	/**
+	 * Returns the selected SyncInfos. This method returns all directly referenced 
+	 * SyncInfos and and SyncInfos that are children of selected folders. Subclasses
+	 * may wish to check for selected SyncInfo before checking for selected resources
+	 * so they can provide special handling for this type of object (e.g. operate on
+	 * only those resources visible in the Synchronize View).
+	 * 
+	 * @return the selected resources
+	 */
+	protected SyncInfo[] getSelectedSyncInfos() {
+		SyncResource[] syncResources = (SyncResource[])getSelectedResources(SyncResource.class);
+		Set result = new HashSet();
+		for (int i = 0; i < syncResources.length; i++) {
+			SyncResource resource = syncResources[i];
+			result.addAll(Arrays.asList(resource.getDescendatSyncInfos()));
+		}
+		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+	}
+	
 	/**
 	 * Convenience method for getting the current shell.
 	 * 
@@ -391,4 +437,5 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 			return null;
 		}
 	}
+
 }

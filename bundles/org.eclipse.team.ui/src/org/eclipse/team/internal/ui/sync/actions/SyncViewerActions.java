@@ -42,6 +42,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private SyncViewerChangeFilters changeFilters;
 	private SyncViewerComparisonCriteria comparisonCriteria;
 	private SyncViewerSubscriberListActions subscriberInputs;
+	private SyncViewerSubscriberActions subscriberActions;
 	
 	// other view actions
 	private Action refreshAction;
@@ -120,6 +121,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		changeFilters = new SyncViewerChangeFilters(syncView, this);
 		comparisonCriteria = new SyncViewerComparisonCriteria(syncView);
 		subscriberInputs = new SyncViewerSubscriberListActions(syncView);
+		subscriberActions = new SyncViewerSubscriberActions(syncView);
 		
 		// initialize other actions
 		refreshAction = new RefreshAction();
@@ -159,6 +161,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(refreshAction);
 		manager.add(new Separator());
 		manager.add(toggleViewerType);
+		// Subscriber menues go here
+		subscriberActions.fillContextMenu(manager);
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator("Additions"));
 	}
@@ -241,6 +245,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		directionsFilters.setContext(context);
 		comparisonCriteria.setContext(context);
 		subscriberInputs.setContext(context);
+		subscriberActions.setContext(context);
 		
 		// causes initializeActions to be called. Must be called after
 		// setting the context for contained groups.

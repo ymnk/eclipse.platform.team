@@ -71,19 +71,29 @@ public class SyncSet {
 	 * @return
 	 */
 	public static int getSyncKind(SyncSet syncSet, Object element) {
-		if (element instanceof SyncInfo) {
-			return ((SyncInfo) element).getKind();
-		}  else if (element instanceof SyncResource) {
-			SyncResource syncResource = (SyncResource)element;
-			SyncInfo info = syncResource.getSyncInfo();
-			if (info == null && syncSet != null) {
-				info = syncSet.getSyncInfo(getIResource(element));
-			}
-			if (info != null) {
-				return info.getKind();
-			}
+		SyncInfo info = getSyncInfo(syncSet, element);
+		if (info != null) {
+			return info.getKind();
 		}
 		return 0;
+	}
+	
+	/**
+	 * Return the SyncInfo for the given model object that was returned by 
+	 * SyncSet#members(IResource). If syncSet is null, then the 
+	 * sync info will also be null.
+	 * 
+	 * @param element
+	 * @return
+	 */
+	public static SyncInfo getSyncInfo(SyncSet syncSet, Object element) {
+		if (element instanceof SyncInfo) {
+			return ((SyncInfo) element);
+		}  else if (element instanceof SyncResource) {
+			SyncResource syncResource = (SyncResource)element;
+			return syncResource.getSyncInfo();
+		}
+		return null;
 	}
 	
 	/**
@@ -237,6 +247,9 @@ public class SyncSet {
 	 * out-of-sync resources.
 	 * 
 	 * The children will either be SyncInfo or SyncContainer.
+	 * 
+	 * TODO: How does an IWorkbecnhAdapter fit into this picture (i.e. should
+	 * the adapter be converting SyncInfo to SyncResource
 	 * 
 	 * @param container
 	 * @return

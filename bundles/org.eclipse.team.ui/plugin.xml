@@ -24,6 +24,7 @@
 
 <extension-point id="configurationWizards" name="%configurationWizards" schema="schema/configurationWizards.exsd"/>
 <extension-point id="targetConfigWizards" name="%targetWizards"/>
+<extension-point id="subscriberMenus" name="%subscriberMenus"/>
 
 <!-- **************** PREFERENCES ******************* -->
    <extension

@@ -95,6 +95,9 @@ public class TeamException extends Exception {
 		IStatus status = e.getStatus();
 		// If the exception is not a multi-status, wrap the exception to keep the original stack trace.
 		// If the exception is a multi-status, the interesting stack traces should be in the childen already
+		// TODO: The problem here is that, if the CoreException wraps another exception
+		// (e.g. IOException) this wrapped exception will end up 2 deep and the logging
+		// may not suck it out.
 		if ( ! status.isMultiStatus()) {
 			status = new Status(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), e);
 		}

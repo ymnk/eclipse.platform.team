@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.team.core.sync.SyncInfo;
@@ -56,6 +60,23 @@ public class SyncResource implements IAdaptable {
 	 */
 	public SyncInfo getSyncInfo() {
 		return syncSet.getSyncInfo(resource);
+	}
+	
+	public SyncInfo[] getDescendatSyncInfos() {
+		List result = new ArrayList();
+		SyncInfo info = getSyncInfo();
+		if (info != null) {
+			result.add(info);
+		}
+		Object[] members = syncSet.members(getLocalResource());
+		for (int i = 0; i < members.length; i++) {
+			Object object = members[i];
+			if (object instanceof SyncResource) {
+				SyncResource child = (SyncResource) object;
+				result.addAll(Arrays.asList(child.getDescendatSyncInfos()));
+			}
+		}
+		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
 	
 	/* (non-Javadoc)

@@ -559,6 +559,23 @@
          </action>
       </objectContribution>
    </extension>
+   
+<!-- ************* Subscriber Menus ************ -->
+   <extension
+         point="org.eclipse.team.ui.subscriberMenus">
+      <subscriberContribution
+            subscriberClass="org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber"
+            id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriberContributions">
+          <action
+               label="%CVSWorkspaceSubscriber.commit.label"
+               tooltip="%CVSWorkspaceSubscriber.commit.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
+               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_commit_action"
+               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.commit">
+         </action>
+      </subscriberContribution>
+   </extension>
+   
 <!-- ************** Views ********************** -->
    <extension
          point="org.eclipse.ui.views">
