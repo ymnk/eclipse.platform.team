@@ -16,7 +16,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.BackgroundEventHandler.Event;
 import org.eclipse.team.internal.core.Policy;
 
 /**

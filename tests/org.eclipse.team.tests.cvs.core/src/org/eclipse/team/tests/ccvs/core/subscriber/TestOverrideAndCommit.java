@@ -11,9 +11,9 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.subscriber.OverrideAndCommitAction;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 
 public class TestOverrideAndCommit extends OverrideAndCommitAction {
 	
@@ -29,7 +29,7 @@ public class TestOverrideAndCommit extends OverrideAndCommitAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitAction#promptForConflicts(org.eclipse.team.ui.sync.SyncInfoSet)
 	 */
-	protected int promptForConflicts(SyncInfoSet syncSet) {
+	protected int promptForConflicts(MutableSyncInfoSet syncSet) {
 		this.prompted = true;
 		return 0; // ok to commit all conflicts
 	}

@@ -17,11 +17,8 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.core.subscribers.SyncInfoFilter.OrSyncInfoFilter;
 import org.eclipse.team.core.subscribers.SyncInfoFilter.SyncInfoDirectionFilter;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
@@ -157,7 +154,7 @@ public class MergeUpdateAction extends SafeUpdateAction {
 	 * If called on a new folder, the folder will become an outgoing addition.
 	 */
 	private void makeRemoteLocal(SyncInfo info, IProgressMonitor monitor) throws TeamException {
-		IRemoteResource remote = info.getRemote();
+		ISubscriberResource remote = info.getRemote();
 		IResource local = info.getLocal();
 		try {
 			if(remote==null) {
@@ -170,10 +167,10 @@ public class MergeUpdateAction extends SafeUpdateAction {
 					try {
 						IFile localFile = (IFile)local;
 						if(local.exists()) {
-							localFile.setContents(remote.getContents(Policy.subMonitorFor(monitor, 100)), false /*don't force*/, true /*keep history*/, Policy.subMonitorFor(monitor, 100));
+							localFile.setContents(remote.getStorage(Policy.subMonitorFor(monitor, 100)).getContents(), false /*don't force*/, true /*keep history*/, Policy.subMonitorFor(monitor, 100));
 						} else {
 							ensureContainerExists(getParent(info));
-							localFile.create(remote.getContents(Policy.subMonitorFor(monitor, 100)), false /*don't force*/, Policy.subMonitorFor(monitor, 100));
+							localFile.create(remote.getStorage(Policy.subMonitorFor(monitor, 100)).getContents(), false /*don't force*/, Policy.subMonitorFor(monitor, 100));
 						}
 					} finally {
 						monitor.done();

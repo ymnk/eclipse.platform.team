@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.core;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -77,5 +79,16 @@ public class TeamException extends CoreException {
 			return (TeamException)e;
 		}
 		return new TeamException(e);
+	}
+	
+	/*
+	 * Static helper methods for creating exceptions
+	 */
+	public static TeamException asTeamException(InvocationTargetException e) {
+		Throwable target = e.getTargetException();
+		if (target instanceof TeamException) {
+			return (TeamException) target;
+		}
+		return new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, UNABLE, target.getMessage() != null ? target.getMessage() : "",	target)); //$NON-NLS-1$
 	}
 }

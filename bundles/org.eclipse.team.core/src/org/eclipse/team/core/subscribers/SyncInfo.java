@@ -1,14 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2003 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Common Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.team.core.subscribers;
-
-/*
- * (c) Copyright IBM Corp. 2000, 2001.
- * All Rights Reserved.
- */
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
 
@@ -41,6 +45,8 @@ import org.eclipse.team.internal.core.Policy;
  * [Issue: "Gender changes" are also an interesting aspect...
  * ]
  * </p>
+ * 
+ * @since 3.0
  */
 public class SyncInfo implements IAdaptable {
 	
@@ -121,12 +127,19 @@ public class SyncInfo implements IAdaptable {
 	 */
 	public static final int MANUAL_CONFLICT = 64;
 	
+	/**
+	 * Sync constant (value 128) indicating that the local resource is not controlled
+	 * by the subscriber. This can occur for either an OUTGOING | ADDITION or a CONFLICTING | ADDITION.
+	 * Uncontrolled resources may be excluded from the operations of ITeamOperation (except control).
+	 */
+	public static final int UNCONTROLLED = 128;
+	
 	/*====================================================================
 	 * Members:
 	 *====================================================================*/
 	 private IResource local;
-	 private IRemoteResource base;
-	 private IRemoteResource remote;
+	 private ISubscriberResource base;
+	 private ISubscriberResource remote;
 	 private TeamSubscriber subscriber;
 	 
 	 private int syncKind;
@@ -134,7 +147,7 @@ public class SyncInfo implements IAdaptable {
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, TeamSubscriber subscriber) throws TeamException {
+	public SyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, TeamSubscriber subscriber) throws TeamException {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
@@ -173,7 +186,7 @@ public class SyncInfo implements IAdaptable {
 	 *
 	 * @return a remote resource handle, or <code>null</code>
 	 */
-	public IRemoteResource getBase() {
+	public ISubscriberResource getBase() {
 		return base;
 	}
 	
@@ -188,7 +201,7 @@ public class SyncInfo implements IAdaptable {
 	 *
 	 * @return a remote resource handle, or <code>null</code>
 	 */
-	public IRemoteResource getRemote() {
+	public ISubscriberResource getRemote() {
 		return remote;
 	}
 	
@@ -243,19 +256,19 @@ public class SyncInfo implements IAdaptable {
 			if (!equalObjects(local1, local2)) return false;
 		
 			// Next, ensure the base resources are equal
-			IRemoteResource base1 = null;
+			ISubscriberResource base1 = null;
 			if (node1.getBase() != null)
 				base1 = node1.getBase();
-			IRemoteResource base2 = null;
+			ISubscriberResource base2 = null;
 			if (node2.getBase() != null)
 				base2 = node2.getBase();
 			if (!equalObjects(base1, base2)) return false;
 
 			// Finally, ensure the remote resources are equal
-			IRemoteResource remote1 = null;
+			ISubscriberResource remote1 = null;
 			if (node1.getRemote() != null)
 				remote1 = node1.getRemote();
-			IRemoteResource remote2 = null;
+			ISubscriberResource remote2 = null;
 			if (node2.getRemote() != null)
 					remote2 = node2.getRemote();
 			if (!equalObjects(remote1, remote2)) return false;

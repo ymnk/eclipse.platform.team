@@ -17,8 +17,6 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.compare.RemoteResourceTypedElement;
@@ -51,7 +49,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	 * Create an ITypedElement for the given remote resource. The contents for the remote resource
 	 * will be retrieved from the given IStorage which is a local cache used to buffer the remote contents
 	 */
-	public static ITypedElement createTypeElement(IRemoteResource remoteResource) {
+	public static ITypedElement createTypeElement(ISubscriberResource remoteResource) {
 		return new RemoteResourceTypedElement(remoteResource);
 	}
 	

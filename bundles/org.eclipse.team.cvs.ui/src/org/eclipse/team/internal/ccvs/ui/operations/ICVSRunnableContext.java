@@ -17,7 +17,7 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Shell;
 
 /**
- * An ICVSRunnableContext is used to provide the context for a CVS operation.
+ * An ITeamRunnableContext is used to provide the context for a Team operation.
  * The hierarchy of contexts is used to configure the following:
  * 1) whether the operation is run in the background as a job
  * 2) whether the operation modifies the workspace

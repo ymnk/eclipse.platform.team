@@ -20,9 +20,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoFilter.*;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -217,8 +215,8 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 				SyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
 				new SyncInfoFilter() {
 					public boolean select(SyncInfo info) {
-						IRemoteResource remote = info.getRemote();
-						IRemoteResource base = info.getBase();
+						ISubscriberResource remote = info.getRemote();
+						ISubscriberResource base = info.getBase();
 						if (info.getLocal().exists()) {
 							// local != base and no remote will fail
 							return (base != null && remote == null);

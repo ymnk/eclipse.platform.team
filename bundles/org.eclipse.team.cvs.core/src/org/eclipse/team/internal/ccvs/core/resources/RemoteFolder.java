@@ -17,28 +17,11 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSStatus;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
-import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
-import org.eclipse.team.internal.ccvs.core.Policy;
-import org.eclipse.team.internal.ccvs.core.client.Command;
-import org.eclipse.team.internal.ccvs.core.client.Session;
-import org.eclipse.team.internal.ccvs.core.client.Update;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.client.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.client.listeners.IUpdateMessageListener;
@@ -628,6 +611,13 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	 */
 	public boolean isManaged() {
 		return super.isManaged() && isCVSFolder();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISubscriberResource#getStorage(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
+		return null;
 	}
 
 }

@@ -12,30 +12,27 @@ package org.eclipse.team.internal.ui.synchronize.compare;
 
 import java.io.InputStream;
 
-import org.eclipse.compare.BufferedContent;
-import org.eclipse.compare.CompareUI;
-import org.eclipse.compare.IEditableContent;
-import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.*;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 
 /**
  * RemoteResourceTypedElement
  */
 public class RemoteResourceTypedElement extends BufferedContent implements ITypedElement, IEditableContent {
 
-	private IRemoteResource remote;
+	private ISubscriberResource remote;
 	private IStorage bufferedContents;
 
 	/**
 	 * Creates a new content buffer for the given team node.
 	 */
-	public RemoteResourceTypedElement(IRemoteResource remote) {
+	public RemoteResourceTypedElement(ISubscriberResource remote) {
 		this.remote = remote;
 	}
 
@@ -102,7 +99,7 @@ public class RemoteResourceTypedElement extends BufferedContent implements IType
 		return null;
 	}
 	
-	public IRemoteResource getRemote() {
+	public ISubscriberResource getRemote() {
 		return remote;
 	}
 
@@ -111,6 +108,6 @@ public class RemoteResourceTypedElement extends BufferedContent implements IType
 	 * @param monitor
 	 */
 	public void cacheContents(IProgressMonitor monitor) throws TeamException {
-		bufferedContents = remote.getBufferedStorage(monitor);		
+		bufferedContents = remote.getStorage(monitor);		
 	}
 }

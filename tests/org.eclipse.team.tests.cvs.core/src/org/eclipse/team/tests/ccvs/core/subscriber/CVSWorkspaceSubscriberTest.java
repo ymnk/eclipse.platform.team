@@ -30,9 +30,7 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction;
-import org.eclipse.team.internal.core.*;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 
 /**
  * This class tests the CVSWorkspaceSubscriber
@@ -273,7 +271,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		IResource[] resources = getResources(container, hierarchy);
 		SyncInfo[] syncResources = createSyncInfos(resources);
 		try {
-			action.getRunnable(new SyncInfoSet(syncResources)).run(DEFAULT_MONITOR);
+			action.getRunnable(new MutableSyncInfoSet(syncResources)).run(DEFAULT_MONITOR);
 			return resources;
 		} catch (InvocationTargetException e) {
 			throw CVSException.wrapException(e);
@@ -916,48 +914,6 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC});
 	}
-	
-	/* 
-	 * Test changes using a granularity of contents
-	 */
-	 public void testGranularityContents() throws TeamException, CoreException, IOException {
-		// Create a test project (which commits it as well)
-		IProject project = createProject(new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
-		
-		// Checkout a copy and make some modifications
-		IProject copy = checkoutCopy(project, "-copy");
-		appendText(copy.getFile("file1.txt"), "same text", false);
-		setContentsAndEnsureModified(copy.getFile("folder1/a.txt"), " unique text"); // whitespace difference
-		commitProject(copy);
-
-		// Make the same modifications to the original
-		appendText(project.getFile("file1.txt"), "same text", false);
-		setContentsAndEnsureModified(project.getFile("folder1/a.txt"), "unique text"); // whitespace difference
-		
-		// Get the sync tree for the project
-		String oldId = getSubscriber().getDefaultComparisonCriteria().getId();
-		try {
-			getSubscriber().setCurrentComparisonCriteria(ContentSyncInfoFilter.ID_DONTIGNORE_WS);
-			assertSyncEquals("testGranularityContents", project, 
-				new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-				true, new int[] {
-					SyncInfo.IN_SYNC,
-					SyncInfo.IN_SYNC,
-					SyncInfo.CONFLICTING | SyncInfo.CHANGE });
-			getSubscriber().setCurrentComparisonCriteria(ContentSyncInfoFilter.ID_IGNORE_WS);
-			// TODO: Should not need to reset after a comparison criteria change (bug 46678)
-			getSyncInfoSource().reset(getSubscriber());
-			assertSyncEquals("testGranularityContents", project, 
-					new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
-					true, new int[] {
-						SyncInfo.IN_SYNC,
-						SyncInfo.IN_SYNC,
-						SyncInfo.IN_SYNC });
-		} finally {
-			getSubscriber().setCurrentComparisonCriteria(oldId);
-		}
-
-	 }
 	 
 	 public void testSyncOnBranch() throws TeamException, CoreException, IOException {
 	 	

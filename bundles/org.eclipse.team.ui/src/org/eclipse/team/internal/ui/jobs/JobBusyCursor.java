@@ -14,8 +14,8 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.core.*;
+import org.eclipse.team.core.subscribers.IJobListener;
+import org.eclipse.team.core.subscribers.JobStatusHandler;
 
 /**
  * This class will show a busy cursor over a control when jobs of a particular type

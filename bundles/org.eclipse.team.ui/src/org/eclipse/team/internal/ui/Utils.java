@@ -11,9 +11,8 @@
 package org.eclipse.team.internal.ui;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
@@ -25,8 +24,8 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.*;
@@ -267,8 +266,8 @@ public class Utils {
 	}
 	
 	public static void updateLabels(SyncInfo sync, CompareConfiguration config) {
-		final IRemoteResource remote = sync.getRemote();
-		final IRemoteResource base = sync.getBase();
+		final ISubscriberResource remote = sync.getRemote();
+		final ISubscriberResource base = sync.getBase();
 
 		String localContentId = sync.getLocalContentIdentifier();
 		if (localContentId != null) {

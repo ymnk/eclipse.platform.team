@@ -11,30 +11,19 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import junit.framework.AssertionFailedError;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamDelta;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.sync.RemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.ui.SynchronizeViewTestAdapter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
 
 /**
  * Provides test methods common to CVS sync subscribers
@@ -236,6 +225,6 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		IResource[] resources = getResources(project, resourcePaths);
 		SyncInfo[] infos = createSyncInfos(subscriber, resources);
 		TestMarkAsMergedAction action = new TestMarkAsMergedAction();
-		action.getRunnable(new SyncInfoSet(infos)).run(DEFAULT_MONITOR);
+		action.getRunnable(new MutableSyncInfoSet(infos)).run(DEFAULT_MONITOR);
 	}
 }

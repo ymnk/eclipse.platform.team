@@ -21,13 +21,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.views.CompressedFolder;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.internal.WorkbenchColors;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 

@@ -12,6 +12,7 @@ package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.subscribers.SubscriberEventHandler;
@@ -47,12 +48,17 @@ public class TeamSubscriberSyncInfoCollector implements IResourceChangeListener,
 		return set.getSyncSet();
 	}
 
-	public void waitForCollector() {
-		try {
-			eventHandler.getEventHandlerJob().join();
-		} catch (InterruptedException e) {
-			// continue
+	public void waitForCollector(IProgressMonitor monitor) {
+		monitor.worked(1);
+		// wait for the event handler to process changes.
+		while(eventHandler.getEventHandlerJob().getState() != Job.NONE) {
+			monitor.worked(1);
+			try {
+				Thread.sleep(10);		
+			} catch (InterruptedException e) {
+			}
 		}
+		monitor.worked(1);
 	}
 	
 	/**

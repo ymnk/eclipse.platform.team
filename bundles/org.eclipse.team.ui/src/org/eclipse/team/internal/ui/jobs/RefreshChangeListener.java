@@ -2,6 +2,7 @@ package org.eclipse.team.internal.ui.jobs;
 
 import java.util.*;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.subscribers.*;
 
 class RefreshChangeListener implements ITeamResourceChangeListener {
@@ -20,7 +21,7 @@ class RefreshChangeListener implements ITeamResourceChangeListener {
 		}
 	}
 	public SyncInfo[] getChanges() {
-		collector.waitForCollector();
+		collector.waitForCollector(new NullProgressMonitor());
 		List changedSyncInfos = new ArrayList();
 		SyncInfoSet set = collector.getSyncInfoSet();
 		for (Iterator it = changes.iterator(); it.hasNext();) {

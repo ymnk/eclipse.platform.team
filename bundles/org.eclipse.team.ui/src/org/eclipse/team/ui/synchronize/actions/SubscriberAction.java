@@ -12,18 +12,14 @@ package org.eclipse.team.ui.synchronize.actions;
 
 import java.util.*;
 
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.core.subscribers.SyncInfoFilter;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.*;
-import org.eclipse.ui.IEditorActionDelegate;
-import org.eclipse.ui.IViewActionDelegate;
 
 /**
  * This is an abstract superclass for actions associated with a 

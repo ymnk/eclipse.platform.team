@@ -16,7 +16,6 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
@@ -84,25 +83,6 @@ abstract public class TeamSubscriber {
 	 * @throws TeamException
 	 */
 	abstract public IResource[] roots();
-
-	/**
-	 * Returns a handle to the remote resource corresponding to the given
-	 * resource, or <code>null</code> if there is no corresponding resource
-	 * edition.
-	 * <p>
-	 * This is a fast operation; the repository is not contacted.
-	 * </p>
-	 * 
-	 * @param resource
-	 *                   the resource
-	 * @return a server resource
-	 * @exception CoreException
-	 *                         if this request fails. Reasons include:
-	 *                         <ul>
-	 *                         <li>???</li>
-	 *                         </ul>
-	 */
-	abstract public IRemoteResource getRemoteResource(IResource resource) throws TeamException;
 
 	/**
 	 * Returns synchronization info for the given resource, or <code>null</code>

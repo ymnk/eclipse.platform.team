@@ -15,12 +15,10 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.core.subscribers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionGroup;
 

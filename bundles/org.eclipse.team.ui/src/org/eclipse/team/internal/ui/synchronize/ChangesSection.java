@@ -17,11 +17,13 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.ui.forms.parts.*;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
+import org.eclipse.ui.forms.events.HyperlinkAdapter;
+import org.eclipse.ui.forms.events.HyperlinkEvent;
+import org.eclipse.ui.forms.widgets.Hyperlink;
 import org.eclipse.ui.part.PageBook;
 
 /**

@@ -12,19 +12,23 @@ package org.eclipse.team.internal.ccvs.core;
 
 import java.util.*;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.core.subscribers.utils.*;
+import org.eclipse.team.internal.ccvs.core.resources.*;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSRefreshOperation;
 
 /**
  * This class provides common funtionality for three way sychronizing
  * for CVS.
  */
-public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
+public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
+	
+	public static final String SYNC_KEY_QUALIFIER = "org.eclipse.team.cvs"; //$NON-NLS-1$
 	
 	private QualifiedName id;
 	private String name;
@@ -58,49 +62,6 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#members(org.eclipse.core.resources.IResource)
-	 */
-	public IResource[] members(IResource resource) throws TeamException {
-		if(resource.getType() == IResource.FILE) {
-			return new IResource[0];
-		}	
-		try {
-			// Filter and return only phantoms associated with the remote synchronizer.
-			IResource[] members;
-			try {
-				members = ((IContainer)resource).members(true /* include phantoms */);
-			} catch (CoreException e) {
-				if (!isSupervised(resource) || e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
-					// The resource is no longer supervised or doesn't exist in any form
-					// so ignore the exception and return that there are no members
-					return new IResource[0];
-				}
-				throw e;
-			}
-			List filteredMembers = new ArrayList(members.length);
-			for (int i = 0; i < members.length; i++) {
-				IResource member = members[i];
-				
-				// TODO: consider that there may be several sync states on this resource. There
-				// should instead be a method to check for the existance of a set of sync types on
-				// a resource.
-				if(member.isPhantom() && !getRemoteSynchronizer().hasRemote(member)) {
-					continue;
-				}
-				
-				// TODO: Is this a valid use of isSupervised
-				if (isSupervised(resource)) {
-					filteredMembers.add(member);
-				}
-			}
-			return (IResource[]) filteredMembers.toArray(new IResource[filteredMembers.size()]);
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.TeamSubscriber#roots()
 	 */
 	public IResource[] roots() {
@@ -108,40 +69,19 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
-	 */
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
-		return getRemoteSynchronizer().getRemoteResource(resource);
-	}
-
-	public IRemoteResource getBaseResource(IResource resource) throws TeamException {
-		return getBaseSynchronizer().getRemoteResource(resource);
-	}
-
-	/**
-	 * Return the synchronizer that provides the remote resources
-	 */
-	protected abstract RemoteSynchronizer getRemoteSynchronizer();
-	/**
-	 * Return the synchronizer that provides the base resources
-	 */
-	protected abstract RemoteSynchronizer getBaseSynchronizer();
-	
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
 	 */
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
 		if (!isSupervised(resource)) return null;
-		IRemoteResource remoteResource = getRemoteResource(resource);
 		if(resource.getType() == IResource.FILE) {
-			IRemoteResource baseResource = getBaseResource(resource);
-			return getSyncInfo(resource, baseResource, remoteResource);
+			return super.getSyncInfo(resource);
 		} else {
 			// In CVS, folders do not have a base. Hence, the remote is used as the base.
+			ISubscriberResource remoteResource = getRemoteResource(resource);
 			return getSyncInfo(resource, remoteResource, remoteResource);
 		}
 	}
-
+	
 	/**
 	 * Method that creates an instance of SyncInfo for the provider local, base and remote.
 	 * Can be overiden by subclasses.
@@ -151,8 +91,8 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	 * @param monitor
 	 * @return
 	 */
-	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote) throws TeamException {
-			return new CVSSyncInfo(local, base, remote, this);
+	protected SyncInfo getSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote) throws TeamException {
+		return new CVSSyncInfo(local, base, remote, this);
 	}
 
 	/* (non-Javadoc)
@@ -187,8 +127,8 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 			int baseWork = getCacheFileContentsHint() ? 10 : 30;
 			int remoteWork = 100;
 			monitor.beginTask(null, baseWork + remoteWork);
-			IResource[] baseChanges = refreshBase(resource, depth, Policy.subMonitorFor(monitor, baseWork));
-			IResource[] remoteChanges = refreshRemote(resource, depth, Policy.subMonitorFor(monitor, remoteWork));
+			IResource[] baseChanges = refreshBase(new IResource[] {resource}, depth, Policy.subMonitorFor(monitor, baseWork));
+			IResource[] remoteChanges = refreshRemote(new IResource[] {resource}, depth, Policy.subMonitorFor(monitor, remoteWork));
 			
 			Set allChanges = new HashSet();
 			allChanges.addAll(Arrays.asList(remoteChanges));
@@ -202,17 +142,31 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 			monitor.done();
 		} 
 	}
-	protected IResource[] refreshBase(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getBaseSynchronizer().refresh(resource, depth, getCacheFileContentsHint(), monitor);
-	}
-
-	protected IResource[] refreshRemote(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getRemoteSynchronizer().refresh(resource, depth,  getCacheFileContentsHint(), monitor);
-	}
-
-	private boolean getCacheFileContentsHint() {
+	
+	/**
+	 * TODO: Temporary
+	 */
+	protected  boolean getCacheFileContentsHint() {
 		return false;
 	}
+
+	protected IResource[] refreshBase(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		return new CVSRefreshOperation(getBaseSynchronizationCache(), null, getBaseTag()).refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+	}
+
+	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		return new CVSRefreshOperation(getRemoteSynchronizationCache(), getBaseSynchronizationCache(), getRemoteTag()).refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+	}
+
+	/**
+	 * Return the tag associated with the base tree. t is used by the refreshBase method.
+	 */
+	protected abstract CVSTag getRemoteTag();
+	
+	/**
+	 * Return the tag associated with the base tree. t is used by the refreshRemote method.
+	 */
+	protected abstract CVSTag getBaseTag();
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#isSupervised(org.eclipse.core.resources.IResource)
@@ -226,7 +180,7 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 			ICVSResource cvsThing = CVSWorkspaceRoot.getCVSResourceFor(resource);
 			if (cvsThing.isIgnored()) {
 				// An ignored resource could have an incoming addition (conflict)
-				return getRemoteSynchronizer().hasRemote(resource);
+				return hasRemote(resource);
 			}
 			return true;
 		} catch (TeamException e) {
@@ -245,18 +199,60 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	public boolean isThreeWay() {
 		return true;
 	}
+	
+	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
+		return getRemoteResource(resource, getRemoteSynchronizationCache());
+	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#isCancellable()
+	public ISubscriberResource getBaseResource(IResource resource) throws TeamException {
+		return getRemoteResource(resource, getBaseSynchronizationCache());
+	}
+	
+	/**
+	 * Return the synchronization cache that provides access to the base sychronization bytes.
 	 */
-	public boolean isCancellable() {
-		return false;
+	protected abstract SynchronizationCache getBaseSynchronizationCache();
+
+	/**
+	 * Return the synchronization cache that provides access to the base sychronization bytes.
+	 */
+	protected abstract SynchronizationCache getRemoteSynchronizationCache();
+	
+	private ISubscriberResource getRemoteResource(IResource resource, SynchronizationCache cache) throws TeamException {
+		byte[] remoteBytes = cache.getSyncBytes(resource);
+		if (remoteBytes == null) {
+			// There is no remote handle for this resource
+			return null;
+		} else {
+			// TODO: This code assumes that the type of the remote resource
+			// matches that of the local resource. This may not be true.
+			if (resource.getType() == IResource.FILE) {
+				byte[] parentBytes = cache.getSyncBytes(resource.getParent());
+				if (parentBytes == null) {
+					CVSProviderPlugin.log(new CVSException( 
+							Policy.bind("ResourceSynchronizer.missingParentBytesOnGet", getSyncName(cache).toString(), resource.getFullPath().toString())));
+					// Assume there is no remote and the problem is a programming error
+					return null;
+				}
+				return RemoteFile.fromBytes(resource, remoteBytes, parentBytes);
+			} else {
+				return RemoteFolder.fromBytes(resource, remoteBytes);
+			}
+		}
+	}
+	
+	private String getSyncName(SynchronizationCache cache) {
+		if (cache instanceof SynchronizationSyncBytesCache) {
+			return ((SynchronizationSyncBytesCache)cache).getSyncName().toString();
+		}
+		return cache.getClass().getName();
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#cancel()
+	 * @see org.eclipse.team.core.subscribers.helpers.SyncTreeSubscriber#hasRemote(org.eclipse.core.resources.IResource)
 	 */
-	public void cancel() {
-		// noop
+	protected boolean hasRemote(IResource resource) throws TeamException {
+		return getRemoteSynchronizationCache().getSyncBytes(resource) != null;
 	}
+
 }

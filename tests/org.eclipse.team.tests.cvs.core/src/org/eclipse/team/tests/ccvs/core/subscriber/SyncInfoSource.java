@@ -46,7 +46,7 @@ public class SyncInfoSource {
 	 * Return the sync info for the given subscriber for the given resource.
 	 */
 	public SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
-		return subscriber.getSyncInfo(resource, DEFAULT_MONITOR = new NullProgressMonitor());
+		return subscriber.getSyncInfo(resource);
 	}
 	
 	/**

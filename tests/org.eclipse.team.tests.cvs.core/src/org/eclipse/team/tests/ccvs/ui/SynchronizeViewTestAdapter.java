@@ -17,13 +17,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputOld;
-import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 import org.eclipse.team.ui.TeamUI;
@@ -39,11 +35,11 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	}
 	
 	public SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
-		SubscriberInputOld input = getInput(subscriber);
-		SyncInfoSet set = input.getWorkingSetSyncSet();
+		TeamSubscriberParticipant input = getParticipant(subscriber);
+		SyncInfoSet set = input.getSyncInfoCollector().getSyncInfoSet();
 		SyncInfo info = set.getSyncInfo(resource);
 		if (info == null) {
-			info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
+			info = subscriber.getSyncInfo(resource);
 			if ((info != null && info.getKind() != SyncInfo.IN_SYNC)) {
 				throw new AssertionFailedError();
 			}
@@ -51,21 +47,24 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		return info;
 	}
 	
-	private SubscriberInputOld getInput(TeamSubscriber subscriber) {
+	private TeamSubscriberParticipant getParticipant(TeamSubscriber subscriber) {
 		// show the sync view
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
 			if(participant instanceof TeamSubscriberParticipant) {
-				SubscriberInputOld input = ((SubscriberInputSyncInfoSet)((TeamSubscriberParticipant)participant).getSyncInfoSet()).getInput();
-				TeamSubscriber s = input.getTeamSubscriber();
-				if(s == subscriber) {
-					EclipseTest.waitForSubscriberInputHandling(input);
-					return input;
+				if(((TeamSubscriberParticipant)participant).getSubscriber() == subscriber) {
+					return (TeamSubscriberParticipant)participant;
 				}
 			}
 		}
 		return null;
+	}
+	
+	private TeamSubscriberSyncInfoCollector getCollector(TeamSubscriber subscriber) {
+		TeamSubscriberParticipant participant = getParticipant(subscriber);
+		if (participant == null) return null;
+		return participant.getSyncInfoCollector();
 	}
 
 	/* (non-Javadoc)
@@ -73,8 +72,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	protected void assertProjectRemoved(TeamSubscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
-		SubscriberInputOld input = getInput(subscriber);
-		SyncInfoSet set = input.getSyncInfoSet();
+		SyncInfoSet set = getParticipant(subscriber).getSyncInfoCollector().getSyncInfoSet();
 		if (set.getOutOfSyncDescendants(project).length != 0) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
 		}
@@ -115,7 +113,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	public void refresh(TeamSubscriber subscriber, IResource resource) throws TeamException {
 		super.refresh(subscriber, resource);
-		EclipseTest.waitForSubscriberInputHandling(getInput(subscriber));
+		EclipseTest.waitForSubscriberInputHandling(getCollector(subscriber));
 	}
 	
 	/* (non-Javadoc)
@@ -123,6 +121,6 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	public void reset(TeamSubscriber subscriber) throws TeamException {
 		super.reset(subscriber);
-		getInput(subscriber).clear();
+		getCollector(subscriber).reset(DEFAULT_MONITOR);
 	}
 }

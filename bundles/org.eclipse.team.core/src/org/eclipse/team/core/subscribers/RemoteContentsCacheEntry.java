@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.sync;
+package org.eclipse.team.core.subscribers;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -97,11 +97,11 @@ public class RemoteContentsCacheEntry {
 		}
 	}
 	
-	private void endOperation() {
+	private synchronized void endOperation() {
 		cache.getLock().release();
 	}
 
-	private void beginOperation() {
+	private synchronized void beginOperation() {
 		cache.getLock().acquire();
 	}
 
@@ -173,13 +173,7 @@ public class RemoteContentsCacheEntry {
 	 * This method is sychronized to ensure atomic setting of the bytes.
 	 * @param bytes
 	 */
-	public void setSyncBytes(byte[] bytes) {
-		try {
-			beginOperation();
-			syncBytes = bytes;
-		} finally {
-			endOperation();
-		}
+	public synchronized void setSyncBytes(byte[] bytes) {
 		syncBytes = bytes;
 	}
 
