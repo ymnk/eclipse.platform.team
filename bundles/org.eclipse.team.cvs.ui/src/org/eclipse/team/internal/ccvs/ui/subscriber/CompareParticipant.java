@@ -22,9 +22,6 @@ import org.eclipse.team.ui.synchronize.*;
 
 public class CompareParticipant extends CVSParticipant {
 	
-	/**
-	 * TODO: Need to add content filtering back
-	 */
 	private SyncInfoFilter contentComparison = new SyncInfoFilter() {
 		private SyncInfoFilter contentCompare = new SyncInfoFilter.ContentComparisonSyncInfoFilter();
 		public boolean select(SyncInfo info, IProgressMonitor monitor) {
@@ -42,6 +39,7 @@ public class CompareParticipant extends CVSParticipant {
 	 */
 	protected void setSubscriber(Subscriber subscriber) {
 		super.setSubscriber(subscriber);
+		setSyncInfoFilter(contentComparison);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(CVSCompareSubscriber.ID);
 			setInitializationData(descriptor);

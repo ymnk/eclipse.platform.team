@@ -20,6 +20,7 @@ import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
+import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
@@ -312,5 +313,20 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 */
 	public void reset() {
 		getSubscriberSyncInfoCollector().reset();
+	}
+	
+	/**
+	 * Provide a filter that is used to filter the contents of the
+	 * sync info set for the participant. Normally, all out-of-sync
+	 * resources from the subscriber will be included in the 
+	 * participant's set. However, a filter can be used to exclude
+	 * some of these out-of-sync resources, if desired.
+	 * <p>
+	 * Subsclasses can invoke this method any time after 
+	 * <code>setSubscriber</code> has been invoked.
+	 * @param filter a sync info filter
+	 */
+	protected void setSyncInfoFilter(SyncInfoFilter filter) {
+		collector.setFilter(filter);
 	}
 }
