@@ -59,7 +59,7 @@ public abstract class SyncChangesStructuredViewer extends SyncChangesViewer {
 	}
 	
 	private void handleOpen(OpenEvent event) {
-		//openWithActions.openInCompareEditor();
+		openWithActions.openInCompareEditor();
 	}
 	
 	protected void fillContextMenu(IMenuManager manager) {	

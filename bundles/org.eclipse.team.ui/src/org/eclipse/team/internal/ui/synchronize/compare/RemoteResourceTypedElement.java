@@ -107,7 +107,6 @@ public class RemoteResourceTypedElement extends BufferedContent implements IType
 	 * @param monitor
 	 */
 	public void cacheContents(IProgressMonitor monitor) throws TeamException {
-		bufferedContents = remote.getBufferedStorage(monitor);
-		
+		bufferedContents = remote.getBufferedStorage(monitor);		
 	}
 }

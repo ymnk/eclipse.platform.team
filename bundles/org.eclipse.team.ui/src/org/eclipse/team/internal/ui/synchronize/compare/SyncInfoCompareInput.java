@@ -12,15 +12,9 @@ package org.eclipse.team.internal.ui.synchronize.compare;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.CompareEditorInput;
-import org.eclipse.compare.IContentChangeListener;
-import org.eclipse.compare.IContentChangeNotifier;
-import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.*;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
@@ -38,8 +32,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	private static Image titleImage;
 	private static ISynchronizeParticipant participant;
 	
-	public static SyncInfoCompareInput createInput(ISynchronizeParticipant participant, SyncInfo sync) {
-				
+	public static SyncInfoDiffNode createSyncInfoDiffNode(ISynchronizeParticipant participant, SyncInfo sync) {	
 		SyncInfoCompareInput.participant = participant;
 		// Create the local ITypedElement
 		ITypedElement localTypedElement = SyncInfoDiffNode.createTypeElement(sync.getLocal(), sync.getKind());
@@ -57,11 +50,10 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		if (baseResource != null) {
 			baseTypedElement = SyncInfoDiffNode.createTypeElement(baseResource);
 		}
-		
-		return new SyncInfoCompareInput(sync, new SyncInfoDiffNode(baseTypedElement, localTypedElement, remoteTypedElement, sync.getKind()));
-	}
-
-	private SyncInfoCompareInput(SyncInfo sync, SyncInfoDiffNode diffNode) {
+		return new SyncInfoDiffNode(baseTypedElement, localTypedElement, remoteTypedElement, sync.getKind());
+	}	
+	
+	public SyncInfoCompareInput(SyncInfo sync, SyncInfoDiffNode diffNode) {
 		super(new CompareConfiguration());
 		this.sync = sync;
 		this.node = diffNode;

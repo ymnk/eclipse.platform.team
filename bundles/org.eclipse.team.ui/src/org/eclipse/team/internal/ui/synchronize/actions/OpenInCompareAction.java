@@ -26,6 +26,7 @@ import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoCompareInput;
+import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.*;
@@ -126,7 +127,8 @@ public class OpenInCompareAction extends Action {
 	 */
 	private static SyncInfoCompareInput getCompareInput(ISynchronizeParticipant participant, SyncInfo info) {
 		if (info != null && info.getLocal() instanceof IFile) {
-			return SyncInfoCompareInput.createInput(participant, info);								
+			SyncInfoDiffNode node = SyncInfoCompareInput.createSyncInfoDiffNode(participant, info);
+			return new SyncInfoCompareInput(info, node);
 		}
 		return null;
 	}				
