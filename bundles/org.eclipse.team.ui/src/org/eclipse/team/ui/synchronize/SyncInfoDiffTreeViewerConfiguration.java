@@ -63,17 +63,21 @@ public class SyncInfoDiffTreeViewerConfiguration {
 	}
 
 	/**
-	 * @param parent
-	 * @param treeViewer
+	 * Initialize the viewer with the elements of this configuration, including
+	 * content and label providers, sorter, input and menus. This method is invoked from the
+	 * constructor of <code>SyncInfoDiffTreeViewer</code> to initialize the viewers. A
+	 * configuration instance may only be used with one viewer.
+	 * @param parent the parent composite
+	 * @param viewer the viewer being initialized
 	 */
 	public void initializeViewer(Composite parent, final StructuredViewer viewer) {
+		viewer.setSorter(getViewerSorter());
+		viewer.setLabelProvider(getLabelProvider());
 		GridData data = new GridData(GridData.FILL_BOTH);
-		viewer.setSorter(new SyncViewerSorter(ResourceSorter.NAME));
-		viewer.setLabelProvider(new TeamSubscriberParticipantLabelProvider());
 		viewer.getControl().setLayoutData(data);
 		propertyListener = getPropertyListener(viewer);
 		getStore().addPropertyChangeListener(propertyListener);
-		setContentProvider(viewer);
+		viewer.setContentProvider(getContentProvider());
 		
 		initializeListeners(viewer);
 		
@@ -86,7 +90,35 @@ public class SyncInfoDiffTreeViewerConfiguration {
 		
 		createToolBarActions(parent);
 		// TODO: This relates to the content provider (i.e. the use of SyncInfoDiffNode)
-		viewer.setInput(new SyncInfoDiffNode(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot()));
+		viewer.setInput(getInput());
+	}
+
+	/**
+	 * Get the input that will be assigned to the viewer initialized by this configuration.
+	 * Subclass may override.
+	 * @return the viewer input
+	 */
+	protected SyncInfoDiffNode getInput() {
+		return new SyncInfoDiffNode(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
+	}
+
+	/**
+	 * Get the viewer sorter that will be assigned to the viewer initialized by this configuration.
+	 * Subclass may override.
+	 * @return a viewer sorter
+	 */
+	protected SyncViewerSorter getViewerSorter() {
+		return new SyncViewerSorter(ResourceSorter.NAME);
+	}
+
+	/**
+	 * Get the label provider that will be assigned to the viewer initialized by this configuration.
+	 * Subclass may override but any created label provider should wrap the default one provided
+	 * by this method.
+	 * @return a label provider
+	 */
+	protected ILabelProvider getLabelProvider() {
+		return new TeamSubscriberParticipantLabelProvider();
 	}
 
 	protected void initializeNavigation(Control tree, INavigationTarget target) {
@@ -132,7 +164,7 @@ public class SyncInfoDiffTreeViewerConfiguration {
 		return new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
 				if (event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-					setContentProvider(viewer);
+					viewer.setContentProvider(getContentProvider());
 				}
 			}
 		};
@@ -146,11 +178,16 @@ public class SyncInfoDiffTreeViewerConfiguration {
 		return TeamUIPlugin.getPlugin().getPreferenceStore();
 	}
 	
-	private void setContentProvider(StructuredViewer viewer) {
+	/**
+	 * Get the content provider that will be assigned to the viewer initialized by this configuration.
+	 * Subclass may override but should return a subclass of <code>SyncSetContentProvider</code>.
+	 * @return a content provider
+	 */
+	protected IContentProvider getContentProvider() {
 		if (getStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			viewer.setContentProvider(new CompressedFolderContentProvider());
+			return new CompressedFolderContentProvider();
 		} else {
-			viewer.setContentProvider(new SyncSetTreeContentProvider());
+			return new SyncSetTreeContentProvider();
 		}
 	}
 
