@@ -13,21 +13,10 @@ package org.eclipse.team.core.variants;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.eclipse.core.resources.IEncodedStorage;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.PlatformObject;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.core.Policy;
-import org.eclipse.team.internal.core.ResourceVariantCache;
-import org.eclipse.team.internal.core.ResourceVariantCacheEntry;
-import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.core.*;
 
 /**
  * A resource variant is a partial implementation of a remote resource
@@ -75,7 +64,7 @@ public abstract class CachedResourceVariant extends PlatformObject implements IR
 			return getCachedContents();
 		}
 		public IPath getFullPath() {
-			return getFullPath();
+			return new Path(getCachePath());
 		}
 		public String getName() {
 			return CachedResourceVariant.this.getName();
