@@ -174,4 +174,13 @@ public abstract class SynchronizeModelAction extends BaseSelectionListenerAction
 	public ISynchronizePageConfiguration getConfiguration() {
 		return configuration;
 	}
+
+	/**
+	 * Set the selection of the action to the given object
+	 * @param input the selected object
+	 */
+	public void setSelection(Object input) {
+		IStructuredSelection selection = new StructuredSelection(input);
+		selectionChanged(selection);
+	}
 }

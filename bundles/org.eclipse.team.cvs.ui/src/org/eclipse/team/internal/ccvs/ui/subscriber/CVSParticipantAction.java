@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -40,14 +38,5 @@ public abstract class CVSParticipantAction extends SynchronizeModelAction {
 			return name;
 		}
 		return name.substring(lastDot + 1)  + "."; //$NON-NLS-1$
-	}
-	
-	/**
-	 * Set the selection of the action to the given object
-	 * @param input the selected object
-	 */
-	public void setSelection(Object input) {
-		IStructuredSelection selection = new StructuredSelection(input);
-		selectionChanged(selection);
 	}
 }
