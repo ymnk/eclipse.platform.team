@@ -396,6 +396,9 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 						// an unedited file is no longer modified
 						setModified(false);
 					}
+				} else {
+					// We still need to report a state change
+					setSyncBytes(getSyncBytes(), ICVSFile.CLEAN);
 				}
 				setBaserevInfo(null);
 					
