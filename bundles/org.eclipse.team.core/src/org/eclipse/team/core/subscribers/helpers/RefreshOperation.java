@@ -30,51 +30,59 @@ public abstract class RefreshOperation {
 	protected abstract SynchronizationCache getSynchronizationCache();
 	
 	public IResource[] refresh(IResource[] resources, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
-		IResource[] changedResources = null;
+		List changedResources = new ArrayList();
 		monitor.beginTask(null, 100 * resources.length);
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
-			ISchedulingRule rule = resource.getProject();
-			
-			try {
-				// Get a scheduling rule on the project since CVS may obtain a lock higher then
-				// the resource itself.
-				JobManager.getInstance().beginRule(rule, monitor);
-				if (!resource.getProject().isAccessible()) {
-					// The project is closed so silently skip it
-					return new IResource[0];
-				}
-				
-				monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString()));
-				
-				// build the remote tree only if an initial tree hasn't been provided
-				ISubscriberResource	tree = buildRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));
-				
-				// update the known remote handles 
-				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
-				try {
-					sub.beginTask(null, 64);
-					// TODO: API shoudl include refresh itself
-					changedResources = collectChanges(resource, tree, depth, sub);
-				} finally {
-					sub.done();	 
-				}
-			} finally {
-				JobManager.getInstance().endRule(rule);
-			}
+			IResource[] changed = refresh(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 100));
+			changedResources.addAll(Arrays.asList(changed));
 		}
 		monitor.done();
 		if (changedResources == null) return new IResource[0];
-		return changedResources;
+		return (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
 	}
 
+	protected IResource[] refresh(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
+		IResource[] changedResources = null;
+		monitor.beginTask(null, 100);
+		ISchedulingRule rule = resource.getProject();
+		try {
+			// Get a scheduling rule on the project since CVS may obtain a lock higher then
+			// the resource itself.
+			JobManager.getInstance().beginRule(rule, monitor);
+			if (!resource.getProject().isAccessible()) {
+				// The project is closed so silently skip it
+				return new IResource[0];
+			}
+			
+			monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString()));
+			
+			// build the remote tree only if an initial tree hasn't been provided
+			ISubscriberResource	tree = getRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));
+			
+			// update the known remote handles 
+			IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
+			try {
+				sub.beginTask(null, 64);
+				changedResources = collectChanges(resource, tree, depth, sub);
+			} finally {
+				sub.done();	 
+			}
+		} finally {
+			JobManager.getInstance().endRule(rule);
+			monitor.done();
+		}
+		if (changedResources == null) return new IResource[0];
+		return changedResources;
+	}
+	
 	public IResource[] collectChanges(IResource local, ISubscriberResource remote, int depth, IProgressMonitor monitor) throws TeamException {
 		List changedResources = new ArrayList();
 		collectChanges(local, remote, changedResources, depth, monitor);
 		return (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
 	}
 	
-	public void collectChanges(IResource local, ISubscriberResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
+	protected void collectChanges(IResource local, ISubscriberResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
 		SynchronizationCache cache = getSynchronizationCache();
 		byte[] newRemoteBytes = getRemoteSyncBytes(local, remote);
 		boolean changed;
@@ -212,7 +220,6 @@ public abstract class RefreshOperation {
 	 */
 	protected abstract byte[] getRemoteSyncBytes(IResource local, ISubscriberResource remote) throws TeamException;
 	
-	
 	/**
 	 * Get the remote children of the given remote resource handle.
 	 * @param remote the remote resource
@@ -229,13 +236,16 @@ public abstract class RefreshOperation {
 	protected abstract IResource[] getLocalChildren(IResource parent) throws TeamException;
 
 	/**
-	 * @param resource
-	 * @param depth
-	 * @param cacheFileContentsHint
-	 * @param monitor
-	 * @return
+	 * Get the root of the remote tree corresponding to the given resource. This method may build the tree
+	 * or may just return the root, in which the remote tree will be built during the collectChanges phase.
+	 * @param resource the local resource
+	 * @param depth the depth of the refresh
+	 * @param cacheFileContentsHint a hint that indicates that remote contents may be needed 
+	 * when comparing local and remote resources.
+	 * @param monitor a progress monitor
+	 * @return the remote resource corresponding to the given local resource
 	 */
-	protected abstract ISubscriberResource buildRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException;
+	protected abstract ISubscriberResource getRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException;
 	
 	/**
 	 * Create a corresponding local resource handle for a remote resource that does not yet have a

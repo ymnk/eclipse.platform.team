@@ -100,7 +100,7 @@ public class CVSRefreshOperation extends RefreshOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.RefreshOperation#buildRemoteTree(org.eclipse.core.resources.IResource, int, boolean, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected ISubscriberResource buildRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
+	protected ISubscriberResource getRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
 		// TODO: we are currently ignoring the depth parameter because the build remote tree is
 		// by default deep!
 		return (ISubscriberResource)CVSWorkspaceRoot.getRemoteTree(resource, tag, cacheFileContentsHint, monitor);
