@@ -342,7 +342,7 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 	
 	/*************** Synchronizer/Configuration ***************/
 
-	public static void restoreAllProviders() throws CoreException, IOException {
+/*	public static void restoreAllProviders() throws CoreException, IOException {
 		String[] targetTypes = getAllTargetTypes();
 		QualifiedName[] partners = getSynchronizer().getPartners();
 		boolean registered = false;
@@ -358,6 +358,7 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 			}
 		}
 	}
+*/
 	
 	/*
 	 * Retrieve configuration information for the receiver
@@ -393,7 +394,7 @@ public abstract class SynchronizedTargetProvider extends TargetProvider {
 		setProject(project);
 		
 		// Configure the receiver with the new config info.
-		configure(configuration);
+//		configure(configuration);
 
 		// Store the new configuration for future.
 		registerWithSynchronizer();
