@@ -94,6 +94,7 @@ public class SyncViewerSubscriberActions extends SyncViewerActionGroup {
 		for (int i = 0; i < actions.length; i++) {
 			ContributedSubscriberAction action = actions[i];
 			action.setActivePart(getSyncView().getSite().getPage().getActivePart());
+			action.setContext(getSubscriberContext());
 			action.selectionChanged(selection);
 			menu.add(action);
 		}
@@ -107,4 +108,5 @@ public class SyncViewerSubscriberActions extends SyncViewerActionGroup {
 		String className = getSubscriberContext().getSubscriber().getClass().getName();
 		actions = (ContributedSubscriberAction[])definitions.get(className);
 	}
+
 }

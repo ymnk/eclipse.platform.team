@@ -577,6 +577,17 @@
                id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.confirmMerged">
          </action>
       </subscriberContribution>
+          <subscriberContribution
+            subscriberClass="org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber"
+            id="org.eclipse.team.ccvs.ui.CVSMergeSubscriberContributions">
+          <action
+               label="%CVSWorkspaceSubscriber.merge.label"
+               tooltip="%CVSWorkspaceSubscriber.merge.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateMergeAction"
+               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_merge_action"
+               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.merge">
+         </action>
+      </subscriberContribution>
    </extension>
    
 <!-- ************** Views ********************** -->

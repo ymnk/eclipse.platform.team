@@ -24,6 +24,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
+import org.eclipse.team.ui.sync.SubscriberAction;
 import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.IActionDelegate2;
 import org.eclipse.ui.IObjectActionDelegate;
@@ -48,6 +50,7 @@ public class ContributedSubscriberAction extends SyncViewerAction {
 	private IConfigurationElement element;
 	private IWorkbenchPart activePart;
 	private ISelection selection;
+	private SubscriberInput context;
 
 	/*
 	 * NOTE: Code copied from WorkbenchPlugin.
@@ -121,6 +124,9 @@ public class ContributedSubscriberAction extends SyncViewerAction {
 	 * Return the delegate action or null if not created yet
 	 */
 	private IActionDelegate getDelegate() {
+		if (delegate == null) {
+			createDelegate();
+		}
 		return delegate;
 	}
 	
@@ -151,8 +157,8 @@ public class ContributedSubscriberAction extends SyncViewerAction {
 	private void initDelegate() {
 		if (delegate instanceof IActionDelegate2)
 			((IActionDelegate2)delegate).init(this);
-		if (getDelegate() instanceof IObjectActionDelegate && activePart != null)
-			((IObjectActionDelegate)getDelegate()).setActivePart(this, activePart);
+		if (delegate instanceof IObjectActionDelegate && activePart != null)
+			((IObjectActionDelegate)delegate).setActivePart(this, activePart);
 	}
 	
 
@@ -283,6 +289,18 @@ public class ContributedSubscriberAction extends SyncViewerAction {
 		}
 
 		delegate.run(this);
+	}
+
+	/*
+	 * Set the context 
+	 * @param input
+	 */
+	protected void setContext(SubscriberInput input) {
+		this.context = input;
+		IActionDelegate delegate = getDelegate();
+		if (delegate instanceof SubscriberAction) {
+			((SubscriberAction)delegate).setSubscriber(context.getSubscriber());
+		}
 	}
 	
 }

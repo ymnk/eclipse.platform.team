@@ -184,4 +184,12 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 		IResource[] roots = (IResource[]) resources.toArray(new IResource[resources.size()]);
 		return new CVSMergeSubscriber(id, roots, start, end);
 	}
+	
+	public CVSTag getStartTag() {
+		return start;
+	}
+	
+	public CVSTag getEndTag() {
+		return end;
+	}
 }
