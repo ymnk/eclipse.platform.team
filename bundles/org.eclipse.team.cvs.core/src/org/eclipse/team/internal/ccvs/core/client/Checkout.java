@@ -118,6 +118,7 @@ public class Checkout extends Command {
 			return status;
 		
 		// Do not shorten paths if there is more than one expansion
+		// XXX We need to investigate when -N should be used
 		if (session.getModuleExpansions().length > 1) {
 			if ( ! DO_NOT_SHORTEN.isElementOf(localOptions)) {
 				LocalOption[] newLocalOptions = new LocalOption[localOptions.length + 1];

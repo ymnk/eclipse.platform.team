@@ -70,6 +70,13 @@ public class Session {
 	private static boolean MUST_CONVERT_NEWLINES = PLATFORM_NEWLINE_BYTES.length != 1
 		&& PLATFORM_NEWLINE_BYTES[0] != SERVER_NEWLINE_BYTE;
 		
+	public static final String[] ALL_VALID_RESPONSES = new String[] {
+		"ok", "error", "Valid-requests", "Checked-in", "New-entry", "Checksum", "Copy-file", 
+		"Updated", "Created", "Update-existing", "Merged", "Patched", "Rcs-diff", "Mode", "Mod-time", "Removed", 
+		"Remove-entry", "Set-static-directory", "Clear-static-directory", "Set-sticky", "Clear-sticky", 
+		"Template", "Set-checkin-prog", "Set-update-prog", "Notified", "Module-expansion", 
+		"Wrapper-rcsOption", "M", "Mbinary", "E", "F", "MT"};
+		
 	// VCM 1.0 comitted files using CR/LF as a delimiter
 	private static final int CARRIAGE_RETURN_BYTE = 0x0d;
 
@@ -139,6 +146,9 @@ public class Session {
 		if (connection != null) throw new IllegalStateException();
 		connection = location.openConnection(monitor);
 		
+		// set the root directory on the server for this connection
+		connection.writeLine("Root " + getRepositoryRoot()); //$NON-NLS-1$
+		
 		// tell the server the names of the responses we can handle
 		connection.writeLine("Valid-responses " + Command.makeResponseList()); //$NON-NLS-1$
 
@@ -148,9 +158,9 @@ public class Session {
 		Command.VALID_REQUESTS.execute(this, Command.NO_GLOBAL_OPTIONS, Command.NO_LOCAL_OPTIONS,
 			Command.NO_ARGUMENTS, null, monitor);
 		outputToConsole = saveOutputToConsole;
-
-		// set the root directory on the server for this connection
-		connection.writeLine("Root " + getRepositoryRoot()); //$NON-NLS-1$
+		
+		// The protocol says it requires this
+		connection.writeLine("UseUnchanged");
 	}		
 	
 	/**

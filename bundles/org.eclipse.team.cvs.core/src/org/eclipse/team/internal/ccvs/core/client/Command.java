@@ -99,8 +99,10 @@ public abstract class Command {
 		registerResponseHandler(new StaticHandler(false));
 		registerResponseHandler(new StickyHandler(true));
 		registerResponseHandler(new StickyHandler(false));
-		registerResponseHandler(new UpdatedHandler(true));
-		registerResponseHandler(new UpdatedHandler(false));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_UPDATED));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_UPDATE_EXISTING));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_CREATED));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_MERGED));
 		registerResponseHandler(new ValidRequestsHandler());
 		registerResponseHandler(new ModuleExpansionHandler());		
 	}
@@ -383,14 +385,14 @@ public abstract class Command {
 			Option[] gOptions = makeAndSendOptions(session, globalOptions, getDefaultGlobalOptions(globalOptions, localOptions));
 			Option[] lOptions = makeAndSendOptions(session, localOptions, getDefaultLocalOptions(globalOptions, localOptions));
 
+			// send arguments
+			sendArguments(session, arguments);
 			// send local working directory state
 			sendLocalResourceState(session, globalOptions, localOptions,
 				resources, Policy.subMonitorFor(monitor, 10));
 			Policy.checkCanceled(monitor);
 			// send local working directory path
 			sendLocalWorkingDirectory(session);
-			// send arguments
-			sendArguments(session, arguments);
 			// send command
 			session.sendCommand(getCommandId());
 
@@ -479,6 +481,7 @@ public abstract class Command {
 				IStatus status = listener.messageLine(argument, session.getLocalRoot(), monitor);
 				if (status != ICommandOutputListener.OK) accumulatedStatus.add(status);
 				if (consoleListener != null && session.isOutputToConsole()) consoleListener.messageLine(argument, null, null);
+			} else if (response.equals("MT")) {  //$NON-NLS-1$
 			} else if (response.equals("E")) { //$NON-NLS-1$
 				IStatus status = listener.errorLine(argument, session.getLocalRoot(), monitor);
 				if (status != ICommandOutputListener.OK) accumulatedStatus.add(status);
@@ -530,13 +533,12 @@ public abstract class Command {
 	 * @return a space-delimited list of all valid response strings
 	 */
 	static String makeResponseList() {
-		StringBuffer result = new StringBuffer("ok error M E");  //$NON-NLS-1$
+		StringBuffer result = new StringBuffer("ok error M MT E");  //$NON-NLS-1$
 		Iterator elements = responseHandlers.keySet().iterator();
 		while (elements.hasNext()) {
 			result.append(' ');
 			result.append((String) elements.next());
 		}
-		
 		return result.toString();
 	}
 

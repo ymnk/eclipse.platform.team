@@ -40,20 +40,29 @@ import org.eclipse.team.internal.ccvs.core.util.EntryFileDateFormat;
  * Requiers a exisiting parent-folder.
  */
 class UpdatedHandler extends ResponseHandler {
+	
+	private int handlerType;
+	
+	protected static final int HANDLE_UPDATED = 1;
+	protected static final int HANDLE_MERGED = 2;
+	protected static final int HANDLE_UPDATE_EXISTING = 3;
+	protected static final int HANDLE_CREATED = 4;
+	
 	private static final EntryFileDateFormat dateFormatter = new EntryFileDateFormat();
 	private static final String READ_ONLY_FLAG = "u=rw"; //$NON-NLS-1$
-	private final boolean updateResponse;
 	
-	public UpdatedHandler(boolean updateResponse) {
-		this.updateResponse = updateResponse;
+	public UpdatedHandler(int handlerType) {
+		this.handlerType = handlerType;
 	}
 	
 	public String getResponseID() {
-		if (updateResponse) {
-			return "Updated"; //$NON-NLS-1$
-		} else {
-			return "Merged"; //$NON-NLS-1$
+		switch (handlerType) {
+			case HANDLE_UPDATED: return "Updated"; //$NON-NLS-1$
+			case HANDLE_MERGED: return "Merged"; //$NON-NLS-1$
+			case HANDLE_UPDATE_EXISTING: return "Update-existing"; //$NON-NLS-1$
+			case HANDLE_CREATED: return "Created"; //$NON-NLS-1$
 		}
+		return null;
 	}
 
 	public void handle(Session session, String localDir,
@@ -84,11 +93,11 @@ class UpdatedHandler extends ResponseHandler {
 		String timestamp = null;
 		if (modTime != null) timestamp = dateFormatter.formatDate(modTime);
 		mFile.setTimeStamp(timestamp);
-		if (updateResponse) {
-			timestamp = mFile.getTimeStamp();
-		} else {
+		if (handlerType == HANDLE_MERGED) {
 			timestamp = ResourceSyncInfo.RESULT_OF_MERGE + mFile.getTimeStamp();
-		}			
+		} else {
+			timestamp = mFile.getTimeStamp();
+		}		
 		mFile.setSyncInfo(new ResourceSyncInfo(entryLine, permissionsLine, timestamp));
 	}
 }
