@@ -138,20 +138,21 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 	 * This method shold only be invoked when the corresponding adapter is shut
 	 * down or a connection is being validated.
 	 */
-	public void dispose() throws CVSException {
+	public void dispose() {
 		flushCache();
 	}
 	
 	/*
 	 * Flush the keyring entry associated with the receiver
 	 */
-	private void flushCache() throws CVSException {
+	private void flushCache() {
 		try {
 			Platform.flushAuthorizationInfo(FAKE_URL, getLocation(), AUTH_SCHEME);
 		} catch (CoreException e) {
-			// We should probably wrap the CoreException here!
+			// No need to report this since the location is
+			// most likely being disposed. 
+			// Just fail silently and continue
 			CVSProviderPlugin.log(e);
-			throw new CVSException(IStatus.ERROR, IStatus.ERROR, Policy.bind("CVSRepositoryLocation.errorFlushing", getLocation()), e);//$NON-NLS-1$ 
 		}
 	}
 	
@@ -414,20 +415,24 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 	public void updateCache() throws CVSException {
 		if (passwordFixed)
 			return;
-		updateCache(user, password, true);
-		password = null;
+		if (updateCache(user, password)) {
+			// If the cache was updated, null the password field
+			// so we will obtain the password from the cache when needed
+			password = null;
+		}
+		
 		// Ensure that the receiver is known by the CVS provider
 		CVSProviderPlugin.getPlugin().getRepository(getLocation());
 	}
 	
 	/*
-	 * Cache the user info in the keyring
+	 * Cache the user info in the keyring. Return true if the operation
+	 * succeeded and false otherwise. If an error occurs, it will be logged.
 	 */
-	private void updateCache(String username, String password, boolean createIfAbsent) throws CVSException {
+	private boolean updateCache(String username, String password) {
 		// put the password into the Platform map
 		Map map = Platform.getAuthorizationInfo(FAKE_URL, getLocation(), AUTH_SCHEME);
 		if (map == null) {
-			if ( ! createIfAbsent) return;
 			map = new java.util.HashMap(10);
 		}
 		if (username != null)
@@ -439,8 +444,9 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 		} catch (CoreException e) {
 			// We should probably wrap the CoreException here!
 			CVSProviderPlugin.log(e);
-			throw new CVSException(IStatus.ERROR, IStatus.ERROR, Policy.bind("CVSRepositoryLocation.errorCaching", getLocation()), e);//$NON-NLS-1$ 
+			return false;
 		}
+		return true;
 	}
 	
 	/*
@@ -854,7 +860,7 @@ public class CVSRepositoryLocation extends PlatformObject implements ICVSReposit
 	/**
 	 * @see ICVSRepositoryLocation#flushUserInfo()
 	 */
-	public void flushUserInfo() throws CVSException {
+	public void flushUserInfo() {
 		flushCache();
 	}
 	
