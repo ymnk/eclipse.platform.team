@@ -16,9 +16,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
-import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CompareParticipant;
@@ -33,17 +31,21 @@ public class CompareWithTagAction extends WorkspaceAction {
 		if (tag == null)
 			return;
 		
-		// Run the comparison
-		CVSCompareSubscriber s = new CVSCompareSubscriber(resources, tag);
-		try {
-			s.primeRemoteTree();
-		} catch (CVSException e) {
-			// This is not essential. Log and continue
-			CVSUIPlugin.log(e);
+		CVSCompareSubscriber compareSubscriber = new CVSCompareSubscriber(resources, tag);
+		if (SyncAction.isSingleFile(resources)) {
+			SyncAction.showSingleFileComparison(getShell(), compareSubscriber, resources[0]);
+			// TODO: leaking subscribers??? we can't dispose if syncinfo getsubscriber must be called
+			compareSubscriber.dispose();
+		} else {
+			//	First check if there is an existing matching participant, if so then re-use it
+			CompareParticipant participant = CompareParticipant.getMatchingParticipant(resources, tag);
+			if (participant == null) {
+				CVSCompareSubscriber s = compareSubscriber;
+				participant = new CompareParticipant(s);
+				TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[]{participant});
+			}
+			participant.refresh(resources, Policy.bind("Participant.comparing"), participant.getName(), null); //$NON-NLS-1$
 		}
-		CompareParticipant participant = new CompareParticipant(s);
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
-		participant.refresh(resources, Policy.bind("Participant.comparing"), 	participant.getName(), null); //$NON-NLS-1$
 	}
 	
 	protected CVSTag promptForTag(IResource[] resources) {
