@@ -17,6 +17,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.*;
 
 /**
@@ -77,5 +78,6 @@ public class CVSParticipant extends SubscriberParticipant {
 		// The decorator adds itself to the configuration
 		ILabelDecorator labelDecorator = new CVSLabelDecorator(configuration);
 		configuration.addLabelDecorator(labelDecorator);
+		configuration.setProperty(SynchronizePageConfiguration.P_MODEL_MANAGER, new ChangeLogModelManager(configuration));
 	}
 }
