@@ -10,11 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.client;
 
+import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 
@@ -42,8 +44,53 @@ public class TemplateHandler extends ResponseHandler {
 		String remoteDir = session.readLine();
 		ICVSFolder localFolder = getExistingFolder(session, localDir);
 		IContainer container = (IContainer)localFolder.getIResource();
-		if (container == null) return;
-		ICVSFile templateFile = CVSWorkspaceRoot.getCVSFileFor(SyncFileWriter.getTemplateFile(container));
+		ICVSStorage templateFile;
+		if (container == null) {
+			// Create a dummy storage handle to recieve the contents from the server
+			templateFile = new ICVSStorage() {
+				public String getName() {
+					return "Template"; //$NON-NLS-1$
+				}
+				public void setContents(
+					InputStream stream,
+					int responseType,
+					boolean keepLocalHistory,
+					IProgressMonitor monitor)
+					throws CVSException {
+
+					try {
+						// Transfer the contents
+						OutputStream out = new ByteArrayOutputStream();
+						try {
+							byte[] buffer = new byte[1024];
+							int read;
+							while ((read = stream.read(buffer)) >= 0) {
+								Policy.checkCanceled(monitor);
+								out.write(buffer, 0, read);
+							}
+						} finally {
+							out.close();
+						}
+					} catch (IOException e) {
+						throw CVSException.wrapException(e); //$NON-NLS-1$
+					} finally {
+						try {
+							stream.close();
+						} catch (IOException e1) {
+							// Ignore close errors
+						}
+					}
+				}
+				public long getSize() {
+					return 0;
+				}
+				public InputStream getContents() throws CVSException {
+					return new ByteArrayInputStream(new byte[0]);
+				}
+			};
+		} else {
+			templateFile = CVSWorkspaceRoot.getCVSFileFor(SyncFileWriter.getTemplateFile(container));
+		}
 		session.receiveFile(templateFile, false, UpdatedHandler.HANDLE_UPDATED, monitor);
 	}
 

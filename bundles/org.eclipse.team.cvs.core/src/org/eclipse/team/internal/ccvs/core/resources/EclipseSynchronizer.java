@@ -42,6 +42,8 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.BaserevInfo;
@@ -536,13 +538,21 @@ public class EclipseSynchronizer implements IFlushOperation {
 	 * Begin an access to the internal data structures of the synchronizer
 	 */
 	private void beginOperation() {
+		// Do not try to acquire the lock if the resources tree is locked
+		// The reason for this is that during the resource delta phase (i.e. when the tree is locked)
+		// the workspace lock is held. If we obtain our lock, there is 
+		// a chance of dealock. It is OK if we don't as we are still protected
+		// by scheduling rules and the workspace lock.
+		if (ResourcesPlugin.getWorkspace().isTreeLocked()) return;
 		lock.acquire();
 	}
 	
 	/*
 	 * End an access to the internal data structures of the synchronizer
 	 */
-	private void endOperation() {						
+	private void endOperation() {
+		// See beginOperation() for a description of why the lock is not obtained when the tree is locked
+		if (ResourcesPlugin.getWorkspace().isTreeLocked()) return;
 		lock.release();
 	}
 	
@@ -1540,14 +1550,24 @@ public class EclipseSynchronizer implements IFlushOperation {
 		return resourceLock.isWithinActiveOperationScope(resource);
 	}
 	
-	public void setTimeStamp(IFile file, long time) throws CVSException {
+	/**
+	 * Set the timestamp of the given file and set it to be CLEAN. It is
+	 * assumed that this method is only invoked to reset the file timestamp
+	 * to the timestamp that is in the CVS/Entries file.
+	 * @param file
+	 * @param time
+	 * @throws CVSException
+	 */
+	public void setTimeStamp(ICVSFile cvsFile, long time) throws CVSException {
 		ISchedulingRule rule = null;
+		IFile file = (IFile)cvsFile.getIResource();
 		try {
 			rule = beginBatching(file, null);
 			try {
 				beginOperation();
 				try {
 					file.setLocalTimeStamp(time);
+					setModified(cvsFile, ICVSFile.CLEAN);
 				} catch (CoreException e) {
 					throw CVSException.wrapException(e);
 				}
@@ -1624,6 +1644,84 @@ public class EclipseSynchronizer implements IFlushOperation {
 		} finally {
 			if (rule != null) endBatching(rule, Policy.subMonitorFor(monitor, 5));
 			monitor.done();
+		}
+	}
+	
+	/**
+	 * Compute the modification state for the given file. If the modificationState is
+	 * ICVSFile.UNKNOWN, it is computed. However, if it is CLEAN or DIRTY, 
+	 * it is set accordingly. CLEAN or DIRTY can only be used if the caller is protected
+	 * from resource modifications (either by a scheduling rule or inside a delta handler).
+	 * @param file
+	 * @param modificationState
+	 * @return true if the file is dirty
+	 */
+	public boolean setModified(ICVSFile cvsFile, int modificationState) throws CVSException {
+		try {
+			beginOperation();
+			boolean dirty;
+			if (modificationState == ICVSFile.UNKNOWN) {
+				// if there is no sync info and it doesn't exist then it is a phantom we don't care about.
+				ResourceSyncInfo info = cvsFile.getSyncInfo();
+				if (info == null) {
+					dirty = cvsFile.exists();
+				} else {
+					// isMerged() must be called because when a file is updated and merged by the cvs server the timestamps
+					// are equal. Merged files should however be reported as dirty because the user should take action and commit
+					// or review the merged contents.
+					if(info.isAdded() || info.isMerged() || !cvsFile.exists()) {
+						dirty = true;
+					} else {
+						dirty = !cvsFile.getTimeStamp().equals(info.getTimeStamp());
+					}
+				}
+			} else {
+				dirty = modificationState == ICVSFile.DIRTY;
+			}
+			setDirtyIndicator(cvsFile.getIResource(), dirty);
+			return dirty;
+		} finally {
+			endOperation();
+		}
+
+	}
+
+	/**
+	 * Set the modified state of the folder. This method can be called when no resource locks are
+	 * held. It will check the cached modification state of all the folder's children before setting.
+	 * If the states of the children do not match, the state for the folder is not cached.
+	 * @param folder
+	 * @param modified
+	 */
+	public void setModified(ICVSFolder cvsFolder, boolean modified) throws CVSException {
+		try {
+			beginOperation();
+			IContainer folder = (IContainer)cvsFolder.getIResource();
+			// The drop out condition for clean or dirty are the opposite.
+			// (i.e. if modified and a dirty is found we can set the indicator
+			// and if not modified and a dirty or unknown is found we cannot set the indicator)
+			boolean okToSet = !modified;
+			// Obtain the children while we're locked to ensure some were not added or changed
+			ICVSResource[] children = cvsFolder.members(ICVSFolder.ALL_UNIGNORED_MEMBERS);
+			for (int i = 0; i < children.length; i++) {
+				IResource resource = children[i].getIResource();
+				if (modified) {
+					if (getDirtyIndicator(resource) == IS_DIRTY_INDICATOR) {
+						okToSet = true;
+						break;
+					}
+				} else {
+					if (getDirtyIndicator(resource) != NOT_DIRTY_INDICATOR) {
+						okToSet = false;
+						break;
+					}
+				}
+			}
+			if (okToSet) {
+				setDirtyIndicator(folder, modified);
+			}
+		} finally {
+			endOperation();
 		}
 	}
 }

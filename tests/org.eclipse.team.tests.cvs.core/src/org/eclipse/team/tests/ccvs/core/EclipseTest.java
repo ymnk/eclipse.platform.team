@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -38,6 +39,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.tests.harness.EclipseWorkspaceTest;
 import org.eclipse.swt.widgets.Display;
@@ -69,6 +71,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileChangeListener;
 import org.eclipse.team.internal.ccvs.ui.operations.CVSOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutSingleProjectOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.ShareProjectOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.ReplaceOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.TagInRepositoryOperation;
@@ -716,7 +719,20 @@ public class EclipseTest extends EclipseWorkspaceTest {
 	}
 	
 	protected void mapNewProject(IProject project) throws TeamException {
-		CVSWorkspaceRoot.createModule(getRepository(), project, null, DEFAULT_MONITOR);
+		shareProject(getRepository(), project, null, DEFAULT_MONITOR);
+	}
+	
+	/**
+	 * Map the given local project to remote folder, creating the remote folder or any of
+	 * its ancestors as necessary.
+	 * @param location
+	 * @param project
+	 * @param moduleName
+	 * @param default_monitor
+	 */
+	protected void shareProject(CVSRepositoryLocation location, IProject project, String moduleName, IProgressMonitor default_monitor) throws CVSException {
+		ShareProjectOperation op = new ShareProjectOperation(null, location, project, moduleName);
+		executeHeadless(op);
 	}
 	
 	protected void commitNewProject(IProject project) throws CoreException, CVSException, TeamException {
@@ -858,8 +874,24 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		// Overridden to change how the workspace is deleted on teardown
 		if (resource.getType() == IResource.ROOT) {
 			// Delete each project individually
+			Job[] allJobs = Platform.getJobManager().find(null /* all families */);
 			IProject[] projects = ((IWorkspaceRoot)resource).getProjects();
-			ensureDoesNotExistInWorkspace(projects);
+			try {
+				ensureDoesNotExistInWorkspace(projects);
+			} catch (AssertionFailedError e) {
+				// The delete failed. Write the active jobs to stdout
+				System.out.println("Jobs active at time of deletion failure: "); //$NON-NLS-1$
+				if (allJobs.length == 0) {
+					System.out.println("None"); //$NON-NLS-1$
+				}
+				for (int i = 0; i < allJobs.length; i++) {
+					Job job = allJobs[i];
+					System.out.println(job.getName());
+				}
+				if (CVSTestSetup.FAIL_IF_EXCEPTION_LOGGED) {
+					throw e;
+				}
+			}
 		} else {
 			super.ensureDoesNotExistInWorkspace(resource);
 		}
