@@ -174,14 +174,16 @@ public class CheckoutAsMainPage extends CVSWizardPage {
 	 */
 	private void updateEnablements() {
 
-		projectNameField.setEnabled(simpleProjectButton.getSelection());
-		if (projectNameField.isEnabled()) {
-			newProjectName = this.projectNameField.getText();
-			IWorkspace workspace = ResourcesPlugin.getWorkspace();
-			IStatus nameStatus = workspace.validateName(newProjectName, IResource.PROJECT);
-			if (!nameStatus.isOK()) {
-				setErrorMessage(nameStatus.getMessage());
-				setPageComplete(false);
+		if (projectNameField != null) {
+			projectNameField.setEnabled(simpleProjectButton.getSelection());
+			if (projectNameField.isEnabled()) {
+				newProjectName = this.projectNameField.getText();
+				IWorkspace workspace = ResourcesPlugin.getWorkspace();
+				IStatus nameStatus = workspace.validateName(newProjectName, IResource.PROJECT);
+				if (!nameStatus.isOK()) {
+					setErrorMessage(nameStatus.getMessage());
+					setPageComplete(false);
+				}
 			}
 		}
 		setErrorMessage(null);

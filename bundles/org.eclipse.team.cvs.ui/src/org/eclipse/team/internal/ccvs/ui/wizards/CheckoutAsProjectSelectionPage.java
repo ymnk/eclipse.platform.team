@@ -176,7 +176,7 @@ public class CheckoutAsProjectSelectionPage extends CVSWizardPage {
 		ISelection sel = event.getSelection();
 		if (sel.isEmpty()) {
 			this.selection = null;
-		} else if (selection instanceof IStructuredSelection) {
+		} else if (sel instanceof IStructuredSelection) {
 			this.selection = (IResource)((IStructuredSelection)sel).getFirstElement();
 		}
 		updateWidgetEnablements();

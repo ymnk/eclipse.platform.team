@@ -232,7 +232,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 					IResource resource = folder.getIResource();
 					if (resource == null) return;
 					FolderSyncInfo info = folder.getFolderSyncInfo();
-					if (!info.isSameMapping(remoteInfo)) {
+					if (info.isSameMapping(remoteInfo)) {
 							throw new CVSException("There is already a local folder mapped to the same remote folder"); /* TODO: need to give more info */
 					}
 					folder.acceptChildren(this);
@@ -349,7 +349,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 	}
 
 	/*
-	 * Bring the provied projects into the workspace
+	 * Bring the provided projects into the workspace
 	 */
 	private static void refreshRoot(IContainer root, IProgressMonitor monitor) throws CVSException {
 			try {
@@ -360,6 +360,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 					
 					// TODO: This should be somewhere else
+					provider = (CVSTeamProvider)RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId());
 					provider.setWatchEditEnabled(CVSProviderPlugin.getPlugin().isWatchEditEnabled());
 				}
 			} catch (TeamException e) {
