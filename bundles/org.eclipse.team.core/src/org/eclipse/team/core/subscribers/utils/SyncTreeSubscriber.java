@@ -20,8 +20,8 @@ import org.eclipse.team.core.subscribers.*;
 
 /**
  * A specialization of TeamSubscriber that provides some additional logic for creating
- * <code>SyncInfo</code> from <code>ISubscriberResource</code> instances and for
- * adding comparison criteria. The <code>members()</code> also assumes that remote 
+ * <code>SyncInfo</code> from <code>ISubscriberResource</code> instances. 
+ * The <code>members()</code> also assumes that remote 
  * instances are stored in the <code>ISynchronizer</code>.
  */
 public abstract class SyncTreeSubscriber extends TeamSubscriber {
