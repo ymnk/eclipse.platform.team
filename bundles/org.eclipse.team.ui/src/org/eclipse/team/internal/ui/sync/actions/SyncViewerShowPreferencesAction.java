@@ -13,8 +13,8 @@ package org.eclipse.team.internal.ui.sync.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.preference.PreferencePage;
-import org.eclipse.team.internal.ui.sync.dialogs.PreferencePageContainerDialog;
-import org.eclipse.team.internal.ui.sync.dialogs.SyncViewerPreferencePage;
+import org.eclipse.team.internal.ui.dialogs.PreferencePageContainerDialog;
+import org.eclipse.team.internal.ui.preferences.SyncViewerPreferencePage;
 
 public class SyncViewerShowPreferencesAction extends Action {
 	private final SyncViewerActions actions;

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.wizards;
 
 
 import org.eclipse.core.runtime.CoreException;
@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.internal.model.WorkbenchAdapter;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 

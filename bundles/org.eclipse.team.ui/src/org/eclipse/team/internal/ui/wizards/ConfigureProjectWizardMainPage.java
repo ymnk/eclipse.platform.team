@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.wizards;
 
 
 import org.eclipse.core.resources.IProject;
@@ -29,6 +29,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.team.internal.ui.IHelpContextIds;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.help.WorkbenchHelp;

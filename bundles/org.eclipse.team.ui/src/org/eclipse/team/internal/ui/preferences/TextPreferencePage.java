@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.preferences;
 
  
 import java.util.ArrayList;
@@ -50,6 +50,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.IFileTypeInfo;
 import org.eclipse.team.core.Team;
+import org.eclipse.team.internal.ui.IHelpContextIds;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.help.WorkbenchHelp;

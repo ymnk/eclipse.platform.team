@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.wizards;
 
 
 import org.eclipse.core.resources.IProject;
@@ -20,6 +20,8 @@ import org.eclipse.core.runtime.IPluginRegistry;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;

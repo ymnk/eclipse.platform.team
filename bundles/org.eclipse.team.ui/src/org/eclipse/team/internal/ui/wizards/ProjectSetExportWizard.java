@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.wizards;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -38,6 +38,8 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.IExportWizard;
 import org.eclipse.ui.IWorkbench;

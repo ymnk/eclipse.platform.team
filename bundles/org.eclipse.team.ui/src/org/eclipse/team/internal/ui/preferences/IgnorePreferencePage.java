@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.preferences;
 
  
 import org.eclipse.jface.dialogs.Dialog;
@@ -30,6 +30,9 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.team.core.IIgnoreInfo;
 import org.eclipse.team.core.Team;
+import org.eclipse.team.internal.ui.IHelpContextIds;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;

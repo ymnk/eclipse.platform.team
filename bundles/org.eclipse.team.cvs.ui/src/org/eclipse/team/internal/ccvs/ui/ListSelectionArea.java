@@ -30,6 +30,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.dialogs.*;
 import org.eclipse.team.ui.*;
 
 /**

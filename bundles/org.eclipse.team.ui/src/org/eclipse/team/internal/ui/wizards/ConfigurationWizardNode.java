@@ -8,13 +8,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.wizards;
 
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardNode;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.team.internal.ui.Policy;
 
 /**
  * ConfigurationWizardNode represents the objects in the

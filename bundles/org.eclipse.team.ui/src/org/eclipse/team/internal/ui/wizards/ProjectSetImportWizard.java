@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui;
+package org.eclipse.team.internal.ui.wizards;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,6 +30,9 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.core.IProjectSetSerializer;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.ProjectSetContentHandler;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
@@ -82,7 +85,7 @@ public class ProjectSetImportWizard extends Wizard implements IImportWizard {
 						
 						Map map = handler.getReferences();
 						List newProjects = new ArrayList();
-						if (map.size() == 0 && handler.isVersionOne) {
+						if (map.size() == 0 && handler.isVersionOne()) {
 							IProjectSetSerializer serializer = Team.getProjectSetSerializer("versionOneSerializer"); //$NON-NLS-1$
 							if (serializer != null) {
 								IProject[] projects = serializer.addToWorkspace(new String[0], filename, getShell(), monitor);

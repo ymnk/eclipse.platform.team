@@ -21,6 +21,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
@@ -55,7 +56,7 @@ class RefreshAction extends Action {
 				}						
 			}
 		} catch(TeamException e) {
-			TeamUIPlugin.handle(e);
+			Utils.handle(e);
 		}
 	}
 	

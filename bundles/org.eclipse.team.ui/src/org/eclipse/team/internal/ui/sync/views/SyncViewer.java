@@ -68,6 +68,7 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
 import org.eclipse.team.ui.ISharedImages;
@@ -477,7 +478,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	}
 	
 	private static void handle(Shell shell, Exception exception, String title, String message) {
-		TeamUIPlugin.handleError(shell, exception, title, message);
+		Utils.handleError(shell, exception, title, message);
 	}
 	
 	/* (non-Javadoc)

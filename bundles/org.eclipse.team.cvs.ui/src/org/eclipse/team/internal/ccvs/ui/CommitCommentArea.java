@@ -32,6 +32,7 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.dialogs.*;
 import org.eclipse.team.ui.*;
 
 /**
