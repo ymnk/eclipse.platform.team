@@ -28,6 +28,7 @@ public class ParticipantComposite extends Composite {
 	private Image participantImage;
 	private ISynchronizeView view;
 	private IControlFactory factory;
+	private Composite participantComposite;
 	
 	public ParticipantComposite(Composite parent, IControlFactory factory, ISynchronizeParticipant participant, ISynchronizeView view, int style) {
 		super(parent, style);
@@ -85,7 +86,7 @@ public class ParticipantComposite extends Composite {
 				gridLayout_1.marginWidth = 0;
 				gridLayout_1.marginHeight = 0;
 				composite_1.setLayout(gridLayout_1);
-				participant.createOverviewComposite(composite_1, factory, view);
+				participantComposite = participant.createOverviewComposite(composite_1, factory, view);
 			}			
 			{
 				final Composite composite_1 = factory.createComposite(composite, SWT.NONE);
@@ -112,6 +113,7 @@ public class ParticipantComposite extends Composite {
 	 */
 	public void dispose() {
 		super.dispose();
+		participantComposite.dispose();
 		participantImage.dispose();
 	}
 }

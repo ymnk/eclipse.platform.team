@@ -16,7 +16,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.sets.*;
@@ -26,6 +28,7 @@ import org.eclipse.ui.IActionDelegate;
 public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncSetChangedListener {
 
 	private List delegates = new ArrayList(2);
+	private ILabelProvider oldLabelProvider;
 
 	protected class CVSActionDelegate extends Action {
 		private IActionDelegate delegate;
@@ -90,24 +93,31 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 * 
 	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#getLabelProvider()
 	 */
-	protected ILabelProvider getLabelProvider() {
-		return new TeamSubscriberParticipantLabelProvider() {
-			protected String decorateText(String input, Object resource) {
-				if (resource instanceof IResource) {
-					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
-					CVSLightweightDecorator.decorateTextLabel((IResource) resource, decoration, false, true);
-					StringBuffer output = new StringBuffer(25);
-					if(decoration.prefix != null) {
-						output.append(decoration.prefix);
+	protected ILabelProvider getLabelProvider(final ILabelProvider proxy) {
+		return new LabelProvider() {
+			public Image getImage(Object element) {
+				return proxy.getImage(element);
+			}
+			public String getText(Object element) {
+				String text = proxy.getText(element);
+				if (element instanceof ITeamSubscriberParticipantNode) {
+					SyncInfo info =  ((ITeamSubscriberParticipantNode)element).getSyncInfo();
+					if(info != null) {
+						IResource resource = info.getLocal();
+						CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
+						CVSLightweightDecorator.decorateTextLabel((IResource) resource, decoration, false, true);
+						StringBuffer output = new StringBuffer(25);
+						if(decoration.prefix != null) {
+							output.append(decoration.prefix);
+						}
+						output.append(text);
+						if(decoration.suffix != null) {
+							output.append(decoration.suffix);
+						}
+						return output.toString();
 					}
-					output.append(input);
-					if(decoration.suffix != null) {
-						output.append(decoration.suffix);
-					}
-					return output.toString();
-				} else {
-					return input;
 				}
+				return text;
 			}
 		};
 	}
@@ -128,7 +138,19 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 */
 	public void createControl(Composite parent) {
 		super.createControl(parent);
+		
+		// Sync changes are used to update the action state for the update/commit buttons.
 		getInput().getFilteredSyncSet().addSyncSetChangedListener(this);
-		CVSUIPlugin.addPropertyChangeListener(this);		
+		
+		// Listen for decorator changed to refresh the viewer's labels.
+		CVSUIPlugin.addPropertyChangeListener(this);
+		
+		// Add a CVS specific label decorator to show CVS information in the sync
+		// view. We aren't using the global adaptable decorators because we don't
+		// want all outgoing/repository icons in this view. Instead, we add 
+		// CVS specific information that is useful in the synchronizing context.
+		StructuredViewer viewer = getChangesViewer();
+		oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
+		viewer.setLabelProvider(getLabelProvider(oldLabelProvider));		
 	}
 }

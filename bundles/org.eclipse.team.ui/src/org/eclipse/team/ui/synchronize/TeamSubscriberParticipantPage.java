@@ -26,6 +26,7 @@ import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.views.*;
 import org.eclipse.team.internal.ui.widgets.ControlFactory;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
@@ -151,11 +152,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		gd.grabExcessVerticalSpace = true;
 		control.setLayoutData(gd);
 	}
-	
-	protected ILabelProvider getLabelProvider() {
-		return new TeamSubscriberParticipantLabelProvider();		
-	}
-		
 	
 	protected StructuredViewer getChangesViewer() {
 		return changesSection.getChangesViewer().getViewer();
@@ -295,15 +291,11 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	public ISynchronizeView getSynchronizeView() {
 		return view;
 	}
-
-	/**
-	 * @param parent
-	 * @return
-	 */
+	
 	public SyncChangesViewer createChangesViewer(Composite parent) {
 		SyncChangesViewer viewer =  new SyncChangesTreeViewer(parent, getParticipant(), getSynchronizeView());
 		getSite().setSelectionProvider(viewer.getViewer());
-		viewer.getViewer().setLabelProvider(getLabelProvider());
+		viewer.getViewer().setLabelProvider(new TeamSubscriberParticipantLabelProvider());
 		return viewer;
 	}
 }

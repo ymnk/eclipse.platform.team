@@ -48,4 +48,5 @@ public interface IControlFactory {
 	public abstract void setHyperlinkHoverColor(org.eclipse.swt.graphics.Color hoverColor);
 	public abstract void setHyperlinkUnderlineMode(int newHyperlinkUnderlineMode);
 	public abstract void turnIntoHyperlink(Control control, IHyperlinkListener listener);
+	public void paintBordersFor(Composite parent);
 }

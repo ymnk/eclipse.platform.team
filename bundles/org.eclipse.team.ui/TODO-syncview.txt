@@ -6,5 +6,5 @@
 - P1 end of refresh prompt should be a property change notice, and let the participant decide what to do!
 - P1 mode switching at the end of a refresh to ensure that changes are shown if available
 - P2 need an event for adding roots to a subscriber to update the list shown
-- P1 support  for table widget in changes page
+- P2 support for table widget in changes page
 - remove duplicated tree/table viewers classes. the orignial ones simply have the INavigable behavior.

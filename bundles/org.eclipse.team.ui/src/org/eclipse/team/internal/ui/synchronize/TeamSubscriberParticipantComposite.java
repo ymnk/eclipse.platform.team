@@ -14,10 +14,11 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
@@ -30,6 +31,7 @@ import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class TeamSubscriberParticipantComposite extends Composite implements IPropertyChangeListener {
@@ -41,14 +43,15 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 	private Label lastSyncLabel;
 	private Label scheduleLabel;
 	private Label statusLabel;
-	private ListViewer rootsList;
+	private TableViewer rootsList;
 	
 	private IJobListener jobListener = new IJobListener() {
 		public void started(QualifiedName jobType) {
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
 					synchronized (this) {
-						statusLabel.setText("Working...");
+						if(statusLabel != null && !statusLabel.isDisposed())
+							statusLabel.setText("Working...");
 					}
 				}
 			});
@@ -57,7 +60,8 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
 					synchronized (this) {
-						statusLabel.setText("Idle");
+						if(statusLabel != null && !statusLabel.isDisposed())
+							statusLabel.setText("Idle");
 					}
 				}
 			});
@@ -94,6 +98,8 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 			GridData gridData = new GridData(GridData.VERTICAL_ALIGN_FILL);
 			final GridLayout gridLayout_1 = new GridLayout();
 			gridLayout_1.numColumns = 2;
+			gridLayout_1.marginHeight = 0;
+			gridLayout_1.marginWidth = 0;
 			composite_1.setLayout(gridLayout_1);
 			composite_1.setLayoutData(gridData);
 			{
@@ -129,15 +135,26 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 				gridData.grabExcessHorizontalSpace = true;
 				statusLabel.setLayoutData(gridData);
 			}
+		}
+		{
+			final Composite composite_1 = factory.createComposite(area, SWT.NONE);
+			GridData gridData = new GridData(GridData.FILL_BOTH);
+			final GridLayout gridLayout_1 = new GridLayout();
+			gridLayout_1.numColumns = 1;
+			gridLayout_1.marginHeight = 0;
+			gridLayout_1.marginWidth = 0;
+			composite_1.setLayout(gridLayout_1);
+			composite_1.setLayoutData(gridData);
 			{
-				rootsList = new ListViewer(composite_1, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);				
+				rootsList = new TableViewer(composite_1, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL);				
 				gridData = new GridData(GridData.FILL_BOTH);
-				gridData.horizontalSpan = 2;
-				gridData.grabExcessHorizontalSpace = true;
-				rootsList.getList().setLayoutData(gridData);	
+				gridData.heightHint = 80;
+				rootsList.getTable().setLayoutData(gridData);	
 				rootsList.setLabelProvider(new WorkbenchLabelProvider());
 				rootsList.setContentProvider(new ArrayContentProvider());
 				rootsList.setInput(participant.getInput().subscriberRoots());
+				factory.paintBordersFor(rootsList.getTable());
+				hookContextMenu();
 			}
 		}		
 		return area;
@@ -156,11 +173,14 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		String property = event.getProperty();
-		if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_LASTSYNC)) {
-			updateLastRefreshLabel();
-		} else if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_STATUS)) {
-			updateStatusLabel();
+		if(! isDisposed()) {
+			String property = event.getProperty();
+			if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_LASTSYNC)) {
+				updateLastRefreshLabel();
+			} else if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_STATUS)) {
+				updateStatusLabel();
+			}
+			layout(true);
 		}
 	}
 	
@@ -182,5 +202,24 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 				lastSyncLabel.setText(text);
 			}
 		});
+	}
+	
+	protected void hookContextMenu() {
+		if(rootsList != null) {
+			final MenuManager menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
+			menuMgr.setRemoveAllWhenShown(true);
+			menuMgr.addMenuListener(new IMenuListener() {
+				public void menuAboutToShow(IMenuManager manager) {
+					setContextMenu(manager);
+				}
+			});
+			Menu menu = menuMgr.createContextMenu(rootsList.getControl());			
+			rootsList.getControl().setMenu(menu);			
+			view.getSite().registerContextMenu(participant.getId(), menuMgr, rootsList);
+		}
+	}
+	
+	protected void setContextMenu(IMenuManager manager) {	
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 }
