@@ -110,4 +110,18 @@ public abstract class DescendantSynchronizationCache extends SynchronizationCach
 		return remoteCache.setRemoteDoesNotExist(resource);
 	}
 
+	/**
+	 * @return Returns the baseCache.
+	 */
+	protected SynchronizationCache getBaseCache() {
+		return baseCache;
+	}
+
+	/**
+	 * @return Returns the remoteCache.
+	 */
+	protected SynchronizationCache getRemoteCache() {
+		return remoteCache;
+	}
+
 }

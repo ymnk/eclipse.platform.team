@@ -17,9 +17,9 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.helpers.*;
-import org.eclipse.team.internal.ccvs.core.syncinfo.*;
-import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSubscriberResourceTree;
+import org.eclipse.team.core.subscribers.helpers.SynchronizationCache;
+import org.eclipse.team.core.subscribers.helpers.SynchronizationSyncBytesCache;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSynchronizationCache;
 
 /**
  * A CVSMergeSubscriber is responsible for maintaining the remote trees for a merge into
@@ -43,9 +43,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	
 	private CVSTag start, end;
 	private List roots;
-	private CVSSubscriberResourceTree remoteSynchronizer;
+	private SynchronizationCache remoteSynchronizer;
 	private SynchronizationSyncBytesCache mergedSynchronizer;
-	private CVSSubscriberResourceTree baseSynchronizer;
+	private SynchronizationCache baseSynchronizer;
 
 	private static final byte[] NO_REMOTE = new byte[0];
 	
@@ -86,9 +86,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	private void initialize() {				
 		QualifiedName id = getId();
 		String syncKeyPrefix = id.getLocalName();
-		remoteSynchronizer = new CVSSubscriberResourceTree(syncKeyPrefix + end.getName(), end);
-		baseSynchronizer = new CVSSubscriberResourceTree(syncKeyPrefix + start.getName(), start);
-		mergedSynchronizer = new SynchronizationSyncBytesCache(new QualifiedName(CVSSubscriberResourceTree.SYNC_KEY_QUALIFIER, syncKeyPrefix + "0merged")); //$NON-NLS-1$
+		remoteSynchronizer = new CVSSynchronizationCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + end.getName()));
+		baseSynchronizer = new CVSSynchronizationCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + start.getName()));
+		mergedSynchronizer = new SynchronizationSyncBytesCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + "0merged")); //$NON-NLS-1$
 		
 		try {
 			setCurrentComparisonCriteria(ContentComparisonCriteria.ID_IGNORE_WS);
@@ -137,24 +137,10 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizer()
-	 */
-	protected SubscriberResourceTree getRemoteResourceTree() {
-		return remoteSynchronizer;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizer()
-	 */
-	protected SubscriberResourceTree getBaseResourceTree() {
-		return baseSynchronizer;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.TeamSubscriber#isSupervised(org.eclipse.core.resources.IResource)
 	 */
 	public boolean isSupervised(IResource resource) throws TeamException {
-		return getBaseResourceTree().hasRemote(resource) || getRemoteResourceTree().hasRemote(resource); 
+		return getBaseSynchronizationCache().getSyncBytes(resource) != null || getRemoteSynchronizationCache().getSyncBytes(resource) != null; 
 	}
 
 	public CVSTag getStartTag() {
@@ -238,5 +224,33 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 					break;
 			}
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteTag()
+	 */
+	protected CVSTag getRemoteTag() {
+		return getEndTag();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseTag()
+	 */
+	protected CVSTag getBaseTag() {
+		return getStartTag();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getBaseSynchronizationCache()
+	 */
+	protected SynchronizationCache getBaseSynchronizationCache() {
+		return baseSynchronizer;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getRemoteSynchronizationCache()
+	 */
+	protected SynchronizationCache getRemoteSynchronizationCache() {
+		return remoteSynchronizer;
 	}		
 }

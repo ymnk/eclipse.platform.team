@@ -11,31 +11,22 @@
 package org.eclipse.team.internal.ccvs.core.syncinfo;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.helpers.*;
-import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.core.subscribers.helpers.SynchronizationSyncBytesCache;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.Policy;
 
 /**
- * CVS sycnrhonization cache that ignores stale remote bytes
+ * Override <code>SynchronizationSyncBytesCache</code> to log an error
+ * if there are no parent bytes for a file.
  */
-public class CVSDescendantSynchronizationCache extends DescendantSynchronizationCache {
+public class CVSSynchronizationCache extends SynchronizationSyncBytesCache {
 
-	public CVSDescendantSynchronizationCache(SynchronizationCache baseCache, SynchronizationSyncBytesCache remoteCache) {
-		super(baseCache, remoteCache);
+	public CVSSynchronizationCache(QualifiedName name) {
+		super(name);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.DescendantSynchronizationCache#isDescendant(org.eclipse.core.resources.IResource, byte[], byte[])
-	 */
-	protected boolean isDescendant(IResource resource, byte[] baseBytes, byte[] remoteBytes) throws TeamException {
-		if (resource.getType() != IResource.FILE) return true;
-		try {
-			return ResourceSyncInfo.isLaterRevisionOnSameBranch(remoteBytes, baseBytes);
-		} catch (CVSException e) {
-			throw TeamException.asTeamException(e);
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.helpers.SynchronizationCache#setSyncBytes(org.eclipse.core.resources.IResource, byte[])
 	 */
@@ -44,7 +35,7 @@ public class CVSDescendantSynchronizationCache extends DescendantSynchronization
 		if (resource.getType() == IResource.FILE && getSyncBytes(resource) != null && !parentHasSyncBytes(resource)) {
 			// Log a warning if there is no sync bytes available for the resource's
 			// parent but there is valid sync bytes for the child
-			CVSProviderPlugin.log(new TeamException(Policy.bind("ResourceSynchronizer.missingParentBytesOnSet", ((SynchronizationSyncBytesCache)getRemoteCache()).getSyncName().toString(), resource.getFullPath().toString())));
+			CVSProviderPlugin.log(new TeamException(Policy.bind("ResourceSynchronizer.missingParentBytesOnSet", getSyncName().toString(), resource.getFullPath().toString())));
 		}
 		return changed;
 	}
@@ -58,5 +49,4 @@ public class CVSDescendantSynchronizationCache extends DescendantSynchronization
 		if (resource.getType() == IResource.PROJECT) return true;
 		return (getSyncBytes(resource.getParent()) != null);
 	}
-
 }
