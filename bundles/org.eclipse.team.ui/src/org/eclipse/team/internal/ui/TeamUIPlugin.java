@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ui;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -18,7 +19,13 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IPluginDescriptor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -33,6 +40,7 @@ import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
@@ -381,6 +389,16 @@ public class TeamUIPlugin extends AbstractUIPlugin implements IPropertyChangeLis
 			display= Display.getDefault();
 		}
 		return display;		
+	}
+	
+	public static void run(IRunnableWithProgress runnable) {
+		try {
+			PlatformUI.getWorkbench().getActiveWorkbenchWindow().run(true, true, runnable);
+		} catch (InvocationTargetException e) {
+			Utils.handleError(getStandardDisplay().getActiveShell(), e, null, null);
+		} catch (InterruptedException e2) {
+			// Nothing to be done
+		}
 	}
 	
 	public void propertyChange(PropertyChangeEvent event) {		

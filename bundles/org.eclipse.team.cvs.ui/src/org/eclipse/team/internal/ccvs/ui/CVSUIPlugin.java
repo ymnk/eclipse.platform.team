@@ -48,7 +48,6 @@ import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.sync.pages.SubscriberSynchronizeViewPage;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.sync.ISynchronizeViewPage;
 import org.eclipse.team.ui.sync.SubscriberPage;

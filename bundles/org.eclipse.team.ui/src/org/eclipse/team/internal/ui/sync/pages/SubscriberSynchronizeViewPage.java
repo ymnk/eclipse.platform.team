@@ -1,22 +1,39 @@
 package org.eclipse.team.internal.ui.sync.pages;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.TableLayout;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -27,10 +44,29 @@ import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
-import org.eclipse.team.internal.ui.sync.views.*;
+import org.eclipse.team.internal.ui.sync.views.INavigableControl;
+import org.eclipse.team.internal.ui.sync.views.StatisticsPanel;
+import org.eclipse.team.internal.ui.sync.views.SyncSetContentProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncSetTableContentProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncTableViewer;
+import org.eclipse.team.internal.ui.sync.views.SyncTreeViewer;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerLabelProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerSorter;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerTableSorter;
+import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
+import org.eclipse.team.internal.ui.sync.views.ViewStatusInformation;
 import org.eclipse.team.ui.sync.INewSynchronizeView;
-import org.eclipse.team.ui.sync.actions.*;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.sync.actions.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.OpenWithActionGroup;
+import org.eclipse.team.ui.sync.actions.PseudoConflictFilter;
+import org.eclipse.team.ui.sync.actions.SubscriberAction;
+import org.eclipse.team.ui.sync.actions.SyncInfoChangeTypeFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.part.IPageBookViewPage;
 import org.eclipse.ui.part.IPageSite;
@@ -39,10 +75,6 @@ import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSetChangedListener {
-	
-	private IPageSite site;
-	private TeamSubscriber subscriber;
-	private INewSynchronizeView view;
 	
 	public static final int PROP_VIEWTYPE = 1;
 	
@@ -57,9 +89,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	 * as a table.
 	 */
 	public static final int TABLE_VIEW = 1;
-	
-	//This view's id. The same value as in the plugin.xml.
-	public static final String VIEW_ID = "org.eclipse.team.sync.views.SynchronizeView";  //$NON-NLS-1$
 	
 	// The viewer that is shown in the view. Currently this can be either a table or tree viewer.
 	private StructuredViewer viewer;
@@ -80,13 +109,15 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	// private SyncViewerActions actions;
 	
 	private JobBusyCursor busyCursor;
+	private INewSynchronizeView view;
+	private IPageSite site;
+	OpenWithActionGroup openWithActions;
 	
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
 	public SubscriberSynchronizeViewPage(TeamSubscriber subscriber, INewSynchronizeView view) {
 		this.view = view;
-		this.subscriber = subscriber;
 		this.input = new SubscriberInput(subscriber);
 		currentViewType = getStore().getInt(IPreferenceIds.SYNCVIEW_VIEW_TYPE);
 		if (currentViewType != TREE_VIEW) {
@@ -110,15 +141,16 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		createViewer(composite);
 		updateStatusPanel();
 		updateTooltip();
+		
+		openWithActions = new OpenWithActionGroup(getSite());		
 		initializeSubscriberInput(input);
-		//actions = new SyncViewerActions(this);
-		//actions.setContext(null);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IViewPart#init(org.eclipse.ui.IViewSite, org.eclipse.ui.IMemento)
 	 */
 	public void init(IPageSite site) throws PartInitException {
+		this.site = site;
 		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
 		if(getStore().getBoolean(IPreferenceIds.SYNCVIEW_SCHEDULED_SYNC) && refreshJob.getState() == Job.NONE) {
 			refreshJob.setReschedule(true);
@@ -130,38 +162,32 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	/*
 	 * This method is synchronized to ensure that all internal state is not corrupted
 	 */
-	public synchronized void initializeSubscriberInput(final SubscriberInput input) {
-		Assert.isNotNull(input);
-		
+	public void initializeSubscriberInput(final SubscriberInput input) {
 		// listen to sync set changes in order to update state relating to the
 		// size of the sync sets and update the title
-		disconnectSubscriberInput();
 		input.registerListeners(this);
-		
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				// create the viewer is it doesn't exist yet.
-				if(viewer == null) {
-					switchViewerType(currentViewType);
-				}
-				ActionContext context = new ActionContext(null);
-				context.setInput(input);
-				//actions.setContext(context);
-				viewer.setInput(input);
-				
-				RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
-				refreshJob.setSubscriberInput(input);
-				updateStatusPanel();
-			}
-		});		
+		RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
+		refreshJob.setSubscriberInput(input);
+		updateStatusPanel();
 	}
 	
-	private void disconnectSubscriberInput() {
-		if(input != null) {
-			input.deregisterListeners(this);
-			input = null;
+	protected void hookContextMenu() {
+		if(getViewer() != null) {
+			MenuManager menuMgr = new MenuManager("#PopupMenu2"); //$NON-NLS-1$
+			menuMgr.setRemoveAllWhenShown(true);
+			menuMgr.addMenuListener(new IMenuListener() {
+				public void menuAboutToShow(IMenuManager manager) {
+					openWithActions.setContext(new ActionContext(viewer.getSelection()));
+					openWithActions.fillContextMenu(manager);
+					manager.add(new Separator("Additions"));
+				}
+			});
+			Menu menu = menuMgr.createContextMenu(viewer.getControl());
+			viewer.getControl().setMenu(menu);			
+			getSite().registerContextMenu("#PopupMenu3", menuMgr, viewer);
 		}
-	}
+	}	
+
 	/**
 	 * Toggles between label/tree/table viewers. 
 	 */
@@ -192,7 +218,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	protected void initializeListeners() {
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
-				handleSelectionChanged(event);
+				;
 			}
 		});
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
@@ -220,6 +246,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		viewer.setInput(input);
 		viewer.getControl().setFocus();
 		initializeListeners();
+		hookContextMenu();
+		getSite().setSelectionProvider(getViewer());
 		busyCursor.setControl(viewer.getControl());
 	}
 	
@@ -327,7 +355,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				SubscriberInput input = getInput();
-				if(input != null && statsPanel != null) {	
+				if(statsPanel != null) {	
 					statsPanel.update(new ViewStatusInformation(input));
 				}
 			}					 	
@@ -361,10 +389,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		return viewer;
 	}
 	
-	private static void handle(Shell shell, Exception exception, String title, String message) {
-		Utils.handleError(shell, exception, title, message);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
 	 */
@@ -381,18 +405,9 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		job.setSubscriberInput(null);
 		
 		// Cleanup the subscriber inputs
+		input.deregisterListeners(this);
 		input.dispose();
 		busyCursor.dispose();
-	}
-	
-	public void run(IRunnableWithProgress runnable) {
-		try {
-			PlatformUI.getWorkbench().getActiveWorkbenchWindow().run(true, true, runnable);
-		} catch (InvocationTargetException e) {
-			handle(getSite().getShell(), e, null, null);
-		} catch (InterruptedException e) {
-			// Nothing to be done
-		}
 	}
 	
 	public int getViewerType() {
@@ -436,11 +451,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		((AbstractTreeViewer)viewer).collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
 		viewer.getControl().setRedraw(true);
 	}
-	
-	public ISelection getSelection() {
-		return getViewer().getSelection();
-	}
-	
+
 	/**
 	 * This method enables "Show In" support for this view
 	 * 
@@ -519,27 +530,28 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	 * Makes this view visible in the active page.
 	 */
 	public static SynchronizeView showInActivePage(IWorkbenchPage activePage, boolean allowSwitchingPerspectives) {
-		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
-		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
-		
-		if(allowSwitchingPerspectives && ! TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE).equals(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE_NONE)) {			
-			try {
-				String pId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE);
-				activePage = workbench.showPerspective(pId, window);
-			} catch (WorkbenchException e) {
-				Utils.handleError(window.getShell(), e, Policy.bind("SynchronizeView.14"), e.getMessage()); //$NON-NLS-1$
-			}
-		}
-		try {
-			if (activePage == null) {
-				activePage = TeamUIPlugin.getActivePage();
-				if (activePage == null) return null;
-			}
-			return (SynchronizeView)activePage.showView(VIEW_ID);
-		} catch (PartInitException pe) {
-			Utils.handleError(window.getShell(), pe, Policy.bind("SynchronizeView.16"), pe.getMessage()); //$NON-NLS-1$
-			return null;
-		}
+//		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
+//		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
+//		
+//		if(allowSwitchingPerspectives && ! TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE).equals(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE_NONE)) {			
+//			try {
+//				String pId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE);
+//				activePage = workbench.showPerspective(pId, window);
+//			} catch (WorkbenchException e) {
+//				Utils.handleError(window.getShell(), e, Policy.bind("SynchronizeView.14"), e.getMessage()); //$NON-NLS-1$
+//			}
+//		}
+//		try {
+//			if (activePage == null) {
+//				activePage = TeamUIPlugin.getActivePage();
+//				if (activePage == null) return null;
+//			}
+//			//return (SynchronizeView)activePage.showView(VIEW_ID);
+//		} catch (PartInitException pe) {
+//			Utils.handleError(window.getShell(), pe, Policy.bind("SynchronizeView.16"), pe.getMessage()); //$NON-NLS-1$
+//			return null;
+//		}
+		return null;
 	}
 	
 	/**
@@ -651,13 +663,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.part.IPageBookViewPage#getSite()
-	 */
-	public IPageSite getSite() {
-		return site;
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.IPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
@@ -677,5 +682,12 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	public void setActionBars(IActionBars actionBars) {
 		// TODO Auto-generated method stub
 		//actions.fillActionBars(actionBars);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.part.IPageBookViewPage#getSite()
+	 */
+	public IPageSite getSite() {
+		return this.site;
 	}
 }
