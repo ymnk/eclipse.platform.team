@@ -645,13 +645,27 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
         if (node == getModelRoot()) return;
 		IDiffContainer parent = node.getParent();
 		if (parent != null) {
-		    ((SynchronizeModelElement)parent).remove(node);
-		    if (!parent.hasChildren()) {
-		        removeToRoot((ISynchronizeModelElement)parent);
+		    ISynchronizeModelElement element = (ISynchronizeModelElement)parent;
+            ((SynchronizeModelElement)element).remove(node);
+		    if (!element.hasChildren() && !isOutOfSync(element)) {
+		        removeToRoot(element);
 		    }
 		}
     }
 
+    /*
+     * Return whether the node represents an out-of-sync resource.
+     */
+    protected boolean isOutOfSync(ISynchronizeModelElement node) {
+        SyncInfo info = Utils.getSyncInfo(node);
+        return (info != null && info.getKind() != SyncInfo.IN_SYNC);
+    }
+
+    protected boolean isOutOfSync(IResource resource) {
+        SyncInfo info = getSyncInfoSet().getSyncInfo(resource);
+        return (info != null && info.getKind() != SyncInfo.IN_SYNC);
+    }
+    
     /**
 	 * Return the provider that created and manages the given
 	 * model element. The default is to return the receiver.
