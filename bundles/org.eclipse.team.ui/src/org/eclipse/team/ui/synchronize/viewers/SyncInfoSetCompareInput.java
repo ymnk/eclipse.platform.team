@@ -22,12 +22,15 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.synchronize.presentation.*;
 
 /**
  * A <code>CompareEditorInput</code> whose diff viewer shows the resources contained
  * in a <code>SyncInfoSet</code>. The configuration of the diff viewer is determined by the 
  * <code>SyncInfoSetCompareConfiguration</code> that is used to create the 
  * <code>SyncInfoSetCompareInput</code>.
+ * 
+ * uses the presentation model defined by the configuration.
  * 
  * @since 3.0
  */

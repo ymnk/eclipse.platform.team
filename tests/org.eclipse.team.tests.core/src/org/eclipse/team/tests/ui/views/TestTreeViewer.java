@@ -12,7 +12,7 @@ package org.eclipse.team.tests.ui.views;
 
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
 
 public class TestTreeViewer extends TreeViewer {
 

@@ -8,15 +8,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.viewers;
+package org.eclipse.team.ui.synchronize.presentation;
 
 import java.util.*;
 
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -26,10 +25,11 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 
 /**
- * An input that can be used with both {@link DiffTreeViewerConfiguration} and 
- * {@link CompareEditorInput}. The
+ * An input that can be used with both {@link } and 
+ * {@link }. The
  * job of this input is to create the logical model of the contents of the
  * sync set for displaying to the user. The created logical model must diff
  * nodes.
@@ -62,7 +62,7 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	// building the model.
 	private boolean refreshViewer;
 	
-	private SyncInfoDiffNode root;
+	private AdaptableDiffNode root;
 	
 	private SyncInfoTree set;
 
@@ -74,7 +74,7 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	 */
 	public DiffNodeControllerHierarchical(SyncInfoTree set) {
 		Assert.isNotNull(set);
-		this.root = new SyncInfoDiffNode(null, set, ResourcesPlugin.getWorkspace().getRoot());
+		this.root = new AdaptableDiffNode(null, SyncInfo.IN_SYNC);
 		this.set = set;
 	}
 
@@ -191,26 +191,34 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	 * @return
 	 */
 	protected IDiffElement[] createModelObjects(DiffNode container) {
-		if (container instanceof SyncInfoDiffNode) {
-			SyncInfoDiffNode parentNode = (SyncInfoDiffNode) container;
-			IResource resource = parentNode.getResource();
-			if (resource == null) {
-				resource = ResourcesPlugin.getWorkspace().getRoot();
-			}
-			IResource[] children = getSyncInfoTree().members(resource);
-			SyncInfoDiffNode[] nodes = new SyncInfoDiffNode[children.length];
+		IResource resource = null;
+		if (container == getRoot()) {
+			resource = ResourcesPlugin.getWorkspace().getRoot();
+		} else {
+			resource = (IResource)Utils.getAdapter(container, IResource.class);
+		}
+		if(resource != null) {
+			SyncInfoTree infoTree = getSyncInfoTree();
+			IResource[] children = infoTree.members(resource);
+			DiffNode[] nodes = new DiffNode[children.length];
 			for (int i = 0; i < children.length; i++) {
-				nodes[i] = createModelObject(parentNode, children[i]);
+				nodes[i] = createModelObject(container, children[i]);
 			}
-			return nodes;
+			return nodes;	
 		}
 		return new IDiffElement[0];
 	}
 
-	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
-		SyncInfoDiffNode node = new SyncInfoDiffNode(parent, getSyncInfoTree(), resource);
-		addToViewer(node);
-		return node;
+	protected DiffNode createModelObject(DiffNode parent, IResource resource) {
+		SyncInfo info = getSyncInfoTree().getSyncInfo(resource);
+		DiffNode newNode;
+		if(info != null) {
+			newNode = new SyncInfoDiffNode(parent, info);
+		} else {
+			newNode = new UnchangedResourceDiffNode(parent, resource);
+		}
+		addToViewer(newNode);
+		return newNode;
 	}
 
 	/**
@@ -223,13 +231,13 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	 */
 	protected void clearModelObjects(DiffNode node) {
 		IDiffElement[] children = node.getChildren();
-		IResource resource = getResource(node);
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
 			if (element instanceof DiffNode) {
 				clearModelObjects((DiffNode) element);
 			}
 		}
+		IResource resource = (IResource)Utils.getAdapter(node, IResource.class);
 		if (resource != null) {
 			unassociateDiffNode(resource);
 		}
@@ -253,26 +261,17 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 		return result;
 	}
 
-	protected void associateDiffNode(IResource childResource, DiffNode childNode) {
-		resourceMap.put(childResource, childNode);
-	}
-
-	protected void unassociateDiffNode(IResource childResource) {
-		resourceMap.remove(childResource);
-	}
-
-	/**
-	 * Return the resource associated with the node or <code>null</code> if
-	 * the node is not directly associated with a resource.
-	 * @param node
-	 *            a diff node
-	 * @return a resource or <code>null</code>
-	 */
-	protected IResource getResource(DiffNode node) {
-		if (node instanceof SyncInfoDiffNode) {
-			return ((SyncInfoDiffNode) node).getResource();
+	protected void associateDiffNode(DiffNode node) {
+		if(node instanceof IAdaptable) {
+			IResource resource = (IResource)((IAdaptable)node).getAdapter(IResource.class);
+			if(resource != null) {
+				resourceMap.put(resource, node);
+			}
 		}
-		return null;
+	}
+
+	protected void unassociateDiffNode(IResource resource) {
+		resourceMap.remove(resource);
 	}
 
 	/**
@@ -364,8 +363,10 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 			for (int i = 0; i < elements.length; i++) {
 				viewer.remove(elements[i]);
 			}
-			associateDiffNode(ResourcesPlugin.getWorkspace().getRoot(), getRoot());
+			associateDiffNode(getRoot());
 			buildModelObjects(getRoot());
+		} catch(Exception e) {
+			e.printStackTrace();
 		} finally {
 			refreshViewer = true;
 		}
@@ -411,8 +412,8 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 		}
 	}
 
-	protected void addToViewer(SyncInfoDiffNode node) {
-		associateDiffNode(node.getResource(), node);
+	protected void addToViewer(DiffNode node) {
+		associateDiffNode(node);
 		if (canUpdateViewer()) {
 			AbstractTreeViewer tree = getTreeViewer();
 			tree.add(node.getParent(), node);

@@ -8,19 +8,68 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.viewers;
+package org.eclipse.team.ui.synchronize.presentation;
 
 import java.util.*;
 
-import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.*;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.ISharedImages;
 
 public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHierarchical {
 
+	protected class UnchangedCompressedDiffNode extends UnchangedResourceDiffNode {
+		public UnchangedCompressedDiffNode(IDiffContainer parent, IResource resource) {
+			super(parent, resource);
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()
+		 */
+		public String getName() {
+			IResource resource = getResource();
+			return resource.getProjectRelativePath().toString();
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getImageDescriptor(java.lang.Object)
+		 */
+		public ImageDescriptor getImageDescriptor(Object object) {
+			return TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER);
+		}
+	}
+	
+	/**
+	 * A compressed folder appears under a project and contains out-of-sync resources
+	 */
+	public class CompressedFolderDiffNode extends SyncInfoDiffNode {
+
+		public CompressedFolderDiffNode(IDiffContainer parent, SyncInfo info) {
+			super(parent, info);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()
+		 */
+		public String getName() {
+			IResource resource = getResource();
+			return resource.getProjectRelativePath().toString();
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getImageDescriptor(java.lang.Object)
+		 */
+		public ImageDescriptor getImageDescriptor(Object object) {
+			return TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER);
+		}
+	}
+	
 	public DiffNodeControllerCompressedFolders(SyncInfoTree set) {
 		super(set);
 	}
@@ -38,22 +87,23 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 			}
 		};
 	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#createChildren(org.eclipse.compare.structuremergeviewer.IDiffContainer)
-	 */
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
-	 */
+	 */	
 	protected IDiffElement[] createModelObjects(DiffNode container) {
-		if (container instanceof SyncInfoDiffNode) {
-			SyncInfoDiffNode node = (SyncInfoDiffNode)container;
-			if (node.getResource().getType() == IResource.PROJECT) {
-				return getProjectChildren(container, (IProject)node.getResource());
+		IResource resource = null;
+		if (container == getRoot()) {
+			resource = ResourcesPlugin.getWorkspace().getRoot();
+		} else {
+			resource = (IResource)Utils.getAdapter(container, IResource.class);
+		}
+		if(resource != null) {
+			if (resource.getType() == IResource.PROJECT) {
+				return getProjectChildren(container, (IProject)resource);
 			}
-			if (container instanceof CompressedFolderDiffNode) {
-				return getFolderChildren(container, node.getResource());
+			if (resource.getType() == IResource.FOLDER) {
+				return getFolderChildren(container, resource);
 			}
 		}
 		return super.createModelObjects(container);
@@ -106,12 +156,18 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObject(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
 	 */
-	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
+	protected DiffNode createModelObject(DiffNode parent, IResource resource) {
 		if (resource.getType() == IResource.FOLDER) {
-			SyncInfoDiffNode node = new CompressedFolderDiffNode(parent, getSyncInfoTree(), resource);
-			associateDiffNode(resource, node);
-			addToViewer(node);
-			return node;
+			SyncInfo info = getSyncInfoTree().getSyncInfo(resource);
+			DiffNode newNode;
+			if(info != null) {
+				newNode = new CompressedFolderDiffNode(parent, info);
+			} else {
+				newNode = new UnchangedCompressedDiffNode(parent, resource);
+			}
+			associateDiffNode(newNode);
+			addToViewer(newNode);
+			return newNode;
 		}
 		return super.createModelObject(parent, resource);
 	}

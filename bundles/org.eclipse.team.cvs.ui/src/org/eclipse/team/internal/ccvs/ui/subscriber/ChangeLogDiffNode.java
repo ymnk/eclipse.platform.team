@@ -13,24 +13,20 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import java.text.DateFormat;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoSet;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
-import org.eclipse.ui.model.IWorkbenchAdapter;
+import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
 
-public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, IWorkbenchAdapter {
+public class ChangeLogDiffNode extends SyncInfoDiffNode {
 
 	private ILogEntry logEntry;
 
 	public ChangeLogDiffNode(DiffNode parent, ILogEntry logEntry) {
-		super(parent, new SyncInfoTree(), ResourcesPlugin.getWorkspace().getRoot());
+		//super(parent, new SyncInfoTree(), ResourcesPlugin.getWorkspace().getRoot());
+		super(null, null);
 		this.logEntry = logEntry;
 	}
 
@@ -60,7 +56,7 @@ public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, I
 	}
 
 	public void add(SyncInfo info) {
-		((SubscriberSyncInfoSet)getSyncInfoTree()).add(info);
+		//((SubscriberSyncInfoSet)getSyncInfoTree()).add(info);
 	}
 	
 	/* (non-Javadoc)

@@ -923,26 +923,6 @@
 		<projectSet id="org.eclipse.team.cvs.core.cvsnature" class="org.eclipse.team.internal.ccvs.ui.CVSProjectSetSerializer"/>
 	</extension>
 	
-	
-	<!-- ************ Editor Actions ************** -->
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			id="org.eclipse.team.cvs.ui.contentCompare"
-			targetID="org.eclipse.compare.CompareEditor">
-			<action
-				id="org.eclipse.team.cvs.ui.ContentAction"
-				state="false"
-				toolbarPath="Normal/additions"
-				icon="icons/full/etool16/contents.gif"
-				disabledIcon="icons/full/dtool16/contents.gif"
-				hoverIcon="icons/full/ctool16/contents.gif"
-				label="%ContentAction.label"
- 	            tooltip="%ContentAction.tooltip"
- 				class="org.eclipse.team.internal.ccvs.ui.actions.ContentAction">
-			</action>
-		</editorContribution>
-	</extension>
-	
 	<!-- ********** Action Sets ************** -->
 	<extension point="org.eclipse.ui.actionSets">
 		<actionSet 

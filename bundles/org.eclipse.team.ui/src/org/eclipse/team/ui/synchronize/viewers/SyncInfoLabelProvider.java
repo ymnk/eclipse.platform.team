@@ -14,14 +14,13 @@ import java.util.*;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
+import org.eclipse.team.ui.synchronize.presentation.*;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
@@ -176,7 +175,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 */
 	private boolean hasDecendantConflicts(DiffNode node) {
 		if(node instanceof SyncInfoDiffNode) {
-			SyncInfoDiffNode diffNode = (SyncInfoDiffNode)node;
+			/*SyncInfoDiffNode diffNode = (SyncInfoDiffNode)node;
 			IResource resource = diffNode.getResource();
 			// If this node has no resource, we can't tell
 			// The subclass which created the node with no resource should have overridden this method
@@ -191,7 +190,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 						return true;
 					}
 				}
-			}
+			}*/
 		}
 		return false;
 	}

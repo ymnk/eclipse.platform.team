@@ -8,23 +8,18 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.synchronize.viewers;
+package org.eclipse.team.ui.synchronize.presentation;
 
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.compare.RemoteResourceTypedElement;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
 /**
  * A diff node used to display the synchronization state for resources described by
@@ -43,91 +38,10 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  * @see DiffTreeViewer
  * @see Differencer
  */
-public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
-	
-	private SyncInfoTree syncSet;
-	private IResource resource;
-	
-	private ITypedElement base;
-	
-	/**
-	 * Property constant indicating the mode of a page has changed. 
-	 */
-	public static final String P_BUSY_ELEMENT = TeamUIPlugin.ID + ".P_NODE_ISBUSY"; //$NON-NLS-1$
-	
-	/**
-	 * Create an ITypedElement for the given local resource. The returned ITypedElement
-	 * will prevent editing of outgoing deletions.
-	 */
-	private static ITypedElement createTypeElement(IResource resource, final int kind) {
-		if(resource != null && resource.exists()) {
-			return new LocalResourceTypedElement(resource) {
-				public boolean isEditable() {
-						if(SyncInfo.getDirection(kind) == SyncInfo.OUTGOING && SyncInfo.getChange(kind) == SyncInfo.DELETION) {
-							return false;
-						}
-						return super.isEditable();
-					}
-				};
-		}
-		return null;
-	}
-	
-	/**
-	 * Create an ITypedElement for the given remote resource. The contents for the remote resource
-	 * will be retrieved from the given IStorage which is a local cache used to buffer the remote contents
-	 */
-	private static ITypedElement createTypeElement(IRemoteResource remoteResource) {
-		return new RemoteResourceTypedElement(remoteResource);
-	}
-
-	private static ITypedElement createRemoteTypeElement(SyncInfoSet set, IResource resource) {
-		return createRemoteTypeElement(set.getSyncInfo(resource));
-	}
-
-	private static ITypedElement createLocalTypeElement(SyncInfoSet set, IResource resource) {
-		return createLocalTypeElement(set.getSyncInfo(resource));
-	}
-
-	private static ITypedElement createBaseTypeElement(SyncInfoSet set, IResource resource) {
-		return createBaseTypeElement(set.getSyncInfo(resource));
-	}
-
-	private static ITypedElement createRemoteTypeElement(SyncInfo info) {
-		if(info != null && info.getRemote() != null) {
-			return createTypeElement(info.getRemote());
-		}
-		return null;
-	}
-
-	private static ITypedElement createLocalTypeElement(SyncInfo info) {
-		if(info != null && info.getLocal() != null) {
-			return createTypeElement(info.getLocal(), info.getKind());
-		}
-		return null;
-	}
-
-	private static ITypedElement createBaseTypeElement(SyncInfo info) {
-		if(info != null && info.getBase() != null) {
-			return createTypeElement(info.getBase());
-		}
-		return null;
-	}
-	
-	private static int getSyncKind(SyncInfoSet set, IResource resource) {
-		SyncInfo info = set.getSyncInfo(resource);
-		if(info != null) {
-			return info.getKind();
-		}
-		return SyncInfo.IN_SYNC;
-	}
-	
-	/**
-	 * Creates a new diff node.
-	 */	
-	private SyncInfoDiffNode(IDiffContainer parent, ITypedElement base, ITypedElement local, ITypedElement remote, int syncKind) {
-		super(parent, syncKind, base, local, remote);
-	}
+public class SyncInfoDiffNode extends AdaptableDiffNode {
+		
+	private ITypedElement ancestor;
+	private SyncInfo info;
 	
 	/**
 	 * Construct a <code>SyncInfoDiffNode</code> for the given resource. The {@link SyncInfoSet} 
@@ -138,14 +52,21 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @param set The set associated with the diff tree veiwer
 	 * @param resource The resource for the node
 	 */
-	public SyncInfoDiffNode(IDiffContainer parent, SyncInfoTree set, IResource resource) {
-		this(parent, createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
-		Assert.isNotNull(resource);
-		Assert.isNotNull(set);
-		this.syncSet = set;
-		this.resource = resource;
+	public SyncInfoDiffNode(IDiffContainer parent, SyncInfo info) {
+		super(parent, info.getKind());
+		update(info);
 	}
 
+	public void update(SyncInfo info) {
+		this.info = info;
+		// local
+		setLeft(createLocalTypeElement(info));
+		// remote
+		setRight(createRemoteTypeElement(info));
+		// base
+		setAncestor(createBaseTypeElement(info));
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.structuremergeviewer.DiffElement#getKind()
 	 */
@@ -156,6 +77,22 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 		} else {
 			return SyncInfo.IN_SYNC;
 		}
+	}
+	
+	/**
+	 * We have to track the base because <code>DiffNode</code> doesn't provide a
+	 * setter. See:
+	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=52261
+	 */
+	public void setAncestor(ITypedElement ancestor) {
+		this.ancestor = ancestor;
+	}
+		
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getAncestor()
+	 */
+	public ITypedElement getAncestor() {
+		return this.ancestor;
 	}
 	
 	/* (non-Javadoc)
@@ -174,20 +111,13 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
 	public Object getAdapter(Class adapter) {
-		if(adapter == IWorkbenchAdapter.class) {
-			return this;
+		if(adapter == IResource.class) {
+			return getResource();
+		} else if(adapter == SyncInfo.class) {
+			return getSyncInfo();
 		}
-		return null;
+		return super.getAdapter(adapter);
 	}
-	
-	/**
-	 * Return the <code>SyncInfoSet</code> from which this diff node was derived.
-	 * @return a <code>SyncInfoSet</code>
-	 */
-	public SyncInfoTree getSyncInfoTree() {
-		return syncSet;
-	}
-	
 	
 	/**
 	 * Helper method that returns the resource associated with this node. A node is not
@@ -197,9 +127,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 */
 	public IResource getResource() {
 		ITypedElement element = getLeft();
-		if(resource != null) {
-			return resource;
-		} else if(element instanceof ResourceNode) {
+		if(element instanceof ResourceNode) {
 			return ((ResourceNode)element).getResource();
 		}
 		return null;
@@ -254,45 +182,53 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	}
 	
 	public SyncInfo getSyncInfo() {
-		IResource resource = getResource();
+		return info;
+	}
+
+	/**
+	 * Create an ITypedElement for the given local resource. The returned ITypedElement
+	 * will prevent editing of outgoing deletions.
+	 */
+	private static ITypedElement createTypeElement(final IResource resource, final int kind) {
 		if(resource != null) {
-			return syncSet.getSyncInfo(resource);
+			return new LocalResourceTypedElement(resource) {
+				public boolean isEditable() {
+						if(! resource.exists() && SyncInfo.getDirection(kind) == SyncInfo.OUTGOING && SyncInfo.getChange(kind) == SyncInfo.DELETION) {
+							return false;
+						}
+						return super.isEditable();
+					}
+				};
+		}
+		return null;
+	}
+	
+	/**
+	 * Create an ITypedElement for the given remote resource. The contents for the remote resource
+	 * will be retrieved from the given IStorage which is a local cache used to buffer the remote contents
+	 */
+	private static ITypedElement createTypeElement(IRemoteResource remoteResource) {
+		return new RemoteResourceTypedElement(remoteResource);
+	}
+
+	private static ITypedElement createRemoteTypeElement(SyncInfo info) {
+		if(info != null && info.getRemote() != null) {
+			return createTypeElement(info.getRemote());
 		}
 		return null;
 	}
 
-	/** WorkbenchAdapter methods **/
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
-	 */
-	public Object[] getChildren(Object o) {
-		return getChildren();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getImageDescriptor(java.lang.Object)
-	 */
-	public ImageDescriptor getImageDescriptor(Object object) {
-		IResource resource = getResource();
-		if (resource == null) {
-			return null;
+	private static ITypedElement createLocalTypeElement(SyncInfo info) {
+		if(info != null && info.getLocal() != null) {
+			return createTypeElement(info.getLocal(), info.getKind());
 		}
-		IWorkbenchAdapter adapter = (IWorkbenchAdapter)((IAdaptable) resource).getAdapter(IWorkbenchAdapter.class);
-		return adapter.getImageDescriptor(resource);
+		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
-	 */
-	public String getLabel(Object o) {
-		return getName();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getParent(java.lang.Object)
-	 */
-	public Object getParent(Object o) {
-		return getParent();
+	private static ITypedElement createBaseTypeElement(SyncInfo info) {
+		if(info != null && info.getBase() != null) {
+			return createTypeElement(info.getBase());
+		}
+		return null;
 	}
 }

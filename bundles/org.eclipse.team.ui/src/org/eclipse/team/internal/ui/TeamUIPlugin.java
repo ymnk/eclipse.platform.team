@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
+import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -179,6 +180,8 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 	public void startup() throws CoreException {
 		Policy.localize("org.eclipse.team.internal.ui.messages"); //$NON-NLS-1$
 		initializePreferences();		
+		IAdapterFactory factory = new TeamAdapterFactory();
+		Platform.getAdapterManager().registerAdapters(factory, DiffNode.class);
 		((SynchronizeManager)TeamUI.getSynchronizeManager()).init();
 	}
 	

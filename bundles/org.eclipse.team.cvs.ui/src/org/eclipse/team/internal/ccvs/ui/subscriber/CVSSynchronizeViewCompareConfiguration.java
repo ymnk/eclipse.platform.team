@@ -16,9 +16,9 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberPageDiffTreeViewerConfiguration;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;
 
 public class CVSSynchronizeViewCompareConfiguration extends SubscriberPageDiffTreeViewerConfiguration {

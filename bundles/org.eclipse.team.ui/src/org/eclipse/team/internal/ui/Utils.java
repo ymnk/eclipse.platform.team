@@ -26,10 +26,10 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.IRemoteResource;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
 public class Utils {
@@ -391,10 +391,8 @@ public class Utils {
 			IResource resource = null;
 			if (element instanceof IResource) {
 				resource = (IResource)element;
-			} else if (element instanceof SyncInfoDiffNode) {
-				resource = ((SyncInfoDiffNode) element).getResource();
-			} else if (element instanceof IAdaptable) {
-				resource = (IResource) ((IAdaptable) element).getAdapter(IResource.class);
+			} else {
+				resource = (IResource) getAdapter(element, IResource.class);
 			} 
 			if (resource != null) {
 				resources.add(resource);
@@ -403,33 +401,11 @@ public class Utils {
 		return (IResource[]) resources.toArray(new IResource[resources.size()]);
 	}
 	
-	/**
-	 * This method returns all out-of-sync SyncInfos that are in the current
-	 * selection.
-	 * 
-	 * @return the list of selected sync infos
-	 */
-	public static SyncInfo[] getSyncInfos(Object[] selected) {
-		Set result = new HashSet();
-		for (int i = 0; i < selected.length; i++) {
-			Object object = selected[i];
-			if (object instanceof SyncInfoDiffNode) {
-				SyncInfoDiffNode syncResource = (SyncInfoDiffNode) object;
-				if(syncResource.hasChildren()) {
-					SyncInfoTree set = syncResource.getSyncInfoTree();
-					SyncInfo[] infos = set.getSyncInfos(syncResource.getResource(), IResource.DEPTH_INFINITE);
-					result.addAll(Arrays.asList(infos));
-				} else {
-					SyncInfo info = syncResource.getSyncInfo();
-					if(info != null && info.getKind() != SyncInfo.IN_SYNC) {
-						result.add(info);
-					}
-				}
-			} else if(object instanceof SyncInfo) {
-				result.add(object);
-			}
-		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+	public static Object getAdapter(Object element, Class adapter) {
+		if (element instanceof IAdaptable) {
+			return ((IAdaptable) element).getAdapter(adapter);
+		} 
+		return null;
 	}
 	
 	/**

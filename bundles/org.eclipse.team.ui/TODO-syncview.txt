@@ -156,3 +156,9 @@ needs to walk the diff node tree for this case.
 - cvs merge participant doesn't get view progress support because participant is added before
 viewer is created. But this should be solvable by ensuring that showInActivePerspective forces
 viewer creation.
+
+
+==============================
+- initialize case doesn't work because main page is shown as empty but mode is correct
+- how do we handle changes to sync: re-create new nodes or update the nodes with new sync kind?
+- new projects don't show up?

@@ -26,7 +26,7 @@ import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoSet;
 import org.eclipse.team.tests.core.TeamTest;
 import org.eclipse.team.tests.ui.views.ContentProviderTestView;
 import org.eclipse.team.tests.ui.views.TestTreeViewer;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.presentation.SyncInfoDiffNode;
 
 /**
  * Tests for the SyncInfoSet content providers.

@@ -31,7 +31,6 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.dialogs.IPromptCondition;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
 /**
@@ -469,17 +468,11 @@ abstract public class CVSAction extends TeamAction implements IEditorActionDeleg
 		List resources = new ArrayList();
 		while(it.hasNext()) {
 			Object element = it.next();
-			if(element instanceof SyncInfoDiffNode) {
-				IResource resource = ((SyncInfoDiffNode)element).getResource();
-				if (resource != null && resource.getType() != IResource.ROOT) {
-					resources.add(resource);
-				}
-			} else {
-				Object adapter = getAdapter(element, IResource.class);
-				if (adapter instanceof IResource) {
-					resources.add(adapter);
-				}
+			Object adapter = getAdapter(element, IResource.class);
+			if (adapter instanceof IResource) {
+				resources.add(adapter);
 			}
+			
 		}
 		return (IResource[]) resources.toArray(new IResource[resources.size()]);
 	}
