@@ -345,7 +345,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	public ICVSFolder[] getFolders() throws CVSException {		
 		ICVSRemoteResource[] children = getChildren();
 		if (children == null) {
-			children = getMembers(getTag(), null);
+			return new ICVSFolder[0];
 		}
 		List result = new ArrayList();
 		for (int i=0;i<children.length;i++)
@@ -360,7 +360,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	public ICVSFile[] getFiles() throws CVSException {
 		ICVSRemoteResource[] children = getChildren();
 		if (children == null) {
-			children = getMembers(getTag(), null);
+			return new ICVSFile[0];
 		}
 		List result = new ArrayList();
 		for (int i=0;i<children.length;i++)
@@ -675,4 +675,15 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 			monitor.done();
 		}
 	 }
+	 
+	/**
+	 * @see ICVSFolder#fetchChildren(IProgressMonitor)
+	 */
+	public ICVSResource[] fetchChildren(IProgressMonitor monitor) throws CVSException {
+		try {
+			return getMembers(monitor);
+		} catch(TeamException e) {
+			throw new CVSException(e.getStatus());
+		}
+	}
 }

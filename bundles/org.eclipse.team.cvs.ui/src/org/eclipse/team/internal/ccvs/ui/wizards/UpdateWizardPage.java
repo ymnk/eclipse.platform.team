@@ -6,6 +6,7 @@ package org.eclipse.team.internal.ccvs.ui.wizards;
  */
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -111,7 +112,8 @@ public class UpdateWizardPage extends CVSWizardPage {
 				tree.refresh();
 			}
 		};
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new IProject[] {project}, refresh, refresh);
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new IProject[] {project},convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
+																							convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH), refresh, refresh);
 		
 		Label seperator = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
 		data = new GridData (GridData.FILL_BOTH);		

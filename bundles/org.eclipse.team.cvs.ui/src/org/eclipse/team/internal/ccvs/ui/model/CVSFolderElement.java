@@ -28,27 +28,25 @@ public class CVSFolderElement extends CVSResourceElement {
 		this.includeUnmanaged = includeUnmanaged;
 	}
 	
+	/**
+	 * Returns CVSResourceElement instances
+	 */
 	public Object[] getChildren(final Object o) {
 		final Object[][] result = new Object[1][];
 		BusyIndicator.showWhile(Display.getDefault(), new Runnable() {
 			public void run() {
 				try {
-					ICVSFolder[] folders = folder.getFolders();
-					ICVSFile[] files = folder.getFiles();
-					List children = new ArrayList();
-					for (int i = 0; i < folders.length; i++) {
-						ICVSFolder folder = folders[i];
-						if(includeUnmanaged || folder.isManaged()) {
-							children.add((CVSResourceElement)new CVSFolderElement(folder, includeUnmanaged));
+					ICVSResource[] children = folder.fetchChildren(null);
+					CVSResourceElement[] elements = new CVSResourceElement[children.length];
+					for (int i = 0; i < children.length; i++) {
+						ICVSResource resource = children[i];
+						if(resource.isFolder()) {
+							elements[i] = new CVSFolderElement((ICVSFolder)resource, includeUnmanaged);
+						} else {
+							elements[i] = new CVSFileElement((ICVSFile)resource);
 						}
 					}
-					for (int i = 0; i < files.length; i++) {
-						ICVSFile file = files[i];
-						if(includeUnmanaged || file.isManaged()) {
-							children.add((CVSResourceElement)new CVSFileElement(file));
-						}
-					}
-					result[0] = (CVSResourceElement[]) children.toArray(new CVSResourceElement[children.size()]);
+					result[0] = elements;
 				} catch (TeamException e) {
 					handle(e);
 				}

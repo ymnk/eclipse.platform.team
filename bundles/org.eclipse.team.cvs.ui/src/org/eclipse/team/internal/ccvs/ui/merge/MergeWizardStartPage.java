@@ -6,6 +6,7 @@ package org.eclipse.team.internal.ccvs.ui.merge;
  */
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
@@ -18,21 +19,13 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.ICVSFolder;
-import org.eclipse.team.ccvs.core.ICVSRemoteFolder;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.TagConfigurationDialog;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage;
@@ -120,7 +113,10 @@ public class MergeWizardStartPage extends CVSWizardPage {
 			}
 		};
 
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new IProject[] {project}, afterRefresh, afterConfigure);
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new IProject[] {project}, 
+																							convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
+																							convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
+																							afterRefresh, afterConfigure);
 		setControl(composite);
 
 		initialize();

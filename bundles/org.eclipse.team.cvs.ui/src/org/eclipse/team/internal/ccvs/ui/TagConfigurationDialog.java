@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -52,11 +53,9 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.ccvs.core.ICVSFolder;
-import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.ccvs.core.ILogEntry;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProvider;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
 import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
@@ -260,7 +259,7 @@ public class TagConfigurationDialog extends Dialog {
 		
 		addSelectedTagsButton = new Button (buttonComposite, SWT.PUSH);
 		addSelectedTagsButton.setText ("&Add Checked Tags");
-		data = new GridData ();
+		data = getStandardButtonData(addSelectedTagsButton);
 		data.horizontalAlignment = GridData.FILL;
 		addSelectedTagsButton.setLayoutData(data);
 		addSelectedTagsButton.addListener(SWT.Selection, new Listener() {
@@ -271,7 +270,7 @@ public class TagConfigurationDialog extends Dialog {
 			
 		removeTagButton = new Button (buttonComposite, SWT.PUSH);
 		removeTagButton.setText ("&Remove");
-		data = new GridData ();
+		data = getStandardButtonData(removeTagButton);
 		data.horizontalAlignment = GridData.FILL;		
 		removeTagButton.setLayoutData(data);
 		removeTagButton.addListener(SWT.Selection, new Listener() {
@@ -282,7 +281,7 @@ public class TagConfigurationDialog extends Dialog {
 			
 		Button removeAllTags = new Button (buttonComposite, SWT.PUSH);
 		removeAllTags.setText ("Remove &All");
-		data = new GridData ();
+		data = getStandardButtonData(removeAllTags);
 		data.horizontalAlignment = GridData.FILL;		
 		removeAllTags.setLayoutData(data);
 		removeAllTags.addListener(SWT.Selection, new Listener() {
@@ -324,7 +323,7 @@ public class TagConfigurationDialog extends Dialog {
 	
 			addSelectedFilesButton = new Button (buttonComposite2, SWT.PUSH);
 			addSelectedFilesButton.setText ("&Add Selected Files");
-			data = new GridData ();
+			data = getStandardButtonData(addSelectedFilesButton);
 			data.horizontalAlignment = GridData.FILL;
 			addSelectedFilesButton.setLayoutData(data);
 			addSelectedFilesButton.addListener(SWT.Selection, new Listener() {
@@ -335,7 +334,7 @@ public class TagConfigurationDialog extends Dialog {
 				
 			removeFileButton = new Button (buttonComposite2, SWT.PUSH);
 			removeFileButton.setText ("&Remove");
-			data = new GridData ();
+			data = getStandardButtonData(removeFileButton);
 			data.horizontalAlignment = GridData.FILL;		
 			removeFileButton.setLayoutData(data);
 			removeFileButton.addListener(SWT.Selection, new Listener() {
@@ -562,7 +561,7 @@ public class TagConfigurationDialog extends Dialog {
 	 * the tags are fetched from the server. A client should refresh their widgets that show tags because they
 	 * may of changed. 
 	 */
-	 private static Button createTagRefreshButton(final Shell shell, Composite composite, String title, final IProject project, final Runnable runnable) {
+	private static Button createTagRefreshButton(final Shell shell, Composite composite, String title, final IProject project, final Runnable runnable) {
 		Button refreshButton = new Button(composite, SWT.PUSH);
 		refreshButton.setText (title);
 		updateToolTipHelpForRefreshButton(refreshButton, project);
@@ -583,7 +582,7 @@ public class TagConfigurationDialog extends Dialog {
 		return refreshButton;		
 	 }
 	 
-	 private static void updateToolTipHelpForRefreshButton(Button button, IProject project) {
+	private static void updateToolTipHelpForRefreshButton(Button button, IProject project) {
 		StringBuffer tooltip = new StringBuffer("This will fetch tags from the repository that are defined on the following files:\n");
 		String[] autoFiles = CVSUIPlugin.getPlugin().getRepositoryManager().getAutoRefreshFiles(CVSWorkspaceRoot.getCVSFolderFor(project));
 		tooltip.append(" - .project\n");
@@ -594,7 +593,7 @@ public class TagConfigurationDialog extends Dialog {
 		button.setToolTipText(tooltip.toString());
 	 }
 	 
-	 public static void createTagDefinitionButtons(final Shell shell, Composite composite, final IProject[] projects, final Runnable afterRefresh, final Runnable afterConfigure) {
+	 public static void createTagDefinitionButtons(final Shell shell, Composite composite, final IProject[] projects, int hHint, int wHint, final Runnable afterRefresh, final Runnable afterConfigure) {
 	 	Composite buttonComp = new Composite(composite, SWT.NONE);
 		GridData data = new GridData ();
 		data.horizontalAlignment = GridData.END;		
@@ -606,7 +605,10 @@ public class TagConfigurationDialog extends Dialog {
 		buttonComp.setLayout (layout);
 	 	
 	 	final Button refreshButton = TagConfigurationDialog.createTagRefreshButton(shell, buttonComp, "&Refresh", projects[0], afterRefresh);
-		data = new GridData ();
+		data = new GridData();
+		data.heightHint = hHint;
+		int widthHint = wHint;
+		data.widthHint = Math.max(widthHint, refreshButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
 		data.horizontalAlignment = GridData.END;
 		data.horizontalSpan = 1;
 		refreshButton.setLayoutData (data);
@@ -614,6 +616,9 @@ public class TagConfigurationDialog extends Dialog {
 		Button addButton = new Button(buttonComp, SWT.PUSH);
 		addButton.setText ("&Configure Tags...");
 		data = new GridData ();
+		data.heightHint = hHint;
+		widthHint = wHint;
+		data.widthHint = Math.max(widthHint, addButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
 		data.horizontalAlignment = GridData.END;
 		data.horizontalSpan = 1;
 		addButton.setLayoutData (data);
@@ -647,5 +652,13 @@ public class TagConfigurationDialog extends Dialog {
 	 */
 	protected void cancelPressed() {
 		super.cancelPressed();
+	}
+	
+	private GridData getStandardButtonData(Button button) {
+		GridData data = new GridData();
+		data.heightHint = convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT);
+		int widthHint = convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
+		data.widthHint = Math.max(widthHint, button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+		return data;
 	}
 }

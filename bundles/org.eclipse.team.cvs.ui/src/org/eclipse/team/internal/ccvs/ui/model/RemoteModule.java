@@ -17,6 +17,7 @@ import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.ccvs.ui.RepositoryManager;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 /**
@@ -56,8 +57,13 @@ public class RemoteModule extends CVSModelElement implements IAdaptable {
 	public Object[] getChildren(Object o) {
 		final Object[][] result = new Object[1][];
 		BusyIndicator.showWhile(Display.getDefault(), new Runnable() {
-			// This is inefficient; need API to get remote resource for a given tag
 			public void run() {
+				RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+				try {
+					manager.refreshDefinedTags(folder);
+				} catch(TeamException e) {
+					// continue
+				}
 				CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownVersionTags(folder);
 				Object[] versions = new Object[tags.length];
 				for (int i = 0; i < versions.length; i++) {

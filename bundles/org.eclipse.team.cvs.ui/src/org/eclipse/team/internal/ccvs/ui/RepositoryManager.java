@@ -25,29 +25,28 @@ import java.util.Set;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSListener;
 import org.eclipse.team.ccvs.core.ICVSProvider;
 import org.eclipse.team.ccvs.core.ICVSRemoteFile;
-import org.eclipse.team.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.ccvs.core.ILogEntry;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProvider;
 import org.eclipse.team.internal.ccvs.core.client.Command;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
 
 /**
  * This class is repsible for maintaining the UI's list of known repositories,
@@ -122,16 +121,28 @@ public class RepositoryManager {
 	public void refreshDefinedTags(ICVSFolder project) throws TeamException {
 		try {
 			ICVSRepositoryLocation location = CVSProvider.getInstance().getRepository(project.getFolderSyncInfo().getRoot());
-			ICVSRemoteFile vcmMeta = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(".vcm_meta"));
-			ICVSRemoteFile dotProject = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(".project"));
-			
 			List tags = new ArrayList();
-			tags.addAll(Arrays.asList(fetchDefinedTagsFor(vcmMeta, project, location)));
-			tags.addAll(Arrays.asList(fetchDefinedTagsFor(dotProject, project, location)));
-			String[] relativePaths = getAutoRefreshFiles(project);
-			for (int i = 0; i < relativePaths.length; i++) {
-				ICVSRemoteFile remoteFile =  (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(relativePaths[i]));
-				tags.addAll(Arrays.asList(fetchDefinedTagsFor(remoteFile, project, location)));
+			List filesToRefresh = new ArrayList(Arrays.asList(getAutoRefreshFiles(project)));
+			filesToRefresh.add(".project");
+			filesToRefresh.add(".vcm_meta");
+			for (Iterator it = filesToRefresh.iterator(); it.hasNext();) {
+				String relativePath = (String)it.next();
+				ICVSFile file = null;
+				if(project instanceof ICVSRemoteFolder) {
+					// There should be a better way of doing this.
+					ICVSRemoteFolder parentFolder = location.getRemoteFolder(new Path(project.getName()).append(relativePath).removeLastSegments(1).toString(), CVSTag.DEFAULT);
+					ICVSResource[] resources = parentFolder.fetchChildren(null);
+					for (int i = 0; i < resources.length; i++) {
+						if (resources[i] instanceof ICVSRemoteFile && resources[i].getName().equals(new Path(relativePath).lastSegment())) {
+							file = (ICVSFile)resources[i];
+						}
+					}
+				} else {
+					file = project.getFile(relativePath);
+				}
+				if(file!=null) {
+					tags.addAll(Arrays.asList(fetchDefinedTagsFor(file, project, location)));
+				}
 			}
 			// add all tags in one pass so that the listeners only get one notification for
 			// versions and another for branches
@@ -654,8 +665,7 @@ public class RepositoryManager {
 	/**
 	 * Returns Branch and Version tags for the given files
 	 */	
-	public CVSTag[] getTags(ICVSRemoteFile file, IProgressMonitor monitor) throws TeamException {
-		ICVSRepositoryLocation root = file.getRepository();
+	public CVSTag[] getTags(ICVSFile file, IProgressMonitor monitor) throws TeamException {
 		Set tagSet = new HashSet();
 		ILogEntry[] entries = file.getLogEntries(monitor);
 		for (int j = 0; j < entries.length; j++) {
@@ -683,9 +693,9 @@ public class RepositoryManager {
 	/*
 	 * Fetches and caches the tags found on the provided remote file.
 	 */
-	private CVSTag[] fetchDefinedTagsFor(ICVSRemoteFile remoteFile, ICVSFolder project, ICVSRepositoryLocation location) throws TeamException {
-		if(remoteFile != null && remoteFile.exists(null)) {
-			return getTags(remoteFile, null);
+	private CVSTag[] fetchDefinedTagsFor(ICVSFile file, ICVSFolder project, ICVSRepositoryLocation location) throws TeamException {
+		if(file != null && file.exists()) {
+			return getTags(file, null);
 		}
 		return new CVSTag[0];
 	}

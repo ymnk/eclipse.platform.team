@@ -126,7 +126,10 @@ public class TagSelectionDialog extends Dialog {
 				tagTree.refresh();
 			}
 		};
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), top, projects, refresh, refresh);
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), top, projects, 
+																							convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT), 
+																							convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH),
+																							refresh, refresh);
 		
 		Label seperator = new Label(top, SWT.SEPARATOR | SWT.HORIZONTAL);
 		data = new GridData (GridData.FILL_BOTH);		
