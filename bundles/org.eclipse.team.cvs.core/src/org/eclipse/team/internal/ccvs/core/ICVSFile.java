@@ -10,6 +10,7 @@ import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 
 /**
  * The CVS analog of a file. CVS files have access to synchronization information
@@ -87,4 +88,22 @@ public interface ICVSFile extends ICVSResource {
 	 * output of the log command.
 	 */
 	public ILogEntry[] getLogEntries(IProgressMonitor monitor) throws TeamException;
+	
+	/**
+	 * Gets any notify information associated with the file that has not yet
+	 * been sent to the server or <code>null</code> if there is none.
+	 * This information is required as part of the watch/edit workflow.
+	 * 
+	 * @param info
+	 */
+	public NotifyInfo getNotifyInfo() throws CVSException;
+	
+	/**
+	 * Set the notify information associated with the file. This information is required
+	 * as part of the watch/edit workflow.
+	 * 
+	 * @param info
+	 */
+	public void setNotifyInfo(NotifyInfo info) throws CVSException;
+
 }

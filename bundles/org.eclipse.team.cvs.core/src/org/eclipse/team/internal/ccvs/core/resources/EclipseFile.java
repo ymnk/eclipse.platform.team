@@ -29,6 +29,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.core.Policy;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
@@ -218,4 +219,26 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		}
 		return new ILogEntry[0];
 	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#setNotifyInfo(NotifyInfo)
+	 */
+	public void setNotifyInfo(NotifyInfo info) throws CVSException {
+		if (isManaged()) {
+			EclipseSynchronizer.getInstance().setNotifyInfo(resource, info);
+			// On an edit, the base should be cached
+			// On an unedit, the base should be restored and cleared
+			// On a commit, the base should be cleared
+		}
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getNotifyInfo()
+	 */
+	public NotifyInfo getNotifyInfo() throws CVSException {
+		if (isManaged()) {
+			return EclipseSynchronizer.getInstance().getNotifyInfo(resource);		
+		}
+		return null;
+	}
+
 }

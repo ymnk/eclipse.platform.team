@@ -48,9 +48,10 @@ import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
 import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.Policy;
-import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.Connection;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.Util;
 import org.eclipse.team.internal.core.streams.CRLFtoLFInputStream;
@@ -779,7 +780,18 @@ public class Session {
 	public void sendUnchanged(ICVSFile file) throws CVSException {
 		connection.writeLine("Unchanged " + file.getName()); //$NON-NLS-1$
 	}
-	
+
+	/**
+	 * Sends the Notify request to the server
+	 */
+	public void sendNotify(NotifyInfo info, IProgressMonitor monitor)
+		throws CVSException {
+		
+		String filename = info.getName();
+		connection.writeLine("Notify " + filename); //$NON-NLS-1$
+		connection.writeLine(info.getServerLine());
+	}
+		
 	/**
 	 * Sends a Questionable request to the server.
 	 * <p>
@@ -846,7 +858,7 @@ public class Session {
 		}
 		sendFile(file, isBinary, monitor);
 	}
-
+	
 	/**
 	 * Sends a file to the remote CVS server, possibly translating line delimiters.
 	 * <p>

@@ -53,6 +53,7 @@ import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
 import org.eclipse.team.internal.ccvs.core.client.listeners.LogListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Util;
 
@@ -536,4 +537,18 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		out.write(byteStream.toByteArray());
 		return out;
 	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#setNotifyInfo(NotifyInfo)
+	 */
+	public void setNotifyInfo(NotifyInfo info) {
+		// do nothing
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getNotifyInfo()
+	 */
+	public NotifyInfo getNotifyInfo() throws CVSException {
+		return null;
+	}
+
 }

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
@@ -30,6 +31,7 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
@@ -831,4 +833,51 @@ public class EclipseSynchronizer {
 			throw CVSException.wrapException(e);
 		}
 	}
+	
+	/**
+	 * Add the entry to the CVS/Notify file. We are not initially concerned with efficiency
+	 * since edit/unedit are typically issued on a small set of files.
+	 * 
+	 * XXX If there was a previous notify entry for the resource, it is replaced. This is
+	 * probably not the proper behavior (see EclipseFile).
+	 * 
+	 * @param resource
+	 * @param info
+	 */
+	public void setNotifyInfo(IResource resource, NotifyInfo info) throws CVSException {
+		NotifyInfo[] infos = SyncFileWriter.readAllNotifyInfo(resource.getParent());
+		if (infos == null) {
+			infos = new NotifyInfo[] { info };
+		} else {
+			Map infoMap = new HashMap();
+			for (int i = 0; i < infos.length; i++) {
+				NotifyInfo notifyInfo = infos[i];
+				infoMap.put(infos[i].getName(), infos[i]);
+			}
+			infoMap.put(info.getName(), info);
+			NotifyInfo[] newInfos = new NotifyInfo[infoMap.size()];
+			int i = 0;
+			for (Iterator iter = infoMap.values().iterator(); iter.hasNext();) {
+				newInfos[i++] = (NotifyInfo) iter.next();
+			}
+			SyncFileWriter.writeAllNotifyInfo(resource.getParent(), newInfos);
+		}
+	}
+
+	/**
+	 * Method getNotifyInfo.
+	 * @param resource
+	 * @return NotifyInfo
+	 */
+	public NotifyInfo getNotifyInfo(IResource resource) throws CVSException {
+		NotifyInfo[] infos = SyncFileWriter.readAllNotifyInfo(resource.getParent());
+		for (int i = 0; i < infos.length; i++) {
+			NotifyInfo notifyInfo = infos[i];
+			if (notifyInfo.getName().equals(resource.getName())) {
+				return notifyInfo;
+			}
+		}
+		return null;
+	}
+
 }

@@ -5,9 +5,9 @@ package org.eclipse.team.internal.ccvs.core;
  * All Rights Reserved.
  */
 
-import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.internal.ccvs.core.syncinfo.*;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
  * The CVS analog of file system files and directories. These are handles to
@@ -85,6 +85,14 @@ public interface ICVSResource {
 	 */
 	public boolean exists() throws CVSException;	
 
+	/**
+	 * Answers the underlying IResource for the cvs resource (or null if there
+	 * is not a corresponding local resource).
+	 * 
+	 * @return the IResource that corresponds to the CVS resource
+	 */
+	public IResource getIResource() throws CVSException;
+	
 	/**
 	 * Answers the local relative path from the given ancestor to the receiver.
 	 * 
