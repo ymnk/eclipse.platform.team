@@ -10,52 +10,32 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.text.DateFormat;
+import java.util.*;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.ChangeSet;
+import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.core.variants.IResourceVariant;
-import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.ILogEntry;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.resources.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Util;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation.LogEntryCache;
-import org.eclipse.team.internal.ccvs.ui.subscriber.ChangeLogModelProvider.CVSUpdatableSyncInfo;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector;
+import org.eclipse.team.ui.synchronize.*;
 
 /**
  * Collector that fetches the log for incoming CVS change sets
@@ -69,6 +49,23 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 	// Job that builds the layout in the background.
 	private boolean shutdown = false;
 	private FetchLogEntriesJob fetchLogEntriesJob;
+	
+	private DefaultCheckedInChangeSet defaultSet;
+	
+	/* *****************************************************************************
+	 * Special sync info that has its kind already calculated.
+	 */
+	public class CVSUpdatableSyncInfo extends CVSSyncInfo {
+		public int kind;
+		public CVSUpdatableSyncInfo(int kind, IResource local, IResourceVariant base, IResourceVariant remote, Subscriber s) {
+			super(local, base, remote, s);
+			this.kind = kind;
+		}
+
+		protected int calculateKind() throws TeamException {
+			return kind;
+		}
+	}
 	
 	/* *****************************************************************************
 	 * Background job to fetch commit comments and update view
@@ -109,6 +106,69 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 		}
 	};
 	
+	private class DefaultCheckedInChangeSet extends CheckedInChangeSet {
+
+	    private Date date = new Date();
+	    
+        public DefaultCheckedInChangeSet() {
+            setName("[Unassigned]");
+        }
+        /* (non-Javadoc)
+         * @see org.eclipse.team.core.subscribers.CheckedInChangeSet#getAuthor()
+         */
+        public String getAuthor() {
+            return "";
+        }
+
+        /* (non-Javadoc)
+         * @see org.eclipse.team.core.subscribers.CheckedInChangeSet#getDate()
+         */
+        public Date getDate() {
+            return date;
+        }
+
+        /* (non-Javadoc)
+         * @see org.eclipse.team.core.subscribers.ChangeSet#getComment()
+         */
+        public String getComment() {
+            return "Unassigned";
+        }
+	    
+	}
+	
+	private class CVSCheckedInChangeSet extends CheckedInChangeSet {
+
+        private final ILogEntry entry;
+
+        public CVSCheckedInChangeSet(ILogEntry entry) {
+            this.entry = entry;
+    		String date = DateFormat.getDateTimeInstance().format(entry.getDate());
+    		String comment = HistoryView.flattenText(entry.getComment());
+    		setName("["+entry.getAuthor()+ "] (" + date +") " + comment); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        }
+        
+        /* (non-Javadoc)
+         * @see org.eclipse.team.core.subscribers.CheckedInChangeSet#getAuthor()
+         */
+        public String getAuthor() {
+            return entry.getAuthor();
+        }
+
+        /* (non-Javadoc)
+         * @see org.eclipse.team.core.subscribers.CheckedInChangeSet#getDate()
+         */
+        public Date getDate() {
+            return entry.getDate();
+        }
+
+        /* (non-Javadoc)
+         * @see org.eclipse.team.core.subscribers.ChangeSet#getComment()
+         */
+        public String getComment() {
+            return getComment();
+        }
+	}
+	
     public CVSChangeSetCollector(ISynchronizePageConfiguration configuration) {
         super(configuration);
     }
@@ -120,6 +180,21 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
         startUpdateJob(new SyncInfoSet(infos));
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector#reset(org.eclipse.team.core.synchronize.SyncInfoSet)
+     */
+    public void reset(SyncInfoSet seedSet) {
+        // Cancel any currently running job
+        if (fetchLogEntriesJob != null) {
+	        try {
+	            fetchLogEntriesJob.cancel();
+	            fetchLogEntriesJob.join();
+	        } catch (InterruptedException e) {
+	        }
+        }
+        super.reset(seedSet);
+    }
+    
 	private synchronized void startUpdateJob(SyncInfoSet set) {
 		if(fetchLogEntriesJob == null) {
 			fetchLogEntriesJob = new FetchLogEntriesJob();
@@ -485,10 +560,37 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
             // The info was not retrieved for the remote change for some reason.
             // Add the node to the root
             ChangeSet set = getDefaultChangeSet();
+	        if (set == null) {
+	            set = createDefaultChangeSet();
+	        	add(set);
+	        }
             set.add(info);
         }
     }
     
+    private ChangeSet getDefaultChangeSet() {
+        return defaultSet;
+    }
+    
+    private ChangeSet createDefaultChangeSet() {
+        return new DefaultCheckedInChangeSet();
+    }
+
+    private ChangeSet createChangeSetFor(ILogEntry logEntry) {
+        return new CVSCheckedInChangeSet(logEntry);
+    }
+
+    private ChangeSet getChangeSetFor(ILogEntry logEntry) {
+        ChangeSet[] sets = getSets();
+        for (int i = 0; i < sets.length; i++) {
+            ChangeSet set = sets[i];
+            if (set.getComment() == logEntry.getComment()) {
+                return set;
+            }
+        }
+        return null;
+    }
+
     private boolean requiresCustomSyncInfo(SyncInfo info, ICVSRemoteResource remoteResource, ILogEntry logEntry) {
 		// Only interested in non-deletions
 		if (logEntry.isDeletion() || !(info instanceof CVSSyncInfo)) return false;
@@ -498,4 +600,14 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 		if (remote == null) return true;
 		return !remote.equals(remoteResource);
 	}
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.core.subscribers.ChangeSetCollector#remove(org.eclipse.team.core.subscribers.ChangeSet)
+     */
+    public void remove(ChangeSet set) {
+        super.remove(set);
+        if (set == defaultSet) {
+            defaultSet = null;
+        }
+    }
 }

@@ -98,13 +98,6 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_SUPPORTED_MODES = TeamUIPlugin.ID  + ".P_SUPPORTED_MODES";	 //$NON-NLS-1$
 	
 	/**
-	 * Property constant which indicates the change set manager.
-	 * The value is to be an instance of <code>SubscriberChangeSetManager</code>.
-	 * A value of  <code>null</code> indicates that there is no change set manager.
-	 */
-	public static final String P_CHANGE_SET_MANAGER = TeamUIPlugin.ID  + ".P_CHANGE_SET_MANAGER";	 //$NON-NLS-1$
-	
-	/**
 	 * The id of the synchronize group the determines where the synchronize 
 	 * actions appear.
 	 */

@@ -24,24 +24,9 @@ import java.util.Date;
  * the state before and after the resources were checked-in.
  * @since 3.1
  */
-public class CheckedInChangeSet extends ChangeSet {
-
-    private String comment;
-    private String author;
-    private Date date;
+public abstract class CheckedInChangeSet extends ChangeSet {
     
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.subscribers.ChangeSet#getComment()
-     */
-    public String getComment() {
-        return comment;
-    }
+    public abstract String getAuthor();
     
-    public String getAuthor() {
-        return author;
-    }
-    
-    public Date getDate() {
-        return date;
-    }
+    public abstract Date getDate();
 }

@@ -19,16 +19,12 @@ import junit.framework.Test;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.subscriber.ChangeLogDiffNode;
-import org.eclipse.team.internal.ccvs.ui.subscriber.ChangeLogModelManager;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.tests.ccvs.ui.SynchronizeViewTestAdapter;
 import org.eclipse.team.ui.synchronize.*;
@@ -59,7 +55,7 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         ISynchronizeModelElement root = getModelRoot(workspaceSubscriber);
         for (int i = 0; i < messages.length; i++) {
             String message = messages[i];
-            ChangeLogDiffNode node = getCommitSetFor(root, message);
+            ChangeSetDiffNode node = getCommitSetFor(root, message);
             assertNotNull("The commit set for '" + message + "' is not in the sync view", node);
             List filesInSet = new ArrayList();
             getFileChildren(node, filesInSet);
@@ -87,13 +83,13 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         return;
     }
 
-    private ChangeLogDiffNode getCommitSetFor(ISynchronizeModelElement root, String message) {
+    private ChangeSetDiffNode getCommitSetFor(ISynchronizeModelElement root, String message) {
         IDiffElement[] children = root.getChildren();
         for (int i = 0; i < children.length; i++) {
             IDiffElement element = children[i];
-            if (element instanceof ChangeLogDiffNode) {
-                ChangeLogDiffNode node = (ChangeLogDiffNode)element;
-                if (node.getComment().getComment().equals(message)) {
+            if (element instanceof ChangeSetDiffNode) {
+                ChangeSetDiffNode node = (ChangeSetDiffNode)element;
+                if (node.getSet().getComment().equals(message)) {
                     return node;
                 }
             }
@@ -108,7 +104,7 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
     private void enableChangeSets(Subscriber workspaceSubscriber) throws PartInitException {
         ISynchronizeParticipant participant = SynchronizeViewTestAdapter.getParticipant(workspaceSubscriber);
         SubscriberParticipantPage page = (SubscriberParticipantPage)SynchronizeViewTestAdapter.getSyncViewPage(participant);
-        ChangeLogModelManager manager = (ChangeLogModelManager)page.getConfiguration().getProperty(SynchronizePageConfiguration.P_MODEL_MANAGER);
+        ChangeSetModelManager manager = (ChangeSetModelManager)page.getConfiguration().getProperty(SynchronizePageConfiguration.P_MODEL_MANAGER);
         manager.setCommitSetsEnabled(true);
         page.getConfiguration().setMode(ISynchronizePageConfiguration.BOTH_MODE);
     }
@@ -120,7 +116,7 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         SynchronizeViewTestAdapter.getCollector(workspaceSubscriber);
         ISynchronizeParticipant participant = SynchronizeViewTestAdapter.getParticipant(workspaceSubscriber);
         SubscriberParticipantPage page = (SubscriberParticipantPage)SynchronizeViewTestAdapter.getSyncViewPage(participant);
-        ChangeLogModelManager manager = (ChangeLogModelManager)page.getConfiguration().getProperty(SynchronizePageConfiguration.P_MODEL_MANAGER);
+        ChangeSetModelManager manager = (ChangeSetModelManager)page.getConfiguration().getProperty(SynchronizePageConfiguration.P_MODEL_MANAGER);
         AbstractSynchronizeModelProvider provider = (AbstractSynchronizeModelProvider)manager.getActiveModelProvider();
         provider.waitForUpdateHandler(new IProgressMonitor() {
 			public void beginTask(String name, int totalWork) {

@@ -12,9 +12,9 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.ActiveChangeSet;
-import org.eclipse.team.internal.ccvs.core.ILogEntry;
-import org.eclipse.team.internal.ui.synchronize.ChangeSetDiffNode;
+import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 
 /**
@@ -39,10 +39,11 @@ public class ChangeSetModelSorter extends ViewerSorter {
 	
 	protected int classComparison(Object element) {
 		if (element instanceof ChangeSetDiffNode) {
-			return 0;
-		}
-		if (element instanceof ChangeLogDiffNode) {
-			return 1;
+		    ChangeSet set = ((ChangeSetDiffNode)element).getSet();
+		    if (set instanceof ActiveChangeSet) {
+		        return 0;
+		    }
+		    return 1;
 		}
 		return 2;
 	}
@@ -63,34 +64,34 @@ public class ChangeSetModelSorter extends ViewerSorter {
 		//if one or both objects are not resources, returned a comparison 
 		//based on class.
 		if (o1 instanceof  ChangeSetDiffNode && o2 instanceof ChangeSetDiffNode) {
-		    ActiveChangeSet s1 = (ActiveChangeSet)((ChangeSetDiffNode) o1).getSet();
-		    ActiveChangeSet s2 = (ActiveChangeSet)((ChangeSetDiffNode) o2).getSet();
-			return compareNames(s1.getTitle(), s2.getTitle());
+		    ChangeSet s1 = ((ChangeSetDiffNode) o1).getSet();
+		    ChangeSet s2 = ((ChangeSetDiffNode) o2).getSet();
+		    if (s1 instanceof ActiveChangeSet && s2 instanceof ActiveChangeSet) {
+		        return compareNames(((ActiveChangeSet)s1).getTitle(), ((ActiveChangeSet)s2).getTitle());
+		    }
+		    if (s1 instanceof CheckedInChangeSet && s2 instanceof CheckedInChangeSet) {
+		        CheckedInChangeSet r1 = (CheckedInChangeSet)s1;
+		        CheckedInChangeSet r2 = (CheckedInChangeSet)s2;
+				if (commentCriteria == DATE)
+					return r1.getDate().compareTo(r2.getDate());
+				else if (commentCriteria == COMMENT)
+					return compareNames(r1.getComment(), r2.getComment());
+				else if (commentCriteria == USER)
+					return compareNames(r1.getAuthor(), r2.getAuthor());
+				else
+					return 0;
+		    }
+		    if (s1 instanceof ActiveChangeSet) {
+		        return -1;
+		    } else if (s2 instanceof ActiveChangeSet) {
+		        return 1;
+		    }
+		    if (s1 instanceof CheckedInChangeSet) {
+		        return -1;
+		    } else if (s2 instanceof CheckedInChangeSet) {
+		        return 1;
+		    }
 		}
-		
-		if (o1 instanceof  ChangeLogDiffNode && o2 instanceof ChangeLogDiffNode) {
-			ILogEntry r1 = ((ChangeLogDiffNode) o1).getComment();
-			ILogEntry r2 = ((ChangeLogDiffNode) o2).getComment();
-					
-			if (commentCriteria == DATE)
-				return r1.getDate().compareTo(r2.getDate());
-			else if (commentCriteria == COMMENT)
-				return compareNames(r1.getComment(), r2.getComment());
-			else if (commentCriteria == USER)
-				return compareNames(r1.getAuthor(), r2.getAuthor());
-			else
-				return 0;
-		}
-		
-		if (o1 instanceof ChangeSetDiffNode)
-			return 1;
-		else if (o2 instanceof ChangeSetDiffNode)
-			return -1;
-		
-		if (o1 instanceof ChangeLogDiffNode)
-			return 1;
-		else if (o2 instanceof ChangeLogDiffNode)
-			return -1;
 
 		if (o1 instanceof ISynchronizeModelElement && o2 instanceof ISynchronizeModelElement) {
 			ViewerSorter embeddedSorter = provider.getEmbeddedSorter();

@@ -37,7 +37,6 @@ public class CVSParticipant extends SubscriberParticipant {
 		// The decorator adds itself to the configuration
 		ILabelDecorator labelDecorator = new CVSParticipantLabelDecorator(configuration);
 		configuration.addLabelDecorator(labelDecorator);
-		configuration.setProperty(ISynchronizePageConfiguration.P_CHANGE_SET_MANAGER, CVSUIPlugin.getPlugin().getChangeSetManager());
 	}
 	
 	/* (non-Javadoc)

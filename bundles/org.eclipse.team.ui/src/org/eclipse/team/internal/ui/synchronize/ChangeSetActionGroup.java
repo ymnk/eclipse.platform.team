@@ -34,7 +34,7 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
  * This action group contributes actions that support the management
  * of Change sets to a synchronize page.
  */
-public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
+public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
 
     /**
      * Menu group that can be added to the context menu
@@ -82,8 +82,8 @@ public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
                     syncExec(new Runnable() {
                         public void run() {
 		                    SyncInfo[] infos = getSyncInfoSet().getSyncInfos();
-		                    ActiveChangeSet set = createChangeSet(getChangeSetManager(), infos);
-		            		getChangeSetManager().add(set);
+		                    ActiveChangeSet set = createChangeSet(infos);
+		            		getActiveChangeSetManager().add(set);
                         }
                     });
                 }
@@ -136,7 +136,7 @@ public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
         public void run() {
             ActiveChangeSet set = getSelectedSet();
             if (set == null) return;
-    		getChangeSetManager().makeDefault(set);
+    		getActiveChangeSetManager().makeDefault(set);
         }
 	    
 	}
@@ -223,30 +223,31 @@ public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
     private MakeDefaultChangeSetAction makeDefault;
     
     /*
-     * Flag indicating whether the active change sets are included
-     */
-    private boolean includesActive = false;
-    
-    /*
      * The currently chosen sort criteria
      */
     private int sortCriteria = ChangeSetModelSorter.DATE;
     
+    public ChangeSetActionGroup(ChangeSetModelProvider provider) {
+        this.provider = provider;
+    }
+    
 	public void initialize(ISynchronizePageConfiguration configuration) {
 		super.initialize(configuration);
-		sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0a"));	 //$NON-NLS-1$
-		appendToGroup(
-				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-				ISynchronizePageConfiguration.SORT_GROUP, 
-				sortByComment);
-		initializeSortCriteria(configuration);
 		
-		sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1a"), ChangeSetModelSorter.COMMENT)); //$NON-NLS-1$
-		sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2a"), ChangeSetModelSorter.DATE)); //$NON-NLS-1$
-		sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3a"), ChangeSetModelSorter.USER)); //$NON-NLS-1$
+		if (getChangeSetCapability().supportsCheckedInChangeSets()) {
+			sortByComment = new MenuManager(Policy.bind("ChangeLogModelProvider.0a"));	 //$NON-NLS-1$
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					ISynchronizePageConfiguration.SORT_GROUP, 
+					sortByComment);
+			initializeSortCriteria(configuration);
 		
-		if (getChangeSetManager() != null) {
-			includesActive = true;
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.1a"), ChangeSetModelSorter.COMMENT)); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.2a"), ChangeSetModelSorter.DATE)); //$NON-NLS-1$
+			sortByComment.add(new ToggleSortOrderAction(Policy.bind("ChangeLogModelProvider.3a"), ChangeSetModelSorter.USER)); //$NON-NLS-1$
+		}
+		
+		if (getChangeSetCapability().supportsActiveChangeSets()) {
 			addToChangeSet = new MenuManager(Policy.bind("ChangeLogModelProvider.12")); //$NON-NLS-1$
 			addToChangeSet.setRemoveAllWhenShown(true);
 			addToChangeSet.addMenuListener(new IMenuListener() {
@@ -296,7 +297,7 @@ public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
     }
     
     protected void addChangeSets(IMenuManager manager) {
-        ChangeSet[] sets = getChangeSetManager().getSets();
+        ChangeSet[] sets = getActiveChangeSetManager().getSets();
         ISelection selection = getContext().getSelection();
         createChangeSet.selectionChanged(selection);
 		addToChangeSet.add(createChangeSet);
@@ -312,29 +313,31 @@ public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
      * Return the change set manager for the current page.
      * @return the change set manager for the current page
      */
-    protected SubscriberChangeSetCollector getChangeSetManager() {
-        return (SubscriberChangeSetCollector)getConfiguration().getProperty(ISynchronizePageConfiguration.P_CHANGE_SET_MANAGER);
+    protected SubscriberChangeSetCollector getActiveChangeSetManager() {
+        return getChangeSetCapability().getActiveChangeSetManager();
     }
 
     /* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#dispose()
 	 */
 	public void dispose() {
-	    if (includesActive) {
+	    if (addToChangeSet != null) {
 			addToChangeSet.dispose();
 			addToChangeSet.removeAll();
 	    }
-		sortByComment.dispose();
-		sortByComment.removeAll();
+	    if (sortByComment != null) {
+			sortByComment.dispose();
+			sortByComment.removeAll();
+	    }
 		super.dispose();
 	}
 	
 	
     public void updateActionBars() {
-        if (includesActive) {
+        if (editChangeSet != null)
 	        editChangeSet.selectionChanged((IStructuredSelection)getContext().getSelection());
+        if (makeDefault != null)
 	        makeDefault.selectionChanged((IStructuredSelection)getContext().getSelection());
-        }
         super.updateActionBars();
     }
     
@@ -359,19 +362,15 @@ public abstract class ChangeSetActionGroup extends SynchronizePageActionGroup {
 		return new ChangeSetModelSorter(provider, sortCriteria);
 	}
 	
-    /**
-     * Create a change set from the given manager that contains the given sync info.
-     * This method is invoked from the UI thread.
-     * @param manager a change set manager
-     * @param infos the sync info to be added to the change set
-     * @return the created set.
-     */
-    protected abstract ActiveChangeSet createChangeSet(SubscriberChangeSetCollector manager, SyncInfo[] infos);
+    private ActiveChangeSet createChangeSet(SyncInfo[] infos) {
+        return getChangeSetCapability().createChangeSet(null, infos);
+    }
     
-    /**
-     * Edit the title and comment of the given change set.
-     * This method is invoked from the UI thread.
-     * @param set the set to be edited
-     */
-    protected abstract void editChangeSet(ActiveChangeSet set);
+    private void editChangeSet(ActiveChangeSet set) {
+        getChangeSetCapability().editChangeSet(null, set);
+    }
+
+    private ChangeSetCapability getChangeSetCapability() {
+        return provider.getChangeSetCapability();
+    }
 }

@@ -160,7 +160,6 @@ public class CompareParticipant extends CVSParticipant implements IPropertyChang
 				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 				NON_MODAL_CONTEXT_MENU_CONTRIBUTION_GROUP);
 		configuration.addActionContribution(new CompareParticipantActionContribution());
-		new ChangeLogModelManager(configuration);
 	}
 	
 	/* (non-Javadoc)
