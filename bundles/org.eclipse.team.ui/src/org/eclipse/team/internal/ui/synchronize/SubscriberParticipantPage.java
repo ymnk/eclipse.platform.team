@@ -320,6 +320,7 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 		TreeViewer viewer = new TreeViewerAdvisor.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(data);
+		viewerAdvisor = new TreeViewerAdvisor(configuration.getParticipant().getId(), configuration.getPart().getSite(), getFilteredCollector().getSyncInfoTree());
 		viewerAdvisor.initializeViewer(viewer);
 		getSite().setSelectionProvider(viewer);		
 		return viewer;
