@@ -18,8 +18,9 @@ public interface IMessagePatterns {
 	public static final String SERVER_MESSAGE_PREFIX = "\\w* \\w*: ";
 	public static final String SERVER_ABORTED_MESSAGE_PREFIX = "\\w* [\\w* aborted]: ";
 
-	public static final String RDIFF_DIRECTORY = "(?:\\w* \\w*: )?Diffing (remoteFolderPath:.*)";
-	public static final String RDIFF_SUMMARY_FILE_DIFF = "File (remoteFilePath:.*) changed from revision (leftRevision:.*) to (rightRevision:.*)";
-	public static final String RDIFF_SUMMARY_NEW_FILE = "File (remoteFilePath:.*) is new; current revision (rightRevision:.*)";
-	public static final String RDIFF_SUMMARY_DELETED_FILE = "File (remoteFilePath:.*) is removed; not included in release tag .*";
+	// TODO: It would be better if the prefix was optional but this requires the use of a capturing group which throws the group count off
+	public static final String RDIFF_DIRECTORY = "\\w* \\w*: Diffing (remoteFolderPath:.*:remoteFolderPath)";
+	public static final String RDIFF_SUMMARY_FILE_DIFF = "File (remoteFilePath:.*:remoteFilePath) changed from revision (leftRevision:.*:leftRevision) to (rightRevision:.*:rightRevision)";
+	public static final String RDIFF_SUMMARY_NEW_FILE = "File (remoteFilePath:.*:remoteFilePath) is new; current revision (rightRevision:.*:rightRevision)";
+	public static final String RDIFF_SUMMARY_DELETED_FILE = "File (remoteFilePath:.*:remoteFilePath) is removed; not included in release tag .*";
 }

@@ -40,9 +40,9 @@ public class RDiffSummaryListener extends CommandOutputListener {
 			DIRECTORY_MATCHER = new ServerMessageLineMatcher(
 				IMessagePatterns.RDIFF_DIRECTORY, new String[] {"remoteFolderPath"});
 			FILE_DIFF_MATCHER = new ServerMessageLineMatcher(
-				IMessagePatterns.RDIFF_SUMMARY_FILE_DIFF, new String[] {"remoteFilePath, leftRevision, rightRevision"});
+				IMessagePatterns.RDIFF_SUMMARY_FILE_DIFF, new String[] {"remoteFilePath", "leftRevision", "rightRevision"});
 			NEW_FILE_MATCHER = new ServerMessageLineMatcher(
-				IMessagePatterns.RDIFF_SUMMARY_NEW_FILE, new String[] {"remoteFilePath, rightRevision"});
+				IMessagePatterns.RDIFF_SUMMARY_NEW_FILE, new String[] {"remoteFilePath", "rightRevision"});
 			DELETED_FILE_MATCHER = new ServerMessageLineMatcher(
 				IMessagePatterns.RDIFF_SUMMARY_DELETED_FILE, new String[] {"remoteFilePath"});
 		} catch (CVSException e) {
