@@ -213,14 +213,24 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 				new SyncInfoFilter[] {
 					new SyncInfoDirectionFilter(directionsFilters.getDirectionFilter()), 
 					new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters()),
-					new PseudoConflictFilter(),
-					workingSetFilter
+					new PseudoConflictFilter()
 				}), new NullProgressMonitor() /* TODO: should be a job ? */);
 			} catch (TeamException e) {
-				
+				// TODO: bad stuff here
 			}
 		}
 	}
+	
+	public void refreshWorkingSet() {
+			final SubscriberInput input = getSubscriberContext();
+			if(input != null) {
+				try {
+					input.setWorkingSet(workingSetFilter, new NullProgressMonitor() /* TODO: should be a job ? */);
+				} catch (TeamException e) {
+					// TODO: bad stuff here
+				}
+			}
+		}
 	
 	public void open() {
 		open.run();
@@ -257,6 +267,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		
 		// refresh the selected filter
 		refreshFilters();
+		refreshWorkingSet();
 	}
 	
 	/* (non-Javadoc)
@@ -301,7 +312,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		if (set != getWorkingSet()) {
 			workingSetFilter.setWorkingSet(set);
 		}
-		refreshFilters();
+		refreshWorkingSet();
 		getSyncView().workingSetChanged();
 	}
 

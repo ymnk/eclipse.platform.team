@@ -56,6 +56,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
@@ -127,6 +128,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 * viewer type constants
 	 */ 
 	private int currentViewType;
+	private int lastViewType;
 	
 	/*
 	 * Array of SubscriberInput objects. There is one of these for each subscriber
@@ -220,8 +222,8 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 
 	public void switchViewerType(int viewerType) {
 		if(viewerType != currentViewType) {
-			ISelection s = viewer.getSelection();
 			if (composite == null || composite.isDisposed()) return;
+			ISelection s = viewer.getSelection();
 			currentViewType = viewerType;
 			getStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_TYPE, currentViewType);
 			disposeChildren(composite);
@@ -246,12 +248,11 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 				createTableViewerPartControl(parent); 
 				break;
 		}
-		hookContextMenu();
-		initializeListeners();
-		
 		if(input != null) {
 			viewer.setInput(input.getFilteredSyncSet());
 		}
+		hookContextMenu();
+		initializeListeners();
 		viewer.getControl().setFocus();
 	}
 
@@ -329,16 +330,18 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	}
 
 	private void hookContextMenu() {
-		MenuManager menuMgr = new MenuManager("#PopupMenu");
-		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener() {
-			public void menuAboutToShow(IMenuManager manager) {
-				actions.fillContextMenu(manager);
-			}
-		});
-		Menu menu = menuMgr.createContextMenu(viewer.getControl());
-		viewer.getControl().setMenu(menu);
-		getSite().registerContextMenu(menuMgr, viewer);
+		if(viewer != null) {
+			MenuManager menuMgr = new MenuManager("#PopupMenu");
+			menuMgr.setRemoveAllWhenShown(true);
+			menuMgr.addMenuListener(new IMenuListener() {
+				public void menuAboutToShow(IMenuManager manager) {
+					actions.fillContextMenu(manager);
+				}
+			});
+			Menu menu = menuMgr.createContextMenu(viewer.getControl());
+			viewer.getControl().setMenu(menu);
+			getSite().registerContextMenu(menuMgr, viewer);
+		}
 	}
 
 	private void contributeToActionBars() {
@@ -454,9 +457,11 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 		// listen to sync set changes in order to update state relating to the
 		// size of the sync sets and update the title
 		if(lastInput != null) {
+			lastInput.getWorkingSetSyncSet().removeSyncSetChangedListener(this);
 			lastInput.getFilteredSyncSet().removeSyncSetChangedListener(this);
 			lastInput.getSubscriberSyncSet().removeSyncSetChangedListener(this);
 		}
+		input.getWorkingSetSyncSet().removeSyncSetChangedListener(this);
 		input.getFilteredSyncSet().addSyncSetChangedListener(this);
 		input.getSubscriberSyncSet().addSyncSetChangedListener(this);
 
@@ -465,8 +470,8 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 				ActionContext context = new ActionContext(null);
 				context.setInput(input);
 				actions.setContext(context);
-				if (!hasRunnableContext()) return;				
 				viewer.setInput(input.getFilteredSyncSet());
+				
 				RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
 				refreshJob.setSubscriberInput(input);
 				IStructuredSelection s = (IStructuredSelection)viewer.getSelection();
@@ -488,7 +493,8 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 				if(input != null) {
 					TeamSubscriber subscriber = input.getSubscriber();
 					String changesText = Policy.bind("LiveSyncView.titleChangeNumbers",  //$NON-NLS-1$
-														new Integer(input.getFilteredSyncSet().size()).toString(), 
+														new Integer(input.getFilteredSyncSet().size()).toString(),
+														new Integer(input.getWorkingSetSyncSet().size()).toString(), 
 														new Integer(input.getSubscriberSyncSet().size()).toString());
 				 	setTitle(
 				 		Policy.bind("LiveSyncView.titleWithSubscriber", new String[] { //$NON-NLS-1$
@@ -776,6 +782,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 */
 	public void syncSetChanged(SyncSetChangedEvent event) {
 		updateTitle();
+		
 		// remove opened compare editors if file was removed from sync view and update if changed
 		IResource[] resources =event.getRemovedResources();
 		for (int i = 0; i < resources.length; i++) {
@@ -890,7 +897,5 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 
 	public void workingSetChanged() {
 		updateTitle();
-		fireSafePropertyChange(PROP_WORKINGSET);
 	}
-
 }

@@ -22,7 +22,6 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 public class SyncSetInputFromSubscriber extends SyncSetInput  {
 
 	private TeamSubscriber subscriber;
-	private boolean connected = false;
 
 	public SyncSetInputFromSubscriber(TeamSubscriber subscriber) {
 		this.subscriber = subscriber;

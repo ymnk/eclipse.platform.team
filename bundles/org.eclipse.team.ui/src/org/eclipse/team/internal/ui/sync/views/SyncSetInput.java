@@ -27,10 +27,6 @@ public abstract class SyncSetInput {
 	public SyncSet getSyncSet() {
 		return syncSet;
 	}
-
-	protected void log(TeamException e) {
-		// TODO: log or throw or communicate to the view that an error has occured
-	}
 	
 	/**
 	 * The input is no longer being used. Disconnect it from its source.
