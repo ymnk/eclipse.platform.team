@@ -48,7 +48,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 	 */
 	public void refreshDone(final IRefreshEvent event) {
 		// Ensure that this event was generated for this participant
-		if (event.getSubscriber() != participant.getSubscriberSyncInfoCollector().getSubscriber()) return;
+		if (event.getSubscriber() != participant.getSubscriber()) return;
 		// If the event is for a cancelled operation, there's nothing to do
 		if(! event.getStatus().isOK()) return;
 		// Decide on what action to take after the refresh is completed
@@ -72,7 +72,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 					// If it's a file, simply show the compare editor
 					if (resources.length == 1 && resources[0].getType() == IResource.FILE) {
 						IResource file = resources[0];
-						SyncInfo info = participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().getSyncInfo(file);
+						SyncInfo info = participant.getSyncInfoSet().getSyncInfo(file);
 						if(info != null) {
 							SyncInfoCompareInput input = new SyncInfoCompareInput(participant.getName(), info);
 							CompareUI.openCompareEditor(input);

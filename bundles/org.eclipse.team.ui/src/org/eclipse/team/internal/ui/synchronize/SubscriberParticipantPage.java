@@ -22,13 +22,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.subscribers.WorkingSetFilteredSyncInfoCollector;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
+import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
 import org.eclipse.team.ui.synchronize.subscribers.*;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberRefreshWizard;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 
@@ -63,7 +61,6 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	private static final String STORE_MODE = "SubscriberParticipantPage.STORE_MODE"; //$NON-NLS-1$
 	
 	private IDialogSettings settings;
-	private WorkingSetFilteredSyncInfoCollector collector;
 	private SubscriberConfiguration configuration;
 	
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
@@ -175,8 +172,6 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 		
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
-		collector = new WorkingSetFilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector(), participant.getSubscriber().roots());
-		collector.reset();
 	}
 	
 	private Shell getShell() {
@@ -187,7 +182,8 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	 * @see org.eclipse.ui.IViewPart#init(org.eclipse.ui.IViewSite, org.eclipse.ui.IMemento)
 	 */
 	public void init(IPageSite site) throws PartInitException {
-		this.site = site;		
+		this.site = site;
+		configuration.init(site);
 	}
 	
 	/* (non-Javadoc)
@@ -201,7 +197,6 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
 	 */
 	public void dispose() {
-		collector.dispose();
 		statusLine.dispose();
 		changesSection.dispose();
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
@@ -336,9 +331,5 @@ public final class SubscriberParticipantPage implements IPageBookViewPage, IProp
 
 	public void setSelection(Object[] objects, boolean reveal) {
 		getViewerAdvisor().setSelection(objects, reveal);
-	}
-	
-	public WorkingSetFilteredSyncInfoCollector getFilteredCollector() {
-		return collector;
 	}
 }

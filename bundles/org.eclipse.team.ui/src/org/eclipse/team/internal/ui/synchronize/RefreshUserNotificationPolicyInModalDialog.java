@@ -49,7 +49,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 			public void run() {
 				try {
 					//	Ensure that this event was generated for this participant
-					if (event.getSubscriber() != participant.getSubscriberSyncInfoCollector().getSubscriber())
+					if (event.getSubscriber() != participant.getSubscriber())
 						return;
 					// If the refresh was cancelled or returned an error there is nothing to report here.
 					if (!event.getStatus().isOK())
@@ -84,7 +84,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 	protected void compareAndOpenEditors(IRefreshEvent event, SubscriberParticipant participant) {
 		IResource[] resources = event.getResources();
 		for (int i = 0; i < resources.length; i++) {
-			SyncInfo info = participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().getSyncInfo(resources[i]);
+			SyncInfo info = participant.getSyncInfoSet().getSyncInfo(resources[i]);
 			if (info != null) {
 				SyncInfoCompareInput input = new SyncInfoCompareInput(event.getSubscriber().getName(), info);
 				CompareUI.openCompareEditor(input);

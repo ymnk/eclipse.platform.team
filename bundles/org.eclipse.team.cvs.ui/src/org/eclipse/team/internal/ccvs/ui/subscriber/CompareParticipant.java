@@ -125,6 +125,6 @@ public class CompareParticipant extends SubscriberParticipant {
 	 * @deprecated This is used by the releng tools plugin
 	 */
 	public void refresh(IResource[] resources) {
-		refresh(resources, getRefreshListenerFactory().createModalDialogListener((Shell)null /* shell */, getId(), this, getSubscriberSyncInfoCollector().getSyncInfoTree()), getName(), null);
+		refresh(resources, getRefreshListenerFactory().createModalDialogListener((Shell)null /* shell */, getId(), this, getSyncInfoSet()), getName(), null);
 	}
 }

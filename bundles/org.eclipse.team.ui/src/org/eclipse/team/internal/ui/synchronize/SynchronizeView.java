@@ -23,7 +23,6 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.*;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
@@ -133,8 +132,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		if(component instanceof ISynchronizeParticipant) {
 			ISynchronizeParticipant participant = (ISynchronizeParticipant)component;			
 			participant.addPropertyChangeListener(this);
-			SubscriberConfiguration sc = new SubscriberConfiguration(participant, this);
-			page = participant.createPage(sc);
+			page = participant.createPage();
 		} else if(component instanceof IPageBookViewPage) {
 			page = (IPageBookViewPage)component;
 		}	

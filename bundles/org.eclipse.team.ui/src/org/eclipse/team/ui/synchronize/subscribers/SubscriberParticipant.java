@@ -31,7 +31,7 @@ import org.eclipse.ui.part.IPageBookViewPage;
  * resources that are managed via a {@link Subscriber}.
  * 
  * Participant:
- * 1. manages subscriber collector
+ * 1. maintains a collection of all out-of-sync resources for a subscriber
  * 2. synchronize schedule
  * 3. APIs for creating specific: sync page, sync wizard, sync advisor (control ui pieces)
  * 4. allows refreshing the participant synchronization state
@@ -45,6 +45,9 @@ import org.eclipse.ui.part.IPageBookViewPage;
  */
 public abstract class SubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
 	
+	/**
+	 * Collects and maintains set of all out-of-sync resources of the subscriber
+	 */
 	private SubscriberSyncInfoCollector collector;
 	
 	private SubscriberRefreshSchedule refreshSchedule;
@@ -82,8 +85,8 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
-	public final IPageBookViewPage createPage(SubscriberConfiguration configuration) {
-		return doCreatePage(configuration);
+	public final IPageBookViewPage createPage() {
+		return doCreatePage(new SubscriberConfiguration(this));
 	}
 	
 	protected SubscriberParticipantPage doCreatePage(SubscriberConfiguration configuration) {
@@ -94,7 +97,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createSynchronizeConfiguration(org.eclipse.ui.IWorkbenchPart)
 	 */
 	public ISynchronizeConfiguration createSynchronizeConfiguration(IWorkbenchPart part) {
-		return new SubscriberConfiguration(this, part);
+		return new SubscriberConfiguration(this);
 	}
 	
 	/* (non-Javadoc)
@@ -161,12 +164,17 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		collector.dispose();
 	}
 	
-	/**
+	
+	public SyncInfoTree getSyncInfoSet() {
+		return getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
+	}
+	
+	/*
 	 * Return the <code>SubscriberSyncInfoCollector</code> for the participant.
 	 * This collector maintains the set of all out-of-sync resources for the subscriber.
 	 * @return the <code>SubscriberSyncInfoCollector</code> for this participant
 	 */
-	public final SubscriberSyncInfoCollector getSubscriberSyncInfoCollector() {
+	SubscriberSyncInfoCollector getSubscriberSyncInfoCollector() {
 		return collector;
 	}
 	

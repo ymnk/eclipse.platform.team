@@ -37,7 +37,7 @@ public class CompareWithTagAction extends WorkspaceAction {
 						getShell(),
 						CVSCompareSubscriber.ID_MODAL, 
 						participant, 
-						participant.getSubscriberSyncInfoCollector().getSyncInfoTree()), 
+						participant.getSyncInfoSet()), 
 				Policy.bind("Participant.comparing"),  //$NON-NLS-1$
 				null);
 	}

@@ -11,13 +11,18 @@
 package org.eclipse.team.ui.synchronize.subscribers;
 
 import java.util.HashMap;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.util.*;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.team.core.subscribers.WorkingSetFilteredSyncInfoCollector;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.ISynchronizeConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.part.IPageSite;
 
 
 /**
@@ -28,7 +33,7 @@ import org.eclipse.ui.IWorkingSet;
  * </p>
  * @since 3.0
  */
-public class SubscriberConfiguration implements ISynchronizeConfiguration {
+public class SubscriberConfiguration implements ISynchronizeConfiguration, StructuredViewerAdvisor.IContextMenuListener {
 	
 	/**
 	 * Property constant indicating the mode of a page has changed. 
@@ -49,32 +54,51 @@ public class SubscriberConfiguration implements ISynchronizeConfiguration {
 	public final static int CONFLICTING_MODE = 0x8;
 	public final static int ALL_MODES = INCOMING_MODE | OUTGOING_MODE | CONFLICTING_MODE | BOTH_MODE;
 	
-	private IWorkbenchPart workbenchPart;
-	private ISynchronizeParticipant participant;
+	private SubscriberParticipant participant;
 	
 	private ListenerList fListeners= new ListenerList();
 	private HashMap fProperties= new HashMap();
+
+	/**
+	 * Filters out-of-sync resources by working set and mode
+	 */
+	private WorkingSetFilteredSyncInfoCollector collector;
 	
 	// Properties
 	private int mode;
 	private int supportedModes;
 	private IWorkingSet workingSet;
+
+	private IPageSite site;
 	
-	public SubscriberConfiguration(ISynchronizeParticipant participant, IWorkbenchPart part) {
+	// Actions
+	private ExpandAllAction expandAllAction;
+	
+	public SubscriberConfiguration(SubscriberParticipant participant) {
 		Assert.isNotNull(participant);
 		this.participant = participant;
-		this.workbenchPart = part;
 	}
 	
 	public ISynchronizeParticipant getParticipant() {
 		return participant;
 	}
-
-	public IWorkbenchPart getPart() {
-		return workbenchPart;
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeConfiguration#initialize(org.eclipse.team.ui.synchronize.StructuredViewerAdvisor)
+	 */
+	public void initialize(StructuredViewerAdvisor advisor) {
+		initializeCollector();
+		initializeActions(advisor);
+		advisor.addContextMenuListener(this);
 	}
 	
+	private void initializeCollector() {
+		collector = new WorkingSetFilteredSyncInfoCollector(((SubscriberParticipant)getParticipant()).getSubscriberSyncInfoCollector(), participant.getSubscriber().roots());
+		collector.reset();
+	}
+
 	public void dispose() {
+		collector.dispose();
 	}
 	
 	/**
@@ -171,5 +195,33 @@ public class SubscriberConfiguration implements ISynchronizeConfiguration {
 	 */
 	public void setSupportedModes(int supportedModes) {
 		this.supportedModes = supportedModes;
+	}
+
+	/**
+	 * This method is invoked when the page using this configuration
+	 * is initiatialized with a page site
+	 * @param site the page site displaying the page using this configuration
+	 */
+	public void init(IPageSite site) {
+		this.site = site;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.StructuredViewerAdvisor.IContextMenuListener#fillContextMenu(org.eclipse.jface.action.IMenuManager)
+	 */
+	public void fillContextMenu(IMenuManager manager) {
+		// TODO Auto-generated method stub
+		// Fill the context menu
+		if (expandAllAction != null) {
+			manager.insertAfter(NAVIGATE_MENU, expandAllAction);
+		}
+	}
+	
+	private void initializeActions(StructuredViewerAdvisor advisor) {
+		StructuredViewer viewer = advisor.getViewer();
+		if (viewer instanceof AbstractTreeViewer) {
+			expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
+			Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
+		}
 	}
 }

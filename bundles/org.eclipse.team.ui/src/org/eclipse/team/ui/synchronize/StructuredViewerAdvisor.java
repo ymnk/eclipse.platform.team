@@ -11,7 +11,6 @@
 package org.eclipse.team.ui.synchronize;
 
 import java.util.*;
-
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -24,11 +23,8 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.*;
 import org.eclipse.ui.internal.PluginAction;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
@@ -68,6 +64,14 @@ import org.eclipse.ui.model.BaseWorkbenchContentProvider;
  * @since 3.0
  */
 public abstract class StructuredViewerAdvisor {
+	
+	public interface IContextMenuListener {
+		// Contants used to identify customizable menu areas
+		public static final String FILE_MENU = "File"; //$NON-NLS-1$
+		public static final String EDIT_MENU = "Edit"; //$NON-NLS-1$
+		public static final String NAVIGATE_MENU = "Navigate"; //$NON-NLS-1$
+		public void fillContextMenu(IMenuManager manager);
+	}
 
 	// Workbench site is used to register the context menu for the viewer
 	private IWorkbenchPartSite site;
@@ -84,6 +88,8 @@ public abstract class StructuredViewerAdvisor {
 	
 	// Listeners for model changes
 	private ListenerList listeners;
+	
+	private ListenerList contextMenuListeners;
 	
 	/**
 	 * Action that allows changing the model providers supported by this advisor.
@@ -309,6 +315,29 @@ public abstract class StructuredViewerAdvisor {
 	}
 
 	/**
+	 * Add a context menu listener that will get invoked when the context
+	 * menu is shown for the viewer associated with this advisor.
+	 * @param listener a context menu listener
+	 */
+	public void addContextMenuListener(IContextMenuListener listener) {
+		if (contextMenuListeners == null) {
+			contextMenuListeners = new ListenerList();
+		}
+		contextMenuListeners.add(listener);
+	}
+	
+	/**
+	 * Remove a previously registered content menu listener.
+	 * Removing a listener that is not registered has no effect.
+	 * @param listener a context menu listener
+	 */
+	public void removeContextMenuListener(IContextMenuListener listener) {
+		if (contextMenuListeners != null) {
+			contextMenuListeners.remove(listener);
+		}
+	}
+	
+	/**
 	 * Callback that is invoked when a context menu is about to be shown in the
 	 * viewer. Subsclasses must implement to contribute menus. Also, menus can
 	 * contributed by creating a viewer contribution with a <code>targetID</code> 
@@ -318,6 +347,16 @@ public abstract class StructuredViewerAdvisor {
 	 * @param manager the menu manager to which actions can be added.
 	 */
 	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
+		manager.add(new Separator(IContextMenuListener.FILE_MENU));
+		manager.add(new Separator(IContextMenuListener.EDIT_MENU));
+		manager.add(new Separator(IContextMenuListener.NAVIGATE_MENU));
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+		if (contextMenuListeners != null) {
+			Object[] l= contextMenuListeners.getListeners();
+			for (int i= 0; i < l.length; i++) {
+				((IContextMenuListener) l[i]).fillContextMenu(manager);
+			}
+		}
 	}
 	
 	/**
@@ -473,7 +512,7 @@ public abstract class StructuredViewerAdvisor {
 	 * 
 	 * @return the viewer configured by this advisor.
 	 */
-	protected StructuredViewer getViewer() {
+	public final StructuredViewer getViewer() {
 		return viewer;
 	}
 

@@ -135,7 +135,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 
 	private void updateCounts() {
 		if (getParticipant().getSubscriberSyncInfoCollector() != null) {
-			SyncInfoSet workspaceSetStats = getParticipant().getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
+			SyncInfoSet workspaceSetStats = getParticipant().getSyncInfoSet();
 			SyncInfoSet workingSetSetStats = page.getFilteredCollector().getWorkingSetSyncInfoSet();
 
 			final int total = workspaceSetStats.size();

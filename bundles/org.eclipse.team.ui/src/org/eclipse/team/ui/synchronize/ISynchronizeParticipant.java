@@ -14,10 +14,7 @@ import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.wizard.IWizard;
-import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.*;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -97,7 +94,7 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * @return a page book view page representation of this synchronize
 	 * participant
 	 */
-	public IPageBookViewPage createPage(SubscriberConfiguration configuration);
+	public IPageBookViewPage createPage();
 	
 	/**
 	 * Creates a default synchronize configuration that is used to control various

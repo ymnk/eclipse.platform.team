@@ -11,13 +11,14 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.ui.IWorkbenchPart;
 
 public interface ISynchronizeConfiguration {
 
 	public abstract ISynchronizeParticipant getParticipant();
-
-	public abstract IWorkbenchPart getPart();
+	
+	public abstract void initialize(StructuredViewerAdvisor advisor);
+	
+	public abstract void dispose();
 
 	public abstract void addPropertyChangeListener(IPropertyChangeListener listener);
 

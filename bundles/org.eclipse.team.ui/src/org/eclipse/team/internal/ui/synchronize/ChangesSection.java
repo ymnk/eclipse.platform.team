@@ -156,7 +156,7 @@ public class ChangesSection extends Composite {
 		this.changesViewer = viewer;
 		calculateDescription();
 		page.getViewerAdvisor().addInputChangedListener(changedListener);
-		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().addSyncSetChangedListener(subscriberListener);
+		participant.getSyncInfoSet().addSyncSetChangedListener(subscriberListener);
 		page.getFilteredCollector().getSyncInfoTree().addSyncSetChangedListener(outputSetListener);
 	}
 	
@@ -225,7 +225,7 @@ public class ChangesSection extends Composite {
 			return composite;
 		}
 		
-		SyncInfoSet workspace = participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
+		SyncInfoSet workspace = participant.getSyncInfoSet();
 		SyncInfoSet workingSet = page.getFilteredCollector().getWorkingSetSyncInfoSet();
 		SyncInfoSet filteredSet = page.getFilteredCollector().getSyncInfoTree();
 		
@@ -291,7 +291,7 @@ public class ChangesSection extends Composite {
 	public void dispose() {
 		super.dispose();
 		page.getViewerAdvisor().removeInputChangedListener(changedListener);
-		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().removeSyncSetChangedListener(subscriberListener);
+		participant.getSyncInfoSet().removeSyncSetChangedListener(subscriberListener);
 	}
 	
 	private Composite getErrorComposite(Composite parent) {

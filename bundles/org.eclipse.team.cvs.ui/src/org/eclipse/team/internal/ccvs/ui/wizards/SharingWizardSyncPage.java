@@ -136,7 +136,7 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 		infos = new SyncInfoTree();
 		infos.addSyncSetChangedListener(this);
 		WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		collector = new FilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), infos, new SyncInfoFilter() {
+		collector = new FilteredSyncInfoCollector(participant.getSyncInfoSet(), infos, new SyncInfoFilter() {
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
 				if (project == null)return false;
 				return project.getFullPath().isPrefixOf(info.getLocal().getFullPath());

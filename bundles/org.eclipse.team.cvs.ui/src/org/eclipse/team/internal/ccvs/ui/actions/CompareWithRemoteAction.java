@@ -54,7 +54,7 @@ public class CompareWithRemoteAction extends WorkspaceAction {
 		SyncInfoTree syncInfoSet = new SyncInfoTree();
 		
 		FilteredSyncInfoCollector collector = new FilteredSyncInfoCollector(
-				participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
+				participant.getSyncInfoSet(), 
 				syncInfoSet, 
 				contentComparison);	
 		collector.start(new NullProgressMonitor());
