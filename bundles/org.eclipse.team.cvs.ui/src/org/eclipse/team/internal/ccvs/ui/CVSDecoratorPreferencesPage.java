@@ -466,7 +466,6 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		bindings.put(CVSDecoratorConfiguration.FILE_REVISION, Policy.bind("last_revision_loaded_into_workspace_45")); //$NON-NLS-1$
 		bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, Policy.bind("flag_indicating_that_the_file_has_outgoing_changes_46")); //$NON-NLS-1$
 		bindings.put(CVSDecoratorConfiguration.ADDED_FLAG, Policy.bind("flag_indicating_that_the_file_has_been_added_to_the_server_47")); //$NON-NLS-1$
-		bindings.put(CVSDecoratorConfiguration.READ_ONLY_FLAG, Policy.bind("flag_indicating_that_the_file_is_read_only")); //$NON-NLS-1$
 		return bindings;
 	}
 }
