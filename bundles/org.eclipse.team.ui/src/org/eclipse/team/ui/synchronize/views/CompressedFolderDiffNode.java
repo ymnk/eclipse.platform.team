@@ -8,21 +8,24 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.views;
 
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**
  * A compressed folder appears under a project and contains out-of-sync resources
  */
-public class CompressedFolder extends SyncInfoDiffNode {
+public class CompressedFolderDiffNode extends SyncInfoDiffNode {
 
-	public CompressedFolder(SyncInfoSet input, IResource resource) {
+	public CompressedFolderDiffNode(SyncInfoSet input, IResource resource) {
 		super(input, resource);
 	}
 	
@@ -56,4 +59,18 @@ public class CompressedFolder extends SyncInfoDiffNode {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()
+	 */
+	public String getLabel(Object o) {
+		IResource resource = getResource();
+		return resource.getProjectRelativePath().toString();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getImageDescriptor(java.lang.Object)
+	 */
+	public ImageDescriptor getImageDescriptor(Object object) {
+		return TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER);
+	}
 }

@@ -24,8 +24,8 @@ public class TreeViewerUtils {
 	 *
 	 * @param next if <code>true</code> the next node is selected, otherwise the previous node
 	 */
-	public static boolean gotoDifference(TreeViewer viewer, boolean next) {	
-		return navigate(viewer, next, false);
+	public static boolean gotoDifference(TreeViewer viewer, boolean next, boolean fireOpen) {	
+		return navigate(viewer, next, fireOpen);
 	}
 	
 	/**

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.views;
+package org.eclipse.team.ui.synchronize.views;
 
 import java.util.*;
 
@@ -18,7 +18,6 @@ import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.views.*;
 
 /**
  * The contents provider compressed in-sync folder paths
@@ -169,7 +168,7 @@ public class CompressedFolderContentProvider extends SyncInfoSetTreeContentProvi
 	}
 	
 	public Object getParent(Object element) {
-		if (element instanceof CompressedFolder) {
+		if (element instanceof CompressedFolderDiffNode) {
 			// The parent of a compressed folder is always the project
 			return getModelObject(getResource(element).getProject());
 		}
@@ -180,7 +179,7 @@ public class CompressedFolderContentProvider extends SyncInfoSetTreeContentProvi
 				// The resource is in-sync so return a compressed folder
 				IResource resource = ((SyncInfoDiffNode)parent).getResource();
 				if (resource.getType() == IResource.FOLDER) {					
-					return new CompressedFolder(((SyncInfoDiffNode)parent).getSyncInfoSet(), resource);
+					return new CompressedFolderDiffNode(((SyncInfoDiffNode)parent).getSyncInfoSet(), resource);
 					
 				}
 			}
@@ -241,7 +240,7 @@ public class CompressedFolderContentProvider extends SyncInfoSetTreeContentProvi
 	 */
 	public Object getModelObject(IResource resource) {
 		if (resource.getType() == IResource.FOLDER && getSyncInfoSet().getSyncInfo(resource) == null) {
-			return new CompressedFolder(getSyncInfoSet(), resource);
+			return new CompressedFolderDiffNode(getSyncInfoSet(), resource);
 		}
 		return super.getModelObject(resource);
 	}

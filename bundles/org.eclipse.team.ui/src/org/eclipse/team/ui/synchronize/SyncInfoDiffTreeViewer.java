@@ -59,7 +59,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigatable, 
 	 * @see org.eclipse.team.ui.synchronize.actions.INavigableControl#gotoDifference(int)
 	 */
 	public boolean gotoDifference(boolean direction) {
-		return TreeViewerUtils.gotoDifference(this, direction);
+		return TreeViewerUtils.gotoDifference(this, direction, true);
 	}
 
 	/* (non-Javadoc)

@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
@@ -23,38 +25,26 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.views.DefaultLogicalView;
-import org.eclipse.team.internal.ui.synchronize.views.LogicalViewProvider;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.synchronize.actions.ExpandAllAction;
 import org.eclipse.team.ui.synchronize.views.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
+import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
- * This class provides the configurability of diff viewers that contain <code>SyncInfo</code>
- * (e.g. <code>SyncInfoDiffTreeViewer</code> and <code>SyncInfoDiffCheckboxTreeViewer</code>
- * as well as instance of <code>SyncInfoSetCompareInput</code>.
- * A configuration can only be used to configure a single viewer and the lifecycle of the 
- * configuration
- * 
- * 1. contents diff nodes (labels, content provider, sorter)
- * 2. menus
- * 3. title
- * 4. navigation
- * 
- * @see SyncInfoSetCompareInput
- * @see SyncInfoDiffTreeViewer
- * @see SyncInfoDiffCheckboxTreeViewer
+ * Configures the following behavior of a SyncInfoDiffTreeViewer:
+ * <ul>
+ * <li>context menus
+ * <li>
  * @since 3.0
  */
-public class DiffTreeViewerConfiguration {
+public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	
 	private SyncInfoSet set;
 	private String menuId;
 	private StructuredViewer viewer;
-	private LogicalViewProvider logicalView;
 	
 	private ExpandAllAction expandAllAction;
 	
@@ -79,6 +69,7 @@ public class DiffTreeViewerConfiguration {
 	public DiffTreeViewerConfiguration(String menuId, SyncInfoSet set) {
 		this.menuId = menuId;
 		this.set = set;
+		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 	}
 
 	/**
@@ -99,9 +90,10 @@ public class DiffTreeViewerConfiguration {
 		initializeListeners(viewer);
 		hookContextMenu(viewer);
 		initializeActions(viewer);
-		logicalView = getDefaultLogicalViewProvider();
-		setLogicalViewProvider(logicalView);
 		
+		viewer.setLabelProvider(getLabelProvider());
+		viewer.setSorter(getViewSorter());
+		viewer.setContentProvider(getContentProvider());
 		viewer.setInput(getInput());
 	}
 
@@ -123,10 +115,21 @@ public class DiffTreeViewerConfiguration {
 	 * subclass of <code>TeamSubscriberParticipantLabelProvider</code>.
 	 * @param logicalProvider the label provider for the selected logical view
 	 * @return a label provider
-	 * @see SyncInfoDecoratingLabelProvider
+	 * @see SyncInfoLabelDecorator
 	 */
-	protected ILabelProvider getLabelProvider(SyncInfoLabelProvider logicalProvider) {
-		return new SyncInfoDecoratingLabelProvider(logicalProvider);
+	protected ILabelProvider getLabelProvider() {
+		return new SyncInfoLabelDecorator();
+	}
+	
+	protected IStructuredContentProvider getContentProvider() {
+		if(getShowCompressedFolders()) {
+			return new CompressedFolderContentProvider();
+		}
+		return new SyncInfoSetTreeContentProvider();
+	}
+		
+	protected ViewerSorter getViewSorter() {
+		return new SyncViewerSorter(ResourceSorter.NAME);
 	}
 	
 	/**
@@ -165,8 +168,6 @@ public class DiffTreeViewerConfiguration {
 	public SyncInfoSet getSyncSet() {
 		return set;
 	}
-
-	
 
 	/**
 	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
@@ -227,40 +228,15 @@ public class DiffTreeViewerConfiguration {
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
-	public void contributeToToolBar(IToolBarManager tbm) {
-	}
-	
-	protected LogicalViewProvider getDefaultLogicalViewProvider() {
-		return new DefaultLogicalView(this);
-	}
-	
-	/**
-	 * Return the title of the diff viewer. This title is used by the <code>SyncInfoCompareInput</code>.
-	 * @return a title string
-	 */
-	public String getTitle() {
-		return "Synchronization Changes";
+	protected StructuredViewer getViewer() {
+		return viewer;
 	}
 	
 	/**
 	 * Cleanup listeners
 	 */	
 	public void dispose() {
-		logicalView.dispose();
-	}
-	
-	/**
-	 * Set the logical view to be used in the diff tree viewer. Passing <code>null</code>
-	 * will remove any logical view and use the standard resource hierarchy view.
-	 * @param viewer the viewer
-	 * @param view the logical view to be used
-	 */
-	public void setLogicalViewProvider(LogicalViewProvider provider) {
-		if (viewer != null) {
-			viewer.setLabelProvider(getLabelProvider(provider.getLabelProvider()));
-			viewer.setSorter(provider.getSorter());
-			viewer.setContentProvider(provider.getContentProvider());
-		}
+		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 	}
 	
 	/**
@@ -326,5 +302,18 @@ public class DiffTreeViewerConfiguration {
 	 */
 	protected boolean allowParticipantMenuContributions() {
 		return getMenuId() != null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {	
+		if (viewer != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
+			viewer.setContentProvider(getContentProvider());
+		}
+	}
+		
+	private boolean getShowCompressedFolders() {
+		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
 	}
 }

@@ -12,20 +12,22 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.compare.RemoteResourceTypedElement;
+import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
+public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
 	
 	private IResource resource;
 	private SyncInfoSet input;
-	// TODO: Create subclass for SyncInfoCompareInput
 	private SyncInfo info;
 		
 	/**
@@ -133,7 +135,10 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	public Object getAdapter(Class adapter) {
 		if (adapter == SyncInfo.class) {
 			return getSyncInfo();
-		} 
+		}
+		if(adapter == IWorkbenchAdapter.class) {
+			return this;
+		}
 		return null;
 	}
 
@@ -193,7 +198,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "SynchronizeViewNode for " + getResource().getFullPath().toString(); //$NON-NLS-1$
+		return "SyncInfoDiffNode for " + getResource().getFullPath().toString(); //$NON-NLS-1$
 	}
 	
 	/**
@@ -268,5 +273,47 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 			}
 		}
 		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
+	 */
+	public Object[] getChildren(Object o) {
+		if(input != null) {
+			IResource[] children = input.members(getResource());
+			SyncInfoDiffNode[] nodes = new SyncInfoDiffNode[children.length];
+			for (int i = 0; i < children.length; i++) {
+				nodes[i] = new SyncInfoDiffNode(getSyncInfoSet(), children[i]);				
+			}
+			return nodes;
+		}
+		return new SyncInfo[0];
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getImageDescriptor(java.lang.Object)
+	 */
+	public ImageDescriptor getImageDescriptor(Object object) {
+		IResource resource = getResource();
+		IWorkbenchAdapter adapter = (IWorkbenchAdapter)((IAdaptable) resource).getAdapter(IWorkbenchAdapter.class);
+		return adapter.getImageDescriptor(resource);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
+	 */
+	public String getLabel(Object o) {
+		return getResource().getName();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getParent(java.lang.Object)
+	 */
+	public Object getParent(Object o) {
+		IContainer parent = getResource().getParent();
+		if(parent != null) {
+			return new SyncInfoDiffNode(getSyncInfoSet(), parent);
+		}
+		return null;
 	}
 }

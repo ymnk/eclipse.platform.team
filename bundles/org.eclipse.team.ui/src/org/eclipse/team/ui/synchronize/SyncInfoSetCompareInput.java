@@ -50,7 +50,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 
 	public final Viewer createDiffViewer(Composite parent) {
 		final StructuredViewer viewer = internalCreateDiffViewer(parent, diffViewerConfiguration);
-		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, diffViewerConfiguration.getTitle());
+		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
 		
 		if(viewer instanceof INavigatable) { 
 			INavigatable nav= new INavigatable() {

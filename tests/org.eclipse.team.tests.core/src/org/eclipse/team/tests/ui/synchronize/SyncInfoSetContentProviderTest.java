@@ -20,11 +20,11 @@ import org.eclipse.swt.widgets.Item;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.views.CompressedFolder;
 import org.eclipse.team.tests.core.TeamTest;
 import org.eclipse.team.tests.ui.views.ContentProviderTestView;
 import org.eclipse.team.tests.ui.views.TestTreeViewer;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.views.CompressedFolderDiffNode;
 
 /**
  * Tests for the SyncInfoSet content providers.
@@ -140,7 +140,7 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 			if (set.getSyncInfo(parent) == null) {
 				assertTrue(
 						"Compressed parent for " + resource.getFullPath() + " is missing",
-						viewer.hasItemFor(new CompressedFolder(set, parent)));
+						viewer.hasItemFor(new CompressedFolderDiffNode(set, parent)));
 			}
 		}
 	}
@@ -155,7 +155,7 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 			if (resource.getType() == IResource.PROJECT) {
 				assertProjectPresent((IProject)resource, resources);
 			} else if (resource.getType() == IResource.FOLDER) {
-				if (data instanceof CompressedFolder) {
+				if (data instanceof CompressedFolderDiffNode) {
 					assertParentOfResource((IFolder)resource, resources);
 				} else {
 					assertResourcePresent(resource, resources);

@@ -13,7 +13,7 @@ package org.eclipse.team.ui.synchronize.views;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent;
 import org.eclipse.team.core.subscribers.SyncInfo;
@@ -26,45 +26,6 @@ public class SyncInfoSetTreeContentProvider extends SyncInfoSetContentProvider i
 	
 	// parents who need a label update accumulated while handling sync set changes
 	private Set parentsToUpdate = new HashSet();
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetContentProvider#getElements(java.lang.Object)
-	 */
-	public Object[] getElements(Object inputElement) {
-		return getChildren(inputElement);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
-	 */
-	public Object[] getChildren(Object element) {
-		IResource resource = getResource(element);
-		IResource[] children;
-		if (resource != null) {
-			children = getSyncInfoSet().members(resource);
-		} else {
-			// TODO: This doesn't make sense!
-			children = getSyncInfoSet().members(ResourcesPlugin.getWorkspace().getRoot());
-		}
-		return getModelObjects(children);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
-	 */
-	public boolean hasChildren(Object element) {
-		return getChildren(element).length > 0;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getParent(java.lang.Object)
-	 */
-	public Object getParent(Object element) {
-		IResource resource = getResource(element);
-		if (resource == null) return null;
-		IContainer parent = resource.getParent();
-		return getModelObject(parent);
-	}
 	
 	/**
 	 * Return the <code>AbstractTreeViewer</code> asociated with this content provider

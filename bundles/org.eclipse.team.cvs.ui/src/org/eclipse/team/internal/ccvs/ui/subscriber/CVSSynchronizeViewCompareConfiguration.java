@@ -11,20 +11,17 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.views.*;
-import org.eclipse.team.ui.synchronize.views.SyncInfoLabelProvider;
+import org.eclipse.team.ui.synchronize.views.DecoratingColorLabelProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoLabelDecorator;
 
 public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDiffTreeViewerConfiguration {
 
-	private static class CVSLabelProvider extends SyncInfoDecoratingLabelProvider {
-		protected CVSLabelProvider(SyncInfoLabelProvider syncInfoLabelProvider) {
-			super(syncInfoLabelProvider);
-		}
-		protected String decorateText(String input, Object element) {
+	private static class CVSLabelDecorator extends LabelProvider implements ILabelDecorator  {
+		public String decorateText(String input, Object element) {
 			String text = input;
 			if (element instanceof SyncInfoDiffNode) {
 				IResource resource =  ((SyncInfoDiffNode)element).getResource();
@@ -46,15 +43,8 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 			}
 			return text;
 		}
-		
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantLabelProvider#decorateImage(org.eclipse.swt.graphics.Image, java.lang.Object)
-		 */
-		protected Image decorateImage(Image base, Object element) {
-			if(element instanceof ChangeLogDiffNode) {
-				//TODO: return getCompressedFolderImage();
-			}
-			return super.decorateImage(base, element);
+		public Image decorateImage(Image base, Object element) {
+			return base;
 		}
 	}
 	
@@ -63,9 +53,9 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#getLabelProvider(org.eclipse.team.ui.synchronize.content.SyncInfoLabelProvider)
+	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#getLabelProvider()
 	 */
-	protected ILabelProvider getLabelProvider(SyncInfoLabelProvider logicalProvider) {
-		return new CVSLabelProvider(logicalProvider);
+	protected ILabelProvider getLabelProvider() {
+		return new DecoratingColorLabelProvider(new SyncInfoLabelDecorator(), new CVSLabelDecorator());
 	}
 }

@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
+import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 /**
  * This class provides the contents for a StructuredViewer using the <code>SyncInfo</code>
@@ -27,7 +28,7 @@ import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
  * @see SyncInfo
  * @see SyncInfoSet
  */
-public abstract class SyncInfoSetContentProvider implements IStructuredContentProvider, ISyncSetChangedListener {
+public abstract class SyncInfoSetContentProvider extends BaseWorkbenchContentProvider implements IStructuredContentProvider, ISyncSetChangedListener {
 	
 	private Viewer viewer;
 	
@@ -48,13 +49,6 @@ public abstract class SyncInfoSetContentProvider implements IStructuredContentPr
 		}
 		if(input instanceof SyncInfoDiffNode) {
 			return ((SyncInfoDiffNode)input).getSyncInfoSet();
-		}
-		if(input instanceof SyncInfoSet) {
-			return (SyncInfoSet)input;
-		}
-		if (input instanceof IAdaptable) {
-			IAdaptable adaptable = (IAdaptable)input;
-			return (SyncInfoSet)adaptable.getAdapter(SyncInfoSet.class);
 		}
 		return null;
 	}

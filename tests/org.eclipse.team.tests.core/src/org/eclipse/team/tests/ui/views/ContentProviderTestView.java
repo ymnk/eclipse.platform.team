@@ -16,9 +16,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.views.CompressedFolderContentProvider;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.views.SyncInfoDecoratingLabelProvider;
+import org.eclipse.team.ui.synchronize.views.CompressedFolderContentProvider;
+import org.eclipse.team.ui.synchronize.views.SyncInfoLabelDecorator;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.ViewPart;
 
@@ -49,7 +49,7 @@ public class ContentProviderTestView extends ViewPart {
 	public void createPartControl(Composite parent) {
 		viewer = new TestTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setContentProvider(new CompressedFolderContentProvider());
-		viewer.setLabelProvider(new SyncInfoDecoratingLabelProvider());
+		viewer.setLabelProvider(new SyncInfoLabelDecorator());
 		setInput(new SyncInfoSet(new SyncInfo[0]));
 	}
 

@@ -14,50 +14,34 @@ import java.util.*;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.ui.internal.WorkbenchColors;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
- * Decorates the text and labels from a <code>SyncInfoLabelProvider</code>
- * with the proper sync kind indications. 
- * This class provides a facility for subclasses to define annotations
- * on the labels and icons of adaptable objects by overriding
- * <code>decorateText()</code> and <code>decorateImage</code>.
- * 
- * @see DiffTreeViewerConfiguration#getLabelProvider(SyncInfoLabelProvider)
  * @since 3.0
  */
-public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IColorProvider {
+public class SyncInfoLabelDecorator extends LabelProvider implements IColorProvider {
 	
-	//column constants
-	private static final int COL_RESOURCE = 0;
-	private static final int COL_PARENT = 1;
 	private boolean working = false;
-	
 	// cache for folder images that have been overlayed with conflict icon
-	private Map fgImageCache;
-	
-	// Keep track of the compare provider and sync info label provider
-	// so they can be properly disposed
+	private Map fgImageCache;	
 	CompareConfiguration compareConfig = new CompareConfiguration();
-	SyncInfoLabelProvider syncInfoLabelProvider;
-
-	public SyncInfoDecoratingLabelProvider() {
-		this(new SyncInfoLabelProvider());
-	}
+	private WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
 	
-	public SyncInfoDecoratingLabelProvider(SyncInfoLabelProvider syncInfoLabelProvider) {
-		Assert.isNotNull(syncInfoLabelProvider);
+	public SyncInfoLabelDecorator() {
 		JobStatusHandler.addJobListener(new IJobListener() {
 			public void started(QualifiedName jobType) {
 				working = true;
@@ -65,7 +49,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IC
 					public void run() {
 						// TODO: What this is this supposed to be?
 						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoDecoratingLabelProvider.this));
+							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelDecorator.this));
 						}
 					}
 				});
@@ -75,7 +59,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IC
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						synchronized (this) {
-							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoDecoratingLabelProvider.this));
+							fireLabelProviderChanged(new LabelProviderChangedEvent(SyncInfoLabelDecorator.this));
 						}
 					}
 				});
@@ -85,46 +69,58 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IC
 		// The label provider may of been created after the subscriber job has been
 		// started.
 		this.working = JobStatusHandler.hasRunningJobs(TeamSubscriber.SUBSCRIBER_JOB_TYPE);
-		this.syncInfoLabelProvider = syncInfoLabelProvider;
-	}
-
-	protected String decorateText(String input, Object element) {
-		return input;
 	}
 	
-	protected Image decorateImage(Image base, Object element) {
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
+	 */
+	public Color getForeground(Object element) {	
+		if (working)  {
+			return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
+		} else  {
+			return null;
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.IColorProvider#getBackground(java.lang.Object)
+	 */
+	public Color getBackground(Object element) {
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.LabelProvider#getImage(java.lang.Object)
+	 */
+	public Image getImage(Object element) {
+		Image base = workbenchLabelProvider.getImage(element);
+		if(base != null) {
+			SyncInfo info = getSyncInfo(element);
+			if(info == null) {
+				return getCompareImage(base, SyncInfo.IN_SYNC);
+			}
+			Image decoratedImage = getCompareImage(base, info.getKind());
+			return propagateConflicts(decoratedImage, element, info.getLocal()); 
+		}
 		return base;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
+	 */
 	public String getText(Object element) {
-		String name = syncInfoLabelProvider.getText(element);
+		String base = workbenchLabelProvider.getText(element);
 		if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
-			SyncInfo info = syncInfoLabelProvider.getSyncInfo(element);
+			SyncInfo info = getSyncInfo(element);
 			if (info != null && info.getKind() != SyncInfo.IN_SYNC) {
 				String syncKindString = SyncInfo.kindToString(info.getKind());
-				name = Policy.bind("TeamSubscriberSyncPage.labelWithSyncKind", name, syncKindString); //$NON-NLS-1$
+				return Policy.bind("TeamSubscriberSyncPage.labelWithSyncKind", base, syncKindString); //$NON-NLS-1$ 
 			}
 		}
-		return decorateText(name, element);
+		return base;
 	}
 	
-	/**
-	 * An image is decorated by at most 3 different plugins. 
-	 * 1. ask the sync info label decorator for the default icon for the resource
-	 * 2. ask the compare plugin for the sync kind overlay
-	 * 3. overlay the conflicting image on folders/projects containing conflicts 
-	 */
-	public Image getImage(Object element) {
-		Image decoratedImage = null;
-		IResource resource = syncInfoLabelProvider.getResource(element);
-		Image image = syncInfoLabelProvider.getImage(element);
-		decoratedImage = getCompareImage(image, element);	
-		decoratedImage = propagateConflicts(decoratedImage, element, resource);
-		return decorateImage(decoratedImage, element);
-	}
-	
-	private Image getCompareImage(Image base, Object element) {
-		int kind = getSyncKind(element);
+	protected Image getCompareImage(Image base, int kind) {
 		switch (kind & SyncInfo.DIRECTION_MASK) {
 			case SyncInfo.OUTGOING:
 				kind = (kind &~ SyncInfo.OUTGOING) | SyncInfo.INCOMING;
@@ -164,7 +160,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IC
 	}
 	
 	private int getSyncKind(Object element) {
-		SyncInfo info = syncInfoLabelProvider.getSyncInfo(element);
+		SyncInfo info = getSyncInfo(element);
 		if (info != null) {
 			return info.getKind();
 		}
@@ -175,8 +171,6 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IC
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
 	 */
 	public void dispose() {
-		super.dispose();
-		syncInfoLabelProvider.dispose();
 		compareConfig.dispose();
 		if(fgImageCache != null) {
 			Iterator it = fgImageCache.values().iterator();
@@ -186,22 +180,16 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IC
 			}
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
+	
+	/**
+	 * Returns the implementation of SyncInfo for the given
+	 * object.  Returns <code>null</code> if the adapter is not defined or the
+	 * object is not adaptable.
 	 */
-	public Color getForeground(Object element) {	
-		if (working)  {
-			return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
-		} else  {
+	protected final SyncInfo getSyncInfo(Object o) {
+		if (!(o instanceof IAdaptable)) {
 			return null;
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.IColorProvider#getBackground(java.lang.Object)
-	 */
-	public Color getBackground(Object element) {
-		return null;
+		return (SyncInfo) ((IAdaptable) o).getAdapter(SyncInfo.class);
 	}
 }
