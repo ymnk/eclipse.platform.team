@@ -67,6 +67,8 @@ public abstract class DeploymentProvider implements IExecutableExtension, IAdapt
 	 * @see org.eclipse.core.runtime.IExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+		// TODO: This doesn't work well since the Provider is created programmatically
+		// when initially mapped
 		this.id = config.getAttribute(DeploymentProviderDescriptor.ATT_ID);
 		this.name = config.getAttribute(DeploymentProviderDescriptor.ATT_NAME);
 	}
