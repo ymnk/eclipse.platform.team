@@ -960,8 +960,15 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 	
 	/** 
 	 * Tag the resources in the CVS repository with the given tag.
+	 * 
+	 * The returned IStatus will be a status containing any errors or warnings.
+	 * If the returned IStatus is a multi-status, the code indicates the severity.
+	 * Possible codes are:
+	 *    CVSStatus.OK - Nothing to report
+	 *    CVSStatus.SERVER_ERROR - The server reported an error
+	 *    any other code - warning messages received from the server
 	 */
-	public void tag(IResource[] resources, int depth, CVSTag tag, IProgressMonitor progress) throws TeamException {
+	public IStatus tag(IResource[] resources, int depth, CVSTag tag, IProgressMonitor progress) throws TeamException {
 						
 		// Build the local options
 		List localOptions = new ArrayList();
@@ -993,6 +1000,7 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 		if (status.getCode() == CVSStatus.SERVER_ERROR) {
 			throw new CVSServerException(status);
 		}
+		return status;
 	}
 	
 	/**

@@ -14,13 +14,16 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener;
+import org.eclipse.team.internal.ccvs.core.client.listeners.TagListener;
 import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.util.Assert;
 
 public class Tag extends Command {
 	/*** Local options: specific to tag ***/
 	public static final LocalOption CREATE_BRANCH = new LocalOption("-b", null);	 //$NON-NLS-1$	
 
+	/*** Default command output listener ***/
+	private static final ICommandOutputListener DEFAULT_OUTPUT_LISTENER = new TagListener();
+	
 	// handle added and removed resources in a special way
 	private boolean customBehaviorEnabled;
 	
@@ -70,7 +73,11 @@ public class Tag extends Command {
 		
 		return execute(session, globalOptions, localOptions, newArguments, listener, monitor);	
 	}
-			
+
+	protected ICommandOutputListener getDefaultCommandOutputListener() {
+		return DEFAULT_OUTPUT_LISTENER;
+	}
+		
 	protected void sendLocalResourceState(Session session, GlobalOption[] globalOptions,
 		LocalOption[] localOptions, ICVSResource[] resources, IProgressMonitor monitor)
 		throws CVSException {			

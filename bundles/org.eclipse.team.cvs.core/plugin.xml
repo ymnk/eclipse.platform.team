@@ -18,4 +18,42 @@
 		</library>
 	</runtime>
 
+	<!-- *************** Extension Points **************** -->
+	<extension-point name="Authenticator" id="authenticator"/>
+	<extension-point name="ConnectionMethods" id="connectionmethods"/>
+
+	<!-- *************** Conection Methods **************** -->
+	<extension id="pserver" point="org.eclipse.team.cvs.core.connectionmethods">
+		<adapter>
+			<run class="org.eclipse.team.internal.ccvs.core.connection.PServerConnectionMethod">
+				<parameter name="trace" value="false" /> 
+			</run>
+		</adapter>
+	</extension>
+	
+	<extension id="ext" point="org.eclipse.team.cvs.core.connectionmethods">
+		<adapter>
+			<run class="org.eclipse.team.internal.ccvs.core.connection.ExtConnectionMethod">
+				<parameter name="trace" value="false" /> 
+			</run>
+		</adapter>
+	</extension>
+
+	<!-- *************** Team Provider **************** -->
+	<extension id="CVSProvider" point="org.eclipse.team.core.providers">
+		<providers natureId="org.eclipse.team.cvs.core.cvsnature"/>
+	</extension>
+
+	<!-- *************** Project Nature **************** -->
+	<extension point="org.eclipse.core.resources.natures" id="cvsnature" name="%cvsNature">
+		<runtime>
+			<run class="org.eclipse.team.ccvs.core.CVSTeamProvider"/> 
+		</runtime>
+	</extension>
+ 
+ 	<!-- *************** Resource patterns ignored by CVS **************** -->
+ 	<extension point="org.eclipse.team.core.ignore">
+		<ignore pattern = ".#*" selected = "true"/>
+	</extension>
+ 
 </plugin>
