@@ -13,20 +13,24 @@ package org.eclipse.team.internal.ccvs.ui.console;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.resource.FontRegistry;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSStatus;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.client.listeners.IConsoleListener;
 import org.eclipse.team.internal.ccvs.ui.*;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.*;
 
@@ -200,7 +204,68 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 		}
 	}
 	
-	private void showConsole() {
+	/*
+     * Add hyperlinks for the following descriptors
+     */
+    private void addHyperlinks(String text, CVSHyperlinkDescriptor[] descriptors) {
+        try {
+            int offset = getOffsetFor(text);
+            for (int i = 0; i < descriptors.length; i++) {
+                CVSHyperlinkDescriptor descriptor = descriptors[i];
+                addHyperlink(getHyperlink(descriptor), offset + descriptor.getOffset(), descriptor.getLength());
+            }
+        } catch (BadLocationException e) {
+            CVSUIPlugin.log(CVSException.wrapException(e));
+        }
+    }
+
+
+    /*
+     * Return a hyperlink for the given descriptor
+     */
+    private IHyperlink getHyperlink(final CVSHyperlinkDescriptor descriptor) {
+        // TODO Auto-generated method stub
+        return new IHyperlink() {
+            /* (non-Javadoc)
+             * @see org.eclipse.ui.console.IHyperlink#linkEntered()
+             */
+            public void linkEntered() {
+                // TODO Auto-generated method stub
+
+            }
+
+            /* (non-Javadoc)
+             * @see org.eclipse.ui.console.IHyperlink#linkExited()
+             */
+            public void linkExited() {
+                // TODO Auto-generated method stub
+
+            }
+
+            /* (non-Javadoc)
+             * @see org.eclipse.ui.console.IHyperlink#linkActivated()
+             */
+            public void linkActivated() {
+                System.out.println(descriptor.getLocalResource());
+            }
+        };
+    }
+
+    /*
+     * Return the offset for the text that was just added to the console
+     * @throws BadLocationException
+     */
+    private int getOffsetFor(String text) throws BadLocationException {
+        IDocument doc = getDocument();
+        int offset = doc.getLength() - 1;
+        while (Character.isWhitespace(doc.getChar(offset))) {
+            offset--;
+        }
+        text = text.trim();
+        return offset - text.length() + 1;
+    }
+
+    private void showConsole() {
 		if(showOnMessage) {
 			if(!visible)
 				CVSConsoleFactory.showConsole();
@@ -243,7 +308,8 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IConsoleListener#commandInvoked(java.lang.String)
 	 */
-	public void commandInvoked(String line) {
+	public void commandInvoked(Session session, String line) {
+	    if (!session.isOutputToConsole()) return;
 		commandStarted = System.currentTimeMillis();
 		appendLine(ConsoleDocument.COMMAND, Policy.bind("Console.preExecutionDelimiter")); //$NON-NLS-1$
 		appendLine(ConsoleDocument.COMMAND, line);
@@ -252,21 +318,41 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IConsoleListener#messageLineReceived(java.lang.String)
 	 */
-	public void messageLineReceived(String line) {
-		appendLine(ConsoleDocument.MESSAGE, "  " + line); //$NON-NLS-1$
+	public void messageLineReceived(Session session, String line, IStatus status) {
+	    if (session.isOutputToConsole()) {
+	        appendLine(ConsoleDocument.MESSAGE, "  " + line); //$NON-NLS-1$
+	        addHyperlinks(line, status);
+	    }
 	}
 	
-	/* (non-Javadoc)
+    private void addHyperlinks(String line, IStatus status) {
+        if (visible) {
+            CVSHyperlinkDescriptor[] descriptors;
+            if (status instanceof CVSParseStatus) {
+                descriptors = ((CVSParseStatus)status).getHyperlinkDescriptors();
+            } else {
+                descriptors = null;
+            }
+            if (descriptors != null && descriptors.length > 0)
+                addHyperlinks(line, descriptors);
+        }
+    }
+
+    /* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IConsoleListener#errorLineReceived(java.lang.String)
 	 */
-	public void errorLineReceived(String line) {
-		appendLine(ConsoleDocument.ERROR, "  " + line); //$NON-NLS-1$
+	public void errorLineReceived(Session session, String line, IStatus status) {
+	    if (session.isOutputToConsole()) {
+	        appendLine(ConsoleDocument.ERROR, "  " + line); //$NON-NLS-1$
+	        addHyperlinks(line, status);
+	    }
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IConsoleListener#commandCompleted(org.eclipse.core.runtime.IStatus, java.lang.Exception)
 	 */
-	public void commandCompleted(IStatus status, Exception exception) {
+	public void commandCompleted(Session session, IStatus status, Exception exception) {
+	    if (!session.isOutputToConsole()) return;
 		long commandRuntime = System.currentTimeMillis() - commandStarted;
 		String time;
 		try {

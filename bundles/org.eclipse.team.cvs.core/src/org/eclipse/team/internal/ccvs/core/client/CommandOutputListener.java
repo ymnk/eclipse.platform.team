@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.core.client;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
@@ -56,4 +57,17 @@ public class CommandOutputListener implements ICommandOutputListener {
 	public String getServerRTagMessage(String line, ICVSRepositoryLocation location) {
 		return ((CVSRepositoryLocation)location).getServerMessageWithoutPrefix(line, RTAG_PREFIX);
 	}
+	
+	/**
+	 * Helper method for creating a status that contains a descriptor that can
+	 * be used to create hyperlink in the message line.
+     * @param commandRoot the local folder used as the root of the CVS command
+     * @param line the message or error line recieved from the server
+     * @param path the path of the resource relative to the command root
+     * @return a status that contains the link descriptor
+     */
+    protected IStatus getHyperlinkDescriptorStatus(ICVSFolder commandRoot, String line, String path) {
+        CVSHyperlinkDescriptor desc = new CVSHyperlinkDescriptor(commandRoot, line, CVSHyperlinkDescriptor.LOCAL_RESOURCE_PATH, path);
+        return CVSStatus.createStatusFor(commandRoot, line, new CVSHyperlinkDescriptor[] { desc });
+    }
 }

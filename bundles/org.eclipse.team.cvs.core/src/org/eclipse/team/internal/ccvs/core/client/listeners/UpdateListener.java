@@ -15,13 +15,7 @@ import java.util.Map;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSStatus;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.Policy;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.CommandOutputListener;
 import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -67,22 +61,23 @@ public class UpdateListener extends CommandOutputListener {
 		this.updateMessageListener = updateMessageListener;
 	}
 	
-	public IStatus messageLine(String line, ICVSRepositoryLocation location, ICVSFolder commandRoot,
-		IProgressMonitor monitor) {
+	public IStatus messageLine(String line, 
+	        ICVSRepositoryLocation location, 
+	        ICVSFolder commandRoot,
+	        IProgressMonitor monitor) {
 		mergingBinary = false;
-		if (updateMessageListener == null) return OK;
 		if(line.startsWith("Merging differences")) { //$NON-NLS-1$
 			merging = true;
 		} else if(line.indexOf(' ')==1) {
-			// We have a message that indicates the type of update. The possible messages are
-			// defined by the prefix constants MLP_*.
+
+		    // Extract the resource path and the update type from the line
 			String path = line.substring(2);
 			char changeType = line.charAt(0);
 			
-			// calculate change type
+			// Determine the Update change type constant from the change type
 			int type = 0;
 			switch(changeType) {
-				case 'A': type = Update.STATE_ADDED_LOCAL; break; // new file locally that was added but not comitted to server yet
+				case 'A': type = Update.STATE_ADDED_LOCAL; break; // new file locally that was added but not committed to server yet
 				case '?': type = Update.STATE_UNKOWN; break; // new file locally but not added to server
 				case 'U': type = Update.STATE_REMOTE_CHANGES; break;  // remote changes to an unmodified local file
 				case 'R': type = Update.STATE_DELETED; break; // removed locally but still exists on the server
@@ -91,7 +86,8 @@ public class UpdateListener extends CommandOutputListener {
 				case 'D': type = Update.STATE_DELETED; break;  // deleted locally but still exists on server
 				default: type = Update.STATE_NONE;
 			}
-				
+			
+			// A modification (M) will have been a mergable conflict if the line was preceeded by a merge notification
 			if (merging) {
 				// If we are merging the modified prefix is used both to show merges and
 				// local changes. We have to detect this case and use a more specific change
@@ -100,12 +96,19 @@ public class UpdateListener extends CommandOutputListener {
 					type = Update.STATE_MERGEABLE_CONFLICT;
 				merging = false;
 			}
-			updateMessageListener.fileInformation(type, commandRoot, path);
+			
+			// Notify the listener of the update type and path
+			if (updateMessageListener != null)
+			    updateMessageListener.fileInformation(type, commandRoot, path);
+			
+			// Generate a hyperlink descriptor to include in the status
+			return getHyperlinkDescriptorStatus(commandRoot, line, path);
+			
 		}
 		return OK;
 	}
 
-	/**
+    /**
 	 * This handler is used by the RemoteResource hierarchy to retrieve E messages
 	 * from the CVS server in order to determine the folders contained in a parent folder.
 	 * 

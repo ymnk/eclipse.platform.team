@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
  
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 	
 public class CVSStatus extends Status {
@@ -32,6 +33,13 @@ public class CVSStatus extends Status {
 	public static final int FAILED_TO_CACHE_SYNC_INFO = -25;
 	public static final int UNMEGERED_BINARY_CONFLICT = -26;
 	public static final int INVALID_LOCAL_RESOURCE_PATH = -27;
+	
+	/*
+	 * Status code that indicates that the status only contains a hyperlink
+	 * and no other relevant status information. Status of this type
+	 * can be ignored by most error handling code.
+	 */
+	public static final int HYPERLINK_DESCRIPTION_ONLY = -40;
 	
 	// Path for resource related status
 	private ICVSFolder commandRoot;
@@ -56,9 +64,7 @@ public class CVSStatus extends Status {
 	public CVSStatus(int severity, String message) {
 		this(severity, severity, message, null);
 	}
-	/**
-	 * @see IStatus#getMessage()
-	 */
+
 	public String getMessage() {
 		String message = super.getMessage();
 		if (commandRoot != null) {
@@ -66,5 +72,14 @@ public class CVSStatus extends Status {
 		}
 		return message;
 	}
+
+    /**
+     * Create a status that provides access to a hyperlink descriptor
+     * @param desc the hyperlink descriptor
+     * @return a status that wraps the descriptor
+     */
+    public static IStatus createStatusFor(ICVSFolder commandRoot, String outputLine, CVSHyperlinkDescriptor[] descriptors) {
+        return new CVSParseStatus(commandRoot, outputLine, descriptors);
+    }
 
 }
