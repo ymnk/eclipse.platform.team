@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.sync;
+package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
@@ -18,10 +18,11 @@ import org.eclipse.team.core.TeamException;
  * Implementations must provide a public no-arg constructor.
  */
 public interface ISyncTreeSubscriberFactory {
+	
 	/** 
 	 * Returns a team subscriber the given id.
 	 * @throw TeamException if this method fails. Reasons include:
 	 * the location is not valid
 	 */
-	public SyncTreeSubscriber getAdapter(QualifiedName id) throws TeamException;
+	public SyncTreeSubscriber createSubscriber(QualifiedName id) throws TeamException;
 }

@@ -22,7 +22,7 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**

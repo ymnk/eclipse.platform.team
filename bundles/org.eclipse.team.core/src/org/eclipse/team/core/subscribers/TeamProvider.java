@@ -8,14 +8,25 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.sync;
+package org.eclipse.team.core.subscribers;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.core.VestigeConfigurationItem;
+import org.eclipse.team.internal.core.VestigeXMLWriter;
 
 /**
  * TeamProvider
@@ -31,13 +42,44 @@ public abstract class TeamProvider {
 		if(s == null) {
 			ISyncTreeSubscriberFactory factory = create(id);
 			if(factory != null) {
-				s = factory.getAdapter(id);
+				s = factory.createSubscriber(id);
 				if(s != null) {
 					registerSubscriber(s);
 				}
 			}
 		}
 		return s;
+	}
+			
+	static public void shutdown() {
+		VestigeConfigurationItem root = new VestigeConfigurationItem();
+		root.setName("subscribers");
+		List children = new ArrayList();
+		
+		for (Iterator it = subscribers.values().iterator(); it.hasNext();) {
+			SyncTreeSubscriber subscriber = (SyncTreeSubscriber) it.next();
+			
+			VestigeConfigurationItem child = new VestigeConfigurationItem();
+			subscriber.saveState(child);
+			if(child.getName() != null) { 
+				VestigeConfigurationItem item = new VestigeConfigurationItem();
+				
+				item.setChildren(new VestigeConfigurationItem[] {child});
+				item.setName("subscriber");
+				Map attributes = new HashMap();
+				attributes.put("qualifier", subscriber.getId().getQualifier());
+				attributes.put("localname", subscriber.getId().getLocalName());
+				item.setAttributes(attributes);
+				
+				children.add(item);
+			}
+		}
+		root.setChildren((VestigeConfigurationItem[])children.toArray(new VestigeConfigurationItem[children.size()]));
+		try {
+			VestigeXMLWriter.writeXMLPluginMetaFile(TeamPlugin.getPlugin(), "subscribers", root);
+		} catch (TeamException e) {
+			TeamPlugin.log(e.getStatus());
+		}
 	}
 	
 	static public SyncTreeSubscriber[] getSubscribers() {
@@ -108,13 +150,5 @@ public abstract class TeamProvider {
 			}		
 		}
 		return null;
-	}
-	
-	/**
-	 * TODO: It would be nice to be able to use IMemento here but we can't because it's
-	 * a UI class.
-	 */
-	public abstract String saveSubscriber(SyncTreeSubscriber subscriber) throws TeamException;
-	public abstract SyncTreeSubscriber restoreSubscriber(String storeString) throws TeamException;
-	
+	}	
 }

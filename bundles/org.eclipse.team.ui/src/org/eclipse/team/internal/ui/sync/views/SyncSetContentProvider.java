@@ -15,7 +15,7 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * This class provides the contents for a StructuredViewer using a SyncSet as the model

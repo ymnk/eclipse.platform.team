@@ -18,7 +18,7 @@ import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 
 public class SyncInfoCompareInput extends CompareEditorInput {
 

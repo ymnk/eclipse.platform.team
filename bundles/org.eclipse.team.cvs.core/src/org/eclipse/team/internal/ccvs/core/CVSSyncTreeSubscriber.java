@@ -25,11 +25,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.ComparisonCriteria;
-import org.eclipse.team.core.sync.ContentComparisonCriteria;
+import org.eclipse.team.core.subscribers.ComparisonCriteria;
+import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
+import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.core.sync.SyncInfo;
-import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
 

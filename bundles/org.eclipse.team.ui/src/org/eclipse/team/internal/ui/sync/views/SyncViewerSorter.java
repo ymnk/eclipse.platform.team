@@ -12,7 +12,7 @@ package org.eclipse.team.internal.ui.sync.views;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ViewerSorter;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * This class sorts the model elements that appear in the SyncViewer

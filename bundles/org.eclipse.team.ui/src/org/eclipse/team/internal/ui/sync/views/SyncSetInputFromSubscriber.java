@@ -20,10 +20,10 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.ITeamResourceChangeListener;
-import org.eclipse.team.core.sync.SyncInfo;
-import org.eclipse.team.core.sync.SyncTreeSubscriber;
-import org.eclipse.team.core.sync.TeamDelta;
+import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
+import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 

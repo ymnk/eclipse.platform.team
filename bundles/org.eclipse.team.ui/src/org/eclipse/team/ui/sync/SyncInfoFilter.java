@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * A SyncInfoFilter is used by a SyncSetInput to detemine which resources

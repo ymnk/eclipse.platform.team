@@ -13,8 +13,8 @@ package org.eclipse.team.internal.ui.sync.compare;
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.core.sync.SyncInfo;
 
 public class SyncInfoDiffNode extends DiffNode {
 		

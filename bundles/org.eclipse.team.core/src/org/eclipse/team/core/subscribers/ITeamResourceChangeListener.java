@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.sync;
+package org.eclipse.team.core.subscribers;
 
 
 import java.util.EventListener;

@@ -17,7 +17,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.sync.views.ChangeFiltersContentProvider;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.IMemento;

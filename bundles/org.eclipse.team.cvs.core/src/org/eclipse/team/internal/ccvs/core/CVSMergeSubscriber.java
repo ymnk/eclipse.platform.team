@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer;
+import org.eclipse.team.internal.core.VestigeConfigurationItem;
 
 /**
  * CVSMergeSubscriber
@@ -126,5 +127,17 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	 */
 	public boolean isSupervised(IResource resource) throws TeamException {
 		return getBaseSynchronizer().getSyncBytes(resource) != null || getRemoteSynchronizer().getSyncBytes(resource) != null; 
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncTreeSubscriber#saveState(org.eclipse.team.internal.core.VestigeConfigurationItem)
+	 */
+	public void saveState(VestigeConfigurationItem state) {
+		super.saveState(state);
+		state.setName("merge");
+		state.addAttribute("startTag", start.getName());
+		state.addAttribute("startTagType", new Integer(start.getType()).toString());
+		state.addAttribute("endTag", end.getName());
+		state.addAttribute("endTagType", new Integer(end.getType()).toString());
 	}
 }

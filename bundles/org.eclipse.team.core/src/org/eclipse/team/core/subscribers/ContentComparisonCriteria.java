@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.sync;
+package org.eclipse.team.core.subscribers;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.Policy;
 
 /**

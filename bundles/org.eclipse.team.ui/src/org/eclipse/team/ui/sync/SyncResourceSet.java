@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.sync.views.SyncResource;
 
 /**

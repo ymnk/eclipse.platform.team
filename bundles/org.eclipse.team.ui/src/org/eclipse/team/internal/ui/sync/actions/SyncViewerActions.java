@@ -101,6 +101,9 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 					}
 				}
 				private IResource[] getResources(ISelection selection) {
+					if(selection == null) {
+						return new IResource[0];
+					}
 					return (IResource[])TeamAction.getSelectedAdaptables(selection, IResource.class);
 					
 				}

@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ui.sync.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;

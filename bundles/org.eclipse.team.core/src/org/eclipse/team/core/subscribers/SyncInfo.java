@@ -1,4 +1,4 @@
-package org.eclipse.team.core.sync;
+package org.eclipse.team.core.subscribers;
 
 /*
  * (c) Copyright IBM Corp. 2000, 2001.
@@ -9,6 +9,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.Policy;
 

@@ -12,7 +12,7 @@ package org.eclipse.team.internal.ui.sync.views;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * Ths class uses the contents of one sync set as the input of another.

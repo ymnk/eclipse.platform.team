@@ -47,6 +47,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Preferences;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.StringMatcher;
 import org.eclipse.team.internal.core.TeamPlugin;
@@ -598,6 +599,7 @@ public final class Team {
 	 */	
 	public static void shutdown() {
 		TeamPlugin.getPlugin().savePluginPreferences();
+		TeamProvider.shutdown();
 	}
 	public static IProjectSetSerializer getProjectSetSerializer(String id) {
 		TeamPlugin plugin = TeamPlugin.getPlugin();

@@ -13,7 +13,7 @@ package org.eclipse.team.internal.ui.sync.views;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.SyncTreeSubscriber;
+import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
 import org.eclipse.ui.IWorkingSet;

@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
-import org.eclipse.team.core.sync.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
  * Selects SyncInfo which mathc all child filters

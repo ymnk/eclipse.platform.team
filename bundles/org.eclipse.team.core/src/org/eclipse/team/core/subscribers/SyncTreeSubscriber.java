@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.core.sync;
+package org.eclipse.team.core.subscribers;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,6 +18,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.IRemoteResource;
+import org.eclipse.team.internal.core.VestigeConfigurationItem;
 
 /**
  * An ISyncTreeSubscriber is connected to a remote location that has incoming changes
@@ -281,5 +283,11 @@ abstract public class SyncTreeSubscriber {
 	 */
 	public SyncInfo[] getAllOutOfSync(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
 		return null;
+	}
+	
+	public void saveState(VestigeConfigurationItem state) {
+	}
+	
+	public void restoreState(VestigeConfigurationItem state) {
 	}
 }

@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
-import org.eclipse.team.core.sync.SyncInfo;
 
 /**
  * Filter the SyncInfo by a set of directions (incoming, outgoing, conflict)
