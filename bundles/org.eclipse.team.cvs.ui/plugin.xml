@@ -249,7 +249,8 @@
                value="org.eclipse.team.cvs.core.cvsnature">
          </filter>
          <action
-               label="Convert Nature"
+               label="%ConvertNature.label"
+               tooltip="%ConvertNature.tooltip"
                class="org.eclipse.team.internal.ui.NatureToPropertyAction"
                menubarPath="team.main/projectGroup"
                id="org.eclipse.team.ccvs.ui.convertNature">
