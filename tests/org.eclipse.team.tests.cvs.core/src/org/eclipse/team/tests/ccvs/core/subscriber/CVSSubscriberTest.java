@@ -30,9 +30,9 @@ import org.eclipse.team.core.sync.RemoteSyncElement;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.core.sync.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.TeamProvider;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Update;
@@ -69,8 +69,8 @@ public class CVSSubscriberTest extends EclipseTest {
 		}
 	}
 	
-	protected SyncTreeSubscriber getSubscriber() {
-		SyncTreeSubscriber subscriber = TeamProvider.getSubscriber(CVSWorkspaceSubscriber.ID);
+	protected SyncTreeSubscriber getSubscriber() throws TeamException {
+		SyncTreeSubscriber subscriber = TeamProvider.getSubscriber(CVSProviderPlugin.CVS_WORKSPACE_SUBSCRIBER_ID);
 		if (subscriber == null) fail("The CVS sync subsciber is not registered");
 		return subscriber;
 	}
@@ -782,7 +782,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		
 		// The files should show up as outgoing deletions
 		assertSyncEquals("testFolderDeletion sync check", project,
-						 new String[] { "folder1", "folder1/a.txt", "folder1/folder2", "folder1/folder2/file.txt"},
+						 new String[] { "folder1/", "folder1/a.txt", "folder1/folder2/", "folder1/folder2/file.txt"},
 						 new int[] { SyncInfo.IN_SYNC,
 									  SyncInfo.OUTGOING | SyncInfo.DELETION,
 									  SyncInfo.IN_SYNC,
@@ -793,7 +793,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		
 		// Resync and verify that above file is gone and others remain the same
 		assertSyncEquals("testFolderDeletion sync check", project,
-						 new String[] { "folder1", "folder1/folder2", "folder1/folder2/file.txt"},
+						 new String[] { "folder1/", "folder1/folder2/", "folder1/folder2/file.txt"},
 						 new int[] { SyncInfo.IN_SYNC,
 									  SyncInfo.IN_SYNC,
 									  SyncInfo.OUTGOING | SyncInfo.DELETION});
@@ -803,7 +803,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		commitResources(project, new String[] { "folder1/folder2/file.txt" });
 		
 		// Resync and verify that all are deleted
-		assertDeleted("testFolderDeletion", project, new String[] {"folder1", "folder1/folder2", "folder1/folder2/file.txt"});
+		assertDeleted("testFolderDeletion", project, new String[] {"folder1/", "folder1/folder2/", "folder1/folder2/file.txt"});
 	}
 	/**
 	  * There is special handling required when building a sync tree for a tag when there are undiscovered folders

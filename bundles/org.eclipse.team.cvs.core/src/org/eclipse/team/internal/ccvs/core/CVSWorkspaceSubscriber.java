@@ -367,7 +367,8 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 		IResource[] localChildren;			
 		try {	
 			if( local.getType() != IResource.FILE && local.exists() ) {
-				localChildren = ((IContainer)local).members();
+				// TODO: This should be a list of all non-ignored resources including outgoing deletions
+				localChildren = ((IContainer)local).members(true /* include phantoms */);
 			} else {
 				localChildren = new IResource[0];
 			}
@@ -456,7 +457,9 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 		for (int i = 0; i < changedResources.length; i++) {
 			IResource resource = changedResources[i];
 			try {
-				if (resource.exists() || resource.isPhantom()) {
+				// TODO should use revision and tag to determine if remote is stale
+				if (resource.getType() == IResource.FILE
+						&& (resource.exists() || resource.isPhantom())) {
 					getSynchronizer().flushSyncInfo(getRemoteSyncName(), resource, IResource.DEPTH_ZERO);
 				}
 			} catch (CoreException e) {

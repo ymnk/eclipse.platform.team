@@ -85,6 +85,7 @@ public class CVSProviderPlugin extends Plugin {
 
 	// cvs plugin extension points and ids
 	public static final String ID = "org.eclipse.team.cvs.core"; //$NON-NLS-1$
+	public static final QualifiedName CVS_WORKSPACE_SUBSCRIBER_ID = new QualifiedName(ID, "workspace-subscriber");
 	public static final String PT_AUTHENTICATOR = "authenticator"; //$NON-NLS-1$
 	public static final String PT_CONNECTIONMETHODS = "connectionmethods"; //$NON-NLS-1$
 	public static final String PT_FILE_MODIFICATION_VALIDATOR = "filemodificationvalidator"; //$NON-NLS-1$
@@ -311,7 +312,7 @@ public class CVSProviderPlugin extends Plugin {
 		createCacheDirectory();
 		
 		cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber(
-				new QualifiedName(ID, "workspace-subscriber"), 
+				CVS_WORKSPACE_SUBSCRIBER_ID, 
 				"CVS",  
 				"Synchronizes the CVS managed resources in your workspace with their associated remote location");
 		TeamProvider.registerSubscriber(cvsWorkspaceSubscriber);
