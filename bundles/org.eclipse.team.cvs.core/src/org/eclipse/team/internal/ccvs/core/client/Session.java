@@ -784,12 +784,12 @@ public class Session {
 	/**
 	 * Sends the Notify request to the server
 	 */
-	public void sendNotify(NotifyInfo info, IProgressMonitor monitor)
+	public void sendNotify(ICVSFolder parent, NotifyInfo info)
 		throws CVSException {
 		
 		String filename = info.getName();
 		connection.writeLine("Notify " + filename); //$NON-NLS-1$
-		connection.writeLine(info.getServerLine());
+		connection.writeLine(info.getServerLine(parent));
 	}
 		
 	/**

@@ -43,6 +43,7 @@ import org.eclipse.team.internal.ccvs.core.client.listeners.StatusListener;
 import org.eclipse.team.internal.ccvs.core.client.listeners.UpdateListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -131,12 +132,27 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	}
 	
 	/**
-	 * @see IManagedResource#accept(IManagedVisitor)
+	 * @see ICVSResource#accept(ICVSResourceVisitor)
 	 */
 	public void accept(ICVSResourceVisitor visitor) throws CVSException {
 		visitor.visitFolder(this);
 	}
 
+	/**
+	 * @see ICVSResource#accept(ICVSResourceVisitor, boolean)
+	 */
+	public void accept(ICVSResourceVisitor visitor, boolean recurse) throws CVSException {
+		visitor.visitFolder(this);
+		if (recurse) {
+			acceptChildren(visitor);
+		} else {
+			ICVSResource[] files = members(ICVSFolder.FILE_MEMBERS);
+			for (int i = 0; i < files.length; i++) {
+				files[i].accept(visitor);
+			}
+		}
+	}
+	
 	/*
 	 * @see ICVSRemoteResource#exists(IProgressMonitor)
 	 */
@@ -744,4 +760,12 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		Assert.isTrue( ! path.isEmpty());
 		return getRelativePathFromRootRelativePath((ICVSFolder)root.getChild(path.segment(0)), path.removeFirstSegments(1));
 	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFolder#getPendingNotifications()
+	 */
+	public NotifyInfo[] getPendingNotifications() throws CVSException {
+		return null;
+	}
+
 }

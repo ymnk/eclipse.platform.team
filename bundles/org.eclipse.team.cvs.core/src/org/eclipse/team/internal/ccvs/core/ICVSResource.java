@@ -66,6 +66,8 @@ public interface ICVSResource {
 	
 	/**
 	 * Add the following pattern to the file's parent ignore list
+	 * 
+	 * XXX This should really be a method of ICVSFolder
 	 */
 	public void setIgnoredAs(String pattern) throws CVSException;
 			
@@ -142,5 +144,13 @@ public interface ICVSResource {
 	/**
 	 * Accept a vistor to this resource.
 	 */
-	public void accept(ICVSResourceVisitor visitor) throws CVSException;	
+	public void accept(ICVSResourceVisitor visitor) throws CVSException;
+	
+	/**
+	 * Accept a visitor to this resource. The recurse parameter corresponds to the CVS
+	 * -l (do not recurse) and -R (recurse) options. If recurse is false, only the resource
+	 * and it's children are visited. Otherwise, the resource and all it's decendants are
+	 * visited.
+	 */
+	public void accept(ICVSResourceVisitor visitor, boolean recurse) throws CVSException;
 }

@@ -120,12 +120,19 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	}
 
 	/**
-	 * @see ICVSResource#accept(IManagedVisitor)
+	 * @see ICVSResource#accept(ICVSResourceVisitor)
 	 */
 	public void accept(ICVSResourceVisitor visitor) throws CVSException {
 		visitor.visitFile(this);
 	}
 
+	/**
+	 * @see ICVSResource#accept(ICVSResourceVisitor, boolean)
+	 */
+	public void accept(ICVSResourceVisitor visitor, boolean recurse) throws CVSException {
+		visitor.visitFile(this);
+	}
+	
 	/**
 	 * @see ICVSRemoteFile#getContents()
 	 */
@@ -409,9 +416,9 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	}
 
 	/**
-	 * @see IManagedFile#moveTo(IManagedFile)
+	 * @see ICVSFile#moveTo(String)
 	 */
-	public void copyTo(String mFile) throws CVSException, ClassCastException {		
+	public void copyTo(String mFile) throws CVSException {		
 		// Do nothing
 	}
 	
@@ -537,17 +544,39 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		out.write(byteStream.toByteArray());
 		return out;
 	}
+
 	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#setNotifyInfo(NotifyInfo)
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#checkout(int)
 	 */
-	public void setNotifyInfo(NotifyInfo info) {
+	public void checkout(int notifications) throws CVSException {
 		// do nothing
 	}
 
 	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getNotifyInfo()
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#isCheckedOut()
 	 */
-	public NotifyInfo getNotifyInfo() throws CVSException {
+	public boolean isCheckedOut() {
+		return false;
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#uncheckout()
+	 */
+	public void uncheckout() throws CVSException {
+		// do nothing
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#notificationCompleted()
+	 */
+	public void notificationCompleted() {
+		// do nothing
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getPendingNotification()
+	 */
+	public NotifyInfo getPendingNotification() throws CVSException {
 		return null;
 	}
 

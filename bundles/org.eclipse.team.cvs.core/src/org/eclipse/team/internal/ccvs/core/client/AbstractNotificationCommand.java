@@ -42,7 +42,7 @@ public abstract class AbstractNotificationCommand extends Command {
 		throws CVSException {
 			
 		// Send all folders that are managed to the server
-		new FileStructureVisitor(session, false, false, monitor).visit(session, resources);
+		new NOOPVisitor(session, monitor).visit(session, resources);
 	}
 	
 	/**

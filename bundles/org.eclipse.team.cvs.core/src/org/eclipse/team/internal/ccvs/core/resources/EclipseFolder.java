@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.ccvs.core.resources;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
@@ -36,6 +35,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
 import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
@@ -145,6 +145,21 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 */
 	public void accept(ICVSResourceVisitor visitor) throws CVSException {
 		visitor.visitFolder(this);
+	}
+	
+	/**
+	 * @see ICVSResource#accept(ICVSResourceVisitor, boolean)
+	 */
+	public void accept(ICVSResourceVisitor visitor, boolean recurse) throws CVSException {
+		visitor.visitFolder(this);
+		if (recurse) {
+			acceptChildren(visitor);
+		} else {
+			ICVSResource[] files = members(ICVSFolder.FILE_MEMBERS);
+			for (int i = 0; i < files.length; i++) {
+				files[i].accept(visitor);
+			}
+		}
 	}
 
 	/**
@@ -299,5 +314,15 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 */
 	public ICVSResource[] fetchChildren(IProgressMonitor monitor) throws CVSException {
 		return members(FILE_MEMBERS | FOLDER_MEMBERS);
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFolder#getPendingNotifications()
+	 */
+	public NotifyInfo[] getPendingNotifications() throws CVSException {
+		if (isCVSFolder()) {
+			return EclipseSynchronizer.getInstance().getAllNotifyInfo((IContainer)resource);		
+		}
+		return null;
 	}
 }

@@ -30,6 +30,7 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFileModificationValidator;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
@@ -100,6 +101,8 @@ import org.eclipse.team.internal.core.streams.LFtoCRLFInputStream;
 public class CVSTeamProvider extends RepositoryProvider {
 	private static final boolean IS_CRLF_PLATFORM = Arrays.equals(
 		System.getProperty("line.separator").getBytes(), new byte[] { '\r', '\n' }); //$NON-NLS-1$
+	
+	public static final IStatus OK = new Status(IStatus.OK, CVSProviderPlugin.ID, 0, Policy.bind("ok"), null);
 
 	private CVSWorkspaceRoot workspaceRoot;
 	private IProject project;
@@ -333,12 +336,39 @@ public class CVSTeamProvider extends RepositoryProvider {
 
 	/**
 	 * Checkout the provided resources so they can be modified locally and committed.
-	 * 
-	 * Currently, we support only the optimistic model so checkout does nothing.
-	 * 
-	 * @see ITeamProvider#checkout(IResource[], int, IProgressMonitor)
 	 */
-	public void checkout(IResource[] resources, int depth, IProgressMonitor progress) throws TeamException {
+	public void checkout(IResource[] resources, boolean recurse, IProgressMonitor progress) throws TeamException {
+		
+		final ICVSResource[] cvsResources = getCVSArguments(resources);
+		
+		// mark the files locally as being checked out
+		for (int i = 0; i < cvsResources.length; i++) {
+			ICVSResource resource = cvsResources[i];
+			resource.accept(new ICVSResourceVisitor() {
+				public void visitFile(ICVSFile file) throws CVSException {
+					file.checkout(ICVSFile.NO_NOTIFICATION);
+				}
+				public void visitFolder(ICVSFolder folder) throws CVSException {
+					// nothing needs to be done here as the recurse will handle the traversal
+				}
+			}, recurse);
+		}
+		
+		// send the noop command to the server in order to deliver the notifications
+		final boolean[] connected = new boolean[] { false };
+		try {
+			Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true, new ICVSRunnable() {
+				public void run(IProgressMonitor monitor) throws CVSException {
+					connected[0] = true;
+					Command.NOOP.execute(Command.NO_GLOBAL_OPTIONS, Command.NO_LOCAL_OPTIONS, 
+					cvsResources, null, monitor);
+				}
+			}, progress);
+		} catch (CVSException e) {
+			// Only report the exception if we were able to connect.
+			// If we couldn't connect, the notification will be sent the next time we do.
+			if (connected[0]) throw e;
+		}
 	}
 		
 	/**
@@ -877,6 +907,14 @@ public class CVSTeamProvider extends RepositoryProvider {
 		return (String[])arguments.toArray(new String[arguments.size()]);
 	}
 	
+	private ICVSResource[] getCVSArguments(IResource[] resources) {
+		ICVSResource[] cvsResources = new ICVSResource[resources.length];
+		for (int i = 0; i < cvsResources.length; i++) {
+			cvsResources[i] = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
+		}
+		return cvsResources;
+	}
+	
 	/*
 	 * This method expects to be passed an InfiniteSubProgressMonitor
 	 */
@@ -1143,4 +1181,51 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 public static void setMoveDeleteHook(IMoveDeleteHook hook) {
 	 	moveDeleteHook = hook;
 	 }
+	 
+	/**
+	 * @see org.eclipse.team.core.RepositoryProvider#getFileModificationValidator()
+	 */
+	public IFileModificationValidator getFileModificationValidator() {
+		if (isWatchEditEnabled()) {
+			return new IFileModificationValidator() {
+				public IStatus validateEdit(IFile[] files, Object context) {
+					try {
+						// only do this for files that are read-only
+						List readOnlys = new ArrayList();
+						for (int i = 0; i < files.length; i++) {
+							IFile iFile = files[i];
+							if (iFile.isReadOnly()) 
+								readOnlys.add(iFile);
+						}
+						if (readOnlys.isEmpty()) return OK;
+						
+						// XXX We should try to create a PM using the provided context
+						checkout((IFile[]) readOnlys.toArray(new IFile[readOnlys.size()]), false /* recurse */, null);
+					} catch (TeamException e) {
+						return e.getStatus();
+					}
+					return OK;
+				}
+				public IStatus validateSave(IFile file) {
+					// Ignore files that are not read-only
+					if (!file.isReadOnly()) return OK;
+					try {
+						checkout(new IResource[] {file}, false /* recurse */, null);
+					} catch (TeamException e) {
+						return e.getStatus();
+					}
+					return OK;
+				}
+			};
+		} else {
+			return super.getFileModificationValidator();
+		}
+	}
+
+	/**
+	 * Answer true if watch/edit support is enabled for this provider.
+	 */
+	public boolean isWatchEditEnabled() {
+		return CVSProviderPlugin.getPlugin().isWatchEditEnabled();
+	}
 }

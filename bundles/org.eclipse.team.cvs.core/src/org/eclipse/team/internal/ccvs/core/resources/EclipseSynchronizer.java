@@ -860,8 +860,9 @@ public class EclipseSynchronizer {
 			for (Iterator iter = infoMap.values().iterator(); iter.hasNext();) {
 				newInfos[i++] = (NotifyInfo) iter.next();
 			}
-			SyncFileWriter.writeAllNotifyInfo(resource.getParent(), newInfos);
+			infos = newInfos;
 		}
+		SyncFileWriter.writeAllNotifyInfo(resource.getParent(), infos);
 	}
 
 	/**
@@ -878,6 +879,36 @@ public class EclipseSynchronizer {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Anwser all the notification information associated with the given folder
+	 * @param parent
+	 * @return NotifyInfo[]
+	 */
+	public NotifyInfo[] getAllNotifyInfo(IContainer parent) throws CVSException {
+		return SyncFileWriter.readAllNotifyInfo(parent);
+	}
+	
+	/**
+	 * Method deleteNotifyInfo.
+	 * @param resource
+	 */
+	public void deleteNotifyInfo(IResource resource) throws CVSException {
+		NotifyInfo[] infos = SyncFileWriter.readAllNotifyInfo(resource.getParent());
+		if (infos == null) return;
+		Map infoMap = new HashMap();
+		for (int i = 0; i < infos.length; i++) {
+			NotifyInfo notifyInfo = infos[i];
+			infoMap.put(infos[i].getName(), infos[i]);
+		}
+		infoMap.remove(resource.getName());
+		NotifyInfo[] newInfos = new NotifyInfo[infoMap.size()];
+		int i = 0;
+		for (Iterator iter = infoMap.values().iterator(); iter.hasNext();) {
+			newInfos[i++] = (NotifyInfo) iter.next();
+		}
+		SyncFileWriter.writeAllNotifyInfo(resource.getParent(), newInfos);
 	}
 
 }

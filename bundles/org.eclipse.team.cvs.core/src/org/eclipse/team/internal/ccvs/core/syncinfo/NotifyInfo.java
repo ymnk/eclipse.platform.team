@@ -39,7 +39,7 @@ public class NotifyInfo {
 	protected static final String SEPERATOR = "/"; //$NON-NLS-1$
 	protected static final String TAB_SEPERATOR = "\t"; //$NON-NLS-1$
 	
-	private ICVSFile file;
+	private String filename;
 	private char notificationType;
 	private Date timeStamp;
 	private char[] watches;
@@ -47,9 +47,9 @@ public class NotifyInfo {
 	/**
 	 * Constructor for setting all variables
 	 */
-	public NotifyInfo(ICVSFile file, char notificationType, Date timeStamp, char[] watches) {
+	public NotifyInfo(String filename, char notificationType, Date timeStamp, char[] watches) {
 			
-		this.file = file;
+		this.filename = filename;
 		this.notificationType = notificationType;
 		this.timeStamp = timeStamp;
 		this.watches = watches;
@@ -65,8 +65,7 @@ public class NotifyInfo {
 		if(tokenizer.countTokens() != 4) {
 			throw new CVSException(Policy.bind("NotifyInfo.MalformedLine", line)); //$NON-NLS-1$
 		}
-		String filename = tokenizer.nextToken();
-		this.file = cvsFolder.getFile(filename);
+		this.filename = tokenizer.nextToken();
 		
 		String type = tokenizer.nextToken();
 		if (type.length() != 1) {
@@ -121,7 +120,7 @@ public class NotifyInfo {
 	 * 
 	 * @return String
 	 */
-	public String getServerLine() throws CVSException {
+	public String getServerLine(ICVSFolder parent) throws CVSException {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(notificationType);
 		buffer.append(TAB_SEPERATOR);
@@ -129,7 +128,7 @@ public class NotifyInfo {
 		buffer.append(TAB_SEPERATOR);
 		buffer.append(getHost());
 		buffer.append(TAB_SEPERATOR);
-		buffer.append(getWorkingDirectory());
+		buffer.append(getWorkingDirectory(parent));
 		buffer.append(TAB_SEPERATOR);
 		if (watches != null) {
 			for (int i = 0; i < watches.length; i++) {
@@ -154,8 +153,8 @@ public class NotifyInfo {
 	 * 
 	 * @return String
 	 */
-	private String getWorkingDirectory() throws CVSException {
-		return file.getIResource().getParent().getLocation().toString();
+	private String getWorkingDirectory(ICVSFolder parent) throws CVSException {
+		return parent.getIResource().getLocation().toString();
 	}
 
 	/**
@@ -175,7 +174,15 @@ public class NotifyInfo {
 	 * @return String
 	 */
 	public String getName() {
-		return file.getName();
+		return filename;
+	}
+
+	/**
+	 * Answer the notification type associated with the notification
+	 * @return char
+	 */
+	public char getNotificationType() {
+		return notificationType;
 	}
 
 }

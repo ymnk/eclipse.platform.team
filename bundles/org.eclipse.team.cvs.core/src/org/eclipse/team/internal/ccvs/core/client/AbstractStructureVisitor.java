@@ -18,9 +18,9 @@ import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
 import org.eclipse.team.internal.ccvs.core.Policy;
-import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSEntryLineTag;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
@@ -140,11 +140,12 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 	protected void sendFile(ICVSFile mFile) throws CVSException {
 
 		Policy.checkCanceled(monitor);
-
+		
 		// Send the file's entry line to the server
 		ResourceSyncInfo info = null;
 		boolean isManaged = mFile.isManaged();
 		if (isManaged) {
+			sendPendingNotification(mFile);
 			info = mFile.getSyncInfo();
 			session.sendEntry(info.getServerEntryLine(mFile.getTimeStamp()));
 		} else {
@@ -170,6 +171,14 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 			} else {
 				session.sendUnchanged(mFile);
 			}
+		}
+	}
+
+	protected void sendPendingNotification(ICVSFile mFile) throws CVSException {
+		NotifyInfo notify = mFile.getPendingNotification();
+		if (notify != null) {
+			sendFolder(mFile.getParent());
+			session.sendNotify(mFile.getParent(), notify);
 		}
 	}
 	

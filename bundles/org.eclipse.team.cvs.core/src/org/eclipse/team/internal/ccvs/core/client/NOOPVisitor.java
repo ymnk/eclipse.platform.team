@@ -19,9 +19,9 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 /**
  * Send the contents of the CVS/Notify files to the server
  */
-public class EditNotificationVisitor extends AbstractStructureVisitor {
+public class NOOPVisitor extends AbstractStructureVisitor {
 
-	public EditNotificationVisitor(Session session, IProgressMonitor monitor) {
+	public NOOPVisitor(Session session, IProgressMonitor monitor) {
 		// Only send non-empty folders
 		super(session, false, false, monitor);
 	}
@@ -30,16 +30,7 @@ public class EditNotificationVisitor extends AbstractStructureVisitor {
 	 * @see org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor#visitFile(ICVSFile)
 	 */
 	public void visitFile(ICVSFile file) throws CVSException {
-		
-		// we're only interested in files that have notification information
-		NotifyInfo info = file.getNotifyInfo();
-		if (info == null) return;
-		
-		// Send the parent folder if it hasn't been sent already
-		sendFolder(file.getParent());
-
-		// Send the notification to the server
-		session.sendNotify(info, monitor);
+		sendPendingNotification(file);
 	}
 
 	/**

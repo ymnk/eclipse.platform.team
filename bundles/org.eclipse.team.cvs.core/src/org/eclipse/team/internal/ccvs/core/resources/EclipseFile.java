@@ -12,7 +12,9 @@ package org.eclipse.team.internal.ccvs.core.resources;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -126,6 +128,13 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	}
 
 	/*
+	 * @see ICVSResource#accept(ICVSResourceVisitor, boolean)
+	 */
+	public void accept(ICVSResourceVisitor visitor, boolean recurse) throws CVSException {
+		visitor.visitFile(this);
+	}
+	
+	/*
 	 * This is to be used by the Copy handler. The filename of the form .#filename
 	 */
 	public void copyTo(String filename) throws CVSException {
@@ -226,7 +235,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		if (isManaged()) {
 			EclipseSynchronizer.getInstance().setNotifyInfo(resource, info);
 			// On an edit, the base should be cached
-			// On an unedit, the base should be restored and cleared
+			// On an unedit, the base should be restored (and cleared?)
 			// On a commit, the base should be cleared
 		}
 	}
@@ -239,6 +248,84 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			return EclipseSynchronizer.getInstance().getNotifyInfo(resource);		
 		}
 		return null;
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#checkout(int)
+	 */
+	public void checkout(int notifications) throws CVSException {
+		if (isCheckedOut()) return;
+		
+		// convert the notifications to internal form
+		char[] internalFormat;
+		if (notifications == NO_NOTIFICATION) {
+			internalFormat = null;
+		} else if (notifications == NOTIFY_ON_ALL) {
+			internalFormat = NotifyInfo.ALL;
+		} else {
+			List notificationCharacters = new ArrayList();
+			if ((notifications & NOTIFY_ON_EDIT) >0) 
+				notificationCharacters.add(new Character(NotifyInfo.EDIT));
+			if ((notifications & NOTIFY_ON_UNEDIT) >0) 
+				notificationCharacters.add(new Character(NotifyInfo.UNEDIT));
+			if ((notifications & NOTIFY_ON_COMMIT) >0) 
+				notificationCharacters.add(new Character(NotifyInfo.COMMIT));
+			internalFormat = new char[notificationCharacters.size()];
+			for (int i = 0; i < internalFormat.length; i++) {
+				internalFormat[i] = ((Character)notificationCharacters.get(i)).charValue();
+			}
+		}
+		
+		// record the notification
+		NotifyInfo info = new NotifyInfo(getName(), NotifyInfo.EDIT, new Date(), internalFormat);
+		setNotifyInfo(info);
+		
+		// XXX Copy original file to CVS/Base directory abd update CVS/Baserev file
+		
+		// allow editing
+		setReadOnly(false);
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#isCheckedOut()
+	 */
+	public boolean isCheckedOut() throws CVSException {
+		return !isReadOnly();
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#uncheckout()
+	 */
+	public void uncheckout() throws CVSException {
+		if (!isCheckedOut()) return;
+		
+		// record the notification
+		NotifyInfo info = getNotifyInfo();
+		if (info != null && info.getNotificationType() == NotifyInfo.EDIT) {
+			info = null;
+		} else {
+			info = new NotifyInfo(getName(), NotifyInfo.UNEDIT, new Date(), null);
+		}
+		setNotifyInfo(info);
+		
+		// XXX Copy original file back from CVS/Base directory
+		
+		// prevent editing
+		setReadOnly(true);
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#notificationCompleted()
+	 */
+	public void notificationCompleted() throws CVSException {
+		EclipseSynchronizer.getInstance().deleteNotifyInfo(resource);
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getPendingNotification()
+	 */
+	public NotifyInfo getPendingNotification() throws CVSException {
+		return getNotifyInfo();
 	}
 
 }

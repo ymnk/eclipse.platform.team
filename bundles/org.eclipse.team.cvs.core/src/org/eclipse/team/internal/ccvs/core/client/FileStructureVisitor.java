@@ -54,7 +54,7 @@ class FileStructureVisitor extends AbstractStructureVisitor {
 	 * @see ICVSResourceVisitor#visitFolder(ICVSFolder)
 	 */
 	public void visitFolder(ICVSFolder mFolder) throws CVSException {
-
+		
 		if (sendEmptyFolders) {
 			// If we want to send empty folder, that just send it when
 			// we come to it

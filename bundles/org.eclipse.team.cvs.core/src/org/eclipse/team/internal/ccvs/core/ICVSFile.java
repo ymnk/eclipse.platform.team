@@ -1,9 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2002 IBM Corporation and others.
+ * All rights reserved.   This program and the accompanying materials
+ * are made available under the terms of the Common Public License v0.5
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v05.html
+ * 
+ * Contributors:
+ * IBM - Initial API and implementation
+ ******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
-
-/*
- * (c) Copyright IBM Corp. 2000, 2001.
- * All Rights Reserved.
- */
 
 import java.io.InputStream;
 import java.util.Date;
@@ -27,6 +32,13 @@ public interface ICVSFile extends ICVSResource {
 	public static final int UPDATE_EXISTING = 3;
 	public static final int CREATED = 4;
 	
+	// Constants used to indicate temporary watches
+	public static final int NO_NOTIFICATION = 0;
+	public static final int NOTIFY_ON_EDIT = 1;
+	public static final int NOTIFY_ON_UNEDIT = 2;
+	public static final int NOTIFY_ON_COMMIT = 4;
+	public static final int NOTIFY_ON_ALL = NOTIFY_ON_EDIT | NOTIFY_ON_UNEDIT | NOTIFY_ON_COMMIT;
+	
 	/**
 	 * Answers the size of the file. 
 	 */
@@ -39,7 +51,11 @@ public interface ICVSFile extends ICVSResource {
 	InputStream getContents() throws CVSException;
 	
 	/**
-	 * Set the contents of the file to the contents of the provided input stream
+	 * Set the contents of the file to the contents of the provided input stream.
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
+	 * Other clients should set the contents of the underlying <code>IFile</code> which
+	 * can be obtained using <code>getIResource()</code>.
 	 * 
 	 * @param responseType the type of reponse that was received from the server
 	 * 
@@ -51,28 +67,40 @@ public interface ICVSFile extends ICVSResource {
 	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, IProgressMonitor monitor) throws CVSException;
 
 	/**
-	 * Sets the file's read-only permission.
+	 * Sets the file to read-only (<code>true</code>) or writable (<code>false</code>).
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
+	 * Other clients should use <code>checkout</code> and <code>uncheckout</code> instead as they
+	 * will report the change to the server if appropriate.
 	 */
 	void setReadOnly(boolean readOnly) throws CVSException;
 	
 	/**
-	 * Answers if the file is read-only.
+	 * Answers whether the file is read-only or not.
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
+	 * Other clients should use <code>isCheckedOut</code> instead.
 	 */
 	boolean isReadOnly() throws CVSException;
 	
 	/**
-	 * Move the resource to another location. Does overwrite without
-	 * promting.
+	 * Copy the resource to another file in the same directory
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
 	 */
 	void copyTo(String filename) throws CVSException;
 	
 	/**
 	 * Answers the current timestamp for this file with second precision.
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
 	 */
 	Date getTimeStamp();
 
 	/**
 	 * If the date is <code>null</code> then the current time is used.
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
 	 */
 	void setTimeStamp(Date date) throws CVSException;
 	
@@ -90,20 +118,42 @@ public interface ICVSFile extends ICVSResource {
 	public ILogEntry[] getLogEntries(IProgressMonitor monitor) throws TeamException;
 	
 	/**
-	 * Gets any notify information associated with the file that has not yet
-	 * been sent to the server or <code>null</code> if there is none.
-	 * This information is required as part of the watch/edit workflow.
-	 * 
-	 * @param info
+	 * Indicate whether a fiel has been checked out for local editing. A file is checked out
+	 * for local editing if it's read-only bit is false.
 	 */
-	public NotifyInfo getNotifyInfo() throws CVSException;
+	public boolean isCheckedOut() throws CVSException;
 	
 	/**
-	 * Set the notify information associated with the file. This information is required
-	 * as part of the watch/edit workflow.
+	 * Mark the file as checked out to allow local editing (analogous to "cvs edit"). 
+	 * If this method is invoked when <code>isCheckedOut()</code> returns <code>false</code>, 
+	 * a notification message that will be sent to the server on the next connection
+	 * If <code>isCheckedOut()</code> returns <code>true</code> then nothing is done.
 	 * 
-	 * @param info
+	 * @param notifications the set of operations for which the local user would like notification
+	 * while the local file is being edited.
 	 */
-	public void setNotifyInfo(NotifyInfo info) throws CVSException;
+	public void checkout(int notifications) throws CVSException;
+
+	/**
+	 * Undo a checkout of the file (analogous to "cvs unedit").
+	 * If this method is invoked when <code>isCheckedOut()</code> returns <code>true</code>, 
+	 * a notification message that will be sent to the server on the next connection
+	 * If <code>isCheckedOut()</code> returns <code>false</code> then nothing is done.
+	 */
+	public void uncheckout() throws CVSException;
+	
+	/**
+	 * Answer any pending notification information associated with the receiver.
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
+	 */
+	public NotifyInfo getPendingNotification() throws CVSException;
+	
+	/**
+	 * Indicate to the file that the pending notification was successfully communicated to the server.
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
+	 */
+	public void notificationCompleted() throws CVSException;
 
 }

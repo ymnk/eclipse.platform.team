@@ -7,6 +7,7 @@ package org.eclipse.team.internal.ccvs.core;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 
 /**
  * The CVS analog of a directory. CVS folders have access to synchronization information
@@ -151,4 +152,12 @@ public interface ICVSFolder extends ICVSResource {
 	 * @exception CVSException if the operation failed.
 	 */
 	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException;
+	
+	/**
+	 * Answer the list of pending notifications for the folder. An empty list or <code>null</code>
+	 * may be returned if there are no pending notifications.
+	 * 
+	 * This method is used by the command framework and should not be used by other clients.
+	 */
+	public NotifyInfo[] getPendingNotifications() throws CVSException;
 }

@@ -53,6 +53,7 @@ public abstract class Request {
 		registerResponseHandler(new ValidRequestsHandler());
 		registerResponseHandler(new ModuleExpansionHandler());
 		registerResponseHandler(new MTHandler());
+		registerResponseHandler(new NotifiedHandler());
 	}
 	protected static void registerResponseHandler(ResponseHandler handler) {
 		responseHandlers.put(handler.getResponseID(), handler);
@@ -134,7 +135,7 @@ public abstract class Request {
 			} else argument = "";  //$NON-NLS-1$
 
 			// handle completion responses
-			if (response.equals("ok")) {  //$NON-NLS-1$
+			if (response.trim().equals("ok")) {  //$NON-NLS-1$
 				break;
 			} else if (response.equals("error") || (isCVSNT && response.equals(""))) {  //$NON-NLS-1$ //$NON-NLS-2$
 				if (argument.trim().length() == 0) {
