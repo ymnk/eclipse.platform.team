@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import org.eclipse.compare.internal.CompareUIPlugin;
 import org.eclipse.compare.internal.Splitter;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -110,6 +112,70 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	private Map entriesCache = new HashMap();
 	private Map filesToRestore = new HashMap();
 
+	/*
+	 * This class handles the output from "cvs log -R ..." where -R
+	 * indicates that only the RCS file name is to be returned. Files
+	 * that have been deleted will be in the Attic. The Attic may also
+	 * contains files that exist on a branch but not in HEAD
+	 */
+	class AtticLogListener extends CommandOutputAdapter {
+		private static final String ATTIC = "Attic";
+		private static final String RCS_FILE_POSTFIX = ",v";
+		private static final String LOGGING_PREFIX = "Logging ";
+		ICVSFolder currentFolder;
+		List atticFiles = new ArrayList();
+		
+		public IStatus messageLine(
+					String line,
+					ICVSRepositoryLocation location,
+					ICVSFolder commandRoot,
+					IProgressMonitor monitor) {
+			
+			// Find all RCS file names tat contain "Attic"
+			int index = line.indexOf(ATTIC);
+			if (index == -1) return OK;
+			// Extract the file name and path from the RCS path
+			String filePath = line.substring(index);
+			int start = line.indexOf(Session.SERVER_SEPARATOR, index);
+			String fileName = line.substring(start + 1);
+			if (fileName.endsWith(RCS_FILE_POSTFIX)) {
+				fileName = fileName.substring(0, fileName.length() - RCS_FILE_POSTFIX.length());
+			}
+			try {
+				atticFiles.add(currentFolder.getFile(fileName));
+			} catch (CVSException e) {
+				return e.getStatus();
+			}
+			return OK;
+		}
+		
+		public IStatus errorLine(
+			String line,
+			ICVSRepositoryLocation location,
+			ICVSFolder commandRoot,
+			IProgressMonitor monitor) {
+			
+			CVSRepositoryLocation repo = (CVSRepositoryLocation)location;
+			String folderPath = repo.getServerMessageWithoutPrefix(line, SERVER_PREFIX);
+			if (folderPath != null) {
+				if (folderPath.startsWith(LOGGING_PREFIX)) {
+					folderPath = folderPath.substring(LOGGING_PREFIX.length());
+					try {
+						currentFolder = commandRoot.getFolder(folderPath);
+					} catch (CVSException e) {
+						return e.getStatus();
+					}
+					return OK;
+				}
+			}
+			return super.errorLine(line, location, commandRoot, monitor);
+		}
+
+		public ICVSFile[] getAtticFilePaths() {
+			return (ICVSFile[]) atticFiles.toArray(new ICVSFile[atticFiles.size()]);
+		}
+	}
+	
 	class HistoryInput implements ITypedElement, IStreamContentAccessor, IModificationDate {
 		IFile file;
 		ILogEntry logEntry;
@@ -229,7 +295,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	}
 	
 	protected TreeViewer createFileSelectionTree(Composite composite) {
-		TreeViewer tree = new CheckboxTreeViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		TreeViewer tree = new TreeViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		tree.setUseHashlookup(true);
 		tree.setContentProvider(treeInput.getTreeContentProvider());
 		tree.setLabelProvider(
@@ -265,7 +331,22 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	 * Method updateWidgetEnablements.
 	 */
 	private void updateWidgetEnablements() {
+		setErrorMessage(null);
+		if (filesToRestore.isEmpty()) {
+			setPageComplete(false);
+			return;
+		}
+		for (Iterator iter = filesToRestore.keySet().iterator(); iter.hasNext();) {
+			IFile file = (IFile) iter.next();
+			if (file.exists()) {
+				setPageComplete(false);
+				setErrorMessage(Policy.bind("RestoreFromRepositoryFileSelectionPage.fileExists", file.getName()));
+				return;
+			}
+		}
+		setPageComplete(true);
 	}
+	
 	/**
 	 * Method initializeValues.
 	 */
@@ -301,71 +382,6 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	}
 
 	/*
-	 * This class handles the output from "cvs log -R ..." where -R
-	 * indicates that only the RCS file name is to be returned. Files
-	 * that have been deleted will be in the Attic. The Attic may also
-	 * contains files that exist on a branch but not in HEAD
-	 */
-	private class AtticLogListener extends CommandOutputAdapter {
-		private static final String ATTIC = "Attic";
-		private static final String RCS_FILE_POSTFIX = ",v";
-		private static final String LOGGING_PREFIX = "Logging ";
-		ICVSFolder currentFolder;
-		List atticFiles = new ArrayList();
-		public IStatus messageLine(
-					String line,
-					ICVSRepositoryLocation location,
-					ICVSFolder commandRoot,
-					IProgressMonitor monitor) {
-			
-			// Find all RCS file names tat contain "Attic"
-			int index = line.indexOf(ATTIC);
-			if (index == -1) return OK;
-			// Extract the file name and path from the RCS path
-			String filePath = line.substring(index);
-			int start = line.indexOf(Session.SERVER_SEPARATOR, index);
-			String fileName = line.substring(start + 1);
-			if (fileName.endsWith(RCS_FILE_POSTFIX)) {
-				fileName = fileName.substring(0, fileName.length() - RCS_FILE_POSTFIX.length());
-			}
-			try {
-				atticFiles.add(currentFolder.getFile(fileName));
-			} catch (CVSException e) {
-				return e.getStatus();
-			}
-			return OK;
-		}
-		/**
-		 * @see org.eclipse.team.internal.ccvs.core.client.CommandOutputAdapter#errorLine(java.lang.String, org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation, org.eclipse.team.internal.ccvs.core.ICVSFolder, org.eclipse.core.runtime.IProgressMonitor)
-		 */
-		public IStatus errorLine(
-			String line,
-			ICVSRepositoryLocation location,
-			ICVSFolder commandRoot,
-			IProgressMonitor monitor) {
-			
-			CVSRepositoryLocation repo = (CVSRepositoryLocation)location;
-			String folderPath = repo.getServerMessageWithoutPrefix(line, SERVER_PREFIX);
-			if (folderPath != null) {
-				if (folderPath.startsWith(LOGGING_PREFIX)) {
-					folderPath = folderPath.substring(LOGGING_PREFIX.length());
-					try {
-						currentFolder = commandRoot.getFolder(folderPath);
-					} catch (CVSException e) {
-						return e.getStatus();
-					}
-					return OK;
-				}
-			}
-			return super.errorLine(line, location, commandRoot, monitor);
-		}
-
-		public ICVSFile[] getAtticFilePaths() {
-			return (ICVSFile[]) atticFiles.toArray(new ICVSFile[atticFiles.size()]);
-		}
-	}
-
-	/*
 	 * Fetch the RCS paths (minus the Attic segment) of all files in the Attic.
 	 * This path includes the repository root path.
 	 */
@@ -393,7 +409,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		return listener.getAtticFilePaths();
 	}
 	
-	public void fetchPageContents() {
+	private void fetchPageContents() {
 		final ICVSFile[][] files = new ICVSFile[1][0];
 		files[0] = null;
 		try {
@@ -426,6 +442,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		options.add(Log.RCS_FILE_NAMES_ONLY);
 		return (LocalOption[]) options.toArray(new LocalOption[options.size()]);
 	}
+	
 	/**
 	 * Returns the recurse.
 	 * @return boolean
@@ -448,8 +465,7 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	/*
 	 * Set the resource tree input to the files that were deleted	 */
 	private void setTreeInput(ICVSFile[] cvsFiles) {
-		this.selectedFile = null;
-		this.selectedRevision = null;
+		reset();
 		IResource[] files = new IResource[cvsFiles.length];
 		for (int i = 0; i < cvsFiles.length; i++) {
 			try {
@@ -464,6 +480,18 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		treeInput.setResources(files);
 		refresh();
 	}
+
+	private void reset() {
+		this.selectedFile = null;
+		this.selectedRevision = null;
+		treeInput.setResources(null);
+		filesToRestore = new HashMap();
+		if (fileContentPane != null && !fileContentPane.isDisposed()) {
+			fileContentPane.setInput(null);
+		}
+		updateWidgetEnablements();
+	}
+	
 	/**
 	 * Method refresh.
 	 */
@@ -473,8 +501,6 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		// Empty the file content viewer
 		if (fileContentPane != null && !fileContentPane.isDisposed()) {
 			fileContentPane.setInput(null);
-			fileContentPane.setText(null);
-			fileContentPane.setImage(null);
 		}
 		setErrorMessage(null);
 		
@@ -491,6 +517,12 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		ILogEntry selectedEntry = (ILogEntry)filesToRestore.get(selectedFile);
 		if (selectedEntry != null) {
 			revisionsTable.setChecked(selectedEntry, true);
+		}
+		for (int i = 0; i < entries.length; i++) {
+			ILogEntry entry = entries[i];
+			if (entry.isDeletion()) {
+				revisionsTable.setGrayed(entry, true);
+			}
 		}
 		setErrorMessage(null);
 	}
@@ -596,13 +628,18 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	private void handleRevisionChecked(CheckStateChangedEvent event) {
 		// Only allow one element to be checked
 		if (event.getChecked()) {
-			revisionsTable.setCheckedElements(new Object[] {event.getElement()});
-			filesToRestore.put(selectedFile, event.getElement());
+			if (((ILogEntry)event.getElement()).isDeletion()) {
+				revisionsTable.setChecked(event.getElement(), false);
+			} else {
+				revisionsTable.setCheckedElements(new Object[] {event.getElement()});
+				filesToRestore.put(selectedFile, event.getElement());
+			}
 		}
 		if (revisionsTable.getCheckedElements().length == 0) {
 			filesToRestore.remove(selectedFile);
 		}
 		fileTree.refresh();
+		updateWidgetEnablements();
 	}
 				
 	/*
@@ -613,12 +650,16 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 		if (fileContentPane != null && !fileContentPane.isDisposed()) {
 			Object o= w.getData();
 			if (o instanceof ILogEntry) {
-				ILogEntry selected= (ILogEntry) o;
+				ILogEntry selected = (ILogEntry) o;
 				if (this.selectedRevision == selected) return;
 				this.selectedRevision = selected;
-				fileContentPane.setInput(new HistoryInput(selectedFile, selected));
-				fileContentPane.setText(getEditionLabel(selectedFile, selected));
-				fileContentPane.setImage(CompareUI.getImage(selectedFile));
+				if (selected.isDeletion()) {
+					fileContentPane.setInput(null);
+				} else {
+					fileContentPane.setInput(new HistoryInput(selectedFile, selected));
+					fileContentPane.setText(getEditionLabel(selectedFile, selected));
+					fileContentPane.setImage(CompareUI.getImage(selectedFile));
+				}
 			} else {
 				fileContentPane.setInput(null);
 			}
@@ -633,4 +674,49 @@ public class RestoreFromRepositoryFileSelectionPage extends CVSWizardPage {
 	private String getEditionLabel(IFile selectedFile, ILogEntry selected) {
 		return selectedFile.getName() + " " + selected.getRevision();
 	}
+	
+	public boolean restoreSelectedFiles() {
+		try {
+			getContainer().run(true, true, new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					try {
+						monitor.beginTask(null, 100 * filesToRestore.size());
+						for (Iterator iter = filesToRestore.keySet().iterator();iter.hasNext();) {
+							IFile file = (IFile) iter.next();
+							ILogEntry entry = (ILogEntry)filesToRestore.get(file);
+							ensureParentExists(file);
+							file.create(entry.getRemoteFile().getContents(Policy.subMonitorFor(monitor, 100)), false, null);
+						}
+					} catch (TeamException e) {
+						throw new InvocationTargetException(e);
+					} catch (CoreException e) {
+						throw new InvocationTargetException(e);
+					} finally {
+						monitor.done();
+					}
+				}
+			});
+		} catch (InvocationTargetException e) {
+			setErrorMessage(
+				CVSUIPlugin.openError(getShell(), null, null, e, CVSUIPlugin.PERFORM_SYNC_EXEC)
+					.getMessage());
+			return false;
+		} catch (InterruptedException e) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Method ensureParentExists.
+	 * @param file
+	 */
+	private void ensureParentExists(IResource resource) throws CoreException {
+		IContainer parent = resource.getParent();
+		if (!parent.exists() && parent.getType() == IResource.FOLDER) {
+			ensureParentExists(parent);
+			((IFolder)parent).create(false, true, null);
+		}
+	}
+
 }

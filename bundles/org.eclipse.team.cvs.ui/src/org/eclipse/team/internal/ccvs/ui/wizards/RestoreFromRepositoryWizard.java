@@ -60,7 +60,7 @@ public class RestoreFromRepositoryWizard extends Wizard {
 	 * @see org.eclipse.jface.wizard.IWizard#performFinish()
 	 */
 	public boolean performFinish() {
-		return false;
+		return fileSelectionPage.restoreSelectedFiles();
 	}
 	/**
 	 * @see org.eclipse.jface.wizard.IWizard#addPages()

@@ -48,11 +48,11 @@ import org.eclipse.ui.internal.WorkbenchPlugin;
 public class RestoreFromRepositoryQueryPage extends CVSWizardPage {
 
 	private TreeViewer tree;
-	private Button recurseCheck;
+	//private Button recurseCheck;
 
 	private IResource[] resources;
 	private IResource selection;
-	private boolean recurse = false;
+	private boolean recurse = true;
 	
 	/**
 	 * Constructor for RestoreFromRepositoryQueryPage.
@@ -87,19 +87,20 @@ public class RestoreFromRepositoryQueryPage extends CVSWizardPage {
 		});
 
 		createWrappingLabel(composite, "", 0, 1); //$NON-NLS-1$
-				
-		// Should subfolders of the folder be checked out?
-		recurseCheck = createCheckBox(composite, Policy.bind("RestoreFromRepositoryQueryPage.recurse")); //$NON-NLS-1$
-		recurseCheck.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event event) {
-				recurse = recurseCheck.getSelection();
-				updateWidgetEnablements();
-			}
-		});
+		
+		// DO_NOT_RECURSE doesn't work
+//		// Should subfolders of the folder be checked out?
+//		recurseCheck = createCheckBox(composite, Policy.bind("RestoreFromRepositoryQueryPage.recurse")); //$NON-NLS-1$
+//		recurseCheck.addListener(SWT.Selection, new Listener() {
+//			public void handleEvent(Event event) {
+//				recurse = recurseCheck.getSelection();
+//				updateWidgetEnablements();
+//			}
+//		});
 				
 		initializeValues();
 		updateWidgetEnablements();
-		recurseCheck.setFocus();
+		//recurseCheck.setFocus();
 	}
 	
 	/**
@@ -107,7 +108,7 @@ public class RestoreFromRepositoryQueryPage extends CVSWizardPage {
 	 */
 	private void initializeValues() {
 		recurse = false;
-		recurseCheck.setSelection(recurse);
+		//recurseCheck.setSelection(recurse);
 		tree.setInput(new AdaptableResourceList(getProjectSharedWithCVS()));
 		tree.setSelection(new StructuredSelection(this.selection), true);
 	}
