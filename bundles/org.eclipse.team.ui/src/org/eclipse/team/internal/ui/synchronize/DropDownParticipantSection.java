@@ -1,9 +1,8 @@
 package org.eclipse.team.internal.ui.synchronize;
 
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.widgets.FormSection;
-import org.eclipse.team.internal.ui.widgets.FormWidgetFactory;
+import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 
@@ -42,10 +41,10 @@ public class DropDownParticipantSection extends FormSection {
 	 * @see org.eclipse.team.internal.ui.widgets.FormSection#createClient(org.eclipse.swt.widgets.Composite,
 	 *      org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
 	 */
-	public Composite createClient(Composite parent, FormWidgetFactory factory) {
-		participantComposite = new ParticipantComposite(parent, participant, view, SWT.NONE);		
-		return participantComposite;
+	public Composite createClient(Composite parent, IControlFactory factory) {
+		return participant.createOverviewComposite(parent, factory, view);
 	}
+	
 	protected void reflow() {
 		super.reflow();
 		parent.setRedraw(false);

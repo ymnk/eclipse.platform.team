@@ -15,19 +15,28 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.events.*;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackAdapter;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Layout;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.team.ui.controls.IControlFactory;
 
 public abstract class FormSection implements IPropertyChangeListener {
 	public static final int SELECTION = 1;
-	private String headerColorKey = FormWidgetFactory.DEFAULT_HEADER_COLOR;
+	private String headerColorKey = ControlFactory.DEFAULT_HEADER_COLOR;
 	private String headerText;
 	private Control client;
 	protected Label header;
+	protected Label headerRightLabel;
 	protected Control separator;
 	//private SectionChangeManager sectionManager;
 	private String description;
@@ -78,6 +87,10 @@ public abstract class FormSection implements IPropertyChangeListener {
 			if (headerPainted && header != null) {
 				Point hsize = header.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
 				maxWidth = Math.max(maxWidth, hsize.x);
+			}
+			if (headerRightLabel != null) {
+				Point hrsize = headerRightLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
+				maxWidth = Math.max(maxWidth, hrsize.x);
 			}
 			if (descriptionPainted && descriptionLabel != null) {
 				Point dsize = descriptionLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT, flush);
@@ -214,9 +227,9 @@ public abstract class FormSection implements IPropertyChangeListener {
 	public void commitChanges(boolean onSave) {
 	}
 
-	public abstract Composite createClient(Composite parent, FormWidgetFactory factory);
+	public abstract Composite createClient(Composite parent, IControlFactory factory);
 
-	public final Control createControl(Composite parent, final FormWidgetFactory factory) {
+	public final Control createControl(Composite parent, final ControlFactory factory) {
 		Composite section = factory.createComposite(parent);
 		SectionLayout slayout = new SectionLayout();
 		section.setLayout(slayout);
@@ -225,13 +238,14 @@ public abstract class FormSection implements IPropertyChangeListener {
 
 		if (headerPainted) {
 			Color headerColor = factory.getColor(getHeaderColorKey());
-			header = factory.createHeadingLabel(section, getHeaderText(), headerColor, SWT.WRAP);
+			header = factory.createHeadingLabel(section, getHeaderText(), headerColor, SWT.WRAP);					
+			headerRightLabel = factory.createLabel(section, "outgoing", SWT.WRAP);
 			if (collapsable) {
 				toggle = new ToggleControl(section, SWT.NULL);
 				toggle.setSelection(collapsed);
 				toggle.setBackground(factory.getBackgroundColor());
 				toggle.setActiveDecorationColor(factory.getHyperlinkColor());
-				toggle.setDecorationColor(factory.getColor(FormWidgetFactory.COLOR_COMPOSITE_SEPARATOR));
+				toggle.setDecorationColor(factory.getColor(ControlFactory.COLOR_COMPOSITE_SEPARATOR));
 				toggle.setActiveCursor(factory.getHyperlinkCursor());
 				//toggle.addFocusListener(factory.visibilityHandler);
 				//toggle.addKeyListener(factory.keyboardHandler);
@@ -290,10 +304,10 @@ public abstract class FormSection implements IPropertyChangeListener {
 		control.getParent().setRedraw(true);
 	}
 
-	protected Text createText(Composite parent, String label, FormWidgetFactory factory) {
+	protected Text createText(Composite parent, String label, ControlFactory factory) {
 		return createText(parent, label, factory, 1);
 	}
-	protected Text createText(Composite parent, String label, FormWidgetFactory factory, int span) {
+	protected Text createText(Composite parent, String label, ControlFactory factory, int span) {
 		factory.createLabel(parent, label);
 		Text text = factory.createText(parent, "");
 		int hfill = span == 1 ? GridData.FILL_HORIZONTAL : GridData.HORIZONTAL_ALIGN_FILL;
@@ -302,7 +316,7 @@ public abstract class FormSection implements IPropertyChangeListener {
 		text.setLayoutData(gd);
 		return text;
 	}
-	protected Text createText(Composite parent, String label, FormWidgetFactory factory, int span, int style) {
+	protected Text createText(Composite parent, String label, ControlFactory factory, int span, int style) {
 		Label l = factory.createLabel(parent, label);
 		if ((style & SWT.MULTI) != 0) {
 			GridData gd = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
@@ -315,7 +329,7 @@ public abstract class FormSection implements IPropertyChangeListener {
 		text.setLayoutData(gd);
 		return text;
 	}
-	protected Text createText(Composite parent, FormWidgetFactory factory, int span) {
+	protected Text createText(Composite parent, ControlFactory factory, int span) {
 		Text text = factory.createText(parent, "");
 		int hfill = span == 1 ? GridData.FILL_HORIZONTAL : GridData.HORIZONTAL_ALIGN_FILL;
 		GridData gd = new GridData(hfill | GridData.VERTICAL_ALIGN_CENTER);

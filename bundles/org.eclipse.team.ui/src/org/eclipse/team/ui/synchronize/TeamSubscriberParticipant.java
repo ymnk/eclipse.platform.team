@@ -11,7 +11,9 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -20,7 +22,11 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.ui.*;
+import org.eclipse.team.ui.controls.IControlFactory;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -202,12 +208,16 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		settings.putString(P_SYNCVIEWPAGE_LAYOUT, Integer.toString(getLayout()));
 		settings.putString(P_SYNCVIEWPAGE_MODE, Integer.toString(getMode()));
 	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createOverviewPage(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
-	public Composite createOverviewPage(Composite parent, ISynchronizeView view) {
-		Label l = new Label(parent, SWT.NONE);
-		l.setText("This is a test");
-		return null;
+	public Composite createOverviewComposite(Composite parent, IControlFactory factory, ISynchronizeView view) {
+		Composite top = factory.createComposite(parent);
+		GridLayout layout = new GridLayout();
+		top.setLayout(layout);
+		top.setBackground(new Color(parent.getDisplay(), new RGB(23,33,221)));
+		Label l = factory.createLabel(top, "details of the participant go here");
+		return top;
 	}
 }

@@ -10,6 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-public class TwoSectionParticipantPage {
+public class TeamSubscriberOverviewComposite {
 
 }

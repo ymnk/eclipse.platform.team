@@ -16,6 +16,8 @@ import java.util.Hashtable;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.ui.*;
+import org.eclipse.team.ui.controls.*;
 
 public class HyperlinkHandler extends HyperlinkSettings implements MouseListener, MouseTrackListener, SelectionListener, PaintListener {
 	private Hashtable hyperlinkListeners;

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.widgets;
+package org.eclipse.team.ui.controls;
 
 import org.eclipse.swt.widgets.*;
 

@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -72,10 +73,12 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * Creates and returns a new composite that describes this participant
 	 * and will be shown on the participant overview page in the synchronize
 	 * view.
+	 * @param parent the parent composite 
+	 * @param factory used to create controls on the parent composite
 	 * @param view the synchronize view showing this participant
 	 * @return a composite showing the overview details about this participant.
 	 */
-	public Composite createOverviewPage(Composite parent, ISynchronizeView view);
+	public Composite createOverviewComposite(Composite parent, IControlFactory factory, ISynchronizeView view);
 	
 	/**
 	 * Initializes this participant with the given participant state.  

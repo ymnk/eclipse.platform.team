@@ -35,7 +35,8 @@ import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.synchronize.views.*;
 import org.eclipse.team.internal.ui.widgets.FormSection;
-import org.eclipse.team.internal.ui.widgets.FormWidgetFactory;
+import org.eclipse.team.internal.ui.widgets.ControlFactory;
+import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.*;
@@ -136,7 +137,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			/* (non-Javadoc)
 			 * @see org.eclipse.team.internal.ui.widgets.FormSection#createClient(org.eclipse.swt.widgets.Composite, org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
 			 */
-			public Composite createClient(Composite parent, FormWidgetFactory factory) {
+			public Composite createClient(Composite parent, IControlFactory factory) {
 				Composite top = factory.createComposite(parent);
 				GridLayout layout = new GridLayout();
 				layout.marginHeight = 0;
@@ -302,7 +303,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	
 	private void createViewer(Composite parent) {				
 		//tbMgr.createControl(parent);
-		FormWidgetFactory factory = new FormWidgetFactory(parent.getDisplay());
+		ControlFactory factory = new ControlFactory(parent.getDisplay());
 		factory.setBackgroundColor(new Color(parent.getDisplay(), new RGB(255, 255, 255)));
 		// overview section
 		Control control = participantSection.createControl(parent, factory);

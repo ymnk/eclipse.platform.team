@@ -20,9 +20,11 @@ import org.eclipse.swt.custom.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.ui.*;
+import org.eclipse.team.ui.controls.*;
 import org.eclipse.ui.actions.ActionFactory;
 
-public class FormWidgetFactory {
+public class ControlFactory implements IControlFactory {
 	public static final String KEY_DRAW_BORDER = "FormWidgetFactory.drawBorder";
 	public static final String TREE_BORDER = "treeBorder";
 	public static final String DEFAULT_HEADER_COLOR = "__default__header__";
@@ -95,11 +97,11 @@ public class FormWidgetFactory {
 		}
 	}
 
-	public FormWidgetFactory() {
+	public ControlFactory() {
 		this(Display.getCurrent());
 	}
 
-	public FormWidgetFactory(Display display) {
+	public ControlFactory(Display display) {
 		this.display = display;
 		initialize();
 	}
@@ -273,7 +275,7 @@ public class FormWidgetFactory {
 			Color c = (Color) colors.nextElement();
 			c.dispose();
 		}
-		//hyperlinkHandler.dispose();
+		hyperlinkHandler.dispose();
 		colorRegistry = null;
 	}
 	public Color getBackgroundColor() {

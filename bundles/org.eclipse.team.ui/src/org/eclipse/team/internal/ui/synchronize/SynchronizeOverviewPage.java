@@ -13,23 +13,15 @@ package org.eclipse.team.internal.ui.synchronize;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.jface.resource.JFaceColors;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CLabel;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.team.internal.ui.widgets.ControlFactory;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.controls.IControlFactory;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.internal.ide.IDEInternalWorkbenchImages;
 import org.eclipse.ui.part.Page;
 
 /**
@@ -41,8 +33,9 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 
 	private Composite pageComposite;
 	private Map participantsToComposites = new HashMap();
-	private Color white;
 	private SynchronizeView view;
+	private IControlFactory factory;
+	private static final String COLOR_WHITE = "__colorwhite__";
 	
 	public SynchronizeOverviewPage(SynchronizeView view) {
 		this.view = view;
@@ -51,10 +44,10 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.Page#createControl(org.eclipse.swt.widgets.Composite)
 	 */
-	public void createControl(Composite parent) {
-		white = new Color(parent.getDisplay(), new RGB(255, 255, 255));
-		pageComposite = new Composite(parent, SWT.NONE);
-		pageComposite.setBackground(white);
+	public void createControl(Composite parent) {		
+		factory = new ControlFactory(parent.getDisplay());
+		factory.setBackgroundColor(factory.registerColor(COLOR_WHITE, 255, 255, 255));		
+		pageComposite = factory.createComposite(parent);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
@@ -62,12 +55,6 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 		layout.horizontalSpacing = 0;
 		pageComposite.setLayout(layout);
 
-		createTitleArea(pageComposite);
-
-		Label titleBarSeparator = new Label(pageComposite, SWT.HORIZONTAL | SWT.SEPARATOR);
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-		titleBarSeparator.setLayoutData(gd);
-		
 		createParticipants(pageComposite);
 		TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(this);
 	}
@@ -79,7 +66,7 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			participantsToComposites.put(participant, new ParticipantComposite(parent, participant, view, SWT.NONE));
+			participantsToComposites.put(participant, new ParticipantComposite(parent, factory, participant, view, SWT.NONE));
 		}
 	}
 
@@ -97,87 +84,6 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 		pageComposite.setFocus();
 	}	
 	
-	/**
-	 * Creates the wizard's title area.
-	 *
-	 * @param parent the SWT parent for the title area composite
-	 * @return the created title area composite
-	 */
-	private Composite createTitleArea(Composite parent) {
-		// Get the background color for the title area
-		Display display = parent.getDisplay();
-		Color background = JFaceColors.getBannerBackground(display);
-		Color foreground = JFaceColors.getBannerForeground(display);
-
-		// Create the title area which will contain
-		// a title, message, and image.
-		Composite titleArea = new Composite(parent, SWT.NONE | SWT.NO_FOCUS);
-		GridLayout layout = new GridLayout();
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		layout.verticalSpacing = 0;
-		layout.horizontalSpacing = 0;
-		layout.numColumns = 2;
-		titleArea.setLayout(layout);
-		titleArea.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		titleArea.setBackground(background);
-
-		// Message label
-		final CLabel messageLabel = new CLabel(titleArea, SWT.LEFT) {
-			protected String shortenText(GC gc, String text, int width) {
-				if (gc.textExtent(text, SWT.DRAW_MNEMONIC).x <= width) return text;
-				final String ellipsis= "..."; //$NON-NLS-1$
-				int ellipseWidth = gc.textExtent(ellipsis, SWT.DRAW_MNEMONIC).x;
-				int length = text.length();
-				int end = length - 1;
-				while (end > 0) {
-					text = text.substring(0, end);
-					int l1 = gc.textExtent(text, SWT.DRAW_MNEMONIC).x;
-					if (l1 + ellipseWidth <= width) {
-						return text + ellipsis;
-					}
-					end--;
-				}
-				return text + ellipsis;			
-			}
-		};
-		JFaceColors.setColors(messageLabel,foreground,background);
-		messageLabel.setText("Synchronize Overview");
-		messageLabel.setFont(JFaceResources.getHeaderFont());
-		
-		final IPropertyChangeListener fontListener = new IPropertyChangeListener() {
-			public void propertyChange(PropertyChangeEvent event) {
-				if(JFaceResources.HEADER_FONT.equals(event.getProperty())) {
-					messageLabel.setFont(JFaceResources.getHeaderFont());
-				}
-			}
-		};
-		
-		messageLabel.addDisposeListener(new DisposeListener() {
-			public void widgetDisposed(DisposeEvent event) {
-				JFaceResources.getFontRegistry().removeListener(fontListener);
-			}
-		});
-		
-		JFaceResources.getFontRegistry().addListener(fontListener);
-		
-		
-		GridData gd = new GridData(GridData.FILL_BOTH);
-		messageLabel.setLayoutData(gd);
-
-		// Title image
-		Label titleImage = new Label(titleArea, SWT.LEFT);
-		titleImage.setBackground(background);
-		titleImage.setImage(
-				PlatformUI.getWorkbench().getSharedImages().getImage(
-						IDEInternalWorkbenchImages.IMG_OBJS_WELCOME_BANNER));
-		gd = new GridData(); 
-		gd.horizontalAlignment = GridData.END;
-		titleImage.setLayoutData(gd);
-
-		return titleArea;
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipantListener#participantsAdded(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 	 */
@@ -188,8 +94,15 @@ public class SynchronizeOverviewPage extends Page implements ISynchronizePartici
 					for (int i = 0; i < participants.length; i++) {
 						if (isAvailable()) {
 							ISynchronizeParticipant participant = participants[i];
-							participantsToComposites.put(participant, new ParticipantComposite(pageComposite, participant, view, SWT.NONE));
-							pageComposite.redraw();
+							participantsToComposites.put(participant, new ParticipantComposite(pageComposite, factory, participant, view, SWT.NONE));
+							
+							// re-layout and redraw with new participant added
+							pageComposite.setRedraw(false);
+							pageComposite.getParent().setRedraw(false);
+							pageComposite.layout(true);
+							pageComposite.getParent().layout(true);
+							pageComposite.setRedraw(true);
+							pageComposite.getParent().setRedraw(true);
 						}
 					}
 				}
