@@ -14,7 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
+import org.eclipse.team.ui.synchronize.ISyncInfoSet;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 /**
@@ -22,7 +22,7 @@ import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
  */
 public class CompressedFolder extends SyncInfoDiffNode {
 
-	public CompressedFolder(SyncSet input, IResource resource) {
+	public CompressedFolder(ISyncInfoSet input, IResource resource) {
 		super(input, resource);
 	}
 	
@@ -30,16 +30,16 @@ public class CompressedFolder extends SyncInfoDiffNode {
 	 * @see org.eclipse.team.internal.ui.sync.views.SynchronizeViewNode#getOutOfSyncDescendants()
 	 */
 	public SyncInfo[] getChildSyncInfos() {
-		IResource[] children = getSyncSet().members(getResource());
+		IResource[] children = getSyncInfoSet().members(getResource());
 		List result = new ArrayList();
 		for (int i = 0; i < children.length; i++) {
 			IResource child = children[i];
-			SyncInfo info = getSyncSet().getSyncInfo(child);
+			SyncInfo info = getSyncInfoSet().getSyncInfo(child);
 			if (info != null) {
 				if (child.getType() == IResource.FOLDER) {
 					// for folders, add all out-of-sync children
 					// NOTE: the method getOutOfSyncDescendants includes the out-of-sync parent
-					result.addAll(Arrays.asList(getSyncSet().getOutOfSyncDescendants(child)));
+					result.addAll(Arrays.asList(getSyncInfoSet().getOutOfSyncDescendants(child)));
 				} else {
 					// for files, just add the info
 					result.add(info);

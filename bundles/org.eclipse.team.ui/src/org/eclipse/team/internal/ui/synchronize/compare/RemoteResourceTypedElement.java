@@ -17,6 +17,7 @@ import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.IEditableContent;
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.graphics.Image;
@@ -92,6 +93,9 @@ public class RemoteResourceTypedElement extends BufferedContent implements IType
 	 * @see BufferedContent#createStream()
 	 */
 	protected InputStream createStream() throws CoreException {
+		if(bufferedContents == null) {
+			cacheContents(new NullProgressMonitor());
+		}
 		if (bufferedContents != null) {
 			return bufferedContents.getContents();
 		}

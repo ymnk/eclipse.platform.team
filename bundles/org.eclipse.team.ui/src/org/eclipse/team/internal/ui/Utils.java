@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ResourceBundle;
 
+import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.*;
@@ -21,6 +22,8 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.ui.*;
@@ -243,9 +246,55 @@ public class Utils {
 		return null;
 	}
 	
+	public static IWorkbenchPartSite findSite() {
+		IWorkbench workbench = TeamUIPlugin.getPlugin().getWorkbench();
+		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+		if(window != null) {
+			IWorkbenchPage page = window.getActivePage();
+			if(page != null) {
+				IWorkbenchPart part = page.getActivePart();
+				if(part != null) return part.getSite();
+			}
+		}
+		return null;
+	}
+	
 	public static void initAction(IAction a, String prefix) {
 		Utils.initAction(a, prefix, Policy.bundle);
 	}
+	
+	public static void updateLabels(SyncInfo sync, CompareConfiguration config) {
+		final IRemoteResource remote = sync.getRemote();
+		final IRemoteResource base = sync.getBase();
+
+		String localContentId = sync.getLocalContentIdentifier();
+		if (localContentId != null) {
+			config.setLeftLabel(Policy.bind("SyncInfoCompareInput.localLabelExists", localContentId)); //$NON-NLS-1$
+		} else {
+			config.setLeftLabel(Policy.bind("SyncInfoCompareInput.localLabel")); //$NON-NLS-1$
+		}
+
+		if (remote != null) {
+			try {
+				config.setRightLabel(Policy.bind("SyncInfoCompareInput.remoteLabelExists", remote.getContentIdentifier())); //$NON-NLS-1$
+			} catch (TeamException e) {
+				config.setRightLabel(Policy.bind("SyncInfoCompareInput.remoteLabel")); //$NON-NLS-1$
+			}
+		} else {
+			config.setRightLabel(Policy.bind("SyncInfoCompareInput.remoteLabel")); //$NON-NLS-1$
+		}
+
+		if (base != null) {
+			try {
+				config.setAncestorLabel(Policy.bind("SyncInfoCompareInput.baseLabelExists", base.getContentIdentifier())); //$NON-NLS-1$
+			} catch (TeamException e) {
+				config.setAncestorLabel(Policy.bind("SyncInfoCompareInput.baseLabel")); //$NON-NLS-1$
+			}
+		} else {
+			config.setAncestorLabel(Policy.bind("SyncInfoCompareInput.baseLabel")); //$NON-NLS-1$
+		}
+	}
+	
 	/**
 	 * Initialize the given Action from a ResourceBundle.
 	 */

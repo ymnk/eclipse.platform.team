@@ -13,12 +13,15 @@ package org.eclipse.team.ui.synchronize.actions;
 import java.util.*;
 
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
+import org.eclipse.ui.*;
+import org.eclipse.ui.IEditorActionDelegate;
 import org.eclipse.ui.IViewActionDelegate;
 
 /**
@@ -31,7 +34,7 @@ import org.eclipse.ui.IViewActionDelegate;
  * </p>
  * @since 3.0
  */
-public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate {
+public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate, IEditorActionDelegate {
 	
 	public static final QualifiedName SUBSCRIBER_JOB_TYPE = new QualifiedName(TeamUIPlugin.ID, "subcriber_job"); //$NON-NLS-1$
 	
@@ -97,5 +100,11 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 				filtered.add(info);
 		}
 		return (SyncInfo[]) filtered.toArray(new SyncInfo[filtered.size()]);
+	}
+		
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IEditorActionDelegate#setActiveEditor(org.eclipse.jface.action.IAction, org.eclipse.ui.IEditorPart)
+	 */
+	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
 	}
 }

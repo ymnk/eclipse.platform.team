@@ -47,8 +47,8 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 		SyncSet oldSyncSet = null;
 		SyncSet newSyncSet = null;
 		
-		if(newInput instanceof SyncInfoDiffNode) {
-			newInput = ((SyncInfoDiffNode)newInput).getSyncInfoSet();
+		if(newInput instanceof SyncInfoDiffNode && oldInput != null) {
+			return;
 		}
 		
 		if (oldInput instanceof SyncSet) {

@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
@@ -49,11 +50,13 @@ public class SharingWizardFinishPage extends CVSWizardPage {
 		}
 
 		public Viewer createDiffViewer(Composite parent) {
-			return new SyncInfoDiffTreeViewer(parent, participant2, participant2.getInput().getFilteredSyncSet());
+			SyncInfoDiffTreeViewer v =  new SyncInfoDiffTreeViewer(parent, participant2, participant2.getInput().getFilteredSyncSet());
+			v.updateCompareEditorInput(this);
+			return v;
 		}
 
 		protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-			return null; //new SyncInfoDiffNode(participant2.getInput().getFilteredSyncSet(), participant2.getInput().getFilteredSyncSet().g);
+			return new SyncInfoDiffNode(participant2.getInput().getFilteredSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
 		}
 	};
 	
@@ -77,7 +80,7 @@ public class SharingWizardFinishPage extends CVSWizardPage {
 //		setControl(composite);
 //        Dialog.applyDialogFont(parent);
 		
-		setControl(createCoolControl(parent));
+		setControl(createFullCompareControl(parent));
 		
 		
 	}
@@ -109,8 +112,13 @@ public class SharingWizardFinishPage extends CVSWizardPage {
 		GridLayout layout= new GridLayout();
 		layout.marginHeight= 0; layout.marginWidth= 0;
 		result.setLayout(layout);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.grabExcessHorizontalSpace = true;
+		data.grabExcessVerticalSpace = true;
+		result.setLayoutData(data);
 		
-		input.createContents(result);
+		Control c = input.createContents(result);
+		c.setLayoutData(new GridData(GridData.FILL_BOTH));
 		return result;
 	}
 	

@@ -10,6 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import java.lang.reflect.InvocationTargetException;
+
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.FontMetrics;
@@ -19,6 +25,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
+import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoSetCompareInput;
 import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 public class RefreshCompleteDialog extends DetailsDialog {
@@ -26,12 +33,18 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private SyncInfo[] changes;
 	private ITeamSubscriberSyncInfoSets[] inputs;
 	private Button openSyncButton;
-
+	private CompareEditorInput compareEditorInput;
+	
 	public RefreshCompleteDialog(Shell parentShell, SyncInfo[] changes, ITeamSubscriberSyncInfoSets[] inputs) {
 		super(parentShell, "Synchronization Complete");
 		setImageKey(DLG_IMG_INFO);
 		this.changes = changes;
 		this.inputs = inputs;
+		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), inputs[0]) {
+			protected boolean allowParticipantMenuContributions() {
+				return true;
+			}
+		}; 
 	}
 
 	/* (non-Javadoc)
@@ -78,7 +91,25 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#createDropDownDialogArea(org.eclipse.swt.widgets.Composite)
 	 */
 	protected Composite createDropDownDialogArea(Composite parent) {
-		return null;
+		try {
+			compareEditorInput.run(new NullProgressMonitor());
+		} catch (InterruptedException e) {
+		} catch (InvocationTargetException e) {
+		}
+		
+		Composite result= new Composite(parent, SWT.NONE);
+		GridLayout layout= new GridLayout();
+		result.setLayout(layout);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.grabExcessHorizontalSpace = true;
+		data.grabExcessVerticalSpace = true;
+		data.heightHint = 350;
+		result.setLayoutData(data);
+		
+		Control c = compareEditorInput.createContents(result);
+		data = new GridData(GridData.FILL_BOTH);
+		c.setLayoutData(data);
+		return result;
 	}
 
 	/* (non-Javadoc)
@@ -128,5 +159,14 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		gc.dispose();
 		combo.setLayoutData(data);
 		return combo;
+	}
+	
+	private IResource[] getResources() {
+		IResource[] resources = new IResource[changes.length];
+		for (int i = 0; i < changes.length; i++) {
+			SyncInfo info = changes[i];
+			resources[i] = info.getLocal();
+		}
+		return resources;
 	}
 }

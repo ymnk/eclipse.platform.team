@@ -13,6 +13,8 @@ package org.eclipse.team.ui.synchronize;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.eclipse.compare.*;
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -31,11 +33,15 @@ import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
-public class SyncInfoDiffTreeViewer extends TreeViewer {
+public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableControl {
 
 	private TeamSubscriberParticipant participant;
 	private ISyncInfoSet set;
 	private Action expandAll;
+	private NavigationAction nextAction;
+	private NavigationAction previousAction;
+	private boolean acceptParticipantMenuContributions = false;
+	private MenuManager menuMgr = null; 
 		
 	/**
 	 * Change the tree layout between using compressed folders and regular folders
@@ -47,7 +53,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer {
 				setTreeViewerContentProvider();
 			}
 		}
-	};
+	};	
 	
 	public SyncInfoDiffTreeViewer(Composite parent, TeamSubscriberParticipant participant, ISyncInfoSet set) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
@@ -65,11 +71,61 @@ public class SyncInfoDiffTreeViewer extends TreeViewer {
 				handleDoubleClick(event);
 			}
 		});
+		
+		getTree().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
+		
+		INavigatable nav= new INavigatable() {
+			public boolean gotoDifference(boolean next) {
+				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+				return internalNavigate(next, true);
+			}
+		};
+		getTree().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
+		
 		createActions();
 		hookContextMenu();
+		
+		createToolBarActions(parent);			
 		setInput(getSyncSet());
 	}
 
+	protected Object getTitle() {
+		return "Synchronization Changes";
+	}
+
+	public void setAcceptParticipantMenuContributions(boolean accept) {
+		this.acceptParticipantMenuContributions = accept;
+		if(acceptParticipantMenuContributions) {
+			IWorkbenchPartSite site = Utils.findSite(getControl());
+			if(site == null) {
+				site = Utils.findSite();
+			}
+			if(site != null) {
+				site.registerContextMenu(participant.getId(), menuMgr, this);
+			}
+		}
+	}
+	
+	private void createToolBarActions(Composite parent) {
+		ToolBarManager tbm= CompareViewerPane.getToolBarManager(parent);
+		if (tbm != null) {
+			tbm.removeAll();
+			
+			tbm.add(new Separator("navigation")); //$NON-NLS-1$
+			
+			createToolItems(tbm);
+			tbm.update(true);
+		}
+	}
+
+	protected void createToolItems(IToolBarManager tbm) {
+		nextAction= new NavigationAction(true);
+		tbm.appendToGroup("navigation", nextAction); //$NON-NLS-1$
+
+		previousAction= new NavigationAction(false);
+		tbm.appendToGroup("navigation", previousAction); //$NON-NLS-1$		
+	}
+	
 	protected ISyncInfoSet getSyncSet() {
 		return set;
 	}
@@ -161,7 +217,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer {
 	}
 	
 	protected void hookContextMenu() {
-		final MenuManager menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
+		menuMgr = new MenuManager(participant.getId()); //$NON-NLS-1$
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
@@ -190,10 +246,37 @@ public class SyncInfoDiffTreeViewer extends TreeViewer {
 			}
 		});
 		getControl().setMenu(menu);
-		IWorkbenchPartSite site = Utils.findSite(getControl());
-		if(site != null) {
-			site.registerContextMenu(participant.getId(), menuMgr, this);
+		
+		if(acceptParticipantMenuContributions) {
+			IWorkbenchPartSite site = Utils.findSite(getControl());
+			if(site == null) {
+				site = Utils.findSite();
+			}
+			if(site != null) {
+				site.registerContextMenu(participant.getId(), menuMgr, this);
+			}
 		}
+	}
+	
+	protected void inputChanged(Object in, Object oldInput) {
+		super.inputChanged(in, oldInput);		
+		if (in != oldInput) {
+			initialSelection();
+		}
+	}
+	
+	/**
+	 * This hook method is called from within <code>inputChanged</code>
+	 * after a new input has been set but before any controls are updated.
+	 * This default implementation calls <code>navigate(true)</code>
+	 * to select and expand the first leaf node.
+	 * Clients can override this method and are free to decide whether
+	 * they want to call the inherited method.
+	 * 
+	 * @since 2.0
+	 */
+	protected void initialSelection() {
+		internalNavigate(false, true);
 	}
 	
 	/**
@@ -207,6 +290,11 @@ public class SyncInfoDiffTreeViewer extends TreeViewer {
 	public boolean gotoDifference(int direction) {	
 		boolean next = direction == INavigableControl.NEXT ? true : false;
 		return internalNavigate(next, false);
+	}
+	
+	public void updateCompareEditorInput(CompareEditorInput input) {
+		nextAction.setCompareEditorInput(input);
+		previousAction.setCompareEditorInput(input);
 	}
 	
 	/**

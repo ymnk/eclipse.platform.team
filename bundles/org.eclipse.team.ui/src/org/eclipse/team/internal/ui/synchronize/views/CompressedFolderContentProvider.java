@@ -15,7 +15,6 @@ import java.util.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncSet;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncSetChangedEvent;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
@@ -80,8 +79,8 @@ public class CompressedFolderContentProvider extends SyncSetTreeContentProvider 
 			if (info == null) {
 				// The resource is in-sync so return a compressed folder
 				IResource resource = ((SyncInfoDiffNode)parent).getResource();
-				if (resource.getType() == IResource.FOLDER) {
-					return new CompressedFolder((SyncSet)viewer.getInput(), resource);
+				if (resource.getType() == IResource.FOLDER) {					
+					return new CompressedFolder(((SyncInfoDiffNode)parent).getSyncInfoSet(), resource);
 					
 				}
 			}

@@ -21,9 +21,9 @@ import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * SubscriberInput encapsulates the UI model for synchronization changes associated
@@ -88,15 +88,15 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 		return participant;
 	}
 	
-	public SyncSet getFilteredSyncSet() {
+	public ISyncInfoSet getFilteredSyncSet() {
 		return filteredSyncSet.getSyncSet();
 	}
 	
-	public SyncSet getSubscriberSyncSet() {
+	public ISyncInfoSet getSubscriberSyncSet() {
 		return subscriberSyncSet.getSyncSet();
 	}
 	
-	public SyncSet getWorkingSetSyncSet() {
+	public ISyncInfoSet getWorkingSetSyncSet() {
 		return workingRootsSet.getSyncSet();
 	}
 
@@ -289,5 +289,16 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 		getWorkingSetSyncSet().removeSyncSetChangedListener(listener);
 		getFilteredSyncSet().removeSyncSetChangedListener(listener);
 		getSubscriberSyncSet().removeSyncSetChangedListener(listener);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets#createNewFilteredSyncSet(org.eclipse.team.ui.synchronize.actions.SyncInfoFilter)
+	 */
+	public ISyncInfoSet createNewFilteredSyncSet(IResource[] resources) {		
+		WorkingSetSyncSetInput set = new WorkingSetSyncSetInput((SyncSet)getSubscriberSyncSet());
+		IWorkingSet workingSet = PlatformUI.getWorkbench().getWorkingSetManager().createWorkingSet("SubscriberInput", resources);
+		workingSet.setElements(resources);
+		set.setWorkingSet(workingSet);
+		return set.getSyncSet();
 	}
 }

@@ -24,7 +24,7 @@ public class SyncSetTableContentProvider extends SyncSetContentProvider {
 	 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 	 */
 	public Object[] getElements(Object element) {
-		SyncInfo[] infos = getSyncSet().allMembers();
+		SyncInfo[] infos = getSyncSet().members();
 		return getModelObjects(infos);
 	}
 

@@ -26,6 +26,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	
 	private IResource resource;
 	private ISyncInfoSet input;
+	private SyncInfo info;
 		
 	/**
 	 * Create an ITypedElement for the given local resource. The returned ITypedElement
@@ -69,34 +70,52 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 		this(createBaseTypeElement(input, resource), createLocalTypeElement(input, resource), createRemoteTypeElement(input, resource), getSyncKind(input, resource));
 		this.input = input;	
 		this.resource = resource;
+		this.info = null;
+	}
+	
+	/**
+	 * Construct a SynchromizeViewNode
+	 * @param input The SubscriberInput for the node.
+	 * @param resource The resource for the node
+	 */
+	public SyncInfoDiffNode(SyncInfo info) {
+		this(createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
+		this.info = info;
+		this.input = null;	
+		this.resource = info.getLocal();
 	}
 
 	private static ITypedElement createRemoteTypeElement(ISyncInfoSet set, IResource resource) {
-		SyncInfo info = set.getSyncInfo(resource);
+		return createRemoteTypeElement(set.getSyncInfo(resource));
+	}
+
+	private static ITypedElement createLocalTypeElement(ISyncInfoSet set, IResource resource) {
+		return createLocalTypeElement(set.getSyncInfo(resource));
+	}
+
+	private static ITypedElement createBaseTypeElement(ISyncInfoSet set, IResource resource) {
+		return createBaseTypeElement(set.getSyncInfo(resource));
+	}
+
+	private static ITypedElement createRemoteTypeElement(SyncInfo info) {
 		if(info != null && info.getRemote() != null) {
 			return createTypeElement(info.getRemote());
 		}
 		return null;
 	}
 
-	private static ITypedElement createLocalTypeElement(ISyncInfoSet set, IResource resource) {
-		SyncInfo info = set.getSyncInfo(resource);
+	private static ITypedElement createLocalTypeElement(SyncInfo info) {
 		if(info != null && info.getLocal() != null) {
 			return createTypeElement(info.getLocal(), info.getKind());
 		}
 		return null;
 	}
 
-	private static ITypedElement createBaseTypeElement(ISyncInfoSet set, IResource resource) {
-		SyncInfo info = set.getSyncInfo(resource);
+	private static ITypedElement createBaseTypeElement(SyncInfo info) {
 		if(info != null && info.getBase() != null) {
 			return createTypeElement(info.getBase());
 		}
 		return null;
-	}
-
-	protected ISyncInfoSet getSyncSet() {
-		return input;
 	}
 	
 	/* (non-Javadoc)
@@ -113,7 +132,12 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewNode#getSyncInfo()
 	 */
 	public SyncInfo getSyncInfo() {
-		return getSyncSet().getSyncInfo(resource);
+		if(info != null) {
+			return info;
+		} else if(input != null) {
+			return input.getSyncInfo(resource);
+		}
+		return null;
 	}
 	
 	protected static int getSyncKind(ISyncInfoSet set, IResource resource) {
@@ -128,7 +152,10 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewNode#getChildSyncInfos()
 	 */
 	public SyncInfo[] getChildSyncInfos() {
-		return getSyncSet().getOutOfSyncDescendants(resource);
+		if(input != null) {
+			return input.getOutOfSyncDescendants(resource);
+		}
+		return new SyncInfo[0];
 	}
 	
 	/**
@@ -188,5 +215,18 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable {
 	
 	public ISyncInfoSet getSyncInfoSet() {
 		return input;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.structuremergeviewer.IDiffContainer#hasChildren()
+	 */
+	public boolean hasChildren() {
+		if(input != null) {		
+			if(getResource().getType() == IResource.ROOT) return true;
+			SyncInfo[] info = input.getOutOfSyncDescendants(getResource());
+			if(info != null && info.length > 0)
+				return true;
+		}
+		return false;
 	}
 }

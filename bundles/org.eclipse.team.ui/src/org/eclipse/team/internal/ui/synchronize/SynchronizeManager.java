@@ -300,7 +300,6 @@ public class SynchronizeManager implements ISynchronizeManager {
 	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage activePage) {
 		IWorkbench workbench = TeamUIPlugin.getPlugin().getWorkbench();
 		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-
 		if (!TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE).equals(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE_NONE)) {
 			try {
 				String pId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCVIEW_DEFAULT_PERSPECTIVE);

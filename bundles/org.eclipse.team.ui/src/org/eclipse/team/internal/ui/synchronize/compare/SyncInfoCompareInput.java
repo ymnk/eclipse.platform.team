@@ -19,11 +19,9 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 
 public class SyncInfoCompareInput extends CompareEditorInput {
 
@@ -31,30 +29,10 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	private SyncInfoDiffNode node;
 	private static Image titleImage;
 
-	public static SyncInfoDiffNode createSyncInfoDiffNode(SyncInfo sync) {
-		// Create the local ITypedElement
-		ITypedElement localTypedElement = SyncInfoDiffNode.createTypeElement(sync.getLocal(), sync.getKind());
-
-		// Create the remote ITypedElement
-		ITypedElement remoteTypedElement = null;
-		IRemoteResource remoteResource = sync.getRemote();
-		if (remoteResource != null) {
-			remoteTypedElement = SyncInfoDiffNode.createTypeElement(remoteResource);
-		}
-
-		// Create the base ITypedElement
-		ITypedElement baseTypedElement = null;
-		IRemoteResource baseResource = sync.getBase();
-		if (baseResource != null) {
-			baseTypedElement = SyncInfoDiffNode.createTypeElement(baseResource);
-		}
-		return new SyncInfoDiffNode(baseTypedElement, localTypedElement, remoteTypedElement, sync.getKind());
-	}
-
 	public SyncInfoCompareInput(SyncInfo sync) {
 		super(new CompareConfiguration());
 		this.sync = sync;
-		this.node = createSyncInfoDiffNode(sync);
+		this.node = new SyncInfoDiffNode(sync);
 		initializeContentChangeListeners();
 	}
 
@@ -94,7 +72,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		// update the title now that the remote revision number as been fetched
 		// from the server
 		setTitle(getTitle());
-		updateLabels();
+		Utils.updateLabels(sync, getCompareConfiguration());
 		try {
 			node.cacheContents(monitor);
 		} catch (TeamException e) {
@@ -110,39 +88,6 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	 */
 	public String getTitle() {
 		return Policy.bind("SyncInfoCompareInput.title", node.getName()); //$NON-NLS-1$
-	}
-
-	protected void updateLabels() {
-		final CompareConfiguration config = getCompareConfiguration();
-		final IRemoteResource remote = sync.getRemote();
-		final IRemoteResource base = sync.getBase();
-
-		String localContentId = sync.getLocalContentIdentifier();
-		if (localContentId != null) {
-			config.setLeftLabel(Policy.bind("SyncInfoCompareInput.localLabelExists", localContentId)); //$NON-NLS-1$
-		} else {
-			config.setLeftLabel(Policy.bind("SyncInfoCompareInput.localLabel")); //$NON-NLS-1$
-		}
-
-		if (remote != null) {
-			try {
-				config.setRightLabel(Policy.bind("SyncInfoCompareInput.remoteLabelExists", remote.getContentIdentifier())); //$NON-NLS-1$
-			} catch (TeamException e) {
-				config.setRightLabel(Policy.bind("SyncInfoCompareInput.remoteLabel")); //$NON-NLS-1$
-			}
-		} else {
-			config.setRightLabel(Policy.bind("SyncInfoCompareInput.remoteLabel")); //$NON-NLS-1$
-		}
-
-		if (base != null) {
-			try {
-				config.setAncestorLabel(Policy.bind("SyncInfoCompareInput.baseLabelExists", base.getContentIdentifier())); //$NON-NLS-1$
-			} catch (TeamException e) {
-				config.setAncestorLabel(Policy.bind("SyncInfoCompareInput.baseLabel")); //$NON-NLS-1$
-			}
-		} else {
-			config.setAncestorLabel(Policy.bind("SyncInfoCompareInput.baseLabel")); //$NON-NLS-1$
-		}
 	}
 
 	/*

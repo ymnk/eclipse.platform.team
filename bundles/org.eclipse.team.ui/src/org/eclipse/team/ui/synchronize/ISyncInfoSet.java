@@ -1,37 +1,30 @@
-/*
- * Created on Dec 14, 2003
- *
- * To change the template for this generated file go to
- * Window - Preferences - Java - Code Generation - Code and Comments
- */
+/*******************************************************************************
+ * Copyright (c) 2000, 2003 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Common Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
 
-/**
- * @author Jean-Michel Lemieux
- *
- * To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Generation - Code and Comments
- */
 public interface ISyncInfoSet {
 	/**
 	 * Add a change listener
 	 * @param provider
 	 */
-	public abstract void addSyncSetChangedListener(ISyncSetChangedListener listener);
+	public void addSyncSetChangedListener(ISyncSetChangedListener listener);
 	/**
 	 * Remove a change listener
 	 * @param provider
 	 */
-	public abstract void removeSyncSetChangedListener(ISyncSetChangedListener listener);
-	public abstract void add(SyncInfo info);
-	/**
-	 * Reset the sync set so it is empty
-	 */
-	public abstract void reset();
+	public void removeSyncSetChangedListener(ISyncSetChangedListener listener);	
 	/**
 	 * Return the children of the given container who are either out-of-sync or contain
 	 * out-of-sync resources.
@@ -39,7 +32,7 @@ public interface ISyncInfoSet {
 	 * @param container
 	 * @return
 	 */
-	public abstract IResource[] members(IResource resource);
+	public IResource[] members(IResource resource);
 	/**
 	 * Return the out-of-sync descendants of the given resource. If the given resource
 	 * is out of sync, it will be included in the result.
@@ -47,19 +40,19 @@ public interface ISyncInfoSet {
 	 * @param container
 	 * @return
 	 */
-	public abstract SyncInfo[] getOutOfSyncDescendants(IResource resource);
+	public SyncInfo[] getOutOfSyncDescendants(IResource resource);
 	/**
 	 * Return an array of all the resources that are known to be out-of-sync
 	 * @return
 	 */
-	public abstract SyncInfo[] allMembers();
-	public abstract SyncInfo getSyncInfo(IResource resource);
-	public abstract int size();
-	public abstract SyncInfoStatistics getStatistics();
+	public SyncInfo[] members();
+	public SyncInfo getSyncInfo(IResource resource);
+	public int size();
+	public SyncInfoStatistics getStatistics();
 	/**
 	 * Return wether the given resource has any children in the sync set
 	 * @param resource
 	 * @return
 	 */
-	public abstract boolean hasMembers(IResource resource);
+	public boolean hasMembers(IResource resource);
 }
