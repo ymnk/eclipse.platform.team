@@ -45,6 +45,10 @@ public class ReentrantLock {
 		private int nestingCount = 0;
 		private Set changedResources = new HashSet();
 		private Set changedFolders = new HashSet();
+		private IFlushOperation operation;
+		public ThreadInfo(IFlushOperation operation) {
+			this.operation = operation;
+		}
 		public void increment() {
 			nestingCount++;
 		}
@@ -70,10 +74,15 @@ public class ReentrantLock {
 		public IContainer[] getChangedFolders() {
 			return (IContainer[]) changedFolders.toArray(new IContainer[changedFolders.size()]);
 		}
+		public void flush(IProgressMonitor monitor) throws CVSException {
+			operation.flush(this, monitor);
+			changedResources.clear();
+			changedFolders.clear();
+		}
 	}
 	
-	public interface IRunnableOnExit {
-		public void run(ThreadInfo info, IProgressMonitor monitor) throws CVSException;
+	public interface IFlushOperation {
+		public void flush(ThreadInfo info, IProgressMonitor monitor) throws CVSException;
 	}
 	
 	private Map infos = new HashMap();
@@ -88,15 +97,15 @@ public class ReentrantLock {
 		return info;
 	}
 	
-	public synchronized void acquire(IResource resource) {
+	public synchronized void acquire(IResource resource, IFlushOperation operation) {
 		lock(resource);	
-		incrementNestingCount(resource);
+		incrementNestingCount(resource, operation);
 	}
 	
-	private void incrementNestingCount(IResource resource) {
+	private void incrementNestingCount(IResource resource, IFlushOperation operation) {
 		ThreadInfo info = getThreadInfo();
 		if (info == null) {
-			info = new ThreadInfo();
+			info = new ThreadInfo(operation);
 			Thread thisThread = Thread.currentThread();
 			infos.put(thisThread, info);
 			if(DEBUG) System.out.println("[" + thisThread.getName() + "] acquired CVS lock on " + resource.getFullPath()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -110,10 +119,10 @@ public class ReentrantLock {
 		if (resource.getType() == IResource.ROOT) {
 			// Never lock the whole workspace
 			rule = new ISchedulingRule() {
-				public boolean contains(ISchedulingRule rule) {
+				public boolean contains(ISchedulingRule innerRule) {
 					return false;
 				}
-				public boolean isConflicting(ISchedulingRule rule) {
+				public boolean isConflicting(ISchedulingRule innerRule) {
 					return false;
 				}
 			};
@@ -130,10 +139,12 @@ public class ReentrantLock {
 	}
 	
 	/**
-	 * Release the lock held on any resources by this thread. Return true
-	 * if the thread no longer holds the lock (i.e. nesting count is 0).
+	 * Release the lock held on any resources by this thread. Execute the 
+	 * provided runnable if the lock is no longer held (i.e. nesting count is 0).
+	 * On exit, the scheduling rule is held by the lock until after the runnable
+	 * is run.
 	 */
-	public synchronized void release(IRunnableOnExit runnable, IProgressMonitor monitor) throws CVSException {
+	public synchronized void release(IProgressMonitor monitor) throws CVSException {
 		ThreadInfo info = getThreadInfo();
 		Assert.isNotNull(info, "Unmatched acquire/release."); //$NON-NLS-1$
 		Assert.isTrue(info.getNestingCount() > 0, "Unmatched acquire/release."); //$NON-NLS-1$
@@ -141,7 +152,7 @@ public class ReentrantLock {
 			Thread thisThread = Thread.currentThread();
 			if(DEBUG) System.out.println("[" + thisThread.getName() + "] released CVS lock"); //$NON-NLS-1$ //$NON-NLS-2$
 			infos.remove(thisThread);
-			runnable.run(info, monitor);
+			info.flush(monitor);
 			unlock();
 		}
 	}
@@ -156,5 +167,14 @@ public class ReentrantLock {
 		ThreadInfo info = getThreadInfo();
 		Assert.isNotNull(info, "Folder changed outside of resource lock"); //$NON-NLS-1$
 		info.addChangedResource(resource);
+	}
+
+	/**
+	 * Flush any changes accumulated by the lock so far.
+	 */
+	public void flush(IProgressMonitor monitor) throws CVSException {
+		ThreadInfo info = getThreadInfo();
+		Assert.isNotNull(info, "Flush requested outside of resource lock"); //$NON-NLS-1$
+		info.flush(monitor);
 	}
 }

@@ -28,6 +28,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -50,7 +51,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock.IRunnableOnExit;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock.IFlushOperation;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock.ThreadInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.FileNameMatcher;
@@ -69,10 +70,17 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  * Special processing has been added for linked folders and their childen so
  * that their CVS meta files are never read or written.
  * 
+ * IMPORTANT NOTICE: It is the reponsibility of the clients of EclipseSynchronizer
+ * to ensure that they have wrapped operations that may modify the workspace in
+ * an IWorkspaceRunnable. If this is not done, deltas may fore at inopertune times 
+ * and corrupt the sync info. The wrapping could be done within the synchronizer 
+ * itself but would require the creation of an inner class for each case that requires
+ * it.
+ * 
  * @see ResourceSyncInfo
  * @see FolderSyncInfo
  */
-public class EclipseSynchronizer {	
+public class EclipseSynchronizer implements IFlushOperation {	
 	private static final String IS_DIRTY_INDICATOR = SyncInfoCache.IS_DIRTY_INDICATOR;
 	private static final String NOT_DIRTY_INDICATOR = SyncInfoCache.NOT_DIRTY_INDICATOR;
 	private static final String RECOMPUTE_INDICATOR = SyncInfoCache.RECOMPUTE_INDICATOR; 
@@ -450,7 +458,7 @@ public class EclipseSynchronizer {
 	 * @param monitor the progress monitor, may be null
 	 */
 	public void beginBatching(IResource resource) {
-		resourceLock.acquire(resource);
+		resourceLock.acquire(resource, this /* IFlushOperation */);
 	}
 	
 	/**
@@ -466,21 +474,34 @@ public class EclipseSynchronizer {
 	 * if all the CVS sync information could not be written to disk.
 	 */
 	public void endBatching(IProgressMonitor monitor) throws CVSException {
-		resourceLock.release(new IRunnableOnExit() {
-			public void run(ThreadInfo info, IProgressMonitor monitor) throws CVSException {
-				if (info != null) {
-					try {
-						beginOperation();
-						IStatus status = commitCache(info, monitor);
+		resourceLock.release(monitor);
+	}
+	
+	/* (non-Javadoc)
+	 * 
+	 * Callback which is invoked when the batching resource lock is released 
+	 * or when a flush is requested (see beginBatching(IResource)).
+	 * 
+	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock.IRunnableOnExit#run(org.eclipse.team.internal.ccvs.core.syncinfo.ReentrantLock.ThreadInfo, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void flush(final ThreadInfo info, IProgressMonitor monitor) throws CVSException {
+		if (info != null && !info.isEmpty()) {
+			try {
+				beginOperation();
+				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+					public void run(IProgressMonitor pm) throws CoreException {
+						IStatus status = commitCache(info, pm);
 						if (!status.isOK()) {
 							throw new CVSException(status);
 						}
-					} finally {
-						endOperation();
 					}
-				}
+				}, null, monitor);
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			} finally {
+				endOperation();
 			}
-		}, monitor);
+		}
 	}
 	
 	/*
@@ -498,58 +519,57 @@ public class EclipseSynchronizer {
 	}
 	
 	/**
-	 * Flushes unwritten sync information to disk.
+	 * Flush the sync information from the in-memery cache to disk and purge
+	 * the entries from the cache.
 	 * <p>
-	 * Recursively commits unwritten sync information for all resources 
-	 * below the root, and optionally purges the cached data from memory
+	 * Recursively flushes the sync information for all resources 
+	 * below the root to disk and purges the entries from memory
 	 * so that the next time it is accessed it will be retrieved from disk.
 	 * May flush more sync information than strictly needed, but never less.
 	 * </p>
-	 * <p>
-	 * Will throw a CVS Exception with a status with code = CVSStatus.DELETION_FAILED 
-	 * if the flush could not perform CVS folder deletions. In this case, all other
-	 * aspects of the operation succeeded.
-	 * </p>
 	 * 
-	 * @param root the root of the subtree to flush
-	 * @param purgeCache if true, purges the cache from memory as well
+	 * @param root the root of the subtree to purge
 	 * @param deep purge sync from child folders
 	 * @param monitor the progress monitor, may be null
 	 */
-	public void flush(IContainer root, boolean purgeCache, boolean deep, IProgressMonitor monitor) throws CVSException {
-		// flush unwritten sync info to disk
+	public void flush(IContainer root, boolean deep, IProgressMonitor monitor) throws CVSException {
 		monitor = Policy.monitorFor(monitor);
 		monitor.beginTask(null, 10);
 		try {
-			beginOperation();
-			
-			// TODO: Is the following line necessary
-//			IStatus status = commitCache(Policy.subMonitorFor(monitor, 7));
-			
-			// purge from memory too if we were asked to
-			if (purgeCache) {
-				sessionPropertyCache.purgeCache(root, deep);
-			} 
-			
-//			if (!status.isOK()) {
-//				throw new CVSException(status);
-//			}
+			beginBatching(root);
+			try {
+				beginOperation();
+				try {
+					// Flush changes to disk
+					resourceLock.flush(Policy.subMonitorFor(monitor, 7));
+				} finally {
+					// Purge the in-memory cache
+					sessionPropertyCache.purgeCache(root, deep);
+				}
+			} finally {
+				endOperation();
+			}
 		} finally {
-			endOperation();
+			endBatching(Policy.subMonitorFor(monitor, 3));
+			monitor.done();
 		}
-		monitor.done();
 	}
 
 	public void deconfigure(final IProject project, IProgressMonitor monitor) throws CVSException {
-		run(project, new ICVSRunnable() {
-			public void run(IProgressMonitor monitor) throws CVSException {
-				flush(project, true, true, monitor);
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(null, 100);
+		try {
+			beginBatching(project);
+			// Flush 
+			flush(project, true /* deep */, monitor);
 				
-				// forget about pruned folders however the top level pruned folder will have resource sync (e.g. 
-				// a line in the Entry file). As a result the folder is managed but is not a CVS folder.
-				synchronizerCache.purgeCache(project, true);
-			}
-		}, monitor);
+			// forget about pruned folders however the top level pruned folder will have resource sync (e.g. 
+			// a line in the Entry file). As a result the folder is managed but is not a CVS folder.
+			synchronizerCache.purgeCache(project, true);
+		} finally {
+			endBatching(Policy.subMonitorFor(monitor, 20));
+			monitor.done();
+		}
 	}
 
 	private void purgeCache(IResource resource, boolean deep) throws CVSException {
@@ -569,7 +589,7 @@ public class EclipseSynchronizer {
 		try {
 			for (int i = 0; i < roots.length; i++) {
 				IContainer root = roots[i];
-				flush(root, true, false /*don't flush children*/, null);
+				flush(root, false /*don't flush children*/, null);
 				List changedPeers = new ArrayList();
 				changedPeers.add(root);
 				changedPeers.addAll(Arrays.asList(root.members()));
@@ -663,10 +683,11 @@ public class EclipseSynchronizer {
 	public void prepareForMoveDelete(IResource resource, IProgressMonitor monitor) throws CVSException {
 		// Move sync info to phantom space for the resource and all it's children
 		try {
+			monitor.beginTask(null, 100);
 			resource.accept(new IResourceVisitor() {
-				public boolean visit(IResource resource) throws CoreException {
+				public boolean visit(IResource innerResource) throws CoreException {
 					try {
-						prepareForDeletion(resource);
+						prepareForDeletion(innerResource);
 					} catch (CVSException e) {
 						CVSProviderPlugin.log(e);
 						throw new CoreException(e.getStatus());
@@ -676,6 +697,8 @@ public class EclipseSynchronizer {
 			});
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
+		} finally {
+			monitor.done();
 		}
 		// purge the sync info to clear the session properties
 		purgeCache(resource, true);
@@ -866,7 +889,7 @@ public class EclipseSynchronizer {
 	 * 
 	 * @param monitor the progress monitor, may be null
 	 */
-	private IStatus commitCache(ThreadInfo threadInfo, IProgressMonitor monitor) {
+	/* internal use only */ IStatus commitCache(ThreadInfo threadInfo, IProgressMonitor monitor) {
 		if (threadInfo.isEmpty()) {
 			return SyncInfoCache.STATUS_OK;
 		}
@@ -1117,7 +1140,7 @@ public class EclipseSynchronizer {
 			Map infoMap = new HashMap();
 			for (int i = 0; i < infos.length; i++) {
 				NotifyInfo notifyInfo = infos[i];
-				infoMap.put(infos[i].getName(), infos[i]);
+				infoMap.put(notifyInfo.getName(), notifyInfo);
 			}
 			if (info == null) {
 				// if the info is null, remove the entry
@@ -1164,7 +1187,7 @@ public class EclipseSynchronizer {
 		Map infoMap = new HashMap();
 		for (int i = 0; i < infos.length; i++) {
 			NotifyInfo notifyInfo = infos[i];
-			infoMap.put(infos[i].getName(), infos[i]);
+			infoMap.put(notifyInfo.getName(), notifyInfo);
 		}
 		infoMap.remove(resource.getName());
 		NotifyInfo[] newInfos = new NotifyInfo[infoMap.size()];
@@ -1244,29 +1267,37 @@ public class EclipseSynchronizer {
 	}
 
 	public void copyFileToBaseDirectory(final IFile file, IProgressMonitor monitor) throws CVSException {
-		run(file, new ICVSRunnable() {
-			public void run(IProgressMonitor monitor) throws CVSException {
-				ResourceSyncInfo info = getResourceSync(file);
-				// The file must exist remotely and locally
-				if (info == null || info.isAdded() || info.isDeleted())
-					return;
-				SyncFileWriter.writeFileToBaseDirectory(file, monitor);
-				resourceChanged(file);
-			}
-		}, monitor);
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(null, 100);
+		try {
+			beginBatching(file);
+			ResourceSyncInfo info = getResourceSync(file);
+			// The file must exist remotely and locally
+			if (info == null || info.isAdded() || info.isDeleted())
+				return;
+			SyncFileWriter.writeFileToBaseDirectory(file, monitor);
+			resourceChanged(file);
+		} finally {
+			endBatching(Policy.subMonitorFor(monitor, 20));
+			monitor.done();
+		}
 	}
 	
 	public void restoreFileFromBaseDirectory(final IFile file, IProgressMonitor monitor) throws CVSException {
-		run(file, new ICVSRunnable() {
-			public void run(IProgressMonitor monitor) throws CVSException {
-				ResourceSyncInfo info = getResourceSync(file);
-				// The file must exist remotely
-				if (info == null || info.isAdded())
-					return;
-				SyncFileWriter.restoreFileFromBaseDirectory(file, monitor);
-				resourceChanged(file);
-			}
-		}, monitor);
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(null, 100);
+		try {
+			beginBatching(file);
+			ResourceSyncInfo info = getResourceSync(file);
+			// The file must exist remotely
+			if (info == null || info.isAdded())
+				return;
+			SyncFileWriter.restoreFileFromBaseDirectory(file, monitor);
+			resourceChanged(file);
+		} finally {
+			endBatching(Policy.subMonitorFor(monitor, 20));
+			monitor.done();
+		}
 	}
 	
 	public void deleteFileFromBaseDirectory(final IFile file, IProgressMonitor monitor) throws CVSException {
@@ -1337,9 +1368,9 @@ public class EclipseSynchronizer {
 			if (depth != IResource.DEPTH_ZERO) {
 				try {
 					resource.accept(new IResourceVisitor() {
-						public boolean visit(IResource resource) throws CoreException {
-							if (resource.getType() == IResource.FOLDER)
-								folders.add(resource);
+						public boolean visit(IResource innerResource) throws CoreException {
+							if (innerResource.getType() == IResource.FOLDER)
+								folders.add(innerResource);
 							// let the depth determine who we visit
 							return true;
 						}

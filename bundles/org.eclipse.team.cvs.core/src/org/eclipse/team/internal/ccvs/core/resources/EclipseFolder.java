@@ -19,6 +19,8 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -292,7 +294,23 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSFolder#run(ICVSRunnable, IProgressMonitor)
 	 */
 	public void run(final ICVSRunnable job, IProgressMonitor monitor) throws CVSException {
-		EclipseSynchronizer.getInstance().run(getIResource(), job, monitor);
+		final CVSException[] error = new CVSException[1];
+		try {
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					try {
+						EclipseSynchronizer.getInstance().run(getIResource(), job, monitor);
+					} catch(CVSException e) {
+						error[0] = e; 
+					}
+				}
+			}, monitor);
+		} catch(CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+		if(error[0]!=null) {
+			throw error[0];
+		}
 	}
 		
 	/**
