@@ -71,7 +71,7 @@ public class RefactorActionGroup extends ActionGroup {
 			renameAction.selectionChanged(convertedSelection);
 			menu.add(renameAction);
 		}
-		parentMenu.insertAfter(groupId, menu);
+		parentMenu.appendToGroup(groupId, menu);
 	}
 
 	private IStructuredSelection convertSelection(IStructuredSelection selection) {

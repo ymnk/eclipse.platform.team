@@ -26,6 +26,12 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_MODEL = TeamUIPlugin.ID  + ".P_MODEL"; //$NON-NLS-1$
 	
 	/**
+	 * Property constant for the <code>SyncInfoSet</code> that was used 
+	 * to populate the model (P_MODEL).
+	 */
+	public static final String P_SYNC_INFO_SET = TeamUIPlugin.ID  + ".P_SYNC_INFO_SET"; //$NON-NLS-1$
+	
+	/**
 	 * The configuration property that defines the label provider 
 	 * that is used by the page's viewer. Clients
 	 * who wish to add custom labels should obtain any 
@@ -50,6 +56,13 @@ public interface ISynchronizePageConfiguration {
 	 * property should be a string array.
 	 */
 	public static final String P_CONTEXT_MENU = TeamUIPlugin.ID + ".P_CONTEXT_MENU"; //$NON-NLS-1$
+	
+	/**
+	 * The configuration property that defines
+	 * the groups in the dropdown view menu of the page. The value for this
+	 * property should be a string array.
+	 */
+	public static final String P_VIEW_MENU = TeamUIPlugin.ID + ".P_VIEW_MENU"; //$NON-NLS-1$
 	
 	/**
 	 * The configuration property that defines the filter id that
@@ -102,7 +115,21 @@ public interface ISynchronizePageConfiguration {
 	 * actions appear (e.g. move and delete).
 	 */
 	public static final String EDIT_GROUP = "edit"; //$NON-NLS-1$
+	
+	/**
+	 * The id of the working set group that determines whether the
+	 * working set selection appears in the view dropdown. This
+	 * group can only be added as the first group of the view
+	 * dropdoen menu.
+	 */
+	public static final String WORKING_SET_GROUP = "workingset"; //$NON-NLS-1$
 
+	/**
+	 * The id of the preferences group that determines whether the preferences
+	 * actions appear in the view dropdown.
+	 */
+	public static final String PREFERENCES_GROUP = "preferences"; //$NON-NLS-1$
+	
 	/**
 	 * The id of the group that determines where workbench object contributions
 	 * should appear. This group will only be used if there is an
@@ -119,15 +146,39 @@ public interface ISynchronizePageConfiguration {
 	 * This is the default group ordering used for the toobar of a page.
 	 */
 	public static final String[] DEFAULT_TOOLBAR_MENU = new String[] { SYNCHRONIZE_GROUP,  NAVIGATE_GROUP, MODE_GROUP };
+	
+	/**
+	 * This is the default group ordering used for the toobar of a page.
+	 */
+	public static final String[] DEFAULT_VIEW_MENU = new String[] { WORKING_SET_GROUP,  SYNCHRONIZE_GROUP, PREFERENCES_GROUP };
 
+	/**
+	 * Return the particpant associated with the page to shich this configuration
+	 * is associated.
+	 * @return the particpant
+	 */
 	public abstract ISynchronizeParticipant getParticipant();
 	
+	/**
+	 * Return the site which provieds access to certain workbench
+	 * services.
+	 * @return the page site
+	 */
 	public abstract ISynchronizePageSite getSite();
-	
-	public StructuredViewerAdvisor getAdvisor();
 
+	/**
+	 * Add a property change listener to the configuration.
+	 * Registered listeners will receive notification when 
+	 * any property changes.
+	 * @param listener a property change listener
+	 */
 	public abstract void addPropertyChangeListener(IPropertyChangeListener listener);
 
+	/**
+	 * Remove the registered change listener. Removing an unregistered listener
+	 * has no effects.
+	 * @param listener a property change listener
+	 */
 	public abstract void removePropertyChangeListener(IPropertyChangeListener listener);
 
 	/**
@@ -157,4 +208,11 @@ public interface ISynchronizePageConfiguration {
 	 * @param contribution an action contribution
 	 */
 	public abstract void addActionContribution(IActionContribution contribution);
+
+	/**
+	 * Remove a previously registered action contribution. Removing
+	 * a contribution that is not registered has no effect.
+	 * @param contribution an action contributio
+	 */
+	public abstract void removeActionContribution(IActionContribution contribution);
 }

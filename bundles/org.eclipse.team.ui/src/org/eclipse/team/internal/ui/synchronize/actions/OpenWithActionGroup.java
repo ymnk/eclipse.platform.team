@@ -75,7 +75,7 @@ public class OpenWithActionGroup extends ActionGroup {
 		
 		if(resource.getType() != IResource.FILE) return;
 		
-		menu.insertAfter(groupId, openInCompareAction);
+		menu.appendToGroup(groupId, openInCompareAction);
 		
 		if(!((resource.exists()))) {
 			return;
@@ -83,7 +83,7 @@ public class OpenWithActionGroup extends ActionGroup {
 		
 		if (openFileAction != null) {
 			openFileAction.selectionChanged(selection);
-			menu.insertAfter(groupId, openFileAction);
+			menu.appendToGroup(groupId, openFileAction);
 		}
 		
 		IWorkbenchSite ws = site.getWorkbenchSite();
@@ -91,7 +91,7 @@ public class OpenWithActionGroup extends ActionGroup {
 			MenuManager submenu =
 				new MenuManager(ResourceNavigatorMessages.getString("ResourceNavigator.openWith")); //$NON-NLS-1$
 			submenu.add(new OpenWithMenu(ws.getPage(), resource));
-			menu.insertAfter(groupId, submenu);
+			menu.appendToGroup(groupId, submenu);
 		}
 	}
 

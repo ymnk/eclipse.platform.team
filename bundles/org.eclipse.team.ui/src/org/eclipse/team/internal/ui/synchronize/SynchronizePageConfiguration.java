@@ -12,31 +12,23 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jface.action.*;
+import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.util.*;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.swt.events.MenuEvent;
-import org.eclipse.swt.events.MenuListener;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.ui.IWorkbenchPartSite;
-import org.eclipse.ui.IWorkbenchSite;
-import org.eclipse.ui.internal.PluginAction;
+import org.eclipse.ui.IActionBars;
 
 /**
  * Concrete implementation of the ISynchronizePageConfiguration.
  */
-public abstract class SynchronizePageConfiguration implements ISynchronizePageConfiguration {
+public abstract class SynchronizePageConfiguration implements ISynchronizePageConfiguration, IActionContribution {
 
 	private ISynchronizeParticipant participant;
 	private ISynchronizePageSite site;
 	private ListenerList propertyChangeListeners = new ListenerList();
 	private ListenerList actionContributions = new ListenerList();
 	private Map properties = new HashMap();
-	private StructuredViewerAdvisor advisor;
 	
 	/**
 	 * Create a configuration for creating a page from the given particpant.
@@ -72,17 +64,6 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 */
 	public void setSite(ISynchronizePageSite site) {
 		this.site = site;
-	}
-	
-	public StructuredViewerAdvisor getAdvisor() {
-		return advisor;
-	}
-	
-	/**
-	 * @param advisor
-	 */
-	public void setAdvisor(StructuredViewerAdvisor advisor) {
-		this.advisor = advisor;
 	}
 	
 	/* (non-Javadoc)
@@ -129,6 +110,15 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#removeActionContribution(org.eclipse.team.ui.synchronize.IActionContribution)
+	 */
+	public void removeActionContribution(IActionContribution contribution) {
+		synchronized(actionContributions) {
+			actionContributions.remove(contribution);
+		}
+	}
+	
 	private void firePropertyChange(String key, Object oldValue, Object newValue) {
 		Object[] listeners;
 		synchronized(propertyChangeListeners) {
@@ -148,98 +138,30 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 		}
 	}
 	
-	public void initialize(StructuredViewerAdvisor advisor) {
-		initializeViewer(advisor.getViewer());
-	}
-	
-	private void initializeViewer(StructuredViewer viewer) {
-		hookContextMenu(viewer);
-	}
-	
-	/**
-	 * Method invoked from <code>initializeViewer(StructuredViewer)</code>
-	 * in order to configure the viewer to call <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
-	 * when a context menu is being displayed in viewer.
-	 * 
-	 * @param viewer the viewer being initialized
-	 * @see fillContextMenu(StructuredViewer, IMenuManager)
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
-	private void hookContextMenu(final StructuredViewer viewer) {
-		String targetID;
-		Object o = getProperty(P_OBJECT_CONTRIBUTION_ID);
-		if (o instanceof String) {
-			targetID = (String)o;
-		} else {
-			targetID = null;
-		}
-		final MenuManager menuMgr = new MenuManager(targetID); //$NON-NLS-1$
-		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener() {
-	
-			public void menuAboutToShow(IMenuManager manager) {
-				fillContextMenu(viewer, manager);
-			}
-		});
-		Menu menu = menuMgr.createContextMenu(viewer.getControl());
-		menu.addMenuListener(new MenuListener() {
-	
-			public void menuHidden(MenuEvent e) {
-			}
-	
-			// Hack to allow action contributions to update their
-			// state before the menu is shown. This is required when
-			// the state of the selection changes and the contributions
-			// need to update enablement based on this.
-			public void menuShown(MenuEvent e) {
-				IContributionItem[] items = menuMgr.getItems();
-				for (int i = 0; i < items.length; i++) {
-					IContributionItem item = items[i];
-					if (item instanceof ActionContributionItem) {
-						IAction actionItem = ((ActionContributionItem) item).getAction();
-						if (actionItem instanceof PluginAction) {
-							((PluginAction) actionItem).selectionChanged(viewer.getSelection());
-						}
-					}
+	public void initialize(final ISynchronizePageConfiguration configuration) {
+		final Object[] listeners = actionContributions.getListeners();
+		for (int i= 0; i < listeners.length; i++) {
+			final IActionContribution contribution = (IActionContribution)listeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Logged by Platform
 				}
-			}
-		});
-		viewer.getControl().setMenu(menu);
-		if (targetID != null) {
-			IWorkbenchSite workbenchSite = site.getWorkbenchSite();
-			IWorkbenchPartSite ws = null;
-			if (workbenchSite instanceof IWorkbenchPartSite)
-				ws = (IWorkbenchPartSite)workbenchSite;
-			if (ws == null) 
-				ws = Utils.findSite();
-			if (ws != null) {
-				ws.registerContextMenu(targetID, menuMgr, viewer);
-			} else {
-				TeamUIPlugin.log(IStatus.ERROR, "Cannot add menu contributions because the site cannot be found: " + targetID, null); //$NON-NLS-1$
-			}
+				public void run() throws Exception {
+					contribution.initialize(configuration);
+				}
+			});
 		}
 	}
 	
 	/**
-	 * Callback that is invoked when a context menu is about to be shown in the
-	 * viewer. Subsclasses must implement to contribute menus. Also, menus can
-	 * contributed by creating a viewer contribution with a <code>targetID</code> 
-	 * that groups sets of actions that are related.
-	 * 
-	 * @param viewer the viewer in which the context menu is being shown.
-	 * @param manager the menu manager to which actions can be added.
+	 * Callback invoked from the advisor each time the context menu is
+	 * about to be shown.
+	 * @param manager the context menu manager
 	 */
-	private void fillContextMenu(StructuredViewer viewer, final IMenuManager manager) {
-		// Populate the menu with the configured groups
-		Object o = getProperty(P_CONTEXT_MENU);
-		if (!(o instanceof String[])) {
-			o = DEFAULT_CONTEXT_MENU;
-		}
-		String[] groups = (String[])o;
-		for (int i = 0; i < groups.length; i++) {
-			String group = groups[i];
-			manager.add(new Separator(group));
-		}
-		// Ask contributions to fill the menu
+	public void fillContextMenu(final IMenuManager manager) {
 		final Object[] listeners = actionContributions.getListeners();
 		for (int i= 0; i < listeners.length; i++) {
 			final IActionContribution contribution = (IActionContribution)listeners[i];
@@ -249,6 +171,43 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 				}
 				public void run() throws Exception {
 					contribution.fillContextMenu(manager);
+				}
+			});
+		}
+	}
+
+	/**
+	 * Callback invoked from the page to fil the action bars.
+	 * @param actionBars the action bars of the view
+	 */
+	public void setActionBars(final IActionBars actionBars) {
+		final Object[] listeners = actionContributions.getListeners();
+		for (int i= 0; i < listeners.length; i++) {
+			final IActionContribution contribution = (IActionContribution)listeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Logged by Platform
+				}
+				public void run() throws Exception {
+					contribution.setActionBars(actionBars);
+				}
+			});
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
+	 */
+	public void dispose() {
+		final Object[] listeners = actionContributions.getListeners();
+		for (int i= 0; i < listeners.length; i++) {
+			final IActionContribution contribution = (IActionContribution)listeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Logged by Platform
+				}
+				public void run() throws Exception {
+					contribution.dispose();
 				}
 			});
 		}

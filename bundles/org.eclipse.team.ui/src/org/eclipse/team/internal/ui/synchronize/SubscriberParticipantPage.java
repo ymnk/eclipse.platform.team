@@ -10,22 +10,22 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.*;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberPageConfiguration;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 
@@ -72,12 +72,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	
 	// Toolbar and status line actions for this page, note that context menu actions shown in 
 	// the changes viewer are contributed via the viewer and not the page.
-	private NavigateAction gotoNext;
-	private NavigateAction gotoPrevious;
-	private Action configureSchedule;
-	private SyncViewerShowPreferencesAction showPreferences;
-	private Action refreshAllAction;
-	private Action collapseAll;
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
 	private StructuredViewerAdvisor viewerAdvisor;
@@ -117,57 +111,10 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		this.changesSection = new ChangesSection(composite, this, configuration);
 		this.changesViewer = createChangesViewer(changesSection.getComposite());
 		changesSection.setViewer(changesViewer);
-		
-		// toolbar
-		INavigatable nav = new INavigatable() {
-			public boolean gotoDifference(boolean next) {
-				return viewerAdvisor.navigate(next);
-			}
-		};
-		gotoNext = new NavigateAction(configuration.getPart(), configuration.getParticipant().getName(), nav, true /*next*/);		
-		gotoPrevious = new NavigateAction(configuration.getPart(), configuration.getParticipant().getName(), nav, false /*previous*/);
-		
-		if(participant.doesSupportSynchronize()) {
-			refreshAllAction = new Action() {
-				public void run() {
-					// Prime the refresh wizard with an appropriate initial selection
-					final SubscriberRefreshWizard wizard = new SubscriberRefreshWizard(participant);
-					IWorkingSet set = configuration.getWorkingSet();
-					if(set != null) {
-						int scopeHint = SubscriberRefreshWizard.SCOPE_WORKING_SET;
-						wizard.setScopeHint(scopeHint);
-					}					
-					WizardDialog dialog = new WizardDialog(getShell(), wizard);
-					dialog.open();
-				}
-			};
-			Utils.initAction(refreshAllAction, "action.refreshWithRemote."); //$NON-NLS-1$
-		}
-		
-		collapseAll = new Action() {
-			public void run() {
-				if (changesViewer == null || !(changesViewer instanceof AbstractTreeViewer)) return;
-				changesViewer.getControl().setRedraw(false);		
-				((AbstractTreeViewer)changesViewer).collapseToLevel(changesViewer.getInput(), TreeViewer.ALL_LEVELS);
-				changesViewer.getControl().setRedraw(true);
-			}
-		};
-		Utils.initAction(collapseAll, "action.collapseAll."); //$NON-NLS-1$
-		
-		configureSchedule = new Action() {
-			public void run() {
-				ConfigureRefreshScheduleDialog d = new ConfigureRefreshScheduleDialog(
-						getShell(), participant.getRefreshSchedule());
-				d.setBlockOnOpen(false);
-				d.open();
-			}
-		};
-		Utils.initAction(configureSchedule, "action.configureSchedulel."); //$NON-NLS-1$
-		
+				
 		// view menu
 		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), participant.toString(), this, configuration.getWorkingSet());		
-		showPreferences = new SyncViewerShowPreferencesAction(getShell());		
-		statusLine = new StatusLineContributionGroup(getShell(), this, configuration, workingSetGroup);
+		statusLine = new StatusLineContributionGroup(getShell(), configuration, workingSetGroup);
 		
 		participant.addPropertyChangeListener(this);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
@@ -183,6 +130,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	public void init(ISynchronizePageSite site) {
 		this.site = site;
 		configuration.setSite(site);
+		((IActionContribution)configuration).initialize(configuration);
 	}
 	
 	public ISynchronizePageSite getSynchronizePageSite() {
@@ -205,6 +153,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		composite.dispose();
 		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 		participant.removePropertyChangeListener(this);
+		((IActionContribution)configuration).dispose();
 	}
 
 	/*
@@ -252,36 +201,50 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 */
 	public void setActionBars(IActionBars actionBars) {
 		if(actionBars != null) {
-			IToolBarManager manager = actionBars.getToolBarManager();			
+			IToolBarManager manager = actionBars.getToolBarManager();
 			
-			// toolbar
-			if(refreshAllAction != null) {
-				manager.add(refreshAllAction);
+			// Populate the toobar menu with the configured groups
+			Object o = configuration.getProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU);
+			if (!(o instanceof String[])) {
+				o = ISynchronizePageConfiguration.DEFAULT_TOOLBAR_MENU;
 			}
-			manager.add(new Separator());	
-			if(gotoNext != null) {
-				manager.add(gotoNext);
-				manager.add(gotoPrevious);
+			String[] groups = (String[])o;
+			for (int i = 0; i < groups.length; i++) {
+				String group = groups[i];
+				manager.add(new Separator(group));
 			}
-			manager.add(collapseAll);
-			manager.add(new Separator());
 
 			// view menu
 			IMenuManager menu = actionBars.getMenuManager();
-			workingSetGroup.fillActionBars(actionBars);
-			menu.add(new Separator());
-			menu.add(new Separator());
-			menu.add(new Separator("others")); //$NON-NLS-1$
-			menu.add(new Separator());
-			menu.add(configureSchedule);
-			menu.add(new Separator());
-			menu.add(showPreferences);
+			
+			// Populate the view dropdown menu with the configured groups
+			o = configuration.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
+			if (!(o instanceof String[])) {
+				o = ISynchronizePageConfiguration.DEFAULT_VIEW_MENU;
+			}
+			groups = (String[])o;
+			int start = 0;
+			if (groups.length > 0 && groups[1].equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
+				// Special handling for working set group
+				workingSetGroup.fillActionBars(actionBars);
+				menu.add(new Separator());
+				menu.add(new Separator());
+				menu.add(new Separator("others")); //$NON-NLS-1$
+				menu.add(new Separator());
+				start = 1;
+			}
+			for (int i = start; i < groups.length; i++) {
+				String group = groups[i];
+				manager.add(new Separator(group));
+				
+			}
 			
 			// status line
 			statusLine.fillActionBars(actionBars);
 			
 			// allow the advisor to contribute
 			getViewerAdvisor().setActionBars(actionBars);
+			((IActionContribution)configuration).setActionBars(actionBars);
 		}		
 	}
 
@@ -312,7 +275,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		TreeViewer viewer = new TreeViewerAdvisor.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(data);
-		viewerAdvisor = new TreeViewerAdvisor(configuration.getParticipant().getId(), configuration.getPart().getSite(), getFilteredCollector().getSyncInfoTree());
+		viewerAdvisor = new TreeViewerAdvisor(configuration);
 		viewerAdvisor.initializeViewer(viewer);
 		getSynchronizePageSite().setSelectionProvider(viewer);		
 		return viewer;

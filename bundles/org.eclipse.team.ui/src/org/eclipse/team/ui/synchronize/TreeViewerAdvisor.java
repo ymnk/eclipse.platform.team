@@ -10,14 +10,17 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
+import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
+import org.eclipse.ui.*;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
 /**
@@ -35,7 +38,12 @@ import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
  * <p>
  * @since 3.0
  */
-public class TreeViewerAdvisor extends StructuredViewerAdvisor {
+public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActionContribution{
+	
+	private ExpandAllAction expandAllAction;
+	private Action collapseAll;
+	private NavigateAction gotoNext;
+	private NavigateAction gotoPrevious;
 	
 	/**
 	 * Interface used to implement navigation for tree viewers. This interface is used by
@@ -93,8 +101,9 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	 * case a site will be found using the default workbench page.
 	 * @param set the set of <code>SyncInfo</code> objects that are to be shown to the user.
 	 */
-	public TreeViewerAdvisor(ISynchronizePageConfiguration configuration, SyncInfoTree set) {
-		super(configuration, set);
+	public TreeViewerAdvisor(ISynchronizePageConfiguration configuration) {
+		super(configuration);
+		configuration.addActionContribution(this);
 	}
 	
 	/* (non-Javadoc)
@@ -329,5 +338,71 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 			return false;
 		}
 		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
+	 */
+	public void initialize(ISynchronizePageConfiguration configuration) {
+		final StructuredViewer viewer = getViewer();
+		if (viewer instanceof AbstractTreeViewer) {
+			
+			expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
+			Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
+			
+			collapseAll = new Action() {
+				public void run() {
+					if (viewer == null || viewer.getControl().isDisposed() || !(viewer instanceof AbstractTreeViewer)) return;
+					viewer.getControl().setRedraw(false);		
+					((AbstractTreeViewer)viewer).collapseToLevel(viewer.getInput(), TreeViewer.ALL_LEVELS);
+					viewer.getControl().setRedraw(true);
+				}
+			};
+			Utils.initAction(collapseAll, "action.collapseAll."); //$NON-NLS-1$
+			
+			INavigatable nav = new INavigatable() {
+				public boolean gotoDifference(boolean next) {
+					return TreeViewerAdvisor.this.navigate(next);
+				}
+			};
+			ISynchronizeParticipant participant = configuration.getParticipant();
+			ISynchronizePageSite site = configuration.getSite();
+			gotoNext = new NavigateAction(site, participant.getName(), nav, true /*next*/);		
+			gotoPrevious = new NavigateAction(site, participant.getName(), nav, false /*previous*/);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
+	 */
+	public void fillContextMenu(IMenuManager manager) {
+		if (expandAllAction != null  && manager.find(ISynchronizePageConfiguration.NAVIGATE_GROUP) != null) {
+			manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAllAction);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
+	 */
+	public void setActionBars(IActionBars actionBars) {
+		super.setActionBars(actionBars);
+		if(actionBars != null) {
+			IToolBarManager manager = actionBars.getToolBarManager();
+			if (manager.find(ISynchronizePageConfiguration.NAVIGATE_GROUP) != null) {
+				if(gotoNext != null) {
+					manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, gotoNext);
+					manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, gotoPrevious);
+				}
+				manager.appendToGroup(ISynchronizePageConfiguration.NAVIGATE_GROUP, collapseAll);
+			}
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
+	 */
+	public void dispose() {
+		super.dispose();
+		getConfiguration().removeActionContribution(this);
 	}
 }

@@ -11,13 +11,9 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.synchronize.actions.OpenWithActionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.RefactorActionGroup;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.IActionContribution;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.*;
 
 /**
@@ -28,17 +24,11 @@ public class SynchronizePageActions implements IActionContribution {
 	// Actions
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
-	private ExpandAllAction expandAllAction;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(ISynchronizePageConfiguration configuration) {
-		final StructuredViewer viewer = configuration.getAdviser().getViewer();
-		if (viewer instanceof AbstractTreeViewer) {
-			expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
-			Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
-		}
 		ISynchronizePageSite site = configuration.getSite();
 		IWorkbenchSite ws = site.getWorkbenchSite();
 		if (ws instanceof IViewSite) {
@@ -50,14 +40,11 @@ public class SynchronizePageActions implements IActionContribution {
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#fillContextMenu(org.eclipse.jface.action.IMenuManager)
 	 */
 	public void fillContextMenu(IMenuManager manager) {
-		if (openWithActions != null && manager.find(FILE_MENU) != null) {
-			openWithActions.fillContextMenu(manager, FILE_MENU);
+		if (openWithActions != null && manager.find(ISynchronizePageConfiguration.FILE_GROUP) != null) {
+			openWithActions.fillContextMenu(manager, ISynchronizePageConfiguration.FILE_GROUP);
 		}
-		if (refactorActions != null && manager.find(EDIT_MENU) != null) {
-			refactorActions.fillContextMenu(manager, EDIT_MENU);
-		}
-		if (expandAllAction != null  && manager.find(NAVIGATE_MENU) != null) {
-			manager.insertAfter(NAVIGATE_MENU, expandAllAction);
+		if (refactorActions != null && manager.find(ISynchronizePageConfiguration.EDIT_GROUP) != null) {
+			refactorActions.fillContextMenu(manager, ISynchronizePageConfiguration.EDIT_GROUP);
 		}
 	}
 	/* (non-Javadoc)

@@ -21,11 +21,9 @@ import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberPageConfiguration;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscribers.*;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.actions.ActionGroup;
@@ -49,12 +47,9 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private SubscriberPageConfiguration configuration;
-	private SubscriberParticipantPage page;
+	private ISubscriberPageConfiguration configuration;
 
-	public StatusLineContributionGroup(final Shell shell, SubscriberParticipantPage page, SubscriberPageConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
-		super();
-		this.page = page;
+	public StatusLineContributionGroup(final Shell shell, ISubscriberPageConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
 		this.configuration = configuration;
 		this.incoming = createStatusLineContribution(INCOMING_ID, SubscriberPageConfiguration.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
 		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberPageConfiguration.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$

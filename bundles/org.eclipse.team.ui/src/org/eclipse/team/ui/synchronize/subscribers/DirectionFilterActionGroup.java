@@ -17,7 +17,6 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionGroup;
 
@@ -40,7 +39,7 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	private DirectionFilterAction bothMode;
 	private DirectionFilterAction conflictsMode;
 	
-	private SubscriberPageConfiguration configuration;
+	private ISubscriberPageConfiguration configuration;
 	
 	/**
 	 * An action filter for a specific mode. 
@@ -82,7 +81,7 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @param participant the participant showing this group 
 	 * @param supportedModes the modes to be shown
 	 */
-	public DirectionFilterActionGroup(SubscriberPageConfiguration configuration) {		
+	public DirectionFilterActionGroup(ISubscriberPageConfiguration configuration) {		
 		this.configuration = configuration;
 		createActions();
 		configuration.addPropertyChangeListener(this);
@@ -135,10 +134,10 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
 	 */
-	public void fillToolBar(IToolBarManager toolBar) {
+	public void fillToolBar(String groupId, IToolBarManager toolBar) {
 		for (Iterator it = actions.iterator(); it.hasNext();) {
 			DirectionFilterAction action = (DirectionFilterAction) it.next();
-				toolBar.add(action);
+				toolBar.appendToGroup(groupId, action);
 		}
 	}
 	
@@ -157,7 +156,7 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		if(event.getProperty().equals(SubscriberPageConfiguration.P_SYNCVIEWPAGE_MODE)) {
+		if(event.getProperty().equals(SubscriberPageConfiguration.P_MODE)) {
 			Integer mode = (Integer)event.getNewValue();
 			checkMode(mode.intValue());
 		}
