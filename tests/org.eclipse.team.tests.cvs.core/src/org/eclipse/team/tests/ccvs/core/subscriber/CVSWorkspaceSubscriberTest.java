@@ -1194,4 +1194,11 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 				SyncInfo.IN_SYNC, /* conflicting deletions are handled automatically */
 				SyncInfo.IN_SYNC});
 	}
+	
+	public void testProjectClose() throws TeamException, CoreException {
+		IProject project = createProject(new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		project.close(null);
+		// TODO: dirty some resources and some incoming and ensure entries are removed
+		assertProjectRemoved(getWorkspaceSubscriber(), project);
+	}
 }
