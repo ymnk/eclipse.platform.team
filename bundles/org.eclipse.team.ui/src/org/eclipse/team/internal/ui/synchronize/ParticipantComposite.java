@@ -19,6 +19,8 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.widgets.FormSection;
+import org.eclipse.team.internal.ui.widgets.FormWidgetFactory;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
@@ -35,14 +37,72 @@ public class ParticipantComposite extends Composite {
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 
 	private ISynchronizeView view;
+	private FormSection dropDownSection;
 	
 	public ParticipantComposite(Composite parent, ISynchronizeParticipant participant, ISynchronizeView view, int style) {
 		super(parent, style);
 		this.participant = participant;		
 		this.background = new Color(parent.getDisplay(), new RGB(255, 255, 255));
 		this.participantImage = participant.getImageDescriptor().createImage();
-		this.view = view;
+		this.view = view;		
+		this.dropDownSection = new FormSection() {
+			/* (non-Javadoc)
+			 * @see org.eclipse.team.internal.ui.widgets.FormSection#getDescription()
+			 */
+			public String getDescription() {
+				return "This is the place where the resources are";
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.team.internal.ui.widgets.FormSection#getHeaderText()
+			 */
+			public String getHeaderText() {
+				return "Resources are here";
+			}
+		
+			/* (non-Javadoc)
+			 * @see org.eclipse.team.internal.ui.widgets.FormSection#createClient(org.eclipse.swt.widgets.Composite, org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
+			 */
+			public Composite createClient(Composite parent, FormWidgetFactory factory) {
+				Composite top = factory.createComposite(parent);
+				GridLayout layout = new GridLayout();
+				layout.numColumns = 1;
+				//layout.verticalSpacing = 9;
+				//layout.horizontalSpacing = 6;
+				top.setLayout(layout);
+				top.setBackground(new Color(top.getDisplay(), new RGB(134,145,56)));
+				//top.setBackground(getBackgroundColor());
+				{Label label = new Label(top, SWT.NONE);
+				label.setText("Hello!!!");}
+				{Label label = new Label(top, SWT.NONE);
+				label.setText("Hello!!!");}
+				{Label label = new Label(top, SWT.NONE);
+				label.setText("Hello!!!");}
+				{Label label = new Label(top, SWT.NONE);
+				label.setText("Hello!!!");}
+				//factory.paintBordersFor(top);
+				return top;				
+			}
+			protected void reflow() {
+				super.reflow();
+				setRedraw(false);
+				getParent().setRedraw(false);
+				layout(true);
+				getParent().layout(true);
+				setRedraw(true);
+				getParent().setRedraw(true);
+			}
+		};
+		dropDownSection.setCollapsable(true);
+		dropDownSection.setCollapsed(false);
 		createComposite(this);
+		//dropDownSection.setDescription("asdkjfh aklhfd kahsdf kjgdaskjhsagf kjgsdaf j ");
+		
+//		Control control = dropDownSection.createControl(this, factory);
+//		control.setBackground(new Color(parent.getDisplay(), new RGB(0,0,0)));
+//		GridData gd = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
+//		control.setLayoutData(gd);
+		
 	}
 	
 	protected Composite createComposite(Composite area) {
@@ -100,14 +160,21 @@ public class ParticipantComposite extends Composite {
 					label.setBackground(getBackgroundColor());
 				}
 				{
-					final Label label = new Label(composite_1, SWT.NONE);
-					label.setText("Resources:");
-					label.setBackground(getBackgroundColor());
+//					final Label label = new Label(composite_1, SWT.NONE);
+//					label.setText("Resources:");
+//					label.setBackground(getBackgroundColor());
+					FormWidgetFactory factory = new FormWidgetFactory(getDisplay());
+					factory.setBackgroundColor(getBackgroundColor());
+					Control control = dropDownSection.createControl(composite_1, factory);
+		control.setBackground(new Color(composite_1.getDisplay(), new RGB(0,0,0)));
+		GridData gd = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
+		gd.horizontalSpan = 2;
+		control.setLayoutData(gd);
 				}
 				{
-					final Combo combo = new Combo(composite_1, SWT.READ_ONLY);
-					combo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-					combo.setBackground(getBackgroundColor());
+//					final Combo combo = new Combo(composite_1, SWT.READ_ONLY);
+//					combo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+//					combo.setBackground(getBackgroundColor());
 				}
 			}
 			{
