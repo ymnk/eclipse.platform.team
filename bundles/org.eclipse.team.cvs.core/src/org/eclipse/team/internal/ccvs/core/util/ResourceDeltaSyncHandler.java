@@ -121,7 +121,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 				if (info.isAdded()) {
 					mFile.unmanage(null);
 				} else {
-					mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.DELETED_PREFIX + info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType()));
+					mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.DELETED_PREFIX + info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions()));
 				}
 			}
 		} catch (CVSException e) {
@@ -139,7 +139,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 			if (mFile.isManaged()) {
 				ResourceSyncInfo info = mFile.getSyncInfo();
 				if (info.isDeleted()) {
-					mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType()));
+					mFile.setSyncInfo((ResourceSyncInfo)info.clone());
 				} else if (info.isDirectory()) {
 					// XXX This is a gender change against the server! We should prevent this creation.
 					mFile.unmanage(null);
@@ -165,7 +165,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 				if (fromInfo.isAdded()) {
 					fromFile.unmanage(null);
 				} else {
-					fromFile.setSyncInfo(new ResourceSyncInfo(fromInfo.getName(), fromInfo.DELETED_PREFIX + fromInfo.getRevision(), fromInfo.getTimeStamp(), fromInfo.getKeywordMode(), fromInfo.getTag(), fromInfo.getPermissions(), fromInfo.getType()));
+					fromFile.setSyncInfo(new ResourceSyncInfo(fromInfo.getName(), fromInfo.DELETED_PREFIX + fromInfo.getRevision(), fromInfo.getTimeStamp(), fromInfo.getKeywordMode(), fromInfo.getTag(), fromInfo.getPermissions()));
 				}
 			}
 			
@@ -174,10 +174,10 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 			if (toFile.isManaged()) {
 				ResourceSyncInfo info = toFile.getSyncInfo();
 				if (info.isDeleted()) {
-					toFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType()));
+					toFile.setSyncInfo((ResourceSyncInfo)info.clone());
 				}
 			} else if (fromInfo != null) {
-				toFile.setSyncInfo(new ResourceSyncInfo(toFile.getName(), ResourceSyncInfo.ADDED_REVISION, ResourceSyncInfo.NULL_TIMESTAMP, fromInfo.getKeywordMode(), fromInfo.getTag(), fromInfo.getPermissions(), ResourceSyncInfo.DUMMY_SYNC));
+				toFile.setSyncInfo(new ResourceSyncInfo(toFile.getName(), ResourceSyncInfo.ADDED_REVISION, ResourceSyncInfo.DUMMY_DATE, fromInfo.getKeywordMode(), fromInfo.getTag(), fromInfo.getPermissions()));
 			}
 			
 		} catch (CVSException e) {

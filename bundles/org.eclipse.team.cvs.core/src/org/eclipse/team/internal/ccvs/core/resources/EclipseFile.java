@@ -64,20 +64,19 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	/*
 	 * @see ICVSFile#getTimeStamp()
 	 */
-	public long getTimeStamp() {						
-		return getIOFile().lastModified();
+	public Date getTimeStamp() {						
+		return new Date(getIOFile().lastModified());
 	}
  
 	/*
 	 * @see ICVSFile#setTimeStamp(String)
 	 */
-	public void setTimeStamp(long date) throws CVSException {
-		long timestamp = date;
-		if (date==NULL_TIMESTAMP) {
+	public void setTimeStamp(Date date) throws CVSException {
+		if (date==null) {
 			// get the current time
-			timestamp = new Date().getTime();
+			date = new Date();
 		}
-		getIOFile().setLastModified(timestamp);
+		getIOFile().setLastModified(date.getTime());
 		try {
 			// Needed for workaround to Platform Core Bug #
 			resource.refreshLocal(IResource.DEPTH_ZERO, null);
@@ -103,7 +102,7 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 			ResourceSyncInfo info = getSyncInfo();
 			if (info.isAdded()) return false;
 			if (info.isDeleted()) return true;
-			return getTimeStamp() != info.getTimeStamp();
+			return !getTimeStamp().equals(info.getTimeStamp());
 		}
 	}
 
@@ -115,7 +114,7 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 			return true;
 		} else {
 			ResourceSyncInfo info = getSyncInfo();
-			return getTimeStamp() != info.getTimeStamp();
+			return !getTimeStamp().equals(info.getTimeStamp());
 		}
 	}
 	

@@ -56,7 +56,7 @@ public class CVSFilePropertiesPage extends PropertyPage {
 			createLabel(composite, Policy.bind("CVSFilePropertiesPage.baseRevision"));
 			createLabel(composite, syncInfo.getRevision());
 			createLabel(composite, Policy.bind("CVSFilePropertiesPage.baseTimestamp"));
-			createLabel(composite, CVSDateFormatter.dateToEntryLine(new Date(syncInfo.getTimeStamp())));
+			createLabel(composite, CVSDateFormatter.dateToEntryLine(syncInfo.getTimeStamp()));
 			
 			// Dirty and Modified
 			createLabel(composite, Policy.bind("CVSFilePropertiesPage.dirty"));

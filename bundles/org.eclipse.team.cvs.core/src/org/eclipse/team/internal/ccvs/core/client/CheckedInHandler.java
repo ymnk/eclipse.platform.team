@@ -60,10 +60,10 @@ class CheckedInHandler extends ResponseHandler {
 		ResourceSyncInfo newInfo;
 		
 		if (changeFile) {
-			newInfo = new ResourceSyncInfo(entryLine, null, 0, ResourceSyncInfo.DUMMY_SYNC);
+			newInfo = new ResourceSyncInfo(entryLine, null, ResourceSyncInfo.DUMMY_DATE);
 		} else {
 			ResourceSyncInfo fileInfo = mFile.getSyncInfo();
-			newInfo = new ResourceSyncInfo(entryLine, fileInfo.getPermissions(), mFile.getTimeStamp(), ResourceSyncInfo.REGULAR_SYNC);
+			newInfo = new ResourceSyncInfo(entryLine, fileInfo.getPermissions(), mFile.getTimeStamp());
 		}
 
 		mFile.setSyncInfo(newInfo);

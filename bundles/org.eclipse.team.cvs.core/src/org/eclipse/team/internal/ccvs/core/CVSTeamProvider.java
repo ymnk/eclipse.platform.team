@@ -701,7 +701,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 									monitor.subTask(Policy.bind("CVSTeamProvider.updatingFile", info.getName())); //$NON-NLS-1$
 									file.setSyncInfo(new ResourceSyncInfo(info.getName(), 
 									(info.isDeleted() ? info.DELETED_PREFIX : "") + info.getRevision(), //$NON-NLS-1$
-									info.getTimeStamp(), info.getKeywordMode(), tag, info.getPermissions(), info.getType()));
+									info.getTimeStamp(), info.getKeywordMode(), tag, info.getPermissions()));
 								}
 							};
 							public void visitFolder(ICVSFolder folder) throws CVSException {
@@ -1028,7 +1028,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 					if (info.isAdded()) {
 						ResourceSyncInfo newInfo = new ResourceSyncInfo(
 							info.getName(), info.getRevision(), info.getTimeStamp(), toKSubst.toMode(),
-							info.getTag(), info.getPermissions(), info.getType());
+							info.getTag(), info.getPermissions());
 						mFile.setSyncInfo(newInfo);
 						continue;
 					}
@@ -1177,7 +1177,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 */
 	private static void makeDirty(IFile file) throws CVSException {
 		ICVSFile mFile = CVSWorkspaceRoot.getCVSFileFor(file);
-		mFile.setTimeStamp(ICVSFile.NULL_TIMESTAMP);
+		mFile.setTimeStamp(null /*set the timestamp to current time*/);
 	}
 	
 	/*

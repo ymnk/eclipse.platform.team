@@ -39,7 +39,7 @@ public class NewEntryHandler extends ResponseHandler {
 		ICVSFile mFile = mParent.getFile(fileName);
 
 		ResourceSyncInfo fileInfo = mFile.getSyncInfo();
-		ResourceSyncInfo newInfo = new ResourceSyncInfo(entryLine, fileInfo.getPermissions(), 0, ResourceSyncInfo.DUMMY_SYNC);
+		ResourceSyncInfo newInfo = new ResourceSyncInfo(entryLine, fileInfo.getPermissions(), null);
 		mFile.setSyncInfo(newInfo);
 	}
 }

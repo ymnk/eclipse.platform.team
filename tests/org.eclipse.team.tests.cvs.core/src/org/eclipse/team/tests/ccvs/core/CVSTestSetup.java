@@ -26,6 +26,9 @@ public class CVSTestSetup extends TestSetup {
 	
 	public static CVSRepositoryLocation repository;
 	
+	// allows running those suites that don't require a connection to a server
+	private static boolean DONT_CONNECT = false;
+	
 	// Static initializer for constants
 	static {
 		loadProperties();
@@ -64,6 +67,15 @@ public class CVSTestSetup extends TestSetup {
 		super(test);
 	}
 
+	/**
+	 * Constructor for CVSTestSetup.
+	 */
+	public CVSTestSetup(Test test, boolean dontConnect) {
+		super(test);
+		DONT_CONNECT = dontConnect;
+	}
+
+
 	/*
 	 * Use rsh to delete any contents of the repository and initialize it again
 	 */
@@ -84,8 +96,8 @@ public class CVSTestSetup extends TestSetup {
 		}
 	}
 	
-	public void setUp() throws CVSException {
-		if (repository == null)
+	public void setUp() throws CVSException {		
+		if (repository == null && !DONT_CONNECT)
 			repository = setupRepository(REPOSITORY_LOCATION);
 	}
 
@@ -114,8 +126,6 @@ public class CVSTestSetup extends TestSetup {
 	}
 	
 	public void tearDown() throws CVSException {
-		// Nothing to do here
 	}
-
 }
 

@@ -34,10 +34,10 @@ class TagFileSender extends FileStructureVisitor {
 			// Send the file if appropriate
 			ResourceSyncInfo info = mFile.getSyncInfo();
 			if (info.isDeleted()) {
-				info = new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType());
+				info = new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions());
 			}
 			if (! info.isAdded()) {
-				session.sendEntry(info.getEntryLine(false, mFile.getTimeStamp()));
+				session.sendEntry(info.getServerEntryLine(mFile.getTimeStamp()));
 				boolean binary = info != null && KSubstOption.fromMode(info.getKeywordMode()).isBinary();
 				session.sendIsModified(mFile, binary, monitor);
 			}

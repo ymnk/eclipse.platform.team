@@ -72,7 +72,7 @@ class UpdatedHandler extends ResponseHandler {
 		String entryLine = session.readLine();
 		String permissionsLine = session.readLine();
 		// temporary sync info for parsing the line received from the server
-		ResourceSyncInfo info = new ResourceSyncInfo(entryLine, permissionsLine, ResourceSyncInfo.NULL_TIMESTAMP, ResourceSyncInfo.REGULAR_SYNC);
+		ResourceSyncInfo info = new ResourceSyncInfo(entryLine, permissionsLine, null);
 
 		// clear file update modifiers
 		Date modTime = session.getModTime();
@@ -92,12 +92,12 @@ class UpdatedHandler extends ResponseHandler {
 		if (readOnly) mFile.setReadOnly(true);
 		
 		// Set the timestamp in the file, set the result in the fileInfo
-		long timestamp = ICVSFile.NULL_TIMESTAMP;
+		Date timestamp = ResourceSyncInfo.DUMMY_DATE;
 		if (modTime != null) {
-			timestamp = modTime.getTime();
+			timestamp = modTime;
 		}
 		mFile.setTimeStamp(timestamp);
 		mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(),
-			timestamp, info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType()));
+								   timestamp, info.getKeywordMode(), info.getTag(), info.getPermissions()));
 	}
 }

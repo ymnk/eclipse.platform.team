@@ -32,10 +32,10 @@ class DiffStructureVisitor extends FileStructureVisitor {
 		Policy.checkCanceled(monitor);
 
 		if (mFile.isManaged()) {
-			session.sendEntry(mFile.getSyncInfo().getEntryLine(false));
+			session.sendEntry(mFile.getSyncInfo().getEntryLine(false /*don't include timestamp*/));
 		} else {
-			ResourceSyncInfo info = new ResourceSyncInfo(mFile.getName(), ResourceSyncInfo.ADDED_REVISION, 0, null, null, null, ResourceSyncInfo.REGULAR_SYNC);
-			session.sendEntry(info.getEntryLine(false));
+			ResourceSyncInfo info = new ResourceSyncInfo(mFile.getName(), ResourceSyncInfo.ADDED_REVISION, null, null, null, null);
+			session.sendEntry(info.getEntryLine(false /*don't include timestamp*/));
 			newFile = true;
 		}
 

@@ -149,7 +149,7 @@ public class SyncFileWriter implements IResourceChangeListener {
 		for (int i = 0; i < entries.length; i++) {
 			String line = entries[i];
 			if(!FOLDER_TAG.equals(line) && !"".equals(line)) { //$NON-NLS-1$
-				ResourceSyncInfo info = new ResourceSyncInfo(line, null, ResourceSyncInfo.NULL_TIMESTAMP, ResourceSyncInfo.REGULAR_SYNC);
+				ResourceSyncInfo info = new ResourceSyncInfo(line, null, null);
 				infos.put(info.getName(), info);			
 			}
 		}
@@ -161,11 +161,11 @@ public class SyncFileWriter implements IResourceChangeListener {
 				String line = entriesLog[i];
 				if (line.startsWith(ADD_TAG)) {
 					line = line.substring(ADD_TAG.length());
-					ResourceSyncInfo info = new ResourceSyncInfo(line, null, ResourceSyncInfo.NULL_TIMESTAMP, ResourceSyncInfo.REGULAR_SYNC);
+					ResourceSyncInfo info = new ResourceSyncInfo(line, null, null);
 					infos.put(info.getName(), info);
 				} else if (line.startsWith(REMOVE_TAG)) {
 					line = line.substring(REMOVE_TAG.length());
-					ResourceSyncInfo info = new ResourceSyncInfo(line, null, ResourceSyncInfo.NULL_TIMESTAMP, ResourceSyncInfo.REGULAR_SYNC);
+					ResourceSyncInfo info = new ResourceSyncInfo(line, null, null);
 					infos.remove(info.getName());
 				}
 			}

@@ -7,9 +7,9 @@ package org.eclipse.team.ccvs.core;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 
 /**
@@ -26,8 +26,6 @@ public interface ICVSFile extends ICVSResource {
 	public static final int MERGED = 2;
 	public static final int UPDATE_EXISTING = 3;
 	public static final int CREATED = 4;
-	
-	public static final long NULL_TIMESTAMP = 0;
 	
 	/**
 	 * Answers the size of the file. 
@@ -76,7 +74,7 @@ public interface ICVSFile extends ICVSResource {
 	 * 
 	 * @throws CVSFileNotFoundException if exists() = false
 	 */
-	long getTimeStamp();
+	Date getTimeStamp();
 
 	/**
 	 * Sets the current timestamp for this file. The supplied date must be in the
@@ -87,7 +85,7 @@ public interface ICVSFile extends ICVSResource {
 	 * If the date is <code>null</code> then the current time is used as 
 	 * the timestamp.
 	 */
-	void setTimeStamp(long date) throws CVSException;
+	void setTimeStamp(Date date) throws CVSException;
 	
 	/**
 	 * Answers <code>true</code> if the file differs from its base. If the file has no

@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -119,7 +120,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	}
 	
 	public RemoteFile(RemoteFolder parent, int workspaceSyncState, String name, String revision, CVSTag tag) {
-		this(parent, workspaceSyncState, new ResourceSyncInfo(name, revision, ResourceSyncInfo.NULL_TIMESTAMP, ResourceSyncInfo.USE_SERVER_MODE, tag, ResourceSyncInfo.DEFAULT_PERMISSIONS, ResourceSyncInfo.REGULAR_SYNC));
+		this(parent, workspaceSyncState, new ResourceSyncInfo(name, revision, ResourceSyncInfo.DUMMY_DATE, ResourceSyncInfo.USE_SERVER_MODE, tag, ResourceSyncInfo.DEFAULT_PERMISSIONS));
 	}
 	
 	public RemoteFile(RemoteFolder parent, ResourceSyncInfo info) {
@@ -293,7 +294,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	 * @param revision to associated with this remote file
 	 */
 	public void setRevision(String revision) {
-		info = new ResourceSyncInfo(info.getName(), revision, info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions(), info.getType());
+		info = new ResourceSyncInfo(info.getName(), revision, info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions());
 	}		
 	
 	/*
@@ -321,38 +322,39 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 		}
 	}
  
+	/*
+	 * @see ICVSFile#setReadOnly(boolean)
+	 */
 	public void setReadOnly(boolean readOnly) throws CVSException {
  	}
 
+	/*
+	 * @see ICVSFile#isReadOnly()
+	 */
 	public boolean isReadOnly() throws CVSException {
 		return true;
 	}
 	
-	/**
-	 * @see IManagedFile#getTimeStamp()
+	/*
+	 * @see ICVSFile#getTimeStamp()
 	 */
-	public long getTimeStamp() {
+	public Date getTimeStamp() {
 		return info.getTimeStamp();
 	}
 
-	/**
-	 * @see IManagedFile#setTimeStamp(String)
+	/*
+	 * @see ICVSFile#setTimeStamp(Date)
 	 */
-	public void setTimeStamp(long date) throws CVSException {
+	public void setTimeStamp(Date date) throws CVSException {
 	}
 
-	/**
-	 * @see IManagedFile#isDirty()
-	 * 
-	 * A remote file is never dirty
+	/*
+	 * @see ICVSFile#isDirty()
 	 */
 	public boolean isDirty() throws CVSException {
 		return false;
 	}
 	
-	/**
-	 * @see IManagedFile#isModified()
-	 */
 	public boolean isModified() throws CVSException {
 		// it is safe to always consider a remote file handle as modified. This will cause any
 		// CVS command to fetch new contents from the server.
