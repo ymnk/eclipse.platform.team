@@ -117,13 +117,4 @@ public class CompareParticipant extends SubscriberParticipant {
 	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		return new CompareParticipantAdvisor(configuration, syncInfoTree);
 	}
-	
-	/**
-	 * Refresh this participant and show the results in a model dialog.
-	 * @param resources
-	 * @deprecated This is used by the releng tools plugin
-	 */
-	public void refresh(IResource[] resources) {
-		refresh(resources, getRefreshListenerFactory().createModalDialogListener((Shell)null /* shell */, getId(), this, getSyncInfoSet()), getName(), null);
-	}
 }

@@ -11,13 +11,15 @@
 package org.eclipse.team.internal.ccvs.ui;
 
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -50,8 +52,8 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.core.util.*;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
+import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
 import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -74,7 +76,8 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 
 	private static ExceptionCollector exceptions = new ExceptionCollector(Policy.bind("CVSDecorator.exceptionMessage"), CVSUIPlugin.ID, IStatus.ERROR, CVSUIPlugin.getPlugin().getLog()); //$NON-NLS-1$;
 	
-	
+	private static String DECORATOR_FORMAT = "yyyy/MM/dd HH:mm:ss";
+	private static SimpleDateFormat decorateFormatter = new SimpleDateFormat(DECORATOR_FORMAT, Locale.getDefault());
 
 	/*
 	 * Define a cached image descriptor which only creates the image data once
@@ -263,10 +266,16 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 			if (isDirty) {
 				bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
 			}
-
 			CVSTag tag = getTagToShow(resource);
 			if (tag != null) {
-				bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, tag.getName());
+				String name = tag.getName();
+				if(tag.getType() == CVSTag.DATE){
+					Date date = tag.asDate();
+					if(date != null){
+						name = decorateFormatter.format(date);
+					}
+				}
+				bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, name);
 			}
 
 			if (type != IResource.FILE) {

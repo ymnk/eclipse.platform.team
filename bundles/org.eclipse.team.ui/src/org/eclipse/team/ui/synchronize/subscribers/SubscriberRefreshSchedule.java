@@ -41,7 +41,7 @@ public class SubscriberRefreshSchedule {
 	private IRefreshSubscriberListener refreshSubscriberListener = new IRefreshSubscriberListener() {
 		public void refreshStarted(IRefreshEvent event) {
 		}
-		public void refreshDone(final IRefreshEvent event) {
+		public Runnable refreshDone(final IRefreshEvent event) {
 			if (event.getSubscriber() == participant.getSubscriber()) {
 				lastRefreshEvent = event;
 				if(enabled && event.getRefreshType() == IRefreshEvent.SCHEDULED_REFRESH) {
@@ -49,6 +49,7 @@ public class SubscriberRefreshSchedule {
 					policy.refreshDone(event);
 				}
 			}
+			return null;
 		}
 	};
 	

@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.model;
 
  
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -20,49 +19,22 @@ import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 /**
  * BranchCategory is the model element for the branches category
- * for a particular repsitory in the repositories view. Its children
+ * for a particular repository in the repositories view. Its children
  * are the array of all known branch tags, other than HEAD, for the
  * given repository.
  */
-public class BranchCategory extends CVSModelElement implements IAdaptable {
-	private ICVSRepositoryLocation repository;
-	
-	/**
-	 * TeamStreamsCategory constructor.
-	 */
+public class BranchCategory extends TagCategory {
+
 	public BranchCategory(ICVSRepositoryLocation repository) {
-		super();
-		this.repository = repository;
+		super(repository);
 	}
 	
-	/**
-	 * Returns an object which is an instance of the given class
-	 * associated with this object. Returns <code>null</code> if
-	 * no such object can be found.
-	 */
-	public Object getAdapter(Class adapter) {
-		if (adapter == IWorkbenchAdapter.class) return this;
-		return null;
+	protected CVSTag[] getTags(IProgressMonitor monitor) throws CVSException {
+		return CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, getWorkingSet(), CVSTag.BRANCH, monitor);
 	}
-	
-	/**
-	 * Returns the children of this object.  When this object
-	 * is displayed in a tree, the returned objects will be this
-	 * element's children.  Returns an empty enumeration if this
-	 * object has no children.
-	 */
-	public Object[] fetchChildren(Object o, IProgressMonitor monitor) throws CVSException {
-		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownTags(repository, getWorkingSet(), CVSTag.BRANCH, monitor);
-		CVSTagElement[] branchElements = new CVSTagElement[tags.length];
-		for (int i = 0; i < tags.length; i++) {
-			branchElements[i] = new CVSTagElement(tags[i], repository);
-		}
-		return branchElements;
-	}
-	
+
 	/**
 	 * Returns an image descriptor to be used for displaying an object in the workbench.
 	 * Returns null if there is no appropriate image.
@@ -83,23 +55,5 @@ public class BranchCategory extends CVSModelElement implements IAdaptable {
 	 */
 	public String getLabel(Object o) {
 		return Policy.bind("BranchCategory.Branches_1"); //$NON-NLS-1$
-	}
-	
-	/**
-	 * Returns the logical parent of the given object in its tree.
-	 * Returns null if there is no parent, or if this object doesn't
-	 * belong to a tree.
-	 *
-	 * @param object The object to get the parent for.
-	 */
-	public Object getParent(Object o) {
-		return repository;
-	}
-	
-	/**
-	 * Return the repository the given element belongs to.
-	 */
-	public ICVSRepositoryLocation getRepository(Object o) {
-		return repository;
 	}
 }

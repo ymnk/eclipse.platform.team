@@ -46,19 +46,24 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 	 * (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.jobs.IRefreshSubscriberListener#refreshDone(org.eclipse.team.internal.ui.jobs.IRefreshEvent)
 	 */
-	public void refreshDone(final IRefreshEvent event) {
+	public Runnable refreshDone(final IRefreshEvent event) {
 		// Ensure that this event was generated for this participant
 		if (event.getSubscriber() != participant.getSubscriber()) return;
 		// If the event is for a cancelled operation, there's nothing to do
-		if(! event.getStatus().isOK()) return;
+		int severity = event.getStatus().getSeverity();
+		if(severity == Status.CANCEL || severity == Status.ERROR) return null;
 		// Decide on what action to take after the refresh is completed
-		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+		return new Runnable() {
 			public void run() {
-					boolean prompt = true;
-					if(event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
-						prompt = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCHRONIZING_COMPLETE_SHOW_DIALOG);
+				boolean prompt = true;
+					if(WorkbenchPlugin.getDefault().getPreferenceStore().getBoolean("USE_NEW_PROGRESS")) {
+						prompt = event.getStatus().getCode() == IRefreshEvent.STATUS_NO_CHANGES;
 					} else {
-						prompt = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCHRONIZING_SCHEDULED_COMPLETE_SHOW_DIALOG);
+						if(event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
+							prompt = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCHRONIZING_COMPLETE_SHOW_DIALOG);
+						} else {
+							prompt = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCHRONIZING_SCHEDULED_COMPLETE_SHOW_DIALOG);
+						}
 					}
 				
 					SyncInfo[] infos = event.getChanges();
@@ -88,7 +93,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 						notifyIfNeededModal(event);
 					}
 				}	
-		});
+		};
 	}
 	
 	private void notifyIfNeededModal(final IRefreshEvent event) {

@@ -11,7 +11,10 @@
 package org.eclipse.team.internal.ccvs.ui.model;
 
 import java.lang.reflect.InvocationTargetException;
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.progress.IElementCollector;
@@ -34,6 +37,22 @@ public class CVSTagElement extends CVSModelElement implements IDeferredWorkbench
 	CVSTag tag;
 	ICVSRepositoryLocation root;
 
+	private static final String REPO_VIEW_LONG_FORAMT = "dd MMM yyyy HH:mm:ss";
+	private static final String REPO_VIEW_SHORT_FORMAT = "dd MMM yyyy";
+	private static final String TIME_ONLY_COLUMN_FORMAT = "HH:mm:ss";
+	private static SimpleDateFormat localLongFormat = new SimpleDateFormat(REPO_VIEW_LONG_FORAMT,Locale.getDefault());
+	private static SimpleDateFormat localShortFormat = new SimpleDateFormat(REPO_VIEW_SHORT_FORMAT,Locale.getDefault());
+	private static SimpleDateFormat timeColumnFormat = new SimpleDateFormat(TIME_ONLY_COLUMN_FORMAT, Locale.getDefault());
+
+	static synchronized public String toDisplayString(Date date){
+		String localTime = timeColumnFormat.format(date);
+		timeColumnFormat.setTimeZone(TimeZone.getDefault());
+		if(localTime.equals("00:00:00")){
+			return localShortFormat.format(date);
+		}
+		return localLongFormat.format(date);
+	}
+	
 	public CVSTagElement(CVSTag tag, ICVSRepositoryLocation root) {
 		this.tag = tag;
 		this.root = root;
@@ -71,13 +90,21 @@ public class CVSTagElement extends CVSModelElement implements IDeferredWorkbench
 				ICVSUIConstants.IMG_PROJECT_VERSION);
 		} else {
 			// This could be a Date tag
-			return null;
+			return CVSUIPlugin.getPlugin().getImageDescriptor(
+					ICVSUIConstants.IMG_DATE);
 		}
 	}
 	public String getLabel(Object o) {
 		if (!(o instanceof CVSTagElement))
 			return null;
-		return ((CVSTagElement) o).tag.getName();
+		CVSTag aTag = ((CVSTagElement) o).tag;
+		if(aTag.getType() == CVSTag.DATE){
+			Date date = tag.asDate();
+			if (date != null){
+				return toDisplayString(date);
+			}
+		}
+		return aTag.getName();
 	}
 	
 	public String toString() {
@@ -98,7 +125,7 @@ public class CVSTagElement extends CVSModelElement implements IDeferredWorkbench
 	}
 	
 	public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
-		if (tag.getType() == CVSTag.HEAD) {
+		if (tag.getType() == CVSTag.HEAD || tag.getType() == CVSTag.DATE) {
 			try {
 				monitor = Policy.monitorFor(monitor);
 				RemoteFolder folder = new RemoteFolder(null, root, ICVSRemoteFolder.REPOSITORY_ROOT_FOLDER_NAME, tag);
