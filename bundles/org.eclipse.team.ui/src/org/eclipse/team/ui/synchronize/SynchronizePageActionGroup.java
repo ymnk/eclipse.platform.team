@@ -22,15 +22,33 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 
 	private ISynchronizePageConfiguration configuration;
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
+	/**
+	 * Initialize the actions of this contribution.
+	 * This method will be invoked once before any calls are
+	 * made to <code>filleContextMenu</code> or <code>setActionBars</code>
+	 * but after the control for the page has been created. As a result
+	 * of this, the site of the configuration can be accessed.
+	 * @param configuration the configuration for the part to which
+	 * the contribution is associated
 	 */
 	public void initialize(ISynchronizePageConfiguration configuration) {
 		this.configuration = configuration;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
+	/**
+	 * This method is invoked whenever the model being displayed in the
+	 * view changes. This includes when the input to the view changes
+	 * and when the children of the input change. The default implementation
+	 * of this method does nothing. Subclasses may override.
+	 * @param root the root of the model being viewed
+	 */
+	public void modelChanged(ISynchronizeModelElement root) {
+		// Do nothing by default
+	}
+	
+	/** 
+	 * Dispose of the action group. Subclasses may override but must
+	 * invoke the overriden method.
 	 */
 	public void dispose() {
 		super.dispose();
@@ -58,13 +76,17 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	 * @param manager the menu manager
 	 * @param groupId the group to append the action to
 	 * @param action the action to add
+	 * @return <code>true</code> if the group exists and the action was added
+	 * and <code>false</code> if the action was not added
 	 */
-	protected void appendToGroup(IContributionManager manager, String groupId, IAction action) {
-		if (manager == null || action == null) return;
+	protected boolean appendToGroup(IContributionManager manager, String groupId, IAction action) {
+		if (manager == null || action == null) return false;
 		IContributionItem group = findGroup(manager, groupId);
 		if (group != null) {
 			manager.appendToGroup(group.getId(), action);
+			return true;
 		}
+		return false;
 	}
 	
 	/**
@@ -74,12 +96,16 @@ public abstract class SynchronizePageActionGroup extends ActionGroup {
 	 * @param manager the menu manager
 	 * @param groupId the group to append the action to
 	 * @param item the item to add
+	 * @return <code>true</code> if the group exists and the action was added
+	 * and <code>false</code> if the action was not added
 	 */
-	protected void appendToGroup(IContributionManager manager, String groupId, IContributionItem item) {
-		if (manager == null || item == null) return;
+	protected boolean appendToGroup(IContributionManager manager, String groupId, IContributionItem item) {
+		if (manager == null || item == null) return false;
 		IContributionItem group = findGroup(manager, groupId);
 		if (group != null) {
 			manager.appendToGroup(group.getId(), item);
+			return true;
 		}
+		return false;
 	}
 }

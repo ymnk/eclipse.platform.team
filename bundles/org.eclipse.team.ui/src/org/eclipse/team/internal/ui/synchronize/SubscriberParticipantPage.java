@@ -11,23 +11,19 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
-import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
-import org.eclipse.ui.*;
-import org.eclipse.ui.actions.ActionContext;
-import org.eclipse.ui.actions.ActionGroup;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.part.*;
 
 /**
@@ -41,7 +37,7 @@ import org.eclipse.ui.part.*;
  * </p> 
  * @since 3.0
  */
-public final class SubscriberParticipantPage extends Page implements ISynchronizePage, IPropertyChangeListener, IAdaptable {
+public final class SubscriberParticipantPage extends Page implements ISynchronizePage, IAdaptable {
 	
 	/** 
 	 * Settings constant for section name (value <code>SubscriberParticipantPage</code>).
@@ -68,8 +64,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	
 	// Toolbar and status line actions for this page, note that context menu actions shown in 
 	// the changes viewer are contributed via the viewer and not the page.
-	private WorkingSetFilterActionGroup workingSetGroup;
-	private StatusLineContributionGroup statusLine;
 	private StructuredViewerAdvisor viewerAdvisor;
 	private ISynchronizePageSite site;
 		
@@ -108,17 +102,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		this.changesSection = new ChangesSection(composite, this, configuration);
 		this.changesViewer = createChangesViewer(changesSection.getComposite());
 		changesSection.setViewer(changesViewer);
-				
-		// view menu
-		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), participant.toString(), this, configuration.getWorkingSet());		
-		statusLine = new StatusLineContributionGroup(getShell(), configuration, workingSetGroup);
-		
-		participant.addPropertyChangeListener(this);
-		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
-	}
-	
-	private Shell getShell() {
-		return getSynchronizePageSite().getShell();
 	}
 	
 	/* (non-Javadoc)
@@ -144,11 +127,8 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
 	 */
 	public void dispose() {
-		statusLine.dispose();
 		changesSection.dispose();
 		composite.dispose();
-		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
-		participant.removePropertyChangeListener(this);
 		((SynchronizePageActionGroup)configuration).dispose();
 	}
 
@@ -196,70 +176,8 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 * @see org.eclipse.ui.part.IPage#setActionBars(org.eclipse.ui.IActionBars)
 	 */
 	public void setActionBars(IActionBars actionBars) {
-		if(actionBars != null) {
-			IToolBarManager manager = actionBars.getToolBarManager();
-			
-			// Populate the toobar menu with the configured groups
-			Object o = configuration.getProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU);
-			if (!(o instanceof String[])) {
-				o = ISynchronizePageConfiguration.DEFAULT_TOOLBAR_MENU;
-			}
-			String[] groups = (String[])o;
-			for (int i = 0; i < groups.length; i++) {
-				String group = groups[i];
-				manager.add(new Separator(getGroupId(group)));
-			}
-
-			// view menu
-			IMenuManager menu = actionBars.getMenuManager();
-			
-			// Populate the view dropdown menu with the configured groups
-			o = configuration.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
-			if (!(o instanceof String[])) {
-				o = ISynchronizePageConfiguration.DEFAULT_VIEW_MENU;
-			}
-			groups = (String[])o;
-			int start = 0;
-			if (groups.length > 0 && groups[0].equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
-				// Special handling for working set group
-				workingSetGroup.fillActionBars(actionBars);
-				menu.add(new Separator());
-				menu.add(new Separator());
-				menu.add(new Separator("others")); //$NON-NLS-1$
-				menu.add(new Separator());
-				start = 1;
-			}
-			for (int i = start; i < groups.length; i++) {
-				String group = groups[i];
-				menu.add(new Separator(getGroupId(group)));
-				
-			}
-			
-			// status line
-			statusLine.fillActionBars(actionBars);
-			
-			getActionGroup().fillActionBars(actionBars);
-			updateActionBars((IStructuredSelection)getViewer().getSelection());
-		}		
-	}
-
-	private String getGroupId(String group) {
-		return ((SynchronizePageConfiguration)configuration).getGroupId(group);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
-	 */
-	public void propertyChange(PropertyChangeEvent event) {
-		// Working set changed by user
-		if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
-			configuration.setWorkingSet((IWorkingSet)event.getNewValue());
-		// Change to showing of sync state in text labels preference
-		} else if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
-			if(changesViewer instanceof StructuredViewer) {
-				((StructuredViewer)changesViewer).refresh(true /* update labels */);
-			}
-		}
+		// Delegate menu creation to the advisor
+		viewerAdvisor.setActionBars(actionBars);		
 	}
 	
 	/**
@@ -276,11 +194,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 		viewerAdvisor = new TreeViewerAdvisor(configuration);
 		viewerAdvisor.initializeViewer(viewer);
 		getSynchronizePageSite().setSelectionProvider(viewer);
-		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				updateActionBars((IStructuredSelection)event.getSelection());
-			}
-		});
 		return viewer;
 	}
 	
@@ -290,17 +203,5 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	
 	public Viewer getViewer() {
 		return changesViewer;
-	}
-	
-	protected void updateActionBars(IStructuredSelection selection) {
-		ActionGroup group = getActionGroup();
-		if (group != null) {
-			group.setContext(new ActionContext(selection));
-			group.updateActionBars();
-		}
-	}
-
-	private ActionGroup getActionGroup() {
-		return (SynchronizePageActionGroup)configuration;
 	}
 }

@@ -69,7 +69,7 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 		 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 		 */
 		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().equals(ISynchronizePageConfiguration.P_MODEL)) {
+			if (event.getProperty().equals(SynchronizePageConfiguration.P_MODEL)) {
 				update();
 			}
 		}
@@ -177,7 +177,7 @@ public abstract class SynchronizeModelManager extends SynchronizePageActionGroup
 	 * Set the input of the viewer
 	 */
 	protected void setInput() {
-		configuration.setProperty(ISynchronizePageConfiguration.P_MODEL, modelProvider.getModelRoot());
+		configuration.setProperty(SynchronizePageConfiguration.P_MODEL, modelProvider.getModelRoot());
 		advisor.setInput(modelProvider);
 	}
 

@@ -17,24 +17,10 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.actions.AbstractParticipantActionContribution;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 
 public class CompareParticipant extends CVSParticipant {
-	
-	/**
-	 * Toolbar actions for compare participants
-	 */
-	public class CompareParticipantActionContribution extends AbstractParticipantActionContribution {
-		public void initialize(ISynchronizePageConfiguration configuration) {
-			createRemoveAction(configuration);
-			super.initialize(configuration);
-		}
-		protected void modelChanged(ISynchronizeModelElement input) {
-			// Nothing to do
-		}
-	}
 	
 	/**
 	 * TODO: Need to add content filtering back
@@ -94,6 +80,6 @@ public class CompareParticipant extends CVSParticipant {
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
-		configuration.addActionContribution(new CompareParticipantActionContribution());
+		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP);
 	}
 }

@@ -18,8 +18,10 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.util.*;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.actions.ActionContext;
 
 /**
  * Concrete implementation of the ISynchronizePageConfiguration. It 
@@ -28,6 +30,15 @@ import org.eclipse.ui.IActionBars;
  */
 public abstract class SynchronizePageConfiguration extends SynchronizePageActionGroup implements ISynchronizePageConfiguration {
 
+	/**
+	 * Property constant for the page's viewer input which is 
+	 * an instance of <code>ISynchronizeModelElement</code>.
+	 * This property can be queried by clients but should not be
+	 * set.
+	 */
+	public static final String P_MODEL = TeamUIPlugin.ID  + ".P_MODEL"; //$NON-NLS-1$
+	
+	
 	/**
 	 * The hidden configuration property that opens the current selection in the
 	 * page. The registered <code>IAction</code> is invoked on a single or
@@ -53,7 +64,7 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 		setProperty(P_TOOLBAR_MENU, DEFAULT_TOOLBAR_MENU);
 		setProperty(P_VIEW_MENU, DEFAULT_VIEW_MENU);
 		setProperty(P_LABEL_PROVIDER, new SynchronizeModelElementLabelProvider());
-		addActionContribution(new SynchronizePageActions());
+		addActionContribution(new DefaultSynchronizePageActions());
 	}
 	
 	/* (non-Javadoc)
@@ -174,6 +185,25 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 		actionsInitialized = true;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#setContext(org.eclipse.ui.actions.ActionContext)
+	 */
+	public void setContext(final ActionContext context) {
+		super.setContext(context);
+		final Object[] listeners = actionContributions.getListeners();
+		for (int i= 0; i < listeners.length; i++) {
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Logged by Platform
+				}
+				public void run() throws Exception {
+					contribution.setContext(context);
+				}
+			});
+		}
+	}
+	
 	/**
 	 * Callback invoked from the advisor each time the context menu is
 	 * about to be shown.
@@ -217,6 +247,42 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#updateActionBars()
+	 */
+	public void updateActionBars() {
+		final Object[] listeners = actionContributions.getListeners();
+		for (int i= 0; i < listeners.length; i++) {
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Logged by Platform
+				}
+				public void run() throws Exception {
+					contribution.updateActionBars();
+				}
+			});
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#modelChanged(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
+	 */
+	public void modelChanged(final ISynchronizeModelElement root) {
+		final Object[] listeners = actionContributions.getListeners();
+		for (int i= 0; i < listeners.length; i++) {
+			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// Logged by Platform
+				}
+				public void run() throws Exception {
+					contribution.modelChanged(root);
+				}
+			});
+		}
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#dispose()
 	 */
 	public void dispose() {
@@ -230,24 +296,6 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 				}
 				public void run() throws Exception {
 					contribution.dispose();
-				}
-			});
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.actions.ActionGroup#updateActionBars()
-	 */
-	public void updateActionBars() {
-		final Object[] listeners = actionContributions.getListeners();
-		for (int i= 0; i < listeners.length; i++) {
-			final SynchronizePageActionGroup contribution = (SynchronizePageActionGroup)listeners[i];
-			Platform.run(new ISafeRunnable() {
-				public void handleException(Throwable exception) {
-					// Logged by Platform
-				}
-				public void run() throws Exception {
-					contribution.updateActionBars();
 				}
 			});
 		}
@@ -274,6 +322,21 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 		setProperty(menuPropertyId, newGroups);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#hasMenuGroup(java.lang.String, java.lang.String)
+	 */
+	public boolean hasMenuGroup(String menuPropertyId, String groupId) {
+		String[] groups = (String[])getProperty(menuPropertyId);
+		if (groups == null) {
+			groups = getDefault(menuPropertyId);
+		}
+		for (int i = 0; i < groups.length; i++) {
+			String string = groups[i];
+			if (string.equals(groupId)) return true;
+		}
+		return false;
+	}
+	
 	protected String[] getDefault(String menuPropertyId) {
 		if (menuPropertyId.equals(P_CONTEXT_MENU)) {
 			return DEFAULT_CONTEXT_MENU;
@@ -300,9 +363,9 @@ public abstract class SynchronizePageConfiguration extends SynchronizePageAction
 	public String getGroupId(String group) {
 		String id = getParticipant().getId();
 		if (getParticipant().getSecondaryId() != null) {
-			id += ".";
+			id += "."; //$NON-NLS-1$
 			id += getParticipant().getSecondaryId();
 		}
-		return id + "." + group;
+		return id + "." + group; //$NON-NLS-1$
 	}
 }

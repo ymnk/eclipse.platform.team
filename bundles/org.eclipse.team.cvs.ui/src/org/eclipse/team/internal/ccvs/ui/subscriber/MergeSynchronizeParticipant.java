@@ -15,7 +15,6 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -23,7 +22,6 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ActionDelegateWrapper;
-import org.eclipse.team.internal.ui.synchronize.actions.AbstractParticipantActionContribution;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
@@ -48,18 +46,18 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	/**
 	 * Actions for the merge particpant's toolbar
 	 */
-	public class MergeParticipantActionContribution extends AbstractParticipantActionContribution {
+	public class MergeParticipantActionContribution extends SynchronizePageActionGroup {
 		private ActionDelegateWrapper updateAdapter;
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
-			createRemoveAction(configuration);
 			MergeUpdateAction action = new MergeUpdateAction();
 			action.setPromptBeforeUpdate(true);
 			updateAdapter = new ActionDelegateWrapper(action, configuration.getSite().getPart());
 			Utils.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
 			super.initialize(configuration);
 		}
-		protected void modelChanged(ISynchronizeModelElement input) {
+		public void modelChanged(ISynchronizeModelElement input) {
+			if (updateAdapter == null) return;
 			updateAdapter.setSelection(input);
 		}
 		public void fillActionBars(IActionBars actionBars) {
@@ -196,6 +194,7 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ACTION_GROUP);
+		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP);
 		((ISubscriberPageConfiguration)configuration).setSupportedModes(ISubscriberPageConfiguration.INCOMING_MODE | ISubscriberPageConfiguration.CONFLICTING_MODE);
 		((ISubscriberPageConfiguration)configuration).setMode(ISubscriberPageConfiguration.INCOMING_MODE);
 		configuration.addActionContribution(new MergeParticipantActionContribution());

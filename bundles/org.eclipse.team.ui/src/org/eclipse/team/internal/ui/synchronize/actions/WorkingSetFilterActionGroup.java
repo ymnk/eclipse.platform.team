@@ -65,7 +65,7 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 		menuManager.add(editWorkingSetAction);
 		menuManager.add(new Separator(id));
 		updateMruContribution(menuManager);
-	};
+	}
 	
 	private void updateMruContribution(IMenuManager menuManager) {
 		IWorkingSet[] sets = PlatformUI.getWorkbench().getWorkingSetManager().getRecentWorkingSets();

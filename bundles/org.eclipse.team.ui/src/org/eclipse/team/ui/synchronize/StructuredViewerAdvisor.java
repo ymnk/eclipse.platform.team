@@ -10,21 +10,25 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.compare.structuremergeviewer.DiffNode;
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.*;
-import org.eclipse.jface.util.ListenerList;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.ui.IWorkbenchPartSite;
-import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
+import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
+import org.eclipse.team.ui.synchronize.subscribers.ISubscriberPageConfiguration;
+import org.eclipse.ui.*;
+import org.eclipse.ui.actions.ActionContext;
+import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.internal.PluginAction;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
@@ -70,10 +74,30 @@ public abstract class StructuredViewerAdvisor {
 	// in the viewer.
 	private StructuredViewer viewer;
 	
-	// Listeners for model changes
-	private ListenerList listeners;
+	// The page configuration
 	private ISynchronizePageConfiguration configuration;
 	
+	// Special actions that could not be contributed using an ActionGroup
+	private WorkingSetFilterActionGroup workingSetGroup;
+	private StatusLineContributionGroup statusLine;
+	
+	// Property change listener which reponds to:
+	//    - working set selection by the user
+	//    - decorator format change selected by the user
+	private IPropertyChangeListener propertyListener = new IPropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent event) {
+			// Working set changed by user
+			if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
+				((ISubscriberPageConfiguration)configuration).setWorkingSet((IWorkingSet)event.getNewValue());
+			} else
+				// Change to showing of sync state in text labels preference
+				if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
+					if(viewer != null && !viewer.getControl().isDisposed()) {
+						viewer.refresh(true /* update labels */);
+					}
+				}
+		}
+	};
 	
 	/**
 	 * Create an advisor that will allow viewer contributions with the given <code>targetID</code>. This
@@ -97,7 +121,7 @@ public abstract class StructuredViewerAdvisor {
 
 	 * @param viewer the viewer being installed
 	 */
-	public final void initializeViewer(StructuredViewer viewer) {
+	public final void initializeViewer(final StructuredViewer viewer) {
 		Assert.isTrue(this.viewer == null, "Can only be initialized once."); //$NON-NLS-1$
 		Assert.isTrue(validateViewer(viewer));
 		this.viewer = viewer;
@@ -106,30 +130,26 @@ public abstract class StructuredViewerAdvisor {
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setContentProvider(getContentProvider());
 		hookContextMenu(viewer);
+		
+		initializeActions(viewer);
 	}
 	
-	/**
-	 * This is called to add a listener to the model shown in the viewer. The listener is
-	 * called when the model is changed or updated.
-	 * 
-	 * @param listener the listener to add
+	/*
+	 * Initializes actions that are contributed directly by the advisor.
+	 * @param viewer the viewer being installed
 	 */
-	public void addInputChangedListener(ISynchronizeModelChangeListener listener) {
-		if (listeners == null)
-			listeners= new ListenerList();
-		listeners.add(listener);
-	}
-
-	/**
-	 * Remove a model listener.
-	 * 
-	 * @param listener the listener to remove.
-	 */
-	public void removeInputChangedListener(ISynchronizeModelChangeListener listener) {
-		if (listeners != null) {
-			listeners.remove(listener);
-			if (listeners.isEmpty())
-				listeners= null;
+	private void initializeActions(StructuredViewer viewer) {
+		// view menu
+		if (configuration instanceof ISubscriberPageConfiguration) {
+			workingSetGroup = new WorkingSetFilterActionGroup(
+					configuration.getSite().getShell(), 
+					getUniqueId(configuration.getParticipant()), 
+					propertyListener, 
+					((ISubscriberPageConfiguration)configuration).getWorkingSet());		
+			statusLine = new StatusLineContributionGroup(
+					configuration.getSite().getShell(), 
+					(ISubscriberPageConfiguration)configuration, 
+					workingSetGroup);
 		}
 	}
 	
@@ -137,7 +157,10 @@ public abstract class StructuredViewerAdvisor {
 	 * Must be called when an advisor is no longer needed.
 	 */
 	public void dispose() {
-		// Nothing to dispose
+		if (statusLine != null) {
+			statusLine.dispose();
+		}
+		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(propertyListener);
 	}
 	
 	/**
@@ -187,6 +210,13 @@ public abstract class StructuredViewerAdvisor {
 				handleDoubleClick(viewer, event);
 			}
 		});
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				// Update the action bars enablement for any contributed action groups
+				updateActionBars((IStructuredSelection)viewer.getSelection());
+			}
+		});
+		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(propertyListener);
 	}
 	
 	protected boolean handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
@@ -264,10 +294,17 @@ public abstract class StructuredViewerAdvisor {
 	 * @param viewer the viewer to set the input.
 	 */
 	public final void setInput(ISynchronizeModelProvider modelProvider) {
+		final ISynchronizeModelElement modelRoot = modelProvider.getModelRoot();
+		getActionGroup().modelChanged(modelRoot);
+		modelRoot.addCompareInputChangeListener(new ICompareInputChangeListener() {
+			public void compareInputChanged(ICompareInput source) {
+				getActionGroup().modelChanged(modelRoot);
+			}
+		});
 		if (viewer != null) {
 			modelProvider.setViewer(viewer);
 			viewer.setSorter(modelProvider.getViewerSorter());
-			viewer.setInput(modelProvider.getModelRoot());
+			viewer.setInput(modelRoot);
 		}
 	}
 	
@@ -279,6 +316,67 @@ public abstract class StructuredViewerAdvisor {
 	}
 	
 	/**
+	 * Method invoked from the synchronize page when the action
+	 * bars are set. The advisor uses the configuration to determine
+	 * which groups appear in the action bar menus and allows all
+	 * action groups registered with the configuration to fill the action bars.
+	 * @param actionBars the Action bars for the page
+	 */
+	public final void setActionBars(IActionBars actionBars) {
+		if(actionBars != null) {
+			IToolBarManager manager = actionBars.getToolBarManager();
+			
+			// Populate the toobar menu with the configured groups
+			Object o = configuration.getProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU);
+			if (!(o instanceof String[])) {
+				o = ISynchronizePageConfiguration.DEFAULT_TOOLBAR_MENU;
+			}
+			String[] groups = (String[])o;
+			for (int i = 0; i < groups.length; i++) {
+				String group = groups[i];
+				manager.add(new Separator(getGroupId(group)));
+			}
+
+			// view menu
+			IMenuManager menu = actionBars.getMenuManager();
+			
+			// Populate the view dropdown menu with the configured groups
+			o = configuration.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
+			if (!(o instanceof String[])) {
+				o = ISynchronizePageConfiguration.DEFAULT_VIEW_MENU;
+			}
+			groups = (String[])o;
+			int start = 0;
+			if (workingSetGroup != null) {
+				if (groups.length > 0 && groups[0].equals(ISynchronizePageConfiguration.WORKING_SET_GROUP)) {
+					// Special handling for working set group
+					workingSetGroup.fillActionBars(actionBars);
+					menu.add(new Separator());
+					menu.add(new Separator());
+					menu.add(new Separator("others")); //$NON-NLS-1$
+					menu.add(new Separator());
+					start = 1;
+				}
+			}
+			for (int i = start; i < groups.length; i++) {
+				String group = groups[i];
+				menu.add(new Separator(getGroupId(group)));
+				
+			}
+			
+			// status line
+			statusLine.fillActionBars(actionBars);
+			
+			getActionGroup().fillActionBars(actionBars);
+			updateActionBars((IStructuredSelection)getViewer().getSelection());
+			Object input = viewer.getInput();
+			if (input instanceof ISynchronizeModelElement) {
+				getActionGroup().modelChanged((ISynchronizeModelElement)input);
+			}
+		}		
+	}
+	
+	/*
 	 * Method invoked from <code>initializeViewer(StructuredViewer)</code>
 	 * in order to configure the viewer to call <code>fillContextMenu(StructuredViewer, IMenuManager)</code>
 	 * when a context menu is being displayed in viewer.
@@ -341,7 +439,7 @@ public abstract class StructuredViewerAdvisor {
 		}
 	}
 	
-	/**
+	/*
 	 * Callback that is invoked when a context menu is about to be shown in the
 	 * viewer. Subsclasses must implement to contribute menus. Also, menus can
 	 * contributed by creating a viewer contribution with a <code>targetID</code> 
@@ -361,10 +459,32 @@ public abstract class StructuredViewerAdvisor {
 			String group = groups[i];
 			manager.add(new Separator(getGroupId(group)));
 		}
-		((SynchronizePageConfiguration)configuration).fillContextMenu(manager);
+		getActionGroup().setContext(new ActionContext(viewer.getSelection()));
+		getActionGroup().fillContextMenu(manager);
+	}
+	
+	private void updateActionBars(IStructuredSelection selection) {
+		ActionGroup group = getActionGroup();
+		if (group != null) {
+			group.setContext(new ActionContext(selection));
+			group.updateActionBars();
+		}
+	}
+	
+	private SynchronizePageActionGroup getActionGroup() {
+		return (SynchronizePageActionGroup)configuration;
 	}
 	
 	private String getGroupId(String group) {
 		return ((SynchronizePageConfiguration)configuration).getGroupId(group);
+	}
+	
+	private String getUniqueId(ISynchronizeParticipant particpant) {
+		String id = particpant.getId();
+		if (particpant.getSecondaryId() != null) {
+			id += "."; //$NON-NLS-1$
+			id += particpant.getSecondaryId();
+		}
+		return id;
 	}
 }

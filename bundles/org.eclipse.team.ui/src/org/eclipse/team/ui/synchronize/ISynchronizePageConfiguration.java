@@ -27,14 +27,6 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_ADVISOR = TeamUIPlugin.ID  + ".P_ADVISOR"; //$NON-NLS-1$
 
 	/**
-	 * Property constant for the page's viewer input which is 
-	 * an instance of <code>ISynchronizeModelElement</code>.
-	 * This property can be queried by clients but should not be
-	 * set.
-	 */
-	public static final String P_MODEL = TeamUIPlugin.ID  + ".P_MODEL"; //$NON-NLS-1$
-	
-	/**
 	 * Property constant for the <code>SyncInfoSet</code> that was used 
 	 * to populate the model (P_MODEL). This property can be queried by 
 	 * clients but should not be set.
@@ -155,6 +147,13 @@ public interface ISynchronizePageConfiguration {
 	public static final String LAYOUT_GROUP = "layout"; //$NON-NLS-1$
 
 	/**
+	 * The id of the group that contains the action to remove a particpant
+	 * from a page view (such as the synchronize view). This group can
+	 * be added to the toolbar menu if a particpant supports cancelation.
+	 */
+	public static final String REMOVE_PARTICPANT_GROUP = "remove_particpant"; //$NON-NLS-1$
+
+	/**
 	 * These are the default groups used for the context menu of a page.
 	 * Clients can remove, add and change the ordering for groups in
 	 * the context menu.
@@ -267,4 +266,14 @@ public interface ISynchronizePageConfiguration {
 	 * group list
 	 */
 	public void addMenuGroup(String menuPropertyId, String groupId);
+
+	/**
+	 * Returns whether the given group appears in the given menu
+	 * @param menuPropertyId the property id that identifies the menu
+	 * @param groupId the id of the group
+	 * @return <code>true</code> if the group identified by the groupId appears
+	 * in the menu identified by the menuPropertyId and <code>false</code>
+	 * otherwise
+	 */
+	public abstract boolean hasMenuGroup(String menuPropertyId, String groupId);
 }

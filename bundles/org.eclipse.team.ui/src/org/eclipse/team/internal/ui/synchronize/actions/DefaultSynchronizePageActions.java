@@ -8,22 +8,22 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize;
+package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.jface.action.*;
-import org.eclipse.team.internal.ui.synchronize.actions.OpenWithActionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.RefactorActionGroup;
+import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.*;
 
 /**
  * General synchronize page actions
  */
-public class SynchronizePageActions extends SynchronizePageActionGroup {
+public class DefaultSynchronizePageActions extends SynchronizePageActionGroup {
 	
 	// Actions
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
+	private RemoveSynchronizeParticipantAction removeAction;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
@@ -40,6 +40,9 @@ public class SynchronizePageActions extends SynchronizePageActionGroup {
 					openWithActions.openInCompareEditor();
 				}
 			});
+			if (configuration.hasMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP)) {
+				removeAction = new RemoveSynchronizeParticipantAction(configuration.getParticipant());
+			}
 		}
 	}
 	
@@ -55,5 +58,13 @@ public class SynchronizePageActions extends SynchronizePageActionGroup {
 		if (refactorActions != null && group != null) {
 			refactorActions.fillContextMenu(manager, group.getId());
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
+	 */
+	public void fillActionBars(IActionBars actionBars) {
+		IToolBarManager menu = actionBars.getToolBarManager();
+		appendToGroup(menu, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP, removeAction);
 	}
 }
