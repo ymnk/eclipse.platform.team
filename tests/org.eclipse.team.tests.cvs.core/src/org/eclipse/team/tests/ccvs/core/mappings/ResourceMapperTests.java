@@ -14,9 +14,10 @@ import java.io.IOException;
 
 import junit.framework.Test;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
 /**
@@ -36,6 +37,15 @@ public class ResourceMapperTests extends EclipseTest {
         return suite(ResourceMapperTests.class);
     }
     
+    private IContainer asResourceMapper(IResource resource, int depth) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
+    private ICVSResource asCVSResource(IResource resource) {
+        return CVSWorkspaceRoot.getCVSResourceFor(resource);
+    }
+    
     public void testUpdate() throws CoreException, IOException {
         // Create a test project, import it into cvs and check it out
         IProject project = createProject("testUpdate", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt" });
@@ -49,9 +59,8 @@ public class ResourceMapperTests extends EclipseTest {
         deleteResources(new IResource[] {copy.getFile("deleted.txt")});
         commitResources(asResourceMapper(copy, IResource.DEPTH_INFINITE));
         
-        // Update the othe rproject and ensure we got only what was asked for
-        updateProject(asResourceMapper(project, IResource.DEPTH_ONE), null, false);
-        assertEquals(project, copy);
+        // Update the other project using depth one and ensure we got only what was asked for
+        updateProject(asResourceMapper(project, IResource.DEPTH_ONE), asCVSResource(copy), null, false);
     }
     
 }
