@@ -13,49 +13,25 @@ package org.eclipse.team.internal.ccvs.ui.repo;
 import java.io.*;
 
 import org.eclipse.core.runtime.*;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.util.Util;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.core.caches.ICacheSource;
-import org.eclipse.team.internal.core.caches.ICacheableReference;
-import org.eclipse.ui.*;
+import org.eclipse.team.internal.core.caches.LocalReplica;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.XMLMemento;
 
 /**
  * Provides access to the tags for a remte folder that are cached
  * on the loal disk
  */
-public class LocalTagCache implements ICacheSource {
+public class LocalTagCache extends LocalReplica {
     
-    private final String remoteFolderPath;
     private final String localFilePath;
-    private final RepositoryRoot location;
 
-    public LocalTagCache(RepositoryRoot location, String remoteFolderPath, String localFilePath) {
-        super();
-        this.location = location;
-        this.remoteFolderPath = remoteFolderPath;
+    public LocalTagCache(RepositoryRoot location, String remotePath, String localFilePath) {
+        super(new TagCacheSource(location, remotePath));
         this.localFilePath = localFilePath;
     }
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.core.caches.ICacheSource#getLocationDescription()
-     */
-    public String getLocationDescription() {
-        return "Tags for " + Util.appendPath(location.getRoot().getLocation(), remoteFolderPath);
-    }
-
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.core.caches.ICacheSource#fetch(int, org.eclipse.core.runtime.IProgressMonitor)
-     */
-    public Object fetch(int flags, IProgressMonitor monitor) throws CoreException {
-        if ((flags & ICacheableReference.ALWAYS_FETCH) > 0) {
-            // fetch from the server and update the disk cache
-            return fetchFromServer(flags, monitor);
-        } else {
-            return loadFromDisk(flags, monitor);
-        }
-    }
     
-    private Object loadFromDisk(int flags, IProgressMonitor monitor) throws WorkbenchException {
+    private Object loadFromDisk(int flags, IProgressMonitor monitor) throws CoreException {
         // reload from the disk cache
         Reader reader = null;
         try {
@@ -64,8 +40,9 @@ public class LocalTagCache implements ICacheSource {
             return null;
         } catch (FileNotFoundException e) {
             // Log the exception and try to load from the server
+            String remoteFolderPath = ((TagCacheSource)getRemote()).getRemotePath();
             CVSUIPlugin.log(IStatus.ERROR, "Tag cache for " + remoteFolderPath + " was not found on disk. Refetching the tags from the server will be attempted.", e);
-            return fetchFromServer(flags, monitor);
+            return fetchRemote(flags, monitor);
         } finally {
             if (reader != null) {
                 try {
@@ -80,18 +57,20 @@ public class LocalTagCache implements ICacheSource {
     private String getFile() {
         return localFilePath;
     }
-    
-    private Object fetchFromServer(int flags, IProgressMonitor monitor) {
-        CVSTag[] tags = location.fetchTags(getFolder(), isRecurse(flags), monitor);
-        writeToDisk(tags);
-        return tags;
-    }
-    
+
     /* (non-Javadoc)
-     * @see java.lang.Object#toString()
+     * @see org.eclipse.team.internal.core.caches.LocalReplica#save(java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
      */
-    public String toString() {
-        return getLocationDescription();
+    protected void save(Object o, IProgressMonitor monitor) throws CoreException {
+        // TODO Auto-generated method stub
+        
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.core.caches.LocalReplica#load(org.eclipse.core.runtime.IProgressMonitor)
+     */
+    protected Object load(IProgressMonitor monitor) throws CoreException {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

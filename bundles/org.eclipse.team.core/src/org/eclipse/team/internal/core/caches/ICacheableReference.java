@@ -36,6 +36,12 @@ public interface ICacheableReference {
      * even if it is cached.
      */
     public static final int ALWAYS_FETCH = 2;
+    
+    /**
+     * This contant provides the beginning flag that can be used by clients
+     * to provide custom flags for fetching objects.
+     */
+    public static final int BEGINNING_CLIENT_FLAG_RANGE = 256;
 
     /**
      * Return the object that is persisted at this source. The object will be fetched
