@@ -39,11 +39,13 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IPluginDescriptor;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Preferences;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
 import org.eclipse.core.settings.IMemento;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
@@ -988,5 +990,30 @@ public class CVSProviderPlugin extends Plugin {
 	
 	public IPath getSettingsLocation() {
 		return getStateLocation().append("settings");
+	}
+	
+	public SettingsStore getProjectSettings(IProject project) throws CoreException {
+		QualifiedName settingsPropertyName = new QualifiedName(ID, "settings");
+		Object cached = project.getSessionProperty(settingsPropertyName);
+		if (cached instanceof SettingsStore) {
+			return (SettingsStore)cached;
+		}
+		try {
+			final SettingsStore store = new SettingsStore(project.getFolder(new Path(".settings").append(ID)).getLocation().toFile());
+			store.load();
+			project.setSessionProperty(settingsPropertyName, store);
+			store.addPropertyChangeListener(new Preferences.IPropertyChangeListener() {
+				public void propertyChange(PropertyChangeEvent event) {
+					try {
+						store.store(ID);
+					} catch (IOException e) {
+						log(IStatus.ERROR, "Error storing plugin settings", e);
+					}
+				}
+			});
+			return store;
+		} catch (IOException e) {
+			throw new CoreException(new Status(IStatus.ERROR, ID, 0, "Error loading plugin settings", e));
+		}
 	}
 }
