@@ -21,22 +21,22 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.TagetLocationSelectionDialog;
+import org.eclipse.team.internal.ccvs.ui.operations.CheckoutMultipleProjectsOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.CheckoutSingleProjectOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.HasProjectMetaFileOperation;
 import org.eclipse.team.internal.ui.IPromptCondition;
 import org.eclipse.team.internal.ui.PromptingDialog;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.NewProjectAction;
-import org.eclipse.ui.actions.WorkspaceModifyOperation;
 
 /**
  * Add a remote resource to the workspace. Current implementation:
@@ -44,22 +44,24 @@ import org.eclipse.ui.actions.WorkspaceModifyOperation;
  * -Does not prompt for project name; uses folder name instead
  */
 public class CheckoutAsAction extends AddToWorkspaceAction {
+	
 	/*
 	 * @see IActionDelegate#run(IAction)
 	 */
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		final ICVSRemoteFolder[] folders = getSelectedRemoteFolders();
-		if (folders.length == 1){
-			// make a copy of the folder so that we will not effect the original folder when we refetch the members
-			// todo: this is a strang thing to need to do. We shold fix this.
-			final ICVSRemoteFolder folder = (ICVSRemoteFolder)folders[0].forTag(folders[0].getTag());
-			checkoutSingleProject(folder);
-		} else {
-			checkoutMultipleProjects(folders);
+		ICVSRemoteFolder[] folders = getSelectedRemoteFolders();
+		try {
+			if (folders.length == 1){
+				checkoutSingleProject(folders[0]);
+			} else {
+				checkoutMultipleProjects(folders);
+			}
+		} catch (CVSException e) {
+			throw new InvocationTargetException(e);
 		}
 	}
 	
-	private void checkoutMultipleProjects(final ICVSRemoteFolder[] folders) throws InvocationTargetException, InterruptedException {
+	private void checkoutMultipleProjects(final ICVSRemoteFolder[] folders) throws CVSException, InterruptedException {
 		
 		// create the target project handles
 		IProject[] targetProjects = new IProject[folders.length];
@@ -79,7 +81,8 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 			
 		// if the location is null, just checkout the projects into the workspace
 		if (targetParentLocation == null) {
-			checkoutSelectionIntoWorkspaceDirectory();
+			new CheckoutMultipleProjectsOperation(getShell(), folders, null)
+				.execute(new ProgressMonitorDialog(shell));
 			return;
 		}
 		
@@ -104,62 +107,22 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 		}
 		
 		// perform the checkout
-		final IProjectDescription[] newDescriptions = descriptions;
-		run(new WorkspaceModifyOperation() {
-			public void execute(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
-				try {
-					monitor.beginTask(null, 100);
-					monitor.setTaskName(Policy.bind("CheckoutAsAction.multiCheckout", new Integer(projects.length).toString())); //$NON-NLS-1$
-					// create the projects
-					createAndOpenProjects(projects, newDescriptions, Policy.subMonitorFor(monitor, 5));
-					checkoutProjects(folders, projects, Policy.subMonitorFor(monitor, 95));
-
-
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				} finally {
-					monitor.done();
-				}
-			}
-		}, true /* cancelable */, PROGRESS_DIALOG);
+		// TODO: The selected projects neew to be used to determine which folders are still 
+		// to be checked out
+		new CheckoutMultipleProjectsOperation(getShell(), folders, descriptions)
+			.execute(new ProgressMonitorDialog(shell));
 	}
 
-	private void checkoutSingleProject(final ICVSRemoteFolder remoteFolder) throws InvocationTargetException, InterruptedException {
+	private void checkoutSingleProject(final ICVSRemoteFolder remoteFolder) throws CVSException, InterruptedException {
 		// Fetch the members of the folder to see if they contain a .project file.
 		final String remoteFolderName = remoteFolder.getName();
-		final boolean[] hasProjectMetaFile = new boolean[] { false };
-		run(new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
-				try {
-					remoteFolder.members(monitor);
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				}
-				// Check for the existance of the .project file
-				try {
-					remoteFolder.getFile(".project"); //$NON-NLS-1$
-					hasProjectMetaFile[0] = true;
-				} catch (TeamException e) {
-					// We couldn't retrieve the meta file so assume it doesn't exist
-					hasProjectMetaFile[0] = false;
-				}
-				// If the above failed, look for the old .vcm_meta file
-				if (! hasProjectMetaFile[0]) {
-					try {
-						remoteFolder.getFile(".vcm_meta"); //$NON-NLS-1$
-						hasProjectMetaFile[0] = true;
-					} catch (TeamException e) {
-						// We couldn't retrieve the meta file so assume it doesn't exist
-						hasProjectMetaFile[0] = false;
-					}
-				}
-			}
-		}, true /* cancelable */, PROGRESS_DIALOG);
+		
+		boolean hasProjectMetaFile = HasProjectMetaFileOperation.hasMetaFile(remoteFolder, new ProgressMonitorDialog(shell));
 		
 		// Prompt outside a workspace runnable so that the project creation delta can be heard
 		IProject newProject = null;
 		IProjectDescription newDesc = null;
-		if (hasProjectMetaFile[0]) {
+		if (hasProjectMetaFile) {
 			
 			// prompt for the project name and location
 			newProject = ResourcesPlugin.getWorkspace().getRoot().getProject(remoteFolderName);
@@ -189,66 +152,8 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 			if (newProject == null) return;
 		}
 		
-		final IProject project = newProject;
-		final IProjectDescription desc = newDesc;
-		run(new WorkspaceModifyOperation() {
-			public void execute(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
-				try {
-					monitor.beginTask(null, 100);
-					monitor.setTaskName(Policy.bind("CheckoutAsAction.taskname", remoteFolderName, project.getName())); //$NON-NLS-1$
-					int used = 0;
-					if (hasProjectMetaFile[0]) {
-						used = 5;
-						createAndOpenProject(project, desc, Policy.subMonitorFor(monitor, used));
-					}
-					checkoutProjects(new ICVSRemoteFolder[] { remoteFolder }, new IProject[] { project }, Policy.subMonitorFor(monitor, 100 - used));
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				} finally {
-					monitor.done();
-				}
-			}
-		}, true /* cancelable */, PROGRESS_DIALOG);
-	}
-	
-	private void createAndOpenProjects(IProject[] projects, IProjectDescription[] descriptions, IProgressMonitor monitor) throws CVSException {
-		monitor.beginTask(null, projects.length* 100);
-		for (int i = 0; i < projects.length; i++) {
-			IProject project = projects[i];
-			IProjectDescription desc = findDescription(descriptions, project);
-			createAndOpenProject(project, desc, Policy.subMonitorFor(monitor, 100));
-		}
-		monitor.done();
-	}
-
-	private void createAndOpenProject(IProject project, IProjectDescription desc, IProgressMonitor monitor) throws CVSException {
-		try {
-			monitor.beginTask(null, 5);
-			if (project.exists()) {
-				if (desc != null) {
-					project.move(desc, true, Policy.subMonitorFor(monitor, 3));
-				}
-			} else {
-				if (desc == null) {
-					// create in default location
-					project.create(Policy.subMonitorFor(monitor, 3));
-				} else {
-					// create in some other location
-					project.create(desc, Policy.subMonitorFor(monitor, 3));
-				}
-			}
-			if (!project.isOpen()) {
-				project.open(Policy.subMonitorFor(monitor, 2));
-			}
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		} finally {
-			monitor.done();
-		}
-	}
-	
-	private void checkoutProjects(ICVSRemoteFolder[] folders, IProject[] projects, IProgressMonitor monitor) throws TeamException {
-		CVSWorkspaceRoot.checkout(folders, projects, monitor);
+		new CheckoutSingleProjectOperation(remoteFolder, newProject, newDesc, !hasProjectMetaFile)
+			.execute(new ProgressMonitorDialog(shell));
 	}
 	
 	/*
