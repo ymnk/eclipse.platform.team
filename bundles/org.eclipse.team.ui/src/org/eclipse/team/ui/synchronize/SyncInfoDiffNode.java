@@ -124,9 +124,9 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	public SyncInfoDiffNode(SyncInfo info) {
 		this(null, createBaseTypeElement(info), createLocalTypeElement(info), createRemoteTypeElement(info), info.getKind());
 		this.syncSet = new SyncInfoSet(new SyncInfo[] {info});
+		this.resource = info.getLocal();
 	}
 
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.structuremergeviewer.DiffElement#getKind()
 	 */
@@ -138,7 +138,6 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 			return SyncInfo.IN_SYNC;
 		}
 	}
-	
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.structuremergeviewer.DiffNode#getName()

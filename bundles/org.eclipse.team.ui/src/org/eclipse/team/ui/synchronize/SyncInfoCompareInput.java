@@ -43,13 +43,11 @@ import org.eclipse.team.ui.ISharedImages;
  */
 public class SyncInfoCompareInput extends CompareEditorInput {
 
-	private SyncInfo sync;
 	private SyncInfoDiffNode node;
 
 	public SyncInfoCompareInput(SyncInfo sync) {
 		super(new CompareConfiguration());
 		Assert.isNotNull(sync);
-		this.sync = sync;
 		this.node = new SyncInfoDiffNode(sync);
 		initializeContentChangeListeners();
 	}
@@ -92,7 +90,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		// update the title now that the remote revision number as been fetched
 		// from the server
 		setTitle(getTitle());
-		Utils.updateLabels(sync, getCompareConfiguration());
+		Utils.updateLabels(node.getSyncInfo(), getCompareConfiguration());
 		try {
 			node.cacheContents(monitor);
 		} catch (TeamException e) {
@@ -170,6 +168,6 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	}
 
 	public SyncInfo getSyncInfo() {
-		return sync;
+		return node.getSyncInfo();
 	}
 }
