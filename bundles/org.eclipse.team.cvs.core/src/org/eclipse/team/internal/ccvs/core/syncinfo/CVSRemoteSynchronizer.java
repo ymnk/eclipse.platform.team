@@ -13,14 +13,10 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.RemoteBytesSynchronizer;
-import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.Policy;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.resources.*;
 
 /**
  * CVS specific remote synchronizer behavior
@@ -33,7 +29,7 @@ public abstract class CVSRemoteSynchronizer extends RemoteBytesSynchronizer {
 		super(new QualifiedName(SYNC_KEY_QUALIFIER, id));
 	}
 
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
+	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
 		byte[] remoteBytes = getSyncBytes(resource);
 		if (remoteBytes == null) {
 			// There is no remote handle for this resource
@@ -83,7 +79,7 @@ public abstract class CVSRemoteSynchronizer extends RemoteBytesSynchronizer {
 	 * Return the sync bytes associated with the remote resource. A return
 	 * value of <code>null</code> indicates that the remote resource does not exist.
 	 */
-	protected byte[] getRemoteSyncBytes(IResource local, IRemoteResource remote) throws TeamException {
+	protected byte[] getRemoteSyncBytes(IResource local, ICVSRemoteResource remote) throws TeamException {
 		if (remote != null) {
 			return ((RemoteResource)remote).getSyncBytes();
 		} else {

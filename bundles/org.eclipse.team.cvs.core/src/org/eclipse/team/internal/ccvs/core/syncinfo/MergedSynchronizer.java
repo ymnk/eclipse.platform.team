@@ -14,8 +14,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.RemoteBytesSynchronizer;
-import org.eclipse.team.core.sync.IRemoteResource;
 
 /**
  * This synchronizer keeps track of which resources have been merged.
@@ -30,7 +30,7 @@ public class MergedSynchronizer extends RemoteBytesSynchronizer {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#getRemoteResource(org.eclipse.core.resources.IResource)
 	 */
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
+	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
 		throw new UnsupportedOperationException();
 	}
 

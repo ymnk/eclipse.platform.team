@@ -12,20 +12,14 @@ package org.eclipse.team.internal.ui.synchronize.compare;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.CompareEditorInput;
-import org.eclipse.compare.IContentChangeListener;
-import org.eclipse.compare.IContentChangeNotifier;
-import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.*;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
@@ -46,14 +40,14 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		
 		// Create the remote ITypedElement
 		ITypedElement remoteTypedElement = null;
-		IRemoteResource remoteResource = sync.getRemote();
+		ISubscriberResource remoteResource = sync.getRemote();
 		if (remoteResource != null) {
 			remoteTypedElement = SyncInfoDiffNode.createTypeElement(remoteResource);
 		}
 		
 		// Create the base ITypedElement
 		ITypedElement baseTypedElement = null;
-		IRemoteResource baseResource = sync.getBase();
+		ISubscriberResource baseResource = sync.getBase();
 		if (baseResource != null) {
 			baseTypedElement = SyncInfoDiffNode.createTypeElement(baseResource);
 		}
@@ -117,8 +111,8 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	
 	protected void updateLabels() {
 		final CompareConfiguration config = getCompareConfiguration();
-		final IRemoteResource remote = sync.getRemote();
-		final IRemoteResource base = sync.getBase();
+		final ISubscriberResource remote = sync.getRemote();
+		final ISubscriberResource base = sync.getBase();
 		
 		String localContentId = sync.getLocalContentIdentifier();
 		if(localContentId != null) {		

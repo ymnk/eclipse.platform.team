@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.OptimizedRemoteSynchronizer;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
@@ -255,8 +254,8 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
 	 */
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
-		IRemoteResource remote =  super.getRemoteResource(resource);
+	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
+		ISubscriberResource remote =  super.getRemoteResource(resource);
 		if (resource.getType() == IResource.FILE && remote instanceof ICVSRemoteFile) {
 			byte[] remoteBytes = ((ICVSRemoteFile)remote).getSyncBytes();
 			byte[] localBytes = CVSWorkspaceRoot.getCVSFileFor((IFile)resource).getSyncBytes();

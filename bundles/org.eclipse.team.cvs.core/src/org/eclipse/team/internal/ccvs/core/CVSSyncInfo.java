@@ -10,21 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.core.sync.IRemoteResource;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.client.Update;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
-import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
-import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
-import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.resources.*;
+import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 
 /**
@@ -32,7 +24,7 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
  */
 public class CVSSyncInfo extends SyncInfo {
 
-	public CVSSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
+	public CVSSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
 		super(local, base, remote, subscriber, monitor);
 	}
 
@@ -91,7 +83,7 @@ public class CVSSyncInfo extends SyncInfo {
 	
 		// 2. Set the CVS specific sync type based on the workspace sync state provided
 		// by the CVS server.
-		IRemoteResource remote = getRemote();
+		ISubscriberResource remote = getRemote();
 		if(remote!=null && (kind & SyncInfo.PSEUDO_CONFLICT) == 0) {
 			RemoteResource cvsRemote = (RemoteResource)remote;
 			int type = cvsRemote.getWorkspaceSyncState();
@@ -278,8 +270,8 @@ public class CVSSyncInfo extends SyncInfo {
 	}
 	
 	public String toString() {
-		IRemoteResource base = getBase();
-		IRemoteResource remote = getRemote();
+		ISubscriberResource base = getBase();
+		ISubscriberResource remote = getRemote();
 		StringBuffer result = new StringBuffer(super.toString());
 		result.append("Local: "); //$NON-NLS-1$
 		result.append(getLocal().toString());

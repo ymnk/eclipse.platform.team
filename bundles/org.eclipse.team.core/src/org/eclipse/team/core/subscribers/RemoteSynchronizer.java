@@ -13,7 +13,6 @@ package org.eclipse.team.core.subscribers;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
 
 /**
  * A remote synchronizer provides API to access a handle for a resource resource
@@ -24,14 +23,14 @@ import org.eclipse.team.core.sync.IRemoteResource;
 public abstract class RemoteSynchronizer {
 	
 	/**
-	 * Return a remote resource handle created from the remote sync bytes associated
-	 * with the local resource for this synchronizer.
+	 * Return a subscriber resource handle representing the remote resource associated
+	 * with the given local resource.
 	 * 
 	 * @param resource the local resource
-	 * @return the IRemoteResource handle for a remote resource
+	 * @return the handle for a remote resource
 	 * @throws TeamException
 	 */
-	public abstract IRemoteResource getRemoteResource(IResource resource) throws TeamException;
+	public abstract ISubscriberResource getRemoteResource(IResource resource) throws TeamException;
 
 	/**
 	 * Return whether the given resource has a corresponding remote resource that

@@ -12,10 +12,7 @@ package org.eclipse.team.internal.core;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFileModificationValidator;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.Team;
 
 public class DefaultFileModificationValidator implements IFileModificationValidator {

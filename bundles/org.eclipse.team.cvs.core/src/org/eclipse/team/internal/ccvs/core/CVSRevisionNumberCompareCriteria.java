@@ -14,7 +14,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.subscribers.ComparisonCriteria;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.Policy;
@@ -42,10 +41,10 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 	 * @see ComparisonCriteria#compare(Object, Object, IProgressMonitor)
 	 */
 	public boolean compare(Object e1, Object e2, IProgressMonitor monitor) {
-		if(e1 instanceof IResource && e2 instanceof IRemoteResource) {
-			return compare((IResource)e1, (IRemoteResource)e2);
-		} else if(e1 instanceof IRemoteResource && e2 instanceof IRemoteResource) {
-			return compare((IRemoteResource)e1, (IRemoteResource)e2);
+		if(e1 instanceof IResource && e2 instanceof ICVSRemoteResource) {
+			return compare((IResource)e1, (ICVSRemoteResource)e2);
+		} else if(e1 instanceof ICVSRemoteResource && e2 instanceof ICVSRemoteResource) {
+			return compare((ICVSRemoteResource)e1, (ICVSRemoteResource)e2);
 		}
 		return false;
 	}
@@ -53,7 +52,7 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 	/**
 	 * @see RemoteSyncElement#timestampEquals(IRemoteResource, IRemoteResource)
 	 */
-	protected boolean compare(IRemoteResource e1, IRemoteResource e2) {
+	protected boolean compare(ICVSRemoteResource e1, ICVSRemoteResource e2) {
 		if(e1.isContainer()) {
 			if(e2.isContainer()) {
 				return true;
@@ -66,7 +65,7 @@ import org.eclipse.team.internal.ccvs.core.Policy;
 	/**
 	 * @see RemoteSyncElement#timestampEquals(IResource, IRemoteResource)
 	 */
-	protected boolean compare(IResource e1, IRemoteResource e2) {
+	protected boolean compare(IResource e1, ICVSRemoteResource e2) {
 		if(e1.getType() != IResource.FILE) {
 			if(e2.isContainer()) {
 				return true;

@@ -13,86 +13,38 @@ package org.eclipse.team.internal.ccvs.ui.sync;
  
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.DiffContainer;
-import org.eclipse.compare.structuremergeviewer.DiffElement;
-import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.IDecoration;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.Point;
+import org.eclipse.jface.viewers.*;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.ILogEntry;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.HistoryView;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
-import org.eclipse.team.internal.ccvs.ui.OverlayIconCache;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.merge.OverrideUpdateMergeAction;
-import org.eclipse.team.internal.ccvs.ui.merge.UpdateMergeAction;
-import org.eclipse.team.internal.ccvs.ui.merge.UpdateWithForcedJoinAction;
 import org.eclipse.team.internal.ui.OverlayIcon;
-import org.eclipse.team.internal.ui.sync.CatchupReleaseViewer;
-import org.eclipse.team.internal.ui.sync.ChangedTeamContainer;
-import org.eclipse.team.internal.ui.sync.ITeamNode;
-import org.eclipse.team.internal.ui.sync.MergeResource;
-import org.eclipse.team.internal.ui.sync.SyncView;
-import org.eclipse.team.internal.ui.sync.TeamFile;
+import org.eclipse.team.internal.ui.sync.*;
 import org.eclipse.ui.help.WorkbenchHelp;
 
 public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 	// Actions
-	private UpdateSyncAction updateAction;
-	private ForceUpdateSyncAction forceUpdateAction;
-	
-	private CommitSyncAction commitAction;
-	private ForceCommitSyncAction forceCommitAction;
-	
-	private UpdateMergeAction updateMergeAction;
-	private UpdateWithForcedJoinAction updateWithJoinAction;
-	private OverrideUpdateMergeAction forceUpdateMergeAction;
-
-	private IgnoreAction ignoreAction;
 	private HistoryAction showInHistory;
 
-	private Action confirmMerge;
-	private AddSyncAction addAction;
-	
-	private Action selectAdditions;
 	private Image conflictImage;
 	
 	private static class DiffOverlayIcon extends OverlayIcon {
@@ -219,16 +171,7 @@ public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 			this.overlay = overlay;
 		}
 	}
-	
-	private Image getConflictImage() {
-		if(conflictImage != null)
-			return conflictImage;
-		final ImageDescriptor conflictDescriptor = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_MERGEABLE_CONFLICT);
-		conflictImage = conflictDescriptor.createImage();
-		return conflictImage;
-	}
 		
-
 	private void initializeLabelProvider() {
 		final LabelProvider oldProvider = (LabelProvider)getLabelProvider();
 		
@@ -315,199 +258,15 @@ public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 		if (showInHistory != null) {
 			manager.add(showInHistory);
 		}
-		manager.add(new Separator());
-		switch (getSyncMode()) {
-			case SyncView.SYNC_INCOMING:
-				updateAction.update(SyncView.SYNC_INCOMING);
-				manager.add(updateAction);
-				forceUpdateAction.update(SyncView.SYNC_INCOMING);
-				manager.add(forceUpdateAction);
-				manager.add(new Separator());
-				confirmMerge.setEnabled(confirmMerge.isEnabled());				
-				manager.add(confirmMerge);
-				break;
-			case SyncView.SYNC_OUTGOING:
-				addAction.update(SyncView.SYNC_OUTGOING);
-				manager.add(addAction);
-				commitAction.update(SyncView.SYNC_OUTGOING);
-				manager.add(commitAction);
-				forceCommitAction.update(SyncView.SYNC_OUTGOING);
-				manager.add(forceCommitAction);
-				ignoreAction.update();
-				manager.add(ignoreAction);
-				manager.add(new Separator());
-				confirmMerge.setEnabled(confirmMerge.isEnabled());				
-				manager.add(confirmMerge);
-				selectAdditions.setEnabled(selectAdditions.isEnabled());				
-				manager.add(selectAdditions);
-				break;
-			case SyncView.SYNC_BOTH:
-				addAction.update(SyncView.SYNC_BOTH);
-				manager.add(addAction);
-				commitAction.update(SyncView.SYNC_BOTH);
-				manager.add(commitAction);
-				updateAction.update(SyncView.SYNC_BOTH);
-				manager.add(updateAction);
-				ignoreAction.update();
-				manager.add(ignoreAction);
-				manager.add(new Separator());
-				forceCommitAction.update(SyncView.SYNC_BOTH);
-				manager.add(forceCommitAction);
-				forceUpdateAction.update(SyncView.SYNC_BOTH);
-				manager.add(forceUpdateAction);				
-				manager.add(new Separator());
-				confirmMerge.setEnabled( confirmMerge.isEnabled());				
-				manager.add(confirmMerge);
-				break;
-			case SyncView.SYNC_MERGE:
-				updateMergeAction.update(SyncView.SYNC_INCOMING);
-				forceUpdateMergeAction.update(SyncView.SYNC_INCOMING);
-				updateWithJoinAction.update(SyncView.SYNC_INCOMING);
-				manager.add(updateMergeAction);
-				manager.add(forceUpdateMergeAction);
-				manager.add(updateWithJoinAction);
-				break;
-		}
 	}
 	
 	/**
 	 * Creates the actions for this viewer.
 	 */
-	private void initializeActions(final CVSSyncCompareInput diffModel) {
-		Shell shell = getControl().getShell();
-		commitAction = new CommitSyncAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.commit"), shell); //$NON-NLS-1$
-		forceCommitAction = new ForceCommitSyncAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.forceCommit"), shell); //$NON-NLS-1$
-		updateAction = new UpdateSyncAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.update"), shell); //$NON-NLS-1$
-		forceUpdateAction = new ForceUpdateSyncAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.forceUpdate"), shell); //$NON-NLS-1$
-		updateMergeAction = new UpdateMergeAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.update"), shell); //$NON-NLS-1$
-		ignoreAction = new IgnoreAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.ignore"), shell); //$NON-NLS-1$
-		updateWithJoinAction = new UpdateWithForcedJoinAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.mergeUpdate"), shell); //$NON-NLS-1$
-		forceUpdateMergeAction = new OverrideUpdateMergeAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.forceUpdate"), shell); //$NON-NLS-1$
-		addAction = new AddSyncAction(diffModel, this, Policy.bind("CVSCatchupReleaseViewer.addAction"), shell); //$NON-NLS-1$
-		
-		// Show in history view
+	private void initializeActions(final CVSSyncCompareInput diffModel) {		// Show in history view
 		showInHistory = new HistoryAction(Policy.bind("CVSCatchupReleaseViewer.showInHistory")); //$NON-NLS-1$
 		WorkbenchHelp.setHelp(showInHistory, IHelpContextIds.SHOW_IN_RESOURCE_HISTORY);
 		addSelectionChangedListener(showInHistory);
-		
-		selectAdditions = new Action(Policy.bind("CVSCatchupReleaseViewer.Select_&Outgoing_Additions_1"), null) { //$NON-NLS-1$
-			public boolean isEnabled() {
-				DiffNode node = diffModel.getDiffRoot();
-				IDiffElement[] elements = node.getChildren();
-				for (int i = 0; i < elements.length; i++) {
-					IDiffElement element = elements[i];
-					if (element instanceof ITeamNode) {
-						CVSSyncSet set = new CVSSyncSet(new StructuredSelection(element));
-						try {
-							if (set.hasNonAddedChanges()) return true;
-						} catch (CVSException e) {
-							// Log the error and enable the menu item
-							CVSUIPlugin.log(e);
-							return true;
-						}
-					} else {
-						// unanticipated situation, just enable the action
-						return true;
-					}
-				}
-				return false;
-			}
-			public void run() {
-				List additions = new ArrayList();
-				DiffNode root = diffModel.getDiffRoot();
-				visit(root, additions);
-				setSelection(new StructuredSelection(additions));
-			}
-			private void visit(IDiffElement node, List additions) {
-				try {
-					if (node instanceof TeamFile) {
-						TeamFile file = (TeamFile)node;
-						if (file.getChangeDirection() == IRemoteSyncElement.OUTGOING) {
-							if (file.getChangeType() == IRemoteSyncElement.ADDITION) {
-								ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(file.getResource());
-								if (cvsResource.isManaged()) return;
-								additions.add(node);
-							}
-						}
-						return;
-					}
-					if (node instanceof ChangedTeamContainer) {
-						ChangedTeamContainer container = (ChangedTeamContainer)node;
-						if (container.getChangeDirection() == IRemoteSyncElement.OUTGOING) {
-							if (container.getChangeType() == IRemoteSyncElement.ADDITION) {
-								ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(container.getResource());
-								if (!((ICVSFolder)cvsResource).isCVSFolder()) {
-									additions.add(node);
-								}
-							}
-						}
-						
-					}
-					if (node instanceof DiffContainer) {
-						IDiffElement[] children = ((DiffContainer)node).getChildren();
-						for (int i = 0; i < children.length; i++) {
-							visit(children[i], additions);
-						}
-					}
-				} catch (TeamException e) {
-					CVSUIPlugin.log(e);
-				}
-			}
-		};
-		WorkbenchHelp.setHelp(selectAdditions, IHelpContextIds.SELECT_NEW_RESOURCES_ACTION);
-		
-		// confirm merge
-		confirmMerge = new Action(Policy.bind("CVSCatchupReleaseViewer.confirmMerge"), null) { //$NON-NLS-1$
-			public void run() {
-				ISelection s = getSelection();
-				if (!(s instanceof IStructuredSelection) || s.isEmpty()) {
-					return;
-				}
-				List needsMerge = new ArrayList();
-				for (Iterator it = ((IStructuredSelection)s).iterator(); it.hasNext();) {
-					final Object element = it.next();
-					if(element instanceof DiffElement) {
-						mergeRecursive((IDiffElement)element, needsMerge);
-					}
-				}
-				TeamFile[] files = (TeamFile[]) needsMerge.toArray(new TeamFile[needsMerge.size()]);
-				if(files.length != 0) {
-					try {
-						for (int i = 0; i < files.length; i++) {		
-							TeamFile teamFile = (TeamFile)files[i];
-							CVSUIPlugin.getPlugin().getRepositoryManager().merged(new IRemoteSyncElement[] {teamFile.getMergeResource().getSyncElement()});
-							teamFile.merged();
-						}
-					} catch(TeamException e) {
-						CVSUIPlugin.openError(getControl().getShell(), null, null, e);
-					}
-				}
-				refresh();
-				diffModel.updateStatusLine();
-			}
-			 
-			public boolean isEnabled() {
-				ISelection s = getSelection();
-				if (!(s instanceof IStructuredSelection) || s.isEmpty()) {
-					return false;
-				}
-				for (Iterator it = ((IStructuredSelection)s).iterator(); it.hasNext();) {
-					Object element = (Object) it.next();
-					if(element instanceof TeamFile) {
-						TeamFile file = (TeamFile)element;						
-						int direction = file.getChangeDirection();
-						int type = file.getChangeType();
-						if(direction == IRemoteSyncElement.INCOMING ||
-						   direction == IRemoteSyncElement.CONFLICTING) {
-							continue;
-						}
-					}
-					return false;
-				}
-				return true;
-			}
-		};
-		WorkbenchHelp.setHelp(confirmMerge, IHelpContextIds.CONFIRM_MERGE_ACTION);
 	}
 	
 	protected void mergeRecursive(IDiffElement element, List needsMerge) {

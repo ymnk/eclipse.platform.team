@@ -9,9 +9,7 @@ package org.eclipse.team.internal.ccvs.core;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.core.sync.IRemoteResource;
+import org.eclipse.team.core.subscribers.*;
 
 /**
  * @author JLemieux
@@ -48,7 +46,7 @@ public class CVSMergeSyncInfo extends CVSSyncInfo {
 		return kind;
 	}
 
-	public CVSMergeSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
+	public CVSMergeSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, TeamSubscriber subscriber, IProgressMonitor monitor) throws TeamException {
 		super(local, base, remote, subscriber, monitor);
 	}
 	

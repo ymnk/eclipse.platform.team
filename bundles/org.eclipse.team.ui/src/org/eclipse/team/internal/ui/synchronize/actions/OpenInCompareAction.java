@@ -10,32 +10,19 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.actions;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoCompareInput;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IEditorReference;
-import org.eclipse.ui.IReusableEditor;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.*;
 
 /**
  * Action to open a compare editor from a SyncInfo object.
@@ -74,7 +61,6 @@ public class OpenInCompareAction extends Action {
 					wpage.activate(editor);
 				} else {
 					// if editor is currently not open on that input either re-use existing
-					if (!prefetchFileContents(info)) return null;
 					if(editor != null && editor instanceof IReusableEditor) {
 						CompareUI.reuseCompareEditor(input, (IReusableEditor)editor);
 						wpage.activate(editor);
@@ -90,40 +76,6 @@ public class OpenInCompareAction extends Action {
 			return input;
 		}			
 		return null;
-	}
-
-	/**
-	 * Prefetching the file contents will cache them for use by the compare editor
-	 * so that the compare editor doesn't have to perform file transfers. This will
-	 * make the transfer cancellable.
-	 */
-	private static boolean prefetchFileContents(SyncInfo info) {
-		final IRemoteResource remote = info.getRemote();
-		final IRemoteResource base = info.getBase();
-		if (remote != null || base != null) {
-			final boolean[] ok = new boolean[] { true };
-			TeamUIPlugin.run(new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					try {
-						monitor.beginTask(null, (remote == null ? 0 : 100) + (base == null ? 0 : 100));
-						if (remote != null)
-							remote.getContents(Policy.subMonitorFor(monitor, 100));
-						if (base != null)
-							base.getContents(Policy.subMonitorFor(monitor, 100));
-					} catch (TeamException e) {
-						ok[0] = false;
-						// The sync viewer will show the error to the user so we need only abort the action
-						throw new InvocationTargetException(e);
-					} finally {
-						// return false if the operation was cancelled
-						ok[0] = ! monitor.isCanceled();
-						monitor.done();
-					}
-				}
-			});
-			return ok[0];
-		}
-		return true;
 	}
 	
 	/**

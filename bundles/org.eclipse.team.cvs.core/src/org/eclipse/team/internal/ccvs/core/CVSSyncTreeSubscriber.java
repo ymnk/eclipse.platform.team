@@ -10,31 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ComparisonCriteria;
-import org.eclipse.team.core.subscribers.ContentComparisonCriteria;
-import org.eclipse.team.core.subscribers.RemoteSynchronizer;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.core.subscribers.TeamDelta;
-import org.eclipse.team.core.sync.IRemoteResource;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 
 /**
@@ -159,11 +142,11 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
 	 */
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
+	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
 		return getRemoteSynchronizer().getRemoteResource(resource);
 	}
 
-	public IRemoteResource getBaseResource(IResource resource) throws TeamException {
+	public ISubscriberResource getBaseResource(IResource resource) throws TeamException {
 		return getBaseSynchronizer().getRemoteResource(resource);
 	}
 
@@ -181,9 +164,9 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	 */
 	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
 		if (!isSupervised(resource)) return null;
-		IRemoteResource remoteResource = getRemoteResource(resource);
+		ISubscriberResource remoteResource = getRemoteResource(resource);
 		if(resource.getType() == IResource.FILE) {
-			IRemoteResource baseResource = getBaseResource(resource);
+			ISubscriberResource baseResource = getBaseResource(resource);
 			return getSyncInfo(resource, baseResource, remoteResource, monitor);
 		} else {
 			// In CVS, folders do not have a base. Hence, the remote is used as the base.
@@ -200,7 +183,7 @@ public abstract class CVSSyncTreeSubscriber extends TeamSubscriber {
 	 * @param monitor
 	 * @return
 	 */
-	protected SyncInfo getSyncInfo(IResource local, IRemoteResource base, IRemoteResource remote, IProgressMonitor monitor) throws TeamException {
+	protected SyncInfo getSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, IProgressMonitor monitor) throws TeamException {
 		try {
 			monitor = Policy.monitorFor(monitor);
 			monitor.beginTask(null, 100);

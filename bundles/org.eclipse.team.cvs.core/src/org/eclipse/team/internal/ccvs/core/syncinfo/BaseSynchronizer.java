@@ -15,8 +15,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.RemoteSynchronizer;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -81,8 +81,8 @@ public class BaseSynchronizer extends RemoteSynchronizer {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSynchronizer#getRemoteResource(org.eclipse.core.resources.IResource)
 	 */
-	public IRemoteResource getRemoteResource(IResource resource) throws TeamException {
-		return CVSWorkspaceRoot.getRemoteResourceFor(resource);
+	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
+		return (ISubscriberResource)CVSWorkspaceRoot.getRemoteResourceFor(resource);
 	}
 
 	/* (non-Javadoc)

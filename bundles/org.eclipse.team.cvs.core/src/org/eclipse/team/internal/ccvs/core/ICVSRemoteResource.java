@@ -24,7 +24,15 @@ import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
  * 
  * Clients are not expected to implement this interface.
  */
-public interface ICVSRemoteResource extends IRemoteResource, ICVSResource {
+public interface ICVSRemoteResource extends ICVSResource, IRemoteResource {
+	
+	/**
+	 * Answers if the remote element may have children.
+	 * 
+	 * @return <code>true</code> if the remote element may have children and 
+	 * <code>false</code> otherwise.
+	 */
+	public boolean isContainer();
 	
 	/**
 	 * Return the repository

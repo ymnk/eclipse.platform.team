@@ -11,32 +11,17 @@
 
 package org.eclipse.team.internal.ccvs.core.syncinfo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.internal.jobs.JobManager;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.Policy;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 
 /**
@@ -51,7 +36,7 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 		this.tag = tag;
 	}
 
-	public void collectChanges(IResource local, IRemoteResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
+	public void collectChanges(IResource local, ICVSRemoteResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
 		byte[] remoteBytes = getRemoteSyncBytes(local, remote);
 		boolean changed;
 		if (remoteBytes == null) {
@@ -66,7 +51,7 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 		Map children = mergedMembers(local, remote, monitor);	
 		for (Iterator it = children.keySet().iterator(); it.hasNext();) {
 			IResource localChild = (IResource) it.next();
-			IRemoteResource remoteChild = (IRemoteResource)children.get(localChild);
+			ICVSRemoteResource remoteChild = (ICVSRemoteResource)children.get(localChild);
 			collectChanges(localChild, remoteChild, changedResources,
 				depth == IResource.DEPTH_INFINITE ? IResource.DEPTH_INFINITE : IResource.DEPTH_ZERO, 
 				monitor);
@@ -84,12 +69,12 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 		}
 	}
 	
-	protected Map mergedMembers(IResource local, IRemoteResource remote, IProgressMonitor progress) throws TeamException {
+	protected Map mergedMembers(IResource local, ICVSRemoteResource remote, IProgressMonitor progress) throws TeamException {
 	
 		// {IResource -> IRemoteResource}
 		Map mergedResources = new HashMap();
 		
-		IRemoteResource[] remoteChildren = getRemoteChildren(remote, progress);
+		ICVSRemoteResource[] remoteChildren = getRemoteChildren(remote, progress);
 		
 		IResource[] localChildren = getLocalChildren(local);		
 
@@ -111,7 +96,7 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 			if (remoteChildren.length > 0) {
 				remoteSet = new HashMap(10);
 				for (int i = 0; i < remoteChildren.length; i++) {
-					IRemoteResource remoteChild = remoteChildren[i];
+					ICVSRemoteResource remoteChild = remoteChildren[i];
 					String name = remoteChild.getName();
 					remoteSet.put(name, remoteChild);
 					allSet.add(name);
@@ -132,8 +117,8 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 				IResource localChild =
 					localSet != null ? (IResource) localSet.get(keyChildName) : null;
 
-				IRemoteResource remoteChild =
-					remoteSet != null ? (IRemoteResource) remoteSet.get(keyChildName) : null;
+				ICVSRemoteResource remoteChild =
+					remoteSet != null ? (RemoteResource) remoteSet.get(keyChildName) : null;
 				
 				if (localChild == null) {
 					// there has to be a remote resource available if we got this far
@@ -147,8 +132,9 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 		return mergedResources;
 	}
 	
-	private IRemoteResource[] getRemoteChildren(IRemoteResource remote, IProgressMonitor progress) throws TeamException {
-		return remote != null ? remote.members(progress) : new IRemoteResource[0];
+	private ICVSRemoteResource[] getRemoteChildren(ICVSRemoteResource remote, IProgressMonitor progress) throws TeamException {
+		// TODO: needs ot be properly handled
+		return remote != null ? (ICVSRemoteResource[])((RemoteResource)remote).members(progress) : new ICVSRemoteResource[0];
 	}
 
 	private IResource[] getLocalChildren(IResource local) throws TeamException {
@@ -227,7 +213,7 @@ public class RemoteTagSynchronizer extends CVSRemoteSynchronizer {
 			monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString())); //$NON-NLS-1$
 			
 			// build the remote tree only if an initial tree hasn't been provided
-			IRemoteResource	tree = buildRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));
+			ICVSRemoteResource	tree = buildRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));
 			
 			// update the known remote handles 
 			IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);

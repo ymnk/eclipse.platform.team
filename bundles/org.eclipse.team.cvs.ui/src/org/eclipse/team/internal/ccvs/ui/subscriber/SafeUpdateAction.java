@@ -11,11 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -23,8 +19,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -32,9 +28,7 @@ import org.eclipse.team.internal.ccvs.ui.operations.UpdateOnlyMergableOperation;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoSet;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.AndSyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.OrSyncInfoFilter;
-import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter.*;
 
 /**
  * This update action will update all mergable resources first and then prompt the
@@ -222,8 +216,8 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 				SyncInfoFilter.getDirectionAndChangeFilter(SyncInfo.CONFLICTING, SyncInfo.CHANGE),
 				new SyncInfoFilter() {
 					public boolean select(SyncInfo info) {
-						IRemoteResource remote = info.getRemote();
-						IRemoteResource base = info.getBase();
+						ISubscriberResource remote = info.getRemote();
+						ISubscriberResource base = info.getBase();
 						if (info.getLocal().exists()) {
 							// local != base and no remote will fail
 							return (base != null && remote == null);

@@ -15,8 +15,8 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ui.Policy;
 
 public class SyncInfoDiffNode extends DiffNode {
@@ -43,7 +43,7 @@ public class SyncInfoDiffNode extends DiffNode {
 	 * Create an ITypedElement for the given remote resource. The contents for the remote resource
 	 * will be retrieved from the given IStorage which is a local cache used to buffer the remote contents
 	 */
-	public static ITypedElement createTypeElement(IRemoteResource remoteResource) {
+	public static ITypedElement createTypeElement(ISubscriberResource remoteResource) {
 		return new RemoteResourceTypedElement(remoteResource);
 	}
 	

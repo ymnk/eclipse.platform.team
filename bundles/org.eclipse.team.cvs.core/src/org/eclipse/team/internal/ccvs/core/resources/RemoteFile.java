@@ -10,51 +10,20 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.resources;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.RemoteContentsCache;
 import org.eclipse.team.core.sync.IRemoteResource;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSStatus;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
-import org.eclipse.team.internal.ccvs.core.ILogEntry;
-import org.eclipse.team.internal.ccvs.core.Policy;
-import org.eclipse.team.internal.ccvs.core.client.Command;
-import org.eclipse.team.internal.ccvs.core.client.Log;
-import org.eclipse.team.internal.ccvs.core.client.Session;
-import org.eclipse.team.internal.ccvs.core.client.Update;
-import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
-import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
-import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.client.*;
+import org.eclipse.team.internal.ccvs.core.client.Command.*;
 import org.eclipse.team.internal.ccvs.core.client.listeners.LogListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
-import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.core.syncinfo.NotifyInfo;
-import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 
 /**
@@ -462,7 +431,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 * @see IRemoteResource#members(IProgressMonitor)
 	 */
 	public IRemoteResource[] members(IProgressMonitor progress) {
-		return new IRemoteResource[0];
+		return new ICVSRemoteResource[0];
 	}
 
 	/*
@@ -614,6 +583,31 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 * @see org.eclipse.team.core.sync.IRemoteResource#getBufferedStorage(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public IStorage getBufferedStorage(IProgressMonitor monitor) throws TeamException {
+		// Invoke getContents which ensures that contents are cached
+		getContents(monitor);
+		return new IStorage() {
+			public InputStream getContents() throws CoreException {
+				return RemoteFile.this.getContents();
+			}
+			public IPath getFullPath() {
+				return new Path(getRepositoryRelativePath());
+			}
+			public String getName() {
+				return RemoteFile.this.getName();
+			}
+			public boolean isReadOnly() {
+				return true;
+			}
+			public Object getAdapter(Class adapter) {
+				return RemoteFile.this.getAdapter(adapter);
+			}
+		};
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISubscriberResource#getStorage(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
 		// Invoke getContents which ensures that contents are cached
 		getContents(monitor);
 		return new IStorage() {

@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.Policy;
 
 /**
@@ -152,10 +151,10 @@ public class ContentComparisonCriteria extends ComparisonCriteria {
 		try {
 			if (resource instanceof IFile) {
 				return new BufferedInputStream(((IFile) resource).getContents());
-			} else if(resource instanceof IRemoteResource) {
-				IRemoteResource remote = (IRemoteResource)resource;
+			} else if(resource instanceof ISubscriberResource) {
+				ISubscriberResource remote = (ISubscriberResource)resource;
 				if (!remote.isContainer()) {
-					return new BufferedInputStream(remote.getContents(monitor));
+					return new BufferedInputStream(remote.getStorage(monitor).getContents());
 				}
 			}
 			return null;
