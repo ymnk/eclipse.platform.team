@@ -23,6 +23,9 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
+import org.eclipse.team.internal.ccvs.core.util.Assert;
 
 /**
  * CVSSyncInfo
@@ -162,6 +165,92 @@ public class CVSSyncInfo extends SyncInfo {
 		return kind;
 	}
 
+	/*
+	 * Update the sync info of the local resource in such a way that the local changes can be committed.
+	 */
+	public void makeOutgoing(IProgressMonitor monitor) throws TeamException {
+		
+		// TODO: What is the impact of using whatever the current granularity is?
+		// int syncKind = getSyncKind(GRANULARITY_TIMESTAMP , monitor);
+		int syncKind = getKind();
+		boolean incoming = (syncKind & DIRECTION_MASK) == INCOMING;
+		boolean outgoing = (syncKind & DIRECTION_MASK) == OUTGOING;
+
+		ICVSResource local = CVSWorkspaceRoot.getCVSResourceFor(getLocal());
+		RemoteResource remote = (RemoteResource)getRemote();
+		ResourceSyncInfo origInfo = local.getSyncInfo();
+		MutableResourceSyncInfo info = null;
+		if(origInfo!=null) {
+			info = origInfo.cloneMutable();			
+		}
+	
+		if (outgoing) {
+				// The sync info is alright, it's already outgoing!
+				return;
+		} else if (incoming) {
+			// We have an incoming change, addition, or deletion that we want to ignore
+			if (local.exists()) {
+				// We could have an incoming change or deletion
+				if (remote == null) {
+					info.setAdded();
+				} else {
+					// Otherwise change the revision to the remote revision and dirty the file
+					info.setRevision(remote.getSyncInfo().getRevision());
+					info.setTimeStamp(null);
+				}
+			} else {
+				// We have an incoming add, turn it around as an outgoing delete
+				info = remote.getSyncInfo().cloneMutable();
+				info.setDeleted(true);
+			}
+		} else if (local.exists()) {
+			// We have a conflict and a local resource!
+			if (getRemote() != null) {
+				if (getBase() != null) {
+					// We have a conflicting change, Update the local revision
+					info.setRevision(remote.getSyncInfo().getRevision());
+				} else {
+					// We have conflictin additions.
+					// We need to fetch the contents of the remote to get all the relevant information (timestamp, permissions)
+					remote.getContents(Policy.monitorFor(monitor));
+					info = remote.getSyncInfo().cloneMutable();
+				}
+			} else if (getBase() != null) {
+				// We have a remote deletion. Make the local an addition
+				info.setAdded();
+			} else {
+				// There's a local, no base and no remote. We can't possible have a conflict!
+				Assert.isTrue(false);
+			} 
+		} else {
+			// We have a conflict and there is no local!
+			if (getRemote() != null) {
+				// We have a local deletion that conflicts with remote changes.
+				info.setRevision(remote.getSyncInfo().getRevision());
+				info.setDeleted(true);
+			} else {
+				// We have conflicting deletions. Clear the sync info
+				info = null;
+				return;
+			}
+		}
+		if(info!=null) {
+			info.setTag(local.getParent().getFolderSyncInfo().getTag());
+		}
+		((ICVSFile)local).setSyncInfo(info, ICVSFile.UNKNOWN);
+	}
+	
+	/*
+	 * Update the sync info of the local resource in such a way that the remote resource can be loaded 
+	 * ignore any local changes. 
+	 */
+	public void makeIncoming(IProgressMonitor monitor) throws TeamException {
+		// To make outgoing deletions incoming, the local will not exist but
+		// it is still important to unmanage (e.g. delete all meta info) for the
+		// deletion.
+		CVSWorkspaceRoot.getCVSResourceFor(getLocal()).unmanage(null);
+	}
+	
 	/*
 	 * Load the resource and folder sync info into the local from the remote
 	 * 
