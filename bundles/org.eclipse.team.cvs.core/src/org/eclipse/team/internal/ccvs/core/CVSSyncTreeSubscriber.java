@@ -237,7 +237,16 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 						// Assume there is no remote and the problem is a programming error
 						return null;
 					} else {
-						FolderSyncInfo newInfo = new FolderSyncInfo(info.getRepository(), info.getRoot(), new CVSEntryLineTag(new String(ResourceSyncInfo.getTagBytes(remoteBytes))), false);
+						// Use the folder sync from the workspace and the tag from the file
+						
+						byte[] tagBytes = ResourceSyncInfo.getTagBytes(remoteBytes);
+						CVSTag tag;
+						if (tagBytes == null || tagBytes.length == 0) {
+							tag = CVSTag.DEFAULT;
+						} else {
+							tag = new CVSEntryLineTag(new String(tagBytes));
+						}
+						FolderSyncInfo newInfo = new FolderSyncInfo(info.getRepository(), info.getRoot(), tag, false);
 						parentBytes = newInfo.getBytes();
 					}
 				}

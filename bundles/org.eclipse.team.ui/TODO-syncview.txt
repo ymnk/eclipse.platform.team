@@ -111,6 +111,10 @@ x actions in sync view all assume that selection will have a resource (e.g refre
   doesn't handle outgoing changes. For example, when changing from incoming to outgoing with
   the change log root, the change log root gets a reset from the sync set then the input
   is changed. this can cause an NPE. Must look into the ordering here.
+  [mv] I think we have to make the statement that the content provider must handle all sync types
+  in some fashion. I recall that we discussed the restriction that a sync diff root node must
+  show all elements in it's sync set. Could the comment builder place all outgoing changes in 
+  an additional section. The user would never see this but it would fulfill the contract.
 - the test cases starve the subscriber event handler such that an event has additions and removals for the same resources
   - this causes failures in the diff tree builders
   - although less likely in UI, can still happen
@@ -118,9 +122,8 @@ x actions in sync view all assume that selection will have a resource (e.g refre
 - there are several places in SyncInfoSet and in the DiffNodes where we must use the workspace root
 as the input resource to imply get all members? Maybe this should be cleaned up a bit.
 - SyncInfoSet must be cleaned up a lot, the API is vague and method names are not clear.
-  - we need a way to ensure that the sync set does not change while we are building a diff tree
-  - events are only fired from endInput(). It should work in both batching and non-batching mode
-  
+  x we need a way to ensure that the sync set does not change while we are building a diff tree
+  x events are only fired from endInput(). It should work in both batching and non-batching mode  
 x SyncInfoDiffNode doesn't have to return a resource or a syncinfo. By definition a diff node already has API
 for returning a sync kind getKind() and access to all three resources getRight(), getLeft(), getAncestor().
 

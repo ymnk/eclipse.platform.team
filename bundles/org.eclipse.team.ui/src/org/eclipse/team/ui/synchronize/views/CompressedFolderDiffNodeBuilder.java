@@ -118,11 +118,17 @@ public class CompressedFolderDiffNodeBuilder extends SyncInfoDiffNodeBuilder {
 				}
 				createChildNode(compressedNode, local);
 			} else {
-				DiffNode projectNode = getModelObject(local.getProject());
-				if (projectNode == null) {
-					projectNode = createChildNode(getRoot(), local.getProject());
+				DiffNode existingNode = getModelObject(local);
+				if (existingNode != null) {
+					// The node was added as the parent of a newly added out-of-sync file
+					refreshInViewer(existingNode);
+				} else {
+					DiffNode projectNode = getModelObject(local.getProject());
+					if (projectNode == null) {
+						projectNode = createChildNode(getRoot(), local.getProject());
+					}
+					createChildNode(projectNode, local);
 				}
-				createChildNode(projectNode, local);
 			}
 		}
 	}

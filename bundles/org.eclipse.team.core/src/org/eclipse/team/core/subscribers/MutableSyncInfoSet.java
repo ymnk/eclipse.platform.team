@@ -28,6 +28,7 @@ public class MutableSyncInfoSet extends SyncInfoSet {
 	
 	public MutableSyncInfoSet(SyncInfo[] infos) {
 		super(infos);
+		resetChanges();
 	}
 		
 	/**
