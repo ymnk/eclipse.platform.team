@@ -505,7 +505,7 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 			Command.NO_GLOBAL_OPTIONS,
 			options,
 			arguments,
-			null, //new DiffListener(stream),
+			null, // FIXME new DiffListener(stream),
 			progress);
 		} finally {
 			s.close();

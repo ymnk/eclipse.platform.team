@@ -121,7 +121,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 		try {
 			if (contents == null) {
 				IStatus status;
-				Session s = new Session(getRepository(), parent);
+				Session s = new Session(getRepository(), parent, false);
 				s.open(monitor);
 				try {
 					status = Command.UPDATE.execute(s,
@@ -152,7 +152,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 		// Perform a "cvs log..." with a custom message handler
 		final List entries = new ArrayList();
 		IStatus status;
-		Session s = new Session(getRepository(), parent);
+		Session s = new Session(getRepository(), parent, false);
 		s.open(monitor);
 		try {
 			status = Command.LOG.execute(s,

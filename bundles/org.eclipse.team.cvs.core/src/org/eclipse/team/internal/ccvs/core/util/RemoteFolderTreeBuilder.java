@@ -111,7 +111,7 @@ public class RemoteFolderTreeBuilder {
 	}
 	
 	private RemoteFolderTree buildTree(IProgressMonitor monitor) throws CVSException {
-		Session session = new Session(repository, root);
+		Session session = new Session(repository, root, false);
 		session.open(monitor);
 		try {
 			fetchDelta(session, monitor);
@@ -125,7 +125,7 @@ public class RemoteFolderTreeBuilder {
 		// We didn't need one before!!! Perhaps we could support the changing of a sessions root as long as
 		// the folder sync info is the same 
 		remoteRoot = new RemoteFolderTree(null, repository, new Path(root.getFolderSyncInfo().getRepository()), tag);
-		session = new Session(repository, remoteRoot);
+		session = new Session(repository, remoteRoot, false);
 		session.open(monitor);
 		try {
 			buildRemoteTree(session, root, remoteRoot, Path.EMPTY, monitor);

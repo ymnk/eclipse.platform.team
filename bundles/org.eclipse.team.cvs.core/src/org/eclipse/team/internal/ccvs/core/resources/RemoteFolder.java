@@ -142,7 +142,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		// Retrieve the children and any file revision numbers in a single connection
 		// Perform a "cvs -n update -d -r tagName folderName" with custom message and error handlers		
 		IStatus status;
-		Session s = new Session(getRepository(), this);
+		Session s = new Session(getRepository(), this, false);
 		s.open(monitor);
 		try {
 			status = Command.UPDATE.execute(s,
@@ -222,7 +222,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		if (tag != null) localOptions.add(Update.makeTagOption(tag));
 		
 		// Retrieve the children and any file revision numbers in a single connection
-		Session s = new Session(getRepository(), this);
+		Session s = new Session(getRepository(), this, false);
 		s.open(monitor);
 		try {
 			// Perform a "cvs -n update -d -r tagName folderName"
@@ -542,7 +542,7 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 				localOptions.add(Update.makeTagOption(tag));
 			
 			// Retrieve the children and any file revision numbers in a single connection
-			Session s = new Session(getRepository(), this);
+			Session s = new Session(getRepository(), this, false);
 			s.open(monitor);
 			try {
 				// Perform a "cvs -n update -d -r tagName fileName" with custom message and error handlers
