@@ -40,7 +40,12 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
 		if (!isSupervised(resource)) return null;
 		ISubscriberResource remoteResource = getRemoteResource(resource);
-		ISubscriberResource baseResource = getBaseResource(resource);
+		ISubscriberResource baseResource;
+		if (isThreeWay()) {
+			baseResource= getBaseResource(resource);
+		} else {
+			baseResource = null;
+		}
 		return getSyncInfo(resource, baseResource, remoteResource);
 	}
 

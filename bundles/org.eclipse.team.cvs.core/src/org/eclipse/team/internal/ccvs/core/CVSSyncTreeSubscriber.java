@@ -20,7 +20,9 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.utils.*;
 import org.eclipse.team.internal.ccvs.core.resources.*;
+import org.eclipse.team.internal.ccvs.core.syncinfo.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.CVSRefreshOperation;
+import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 
 /**
  * This class provides common funtionality for three way sychronizing
@@ -29,6 +31,8 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.CVSRefreshOperation;
 public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	
 	public static final String SYNC_KEY_QUALIFIER = "org.eclipse.team.cvs"; //$NON-NLS-1$
+	
+	private static IComparisonCriteria comparisonCriteria = new CVSRevisionNumberCompareCriteria();
 	
 	private QualifiedName id;
 	private String name;
@@ -62,18 +66,11 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#roots()
-	 */
-	public IResource[] roots() {
-		return null;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ISyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
 	 */
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
 		if (!isSupervised(resource)) return null;
-		if(resource.getType() == IResource.FILE) {
+		if(resource.getType() == IResource.FILE || !isThreeWay()) {
 			return super.getSyncInfo(resource);
 		} else {
 			// In CVS, folders do not have a base. Hence, the remote is used as the base.
@@ -124,7 +121,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		monitor = Policy.monitorFor(monitor);
 		try {
 			// Take a guess at the work involved for refreshing the base and remote tree
-			int baseWork = getCacheFileContentsHint() ? 10 : 30;
+			int baseWork = isThreeWay() ? (getCacheFileContentsHint() ? 30 : 10) : 0;
 			int remoteWork = 100;
 			monitor.beginTask(null, baseWork + remoteWork);
 			IResource[] baseChanges = refreshBase(new IResource[] {resource}, depth, Policy.subMonitorFor(monitor, baseWork));
@@ -143,15 +140,16 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		} 
 	}
 	
-	/**
-	 * TODO: Temporary
-	 */
 	protected  boolean getCacheFileContentsHint() {
 		return false;
 	}
 
 	protected IResource[] refreshBase(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		return new CVSRefreshOperation(getBaseSynchronizationCache(), null, getBaseTag()).refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+		if (isThreeWay()) {
+			return new CVSRefreshOperation(getBaseSynchronizationCache(), null, getBaseTag()).refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+		} else {
+			return new IResource[0];
+		}
 	}
 
 	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
@@ -205,7 +203,11 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	}
 
 	public ISubscriberResource getBaseResource(IResource resource) throws TeamException {
-		return getRemoteResource(resource, getBaseSynchronizationCache());
+		if (isThreeWay()) {
+			return getRemoteResource(resource, getBaseSynchronizationCache());
+		} else {
+			return null;
+		}
 	}
 	
 	/**
@@ -218,7 +220,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	 */
 	protected abstract SynchronizationCache getRemoteSynchronizationCache();
 	
-	private ISubscriberResource getRemoteResource(IResource resource, SynchronizationCache cache) throws TeamException {
+	protected ISubscriberResource getRemoteResource(IResource resource, SynchronizationCache cache) throws TeamException {
 		byte[] remoteBytes = cache.getSyncBytes(resource);
 		if (remoteBytes == null) {
 			// There is no remote handle for this resource
@@ -229,10 +231,18 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			if (resource.getType() == IResource.FILE) {
 				byte[] parentBytes = cache.getSyncBytes(resource.getParent());
 				if (parentBytes == null) {
-					CVSProviderPlugin.log(new CVSException( 
-							Policy.bind("ResourceSynchronizer.missingParentBytesOnGet", getSyncName(cache).toString(), resource.getFullPath().toString())));
-					// Assume there is no remote and the problem is a programming error
-					return null;
+					// Before failing, try and use the local folder sync bytes
+					ICVSFolder local = CVSWorkspaceRoot.getCVSFolderFor(resource.getParent());
+					FolderSyncInfo info = local.getFolderSyncInfo();
+					if (info == null) {
+						CVSProviderPlugin.log(new CVSException( 
+								Policy.bind("ResourceSynchronizer.missingParentBytesOnGet", getSyncName(cache).toString(), resource.getFullPath().toString())));
+						// Assume there is no remote and the problem is a programming error
+						return null;
+					} else {
+						FolderSyncInfo newInfo = new FolderSyncInfo(info.getRepository(), info.getRoot(), new CVSEntryLineTag(new String(ResourceSyncInfo.getTagBytes(remoteBytes))), false);
+						parentBytes = newInfo.getBytes();
+					}
 				}
 				return RemoteFile.fromBytes(resource, remoteBytes, parentBytes);
 			} else {
@@ -255,4 +265,10 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		return getRemoteSynchronizationCache().getSyncBytes(resource) != null;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
+	 */
+	public IComparisonCriteria getDefaultComparisonCriteria() {
+		return comparisonCriteria;
+	}
 }

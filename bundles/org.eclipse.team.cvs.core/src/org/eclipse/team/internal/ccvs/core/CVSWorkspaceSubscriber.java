@@ -31,7 +31,6 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	
 	private SynchronizationCache remoteSynchronizer;
 	private SynchronizationCache baseSynchronizer;
-	private IComparisonCriteria comparisonCriteria;
 	
 	// qualified name for remote sync info
 	private static final String REMOTE_RESOURCE_KEY = "remote-resource-key"; //$NON-NLS-1$
@@ -46,8 +45,6 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 				new SynchronizationSyncBytesCache(new QualifiedName(SYNC_KEY_QUALIFIER, REMOTE_RESOURCE_KEY)));
 		
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this); 
-		
-		comparisonCriteria = new CVSRevisionNumberCompareCriteria();
 	}
 
 	/* 
@@ -292,10 +289,4 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		return remoteSynchronizer;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
-	 */
-	public IComparisonCriteria getDefaultComparisonCriteria() {
-		return comparisonCriteria;
-	}
 }

@@ -22,9 +22,9 @@ import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 // TODO: This is an internal superclass
 public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer implements INavigableControl, SyncInfoDiffTreeNavigator.INavigationTarget {
 
-	private SyncInfoDiffTreeViewerConfiguration configuration;
+	private SyncInfoSetCompareConfiguration configuration;
 	
-	public SyncInfoDiffCheckboxTreeViewer(Composite parent, SyncInfoDiffTreeViewerConfiguration configuration) {
+	public SyncInfoDiffCheckboxTreeViewer(Composite parent, SyncInfoSetCompareConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		this.configuration = configuration;
 		configuration.initializeViewer(parent, this);
@@ -92,7 +92,7 @@ public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer i
 	/**
 	 * @return Returns the configuration.
 	 */
-	public SyncInfoDiffTreeViewerConfiguration getConfiguration() {
+	public SyncInfoSetCompareConfiguration getConfiguration() {
 		return configuration;
 	}
 	

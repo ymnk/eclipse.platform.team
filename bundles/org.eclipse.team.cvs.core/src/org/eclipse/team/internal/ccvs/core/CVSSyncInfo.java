@@ -48,7 +48,7 @@ public class CVSSyncInfo extends SyncInfo {
 		// with CVS because folders are not in namespaces (e.g. they exist in all versions
 		// and branches).
 		IResource local = getLocal();
-		if(local.getType() != IResource.FILE && getSubscriber().isThreeWay()) {
+		if(local.getType() != IResource.FILE) {
 			int folderKind = SyncInfo.IN_SYNC;
 			ICVSRemoteFolder remote = (ICVSRemoteFolder)getRemote();
 			ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)local);

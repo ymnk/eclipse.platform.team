@@ -43,7 +43,9 @@ abstract public class TeamSubscriber {
 	/**
 	 * Returns <code>true</code> if this resource is supervised by this
 	 * subscriber. A supervised resource is one for which this subscriber
-	 * maintains the synchronization state. Returns <code>false</code> in all
+	 * maintains the synchronization state. Supervised resources are the only
+	 * resources returned when <code>members(IResource)</code> was invoked with the parent
+	 * of the resource. Returns <code>false</code> in all
 	 * other cases.
 	 * 
 	 * @return <code>true</code> if this resource is supervised, and <code>false</code>

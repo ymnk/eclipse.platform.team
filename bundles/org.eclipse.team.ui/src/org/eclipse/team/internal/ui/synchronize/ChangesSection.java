@@ -104,8 +104,9 @@ public class ChangesSection extends Composite {
 		if(participant.getSyncInfoSetCollector().getSyncInfoSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
-						filteredContainer = getEmptyChangesComposite(changesSectionContainer);
-						changesSectionContainer.showPage(filteredContainer);
+					if (changesSectionContainer.isDisposed()) return;
+					filteredContainer = getEmptyChangesComposite(changesSectionContainer);
+					changesSectionContainer.showPage(filteredContainer);
 				}
 			});
 		} else {

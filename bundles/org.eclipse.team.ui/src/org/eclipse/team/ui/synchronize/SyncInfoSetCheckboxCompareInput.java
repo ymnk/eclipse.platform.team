@@ -31,22 +31,22 @@ public class SyncInfoSetCheckboxCompareInput extends SyncInfoSetCompareInput {
 	
 	/**
 	 * Create a <code>SyncInfoSetCheckboxCompareInput</code> whose diff viewer is configured
-	 * using the provided <code>SyncInfoDiffTreeViewerConfiguration</code>.
+	 * using the provided <code>SyncInfoSetCompareConfiguration</code>.
 	 * @param configuration the compare configuration 
 	 * @param diffViewerConfiguration the diff viewer configuration
 	 * @param listener listener taht is notified whenever the selection changes
 	 */
-	public SyncInfoSetCheckboxCompareInput(CompareConfiguration configuration, SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration, ICheckStateListener listener) {
+	public SyncInfoSetCheckboxCompareInput(CompareConfiguration configuration, SyncInfoSetCompareConfiguration diffViewerConfiguration, ICheckStateListener listener) {
 		super(configuration, diffViewerConfiguration);
 		this.listener = listener;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput#internalCreateDiffViewer(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewerConfiguration)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput#internalCreateDiffViewer(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration)
 	 */
 	protected StructuredViewer internalCreateDiffViewer(
 			Composite parent,
-			SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration) {
+			SyncInfoSetCompareConfiguration diffViewerConfiguration) {
 		final SyncInfoDiffCheckboxTreeViewer treeViewer = new SyncInfoDiffCheckboxTreeViewer(parent, diffViewerConfiguration);
 		treeViewer.addCheckStateListener(new ICheckStateListener() {
 			public void checkStateChanged(CheckStateChangedEvent event) {

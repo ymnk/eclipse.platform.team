@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -19,36 +20,50 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.ui.CVSLocalCompareEditorInput;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CVSLocalCompareConfiguration;
+import org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput;
 
 public class CompareWithTagAction extends WorkspaceAction {
 
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		final ICVSRemoteResource[] remoteResource = new ICVSRemoteResource[] { null };
-		final IResource[] resources = getSelectedResources();
-		
-		IProject[] projects = new IProject[resources.length];
-		for (int i = 0; i < resources.length; i++) {
-			projects[i] = resources[i].getProject();
-		}
-		final CVSTag tag = TagSelectionDialog.getTagToCompareWith(getShell(), projects);
+		IResource[] resources = getSelectedResources();
+		CVSTag tag = promptForTag(resources);
 		if (tag == null) return;
+		final SyncInfoSetCompareInput input = createCompareInput(resources, tag);
+		
 		// Show the compare viewer
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException {
 				CompareUI.openCompareEditorOnPage(
-				  new CVSLocalCompareEditorInput(resources, tag),
+				  input,
 				  getTargetPage());
 			}
 		}, false /* cancelable */, PROGRESS_BUSYCURSOR);
 	}
 	
+	private SyncInfoSetCompareInput createCompareInput(IResource[] resources, CVSTag tag) {
+		final SyncInfoSetCompareInput input = new SyncInfoSetCompareInput(
+				new CompareConfiguration(), 
+				CVSLocalCompareConfiguration.create(resources, tag));
+		return input;
+	}
+
+	private CVSTag promptForTag(IResource[] resources) {
+		IProject[] projects = new IProject[resources.length];
+		for (int i = 0; i < resources.length; i++) {
+			projects[i] = resources[i].getProject();
+		}
+		CVSTag tag = TagSelectionDialog.getTagToCompareWith(getShell(), projects);
+		return tag;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.actions.WorkspaceAction#isEnabledForNonExistantResources()
 	 */
 	protected boolean isEnabledForNonExistantResources() {
 		return true;
 	}
+	
+	
 }

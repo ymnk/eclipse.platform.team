@@ -15,6 +15,7 @@ import java.io.*;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
@@ -24,7 +25,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
  * 
  * @see org.eclipse.team.core.subscribers.ComparisonCriteria
  */
-public class ContentComparisonCriteria implements IComparisonCriteria {
+public class ContentComparisonCriteria {
 
 	private boolean ignoreWhitespace = false;
 
@@ -40,11 +41,15 @@ public class ContentComparisonCriteria implements IComparisonCriteria {
 	 * point checking the contents.
 	 */
 	public boolean compare(Object e1, Object e2) {
+		return compare(e1, e2, new NullProgressMonitor());
+	}
+		
+	public boolean compare(Object e1, Object e2, IProgressMonitor monitor) {
 		InputStream is1 = null;
 		InputStream is2 = null;
 		try {
-			is1 = getContents(e1, new NullProgressMonitor());
-			is2 = getContents(e2, new NullProgressMonitor());
+			is1 = getContents(e1, Policy.subMonitorFor(monitor, 50));
+			is2 = getContents(e2, Policy.subMonitorFor(monitor, 50));
 			return contentsEqual(is1, is2, shouldIgnoreWhitespace());
 		} catch(TeamException e) {
 			TeamPlugin.log(e);

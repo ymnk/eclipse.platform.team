@@ -90,7 +90,7 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		TeamSubscriberParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
 		SyncInfoFilter.SyncInfoDirectionFilter filter = new SyncInfoFilter.SyncInfoDirectionFilter(SyncInfo.OUTGOING);
 		compareEditorInput = new SyncInfoSetCompareInput(cc, 
-				new SyncInfoDiffTreeViewerConfiguration(null, participant.getSyncInfoCollector().getSyncInfoSet()));
+				new SyncInfoSetCompareConfiguration(null, participant.getSyncInfoCollector().getSyncInfoSet()));
 		
 		// set F1 help
 		WorkbenchHelp.setHelp(composite, IHelpContextIds.RELEASE_COMMENT_DIALOG);	

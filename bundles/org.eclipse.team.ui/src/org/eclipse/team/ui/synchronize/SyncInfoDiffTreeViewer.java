@@ -20,9 +20,9 @@ import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 
 public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableControl, SyncInfoDiffTreeNavigator.INavigationTarget {
 
-	private SyncInfoDiffTreeViewerConfiguration configuration;
+	private SyncInfoSetCompareConfiguration configuration;
 	
-	public SyncInfoDiffTreeViewer(Composite parent, SyncInfoDiffTreeViewerConfiguration configuration) {
+	public SyncInfoDiffTreeViewer(Composite parent, SyncInfoSetCompareConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		this.configuration = configuration;
 		configuration.initializeViewer(parent, this);

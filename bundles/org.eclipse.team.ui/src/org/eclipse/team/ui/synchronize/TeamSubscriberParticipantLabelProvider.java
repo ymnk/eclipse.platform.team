@@ -67,24 +67,22 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 			public void started(QualifiedName jobType) {
 				working = true;
 				Display.getDefault().asyncExec(new Runnable() {
-							public void run() {
-								synchronized (this) {
-									System.out.println(">> Fire started work: ");
-									fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
-								}
-							}
-						});
+					public void run() {
+						synchronized (this) {
+							fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
+						}
+					}
+				});
 			}
 			public void finished(QualifiedName jobType) {
 				working = false;
 				Display.getDefault().asyncExec(new Runnable() {
-							public void run() {
-								synchronized (this) {
-									System.out.println(">> Fire stopped work: ");
-									fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
-								}
-							}
-						});
+					public void run() {
+						synchronized (this) {
+							fireLabelProviderChanged(new LabelProviderChangedEvent(TeamSubscriberParticipantLabelProvider.this));
+						}
+					}
+				});
 			}
 		}, TeamSubscriber.SUBSCRIBER_JOB_TYPE);
 		
@@ -231,10 +229,8 @@ public class TeamSubscriberParticipantLabelProvider extends LabelProvider implem
 	 */
 	public Color getForeground(Object element) {	
 		if (working)  {
-			System.out.println("Working: " + element.toString());
 			return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
 		} else  {
-			System.out.println("Not Working: " + element.toString());
 			return null;
 		}
 	}

@@ -15,32 +15,32 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 
 /**
  * A <code>CompareEditorInput</code> whose diff viewer shows the resources contained
  * in a <code>SyncInfoSet</code>. The configuration of the diff viewer is determined by the 
- * <code>SyncInfoDiffTreeViewerConfiguration</code> that is used to create the 
+ * <code>SyncInfoSetCompareConfiguration</code> that is used to create the 
  * <code>SyncInfoSetCompareInput</code>.
  * 
  * @since 3.0
  */
 public class SyncInfoSetCompareInput extends CompareEditorInput {
 
-	private SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration;
+	private SyncInfoSetCompareConfiguration diffViewerConfiguration;
 
 	/**
 	 * Create a <code>SyncInfoSetCompareInput</code> whose diff viewer is configured
-	 * using the provided <code>SyncInfoDiffTreeViewerConfiguration</code>.
+	 * using the provided <code>SyncInfoSetCompareConfiguration</code>.
 	 * @param configuration the compare configuration 
 	 * @param diffViewerConfiguration the diff viewer configuration 
 	 */
-	public SyncInfoSetCompareInput(CompareConfiguration configuration, SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration) {
+	public SyncInfoSetCompareInput(CompareConfiguration configuration, SyncInfoSetCompareConfiguration diffViewerConfiguration) {
 		super(configuration);
 		this.diffViewerConfiguration = diffViewerConfiguration;
 	}
@@ -60,7 +60,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * @param diffViewerConfiguration the configuration for the diff viewer
 	 * @return the created diff viewer
 	 */
-	protected StructuredViewer internalCreateDiffViewer(Composite parent, SyncInfoDiffTreeViewerConfiguration diffViewerConfiguration) {
+	protected StructuredViewer internalCreateDiffViewer(Composite parent, SyncInfoSetCompareConfiguration diffViewerConfiguration) {
 		return new SyncInfoDiffTreeViewer(parent, diffViewerConfiguration);
 	}
 
@@ -87,10 +87,14 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	}
 
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		return new SyncInfoDiffNode(diffViewerConfiguration.getSyncSet(), ResourcesPlugin.getWorkspace().getRoot());
+		try {
+			return diffViewerConfiguration.prepareInput(monitor);
+		} catch (TeamException e) {
+			throw new InvocationTargetException(e);
+		}
 	}
 	
-	private static SyncInfoDiffNode getElement(ISelection selection) {
+	/* private */ SyncInfoDiffNode getElement(ISelection selection) {
 		if (selection != null && selection instanceof IStructuredSelection) {
 			IStructuredSelection ss= (IStructuredSelection) selection;
 			if (ss.size() == 1) {

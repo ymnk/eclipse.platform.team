@@ -25,7 +25,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 /**
  * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer for the synchroniza view
  */
-public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffTreeViewerConfiguration {
+public class SynchronizeViewCompareConfiguration extends SyncInfoSetCompareConfiguration {
 
 	private ISynchronizeView view;
 	private TeamSubscriberParticipant participant;
@@ -34,7 +34,7 @@ public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffTreeVie
 	private RefactorActionGroup refactorActions;
 	private RefreshAction refreshSelectionAction;
 	
-	public SyncInfoDiffViewerSyncViewConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
+	public SynchronizeViewCompareConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
 		super(participant.getId(), participant.getSyncInfoSetCollector().getSyncInfoSet());
 		this.view = view;
 		this.participant = participant;

@@ -16,6 +16,7 @@ import org.eclipse.compare.*;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -25,6 +26,7 @@ import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffTreeNavigator;
@@ -39,8 +41,10 @@ import org.eclipse.ui.views.navigator.ResourceSorter;
  * This class provides the configurability of SyncInfo diff viewers.
  * A configuration can only be used with one viewer.
  * TODO: Should we make it reusable? If not, should assert on second call to createViewer
+ * 
+ * @since 3.0
  */
-public class SyncInfoDiffTreeViewerConfiguration {
+public class SyncInfoSetCompareConfiguration {
 	
 	private SyncInfoSet set;
 	private String menuId;
@@ -51,13 +55,13 @@ public class SyncInfoDiffTreeViewerConfiguration {
 	private IPropertyChangeListener propertyListener;
 	
 	/**
-	 * Create a <code>SyncInfoDiffTreeViewerConfiguration</code> for the given sync set
+	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given sync set
 	 * and menuId. If the menuId is <code>null</code>, then no contributed menus will be shown
 	 * in the diff viewer created from this configuration.
 	 * @param menuId the id of menu objectContributions
 	 * @param set the <code>SyncInfoSet</code> to be displayed in the resulting diff viewer
 	 */
-	public SyncInfoDiffTreeViewerConfiguration(String menuId, SyncInfoSet set) {
+	public SyncInfoSetCompareConfiguration(String menuId, SyncInfoSet set) {
 		this.menuId = menuId;
 		this.set = set;
 	}
@@ -296,5 +300,17 @@ public class SyncInfoDiffTreeViewerConfiguration {
 
 	protected boolean allowParticipantMenuContributions() {
 		return getMenuId() != null;
+	}
+	
+	/**
+	 * Prepare the input that is to be shown in the diff viewer of the configuration's
+	 * compare input. This method may be overridden by sublcass but should only be
+	 * invoked by the compare input
+	 * @param monitor a progress monitor
+	 * @return the input ot the compare input's diff viewer
+	 * @throws TeamException
+	 */
+	public SyncInfoDiffNode prepareInput(IProgressMonitor monitor) throws TeamException {
+		return getInput();
 	}
 }
