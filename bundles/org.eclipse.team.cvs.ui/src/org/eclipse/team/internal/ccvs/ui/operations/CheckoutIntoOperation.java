@@ -357,7 +357,7 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 			}
 			
 			manageFolders(targetFolders, repository.getLocation());
-			
+			fireDelta();
 		} finally {
 			session.close();
 		}

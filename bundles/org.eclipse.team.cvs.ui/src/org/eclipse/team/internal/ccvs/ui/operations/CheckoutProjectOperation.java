@@ -396,7 +396,7 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 	/*
 	 * Bring the provied projects into the workspace
 	 */
-	private static void refreshProjects(IProject[] projects, IProgressMonitor monitor) throws CVSException {
+	private void refreshProjects(IProject[] projects, IProgressMonitor monitor) throws CVSException {
 		monitor.beginTask(null, projects.length * 100);
 		try {
 			for (int i = 0; i < projects.length; i++) {
@@ -411,7 +411,8 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 				CVSTeamProvider provider = (CVSTeamProvider)RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId());
 				provider.setWatchEditEnabled(CVSProviderPlugin.getPlugin().isWatchEditEnabled());
 			}
-			
+			// Allow deltas to be sent out
+			fireDelta();
 		} finally {
 			monitor.done();
 		}
@@ -429,7 +430,6 @@ public abstract class CheckoutProjectOperation extends CheckoutOperation {
 	 */
 	protected void checkout(ICVSRemoteFolder[] folders, IProgressMonitor monitor) throws CVSException {
 		checkout(folders, getTargetProjects(folders), monitor);
-
 	}
 
 }
