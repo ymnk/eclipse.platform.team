@@ -479,15 +479,18 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		EclipseSynchronizer.getInstance().markFileAsUpdated(getIFile());
 	}
 	
-	
-	public boolean isContentsChanged() throws CVSException {
+	public boolean handleModification(boolean forAddition) throws CVSException {
 		if (isIgnored()) return false;
 		if (EclipseSynchronizer.getInstance().contentsChangedByUpdate(getIFile()))
 			return false;
-		// It is possible that the file was a deletion that was recreated so
-		// make sure it is removed from the deletion list.
-		((EclipseFolder)getParent()).handleDeletion(getIFile(), false /* add to list */);
-		return setModified(true);
+		if (forAddition) {
+			// It is possible that the addition was a deletion that was recreated so
+			// make sure it is removed from the deletion list.
+			((EclipseFolder)getParent()).handleDeletion(getIFile(), false /* add to list */);
+		}
+		// set the modification state to what it really is and return true if the modification state changed
+		boolean isModified = isModified(getSyncInfo());
+		return setModified(isModified) && isModified;
 	}
 	
 	/**
@@ -506,12 +509,14 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 				}
 				return adjustParent;
 			} else {
-				// the file doesn't exist so either the file is an outgoing deletion
-				// or a deletion that has just been committed. Record the deletion
-				// if it is a resource modification, otherwise remove it from the
-				// record.
-				((EclipseFolder)getParent()).handleDeletion(getIFile(), modified /* record */);
-				return true;
+				// The modification must be a deletion. Handle it
+				// if modified is false (meaning that the deletion has been commited) 
+				// or if the file is managed and modified is true (meaning a new deletion)
+				if (!modified || isManaged()) {
+					((EclipseFolder)getParent()).handleDeletion(getIFile(), modified /* record */);
+					return true;
+				}
+				return false;
 			}
 		} catch (CVSException e) {
 			// flush any cached info for the file and it's parent's so they are recalculated.
@@ -532,6 +537,21 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	protected void flushModificationCache() throws CVSException {
 		EclipseSynchronizer.getInstance().flushModificationCache(getIFile());
 
+	}
+	
+	/*
+	 * @see org.eclipse.team.internal.ccvs.core.resources.EclipseResource#prepareToBeDeleted()
+	 */
+	protected void prepareToBeDeleted() throws CVSException {
+		// Decrement the parent count for both managed and unmanaged files.
+		// For managed files, the sync info change following the delete will increment the count again
+		if (!isIgnored()) {
+			String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(getIFile());
+			if (indicator == EclipseSynchronizer.IS_DIRTY_INDICATOR) {
+				// If the file is mark as dirty, decrement the parent's dirty count
+				((EclipseFolder)getParent()).adjustModifiedCount(false);
+			}
+		}
 	}
 }
 

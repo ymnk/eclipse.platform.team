@@ -8,7 +8,7 @@
  * Contributors:
  * IBM - Initial implementation
  ******************************************************************************/
-package org.eclipse.team.internal.ccvs.core.util;
+package org.eclipse.team.internal.ccvs.core.resources;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,9 +31,8 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.EclipseFile;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
@@ -69,6 +68,8 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 
 					if (resource.getType()==IResource.FILE && delta.getKind() == IResourceDelta.CHANGED) {
 						contentsChanged((IFile)resource);
+					} else if (delta.getKind() == IResourceDelta.ADDED) {
+						resourceAdded(resource);
 					}
 
 					return true;
@@ -138,7 +139,6 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 		}
 	}
 	
-	
 	/**
 	 * Method updated flags the objetc as having been modfied by the updated
 	 * handler. This flag is read during the resource delta to determine whether
@@ -154,13 +154,35 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 	public void contentsChanged(IFile file) throws CoreException {
 		try {
 			EclipseFile cvsFile = (EclipseFile)CVSWorkspaceRoot.getCVSFileFor(file);
-			if (cvsFile.isContentsChanged()) {
+			if (cvsFile.handleModification(false /* addition */)) {
 				modifiedResources.add(file);
 			}
 		} catch (CVSException e) {
 			// XXX Should wrap exception
 			throw new CoreException(e.getStatus());
 		}
+	}
+	
+	/*
+	 * Handle an added resource.
+	 */
+	private void resourceAdded(IResource resource) throws CoreException {
+		try {
+			EclipseResource cvsResource = (EclipseResource)CVSWorkspaceRoot.getCVSResourceFor(resource);
+			if (cvsResource.handleModification(true /* addition */)) {
+				modifiedResources.add(resource);
+			}
+		} catch (CVSException e) {
+			// XXX Should wrap exception
+			throw new CoreException(e.getStatus());
+		}
+	}
+	/**
+	 * Method prepareToDelete.
+	 * @param resource
+	 */
+	public void prepareToDelete(ICVSResource resource) throws CVSException {
+		((EclipseResource)resource).prepareToBeDeleted();
 	}
 }
 

@@ -21,8 +21,6 @@ import org.eclipse.core.resources.IResource;
 public interface IResourceStateChangeListener extends EventListener{
 	
 	public static final int CONTENTS_MODIFIED = 0;
-	public static final int NO_LONGER_MODIFIED = 1;
-	public static final int SYNC_INFO_EXTERNALLY_MODIFIED = 2;
 	
 	/**
 	 * Notifies this listener that some resource sync info state changes have

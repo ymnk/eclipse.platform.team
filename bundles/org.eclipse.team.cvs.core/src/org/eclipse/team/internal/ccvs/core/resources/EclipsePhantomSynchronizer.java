@@ -221,9 +221,16 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 	 * @param folder the folder that has been created
 	 */
 	public void folderCreated(IFolder folder) throws CVSException {
-		FolderSyncInfo folderInfo = getPhantomFolderSyncInfo(folder);
-		if (folderInfo != null) {
-			try {
+		try {
+			// set the dirty count using what was cached in the phantom it
+			beginOperation(null);
+			FolderSyncInfo folderInfo = getPhantomFolderSyncInfo(folder);
+			int count = internalGetDirtyCount(folder);
+			if (count != -1) {
+				setDirtyCount(folder, count);
+				setModified(folder, count > 0 || folderInfo == null);
+			}
+			if (folderInfo != null) {
 				beginOperation(null);
 				Map map = getPhantomResourceSyncInfoMap(folder);
 				if (folder.getFolder(SyncFileWriter.CVS_DIRNAME).exists()) {
@@ -254,6 +261,7 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 						deleteResourceSync(resource.getIResource());
 					}
 				}
+		
 				// set the sync info using what was cached in the phantom
 				setFolderSync(folder, folderInfo);
 				for (Iterator it = map.values().iterator(); it.hasNext();) {
@@ -266,15 +274,15 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 						childResource = folder.getFile(path);
 					}
 					setResourceSync(childResource, info);
-				}
+				} 
+			}	
+		} finally {
+			try {
+				endOperation(null);
 			} finally {
-				try {
-					endOperation(null);
-				} finally {
-					flushPhantomInfo(folder);
-				}
+				flushPhantomInfo(folder);
 			}
-		}	
+		}
 	}
 	
 	/**
@@ -312,6 +320,7 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 			if (container.exists() || container.isPhantom()) {
 				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, container, IResource.DEPTH_ZERO);
 			}
+			internalFlushModificationCache(container);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -334,12 +343,19 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 			if (container.getType() == IResource.PROJECT) {
 				getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, container, IResource.DEPTH_INFINITE);
 				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, container, IResource.DEPTH_INFINITE);
+				getWorkspaceSynchronizer().flushSyncInfo(DIRTY_COUNT, container, IResource.DEPTH_INFINITE);
 			} else {
+				// Move the folder sync info into phantom space
 				FolderSyncInfo info = getFolderSync(container);
 				if (info == null) return;
 				getWorkspaceSynchronizer().setSyncInfo(FOLDER_SYNC_KEY, container, getBytes(info));
 				getWorkspaceSynchronizer().setSyncInfo(RESOURCE_SYNC_KEY, container, getBytes(getResourceSyncInfosForChildren(container)));
 				changedResources.add(container);
+				// Move the dirty count into phantom space
+				Integer dirtyCount = getDirtyCount(container);
+				if (dirtyCount != null) {
+					internalSetDirtyCount(container, dirtyCount.intValue());
+				}
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -478,40 +494,44 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 	 */
 	protected Integer getDirtyCount(IContainer parent) throws CVSException {
 		if (parent.isPhantom()) {
-			try {
-				// get the count from the synchronizer
-				int count = internalGetDirtyCount(parent);
-				if (count == -1) {
-					count = calculateDirtyCountForPhantom(parent);
-					setDirtyCount(parent, count);
-				}
-				return new Integer(count);
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
+			// get the count from the synchronizer
+			int count = internalGetDirtyCount(parent);
+			if (count == -1) {
+				count = calculateDirtyCountForPhantom(parent);
+				setDirtyCount(parent, count);
 			}
+			return new Integer(count);
 		} else {
 			return super.getDirtyCount(parent);
 		}
 	}
 	
-	protected int internalGetDirtyCount(IContainer parent) throws CoreException {
-		byte[] bytes = getWorkspaceSynchronizer().getSyncInfo(DIRTY_COUNT, parent);
-		if (bytes == null) return -1;
-		return intFromBytes(bytes);
+	protected int internalGetDirtyCount(IContainer parent) throws CVSException {
+		try {
+			byte[] bytes = getWorkspaceSynchronizer().getSyncInfo(DIRTY_COUNT, parent);
+			if (bytes == null) return -1;
+			return intFromBytes(bytes);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
 	}
 	
 	protected void setDirtyCount(IContainer container, int count) throws CVSException {
 		if (container.isPhantom()) {
-			try {
-				beginOperation(null);
-				getWorkspaceSynchronizer().setSyncInfo(DIRTY_COUNT, container, getBytes(count));
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
-			} finally {
-			   endOperation(null);
-		   	}
+			internalSetDirtyCount(container, count);
 		} else {
 			super.setDirtyCount(container, count);
+		}
+	}
+
+	protected void internalSetDirtyCount(IContainer container, int count) throws CVSException {
+		try {
+			beginOperation(null);
+			getWorkspaceSynchronizer().setSyncInfo(DIRTY_COUNT, container, getBytes(count));
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		} finally {
+		   endOperation(null);
 		}
 	}
 	
@@ -558,17 +578,17 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 	 * Flush all cached info for the container and it's ancestors
 	 */
 	protected void flushModificationCache(IContainer container) throws CVSException {
-		if (container.isPhantom()) {
+		internalFlushModificationCache(container);
+		super.flushModificationCache(container);
+	}
+	
+	private void internalFlushModificationCache(IContainer container) throws CVSException {
+		if (container.exists() || container.isPhantom()) {
 			try {
-				beginOperation(null);
 				getWorkspaceSynchronizer().flushSyncInfo(DIRTY_COUNT, container, IResource.DEPTH_ZERO);
 			} catch (CoreException e) {
 				throw CVSException.wrapException(e);
-			} finally {
-				endOperation(null);
 			}
-		} else {
-			super.flushModificationCache(container);
 		}
 	}
 	
@@ -588,9 +608,7 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 				int newCount = calculateDirtyCountForPhantom(container);
 				// adjust the parent folder count if the newCount is 1;
 				return oldCount == 0 && newCount == 1;
-			} catch (CoreException e) {
-			   throw CVSException.wrapException(e);
-		    } finally {
+			} finally {
 				endOperation(null);
 			}
 		} else {
@@ -614,8 +632,6 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 				int newCount = calculateDirtyCountForPhantom(container);
 				// adjust the parent folder count if the newCount is 0;
 				return newCount == 0;
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
 			} finally {
 				endOperation(null);
 			}

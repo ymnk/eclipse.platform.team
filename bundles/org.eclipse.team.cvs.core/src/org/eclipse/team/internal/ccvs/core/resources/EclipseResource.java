@@ -272,6 +272,8 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	 */
 	protected abstract void flushModificationCache() throws CVSException;
 
+	public abstract boolean handleModification(boolean forAddition) throws CVSException;
+	
 	/*
 	 * Flush all cached info for the file and it's ancestors
 	 */
@@ -291,4 +293,10 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	protected void setDirtyIndicator(String indicator) throws CVSException {
 		EclipseSynchronizer.getInstance().setDirtyIndicator(getIResource(), indicator);
 	}
+	
+	/*
+	 * Method prepareToBeDeleted is invoked by the move/delete hook to allow the
+	 * resource to prepare to be deleted.
+	 */
+	protected abstract void prepareToBeDeleted() throws CVSException;
 }
