@@ -15,6 +15,8 @@ import java.util.*;
 import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.IAction;
@@ -428,5 +430,34 @@ public class Utils {
 			}
 		}
 		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+	}
+	
+	/**
+	 * This method returns all out-of-sync SyncInfos that are in the current
+	 * selection.
+	 * 
+	 * @return the list of selected sync infos
+	 */
+	public static IDiffElement[] getDiffNodes(Object[] selected) {
+		Set result = new HashSet();
+		for (int i = 0; i < selected.length; i++) {
+			Object object = selected[i];
+			if(object instanceof IDiffElement) {
+				collectAllNodes((IDiffElement)object, result);
+			}
+		}
+		return (IDiffElement[]) result.toArray(new IDiffElement[result.size()]);
+	}
+	
+	private static void collectAllNodes(IDiffElement element, Set nodes) {
+		if(element.getKind() != SyncInfo.IN_SYNC) {
+			nodes.add(element);
+		}
+		if(element instanceof IDiffContainer) {
+			IDiffElement[] children = ((IDiffContainer)element).getChildren();
+			for (int i = 0; i < children.length; i++) {
+				collectAllNodes(children[i], nodes);				
+			}
+		}
 	}
 }

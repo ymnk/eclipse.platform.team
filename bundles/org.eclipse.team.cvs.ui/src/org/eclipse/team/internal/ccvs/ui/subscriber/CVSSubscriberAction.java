@@ -11,12 +11,11 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.*;
-import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
@@ -27,11 +26,8 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.operations.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberAction;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchSite;
 
 public abstract class CVSSubscriberAction extends SubscriberAction {
 	
@@ -126,7 +122,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 * Sync actions seem to need to be sync-execed to work
 	 * @param t
 	 */
-	protected void handle(Throwable t) {
+	protected void handle(Exception t) {
 		CVSUIPlugin.openError(getShell(), getErrorTitle(), null, t, CVSUIPlugin.PERFORM_SYNC_EXEC | CVSUIPlugin.LOG_NONTEAM_EXCEPTIONS);
 	}
 
@@ -136,25 +132,6 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 */
 	protected String getErrorTitle() {
 		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
-	 */
-	public void run(IAction action) {
-//		TODO: Saving can change the sync state! How should this be handled?
-//			 boolean result = saveIfNecessary();
-//			 if (!result) return null;
-
-		SyncInfoSet syncSet = getFilteredSyncInfoSet(getFilteredSyncInfos());
-		if (syncSet == null || syncSet.isEmpty()) return;
-		try {
-			getCVSRunnableContext().run(getJobName(syncSet), getSchedulingRule(syncSet), true, getRunnable(syncSet));
-		} catch (InvocationTargetException e) {
-			handle(e);
-		} catch (InterruptedException e) {
-			// nothing to do;
-		}
 	}
 
 	/**
@@ -189,73 +166,8 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		};
 	}
 
-	protected abstract void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
-
-	/*
-	 * Return the ICVSRunnableContext which will be used to run the operation.
-	 */
-	private ICVSRunnableContext getCVSRunnableContext() {
-		if (canRunAsJob() && areJobsEnabled()) {
-			return new CVSNonblockingRunnableContext() {
-				protected void schedule(Job job) {
-					IWorkbenchSite site = null;
-					IWorkbenchPart part = getTargetPart();
-					if(part != null) {
-						site = part.getSite();
-					}
-					SubscriberAction.schedule(job, site);
-				}
-			};
-		} else {
-			return new CVSBlockingRunnableContext(shell);
-		}
-	}
-	
-	protected boolean areJobsEnabled() {
-		return true;
-	}
-	
-	/**
-	 * Return the job name to be used if the action can run as a job.
-	 * 
-	 * @param syncSet
-	 * @return
-	 */
-	protected abstract String getJobName(SyncInfoSet syncSet);
-
-	/**
-	 * Return a scheduling rule that includes all resources that will be operated 
-	 * on by the subscriber action. The default behavior is to include all projects
-	 * effected by the operation. Subclasses may override.
-	 * 
-	 * @param syncSet
-	 * @return
-	 */
-	protected ISchedulingRule getSchedulingRule(SyncInfoSet syncSet) {
-		IResource[] resources = syncSet.getResources();
-		Set set = new HashSet();
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			set.add(resource.getProject());
-		}
-		IProject[] projects = (IProject[]) set.toArray(new IProject[set.size()]);
-		if (projects.length == 1) {
-			return projects[0];
-		} else {
-			return new MultiRule(projects);
-		}
-	}
-
 	protected boolean canRunAsJob() {
 		return true;
-	}
-
-	/**
-	 * Filter the sync resource set using action specific criteria or input from the user.
-	 */
-	protected SyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
-		// If there are conflicts or outgoing changes in the syncSet, we need to warn the user.
-		return new SyncInfoSet(selectedResources);
 	}
 	
 	protected void pruneEmptyParents(SyncInfo[] nodes) throws CVSException {

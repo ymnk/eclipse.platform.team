@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.operations;
+package org.eclipse.team.ui.synchronize.subscriber;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -23,7 +23,7 @@ import org.eclipse.swt.widgets.Shell;
  * 2) whether the operation modifies the workspace
  * 3) what shell the operation should use to display info to the user
  */
-public interface ICVSRunnableContext {
+public interface ITeamRunnableContext {
 	
 	/**
 	 * Run the given runnable in the context of the receiver. By default, the

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ccvs.ui.operations;
+package org.eclipse.team.ui.synchronize.subscriber;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.IProgressService;
 
@@ -28,12 +28,12 @@ import org.eclipse.ui.progress.IProgressService;
  * This CVS runnable context blocks the UI and can therfore have a shell assigned to
  * it (since the shell won't be closed by the user before the runnable completes.
  */
-public class CVSBlockingRunnableContext implements ICVSRunnableContext {
+public class ProgressDialogRunnableContext implements ITeamRunnableContext {
 
 	private Shell shell;
 	private IRunnableContext runnableContext;
 	
-	public CVSBlockingRunnableContext(Shell shell) {
+	public ProgressDialogRunnableContext(Shell shell) {
 		this.shell = shell;
 	}
 

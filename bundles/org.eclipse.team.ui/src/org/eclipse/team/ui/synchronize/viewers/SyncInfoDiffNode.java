@@ -20,10 +20,12 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.compare.RemoteResourceTypedElement;
 import org.eclipse.ui.model.IWorkbenchAdapter;
@@ -45,13 +47,19 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  * @see DiffTreeViewer
  * @see Differencer
  */
-public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
+public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter, IBusyWorkbenchAdapter {
 	
 	private SyncInfoTree syncSet;
 	private IResource resource;
 	
 	private Set workingChildren = new HashSet();
-	private boolean working = false;
+	private boolean nodeIsBusy = false;
+	private ListenerList listeners;
+	
+	/**
+	 * Property constant indicating the mode of a page has changed. 
+	 */
+	public static final String P_BUSY_ELEMENT = TeamUIPlugin.ID + ".P_NODE_ISBUSY"; //$NON-NLS-1$
 	
 	/**
 	 * Create an ITypedElement for the given local resource. The returned ITypedElement
@@ -174,6 +182,8 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	public Object getAdapter(Class adapter) {
 		if(adapter == IWorkbenchAdapter.class) {
 			return this;
+		} else if(adapter == IBusyWorkbenchAdapter.class) {
+			return this;
 		}
 		return null;
 	}
@@ -261,12 +271,12 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	
 	/** Track nodes that are being worked on **/
 	
-	public boolean isWorking() {
-		return working || ! workingChildren.isEmpty();
+	public boolean isBusy(Object element) {
+		return nodeIsBusy || ! workingChildren.isEmpty();
 	}
 	
-	public void setWorking(boolean working) {
-		this.working = working;
+	public void setBusy(Object element, boolean isBusy) {
+		this.nodeIsBusy = isBusy;
 		IDiffContainer parent = getParent();
 		while (parent != null) {
 			if(parent instanceof SyncInfoDiffNode) {
@@ -274,13 +284,53 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 			}
 			parent = parent.getParent();
 		}
+		fireChange(P_BUSY_ELEMENT);
 	}
 		
 	public void updateWorkingChild(SyncInfoDiffNode node) {
-		if(node.isWorking()) {
+		if(node.isBusy(node)) {
 			workingChildren.add(node);
 		} else {
 			workingChildren.remove(node);
+		}
+	}
+	
+	/**
+	 * Registers a listener for changes of this <code>ICompareInput</code>.
+	 * Has no effect if an identical listener is already registered.
+	 *
+	 * @param listener the listener to add
+	 */
+	public void addPropertyChangeListener(IPropertyChangeListener listener) {
+		if (listeners == null)
+			listeners= new ListenerList();
+		listeners.add(listener);
+	}
+	
+	/**
+	 * Unregisters a <code>ICompareInput</code> listener.
+	 * Has no effect if listener is not registered.
+	 *
+	 * @param listener the listener to remove
+	 */
+	public void removePropertyInputChangeListener(IPropertyChangeListener listener) {
+		if (listeners != null) {
+			listeners.remove(listener);
+			if (listeners.isEmpty())
+				listeners= null;
+		}
+	}
+	
+	/**
+	 * Sends out notification that a change has occured on the <code>ICompareInput</code>.
+	 */
+	protected void fireChange(String property) {
+		if (listeners != null) {
+			Object[] l= listeners.getListeners();
+			for (int i= 0; i < l.length; i++) {
+				PropertyChangeEvent event = new PropertyChangeEvent(this, property, null, null);
+				((IPropertyChangeListener) l[i]).propertyChange(event);
+			}
 		}
 	}
 

@@ -94,5 +94,12 @@ public class WorkspaceUpdateAction extends SafeUpdateAction {
 	 */
 	protected void updated(IResource[] resources) throws TeamException {
 		// Do nothing
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberAction#getJobName(org.eclipse.team.core.synchronize.SyncInfoSet)
+	 */
+	protected String getJobName(SyncInfoSet syncSet) {
+		return null;
 	}	
 }

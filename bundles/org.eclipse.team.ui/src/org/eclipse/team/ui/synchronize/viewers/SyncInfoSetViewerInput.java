@@ -17,6 +17,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -42,7 +44,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * 
  * @since 3.0
  */
-public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInfoSetChangeListener {
+public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInfoSetChangeListener, IPropertyChangeListener {
 
 	// During updates we keep track of the parent elements that need their
 	// labels updated. This is required to support displaying information in a 
@@ -199,6 +201,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
 		SyncInfoTree set = parent instanceof SyncInfoDiffNode ? ((SyncInfoDiffNode) parent).getSyncInfoTree() : getSyncInfoTree();
 		SyncInfoDiffNode node = new SyncInfoDiffNode(parent, set, resource);
+		node.addPropertyChangeListener(this);
 		addToViewer(node);
 		return node;
 	}
@@ -454,5 +457,34 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 */
 	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
 		// TODO Auto-generated method stub
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {
+		String prop = event.getProperty();
+		if(prop.equals(SyncInfoDiffNode.P_BUSY_ELEMENT)) {
+			List labelUpdates = new ArrayList();
+			SyncInfoDiffNode node = (SyncInfoDiffNode)event.getSource();
+			boolean isBusy = node.isBusy(node);
+			labelUpdates.add(node);
+			IDiffContainer parent = node.getParent();
+			while (parent != null) {
+				if(parent instanceof IBusyWorkbenchAdapter) {
+					IBusyWorkbenchAdapter busy = (IBusyWorkbenchAdapter)parent;
+					if(busy.isBusy(busy) != isBusy) {
+						labelUpdates.add(parent);
+					}
+				}
+				parent = parent.getParent();
+			}
+			
+			// update labels
+			if (canUpdateViewer()) {
+				AbstractTreeViewer tree = getTreeViewer();
+				tree.update(labelUpdates.toArray(new Object[labelUpdates.size()]), null);
+			}
+		}
 	}
 }

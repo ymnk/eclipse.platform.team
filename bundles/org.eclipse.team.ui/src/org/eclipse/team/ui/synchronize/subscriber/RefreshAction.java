@@ -69,6 +69,7 @@ public class RefreshAction extends Action {
 		group.beginTask("Refreshing " + description, 100);
 		job.setProgressGroup(group, 70);
 		collector.setProgressGroup(group, 30);
+		
 		SubscriberAction.schedule(job, site);
 		job.addJobChangeListener(new JobChangeAdapter() {
 			public void done(IJobChangeEvent event) {

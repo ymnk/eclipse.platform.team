@@ -115,7 +115,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	public Color getForeground(Object element) {
 		if (element instanceof SyncInfoDiffNode) {
 			SyncInfoDiffNode node = (SyncInfoDiffNode)element;
-			if(node.isWorking()) {
+			if(node.isBusy(node)) {
 				return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
 			}
 		}

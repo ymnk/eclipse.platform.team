@@ -45,7 +45,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getFilteredSyncInfoSet(org.eclipse.team.internal.ui.sync.views.SyncInfo[])
 	 */
 	protected SyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
-		SyncInfoSet syncSet = super.getFilteredSyncInfoSet(selectedResources);
+		SyncInfoSet syncSet = new SyncInfoSet(selectedResources);
 		if (!promptForConflictHandling(syncSet)) return null;
 		try {
 			if (!promptForUnaddedHandling(syncSet)) return null;
