@@ -99,7 +99,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 	public String getText(Object element) {
 		String name = syncInfoLabelProvider.getText(element);
 		if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
-			SyncInfo info = SyncInfoSetContentProvider.getSyncInfo(element);
+			SyncInfo info = syncInfoLabelProvider.getSyncInfo(element);
 			if (info != null && info.getKind() != SyncInfo.IN_SYNC) {
 				String syncKindString = SyncInfo.kindToString(info.getKind());
 				name = Policy.bind("TeamSubscriberSyncPage.labelWithSyncKind", name, syncKindString); //$NON-NLS-1$
@@ -116,7 +116,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 	 */
 	public Image getImage(Object element) {
 		Image decoratedImage = null;
-		IResource resource = SyncInfoSetContentProvider.getResource(element);
+		IResource resource = syncInfoLabelProvider.getResource(element);
 		Image image = syncInfoLabelProvider.getImage(element);
 		decoratedImage = getCompareImage(image, element);	
 		decoratedImage = propagateConflicts(decoratedImage, element, resource);
@@ -124,7 +124,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 	}
 	
 	private Image getCompareImage(Image base, Object element) {
-		int kind = SyncInfoSetContentProvider.getSyncKind(element);
+		int kind = getSyncKind(element);
 		switch (kind & SyncInfo.DIRECTION_MASK) {
 			case SyncInfo.OUTGOING:
 				kind = (kind &~ SyncInfo.OUTGOING) | SyncInfo.INCOMING;
@@ -139,7 +139,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 	private Image propagateConflicts(Image base, Object element, IResource resource) {
 		if(element instanceof SyncInfoDiffNode && resource.getType() != IResource.FILE) {
 			// if the folder is already conflicting then don't bother propagating the conflict
-			int kind = SyncInfoSetContentProvider.getSyncKind(element);
+			int kind = getSyncKind(element);
 			if((kind & SyncInfo.DIRECTION_MASK) != SyncInfo.CONFLICTING) {
 				if(((SyncInfoDiffNode)element).hasDecendantConflicts()) {
 					ImageDescriptor overlay = new OverlayIcon(
@@ -161,6 +161,14 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 			}
 		}
 		return base;
+	}
+	
+	private int getSyncKind(Object element) {
+		SyncInfo info = syncInfoLabelProvider.getSyncInfo(element);
+		if (info != null) {
+			return info.getKind();
+		}
+		return SyncInfo.IN_SYNC;
 	}
 	   
 	/* (non-Javadoc)
@@ -186,7 +194,6 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 		if (columnIndex == COL_RESOURCE) {
 			return getImage(element);
 		} else if (columnIndex == COL_PARENT) {
-			IResource resource = SyncInfoSetContentProvider.getResource(element);
 			return null;
 		}
 		return null;
@@ -199,7 +206,7 @@ public class SyncInfoDecoratingLabelProvider extends LabelProvider implements IT
 		if (columnIndex == COL_RESOURCE) {
 			return getText(element);
 		} else if (columnIndex == COL_PARENT) {
-			IResource resource = SyncInfoSetContentProvider.getResource(element);
+			IResource resource = syncInfoLabelProvider.getResource(element);
 			return resource.getParent().getFullPath().toString();
 		}
 		return null;

@@ -13,6 +13,7 @@ package org.eclipse.team.ui.synchronize.content;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 /**
@@ -51,5 +52,13 @@ public class SyncInfoLabelProvider extends LabelProvider {
 			return workbenchLabelProvider.getText(resource);
 		}
 		return super.getText(element);
+	}
+	
+	public SyncInfo getSyncInfo(Object element) {
+		return SyncInfoSetContentProvider.getSyncInfo(element);
+	}
+	
+	public IResource getResource(Object element) {
+		return SyncInfoSetContentProvider.getResource(element);
 	}
 }
