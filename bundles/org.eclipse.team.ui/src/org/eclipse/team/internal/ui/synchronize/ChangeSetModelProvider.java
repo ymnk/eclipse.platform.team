@@ -108,5 +108,12 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         this.viewerSorter = viewerSorter;
         firePropertyChange(ISynchronizeModelProvider.P_VIEWER_SORTER, null, null);
     }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#runViewUpdate(java.lang.Runnable)
+     */
+    public void runViewUpdate(Runnable runnable) {
+        super.runViewUpdate(runnable);
+    }
 
 }

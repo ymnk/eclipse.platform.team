@@ -25,19 +25,24 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.team.core.subscribers.SyncInfoSetChangeSetCollector;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
+import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -45,9 +50,12 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation.LogEntryCache;
+import org.eclipse.team.internal.ccvs.ui.subscriber.ChangeLogModelProvider.CVSUpdatableSyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeManager;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector;
 
 /**
  * Collector that fetches the log for incoming CVS change sets
@@ -101,8 +109,8 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 		}
 	};
 	
-    public CVSChangeSetCollector(SyncInfoSet seedSet) {
-        super(seedSet);
+    public CVSChangeSetCollector(ISynchronizePageConfiguration configuration) {
+        super(configuration);
     }
 
     /* (non-Javadoc)
@@ -125,7 +133,6 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 			// Decide which nodes we have to fetch log histories
 			SyncInfo[] infos = set.getSyncInfos();
 			ArrayList remoteChanges = new ArrayList();
-			ArrayList localChanges = new ArrayList();
 			for (int i = 0; i < infos.length; i++) {
 				SyncInfo info = infos[i];
 				if(isRemoteChange(info)) {
@@ -363,5 +370,132 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 		    logs.clearEntries();
 		}
 		super.dispose();
+	}
+	
+    /*
+	 * Add the following sync info elements to the viewer. It is assumed that these elements have associated
+	 * log entries cached in the log operation.
+	 */
+	private void addLogEntries(SyncInfo[] commentInfos, LogEntryCache logs, IProgressMonitor monitor) {
+		try {
+			monitor.beginTask(null, commentInfos.length * 10);
+			if (logs != null) {
+				for (int i = 0; i < commentInfos.length; i++) {
+					addSyncInfoToCommentNode(commentInfos[i], logs);
+					monitor.worked(10);
+				}
+			}
+		} finally {
+			monitor.done();
+		}
+	}
+	
+	/*
+	 * Create a node for the given sync info object. The logs should contain the log for this info.
+	 * 
+	 * @param info the info for which to create a node in the model
+	 * @param log the cvs log for this node
+	 */
+	private void addSyncInfoToCommentNode(SyncInfo info, LogEntryCache logs) {
+		ICVSRemoteResource remoteResource = getRemoteResource((CVSSyncInfo)info);
+		if(isTagComparison() && remoteResource != null) {
+			addMultipleRevisions(info, logs, remoteResource);
+		} else {
+			addSingleRevision(info, logs, remoteResource);
+		}
+	}
+	
+	/*
+	 * Add a single log entry to the model.
+	 * 
+	 * @param info
+	 * @param logs
+	 * @param remoteResource
+	 */
+	private void addSingleRevision(SyncInfo info, LogEntryCache logs, ICVSRemoteResource remoteResource) {
+		ILogEntry logEntry = logs.getLogEntry(remoteResource);
+		// For incoming deletions grab the comment for the latest on the same branch
+		// which is now in the attic.
+		try {
+			String remoteRevision = ((ICVSRemoteFile) remoteResource).getRevision();
+			if (isDeletedRemotely(info)) {
+				ILogEntry[] logEntries = logs.getLogEntries(remoteResource);
+				for (int i = 0; i < logEntries.length; i++) {
+					ILogEntry entry = logEntries[i];
+					String revision = entry.getRevision();
+					if (entry.isDeletion() && ResourceSyncInfo.isLaterRevision(revision, remoteRevision)) {
+						logEntry = entry;
+					}
+				}
+			}
+		} catch (TeamException e) {
+			// continue and skip deletion checks
+		}
+		addRemoteChange(info, remoteResource, logEntry);
+	}
+	
+    /*
+	 * Add multiple log entries to the model.
+	 * 
+	 * @param info
+	 * @param logs
+	 * @param remoteResource
+	 */
+	private void addMultipleRevisions(SyncInfo info, LogEntryCache logs, ICVSRemoteResource remoteResource) {
+		ILogEntry[] logEntries = logs.getLogEntries(remoteResource);
+		if(logEntries == null || logEntries.length == 0) {
+			// If for some reason we don't have a log entry, try the latest
+			// remote.
+			addRemoteChange(info, null, null);
+		} else {
+			for (int i = 0; i < logEntries.length; i++) {
+				ILogEntry entry = logEntries[i];
+				addRemoteChange(info, remoteResource, entry);
+			}
+		}
+	}
+	
+	private boolean isDeletedRemotely(SyncInfo info) {
+		int kind = info.getKind();
+		if(kind == (SyncInfo.INCOMING | SyncInfo.DELETION)) return true;
+		if(SyncInfo.getDirection(kind) == SyncInfo.CONFLICTING && info.getRemote() == null) return true;
+		return false;
+	}
+	
+    /*
+     * Add the remote change to an incoming commit set
+     */
+    private void addRemoteChange(SyncInfo info, ICVSRemoteResource remoteResource, ILogEntry logEntry) {
+        if(remoteResource != null && logEntry != null && isRemoteChange(info)) {
+	        ChangeSet set = getChangeSetFor(logEntry);
+	        if (set == null) {
+	            set = createChangeSetFor(logEntry);
+	        	add(set);
+	        }
+	        if(requiresCustomSyncInfo(info, remoteResource, logEntry)) {
+	        	info = new CVSUpdatableSyncInfo(info.getKind(), info.getLocal(), info.getBase(), (RemoteResource)logEntry.getRemoteFile(), ((CVSSyncInfo)info).getSubscriber());
+	        	try {
+	        		info.init();
+	        	} catch (TeamException e) {
+	        		// this shouldn't happen, we've provided our own calculate kind
+	        	}
+	        }
+	        set.add(info);
+        } else {
+            // The info was not retrieved for the remote change for some reason.
+            // Add the node to the root
+            ChangeSet set = getDefaultChangeSet();
+            set.add(info);
+        }
+    }
+    
+    private boolean requiresCustomSyncInfo(SyncInfo info, ICVSRemoteResource remoteResource, ILogEntry logEntry) {
+		// Only interested in non-deletions
+		if (logEntry.isDeletion() || !(info instanceof CVSSyncInfo)) return false;
+		// Only require a custom sync info if the remote of the sync info
+		// differs from the remote in the log entry
+		IResourceVariant remote = info.getRemote();
+		if (remote == null) return true;
+		return !remote.equals(remoteResource);
 	}
 }
