@@ -20,11 +20,11 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSubscriberPage;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CVSMergeSynchronizeParticipant;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
+import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.team.ui.sync.ISynchronizeManager;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -65,11 +65,11 @@ public class MergeWizard extends Wizard {
 		CVSTag endTag = endPage.getTag();				
 		
 		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
-		CVSMergeSubscriberPage page = new CVSMergeSubscriberPage(s, s.getName(), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION));
+		CVSMergeSynchronizeParticipant page = new CVSMergeSynchronizeParticipant(s, s.getName(), CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION));
 		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
-		manager.addSynchronizePages(new ISynchronizeViewPage[] {page});
+		manager.addSynchronizeParticipants(new ISynchronizeParticipant[] {page});
 		
-		INewSynchronizeView view = manager.showSynchronizeViewInActivePage(null);
+		ISynchronizeView view = manager.showSynchronizeViewInActivePage(null);
 		if(view != null) {
 			view.display(page);
 			page.refreshWithRemote(null /* all roots */);

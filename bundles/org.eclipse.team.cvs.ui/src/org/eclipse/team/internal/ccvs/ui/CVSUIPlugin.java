@@ -46,11 +46,11 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.ui.model.CVSAdapterFactory;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberPage;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CVSWorkspaceSynchronizeParticipant;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
@@ -81,7 +81,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 * The repository manager
 	 */
 	private RepositoryManager repositoryManager;
-	private CVSSubscriberPage cvsWorkspaceSynchronizeViewPage;
+	private CVSWorkspaceSynchronizeParticipant cvsWorkspaceSynchronizeViewPage;
 	
 	// constants used by watch/edit as values for string preference
 	public static final String EDIT = "edit"; //$NON-NLS-1$
@@ -653,23 +653,23 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		// Commented out until we have fully ported the CVS console to the new API				
 		//ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] {new CVSOutputConsole()});
 		
-		cvsWorkspaceSynchronizeViewPage = new CVSSubscriberPage(
+		cvsWorkspaceSynchronizeViewPage = new CVSWorkspaceSynchronizeParticipant(
 				CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
 				"CVS Workspace", 
 				CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 
 				6);
 		
-		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {cvsWorkspaceSynchronizeViewPage});
-		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
-		   new CVSSubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {cvsWorkspaceSynchronizeViewPage});
+		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {
+		   new CVSWorkspaceSynchronizeParticipant(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
 							  "CVS Workspace - 2", 
 							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 2)});
-		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
-		   new CVSSubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {
+		   new CVSWorkspaceSynchronizeParticipant(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
 							  "CVS Workspace - 3", 
 							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 3)});
-		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
-		   new CVSSubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {
+		   new CVSWorkspaceSynchronizeParticipant(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
 							  "CVS Workspace - 4", 
 							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 4)});
 
@@ -705,7 +705,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	/**
 	 * @return Returns the cvsWorkspaceSynchronizeViewPage.
 	 */
-	public CVSSubscriberPage getCvsWorkspaceSynchronizeViewPage() {
+	public CVSWorkspaceSynchronizeParticipant getCvsWorkspaceSynchronizeViewPage() {
 		return cvsWorkspaceSynchronizeViewPage;
 	}
 }

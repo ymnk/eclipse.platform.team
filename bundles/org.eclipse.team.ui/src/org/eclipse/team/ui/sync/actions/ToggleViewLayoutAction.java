@@ -15,17 +15,17 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.sync.SubscriberPage;
+import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 
 public class ToggleViewLayoutAction extends Action implements IPropertyChangeListener {	
 	private int layout;
-	private SubscriberPage page;
+	private TeamSubscriberParticipant page;
 	
-	public ToggleViewLayoutAction(SubscriberPage page, int layout) {
+	public ToggleViewLayoutAction(TeamSubscriberParticipant page, int layout) {
 		super(null, SWT.RADIO);
 		this.page = page;
 		this.layout = layout;
-		if(layout == SubscriberPage.TABLE_LAYOUT) {
+		if(layout == TeamSubscriberParticipant.TABLE_LAYOUT) {
 			Utils.initAction(this, "action.toggleViewFlat."); //$NON-NLS-1$	
 		} else {
 			Utils.initAction(this, "action.toggleViewHierarchical."); //$NON-NLS-1$
@@ -42,7 +42,7 @@ public class ToggleViewLayoutAction extends Action implements IPropertyChangeLis
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_LAYOUT)) {
+		if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_LAYOUT)) {
 			Integer newLayout = (Integer)event.getNewValue();
 			setChecked(newLayout.intValue() == layout);
 		}		

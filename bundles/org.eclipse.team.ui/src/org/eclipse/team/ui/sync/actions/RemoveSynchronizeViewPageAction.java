@@ -13,17 +13,17 @@ package org.eclipse.team.ui.sync.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 
 public class RemoveSynchronizeViewPageAction extends Action {
-	private ISynchronizeViewPage page;
+	private ISynchronizeParticipant page;
 
-	public RemoveSynchronizeViewPageAction(ISynchronizeViewPage page) {
+	public RemoveSynchronizeViewPageAction(ISynchronizeParticipant page) {
 		this.page = page;
 		Utils.initAction(this, "action.removePage."); //$NON-NLS-1$
 	}
 	
 	public void run() {
-		TeamUI.getSynchronizeManager().removeSynchronizePages(new ISynchronizeViewPage[] {page});
+		TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] {page});
 	}
 }

@@ -51,8 +51,8 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
-import org.eclipse.team.ui.sync.SubscriberPage;
+import org.eclipse.team.ui.sync.ISynchronizeView;
+import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkingSet;
 
@@ -299,13 +299,13 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 						throw new InvocationTargetException(e);
 					}
 				}
-				INewSynchronizeView view = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
+				ISynchronizeView view = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
 				if(view != null) {
-					SubscriberPage page = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeViewPage();
+					TeamSubscriberParticipant page = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeViewPage();
 					IWorkingSet workingSet = CVSUIPlugin.getWorkingSet(new IResource[] {project}, Policy.bind("SyncAction.workingSetName")); //$NON-NLS-1$)
 					page.setWorkingSet(workingSet);
 					view.display(page);
-					page.setMode(SubscriberPage.OUTGOING_MODE);
+					page.setMode(TeamSubscriberParticipant.OUTGOING_MODE);
 				} else {
 					CVSUIPlugin.openError(getContainer().getShell(), Policy.bind("error"), Policy.bind("Error.unableToShowSyncView"), null); //$NON-NLS-1$ //$NON-NLS-2$
 				}

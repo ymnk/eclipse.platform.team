@@ -22,10 +22,10 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
+import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.team.ui.sync.ISynchronizeManager;
-import org.eclipse.team.ui.sync.ISynchronizePageListener;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeParticipantListener;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.IPage;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -33,12 +33,12 @@ import org.eclipse.ui.part.MessagePage;
 import org.eclipse.ui.part.PageBook;
 import org.eclipse.ui.part.PageBookView;
 
-public class NewSynchronizeView extends PageBookView implements INewSynchronizeView, ISynchronizePageListener, IPropertyChangeListener {
+public class NewSynchronizeView extends PageBookView implements ISynchronizeView, ISynchronizeParticipantListener, IPropertyChangeListener {
 	
 	/**
 	 * The console being displayed, or <code>null</code> if none
 	 */
-	private ISynchronizeViewPage fActivePage = null;
+	private ISynchronizeParticipant fActivePage = null;
 	
 	/**
 	 * Map of consoles to dummy console parts (used to close pages)
@@ -62,8 +62,8 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		Object source = event.getSource();
-		if (source instanceof ISynchronizeViewPage && event.getProperty().equals(IBasicPropertyConstants.P_TEXT)) {
-			if (source.equals(getActivePage())) {
+		if (source instanceof ISynchronizeParticipant && event.getProperty().equals(IBasicPropertyConstants.P_TEXT)) {
+			if (source.equals(getParticipant())) {
 				updateTitle();
 			}
 		}
@@ -80,7 +80,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	/* (non-Javadoc)
 	 * @see org.eclipse.debug.internal.ui.console.IConsoleView#getConsole()
 	 */
-	public ISynchronizeViewPage getActivePage() {
+	public ISynchronizeParticipant getParticipant() {
 		return fActivePage;
 	}
 
@@ -89,7 +89,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	 */
 	protected void showPageRec(PageRec pageRec) {
 		super.showPageRec(pageRec);
-		fActivePage = (ISynchronizeViewPage)fPartToPage.get(pageRec.part);
+		fActivePage = (ISynchronizeParticipant)fPartToPage.get(pageRec.part);
 		updateTitle();		
 	}
 
@@ -97,7 +97,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	 * Updates the view title based on the active console
 	 */
 	protected void updateTitle() {
-		ISynchronizeViewPage page = getActivePage();
+		ISynchronizeParticipant page = getParticipant();
 		if (page == null) {
 			setTitle("Synchronize View");
 		} else {
@@ -113,7 +113,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 		page.dispose();
 		pageRecord.dispose();
 		
-		ISynchronizeViewPage console = (ISynchronizeViewPage)fPartToPage.get(part);
+		ISynchronizeParticipant console = (ISynchronizeParticipant)fPartToPage.get(part);
 		console.removePropertyChangeListener(this);
 				
 		// empty cross-reference cache
@@ -126,7 +126,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	 */
 	protected PageRec doCreatePage(IWorkbenchPart dummyPart) {
 		SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)dummyPart;
-		ISynchronizeViewPage console = part.getConsole();
+		ISynchronizeParticipant console = part.getConsole();
 		IPageBookViewPage page = console.createPage(this);
 		initPage(page);
 		page.createControl(getPageBook());
@@ -147,7 +147,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	 */
 	public void dispose() {
 		super.dispose();
-		TeamUI.getSynchronizeManager().removeSynchronizePageListener(this);
+		TeamUI.getSynchronizeManager().removeSynchronizeParticipantListener(this);
 	}
 
 	/* (non-Javadoc)
@@ -163,13 +163,13 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.console.IConsole[])
 	 */
-	public void consolesAdded(final ISynchronizeViewPage[] consoles) {
+	public void participantsAdded(final ISynchronizeParticipant[] consoles) {
 		if (isAvailable()) {
 			Runnable r = new Runnable() {
 				public void run() {
 					for (int i = 0; i < consoles.length; i++) {
 						if (isAvailable()) {
-							ISynchronizeViewPage console = consoles[i];
+							ISynchronizeParticipant console = consoles[i];
 							SynchronizeViewWorkbenchPart part = new SynchronizeViewWorkbenchPart(console, getSite());
 							fPageToPart.put(console, part);
 							fPartToPage.put(part, console);
@@ -185,19 +185,19 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui.console.IConsole[])
 	 */
-	public void consolesRemoved(final ISynchronizeViewPage[] consoles) {
+	public void participantsRemoved(final ISynchronizeParticipant[] consoles) {
 		if (isAvailable()) {
 			Runnable r = new Runnable() {
 				public void run() {
 					for (int i = 0; i < consoles.length; i++) {
 						if (isAvailable()) {
-							ISynchronizeViewPage console = consoles[i];
+							ISynchronizeParticipant console = consoles[i];
 							SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)fPageToPart.get(console);
 							if (part != null) {
 								partClosed(part);
 							}
-							if (getActivePage() == null) {
-								ISynchronizeViewPage[] available = TeamUI.getSynchronizeManager().getSynchronizePages();
+							if (getParticipant() == null) {
+								ISynchronizeParticipant[] available = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 								if (available.length > 0) {
 									display(available[available.length - 1]);
 								}
@@ -254,7 +254,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleView#display(org.eclipse.ui.console.IConsole)
 	 */
-	public void display(ISynchronizeViewPage console) {
+	public void display(ISynchronizeParticipant console) {
 		SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)fPageToPart.get(console);
 		if (part != null) {
 			partActivated(part);
@@ -312,9 +312,9 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	private void updateForExistingConsoles() {
 		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
 		// create pages for consoles
-		ISynchronizeViewPage[] consoles = manager.getSynchronizePages();
-		consolesAdded(consoles);
+		ISynchronizeParticipant[] consoles = manager.getSynchronizeParticipants();
+		participantsAdded(consoles);
 		// add as a listener
-		manager.addSynchronizePageListener(this);		
+		manager.addSynchronizeParticipantListener(this);		
 	}	
 }

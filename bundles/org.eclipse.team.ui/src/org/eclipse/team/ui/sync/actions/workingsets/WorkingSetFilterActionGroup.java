@@ -23,8 +23,8 @@ import org.eclipse.jface.util.Assert;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeView;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
@@ -53,9 +53,9 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 	private IMenuManager menuManager;
 	private IMenuListener menuListener;
 
-	private ISynchronizeViewPage page;
+	private ISynchronizeParticipant page;
 
-	private INewSynchronizeView view;
+	private ISynchronizeView view;
 
 	/**
 	 * Creates a new instance of the receiver
@@ -64,7 +64,7 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 	 * @param workingSetUpdater property change listener notified when a 
 	 * 	working set is set
 	 */
-	public WorkingSetFilterActionGroup(Shell shell, IPropertyChangeListener workingSetUpdater, INewSynchronizeView view, ISynchronizeViewPage page) {
+	public WorkingSetFilterActionGroup(Shell shell, IPropertyChangeListener workingSetUpdater, ISynchronizeView view, ISynchronizeParticipant page) {
 		this.view = view;
 		this.page = page;
 		Assert.isNotNull(shell);

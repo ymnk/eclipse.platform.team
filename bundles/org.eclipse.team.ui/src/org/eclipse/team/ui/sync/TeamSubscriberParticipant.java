@@ -1,6 +1,7 @@
 package org.eclipse.team.ui.sync;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -14,7 +15,7 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.part.IPageBookViewPage;
 
-public class SubscriberPage extends AbstractSynchronizeViewPage {
+public class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 	
 	private SubscriberInput input;
 	private SubscriberSynchronizeViewPage page;
@@ -58,16 +59,23 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 	
 	public static final String MB_MODESGROUP = TeamUIPlugin.ID + ".modes";
 	
-	public SubscriberPage(TeamSubscriber subscriber, String name, ImageDescriptor imageDescriptor) {
+	public TeamSubscriberParticipant(TeamSubscriber subscriber, String name, ImageDescriptor imageDescriptor) {
 		super(name, imageDescriptor);
 		this.input = new SubscriberInput(subscriber);
 		this.currentMode = BOTH_MODE;
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#getUniqueId()
+	 */
+	public QualifiedName getUniqueId() {
+		return input.getSubscriber().getId();
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
-	public IPageBookViewPage createPage(INewSynchronizeView view) {
+	public IPageBookViewPage createPage(ISynchronizeView view) {
 		this.page = new SubscriberSynchronizeViewPage(this, view, input);
 		return page;
 	}
@@ -77,7 +85,7 @@ public class SubscriberPage extends AbstractSynchronizeViewPage {
 	}
 	
 	public SubscriberInput getInput() {
-		return page.getInput();
+		return input;
 	}
 	
 	public void setMode(int mode) {

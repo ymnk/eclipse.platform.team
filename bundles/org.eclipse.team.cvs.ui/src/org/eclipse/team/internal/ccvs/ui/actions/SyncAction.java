@@ -19,12 +19,12 @@ import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberPage;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CVSWorkspaceSynchronizeParticipant;
 import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncView;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
+import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.ui.IWorkingSet;
 
 /**
@@ -38,9 +38,9 @@ public class SyncAction extends WorkspaceAction {
 			if (resources == null || resources.length == 0) return;
 			
 			IWorkingSet workingSet = CVSUIPlugin.getWorkingSet(resources, Policy.bind("SyncAction.workingSetName")); //$NON-NLS-1$
-			INewSynchronizeView view = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
+			ISynchronizeView view = TeamUI.getSynchronizeManager().showSynchronizeViewInActivePage(null);
 			if(view != null) {
-				CVSSubscriberPage cvsPage = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeViewPage();
+				CVSWorkspaceSynchronizeParticipant cvsPage = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeViewPage();
 				cvsPage.setWorkingSet(workingSet);
 				view.display(cvsPage);
 				cvsPage.refreshWithRemote(resources);

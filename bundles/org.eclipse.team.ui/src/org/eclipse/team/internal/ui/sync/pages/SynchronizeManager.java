@@ -14,16 +14,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
 import org.eclipse.team.ui.sync.ISynchronizeManager;
-import org.eclipse.team.ui.sync.ISynchronizePageListener;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
+import org.eclipse.team.ui.sync.ISynchronizeParticipantListener;
+import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -45,7 +46,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/**
 	 * List of registered synchronize view pages
 	 */
-	private List synchronizePages = new ArrayList(10); 
+	private List synchronizeParticipants = new ArrayList(10); 
 	
 	// change notification constants
 	private final static int ADDED = 1;
@@ -56,17 +57,15 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 */
 	class SynchronizeViewPageNotifier implements ISafeRunnable {
 		
-		private ISynchronizePageListener fListener;
+		private ISynchronizeParticipantListener fListener;
 		private int fType;
-		private ISynchronizeViewPage[] fChanged;
+		private ISynchronizeParticipant[] fChanged;
 		
 		/* (non-Javadoc)
 		 * @see org.eclipse.core.runtime.ISafeRunnable#handleException(java.lang.Throwable)
 		 */
 		public void handleException(Throwable exception) {
-			// TODO:
-			//IStatus status = new Status(IStatus.ERROR, ConsolePlugin.getUniqueIdentifier(), IConsoleConstants.INTERNAL_ERROR, ConsoleMessages.getString("ConsoleManager.0"), exception); //$NON-NLS-1$
-			//ConsolePlugin.log(status);
+			TeamUIPlugin.log(IStatus.ERROR, "", exception);
 		}
 
 		/* (non-Javadoc)
@@ -75,10 +74,10 @@ public class SynchronizeManager implements ISynchronizeManager {
 		public void run() throws Exception {
 			switch (fType) {
 				case ADDED:
-					fListener.consolesAdded(fChanged);
+					fListener.participantsAdded(fChanged);
 					break;
 				case REMOVED:
-					fListener.consolesRemoved(fChanged);
+					fListener.participantsRemoved(fChanged);
 					break;
 			}
 		}
@@ -89,7 +88,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		 * @param consoles the consoles that changed
 		 * @param update the type of change
 		 */
-		public void notify(ISynchronizeViewPage[] consoles, int update) {
+		public void notify(ISynchronizeParticipant[] consoles, int update) {
 			if (fListeners == null) {
 				return;
 			}
@@ -97,7 +96,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 			fType = update;
 			Object[] copiedListeners= fListeners.getListeners();
 			for (int i= 0; i < copiedListeners.length; i++) {
-				fListener = (ISynchronizePageListener)copiedListeners[i];
+				fListener = (ISynchronizeParticipantListener)copiedListeners[i];
 				Platform.run(this);
 			}	
 			fChanged = null;
@@ -108,7 +107,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleManager#addConsoleListener(org.eclipse.ui.console.IConsoleListener)
 	 */
-	public void addSynchronizePageListener(ISynchronizePageListener listener) {
+	public void addSynchronizeParticipantListener(ISynchronizeParticipantListener listener) {
 		if (fListeners == null) {
 			fListeners = new ListenerList(5);
 		}
@@ -118,7 +117,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleManager#removeConsoleListener(org.eclipse.ui.console.IConsoleListener)
 	 */
-	public void removeSynchronizePageListener(ISynchronizePageListener listener) {
+	public void removeSynchronizeParticipantListener(ISynchronizeParticipantListener listener) {
 		if (fListeners != null) {
 			fListeners.remove(listener);
 		}
@@ -127,41 +126,41 @@ public class SynchronizeManager implements ISynchronizeManager {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleManager#addConsoles(org.eclipse.ui.console.IConsole[])
 	 */
-	public synchronized void addSynchronizePages(ISynchronizeViewPage[] consoles) {
+	public synchronized void addSynchronizeParticipants(ISynchronizeParticipant[] consoles) {
 		List added = new ArrayList(consoles.length);
 		for (int i = 0; i < consoles.length; i++) {
-			ISynchronizeViewPage console = consoles[i];
-			if (!synchronizePages.contains(console)) {
-				synchronizePages.add(console);
+			ISynchronizeParticipant console = consoles[i];
+			if (!synchronizeParticipants.contains(console)) {
+				synchronizeParticipants.add(console);
 				added.add(console);
 			}
 		}
 		if (!added.isEmpty()) {
-			fireUpdate((ISynchronizeViewPage[])added.toArray(new ISynchronizeViewPage[added.size()]), ADDED);
+			fireUpdate((ISynchronizeParticipant[])added.toArray(new ISynchronizeParticipant[added.size()]), ADDED);
 		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleManager#removeConsoles(org.eclipse.ui.console.IConsole[])
 	 */
-	public synchronized void removeSynchronizePages(ISynchronizeViewPage[] consoles) {
+	public synchronized void removeSynchronizeParticipants(ISynchronizeParticipant[] consoles) {
 		List removed = new ArrayList(consoles.length);
 		for (int i = 0; i < consoles.length; i++) {
-			ISynchronizeViewPage console = consoles[i];
-			if (synchronizePages.remove(console)) {
+			ISynchronizeParticipant console = consoles[i];
+			if (synchronizeParticipants.remove(console)) {
 				removed.add(console);
 			}
 		}
 		if (!removed.isEmpty()) {
-			fireUpdate((ISynchronizeViewPage[])removed.toArray(new ISynchronizeViewPage[removed.size()]), REMOVED);
+			fireUpdate((ISynchronizeParticipant[])removed.toArray(new ISynchronizeParticipant[removed.size()]), REMOVED);
 		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.console.IConsoleManager#getConsoles()
 	 */
-	public synchronized ISynchronizeViewPage[] getSynchronizePages() {
-		return (ISynchronizeViewPage[])synchronizePages.toArray(new ISynchronizeViewPage[synchronizePages.size()]);
+	public synchronized ISynchronizeParticipant[] getSynchronizeParticipants() {
+		return (ISynchronizeParticipant[])synchronizeParticipants.toArray(new ISynchronizeParticipant[synchronizeParticipants.size()]);
 	}
 
 	/**
@@ -170,11 +169,11 @@ public class SynchronizeManager implements ISynchronizeManager {
 	 * @param consoles consoles added/removed
 	 * @param type ADD or REMOVE
 	 */
-	private void fireUpdate(ISynchronizeViewPage[] consoles, int type) {
+	private void fireUpdate(ISynchronizeParticipant[] consoles, int type) {
 		new SynchronizeViewPageNotifier().notify(consoles, type);
 	}
 
-	public INewSynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage activePage) {
+	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage activePage) {
 		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
 		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
 		
@@ -191,7 +190,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 				activePage = TeamUIPlugin.getActivePage();
 				if (activePage == null) return null;
 			}
-			return (INewSynchronizeView)activePage.showView(INewSynchronizeView.VIEW_ID);
+			return (ISynchronizeView)activePage.showView(ISynchronizeView.VIEW_ID);
 		} catch (PartInitException pe) {
 			Utils.handleError(window.getShell(), pe, Policy.bind("SynchronizeView.16"), pe.getMessage()); //$NON-NLS-1$
 			return null;

@@ -13,23 +13,35 @@ package org.eclipse.team.ui.sync;
 import org.eclipse.ui.IViewPart;
 
 /**
- * A view that displays synchronization targets that are registered with the
- * synchronize view manager.
+ * A view that displays synchronization participants that are registered with the
+ * synchronize manager.
  * <p>
  * Clients are not intended to implement this interface.
  * </p>
  * 
  * @since 3.0
  */
-public interface INewSynchronizeView extends IViewPart {
+public interface ISynchronizeView extends IViewPart {
 
 	/**
 	 * The id for this view
 	 */
 	public static final String VIEW_ID = "org.eclipse.team.sync.views.SynchronizeView";
 	
+	/**
+	 * Displays the given synchronize participant in the Synchronize View. This
+	 * has no effect if this participant is already being displayed.
+	 * 
+	 * @param participant participant to be displayed, cannot be <code>null</code>
+	 */
+	public void display(ISynchronizeParticipant participant);
 	
-	public void display(ISynchronizeViewPage page);
-	
-	public ISynchronizeViewPage getActivePage();
+	/**
+	 * Returns the participant currently being displayed in the Synchronize View
+	 * or <code>null</code> if none.
+	 *  
+	 * @return the participant currently being displayed in the Synchronize View
+	 * or <code>null</code> if none
+	 */
+	public ISynchronizeParticipant getParticipant();
 }

@@ -11,14 +11,14 @@
 package org.eclipse.team.ui.sync;
 
 /**
- * A console listener is notified when consoles are added or removed from
- * the console manager.
+ * A synchronize participant listener is notified when participants are added or 
+ * removed from the synchronize manager.
  * <p>
  * Clients may implement this interface.
  * </p>
  * @since 3.0
  */
-public interface ISynchronizePageListener {
+public interface ISynchronizeParticipantListener {
 	
 	/**
 	 * Notification the given consoles have been added to the console
@@ -26,7 +26,7 @@ public interface ISynchronizePageListener {
 	 * 
 	 * @param consoles added consoles
 	 */
-	public void consolesAdded(ISynchronizeViewPage[] synchronizeTargets);
+	public void participantsAdded(ISynchronizeParticipant[] synchronizeTargets);
 	
 	/**
 	 * Notification the given consoles have been removed from the
@@ -34,6 +34,6 @@ public interface ISynchronizePageListener {
 	 * 
 	 * @param consoles removed consoles
 	 */
-	public void consolesRemoved(ISynchronizeViewPage[] synchronizeTargets);
+	public void participantsRemoved(ISynchronizeParticipant[] synchronizeTargets);
 
 }

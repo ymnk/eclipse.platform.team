@@ -12,7 +12,7 @@ package org.eclipse.team.internal.ui.sync.pages;
 
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 import org.eclipse.ui.IPropertyListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
@@ -22,7 +22,7 @@ import org.eclipse.ui.IWorkbenchPartSite;
  */
 public class SynchronizeViewWorkbenchPart implements IWorkbenchPart {
 
-	private ISynchronizeViewPage fConsole = null;
+	private ISynchronizeParticipant fConsole = null;
 	private IWorkbenchPartSite fSite = null;
 	
 	/* (non-Javadoc)
@@ -44,7 +44,7 @@ public class SynchronizeViewWorkbenchPart implements IWorkbenchPart {
 	 * Constructs a part for the given console that binds to the given
 	 * site
 	 */
-	public SynchronizeViewWorkbenchPart(ISynchronizeViewPage console, IWorkbenchPartSite site) {
+	public SynchronizeViewWorkbenchPart(ISynchronizeParticipant console, IWorkbenchPartSite site) {
 		fConsole = console;
 		fSite = site;
 	}
@@ -119,7 +119,7 @@ public class SynchronizeViewWorkbenchPart implements IWorkbenchPart {
 	 * 
 	 * @return console associated with this part
 	 */
-	protected ISynchronizeViewPage getConsole() {
+	protected ISynchronizeParticipant getConsole() {
 		return fConsole;
 	}
 }

@@ -13,7 +13,7 @@ package org.eclipse.team.ui.sync;
 import org.eclipse.ui.IWorkbenchPage;
 
 /**
- * Manages synchronization pages.
+ * Manages synchronization view participants.
  * <p>
  * Clients are not intended to implement this interface.
  * </p>
@@ -22,44 +22,50 @@ import org.eclipse.ui.IWorkbenchPage;
 public interface ISynchronizeManager {
 	
 	/**
-	 * Registers the given listener for console notifications. Has
+	 * Registers the given listener for participant notifications. Has
 	 * no effect if an identical listener is already registered.
 	 * 
 	 * @param listener listener to register
 	 */
-	public void addSynchronizePageListener(ISynchronizePageListener listener);
+	public void addSynchronizeParticipantListener(ISynchronizeParticipantListener listener);
 	
 	/**
-	 * Deregisters the given listener for console notifications. Has
+	 * Deregisters the given listener for participant notifications. Has
 	 * no effect if an identical listener is not already registered.
 	 * 
 	 * @param listener listener to deregister
 	 */
-	public void removeSynchronizePageListener(ISynchronizePageListener listener);
+	public void removeSynchronizeParticipantListener(ISynchronizeParticipantListener listener);
 
 	/**
-	 * Adds the given consoles to the console manager. Has no effect for
-	 * equivalent consoles already registered. The consoles will be added
-	 * to any existing console views.
+	 * Adds the given participants to the synchronize manager. Has no effect for
+	 * equivalent participants are already registered. The participants will be added
+	 * to any existing synchronize views.
 	 * 
 	 * @param consoles consoles to add
 	 */
-	public void addSynchronizePages(ISynchronizeViewPage[] consoles);
+	public void addSynchronizeParticipants(ISynchronizeParticipant[] consoles);
 	
 	/**
-	 * Removes the given consoles from the console manager. If the consoles are
-	 * being displayed in any console views, the associated pages will be closed.
+	 * Removes the given participants from the synchronize manager. If the participants are
+	 * being displayed in any synchronize views, the associated pages will be closed.
 	 * 
 	 * @param consoles consoles to remove
 	 */
-	public void removeSynchronizePages(ISynchronizeViewPage[] consoles);
+	public void removeSynchronizeParticipants(ISynchronizeParticipant[] consoles);
 	
 	/**
 	 * Returns a collection of consoles registered with the console manager.
 	 * 
 	 * @return a collection of consoles registered with the console manager
 	 */
-	public ISynchronizeViewPage[] getSynchronizePages();
+	public ISynchronizeParticipant[] getSynchronizeParticipants();
 	
-	public INewSynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage page);
+	/**
+	 * Opens the synchronize view in the given page. Has no effect if the view is 
+	 * already open in that page. 
+	 * 
+	 * @return the opened synchronize view 
+	 */
+	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage page);
 }

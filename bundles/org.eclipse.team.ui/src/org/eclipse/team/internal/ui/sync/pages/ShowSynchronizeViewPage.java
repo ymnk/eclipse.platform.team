@@ -11,18 +11,18 @@
 package org.eclipse.team.internal.ui.sync.pages;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeView;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 
 public class ShowSynchronizeViewPage extends Action {
-	private ISynchronizeViewPage fPage;
-	private INewSynchronizeView fView;
+	private ISynchronizeParticipant fPage;
+	private ISynchronizeView fView;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.action.IAction#run()
 	 */
 	public void run() {
-		if (!fPage.equals(fView.getActivePage())) {
+		if (!fPage.equals(fView.getParticipant())) {
 			fView.display(fPage);
 		}
 	}
@@ -33,7 +33,7 @@ public class ShowSynchronizeViewPage extends Action {
 	 * @param view the synchronize view in which the given page is contained
 	 * @param console the console
 	 */
-	public ShowSynchronizeViewPage(INewSynchronizeView view, ISynchronizeViewPage page) {
+	public ShowSynchronizeViewPage(ISynchronizeView view, ISynchronizeParticipant page) {
 		super(page.getName(), Action.AS_RADIO_BUTTON);
 		fPage = page;
 		fView = view;

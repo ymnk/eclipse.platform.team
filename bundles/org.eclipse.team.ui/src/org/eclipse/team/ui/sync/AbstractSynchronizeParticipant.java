@@ -17,8 +17,9 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IBasicPropertyConstants;
+import org.eclipse.team.ui.TeamUI;
 
-public abstract class AbstractSynchronizeViewPage implements ISynchronizeViewPage {
+public abstract class AbstractSynchronizeParticipant implements ISynchronizeParticipant {
 	
 	// property listeners
 	private ListenerList fListeners;
@@ -31,15 +32,15 @@ public abstract class AbstractSynchronizeViewPage implements ISynchronizeViewPag
 	 * Used to notify this console of lifecycle methods <code>init()</code>
 	 * and <code>dispose()</code>.
 	 */
-	class Lifecycle implements ISynchronizePageListener {
+	class Lifecycle implements ISynchronizeParticipantListener {
 		
 		/* (non-Javadoc)
 		 * @see org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.console.IConsole[])
 		 */
-		public void consolesAdded(ISynchronizeViewPage[] consoles) {
+		public void participantsAdded(ISynchronizeParticipant[] consoles) {
 			for (int i = 0; i < consoles.length; i++) {
-				ISynchronizeViewPage console = consoles[i];
-				if (console == AbstractSynchronizeViewPage.this) {
+				ISynchronizeParticipant console = consoles[i];
+				if (console == AbstractSynchronizeParticipant.this) {
 					init();
 				}
 			}
@@ -49,11 +50,11 @@ public abstract class AbstractSynchronizeViewPage implements ISynchronizeViewPag
 		/* (non-Javadoc)
 		 * @see org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui.console.IConsole[])
 		 */
-		public void consolesRemoved(ISynchronizeViewPage[] consoles) {
+		public void participantsRemoved(ISynchronizeParticipant[] consoles) {
 			for (int i = 0; i < consoles.length; i++) {
-				ISynchronizeViewPage console = consoles[i];
-				if (console == AbstractSynchronizeViewPage.this) {
-					//ConsolePlugin.getDefault().getConsoleManager().removeConsoleListener(this);
+				ISynchronizeParticipant console = consoles[i];
+				if (console == AbstractSynchronizeParticipant.this) {
+					TeamUI.getSynchronizeManager().removeSynchronizeParticipantListener(this);
 					dispose();
 				}
 			}
@@ -109,10 +110,10 @@ public abstract class AbstractSynchronizeViewPage implements ISynchronizeViewPag
 	 * @param name console name, cannot be <code>null</code>
 	 * @param imageDescriptor image descriptor, or <code>null</code> if none
 	 */
-	public AbstractSynchronizeViewPage(String name, ImageDescriptor imageDescriptor) {
+	public AbstractSynchronizeParticipant(String name, ImageDescriptor imageDescriptor) {
 		setName(name);
 		setImageDescriptor(imageDescriptor);
-		//ConsolePlugin.getDefault().getConsoleManager().addConsoleListener(new Lifecycle());
+		TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(new Lifecycle());
 	}
 
 	/* (non-Javadoc)

@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ISubscriberManager;
 import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
@@ -37,7 +36,7 @@ import org.eclipse.team.core.subscribers.TeamSubscriberFactory;
 /**
  * This class provides the private implementation of <code>ISubscriberManager</code>.
  */
-public class SubscriberManager implements ISubscriberManager, ISaveParticipant {
+public class SubscriberManager implements ISaveParticipant {
 
 	private static String SUBSCRIBER_EXTENSION = "subscriber"; //$NON-NLS-1$
 	final static private String SAVECTX_SUBSCRIBERS = "subscribers";  //$NON-NLS-1$
@@ -49,54 +48,6 @@ public class SubscriberManager implements ISubscriberManager, ISaveParticipant {
 	private List listeners = new ArrayList(1);
 	private Map factories = new HashMap();
 	
-	static private ISubscriberManager instance;
-	
-	public static synchronized ISubscriberManager getInstance() {
-		if (instance == null) {
-			// Initialize the variable before trigering startup.
-			// This is done because the startup code can invoke
-			// subscriber factories which, in turn will ask for the 
-			// subscriber manager.
-			instance = new SubscriberManager();
-			((SubscriberManager)instance).startup();
-		}
-		return instance;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.ISubscriberManager#registerSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
-	 */
-	public void registerSubscriber(TeamSubscriber subscriber) {
-		boolean fireEvent = false;
-		synchronized(subscribers) {
-			if(! subscribers.containsKey(subscriber.getId())) {
-				subscribers.put(subscriber.getId(), subscriber);
-				fireEvent = true;
-			}
-		}
-		if (fireEvent) {
-			fireTeamResourceChange(new TeamDelta[] {
-				new TeamDelta(subscriber, TeamDelta.SUBSCRIBER_CREATED, null)});
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.ISubscriberManager#deregisterSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
-	 */
-	public void deregisterSubscriber(TeamSubscriber subscriber) {
-		boolean fireEvent = false;
-		synchronized(subscribers) {
-			if (subscribers.remove(subscriber.getId()) != null) {
-				// Only notify if the subscriber was registered in the first place
-				fireEvent = true;
-			}
-		}
-		if (fireEvent) {
-			fireTeamResourceChange(new TeamDelta[] {
-				new TeamDelta(subscriber, TeamDelta.SUBSCRIBER_DELETED, null)});
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ISubscriberManager#getSubscriber(org.eclipse.core.runtime.QualifiedName)
 	 */
@@ -205,7 +156,7 @@ public class SubscriberManager implements ISubscriberManager, ISaveParticipant {
 						if(children.length == 1) {			
 							TeamSubscriber s = factory.restoreSubscriber(new QualifiedName(qualifier, localName), children[0]);								
 							if(s != null) {
-								registerSubscriber(s);
+								//registerSubscriber(s);
 							}
 						}
 					}

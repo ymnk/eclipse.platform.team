@@ -22,8 +22,8 @@ import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberInputJob;
 import org.eclipse.team.internal.ui.sync.sets.*;
 import org.eclipse.team.internal.ui.sync.views.*;
-import org.eclipse.team.ui.sync.INewSynchronizeView;
-import org.eclipse.team.ui.sync.SubscriberPage;
+import org.eclipse.team.ui.sync.ISynchronizeView;
+import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
 import org.eclipse.team.ui.sync.actions.*;
 import org.eclipse.team.ui.sync.actions.workingsets.WorkingSetFilterActionGroup;
 import org.eclipse.ui.*;
@@ -50,8 +50,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	// private SyncViewerActions actions;
 	
 	private JobBusyCursor busyCursor;
-	private INewSynchronizeView view;
-	private SubscriberPage page;
+	private ISynchronizeView view;
+	private TeamSubscriberParticipant page;
 	private IPageSite site;
 	
 	public final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
@@ -76,13 +76,13 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public SubscriberSynchronizeViewPage(SubscriberPage page, INewSynchronizeView view, SubscriberInput input) {
+	public SubscriberSynchronizeViewPage(TeamSubscriberParticipant page, ISynchronizeView view, SubscriberInput input) {
 		this.page = page;
 		this.view = view;
 		this.input = input;
 		layout = getStore().getInt(IPreferenceIds.SYNCVIEW_VIEW_TYPE);
-		if (layout != SubscriberPage.TREE_LAYOUT) {
-			layout = SubscriberPage.TABLE_LAYOUT;
+		if (layout != TeamSubscriberParticipant.TREE_LAYOUT) {
+			layout = TeamSubscriberParticipant.TABLE_LAYOUT;
 		}		
 	}
 	
@@ -108,8 +108,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		gotoPrevious = new NavigateAction(view, this, INavigableControl.PREVIOUS);
 		comparisonCriteria = new ComparisonCriteriaActionGroup(input);
 		
-		toggleLayoutTable = new ToggleViewLayoutAction(page, SubscriberPage.TABLE_LAYOUT);
-		toggleLayoutTree = new ToggleViewLayoutAction(page, SubscriberPage.TREE_LAYOUT);
+		toggleLayoutTable = new ToggleViewLayoutAction(page, TeamSubscriberParticipant.TABLE_LAYOUT);
+		toggleLayoutTree = new ToggleViewLayoutAction(page, TeamSubscriberParticipant.TREE_LAYOUT);
 		
 		showPreferences = new SyncViewerShowPreferencesAction(view.getSite().getShell());
 		workingSetGroup = new WorkingSetFilterActionGroup(getSite().getShell(), this, view, page);
@@ -232,10 +232,10 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	protected void createViewer(Composite parent) {				
 		statsPanel = new StatisticsPanel(parent);
 		switch(layout) {
-			case SubscriberPage.TREE_LAYOUT:
+			case TeamSubscriberParticipant.TREE_LAYOUT:
 				createTreeViewerPartControl(parent); 
 				break;
-			case SubscriberPage.TABLE_LAYOUT:
+			case TeamSubscriberParticipant.TABLE_LAYOUT:
 				createTableViewerPartControl(parent); 
 				break;
 		}
@@ -461,7 +461,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	}
 
 	public void selectAll() {
-		if (getLayout() == SubscriberPage.TABLE_LAYOUT) {
+		if (getLayout() == TeamSubscriberParticipant.TABLE_LAYOUT) {
 			TableViewer table = (TableViewer)getViewer();
 			table.getTable().selectAll();
 		} else {
@@ -491,7 +491,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 		IToolBarManager manager = actionBars.getToolBarManager();
 		manager.add(comparisonCriteria);
 		manager.add(refreshAction);
-		manager.add(new Separator(SubscriberPage.MB_MODESGROUP));		
+		manager.add(new Separator(TeamSubscriberParticipant.MB_MODESGROUP));		
 		manager.add(gotoNext);
 		manager.add(gotoPrevious);
 		manager.add(collapseAll);
@@ -525,11 +525,11 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_LAYOUT)) {
+		if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_LAYOUT)) {
 			switchViewerType(((Integer)event.getNewValue()).intValue());
-		} else if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_MODE)) {
+		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE)) {
 			updateMode(((Integer)event.getNewValue()).intValue());
-		} else if(event.getProperty().equals(SubscriberPage.P_SYNCVIEWPAGE_WORKINGSET)) {
+		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
 			updateWorkingSet((IWorkingSet)event.getNewValue());
 		} else if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
 			Object newValue = event.getNewValue();
@@ -548,13 +548,13 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, ISyncSe
 	private void updateMode(int mode) {
 		int[] modeFilter = BOTH_MODE_FILTER;
 		switch(mode) {
-			case SubscriberPage.INCOMING_MODE:
+			case TeamSubscriberParticipant.INCOMING_MODE:
 				modeFilter = INCOMING_MODE_FILTER; break;
-			case SubscriberPage.OUTGOING_MODE:
+			case TeamSubscriberParticipant.OUTGOING_MODE:
 				modeFilter = OUTGOING_MODE_FILTER; break;
-			case SubscriberPage.BOTH_MODE:
+			case TeamSubscriberParticipant.BOTH_MODE:
 				modeFilter = BOTH_MODE_FILTER; break;
-			case SubscriberPage.CONFLICTING_MODE:
+			case TeamSubscriberParticipant.CONFLICTING_MODE:
 				modeFilter = CONFLICTING_MODE_FILTER; break;
 		}
 		try {

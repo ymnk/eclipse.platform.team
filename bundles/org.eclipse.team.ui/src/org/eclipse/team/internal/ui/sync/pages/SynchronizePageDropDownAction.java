@@ -21,26 +21,26 @@ import org.eclipse.team.ui.sync.*;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.texteditor.IUpdate;
 
-public class SynchronizePageDropDownAction extends Action implements IMenuCreator, ISynchronizePageListener, IUpdate {
+public class SynchronizePageDropDownAction extends Action implements IMenuCreator, ISynchronizeParticipantListener, IUpdate {
 
-		private INewSynchronizeView fView;
+		private ISynchronizeView fView;
 		private Menu fMenu;
 	
 		/* (non-Javadoc)
 		 * @see org.eclipse.ui.texteditor.IUpdate#update()
 		 */
 		public void update() {
-			ISynchronizeViewPage[] pages = TeamUI.getSynchronizeManager().getSynchronizePages();
+			ISynchronizeParticipant[] pages = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 			setEnabled(pages.length >= 1);
 		}
 
-		public SynchronizePageDropDownAction(INewSynchronizeView view) {
+		public SynchronizePageDropDownAction(ISynchronizeView view) {
 			fView= view;
 			Utils.initAction(this, "action.refreshSubscriber."); //$NON-NLS-1$
 			IKeyBindingService kbs = view.getSite().getKeyBindingService();
 			Utilities.registerAction(kbs, this, "org.eclipse.team.ui.syncview.syncAll"); //$NON-NLS-1$
 			setMenuCreator(this);
-			TeamUI.getSynchronizeManager().addSynchronizePageListener(this);
+			TeamUI.getSynchronizeManager().addSynchronizeParticipantListener(this);
 			update();
 		}
 
@@ -53,7 +53,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			}
 		
 			fView= null;
-			TeamUI.getSynchronizeManager().removeSynchronizePageListener(this);
+			TeamUI.getSynchronizeManager().removeSynchronizeParticipantListener(this);
 		}
 
 		/* (non-Javadoc)
@@ -71,10 +71,10 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 				fMenu.dispose();
 			}		
 			fMenu= new Menu(parent);
-			ISynchronizeViewPage[] pages = TeamUI.getSynchronizeManager().getSynchronizePages();
-			ISynchronizeViewPage current = fView.getActivePage();
+			ISynchronizeParticipant[] pages = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+			ISynchronizeParticipant current = fView.getParticipant();
 			for (int i = 0; i < pages.length; i++) {
-				ISynchronizeViewPage page = pages[i];
+				ISynchronizeParticipant page = pages[i];
 				Action action = new ShowSynchronizeViewPage(fView, page);  
 				action.setChecked(page.equals(current));
 				addActionToMenu(fMenu, action);
@@ -101,7 +101,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		/* (non-Javadoc)
 		 * @see org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.console.IConsole[])
 		 */
-		public void consolesAdded(ISynchronizeViewPage[] consoles) {
+		public void participantsAdded(ISynchronizeParticipant[] consoles) {
 			Display display = TeamUIPlugin.getStandardDisplay();
 			display.asyncExec(new Runnable() {
 				public void run() {
@@ -117,7 +117,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		 * 
 		 * @see org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui.console.IConsole[])
 		 */
-		public void consolesRemoved(ISynchronizeViewPage[] consoles) {
+		public void participantsRemoved(ISynchronizeParticipant[] consoles) {
 			Display display = TeamUIPlugin.getStandardDisplay();
 			display.asyncExec(new Runnable() {
 				public void run() {

@@ -23,7 +23,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISynchronizeViewPage;
+import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 
 /**
  * This action group allows the user to choose one or more comparison critera
@@ -93,7 +93,7 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 	 * @see org.eclipse.ui.texteditor.IUpdate#update()
 	 */
 	public void update() {
-		ISynchronizeViewPage[] pages = TeamUI.getSynchronizeManager().getSynchronizePages();
+		ISynchronizeParticipant[] pages = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		setEnabled(pages.length >= 1);
 	}
 	
