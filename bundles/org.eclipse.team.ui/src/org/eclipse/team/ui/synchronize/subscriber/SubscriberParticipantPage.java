@@ -25,6 +25,7 @@ import org.eclipse.team.internal.ui.synchronize.ChangesSection;
 import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffTreeViewer;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
@@ -290,6 +291,10 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 		return viewer;
 	}
 
+	public DiffTreeViewerConfiguration getViewerConfiguration() {
+		return configuration;
+	}
+	
 	protected SubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
 		return new SubscriberPageDiffTreeViewerConfiguration(getSynchronizeView(), getParticipant());
 	}

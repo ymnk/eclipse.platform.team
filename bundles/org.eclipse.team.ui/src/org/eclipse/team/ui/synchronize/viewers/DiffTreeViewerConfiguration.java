@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
@@ -70,6 +70,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	private AbstractTreeViewer viewer;
 	private ExpandAllAction expandAllAction;
 	private DiffNodeController diffNodeController;
+	private ListenerList listeners;
 
 	/**
 	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given
@@ -99,7 +100,29 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		this.set = set;
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 	}
-
+	
+	public void addInputChangedListener(IInputChangedListener listener) {
+		if (listeners == null)
+			listeners= new ListenerList();
+		listeners.add(listener);
+	}
+	
+	public void removeInputChangedListener(IInputChangedListener listener) {
+		if (listeners != null) {
+			listeners.remove(listener);
+			if (listeners.isEmpty())
+				listeners= null;
+		}
+	}
+	
+	protected void fireChanges() {
+		if (listeners != null) {
+			Object[] l= listeners.getListeners();
+			for (int i= 0; i < l.length; i++)
+				((IInputChangedListener) l[i]).inputChanged(diffNodeController.getInput());
+		}
+	}
+	
 	/**
 	 * Initialize the viewer with the elements of this configuration, including
 	 * content and label providers, sorter, input and menus. This method is
@@ -137,6 +160,12 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	private void setInput(AbstractTreeViewer viewer) {
 		diffNodeController.setViewer(viewer);
 		viewer.setSorter(diffNodeController.getViewerSorter());
+		DiffNode input = diffNodeController.getInput();
+		input.addCompareInputChangeListener(new ICompareInputChangeListener() {
+			public void compareInputChanged(ICompareInput source) {
+				fireChanges();
+			}
+		});
 		viewer.setInput(diffNodeController.getInput());
 	}
 
@@ -154,7 +183,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 		diffNodeController = getDiffNodeController();		
 		return diffNodeController.prepareInput(monitor);
 	}
-
+	
 	/**
 	 * Get the input that will be assigned to the viewer initialized by this
 	 * configuration. Subclass may override.

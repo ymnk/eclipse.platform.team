@@ -43,7 +43,7 @@ import org.eclipse.team.internal.ui.Utils;
  * NOT ON DEMAND - model is created then maintained!
  * @since 3.0
  */
-public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListener, DiffNodeController {
+public class DiffNodeControllerHierarchical extends DiffNodeController implements ISyncInfoSetChangeListener {
 
 	// During updates we keep track of the parent elements that need their
 	// labels updated. This is required to support displaying information in a 
@@ -62,10 +62,19 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	// building the model.
 	private boolean refreshViewer;
 	
-	private AdaptableDiffNode root;
+	private RootDiffNode root;
 	
 	private SyncInfoTree set;
 
+	private class RootDiffNode extends AdaptableDiffNode {
+		public RootDiffNode() {
+			super(null, SyncInfo.IN_SYNC);
+		}
+		public void fireChanges() {
+			fireChange();
+		}
+	}
+	
 	/**
 	 * Create an input based on the provide sync set. The input is not initialized
 	 * until <code>prepareInput</code> is called. 
@@ -74,7 +83,7 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	 */
 	public DiffNodeControllerHierarchical(SyncInfoTree set) {
 		Assert.isNotNull(set);
-		this.root = new AdaptableDiffNode(null, SyncInfo.IN_SYNC);
+		this.root = new RootDiffNode();
 		this.set = set;
 	}
 
@@ -153,13 +162,12 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 			final Control ctrl = viewer.getControl();
 			if (ctrl != null && !ctrl.isDisposed()) {
 				ctrl.getDisplay().syncExec(new Runnable() {
-
 					public void run() {
 						if (!ctrl.isDisposed()) {
 							BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
-
 								public void run() {
 									handleChanges((ISyncInfoTreeChangeEvent)event);
+									getRoot().fireChanges();
 								}
 							});
 						}
@@ -302,21 +310,7 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	 */
 	protected void handleResourceAdditions(ISyncInfoTreeChangeEvent event) {
 		IResource[] added = event.getAddedSubtreeRoots();
-		for (int i = 0; i < added.length; i++) {
-			IResource resource = added[i];
-			DiffNode node = getModelObject(resource);
-			if (node != null) {
-				// Somehow the node exists. Remove it and read it to ensure
-				// what is shown matches the contents of the sync set
-				removeFromViewer(resource);
-			}
-			// Build the sub-tree rooted at this node
-			DiffNode parent = getModelObject(resource.getParent());
-			if (parent != null) {
-				node = createModelObject(parent, resource);
-				buildModelObjects(node);
-			}
-		}
+		addResources(added);
 	}
 
 	/**
@@ -329,14 +323,24 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 		// Refresh the viewer for each changed resource
 		SyncInfo[] infos = event.getChangedResources();
 		for (int i = 0; i < infos.length; i++) {
-			IResource local = infos[i].getLocal();
+			SyncInfo info = infos[i];
+			IResource local = info.getLocal();
 			DiffNode diffNode = getModelObject(local);
+			// If a sync info diff node already exists then just update
+			// it, otherwise remove the old diff node and create a new
+			// sub-tree.
 			if (diffNode != null) {
-				refreshInViewer(diffNode);
+				if(diffNode instanceof SyncInfoDiffNode) {
+					((SyncInfoDiffNode)diffNode).update(info);
+					refreshInViewer(diffNode);
+				} else {
+					removeFromViewer(local);
+					addResources(new IResource[] {local});
+				}
 			}
 		}
 	}
-
+	
 	/**
 	 * Update the viewer for the sync set removals in the provided event. This
 	 * method is invoked by <code>handleChanges(ISyncInfoSetChangeEvent)</code>.
@@ -356,6 +360,8 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 	protected void reset() {
 		try {
 			refreshViewer = false;
+			
+			// Clear existing model, but keep the root node
 			resourceMap.clear();
 			clearModelObjects(getRoot());
 			// remove all from tree viewer
@@ -363,15 +369,17 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 			for (int i = 0; i < elements.length; i++) {
 				viewer.remove(elements[i]);
 			}
+			
+			// Rebuild the model
 			associateDiffNode(getRoot());
 			buildModelObjects(getRoot());
-		} catch(Exception e) {
-			e.printStackTrace();
+			
+			// Notify listeners that model has changed
+			getRoot().fireChanges();
 		} finally {
 			refreshViewer = true;
 		}
 		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-
 			public void run() {
 				if (viewer != null && !viewer.getControl().isDisposed()) {
 					viewer.refresh();
@@ -380,7 +388,7 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 		});
 	}
 
-	protected DiffNode getRoot() {
+	protected RootDiffNode getRoot() {
 		return root;
 	}
 	
@@ -421,6 +429,24 @@ public class DiffNodeControllerHierarchical implements ISyncInfoSetChangeListene
 		}
 	}
 
+	protected void addResources(IResource[] added) {
+		for (int i = 0; i < added.length; i++) {
+			IResource resource = added[i];
+			DiffNode node = getModelObject(resource);
+			if (node != null) {
+				// Somehow the node exists. Remove it and read it to ensure
+				// what is shown matches the contents of the sync set
+				removeFromViewer(resource);
+			}
+			// Build the sub-tree rooted at this node
+			DiffNode parent = getModelObject(resource.getParent());
+			if (parent != null) {
+				node = createModelObject(parent, resource);
+				buildModelObjects(node);
+			}
+		}
+	}
+	
 	/**
 	 * @param tree
 	 * @return

@@ -15,11 +15,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 
-public interface DiffNodeController {
-
-	public abstract void setViewer(AbstractTreeViewer viewer);
-
-	public abstract ViewerSorter getViewerSorter();
+/**
+ * This class is reponsible for creating and maintaining model of
+ * DiffNodes that can be shown in a viewer.
+ * 
+ * @since 3.0
+ */
+public abstract class DiffNodeController {
 
 	/**
 	 * Called to initialize this controller and returns the input created by this controller. 
@@ -27,13 +29,19 @@ public interface DiffNodeController {
 	 * @return
 	 */
 	public abstract DiffNode prepareInput(IProgressMonitor monitor);
-
-	public abstract void dispose();
 	
 	/**
 	 * Returns the input created by this controller or <code>null</code> if 
 	 * {@link #prepareInput(IProgressMonitor)} hasn't been called on this object yet.
 	 * @return
 	 */
-	public DiffNode getInput();
+	public abstract DiffNode getInput();
+	
+	public abstract void setViewer(AbstractTreeViewer viewer);
+
+	public abstract ViewerSorter getViewerSorter();
+
+
+	public abstract void dispose();
+
 }

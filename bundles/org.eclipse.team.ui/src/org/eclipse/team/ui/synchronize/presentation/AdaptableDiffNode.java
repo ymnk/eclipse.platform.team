@@ -22,13 +22,9 @@ public class AdaptableDiffNode extends DiffNode implements IAdaptable {
 		super(parent, kind);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	/*
+	 * Added as part
 	 */
-	public Object getAdapter(Class adapter) {
-		return Platform.getAdapterManager().getAdapter(this, adapter);
-	}
-
 	public ImageDescriptor getImageDescriptor(Object object) {
 		return null;
 	}
@@ -38,5 +34,12 @@ public class AdaptableDiffNode extends DiffNode implements IAdaptable {
 	 */
 	public boolean hasChildren() {
 		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
+		return Platform.getAdapterManager().getAdapter(this, adapter);
 	}
 }

@@ -59,6 +59,8 @@ public class SyncInfoDiffNode extends AdaptableDiffNode {
 
 	public void update(SyncInfo info) {
 		this.info = info;
+		// update state
+		setKind(info.getKind());		
 		// local
 		setLeft(createLocalTypeElement(info));
 		// remote

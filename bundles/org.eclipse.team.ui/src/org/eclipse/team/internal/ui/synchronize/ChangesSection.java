@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
@@ -23,6 +24,7 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipantPage;
+import org.eclipse.team.ui.synchronize.viewers.IInputChangedListener;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.widgets.Hyperlink;
@@ -62,17 +64,21 @@ public class ChangesSection extends Composite {
 	/**
 	 * Listen to sync set changes so that we can update message to user and totals.
 	 */
-	private ISyncInfoSetChangeListener changedListener = new ISyncInfoSetChangeListener() {
-		public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+	private IInputChangedListener changedListener = new IInputChangedListener() {
+		public void inputChanged(DiffNode input) {
 			calculateDescription();
 		}
-
+	};
+	
+	private ISyncInfoSetChangeListener syncsetChangedListener = new ISyncInfoSetChangeListener() {
 		public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
 			calculateDescription();
 		}
-
+		public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+			calculateDescription();
+		}
 		public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
-			// Nothing to do for errors
+			// TODO Auto-generated method stub
 		}
 	};
 		
@@ -103,10 +109,9 @@ public class ChangesSection extends Composite {
 		changesSectionContainer.setLayoutData(data);
 		
 		changesViewer = page.createChangesViewer(changesSectionContainer);
-
 		calculateDescription();
-		
-		participant.getSubscriberSyncInfoCollector().getSyncInfoTree().addSyncSetChangedListener(changedListener);
+		page.getViewerConfiguration().addInputChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().addSyncSetChangedListener(syncsetChangedListener);
 	}
 	
 	private void calculateDescription() {
@@ -214,7 +219,7 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
-		participant.getSubscriberSyncInfoCollector().getSyncInfoTree().removeSyncSetChangedListener(changedListener);
-		participant.getSubscriberSyncInfoCollector().getSyncInfoTree().removeSyncSetChangedListener(changedListener);
+		page.getViewerConfiguration().removeInputChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().removeSyncSetChangedListener(syncsetChangedListener);
 	}
 }

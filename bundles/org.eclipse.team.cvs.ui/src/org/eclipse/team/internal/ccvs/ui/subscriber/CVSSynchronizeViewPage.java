@@ -12,19 +12,19 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import java.util.*;
 
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscriber.*;
+import org.eclipse.team.ui.synchronize.viewers.IInputChangedListener;
 import org.eclipse.ui.*;
 
-public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements ISyncInfoSetChangeListener {
+public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements IInputChangedListener {
 	
 	private List delegates = new ArrayList(2);
 	private CVSSynchronizeViewCompareConfiguration config;
@@ -75,7 +75,7 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 	 */
 	public void dispose() {
 		super.dispose();
-		getSyncInfoSet().removeSyncSetChangedListener(this);
+		getViewerConfiguration().removeInputChangedListener(this);
 		CVSUIPlugin.removePropertyChangeListener(this);
 	}
 	
@@ -87,27 +87,15 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 		IMenuManager mgr = actionBars.getMenuManager();
 		mgr.add(new Separator());
 	}
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent)
-	 */
-	public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
-		updateActionEnablement();
-	}
 
 	/*
 	 * Update the enablement of any action delegates 
 	 */
-	private void updateActionEnablement() {
-		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
-		if (viewer != null) {
-			ISelection selection = new StructuredSelection(viewer.getInput());
-			for (Iterator it = delegates.iterator(); it.hasNext(); ) {
-				CVSActionDelegate delegate = (CVSActionDelegate) it.next();
-				delegate.getDelegate().selectionChanged(delegate, selection);
-			}
+	private void updateActionEnablement(DiffNode input) {
+		ISelection selection = new StructuredSelection(input);
+		for (Iterator it = delegates.iterator(); it.hasNext(); ) {
+			CVSActionDelegate delegate = (CVSActionDelegate) it.next();
+			delegate.getDelegate().selectionChanged(delegate, selection);
 		}
 	}
 
@@ -133,11 +121,7 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 		super.createControl(parent);
 		
 		// Sync changes are used to update the action state for the update/commit buttons.
-		getSyncInfoSet().addSyncSetChangedListener(this);
-		
-		// Update the enablement of any action delegates.
-		// This is done after sync set registry to avoid the possibility of losing changes
-		updateActionEnablement();
+		getViewerConfiguration().addInputChangedListener(this);
 		
 		// Listen for decorator changed to refresh the viewer's labels.
 		CVSUIPlugin.addPropertyChangeListener(this);
@@ -158,16 +142,9 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.team.ui.synchronize.presentation.IInputChangedListener#inputChanged(org.eclipse.team.ui.synchronize.presentation.DiffNodeController)
 	 */
-	public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
-		updateActionEnablement();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.ISyncInfoSetChangeListener#syncInfoSetError(org.eclipse.team.core.subscribers.SyncInfoSet, org.eclipse.team.core.ITeamStatus[], org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
-		// Nothing to do for errors
+	public void inputChanged(DiffNode node) {
+		updateActionEnablement(node);		
 	}
 }
