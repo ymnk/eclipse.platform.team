@@ -51,6 +51,8 @@ public abstract class BackgroundEventHandler {
 	
 	// time to wait for messages to be queued
 	private long WAIT_DELAY = 1000;
+
+	private String jobName;
 	
 	/**
 	 * Resource event class. The type is specific to subclasses.
@@ -100,10 +102,11 @@ public abstract class BackgroundEventHandler {
 		}
 	}
 	
-	protected BackgroundEventHandler() {
+	protected BackgroundEventHandler(String jobName, String errorTitle) {
+		this.jobName = jobName;
 		errors =
 			new ExceptionCollector(
-				getErrorsTitle(),
+				errorTitle,
 				TeamPlugin.ID,
 				IStatus.ERROR,
 				null /* don't log */
@@ -161,18 +164,6 @@ public abstract class BackgroundEventHandler {
 	}
 	
 	/**
-	 * Return the name of the handler, which is used as the job name.
-	 * @return the name of the handler
-	 */
-	public abstract String getName();
-	
-	/**
-	 * Return the text to be displayed as the title for any errors that occur.
-	 * @return the title to display in an error message
-	 */
-	protected abstract String getErrorsTitle();
-	
-	/**
 	 * Shutdown the event handler. Any events on the queue will be removed from the queue
 	 * and will not be processed.
 	 */
@@ -206,6 +197,10 @@ public abstract class BackgroundEventHandler {
 		}
 	}
 	
+	protected String getName() {
+		return jobName;
+	}
+
 	/**
 	 * Get the next resource to be calculated.
 	 * @return Event to be processed

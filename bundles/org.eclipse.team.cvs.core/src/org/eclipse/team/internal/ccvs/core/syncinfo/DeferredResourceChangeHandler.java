@@ -25,23 +25,13 @@ import org.eclipse.team.internal.ccvs.core.resources.EclipseSynchronizer;
  */
 public class DeferredResourceChangeHandler extends BackgroundEventHandler {
 
+	public DeferredResourceChangeHandler() {
+		super(Policy.bind("DeferredResourceChangeHandler.0"), Policy.bind("DeferredResourceChangeHandler.1")); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
 	private static final int IGNORE_FILE_CHANGED = 1;
 	
 	private Set changedIgnoreFiles = new HashSet();
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#getName()
-	 */
-	public String getName() {
-		return Policy.bind("DeferredResourceChangeHandler.0"); //$NON-NLS-1$
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#getErrorsTitle()
-	 */
-	public String getErrorsTitle() {
-		return Policy.bind("DeferredResourceChangeHandler.1"); //$NON-NLS-1$
-	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#processEvent(org.eclipse.team.core.subscribers.BackgroundEventHandler.Event, org.eclipse.core.runtime.IProgressMonitor)

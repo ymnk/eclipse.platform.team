@@ -79,6 +79,9 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * @param set the subscriber set to feed changes into
 	 */
 	public SubscriberEventHandler(SyncSetInputFromSubscriber set) {
+		super(
+			Policy.bind("SubscriberEventHandler.jobName", set.getSubscriber().getDescription()), //$NON-NLS-1$
+			Policy.bind("SubscriberEventHandler.errors", set.getSubscriber().getDescription())); //$NON-NLS-1$
 		this.set = set;
 		reset(set.getSubscriber().roots(), SubscriberEvent.INITIALIZE);
 	}
@@ -248,21 +251,6 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		for (int i = 0; i < resources.length; i++) {
 			queueEvent(new SubscriberEvent(resources[i], type, IResource.DEPTH_INFINITE));
 		}
-	}
-	
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#getName()
-	 */
-	public String getName() {
-		return Policy.bind("SubscriberEventHandler.jobName"); //$NON-NLS-1$
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#getErrorsTitle()
-	 */
-	public String getErrorsTitle() {
-		return Policy.bind("SubscriberEventHandler.errors"); //$NON-NLS-1$;
 	}
 	
 	/* (non-Javadoc)
