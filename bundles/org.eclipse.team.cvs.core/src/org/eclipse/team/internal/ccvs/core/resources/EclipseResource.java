@@ -118,25 +118,33 @@ abstract class EclipseResource implements ICVSResource {
 			return false;
 		}
 		
-		// initialize matcher with global ignores and basic CVS ignore patterns
-		IIgnoreInfo[] ignorePatterns = TeamPlugin.getManager().getGlobalIgnore();
+		// initialize matcher with global ignores, basic CVS ignore patterns, and ignore patterns
+		// from the .cvsignore file.
 		FileNameMatcher matcher = new FileNameMatcher(SyncFileUtil.BASIC_IGNORE_PATTERNS);
+		String[] cvsIgnorePatterns;;
+		try {
+			cvsIgnorePatterns = EclipseSynchronizer.getInstance().getIgnored(resource);
+		} catch(CVSException e) {
+			cvsIgnorePatterns = null;
+		}
+		IIgnoreInfo[] ignorePatterns = TeamPlugin.getManager().getGlobalIgnore();
 		for (int i = 0; i < ignorePatterns.length; i++) {
 			IIgnoreInfo info = ignorePatterns[i];
 			if(info.getEnabled()) {
 				matcher.register(info.getPattern(), "true"); //$NON-NLS-1$
 			}
 		}
-		
-		// 1. check CVS default patterns and global ignores
-		boolean ignored = matcher.match(getName());
-		
-		// 2. check .cvsignore file
-		if(!ignored) {
-			ignored = EclipseSynchronizer.getInstance().isIgnored(resource);		
+		if(cvsIgnorePatterns!=null) {
+			for (int i = 0; i < cvsIgnorePatterns.length; i++) {
+				matcher.register(cvsIgnorePatterns[i], "true");
+			}
 		}
 		
-		// 3. check the parent
+		// check against all the registered patterns
+		boolean ignored = matcher.match(getName());
+		
+		// check the parent, if the parent is ignored then this resource
+		// is ignored also
 		if(!ignored) {
 			ICVSFolder parent = getParent();
 			if(parent==null) return false;

@@ -308,11 +308,11 @@ public class SyncFileWriter {
 		}
 	}
 	
-	public static void addCvsIgnoreEntry(ICVSFile file, String pattern) throws CVSException {
+	public static void addCvsIgnoreEntry(ICVSResource resource, String pattern) throws CVSException {
 		OutputStream out = null;
 		try {
-			ICVSFile cvsignore = file.getParent().getFile(IGNORE_FILE);
-			String line = pattern == null ? file.getName() : pattern;
+			ICVSFile cvsignore = resource.getParent().getFile(IGNORE_FILE);
+			String line = pattern == null ? resource.getName() : pattern;
 			line += "\n"; //$NON-NLS-1$
 			out = cvsignore.getAppendingOutputStream();
 			out.write(line.getBytes());

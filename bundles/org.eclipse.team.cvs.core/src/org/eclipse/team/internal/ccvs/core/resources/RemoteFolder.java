@@ -23,6 +23,7 @@ import org.eclipse.team.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.ccvs.core.ICVSRunnable;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -602,5 +603,12 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 		} finally {
 			children = oldChildren;
 		}
+	}
+	
+	/*
+	 * @see ICVSFolder#run(ICVSRunnable, IProgressMonitor)
+	 */
+	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException {
+		job.run(monitor);
 	}
 }

@@ -468,7 +468,6 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 			IResource resource = resources[i];
 			ICVSResource cvsResource = workspaceRoot.getLocalRoot().getChild(resource.getProjectRelativePath().toString());
 			cvsResource.accept(visitor);
-			cvsResource.saveSyncInfo(progress);
 		}
 				
 		// Perform an update, ignoring any local file modifications
@@ -810,7 +809,6 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 					}
 				};
 			});
-			workspaceRoot.getLocalRoot().saveSyncInfo(monitor);
 		} finally {
 			monitor.done();
 		}

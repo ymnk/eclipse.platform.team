@@ -411,8 +411,6 @@ public class CVSProvider implements ICVSProvider {
 			if ( ! alreadyExists)
 				disposeRepository(location);
 			throw e;
-		} finally {
-			folder.saveSyncInfo(Policy.subMonitorFor(monitor, 5));
 		}
 		// Add the repository if it didn't exist already
 		if ( ! alreadyExists)
@@ -482,8 +480,6 @@ public class CVSProvider implements ICVSProvider {
 				TeamPlugin.getManager().setProvider(project, CVSProviderPlugin.NATURE_ID, null, monitor);
 		} catch (CoreException e) {
 			throw wrapException(e);
-		} finally {
-			folder.saveSyncInfo(Policy.subMonitorFor(monitor, 5));
 		}
 	}
 	

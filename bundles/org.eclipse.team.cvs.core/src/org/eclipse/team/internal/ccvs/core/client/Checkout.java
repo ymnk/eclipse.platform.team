@@ -109,7 +109,7 @@ public class Checkout extends Command {
 	/**
 	 * Override execute to perform a expand-modules before the checkout
 	 */
-	public IStatus execute(Session session, GlobalOption[] globalOptions,
+	protected IStatus doExecute(Session session, GlobalOption[] globalOptions,
 		LocalOption[] localOptions, String[] arguments, ICommandOutputListener listener,
 		IProgressMonitor monitor) throws CVSException {
 		monitor.beginTask(null, 100);

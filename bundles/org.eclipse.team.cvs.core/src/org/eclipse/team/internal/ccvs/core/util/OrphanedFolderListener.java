@@ -29,7 +29,6 @@ public class OrphanedFolderListener extends ResourceDeltaVisitor {
 				ICVSFolder mFolder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(resource);
 				if (mFolder.isCVSFolder() && ! mFolder.isManaged() && mFolder.getParent().isCVSFolder()) {
 					mFolder.unmanage();
-					mFolder.reloadSyncInfo(Policy.monitorFor(null));
 				}
 			} catch (CVSException e) {
 				CVSProviderPlugin.log(e);

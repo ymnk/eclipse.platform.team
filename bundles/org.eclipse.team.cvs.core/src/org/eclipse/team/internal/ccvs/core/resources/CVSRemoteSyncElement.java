@@ -203,13 +203,11 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 			} else {
 				// We have conflicting deletions. Clear the sync info
 				local.setSyncInfo(null);
-				local.saveSyncInfo(Policy.monitorFor(monitor));
 				return;
 			}
 		}
 		info = new ResourceSyncInfo(info.getName(), revision, ResourceSyncInfo.DUMMY_TIMESTAMP, info.getKeywordMode(), local.getParent().getFolderSyncInfo().getTag(), info.getPermissions());
 		local.setSyncInfo(info);
-		local.saveSyncInfo(Policy.monitorFor(monitor));
 	}
 	
 	/*
@@ -261,7 +259,6 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 		FolderSyncInfo remoteInfo = remote.getFolderSyncInfo();
 		FolderSyncInfo localInfo = local.getParent().getFolderSyncInfo();
 		local.setFolderSyncInfo(new FolderSyncInfo(remoteInfo.getRepository(), remoteInfo.getRoot(), localInfo.getTag(), localInfo.getIsStatic()));
-		local.saveSyncInfo(Policy.monitorFor(monitor));
 	 }	 	
 	/*
 	 * @see ILocalSyncElement#getSyncKind(int, IProgressMonitor)

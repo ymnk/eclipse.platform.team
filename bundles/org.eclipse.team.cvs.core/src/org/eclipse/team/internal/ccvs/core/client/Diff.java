@@ -30,15 +30,13 @@ public class Diff extends Command {
 	}
 	
 	/**
-	 * Overwritten to throw the CVSDiffException if the server returns an error, because it just does so when there is a 
-	 * difference between  the checked files.	
+	 * Overwritten to throw the CVSDiffException if the server returns an error, because it just does 
+	 * so when there is a difference between the checked files.	
 	 */
-	public IStatus execute(Session session, GlobalOption[] globalOptions,
-		LocalOption[] localOptions, String[] arguments, ICommandOutputListener listener,
-		IProgressMonitor monitor)
-		throws CVSException {
+	protected IStatus doExcecute(Session session, GlobalOption[] globalOptions, LocalOption[] localOptions,
+								  String[] arguments, ICommandOutputListener listener, IProgressMonitor monitor) throws CVSException {
 		try {
-			return super.execute(session, globalOptions, localOptions, arguments, listener, monitor);
+			return super.doExcecute(session, globalOptions, localOptions, arguments, listener, monitor);
 		} catch (CVSServerException e) {
 			if (e.containsErrors()) throw e;
 			return e.getStatus();
@@ -54,5 +52,5 @@ public class Diff extends Command {
 		for (int i = 0; i < resources.length; i++) {
 			resources[i].accept(fsVisitor);
 		}
-	}
+	}		
 }

@@ -59,13 +59,14 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 				try {
 					IFile file = getIFile();
 					if(resource.exists()) {
-						file.setContents(new ByteArrayInputStream(toByteArray()), true /*force*/, true /*keep history*/, null);
+						file.setContents(new ByteArrayInputStream(toByteArray()), false /*force*/, true /*keep history*/, null);
 					} else {
-						file.create(new ByteArrayInputStream(toByteArray()), true /*force*/, null);
+						file.create(new ByteArrayInputStream(toByteArray()), false /*force*/, null);
 					}
-					super.close();
 				} catch(CoreException e) {
 					throw new IOException("Error setting file contents: " + e.getMessage());
+				} finally {
+					super.close();
 				}
 			}
 		};
@@ -80,13 +81,14 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 				try {
 					IFile file = getIFile();
 					if(resource.exists()) {
-						file.appendContents(new ByteArrayInputStream(toByteArray()), true /*force*/, true /*keep history*/, null);
+						file.appendContents(new ByteArrayInputStream(toByteArray()), false /*force*/, true /*keep history*/, null);
 					} else {
-						file.create(new ByteArrayInputStream(toByteArray()), true /*force*/, null);
+						file.create(new ByteArrayInputStream(toByteArray()), false /*force*/, null);
 					}
-					super.close();
 				} catch(CoreException e) {
 					throw new IOException("Error setting file contents: " + e.getMessage());
+				} finally {
+					super.close();
 				}
 			}
 		};
@@ -116,12 +118,7 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 				throw new CVSException(Policy.bind("LocalFile.invalidDateFormat", date), e); //$NON-NLS-1$
 			}
 		}		
-		getIOFile().setLastModified(millSec);
-		try {
-			resource.refreshLocal(IResource.DEPTH_ZERO, null);
-		} catch(CoreException e) {
-			throw CVSException.wrapException(e);
-		}
+		getIOFile().setLastModified(millSec);		
 	}
 
 	/*

@@ -16,11 +16,16 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.team.ccvs.core.*;
-import org.eclipse.team.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.ccvs.core.ICVSFile;
+import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
+import org.eclipse.team.ccvs.core.ICVSResourceVisitor;
+import org.eclipse.team.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
@@ -239,5 +244,30 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 			}
 		}
 		return null;
+	}
+	
+	/*
+	 * @see ICVSFolder#run(ICVSRunnable, IProgressMonitor)
+	 */
+	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException {
+		monitor = Policy.monitorFor(monitor);
+		try {
+			monitor.beginTask(null, 100);
+			try {
+				EclipseSynchronizer.getInstance().beginOperation(Policy.subMonitorFor(monitor, 5));
+				job.run(Policy.subMonitorFor(monitor, 85));
+			} finally {
+				EclipseSynchronizer.getInstance().endOperation(Policy.subMonitorFor(monitor, 8));
+				try {
+					// this is temporary until core allows setting of timestamp via a
+					// IResource handle
+					resource.refreshLocal(IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 2));
+				} catch(CoreException e) {
+					throw CVSException.wrapException(e);
+				}
+			}
+		} finally {
+			monitor.done();
+		}
 	}
 }

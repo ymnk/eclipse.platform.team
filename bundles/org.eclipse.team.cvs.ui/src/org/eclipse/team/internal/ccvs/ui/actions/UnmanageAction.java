@@ -150,7 +150,6 @@ public class UnmanageAction extends TeamAction {
 								ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor((IContainer) resource);
 								if(deleteContent) {
 									folder.unmanage();
-									folder.reloadSyncInfo(Policy.subMonitorFor(subMonitor, 90));
 								}
 								TeamPlugin.getManager().removeProvider((IProject)resource, Policy.subMonitorFor(subMonitor, 10));							
 								CVSDecorator.refresh(resource);
@@ -190,8 +189,8 @@ public class UnmanageAction extends TeamAction {
 			if(resources[i].getType()!=IResource.PROJECT) return false;
 			ITeamProvider provider = manager.getProvider(resources[i].getProject());
 			if (provider == null) return false;
-			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
-			if (!cvsResource.isManaged()) return false;
+			ICVSFolder project = CVSWorkspaceRoot.getCVSFolderFor((IContainer)resources[i]);
+			if (!project.isCVSFolder()) return false;
 		}
 		return true;
 	}

@@ -5,6 +5,7 @@ package org.eclipse.team.ccvs.core;
  * All Rights Reserved.
  */
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 
@@ -93,4 +94,29 @@ public interface ICVSFolder extends ICVSResource {
 	 * <code>false</code> otherwise.
 	 */
 	public boolean isCVSFolder();
+	
+	/**
+	 * Runs the given action as an atomic cvs local workspace operation 
+	 * rooted at this cvs folder.
+	 * <p>
+	 * After running a method that modifies cvs resource state in the 
+	 * local workspace, registered listeners receive after-the-fact 
+	 * notification in the form of a resource state change event. In addition,
+	 * any resource state information persistance is batched.
+	 * This method allows clients to call a number of
+	 * methods that modify resources and only have resource
+	 * change event notifications reported at the end of the entire
+	 * batch.
+	 * </p>
+	 * <p>
+	 * If this method is called in the dynamic scope of another such
+	 * call, this method simply runs the action.
+	 * </p>
+	 *
+	 * @param action the action to perform
+	 * @param monitor a progress monitor, or <code>null</code> if progress
+	 *    reporting and cancellation are not desired
+	 * @exception CVSException if the operation failed.
+	 */
+	public void run(ICVSRunnable job, IProgressMonitor monitor) throws CVSException;
 }

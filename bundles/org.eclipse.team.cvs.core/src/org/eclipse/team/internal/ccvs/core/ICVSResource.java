@@ -5,6 +5,7 @@ package org.eclipse.team.ccvs.core;
  * All Rights Reserved.
  */
 
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.syncinfo.*;
@@ -134,15 +135,5 @@ public interface ICVSResource {
 	/**
 	 * Accept a vistor to this resource.
 	 */
-	public void accept(ICVSResourceVisitor visitor) throws CVSException;
-	
-	/**
-	 * Reload sync info from for this resource and all child resources from disk
-	 */
-	public void reloadSyncInfo(IProgressMonitor monitor) throws CVSException;
-	
-	/**
-	 * Save sync info from for this resource and all child resources from disk
-	 */
-	public void saveSyncInfo(IProgressMonitor monitor) throws CVSException;
+	public void accept(ICVSResourceVisitor visitor) throws CVSException;	
 }

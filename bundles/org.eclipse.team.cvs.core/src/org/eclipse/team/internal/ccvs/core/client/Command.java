@@ -20,6 +20,7 @@ import org.eclipse.team.ccvs.core.CVSStatus;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSResource;
+import org.eclipse.team.ccvs.core.ICVSRunnable;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener;
@@ -309,43 +310,7 @@ public abstract class Command {
 			}
 		}
 	}
-
-	/**
-	 * Reloads the sync info for all resource arguments.
-	 * 
-	 * @param resources the resource arguments for the command
-	 * @param monitor the progress monitor
-	 */
-	private void reloadSyncInfo(ICVSResource[] resources, IProgressMonitor monitor) throws CVSException {
-		try {
-			monitor = Policy.monitorFor(monitor);
-			monitor.beginTask(Policy.bind("Command.loadingSyncInfo"), 100 * resources.length);//$NON-NLS-1$
-			for (int i = 0; i < resources.length; i++) {
-				resources[i].reloadSyncInfo(Policy.subMonitorFor(monitor, 100));			
-			}
-		} finally {
-			monitor.done();
-		}
-	}
-	
-	/**
-	 * Saves the sync info for all resource arguments.
-	 * 
-	 * @param resources the resource arguments for the command
-	 * @param monitor the progress monitor
-	 */
-	private void saveSyncInfo(ICVSResource[] resources, IProgressMonitor monitor) throws CVSException {
-		try {
-			monitor = Policy.monitorFor(monitor);
-			monitor.beginTask(Policy.bind("Command.savingSyncInfo"), 100 * resources.length);//$NON-NLS-1$
-			for (int i = 0; i < resources.length; i++) {
-				resources[i].saveSyncInfo(Policy.subMonitorFor(monitor, 100));
-			}
-		} finally {
-			monitor.done();
-		}
-	}
-	
+		
 	/**
 	 * Executes a CVS command.
 	 * <p>
@@ -363,9 +328,23 @@ public abstract class Command {
 	 * @return a status code indicating success or failure of the operation
 	 * @throws CVSException if a fatal error occurs (e.g. connection timeout)
 	 */
-	public IStatus execute(Session session, GlobalOption[] globalOptions,
+	public final IStatus execute(final Session session, final GlobalOption[] globalOptions,
+		final LocalOption[] localOptions, final String[] arguments, final ICommandOutputListener listener,
+		IProgressMonitor pm) throws CVSException {		
+		final IStatus[] status = new IStatus[1];
+		ICVSRunnable job = new ICVSRunnable() {
+			public void run(IProgressMonitor monitor) throws CVSException {
+				status[0] = doExcecute(session, globalOptions, localOptions, arguments, listener, monitor);
+			}
+		};
+		session.getLocalRoot().run(job, pm);
+		return status[0];
+	}
+	
+	protected IStatus doExcecute(Session session, GlobalOption[] globalOptions,
 		LocalOption[] localOptions, String[] arguments, ICommandOutputListener listener,
 		IProgressMonitor monitor) throws CVSException {
+			
 		ICVSResource[] resources = null;
 		/*** setup progress monitor ***/
 		monitor = Policy.monitorFor(monitor);
@@ -375,8 +354,7 @@ public abstract class Command {
 			/*** prepare for command ***/
 			// Ensure that the commands run with the latest contents of the CVS subdirectory sync files 
 			// and not the cached values. Allow 10% of work.
-			resources = computeWorkResources(session, localOptions, arguments);
-			reloadSyncInfo(resources, Policy.subMonitorFor(monitor, 10));
+			resources = computeWorkResources(session, localOptions, arguments);			
 			Policy.checkCanceled(monitor);
 
 			// clear stale command state from previous runs
@@ -407,11 +385,7 @@ public abstract class Command {
 			commandFinished(session, gOptions, lOptions, resources, Policy.subMonitorFor(monitor, 5),
 				status.getCode() != CVSStatus.SERVER_ERROR);
 			return status;
-		} finally {
-			// Give the synchronizer a chance to persist any pending changes.
-			if(resources != null) {
-				saveSyncInfo(resources, Policy.subMonitorFor(monitor, 5));
-			}
+		} finally {			
 			monitor.done();
 		}
 	}

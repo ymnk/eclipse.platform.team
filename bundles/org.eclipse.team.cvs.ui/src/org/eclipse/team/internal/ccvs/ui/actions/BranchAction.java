@@ -45,10 +45,11 @@ public class BranchAction extends TeamAction {
 		if (resources.length == 0) return false;
 		ITeamManager manager = TeamPlugin.getManager();
 		for (int i = 0; i < resources.length; i++) {
-			ITeamProvider provider = manager.getProvider(resources[i].getProject());
+			IResource resource = resources[i];
+			ITeamProvider provider = manager.getProvider(resource.getProject());
 			if (provider == null) return false;
-			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resources[i]);
-			if (!cvsResource.isManaged()) return false;
+			ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+			if (resource.getType()!=IResource.PROJECT&&!cvsResource.isManaged()) return false;
 		}
 		return true;
 	}
