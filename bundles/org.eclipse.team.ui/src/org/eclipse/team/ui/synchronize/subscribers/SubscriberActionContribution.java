@@ -19,6 +19,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
 import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
 import org.eclipse.ui.IActionBars;
@@ -27,7 +28,7 @@ import org.eclipse.ui.IWorkingSet;
 /**
  * Provides the actions to be associated with a synchronize page
  */
-public class SubscriberActionProvider {
+public class SubscriberActionContribution {
 	
 	// the changes viewer are contributed via the viewer and not the page.
 	private NavigateAction gotoNext;

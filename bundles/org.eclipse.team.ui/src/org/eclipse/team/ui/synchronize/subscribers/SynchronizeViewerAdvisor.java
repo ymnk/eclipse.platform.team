@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize.subscribers;
 
 import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
 

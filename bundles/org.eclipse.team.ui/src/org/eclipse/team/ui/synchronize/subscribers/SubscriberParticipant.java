@@ -47,66 +47,6 @@ import org.eclipse.ui.part.IPageBookViewPage;
 public abstract class SubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
 	
 	/**
-	 * <code>ISynchronizePageConfiguration</code> property that 
-	 * represents the model being displayed by the page. The value 
-	 * is an instance of <code>ISynchronizeModelElement</code>.
-	 * This property can be queried by clients but should not be
-	 * set.
-	 */
-	public static final String MODEL = "model_property"; //$NON-NLS-1$
-	
-	/**
-	 * <code>ISynchronizePageConfiguration</code> property that defines
-	 * the groups in the toolbar menu of the page. The value for this
-	 * property should be a string array.
-	 */
-	public static final String TOOLBAR_MENU = "toolbar_menu_property"; //$NON-NLS-1$
-
-	/**
-	 * <code>ISynchronizePageConfiguration</code> property that defines
-	 * the groups in the context menu of the page. The value for this
-	 * property should be a string array.
-	 */
-	public static final String CONTEXT_MENU = "context_menu_property"; //$NON-NLS-1$
-
-	/**
-	 * The id of the synchronize group the determines where the synchronize 
-	 * actions appear.
-	 */
-	public static final String SYNCHRONIZE_GROUP = "synchronize"; //$NON-NLS-1$
-
-	/**
-	 * The id of the navigate group that determines where the navigation
-	 * actions appear
-	 */
-	public static final String NAVIGATE_GROUP = "navigate"; //$NON-NLS-1$
-
-	/**
-	 * The id of the mode group that determines where the mode selection
-	 * actions appear
-	 */
-	public static final String MODE_GROUP = "modes"; //$NON-NLS-1$
-
-	/**
-	 * The id of the file group that determines where the file
-	 * actions appear. File actions include the open actions.
-	 */
-	public static final String FILE_GROUP = "file"; //$NON-NLS-1$
-
-	/**
-	 * The id of the edit group that determines where the edit
-	 * actions appear (e.g. move and delete).
-	 */
-	public static final String EDIT_GROUP = "edit"; //$NON-NLS-1$
-
-	/**
-	 * The id of the group that determines where workbench object contributions
-	 * should appear.
-	 */
-	public static final String OBJECT_CONTRIBUTIONS_GROUP = IWorkbenchActionConstants.MB_ADDITIONS;
-
-	
-	/**
 	 * Collects and maintains set of all out-of-sync resources of the subscriber
 	 */
 	private SubscriberSyncInfoCollector collector;

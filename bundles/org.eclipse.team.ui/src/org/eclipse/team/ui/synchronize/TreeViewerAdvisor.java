@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import javax.print.attribute.SupportedValuesAttribute;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.*;
@@ -18,8 +20,7 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
-import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.*;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
 /**
@@ -171,7 +172,8 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	 * @param viewer the viewer
 	 * @param event the double-click event
 	 */
-	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
+	protected boolean handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
+		if (super.handleDoubleClick(viewer, event)) return true;
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		Object element = selection.getFirstElement();
 		AbstractTreeViewer treeViewer = (AbstractTreeViewer) getViewer();
@@ -182,6 +184,7 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 				TreeViewerAdvisor.navigate((TreeViewer)getViewer(), true /* next */, false /* no-open */, true /* only-expand */);
 			}
 		}
+		return true;
 	}
 	
 	/* (non-Javadoc)
@@ -196,13 +199,40 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#initializeListeners(org.eclipse.jface.viewers.StructuredViewer)
 	 */
-	protected void initializeListeners(StructuredViewer viewer) {
+	protected void initializeListeners(final StructuredViewer viewer) {
 		super.initializeListeners(viewer);
-		viewer.addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				handleDoubleClick(getViewer(), event);
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				updateStatusLine((IStructuredSelection) event.getSelection());
 			}
 		});
+	}
+	
+	private void updateStatusLine(IStructuredSelection selection) {
+		IWorkbenchSite ws = getConfiguration().getSite().getWorkbenchSite();
+		if (ws != null && ws instanceof IViewSite) {
+			String msg = getStatusLineMessage(selection);
+			((IViewSite)ws).getActionBars().getStatusLineManager().setMessage(msg);
+		}
+	}
+	
+	private String getStatusLineMessage(IStructuredSelection selection) {
+		if (selection.size() == 1) {
+			Object first = selection.getFirstElement();
+			if (first instanceof SyncInfoModelElement) {
+				SyncInfoModelElement node = (SyncInfoModelElement) first;
+				IResource resource = node.getResource();
+				if (resource == null) {
+					return node.getName();
+				} else {
+					return resource.getFullPath().makeRelative().toString();
+				}
+			}
+		}
+		if (selection.size() > 1) {
+			return selection.size() + Policy.bind("SynchronizeView.13"); //$NON-NLS-1$
+		}
+		return ""; //$NON-NLS-1$
 	}
 	
 	/**

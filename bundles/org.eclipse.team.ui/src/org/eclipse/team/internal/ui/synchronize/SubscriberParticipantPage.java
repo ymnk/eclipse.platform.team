@@ -182,7 +182,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	 */
 	public void init(ISynchronizePageSite site) {
 		this.site = site;
-		configuration.init(site);
+		configuration.setSite(site);
 	}
 	
 	public ISynchronizePageSite getSynchronizePageSite() {

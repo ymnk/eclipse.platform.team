@@ -12,6 +12,7 @@ package org.eclipse.team.ui.synchronize;
 
 import java.util.*;
 import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.ListenerList;
@@ -340,6 +341,34 @@ public abstract class StructuredViewerAdvisor {
 				StructuredViewerAdvisor.this.dispose();
 			}
 		});
+		viewer.addOpenListener(new IOpenListener() {
+			public void open(OpenEvent event) {
+				handleOpen();
+			}
+		});
+		viewer.addDoubleClickListener(new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				handleDoubleClick(viewer, event);
+			}
+		});
+	}
+	
+	protected boolean handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
+		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+		DiffNode node = (DiffNode) selection.getFirstElement();
+		if (node != null && node instanceof SyncInfoModelElement) {
+			SyncInfoModelElement syncNode = (SyncInfoModelElement) node;
+			IResource resource = syncNode.getResource();
+			if (syncNode != null && resource != null && resource.getType() == IResource.FILE) {
+				handleOpen();
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void handleOpen() {
+		// TODO: Invoke an open callbak on the configuration
 	}
 	
 	/**
