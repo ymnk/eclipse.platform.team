@@ -13,7 +13,11 @@ package org.eclipse.team.tests.ccvs.core.provider;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -26,10 +30,12 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ICVSResourceVisitor;
+import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
@@ -40,6 +46,68 @@ import org.eclipse.team.tests.ccvs.core.EclipseTest;
  */
 public class IsModifiedTests extends EclipseTest {
 
+	Set previouslyModified = new HashSet();
+	Map changedResources = new HashMap();
+	IResourceStateChangeListener listener = new IResourceStateChangeListener() {
+		public void resourceSyncInfoChanged(IResource[] changedResources) {
+			try {
+				for (int i = 0; i < changedResources.length; i++) {
+					IResource resource = changedResources[i];
+					ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+					recordModificationState(cvsResource);
+					recordParents(cvsResource);
+					if (cvsResource.isFolder()) {
+						recordChildren((ICVSFolder)cvsResource);
+					}
+				}
+			} catch (CVSException e) {
+				fail(e.getMessage());
+			}
+		}
+		private void recordChildren(ICVSFolder folder) {
+			try {
+				folder.accept(new ICVSResourceVisitor() {
+					public void visitFile(ICVSFile file) throws CVSException {
+						recordModificationState(file);
+					}
+					public void visitFolder(ICVSFolder folder) throws CVSException {
+						recordModificationState(folder);
+						folder.acceptChildren(this);
+					}
+				});
+			} catch (CVSException e) {
+				fail(e.getMessage());
+			}
+		}
+		private void recordParents(ICVSResource cvsResource) throws CVSException {
+			if (cvsResource.getIResource().getType() == IResource.ROOT) return;
+			recordModificationState(cvsResource);
+			recordParents(cvsResource.getParent());
+		}
+		private void recordModificationState(ICVSResource cvsResource) throws CVSException {
+			IsModifiedTests.this.changedResources.put(cvsResource.getIResource(), cvsResource.isModified() ? Boolean.TRUE : Boolean.FALSE);
+		}
+		public void resourceModified(IResource[] changedResources) {
+			try {
+				for (int i = 0; i < changedResources.length; i++) {
+					IResource resource = changedResources[i];
+					ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+					IsModifiedTests.this.changedResources.put(resource, cvsResource.isModified() ? Boolean.TRUE : Boolean.FALSE);
+					recordParents(cvsResource);
+					if (cvsResource.isFolder()) {
+						recordChildren((ICVSFolder)cvsResource);
+					}
+				}
+			} catch (CVSException e) {
+				fail(e.getMessage());
+			}
+		}
+		public void projectConfigured(IProject project) {
+		}
+		public void projectDeconfigured(IProject project) {
+		}
+	};
+	
 	/**
 	 * Constructor for CVSProviderTest
 	 */
@@ -56,10 +124,30 @@ public class IsModifiedTests extends EclipseTest {
 
 	public static Test suite() {
 		TestSuite suite = new TestSuite(IsModifiedTests.class);
-		//return new CVSTestSetup(suite);
-		return new CVSTestSetup(new IsModifiedTests("testFolderDeletions"));
+		return new CVSTestSetup(suite);
+		//return new CVSTestSetup(new IsModifiedTests("testFileAdditions"));
 	}
 
+	/**
+	 * @see junit.framework.TestCase#setUp()
+	 */
+	protected void setUp() throws Exception {
+		super.setUp();
+		previouslyModified.clear();
+		changedResources.clear();
+		CVSProviderPlugin.addResourceStateChangeListener(listener);
+	}
+
+	/**
+	 * @see junit.framework.TestCase#tearDown()
+	 */
+	protected void tearDown() throws Exception {
+		previouslyModified.clear();
+		changedResources.clear();
+		CVSProviderPlugin.removeResourceStateChangeListener(listener);
+		super.tearDown();
+	}
+	
 	/*
 	 * Assert that the modification state of the provided resources matches the
 	 * provided state and that the other are the opposite state.
@@ -67,6 +155,7 @@ public class IsModifiedTests extends EclipseTest {
 	private void assertModificationState(IContainer container, String[] resources, final boolean modified) throws CVSException {
 		final ICVSFolder rootFolder = CVSWorkspaceRoot.getCVSFolderFor(container);
 		final List resourceList = new ArrayList();
+		final Set modifiedResources = new HashSet();
 		if (resources != null) {
 			for (int i = 0; i < resources.length; i++) {
 				String string = resources[i];
@@ -93,8 +182,31 @@ public class IsModifiedTests extends EclipseTest {
 						+ " should not be modified but it is",
 						!resource.isModified() != resourceList.contains(relativePath));
 				}
+				IResource iResource = resource.getIResource();
+				if (resource.isModified()) {
+					modifiedResources.add(iResource);
+					if (!wasPreviouslyModified(iResource)) {
+						// the state has changed, make sure we got a notification
+						Boolean b = (Boolean)changedResources.get(iResource);
+						assertTrue("No notification received for state change of " + iResource.getFullPath().toString(),
+							b == Boolean.TRUE);
+					}	
+				} else {
+					if (wasPreviouslyModified(iResource)) {
+						// the state has changed, make sure we got a notification
+						Boolean b = (Boolean)changedResources.get(iResource);
+						assertTrue("No notification received for state change of " + iResource.getFullPath().toString(),
+							b == Boolean.FALSE);
+					}
+				}
+			}
+			public boolean wasPreviouslyModified(IResource iResource) {
+				return previouslyModified.contains(iResource);
 			}
 		});
+		changedResources.clear();
+		previouslyModified.clear();
+		previouslyModified.addAll(modifiedResources);
 	}
 	
 	/**
@@ -279,7 +391,6 @@ public class IsModifiedTests extends EclipseTest {
 		// ignore the folder
 		project.getFile("folder1/.cvsignore").create(new ByteArrayInputStream("ignored".getBytes()), false, DEFAULT_MONITOR);
 		assertModificationState(project, new String[] {".", "folder1/", "folder1/.cvsignore"}, true);
-		// XXX How can we ensure that the file info was flushed?
 		getProvider(project).add(new IResource[] {project.getFile("folder1/.cvsignore")}, IResource.DEPTH_ZERO, DEFAULT_MONITOR);
 		assertModificationState(project, new String[] {".", "folder1/", "folder1/.cvsignore"}, true);
 		commitResources(project, new String[] {"folder1/.cvsignore"});
@@ -342,7 +453,31 @@ public class IsModifiedTests extends EclipseTest {
 		assertModificationState(project, null, false);
 	}
 	
-	public void testFolderMoveAndCopy() {
+	public void testFolderMoveAndCopy() throws CoreException, TeamException {
+		IProject project = createProject("testFolderMoveAndCopy", new String[] { "changed.txt", "folder1/", "folder2/", "folder1/a.txt" , "folder1/folder3/file.txt"});
+		// move a file
+		project.getFolder("folder1/folder3").move(project.getFolder("folder2/folder3").getFullPath(), false, DEFAULT_MONITOR);
+		assertModificationState(project, new String[] {".", "folder1/", "folder1/folder3", "folder1/folder3/file.txt", "folder2/", "folder2/folder3/", "folder2/folder3/file.txt"}, true);
+		// commit the source
+		commitResources(project, new String[] {"folder1/folder3"});
+		assertModificationState(project, new String[] {".", "folder2/", "folder2/folder3/", "folder2/folder3/file.txt"}, true);
+		// copy the destination back to the source
+		project.getFolder("folder2/folder3/").copy(project.getFolder("folder1/folder3").getFullPath(), false, DEFAULT_MONITOR);
+		assertModificationState(project, new String[] {".", "folder1/", "folder1/folder3", "folder1/folder3/file.txt", "folder2/", "folder2/folder3/", "folder2/folder3/file.txt"}, true);
+		// add the source, delete the destination and commit
+		getProvider(project).add(new IResource[] {project.getFile("folder1/folder3/file.txt")}, IResource.DEPTH_ZERO, DEFAULT_MONITOR);
+		project.getFolder("folder2/folder3").delete(false, DEFAULT_MONITOR);
+		commitProject(project);
+		assertModificationState(project, null, false);
+		// Do the above without committing the source
+		project.getFolder("folder1/folder3").move(project.getFolder("folder2/folder3").getFullPath(), false, DEFAULT_MONITOR);
+		assertModificationState(project, new String[] {".", "folder1/", "folder1/folder3", "folder1/folder3/file.txt", "folder2/", "folder2/folder3/", "folder2/folder3/file.txt"}, true);
+		// copy the destination back to the source
+		project.getFolder("folder2/folder3/").copy(project.getFolder("folder1/folder3").getFullPath(), false, DEFAULT_MONITOR);
+		assertModificationState(project, new String[] {".", "folder2/", "folder2/folder3/", "folder2/folder3/file.txt"}, true);
+		getProvider(project).add(new IResource[] {project.getFolder("folder2/folder3/")}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		commitProject(project);
+		assertModificationState(project, null, false);
 	}
 	
 	public void testUpdate() throws TeamException, CoreException, IOException {
@@ -373,5 +508,6 @@ public class IsModifiedTests extends EclipseTest {
 	
 	public void testExternalModifications() {
 	}
+
 }
 
