@@ -68,7 +68,8 @@ public abstract class MappingSelectionDialog extends DetailsDialog implements IP
      */
     protected Composite createDropDownDialogArea(Composite parent) {
         if (resourceArea == null) {
-            resourceArea = new ResourceMappingResourceDisplayArea(getSelectedMapping(), filter);
+            ResourceMapping selectedMapping = getSelectedMapping();
+            resourceArea = new ResourceMappingResourceDisplayArea(selectedMapping, getResourceListMessage(selectedMapping), filter);
         }
         Composite c = createComposite(parent);
         resourceArea.createArea(c);
@@ -151,16 +152,23 @@ public abstract class MappingSelectionDialog extends DetailsDialog implements IP
     }
     
     /**
-     * Provide
-     * @param mapping
-     * @return
+     * Provide the message that is displayed if there is only a single mapping to be selected.
+     * @param mapping the mapping
+     * @return the display string
      */
     protected abstract String getSingleMappingMessage(ResourceMapping mapping);
     
     /**
-     * @return
+     * Provide the message that is displayed if there are multiple nappings to choose from.
+     * @return the diusplay string
      */
     protected abstract String getMultipleMappingsMessage();
     
+    /**
+     * Return the label to be used in the details area for the list that
+     * displays the resources contained in the mapping
+     * @param mapping the resource mapping
+     * @return the list label
+     */
     protected abstract String getResourceListMessage(ResourceMapping mapping);
 }

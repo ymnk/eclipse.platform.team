@@ -25,6 +25,7 @@ import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.internal.ccvs.ui.operations.ITagOperation;
@@ -55,19 +56,19 @@ public class TagLocalAction extends TagAction {
 
         protected String getSingleMappingMessage(ResourceMapping mapping) {
             String label = ResourceMappingResourceDisplayArea.getLabel(mapping);
-            return "There are uncommitted changes contained in ''{0}'' that will not be tagged. Should ''{0}'' be included in the operation?" + label;
+            return Policy.bind("TagLocalAction.0", label); //$NON-NLS-1$
         }
 
         protected String getMultipleMappingsMessage() {
-            return "The following contain uncommitted changes that will not be versioned. Uncheck those that should be excluded from the tag operation.";
+            return Policy.bind("TagLocalAction.1"); //$NON-NLS-1$
         }
 
         protected String getResourceListMessage(ResourceMapping mapping) {
             if (mapping == null) {
-                return "Select an item to see the resources it contains.";
+                return Policy.bind("TagLocalAction.2"); //$NON-NLS-1$
             } else {
                 String label = ResourceMappingResourceDisplayArea.getLabel(mapping);
-                return "Preview the resource contained in ''{0}''" + label;
+                return Policy.bind("TagLocalAction.3", label); //$NON-NLS-1$
             }
         }
 
@@ -131,7 +132,7 @@ public class TagLocalAction extends TagAction {
 	protected boolean performPrompting()  {
 		// Prompt for any uncommitted changes
         mappings = getCVSResourceMappings();
-        UncommittedChangesDialog dialog = new UncommittedChangesDialog(getShell(), "Tag Uncommitted Changes?", mappings);
+        UncommittedChangesDialog dialog = new UncommittedChangesDialog(getShell(), Policy.bind("TagLocalAction.4"), mappings); //$NON-NLS-1$
 		mappings = dialog.promptToSelectMappings();
 		if(mappings.length == 0) {
 			// nothing to do

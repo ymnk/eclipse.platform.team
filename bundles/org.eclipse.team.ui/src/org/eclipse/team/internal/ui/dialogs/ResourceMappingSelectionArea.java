@@ -19,6 +19,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.ui.model.*;
 
 /**
@@ -61,6 +62,7 @@ public class ResourceMappingSelectionArea extends DialogArea {
         viewer = CheckboxTableViewer.newCheckList(composite, SWT.SINGLE | SWT.BORDER);
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = 100;
+        data.widthHint = 200;
         viewer.getControl().setLayoutData(data);
         viewer.setContentProvider(new BaseWorkbenchContentProvider());
         viewer.setLabelProvider(new WorkbenchLabelProvider());
@@ -87,7 +89,7 @@ public class ResourceMappingSelectionArea extends DialogArea {
         Composite buttons = createEmbeddedButtonComposite(composite);
         
         Button selectAll = new Button(buttons, SWT.PUSH);
-        selectAll.setText("&Select All");
+        selectAll.setText(Policy.bind("ResourceMappingSelectionArea.0")); //$NON-NLS-1$
         selectAll.setLayoutData(new GridData(GridData.FILL_BOTH));
         selectAll.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
@@ -96,7 +98,7 @@ public class ResourceMappingSelectionArea extends DialogArea {
         });
         
         Button deselectAll = new Button(buttons, SWT.PUSH);
-        deselectAll.setText("&Deselect All");
+        deselectAll.setText(Policy.bind("ResourceMappingSelectionArea.1")); //$NON-NLS-1$
         deselectAll.setLayoutData(new GridData(GridData.FILL_BOTH));
         deselectAll.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {

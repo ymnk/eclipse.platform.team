@@ -22,6 +22,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
@@ -42,6 +43,7 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
     private Label label;
     private IResourceMappingResourceFilter filter;
     private Map cachedFiltering = new HashMap(); // String(mapping)-> Map: Resource -> List(IResource)
+    private String message;
     
     private static IWorkbenchAdapter getWorkbenchAdapter(IAdaptable o) {
         return (IWorkbenchAdapter)o.getAdapter(IWorkbenchAdapter.class);
@@ -211,9 +213,12 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
          * @see org.eclipse.ui.model.IWorkbenchAdapter#getLabel(java.lang.Object)
          */
         public String getLabel(Object o) {
-            if (isTraversalRoot(resource))
+            if (resource.getType() != IResource.PROJECT && isTraversalRoot(resource))
                 return resource.getFullPath().toString();
-            return resource.getName();
+            IWorkbenchAdapter workbenchAdapter = getWorkbenchAdapter(resource);
+            if (workbenchAdapter == null)
+                return resource.getName();
+            return workbenchAdapter.getLabel(resource);
         }
         
         private boolean isTraversalRoot(IResource resource) {
@@ -235,16 +240,21 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
                 return this;
             return null;
         }
+        public IResource getResource() {
+            return resource;
+        }
     }
     
     /**
      * Create a dialog area tht will display the resources contained in the 
      * given mapping
+     * @param string 
      * @param filter 
      */
-    public ResourceMappingResourceDisplayArea(ResourceMapping mapping, IResourceMappingResourceFilter filter) {
+    public ResourceMappingResourceDisplayArea(ResourceMapping mapping, String string, IResourceMappingResourceFilter filter) {
         this.mapping = mapping;
         this.filter = filter;
+        this.message = string;
     }
     
     /* (non-Javadoc)
@@ -253,7 +263,6 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
     public void createArea(Composite parent) {
         Composite composite = createComposite(parent, 1, true);
         
-        String message = "Preview resources.";
         label = createWrappingLabel(composite, message, 1);
         viewer = new TreeViewer(composite);
         GridData gridData = new GridData(GridData.FILL_BOTH);
@@ -261,7 +270,16 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
         viewer.getControl().setLayoutData(gridData);
         viewer.setContentProvider(new WorkbenchContentProvider());
         viewer.setLabelProvider(new WorkbenchLabelProvider());
-        viewer.setSorter(new ResourceSorter(ResourceSorter.NAME)); // TODO: Should not be a resource sorter
+        viewer.setSorter(new ResourceSorter(ResourceSorter.NAME) {
+            public int compare(Viewer viewer, Object o1, Object o2) {
+                if (o1 instanceof ResourceTraversalElement && o2 instanceof ResourceTraversalElement) {
+                    ResourceTraversalElement e1 = (ResourceTraversalElement) o1;
+                    ResourceTraversalElement e2 = (ResourceTraversalElement) o2;
+                    return super.compare(viewer, e1.getResource(), e2.getResource());
+                }
+                return super.compare(viewer, o1, o2);
+            }
+        });
         setInput(message);
         Dialog.applyDialogFont(parent);
     }
@@ -274,6 +292,7 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
             viewer.setInput(o);
         }
         if (label != null) {
+            this.message = labelText;
             label.setText(labelText);
         }
     }
