@@ -38,6 +38,7 @@ import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
 import org.eclipse.team.internal.ccvs.core.client.listeners.LogListener;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
+import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 
@@ -120,18 +121,23 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	}
 	
 	public RemoteFile(RemoteFolder parent, int workspaceSyncState, String name, String revision, CVSTag tag) {
-		this(parent, workspaceSyncState, new ResourceSyncInfo(name, revision, ResourceSyncInfo.DUMMY_DATE, ResourceSyncInfo.USE_SERVER_MODE, tag, ResourceSyncInfo.DEFAULT_PERMISSIONS));
+		this(parent, workspaceSyncState, null);
+		MutableResourceSyncInfo newInfo = new MutableResourceSyncInfo(name, revision);
+		newInfo.setTimeStamp(ResourceSyncInfo.DUMMY_DATE);
+		newInfo.setKeywordMode(ResourceSyncInfo.USE_SERVER_MODE);
+		newInfo.setTag(tag);
+		newInfo.setPermissions(ResourceSyncInfo.DEFAULT_PERMISSIONS);
+		info = newInfo;
 	}
 	
 	public RemoteFile(RemoteFolder parent, ResourceSyncInfo info) {
 		this(parent, Update.STATE_NONE, info);
 	}
 	
-	public RemoteFile(RemoteFolder parent, int workspaceSyncState, ResourceSyncInfo info) {
+	public RemoteFile(RemoteFolder parent, int workspaceSyncState, ResourceSyncInfo newInfo) {
 		this.parent = parent;
-		this.info = info;
+		info = newInfo;
 		setWorkspaceSyncState(workspaceSyncState);
-		Assert.isTrue(!info.isDirectory());
 	}
 
 	/**
@@ -294,7 +300,9 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	 * @param revision to associated with this remote file
 	 */
 	public void setRevision(String revision) {
-		info = new ResourceSyncInfo(info.getName(), revision, info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions());
+		MutableResourceSyncInfo newInfo = getSyncInfo().cloneMutable();
+		newInfo.setRevision(revision);
+		info = newInfo;
 	}		
 	
 	/*

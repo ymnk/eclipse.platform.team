@@ -87,7 +87,7 @@ public class EclipseSynchronizer {
 		Assert.isNotNull(info); // enforce the use of deleteFolderSync
 		if (folder.getType() == IResource.ROOT || ! folder.exists()) {
 			throw new CVSException(IStatus.ERROR, CVSException.UNABLE,
-				"Cannot set folder sync info on " + folder.getFullPath());
+				Policy.bind("EclipseSynchronizer.ErrorSettingFolderSync", folder.getFullPath().toString())); //$NON-NLS-1$
 		}
 		try {
 			beginOperation(null);
@@ -163,7 +163,7 @@ public class EclipseSynchronizer {
 		IContainer parent = resource.getParent();
 		if (parent == null || ! parent.exists() || parent.getType() == IResource.ROOT) {
 			throw new CVSException(IStatus.ERROR, CVSException.UNABLE,
-				"Cannot set resource sync info on " + resource.getFullPath());
+				Policy.bind("EclipseSynchronizer.ErrorSettingResourceSync", resource.getFullPath().toString())); //$NON-NLS-1$
 		}
 		try {
 			beginOperation(null);
@@ -239,7 +239,7 @@ public class EclipseSynchronizer {
 	public void addIgnored(IContainer folder, String pattern) throws CVSException {
 		if (folder.getType() == IResource.ROOT || ! folder.exists()) {
 			throw new CVSException(IStatus.ERROR, CVSException.UNABLE,
-				"Cannot set ignored pattern on " + folder.getFullPath());
+				Policy.bind("EclipseSynchronizer.ErrorSettingIgnorePattern", folder.getFullPath().toString())); //$NON-NLS-1$
 		}
 		String[] ignores = cacheFolderIgnores(folder);
 		if (ignores != null) {

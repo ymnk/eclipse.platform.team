@@ -5,12 +5,15 @@ package org.eclipse.team.internal.ccvs.core.util;
  * All Rights Reserved.
  */
 
+import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Locale;
+import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
 /**
@@ -19,18 +22,14 @@ import java.util.TimeZone;
  */
 public class CVSDateFormatter {
 	
-	// entry file date is actually a zero padded number:
-	// Mon Jan  9 12:33:44 2002
-	// Mon Jan 12 23:34:22 2002
-	public static final String ENTRYLINE_FORMAT = "E MMM d HH:mm:ss yyyy"; //$NON-NLS-1$
-	public static final String SERVER_FORMAT = "dd MMM yyyy HH:mm:ss";//$NON-NLS-1$
+	private static final String ENTRYLINE_FORMAT = "E MMM d HH:mm:ss yyyy"; //$NON-NLS-1$
+	private static final String SERVER_FORMAT = "dd MMM yyyy HH:mm:ss";//$NON-NLS-1$
 	
-	private static SimpleDateFormat serverFormat = new SimpleDateFormat(SERVER_FORMAT, Locale.US);
+	private static final SimpleDateFormat serverFormat = new SimpleDateFormat(SERVER_FORMAT, Locale.US);
 	private static SimpleDateFormat entryLineFormat = new SimpleDateFormat(ENTRYLINE_FORMAT, Locale.US);
-	
 	static {
-		serverFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		entryLineFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+		serverFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+		entryLineFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
 	}
 	
 	static public Date serverStampToDate(String text) throws ParseException {
@@ -42,7 +41,7 @@ public class CVSDateFormatter {
 	}
 
 	static public String dateToServerStamp(Date date) {
-		return serverFormat.format(date);
+		return serverFormat.format(date) + " -0000"; //$NON-NLS-1$
 	}	
 	
 	static public Date entryLineToDate(String text) throws ParseException {

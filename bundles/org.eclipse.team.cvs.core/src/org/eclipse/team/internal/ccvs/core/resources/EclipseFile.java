@@ -72,11 +72,13 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	 * @see ICVSFile#setTimeStamp(String)
 	 */
 	public void setTimeStamp(Date date) throws CVSException {
-		if (date==null) {
-			// get the current time
-			date = new Date();
+		long time;
+		if (date == null) {
+			time = System.currentTimeMillis();
+		} else {
+			time = date.getTime();
 		}
-		getIOFile().setLastModified(date.getTime());
+		getIOFile().setLastModified(time);
 		try {
 			// Needed for workaround to Platform Core Bug #
 			resource.refreshLocal(IResource.DEPTH_ZERO, null);
@@ -102,6 +104,8 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 			ResourceSyncInfo info = getSyncInfo();
 			if (info.isAdded()) return false;
 			if (info.isDeleted()) return true;
+			// consider a merged file as always modified.
+			if(info.isMerged()) return true;
 			return !getTimeStamp().equals(info.getTimeStamp());
 		}
 	}
@@ -114,6 +118,8 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 			return true;
 		} else {
 			ResourceSyncInfo info = getSyncInfo();
+			// consider a merged file as always modified.
+			if(info.isMerged()) return true;
 			return !getTimeStamp().equals(info.getTimeStamp());
 		}
 	}

@@ -10,6 +10,7 @@ import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
+import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
 /**
@@ -34,9 +35,12 @@ class TagFileSender extends FileStructureVisitor {
 			// Send the file if appropriate
 			ResourceSyncInfo info = mFile.getSyncInfo();
 			if (info.isDeleted()) {
-				info = new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions());
+				// makes this resource sync undeleted
+				MutableResourceSyncInfo undeletedInfo = info.cloneMutable();
+				undeletedInfo.setDeleted(false);
+				info = undeletedInfo;
 			}
-			if (! info.isAdded()) {
+			if (!info.isAdded()) {
 				session.sendEntry(info.getServerEntryLine(mFile.getTimeStamp()));
 				boolean binary = info != null && KSubstOption.fromMode(info.getKeywordMode()).isBinary();
 				session.sendIsModified(mFile, binary, monitor);

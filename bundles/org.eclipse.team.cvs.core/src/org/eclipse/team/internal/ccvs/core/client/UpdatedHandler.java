@@ -12,6 +12,7 @@ import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
+import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.core.util.CVSDateFormatter;
@@ -91,13 +92,12 @@ class UpdatedHandler extends ResponseHandler {
 		session.receiveFile(mFile, binary, handlerType, monitor);
 		if (readOnly) mFile.setReadOnly(true);
 		
-		// Set the timestamp in the file, set the result in the fileInfo
-		Date timestamp = ResourceSyncInfo.DUMMY_DATE;
-		if (modTime != null) {
-			timestamp = modTime;
-		}
-		mFile.setTimeStamp(timestamp);
-		mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(),
-								   timestamp, info.getKeywordMode(), info.getTag(), info.getPermissions()));
+		// Set the timestamp in the file and get it again so that we use the *real* timestamp
+		// in the sync info. The os may not actually set the time we provided :)
+		mFile.setTimeStamp(modTime);
+		modTime = mFile.getTimeStamp();
+		MutableResourceSyncInfo newInfoWithTimestamp = info.cloneMutable();
+		newInfoWithTimestamp.setTimeStamp(modTime);
+		mFile.setSyncInfo(newInfoWithTimestamp);
 	}
 }

@@ -24,8 +24,11 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
@@ -43,6 +46,9 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
  * Eclipse CVS client ResourceSyncInfo and FolderSyncInfo types.
  */
 public class SyncFileWriter implements IResourceChangeListener {
+
+	// the famous CVS meta directory name
+	private static final String CVS_DIRNAME = "CVS"; //$NON-NLS-1$
 
 	// CVS meta files located in the CVS subdirectory
 	private static final String REPOSITORY = "Repository"; //$NON-NLS-1$
@@ -75,7 +81,7 @@ public class SyncFileWriter implements IResourceChangeListener {
 	public static final String[] BASIC_IGNORE_PATTERNS = {"CVS", ".#*"}; //$NON-NLS-1$ //$NON-NLS-2$
 
 	// key for saving the mod stamp for each writen meta file
-	private static final QualifiedName MODSTAMP_KEY = new QualifiedName("org.eclipse.team.cvs.core", "meta-file-modtime");
+	private static final QualifiedName MODSTAMP_KEY = new QualifiedName("org.eclipse.team.cvs.core", "meta-file-modtime"); //$NON-NLS-1$ //$NON-NLS-2$
 	
 	public static void startup() {
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new SyncFileWriter(), IResourceChangeEvent.POST_CHANGE);
@@ -97,7 +103,7 @@ public class SyncFileWriter implements IResourceChangeListener {
 					IResource resource = delta.getResource();
 					if(resource.exists()) {
 						IContainer parent = resource.getParent();
-						boolean isCVSMetaFile = parent != null && parent.getName().equals("CVS");
+						boolean isCVSMetaFile = parent != null && parent.getName().equals(CVS_DIRNAME);
 						boolean isIgnoreFile = resource.getName().equals(IGNORE_FILE);
 						if(isCVSMetaFile || isIgnoreFile) {
 							long modStamp = resource.getModificationStamp();
@@ -115,7 +121,7 @@ public class SyncFileWriter implements IResourceChangeListener {
 									changedContainers.add(parent);
 								}
 								if(Policy.DEBUG_METAFILE_CHANGES) {
-									System.out.println("CVS metaFile changed by 3rd party: " + resource.getFullPath());
+									System.out.println("CVS metaFile changed by 3rd party: " + resource.getFullPath()); //$NON-NLS-1$
 								}
 							}
 						}
@@ -189,7 +195,7 @@ public class SyncFileWriter implements IResourceChangeListener {
 			String[] entries = new String[infos.length];
 			for (int i = 0; i < infos.length; i++) {
 				ResourceSyncInfo info = infos[i];
-				entries[i] = info.getEntryLine(true);
+				entries[i] = info.getEntryLine();
 			}
 	
 			// write Entries
@@ -304,7 +310,7 @@ public class SyncFileWriter implements IResourceChangeListener {
 	 * Returns the CVS subdirectory for this folder.
 	 */
 	private static IFolder getCVSSubdirectory(IContainer folder) throws CVSException {
-		return folder.getFolder(new Path("CVS")); //$NON-NLS-1$
+		return folder.getFolder(new Path(CVS_DIRNAME));
 	}
 	
 	/**
@@ -374,25 +380,35 @@ public class SyncFileWriter implements IResourceChangeListener {
 	 * Writes all lines to the specified file, using linefeed terminators for
 	 * compatibility with other CVS clients.
 	 */
-	private static void writeLines(IFile file, String[] contents) throws CVSException {
+	private static void writeLines(final IFile file, final String[] contents) throws CVSException {
 		try {
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			writeLinesToStreamAndClose(os, contents);
-			if(!file.exists()) {
-				file.create(new ByteArrayInputStream(os.toByteArray()), IResource.NONE /*don't keep history and don't force*/, null);
-			} else {
-				file.setContents(new ByteArrayInputStream(os.toByteArray()), IResource.NONE /*don't keep history and don't force*/, null);
-			}
-			
-			// this is where we could save the timestamp
-			file.setSessionProperty(MODSTAMP_KEY, new Long(file.getModificationStamp()));			
+			// The creation of sync files has to be in a runnable in order for the resulting delta
+			// to include the MODSTAMP value. If not in a runnable then create/setContents
+			// will trigger a delta and the SyncFileWriter change listener won't know that the delta
+			// was a result of our own creation.
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					try {
+						ByteArrayOutputStream os = new ByteArrayOutputStream();
+						writeLinesToStreamAndClose(os, contents);
+						if(!file.exists()) {
+							file.create(new ByteArrayInputStream(os.toByteArray()), IResource.NONE /*don't keep history and don't force*/, null);
+						} else {
+							file.setContents(new ByteArrayInputStream(os.toByteArray()), IResource.NONE /*don't keep history and don't force*/, null);
+						}			
+						// this is where we could save the timestamp
+						file.setSessionProperty(MODSTAMP_KEY, new Long(file.getModificationStamp()));
+					} catch(CVSException e) {
+						throw new CoreException(e.getStatus());
+					}
+				}
+			}, null);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
 	}
 	
-	private static void writeLinesToStreamAndClose(OutputStream os, String[] contents)
-		throws CVSException {
+	private static void writeLinesToStreamAndClose(OutputStream os, String[] contents) throws CVSException {
 		try {
 			try {
 				for (int i = 0; i < contents.length; i++) {

@@ -6,6 +6,7 @@ package org.eclipse.team.tests.ccvs.core.compatible;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.StringTokenizer;
 
 import org.eclipse.core.resources.IFile;
@@ -383,34 +384,24 @@ public final class SameResultEnv extends JUnitTestCase {
 		assertEquals(info1.getName(), info2.getName());
 		assertEquals(info1.getRevision(), info2.getRevision());
 		
-		// Ensure that timestamps are written in ISO C asctime() format and if timestamp
-		// has a conflict marker then both should have the marker. Also ensure that timestamps
-		// are written using same timezone.
+		assertEquals(info1.isDeleted(), info2.isDeleted());
+		assertEquals(info1.isAdded(), info2.isAdded());
+		assertEquals(info1.isMerged(), info2.isMerged());
+		
+		// Ensure that timestamps are written using same timezone.
 		//assertTimestampEquals(info1.getTimeStamp(), info2.getTimeStamp());
 		
 		// We are not able to check for the permissions, as the reference-client doesn't save them
 	}
 
-	private static void assertTimestampEquals(String timestamp1, String timestamp2) {
-		//try {			
-			//EntryFileDateFormat timestampFormat = new EntryFileDateFormat();
-			//boolean merge1 = timestamp1.indexOf(ResourceSyncInfo.RESULT_OF_MERGE_CONFLICT) != -1;
-			//boolean merge2 = timestamp2.indexOf(ResourceSyncInfo.RESULT_OF_MERGE_CONFLICT) != -1;
-			//boolean dummy1 = timestamp1.indexOf(ResourceSyncInfo.DUMMY_TIMESTAMP) != -1;
-			//boolean dummy2 = timestamp2.indexOf(ResourceSyncInfo.DUMMY_TIMESTAMP) != -1;
-			//assertEquals("both timestamps should show same conflict state", merge1, merge2);
-			//assertEquals("both timestamps should show same dummy state", dummy1, dummy2);
-			//if(!merge1 && !dummy1) {
-			//	long time1 = timestampFormat.toDate(timestamp1).getTime();
-			//	long time2 = timestampFormat.toDate(timestamp2).getTime();
-				/* timestamp tests don't seem to work on some systems.
-				long difference = Math.abs(time1 - time2);
-				assertTrue("timestamps should be in same timezone:" + timestamp1 + ":" + timestamp2, difference < (5*60*1000)); // 5 minutes
-				*/
-			//}
-		//} catch(ParseException e) {			
-		//	fail("timestamps in CVS/Entry file are not in ISO C asctime format:" + timestamp1 + ":" + timestamp2);
-		//}
+	private static void assertTimestampEquals(Date timestamp1, Date timestamp2) {
+		assertEquals(timestamp1!=null, timestamp2!=null);
+		if(timestamp1!=null) {
+			long time1 = timestamp1.getTime();
+			long time2 = timestamp2.getTime();
+			long difference = Math.abs(time1 - time2);
+			assertTrue("timestamps should be in same timezone:" + timestamp1 + ":" + timestamp2, difference < (10*60*1000)); // 10 minutes
+		}
 	}
 	
 	/**

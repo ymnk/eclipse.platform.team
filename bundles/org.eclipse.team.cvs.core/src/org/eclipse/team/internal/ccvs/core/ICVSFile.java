@@ -67,23 +67,12 @@ public interface ICVSFile extends ICVSResource {
 	void copyTo(String filename) throws CVSException;
 	
 	/**
-	 * Answers the current timestamp for this file. The returned format must be in the
-	 * following format:
-	 *
-	 * E MMM dd HH:mm:ss yyyy
-	 * 
-	 * @throws CVSFileNotFoundException if exists() = false
+	 * Answers the current timestamp for this file.
 	 */
 	Date getTimeStamp();
 
 	/**
-	 * Sets the current timestamp for this file. The supplied date must be in the
-	 * following format:
-	 *
-	 * E MMM dd HH:mm:ss yyyy
-	 *
-	 * If the date is <code>null</code> then the current time is used as 
-	 * the timestamp.
+	 * If the date is <code>null</code> then the current time is used.
 	 */
 	void setTimeStamp(Date date) throws CVSException;
 	

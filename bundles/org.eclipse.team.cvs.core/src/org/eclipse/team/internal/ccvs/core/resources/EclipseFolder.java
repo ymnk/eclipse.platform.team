@@ -115,9 +115,6 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 				project.open(null);				
 			} else {
 				((IFolder)resource).create(false /*don't force*/, true /*make local*/, null);
-				if(resource.getName().equals("CVS")) {
-					System.out.println("CVS fond and");
-				}
 			}				
 		} catch (CoreException e) {
 			throw CVSException.wrapException(resource, Policy.bind("EclipseFolder_problem_creating", resource.getFullPath().toString(), e.getStatus().getMessage()), e); //$NON-NLS-1$
@@ -212,7 +209,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	public void unmanage(IProgressMonitor monitor) throws CVSException {
 		monitor = Policy.monitorFor(monitor);
 		try {
-			monitor.beginTask("", 100);
+			monitor.beginTask("", 100); //$NON-NLS-1$
 			run(new ICVSRunnable() {
 				public void run(IProgressMonitor monitor) throws CVSException {
 					recursiveUnmanage((IContainer) resource, monitor);				
@@ -227,7 +224,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	
 	private static void recursiveUnmanage(IContainer container, IProgressMonitor monitor) throws CVSException {
 		try {
-			monitor.beginTask("", 10);
+			monitor.beginTask("", 10); //$NON-NLS-1$
 			monitor.subTask(container.getFullPath().toOSString());
 			EclipseSynchronizer.getInstance().deleteFolderSync(container);						
 			IResource[] members = container.members();
