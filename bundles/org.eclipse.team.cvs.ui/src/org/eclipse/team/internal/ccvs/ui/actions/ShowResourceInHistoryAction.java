@@ -1,9 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2002 IBM Corporation and others.
+ * All rights reserved.   This program and the accompanying materials
+ * are made available under the terms of the Common Public License v0.5
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v05.html
+ * 
+ * Contributors:
+ * IBM - Initial implementation
+ ******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.actions;
-
-/*
- * (c) Copyright IBM Corp. 2000, 2002.
- * All Rights Reserved.
- */
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -19,13 +24,12 @@ import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.HistoryView;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ui.actions.TeamAction;
 
-public class ShowResourceInHistoryAction extends TeamAction {
+public class ShowResourceInHistoryAction extends WorkspaceAction {
 	/*
 	 * @see IActionDelegate#run(IAction)
 	 */
-	public void run(IAction action) {
+	public void execute(IAction action) throws InterruptedException, InvocationTargetException {
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException {
 				IResource[] resources = getSelectedResources();
@@ -35,7 +39,7 @@ public class ShowResourceInHistoryAction extends TeamAction {
 					view.showHistory(resources[0]);
 				}
 			}
-		}, Policy.bind("ShowHistoryAction.showHistory"), this.PROGRESS_BUSYCURSOR); //$NON-NLS-1$
+		}, false /* cancelable */, this.PROGRESS_BUSYCURSOR);
 	}
 	/*
 	 * @see TeamAction#isEnabled()
@@ -51,4 +55,11 @@ public class ShowResourceInHistoryAction extends TeamAction {
 		if (cvsResource.getSyncInfo().isAdded()) return false;
 		return true;
 	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getErrorTitle()
+	 */
+	protected String getErrorTitle() {
+		return Policy.bind("ShowHistoryAction.showHistory"); //$NON-NLS-1$
+	}
+
 }

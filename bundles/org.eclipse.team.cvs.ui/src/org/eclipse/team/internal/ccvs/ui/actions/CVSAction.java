@@ -25,12 +25,16 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
@@ -72,27 +76,10 @@ abstract public class CVSAction extends TeamAction {
 	 * if they have failed.]
 	 */
 	final public void run(IAction action) {
-		accumulatedStatus.clear();
-		if(needsToSaveDirtyEditors()) {
-			if(!saveAllEditors()) {
-				return;
-			}
-		}
 		try {
-			// Ensure that the required sync info is loaded
-			if (requiresLocalSyncInfo()) {
-				if (!ensureSyncInfoLoaded(getSelectedResources())) {
-					return;
-				}
-				if (!isEnabled()) {
-					MessageDialog.openInformation(getShell(), Policy.bind("CVSAction.disabledTitle"), Policy.bind("CVSAction.disabledMessage"));
-					return;
-				}
-			}
+			if (!beginExecution(action)) return;
 			execute(action);
-			if ( ! accumulatedStatus.isEmpty()) {
-				handle(null);
-			}
+			endExecution();
 		} catch (InvocationTargetException e) {
 			// Handle the exception and any accumulated errors
 			handle(e);
@@ -102,6 +89,34 @@ abstract public class CVSAction extends TeamAction {
 		}  catch (TeamException e) {
 			// Handle the exception and any accumulated errors
 			handle(e);
+		}
+	}
+
+	/**
+	 * This method gets invoked before the <code>CVSAction#execute(IAction)</code>
+	 * method. It can preform any prechecking and initialization required before 
+	 * the action is executed. Sunclasses may override but must invoke this
+	 * inherited method to ensure proper initialization of this superclass is performed.
+	 * These included prepartion to accumulate IStatus and checking for dirty editors.
+	 */
+	protected boolean beginExecution(IAction action) throws TeamException {
+		accumulatedStatus.clear();
+		if(needsToSaveDirtyEditors()) {
+			if(!saveAllEditors()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * This method gets invoked after <code>CVSAction#execute(IAction)</code>
+	 * if no exception occured. Sunclasses may override but should invoke this
+	 * inherited method to ensure proper handling oy any accumulated IStatus.
+	 */
+	protected void endExecution() throws TeamException {
+		if ( ! accumulatedStatus.isEmpty()) {
+			handle(null);
 		}
 	}
 	
@@ -220,15 +235,52 @@ abstract public class CVSAction extends TeamAction {
 	 * Actions must override to do their work.
 	 */
 	abstract protected void execute(IAction action) throws InvocationTargetException, InterruptedException;
+
+	/**
+	 * Convenience method for running an operation with the appropriate progress.
+	 * Any exceptions are propogated so they can be handled by the
+	 * <code>CVSAction#run(IAction)</code> error handling code.
+	 * 
+	 * @param runnable  the runnable which executes the operation
+	 * @param cancelable  indicate if a progress monitor should be cancelable
+	 * @param progressKind  one of PROGRESS_BUSYCURSOR or PROGRESS_DIALOG
+	 */
+	final protected void run(final IRunnableWithProgress runnable, boolean cancelable, int progressKind) throws InvocationTargetException, InterruptedException {
+		final Exception[] exceptions = new Exception[] {null};
+		switch (progressKind) {
+			case PROGRESS_BUSYCURSOR :
+				BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
+					public void run() {
+						try {
+							runnable.run(new NullProgressMonitor());
+						} catch (InvocationTargetException e) {
+							exceptions[0] = e;
+						} catch (InterruptedException e) {
+							exceptions[0] = e;
+						}
+					}
+				});
+				break;
+			case PROGRESS_DIALOG :
+			default :
+				new ProgressMonitorDialog(getShell()).run(cancelable, true, runnable);	
+				break;
+		}
+		if (exceptions[0] != null) {
+			if (exceptions[0] instanceof InvocationTargetException)
+				throw (InvocationTargetException)exceptions[0];
+			else
+				throw (InterruptedException)exceptions[0];
+		}
+	}
 	
 	/**
 	 * Answers if the action would like dirty editors to saved
 	 * based on the CVS preference before running the action. By
-	 * default most CVS action modify the workspace and thus should
-	 * save dirty editors.
+	 * default, CVSActions do not save dirty editors.
 	 */
 	protected boolean needsToSaveDirtyEditors() {
-		return true;
+		return false;
 	}
 	
 	/**
@@ -426,127 +478,5 @@ abstract public class CVSAction extends TeamAction {
 			});
 		} 
 		return okToContinue[0];
-	}
-	
-	/**
-	 * Return true if the sync info is loaded for all selected resources.
-	 * The purpose of this method is to allow enablement code to be as fast
-	 * as possible. If the sync info is not loaded, the menu should be enabled
-	 * and, if choosen, the action will verify that it is indeed enabled before
-	 * performing the associated operation
-	 */
-	protected boolean isSyncInfoLoaded(IResource[] resources) throws CVSException {
-		return EclipseSynchronizer.getInstance().isSyncInfoLoaded(resources, getActionDepth());
-	}
-
-	/**
-	 * Returns the resource depth of the action for use in determining if the required
-	 * sync info is loaded. The default is IResource.DEPTH_INFINITE. Sunclasses can override
-	 * as required.
-	 */
-	protected int getActionDepth() {
-		return IResource.DEPTH_INFINITE;
-	}
-
-	
-	/**
-	 * Ensure that the sync info for all the provided resources has been loaded.
-	 * If an out-of-sync resource is found, prompt to refresh all the projects involved.
-	 */
-	protected boolean ensureSyncInfoLoaded(IResource[] resources) throws CVSException {
-		boolean keepTrying = true;
-		while (keepTrying) {
-			try {
-				EclipseSynchronizer.getInstance().ensureSyncInfoLoaded(resources, getActionDepth());
-				keepTrying = false;
-			} catch (CVSException e) {
-				if (e.getStatus().getCode() == IResourceStatus.OUT_OF_SYNC_LOCAL) {
-					// determine the projects of the resources involved
-					Set projects = new HashSet();
-					for (int i = 0; i < resources.length; i++) {
-						IResource resource = resources[i];
-						projects.add(resource.getProject());
-					}
-					// prompt to refresh
-					if (promptToRefresh(getShell(), (IResource[]) projects.toArray(new IResource[projects.size()]), e.getStatus())) {
-						for (Iterator iter = projects.iterator();iter.hasNext();) {
-							IProject project = (IProject) iter.next();
-							try {
-								project.refreshLocal(IResource.DEPTH_INFINITE, null);
-							} catch (CoreException coreException) {
-								throw CVSException.wrapException(coreException);
-							}
-						}
-					} else {
-						return false;
-					}
-				} else {
-					throw e;
-				}
-			}
-		}
-		return true;
-	}
-	
-	/**
-	 * Override to ensure that the sync info is available before performing the
-	 * real <code>isEnabled()</code> test.
-	 * 
-	 * @see org.eclipse.team.internal.ui.actions.TeamAction#setActionEnablement(IAction)
-	 */
-	protected void setActionEnablement(IAction action) {
-		try {
-			boolean requires = requiresLocalSyncInfo();
-			if (!requires || (requires && isSyncInfoLoaded(getSelectedResources()))) {
-				super.setActionEnablement(action);
-			} else {
-				// If the sync info is not loaded, enable the menu item
-				// Performing the action will ensure that the action should really
-				// be enabled before anything else is done
-				action.setEnabled(true);
-			}
-		} catch (CVSException e) {
-			// We couldn't determine if the sync info was loaded.
-			// Enable the action so that performing the action will
-			// reveal the error to the user.
-			action.setEnabled(true);
-		}
-	}
-
-	/**
-	 * Return true if the action requires the sync info for the selected resources.
-	 * If the sync info is required, the real enablement code will only be run if
-	 * the sync info is loaded from disc. Otherwise, the action is enabled and
-	 * performing the action will load the sync info and verify that the action is truely
-	 * enabled before doing anything else.
-	 * 
-	 * This implementation returns <code>true</code>. Subclasses must override if they do
-	 * not require the sync info of the selected resources.
-	 * 
-	 * @return boolean
-	 */
-	protected boolean requiresLocalSyncInfo() {
-		return true;
-	}
-
-	protected boolean promptToRefresh(final Shell shell, final IResource[] resources, final IStatus status) {
-		final boolean[] result = new boolean[] { false};
-		Runnable runnable = new Runnable() {
-			public void run() {
-				Shell shellToUse = shell;
-				if (shell == null) {
-					shellToUse = new Shell(Display.getCurrent());
-				}
-				String question;
-				if (resources.length == 1) {
-					question = Policy.bind("CVSAction.refreshQuestion", status.getMessage(), resources[0].getFullPath().toString()); //$NON-NLS-1$
-				} else {
-					question = Policy.bind("CVSAction.refreshMultipleQuestion", status.getMessage()); //$NON-NLS-1$
-				}
-				result[0] = MessageDialog.openQuestion(shellToUse, Policy.bind("CVSAction.refreshTitle"), question); //$NON-NLS-1$
-			}
-		};
-		Display.getDefault().syncExec(runnable);
-		return result[0];
 	}
 }
