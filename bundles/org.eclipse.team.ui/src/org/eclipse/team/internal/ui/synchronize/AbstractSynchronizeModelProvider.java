@@ -756,10 +756,11 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	}
 	
     /**
-     * Wait until the update handler is not processing any events.
+     * Wait until the provider is done processing any events and
+     * the page conent are up-to-date.
      * This method is for testing purposes only.
      */
-    public void waitForUpdateHandler(IProgressMonitor monitor) {
+    public void waitUntilDone(IProgressMonitor monitor) {
 		monitor.worked(1);
 		// wait for the event handler to process changes.
 		while(updateHandler.getEventHandlerJob().getState() != Job.NONE) {

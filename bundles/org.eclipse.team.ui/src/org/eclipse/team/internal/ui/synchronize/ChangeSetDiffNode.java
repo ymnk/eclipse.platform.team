@@ -60,4 +60,21 @@ public class ChangeSetDiffNode extends SynchronizeModelElement {
 	public String toString() {
 		return getName();
 	}
+	
+	/* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelElement#hashCode()
+     */
+    public int hashCode() {
+        return set.hashCode();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelElement#equals(java.lang.Object)
+     */
+    public boolean equals(Object object) {
+        if (object instanceof ChangeSetDiffNode) {
+            return((ChangeSetDiffNode)object).getSet() == set;
+        }
+        return super.equals(object);
+    }
 }

@@ -27,7 +27,7 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
     
     private static final String P_COMMIT_SET_ENABLED = TeamUIPlugin.ID + ".P_COMMIT_SET_ENABLED"; //$NON-NLS-1$
     
-    public static final String COMMIT_SET_GROUP = "CommitSet"; //$NON-NLS-1$
+    public static final String CHANGE_SET_GROUP = "ChangeSet"; //$NON-NLS-1$
 	
 	boolean enabled = false;
 	
@@ -52,7 +52,7 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
 			
 			appendToGroup(
 					ISynchronizePageConfiguration.P_TOOLBAR_MENU, 
-					COMMIT_SET_GROUP,
+					CHANGE_SET_GROUP,
 					new ToggleCommitSetAction());
 		}
 	}
@@ -60,7 +60,7 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
 	public ChangeSetModelManager(ISynchronizePageConfiguration configuration) {
 	    super(configuration);
 		configuration.addPropertyChangeListener(this);
-		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, COMMIT_SET_GROUP);
+		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, CHANGE_SET_GROUP);
 		configuration.addActionContribution(new CommitSetActionContribution());
 		if (configuration.getParticipant().getChangeSetCapability().supportsActiveChangeSets()) {
 		    configuration.addLabelDecorator(new ChangeSetLabelDecorator(configuration));

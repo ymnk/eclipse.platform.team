@@ -1,0 +1,173 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2004 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Common Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.team.internal.ccvs.ui.subscriber;
+
+import java.lang.reflect.InvocationTargetException;
+
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.FastSyncInfoFilter.*;
+import org.eclipse.team.core.variants.IResourceVariant;
+import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.operations.RemoteCompareOperation.CompareTreeBuilder;
+import org.eclipse.team.internal.ui.synchronize.ChangeSetDiffNode;
+import org.eclipse.team.ui.synchronize.*;
+
+class OpenChangeSetAction extends SynchronizeModelAction {
+
+    private final ChangeLogModelProvider provider;
+
+    protected OpenChangeSetAction(ChangeLogModelProvider provider, ISynchronizePageConfiguration configuration) {
+        super(Policy.bind("OpenCommitSetAction.20"), configuration); //$NON-NLS-1$
+        this.provider = provider;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#getSyncInfoFilter()
+     */
+    protected FastSyncInfoFilter getSyncInfoFilter() {
+        return new AndSyncInfoFilter(new FastSyncInfoFilter[] {
+                new FastSyncInfoFilter() {
+                    public boolean select(SyncInfo info) {
+                        return info.getLocal().getType() == IResource.FILE;
+                    }
+                },
+                new OrSyncInfoFilter(new FastSyncInfoFilter[] {
+                    new SyncInfoDirectionFilter(new int[] { SyncInfo.INCOMING, SyncInfo.CONFLICTING }),
+                    new FastSyncInfoFilter() {
+                        public boolean select(SyncInfo info) {
+                            return !info.getComparator().isThreeWay();
+                        }
+                    }
+                })
+        });
+    }
+            
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#updateSelection(org.eclipse.jface.viewers.IStructuredSelection)
+     */
+    protected boolean updateSelection(IStructuredSelection selection) {
+        boolean enabled = super.updateSelection(selection);
+        if (enabled) {
+            // The selection only contains appropriate files
+            // only enable if there is only one item selected and 
+            // it is a file or a commit set
+            if (selection.size() == 1) {
+                Object o = selection.getFirstElement();
+                if (o instanceof ChangeSetDiffNode) return true;
+                if (o instanceof ISynchronizeModelElement) {
+                    ISynchronizeModelElement element = (ISynchronizeModelElement)o;
+                    IResource resource = element.getResource();
+                    return (resource != null && resource.getType() == IResource.FILE);
+                }
+            }
+        }
+        return false;
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#getSubscriberOperation(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration, org.eclipse.compare.structuremergeviewer.IDiffElement[])
+     */
+    protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+        return new SynchronizeModelOperation(configuration, elements) {
+            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                SyncInfoSet set = getSyncInfoSet();
+                SyncInfo[] infos = set.getSyncInfos();
+                if (infos.length > 0) {
+                    ICVSRepositoryLocation location = getLocation(infos[0]);
+                    if (location == null) {
+                        handle(new CVSException(Policy.bind("OpenCommitSetAction.21"))); //$NON-NLS-1$
+                        return;
+                    }
+                    CompareTreeBuilder builder = new CompareTreeBuilder(location, null, null);
+                    if (buildTrees(builder, infos)) {
+                        try {
+                            builder.cacheContents(monitor);
+	                        builder.openCompareEditor(getConfiguration().getSite().getPart().getSite().getPage(), getCompareTitle(), getCompareToolTip());
+                        } catch (CVSException e) {
+                            handle(e);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            private String getCompareToolTip() {
+                IDiffElement[] elements = getSelectedDiffElements();
+                for (int i = 0; i < elements.length; i++) {
+                    IDiffElement element = elements[i];
+                    while (element != null) {
+                        if (element instanceof ChangeSetDiffNode) {
+                            return ((ChangeSetDiffNode)element).getName();
+                        }
+                        element = element.getParent();
+                    }
+                }
+                return null;
+            }
+            
+            private String getCompareTitle() {
+                IDiffElement[] elements = getSelectedDiffElements();
+                for (int i = 0; i < elements.length; i++) {
+                    IDiffElement element = elements[i];
+                    while (element != null) {
+                        if (element instanceof ChangeSetDiffNode) {
+                            return ((ChangeSetDiffNode)element).getShortName();
+                        }
+                        element = element.getParent();
+                    }
+                }
+                return null;
+            }
+
+            private ICVSRepositoryLocation getLocation(SyncInfo info) {
+                IResourceVariant remote = info.getRemote();
+                if (remote == null) {
+                    remote = info.getBase();
+                }
+                if (remote != null) {
+                    return ((ICVSRemoteResource)remote).getRepository();
+                }
+                return null;
+            }
+
+            /*
+             * Build the trees that will be compared
+             */
+            private boolean buildTrees(CompareTreeBuilder builder, SyncInfo[] infos) {
+                for (int i = 0; i < infos.length; i++) {
+                    SyncInfo info = infos[i];
+                    IResourceVariant remote = info.getRemote();
+                    if (remote == null) {
+                        IResourceVariant predecessor = info.getBase();
+                        if (predecessor instanceof ICVSRemoteFile) {
+                            builder.addToTrees((ICVSRemoteFile)predecessor, null);
+                        }
+                    } else if (remote instanceof ICVSRemoteFile) {
+                        try {
+                            ICVSRemoteFile predecessor = OpenChangeSetAction.this.provider.logs.getImmediatePredecessor((ICVSRemoteFile)remote);
+                            builder.addToTrees(predecessor, (ICVSRemoteFile)remote);
+                        } catch (TeamException e) {
+                            handle(e);
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+        };
+    } 
+}

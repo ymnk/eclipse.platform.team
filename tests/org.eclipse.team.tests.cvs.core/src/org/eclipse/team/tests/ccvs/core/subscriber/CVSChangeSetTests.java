@@ -11,6 +11,7 @@
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import java.io.ByteArrayInputStream;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,8 @@ import junit.framework.Test;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
@@ -50,9 +52,11 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
     private void assertIncomingChangesInSets(IFile[][] files, String[] messages) throws CoreException {
         // Get the workspace subscriber which also creates a participant and page in the sync view
         Subscriber workspaceSubscriber = getWorkspaceSubscriber();
-        enableChangeSets(workspaceSubscriber);
         refresh(workspaceSubscriber);
         ISynchronizeModelElement root = getModelRoot(workspaceSubscriber);
+        ChangeSetDiffNode[] nodes = getCheckedInChangeSetNodes(root);
+        assertNodesInViewer(workspaceSubscriber, nodes);
+        assertEquals("The number of change sets in the sync view do not match the expected number", messages.length, nodes.length);
         for (int i = 0; i < messages.length; i++) {
             String message = messages[i];
             ChangeSetDiffNode node = getCommitSetFor(root, message);
@@ -66,7 +70,43 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
             }
         }
     }
-    
+
+    private void assertNodesInViewer(Subscriber workspaceSubscriber, ChangeSetDiffNode[] nodes) throws PartInitException {
+        ISynchronizeParticipant participant = SynchronizeViewTestAdapter.getParticipant(workspaceSubscriber);
+        SubscriberParticipantPage page = (SubscriberParticipantPage)SynchronizeViewTestAdapter.getSyncViewPage(participant);
+        TreeViewer viewer = (TreeViewer)page.getViewer();
+        Tree tree = viewer.getTree();
+        List nodeList = new ArrayList();
+        nodeList.addAll(Arrays.asList(nodes));
+        TreeItem[] items = tree.getItems();
+        removeTreeItemsFromList(nodeList, items);
+        assertTrue("Not all nodes are visible in the view", nodeList.isEmpty());
+    }
+
+    private void removeTreeItemsFromList(List nodeList, TreeItem[] items) {
+        for (int i = 0; i < items.length; i++) {
+            TreeItem item = items[i];
+            nodeList.remove(item.getData());
+            TreeItem[] children = item.getItems();
+            removeTreeItemsFromList(nodeList, children);
+        }
+    }
+
+    private ChangeSetDiffNode[] getCheckedInChangeSetNodes(ISynchronizeModelElement root) {
+        List result = new ArrayList();
+        IDiffElement[] children = root.getChildren();
+        for (int i = 0; i < children.length; i++) {
+            IDiffElement element = children[i];
+            if (element instanceof ChangeSetDiffNode) {
+                ChangeSetDiffNode node = (ChangeSetDiffNode)element;
+                if (node.getSet() instanceof CheckedInChangeSet) {
+                    result.add(node);
+                }
+            }
+        }
+        return (ChangeSetDiffNode[]) result.toArray(new ChangeSetDiffNode[result.size()]);
+    }
+
     /**
      * Adds IFiles to the list
      */
@@ -109,6 +149,20 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         page.getConfiguration().setMode(ISynchronizePageConfiguration.BOTH_MODE);
     }
 
+    private void enableCheckedInChangeSets(Subscriber workspaceSubscriber) throws PartInitException {
+        enableChangeSets(workspaceSubscriber);
+        ISynchronizeParticipant participant = SynchronizeViewTestAdapter.getParticipant(workspaceSubscriber);
+        SubscriberParticipantPage page = (SubscriberParticipantPage)SynchronizeViewTestAdapter.getSyncViewPage(participant);
+        page.getConfiguration().setMode(ISynchronizePageConfiguration.INCOMING_MODE);
+    }
+    
+    private void enableActiveChangeSets(Subscriber workspaceSubscriber) throws PartInitException {
+        enableChangeSets(workspaceSubscriber);
+        ISynchronizeParticipant participant = SynchronizeViewTestAdapter.getParticipant(workspaceSubscriber);
+        SubscriberParticipantPage page = (SubscriberParticipantPage)SynchronizeViewTestAdapter.getSyncViewPage(participant);
+        page.getConfiguration().setMode(ISynchronizePageConfiguration.OUTGOING_MODE);
+    }
+    
     /*
      * Wait until all the background handlers have settled and then return the root element in the sync view
      */
@@ -118,7 +172,7 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
         SubscriberParticipantPage page = (SubscriberParticipantPage)SynchronizeViewTestAdapter.getSyncViewPage(participant);
         ChangeSetModelManager manager = (ChangeSetModelManager)page.getConfiguration().getProperty(SynchronizePageConfiguration.P_MODEL_MANAGER);
         AbstractSynchronizeModelProvider provider = (AbstractSynchronizeModelProvider)manager.getActiveModelProvider();
-        provider.waitForUpdateHandler(new IProgressMonitor() {
+        provider.waitUntilDone(new IProgressMonitor() {
 			public void beginTask(String name, int totalWork) {
 			}
 			public void done() {
@@ -254,6 +308,8 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
     }
 
     public void testSimpleCommit() throws CoreException {
+        enableCheckedInChangeSets(getWorkspaceSubscriber());
+        
 	    IProject project = createProject(new String[] { "file1.txt", "file2.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 	    
 	    // Modify a file in a copy
@@ -282,12 +338,19 @@ public class CVSChangeSetTests extends CVSSyncSubscriberTest {
 	            { project.getFile("folder1/a.txt") },
 	            { project.getFile("file2.txt")}
 	            }, new String[] {message1, message2, message3});
+	    
+	    // Now commit the files in one of the sets and ensure it is removed from the view
+	    updateResources(new IResource[] { project.getFile("file1.txt")}, false);
+	    assertIncomingChangesInSets(new IFile[][] {
+	            { project.getFile("folder1/a.txt") },
+	            { project.getFile("file2.txt")}
+	            }, new String[] {message2, message3});
 	}
 	
     public void testSimpleActiveChangeSet() throws CoreException {
         IProject project = createProject(new String[] { "file1.txt", "file2.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
         // Enable Change Sets
-        enableChangeSets(getWorkspaceSubscriber());
+        enableActiveChangeSets(getWorkspaceSubscriber());
 	    // Add a folder and file
 	    IFolder newFolder = project.getFolder("folder2");
         newFolder.create(false, true, null);

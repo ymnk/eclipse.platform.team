@@ -73,7 +73,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 	private class FetchLogEntriesJob extends Job {
 		private Set syncSets = new HashSet();
 		public FetchLogEntriesJob() {
-			super(Policy.bind("ChangeLogModelProvider.4"));  //$NON-NLS-1$
+			super(Policy.bind("CVSChangeSetCollector.4"));  //$NON-NLS-1$
 			setUser(false);
 		}
 		public boolean belongsTo(Object family) {
@@ -584,7 +584,9 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
         ChangeSet[] sets = getSets();
         for (int i = 0; i < sets.length; i++) {
             ChangeSet set = sets[i];
-            if (set.getComment().equals(logEntry.getComment())) {
+            if (set instanceof CheckedInChangeSet &&
+                    set.getComment().equals(logEntry.getComment()) &&
+                    ((CheckedInChangeSet)set).getAuthor().equals(logEntry.getAuthor())) {
                 return set;
             }
         }
@@ -609,5 +611,23 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
         if (set == defaultSet) {
             defaultSet = null;
         }
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector#waitUntilDone(org.eclipse.core.runtime.IProgressMonitor)
+     */
+    public void waitUntilDone(IProgressMonitor monitor) {
+        super.waitUntilDone(monitor);
+		monitor.worked(1);
+		// wait for the event handler to process changes.
+		while(fetchLogEntriesJob.getState() != Job.NONE) {
+			monitor.worked(1);
+			try {
+				Thread.sleep(10);		
+			} catch (InterruptedException e) {
+			}
+			Policy.checkCanceled(monitor);
+		}
+		monitor.worked(1);
     }
 }

@@ -74,7 +74,6 @@ public abstract class SyncInfoSetChangeSetCollector extends ChangeSetCollector {
         }
     };
 
-
     /**
      * Create a collector that contains the sync info from the given seed set
      * @param seedSet the set used to determine which sync info
@@ -119,6 +118,8 @@ public abstract class SyncInfoSetChangeSetCollector extends ChangeSetCollector {
     
     /**
      * Repopulate the change sets from the seed set.
+     * If <code>null</code> is passed, clear any state
+     * but do not repopulate.
      *
      */
     public void reset(SyncInfoSet seedSet) {
@@ -128,7 +129,9 @@ public abstract class SyncInfoSetChangeSetCollector extends ChangeSetCollector {
             ChangeSet set2 = sets[i];
             remove(set2);
         }
-        add(seedSet.getSyncInfos());
+        if (seedSet != null) {
+            add(seedSet.getSyncInfos());
+        }
     }
 
     public void handleChange(ISyncInfoSetChangeEvent event) {
@@ -163,5 +166,15 @@ public abstract class SyncInfoSetChangeSetCollector extends ChangeSetCollector {
      */
     public void setProvider(ChangeSetModelProvider provider) {
         this.provider = provider;
+    }
+
+    /**
+     * This method should wait unti any background processing is
+     * completed. It is for testing purposes. By default, it does not wait at all.
+     * Subclasses that perform work in the background should override.
+     * @param monitor a progress monitor
+     */
+    public void waitUntilDone(IProgressMonitor monitor) {
+        // Do nothing, by default
     }
 }

@@ -12,7 +12,6 @@ package org.eclipse.team.core.subscribers;
 
 import java.util.*;
 
-import org.eclipse.core.internal.runtime.ListenerList;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
@@ -36,8 +35,6 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
     private static final int RESOURCE_REMOVAL = 1;
     private static final int RESOURCE_CHANGE = 2;
     
-    private List activeSets;
-    private ListenerList listeners = new ListenerList();
     private ActiveChangeSet defaultSet;
     private EventHandler handler;
     private ResourceCollector collector;
@@ -94,22 +91,24 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
         }
 
         private void beginDispath() {
-            for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ActiveChangeSet set = (ActiveChangeSet) iter.next();
+            ChangeSet[] sets = getSets();
+            for (int i = 0; i < sets.length; i++) {
+                ChangeSet set = sets[i];
                 set.getSyncInfoSet().beginInput();
             }
         }
 
         private void endDispatch(IProgressMonitor monitor) {
-            monitor.beginTask(null, 100 * activeSets.size());
-            for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ActiveChangeSet set = (ActiveChangeSet) iter.next();
+            ChangeSet[] sets = getSets();
+            monitor.beginTask(null, 100 * sets.length);
+            for (int i = 0; i < sets.length; i++) {
+                ChangeSet set = sets[i];
                 try {
                     set.getSyncInfoSet().endInput(Policy.subMonitorFor(monitor, 100));
                 } catch (RuntimeException e) {
                     // Don't worry about ending every set if an error occurs.
                     // Instead, log the error and suggest a restart.
-                    TeamPlugin.log(IStatus.ERROR, "An error occurred while reconciling change sets. Restarting the application is recommended.", e);
+                    TeamPlugin.log(IStatus.ERROR, Policy.bind("SubscriberChangeSetCollector.0"), e); //$NON-NLS-1$
                     throw e;
                 }
             }
@@ -128,8 +127,9 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
          * Handle the removal
          */
         private void handleRemove(IResource resource) {
-            for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ActiveChangeSet set = (ActiveChangeSet) iter.next();
+            ChangeSet[] sets = getSets();
+            for (int i = 0; i < sets.length; i++) {
+                ChangeSet set = sets[i];
                 // This will remove any descendants from the set and callback to 
                 // resourcesChanged which will batch changes
                 if (!set.isEmpty()) {
@@ -175,8 +175,9 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
         
         private void removeFromAllSets(IResource resource) {
             List toRemove = new ArrayList();
-            for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ActiveChangeSet set = (ActiveChangeSet) iter.next();
+            ChangeSet[] sets = getSets();
+            for (int i = 0; i < sets.length; i++) {
+                ChangeSet set = sets[i];
                 if (set.contains(resource)) {
                     set.remove(resource);
 	                if (set.isEmpty()) {
@@ -191,14 +192,15 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
         }
 
         private ActiveChangeSet[] getContainingSets(IResource resource) {
-            Set sets = new HashSet();
-            for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-                ActiveChangeSet set = (ActiveChangeSet) iter.next();
+            Set result = new HashSet();
+            ChangeSet[] sets = getSets();
+            for (int i = 0; i < sets.length; i++) {
+                ChangeSet set = sets[i];
                 if (set.contains(resource)) {
-                    sets.add(set);
+                    result.add(set);
                 }
             }
-            return (ActiveChangeSet[]) sets.toArray(new ActiveChangeSet[sets.size()]);
+            return (ActiveChangeSet[]) result.toArray(new ActiveChangeSet[result.size()]);
         }
     }
     
@@ -227,7 +229,7 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
     public SubscriberChangeSetCollector(Subscriber subscriber) {
         collector = new ResourceCollector(subscriber);
         load();
-        handler = new EventHandler("Updating Change Sets for {0}" + subscriber.getName(), "Errors occurred while updating the change sets for {0}" + subscriber.getName());
+        handler = new EventHandler(Policy.bind("SubscriberChangeSetCollector.1", subscriber.getName()), Policy.bind("SubscriberChangeSetCollector.2", subscriber.getName())); //$NON-NLS-1$ //$NON-NLS-2$
     }
     
     /**
@@ -368,11 +370,12 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
     
     private void save() {
 		Preferences prefs = getPreferences();
-		for (Iterator it = activeSets.iterator(); it.hasNext(); ) {
-		    ActiveChangeSet set = (ActiveChangeSet) it.next();
-			if (!set.isEmpty()) {
-			    Preferences child = prefs.node(set.getTitle());
-			    set.save(child);
+        ChangeSet[] sets = getSets();
+        for (int i = 0; i < sets.length; i++) {
+            ChangeSet set = sets[i];
+			if (set instanceof ActiveChangeSet && !set.isEmpty()) {
+			    Preferences child = prefs.node(((ActiveChangeSet)set).getTitle());
+			    ((ActiveChangeSet)set).save(child);
 			}
 		}
 		if (defaultSet != null) {
@@ -381,12 +384,11 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
 		try {
             prefs.flush();
         } catch (BackingStoreException e) {
-            TeamPlugin.log(IStatus.ERROR, "An error occurred saving the change set state for {0}" + getSubscriber().getName(), e);
+            TeamPlugin.log(IStatus.ERROR, Policy.bind("SubscriberChangeSetCollector.3", getSubscriber().getName()), e); //$NON-NLS-1$
         }
     }
     
     private void load() {
-        activeSets = new ArrayList();
         Preferences prefs = getPreferences();
 		String defaultSetTitle = prefs.get(CTX_DEFAULT_SET, null);
 		try {
@@ -398,10 +400,10 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
             	if (defaultSet == null && defaultSetTitle != null && set.getTitle().equals(defaultSetTitle)) {
             	    defaultSet = set;
             	}
-            	activeSets.add(set);
+            	add(set);
             }
         } catch (BackingStoreException e) {
-            TeamPlugin.log(IStatus.ERROR, "An error occurred restoring the change set state for {0}" + getSubscriber().getName(), e);
+            TeamPlugin.log(IStatus.ERROR, Policy.bind("SubscriberChangeSetCollector.4", getSubscriber().getName()), e); //$NON-NLS-1$
         }
     }
 
@@ -478,8 +480,9 @@ public class SubscriberChangeSetCollector extends ChangeSetCollector implements 
                 resources[i] = infos[i].getLocal();
             }
 	        // Remove the added files from any other set that contains them
-	        for (Iterator iter = activeSets.iterator(); iter.hasNext();) {
-	            ChangeSet otherSet = (ChangeSet) iter.next();
+            ChangeSet[] sets = getSets();
+            for (int i = 0; i < sets.length; i++) {
+                ChangeSet otherSet = sets[i];
 	            if (otherSet != set) {
 	                otherSet.remove(resources);
 	            }

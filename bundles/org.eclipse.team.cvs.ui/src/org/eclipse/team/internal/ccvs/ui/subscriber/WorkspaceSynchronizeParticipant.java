@@ -145,9 +145,9 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
          * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#createChangeSet(org.eclipse.team.core.synchronize.SyncInfo[])
          */
         public ActiveChangeSet createChangeSet(ISynchronizePageConfiguration configuration, SyncInfo[] infos) {
-	        ActiveChangeSet set = getActiveChangeSetManager().createSet(Policy.bind("ChangeLogModelProvider.1"), new SyncInfo[0]); //$NON-NLS-1$
+	        ActiveChangeSet set = getActiveChangeSetManager().createSet(Policy.bind("WorkspaceChangeSetCapability.1"), new SyncInfo[0]); //$NON-NLS-1$
 			CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, getResources(infos),
-			        Policy.bind("ChangeLogModelProvider.2"), Policy.bind("ChangeLogModelProvider.3")); //$NON-NLS-1$ //$NON-NLS-2$
+			        Policy.bind("WorkspaceChangeSetCapability.2"), Policy.bind("WorkspaceChangeSetCapability.3")); //$NON-NLS-1$ //$NON-NLS-2$
 			dialog.open();
 			if (dialog.getReturnCode() != InputDialog.OK) return null;
 			set.add(infos);
@@ -167,7 +167,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
          */
         public void editChangeSet(ISynchronizePageConfiguration configuration, ActiveChangeSet set) {
 	        CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, set.getResources(),
-			        Policy.bind("ChangeLogModelProvider.7"), Policy.bind("ChangeLogModelProvider.8")); //$NON-NLS-1$ //$NON-NLS-2$
+			        Policy.bind("WorkspaceChangeSetCapability.7"), Policy.bind("WorkspaceChangeSetCapability.8")); //$NON-NLS-1$ //$NON-NLS-2$
 			dialog.open();
 			if (dialog.getReturnCode() != InputDialog.OK) return;
 			// Nothing to do here as the set was updated by the dialog 
