@@ -13,7 +13,9 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.ccvs.core.*;
@@ -113,7 +115,12 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	public ICVSFolder getFolder(String name) throws CVSException {
 		if ((CURRENT_LOCAL_FOLDER.equals(name)) || ((CURRENT_LOCAL_FOLDER + SEPARATOR).equals(name)))
 			return this;
-		return new EclipseFolder(((IContainer)resource).getFolder(new Path(name)));
+		IPath path = new Path(name);
+		if(resource.getType()==IResource.ROOT && path.segmentCount()==1) {
+			return new EclipseFolder(((IWorkspaceRoot)resource).getProject(name));
+		} else {
+			return new EclipseFolder(((IContainer)resource).getFolder(new Path(name)));
+		}
 	}
 
 	/**
@@ -129,7 +136,9 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	public void mkdir() throws CVSException {
 		try {
 			if(resource.getType()==IResource.PROJECT) {
-				((IProject)resource).create(null);
+				IProject project = (IProject)resource;
+				project.create(null);
+				project.open(null);				
 			} else {
 				((IFolder)resource).create(false /*don't force*/, true /*make local*/, null);
 			}				
@@ -176,23 +185,20 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSResource#getRemoteLocation(ICVSFolder)
 	 */
 	public String getRemoteLocation(ICVSFolder stopSearching) throws CVSException {
-		
-		String parentLocation;
-		
+				
 		if (getFolderSyncInfo() != null) {
 			return getFolderSyncInfo().getRemoteLocation();
 		}			
 
-		if (equals(stopSearching)) {
-			return null;
+		ICVSFolder parent = getParent();
+		if(parent!=null && !equals(stopSearching)) {
+			String parentLocation;
+			parentLocation = parent.getRemoteLocation(stopSearching);
+			if (parentLocation!=null) {
+				return parentLocation + SEPARATOR + getName();
+			}		
 		}
-		
-		parentLocation = getParent().getRemoteLocation(stopSearching);
-		if (parentLocation == null) {
-			return null;
-		} else {
-			return parentLocation + SEPARATOR + getName();
-		}		
+		return null;
 	}
 
 	/*

@@ -54,7 +54,7 @@ public class RemoteResourceTest extends EclipseTest {
 	}
 	
 	protected void assertRemoteMatchesLocal(String message, RemoteFolder remote, IContainer container) throws CVSException, IOException, CoreException {
-		assertEquals(Path.EMPTY, (ICVSResource)remote, CVSWorkspaceRoot.getCVSFolderFor(container.getLocation().toFile()), false, false);
+		assertEquals(Path.EMPTY, (ICVSResource)remote, CVSWorkspaceRoot.getCVSFolderFor(container), false, false);
 	}
 	
 	protected void getMembers(ICVSRemoteFolder folder, boolean deep) throws TeamException {
@@ -111,7 +111,7 @@ public class RemoteResourceTest extends EclipseTest {
 	 */
 	public void testGetBase() throws TeamException, CoreException, IOException {
 		IProject project = createProject("testGetBase", new String[] { "file1.txt", "file2.txt", "folder1/a.txt", "folder2/folder3/b.txt"});
-		RemoteFolderTree tree = RemoteFolderTreeBuilder.buildBaseTree(getRepository(), CVSWorkspaceRoot.getCVSFolderFor(project.getLocation().toFile()), CVSTag.DEFAULT, DEFAULT_MONITOR);
+		RemoteFolderTree tree = RemoteFolderTreeBuilder.buildBaseTree(getRepository(), CVSWorkspaceRoot.getCVSFolderFor(project), CVSTag.DEFAULT, DEFAULT_MONITOR);
 		assertRemoteMatchesLocal("testGetBase", tree, project);
 	}
 	
@@ -167,10 +167,10 @@ public class RemoteResourceTest extends EclipseTest {
 	 */
 	public void testGetRemoteResource() throws CoreException, TeamException, IOException {
 		IProject project = createProject("testGetRemoteResource", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder2/", "folder2/a.txt", "folder2/folder3/", "folder2/folder3/b.txt", "folder2/folder3/c.txt"});
-		ICVSRemoteResource file = getProvider(project).getRemoteResource(project.getFile("folder1/a.txt"));
+		ICVSRemoteResource file = CVSWorkspaceRoot.getRemoteResourceFor(project.getFile("folder1/a.txt"));
 		assertTrue("File should exist remotely", file.exists());
-		assertEquals(Path.EMPTY, (ICVSResource)file, (ICVSResource)CVSWorkspaceRoot.getRemoteFileFor(project.getFile("folder1/a.txt").getLocation().toFile()), false, false);
-		ICVSRemoteResource folder = getProvider(project).getRemoteResource(project.getFolder("folder2/folder3/"));
+		assertEquals(Path.EMPTY, (ICVSResource)file, (ICVSResource)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile("folder1/a.txt")), false, false);
+		ICVSRemoteResource folder = CVSWorkspaceRoot.getRemoteResourceFor(project.getFolder("folder2/folder3/"));
 		getMembers((ICVSRemoteFolder)folder, true);
 		assertTrue("Folder should exist remotely", folder.exists());
 		// XXX this didn't work right. I'll need to check into it later
@@ -215,7 +215,7 @@ public class RemoteResourceTest extends EclipseTest {
 		file.setContents(new ByteArrayInputStream(new byte[0]), false, false, DEFAULT_MONITOR);
 		commitResources(project, new String[] {"file.txt"});
 		
-		ICVSRemoteResource remote = getProvider(project).getRemoteResource(file);
+		ICVSRemoteResource remote = CVSWorkspaceRoot.getRemoteResourceFor(file);
 		InputStream in = remote.getContents(DEFAULT_MONITOR);
 		int count = 0;
 		while(in.read() != -1) {
@@ -239,7 +239,7 @@ public class RemoteResourceTest extends EclipseTest {
 		file.setContents(new ByteArrayInputStream("bye there".getBytes()), false, false, DEFAULT_MONITOR);
 		commitResources(project, new String[] {"file.txt"});
 
-		ICVSRemoteFile remote = (ICVSRemoteFile)getProvider(project).getRemoteResource(file);
+		ICVSRemoteFile remote = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(file);
 		ILogEntry[] entries = remote.getLogEntries(DEFAULT_MONITOR);
 		for (int i=0;i<entries.length;i++) {
 			InputStream in = entries[i].getRemoteFile().getContents(DEFAULT_MONITOR);

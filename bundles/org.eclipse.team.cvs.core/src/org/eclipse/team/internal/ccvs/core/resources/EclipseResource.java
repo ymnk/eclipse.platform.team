@@ -10,6 +10,7 @@ import java.io.File;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.ICVSFolder;
@@ -95,7 +96,7 @@ abstract class EclipseResource implements ICVSResource {
 	 */
 	public ICVSFolder getParent() {
 		IContainer parent = resource.getParent();
-		if (parent == null || parent.getType() == IResource.ROOT) {
+		if (parent==null) {
 			return null;
 		}
 		return new EclipseFolder(parent);
@@ -232,20 +233,30 @@ abstract class EclipseResource implements ICVSResource {
 	 * eclipse resource. Must be removed when the refactoring is complete.
 	 */
 	protected File getIOFile() {
-		return resource.getLocation().toFile();
+		IPath location = resource.getLocation();
+		if(location!=null) {
+			return location.toFile();
+		}
+		return null;
 	}
 	
 		/*
 	 * @see ICVSResource#reloadSyncInfo(IProgressMonitor)
 	 */
 	public void reloadSyncInfo(IProgressMonitor monitor) throws CVSException {
-		CVSProviderPlugin.getSynchronizer().reload(getIOFile(), monitor);
+		File file = getIOFile();
+		if(file!=null) {
+			CVSProviderPlugin.getSynchronizer().reload(file, monitor);
+		}
 	}
 
 	/*
 	 * @see ICVSResource#saveSyncInfo(IProgressMonitor)
 	 */
 	public void saveSyncInfo(IProgressMonitor monitor) throws CVSException {
-		CVSProviderPlugin.getSynchronizer().save(getIOFile(), monitor);
+		File file = getIOFile();
+		if(file!=null) {
+			CVSProviderPlugin.getSynchronizer().save(file, monitor);
+		}
 	}
 }

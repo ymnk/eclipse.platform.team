@@ -160,7 +160,8 @@ public class CVSRemoteSyncElement extends RemoteSyncElement {
 			if (local.exists()) {
 				// We could have an incoming change or deletion
 				if (remote == null) {
-					info =  new ResourceSyncInfo(local.getName(), ResourceSyncInfo.ADDED_REVISION, ResourceSyncInfo.DUMMY_TIMESTAMP, CVSProvider.isText(local.getName())?ResourceSyncInfo.USE_SERVER_MODE:ResourceSyncInfo.BINARY_TAG, local.getParent().getFolderSyncInfo().getTag(), null);
+					info =  new ResourceSyncInfo(local.getName(), ResourceSyncInfo.ADDED_REVISION, ResourceSyncInfo.DUMMY_TIMESTAMP,
+								CVSProvider.isText(local.getName()) ? ResourceSyncInfo.USE_SERVER_MODE:ResourceSyncInfo.BINARY_TAG, local.getParent().getFolderSyncInfo().getTag(), null);
 					revision = info.getRevision();
 				} else {
 					info = remote.getSyncInfo();

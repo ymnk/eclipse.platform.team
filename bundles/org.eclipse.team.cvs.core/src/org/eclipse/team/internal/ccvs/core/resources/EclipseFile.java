@@ -55,7 +55,12 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 		return new ByteArrayOutputStream() {
 			public void close() throws IOException {
 				try {
-					getIFile().setContents(new ByteArrayInputStream(toByteArray()), true /*force*/, true /*keep history*/, null);
+					IFile file = getIFile();
+					if(resource.exists()) {
+						file.setContents(new ByteArrayInputStream(toByteArray()), true /*force*/, true /*keep history*/, null);
+					} else {
+						file.create(new ByteArrayInputStream(toByteArray()), true /*force*/, null);
+					}
 					super.close();
 				} catch(CoreException e) {
 					throw new IOException("Error setting file contents: " + e.getMessage());

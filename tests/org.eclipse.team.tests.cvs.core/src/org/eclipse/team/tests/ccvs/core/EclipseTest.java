@@ -27,12 +27,13 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.tests.harness.EclipseWorkspaceTest;
-import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSStatus;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.ccvs.core.ICVSResource;
 import org.eclipse.team.core.TeamException;
@@ -47,9 +48,6 @@ import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
-import org.eclipse.team.internal.ccvs.core.resources.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.resources.LocalFile;
-import org.eclipse.team.internal.ccvs.core.resources.LocalResource;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
@@ -151,7 +149,7 @@ public class EclipseTest extends EclipseWorkspaceTest {
 	public void unmanageResources(IContainer container, String[] hierarchy) throws CoreException, TeamException {
 		IResource[] resources = getResources(container, hierarchy);
 		for (int i=0;i<resources.length;i++) {
-			Session.getManagedResource(resources[i]).unmanage();
+			CVSWorkspaceRoot.getCVSResourceFor(resources[i]).unmanage();
 		}
 		CVSProviderPlugin.getSynchronizer().save(container.getLocation().toFile(), DEFAULT_MONITOR);
 	}
@@ -222,7 +220,7 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		
 		// Check the project out under a different name and validate that the results are the same
 		IProject copy = getWorkspace().getRoot().getProject(project.getName() + postfix);
-		CVSProviderPlugin.getProvider().checkout(getRepository(), copy, ((ICVSFolder)Session.getManagedResource(project)).getFolderSyncInfo().getRepository(), null, DEFAULT_MONITOR);
+		CVSProviderPlugin.getProvider().checkout(getRepository(), copy, CVSWorkspaceRoot.getCVSFolderFor(project).getFolderSyncInfo().getRepository(), null, DEFAULT_MONITOR);
 		return copy;
 	 }
 	 
@@ -232,7 +230,9 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		
 		// Check the project out under a different name and validate that the results are the same
 		IProject copy = getWorkspace().getRoot().getProject(project.getName() + tag.getName());
-		CVSProviderPlugin.getProvider().checkout(getRepository(), copy, ((ICVSFolder)Session.getManagedResource(project)).getFolderSyncInfo().getRepository(), tag, DEFAULT_MONITOR);
+		CVSProviderPlugin.getProvider().checkout(getRepository(), copy, 
+			CVSWorkspaceRoot.getCVSFolderFor(project).getFolderSyncInfo().getRepository(), 
+			tag, DEFAULT_MONITOR);
 		return copy;
 	 }
 	 
@@ -273,7 +273,9 @@ public class EclipseTest extends EclipseWorkspaceTest {
 	 * Compare CVS team providers by comparing the cvs resource corresponding to the provider's project
 	 */
 	protected void assertEquals(CVSTeamProvider provider1, CVSTeamProvider provider2, boolean includeTimestamps, boolean includeTags) throws CoreException, TeamException, IOException {
-		assertEquals(Path.EMPTY, (ICVSFolder)Session.getManagedFolder(provider1.getProject().getLocation().toFile()), (ICVSFolder)Session.getManagedFolder(provider2.getProject().getLocation().toFile()), includeTimestamps, includeTags);
+		assertEquals(Path.EMPTY, CVSWorkspaceRoot.getCVSFolderFor(provider1.getProject()), 
+			CVSWorkspaceRoot.getCVSFolderFor(provider2.getProject()), 
+			includeTimestamps, includeTags);
 	}
 	
 	/*
@@ -434,26 +436,17 @@ public class EclipseTest extends EclipseWorkspaceTest {
 		assertNotNull(provider);
 	}
 	protected InputStream getContents(ICVSFile file) throws CVSException, IOException {
-		if (file instanceof LocalFile)
-			return new BufferedInputStream(new FileInputStream(getFile(file)));
-		else
+		if (file instanceof ICVSRemoteFile)
 			return ((RemoteFile)file).getContents(DEFAULT_MONITOR);
+		else
+			return new BufferedInputStream(file.getInputStream());
 	}
 	
 	/*
 	 * Get the CVS Resource for the given resource
 	 */
 	protected ICVSResource getCVSResource(IResource resource) throws CVSException {
-		if (resource.getType() == IResource.FILE)
-			return Session.getManagedFile(resource.getLocation().toFile());
-		else
-			return Session.getManagedFolder(resource.getLocation().toFile());
-	}
-	/*
-	 * Get the IO File for the given CVS resource
-	 */
-	protected File getFile(ICVSResource mResource) {
-		return new File(((LocalResource)mResource).getPath());
+		return CVSWorkspaceRoot.getCVSResourceFor(resource);
 	}
 	
 	protected IProject getNamedTestProject(String name) throws CoreException {
@@ -516,7 +509,7 @@ public class EclipseTest extends EclipseWorkspaceTest {
 	protected void importProject(IProject project) throws TeamException {
 		
 		// Create the root folder for the import operation
-		ICVSFolder root = (ICVSFolder)Session.getManagedResource(project);
+		ICVSFolder root = CVSWorkspaceRoot.getCVSFolderFor(project);
 
 		// Perform the import
 		IStatus status;

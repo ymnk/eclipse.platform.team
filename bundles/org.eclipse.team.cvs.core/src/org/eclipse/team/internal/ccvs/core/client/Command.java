@@ -257,12 +257,16 @@ public abstract class Command {
 			// of the local root folder.
 			ICVSResource[] resources = new ICVSResource[arguments.length];
 			for (int i = 0; i < arguments.length; i++) {
-				try {
-					resources[i] = localRoot.getChild(arguments[i]);
-				} catch (CVSFileNotFoundException e) {
-					// XXX Temporary fix to allow non-managed resources to be used as arguments
-					resources[i] = localRoot.getFile(arguments[i]);
+				ICVSResource resource = localRoot.getChild(arguments[i]);				
+				// file does not exist, it could have been deleted. It doesn't matter
+				// which type we return since only the name of the resource is used
+				// and sent to the server.
+				if(resource==null) {
+					// XXX returning a folder because it is the safest choice when
+					// localRoot is a handle to the IWorkspaceRoot!
+					resource = localRoot.getFolder(arguments[i]);
 				}
+				resources[i] = resource;
 			}
 			return resources;
 		}
@@ -294,7 +298,7 @@ public abstract class Command {
 			/// XXX should perhaps use a visitor instead of type checking
 			if (resources[i].isFolder()) folder = (ICVSFolder) resources[i];
 			else folder = resources[i].getParent();
-			if (! folder.isCVSFolder()) {
+			if (folder==null || !folder.isCVSFolder()) {
 				throw new CVSException(Policy.bind("Command.argumentNotManaged", folder.getName()));//$NON-NLS-1$
 			}
 		}
