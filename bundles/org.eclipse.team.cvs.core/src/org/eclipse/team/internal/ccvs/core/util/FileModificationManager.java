@@ -133,7 +133,7 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 			if (resource.getType() == IResource.FILE) {
 				ICVSFile file = CVSWorkspaceRoot.getCVSFileFor((IFile)resource);
 				ResourceSyncInfo info = file.getSyncInfo();
-				((EclipseFile)file).syncInfoChanged(file, info);
+				((EclipseFile)file).syncInfoChanged(info);
 			}
 		}
 	}

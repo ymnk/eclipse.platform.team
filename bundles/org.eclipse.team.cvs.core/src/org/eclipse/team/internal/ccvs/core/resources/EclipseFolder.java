@@ -198,10 +198,16 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	 * @see ICVSFolder#setFolderInfo(FolderSyncInfo)
 	 */
 	public void setFolderSyncInfo(FolderSyncInfo folderInfo) throws CVSException {
+		FolderSyncInfo oldInfo = EclipseSynchronizer.getInstance().getFolderSync((IContainer)resource);
 		EclipseSynchronizer.getInstance().setFolderSync((IContainer)resource, folderInfo);
 		// the server won't add directories as sync info, therefore it must be done when
 		// a directory is shared with the repository.
 		setSyncInfo(new ResourceSyncInfo(getName()));
+		// if the sync info changed from null, we need to flush the cache for all ancestors
+		if (oldInfo == null) 
+			flushAncestors();
+			// XXX Instead of flushing, we should determine if the folder was previously dirty
+			// and had a count. If so we would need to reset the dirtyness if the count was zero.
 	}
 
 	/*
@@ -225,6 +231,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 			}, Policy.subMonitorFor(monitor, 99));
 			// unmanaged from parent
 			super.unmanage(Policy.subMonitorFor(monitor, 1));
+			flushAncestors();
 		} finally {
 			monitor.done();
 		}
@@ -376,6 +383,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	}
 	
 	public boolean isModified() throws CVSException {
+		// If it's not a CVS folder, assume it's modified unless it is ignored
 		IContainer container = (IContainer)getIResource();
 		Integer count = EclipseSynchronizer.getInstance().getDirtyCount(container);
 		if (count == null) {

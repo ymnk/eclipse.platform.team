@@ -276,6 +276,7 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	 * Flush all cached info for the file and it's ancestors
 	 */
 	protected void flushAncestors() throws CVSException {
+		if (resource.getType() == IResource.ROOT) return;
 		try {
 			flushModificationCache();
 		} finally {

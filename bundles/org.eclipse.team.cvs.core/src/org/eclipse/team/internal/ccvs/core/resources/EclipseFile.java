@@ -463,9 +463,9 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		}
 	}
 
-	public void syncInfoChanged(ICVSFile mFile, ResourceSyncInfo info) throws CVSException {
+	public void syncInfoChanged(ResourceSyncInfo info) throws CVSException {
+		if (isIgnored()) return;
 		setModified(isModified(info));
-
 	}
 	
 	/**
@@ -481,6 +481,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	
 	
 	public boolean isContentsChanged() throws CVSException {
+		if (isIgnored()) return false;
 		if (EclipseSynchronizer.getInstance().contentsChangedByUpdate(getIFile()))
 			return false;
 		// It is possible that the file was a deletion that was recreated so
