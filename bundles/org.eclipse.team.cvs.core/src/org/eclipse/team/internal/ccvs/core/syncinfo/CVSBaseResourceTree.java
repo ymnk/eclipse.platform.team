@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.core.syncinfo;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.ISubscriberResource;
 import org.eclipse.team.core.subscribers.SyncBytesSubscriberResourceTree;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -54,6 +55,14 @@ public class CVSBaseResourceTree extends SyncBytesSubscriberResourceTree {
 	 */
 	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
 		return (ISubscriberResource)CVSWorkspaceRoot.getRemoteResourceFor(resource);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.SyncBytesSubscriberResourceTree#getRefreshOperation()
+	 */
+	protected RefreshOperation getRefreshOperation() {
+		// Not need since this class overrides refresh
+		throw new UnsupportedOperationException();
 	}
 
 }

@@ -115,8 +115,8 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			int baseWork = getCacheFileContentsHint() ? 10 : 30;
 			int remoteWork = 100;
 			monitor.beginTask(null, baseWork + remoteWork);
-			IResource[] baseChanges = refreshBase(resource, depth, Policy.subMonitorFor(monitor, baseWork));
-			IResource[] remoteChanges = refreshRemote(resource, depth, Policy.subMonitorFor(monitor, remoteWork));
+			IResource[] baseChanges = refreshBase(new IResource[] {resource}, depth, Policy.subMonitorFor(monitor, baseWork));
+			IResource[] remoteChanges = refreshRemote(new IResource[] {resource}, depth, Policy.subMonitorFor(monitor, remoteWork));
 			
 			Set allChanges = new HashSet();
 			allChanges.addAll(Arrays.asList(remoteChanges));
@@ -130,15 +130,8 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			monitor.done();
 		} 
 	}
-	protected IResource[] refreshBase(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getBaseResourceTree().refresh(new IResource[] {resource}, depth, getCacheFileContentsHint(), monitor);
-	}
 
-	protected IResource[] refreshRemote(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		return getRemoteResourceTree().refresh(new IResource[] {resource}, depth,  getCacheFileContentsHint(), monitor);
-	}
-
-	private boolean getCacheFileContentsHint() {
+	protected boolean getCacheFileContentsHint() {
 		return getCurrentComparisonCriteria().usesFileContents();
 	}
 

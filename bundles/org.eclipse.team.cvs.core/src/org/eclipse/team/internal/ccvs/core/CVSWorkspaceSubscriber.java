@@ -38,9 +38,9 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		
 		// install sync info participant
 		baseSynchronizer = new CVSBaseResourceTree();
-		remoteSynchronizer = new RemoteTagSynchronizer(
+		remoteSynchronizer = new CVSSubscriberResourceTree(
 				baseSynchronizer.getSynchronizationCache(), 
-				new SynchronizationSyncBytesCache(new QualifiedName(CVSRemoteSynchronizer.SYNC_KEY_QUALIFIER, REMOTE_RESOURCE_KEY)),
+				new SynchronizationSyncBytesCache(new QualifiedName(CVSSubscriberResourceTree.SYNC_KEY_QUALIFIER, REMOTE_RESOURCE_KEY)),
 				null /* use the tag in the local workspace resources */);
 		
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this); 
@@ -253,24 +253,6 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	
 	private boolean hasIncomingChange(IResource resource) throws TeamException {
 		return remoteSynchronizer.isRemoteKnown(resource);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getRemoteResource(org.eclipse.core.resources.IResource)
-	 */
-	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
-		ISubscriberResource remote =  super.getRemoteResource(resource);
-		if (resource.getType() == IResource.FILE && remote instanceof ICVSRemoteFile) {
-			byte[] remoteBytes = ((ICVSRemoteFile)remote).getSyncBytes();
-			byte[] localBytes = CVSWorkspaceRoot.getCVSFileFor((IFile)resource).getSyncBytes();
-			if (localBytes != null && remoteBytes != null) {
-				if (!ResourceSyncInfo.isLaterRevisionOnSameBranch(remoteBytes, localBytes)) {
-					// The remote bytes are stale so ignore the remote and use the base
-					return getBaseResource(resource);
-				}
-			}
-		}
-		return remote;
 	}
 
 }

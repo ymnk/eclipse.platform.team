@@ -17,8 +17,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.ccvs.core.syncinfo.CVSRemoteSynchronizer;
-import org.eclipse.team.internal.ccvs.core.syncinfo.RemoteTagSynchronizer;
+import org.eclipse.team.internal.ccvs.core.syncinfo.CVSSubscriberResourceTree;
 
 /**
  * A CVSMergeSubscriber is responsible for maintaining the remote trees for a merge into
@@ -42,15 +41,15 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	
 	private CVSTag start, end;
 	private List roots;
-	private RemoteTagSynchronizer remoteSynchronizer;
+	private CVSSubscriberResourceTree remoteSynchronizer;
 	private SynchronizationSyncBytesCache mergedSynchronizer;
-	private RemoteTagSynchronizer baseSynchronizer;
+	private CVSSubscriberResourceTree baseSynchronizer;
 
 	private static final byte[] NO_REMOTE = new byte[0];
 	
 
-	protected IResource[] refreshRemote(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
-		IResource[] remoteChanges = super.refreshRemote(resource, depth, monitor);
+	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		IResource[] remoteChanges = super.refreshRemote(resources, depth, monitor);
 		adjustMergedResources(remoteChanges);
 		return remoteChanges;
 	}
@@ -85,9 +84,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	private void initialize() {				
 		QualifiedName id = getId();
 		String syncKeyPrefix = id.getLocalName();
-		remoteSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + end.getName(), end);
-		baseSynchronizer = new RemoteTagSynchronizer(syncKeyPrefix + start.getName(), start);
-		mergedSynchronizer = new SynchronizationSyncBytesCache(new QualifiedName(CVSRemoteSynchronizer.SYNC_KEY_QUALIFIER, syncKeyPrefix + "0merged")); //$NON-NLS-1$
+		remoteSynchronizer = new CVSSubscriberResourceTree(syncKeyPrefix + end.getName(), end);
+		baseSynchronizer = new CVSSubscriberResourceTree(syncKeyPrefix + start.getName(), start);
+		mergedSynchronizer = new SynchronizationSyncBytesCache(new QualifiedName(CVSSubscriberResourceTree.SYNC_KEY_QUALIFIER, syncKeyPrefix + "0merged")); //$NON-NLS-1$
 		
 		try {
 			setCurrentComparisonCriteria(ContentComparisonCriteria.ID_IGNORE_WS);

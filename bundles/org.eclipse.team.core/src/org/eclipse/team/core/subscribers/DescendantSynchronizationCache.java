@@ -40,7 +40,7 @@ public class DescendantSynchronizationCache extends SynchronizationCache {
 	 */
 	public byte[] getSyncBytes(IResource resource) throws TeamException {
 		byte[] remoteBytes = remoteCache.getSyncBytes(resource);
-		byte[] baseBytes = remoteCache.getSyncBytes(resource);
+		byte[] baseBytes = baseCache.getSyncBytes(resource);
 		if (baseBytes == null) {
 			// There is no base so use the remote bytes
 			return remoteBytes;
@@ -102,7 +102,7 @@ public class DescendantSynchronizationCache extends SynchronizationCache {
 	 * @param remoteBytes the remote bytes for the local resoource
 	 * @return whether the remote bytes are later on the same line-of-descent as the base bytes
 	 */
-	protected boolean isDescendant(IResource resource, byte[] baseBytes, byte[] remoteBytes) {
+	protected boolean isDescendant(IResource resource, byte[] baseBytes, byte[] remoteBytes) throws TeamException {
 		return true;
 	}
 

@@ -13,8 +13,7 @@ package org.eclipse.team.core.subscribers;
 import java.util.*;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 
@@ -27,6 +26,10 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 	protected Map comparisonCriterias = new HashMap();
 	protected String selectedCriteria;
 
+	public SyncTreeSubscriber() {
+		initializeComparisonCriteria();
+	}
+	
 	/**
 	 * Method invoked from the constructor to initialize the comparison criteria
 	 * and the default criteria. This method can be overriden by subclasses.
@@ -173,5 +176,44 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 		} catch (CoreException e) {
 			throw TeamException.asTeamException(e);
 		}
+	}
+
+	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		monitor = Policy.monitorFor(monitor);
+		try {
+			monitor.beginTask(null, isThreeWay() ? 100 : 60);
+			IResource[] baseChanges = refreshBase(resources, depth, Policy.subMonitorFor(monitor, 40));
+			if (isThreeWay()) {
+				baseChanges = refreshBase(resources, depth, Policy.subMonitorFor(monitor, 40));
+			} else {
+				baseChanges = new IResource[0];
+			}
+			IResource[] remoteChanges = refreshRemote(resources, depth, Policy.subMonitorFor(monitor, 60));
+			
+			Set allChanges = new HashSet();
+			allChanges.addAll(Arrays.asList(remoteChanges));
+			allChanges.addAll(Arrays.asList(baseChanges));
+			IResource[] changedResources = (IResource[]) allChanges.toArray(new IResource[allChanges.size()]);
+			fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources));
+		} finally {
+			monitor.done();
+		} 
+	}
+	
+	protected IResource[] refreshBase(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		return getBaseResourceTree().refresh(resources, depth, getCacheFileContentsHint(), monitor);
+	}
+
+	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		return getRemoteResourceTree().refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+	}
+	
+	/**
+	 * Return whether the contents for remote resources will be required by the comparison
+	 * criteria of the subscriber.
+	 * @return boolean
+	 */
+	protected boolean getCacheFileContentsHint() {
+		return false;
 	}
 }

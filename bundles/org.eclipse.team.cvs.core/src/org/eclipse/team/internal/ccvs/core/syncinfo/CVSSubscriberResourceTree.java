@@ -8,26 +8,45 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+
 package org.eclipse.team.internal.ccvs.core.syncinfo;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.ISubscriberResource;
-import org.eclipse.team.core.subscribers.SyncBytesSubscriberResourceTree;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 
 /**
- * CVS specific remote synchronizer behavior
+ * This RemoteSynchronizr uses a CVS Tag to fetch the remote tree
  */
-public abstract class CVSRemoteSynchronizer extends SyncBytesSubscriberResourceTree {
+public class CVSSubscriberResourceTree extends SyncBytesSubscriberResourceTree {
 
 	public static final String SYNC_KEY_QUALIFIER = "org.eclipse.team.cvs"; //$NON-NLS-1$
 	
-	public CVSRemoteSynchronizer(SynchronizationCache cache) {
+	private CVSTag tag;
+	private SynchronizationCache baseCache;
+	
+	public CVSSubscriberResourceTree(SynchronizationCache cache, CVSTag tag) {
 		super(cache);
+		this.tag = tag;
+	}
+
+	public CVSSubscriberResourceTree(String id, CVSTag tag) {
+		this(
+			new SynchronizationSyncBytesCache(new QualifiedName(CVSSubscriberResourceTree.SYNC_KEY_QUALIFIER, id)),
+			tag);
+	}
+
+	public CVSSubscriberResourceTree(SynchronizationCache baseCache, SynchronizationCache cache, CVSTag tag) {
+		this(new CVSDescendantSynchronizationCache(baseCache, cache), tag);
+		this.baseCache = baseCache;
+	}
+
+	protected RefreshOperation getRefreshOperation() {
+		return new CVSRefreshOperation(getSynchronizationCache(), baseCache, tag);
 	}
 
 	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
@@ -42,7 +61,7 @@ public abstract class CVSRemoteSynchronizer extends SyncBytesSubscriberResourceT
 				byte[] parentBytes = getSyncBytes(resource.getParent());
 				if (parentBytes == null) {
 					CVSProviderPlugin.log(new CVSException( 
-						Policy.bind("ResourceSynchronizer.missingParentBytesOnGet", getSyncName().toString(), resource.getFullPath().toString()))); //$NON-NLS-1$
+							Policy.bind("ResourceSynchronizer.missingParentBytesOnGet", getSyncName().toString(), resource.getFullPath().toString()))); //$NON-NLS-1$
 					// Assume there is no remote and the problem is a programming error
 					return null;
 				}
@@ -83,4 +102,5 @@ public abstract class CVSRemoteSynchronizer extends SyncBytesSubscriberResourceT
 		if (resource.getType() == IResource.PROJECT) return true;
 		return (getSyncBytes(resource.getParent()) != null);
 	}
+
 }

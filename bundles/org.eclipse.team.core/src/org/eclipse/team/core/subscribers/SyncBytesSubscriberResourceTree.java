@@ -11,6 +11,7 @@
 package org.eclipse.team.core.subscribers;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 
 /**
@@ -64,4 +65,13 @@ public abstract class SyncBytesSubscriberResourceTree extends SubscriberResource
 	public boolean isRemoteKnown(IResource resource) throws TeamException {
 		return getSynchronizationCache().isRemoteKnown(resource);
 	}
+	
+	public IResource[] refresh(IResource[] resources, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
+		return getRefreshOperation().refresh(resources, depth, cacheFileContentsHint, monitor);
+	}
+
+	/**
+	 * @return
+	 */
+	protected abstract RefreshOperation getRefreshOperation();
 }
