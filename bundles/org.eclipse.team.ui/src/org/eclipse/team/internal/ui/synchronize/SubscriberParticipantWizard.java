@@ -29,12 +29,18 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.eclipse.jface.wizard.Wizard#getWindowTitle()
+	 */
+	public String getWindowTitle() {
+		return "Create a " +  getName() + " Synchronize Participant";
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.jface.wizard.Wizard#addPages()
 	 */
 	public void addPages() {
 		selectionPage = new GlobalRefreshResourceSelectionPage(getRootResources());
 		selectionPage.setTitle("Create");
-		selectionPage.setDescription("Create a " +  getName() + " Synchronize Participant");
 		selectionPage.setMessage("Select the resources that will be synchronized by the newly created synchronize participant.");
 		addPage(selectionPage);
 	}

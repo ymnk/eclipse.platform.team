@@ -110,10 +110,8 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 		ISynchronizeParticipantReference[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipantReference description = participants[i];
-			if (description.getDescriptor().isGlobalSynchronize()) {
-				Action action = new RefreshParticipantAction(i + 1, description);
-				addActionToMenu(fMenu, action);
-			}
+			Action action = new RefreshParticipantAction(i + 1, description);
+			addActionToMenu(fMenu, action);
 		}
 		if(participants.length > 0) addMenuSeparator();
 		addActionToMenu(fMenu, synchronizeAction);

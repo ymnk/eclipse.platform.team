@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.actions;
 
-import java.util.ArrayList;
-
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -38,16 +36,8 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			updateTooltipText();
 		}
 		
-		protected ISynchronizeParticipantReference[] getParticipants(boolean staticOnly) {
-			ArrayList participants = new ArrayList();
-			ISynchronizeParticipantReference[] refs = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-			for (int i = 0; i < refs.length; i++) {
-				ISynchronizeParticipantReference ref = refs[i];
-				if (ref.getDescriptor().isStatic() == staticOnly) {
-					participants.add(ref);
-				}
-			}
-			return (ISynchronizeParticipantReference[]) participants.toArray(new ISynchronizeParticipantReference[participants.size()]);
+		protected ISynchronizeParticipantReference[] getParticipants() {
+			return TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		}
 		
 		protected boolean select(ISynchronizeParticipantReference ref) {

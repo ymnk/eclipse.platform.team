@@ -10,10 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.registry;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -28,9 +25,11 @@ public class SynchronizeWizardDescription {
 	public  static final String ATT_NAME = "name"; //$NON-NLS-1$
 	public  static final String ATT_ICON = "icon"; //$NON-NLS-1$
 	public  static final String ATT_CLASS = "class"; //$NON-NLS-1$
+	public  static final String ATT_DESCRIPTION = "description"; //$NON-NLS-1$
 	
 	private String label;
 	private String className;
+	private String description;
 	private String id;
 	private ImageDescriptor imageDescriptor;
 	
@@ -50,9 +49,10 @@ public class SynchronizeWizardDescription {
 		String identifier = configElement.getAttribute(ATT_ID);
 		label = configElement.getAttribute(ATT_NAME);
 		className = configElement.getAttribute(ATT_CLASS);
+		description = configElement.getAttribute(ATT_DESCRIPTION);
 		
 		// Sanity check.
-		if ((label == null) || (className == null) || (identifier == null)) {
+		if ((label == null) || (className == null) || (identifier == null) || (description == null)) {
 			throw new CoreException(new Status(IStatus.ERROR, configElement.getDeclaringExtension().getDeclaringPluginDescriptor().getUniqueIdentifier(), 0, "Invalid extension (missing label or class name): " + identifier, //$NON-NLS-1$
 					null));
 		}
@@ -62,6 +62,10 @@ public class SynchronizeWizardDescription {
 	
 	public String getId() {
 		return id;
+	}
+	
+	public String getDescription() {
+		return description;
 	}
 	
 	public ImageDescriptor getImageDescriptor() {
@@ -79,6 +83,6 @@ public class SynchronizeWizardDescription {
 	}
 	
 	public String toString() {
-		return "Synchronize Participant(" + getId() + ")"; //$NON-NLS-2$//$NON-NLS-1$
+		return "Synchronize Participant Creation Wizard(" + getId() + ")"; //$NON-NLS-2$//$NON-NLS-1$
 	}
 }

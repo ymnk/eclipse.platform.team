@@ -35,6 +35,7 @@
          point="org.eclipse.team.ui.synchronizeWizards">
       <wizard
             name="%WorkspaceSynchronizeWizard.name"
+            description="%WorkspaceSynchronizeWizard.description"
             icon="icons/full/eview16/cvs_persp.gif"
             class="org.eclipse.team.internal.ccvs.ui.subscriber.CVSSynchronizeWizard"
             id="org.eclipse.team.ccvs.ui.SynchronizeWizard">

@@ -34,7 +34,6 @@ public class CompareWithTagAction extends WorkspaceAction {
 		CVSCompareSubscriber compareSubscriber = new CVSCompareSubscriber(resources, tag);
 		if (SyncAction.isSingleFile(resources)) {
 			SyncAction.showSingleFileComparison(getShell(), compareSubscriber, resources[0]);
-			// TODO: leaking subscribers??? we can't dispose if syncinfo getsubscriber must be called
 			compareSubscriber.dispose();
 		} else {
 			//	First check if there is an existing matching participant, if so then re-use it
