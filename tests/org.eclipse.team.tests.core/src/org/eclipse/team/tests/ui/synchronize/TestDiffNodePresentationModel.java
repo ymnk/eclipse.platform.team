@@ -54,7 +54,7 @@ public class TestDiffNodePresentationModel extends TeamTest {
 		super.setUp();
 		this.set = new SyncInfoTree();
 		this.configuration = new TreeViewerAdvisor(set) {
-			protected ISynchronizeModelProvider getModelProvider() {
+			protected ISynchronizeModelProvider createModelProvider() {
 				return TestDiffNodePresentationModel.this.getDiffNodeController(set);
 			}
 		};

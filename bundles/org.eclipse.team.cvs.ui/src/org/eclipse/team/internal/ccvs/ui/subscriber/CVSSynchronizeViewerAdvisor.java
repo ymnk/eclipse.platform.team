@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
@@ -21,7 +22,7 @@ import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.subscribers.SynchronizeViewerAdvisor;
 
-public class CVSSynchronizeViewerAdvisor extends SynchronizeViewerAdvisor implements ISynchronizeModelChangeListener {
+public class CVSSynchronizeViewerAdvisor extends SynchronizeViewerAdvisor implements ISynchronizeModelChangeListener, IPropertyChangeListener {
 
 	private boolean isGroupIncomingByComment = false;
 
@@ -99,7 +100,6 @@ public class CVSSynchronizeViewerAdvisor extends SynchronizeViewerAdvisor implem
 		if(property.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getViewer() != null && getSyncInfoSet() != null) {
 			getViewer().refresh(true /* update labels */);
 		}
-		super.propertyChange(event);
 	}	
 	
 	/*

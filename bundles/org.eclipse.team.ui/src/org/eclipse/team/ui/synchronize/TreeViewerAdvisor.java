@@ -12,16 +12,11 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.internal.ui.synchronize.CompressedFoldersModelProvider;
-import org.eclipse.team.internal.ui.synchronize.HierarchicalModelProvider;
 import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
@@ -42,7 +37,7 @@ import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
  * <p>
  * @since 3.0
  */
-public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IPropertyChangeListener {
+public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	
 	/**
 	 * Interface used to implement navigation for tree viewers. This interface is used by
@@ -105,7 +100,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IPrope
 	 */
 	public TreeViewerAdvisor(String menuId, IWorkbenchPartSite site, SyncInfoTree set) {
 		super(menuId,site, set);
-		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 	}
 	
 	/**
@@ -123,7 +117,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IPrope
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#dispose()
 	 */
 	public void dispose() {
-		TeamUIPlugin.getPlugin().getPreferenceStore().removePropertyChangeListener(this);
 		super.dispose();
 	}
 	
@@ -132,20 +125,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IPrope
 	 */
 	public boolean navigate(boolean next) {
 		return TreeViewerAdvisor.navigate((TreeViewer)getViewer(), next, true, false);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
-	 */
-	public void propertyChange(PropertyChangeEvent event) {
-		if (getViewer() != null && event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			try {
-				prepareInput(null);
-				setInput(getViewer());
-			} catch (TeamException e) {
-				TeamUIPlugin.log(e);
-			}
-		}
 	}
 	
 	/* (non-Javadoc)
@@ -166,13 +145,26 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IPrope
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#getDiffNodeController()
 	 */
-	protected ISynchronizeModelProvider getModelProvider() {
-		if(getShowCompressedFolders()) {
-			return new CompressedFoldersModelProvider((SyncInfoTree)getSyncInfoSet());
+	protected ISynchronizeModelProvider createModelProvider(String id) {
+		if(id == null) {
+			id = CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID;
 		}
-		return new HierarchicalModelProvider((SyncInfoTree)getSyncInfoSet());
+		if(id.endsWith(CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID)) {
+			return new CompressedFoldersModelProvider((SyncInfoTree)getSyncInfoSet());
+		} else {
+			return new HierarchicalModelProvider((SyncInfoTree)getSyncInfoSet());
+		}
 	}
-		
+			
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.StructuredViewerAdvisor#getSupportedModelProviders()
+	 */
+	protected ISynchronizeModelProviderDescriptor[] getSupportedModelProviders() {
+		return new ISynchronizeModelProviderDescriptor[] {
+				new HierarchicalModelProvider.HierarchicalModelProviderDescriptor(),
+				new CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor() };
+	}
+	
 	/**
 	 * Handles a double-click event from the viewer. Expands or collapses a folder when double-clicked.
 	 * 

@@ -206,11 +206,7 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		try {
-			return getViewerConfiguration().prepareInput(monitor);
-		} catch (TeamException e) {
-			throw new InvocationTargetException(e);
-		}
+		return getViewerConfiguration().prepareInput(monitor);
 	}	
 	
 	/*

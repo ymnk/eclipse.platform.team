@@ -17,7 +17,6 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction;
 import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitOperation;
@@ -93,7 +92,6 @@ public class SharingWizardTreeAdviser extends TreeViewerAdvisor implements ISync
 	public void dispose() {
 		super.dispose();
 		removeInputChangedListener(this);
-		CVSUIPlugin.removePropertyChangeListener(this);
 	}
 
 	/* (non-Javadoc)

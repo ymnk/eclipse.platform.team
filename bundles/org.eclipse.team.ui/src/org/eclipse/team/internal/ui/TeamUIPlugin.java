@@ -348,7 +348,8 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		
 		// Live Sync View icons
 		createImageDescriptor(plugin, ISharedImages.IMG_COMPRESSED_FOLDER, baseURL);
-		createImageDescriptor(plugin, ISharedImages.IMG_WARNING, baseURL);		
+		createImageDescriptor(plugin, ISharedImages.IMG_WARNING, baseURL);
+		createImageDescriptor(plugin, ISharedImages.IMG_HIERARCHICAL, baseURL);		
 	}
 
 	/**

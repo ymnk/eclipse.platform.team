@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import java.util.*;
+
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -17,17 +19,14 @@ import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.*;
-import org.eclipse.swt.events.MenuEvent;
-import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.internal.ui.synchronize.SynchronizeModelElementLabelProvider;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.internal.PluginAction;
@@ -81,9 +80,50 @@ public abstract class StructuredViewerAdvisor {
 	private SyncInfoSet set;
 	private StructuredViewer viewer;
 	private ISynchronizeModelProvider modelProvider;
+	private List toggleModelProviderActions;
 	
 	// Listeners for model changes
 	private ListenerList listeners;
+	
+	/**
+	 * Action that allows changing the model providers supported by this advisor.
+	 */
+	private class ToggleModelProviderAction extends Action implements ISynchronizeModelChangeListener {
+		private ISynchronizeModelProviderDescriptor descriptor;
+		protected ToggleModelProviderAction(ISynchronizeModelProviderDescriptor descriptor) {
+			super(descriptor.getName(), Action.AS_RADIO_BUTTON);
+			setImageDescriptor(descriptor.getImageDescriptor());
+			setToolTipText(descriptor.getName());
+			this.descriptor = descriptor;
+			update();
+			addInputChangedListener(this);
+		}
+
+		public void run() {
+			ISynchronizeModelProvider mp = getActiveModelProvider();
+			IStructuredSelection selection = null;
+			if(mp != null) {
+				if(mp.getDescriptor().getId().equals(descriptor.getId())) return;	
+				selection = (IStructuredSelection)viewer.getSelection();	
+			}
+			internalPrepareInput(descriptor.getId(), null);
+			setInput(getViewer());
+			if(selection != null) {
+				setSelection(selection.toArray(), true);
+			}
+		}
+		
+		public void modelChanged(ISynchronizeModelElement root) {
+			update();
+		}
+		
+		public void update() {
+			ISynchronizeModelProvider mp = getActiveModelProvider();
+			if(mp != null) {
+				setChecked(mp.getDescriptor().getId().equals(descriptor.getId()));
+			}
+		}
+	}
 	
 	/**
 	 * Create an advisor that will allow viewer contributions with the given <code>targetID</code>. This
@@ -132,8 +172,7 @@ public abstract class StructuredViewerAdvisor {
 		// The input may of been set already. In that case, don't change it and
 		// simply assign it to the view.
 		if(modelProvider == null) {
-			modelProvider = getModelProvider();
-			modelProvider.prepareInput(null);
+			prepareInput(null);
 		}
 		setInput(viewer);
 	}
@@ -229,7 +268,7 @@ public abstract class StructuredViewerAdvisor {
 	 * This method does not affect the selection of the viewer itself.
 	 * It's main purpose is for testing and should not be used by other
 	 * clients.
-	 * 
+	 * </p>
 	 * @param object the objects to select
 	 * @return a selection corresponding to the given objects
 	 */
@@ -257,11 +296,15 @@ public abstract class StructuredViewerAdvisor {
 	 * @param monitor shows progress while preparing the model
 	 * @return the model that can be shown in a viewer
 	 */
-	public Object prepareInput(IProgressMonitor monitor) throws TeamException {
+	public Object prepareInput(IProgressMonitor monitor) {
+		return internalPrepareInput(null, monitor);
+	}
+	
+	protected Object internalPrepareInput(String id, IProgressMonitor monitor) {
 		if(modelProvider != null) {
 			modelProvider.dispose();
 		}
-		modelProvider = getModelProvider();		
+		modelProvider = createModelProvider(id);		
 		return modelProvider.prepareInput(monitor);
 	}
 
@@ -283,7 +326,27 @@ public abstract class StructuredViewerAdvisor {
 	 * 
 	 * @param actionBars the toolbar manager to which to add actions.
 	 */
-	public void setActionBars(IActionBars actionBars) {	
+	public void setActionBars(IActionBars actionBars) {
+		IToolBarManager toolbar = actionBars.getToolBarManager();
+		IMenuManager menu = actionBars.getMenuManager();
+		IContributionManager contribManager = null;
+		if(menu != null) {
+			MenuManager layout = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$
+			menu.add(layout);	
+			contribManager = layout;
+		} else if(toolbar != null) {
+			contribManager = toolbar;
+		}
+		
+		if (toggleModelProviderActions != null && contribManager != null) {
+			if (toolbar != null) {
+				toolbar.add(new Separator());
+				for (Iterator iter = toggleModelProviderActions.iterator(); iter.hasNext();) {
+					contribManager.add((Action) iter.next());
+				}
+				toolbar.add(new Separator());
+			}
+		}
 	}
 	
 	/**
@@ -299,6 +362,15 @@ public abstract class StructuredViewerAdvisor {
 	 * @param viewer the viewer being initialize
 	 */
 	protected void initializeActions(StructuredViewer viewer) {
+		ISynchronizeModelProviderDescriptor[] providers = getSupportedModelProviders();
+		// We only need switching of layouts if there is more than one model provider
+		if (providers.length > 1) {
+			toggleModelProviderActions = new ArrayList();
+			for (int i = 0; i < providers.length; i++) {
+				final ISynchronizeModelProviderDescriptor provider = providers[i];
+				toggleModelProviderActions.add(new ToggleModelProviderAction(provider));
+			}
+		}
 	}
 	
 	/**
@@ -320,8 +392,18 @@ public abstract class StructuredViewerAdvisor {
 	 * for the adviser's viewer.
 	 * @return the model provider
 	 */
-	protected abstract ISynchronizeModelProvider getModelProvider();
+	protected abstract ISynchronizeModelProvider createModelProvider(String id);
 	
+	protected ISynchronizeModelProvider getActiveModelProvider() {
+		return modelProvider;
+	}
+	
+	/**
+	 * Return the list of supported model providers for this advisor.
+	 * @param viewer
+	 * @return
+	 */
+	protected abstract ISynchronizeModelProviderDescriptor[] getSupportedModelProviders();
 	
 	/**
 	 * Subclasses can validate that the viewer being initialized with this advisor
