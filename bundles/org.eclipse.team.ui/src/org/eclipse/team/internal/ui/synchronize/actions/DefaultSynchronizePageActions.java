@@ -43,6 +43,8 @@ public class DefaultSynchronizePageActions extends SynchronizePageActionGroup {
 			if (configuration.hasMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP)) {
 				removeAction = new RemoveSynchronizeParticipantAction(configuration.getParticipant());
 			}
+		} else {
+			// TODO: Add open menu action which opens in compare editor input
 		}
 	}
 	
