@@ -78,5 +78,7 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ACTION_GROUP);
 		configuration.addActionContribution(new WorkspaceActionContribution());
 		configuration.setSupportedModes(ISynchronizePageConfiguration.ALL_MODES);
+		// TODO: This is the default but should not override persisted mode
+		configuration.setMode(ISynchronizePageConfiguration.BOTH_MODE);
 	}
 }
