@@ -68,9 +68,11 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 
 		}
 	};
+	private boolean shortStyle;
 	
-	public TeamSubscriberParticipantComposite(Composite parent, IControlFactory factory, TeamSubscriberParticipant participant, ISynchronizeView view) {
+	public TeamSubscriberParticipantComposite(Composite parent, boolean shortStyle, IControlFactory factory, TeamSubscriberParticipant participant, ISynchronizeView view) {
 		super(parent, SWT.NONE);
+		this.shortStyle = shortStyle;
 		this.factory = factory;
 		this.participant = participant;		
 		this.view = view;
@@ -89,8 +91,8 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 	
 	protected Composite createComposite(Composite area) {
 		GridLayout layout = new GridLayout();
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
+		//layout.marginHeight = 0;
+		//layout.marginWidth = 0;
 		area.setLayout(layout);
 		setBackground(factory.getBackgroundColor());
 		{
@@ -103,24 +105,24 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 			composite_1.setLayout(gridLayout_1);
 			composite_1.setLayoutData(gridData);
 			{
-				final Label label = factory.createLabel(composite_1, "Last Sync");
+				final Label label = factory.createLabel(composite_1, "Last Refresh:");
 				gridData = new GridData();
 				label.setLayoutData(gridData);
 			}
 			{
 				lastSyncLabel = factory.createLabel(composite_1, "11/23/03 10:03:12");
-				gridData = new GridData();
+				gridData = new GridData(GridData.FILL_HORIZONTAL);
 				gridData.grabExcessHorizontalSpace = true;
 				lastSyncLabel.setLayoutData(gridData);
 			}
 			{
-				final Label label = factory.createLabel(composite_1, "Schedule");
+				final Label label = factory.createLabel(composite_1, "Refresh Schedule:");
 				gridData = new GridData();
 				label.setLayoutData(gridData);
 			}
 			{
 				scheduleLabel = factory.createLabel(composite_1, "Every Hour");
-				gridData = new GridData();
+				gridData = new GridData(GridData.FILL_HORIZONTAL);
 				gridData.grabExcessHorizontalSpace = true;
 				scheduleLabel.setLayoutData(gridData);
 			}
@@ -131,32 +133,35 @@ public class TeamSubscriberParticipantComposite extends Composite implements IPr
 			}
 			{
 				statusLabel = factory.createLabel(composite_1, "Idle");
-				gridData = new GridData();
+				gridData = new GridData(GridData.FILL_HORIZONTAL);
 				gridData.grabExcessHorizontalSpace = true;
 				statusLabel.setLayoutData(gridData);
 			}
 		}
-		{
-			final Composite composite_1 = factory.createComposite(area, SWT.NONE);
-			GridData gridData = new GridData(GridData.FILL_BOTH);
-			final GridLayout gridLayout_1 = new GridLayout();
-			gridLayout_1.numColumns = 1;
-			gridLayout_1.marginHeight = 0;
-			gridLayout_1.marginWidth = 0;
-			composite_1.setLayout(gridLayout_1);
-			composite_1.setLayoutData(gridData);
+		if(! shortStyle) {
 			{
-				rootsList = new TableViewer(composite_1, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL);				
-				gridData = new GridData(GridData.FILL_BOTH);
-				gridData.heightHint = 80;
-				rootsList.getTable().setLayoutData(gridData);	
-				rootsList.setLabelProvider(new WorkbenchLabelProvider());
-				rootsList.setContentProvider(new ArrayContentProvider());
-				rootsList.setInput(participant.getInput().subscriberRoots());
-				factory.paintBordersFor(rootsList.getTable());
-				hookContextMenu();
+				final Composite composite_1 = factory.createComposite(area, SWT.NONE);
+				GridData gridData = new GridData(GridData.FILL_BOTH);
+				final GridLayout gridLayout_1 = new GridLayout();
+				gridLayout_1.numColumns = 1;
+				gridLayout_1.marginHeight = 3;
+				gridLayout_1.marginWidth = 3;
+				composite_1.setLayout(gridLayout_1);
+				composite_1.setLayoutData(gridData);
+				{
+					final Label label = factory.createLabel(composite_1, "Synchronized Folders:");
+					rootsList = new TableViewer(composite_1, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL);
+					gridData = new GridData(GridData.FILL_BOTH);
+					gridData.heightHint = 80;
+					rootsList.getTable().setLayoutData(gridData);
+					rootsList.setLabelProvider(new WorkbenchLabelProvider());
+					rootsList.setContentProvider(new ArrayContentProvider());
+					rootsList.setInput(participant.getInput().subscriberRoots());
+					factory.paintBordersFor(composite_1);
+					hookContextMenu();
+				}
 			}
-		}		
+		}
 		return area;
 	}
 		

@@ -63,7 +63,7 @@ public class ParticipantComposite extends Composite {
 			{
 				final Label label = factory.createLabel(composite, participant.getName(), SWT.WRAP);
 				label.setLayoutData(new GridData());
-				label.setFont(JFaceResources.getHeaderFont());
+				label.setFont(JFaceResources.getBannerFont());
 				label.setText(participant.getName());
 			}
 			{

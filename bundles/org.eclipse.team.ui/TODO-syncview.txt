@@ -4,18 +4,19 @@
 - P3 status message could be more precise instead of simply "Working". But to do this we need access to the job progress monitor 
   and it isn't available API from the UI.
 - P1 end of refresh prompt should be a property change notice, and let the participant decide what to do!
+- P2 decide overview page contents and how it should be used
 - P1 mode switching at the end of a refresh to ensure that changes are shown if available
 - P2 need an event for adding roots to a subscriber to update the list shown
-- P2 support for table widget in changes page
+- P3 support for table widget in changes page
 - remove duplicated tree/table viewers classes. the orignial ones simply have the INavigable behavior.
-- make changes section only be a pagebook. this would easily allow adding any number of composites to the page?
+- P1 make changes section only be a pagebook. this would easily allow adding any number of composites to the page?
 - compareeditorinput fetcheds remote content outside of a progress monitor
 - decorations for SyncInfoDiffElements (of which type.. project persistent property setting?)
 - labels for compare editors (text merge viewers and title for diff viewer)
-x generic navigate support for SyncInfoDiffTreeViewer
+x generic navigate support for SyncInfoDiffTreeViewer, PRd compare for API support
 - readonly state for compare panes
 - progress support added when fetching (e.g. caching contents in ITypedElement). This will require compare to add some API.
-- INavigable in compare needs to be made API.
+x INavigable in compare needs to be made API.
 - details dialog needs to create composites once then display them. Or only create once!!!!
 - sync set filtering creation must be more precise. For example you should be able to specify a root and a direction.
 - cvs update/commit action in sync view toolbar are not updating their state anymore :(

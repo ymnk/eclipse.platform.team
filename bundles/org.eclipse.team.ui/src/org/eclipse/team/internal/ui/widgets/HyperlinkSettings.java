@@ -21,7 +21,7 @@ public class HyperlinkSettings {
 	public static final int UNDERLINE_ALWAYS = 3;
 
 	protected boolean hyperlinkCursorUsed = true;
-	protected int hyperlinkUnderlineMode = UNDERLINE_ALWAYS;
+	protected int hyperlinkUnderlineMode = UNDERLINE_ROLLOVER;
 	protected Color background;
 	protected Color foreground;
 	protected Color activeBackground;

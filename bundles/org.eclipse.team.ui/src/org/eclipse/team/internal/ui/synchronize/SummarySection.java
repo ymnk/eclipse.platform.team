@@ -40,7 +40,7 @@ public class SummarySection extends FormSection {
 	 *      org.eclipse.team.internal.ui.widgets.FormWidgetFactory)
 	 */
 	public Composite createClient(Composite parent, IControlFactory factory) {
-		client = participant.createOverviewComposite(parent, factory, view);
+		client = new TeamSubscriberParticipantComposite(parent, false, factory, participant, view);
 		return client;
 	}
 	

@@ -43,6 +43,7 @@ public class ChangesSection extends FormSection {
 		setCollapsed(false);
 		setDescription("");
 		calculateDescription();
+		updateHeaderRightText();
 	}
 	
 	/*
@@ -124,5 +125,10 @@ public class ChangesSection extends FormSection {
 	public void dispose() {
 		super.dispose();
 		participant.getInput().deregisterListeners(changedListener);
+	}
+	
+	public void updateHeaderRightText() {
+		setHeaderRightText("Inc: 1 Out: 2 Con: 3");
+		reflow();
 	}
 }

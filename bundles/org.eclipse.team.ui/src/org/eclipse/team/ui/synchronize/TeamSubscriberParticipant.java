@@ -243,6 +243,6 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createOverviewPage(org.eclipse.swt.widgets.Composite, org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
 	public Composite createOverviewComposite(Composite parent, IControlFactory factory, ISynchronizeView view) {
-		return new TeamSubscriberParticipantComposite(parent, factory, this, view);
+		return new TeamSubscriberParticipantComposite(parent, true, factory, this, view);
 	}
 }
