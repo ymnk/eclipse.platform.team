@@ -14,7 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.ui.IWorkingSet;
 
-public interface ISyncViewer {
+public interface ISynchronizeView {
 
 	 /**
 	  * View type constant (value 0) indicating that the synchronize view will be shown

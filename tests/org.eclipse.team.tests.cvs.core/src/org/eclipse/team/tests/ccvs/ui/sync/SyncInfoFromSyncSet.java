@@ -22,11 +22,11 @@ import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.sets.SyncSet;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
+import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 
 /**
- * SyncInfoSource that obtains SyncInfo from the SyncViewer's SyncSet.
+ * SyncInfoSource that obtains SyncInfo from the SynchronizeView's SyncSet.
  */
 public class SyncInfoFromSyncSet extends SyncInfoSource {
 
@@ -49,7 +49,7 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 	
 	private SubscriberInput getInput(TeamSubscriber subscriber) throws AssertionFailedError {
 		// show the sync view
-		SyncViewer syncView = (SyncViewer)SyncViewer.showInActivePage(null);
+		SynchronizeView syncView = (SynchronizeView)SynchronizeView.showInActivePage(null);
 		SubscriberInput input = syncView.getInput();
 		if (subscriber != input.getSubscriber()) {
 			// ensure that the CVS subscriber is active

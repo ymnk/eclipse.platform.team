@@ -21,7 +21,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
+import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.IMemento;
@@ -75,7 +75,7 @@ public class SyncViewerDirectionFilters extends SyncViewerActionGroup {
 		}
 	}
 	
-	protected SyncViewerDirectionFilters(SyncViewer viewer, SyncViewerActions refreshGroup) {
+	protected SyncViewerDirectionFilters(SynchronizeView viewer, SyncViewerActions refreshGroup) {
 		super(viewer);
 		this.refreshGroup = refreshGroup;
 		createActions();

@@ -49,5 +49,4 @@ public class CompressedFolder extends SyncResource {
 		}
 		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
 	}
-
 }

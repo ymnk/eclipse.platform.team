@@ -27,7 +27,7 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
+import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.ui.actions.ActionContext;
 
 public class RefreshAction extends Action {
@@ -41,7 +41,7 @@ public class RefreshAction extends Action {
 	}
 	
 	public void run() {
-		final SyncViewer view = actions.getSyncView();
+		final SynchronizeView view = actions.getSyncView();
 		ActionContext context = actions.getContext();
 		if(context != null) {
 			getResources(context.getSelection());
@@ -62,7 +62,7 @@ public class RefreshAction extends Action {
 		return (IResource[])TeamAction.getSelectedAdaptables(selection, IResource.class);					
 	}
 	
-	public static void run(SyncViewer viewer, IResource[] resources, TeamSubscriber subscriber) {
+	public static void run(SynchronizeView viewer, IResource[] resources, TeamSubscriber subscriber) {
 		// Cancel the scheduled background refresh or any other refresh that is happening.
 		// The scheduled background refresh will restart automatically.
 		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
@@ -74,7 +74,7 @@ public class RefreshAction extends Action {
 		}
 	}
 		
-	private static void runBlocking(SyncViewer viewer, final TeamSubscriber s, final IResource[] resources) {
+	private static void runBlocking(SynchronizeView viewer, final TeamSubscriber s, final IResource[] resources) {
 		viewer.run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {

@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncCompareInput;
 import org.eclipse.team.internal.ui.sync.SyncView;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISyncViewer;
+import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.ui.IWorkingSet;
 
 /**
@@ -39,7 +39,7 @@ public class SyncAction extends WorkspaceAction {
 			if (resources == null || resources.length == 0) return;
 			
 			IWorkingSet workingSet = CVSUIPlugin.getWorkingSet(resources, Policy.bind("SyncAction.workingSetName")); //$NON-NLS-1$
-			ISyncViewer view = TeamUI.showSyncViewInActivePage(null);
+			ISynchronizeView view = TeamUI.showSyncViewInActivePage(null);
 			if(view != null) {
 				CVSWorkspaceSubscriber cvsWorkspaceSubscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
 				view.setWorkingSet(workingSet);

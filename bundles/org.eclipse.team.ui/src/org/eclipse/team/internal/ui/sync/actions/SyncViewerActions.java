@@ -21,7 +21,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.INavigableControl;
-import org.eclipse.team.internal.ui.sync.views.SyncViewer;
+import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.team.ui.sync.AndSyncInfoFilter;
 import org.eclipse.team.ui.sync.PseudoConflictFilter;
 import org.eclipse.team.ui.sync.SyncInfoChangeTypeFilter;
@@ -38,7 +38,7 @@ import org.eclipse.ui.actions.WorkingSetFilterActionGroup;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 /**
- * This class managers the actions associated with the SyncViewer class.
+ * This class managers the actions associated with the SynchronizeView class.
  */
 public class SyncViewerActions extends SyncViewerActionGroup {
 		
@@ -76,14 +76,14 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		expandAll.update();
 	}
 
-	public SyncViewerActions(SyncViewer viewer) {
+	public SyncViewerActions(SynchronizeView viewer) {
 		super(viewer);
 		createActions();
 	}
 	
 	private void createActions() {
 		// initialize action groups
-		SyncViewer syncView = getSyncView();
+		SynchronizeView syncView = getSyncView();
 		directionsFilters = new SyncViewerDirectionFilters(syncView, this);
 		changeFilters = new SyncViewerChangeFilters(syncView, this);
 		subscriberActions = new SyncViewerSubscriberActions(syncView);

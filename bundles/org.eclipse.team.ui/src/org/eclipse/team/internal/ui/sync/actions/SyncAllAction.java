@@ -23,7 +23,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.team.core.subscribers.TeamProvider;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.ISyncViewer;
+import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowPulldownDelegate2;
 
@@ -39,7 +39,7 @@ public class SyncAllAction implements IWorkbenchWindowPulldownDelegate2 {
 			setText(s.getName());			
 		}
 		public void run() {
-			ISyncViewer view = TeamUI.showSyncViewInActivePage(window.getActivePage());
+			ISynchronizeView view = TeamUI.showSyncViewInActivePage(window.getActivePage());
 			if(view != null) {
 				view.refreshWithRemote(subscriber);
 			}
@@ -47,7 +47,7 @@ public class SyncAllAction implements IWorkbenchWindowPulldownDelegate2 {
 	}
 	
 	public void run(IAction action) {
-		ISyncViewer view = TeamUI.showSyncViewInActivePage(window.getActivePage());
+		ISynchronizeView view = TeamUI.showSyncViewInActivePage(window.getActivePage());
 		if(view != null) {
 			view.refreshWithRemote();
 		}

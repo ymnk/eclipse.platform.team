@@ -88,7 +88,7 @@ public class SubscriberEventHandler {
 	 */
 	public SubscriberEventHandler(SyncSetInputFromSubscriber set) {
 		this.set = set;
-		initialize();
+		reset(Event.INITIALIZE);
 		createEventHandlingJob();
 		eventHandlerJob.schedule();
 	}
@@ -99,11 +99,8 @@ public class SubscriberEventHandler {
 	 * @param depth
 	 */
 	public void initialize() {
-		IResource[] resources = set.getSubscriber().roots(); 
-		for (int i = 0; i < resources.length; i++) {
-			queueEvent(new Event(resources[i], Event.INITIALIZE, IResource.DEPTH_INFINITE));			
-		}		
-	}
+		reset(Event.CHANGE);		
+	}	
 	/**
 	 * Called by a client to indicate that a resource has changed and its synchronization state
 	 * should be recalculated.  
@@ -277,4 +274,16 @@ public class SubscriberEventHandler {
 		}
 		set.getSyncSet().endInput();
 	};
+	/**
+	 * Initialize all resources for the subscriber associated with the set. This will basically recalculate
+	 * all synchronization information for the subscriber.
+	 * @param resource
+	 * @param depth
+	 */
+	private void reset(int type) {
+		IResource[] resources = set.getSubscriber().roots(); 
+		for (int i = 0; i < resources.length; i++) {
+			queueEvent(new Event(resources[i], type, IResource.DEPTH_INFINITE));			
+		}
+	}
 }
