@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
@@ -19,6 +20,8 @@ import org.eclipse.team.ui.synchronize.views.DecoratingColorLabelProvider;
 import org.eclipse.team.ui.synchronize.views.SyncInfoLabelDecorator;
 
 public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDiffTreeViewerConfiguration {
+
+	private boolean isGroupIncomingByComment;
 
 	private static class CVSLabelDecorator extends LabelProvider implements ILabelDecorator  {
 		public String decorateText(String input, Object element) {
@@ -50,6 +53,7 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	
 	public CVSSynchronizeViewCompareConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
 		super(view, participant);
+		participant.addPropertyChangeListener(this);
 	}
 	
 	/* (non-Javadoc)
@@ -57,5 +61,43 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	 */
 	protected ILabelProvider getLabelProvider() {
 		return new DecoratingColorLabelProvider(new SyncInfoLabelDecorator(), new CVSLabelDecorator());
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#getContentProvider()
+	 */
+	protected IStructuredContentProvider getContentProvider() {
+		if(isGroupIncomingByComment() && getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
+			return new ChangeLogContentProvider();
+		} else {
+			return super.getContentProvider();
+		}
+	}
+	
+	public boolean isGroupIncomingByComment() {
+		return isGroupIncomingByComment;
+	}
+	
+	public void setGroupIncomingByComment(boolean enabled) {
+		this.isGroupIncomingByComment = enabled;
+		if(getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
+			getViewer().setContentProvider(getContentProvider());
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {
+		String property = event.getProperty();
+		if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE)) {
+			int oldMode = ((Integer)event.getOldValue()).intValue();
+			int newMode = ((Integer)event.getNewValue()).intValue();
+			if(newMode == TeamSubscriberParticipant.INCOMING_MODE || 
+			   oldMode == TeamSubscriberParticipant.INCOMING_MODE) {
+				getViewer().setContentProvider(getContentProvider());
+			}
+		}
+		super.propertyChange(event);
 	}
 }

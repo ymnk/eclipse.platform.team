@@ -17,10 +17,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.views.SyncInfoSetTreeContentProvider;
 
 /**
@@ -29,26 +28,21 @@ import org.eclipse.team.ui.synchronize.views.SyncInfoSetTreeContentProvider;
 public class ChangeLogContentProvider extends SyncInfoSetTreeContentProvider {
 	
 	private Map commentRoots = new HashMap();
+//	private SyncInfoSetContentProvider oldProvider;
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
-	 */
+	public ChangeLogContentProvider() {
+//		this.oldProvider = provider;
+	}
+	
 	public Object[] getChildren(Object element) {
 		IResource resource = getResource(element);
-		if(element instanceof SyncInfoSet){
-			// initialize case
-			return calculateRoots();
-		} else if(element instanceof ChangeLogDiffNode) {
-			return ((ChangeLogDiffNode)element).getChildren();
+		if(element instanceof SyncInfoDiffNode && resource != null && resource.getType() == IResource.ROOT){
+			return calculateRoots(((SyncInfoDiffNode)element).getSyncInfoSet());
 		}
-		return new Object[0];
+		return super.getChildren(element);
 	}
 
-	/**
-	 * @return
-	 */
-	private Object[] calculateRoots() {
-		SyncInfoSet set = getSyncInfoSet();
+	private Object[] calculateRoots(SyncInfoSet set) {
 		SyncInfo[] infos = set.members();
 		commentRoots.clear();
 		for (int i = 0; i < infos.length; i++) {
@@ -58,15 +52,15 @@ public class ChangeLogContentProvider extends SyncInfoSetTreeContentProvider {
 				changeRoot = new ChangeLogDiffNode(comment);
 				commentRoots.put(comment, changeRoot);
 			}
-			changeRoot.add(new SyncInfoDiffNode(infos[i]));
-		}
+			changeRoot.addChild(infos[i]);
+		}		
 		return (ChangeLogDiffNode[]) commentRoots.values().toArray(new ChangeLogDiffNode[commentRoots.size()]);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider#handleResourceAdditions(org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent)
 	 */
-	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
+	public void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
 			SyncInfo[] added = event.getAddedResources();
@@ -88,7 +82,7 @@ public class ChangeLogContentProvider extends SyncInfoSetTreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider#handleResourceRemovals(org.eclipse.team.ui.synchronize.ISyncInfoSetChangeEvent)
 	 */
-	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
+	public void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
 		AbstractTreeViewer tree = getTreeViewer();
 		if (tree != null) {
 			IResource[] roots = event.getRemovedResources();

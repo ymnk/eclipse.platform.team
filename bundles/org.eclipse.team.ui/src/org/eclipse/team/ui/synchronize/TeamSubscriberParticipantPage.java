@@ -209,6 +209,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			workingSetGroup.fillActionBars(actionBars);
 			menu.add(new Separator());
 			menu.add(new Separator());
+			menu.add(new Separator("others"));
+			menu.add(new Separator());
 			menu.add(configureSchedule);
 			menu.add(new Separator());
 			menu.add(showPreferences);

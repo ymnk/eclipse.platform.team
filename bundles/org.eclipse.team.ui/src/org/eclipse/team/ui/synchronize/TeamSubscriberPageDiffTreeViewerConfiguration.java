@@ -37,6 +37,10 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 		this.participant = participant;
 	}
 	
+	protected TeamSubscriberParticipant getParticipant() {
+		return participant;
+	}
+	
 	protected void initializeActions(StructuredViewer treeViewer) {
 		super.initializeActions(treeViewer);
 		openWithActions = new OpenWithActionGroup(view, participant);

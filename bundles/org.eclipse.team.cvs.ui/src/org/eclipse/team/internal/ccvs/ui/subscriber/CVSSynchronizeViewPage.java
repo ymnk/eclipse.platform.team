@@ -14,17 +14,21 @@ import java.util.*;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IActionDelegate;
 
 public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncSetChangedListener {
 	
 	private List delegates = new ArrayList(2);
+	private CVSSynchronizeViewCompareConfiguration config;
+	private Action groupByComment;
 
 	protected class CVSActionDelegate extends Action {
 		private IActionDelegate delegate;
@@ -50,6 +54,12 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 
 	public CVSSynchronizeViewPage(TeamSubscriberParticipant participant, ISynchronizeView view) {
 		super(participant, view);
+		groupByComment = new Action("Group By Comment", Action.AS_CHECK_BOX) {
+			public void run() {
+				config.setGroupIncomingByComment(!config.isGroupIncomingByComment());
+				setChecked(config.isGroupIncomingByComment());
+			}
+		};
 	}	
 	
 	/*
@@ -62,7 +72,16 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		getSyncInfoSet().removeSyncSetChangedListener(this);
 		CVSUIPlugin.removePropertyChangeListener(this);
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#setActionBars(org.eclipse.ui.IActionBars)
+	 */
+	public void setActionBars(IActionBars actionBars) {
+		super.setActionBars(actionBars);
+		IMenuManager mgr = actionBars.getMenuManager();
+		mgr.appendToGroup("others", groupByComment);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -116,6 +135,9 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#createSyncInfoSetCompareConfiguration()
 	 */
 	protected TeamSubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
-		return new CVSSynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
+		if(config == null) {
+			config = new CVSSynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
+		}
+		return config;
 	}
 }
