@@ -91,18 +91,40 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 */
 	public static void map(IProject project, String id) throws TeamException {
 		try {
+			RepositoryProvider existingProvider = null;
+
+			if(project.getPersistentProperty(PROVIDER_PROP_KEY) != null)
+				existingProvider = getProvider(project);	// get the real one, not the nature one
+			
+			//if we already have a provider, and its the same ID, we're ok
+			//if the ID's differ, unmap the existing.
+			if(existingProvider != null) {
+				if(existingProvider.getID().equals(id))
+					return;	//nothing to do
+				else
+					unmap(project);
+			}
+			
 			RepositoryProvider provider = mapNewProvider(project, id);
-			provider.configureProject();	//xxx not sure if needed since they control with wiz page and can configure all they want
-			//and mark it with the persistent ID for filtering and session persistence
 			project.setPersistentProperty(PROVIDER_PROP_KEY, id);
+			
+			try {	
+				provider.configureProject();	//xxx not sure if needed since they control with wiz page and can configure all they want
+			} catch (CoreException e) {
+				project.setPersistentProperty(PROVIDER_PROP_KEY, null);
+				throw e;
+			}
+			//and mark it with the persistent ID for filtering and session persistence
 		} catch (CoreException e) {
 			throw TeamPlugin.wrapException(e);
 		}
 	}	
 
 	/*
-	 * Instantiate the provider denoted by ID and store in session property.
+	 * Instantiate the provider denoted by ID and store it in the session property.
 	 * Return the new provider instance.
+	 * @throws TeamException if the we can't instantiate the provider,
+	 * or if the set session property fails from core
 	 */
 	private static RepositoryProvider mapNewProvider(IProject project, String id) throws TeamException {
 		RepositoryProvider provider = newProvider(id); 	// instantiate via extension point
@@ -126,10 +148,21 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 */
 	public static void unmap(IProject project) throws TeamException {
 		try{
-			if(project.getSessionProperty(PROVIDER_PROP_KEY) == null)
+			boolean hasProviderAssociated = project.getPersistentProperty(PROVIDER_PROP_KEY) != null;
+			
+			//If you tried to remove a non-existance nature it would fail, so we need to as well with the persistent prop
+			if(! hasProviderAssociated)
 				throw new TeamException(Policy.bind("RepositoryProvider.No_Provider_Registered", project.getName())); //$NON-NLS-1$
+
+			//This will instantiate one if it didn't already exist,
+			//which is ok since we need to call deconfigure() on it for proper lifecycle
+			getProvider(project).deconfigure();
+							
 			project.setSessionProperty(PROVIDER_PROP_KEY, null);
 			project.setPersistentProperty(PROVIDER_PROP_KEY, null);
+			
+			//removing the nature would've caused project description delta, so trigger one
+			project.setDescription(project.getDescription(), null);	
 		} catch (CoreException e) {
 			throw TeamPlugin.wrapException(e);
 		}
@@ -263,17 +296,30 @@ public abstract class RepositoryProvider implements IProjectNature {
 	final public static RepositoryProvider getProvider(IProject project) {
 		try {					
 			if(project.isAccessible()) {
-				//context to hide provider local from accidental reuse
+				
+				//-----------------------------
+				//First check if we are using the persistent property to tag the project with provider
+
+				//
+				String id = project.getPersistentProperty(PROVIDER_PROP_KEY);
 				RepositoryProvider provider = lookupProviderProp(project);  //throws core, we will reuse the catching already here
+
+				//If we have the session but not the persistent, we have a problem
+				//because we somehow got only halfway through mapping before
+				if(id == null && provider != null) {
+					TeamPlugin.log(IStatus.ERROR, Policy.bind("RepositoryProvider.propertyMismatch", project.getName()), null);
+					project.setSessionProperty(PROVIDER_PROP_KEY, null); //clears it
+					return null;
+				}
+				
 				if(provider != null)
 					return provider;
 					
 				//check if it has the ID as a persistent property, if yes then instantiate provider
-				String id = project.getPersistentProperty(PROVIDER_PROP_KEY);
 				if(id != null)
 					return mapNewProvider(project, id);
 				
-				//couldn't find using new method, fall back to lookup using natures for backwards compatibility
+				//Couldn't find using new method, fall back to lookup using natures for backwards compatibility
 				//-----------------------------
 								
 				IProjectDescription projectDesc = project.getDescription();
