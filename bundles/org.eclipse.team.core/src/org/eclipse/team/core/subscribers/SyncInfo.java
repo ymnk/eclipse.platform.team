@@ -123,6 +123,13 @@ public class SyncInfo implements IAdaptable {
 	 */
 	public static final int MANUAL_CONFLICT = 64;
 	
+	/**
+	 * Sync constant (value 128) indicating that the local resource is not controlled
+	 * by the subscriber. This can occur for either an OUTGOING | ADDITION or a CONFLICTING | ADDITION.
+	 * Uncontrolled resources may be excluded from the operations of ITeamOperation (except control).
+	 */
+	public static final int UNCONTROLLED = 128;
+	
 	/*====================================================================
 	 * Members:
 	 *====================================================================*/
