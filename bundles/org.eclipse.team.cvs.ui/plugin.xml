@@ -32,7 +32,7 @@
 
 <!-- *************** Synchronize Wizards **************** -->
    <extension
-         point="org.eclipse.team.ui.synchronizationWizards">
+         point="org.eclipse.team.ui.synchronizeWizards">
       <wizard
             name="%WorkspaceSynchronizeWizard.name"
             icon="icons/full/eview16/cvs_persp.gif"

@@ -17,7 +17,6 @@ import java.util.List;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.ICheckStateListener;
@@ -49,6 +48,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.IWorkingSetSelectionDialog;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
+import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
@@ -79,6 +79,19 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	private Text workingSetLabel;
 	private IWorkingSet workingSet;
 	private List resources;
+	
+	/**
+	 * Content provider that accepts a <code>SubscriberParticipant</code> as input and
+	 * returns the participants root resources.
+	 */
+	class MyContentProvider extends BaseWorkbenchContentProvider {
+		public Object[] getChildren(Object element) {
+			if(element instanceof List) {
+				return (IResource[]) ((List)element).toArray(new IResource[((List)element).size()]);
+			}
+			return super.getChildren(element);
+		}
+	}
 	
 	/**
 	 * Label decorator that will display the full path for participant roots that are folders. This
@@ -139,7 +152,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			//data.widthHint = 200;
 			data.heightHint = 100;
 			fViewer.getControl().setLayoutData(data);
-			fViewer.setContentProvider(new ArrayContentProvider());
+			fViewer.setContentProvider(new MyContentProvider());
 			fViewer.setLabelProvider( new DecoratingLabelProvider(
 					new MyLabelProvider(),
 					PlatformUI.getWorkbench().getDecoratorManager().getLabelDecorator()));

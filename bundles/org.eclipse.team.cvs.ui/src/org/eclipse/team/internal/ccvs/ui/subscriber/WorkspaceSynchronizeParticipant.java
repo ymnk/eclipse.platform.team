@@ -154,25 +154,20 @@ public class WorkspaceSynchronizeParticipant extends CVSParticipant {
 	public void init(String secondaryId, IMemento memento) throws PartInitException {
 		super.init(secondaryId, memento);
 		IMemento[] rootNodes = memento.getChildren(CTX_ROOT);
-		if(rootNodes == null || rootNodes.length == 0) {
-			// Assume workspace scope
-			return;
-		}
-		
-		List resources = new ArrayList();
-		for (int i = 0; i < rootNodes.length; i++) {
-			IMemento rootNode = rootNodes[i];
-			IPath path = new Path(rootNode.getString(CTX_ROOT_PATH)); //$NON-NLS-1$
-			IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(path, true /* include phantoms */);
-			if(resource != null) {
-				resources.add(resource);
+		if(rootNodes != null) {
+			List resources = new ArrayList();
+			for (int i = 0; i < rootNodes.length; i++) {
+				IMemento rootNode = rootNodes[i];
+				IPath path = new Path(rootNode.getString(CTX_ROOT_PATH)); //$NON-NLS-1$
+				IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(path, true /* include phantoms */);
+				if(resource != null) {
+					resources.add(resource);
+				}
+			}
+			if(!resources.isEmpty()) {
+				this.resources = (IResource[]) resources.toArray(new IResource[resources.size()]);
 			}
 		}
-		if(resources.isEmpty()) {
-			// Assume workspace scope
-			return;
-		}
-		this.resources = (IResource[]) resources.toArray(new IResource[resources.size()]);
 		Subscriber subscriber = CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber();
 		setSubscriber(subscriber);
 	}
