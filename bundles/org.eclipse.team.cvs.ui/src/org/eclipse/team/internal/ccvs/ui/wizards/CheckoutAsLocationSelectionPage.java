@@ -101,8 +101,10 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
-		Composite composite= createComposite(parent, 3);
+		Composite composite= createComposite(parent, 1);
 		setControl(composite);
+		// required in order to use setButtonLayoutData
+		initializeDialogUnits(composite);
 		
 		// WorkbenchHelp.setHelp(composite, IHelpContextIds.CHECKOUT_INTO_RESOURCE_SELECTION_PAGE);
 
@@ -110,9 +112,6 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 			new Button(composite, SWT.CHECK | SWT.RIGHT);
 		useDefaultsButton.setText(Policy.bind("CheckoutAsLocationSelectionPage.useDefaultLabel")); //$NON-NLS-1$
 		useDefaultsButton.setSelection(this.useDefaults);
-		GridData buttonData = new GridData();
-		buttonData.horizontalSpan = 3;
-		useDefaultsButton.setLayoutData(buttonData);
 
 		createUserSpecifiedProjectLocationGroup(composite, !this.useDefaults);
 
@@ -136,8 +135,11 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 	 * @param projectGroup the parent composite
 	 * @param enabled - sets the initial enabled state of the widgets
 	 */
-	private Composite createUserSpecifiedProjectLocationGroup(Composite projectGroup, boolean enabled) {
+	private Composite createUserSpecifiedProjectLocationGroup(Composite parent, boolean enabled) {
 	
+		// This group needs 3 columns
+		Composite projectGroup = createComposite(parent, 3);
+		
 		// location label
 		locationLabel = new Label(projectGroup, SWT.NONE);
 		if (isSingleFolder()) {
@@ -149,13 +151,12 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 
 		// project location entry field
 		locationPathField = new Text(projectGroup, SWT.BORDER);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
-		//data.widthHint = SIZING_TEXT_FIELD_WIDTH;
+		GridData data = new GridData(GridData.FILL_HORIZONTAL);
+		data.widthHint = SIZING_TEXT_FIELD_WIDTH;
 		locationPathField.setLayoutData(data);
 		locationPathField.setEnabled(enabled);
 
 		// browse button
-		// TODO: Browse button does not appear
 		this.browseButton = new Button(projectGroup, SWT.PUSH);
 		this.browseButton.setText(Policy.bind("CheckoutAsLocationSelectionPage.browseLabel")); //$NON-NLS-1$
 		this.browseButton.addSelectionListener(new SelectionAdapter() {

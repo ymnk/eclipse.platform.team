@@ -251,12 +251,12 @@ public class CheckoutIntoOperation extends CheckoutOperation {
 					if (resource == null) return;
 					FolderSyncInfo info = folder.getFolderSyncInfo();
 					if (info.isSameMapping(remoteInfo)) {
-							throw new CVSException(Policy.bind("CheckoutIntoOperation.targetIsPrunedFolder", 
-								new Object[] {
-									remoteFolder.getName(), 
-									targetFolder.getIResource().getFullPath().toString(),
-									resource.getFullPath().toString()
-								}));
+						throw new CVSException(Policy.bind("CheckoutIntoOperation.mappingAlreadyExists", 
+							new Object[] {
+								remoteFolder.getName(), 
+								targetFolder.getIResource().getFullPath().toString(),
+								resource.getFullPath().toString()
+							}));
 					}
 					folder.acceptChildren(this);
 				}

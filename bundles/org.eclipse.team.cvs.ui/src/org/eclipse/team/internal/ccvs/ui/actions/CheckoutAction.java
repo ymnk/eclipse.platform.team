@@ -32,6 +32,8 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.operations.CVSOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.CheckoutMultipleProjectsOperation;
 import org.eclipse.team.internal.ui.IPromptCondition;
 import org.eclipse.team.internal.ui.PromptingDialog;
 
@@ -45,24 +47,12 @@ public class CheckoutAction extends CVSAction {
 	 * @see CVSAction#execute(IAction)
 	 */
 	protected void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		run(new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				try {
-					ICVSRemoteFolder[] remoteFolders = getSelectedRemoteFolders();
-					String taskName = getTaskName(remoteFolders);
-					monitor.beginTask(taskName, 100);
-					monitor.setTaskName(taskName);
-					String[] expansions = getExpansions(remoteFolders, Policy.subMonitorFor(monitor, 10));
-					if (!checkValidExpansions(expansions)) return;
-					if (!promptForOverwrite(expansions)) return;
-					checkoutModules(remoteFolders, Policy.subMonitorFor(monitor, 90));
-				} catch (CVSException e) {
-					throw new InvocationTargetException(e);
-				} finally {
-					monitor.done();
-				}
-			}
-		}, true /* cancelable */, PROGRESS_DIALOG);
+		try {
+			new CheckoutMultipleProjectsOperation(getShell(), getSelectedRemoteFolders(), null)
+				.executeWithProgress();
+		} catch (CVSException e) {
+			throw new InvocationTargetException(e);
+		}
 	}
 
 	/*
@@ -111,17 +101,6 @@ public class CheckoutAction extends CVSAction {
 													  Policy.bind("ReplaceWithAction.confirmOverwrite"),
 													  true /* all or nothing*/);//$NON-NLS-1$
 		return (prompt.promptForMultiple().length == projects.length);
-	}
-	
-	/*
-	 * Peform the checkout of the remote modules
-	 */
-	protected void checkoutModules(ICVSRemoteFolder[] remoteFolders, IProgressMonitor monitor) throws InvocationTargetException {
-		try {					
-			CVSWorkspaceRoot.checkout(remoteFolders, null, monitor);
-		} catch (TeamException e) {
-			throw new InvocationTargetException(e);
-		}
 	}
 	
 	/**
