@@ -138,10 +138,8 @@ public class SyncSet {
 		if (resource.getType() == IResource.ROOT) {
 			// TODO: A subscriber may not be rooted at the project!!!
 			return syncSet;
-		} else if (resource.getType() == IResource.FILE) {
-			return new SyncFile(syncSet, resource);
 		} else {
-			return new SyncFolder(syncSet, resource);
+			return new SyncResource(syncSet, resource);
 		}
 	}
 	

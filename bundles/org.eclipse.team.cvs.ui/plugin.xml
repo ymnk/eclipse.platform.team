@@ -569,6 +569,13 @@
                helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_commit_action"
                id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.commit">
          </action>
+         <action
+               label="%CVSWorkspaceSubscriber.confirmMerged.label"
+               tooltip="%CVSWorkspaceSubscriber.confirmMerged.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberConfirmMergedAction"
+               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_confirm_merged_action"
+               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.confirmMerged">
+         </action>
       </subscriberContribution>
    </extension>
    

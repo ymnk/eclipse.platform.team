@@ -200,4 +200,12 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 			CVSWorkspaceRoot.getCVSFolderFor(ResourcesPlugin.getWorkspace().getRoot()),
 			cvsResources);
 	}
+	
+	public CVSSyncInfo getCVSSyncInfo(SyncResource syncResource) {
+		SyncInfo info = syncResource.getSyncInfo();
+		if (info instanceof CVSSyncInfo) {
+			return (CVSSyncInfo)info;
+		}
+		return null;
+	}
 }
