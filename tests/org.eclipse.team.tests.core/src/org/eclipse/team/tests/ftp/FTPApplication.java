@@ -100,7 +100,7 @@ public class FTPApplication implements IPlatformRunnable {
 						tok.nextToken(),
 						tok.nextToken(),
 						tok.nextToken().equals("true"));
-					client = new FTPClient(location, proxy, listener);
+					client = new FTPClient(location, proxy, listener, FTPClient.USE_DEFAULT_TIMEOUT);
 					client.open(getProgressMonitor());
 				} else if (command.equals("close")) {
 					client.close(getProgressMonitor());

@@ -133,7 +133,7 @@ public class FTPTestSetup extends TestSetup {
 	
 	public static FTPClient openFTPConnection(URL url) throws FTPException {
 		FTPServerLocation location = FTPServerLocation.fromURL(url, false);
-		FTPClient client = new FTPClient(location, null, getListener());
+		FTPClient client = new FTPClient(location, null, getListener(), FTPClient.USE_DEFAULT_TIMEOUT);
 		client.open(DEFAULT_PROGRESS_MONITOR);
 		String urlPath = url.getPath();
 		// Strip leading slash
