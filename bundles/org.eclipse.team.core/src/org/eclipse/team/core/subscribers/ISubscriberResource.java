@@ -17,6 +17,8 @@ import org.eclipse.team.core.TeamException;
 /**
  * This interface provides access to a resource that is controlled
  * by a particular subscriber. The resource may be local or remote.
+ * 
+ * @since 3.0
  */
 public interface ISubscriberResource {
 	

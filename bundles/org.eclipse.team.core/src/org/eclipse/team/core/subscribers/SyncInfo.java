@@ -41,6 +41,8 @@ import org.eclipse.team.internal.core.Policy;
  * [Issue: "Gender changes" are also an interesting aspect...
  * ]
  * </p>
+ * 
+ * @since 3.0
  */
 public class SyncInfo implements IAdaptable {
 	

@@ -136,6 +136,22 @@ public class TeamTest extends EclipseWorkspaceTest {
 		}
 	}
 
+	/*
+	 * This method creates a project with the given resources, imports
+	 * it to CVS and checks it out
+	 */
+	protected IProject createProject(String prefix, String[] resources) throws CoreException, TeamException {
+		IProject project = getUniqueTestProject(prefix);
+		buildResources(project, resources, true);
+		return project;
+	}
+	
+	/*
+	 * Create a test project using the currently running test case as the project name prefix
+	 */
+	protected IProject createProject(String[] strings) throws TeamException, CoreException {
+		return createProject(getName(), strings);
+	}
 	
 	public void sleep(int ms) {
 		try {
