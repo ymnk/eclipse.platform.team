@@ -25,7 +25,7 @@ public class Remove extends Command {
 		
 		// Send all modified files to the server
 		// XXX Does the command line client send all modified files?
-		new ModifiedFileSender(session, monitor).visit(resources);
+		new ModifiedFileSender(session, monitor).visit(session, resources);
 	}
 }
 

@@ -50,6 +50,6 @@ public class Diff extends Command {
 
 		checkResourcesManaged(resources);
 		DiffStructureVisitor visitor = new DiffStructureVisitor(session, monitor);
-		visitor.visit(resources);
+		visitor.visit(session, resources);
 	}
 }

@@ -283,7 +283,7 @@ public abstract class Command {
 		boolean emptyFolders, IProgressMonitor monitor) throws CVSException {
 		checkResourcesManaged(resources);
 		
-		new FileStructureVisitor(session, emptyFolders, true, monitor).visit(resources);
+		new FileStructureVisitor(session, emptyFolders, true, monitor).visit(session, resources);
 	}
 
 	/**

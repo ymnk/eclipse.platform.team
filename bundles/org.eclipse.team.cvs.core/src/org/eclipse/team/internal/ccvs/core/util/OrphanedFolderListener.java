@@ -57,11 +57,36 @@ public class OrphanedFolderListener extends ResourceDeltaVisitor {
 	}
 	
 	/*
+	 * Handle the case where an added file has the same name as a "cvs removed" file
+	 * by restoring the sync info to what it was before the delete
+	 */
+	private void handleReplacedDeletion(IResource resource) {
+		if (resource.getType() == IResource.FILE) {
+			try {
+				ICVSFile mFile = (ICVSFile)Session.getManagedResource(resource);
+				if (mFile.isManaged()) {
+					ResourceSyncInfo info = mFile.getSyncInfo();
+					if (info.isDeleted()) {
+						mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions()));
+					}
+					CVSProviderPlugin.getSynchronizer().reload(resource.getLocation().toFile(), Policy.monitorFor(null));
+				}
+			} catch (CVSException e) {
+				CVSProviderPlugin.log(e);
+			}
+		}
+	}
+	
+	/*
 	 * @see ResourceDeltaVisitor#handleAdded(IResource[])
 	 */
 	protected void handleAdded(IResource[] resources) {
 		for (int i = 0; i < resources.length; i++) {
-			handleOrphanedSubtree(resources[i]);
+			if (resources[i].getType() == IResource.FOLDER) {
+				handleOrphanedSubtree(resources[i]);
+			} else if (resources[i].getType() == IResource.FILE) {
+				handleReplacedDeletion(resources[i]);
+			}
 		}
 	}
 

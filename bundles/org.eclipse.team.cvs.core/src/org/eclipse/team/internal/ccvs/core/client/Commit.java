@@ -33,7 +33,7 @@ public class Commit extends Command {
 		
 		// Send all changed files to the server	
 		ModifiedFileSender visitor = new ModifiedFileSender(session, monitor);
-		visitor.visit(resources);
+		visitor.visit(session, resources);
 		
 		// Send the changed files as arguments
 		// XXX Is this the way the command line client works?

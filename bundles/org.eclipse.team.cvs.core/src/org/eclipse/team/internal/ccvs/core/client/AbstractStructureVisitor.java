@@ -5,8 +5,11 @@ package org.eclipse.team.internal.ccvs.core.client;
  * All Rights Reserved.
  */
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -157,11 +160,40 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 	 * This method is used to visit a set of ICVSResources. Using it ensures
 	 * that a common parent between the set of resources is only sent once
 	 */
-	public void visit(ICVSResource[] resources) throws CVSException {
+	public void visit(Session session, ICVSResource[] resources) throws CVSException {
+		
+		// Sort the resources to avoid sending the same directory multiple times
+		List resourceList = new ArrayList(resources.length);
+		resourceList.addAll(Arrays.asList(resources));
+		final ICVSFolder localRoot = session.getLocalRoot();
+		Collections.sort(resourceList, new Comparator() {
+			public int compare(Object object1, Object object2) {
+				ICVSResource resource1 = (ICVSResource)object1;
+				ICVSResource resource2 = (ICVSResource)object2;
+				try {
+					String path1 = resource1.getParent().getRelativePath(localRoot);
+					String path2 = resource2.getParent().getRelativePath(localRoot);
+					int pathCompare = path1.compareTo(path2);
+					if (pathCompare == 0) {
+						if (resource1.isFolder() == resource2.isFolder()) {
+							return resource1.getName().compareTo(resource2.getName());
+						} else if (resource1.isFolder()) {
+							return 1;
+						} else {
+							return -1;
+						}
+					} else {
+						return pathCompare;
+					}
+				} catch (CVSException e) {
+					return resource1.getName().compareTo(resource2.getName());
+				}
+			}
+		});
 
 		// Visit all the resources
-		for (int i = 0; i < resources.length; i++) {
-			resources[i].accept(this);
+		for (int i = 0; i < resourceList.size(); i++) {
+			((ICVSResource)resourceList.get(i)).accept(this);
 		}
 	}
 	

@@ -84,9 +84,9 @@ public class Tag extends Command {
 
 		// Send all folders that are already managed to the server
 		if (customBehaviorEnabled) {
-			new TagFileSender(session, monitor).visit(resources);
+			new TagFileSender(session, monitor).visit(session, resources);
 		} else {
-			new FileStructureVisitor(session, false, false, monitor).visit(resources);
+			new FileStructureVisitor(session, false, false, monitor).visit(session, resources);
 		}
 	}
 }
