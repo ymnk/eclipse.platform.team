@@ -92,7 +92,7 @@ public class EclipseTest extends ResourceTest {
 	
 	protected void addResources(IResource[] newResources) throws CoreException {
 		if (newResources.length == 0) return;
-		executeHeadless(new AddOperation(null, newResources));
+		executeHeadless(new AddOperation(null, RepositoryProviderOperation.asResourceMappers(newResources)));
 	}
 	
 	/**
@@ -267,14 +267,14 @@ public class EclipseTest extends ResourceTest {
 	 */
 	protected void commitResources(IResource[] resources, int depth, String message) throws TeamException, CoreException {
 		if (resources.length == 0) return;
-		executeHeadless(new CommitOperation(null, resources, new Command.LocalOption[] { Commit.makeArgumentOption(Command.MESSAGE_OPTION, message) }));
+		executeHeadless(new CommitOperation(null, RepositoryProviderOperation.asResourceMappers(resources), new Command.LocalOption[] { Commit.makeArgumentOption(Command.MESSAGE_OPTION, message) }));
 	}
 	
 	/**
 	 * Commit the resources from an existing container to the CVS repository
 	 */
 	public void tagProject(IProject project, CVSTag tag, boolean force) throws TeamException {
-		ITagOperation op = new TagOperation((IWorkbenchPart)null, new IResource[] {project});
+		ITagOperation op = new TagOperation((IWorkbenchPart)null, RepositoryProviderOperation.asResourceMappers(new IResource[] {project}));
 		runTag(op, tag, force);
 	}
 	
@@ -300,7 +300,7 @@ public class EclipseTest extends ResourceTest {
 		}
 	}
 	public void makeBranch(IResource[] resources, CVSTag version, CVSTag branch, boolean update) throws CVSException {
-		BranchOperation op = new BranchOperation(null, resources);
+		BranchOperation op = new BranchOperation(null, RepositoryProviderOperation.asResourceMappers(resources));
 		op.setTags(version, branch, update);
 		executeHeadless(op);
 	}

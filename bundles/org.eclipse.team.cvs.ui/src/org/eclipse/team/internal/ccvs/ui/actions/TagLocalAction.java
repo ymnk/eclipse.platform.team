@@ -40,9 +40,9 @@ public class TagLocalAction extends TagAction {
 	}
 
 	protected ITagOperation createTagOperation() {
-		return new TagOperation(getTargetPart(), resources);
+		return new TagOperation(getTargetPart(), getCVSResourceMappings());
 	}
-	
+    
 	/**
 	 * Note: This method is designed to be overridden by test cases.
 	 */
@@ -55,16 +55,6 @@ public class TagLocalAction extends TagAction {
 				return Policy.bind("TagAction.uncommittedChanges", resource.getName());//$NON-NLS-1$
 			}
 		};
-	}
-	
-	/**
-	 * Return the resources that have been selected by the user. The user has been given 
-	 * a chance to remove any resources with outgoing changes so all provided resources
-	 * are to be tagged.
-	 * @return Returns the resources.
-	 */
-	protected IResource[] getResources() {
-		return resources;
 	}
 
 }

@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.operations;
 import java.util.*;
 
 import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.mapping.IResourceMapper;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -30,15 +31,15 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public class AddOperation extends RepositoryProviderOperation {
 	
-	public AddOperation(IWorkbenchPart part, IResource[] resources) {
-		super(part, resources);
+	public AddOperation(IWorkbenchPart part, IResourceMapper[] mappers) {
+		super(part, mappers);
 	}
-	
-	/* (non-Javadoc)
+
+    /* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#execute(org.eclipse.team.internal.ccvs.core.CVSTeamProvider, org.eclipse.core.resources.IResource[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected void execute(CVSTeamProvider provider, IResource[] resources, IProgressMonitor monitor) throws CVSException, InterruptedException {
-		add(provider, resources, IResource.DEPTH_INFINITE, monitor);
+	protected void execute(CVSTeamProvider provider, IResource[] resources, boolean recurse, IProgressMonitor monitor) throws CVSException, InterruptedException {
+		add(provider, resources, recurse ? IResource.DEPTH_INFINITE : IResource.DEPTH_ONE, monitor);
 	}
 	
 	/* (non-Javadoc)

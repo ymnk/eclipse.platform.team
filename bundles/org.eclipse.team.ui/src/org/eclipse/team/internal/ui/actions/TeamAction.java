@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.actions;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -167,6 +168,51 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	}
 	
 	/**
+     * Return the selected resource mappins that contain resources in 
+     * projects that are associated with a repository of the given id.
+     * @param providerId the repository provider id
+     * @return the resource mappings that contain resources associated with the given provider
+	 */
+    protected IResourceMapper[] getSelectedResourceMappers(String providerId) {
+        Object[] elements = getSelectedAdaptables(selection, IResourceMapper.class);
+        ArrayList providerMappings = new ArrayList();
+        for (int i = 0; i < elements.length; i++) {
+            IResourceMapper element = (IResourceMapper) elements[i];
+            if (providerId == null || isMappedToProvider(element, providerId)) {
+                providerMappings.add(element);
+            }
+        }
+        return (IResourceMapper[]) providerMappings.toArray(new IResourceMapper[providerMappings.size()]);
+    }
+    
+    private boolean isMappedToProvider(IResourceMapper element, String providerId) {
+        IProject[] projects = getProjects(element);
+        for (int k = 0; k < projects.length; k++) {
+            IProject project = projects[k];
+            RepositoryProvider provider = RepositoryProvider.getProvider(project);
+            if (provider.getID().equals(providerId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static IProject[] getProjects(IResourceMapper element) {
+        try {
+            ITraversal[] traversals = element.getTraversals(null, null);
+            Set projects = new HashSet();
+            for (int i = 0; i < traversals.length; i++) {
+                ITraversal traversal = traversals[i];
+                projects.addAll(Arrays.asList(traversal.getProjects()));
+            }
+            return (IProject[]) projects.toArray(new IProject[projects.size()]);
+        } catch (CoreException e) {
+            TeamPlugin.log(e);
+            return new IProject[0];
+        }
+    }
+
+    /**
 	 * Returns the selected resource based on the available traversals.
 	 * 
 	 * @return the selected resources based on the available traversals.

@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.mapping.IResourceMapper;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.*;
@@ -31,8 +32,8 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public class CommitOperation extends SingleCommandOperation {
 
-	public CommitOperation(IWorkbenchPart part, IResource[] resources, LocalOption[] options) {
-		super(part, resources, options);
+	public CommitOperation(IWorkbenchPart part, IResourceMapper[] mappers, LocalOption[] options) {
+		super(part, mappers, options);
 	}
 	
 	/**
@@ -41,41 +42,49 @@ public class CommitOperation extends SingleCommandOperation {
 	 * @return <code>true</code> if execution should continue
 	 */
 	public boolean performPrompting(IProgressMonitor monitor) throws CVSException, InvocationTargetException, InterruptedException {
-		monitor.beginTask(null, 20);
-		IResource[] resourcesToBeAdded = promptForResourcesToBeAdded(Policy.subMonitorFor(monitor, 10));
-		if (resourcesToBeAdded == null) return false;
-		String comment = promptForComment(getResources());
-		if (comment == null) return false;
-		addLocalOption(Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment));
-		if (resourcesToBeAdded.length > 0) {
-			new AddOperation(getPart(), resourcesToBeAdded)
-				.run(Policy.subMonitorFor(monitor, 10));
-		}
-		setResources(getSharedResources(getResources()));
-		monitor.done();
-		return true;
+		try {
+            monitor.beginTask(null, 20);
+            IResource[] resourcesToBeAdded = promptForResourcesToBeAdded(Policy.subMonitorFor(monitor, 10));
+            if (resourcesToBeAdded == null) return false;
+            String comment = promptForComment(getTraversalRoots());
+            if (comment == null) return false;
+            addLocalOption(Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment));
+            if (resourcesToBeAdded.length > 0) {
+            	new AddOperation(getPart(), RepositoryProviderOperation.asResourceMappers(resourcesToBeAdded))
+            		.run(Policy.subMonitorFor(monitor, 10));
+            }
+            //setResources(getSharedResources(getTraversalRoots()));
+            monitor.done();
+            return true;
+        } catch (CoreException e) {
+            throw CVSException.wrapException(e);
+        }
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public void execute(IProgressMonitor monitor) throws CVSException, InterruptedException {
-		// Ensure that a comment has been provided
-		if (!Command.MESSAGE_OPTION.isElementOf(getLocalOptions())) {
-			String comment = promptForComment(getResources());
-			if (comment == null) return;
-			addLocalOption(Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment));
-		}
-		super.execute(monitor);
+		try {
+            // Ensure that a comment has been provided
+            if (!Command.MESSAGE_OPTION.isElementOf(getLocalOptions(true))) {
+            	String comment = promptForComment(getTraversalRoots());
+            	if (comment == null) return;
+            	addLocalOption(Commit.makeArgumentOption(Command.MESSAGE_OPTION, comment));
+            }
+            super.execute(monitor);
+        } catch (CoreException e) {
+            throw CVSException.wrapException(e);
+        }
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.operations.SingleCommandOperation#executeCommand(org.eclipse.team.internal.ccvs.core.client.Session, org.eclipse.team.internal.ccvs.core.CVSTeamProvider, org.eclipse.team.internal.ccvs.core.ICVSResource[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected IStatus executeCommand(Session session, CVSTeamProvider provider, ICVSResource[] resources, IProgressMonitor monitor) throws CVSException, InterruptedException {
+	protected IStatus executeCommand(Session session, CVSTeamProvider provider, ICVSResource[] resources, boolean recurse, IProgressMonitor monitor) throws CVSException, InterruptedException {
 		return Command.COMMIT.execute(session,
 				Command.NO_GLOBAL_OPTIONS,
-				getLocalOptions(),
+				getLocalOptions(recurse),
 				resources, 
 				null,
 				monitor);
@@ -142,9 +151,13 @@ public class CommitOperation extends SingleCommandOperation {
 	}
 	
 	protected IResource[] promptForResourcesToBeAdded(IProgressMonitor monitor) throws CVSException {
-		IResource[] unadded = getUnaddedResources(getResources(), monitor);
-		RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
-		return manager.promptForResourcesToBeAdded(getShell(), unadded);
+		try {
+            IResource[] unadded = getUnaddedResources(getTraversalRoots(), monitor);
+            RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
+            return manager.promptForResourcesToBeAdded(getShell(), unadded);
+        } catch (CoreException e) {
+            throw CVSException.wrapException(e);
+        }
 	}
 	
 	protected String promptForComment(IResource[] resourcesToCommit) {

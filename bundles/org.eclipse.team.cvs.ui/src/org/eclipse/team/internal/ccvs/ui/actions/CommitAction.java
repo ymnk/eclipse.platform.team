@@ -23,13 +23,13 @@ import org.eclipse.team.internal.ccvs.ui.operations.CommitOperation;
  * Action for checking in files to a CVS provider.
  * Prompts the user for a release comment.
  */
-public class CommitAction extends WorkspaceAction {
+public class CommitAction extends WorkspaceTraversalAction {
 	
 	/*
 	 * @see CVSAction#execute(IAction)
 	 */
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		final CommitOperation operation = new CommitOperation(getTargetPart(), getSelectedResources(), null);
+		final CommitOperation operation = new CommitOperation(getTargetPart(), getCVSResourceMappings(), null);
 		final boolean[] retVal = {true};
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {

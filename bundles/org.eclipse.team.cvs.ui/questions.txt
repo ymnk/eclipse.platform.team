@@ -1,0 +1,49 @@
+Questions/comments related to resource traversals
+
+Questions:
+
+1) It would be helpful to have an IResourceMapping#getProjects() to make project containment detection easier.
+Should we add this?
+
+2) Are heterogeneous selections supported?
+   - case 1: Two model objects that map to different providers
+   - case 2: A single model object that spans multiple providers
+   
+3) Ignored resource handling
+   - How do we handle a logical model element (i.e. traversals) that contains ignored resources 
+   (due to provider ignores) but are part of the model. This is easy for depth-zero traversals
+   but tricky for depth one and depth infinite.
+
+Pending Items:
+
+ - CVS commands need to respect DO_NOT_RECURSE flag
+
+ - Workspace subscriber refreshes are always deep but could be optimized to be shallow when possible
+
+ - Commit needs to be reworked but I'm postponing this until Silvio is done
+
+ - Sync/Compare with Tag/Merge are a bit more complicated. Deferring util later.
+
+ - EditAction, UneditAction, ShowEditorsAction, GenerateDiffFileAction does not follow the standard action/operation pattern. Deferring.
+
+ - TagLocalAction requires dirty prompting: need a dialog which shows mappers and traversals
+    - also the TagAction hierarchy is smelly due to shared code between local and remote tagging
+ 
+ - Synchronize view actions?
+
+Summary of changes:
+
+ - actions that support resource mappers are subclasses of WorkspaceTraversalAction
+ 
+ - RepositoryProviderAction handles most of the work for translating from a mapper to resources.
+   Subclasses decide on what the depth is using a recurse parameter on the execute method.
+   
+Actions that don't need to change:
+
+ - UnmanageAction is always deep and should only be on IProject and things that adapt to a project.
+ 
+ - Compare/Replace with revision, ShowAnnotationAction, ShowResourceInHistoryAction are single select 
+   on IFile (and adapters).
+   
+ - Although SetKeywordSubstitutionAction could change, my inclination is to leave it as is since it is
+   not part of the day to day workflow and its use should decline now the better handle types up front.

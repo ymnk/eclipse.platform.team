@@ -12,73 +12,80 @@ package org.eclipse.team.internal.ccvs.ui.wizards;
 
  
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.ITraversal;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
-import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.*;
-import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.UpdateOperation;
 import org.eclipse.team.internal.ccvs.ui.tags.*;
-import org.eclipse.team.internal.ccvs.ui.tags.TagSourceWorkbenchAdapter;
-import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 import org.eclipse.ui.IWorkbenchPart;
 
 public class UpdateWizard extends Wizard {
 
-	private IResource[] resources;
+	private IResourceMapper[] mappers;
 	private final IWorkbenchPart part;
 	private TagSelectionWizardPage tagSelectionPage;
 	
-	public UpdateWizard(IWorkbenchPart part, IResource[] resources) {
+	public UpdateWizard(IWorkbenchPart part, IResourceMapper[] mappers) {
 		this.part = part;
-		this.resources = resources;
+		this.mappers = mappers;
 		setWindowTitle(Policy.bind("UpdateWizard.title")); //$NON-NLS-1$
 	}
 	
 	public void addPages() {
 		ImageDescriptor substImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_CHECKOUT);
-        tagSelectionPage = new TagSelectionWizardPage("tagPage", Policy.bind("UpdateWizard.0"), substImage, Policy.bind("UpdateWizard.1"), TagSource.create(resources), TagSourceWorkbenchAdapter.INCLUDE_ALL_TAGS); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        tagSelectionPage = new TagSelectionWizardPage("tagPage", Policy.bind("UpdateWizard.0"), substImage, Policy.bind("UpdateWizard.1"), TagSource.create(mappers), TagSourceWorkbenchAdapter.INCLUDE_ALL_TAGS); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		tagSelectionPage.setAllowNoTag(true);
 		tagSelectionPage.setHelpContxtId(IHelpContextIds.UPDATE_TAG_SELETION_PAGE);
-		ICVSFolder[] folders = getCVSFolders();
-		if (folders.length > 0) {
-			try {
-				CVSTag selectedTag = folders[0].getFolderSyncInfo().getTag();
-				tagSelectionPage.setSelection(selectedTag);
-			} catch (CVSException e) {
-				CVSUIPlugin.log(e);
-			}
+		CVSTag tag = getInitialSelection();
+		if (tag != null) {
+			tagSelectionPage.setSelection(tag);
 		}
 		addPage(tagSelectionPage);
 	}
 	
-	private ICVSFolder[] getCVSFolders() {
-		Set projects = new HashSet();
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			projects.add(resource.getProject());
-		}
-		ICVSFolder[] folders = new ICVSFolder[projects.size()];
-		int i = 0;
-		for (Iterator iter = projects.iterator(); iter.hasNext();) {
-			IProject project = (IProject) iter.next();
-			folders[i++] = CVSWorkspaceRoot.getCVSFolderFor(project);
-		}
-		return folders;
-	}
+	/**
+     * @return
+     */
+    private CVSTag getInitialSelection() {
+        try {
+            for (int i = 0; i < mappers.length; i++) {
+                IResourceMapper mapper = mappers[i];
+                ITraversal[] traversals = mapper.getTraversals(null, null);
+                for (int j = 0; j < traversals.length; j++) {
+                    ITraversal traversal = traversals[j];
+                    IProject[] projects = traversal.getProjects();
+                    for (int k = 0; k < projects.length; k++) {
+                        IProject project = projects[k];
+                        ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(project);
+                        FolderSyncInfo info = folder.getFolderSyncInfo();
+                        if (info != null) {
+                            return info.getTag();
+                        }
+                    }
+                }
+            }
+        } catch (CoreException e) {
+            CVSUIPlugin.log(e);
+        }
+        return null;
+    }
 
 	/*
 	 * @see IWizard#performFinish()
 	 */
 	public boolean performFinish() {
 		try {
-			new UpdateOperation(part, resources, Command.NO_LOCAL_OPTIONS, tagSelectionPage.getSelectedTag()).run();
+			new UpdateOperation(part, mappers, Command.NO_LOCAL_OPTIONS, tagSelectionPage.getSelectedTag()).run();
 		} catch (InvocationTargetException e) {
 			CVSUIPlugin.openError(getShell(), null, null, e);
 			return false;
