@@ -10,17 +10,15 @@ import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.team.internal.ccvs.core.CVSDiffException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.Client;
+import org.eclipse.team.internal.ccvs.core.client.Session;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.core.connection.CVSServerException;
 import org.eclipse.team.internal.ccvs.core.resources.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.resources.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.resources.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.resources.Synchronizer;
-import org.eclipse.team.internal.ccvs.core.util.FileUtil;
 import org.eclipse.team.internal.ccvs.core.util.Util;
-import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 import org.eclipse.team.tests.ccvs.core.JUnitTestCase;
 import org.eclipse.team.tests.ccvs.core.NullOutputStream;
 
@@ -238,7 +236,7 @@ public final class SameResultEnv extends JUnitTestCase {
 					new File(eclipseClientRoot,rootExtention),
 					new NullProgressMonitor(), 
 					new PrintStream(new NullOutputStream()));
-		} catch (CVSDiffException e) {
+		} catch (CVSServerException e) {
 			if (!ignoreExceptions) {
 				throw e;
 			}
@@ -251,8 +249,8 @@ public final class SameResultEnv extends JUnitTestCase {
 	 * are equal and therefore the state valid.
 	 */
 	public void assertConsistent() throws CVSException {
-		ICVSFolder referenceFolder = Client.getManagedFolder(referenceClientRoot);
-		ICVSFolder eclipseFolder = Client.getManagedFolder(eclipseClientRoot);
+		ICVSFolder referenceFolder = Session.getManagedFolder(referenceClientRoot);
+		ICVSFolder eclipseFolder = Session.getManagedFolder(eclipseClientRoot);
 		Synchronizer.getInstance().reload(referenceFolder, new NullProgressMonitor());
 		Synchronizer.getInstance().reload(eclipseFolder, new NullProgressMonitor());
 		assertEquals(referenceFolder,eclipseFolder);
@@ -335,11 +333,11 @@ public final class SameResultEnv extends JUnitTestCase {
 		// Call the "clean-up-delete" that cares about deleting the
 		// cache
 		if (file1.isDirectory()) {
-			delete(Client.getManagedFolder(file1));
-			delete(Client.getManagedFolder(file2));
+			delete(Session.getManagedFolder(file1));
+			delete(Session.getManagedFolder(file2));
 		} else {
-			delete(Client.getManagedFile(file1));
-			delete(Client.getManagedFile(file2));
+			delete(Session.getManagedFile(file1));
+			delete(Session.getManagedFile(file2));
 		}
 	}
 	
