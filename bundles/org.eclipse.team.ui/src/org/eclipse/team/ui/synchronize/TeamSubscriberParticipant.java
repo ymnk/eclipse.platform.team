@@ -11,15 +11,16 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
+import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
+import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -30,7 +31,7 @@ import org.eclipse.ui.part.IPageBookViewPage;
  */
 public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 	
-	private SubscriberInput input;
+	private SubscriberInputSyncInfoSet syncInfoSet;
 	private RefreshSchedule refreshSchedule;
 	
 	private int currentMode;
@@ -80,7 +81,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view) {
-		return new TeamSubscriberParticipantPage(this, view, input);
+		return new TeamSubscriberParticipantPage(this, view);
 	}
 	
 	public void setMode(int mode) {
@@ -104,11 +105,11 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public void setWorkingSet(IWorkingSet set) {
-		ITeamSubscriberSyncInfoSets input = getInput();
+		SubscriberInput input = getInput();
 		IWorkingSet oldSet = null;
 		if(input != null) {
 			oldSet = input.getWorkingSet();
-			((SubscriberInput)input).setWorkingSet(set);
+			input.setWorkingSet(set);
 			workingSet = null;
 		} else {
 			workingSet = set;
@@ -117,9 +118,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public IWorkingSet getWorkingSet() {
-		ITeamSubscriberSyncInfoSets input = getInput();
+		SubscriberInput input = getInput();
 		if(input != null) {
-			return getInput().getWorkingSet();
+			return input.getWorkingSet();
 		} else {
 			return workingSet;
 		}
@@ -127,6 +128,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	
 	public void refreshWithRemote(IResource[] resources) {
 		if((resources == null || resources.length == 0)) {
+			SubscriberInput input = getInput();
 			RefreshAction.run(input.workingSetRoots(), this);
 		} else {
 			RefreshAction.run(resources, this);
@@ -138,23 +140,42 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	 */
 	public void dispose() {
 		refreshSchedule.dispose();
+		
+		SubscriberInput input = getInput();
 		removePropertyChangeListener(input);
 		input.dispose();
 	}
 	
-	/*
-	 * For testing only!
+	/**
+	 * @return
 	 */
-	public ITeamSubscriberSyncInfoSets getInput() {
+	private SubscriberInput getInput() {
+		SubscriberInput input = syncInfoSet.getInput();
 		return input;
+	}
+
+	public void setFilter(SyncInfoFilter filter, IProgressMonitor monitor) throws TeamException {
+		
+	}
+	
+	public ISyncInfoSet createNewFilteredSyncSet(IResource[] resources, SyncInfoFilter filter) {
+		return syncInfoSet.getInput().createNewFilteredSyncSet(resources, filter);
+	}
+	
+	public final ISyncInfoSet getSyncInfoSet() {
+		return syncInfoSet; 
 	}
 	
 	protected void setSubscriber(TeamSubscriber subscriber) {
-		this.input = new SubscriberInput(this, subscriber);
-		addPropertyChangeListener(input);
+		this.syncInfoSet = new SubscriberInputSyncInfoSet(new SubscriberInput(this, subscriber));
+		addPropertyChangeListener(getInput());
 		if(workingSet != null) {
 			setWorkingSet(workingSet);
 		}
+	}
+	
+	protected TeamSubscriber getSubscriber() {
+		return getInput().getSubscriber();
 	}
 		
 	/* (non-Javadoc)

@@ -25,7 +25,7 @@ public abstract class SynchronizeViewActionDelagate extends Action implements IS
 		super();
 		this.delegate = delegate;
 		this.input = input;
-		input.getFilteredSyncSet().addSyncSetChangedListener(this);
+		input.getSyncInfoSet().addSyncSetChangedListener(this);
 	}
 
 	/* (non-Javadoc)

@@ -46,6 +46,7 @@ x P2 need an event for adding roots to a subscriber to update the list shown
   1. embeding sync viewer in dialog/wizard
   2. added a new content provider
   3. adding custom label decorations
+  4. actions/menus
 
 today:
 x stats

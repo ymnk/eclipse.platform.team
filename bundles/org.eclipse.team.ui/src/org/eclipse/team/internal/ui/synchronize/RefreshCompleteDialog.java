@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ui.synchronize;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
@@ -27,13 +26,13 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.internal.ui.jobs.IRefreshEvent;
-import org.eclipse.team.internal.ui.synchronize.compare.SyncInfoSetCompareInput;
+import org.eclipse.team.ui.synchronize.SyncInfoSetCompareInput;
 
 public class RefreshCompleteDialog extends DetailsDialog {
 
 	private Button promptWhenNoChanges;
 	private Button promptWithChanges;
-	private CompareEditorInput compareEditorInput;
+	private SyncInfoSetCompareInput compareEditorInput;
 	private IRefreshEvent event;
 	private final static int RESOURCE_LIST_SIZE = 10;
 	private IDialogSettings settings;
@@ -46,9 +45,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		setShellStyle(shellStyle | SWT.RESIZE | SWT.MAX);
 		this.event = event;
 		setImageKey(DLG_IMG_INFO);
-		
-		// create the compare input for the details area
-		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), getResources(), null /* no filter */,  event.getParticipant().getInput()) {
+			
+		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), event.getParticipant(), getResources(), null /* no filter */) {
 			protected boolean allowParticipantMenuContributions() {
 				return true;
 			}
@@ -76,10 +74,13 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		return new Point(width, p.y);
 	}
 	
+	
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.window.Window#close()
 	 */
 	public boolean close() {
+		compareEditorInput.dispose();
 		Rectangle bounds = getShell().getBounds();
 		settings.put(HEIGHT_KEY, bounds.height);
 		settings.put(WIDTH_KEY, bounds.width);

@@ -84,8 +84,7 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	 */
 	public void saveState(IMemento memento) {
 		super.saveState(memento);
-		ITeamSubscriberSyncInfoSets input = getInput();
-		CVSMergeSubscriber s = (CVSMergeSubscriber)input.getSubscriber();
+		CVSMergeSubscriber s = (CVSMergeSubscriber)getSubscriber();
 		QualifiedName sId = s.getId();
 		memento.putString(CTX_QUALIFIER, sId.getQualifier());
 		memento.putString(CTX_LOCALNAME, sId.getLocalName());
@@ -97,21 +96,21 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	 */
 	public void dispose() {
 		super.dispose();
-		((CVSMergeSubscriber)getInput().getSubscriber()).cancel();
+		((CVSMergeSubscriber)getSubscriber()).cancel();
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPage(org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view) {		
-		return new MergeSynchronizePage(this, view, getInput());
+		return new MergeSynchronizePage(this, view);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#getName()
 	 */
 	public String getName() {		
-		return ((CVSMergeSubscriber)getInput().getSubscriber()).getName();
+		return ((CVSMergeSubscriber)getSubscriber()).getName();
 	}
 	
 	/* (non-Javadoc)

@@ -24,7 +24,6 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 /**
  * This action group allows the user to choose one or more comparison critera
@@ -34,7 +33,7 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 	
 	private ComparisonCriteria[] criteria;
 	private ComparisonCriteriaAction[] actions;
-	private ITeamSubscriberSyncInfoSets input;
+	private SubscriberInput input;
 	private Menu fMenu;
 	
 	/**
@@ -54,7 +53,7 @@ public class ComparisonCriteriaActionGroup extends Action implements IMenuCreato
 		}
 	}
 	
-	public ComparisonCriteriaActionGroup(ITeamSubscriberSyncInfoSets input) {
+	public ComparisonCriteriaActionGroup(SubscriberInput input) {
 		this.input = input;
 		setMenuCreator(this);
 		Utils.initAction(this, "action.comparisonCriteria."); //$NON-NLS-1$

@@ -63,7 +63,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 
 		public void run() {
 			IStructuredContentProvider cp = (IStructuredContentProvider) ((StructuredViewer)getChangesViewer()).getContentProvider();
-			StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
+			StructuredSelection selection = new StructuredSelection(cp.getElements(getSyncInfoSet()));
 			if (!selection.isEmpty()) {
 				delegate.selectionChanged(this, selection);
 				delegate.run(this);
@@ -75,8 +75,8 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		}
 	}
 
-	public CVSSynchronizeViewPage(TeamSubscriberParticipant page, ISynchronizeView view, ITeamSubscriberSyncInfoSets input) {
-		super(page, view, input);
+	public CVSSynchronizeViewPage(TeamSubscriberParticipant participant, ISynchronizeView view) {
+		super(participant, view);
 	}	
 	
 	/*
@@ -86,7 +86,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 */
 	public void dispose() {
 		super.dispose();
-		getInput().getFilteredSyncSet().removeSyncSetChangedListener(this);
+		getSyncInfoSet().removeSyncSetChangedListener(this);
 		CVSUIPlugin.removePropertyChangeListener(this);
 	}
 
@@ -97,9 +97,9 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	 */
 	public void syncSetChanged(ISyncInfoSetChangeEvent event) {
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
-		if (viewer != null && getInput() != null) {
+		if (viewer != null && getSyncInfoSet() != null) {
 			IStructuredContentProvider cp = (IStructuredContentProvider) viewer.getContentProvider();
-			StructuredSelection selection = new StructuredSelection(cp.getElements(getInput()));
+			StructuredSelection selection = new StructuredSelection(cp.getElements(getSyncInfoSet()));
 			for (Iterator it = delegates.iterator(); it.hasNext(); ) {
 				CVSActionDelegate delegate = (CVSActionDelegate) it.next();
 				delegate.getDelegate().selectionChanged(delegate, selection);
@@ -117,7 +117,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	public void propertyChange(PropertyChangeEvent event) {		
 		super.propertyChange(event);
 		String prop = event.getProperty();
-		if(prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getChangesViewer() != null && getInput() != null) {
+		if(prop.equals(CVSUIPlugin.P_DECORATORS_CHANGED) && getChangesViewer() != null && getSyncInfoSet() != null) {
 			((StructuredViewer)getChangesViewer()).refresh(true /* update labels */);
 		}
 	}
@@ -129,7 +129,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		super.createControl(parent);
 		
 		// Sync changes are used to update the action state for the update/commit buttons.
-		getInput().getFilteredSyncSet().addSyncSetChangedListener(this);
+		getSyncInfoSet().addSyncSetChangedListener(this);
 		
 		// Listen for decorator changed to refresh the viewer's labels.
 		CVSUIPlugin.addPropertyChangeListener(this);
@@ -141,5 +141,9 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		StructuredViewer viewer = (StructuredViewer)getChangesViewer();
 		ILabelProvider oldLabelProvider = (ILabelProvider)viewer.getLabelProvider();
 		viewer.setLabelProvider(new CVSLabelProvider(oldLabelProvider));		
+	}
+	
+	private ISyncInfoSet getSyncInfoSet() {
+		return getParticipant().getSyncInfoSet();
 	}
 }

@@ -334,4 +334,12 @@ public class SyncSet implements ISyncInfoSet {
 		Set allDescendants = (Set)parents.get(path);
 		return (allDescendants != null && !allDescendants.isEmpty());
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISyncInfoSet#dispose()
+	 */
+	public void dispose() {
+		// TODO Auto-generated method stub
+		
+	}
 }

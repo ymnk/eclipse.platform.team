@@ -10,46 +10,24 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.swt.widgets.*;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
-import org.eclipse.team.internal.ui.synchronize.ChangesSection;
-import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
-import org.eclipse.team.internal.ui.synchronize.SyncInfoDiffViewerForSynchronizeView;
-import org.eclipse.team.internal.ui.synchronize.actions.ComparisonCriteriaActionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
-import org.eclipse.team.internal.ui.synchronize.actions.RefreshAction;
-import org.eclipse.team.internal.ui.synchronize.actions.StatusLineContributionGroup;
-import org.eclipse.team.internal.ui.synchronize.actions.SyncViewerShowPreferencesAction;
-import org.eclipse.team.internal.ui.synchronize.actions.WorkingSetFilterActionGroup;
+import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.part.IPageBookViewPage;
-import org.eclipse.ui.part.IPageSite;
-import org.eclipse.ui.part.IShowInSource;
-import org.eclipse.ui.part.ShowInContext;
+import org.eclipse.ui.*;
+import org.eclipse.ui.part.*;
 
 /**
  * A synchronize view page that works with participants that are subclasses of 
@@ -68,9 +46,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private Composite composite = null;
 	private ChangesSection changesSection;
 	private boolean settingWorkingSet = false;
-	
-	// Remembering the current input and the previous.
-	private ITeamSubscriberSyncInfoSets input = null;
 	
 	private JobBusyCursor busyCursor;
 	private ISynchronizeView view;
@@ -92,10 +67,9 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public TeamSubscriberParticipantPage(TeamSubscriberParticipant page, ISynchronizeView view, ITeamSubscriberSyncInfoSets input) {
+	public TeamSubscriberParticipantPage(TeamSubscriberParticipant page, ISynchronizeView view) {
 		this.participant = page;
 		this.view = view;
-		this.input = input;
 	}
 	
 	/* (non-Javadoc)
@@ -145,7 +119,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		Utils.initAction(configureSchedule, "action.configureSchedulel."); //$NON-NLS-1$
 		
 		// view menu
-		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(input);		
+		comparisonCriteriaGroup = new ComparisonCriteriaActionGroup(getInput());		
 		workingSetGroup = new WorkingSetFilterActionGroup(getShell(), this, view, participant);		
 		showPreferences = new SyncViewerShowPreferencesAction(getShell());		
 		statusLine = new StatusLineContributionGroup(getShell(), getParticipant());
@@ -188,8 +162,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	/*
 	 * Return the current input for the view.
 	 */
-	public ITeamSubscriberSyncInfoSets getInput() {
-		return input;
+	private SubscriberInput getInput() {
+		return ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();
 	}
 
 	/*
@@ -302,7 +276,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	}
 	
 	public Viewer createChangesViewer(Composite parent) {
-		Viewer viewer =  new SyncInfoDiffViewerForSynchronizeView(parent, getSynchronizeView(), getParticipant(), getInput().getFilteredSyncSet());
+		Viewer viewer =  new SyncInfoDiffViewerForSynchronizeView(parent, getSynchronizeView(), getParticipant(), getInput().getSyncInfoSet());
 		getSite().setSelectionProvider(viewer);		
 		return viewer;
 	}

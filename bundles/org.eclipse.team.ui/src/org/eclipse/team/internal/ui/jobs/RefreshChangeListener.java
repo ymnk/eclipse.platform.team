@@ -4,13 +4,12 @@ import java.util.*;
 
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 
 class RefreshChangeListener implements ITeamResourceChangeListener {
 	private List changes = new ArrayList();
-	private ITeamSubscriberSyncInfoSets input;
+	private SubscriberInput input;
 
-	RefreshChangeListener(ITeamSubscriberSyncInfoSets input) {
+	RefreshChangeListener(SubscriberInput input) {
 		this.input = input;
 	}
 	public void teamResourceChanged(TeamDelta[] deltas) {
@@ -42,10 +41,6 @@ class RefreshChangeListener implements ITeamResourceChangeListener {
 			}
 		}
 		return (SyncInfo[]) changedSyncInfos.toArray(new SyncInfo[changedSyncInfos.size()]);
-	}
-
-	public ITeamSubscriberSyncInfoSets getInput() {
-		return input;
 	}
 
 	public void clear() {

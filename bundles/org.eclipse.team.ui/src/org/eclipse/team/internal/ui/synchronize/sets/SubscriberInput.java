@@ -29,7 +29,7 @@ import org.eclipse.ui.PlatformUI;
  * SubscriberInput encapsulates the UI model for synchronization changes associated
  * with a TeamSubscriber. 
  */
-public class SubscriberInput implements IPropertyChangeListener, ITeamResourceChangeListener, IResourceChangeListener, ITeamSubscriberSyncInfoSets {
+public class SubscriberInput implements IPropertyChangeListener, ITeamResourceChangeListener, IResourceChangeListener {
 
 	/*
 	 * The subscriberInput manages a sync set that contains all of the out-of-sync elements
@@ -88,15 +88,15 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 		return participant;
 	}
 	
-	public ISyncInfoSet getFilteredSyncSet() {
+	public SyncSet getSyncInfoSet() {
 		return filteredSyncSet.getSyncSet();
 	}
 	
-	public ISyncInfoSet getSubscriberSyncSet() {
+	public SyncSet getSubscriberSyncSet() {
 		return subscriberSyncSet.getSyncSet();
 	}
 	
-	public ISyncInfoSet getWorkingSetSyncSet() {
+	public SyncSet getWorkingSetSyncSet() {
 		return workingRootsSet.getSyncSet();
 	}
 
@@ -281,13 +281,13 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 
 	public void registerListeners(ISyncSetChangedListener listener) {
 		getWorkingSetSyncSet().addSyncSetChangedListener(listener);
-		getFilteredSyncSet().addSyncSetChangedListener(listener);
+		getSyncInfoSet().addSyncSetChangedListener(listener);
 		getSubscriberSyncSet().addSyncSetChangedListener(listener);
 	}
 
 	public void deregisterListeners(ISyncSetChangedListener listener) {
 		getWorkingSetSyncSet().removeSyncSetChangedListener(listener);
-		getFilteredSyncSet().removeSyncSetChangedListener(listener);
+		getSyncInfoSet().removeSyncSetChangedListener(listener);
 		getSubscriberSyncSet().removeSyncSetChangedListener(listener);
 	}
 

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize.compare;
+package org.eclipse.team.ui.synchronize;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -20,28 +20,21 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.actions.SyncInfoFilter;
 
 public class SyncInfoSetCompareInput extends CompareEditorInput {
 	// TODO: when are these objects disposed, and how to hook in to the dispose to free listeners?
-	private IResource[] resources;
-	private ISyncInfoSet set;
-	private ITeamSubscriberSyncInfoSets sets;
+	private ISyncInfoSet syncInfoSet;
+	private TeamSubscriberParticipant participant;
 
-	public SyncInfoSetCompareInput(CompareConfiguration configuration, IResource[] resources, SyncInfoFilter filter, ITeamSubscriberSyncInfoSets sets) {
+	public SyncInfoSetCompareInput(CompareConfiguration configuration, TeamSubscriberParticipant participant, IResource[] resources, SyncInfoFilter filter) {
 		super(configuration);
-		this.resources = resources;
-		this.sets = sets;
-		if(resources != null && resources.length > 0) {
-			this.set = sets.createNewFilteredSyncSet(resources, filter);
-		} else {
-			this.set = sets.getSubscriberSyncSet();
-		}
+		this.participant = participant;
+		this.syncInfoSet = participant.createNewFilteredSyncSet(resources, filter);
 	}
 
 	public Viewer createDiffViewer(Composite parent) {
-		SyncInfoDiffTreeViewer v = new SyncInfoDiffTreeViewer(parent, sets.getParticipant(), set);
+		SyncInfoDiffTreeViewer v = new SyncInfoDiffTreeViewer(parent, participant, syncInfoSet);
 		v.updateCompareEditorInput(this);
 		v.addOpenListener(new IOpenListener() {
 			public void open(OpenEvent event) {
@@ -57,7 +50,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	}
 
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		return new SyncInfoDiffNode(set, ResourcesPlugin.getWorkspace().getRoot());
+		return new SyncInfoDiffNode(syncInfoSet, ResourcesPlugin.getWorkspace().getRoot());
 	}
 	
 	private static SyncInfoDiffNode getElement(ISelection selection) {
@@ -75,5 +68,9 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	
 	protected boolean allowParticipantMenuContributions() {
 		return false;
+	}
+	
+	public void dispose() {
+		syncInfoSet.dispose();
 	}
 }

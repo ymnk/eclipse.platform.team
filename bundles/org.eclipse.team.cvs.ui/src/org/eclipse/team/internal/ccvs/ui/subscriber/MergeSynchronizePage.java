@@ -13,7 +13,8 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.jface.action.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.DirectionFilterActionGroup;
 import org.eclipse.team.ui.synchronize.actions.RemoveSynchronizeParticipantAction;
 import org.eclipse.ui.IActionBars;
@@ -25,8 +26,8 @@ public class MergeSynchronizePage extends CVSSynchronizeViewPage {
 	private DirectionFilterActionGroup modes;
 	private Action updateAdapter;
 	
-	public MergeSynchronizePage(TeamSubscriberParticipant participant, ISynchronizeView view, ITeamSubscriberSyncInfoSets input) {
-		super(participant, view, input);		
+	public MergeSynchronizePage(TeamSubscriberParticipant participant, ISynchronizeView view) {
+		super(participant, view);		
 		removeAction = new RemoveSynchronizeParticipantAction(getParticipant());
 		modes = new DirectionFilterActionGroup(getParticipant(), TeamSubscriberParticipant.INCOMING_MODE | TeamSubscriberParticipant.CONFLICTING_MODE);
 		updateAdapter = new CVSActionDelegate(new MergeUpdateAction());

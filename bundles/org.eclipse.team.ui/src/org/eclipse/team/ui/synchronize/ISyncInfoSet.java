@@ -12,7 +12,6 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
 
 /**
  * A dynamic collection of {@link SyncInfo} objects. 
@@ -56,7 +55,7 @@ public interface ISyncInfoSet {
 	public SyncInfo[] members();
 	public SyncInfo getSyncInfo(IResource resource);
 	public int size();
-	public SyncInfoStatistics getStatistics();
+	public void dispose();
 	/**
 	 * Return wether the given resource has any children in the sync set
 	 * @param resource

@@ -22,7 +22,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 
 /**
@@ -60,7 +60,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * is running the job is cancelled.
 	 */
 	private IResource[] resources;
-	private ITeamSubscriberSyncInfoSets input;
+	private SubscriberInput input;
 	
 	/**
 	 * User notification logic
@@ -164,12 +164,12 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 	
 		
-	public RefreshSubscriberJob(String name, IResource[] resources, ITeamSubscriberSyncInfoSets input) {
+	public RefreshSubscriberJob(String name, IResource[] resources, SubscriberInput input) {
 		this(name, input);		
 		this.resources = resources;
 	}
 	
-	public RefreshSubscriberJob(String name, ITeamSubscriberSyncInfoSets input) {
+	public RefreshSubscriberJob(String name, SubscriberInput input) {
 		super(name);
 		
 		this.input = input;

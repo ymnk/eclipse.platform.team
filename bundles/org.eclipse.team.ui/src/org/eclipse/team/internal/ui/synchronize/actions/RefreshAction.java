@@ -25,8 +25,9 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
 import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
-import org.eclipse.team.ui.synchronize.ITeamSubscriberSyncInfoSets;
 import org.eclipse.team.ui.synchronize.TeamSubscriberParticipant;
 import org.eclipse.team.ui.synchronize.actions.SubscriberAction;
 import org.eclipse.ui.IWorkbenchPage;
@@ -35,11 +36,13 @@ public class RefreshAction extends Action {
 	private boolean refreshAll;
 	private IWorkbenchPage page;
 	private TeamSubscriberParticipant participant;
+	private SubscriberInput input;
 	
 	public RefreshAction(IWorkbenchPage page, TeamSubscriberParticipant participant, boolean refreshAll) {
 		this.participant = participant;
 		this.page = page;
 		this.refreshAll = refreshAll;
+		this.input = ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();		
 		Utils.initAction(this, "action.refreshWithRemote."); //$NON-NLS-1$
 	}
 	
@@ -47,7 +50,6 @@ public class RefreshAction extends Action {
 		ISelection selection = page.getSelection();
 		if(selection instanceof IStructuredSelection) {
 			IResource[] resources = getResources((IStructuredSelection)selection);
-			ITeamSubscriberSyncInfoSets input = participant.getInput();
 			if (refreshAll || resources.length == 0) {
 				// If no resources are selected, refresh all the subscriber roots
 				resources = input.workingSetRoots();
@@ -75,7 +77,8 @@ public class RefreshAction extends Action {
 		// Cancel the scheduled background refresh or any other refresh that is happening.
 		// The scheduled background refresh will restart automatically.
 		Platform.getJobManager().cancel(RefreshSubscriberJob.getFamily());
-		RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", participant.getName()), resources, participant.getInput()); //$NON-NLS-1$
+		SubscriberInput input = ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();		
+		RefreshSubscriberJob job = new RefreshSubscriberJob(Policy.bind("SyncViewRefresh.taskName", participant.getName()), resources, input); //$NON-NLS-1$
 		JobStatusHandler.schedule(job, SubscriberAction.SUBSCRIBER_JOB_TYPE);
 	}
 		

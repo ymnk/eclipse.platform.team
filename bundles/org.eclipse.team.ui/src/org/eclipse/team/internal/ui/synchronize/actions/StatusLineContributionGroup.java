@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
+import org.eclipse.team.internal.ui.synchronize.sets.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IActionBars;
@@ -38,17 +38,17 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private ITeamSubscriberSyncInfoSets input;
+	private SubscriberInput input;
 	private TeamSubscriberParticipant participant;
 
 	public StatusLineContributionGroup(final Shell shell, TeamSubscriberParticipant participant) {
 		super();
 		this.participant = participant;
-		this.input = participant.getInput();
+		this.input = ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();
 		this.incoming = createStatusLineContribution(INCOMING_ID, TeamSubscriberParticipant.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
 		this.outgoing = createStatusLineContribution(OUTGOING_ID, TeamSubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
 		this.conflicting = createStatusLineContribution(CONFLICTING_ID, TeamSubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
-		participant.getInput().registerListeners(this);
+		input.registerListeners(this);
 	}
 
 	private StatusLineCLabelContribution createStatusLineContribution(String id, final int mode, String label, Image image) {
@@ -89,7 +89,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncSet
 
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
-					IWorkingSet set = input.getWorkingSet();
+					IWorkingSet set = input.getParticipant().getWorkingSet();
 					if (set != null) {
 						conflicting.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetConflicting).toString(), new Integer(workspaceConflicting).toString())); //$NON-NLS-1$
 						incoming.setText(Policy.bind("StatisticsPanel.changeNumbers", new Integer(workingSetIncoming).toString(), new Integer(workspaceIncoming).toString())); //$NON-NLS-1$

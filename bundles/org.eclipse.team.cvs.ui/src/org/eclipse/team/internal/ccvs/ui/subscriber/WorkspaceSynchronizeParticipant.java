@@ -26,7 +26,7 @@ public class WorkspaceSynchronizeParticipant extends TeamSubscriberParticipant {
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPage(org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view) {
-		return new WorkspaceSynchronizePage(this, view, getInput());
+		return new WorkspaceSynchronizePage(this, view);
 	}
 	
 	/* (non-Javadoc)

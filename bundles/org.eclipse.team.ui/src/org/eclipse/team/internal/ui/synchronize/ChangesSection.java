@@ -18,7 +18,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.sets.SyncInfoStatistics;
+import org.eclipse.team.internal.ui.synchronize.sets.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.forms.parts.*;
@@ -94,11 +94,11 @@ public class ChangesSection extends Composite {
 
 		calculateDescription();
 		
-		participant.getInput().registerListeners(changedListener);
+		getInput().registerListeners(changedListener);
 	}
 	
 	private void calculateDescription() {
-		if(participant.getInput().getFilteredSyncSet().size() == 0) {
+		if(getInput().getSyncInfoSet().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
 						filteredContainer = getEmptyChangesComposite(changesSectionContainer);
@@ -128,10 +128,10 @@ public class ChangesSection extends Composite {
 		data.grabExcessVerticalSpace = true;
 		composite.setLayoutData(data);
 		
-		ITeamSubscriberSyncInfoSets input = participant.getInput();
+		SubscriberInput input = getInput();
 		int changesInWorkspace = input.getSubscriberSyncSet().size();
 		int changesInWorkingSet = input.getWorkingSetSyncSet().size();
-		int changesInFilter = input.getFilteredSyncSet().size();
+		int changesInFilter = input.getSyncInfoSet().size();
 		
 		SyncInfoStatistics stats = input.getWorkingSetSyncSet().getStatistics();
 		long outgoingChanges = stats.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
@@ -199,6 +199,10 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
-		participant.getInput().deregisterListeners(changedListener);
+		getInput().deregisterListeners(changedListener);
+	}
+	
+	private SubscriberInput getInput() {
+		return ((SubscriberInputSyncInfoSet)participant.getSyncInfoSet()).getInput();
 	}
 }

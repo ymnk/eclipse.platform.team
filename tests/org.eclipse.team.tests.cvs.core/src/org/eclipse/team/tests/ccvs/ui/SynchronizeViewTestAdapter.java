@@ -22,6 +22,7 @@ import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
 import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInputSyncInfoSet;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 import org.eclipse.team.ui.TeamUI;
@@ -55,7 +56,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
 			if(participant instanceof TeamSubscriberParticipant) {
-				SubscriberInput input = (SubscriberInput)((TeamSubscriberParticipant)participant).getInput();
+				SubscriberInput input = ((SubscriberInputSyncInfoSet)((TeamSubscriberParticipant)participant).getSyncInfoSet()).getInput();
 				TeamSubscriber s = input.getSubscriber();
 				if(s == subscriber) {
 					EclipseTest.waitForSubscriberInputHandling(input);
@@ -72,7 +73,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	protected void assertProjectRemoved(TeamSubscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
 		SubscriberInput input = getInput(subscriber);
-		ISyncInfoSet set = input.getFilteredSyncSet();
+		ISyncInfoSet set = input.getSyncInfoSet();
 		if (set.getOutOfSyncDescendants(project).length != 0) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
 		}
