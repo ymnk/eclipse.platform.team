@@ -29,6 +29,7 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.progress.UIJob;
+import org.eclipse.team.internal.ui.Policy;
 
 /**
  * An input that can be used with both {@link } and 
@@ -71,7 +72,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		public static final int BATCH_WAIT_INCREMENT = 100;
 		Set nodes = new HashSet();
 		public LabelUpdateJob() {
-			super("Updating labels");
+			super(Policy.bind("DiffNodeControllerHierarchical.0")); //$NON-NLS-1$
 			setSystem(true);
 		}
 		public IStatus runInUIThread(IProgressMonitor monitor) {

@@ -207,7 +207,7 @@ public abstract class SubscriberAction implements IObjectActionDelegate, IViewAc
 	 * @return
 	 */
 	protected String getJobName(SyncInfoSet syncSet) {
-		return "";
+		return ""; //$NON-NLS-1$
 	}
 
 	/**

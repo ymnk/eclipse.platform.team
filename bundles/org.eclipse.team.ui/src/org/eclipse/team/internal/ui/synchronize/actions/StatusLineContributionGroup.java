@@ -163,7 +163,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 						outgoing.setTooltip(Policy.bind("StatisticsPanel.numbersTooltip", Policy.bind("StatisticsPanel.outgoing"))); //$NON-NLS-1$ //$NON-NLS-2$
 						incoming.setTooltip(Policy.bind("StatisticsPanel.numbersTooltip", Policy.bind("StatisticsPanel.incoming"))); //$NON-NLS-1$ //$NON-NLS-2$
 					}
-					totalChanges.setText(Policy.bind("StatisticsPanel.numberTotal", Integer.toString(total)));
+					totalChanges.setText(Policy.bind("StatisticsPanel.numberTotal", Integer.toString(total))); //$NON-NLS-1$
 				}
 			});
 		}

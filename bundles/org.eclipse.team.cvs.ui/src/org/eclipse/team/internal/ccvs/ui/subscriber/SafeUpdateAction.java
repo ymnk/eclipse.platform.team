@@ -357,8 +357,8 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 			TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {
 				public void run() {
 					String sizeString = Integer.toString(set.size());
-					String message = set.size() > 1 ? Policy.bind("UpdateAction.promptForUpdateSeveral", sizeString) : Policy.bind("UpdateAction.promptForUpdateOne", sizeString);
-					result[0] = MessageDialog.openQuestion(getShell(), Policy.bind("UpdateAction.promptForUpdateTitle", sizeString), message); 					
+					String message = set.size() > 1 ? Policy.bind("UpdateAction.promptForUpdateSeveral", sizeString) : Policy.bind("UpdateAction.promptForUpdateOne", sizeString); //$NON-NLS-1$ //$NON-NLS-2$
+					result[0] = MessageDialog.openQuestion(getShell(), Policy.bind("UpdateAction.promptForUpdateTitle", sizeString), message); 					 //$NON-NLS-1$
 				}
 			});
 		}

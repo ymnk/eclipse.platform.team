@@ -12,6 +12,8 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -60,6 +62,12 @@ public class ChangesSection extends Composite {
 	 * by the participant.
 	 */
 	private Viewer changesViewer;
+	
+	/**
+	 * Boolean that indicates whether the error page is being shown.
+	 * This is used to avoid redrawing the error page when new events come in
+	 */
+	private boolean showingError;
 
 	/**
 	 * Listen to sync set changes so that we can update message to user and totals.
@@ -70,18 +78,39 @@ public class ChangesSection extends Composite {
 		}
 	};
 	
-	private ISyncInfoSetChangeListener syncsetChangedListener = new ISyncInfoSetChangeListener() {
+	/**
+	 * Listener registered with the subscriber sync info set which contains
+	 * all out-of-sync resources for the subscriber.
+	 */
+	private ISyncInfoSetChangeListener subscriberListener = new ISyncInfoSetChangeListener() {
 		public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
-			calculateDescription();
+			// Handled by output set listener
 		}
 		public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 			calculateDescription();
 		}
 		public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
-			// TODO Auto-generated method stub
+			// Handled by output set listener
 		}
 	};
-		
+	
+	/**
+	 * Listener registered with the output sync info set which contains
+	 * only the visible sync info. 
+	 */
+	private ISyncInfoSetChangeListener outputSetListener = new ISyncInfoSetChangeListener() {
+		public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
+			calculateDescription();
+		}
+		public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+			// Input changed listener will call calculateDescription()
+			// The input will then react to output set changes
+		}
+		public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
+			calculateDescription();
+		}
+	};
+	
 	/**
 	 * Create a changes section on the following page.
 	 * 
@@ -117,14 +146,39 @@ public class ChangesSection extends Composite {
 		this.changesViewer = viewer;
 		calculateDescription();
 		page.getViewerConfiguration().addInputChangedListener(changedListener);
-		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().addSyncSetChangedListener(syncsetChangedListener);
+		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().addSyncSetChangedListener(subscriberListener);
+		participant.getSubscriberSyncInfoCollector().getSyncInfoTree().addSyncSetChangedListener(outputSetListener);
 	}
 	
 	private void calculateDescription() {
-		if(participant.getSubscriberSyncInfoCollector().getSyncInfoTree().size() == 0) {
+		SyncInfoTree syncInfoTree = participant.getSubscriberSyncInfoCollector().getSyncInfoTree();
+		if (syncInfoTree.getErrors().length > 0) {
+			if (!showingError) {
+				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+					public void run() {
+						if (changesSectionContainer.isDisposed()) return;
+						if(filteredContainer != null) {
+							filteredContainer.dispose();
+							filteredContainer = null;
+						}
+						filteredContainer = getErrorComposite(changesSectionContainer);
+						changesSectionContainer.showPage(filteredContainer);
+						showingError = true;
+					}
+				});
+			}
+			return;
+		}
+		
+		showingError = false;
+		if(syncInfoTree.size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
 					if (changesSectionContainer.isDisposed()) return;
+					if(filteredContainer != null) {
+						filteredContainer.dispose();
+						filteredContainer = null;
+					}
 					filteredContainer = getEmptyChangesComposite(changesSectionContainer);
 					changesSectionContainer.showPage(filteredContainer);
 				}
@@ -231,6 +285,52 @@ public class ChangesSection extends Composite {
 	public void dispose() {
 		super.dispose();
 		page.getViewerConfiguration().removeInputChangedListener(changedListener);
-		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().removeSyncSetChangedListener(syncsetChangedListener);
+		participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet().removeSyncSetChangedListener(subscriberListener);
+	}
+	
+	private Composite getErrorComposite(Composite parent) {
+		Composite composite = new Composite(parent, SWT.NONE);
+		composite.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		composite.setLayout(layout);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.grabExcessVerticalSpace = true;
+		composite.setLayoutData(data);	
+
+		Hyperlink link = new Hyperlink(composite, SWT.WRAP);
+		link.setText("Show Errors");
+		link.addHyperlinkListener(new HyperlinkAdapter() {
+			public void linkActivated(HyperlinkEvent e) {
+				showErrors();
+			}
+		});
+		link.setBackground(composite.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+		link.setUnderlined(true);
+		
+		link = new Hyperlink(composite, SWT.WRAP);
+		link.setText("Reset View");
+		link.addHyperlinkListener(new HyperlinkAdapter() {
+			public void linkActivated(HyperlinkEvent e) {
+				participant.getSubscriberSyncInfoCollector().reset();
+			}
+		});
+		link.setBackground(composite.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+		link.setUnderlined(true);
+		
+		createDescriptionLabel(composite, "Errors have occurred calculating the synchronization state for {0}" + participant.getName());
+
+		return composite;
+	}
+	
+	/* private */ void showErrors() {
+		ITeamStatus[] status = participant.getSubscriberSyncInfoCollector().getSyncInfoTree().getErrors();
+		String title = "Errors Populating View";
+		if (status.length == 1) {
+			ErrorDialog.openError(getShell(), title, status[0].getMessage(), status[0]);
+		} else {
+			MultiStatus multi = new MultiStatus(TeamUIPlugin.ID, 0, status, "Multiple errors occurred while attempting to populate the view.", null);
+			ErrorDialog.openError(getShell(), title, null, multi);
+		}
 	}
 }

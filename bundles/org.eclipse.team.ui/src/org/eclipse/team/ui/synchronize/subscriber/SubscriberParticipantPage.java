@@ -224,7 +224,7 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 			workingSetGroup.fillActionBars(actionBars);
 			menu.add(new Separator());
 			menu.add(new Separator());
-			menu.add(new Separator("others"));
+			menu.add(new Separator("others")); //$NON-NLS-1$
 			menu.add(new Separator());
 			menu.add(configureSchedule);
 			menu.add(new Separator());

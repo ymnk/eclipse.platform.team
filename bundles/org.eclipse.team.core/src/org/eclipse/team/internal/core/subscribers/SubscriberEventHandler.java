@@ -19,6 +19,7 @@ import org.eclipse.team.core.*;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.core.*;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * This handler collects changes and removals to resources and calculates their
@@ -213,7 +214,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 						monitor);
 				}
 			} catch (TeamException e) {
-				handleException(e, resource, ITeamStatus.SYNC_INFO_SET_ERROR, "The members of folder {0} could not be retrieved." + resource.getFullPath().toString());
+				handleException(e, resource, ITeamStatus.SYNC_INFO_SET_ERROR, Policy.bind("SubscriberEventHandler.8", resource.getFullPath().toString(), e.getMessage())); //$NON-NLS-1$
 			}
 		}
 
@@ -230,7 +231,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 			}
 			handlePendingDispatch(monitor);
 		} catch (TeamException e) {
-			handleException(e, resource, ITeamStatus.RESOURCE_SYNC_INFO_ERROR, "The synchronization state for resource {0} could not be determined." + resource.getFullPath().toString());
+			handleException(e, resource, ITeamStatus.RESOURCE_SYNC_INFO_ERROR, Policy.bind("SubscriberEventHandler.9", resource.getFullPath().toString(), e.getMessage())); //$NON-NLS-1$
 		}
 		monitor.worked(1);
 	}
@@ -365,7 +366,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 			}
 		} catch (RuntimeException e) {
 			// handle the exception and keep processing
-			handleException(new TeamException("An internal error occurred processing subscriber events.", e), event.getResource(), ITeamStatus.SYNC_INFO_SET_ERROR, "An internal error occurred processing resource {0}" + event.getResource().getFullPath().toString());
+			handleException(new TeamException(Policy.bind("SubscriberEventHandler.10"), e), event.getResource(), ITeamStatus.SYNC_INFO_SET_ERROR, Policy.bind("SubscriberEventHandler.11", event.getResource().getFullPath().toString(), e.getMessage())); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 		
@@ -379,7 +380,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 		try {
 			((RunnableEvent)event).run(Policy.subMonitorFor(monitor, 1));
 		} catch (CoreException e) {
-			handleException(e, event.getResource(), ITeamStatus.SYNC_INFO_SET_ERROR, "An internal error has occurred.");
+			handleException(e, event.getResource(), ITeamStatus.SYNC_INFO_SET_ERROR, e.getMessage());
 		}
 	}
 

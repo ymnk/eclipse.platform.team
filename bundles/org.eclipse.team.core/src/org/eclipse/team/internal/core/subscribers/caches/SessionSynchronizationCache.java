@@ -139,4 +139,12 @@ public class SessionSynchronizationCache extends SynchronizationCache {
 	public boolean setRemoteDoesNotExist(IResource resource) throws TeamException {
 		return setSyncBytes(resource, NO_REMOTE);
 	}
+
+	/**
+	 * Return <code>true</code> if no sync bytes are cached.
+	 * @return <code>true</code> if no sync bytes are cached.
+	 */
+	public boolean isEmpty() {
+		return syncBytesCache.isEmpty();
+	}
 }

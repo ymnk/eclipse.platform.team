@@ -228,7 +228,7 @@ public class SyncInfoSet {
 			beginInput();
 			runnable.run(Policy.subMonitorFor(monitor, 80));
 		} catch (CoreException e) {
-			addError(new TeamStatus(IStatus.ERROR, TeamPlugin.ID, ITeamStatus.SYNC_INFO_SET_ERROR, "An internal error occurred", e, null));
+			addError(new TeamStatus(IStatus.ERROR, TeamPlugin.ID, ITeamStatus.SYNC_INFO_SET_ERROR, e.getMessage(), e, null));
 		} finally {
 			endInput(Policy.subMonitorFor(monitor, 20));
 		}

@@ -41,7 +41,7 @@ public class DiffNodeWorkbenchAdapter implements IWorkbenchAdapter {
 	 */
 	public String getLabel(Object o) {
 		DiffNode node = getDiffNode(o);
-		return node != null ? node.getName() : "";
+		return node != null ? node.getName() : ""; //$NON-NLS-1$
 	}
 
 	/* (non-Javadoc)

@@ -23,6 +23,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscriber.*;
 import org.eclipse.team.ui.synchronize.viewers.IInputChangedListener;
 import org.eclipse.ui.*;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 
 public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements IInputChangedListener {
 	
@@ -60,7 +61,7 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 
 	public CVSSynchronizeViewPage(SubscriberParticipant participant, ISynchronizeView view) {
 		super(participant, view);
-		groupByComment = new Action("Show incoming grouped by comment", Action.AS_CHECK_BOX) {
+		groupByComment = new Action(Policy.bind("CVSSynchronizeViewPage.0"), Action.AS_CHECK_BOX) { //$NON-NLS-1$
 			public void run() {
 				config.setGroupIncomingByComment(!config.isGroupIncomingByComment());
 				setChecked(config.isGroupIncomingByComment());

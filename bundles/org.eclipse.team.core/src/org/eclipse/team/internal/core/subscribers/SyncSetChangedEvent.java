@@ -91,7 +91,7 @@ public class SyncSetChangedEvent implements ISyncInfoSetChangeEvent {
 	}
 	
 	public boolean isEmpty() {
-		return changedResources.isEmpty() && removedResources.isEmpty() && addedResources.isEmpty();
+		return changedResources.isEmpty() && removedResources.isEmpty() && addedResources.isEmpty() && errors.isEmpty();
 	}
 
 	public void errorOccurred(ITeamStatus status) {

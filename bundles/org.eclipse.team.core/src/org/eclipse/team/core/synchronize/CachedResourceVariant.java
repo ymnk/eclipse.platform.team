@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.*;
 import org.eclipse.team.internal.core.*;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * A resource variant is a partial implementation of a remote resource
@@ -53,7 +54,7 @@ public abstract class CachedResourceVariant extends PlatformObject implements IR
 			if (!isContentsCached()) {
 				// The cache may have been cleared if someone held
 				// on to the storage too long
-				throw new TeamException("There is no cached contents for resource {0}." + getCachePath());
+				throw new TeamException(Policy.bind("CachedResourceVariant.0", getCachePath())); //$NON-NLS-1$
 			}
 			return getCachedContents();
 		}

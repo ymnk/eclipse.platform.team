@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.core.subscribers.caches.SessionSynchronizationCache;
 import org.eclipse.team.internal.core.subscribers.caches.SynchronizationCache;
 
@@ -29,9 +30,9 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	private static final String UNIQUE_ID_PREFIX = "compare-"; //$NON-NLS-1$
 	
 	private CVSTag tag;
-	private SynchronizationCache remoteSynchronizer;
+	private SessionSynchronizationCache remoteSynchronizer;
 	private IResource[] resources;
-
+	
 	public CVSCompareSubscriber(IResource[] resources, CVSTag tag) {
 		super(getUniqueId(), Policy.bind("CVSCompareSubscriber.2", tag.getName()), Policy.bind("CVSCompareSubscriber.3")); //$NON-NLS-1$ //$NON-NLS-2$
 		this.resources = resources;
@@ -175,5 +176,15 @@ public class CVSCompareSubscriber extends CVSSyncTreeSubscriber implements ISubs
 	 */
 	protected boolean getCacheFileContentsHint() {
 		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.core.CVSSyncTreeSubscriber#getSyncInfo(org.eclipse.core.resources.IResource)
+	 */
+	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
+		if (remoteSynchronizer.isEmpty()) {
+			return null;
+		}
+		return super.getSyncInfo(resource);
 	}
 }

@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.core.subscribers.SyncInfoTreeChangeEvent;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * Provides addition API for accessing the <code>SyncInfo</code> in the set through
@@ -125,7 +126,7 @@ public class SyncInfoTree extends SyncInfoSet {
 			if(info != null) {
 				infos.add(info);
 			} else {
-				TeamPlugin.log(IStatus.INFO, "missing sync info: " + child.getFullPath(), null);
+				TeamPlugin.log(IStatus.INFO, Policy.bind("SyncInfoTree.0") + child.getFullPath(), null); //$NON-NLS-1$
 			}
 		}
 		return (SyncInfo[]) infos.toArray(new SyncInfo[infos.size()]);

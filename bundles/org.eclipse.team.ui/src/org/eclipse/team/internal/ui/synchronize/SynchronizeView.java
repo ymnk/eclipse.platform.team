@@ -62,8 +62,8 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	/**
 	 * Preference key to save
 	 */
-	private static final String KEY_LAST_ACTIVE_PARTICIPANT = "lastactiveparticipant";
-	private static final String KEY_SETTINGS_SECTION= "SynchronizeViewSettings";
+	private static final String KEY_LAST_ACTIVE_PARTICIPANT = "lastactiveparticipant"; //$NON-NLS-1$
+	private static final String KEY_SETTINGS_SECTION= "SynchronizeViewSettings"; //$NON-NLS-1$
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
