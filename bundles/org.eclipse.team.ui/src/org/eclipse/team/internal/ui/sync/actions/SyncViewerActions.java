@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ui.sync.actions;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Iterator;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -21,7 +22,10 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.UIConstants;
@@ -30,13 +34,16 @@ import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
+import org.eclipse.team.ui.sync.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.SyncInfoChangeTypeFilter;
+import org.eclipse.team.ui.sync.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.sync.SyncInfoFilter;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.WorkingSetFilterActionGroup;
-import org.eclipse.team.ui.sync.*;
 
 /**
  * This class managers the actions associated with the SyncViewer class.
@@ -62,6 +69,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private Action refreshAction;
 	private Action toggleViewerType;
 	private Action open;
+	private ExpandAllAction expandAll;
 	
 	class RefreshAction extends Action {
 		public RefreshAction() {
@@ -97,6 +105,47 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 					
 				}
 			});
+		}
+	}
+	
+	class ExpandAllAction extends Action {
+		public ExpandAllAction() {
+			super("Expand All");
+		}
+		public void run() {
+			expandSelection();
+		}
+		public void update() {
+			setEnabled(getTreeViewer() != null && hasSelection());
+		}
+		protected void expandSelection() {
+			AbstractTreeViewer treeViewer = getTreeViewer();
+			if (treeViewer != null) {
+				ISelection selection = getSelection();
+				if (selection instanceof IStructuredSelection) {
+					Iterator elements = ((IStructuredSelection)selection).iterator();
+					while (elements.hasNext()) {
+						Object next = elements.next();
+						treeViewer.expandToLevel(next, AbstractTreeViewer.ALL_LEVELS);
+					}
+				}
+			}
+		}
+		private AbstractTreeViewer getTreeViewer() {
+			Viewer viewer = getSyncView().getViewer();
+			if (viewer instanceof AbstractTreeViewer) {
+				return (AbstractTreeViewer)viewer;
+			}
+			return null;
+		}
+		private ISelection getSelection() {
+			ActionContext context = getContext();
+			if (context == null) return null;
+			return getContext().getSelection();
+		}
+		private boolean hasSelection() {
+			ISelection selection = getSelection();
+			return (selection != null && !selection.isEmpty());
 		}
 	}
 	
@@ -159,6 +208,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		comparisonCriteria.updateActionBars();
 		subscriberInputs.updateActionBars();
 		subscriberActions.updateActionBars();
+		
+		expandAll.update();
 	}
 
 	public SyncViewerActions(SyncViewer viewer) {
@@ -185,6 +236,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		refreshAction = new RefreshAction();
 		refreshAction.setEnabled(false);
 		collapseAll = new CollapseAllAction();
+		expandAll = new ExpandAllAction();
 		
 		toggleViewerType = new ToggleViewAction(SyncViewer.TABLE_VIEW);
 		open = new OpenInCompareAction(syncView);
@@ -238,6 +290,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		super.fillContextMenu(manager);
 		
 		manager.add(open);
+		manager.add(new Separator());
+		manager.add(expandAll);
 		manager.add(new Separator());
 		manager.add(refreshAction);
 		// Subscriber menus go here
