@@ -319,7 +319,7 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 	
 	public ISynchronizeScope getSynchronizeScope() {
 		if (workingSetScope.getSelection()) {
-			return new WorkingSetScope(workingSet);
+			return new WorkingSetScope(new IWorkingSet[] { workingSet });
 		}
 		if (participantScope.getSelection()) {
 			return new WorkspaceScope();
