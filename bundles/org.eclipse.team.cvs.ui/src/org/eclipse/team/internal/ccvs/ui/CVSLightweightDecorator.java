@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ccvs.ui;
 
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -264,12 +265,14 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 			if (isDirty) {
 				bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
 			}
-
 			CVSTag tag = getTagToShow(resource);
 			if (tag != null) {
 				String name = tag.getName();
 				if(tag.getType() == CVSTag.DATE){
-					name = CVSDateFormatter.decoratorTimeStamp(tag.asDate());
+					Date date = tag.asDate();
+					if(date != null){
+						name = CVSDateFormatter.decoratorTimeStamp(date);
+					}
 				}
 				bindings.put(CVSDecoratorConfiguration.RESOURCE_TAG, name);
 			}

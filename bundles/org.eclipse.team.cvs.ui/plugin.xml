@@ -540,6 +540,7 @@
          </action>
           <action
                label="%NewDateTagAction.label"
+               icon="icons/full/obj16/date.gif"
                tooltip="%NewDateTagAction.tooltip"
                menubarPath="group.add/group1"
                class="org.eclipse.team.internal.ccvs.ui.repo.NewDateTagAction"
@@ -552,6 +553,7 @@
             id="org.eclipse.team.ccvs.ui.DateCategoryContributions">
           <action
                label="%NewDateTagAction.label"
+               icon="icons/full/obj16/date.gif"
                tooltip="%NewDateTagAction.tooltip"
                menubarPath="group.add/group1"
                class="org.eclipse.team.internal.ccvs.ui.repo.NewDateTagAction"

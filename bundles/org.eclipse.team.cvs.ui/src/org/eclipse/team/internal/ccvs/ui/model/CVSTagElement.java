@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.model;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
@@ -81,7 +82,10 @@ public class CVSTagElement extends CVSModelElement implements IDeferredWorkbench
 			return null;
 		CVSTag aTag = ((CVSTagElement) o).tag;
 		if(aTag.getType() == CVSTag.DATE){
-			return CVSDateFormatter.repoViewTimeStamp(aTag.asDate());
+			Date date = tag.asDate();
+			if (date != null){
+				return CVSDateFormatter.repoViewTimeStamp(date);
+			}
 		}
 		return aTag.getName();
 	}
