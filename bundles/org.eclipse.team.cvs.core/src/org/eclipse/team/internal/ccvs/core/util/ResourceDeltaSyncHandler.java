@@ -7,6 +7,7 @@ package org.eclipse.team.internal.ccvs.core.util;
  
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -20,6 +21,8 @@ import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.ccvs.core.ICVSFile;
 import org.eclipse.team.ccvs.core.ICVSFolder;
+import org.eclipse.team.ccvs.core.ICVSResource;
+import org.eclipse.team.core.IResourceStateChangeListener;
 import org.eclipse.team.core.ITeamProvider;
 import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -33,10 +36,59 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
  * Listen in IResourceChangeEvent.PRE_AUTO_BUILD so that other interested parties 
  * (most notably, the file synchronizer) will receive up to date notifications
  */
-public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
+public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor, IResourceStateChangeListener {
 
+	public static final String DELETION_MARKER = "org.eclipse.team.cvs.core.cvsremove";
+	public static final String ADDITION_MARKER = "org.eclipse.team.cvs.core.cvsadd";
+	
+	public static final String NAME_ATTRIBUTE = "name";
+	
 	private static IResourceChangeListener listener;
 	private static ResourceDeltaSyncHandler visitor;
+	
+	protected IMarker createDeleteMarker(IResource resource) {
+		try {
+			IMarker marker = resource.getParent().createMarker(DELETION_MARKER);
+			marker.setAttribute("name", resource.getName());
+			marker.setAttribute(IMarker.MESSAGE, resource.getName() + " has been deleted locally");
+			return marker;
+		} catch (CoreException e) {
+			Util.logError("Error creating deletion marker", e);
+		}
+		return null;
+	}
+	
+	protected IMarker createAdditonMarker(IResource resource) {
+		try {
+			IMarker marker = resource.createMarker(ADDITION_MARKER);
+			marker.setAttribute(IMarker.MESSAGE, resource.getName() + " is an unmanaged local addition");
+			return marker;
+		} catch (CoreException e) {
+			Util.logError("Error creating addition marker", e);
+		}
+		return null;
+	}
+	
+	protected IMarker getAdditionMarker(IResource resource) throws CoreException {
+   		IMarker[] markers = resource.findMarkers(ADDITION_MARKER, false, IResource.DEPTH_ZERO);
+   		if (markers.length == 1) {
+   			return markers[0];
+   		}
+		return null;
+	}
+	
+	protected IMarker getDeletionMarker(IResource resource) throws CoreException {
+		String name = resource.getName();
+   		IMarker[] markers = resource.getParent().findMarkers(DELETION_MARKER, false, IResource.DEPTH_ZERO);
+   		for (int i = 0; i < markers.length; i++) {
+			IMarker iMarker = markers[i];
+			String markerName = (String)iMarker.getAttribute(NAME_ATTRIBUTE);
+			if (markerName.equals(name))
+				return iMarker;
+		}
+
+		return null;
+	}
 	
 	public static IResource getResourceFor(IProject container, IResource destination, IPath originating) {
 		switch(destination.getType()) {
@@ -60,7 +112,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 				if (resource.getType() == IResource.FOLDER) {
 					return ! handleOrphanedSubtree((IContainer)resource);
 				} else if (resource.getType() == IResource.FILE) {
-					handleReplacedDeletion((IFile)resource);
+					handleAddedFile((IFile)resource);
 				}
 				break;
 			case IResourceDelta.REMOVED :
@@ -111,7 +163,6 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 		return false;
 	}
 	
-	
 	/*
 	 * Mark deleted managed files as outgoing deletions
 	 */
@@ -123,26 +174,32 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 				if (info.isAdded()) {
 					mFile.unmanage();
 				} else {
-					mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.DELETED_PREFIX + info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions()));
+					createDeleteMarker(resource);
+					//mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.DELETED_PREFIX + info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions()));
 				}
 			}
+			// XXX If .cvsignore was deleted, we may have unmanaged additions in the same folder
 		} catch (CVSException e) {
 			CVSProviderPlugin.log(e);
 		}
 	}
-	
+
 	/*
 	 * Handle the case where an added file has the same name as a "cvs removed" file
 	 * by restoring the sync info to what it was before the delete
 	 */
-	private void handleReplacedDeletion(IFile resource) {
+	private void handleAddedFile(IFile resource) {
 		try {
 			ICVSFile mFile = CVSWorkspaceRoot.getCVSFileFor((IFile)resource);
 			if (mFile.isManaged()) {
 				ResourceSyncInfo info = mFile.getSyncInfo();
 				if (info.isDeleted()) {
+					// Handle a replaced deletion
 					mFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions()));
+					// XXX Need to remove delete marker!
 				}
+			} else if ( ! mFile.isIgnored()) {
+				createAdditonMarker(resource);
 			}
 		} catch (CVSException e) {
 			CVSProviderPlugin.log(e);
@@ -164,7 +221,8 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 				if (fromInfo.isAdded()) {
 					fromFile.unmanage();
 				} else {
-					fromFile.setSyncInfo(new ResourceSyncInfo(fromInfo.getName(), fromInfo.DELETED_PREFIX + fromInfo.getRevision(), fromInfo.getTimeStamp(), fromInfo.getKeywordMode(), fromInfo.getTag(), fromInfo.getPermissions()));
+					createDeleteMarker(fromResource);
+					//fromFile.setSyncInfo(new ResourceSyncInfo(fromInfo.getName(), fromInfo.DELETED_PREFIX + fromInfo.getRevision(), fromInfo.getTimeStamp(), fromInfo.getKeywordMode(), fromInfo.getTag(), fromInfo.getPermissions()));
 				}
 			}
 			
@@ -173,6 +231,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 			if (toFile.isManaged()) {
 				ResourceSyncInfo info = toFile.getSyncInfo();
 				if (info.isDeleted()) {
+					// Handle a replaced deletion
 					toFile.setSyncInfo(new ResourceSyncInfo(info.getName(), info.getRevision(), info.getTimeStamp(), info.getKeywordMode(), info.getTag(), info.getPermissions()));
 				}
 			} else if (fromInfo != null) {
@@ -184,7 +243,7 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 		}
 	}
 	
-	public static void startup() {
+	public static void startup() {		
 		if (visitor == null)
 			visitor = new ResourceDeltaSyncHandler();
 		if (listener == null)
@@ -215,9 +274,43 @@ public class ResourceDeltaSyncHandler implements IResourceDeltaVisitor {
 				}
 			};
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(listener, IResourceChangeEvent.PRE_AUTO_BUILD);
+		TeamPlugin.getManager().addResourceStateChangeListener(visitor);
 	}
 	
 	public static void shutdown() {
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(listener);
 	}
+	
+	/*
+	 * @see IResourceStateChangeListener#resourceStateChanged(IResource[])
+	 */
+	public void resourceStateChanged(IResource[] changedResources) {
+		for (int i = 0; i < changedResources.length; i++) {
+			try {
+				IResource resource = changedResources[i];
+				if (resource.getType() == IResource.FILE) {
+					ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+					if (cvsResource.isManaged()) {
+						IMarker marker = getAdditionMarker(resource);
+						if (marker != null)
+							marker.delete();
+					} else if (cvsResource.isIgnored()) {
+						// XXX I doubt that ignore actions result in state changes
+						IMarker marker = getAdditionMarker(resource);
+						if (marker != null)
+							marker.delete();
+					} else if ( ! cvsResource.exists()) {
+						IMarker marker = getDeletionMarker(resource);
+						if (marker != null)
+							marker.delete();
+					}
+				}
+			} catch (CVSException e) {
+				Util.logError("Error updating marker state", e);
+			} catch (CoreException e) {
+				Util.logError("Error updating marker state", e);
+			}
+		}
+	}
+
 }
