@@ -48,7 +48,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
  *
  * @since 2.0
  */
-public abstract class RepositoryProvider implements IProjectNature {
+public abstract class RepositoryProvider implements IProjectNature, IAdaptable {
 	
 	private final static String TEAM_SETID = "org.eclipse.team.repository-provider"; //$NON-NLS-1$
 	
@@ -619,5 +619,13 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 */
 	public boolean canHandleLinkedResources() {
 		return false;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {		
+		return null;
 	}
 }	

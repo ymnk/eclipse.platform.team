@@ -15,6 +15,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.team.core.wvcm.*;
 import org.eclipse.team.internal.core.*;
 
 /**
@@ -46,6 +47,7 @@ public final class Team {
 
 	// Deployment provider manager
 	private static IDeploymentProviderManager deploymentManager;
+	private static WVCMAuthenticationProvider wvcmAuthentication;
 	
 	private static class FileTypeInfo implements IFileTypeInfo {
 		private String extension;
@@ -583,5 +585,13 @@ public final class Team {
 			deploymentManager = new DeploymentProviderManager();
 		}
 		return deploymentManager;
+	}
+	
+	public static void setDefaultWVCMAuthentication(WVCMAuthenticationProvider authentication) {
+		wvcmAuthentication = authentication;
+	}	
+	
+	public static WVCMAuthenticationProvider getDefaultWVCMAuthentication() {
+		return wvcmAuthentication;
 	}
 }

@@ -33,7 +33,7 @@ import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
  * @see IDeploymentProviderManager
  * @since 3.0
  */
-public abstract class DeploymentProvider implements IExecutableExtension {
+public abstract class DeploymentProvider implements IExecutableExtension, IAdaptable {
 	
 	private String id;
 	private IContainer container;
@@ -69,5 +69,12 @@ public abstract class DeploymentProvider implements IExecutableExtension {
 	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
 		this.id = config.getAttribute(DeploymentProviderDescriptor.ATT_ID);
 		this.name = config.getAttribute(DeploymentProviderDescriptor.ATT_NAME);
-	}	
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {		
+		return null;
+	}
 }
