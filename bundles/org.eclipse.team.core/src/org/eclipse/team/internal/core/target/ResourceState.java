@@ -66,7 +66,7 @@ public abstract class ResourceState {
 	 */
 	public ResourceState(IResource localResource) {
 		super();
-		StateFactory.getSynchronizer().add(getStateType());
+		SynchronizedTargetProvider.getSynchronizer().add(getStateType());
 		this.localResource = localResource;
 	}
 
@@ -335,7 +335,7 @@ public abstract class ResourceState {
 	public final void loadState() {
 		try {
 			byte[] storedState =
-				StateFactory.getSynchronizer().getSyncInfo(getStateType(), localResource);
+				SynchronizedTargetProvider.getSynchronizer().getSyncInfo(getStateType(), localResource);
 			if (storedState != null)
 				fromBytes(storedState);
 		} catch (CoreException e) {
@@ -371,7 +371,7 @@ public abstract class ResourceState {
 
 	public final void storeState() {
 		try {
-			StateFactory.getSynchronizer().setSyncInfo(
+			SynchronizedTargetProvider.getSynchronizer().setSyncInfo(
 				getStateType(),
 				localResource,
 				toBytes());
@@ -416,7 +416,7 @@ public abstract class ResourceState {
 
 	final public void removeState() {
 		try {
-			StateFactory.getSynchronizer().flushSyncInfo(
+			SynchronizedTargetProvider.getSynchronizer().flushSyncInfo(
 				getStateType(),
 				localResource,
 				IResource.DEPTH_INFINITE);
