@@ -192,7 +192,7 @@
          </action>
          <action
                label="%ShowHistoryAction.label"
-               icon="icons/full/ctool16/history.gif"
+               icon="icons/full/etool16/history.gif"
                helpContextId="org.eclipse.team.cvs.ui.show_in_history_action_context"
                tooltip="%ShowHistoryAction.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction"
@@ -201,7 +201,7 @@
          </action>
          <action
                label="%ShowAnnotationAction.label"
-               icon="icons/full/ctool16/annotate.gif"
+               icon="icons/full/etool16/annotate.gif"
                helpContextId="org.eclipse.team.cvs.ui.get_annotate_action_context"
                tooltip="%ShowAnnotationAction.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction"
@@ -265,26 +265,29 @@
                id="org.eclipse.team.ccvs.ui.updateSwitch">
          </action>
          <action
-               label="%MergeAction.label"
                helpContextId="org.eclipse.team.cvs.ui.team_merge_action_context"
-               tooltip="%MergeAction.tooltip"
+               label="%MergeAction.label"
+               icon="icons/full/obj16/branches_rep.gif"
                class="org.eclipse.team.internal.ccvs.ui.actions.MergeAction"
+               tooltip="%MergeAction.tooltip"
                menubarPath="team.main/group2"
                id="org.eclipse.team.ccvs.ui.merge">
          </action>
          <action
-               label="%BranchAction.label"
                helpContextId="org.eclipse.team.cvs.ui.team_branch_action_context"
-               tooltip="%BranchAction.tooltip"
+               label="%BranchAction.label"
+               icon="icons/full/elcl16/newstream_wiz.gif"
                class="org.eclipse.team.internal.ccvs.ui.actions.BranchAction"
+               tooltip="%BranchAction.tooltip"
                menubarPath="team.main/group2"
                id="org.eclipse.team.ccvs.ui.branch">
          </action>
          <action
-               label="%TagAction.label"
                helpContextId="org.eclipse.team.cvs.ui.team_tag_as_version_action_context"
-               tooltip="%TagAction.tooltip"
+               label="%TagAction.label"
+               icon="icons/full/obj16/versions_rep.gif"
                class="org.eclipse.team.internal.ccvs.ui.actions.TagLocalAction"
+               tooltip="%TagAction.tooltip"
                menubarPath="team.main/group2"
                id="org.eclipse.team.ccvs.ui.tag">
          </action>
@@ -870,7 +873,7 @@
             label="%CVS"
             description="%CVSActionSet.description"
             visible="false"
-            id="org.eclipse.team.cvs.ui.CVSActionSet">
+            id="cvs">
          <action
                definitionId="org.eclipse.team.cvs.ui.checkout"
                label="%CVSActionSet.checkoutLabel"
@@ -879,6 +882,165 @@
                class="org.eclipse.team.internal.ccvs.ui.actions.CheckoutWizardAction"
                toolbarPath="Normal/CVS"
                id="org.eclipse.team.cvs.ui.actions.CheckoutAction">
+         </action>
+         <menu
+               label="%CVS"
+               path="additions"
+               id="cvs.main">
+            <separator
+                  name="group1">
+            </separator>
+            <separator
+                  name="group2">
+            </separator>
+            <separator
+                  name="group3">
+            </separator>
+            <separator
+                  name="group4">
+            </separator>
+            <separator
+                  name="group5">
+            </separator>
+            <separator
+                  name="group6">
+            </separator>
+            <separator
+                  name="group7">
+            </separator>
+            <separator
+                  name="group8">
+            </separator>
+            <separator
+                  name="group9">
+            </separator>
+            <separator
+                  name="group10">
+            </separator>           
+            <separator
+                  name="projectGroup">
+            </separator>
+         </menu>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_ignore_action_context"
+               label="%IgnoreAction.label"
+               definitionId="org.eclipse.team.cvs.ui.ignore"
+               class="org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction"
+               tooltip="%IgnoreAction.tooltip"
+               menubarPath="cvs.main/group3"
+               id="org.eclipse.team.cvs.ui.ignore">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_add_action_context"
+               label="%AddAction.label"
+               definitionId="org.eclipse.team.cvs.ui.add"
+               class="org.eclipse.team.internal.ccvs.ui.actions.AddAction"
+               tooltip="%AddAction.tooltip"
+               menubarPath="cvs.main/group3"
+               id="org.eclipse.team.cvs.ui.add">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.show_in_history_action_context"
+               label="%ShowHistoryAction.label"
+               definitionId="org.eclipse.team.cvs.ui.showHistory"
+               class="org.eclipse.team.internal.ccvs.ui.actions.ShowResourceInHistoryAction"
+               tooltip="%ShowHistoryAction.tooltip"
+               icon="icons/full/eview16/history_view.gif"
+               menubarPath="cvs.main/group2"
+               id="org.eclipse.team.cvs.ui.showHistory">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.get_annotate_action_context"
+               label="%ShowAnnotationAction.label"
+               definitionId="org.eclipse.team.cvs.ui.showAnnotation"
+               class="org.eclipse.team.internal.ccvs.ui.actions.ShowAnnotationAction"
+               tooltip="%ShowAnnotationAction.tooltip"
+               icon="icons/full/etool16/annotate.gif"
+               menubarPath="cvs.main/group2"
+               id="org.eclipse.team.cvs.ui.showAnnotation">
+          </action>
+          <action
+                helpContextId="org.eclipse.team.cvs.ui.team_set_keyword_mode_action_context"
+                label="%SetKeywordSubstitutionAction.label"
+                definitionId="org.eclipse.team.cvs.ui.setKeywordSubstitution"
+                class="org.eclipse.team.internal.ccvs.ui.actions.SetKeywordSubstitutionAction"
+                tooltip="%SetKeywordSubstitutionAction.tooltip"
+                menubarPath="cvs.main/group3"
+                id="org.eclipse.team.cvs.ui.setKeywordSubstitution">
+         </action>
+         <action
+               label="%UpdateActionSwitch.label"
+               definitionId="org.eclipse.team.cvs.ui.updateSwitch"
+               class="org.eclipse.team.internal.ccvs.ui.actions.UpdateAction"
+               tooltip="%UpdateActionSwitch.tooltip"
+               menubarPath="cvs.main/group2"
+               id="org.eclipse.team.cvs.ui.updateSwitch">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_merge_action_context"
+               label="%MergeAction.label"
+               icon="icons/full/obj16/branches_rep.gif"
+               tooltip="%MergeAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.MergeAction"
+               definitionId="org.eclipse.team.cvs.ui.merge"
+               menubarPath="cvs.main/group2"
+               id="org.eclipse.team.cvs.ui.merge">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_branch_action_context"
+               label="%BranchAction.label"
+               icon="icons/full/elcl16/newstream_wiz.gif"
+               tooltip="%BranchAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.BranchAction"
+               definitionId="org.eclipse.team.cvs.ui.branch"
+               menubarPath="cvs.main/group2"
+               id="org.eclipse.team.cvs.ui.branch">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_tag_as_version_action_context"
+               label="%TagAction.label"
+               icon="icons/full/obj16/versions_rep.gif"
+               tooltip="%TagAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.TagLocalAction"
+               definitionId="org.eclipse.team.cvs.ui.tag"
+               menubarPath="cvs.main/group2"
+               id="org.eclipse.team.cvs.ui.tag">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_create_patch_action_context"
+               label="%GenerateDiff.label"
+               definitionId="org.eclipse.team.cvs.ui.GenerateDiff"
+               class="org.eclipse.team.internal.ccvs.ui.actions.GenerateDiffFileAction"
+               tooltip="%GenerateDiff.tooltip"
+               menubarPath="cvs.main/group1"
+               id="org.eclipse.team.cvs.ui.GenerateDiff">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_update_action_context"
+               label="%UpdateAction.label"
+               tooltip="%UpdateAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.UpdateSilentAction"
+               definitionId="org.eclipse.team.cvs.ui.update"
+               menubarPath="cvs.main/group1"
+               id="org.eclipse.team.cvs.ui.update">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_commit_action_context"
+               label="%CommitAction.label"
+               definitionId="org.eclipse.team.cvs.ui.commit"
+               class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"
+               tooltip="%CommitAction.tooltip"
+               menubarPath="cvs.main/group1"
+               id="org.eclipse.team.cvs.ui.commit">
+         </action>
+         <action
+               helpContextId="org.eclipse.team.cvs.ui.team_synchronize_action_context"
+               label="%Synchronize.label"
+               tooltip="%Synchronize.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
+               definitionId="org.eclipse.team.cvs.ui.sync"
+               menubarPath="cvs.main/group1"
+               id="org.eclipse.team.cvs.ui.sync">
          </action>
       </actionSet>
    </extension>
@@ -945,6 +1107,71 @@
             command="org.eclipse.team.ccvs.ui.AnnotateView"
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
       </keyBinding>
+      <command
+            description="%CommitAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%CommitAction.name"
+            id="org.eclipse.team.cvs.ui.commit"/>
+      <command
+            category="org.eclipse.team.cvs.ui.actionSet"
+            description="%Synchronize.tooltip"
+            name="%Synchronize.name"
+            id="org.eclipse.team.cvs.ui.sync"/>
+      <command
+            description="%UpdateAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%UpdateAction.name"
+            id="org.eclipse.team.cvs.ui.command3"/>
+      <command
+            description="%GenerateDiff.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%GenerateDiff.name"
+            id="org.eclipse.team.cvs.ui.GenerateDiff"/>
+      <command
+            description="%TagAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%TagAction.name"
+            id="org.eclipse.team.cvs.ui.tag"/>
+      <command
+            description="%BranchAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%BranchAction.name"
+            id="org.eclipse.team.cvs.ui.branch"/>
+      <command
+            description="%MergeAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%MergeAction.name"
+            id="org.eclipse.team.cvs.ui.merge"/>
+      <command
+            description="%UpdateActionSwitch.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%UpdateActionSwitch.name"
+            id="org.eclipse.team.cvs.ui.updateSwitch"/>
+      <command
+            description="%SetKeywordSubstitutionAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%SetKeywordSubstitutionAction.name"
+            id="org.eclipse.team.cvs.ui.setKeywordSubstitution"/>
+      <command
+            description="%ShowAnnotationAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%ShowAnnotationAction.name"
+            id="org.eclipse.team.cvs.ui.showAnnotation"/>
+      <command
+            description="%ShowHistoryAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%ShowHistoryAction.name"
+            id="org.eclipse.team.cvs.ui.showHistory"/>
+      <command
+            description="%AddAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%AddAction.name"
+            id="org.eclipse.team.cvs.ui.add"/>
+      <command
+            description="%IgnoreAction.tooltip"
+            category="org.eclipse.team.cvs.ui.actionSet"
+            name="%IgnoreAction.name"
+            id="org.eclipse.team.cvs.ui.ignore"/>
    </extension>
    
 <!-- ********** Color and Font Definitions ************** -->   
