@@ -45,7 +45,7 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
-import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.TeamSubscriberParticipantLabelProvider;
 import org.eclipse.team.internal.ui.synchronize.actions.ComparisonCriteriaActionGroup;
 import org.eclipse.team.internal.ui.synchronize.actions.INavigableControl;
 import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
@@ -471,8 +471,9 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	}
 
 	public void selectAll() {
-		if (getLayout() == TeamSubscriberParticipant.TABLE_LAYOUT) {
-			TableViewer table = (TableViewer)getViewer();
+		Viewer viewer = getViewer();
+		if (viewer instanceof TableViewer) {
+			TableViewer table = (TableViewer)viewer;
 			table.getTable().selectAll();
 		} else {
 			// Select All in a tree doesn't really work well
@@ -481,10 +482,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	
 	private IPreferenceStore getStore() {
 		return TeamUIPlugin.getPlugin().getPreferenceStore();
-	}
-	
-	public void workingSetChanged(IWorkingSet set) {
-		input.setWorkingSet(set);
 	}
 	
 	/* (non-Javadoc)
@@ -535,10 +532,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	 */
 	public IPageSite getSite() {
 		return this.site;
-	}
-
-	public int getLayout() {
-		return layout;
 	}
 
 	/* (non-Javadoc)
@@ -592,13 +585,6 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		} catch (TeamException e) {
 			Utils.handleError(getSite().getShell(), e, Policy.bind("SynchronizeView.16"), e.getMessage()); //$NON-NLS-1$
 		}
-	}
-	
-	/**
-	 * @return Returns the refreshAction.
-	 */
-	public RefreshAction getRefreshAction() {
-		return refreshAction;
 	}
 	
 	/**

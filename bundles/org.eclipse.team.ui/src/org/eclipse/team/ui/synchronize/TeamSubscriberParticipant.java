@@ -13,7 +13,7 @@ import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
  * A synchronize participant that displays synchronization information for local
- * resources that is managed via a {@link TeamSubscriber}.
+ * resources that are managed via a {@link TeamSubscriber}.
  *
  * @since 3.0
  */
