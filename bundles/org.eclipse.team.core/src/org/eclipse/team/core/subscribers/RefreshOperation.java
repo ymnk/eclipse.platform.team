@@ -12,11 +12,15 @@ package org.eclipse.team.core.subscribers;
 
 import java.util.*;
 
+import org.eclipse.core.internal.jobs.JobManager;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.core.Assert;
+import org.eclipse.team.internal.core.Policy;
 
 /**
  * This operation adjusts the cached synchronization bytes using the results of a refresh oepration
@@ -25,13 +29,52 @@ public abstract class RefreshOperation {
 	
 	protected abstract SynchronizationCache getSynchronizationCache();
 	
-	public IResource[] collectChanges(IResource local, ISubscriberResource remote, int depth, IProgressMonitor monitor) throws TeamException {
+	public IResource[] refresh(IResource[] resources, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException {
+		IResource[] changedResources = null;
+		monitor.beginTask(null, 100 * resources.length);
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			ISchedulingRule rule = resource.getProject();
+			
+			try {
+				// Get a scheduling rule on the project since CVS may obtain a lock higher then
+				// the resource itself.
+				JobManager.getInstance().beginRule(rule, monitor);
+				if (!resource.getProject().isAccessible()) {
+					// The project is closed so silently skip it
+					return new IResource[0];
+				}
+				
+				monitor.setTaskName(Policy.bind("RemoteTagSynchronizer.0", resource.getFullPath().makeRelative().toString()));
+				
+				// build the remote tree only if an initial tree hasn't been provided
+				IRemoteResource	tree = buildRemoteTree(resource, depth, cacheFileContentsHint, Policy.subMonitorFor(monitor, 70));
+				
+				// update the known remote handles 
+				IProgressMonitor sub = Policy.infiniteSubMonitorFor(monitor, 30);
+				try {
+					sub.beginTask(null, 64);
+					// TODO: API shoudl include refresh itself
+					changedResources = collectChanges(resource, tree, depth, sub);
+				} finally {
+					sub.done();	 
+				}
+			} finally {
+				JobManager.getInstance().endRule(rule);
+			}
+		}
+		monitor.done();
+		if (changedResources == null) return new IResource[0];
+		return changedResources;
+	}
+
+	public IResource[] collectChanges(IResource local, IRemoteResource remote, int depth, IProgressMonitor monitor) throws TeamException {
 		List changedResources = new ArrayList();
 		collectChanges(local, remote, changedResources, depth, monitor);
 		return (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
 	}
 	
-	protected void collectChanges(IResource local, ISubscriberResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
+	protected void collectChanges(IResource local, IRemoteResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
 		SynchronizationCache cache = getSynchronizationCache();
 		byte[] newRemoteBytes = getRemoteSyncBytes(local, remote);
 		boolean changed;
@@ -47,7 +90,7 @@ public abstract class RefreshOperation {
 		Map children = mergedMembers(local, remote, monitor);	
 		for (Iterator it = children.keySet().iterator(); it.hasNext();) {
 			IResource localChild = (IResource) it.next();
-			ISubscriberResource remoteChild = (ISubscriberResource)children.get(localChild);
+			IRemoteResource remoteChild = (IRemoteResource)children.get(localChild);
 			collectChanges(localChild, remoteChild, changedResources,
 					depth == IResource.DEPTH_INFINITE ? IResource.DEPTH_INFINITE : IResource.DEPTH_ZERO, 
 					monitor);
@@ -92,12 +135,12 @@ public abstract class RefreshOperation {
 		return new IResource[0];
 	}
 	
-	protected Map mergedMembers(IResource local, ISubscriberResource remote, IProgressMonitor progress) throws TeamException {
+	protected Map mergedMembers(IResource local, IRemoteResource remote, IProgressMonitor progress) throws TeamException {
 		
 		// {IResource -> IRemoteResource}
 		Map mergedResources = new HashMap();
 		
-		ISubscriberResource[] remoteChildren = getRemoteChildren(remote, progress);
+		IRemoteResource[] remoteChildren = getRemoteChildren(remote, progress);
 		
 		IResource[] localChildren = getLocalChildren(local);		
 
@@ -119,7 +162,7 @@ public abstract class RefreshOperation {
 			if (remoteChildren.length > 0) {
 				remoteSet = new HashMap(10);
 				for (int i = 0; i < remoteChildren.length; i++) {
-					ISubscriberResource remoteChild = remoteChildren[i];
+					IRemoteResource remoteChild = remoteChildren[i];
 					String name = remoteChild.getName();
 					remoteSet.put(name, remoteChild);
 					allSet.add(name);
@@ -140,8 +183,8 @@ public abstract class RefreshOperation {
 				IResource localChild =
 					localSet != null ? (IResource) localSet.get(keyChildName) : null;
 
-					ISubscriberResource remoteChild =
-						remoteSet != null ? (ISubscriberResource) remoteSet.get(keyChildName) : null;
+					IRemoteResource remoteChild =
+						remoteSet != null ? (IRemoteResource) remoteSet.get(keyChildName) : null;
 						
 						if (localChild == null) {
 							// there has to be a remote resource available if we got this far
@@ -161,7 +204,7 @@ public abstract class RefreshOperation {
 	 * @param remote the corresponding remote resource
 	 * @return the synchronization bytes for the remote resource.
 	 */
-	protected abstract byte[] getRemoteSyncBytes(IResource local, ISubscriberResource remote) throws TeamException;
+	protected abstract byte[] getRemoteSyncBytes(IResource local, IRemoteResource remote) throws TeamException;
 	
 	
 	/**
@@ -170,7 +213,7 @@ public abstract class RefreshOperation {
 	 * @param progress a progress monitor
 	 * @return an array of the children of the renmote resource.
 	 */
-	protected abstract ISubscriberResource[] getRemoteChildren(ISubscriberResource remote, IProgressMonitor progress) throws TeamException;
+	protected abstract IRemoteResource[] getRemoteChildren(IRemoteResource remote, IProgressMonitor progress) throws TeamException;
 
 	/**
 	 * Get the local children that are of interest to the subscriber for the given local resource.
@@ -179,6 +222,15 @@ public abstract class RefreshOperation {
 	 */
 	protected abstract IResource[] getLocalChildren(IResource parent) throws TeamException;
 
+	/**
+	 * @param resource
+	 * @param depth
+	 * @param cacheFileContentsHint
+	 * @param monitor
+	 * @return
+	 */
+	protected abstract IRemoteResource buildRemoteTree(IResource resource, int depth, boolean cacheFileContentsHint, IProgressMonitor monitor) throws TeamException;
+	
 	/**
 	 * Create a corresponding local resource handle for a remote resource that does not yet have a
 	 * corresponding local resource taht exists.
