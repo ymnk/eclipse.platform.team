@@ -67,7 +67,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	private boolean isNewLocation;
 	
 	// Keep track of the folder that existed the last time we checked
-	private ICVSRemoteFolder exisitingRemote;
+	private ICVSRemoteFolder existingRemote;
 
 	private SharingWizardSyncPage syncPage;
 	
@@ -138,7 +138,11 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 				return modulePage.useProjectName() || modulePage.getModuleName() != null;
 			}
 		} else if (page == modulePage) {
-			return modulePage.useProjectName() || modulePage.getModuleName() != null;
+			ICVSRemoteFolder remoteFolder = getRemoteFolder();
+			return (modulePage.isPageComplete() && remoteFolder != null && 
+					(existingRemote == null || existingRemote.equals(remoteFolder)));
+		} else if (page == tagPage) {
+			return false;
 		} else if (page == finishPage) {
 			return true;
 		}
@@ -196,7 +200,12 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 							result[0] = autoconnectCVSProject(monitor);
 						} else {
 							if (exists(getRemoteFolder(), monitor)) {
-								result[0] = reconnectProject(monitor);
+								if (isOnFinishPage()) {
+									result[0] = reconnectProject(monitor);
+								} else {
+									result[0] = false;
+									// TODO: show tag page
+								}
 							} else {
 								result[0] = shareProject(monitor);
 							}
@@ -226,6 +235,10 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		}
 
 		return result[0];
+	}
+
+	protected boolean isOnFinishPage() {
+		return getContainer().getCurrentPage() == finishPage;
 	}
 
 	private void mapProject(final String moduleName, final CVSTag tag) throws InvocationTargetException, InterruptedException {
@@ -471,12 +484,12 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	}
 	
 	private boolean exists(ICVSRemoteFolder folder, IProgressMonitor monitor) throws TeamException {
-		if (exisitingRemote != null && exisitingRemote.equals(folder)) return true;
+		if (existingRemote != null && existingRemote.equals(folder)) return true;
 		if (folder.exists(monitor)) {
-			exisitingRemote = folder;
+			existingRemote = folder;
 			return true;
 		} else {
-			exisitingRemote = null;
+			existingRemote = null;
 			return false;
 		}
 	}
