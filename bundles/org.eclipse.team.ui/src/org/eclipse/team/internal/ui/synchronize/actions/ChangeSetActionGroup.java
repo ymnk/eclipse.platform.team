@@ -77,7 +77,9 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
                         public void run() {
 		                    SyncInfo[] infos = getSyncInfoSet().getSyncInfos();
 		                    ActiveChangeSet set = createChangeSet(infos);
-		            		getActiveChangeSetManager().add(set);
+		                    if (set != null) {
+		                        getActiveChangeSetManager().add(set);
+		                    }
                         }
                     });
                 }

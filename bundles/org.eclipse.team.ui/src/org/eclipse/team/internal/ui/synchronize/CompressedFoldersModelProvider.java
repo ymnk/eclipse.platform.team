@@ -213,7 +213,7 @@ public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
 		}
 	}
 	
-	private void addResource(SyncInfo info) {
+	protected void addResource(SyncInfo info) {
 		IResource local = info.getLocal();
 		ISynchronizeModelElement existingNode = getModelObject(local);
 		if (existingNode == null) {
