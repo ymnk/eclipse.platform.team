@@ -18,16 +18,14 @@ import junit.framework.Test;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTree;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTreeBuilder;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
-import org.eclipse.team.internal.ccvs.ui.operations.WorkspaceResourceMapper;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
 /**
@@ -246,8 +244,28 @@ public class ResourceMapperTests extends EclipseTest {
         return remote;
     }
     
-    private ResourceMapping asResourceMapping(IResource[] resources, int depth) {
-        return new WorkspaceResourceMapper(resources, depth);
+    private ResourceMapping asResourceMapping(final IResource[] resources, final int depth) {
+        return new ResourceMapping() {
+            public Object getModelObject() {
+                return ResourcesPlugin.getWorkspace();
+            }
+            public IProject[] getProjects() {
+                return getProjects(resources);
+            }
+            private IProject[] getProjects(IResource[] resources) {
+                Set projects = new HashSet();
+                for (int i = 0; i < resources.length; i++) {
+                    IResource resource = resources[i];
+                    projects.add(resource.getProject());
+                }
+                return (IProject[]) projects.toArray(new IProject[projects.size()]);
+            }
+            public ResourceTraversal[] getTraversals(ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
+                return new ResourceTraversal[] {
+                        new ResourceTraversal(resources, depth)
+                    };
+            }
+        };
     }
     
     private void assertUpdate(ResourceMapping mapper, final SyncInfoTree set) throws Exception {
