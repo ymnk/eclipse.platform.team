@@ -36,7 +36,7 @@ public class HierarchicalModelManager extends SynchronizeModelManager {
 	 */
 	protected ISynchronizeModelProvider createModelProvider(String id) {
 		if(id == null) {
-			id = getConfiguration().getProviderID();
+			id = getDefaultProviderId();
 		}
 		if (id.endsWith(FlatModelProvider.FlatModelProviderDescriptor.ID)) {
 		    return new FlatModelProvider(getConfiguration(), getSyncInfoSet());

@@ -22,9 +22,8 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.IFileTypeInfo;
+import org.eclipse.team.core.IStringMapping;
 import org.eclipse.team.core.Team;
-import org.eclipse.team.internal.core.KnownModesForNames;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.IWorkbench;
@@ -55,19 +54,19 @@ public class TextPreferencePage extends PreferencePage implements IWorkbenchPref
         
         fItems.clear();
 
-	    final IFileTypeInfo [] extensionInfoArray= Team.getAllTypes();
-        final IFileTypeInfo [] nameInfoArray= KnownModesForNames.getKnownModesForNames();
+	    final IStringMapping [] extensionInfoArray= Team.getFileContentManager().getExtensionMappings();
+        final IStringMapping [] nameInfoArray= Team.getFileContentManager().getNameMappings();
         
         for (int i = 0; i < extensionInfoArray.length; i++) {
-            final IFileTypeInfo info= extensionInfoArray[i];
-            final FileTypeTable.Extension extension= new FileTypeTable.Extension(info.getExtension());
+            final IStringMapping info= extensionInfoArray[i];
+            final FileTypeTable.Extension extension= new FileTypeTable.Extension(info.getString());
             extension.mode= info.getType();
             fItems.add(extension);
         }
         
         for (int i = 0; i < nameInfoArray.length; i++) {
-            final IFileTypeInfo info= nameInfoArray[i];
-            final FileTypeTable.Name name= new FileTypeTable.Name(info.getExtension());
+            final IStringMapping info= nameInfoArray[i];
+            final FileTypeTable.Name name= new FileTypeTable.Name(info.getString());
             name.mode= info.getType();
             fItems.add(name);
         }
@@ -127,7 +126,7 @@ public class TextPreferencePage extends PreferencePage implements IWorkbenchPref
 		});
 		
 		final Button addNameButton = new Button(buttonsComposite, SWT.PUSH);
-		addNameButton.setText("Add Name..."); 
+		addNameButton.setText(Policy.bind("TextPreferencePage.0"));  //$NON-NLS-1$
 		addNameButton.setLayoutData(SWTUtils.createGridData(buttonWidth, SWT.DEFAULT, SWT.FILL, SWT.FILL, false, false));
 		addNameButton.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event e) {
@@ -197,8 +196,8 @@ public class TextPreferencePage extends PreferencePage implements IWorkbenchPref
 	    final int [] extensionsModes= integerListToIntArray(extensionsModesList);
 	    final int [] namesModes= integerListToIntArray(namesModesList);
 	    
-	    Team.setAllTypes(extensions, extensionsModes);
-	    KnownModesForNames.setModesforFiles(names, namesModes);
+	    Team.getFileContentManager().setExtensionMappings(extensions, extensionsModes);
+	    Team.getFileContentManager().setNameMappings(names, namesModes);
 	    
 		TeamUIPlugin.broadcastPropertyChange(new PropertyChangeEvent(this, TeamUI.GLOBAL_FILE_TYPES_CHANGED, null, null));
 
@@ -221,8 +220,8 @@ public class TextPreferencePage extends PreferencePage implements IWorkbenchPref
 		dialog.open();
 		if (dialog.getReturnCode() != InputDialog.OK) return;
 		
-		final String extension = dialog.getValue().trim().replaceAll("\\*\\.", "");
-		if (extension.equals("")) 
+		final String extension = dialog.getValue().trim().replaceAll("\\*\\.", "");  //$NON-NLS-1$ //$NON-NLS-2$
+		if (extension.equals(""))  //$NON-NLS-1$
 		    return;
 		
 		// Check if the item already exists
@@ -248,7 +247,7 @@ public class TextPreferencePage extends PreferencePage implements IWorkbenchPref
 		if (dialog.getReturnCode() != InputDialog.OK) return;
 		
 		final String name = dialog.getValue();
-		if (name.length() == 0 || name.indexOf(" ") >= 0) 
+		if (name.length() == 0 || name.indexOf(" ") >= 0)  //$NON-NLS-1$
 		    return; //$NON-NLS-1$
 		
 		// Check if the item already exists

@@ -32,9 +32,6 @@ import org.eclipse.ui.IWorkbenchActionConstants;
  */
 public interface ISynchronizePageConfiguration {
 	
-    
-	public static final String P_LAYOUT = TeamUIPlugin.ID + "P_LAYOUT"; //$NON-NLS-1$
-   
 	/**
 	 * Property constant for the <code>SyncInfoSet</code> that is being 
 	 * displayed by the page.
@@ -108,11 +105,6 @@ public interface ISynchronizePageConfiguration {
 	 * mode filtering is not supported.
 	 */
 	public static final String P_SUPPORTED_MODES = TeamUIPlugin.ID  + ".P_SUPPORTED_MODES";	 //$NON-NLS-1$
-	
-
-	public static final String FLAT_LAYOUT= "flat";
-	public static final String TREE_LAYOUT= "tree";
-	public static final String  COMPRESSED_LAYOUT= "compressed";
 	
 	/**
 	 * The id of the synchronize group the determines where the synchronize 
@@ -212,7 +204,7 @@ public interface ISynchronizePageConfiguration {
 	public final static int BOTH_MODE = 0x4;
 	public final static int CONFLICTING_MODE = 0x8;
 	public final static int ALL_MODES = INCOMING_MODE | OUTGOING_MODE | CONFLICTING_MODE | BOTH_MODE;
-	
+
 	/**
 	 * Return the particpant associated with the page to shich this configuration
 	 * is associated.
@@ -395,6 +387,4 @@ public interface ISynchronizePageConfiguration {
 	 * @return a runnable context (or <code>null</code>)
 	 */
 	IRunnableContext getRunnableContext();
-	
-	public String getProviderID();
 }

@@ -20,6 +20,7 @@ import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.Team;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.SWTUtils;
 
 
@@ -27,11 +28,11 @@ public class FileTypeTable implements ICellModifier, IStructuredContentProvider,
     
     private final static int COMBO_INDEX_BINARY= 0;
     private final static int COMBO_INDEX_TEXT= 1;
-    private final static String [] MODES_TEXT= { "Binary", "ASCII Text" };
+    private final static String [] MODES_TEXT= { Policy.bind("FileTypeTable.0"), Policy.bind("FileTypeTable.1") }; //$NON-NLS-1$ //$NON-NLS-2$
     
     private final static int COMBO_INDEX_SAVE= 0;
     private final static int COMBO_INDEX_DONT_SAVE= 1;
-    private static final String [] SAVE_TEXT= { "Yes", "No" };
+    private static final String [] SAVE_TEXT= { Policy.bind("FileTypeTable.2"), Policy.bind("FileTypeTable.3") }; //$NON-NLS-1$ //$NON-NLS-2$
 
     public interface PixelConverter	{
         
@@ -59,9 +60,9 @@ public class FileTypeTable implements ICellModifier, IStructuredContentProvider,
     private final static int SMALL_COLUMN= 15;
     private final static int LARGE_COLUMN= 30;
     
-    protected static final String ITEM = "item";
-    protected static final String PROPERTY_MODE= "mode";
-    protected static final String PROPERTY_SAVE= "save";
+    protected static final String ITEM = "item"; //$NON-NLS-1$
+    protected static final String PROPERTY_MODE= "mode"; //$NON-NLS-1$
+    protected static final String PROPERTY_SAVE= "save"; //$NON-NLS-1$
 
     private final TableViewer fTableViewer;
     private final List fItems;
@@ -104,14 +105,14 @@ public class FileTypeTable implements ICellModifier, IStructuredContentProvider,
 		 */
 		final TableColumn fileColumn = new TableColumn(table, SWT.NONE, 0);
 		fileColumn.setWidth(converter.convertWidthInCharsToPixels(LARGE_COLUMN));
-		fileColumn.setText("Name/Extension");
+		fileColumn.setText(Policy.bind("FileTypeTable.4")); //$NON-NLS-1$
 		
 		/**
 		 * The 'Mode' column
 		 */
 		final TableColumn modeColumn = new TableColumn(table, SWT.NONE, 1);
 		modeColumn.setWidth(converter.convertWidthInCharsToPixels(SMALL_COLUMN));
-		modeColumn.setText("Content");
+		modeColumn.setText(Policy.bind("FileTypeTable.5")); //$NON-NLS-1$
 
 		/**
 		 * The 'Save' column
@@ -119,7 +120,7 @@ public class FileTypeTable implements ICellModifier, IStructuredContentProvider,
 		if (fShowSaveColumn) {
 		    final TableColumn saveColumn = new TableColumn(table, SWT.NONE, 2);
 		    saveColumn.setWidth(converter.convertWidthInCharsToPixels(LARGE_COLUMN));
-		    saveColumn.setText("Remember decision?");
+		    saveColumn.setText(Policy.bind("FileTypeTable.6")); //$NON-NLS-1$
 		}
 		
 		/**
@@ -194,7 +195,7 @@ public class FileTypeTable implements ICellModifier, IStructuredContentProvider,
         final Item item= (Item) element;
         
         if (columnIndex == 0) { 
-            return (item instanceof Extension ? "*." : "") + item.name;
+            return (item instanceof Extension ? "*." : "") + item.name; //$NON-NLS-1$ //$NON-NLS-2$
         }
         
         if (columnIndex == 1) {

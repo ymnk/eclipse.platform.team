@@ -169,7 +169,7 @@ public final class ParticipantPagePane {
 		try {
 			((ISynchronizePage)page).init(pageConfiguration.getSite());
 		} catch (PartInitException e1) {
-		   TeamUIPlugin.log(IStatus.ERROR, "Error creating Synchronize Page", e1);
+		   TeamUIPlugin.log(IStatus.ERROR, Policy.bind("ParticipantPagePane.0"), e1); //$NON-NLS-1$
 		}
 
 		page.createControl(fEditionPane);

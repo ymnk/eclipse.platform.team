@@ -40,7 +40,7 @@ public class CommitWizardFileTypePage extends WizardPage implements FileTypeTabl
     
     public CommitWizardFileTypePage(Collection unknownExtensions, Collection unknownNames) {
         super(Policy.bind("CommitWizardFileTypePage.0")); //$NON-NLS-1$
-        setTitle("Add Resources"); //$NON-NLS-1$
+        setTitle(Policy.bind("CommitWizardFileTypePage.0")); //$NON-NLS-1$
         setDescription(Policy.bind("CommitWizardFileTypePage.2")); //$NON-NLS-1$
         
         fNames= new ArrayList();
@@ -70,6 +70,7 @@ public class CommitWizardFileTypePage extends WizardPage implements FileTypeTabl
         final List items= new ArrayList();
         items.addAll(fNames);
         items.addAll(fExtensions);
+        
         new FileTypeTable(composite, this, items, true);
 
         setControl(composite);

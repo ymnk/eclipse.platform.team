@@ -18,7 +18,7 @@ import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.ILabelDecorator;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -33,7 +33,8 @@ import org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction;
 import org.eclipse.team.internal.ccvs.ui.subscriber.*;
 import org.eclipse.team.internal.ui.SWTUtils;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
+import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.*;
 
 /**
@@ -53,6 +54,11 @@ public class CommitWizardCommitPage extends WizardPage implements IPropertyChang
                     ISynchronizePageConfiguration.P_CONTEXT_MENU, 
                     ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                     new CVSActionDelegateWrapper(new IgnoreAction(), configuration));
+        }
+        
+        public void modelChanged(ISynchronizeModelElement root) {
+            super.modelChanged(root);
+            expand();
         }
     }
     
@@ -142,7 +148,7 @@ public class CommitWizardCommitPage extends WizardPage implements IPropertyChang
      */
     public CommitWizardCommitPage(IResource [] resources, CommitWizardFileTypePage fileTypePage) {
         super(Policy.bind("CommitWizardCommitPage.0")); //$NON-NLS-1$
-        setTitle(Policy.bind("CommitWizardCommitPage.2")); //$NON-NLS-1$
+        setTitle(Policy.bind("CommitWizardCommitPage.0")); //$NON-NLS-1$
         setDescription(Policy.bind("CommitWizardCommitPage.2")); //$NON-NLS-1$
         
         fSettingsSaver= new SettingsSaver();
@@ -206,14 +212,12 @@ public class CommitWizardCommitPage extends WizardPage implements IPropertyChang
         fConfiguration.setProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU, ISynchronizePageConfiguration.DEFAULT_CONTEXT_MENU);
         fConfiguration.addActionContribution(new ActionContribution());
         
-        fConfiguration.setProperty(ISynchronizePageConfiguration.P_LAYOUT, ISynchronizePageConfiguration.FLAT_LAYOUT);
         fConfiguration.setRunnableContext(getContainer());
         fConfiguration.setMode(ISynchronizePageConfiguration.OUTGOING_MODE);
         
         final ParticipantPagePane part= new ParticipantPagePane(getShell(), true /* modal */, fConfiguration, participant);
         Control control = part.createPartControl(composite);
         control.setLayoutData(SWTUtils.createHVFillGridData());
-        
     }
     /**
      * @param composite
@@ -243,6 +247,14 @@ public class CommitWizardCommitPage extends WizardPage implements IPropertyChang
         super.setVisible(visible);
         fCommentArea.setFocus();
         fConfiguration.getPage().getViewer().refresh();
+        expand();
+    }
+    
+    protected void expand() {
+        final Viewer viewer= fConfiguration.getPage().getViewer();
+        if (viewer instanceof TreeViewer) {
+            ((TreeViewer)viewer).expandAll();
+        }
     }
     
     /**

@@ -23,7 +23,7 @@ import org.eclipse.jface.wizard.*;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.IFileTypeInfo;
+import org.eclipse.team.core.IFileContentManager;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -32,7 +32,6 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.*;
-import org.eclipse.team.internal.core.KnownModesForNames;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 
@@ -154,6 +153,7 @@ public class CommitWizard extends Wizard {
     private CommitWizard(IResource [] resources, SyncInfoSet syncInfos) throws CVSException {
         super();
         setWindowTitle(Policy.bind("CommitWizard.2")); //$NON-NLS-1$
+        setDefaultPageImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION));
         
         final IDialogSettings cvsSettings = CVSUIPlugin.getPlugin().getDialogSettings();
         IDialogSettings section = cvsSettings.getSection(COMMIT_WIZARD_SECTION);
@@ -195,34 +195,22 @@ public class CommitWizard extends Wizard {
     
     private static void getUnknownNamesAndExtension(SyncInfoSet infos, Collection names, Collection extensions) {
         
-        final Set knownNames= createSetOfStrings(KnownModesForNames.getKnownModesForNames());
-        final Set knownExtensions= createSetOfStrings(Team.getAllTypes());
+        final IFileContentManager manager= Team.getFileContentManager();
         
         for (final Iterator iter = infos.iterator(); iter.hasNext();) {
             
             final SyncInfo info = (SyncInfo)iter.next();
+            
             final String extension= info.getLocal().getFileExtension();
-            final String name= info.getLocal().getName();
-            
-            if (extension == null && !knownNames.contains(name))
-                names.add(name);
-            
-            if (extension != null && !knownExtensions.contains(extension))
+            if (extension != null && !manager.isKnownExtension(extension)) {
                 extensions.add(extension);
+                continue;
+            }
+            
+            final String name= info.getLocal().getName();
+            if (name != null && !manager.isKnownFilename(name))
+                names.add(name);
         }
-    }
-    
-    
-    /**
-     * Create a set of strings from an array of IFileTypeInfo. This set can be used to
-     * determine whether a given name or extension of a file is known. 
-     */
-    private static Set createSetOfStrings(IFileTypeInfo [] infos) {
-        final Set result= new HashSet();
-        for (int i = 0; i < infos.length; ++i) {
-            result.add(infos[i].getExtension());
-        }
-        return result;
     }
     
     /* (non-Javadoc)
@@ -244,7 +232,6 @@ public class CommitWizard extends Wizard {
         
         super.addPages();
     }
-    
     
     /* (non-Javadoc)
      * @see org.eclipse.jface.wizard.IWizard#performFinish()
@@ -269,19 +256,19 @@ public class CommitWizard extends Wizard {
         final AddAndCommitOperation operation= new AddAndCommitOperation(getPart(), infos.getResources(), comment);
         
         if (fFileTypePage != null) {
-            final Map toSave= new HashMap();
-            final Map notToSave= new HashMap();
+            final Map extensionsToSave= new HashMap();
+            final Map extensionsNotToSave= new HashMap();
             
-            fFileTypePage.getModesForExtensions(toSave, notToSave);
-            saveExtensionMappings(toSave);
-            operation.setModesForExtensionsForOneTime(notToSave);
+            fFileTypePage.getModesForExtensions(extensionsToSave, extensionsNotToSave);
+            saveExtensionMappings(extensionsToSave);
+            operation.setModesForExtensionsForOneTime(extensionsNotToSave);
             
-            toSave.clear();
-            notToSave.clear();
-            
-            fFileTypePage.getModesForNames(toSave, notToSave);
-            saveNameMappings(toSave);
-            operation.setModesForNamesForOneTime(notToSave);
+            final Map namesToSave= new HashMap();
+            final Map namesNotToSave= new HashMap();
+
+            fFileTypePage.getModesForNames(namesToSave, namesNotToSave);
+            saveNameMappings(namesToSave);
+            operation.setModesForNamesForOneTime(namesNotToSave);
         }
         
         if (unadded.size() > 0) {
@@ -361,21 +348,21 @@ public class CommitWizard extends Wizard {
             modes[index]= ((Integer)modesToPersist.get(extensions[index])).intValue();
             ++index;
         }
-        Team.addAllTypes(extensions, modes);
+        Team.getFileContentManager().addExtensionMappings(extensions, modes);
     }
     
     private static void saveNameMappings(Map modesToPersist) {
         
-        final String [] extensions= new String [modesToPersist.size()];
+        final String [] names= new String [modesToPersist.size()];
         final int [] modes= new int[modesToPersist.size()];
         
         int index= 0;
         for (Iterator iter= modesToPersist.keySet().iterator(); iter.hasNext();) {
-            extensions[index]= (String) iter.next();
-            modes[index]= ((Integer)modesToPersist.get(extensions[index])).intValue();
+            names[index]= (String) iter.next();
+            modes[index]= ((Integer)modesToPersist.get(names[index])).intValue();
             ++index;
         }
-        KnownModesForNames.addModesForFiles(extensions, modes);
+        Team.getFileContentManager().addNameMappings(names, modes);
     }
     
     /**
