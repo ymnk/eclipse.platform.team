@@ -102,7 +102,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 				modulePage.setDescription(Policy.bind("SharingWizard.enterModuleNameDescription")); //$NON-NLS-1$
 				addPage(modulePage);
 				WorkspaceSynchronizeParticipant p = (WorkspaceSynchronizeParticipant)TeamUI.getSynchronizeManager().find(WorkspaceSynchronizeParticipant.ID)[0];
-				finishPage = new SharingWizardFinishPage("finishPage", Policy.bind("SharingWizard.readyToFinish"), p, sharingImage); //$NON-NLS-1$ //$NON-NLS-2$
+				finishPage = new SharingWizardFinishPage("finishPage", Policy.bind("SharingWizard.readyToFinish"), sharingImage); //$NON-NLS-1$ //$NON-NLS-2$
 				finishPage.setDescription(Policy.bind("SharingWizard.readyToFinishDescription")); //$NON-NLS-1$
 				addPage(finishPage);
 			}
