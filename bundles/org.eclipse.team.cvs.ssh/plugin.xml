@@ -11,18 +11,27 @@
     <import plugin="org.eclipse.core.resources"/>
     <import plugin="org.eclipse.team.cvs.core"/>
     <import plugin="org.eclipse.team.core"/>
+    <import plugin="org.eclipse.team.cvs.ssh2"/>
   </requires>
 
   <runtime>
     <library name="teamcvsssh.jar">
       <export name="*"/>
-      <packages prefixes="org.eclipse.team.internal.ccvs.ssh"/>
+      <packages prefixes="org.eclipse.team.internal.ccvs.ssh,org.eclipse.team.internal.ccvs.ssh2"/>
     </library>
   </runtime>
 
   <extension id="ssh" point="org.eclipse.team.cvs.core.connectionmethods">
     <adapter>
       <run class="org.eclipse.team.internal.ccvs.ssh.SSHMethod">
+        <parameter name="trace" value="false" /> 
+      </run>
+    </adapter>
+  </extension>
+  
+  <extension id="ssh2" point="org.eclipse.team.cvs.core.connectionmethods">
+    <adapter>
+      <run class="org.eclipse.team.internal.ccvs.ssh2.SSHMethod">
         <parameter name="trace" value="false" /> 
       </run>
     </adapter>

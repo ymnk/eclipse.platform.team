@@ -5,3 +5,4 @@ org.eclipse.team.cvs.ssh/debug=false
 
 # Shows ssh protocol messages
 org.eclipse.team.cvs.ssh/ssh_protocol=false
+org.eclipse.team.cvs.ssh/ssh_data=false
