@@ -79,6 +79,7 @@ public class CompareParticipant extends SubscriberParticipant {
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#preCollectingChanges()
 	 */
 	protected void preCollectingChanges() {
+		super.preCollectingChanges();
 		getSubscriberSyncInfoCollector().setFilter(contentComparison);
 	}
 }

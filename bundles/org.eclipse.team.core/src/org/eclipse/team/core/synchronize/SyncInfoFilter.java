@@ -32,6 +32,8 @@ public abstract class SyncInfoFilter {
 	 * This means that the comparison may contact the server unless the contents
 	 * were cached locally by a previous operation. The caching of remote
 	 * contents is subscriber specific. 
+	 * <p>
+	 * For folders, the comparison always returns <code>true</code>.
 	 */
 	public static class ContentComparisonSyncInfoFilter extends SyncInfoFilter {
 		ContentComparator criteria = new ContentComparator(false);
@@ -51,8 +53,9 @@ public abstract class SyncInfoFilter {
 		public boolean select(SyncInfo info, IProgressMonitor monitor) {
 			IResourceVariant remote = info.getRemote();
 			IResource local = info.getLocal();
-			if (remote == null) return local.exists();
-			if (!local.exists()) return true;
+			if (local.getType() != IResource.FILE) return true;
+			if (remote == null) return !local.exists();
+			if (!local.exists()) return false;
 			return criteria.compare(local, remote, monitor);
 		}
 	}
