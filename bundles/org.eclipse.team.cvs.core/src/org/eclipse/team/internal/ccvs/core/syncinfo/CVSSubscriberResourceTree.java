@@ -46,7 +46,7 @@ public class CVSSubscriberResourceTree extends SyncBytesSubscriberResourceTree {
 		this.baseCache = baseCache;
 	}
 
-	protected RefreshOperation getRefreshOperation() {
+	public RefreshOperation getRefreshOperation() {
 		return new CVSRefreshOperation(getSynchronizationCache(), baseCache, tag);
 	}
 

@@ -43,6 +43,12 @@
             <topic label="Sharing" href="html/00026.html">
                 <topic label="Sharing as a subfolder" href="html/00027.html">
                 </topic>
+                <topic label="Reconnecting to existing" href="html/00028.html">
+                </topic>
+            </topic>
+            <topic label="Patching" href="html/00029.html">
+                <topic label="Importing a zip over a shared project" href="html/00030.html">
+                </topic>
             </topic>
         </topic>
 </toc>

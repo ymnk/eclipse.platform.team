@@ -153,10 +153,10 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	
 	/* package*/ void fetchContents(IProgressMonitor monitor) throws CVSException {
 		try {
-			fetching = true;
+			aboutToReceiveContents(getSyncBytes());
 			internalFetchContents(monitor);
 		} finally {
-			fetching = false;
+			doneReceivingContents();
 		}
 	}
 	/* package*/ void internalFetchContents(IProgressMonitor monitor) throws CVSException {
@@ -459,7 +459,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 * @see IRemoteResource#members(IProgressMonitor)
 	 */
 	public IRemoteResource[] members(IProgressMonitor progress) {
-		return new ICVSRemoteResource[0];
+		return new IRemoteResource[0];
 	}
 
 	/*
@@ -640,28 +640,26 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		};
 	}
 
+	/**
+	 * Callback which indicates that the remote file is about to receive contents that should be cached
+	 * @param entryLine
+	 */
+	public void aboutToReceiveContents(byte[] entryLine) {
+		setSyncBytes(entryLine, ICVSFile.CLEAN);
+		fetching = true;
+	}
+
+	/**
+	 * The contents for the file have already been provided.
+	 */
+	public void doneReceivingContents() {
+		fetching = false;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.ISubscriberResource#getStorage(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-		// Invoke getContents which ensures that contents are cached
-		getContents(monitor);
-		return new IStorage() {
-			public InputStream getContents() throws CoreException {
-				return RemoteFile.this.getContents();
-			}
-			public IPath getFullPath() {
-				return new Path(getRepositoryRelativePath());
-			}
-			public String getName() {
-				return RemoteFile.this.getName();
-			}
-			public boolean isReadOnly() {
-				return true;
-			}
-			public Object getAdapter(Class adapter) {
-				return RemoteFile.this.getAdapter(adapter);
-			}
-		};
+		return getBufferedStorage(monitor);
 	}
 }

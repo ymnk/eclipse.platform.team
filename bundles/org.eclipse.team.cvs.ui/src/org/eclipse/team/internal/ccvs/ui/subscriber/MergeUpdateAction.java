@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -185,22 +184,31 @@ public class MergeUpdateAction extends SafeUpdateAction {
 		}
 	}
 	
-	private void ensureContainerExists(SyncInfo info) throws TeamException {
+	private boolean ensureContainerExists(SyncInfo info) throws TeamException {
 		IResource local = info.getLocal();
 		// make sure that the parent exists
 		if (!local.exists()) {
-			ensureContainerExists(getParent(info));
+			if (!ensureContainerExists(getParent(info))) {
+				return false;
+			}
 		}
 		// make sure that the folder sync info is set;
-		if (info instanceof CVSSyncInfo) {
-			CVSSyncInfo cvsInfo = (CVSSyncInfo)info;
-			cvsInfo.makeInSync();
+		if (isOutOfSync(info)) {
+			if (info instanceof CVSSyncInfo) {
+				CVSSyncInfo cvsInfo = (CVSSyncInfo)info;
+				IStatus status = cvsInfo.makeInSync();
+				if (status.getSeverity() == IStatus.ERROR) {
+					logError(status);
+					return false;
+				}
+			}
 		}
 		// create the folder if it doesn't exist
 		ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)local);
 		if (!cvsFolder.exists()) {
 			cvsFolder.mkdir();
 		}
+		return true;
 	}
 	
 	/* (non-Javadoc)

@@ -74,7 +74,7 @@ public abstract class RefreshOperation {
 		return (IResource[]) changedResources.toArray(new IResource[changedResources.size()]);
 	}
 	
-	protected void collectChanges(IResource local, IRemoteResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
+	public void collectChanges(IResource local, IRemoteResource remote, Collection changedResources, int depth, IProgressMonitor monitor) throws TeamException {
 		SynchronizationCache cache = getSynchronizationCache();
 		byte[] newRemoteBytes = getRemoteSyncBytes(local, remote);
 		boolean changed;
