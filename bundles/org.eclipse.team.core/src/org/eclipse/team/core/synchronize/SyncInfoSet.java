@@ -254,9 +254,7 @@ public class SyncInfoSet {
 				try {
 					monitor.beginTask(null, 100);
 					addSyncSetChangedListener(listener);
-					SyncSetChangedEvent event = new SyncSetChangedEvent(SyncInfoSet.this);
-					event.reset();
-					listener.syncInfoChanged(event, Policy.subMonitorFor(monitor, 95));
+					listener.syncInfoSetReset(SyncInfoSet.this, Policy.subMonitorFor(monitor, 95));
 				} finally {
 					monitor.done();
 				}

@@ -77,9 +77,7 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 					try {
 						monitor.beginTask(null, 100);
 						addSyncSetChangedListener(listener);
-						SyncSetChangedEvent event = new SyncSetChangedEvent(SubscriberSyncInfoSet.this);
-						event.reset();
-						listener.syncInfoChanged(event, Policy.subMonitorFor(monitor, 95));
+						listener.syncInfoSetReset(SubscriberSyncInfoSet.this, Policy.subMonitorFor(monitor, 95));
 					} finally {
 						endInput(Policy.subMonitorFor(monitor, 5));
 						monitor.done();
