@@ -11,13 +11,13 @@
 package org.eclipse.team.ui.sync;
 
 /**
- * Manages synchronization targets.
+ * Manages synchronization pages.
  * <p>
  * Clients are not intended to implement this interface.
  * </p>
  * @since 3.0 
  */
-public interface ISynchronizeTargetManager {
+public interface ISynchronizeManager {
 	
 	/**
 	 * Registers the given listener for console notifications. Has
@@ -25,7 +25,7 @@ public interface ISynchronizeTargetManager {
 	 * 
 	 * @param listener listener to register
 	 */
-	public void addConsoleListener(ISynchronizeTargetListener listener);
+	public void addSynchronizePageListener(ISynchronizePageListener listener);
 	
 	/**
 	 * Deregisters the given listener for console notifications. Has
@@ -33,7 +33,7 @@ public interface ISynchronizeTargetManager {
 	 * 
 	 * @param listener listener to deregister
 	 */
-	public void removeConsoleListener(ISynchronizeTargetListener listener);
+	public void removeSynchronizePageListener(ISynchronizePageListener listener);
 
 	/**
 	 * Adds the given consoles to the console manager. Has no effect for
@@ -42,7 +42,7 @@ public interface ISynchronizeTargetManager {
 	 * 
 	 * @param consoles consoles to add
 	 */
-	public void addConsoles(ISynchronizeTarget[] consoles);
+	public void addSynchronizePages(ISynchronizeViewPage[] consoles);
 	
 	/**
 	 * Removes the given consoles from the console manager. If the consoles are
@@ -50,12 +50,12 @@ public interface ISynchronizeTargetManager {
 	 * 
 	 * @param consoles consoles to remove
 	 */
-	public void removeConsoles(ISynchronizeTarget[] consoles);
+	public void removeSynchronizePages(ISynchronizeViewPage[] consoles);
 	
 	/**
 	 * Returns a collection of consoles registered with the console manager.
 	 * 
 	 * @return a collection of consoles registered with the console manager
 	 */
-	public ISynchronizeTarget[] getConsoles();
+	public ISynchronizeViewPage[] getSynchronizePages();
 }

@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
-import org.eclipse.core.runtime.Preferences.IPropertyChangeListener;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -21,7 +21,7 @@ import org.eclipse.ui.part.IPageBookViewPage;
  * 
  * @since 3.0
  */
-public interface ISynchronizeTarget {
+public interface ISynchronizeViewPage {
 	/**
 	 * Returns the name of this synchronize target.
 	 * 
@@ -45,7 +45,7 @@ public interface ISynchronizeTarget {
 	 * @param view the view in which the page is to be created
 	 * @return a page book view page representation of this synchronize target
 	 */
-	public IPageBookViewPage createPage(ISynchronizeView view);
+	public IPageBookViewPage createPage(INewSynchronizeView view);
 	
 	/**
 	 * Adds a listener for changes to properties of this synchronize target.

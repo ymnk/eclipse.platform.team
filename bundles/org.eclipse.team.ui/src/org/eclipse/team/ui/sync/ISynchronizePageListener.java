@@ -18,7 +18,7 @@ package org.eclipse.team.ui.sync;
  * </p>
  * @since 3.0
  */
-public interface ISynchronizeTargetListener {
+public interface ISynchronizePageListener {
 	
 	/**
 	 * Notification the given consoles have been added to the console
@@ -26,7 +26,7 @@ public interface ISynchronizeTargetListener {
 	 * 
 	 * @param consoles added consoles
 	 */
-	public void consolesAdded(ISynchronizeTarget[] synchronizeTargets);
+	public void consolesAdded(ISynchronizeViewPage[] synchronizeTargets);
 	
 	/**
 	 * Notification the given consoles have been removed from the
@@ -34,6 +34,6 @@ public interface ISynchronizeTargetListener {
 	 * 
 	 * @param consoles removed consoles
 	 */
-	public void consolesRemoved(ISynchronizeTarget[] synchronizeTargets);
+	public void consolesRemoved(ISynchronizeViewPage[] synchronizeTargets);
 
 }
