@@ -55,8 +55,8 @@
             class="org.eclipse.team.internal.ccvs.ui.CVSFilePropertiesPage"
             id="org.eclipse.team.ccvs.ui.propertyPages.CVSFilePropertiesPage">
          <filter
-               name="projectNature"
-               value="org.eclipse.team.cvs.core.cvsnature">
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
          </filter>
       </page>
       <page
@@ -66,8 +66,8 @@
             class="org.eclipse.team.internal.ccvs.ui.CVSFolderPropertiesPage"
             id="org.eclipse.team.ccvs.ui.propertyPages.CVSFolderPropertiesPage">
          <filter
-               name="projectNature"
-               value="org.eclipse.team.cvs.core.cvsnature">
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
          </filter>
       </page>
       <page
@@ -77,8 +77,8 @@
             class="org.eclipse.team.internal.ccvs.ui.CVSProjectPropertiesPage"
             id="org.eclipse.team.ccvs.ui.propertyPages.CVSProjectPropertiesPage">
          <filter
-               name="projectNature"
-               value="org.eclipse.team.cvs.core.cvsnature">
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
          </filter>
       </page>
       <page
@@ -96,8 +96,8 @@
             adaptable="true"
             id="org.eclipse.team.ccvs.ui.IFileContributions">
          <filter
-               name="projectNature"
-               value="org.eclipse.team.cvs.core.cvsnature">
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
          </filter>
          <action
                label="%IgnoreAction.label"
@@ -140,8 +140,8 @@
             adaptable="true"
             id="org.eclipse.team.ccvs.ui.ResourceContributions">
          <filter
-               name="projectNature"
-               value="org.eclipse.team.cvs.core.cvsnature">
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
          </filter>
          <action
                label="%SetKeywordSubstitutionAction.label"
@@ -236,6 +236,10 @@
                id="org.eclipse.team.ccvs.ui.sync">
          </action>
       </objectContribution>
+
+      <!-- ************** Project Menu *************** -->
+
+      
       <objectContribution
             objectClass="org.eclipse.core.resources.IProject"
             adaptable="true"
@@ -243,6 +247,23 @@
          <filter
                name="projectNature"
                value="org.eclipse.team.cvs.core.cvsnature">
+         </filter>
+         <action
+               label="%ConvertNature.label"
+               tooltip="%ConvertNature.tooltip"
+               class="org.eclipse.team.internal.ui.NatureToPropertyAction"
+               menubarPath="team.main/projectGroup"
+               id="org.eclipse.team.ccvs.ui.convertNature">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IProject"
+            adaptable="true"
+            id="org.eclipse.team.ccvs.ui.IProjectContributions">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
          </filter>
          <action
                label="%UnmanageFolder.label"
@@ -257,8 +278,8 @@
             adaptable="true"
             id="org.eclipse.team.ccvs.ui.IFolderContributions">
          <filter
-               name="projectNature"
-               value="org.eclipse.team.cvs.core.cvsnature">
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=org.eclipse.team.cvs.core.cvsnature">
          </filter>
          <action
                label="%IgnoreAction.label"
