@@ -231,7 +231,8 @@ public class CVSCatchupReleaseViewer extends CatchupReleaseViewer {
 			public void dispose() {
 				iconCache.disposeAll();
 				oldProvider.dispose();
-				conflictImage.dispose();
+				if(conflictImage != null)	
+					conflictImage.dispose();
 			}
 			
 			public Image getImage(Object element) {

@@ -5,21 +5,34 @@ package org.eclipse.team.internal.ccvs.ui;
  * All Rights Reserved.
  */
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
@@ -29,16 +42,19 @@ import org.eclipse.team.internal.ccvs.core.ICVSFile;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.ICVSRunnable;
+import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
+import org.eclipse.ui.IDecoratorManager;
 
 public class CVSLightweightDecorator
 	extends LabelProvider
-	implements ILightweightLabelDecorator {
+	implements ILightweightLabelDecorator, IResourceChangeListener, IResourceStateChangeListener {
 
 	// Images cached for better performance
 	private static ImageDescriptor dirty;
@@ -72,16 +88,44 @@ public class CVSLightweightDecorator
 		merged = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_MERGED));
 		newResource = new CachedImageDescriptor(CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_QUESTIONABLE));
 	}
-		
-/*	public CVSLightweightDecorator() {
+
+	public CVSLightweightDecorator() {
 		CVSProviderPlugin.addResourceStateChangeListener(this);
 		
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.PRE_AUTO_BUILD);
 	}
-*/
+
 	// Keep track of deconfigured projects
 	private Set deconfiguredProjects = new HashSet();
 
+	public static boolean isDirty(final ICVSResource cvsFile) {
+		try {
+			final boolean[] isDirty = new boolean[] {false};
+			cvsFile.getParent().run(new ICVSRunnable() {
+				public void run(IProgressMonitor monitor) throws CVSException {
+					// file is dirty or file has been merged by an update
+					if(!cvsFile.isIgnored()) {
+						isDirty[0] = cvsFile.isModified();
+					}
+				}
+			}, ICVSFolder.READ_ONLY, null);
+			return isDirty[0];
+		} catch (CVSException e) {
+			//if we get an error report it to the log but assume dirty
+			CVSUIPlugin.log(e.getStatus());
+			return true;
+		}
+	}
+
+	public static boolean isDirty(IResource resource) {
+
+		// No need to decorate non-existant resources
+		if (!resource.exists()) return false;
+
+		return isDirty(CVSWorkspaceRoot.getCVSResourceFor(resource));
+
+	}
+	
 	/*
 	 * Answers null if a provider does not exist or the provider is not a CVS provider. These resources
 	 * will be ignored by the decorator.
@@ -148,7 +192,7 @@ public class CVSLightweightDecorator
 			store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
 		int type = resource.getType();
 		if (type == IResource.FILE || computeDeepDirtyCheck) {
-			isDirty = CVSDecorator.isDirty(resource);
+			isDirty = CVSLightweightDecorator.isDirty(resource);
 		}
 		
 		decorateTextLabel(resource, decoration, isDirty, true);
@@ -348,5 +392,158 @@ public class CVSLightweightDecorator
 		//nothing matched
 		return null;
 
+	}
+
+	/*
+	 * Add resource and its parents to the List
+	 */
+	 
+	private void addWithParents(IResource resource, List resources) {
+		IResource current = resource;
+
+		while (current.getType() != IResource.ROOT) {
+			resources.add(current);
+			current = current.getParent();
+		}
+	}
+	
+	/*
+	 * Return the CVSLightweightDecorator instance that is currently enabled.
+	 * Return null if we don't have a decorator or its not enabled.
+	 */	 
+	/* package */ static CVSLightweightDecorator getActiveCVSDecorator() {
+		IDecoratorManager manager = CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager();
+		if (manager.getEnabled(CVSUIPlugin.DECORATOR_ID))
+			return (CVSLightweightDecorator) manager.getLightweightLabelDecorator(CVSUIPlugin.DECORATOR_ID);
+		return null;
+	}
+	/*
+	 * Perform a blanket refresh of all CVS decorations
+	 */
+	 public static void refresh() {
+		CVSLightweightDecorator activeDecorator = getActiveCVSDecorator();
+
+		if(activeDecorator == null)
+			return;	//nothing to do, our decorator isn't active
+
+		//update all displaying of our decorator;
+		activeDecorator.fireLabelProviderChanged(new LabelProviderChangedEvent(activeDecorator));
+	}
+
+	/*
+	 * Update the decorators for every resource in project
+	 */
+	 
+	public void refresh(IProject project) {
+		final List resources = new ArrayList();
+		try {
+			project.accept(new IResourceVisitor() {
+				public boolean visit(IResource resource) {
+					resources.add(resource);
+					return true;
+				}
+			});
+			postLabelEvent(new LabelProviderChangedEvent(this, resources.toArray()));
+		} catch (CoreException e) {
+			CVSProviderPlugin.log(e.getStatus());
+		}
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceSyncInfoChanged(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceSyncInfoChanged(IResource[] changedResources) {
+		resourceStateChanged(changedResources);
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceModificationStateChanged(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceModified(IResource[] changedResources) {
+		resourceStateChanged(changedResources);
+	}
+	
+	/**
+	 * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
+	 */
+	public void resourceChanged(IResourceChangeEvent event) {
+		try {
+			final List changedResources = new ArrayList();
+			event.getDelta().accept(new IResourceDeltaVisitor() {
+				public boolean visit(IResourceDelta delta) throws CoreException {
+					IResource resource = delta.getResource();
+
+					if(resource.getType() == IResource.ROOT) {
+						// continue with the delta
+						return true;
+					}
+
+					if (resource.getType() == IResource.PROJECT) {
+						// deconfigure if appropriate (see CVSDecorator#projectDeconfigured(IProject))
+						// do this even if there is a provider (this is required since old projects may still have a cvs nature)
+						if (deconfiguredProjects.contains(resource)) {
+							deconfiguredProjects.remove(resource);
+							refresh((IProject)resource);
+						}
+						// If there is no CVS provider, don't continue
+						if (RepositoryProvider.getProvider((IProject)resource, CVSProviderPlugin.getTypeId()) == null) {
+							return false;
+						}
+					}
+
+					return true;
+				}
+			});
+			resourceStateChanged((IResource[])changedResources.toArray(new IResource[changedResources.size()]));
+			changedResources.clear();
+		} catch (CoreException e) {
+			CVSProviderPlugin.log(e.getStatus());
+		}
+	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceStateChanged(org.eclipse.core.resources.IResource[])
+	 */
+	public void resourceStateChanged(IResource[] changedResources) {
+		// add depth first so that update thread processes parents first.
+		//System.out.println(">> State Change Event");
+		List resourcesToUpdate = new ArrayList();
+
+		boolean showingDeepDirtyIndicators = CVSUIPlugin.getPlugin().getPreferenceStore().getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
+
+		for (int i = 0; i < changedResources.length; i++) {
+			IResource resource = changedResources[i];
+
+			if(showingDeepDirtyIndicators) {
+				addWithParents(resource, resourcesToUpdate);
+			} else {
+				resourcesToUpdate.add(resource);
+			}
+		}
+
+		postLabelEvent(new LabelProviderChangedEvent(this, resourcesToUpdate.toArray()));
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectConfigured(org.eclipse.core.resources.IProject)
+	 */
+	public void projectConfigured(IProject project) {
+	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectDeconfigured(org.eclipse.core.resources.IProject)
+	 */
+	public void projectDeconfigured(IProject project) {
+	}
+
+	/**
+	 * Post the label event to the UI thread
+	 *
+	 * @param events  the events to post
+	 */
+	private void postLabelEvent(final LabelProviderChangedEvent event) {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				fireLabelProviderChanged(event);
+			}
+		});
 	}
 }
