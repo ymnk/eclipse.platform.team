@@ -55,20 +55,8 @@ public interface ICVSProvider {
 	 * The contents of the project are not imported.
 	 * 
 	 * Consideration: What if the project already exists?
-	 * 
-	 * The supported properties are:
-	 * 	 connection The connection method to be used
-	 *   user The username for the connection
-	 *   password The password used for the connection (optional)
-	 *   host The host where the repository resides
-	 *   port The port to connect to (optional)
-	 *   root The server directory where the repository is located
-	 *   message The message to be attached (optional)
-	 *   vendor The vendor tag (optional)
-	 *   tag The version tag (optional)
-	 * 
 	 */
-	public void createModule(IProject project, Properties configuration, IProgressMonitor monitor) throws TeamException;
+	public void createModule(ICVSRepositoryLocation location, IProject project, String moduleName, IProgressMonitor monitor) throws TeamException;
 
 	/**
 	 * Create a repository instance from the given properties.

@@ -369,28 +369,18 @@ public class CVSProvider implements ICVSProvider {
 		return result;
 	}
 
-	/*
-	 * @see ICVSProvider#importAndCheckout(IProject, Properties, IProgressMonitor)
+	/**
+	 * @see ICVSProvider#createModule()
 	 */
-	public void createModule(IProject project, Properties configuration, IProgressMonitor monitor) throws TeamException {
-		CVSRepositoryLocation location = buildRepository(configuration, false);
+	public void createModule(ICVSRepositoryLocation location, IProject project, String moduleName, IProgressMonitor monitor) throws TeamException {
 		boolean alreadyExists = isCached(location);
 		addToCache(location);
 		try {
 			// Get the import properties
-			String message = configuration.getProperty("message"); //$NON-NLS-1$
-			if (message == null)
-				message = Policy.bind("CVSProvider.initialImport");
-			String vendor = configuration.getProperty("vendor"); //$NON-NLS-1$
-			if (vendor == null)
-				vendor = location.getUsername();
-			// Get the vendor
-			String tag = configuration.getProperty("tag"); //$NON-NLS-1$
-			if (tag == null)
-				tag = "start"; //$NON-NLS-1$
-			// Get the module name
+			String message = Policy.bind("CVSProvider.initialImport");
+			String vendor = location.getUsername();
+			String tag = "start"; //$NON-NLS-1$
 			String projectName = project.getName();
-			String moduleName = configuration.getProperty("module"); //$NON-NLS-1$
 			if (moduleName == null)
 				moduleName = projectName;
 
@@ -434,7 +424,7 @@ public class CVSProvider implements ICVSProvider {
 			CVSProviderPlugin.getSynchronizer().save(project.getLocation().toFile(), Policy.subMonitorFor(monitor, 5));
 		}
 		// We succeeded so we should cache the password ...
-		location.updateCache();
+		((CVSRepositoryLocation)location).updateCache();
 		// and notify listeners if the location wasn't cached before
 		if (! alreadyExists)
 			repositoryAdded(location);
