@@ -10,19 +10,25 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.repo;
 
-import java.io.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.core.runtime.*;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.core.caches.LocalReplica;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.ui.IMemento;
-import org.eclipse.ui.XMLMemento;
 
 /**
  * Provides access to the tags for a remte folder that are cached
  * on the loal disk
  */
-public class LocalTagCache extends LocalReplica {
+public class LocalTagCache extends XMLLocalReplica {
+    
+    private static final String NAME_ATTRIBUTE = "name"; //$NON-NLS-1$
+    private static final String TYPE_ATTRIBUTE = "type"; //$NON-NLS-1$
+    private static final String TAG_ELEMENT = "tag"; //$NON-NLS-1$
     
     private final String localFilePath;
 
@@ -30,47 +36,65 @@ public class LocalTagCache extends LocalReplica {
         super(new TagCacheSource(location, remotePath));
         this.localFilePath = localFilePath;
     }
-    
-    private Object loadFromDisk(int flags, IProgressMonitor monitor) throws CoreException {
-        // reload from the disk cache
-        Reader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream(getFile())));
-            IMemento memento = XMLMemento.createReadRoot(reader);
-            return null;
-        } catch (FileNotFoundException e) {
-            // Log the exception and try to load from the server
-            String remoteFolderPath = ((TagCacheSource)getRemote()).getRemotePath();
-            CVSUIPlugin.log(IStatus.ERROR, "Tag cache for " + remoteFolderPath + " was not found on disk. Refetching the tags from the server will be attempted.", e);
-            return fetchRemote(flags, monitor);
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e1) {
-                    // Ignore
-                }
-            }
-        }
-    }
 
-    private String getFile() {
+    private String getFilePath() {
         return localFilePath;
     }
 
     /* (non-Javadoc)
-     * @see org.eclipse.team.internal.core.caches.LocalReplica#save(java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
+     * @see org.eclipse.team.internal.ccvs.ui.repo.XMLLocalReplica#getFile()
      */
-    protected void save(Object o, IProgressMonitor monitor) throws CoreException {
-        // TODO Auto-generated method stub
-        
+    protected File getFile() {
+        return new File(getFilePath());
     }
 
     /* (non-Javadoc)
-     * @see org.eclipse.team.internal.core.caches.LocalReplica#load(org.eclipse.core.runtime.IProgressMonitor)
+     * @see org.eclipse.team.internal.ccvs.ui.repo.XMLLocalReplica#save(java.lang.Object, org.eclipse.ui.IMemento, org.eclipse.core.runtime.IProgressMonitor)
      */
-    protected Object load(IProgressMonitor monitor) throws CoreException {
-        // TODO Auto-generated method stub
-        return null;
+    protected void save(Object o, IMemento memento, IProgressMonitor monitor) throws CoreException {
+        CVSTag[] tags = (CVSTag[])o;
+        for (int i = 0; i < tags.length; i++) {
+            CVSTag tag = tags[i];
+            IMemento child = memento.createChild(TAG_ELEMENT);
+            child.putInteger(TYPE_ATTRIBUTE, tag.getType());
+            child.putString(NAME_ATTRIBUTE, tag.getName());
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ccvs.ui.repo.XMLLocalReplica#load(int, org.eclipse.ui.IMemento, org.eclipse.core.runtime.IProgressMonitor)
+     */
+    protected Object load(int flags, IMemento memento, IProgressMonitor monitor) throws CoreException {
+        IMemento[] children = memento.getChildren(TAG_ELEMENT);
+        List tags = new ArrayList();
+        for (int i = 0; i < children.length; i++) {
+            IMemento child = children[i];
+            Integer type = child.getInteger(TYPE_ATTRIBUTE);
+            String name = child.getString(NAME_ATTRIBUTE);
+            if (type != null 
+                    && name != null 
+                    && (type.intValue() == CVSTag.BRANCH 
+                            || type.intValue() == CVSTag.VERSION)) {
+                CVSTag tag = new CVSTag(name, type.intValue());
+                tags.add(tag);
+            }
+        }
+        return (CVSTag[]) tags.toArray(new CVSTag[tags.size()]);
+    }
+
+    /**
+     * Set the tags in the replica to those provided.
+     * @param tags the tags
+     * @throws CoreException
+     */
+    public void setTags(CVSTag[] tags) throws CoreException {
+        save(tags, Policy.monitorFor(null));
+    }
+
+    /**
+     * Delete the replica from disk
+     */
+    public void dispose() {
+        getFile().delete();
     }
 }

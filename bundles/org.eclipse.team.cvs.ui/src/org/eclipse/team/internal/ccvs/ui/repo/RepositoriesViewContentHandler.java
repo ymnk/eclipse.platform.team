@@ -31,6 +31,7 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	public static final String AUTO_REFRESH_FILE_TAG = "auto-refresh-file"; //$NON-NLS-1$
 	public static final String DATE_TAGS_TAG = "date-tags"; //$NON-NLS-1$
 	public static final String DATE_TAG_TAG = "date-tag"; //$NON-NLS-1$
+	public static final String TAG_REPLICA_TAG = "tag-replica"; //$NON-NLS-1$
 	
 	public static final String ID_ATTRIBUTE = "id"; //$NON-NLS-1$
 	public static final String NAME_ATTRIBUTE = "name"; //$NON-NLS-1$
@@ -40,6 +41,7 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	public static final String READ_ID_ATTRIBUTE = "read-id"; //$NON-NLS-1$
 	public static final String WRITE_ID_ATTRIBUTE = "write-id"; //$NON-NLS-1$
 	public static final String LAST_ACCESS_TIME_ATTRIBUTE = "lastAcessTime"; //$NON-NLS-1$
+	public static final String CACHE_ATTRIBUTE = "cache"; //$NON-NLS-1$
 	
 	public static final String[] TAG_TYPES = {"head", "branch", "version", "date"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 	public static final String DEFAULT_TAG_TYPE = "version"; //$NON-NLS-1$
@@ -56,6 +58,8 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 	private boolean ignoreElements;
 
     private long lastAccessTime;
+    
+    private List tagReplicas = new ArrayList();
 
 	public RepositoriesViewContentHandler(RepositoryManager manager) {
 		this.manager = manager;
@@ -144,6 +148,10 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 			if (name != null) {
 				currentRepositoryRoot.setName(name);
 			}
+			String cache = atts.getValue(CACHE_ATTRIBUTE);
+			if (cache != null) {
+				currentRepositoryRoot.setCacheDirectory(cache);
+			}
 		} else if(elementName.equals(DATE_TAGS_TAG)){
 			//prepare to collect date tag
 			dateTags = new ArrayList();
@@ -208,7 +216,23 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 		} else if (elementName.equals(CURRENT_WORKING_SET_TAG)) {
 			// Ignore any elements until the corresponding end tag is reached
 			ignoreElements = true;
+		} else if (elementName.equals(TAG_REPLICA_TAG)) {
+			String replicaPath = atts.getValue(PATH_ATTRIBUTE);
+			if (replicaPath != null) {
+				long cachedTime = 0;
+				String cachedTimeString = atts.getValue(LAST_ACCESS_TIME_ATTRIBUTE);
+				if (cachedTimeString != null) {
+				    try {
+				        Long time = Long.valueOf(cachedTimeString);
+				        cachedTime = time.longValue();
+	                } catch (NumberFormatException e) {
+	                    // Ignore
+	                }
+				}
+				currentRepositoryRoot.addLocalReplica(currentRemotePath, replicaPath, cachedTime);
+			}
 		}
+		
 		// empty buffer
 		buffer = new StringBuffer();
 		tagStack.push(elementName);
@@ -219,6 +243,7 @@ public class RepositoriesViewContentHandler extends DefaultHandler {
 		tags = new ArrayList();
 		this.lastAccessTime = cachedTime;
 		autoRefreshFiles = new ArrayList();
+		tagReplicas = new ArrayList();
 	}
 	
 	/**

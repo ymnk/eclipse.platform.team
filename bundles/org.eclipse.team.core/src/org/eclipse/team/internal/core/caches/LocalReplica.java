@@ -16,7 +16,9 @@ import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * A cache source that keeps a replica on the local disk of information 
- * that is stored on a server
+ * that is stored on a server.
+ * 
+ * TODO: need concurreny protection against multiple accesses causing concurrent saves, etc.
  */
 public abstract class LocalReplica implements ICacheSource {
     
@@ -56,8 +58,20 @@ public abstract class LocalReplica implements ICacheSource {
                 // load the replica from disk
                 return load(flags, monitor);
             } catch (Exception e) {
-                // TODO If possible, try to fetch remote
-                e.printStackTrace();
+                // If possible, try to fetch the remote contents
+                if ((flags & ICacheableReference.DO_NOT_FETCH_IF_ABSENT) > 0) {
+                    // we were instructed not to fetch so throw the exception
+                    if (e instanceof CoreException) {
+                        throw (CoreException)e;
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException)e;
+                    }
+                    // Impossible but handle anyway.
+                    TeamPlugin.log(IStatus.WARNING, "Could no load local replica.", e); //$NON-NLS-1$
+                    return null;
+                }
+                TeamPlugin.log(IStatus.WARNING, "Could no load local replica. Fetching from the remote source.", e); //$NON-NLS-1$
+                return fetchRemote(flags, monitor);
             }
         }
     }
@@ -79,7 +93,7 @@ public abstract class LocalReplica implements ICacheSource {
             } catch (Exception e) {
                 // Log the exception and continue since the in ability to create
                 // the local replica may not cause anything else to fail
-                TeamPlugin.log(IStatus.WARNING, "Could no create local replica. Performance may be affected", e);
+                TeamPlugin.log(IStatus.WARNING, "Could no save local replica. Operation is not affected by oerformance may be reduced.", e); //$NON-NLS-1$
             }
             return o;
         } finally {

@@ -65,12 +65,20 @@ public class CacheableReference implements ICacheableReference {
             return null;
         }
         Object o = fetchObject(flags, Policy.monitorFor(monitor));
+        setCachedObject(o);
+        return o;
+    }
+
+    /**
+     * Set the object that is cached by this reference
+     * @param o the object to be cached
+     */
+    public void setCachedObject(Object o) {
         if (o != null) {
             synchronized(cacheLock) {
                 cached = new SoftReference(o);
             }
         }
-        return o;
     }
 
     /**
@@ -82,6 +90,21 @@ public class CacheableReference implements ICacheableReference {
      */
     protected Object fetchObject(int flags, IProgressMonitor monitor) throws CoreException {
         return source.fetch(flags, monitor);
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.core.caches.ICacheableReference#clear()
+     */
+    public void clear() {
+        cached.clear();
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.core.caches.ICacheableReference#getSource()
+     */
+    public ICacheSource getSource() {
+        return source;
     }
 
 }

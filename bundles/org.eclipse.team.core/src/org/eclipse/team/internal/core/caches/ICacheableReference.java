@@ -71,4 +71,16 @@ public interface ICacheableReference {
      * @return the object that is persisted
      */
     Object getObject(IProgressMonitor monitor) throws CoreException;
+
+    /**
+     * Clear the cached object so that the next time it is accessed,
+     * it will need to be obtained from the source.
+     */
+    void clear();
+
+    /**
+     * Return the source from which this reference obtains it's cached object.
+     * @return the source from which this reference obtains it's cached object
+     */
+    ICacheSource getSource();
 }

@@ -59,18 +59,6 @@ public abstract class XMLLocalReplica extends LocalReplica {
 
     }
 
-    /**
-     * Save the object to the given memento which will be used to
-     * persist the locla replica to disk.
-     * @param o the object being cached
-     * @param memento the memento used to cache the object
-     * @param monitor a progress monitor
-     */
-    protected void save(Object o, IMemento memento, IProgressMonitor monitor) {
-        // TODO Auto-generated method stub
-        
-    }
-
     private String getType() {
         return "replica"; //$NON-NLS-1$
     }
@@ -100,21 +88,27 @@ public abstract class XMLLocalReplica extends LocalReplica {
     }
 
     /**
+     * Return the file where the local replica is to be persisted.
+     * @return the file where the local replica is to be persisted
+     */
+    protected abstract File getFile();
+    
+    /**
+     * Save the object to the given memento which will be used to
+     * persist the locla replica to disk.
+     * @param o the object being cached
+     * @param memento the memento used to cache the object
+     * @param monitor a progress monitor
+     */
+    protected abstract void save(Object o, IMemento memento, IProgressMonitor monitor) throws CoreException;
+    
+    /**
      * Load the object from the given memento.
      * @param flags the flags passed to the cache reference
      * @param memento the memento containing the replica
      * @param monitor a progress monitor
      * @return the object build from the replica
      */
-    protected Object load(int flags, IMemento memento, IProgressMonitor monitor) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * Return the file where the local replica is to be persisted.
-     * @return the file where the local replica is to be persisted
-     */
-    protected abstract File getFile();
+    protected abstract Object load(int flags, IMemento memento, IProgressMonitor monitor) throws CoreException;
 
 }
