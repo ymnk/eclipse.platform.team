@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ccvs.ui.operations;
 import java.util.*;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.*;
@@ -174,21 +175,27 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	 */
 	public void execute(IProgressMonitor monitor) throws CVSException, InterruptedException {
 		try {
-            Map table = getProviderTraversalMapping();
-            Set keySet = table.keySet();
-            monitor.beginTask(null, keySet.size() * 1000);
-            Iterator iterator = keySet.iterator();
-            while (iterator.hasNext()) {
-            	IProgressMonitor subMonitor = new SubProgressMonitor(monitor, 1000);
-            	CVSTeamProvider provider = (CVSTeamProvider)iterator.next();
-            	monitor.setTaskName(getTaskName(provider));
-            	TraversalMapEntry entry = (TraversalMapEntry)table.get(provider);
-            	execute(provider, entry, subMonitor);
-            }
+            monitor.beginTask(null, 100);
+            Map table = getProviderTraversalMapping(Policy.subMonitorFor(monitor, 30));
+            execute(table, Policy.subMonitorFor(monitor, 30));
         } catch (CoreException e) {
             throw CVSException.wrapException(e);
+        } finally {
+            monitor.done();
         }
 	}
+
+    private void execute(Map providerTraversal, IProgressMonitor monitor) throws CVSException, InterruptedException {
+        Set keySet = providerTraversal.keySet();
+        monitor.beginTask(null, keySet.size() * 1000);
+        Iterator iterator = keySet.iterator();
+        while (iterator.hasNext()) {
+        	CVSTeamProvider provider = (CVSTeamProvider)iterator.next();
+        	monitor.setTaskName(getTaskName(provider));
+        	TraversalMapEntry entry = (TraversalMapEntry)providerTraversal.get(provider);
+        	execute(provider, entry, Policy.subMonitorFor(monitor, 1000));
+        }
+    }
 
     /**
      * Execute the operation on the given set of traversals
@@ -253,12 +260,12 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	 * Helper method. Return a Map mapping provider to a list of resources
 	 * shared with that provider.
 	 */
-	private Map getProviderTraversalMapping() throws CoreException {
+	private Map getProviderTraversalMapping(IProgressMonitor monitor) throws CoreException {
 		Map result = new HashMap();
         for (int j = 0; j < mappers.length; j++) {
             ResourceMapping mapper = mappers[j];
             IProject[] projects = mapper.getProjects();
-            ResourceTraversal[] traversals = mapper.getTraversals(null, null);
+            ResourceTraversal[] traversals = mapper.getTraversals(getResourceMappingContext(), monitor);
             for (int k = 0; k < projects.length; k++) {
                 IProject project = projects[k];
                 RepositoryProvider provider = RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId());
@@ -275,7 +282,17 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 		return result;
 	}
 
-	/**
+    /**
+     * Return the resource mapping context that is to be usd by this operation.
+     * By defautl, <code>null</code> is returned but subclasses may override
+     * to provide a specific context.
+     * @return the resource mapping context for this operaton
+     */
+	protected ResourceMappingContext getResourceMappingContext() {
+        return null;
+    }
+
+    /**
 	 * Execute the operation on the resources for the given provider.
 	 * @param provider the provider for the project that contains the resources
 	 * @param resources the resources to be operated on

@@ -191,7 +191,7 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	 * 
 	 * @return the selected resources based on the available traversals.
 	 */
-	public ResourceTraversal[] getSelectedTraversals(String providerId) throws TeamException {
+	public ResourceTraversal[] getSelectedTraversals(ResourceMappingContext context, String providerId) throws TeamException {
 		try {
 			Object[] elements = getSelectedAdaptables(selection, ResourceMapping.class);
 			ArrayList providerTraversals = new ArrayList();
@@ -208,7 +208,7 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
                         }               
                     }
                     if(addIt) {
-    					ResourceTraversal[] traversals = element.getTraversals(getModelContext(), null);
+    					ResourceTraversal[] traversals = element.getTraversals(context, null);
                         providerTraversals.addAll(Arrays.asList(traversals));
                     }
 				}
@@ -217,20 +217,6 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 		} catch (CoreException e) {
 			throw TeamException.asTeamException(e);
 		}
-	}
-	
-	protected ResourceMappingContext getModelContext() {
-		return new ResourceMappingContext() {
-			public boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
-				return false;
-			}
-			public IStorage fetchContents(IFile file, IProgressMonitor monitor) throws CoreException {
-				return null;
-			}
-			public IResource[] fetchMembers(IContainer container, IProgressMonitor monitor) throws CoreException {
-				return new IResource[0];
-			}
-		};
 	}
 	
 	/**

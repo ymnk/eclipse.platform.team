@@ -39,7 +39,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
     protected IResource[] getSelectedResourcesWithOverlap() {
         try {
             // Get all the traversals since enablement may be based on entire selection
-            ResourceTraversal[] traversals = getSelectedTraversals(null);
+            ResourceTraversal[] traversals = getSelectedTraversals(null, null);
             Set resources = new HashSet();
             for (int i = 0; i < traversals.length; i++) {
                 ResourceTraversal traversal = traversals[i];

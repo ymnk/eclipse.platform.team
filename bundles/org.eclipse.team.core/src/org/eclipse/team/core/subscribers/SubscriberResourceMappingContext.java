@@ -38,6 +38,8 @@ public class SubscriberResourceMappingContext extends ResourceMappingContext {
      * @see org.eclipse.core.resources.mapping.ITraversalContext#contentDiffers(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
      */
     public boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
+        // TODO: would like to avoid multiple refreshes somehow
+        subscriber.refresh(new IResource[] { file} , IResource.DEPTH_ONE, monitor);
         SyncInfo syncInfo = subscriber.getSyncInfo(file);
         return syncInfo != null && syncInfo.getKind() != SyncInfo.IN_SYNC;
     }

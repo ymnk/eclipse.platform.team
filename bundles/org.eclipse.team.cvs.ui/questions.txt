@@ -22,7 +22,8 @@ Should we add this? We could also remove the getProjects() from the traversal.
 Pending Items:
 
  - WorkspaceAction enablement code is not mapping aware
-    - However, enablement is performed used the resources obtained from the traversals
+    - However, enablement is performed using the resources obtained from the traversals
+        - the mapping context must be null during menu enablement (i.e. can't hit the server)
     - The resources will be collected for each action. Would be nice to do it once and share the result
  
  - [DONE] Decide how to convert selected resources into mappers. Choices are a single mapper for multiple resources or 
@@ -83,6 +84,8 @@ Pending Items:
  
  - Provide context on update, replace that allows client to see remote state
    - update example to use the context
+   
+ - Provide context on compare and sync
      
 Summary of changes:
 
