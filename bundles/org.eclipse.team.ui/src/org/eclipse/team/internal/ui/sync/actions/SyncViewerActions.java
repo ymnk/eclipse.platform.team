@@ -450,6 +450,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 					// when the working set changes, recalculate the entire sync set based on
 					// the new input.
 					input.prepareInput(monitor);
+					getSyncView().updateTitle();
 				} catch (TeamException e) {
 					throw new InvocationTargetException(e);
 				}

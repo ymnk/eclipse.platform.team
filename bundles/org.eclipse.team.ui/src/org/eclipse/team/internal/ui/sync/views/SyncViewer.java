@@ -63,12 +63,15 @@ import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
 import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
 import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.TeamProvider;
+import org.eclipse.team.internal.core.Assert;
+import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
@@ -158,6 +161,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 			SyncTreeSubscriber subscriber = subscribers[i];
 			addSubscriber(subscriber);
 		}
+		updateTitle();
 	}
 
 	public void switchViewerType(int viewerType) {
@@ -357,9 +361,10 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	}
 
 	public void initializeSubscriberInput(final SubscriberInput input) {
-		// Only initialize if we have a runnable context
+		Assert.isNotNull(input);
+		
 		if (!hasRunnableContext()) return;
-		this.lastInput = input;
+		this.lastInput = this.input;
 		this.input = input;
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -381,8 +386,26 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 				}
 			}
 		});
+		updateTitle();
 	}
 	
+	public void updateTitle() {
+		SubscriberInput input = getInput();
+		if(input != null) {
+			SyncTreeSubscriber subscriber = input.getSubscriber();
+		 	setTitle(Policy.bind("LiveSyncView.titleWithSubscriber", subscriber.getName()));
+		 	IWorkingSet ws = input.getWorkingSet();
+		 	if(ws != null) {
+		 		setTitleToolTip(Policy.bind("LiveSyncView.titleTooltip", subscriber.getDescription(), ws.getName()));
+		 	} else {
+			 	setTitleToolTip(subscriber.getDescription());
+		 	}
+		} else {
+			setTitle(Policy.bind("LiveSyncView.title"));
+			setTitleToolTip("");
+		}
+	}
+
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
@@ -455,13 +478,6 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 			SubscriberInput input = (SubscriberInput) it.next();
 			input.dispose();
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.part.WorkbenchPart#setTitle(java.lang.String)
-	 */
-	public void setTitle(String title) {
-		super.setTitle(title);
 	}
 
 	public void run(IRunnableWithProgress runnable) {

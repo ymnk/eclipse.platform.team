@@ -61,6 +61,8 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 			}
 			final SyncViewer view = getSyncView();
 			view.initializeSubscriberInput(activatedAction.getSubscriberInput());
+		} else {
+			activatedAction.setChecked(true);
 		}
 	}
 

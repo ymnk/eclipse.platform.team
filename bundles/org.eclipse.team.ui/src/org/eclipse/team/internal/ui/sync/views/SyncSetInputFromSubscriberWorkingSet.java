@@ -23,7 +23,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IWorkingSet;
 
 /**
- * Thsi class filters the sync set input using a working set
+ * This class filters the sync set input using a working set.
  */
 public class SyncSetInputFromSubscriberWorkingSet extends SyncSetInputFromSubscriber {
 
@@ -45,10 +45,6 @@ public class SyncSetInputFromSubscriberWorkingSet extends SyncSetInputFromSubscr
 		return (IResource[]) result.toArray(new IResource[result.size()]);
 	}
 
-	/**
-	 * @param resource
-	 * @return
-	 */
 	private IResource[] getIntersectionWithSet(IResource resource) {
 		Object[] elements = workingSet.getElements();
 		List result = new ArrayList();
@@ -73,19 +69,10 @@ public class SyncSetInputFromSubscriberWorkingSet extends SyncSetInputFromSubscr
 		return (IResource[]) result.toArray(new IResource[result.size()]);
 	}
 
-	/**
-	 * @param resource
-	 * @param setResource
-	 * @return
-	 */
 	private boolean isParent(IResource parent, IResource child) {
 		return (parent.getFullPath().isPrefixOf(child.getFullPath()));
 	}
 
-	/**
-	 * @param object
-	 * @return
-	 */
 	private IResource getResource(Object object) {
 		if (object instanceof IResource) {
 			return (IResource)object;
@@ -95,18 +82,11 @@ public class SyncSetInputFromSubscriberWorkingSet extends SyncSetInputFromSubscr
 		return null;
 	}
 
-	/**
-	 * @return
-	 */
 	public IWorkingSet getWorkingSet() {
 		return workingSet;
 	}
 
-	/**
-	 * @param set
-	 */
 	public void setWorkingSet(IWorkingSet set) {
 		this.workingSet = set;
 	}
-
 }

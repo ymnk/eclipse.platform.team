@@ -89,9 +89,9 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber {
 	 */
 	public void cancel() {
 		super.cancel();
+		TeamProvider.deregisterSubscriber(this);
 		remoteSynchronizer.dispose();
-		baseSynchronizer.dispose();
-		TeamProvider.deregisterSubscriber(this);		
+		baseSynchronizer.dispose();				
 	}
 
 	/* (non-Javadoc)

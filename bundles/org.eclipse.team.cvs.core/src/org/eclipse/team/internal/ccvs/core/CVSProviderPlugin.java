@@ -314,7 +314,7 @@ public class CVSProviderPlugin extends Plugin {
 		
 		cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber(
 				CVS_WORKSPACE_SUBSCRIBER_ID, 
-				"CVS",  
+				"CVS Workspace",  
 				"Synchronizes the CVS managed resources in your workspace with their associated remote location");
 		TeamProvider.registerSubscriber(cvsWorkspaceSubscriber);
 	}
