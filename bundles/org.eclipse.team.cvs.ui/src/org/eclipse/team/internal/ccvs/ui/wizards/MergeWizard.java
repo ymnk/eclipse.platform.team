@@ -35,7 +35,7 @@ public class MergeWizard extends Wizard {
 		ImageDescriptor mergeImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_MERGE);
 		startPage = new TagSelectionWizardPage("startPage", Policy.bind("MergeWizard.start"), mergeImage, Policy.bind("MergeWizardStartPage.description"), tagSource, TagSelectionArea.INCLUDE_VERSIONS); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		startPage.setHelpContxtId(IHelpContextIds.MERGE_START_PAGE);
-		startPage.setTagLabel("&Select start tag:");
+		startPage.setTagLabel(Policy.bind("MergeWizard.0")); //$NON-NLS-1$
 		addPage(startPage);
 		endPage = new TagSelectionWizardPage("endPage", Policy.bind("MergeWizard.end"), mergeImage, Policy.bind("MergeWizardEndPage.description"), tagSource, TagSelectionArea.INCLUDE_ALL_TAGS) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		    protected void updateEnablement() {
@@ -51,7 +51,7 @@ public class MergeWizard extends Wizard {
 		    }
 		};
 		endPage.setHelpContxtId(IHelpContextIds.MERGE_END_PAGE);
-		endPage.setTagLabel("&Select end tag:");
+		endPage.setTagLabel(Policy.bind("MergeWizard.1")); //$NON-NLS-1$
 		addPage(endPage);
 	}
 

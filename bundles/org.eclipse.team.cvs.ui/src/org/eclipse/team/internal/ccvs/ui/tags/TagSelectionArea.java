@@ -62,7 +62,7 @@ public class TagSelectionArea extends DialogArea {
 	public static final int INCLUDE_DATES = TagSourceWorkbenchAdapter.INCLUDE_DATES;
 	public static final int INCLUDE_ALL_TAGS = TagSourceWorkbenchAdapter.INCLUDE_ALL_TAGS;
 	
-    private String message;
+    private String tagAreaLabel;
     private final int includeFlags;
     private CVSTag selection;
     private String helpContext;
@@ -96,9 +96,8 @@ public class TagSelectionArea extends DialogArea {
     private boolean includeFilterInputArea = true;
     private String filterPattern = ""; //$NON-NLS-1$
     
-    public TagSelectionArea(Shell shell, TagSource tagSource, String message, int includeFlags, String helpContext) {
+    public TagSelectionArea(Shell shell, TagSource tagSource, int includeFlags, String helpContext) {
         this.shell = shell;
-        this.message = message;
         this.includeFlags = includeFlags;
         this.helpContext = helpContext;
         this.tagSource = tagSource;
@@ -130,10 +129,10 @@ public class TagSelectionArea extends DialogArea {
         Composite inner = createGrabbingComposite(parent, 1);
         if (isIncludeFilterInputArea()) {
             createFilterInput(inner);
+            createWrappingLabel(inner, Policy.bind("TagSelectionArea.0"), 1); //$NON-NLS-1$
+        } else {
+		    createWrappingLabel(inner, Policy.bind("TagSelectionArea.1", getTagAreaLabel()), 1);  //$NON-NLS-1$
         }
-		if (message != null) {
-		    createWrappingLabel(inner, message, 1);
-		}
 		switcher = new PageBook(inner, SWT.NONE);
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 0;
@@ -144,7 +143,7 @@ public class TagSelectionArea extends DialogArea {
     }
 
     private void createFilterInput(Composite inner) {
-        createWrappingLabel(inner, "Filter &tag list (? = any character, * = any String):", 1);
+        createWrappingLabel(inner, Policy.bind("TagSelectionArea.2", getTagAreaLabel()), 1); //$NON-NLS-1$
         filterText = createText(inner, 1);
         filterText.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -163,6 +162,30 @@ public class TagSelectionArea extends DialogArea {
         });
     }
 
+    /**
+     * Return the label that should be used for the tag area.
+     * It should not have any trailing punctuations as the tag area
+     * may position it differently depending on whether the filter
+     * text input is included in the area.
+     * @return the tag area label
+     */
+    public String getTagAreaLabel() {
+        if (tagAreaLabel == null)
+            tagAreaLabel = Policy.bind("TagSelectionArea.3"); //$NON-NLS-1$
+        return tagAreaLabel;
+    }
+
+    /**
+     * Set the label that should be used for the tag area.
+     * It should not have any trailing punctuations as the tag area
+     * may position it differently depending on whether the filter
+     * text input is included in the area.
+     * @param tagAreaLabel the tag area label
+     */
+    public void setTagAreaLabel(String tagAreaLabel) {
+        this.tagAreaLabel = tagAreaLabel;
+    }
+    
     /**
      * Update the tag display to show the tags that match the
      * include flags and the filter entered by the user.

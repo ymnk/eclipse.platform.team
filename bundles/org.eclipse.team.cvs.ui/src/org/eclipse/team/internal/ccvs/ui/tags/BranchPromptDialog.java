@@ -149,7 +149,8 @@ public class BranchPromptDialog extends DetailsDialog {
 		gridData.heightHint = TAG_AREA_HEIGHT_HINT;
 		composite.setLayoutData(gridData);
 		
-		tagArea = new TagSelectionArea(getShell(), tagSource, Policy.bind("BranchWizardPage.existingVersionsAndBranches"), TagSelectionArea.INCLUDE_VERSIONS | TagSelectionArea.INCLUDE_BRANCHES, null); //$NON-NLS-1$
+		tagArea = new TagSelectionArea(getShell(), tagSource, TagSelectionArea.INCLUDE_VERSIONS | TagSelectionArea.INCLUDE_BRANCHES, null);
+		tagArea.setTagAreaLabel(Policy.bind("BranchWizardPage.existingVersionsAndBranches")); //$NON-NLS-1$
 		tagArea.setIncludeFilterInputArea(false);
 		tagArea.createArea(composite);
 

@@ -154,7 +154,7 @@ public class TagSelectionDialog extends Dialog implements IPropertyChangeListene
 		Composite top = (Composite)super.createDialogArea(parent);
 		
 		// Delegate most of the dialog to the tag selection area
-        tagSelectionArea = new TagSelectionArea(getShell(), tagSource, message, includeFlags, helpContext) {
+        tagSelectionArea = new TagSelectionArea(getShell(), tagSource, includeFlags, helpContext) {
 			protected void createCustomArea(Composite parent) {
 				if(showRecurse) {
 					final Button recurseCheck = new Button(parent, SWT.CHECK);
@@ -168,6 +168,8 @@ public class TagSelectionDialog extends Dialog implements IPropertyChangeListene
 				}
 		    }
 		};
+		if (message != null)
+		    tagSelectionArea.setTagAreaLabel(message);
 		tagSelectionArea.addPropertyChangeListener(this);
 		tagSelectionArea.createArea(top);
 		

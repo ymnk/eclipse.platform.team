@@ -132,13 +132,13 @@ public class TagRefreshButtonArea extends DialogArea {
         final boolean[] prompt = new boolean[] { false };
         shell.getDisplay().syncExec(new Runnable() {
             public void run() {
-		        MessageDialog dialog = new MessageDialog(shell, "No Tags Found", null,
+		        MessageDialog dialog = new MessageDialog(shell, Policy.bind("TagRefreshButtonArea.0"), null, //$NON-NLS-1$
 		                getNoTagsFoundMessage(),
 		                MessageDialog.INFORMATION,
 		                new String[] {
-		            		"Perform Deep Search",
-		            		"Configure Manually",
-		            		"Cancel"
+		            		Policy.bind("TagRefreshButtonArea.1"), //$NON-NLS-1$
+		            		Policy.bind("TagRefreshButtonArea.2"), //$NON-NLS-1$
+		            		Policy.bind("TagRefreshButtonArea.3") //$NON-NLS-1$
 		        		}, 1);
 		        int code = dialog.open();
 		        if (code == 0) {
@@ -154,7 +154,7 @@ public class TagRefreshButtonArea extends DialogArea {
     }
     
     private String getNoTagsFoundMessage() {
-        return "Tags were not found for {0} using the auto-refresh files and a shallow cvs log operation. You can choose to search using a deep cvs log operation, to manually configure the tags or to cancel." + tagSource.getShortDescription();
+        return Policy.bind("TagRefreshButtonArea.4", tagSource.getShortDescription()); //$NON-NLS-1$
     }
     
 	protected static ICVSFolder getSingleFolder(TagSource tagSource) {

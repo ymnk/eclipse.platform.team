@@ -156,12 +156,12 @@ public class RefreshRemoteProjectWizard extends Wizard {
         final boolean[] prompt = new boolean[] { false };
         getShell().getDisplay().syncExec(new Runnable() {
             public void run() {
-		        MessageDialog dialog = new MessageDialog(getShell(), "Tags not found for some modules", null,
+		        MessageDialog dialog = new MessageDialog(getShell(), Policy.bind("RefreshRemoteProjectWizard.0"), null, //$NON-NLS-1$
 		                getNoTagsMessage(folders),
 		                MessageDialog.INFORMATION,
 		                new String[] {
-		            		"Search Deeply",
-		            		"Skip"
+		            		Policy.bind("RefreshRemoteProjectWizard.1"), //$NON-NLS-1$
+		            		Policy.bind("RefreshRemoteProjectWizard.2") //$NON-NLS-1$
 		        		}, 1);
 		        int code = dialog.open();
 		        if (code == 0) {
@@ -175,8 +175,8 @@ public class RefreshRemoteProjectWizard extends Wizard {
 
     private String getNoTagsMessage(ICVSRemoteResource[] folders) {
         if (folders.length == 1) {
-            return "Tags were not found on module {0} using the auto-refresh files and a shallow cvs log operation. You can choose to search this module using a deep cvs log operation or skip it." + folders[0].getRepositoryRelativePath();
+            return Policy.bind("RefreshRemoteProjectWizard.3", folders[0].getRepositoryRelativePath()); //$NON-NLS-1$
         }
-        return "Tags were not found on {0} modules using the auto-refresh files and a shallow cvs log operation. You can choose to search these module using a deep cvs log operation or skip them." + Integer.toString(folders.length);
+        return Policy.bind("RefreshRemoteProjectWizard.4", Integer.toString(folders.length)); //$NON-NLS-1$
     }
 }

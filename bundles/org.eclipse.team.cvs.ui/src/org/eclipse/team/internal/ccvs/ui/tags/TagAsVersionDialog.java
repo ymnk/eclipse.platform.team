@@ -111,7 +111,8 @@ public class TagAsVersionDialog extends DetailsDialog {
 		gridData.heightHint = TAG_AREA_HEIGHT_HINT;
         composite.setLayoutData(gridData);
 		
-		tagArea = new TagSelectionArea(getShell(), tagSource, Policy.bind("TagAction.existingVersions"), TagSelectionArea.INCLUDE_VERSIONS, null); //$NON-NLS-1$
+		tagArea = new TagSelectionArea(getShell(), tagSource, TagSelectionArea.INCLUDE_VERSIONS, null);
+		tagArea.setTagAreaLabel(Policy.bind("TagAction.existingVersions"));  //$NON-NLS-1$
 		tagArea.setIncludeFilterInputArea(false);
 		tagArea.createArea(composite);
 		tagArea.addPropertyChangeListener(new IPropertyChangeListener() {
