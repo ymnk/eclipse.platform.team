@@ -123,6 +123,13 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 		// forget local contents. Remote contents will be fetched the next time
 		// the returned handle is used.
 		file.clearContents();
+		
+		// If the revision changed, clear the contents of the original revision in case contents where cached
+		if ( ! info.getRevision().equals(file.getRevision())) {
+			RemoteFile originalRevision = new RemoteFile(parent, info);
+			originalRevision.clearContents();
+		}
+		
 		return file;
 	}
 	
@@ -131,6 +138,14 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 */
 	public void clearContents() {
 		contents = null;
+		try {
+			File ioFile = CVSProviderPlugin.getPlugin().getCacheFileFor(getCacheRelativePath());
+			if (ioFile.exists()) {
+				ioFile.delete();
+			}
+		} catch (IOException e) {
+			CVSProviderPlugin.log(CVSException.wrapException(e).getStatus());
+		}
 	}
 		
 	/**
