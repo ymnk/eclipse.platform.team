@@ -51,7 +51,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	
 	private ISynchronizePageConfiguration configuration;
 
-	public StatusLineContributionGroup(final Shell shell, ISynchronizePageConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
+	public StatusLineContributionGroup(final Shell shell, ISynchronizePageConfiguration configuration) {
 		this.configuration = configuration;
 		this.incoming = createStatusLineContribution(INCOMING_ID, ISynchronizePageConfiguration.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
 		this.outgoing = createStatusLineContribution(OUTGOING_ID, ISynchronizePageConfiguration.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$

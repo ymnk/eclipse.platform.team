@@ -15,7 +15,6 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.ui.IWorkingSet;
 
 /**
  * Configures the model, actions and label decorations of an 
@@ -73,13 +72,6 @@ public interface ISynchronizePageConfiguration {
 	 * included.
 	 */
 	public static final String P_VIEW_MENU = TeamUIPlugin.ID + ".P_VIEW_MENU"; //$NON-NLS-1$
-	
-	/**
-	 * Property constant for the working set used to filter the visible
-	 * elements of the model. The value can be any <code>IWorkingSet</code>
-	 * or <code>null</code>;
-	 */
-	public static final String P_WORKING_SET = TeamUIPlugin.ID + ".P_WORKING_SET"; //$NON-NLS-1$
 
 	/**
 	 * Property constant for the type of comparison used to create
@@ -134,14 +126,6 @@ public interface ISynchronizePageConfiguration {
 	 * actions appear (e.g. move and delete).
 	 */
 	public static final String EDIT_GROUP = "edit"; //$NON-NLS-1$
-	
-	/**
-	 * The id of the working set group that determines whether the
-	 * working set selection appears in the view dropdown. This
-	 * group can only be added as the first group of the view
-	 * dropdoen menu.
-	 */
-	public static final String WORKING_SET_GROUP = "workingset"; //$NON-NLS-1$
 
 	/**
 	 * The id of the preferences group that determines whether the preferences
@@ -312,19 +296,6 @@ public interface ISynchronizePageConfiguration {
 	 * otherwise
 	 */
 	public abstract boolean hasMenuGroup(String menuPropertyId, String groupId);
-	
-	/**
-	 * Return the value of the P_WORKING_SET property of this configuration.
-	 * @return the working set property
-	 */
-	IWorkingSet getWorkingSet();
-	
-	/**
-	 * Set the P_WORKING_SET property of this configuration to the
-	 * given working set (which may be <code>null</code>).
-	 * @param set the working set or <code>null</code>
-	 */
-	void setWorkingSet(IWorkingSet set);
 	
 	/**
 	 * Return the value of the P_MODE property of this configuration.
