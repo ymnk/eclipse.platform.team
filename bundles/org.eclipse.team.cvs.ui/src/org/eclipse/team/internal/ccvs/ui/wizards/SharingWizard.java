@@ -68,6 +68,8 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 	
 	// Keep track of the folder that existed the last time we checked
 	private ICVSRemoteFolder exisitingRemote;
+
+	private SharingWizardSyncPage syncPage;
 	
 	public SharingWizard() {
 		IDialogSettings workbenchSettings = CVSUIPlugin.getPlugin().getDialogSettings();
@@ -107,6 +109,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 			addPage(finishPage);
 			
 			addTagPage(sharingImage);
+			addSyncPage(sharingImage);
 		}
 	}
 	
@@ -116,6 +119,14 @@ public class SharingWizard extends Wizard implements IConfigurationWizard {
 			sharingImage,
 			"Select the branch to share the project with");
 		addPage(tagPage);
+	}
+	
+	private void addSyncPage(ImageDescriptor sharingImage) {
+		syncPage = new SharingWizardSyncPage("syncPagePage", 
+			"Share Project Resources", 
+			sharingImage,
+			"Share individual project resources");
+		addPage(syncPage);
 	}
 	
 	public boolean canFinish() {
