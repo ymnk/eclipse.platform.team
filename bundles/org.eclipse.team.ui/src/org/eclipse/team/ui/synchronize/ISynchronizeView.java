@@ -41,7 +41,7 @@ public interface ISynchronizeView extends IViewPart {
 	 * 
 	 * @param participant participant to be displayed, cannot be <code>null</code>
 	 */
-	public void display(ISynchronizeParticipant participant);
+	public void display(ISynchronizeParticipantReference participant);
 	
 	/**
 	 * Returns the participant currently being displayed in the Synchronize View
@@ -50,5 +50,5 @@ public interface ISynchronizeView extends IViewPart {
 	 * @return the participant currently being displayed in the Synchronize View
 	 * or <code>null</code> if none
 	 */
-	public ISynchronizeParticipant getParticipant();
+	public ISynchronizeParticipantReference getParticipant();
 }

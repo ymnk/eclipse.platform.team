@@ -16,10 +16,12 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 
 /**
  * Action to initiate a CVS workspace synchronize
@@ -27,14 +29,20 @@ import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticip
 public class SyncAction extends WorkspaceAction {
 	
 	public void execute(IAction action) throws InvocationTargetException {
-		IResource[] resources = getResourcesToSync();
-		if (resources == null || resources.length == 0) return;
-		
-		WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		if(participant != null) {
-			IWizard wizard = participant.createSynchronizeWizard();
-			WizardDialog dialog = new WizardDialog(getShell(), wizard);
-			dialog.open();
+		try {
+			IResource[] resources = getResourcesToSync();
+			if (resources == null || resources.length == 0)
+				return;
+			ISynchronizeParticipantReference ref = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
+			if (ref != null) {
+				ISynchronizeParticipant participant = ref.createParticipant();
+				IWizard wizard = participant.createSynchronizeWizard();
+				WizardDialog dialog = new WizardDialog(getShell(), wizard);
+				dialog.open();
+				ref.releaseParticipant();
+			}
+		} catch (TeamException e) {
+			throw new InvocationTargetException(e);
 		}
 	}
 	

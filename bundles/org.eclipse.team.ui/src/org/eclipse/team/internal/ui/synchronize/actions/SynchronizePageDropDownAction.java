@@ -28,7 +28,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		 * @see org.eclipse.ui.texteditor.IUpdate#update()
 		 */
 		public void update() {
-			ISynchronizeParticipant[] pages = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+			ISynchronizeParticipantReference[] pages = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 			setEnabled(pages.length >= 1);
 		}
 
@@ -65,10 +65,10 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 				fMenu.dispose();
 			}		
 			fMenu= new Menu(parent);
-			ISynchronizeParticipant[] pages = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-			ISynchronizeParticipant current = fView.getParticipant();
+			ISynchronizeParticipantReference[] pages = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+			ISynchronizeParticipantReference current = fView.getParticipant();
 			for (int i = 0; i < pages.length; i++) {
-				ISynchronizeParticipant page = pages[i];
+				ISynchronizeParticipantReference page = pages[i];
 				Action action = new ShowSynchronizeParticipantAction(fView, page);  
 				action.setChecked(page.equals(current));
 				addActionToMenu(fMenu, action);
@@ -96,7 +96,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		/* (non-Javadoc)
 		 * @see org.eclipse.team.ui.sync.ISynchronizeParticipantListener#participantsAdded(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 		 */
-		public void participantsAdded(ISynchronizeParticipant[] consoles) {
+		public void participantsAdded(ISynchronizeParticipantReference[] consoles) {
 			Display display = TeamUIPlugin.getStandardDisplay();
 			display.asyncExec(new Runnable() {
 				public void run() {
@@ -108,7 +108,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		/* (non-Javadoc)
 		 * @see org.eclipse.team.ui.sync.ISynchronizeParticipantListener#participantsRemoved(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 		 */
-		public void participantsRemoved(ISynchronizeParticipant[] consoles) {
+		public void participantsRemoved(ISynchronizeParticipantReference[] consoles) {
 			Display display = TeamUIPlugin.getStandardDisplay();
 			display.asyncExec(new Runnable() {
 				public void run() {

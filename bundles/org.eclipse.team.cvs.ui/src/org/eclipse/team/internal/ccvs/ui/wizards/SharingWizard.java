@@ -26,22 +26,17 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
-import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.internal.ccvs.ui.operations.DisconnectOperation;
-import org.eclipse.team.internal.ccvs.ui.operations.ReconcileProjectOperation;
-import org.eclipse.team.internal.ccvs.ui.operations.ShareProjectOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.*;
+import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.IConfigurationWizard;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 import org.eclipse.ui.IWorkbench;
 
 /**
@@ -51,6 +46,10 @@ import org.eclipse.ui.IWorkbench;
 public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSWizard {
 	// The project to configure
 	private IProject project;
+	
+	// The participant reference for the CVS workspace
+	private ISynchronizeParticipantReference participantRef;
+	private WorkspaceSynchronizeParticipant participant;
 
 	// The autoconnect page is used if CVS/ directories already exist.
 	private ConfigurationWizardAutoconnectPage autoconnectPage;
@@ -126,13 +125,20 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	}
 	
 	private void addSyncPage(ImageDescriptor sharingImage) {
-		syncPage = new SharingWizardSyncPage("syncPagePage",  //$NON-NLS-1$
-			Policy.bind("SharingWizard.23"),  //$NON-NLS-1$
-			sharingImage,
-			Policy.bind("SharingWizard.24")); //$NON-NLS-1$
-		syncPage.setProject(project);
-		syncPage.setCVSWizard(this);
-		addPage(syncPage);
+		try {
+			participantRef = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
+			participant = (WorkspaceSynchronizeParticipant) participantRef.createParticipant();
+			syncPage = new SharingWizardSyncPage("syncPagePage",  //$NON-NLS-1$
+				participant,
+				Policy.bind("SharingWizard.23"),  //$NON-NLS-1$
+				sharingImage,
+				Policy.bind("SharingWizard.24")); //$NON-NLS-1$
+			syncPage.setProject(project);
+			syncPage.setCVSWizard(this);
+			addPage(syncPage);
+		} catch (TeamException e) {
+			Utils.handle(e);
+		}
 	}
 	
 	public boolean canFinish() {
@@ -520,7 +526,7 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	private void waitForCollector(IProgressMonitor sub) {
 		sub.beginTask(Policy.bind("ShareProjectOperation.1"), IProgressMonitor.UNKNOWN); //$NON-NLS-1$
 		sub.subTask(Policy.bind("ShareProjectOperation.1")); //$NON-NLS-1$
-		CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant().getSubscriberSyncInfoCollector().waitForCollector(sub);
+		participant.getSubscriberSyncInfoCollector().waitForCollector(sub);
 		sub.done();
 	}
 	
@@ -538,5 +544,13 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 	private void prepareTagPage(ICVSRemoteFolder remote) {
 		tagPage.setFolder(remote);
 		tagPage.setDescription(Policy.bind("SharingWizard.25", remote.getRepositoryRelativePath())); //$NON-NLS-1$
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.wizard.IWizard#dispose()
+	 */
+	public void dispose() {
+		super.dispose();
+		participantRef.releaseParticipant();
 	}
 }

@@ -25,7 +25,7 @@ public interface ISynchronizeParticipantListener {
 	 * 
 	 * @param participants added participants
 	 */
-	public void participantsAdded(ISynchronizeParticipant[] participants);
+	public void participantsAdded(ISynchronizeParticipantReference[] participants);
 	
 	/**
 	 * Notification the given participants have been removed from the
@@ -33,6 +33,6 @@ public interface ISynchronizeParticipantListener {
 	 * 
 	 * @param participants removed participants
 	 */
-	public void participantsRemoved(ISynchronizeParticipant[] participants);
+	public void participantsRemoved(ISynchronizeParticipantReference[] participants);
 
 }

@@ -14,14 +14,14 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 
 /**
  * Action to remove the given participant from the synchronize manager.
  * @since 3.0 
  */
 public class RemoveSynchronizeParticipantAction extends Action {
-	private ISynchronizeParticipant participant;
+	private ISynchronizeParticipantReference ref;
 
 	/**
 	 * Creates the action to remove the participant from the synchronize
@@ -29,13 +29,13 @@ public class RemoveSynchronizeParticipantAction extends Action {
 	 * @param participant the participant to remove from the synchronize
 	 * manager.
 	 */
-	public RemoveSynchronizeParticipantAction(ISynchronizeParticipant participant) {
-		this.participant = participant;
+	public RemoveSynchronizeParticipantAction(String id, String secondaryId) {
+		this.ref = TeamUI.getSynchronizeManager().get(id, secondaryId);
 		Utils.initAction(this, "action.removePage.", Policy.getBundle()); //$NON-NLS-1$
+		setEnabled(ref != null);
 	}
 	
 	public void run() {
-		TeamUI.getSynchronizeManager().removeSynchronizeParticipants(
-				new ISynchronizeParticipant[] {participant});
+		TeamUI.getSynchronizeManager().removeSynchronizeParticipants(	new ISynchronizeParticipantReference[] {ref});
 	}
 }

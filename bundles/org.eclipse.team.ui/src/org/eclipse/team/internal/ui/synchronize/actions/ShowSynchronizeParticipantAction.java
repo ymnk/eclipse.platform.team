@@ -11,12 +11,12 @@
 package org.eclipse.team.internal.ui.synchronize.actions;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 
 public class ShowSynchronizeParticipantAction extends Action {
 	
-	private ISynchronizeParticipant fPage;
+	private ISynchronizeParticipantReference fPage;
 	private ISynchronizeView fView;
 	
 	public void run() {
@@ -32,10 +32,10 @@ public class ShowSynchronizeParticipantAction extends Action {
 	 * @param view the synchronize view in which the given page is contained
 	 * @param participant the participant to show
 	 */
-	public ShowSynchronizeParticipantAction(ISynchronizeView view, ISynchronizeParticipant participant) {
-		super(participant.getName(), Action.AS_RADIO_BUTTON);
-		fPage = participant;
+	public ShowSynchronizeParticipantAction(ISynchronizeView view, ISynchronizeParticipantReference ref) {
+		super(ref.getDescriptor().getName(), Action.AS_RADIO_BUTTON);
+		fPage = ref;
 		fView = view;
-		setImageDescriptor(participant.getImageDescriptor());
+		setImageDescriptor(ref.getDescriptor().getImageDescriptor());
 	}
 }

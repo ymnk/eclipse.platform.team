@@ -15,12 +15,15 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 import org.eclipse.team.ui.synchronize.subscribers.IRefreshSubscriberListener;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.*;
 
 public class MergeWizard extends Wizard {
@@ -48,24 +51,28 @@ public class MergeWizard extends Wizard {
 	 * @see IWizard#performFinish()
 	 */
 	public boolean performFinish() {
-		
 		IWorkbenchWindow wWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage activePage = null;
-		if(wWindow != null) {
+		if (wWindow != null) {
 			activePage = wWindow.getActivePage();
 		}
-		
 		CVSTag startTag = startPage.getTag();
-		CVSTag endTag = endPage.getTag();				
-		
-		CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
-		MergeSynchronizeParticipant participant = (MergeSynchronizeParticipant)SubscriberParticipant.find(s);
-		if(participant == null) {
-			participant = new MergeSynchronizeParticipant(s);
-		}	
-		IRefreshSubscriberListener listener = participant.getRefreshListeners().createModalDialogListener(CVSMergeSubscriber.ID_MODAL, participant, participant.getSubscriberSyncInfoCollector().getSyncInfoTree());
-		participant.refresh(s.roots(), listener, Policy.bind("Participant.merging"), null); //$NON-NLS-1$
-		return true;
+		CVSTag endTag = endPage.getTag();
+		try {
+			CVSMergeSubscriber s = new CVSMergeSubscriber(resources, startTag, endTag);
+			ISynchronizeParticipantReference ref = TeamUI.getSynchronizeManager().createParticipant(s.getId().getLocalName(), s.getId().getQualifier());
+			MergeSynchronizeParticipant participant = (MergeSynchronizeParticipant) ref.createParticipant();
+			participant.setSubscriber(s);
+			IRefreshSubscriberListener listener = participant.getRefreshListeners().createModalDialogListener(CVSMergeSubscriber.ID_MODAL, ref, participant, participant.getSubscriberSyncInfoCollector().getSyncInfoTree());
+			participant.refresh(s.roots(), listener, Policy.bind("Participant.merging"), null); //$NON-NLS-1$
+			return true;
+		} catch (TeamException e) {
+			Utils.handle(e);
+			return false;
+		} catch (PartInitException e) {
+			Utils.handle(e);
+			return false;
+		}
 	}
 	
 	/*

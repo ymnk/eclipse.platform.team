@@ -25,12 +25,16 @@ public class SynchronizeParticipantDescriptor implements ISynchronizeParticipant
 	private static final String ATT_TYPE = "type"; //$NON-NLS-1$	
 	private static final String ATT_TYPE_STATIC = "static"; //$NON-NLS-1$
 	private static final String ATT_SUPPORTS_REFRESH = "supportsRefresh"; //$NON-NLS-1$
+	private static final String ATT_PERSISTENT = "persistent"; //$NON-NLS-1$
+	private static final String ATT_ALLOW_MULTIPLE = "allowMultipleInstances"; //$NON-NLS-1$
 	
 	private String label;
 	private String className;
 	private String type;
 	private String id;
 	private boolean supportsRefresh;
+	private boolean persistent;
+	private boolean allowMultipleInstances;
 	private ImageDescriptor imageDescriptor;
 	private String description;
 	
@@ -111,6 +115,20 @@ public class SynchronizeParticipantDescriptor implements ISynchronizeParticipant
 		} else {
 			supportsRefresh = Boolean.valueOf(supportsRefreshString).booleanValue();
 		}
+		
+		String persistentString = configElement.getAttribute(ATT_PERSISTENT);
+		if(persistentString == null) {
+			persistent = true;
+		} else {
+			persistent = Boolean.valueOf(persistentString).booleanValue();
+		}
+		
+		String allowMultipleString = configElement.getAttribute(ATT_ALLOW_MULTIPLE);
+		if(allowMultipleString == null) {
+			allowMultipleInstances = true;
+		} else {
+			allowMultipleInstances = Boolean.valueOf(allowMultipleString).booleanValue();
+		}
 
 		// Sanity check.
 		if ((label == null) || (className == null) || (identifier == null)) {
@@ -127,5 +145,17 @@ public class SynchronizeParticipantDescriptor implements ISynchronizeParticipant
 	 */
 	public String toString() {
 		return "Synchronize Participant(" + getId() + ")"; //$NON-NLS-2$//$NON-NLS-1$
+	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor#doesAllowMultiple()
+	 */
+	public boolean doesAllowMultiple() {
+		return allowMultipleInstances;
+	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor#isPersistent()
+	 */
+	public boolean isPersistent() {
+		return persistent;
 	}
 }

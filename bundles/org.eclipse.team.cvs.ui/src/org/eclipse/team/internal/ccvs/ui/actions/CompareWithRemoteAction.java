@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -23,6 +24,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 
 /**
  * This action shows the CVS workspace participant into a model dialog. For single file
@@ -50,15 +52,20 @@ public class CompareWithRemoteAction extends WorkspaceAction {
 		};
 		
 		// Show the 3-way comparison in a model dialog
-		WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		SyncInfoTree syncInfoSet = new SyncInfoTree();
-		
-		FilteredSyncInfoCollector collector = new FilteredSyncInfoCollector(
-				participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
-				syncInfoSet, 
-				contentComparison);	
-		collector.start(new NullProgressMonitor());
-		participant.refresh(resources, participant.getRefreshListeners().createModalDialogListener(participant.getId(), participant, syncInfoSet), Policy.bind("Participant.comparing"), null); //$NON-NLS-1$
+		try {
+			ISynchronizeParticipantReference ref = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
+			WorkspaceSynchronizeParticipant participant = (WorkspaceSynchronizeParticipant)ref.createParticipant();
+			SyncInfoTree syncInfoSet = new SyncInfoTree();
+			
+			FilteredSyncInfoCollector collector = new FilteredSyncInfoCollector(
+					participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
+					syncInfoSet, 
+					contentComparison);	
+			collector.start(new NullProgressMonitor());
+			participant.refresh(resources, participant.getRefreshListeners().createModalDialogListener(participant.getId(), ref, participant, syncInfoSet), Policy.bind("Participant.comparing"), null); //$NON-NLS-1$
+		} catch (TeamException e) {
+			throw new InvocationTargetException(e);
+		}
 	}
 	
 	/*

@@ -60,6 +60,17 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	public String getId();
 	
 	/**
+	 * Returns the instance id that identified the unique instance of this
+	 * participant. The synchronize manager supports registering
+	 * several instances of the same participant type and this id is used
+	 * to differentiate between them.
+	 * 
+	 * @return  the instance id that identified the unique instance of this
+	 * participant.
+	 */	
+	public String getSecondaryId();
+	
+	/**
 	 * Returns the name of this synchronize participant.
 	 * 
 	 * @return the name of this synchronize participant

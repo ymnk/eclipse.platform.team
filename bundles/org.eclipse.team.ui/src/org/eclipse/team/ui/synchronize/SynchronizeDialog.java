@@ -45,7 +45,7 @@ import org.eclipse.team.ui.TeamUI;
 public class SynchronizeDialog extends ResizableDialog implements IPropertyChangeListener {
 		
 	private CompareEditorInput fCompareEditorInput;
-	private ISynchronizeParticipant participant;
+	private ISynchronizeParticipantReference ref;
 	private Button saveButton;
 	private Button rememberParticipantButton;
 	private String title;
@@ -67,8 +67,8 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 		fCompareEditorInput.addPropertyChangeListener(this);
 	}
 	
-	public void setSynchronizeParticipant(ISynchronizeParticipant participant) {
-		this.participant = participant;
+	public void setSynchronizeParticipant(ISynchronizeParticipantReference participant) {
+		this.ref = participant;
 	}
 	
 	/* (non-Javadoc)
@@ -86,9 +86,9 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 		Control c = fCompareEditorInput.createContents(parent);
 		c.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		ISynchronizeParticipantReference[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		
-		if (participant != null && ! particantRegisteredWithSynchronizeManager(participant)) {
+		if (ref != null && ! particantRegisteredWithSynchronizeManager(ref)) {
 			rememberParticipantButton = new Button(parent, SWT.CHECK);
 			rememberParticipantButton.setText(Policy.bind("ParticipantCompareDialog.1")); //$NON-NLS-1$
 		}
@@ -99,8 +99,8 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 		return parent;
 	}
 	
-	private boolean particantRegisteredWithSynchronizeManager(ISynchronizeParticipant participant) {
-		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+	private boolean particantRegisteredWithSynchronizeManager(ISynchronizeParticipantReference participant) {
+		ISynchronizeParticipantReference[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			if(participants[i] == participant) return true;
 		}
@@ -114,7 +114,9 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 		saveChanges();
 		if(buttonId == IDialogConstants.OK_ID && isRememberParticipant()) {
 			rememberParticipant();
-		} 
+		} else {
+			ref.releaseParticipant();
+		}
 		super.buttonPressed(buttonId);
 	}
 		
@@ -134,8 +136,8 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 		if(getParticipant() != null) {
 			ISynchronizeManager mgr = TeamUI.getSynchronizeManager();
 			ISynchronizeView view = mgr.showSynchronizeViewInActivePage();
-			mgr.addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
-			view.display(participant);
+			mgr.addSynchronizeParticipants(new ISynchronizeParticipantReference[] {ref});
+			view.display(ref);
 		}
 	}
 
@@ -170,7 +172,7 @@ public class SynchronizeDialog extends ResizableDialog implements IPropertyChang
 	}
 	
 	protected Object getParticipant() {
-		return participant;
+		return ref;
 	}
 	
 	protected CompareEditorInput getCompareEditorInput() {

@@ -70,4 +70,16 @@ public interface ISynchronizeParticipantDescriptor {
 	 * @return if this participant supports a global refresh action.
 	 */
 	public boolean doesSupportRefresh();
+	
+	/**
+	 * Does this type of participant allow multiple instances.
+	 *
+	 */
+	public boolean doesAllowMultiple();
+	
+	/**
+	 * Can be persisted between sessions.
+	 *
+	 */
+	public boolean isPersistent();
 }

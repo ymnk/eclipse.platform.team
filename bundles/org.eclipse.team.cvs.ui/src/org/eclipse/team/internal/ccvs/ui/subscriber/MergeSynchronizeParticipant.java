@@ -22,8 +22,6 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
@@ -59,12 +57,11 @@ public class MergeSynchronizeParticipant extends SubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.sync.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
 	 */
-	protected void setSubscriber(Subscriber subscriber) {
+	public  void setSubscriber(Subscriber subscriber) {
 		super.setSubscriber(subscriber);
-		String id = CVSMergeSubscriber.ID;
 		try {
-			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(id); 
-			setInitializationData(descriptor);
+			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getDescriptor(CVSMergeSubscriber.ID); 
+			setInitializationData(descriptor, ((CVSMergeSubscriber)subscriber).getId().getLocalName());
 		} catch (CoreException e) {
 			CVSUIPlugin.log(e);
 		}

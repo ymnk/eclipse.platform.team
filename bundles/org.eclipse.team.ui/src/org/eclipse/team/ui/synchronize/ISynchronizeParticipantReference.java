@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.team.core.TeamException;
 
 /**
  * Defines a reference to a synchronize participant.
@@ -18,7 +18,9 @@ import org.eclipse.jface.resource.ImageDescriptor;
  * @since 3.0
  */
 public interface ISynchronizeParticipantReference {
-	public ISynchronizeParticipant getParticipant();
-	public String getName();
-	public ImageDescriptor getImageDescriptor();
+	public String getId();
+	public String getSecondaryId();
+	public ISynchronizeParticipant createParticipant() throws TeamException;
+	public void releaseParticipant();
+	public ISynchronizeParticipantDescriptor getDescriptor();
 }

@@ -83,16 +83,21 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	
 	private SubscriberParticipant getParticipant(Subscriber subscriber) {
 		// show the sync view
-		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-		for (int i = 0; i < participants.length; i++) {
-			ISynchronizeParticipant participant = participants[i];
-			if(participant instanceof SubscriberParticipant) {
-				if(((SubscriberParticipant)participant).getSubscriber() == subscriber) {
-					return (SubscriberParticipant)participant;
+		try {
+			ISynchronizeParticipantReference[] participantRefs = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+			for (int i = 0; i < participantRefs.length; i++) {
+				ISynchronizeParticipantReference ref = participantRefs[i];
+				ISynchronizeParticipant participant = ref.createParticipant();
+				if(participant instanceof SubscriberParticipant) {
+					if(((SubscriberParticipant)participant).getSubscriber() == subscriber) {
+						return (SubscriberParticipant)participant;
+					}
 				}
 			}
+			return null;
+		} catch (TeamException e) {
+			return null;
 		}
-		return null;
 	}
 	
 	private SubscriberSyncInfoCollector getCollector(Subscriber subscriber) {
@@ -119,19 +124,18 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#createMergeSubscriber(org.eclipse.core.resources.IProject, org.eclipse.team.internal.ccvs.core.CVSTag, org.eclipse.team.internal.ccvs.core.CVSTag)
 	 */
 	public CVSMergeSubscriber createMergeSubscriber(IProject project, CVSTag root, CVSTag branch) {
-		CVSMergeSubscriber mergeSubscriber = super.createMergeSubscriber(project, root, branch);
-		ISynchronizeManager synchronizeManager = TeamUI.getSynchronizeManager();
-		SubscriberParticipant participant = new MergeSynchronizeParticipant(mergeSubscriber);
-		synchronizeManager.addSynchronizeParticipants(
-				new ISynchronizeParticipant[] {participant});		
-		IWorkbenchPage activePage = TeamUIPlugin.getActivePage();
 		try {
-			ISynchronizeView view = (ISynchronizeView)activePage.showView(ISynchronizeView.VIEW_ID);
-			view.display(participant);
+			CVSMergeSubscriber s = super.createMergeSubscriber(project, root, branch);
+			ISynchronizeParticipantReference ref = TeamUI.getSynchronizeManager().createParticipant(s.getId().getLocalName(), s.getId().getQualifier());
+			MergeSynchronizeParticipant participant = (MergeSynchronizeParticipant) ref.createParticipant();
+			participant.setSubscriber(s);
+			showParticipant(ref);
+			return s;
 		} catch (PartInitException e) {
 			throw new AssertionFailedError("Cannot show sync view in active page");
-		}
-		return mergeSubscriber;
+		} catch (TeamException e) {
+			throw new AssertionFailedError("Cannot show sync view in active page");
+		}	
 	}
 	
 	
@@ -139,30 +143,46 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#createCompareSubscriber(org.eclipse.core.resources.IProject, org.eclipse.team.internal.ccvs.core.CVSTag)
 	 */
 	public CVSCompareSubscriber createCompareSubscriber(IProject project, CVSTag tag) {
-		CVSCompareSubscriber s = super.createCompareSubscriber(project, tag);
-		ISynchronizeManager synchronizeManager = TeamUI.getSynchronizeManager();
-		SubscriberParticipant participant = new CompareParticipant(s);
-		synchronizeManager.addSynchronizeParticipants(
-				new ISynchronizeParticipant[] {participant});	
-		IWorkbenchPage activePage = TeamUIPlugin.getActivePage();
+			try {
+				CVSCompareSubscriber s = super.createCompareSubscriber(project, tag);
+				ISynchronizeParticipantReference ref = TeamUI.getSynchronizeManager().createParticipant(s.getId().getLocalName(), s.getId().getQualifier());
+				CompareParticipant participant = (CompareParticipant) ref.createParticipant();
+				participant.setSubscriber(s);
+				showParticipant(ref);
+				return s;
+			} catch (PartInitException e) {
+				throw new AssertionFailedError("Cannot show sync view in active page");
+			} catch (TeamException e) {
+				throw new AssertionFailedError("Cannot show sync view in active page");
+			}	
+	}
+	
+	private void showParticipant(ISynchronizeParticipantReference ref) {
 		try {
-			ISynchronizeView view = (ISynchronizeView)activePage.showView(ISynchronizeView.VIEW_ID);
-			view.display(participant);
-		} catch (PartInitException e) {
+			ISynchronizeManager synchronizeManager = TeamUI.getSynchronizeManager();
+			synchronizeManager.addSynchronizeParticipants(
+					new ISynchronizeParticipantReference[] {ref});	
+			IWorkbenchPage activePage = TeamUIPlugin.getActivePage();
+			try {
+				ISynchronizeView view = (ISynchronizeView)activePage.showView(ISynchronizeView.VIEW_ID);
+				view.display(ref);
+			} catch (PartInitException e) {
+				throw new AssertionFailedError("Cannot show sync view in active page");
+			}
+		} catch (AssertionFailedError e) {
 			throw new AssertionFailedError("Cannot show sync view in active page");
 		}
-		return s;
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource#tearDown()
 	 */
 	public void tearDown() {
-		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		ISynchronizeParticipantReference[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
-			ISynchronizeParticipant participant = participants[i];
-			if(participant.getId().equals(CVSMergeSubscriber.ID)) {
-				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+			ISynchronizeParticipantReference ref = participants[i];
+			if(ref.getId().equals(CVSMergeSubscriber.ID)) {
+				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipantReference[] {ref});
 			}
 		}
 		// Process all async events that may have been generated above

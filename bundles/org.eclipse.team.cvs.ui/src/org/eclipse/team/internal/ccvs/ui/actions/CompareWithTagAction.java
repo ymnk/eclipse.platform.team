@@ -15,11 +15,15 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSCompareSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CompareParticipant;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
+import org.eclipse.ui.PartInitException;
 
 public class CompareWithTagAction extends WorkspaceAction {
 
@@ -30,12 +34,21 @@ public class CompareWithTagAction extends WorkspaceAction {
 			return;
 		
 		// Run the comparison
-		CVSCompareSubscriber s = new CVSCompareSubscriber(resources, tag);
-		CompareParticipant participant = new CompareParticipant(s);
-		participant.refresh(resources, 
-				participant.getRefreshListeners().createModalDialogListener(CVSCompareSubscriber.ID_MODAL, participant, participant.getSubscriberSyncInfoCollector().getSyncInfoTree()), 
-				Policy.bind("Participant.comparing"),  //$NON-NLS-1$
-				null);
+		try {
+			CVSCompareSubscriber s = new CVSCompareSubscriber(resources, tag);
+			ISynchronizeParticipantReference ref = TeamUI.getSynchronizeManager().createParticipant(s.getId().getLocalName(), s.getId().getQualifier());
+			CompareParticipant participant = (CompareParticipant) ref.createParticipant();
+			participant.setSubscriber(s);
+			// Listener will release participant reference if not added to the synchronize view
+			participant.refresh(resources, 
+					participant.getRefreshListeners().createModalDialogListener(CVSCompareSubscriber.ID_MODAL, ref, participant, participant.getSubscriberSyncInfoCollector().getSyncInfoTree()), 
+					Policy.bind("Participant.comparing"),  //$NON-NLS-1$
+					null);
+		} catch (PartInitException e) {
+			throw new InvocationTargetException(e);
+		} catch (TeamException e) {
+			throw new InvocationTargetException(e);
+		}
 	}
 	
 	protected CVSTag promptForTag(IResource[] resources) {

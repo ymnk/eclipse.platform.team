@@ -15,8 +15,8 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.swt.SWT;
@@ -51,9 +51,11 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 	private Control syncPage;
 	private Control noChangesPage;
 	private Control errorPage;
+	private WorkspaceSynchronizeParticipant participant;
 	
-	public SharingWizardSyncPage(String pageName, String title, ImageDescriptor titleImage, String description) {
+	public SharingWizardSyncPage(String pageName, WorkspaceSynchronizeParticipant participant, String title, ImageDescriptor titleImage, String description) {
 		super(pageName, title, titleImage, description);
+		this.participant = participant;
 	}
 
 	public void setProject(IProject project) {
@@ -135,23 +137,25 @@ public class SharingWizardSyncPage extends CVSWizardPage implements ISyncInfoSet
 	private SynchronizeCompareInput createCompareInput() {
 		infos = new SyncInfoTree();
 		infos.addSyncSetChangedListener(this);
-		WorkspaceSynchronizeParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		collector = new FilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), infos, new SyncInfoFilter() {
-			public boolean select(SyncInfo info, IProgressMonitor monitor) {
-				if (project == null)return false;
-				return project.getFullPath().isPrefixOf(info.getLocal().getFullPath());
-			}
-		});
-		collector.start(new NullProgressMonitor());
-		TreeViewerAdvisor advisor = new SharingWizardTreeAdviser(participant.getId(), null, infos);
-		CompareConfiguration cc = new CompareConfiguration();
-		SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
-			public String getTitle() {
-				return Policy.bind("SharingWizardSyncPage.0"); //$NON-NLS-1$
-			}
-		};
 		try {
-			// model will be built in the background since we know the compare input was 
+			collector = new FilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), infos, new SyncInfoFilter() {
+				public boolean select(SyncInfo info, IProgressMonitor monitor) {
+					if (project == null)
+						return false;
+					return project.getFullPath().isPrefixOf(info.getLocal().getFullPath());
+				}
+			});
+			collector.start(new NullProgressMonitor());
+			TreeViewerAdvisor advisor = new SharingWizardTreeAdviser(participant.getId(), null, infos);
+			CompareConfiguration cc = new CompareConfiguration();
+			SynchronizeCompareInput input = new SynchronizeCompareInput(cc, advisor) {
+
+				public String getTitle() {
+					return Policy.bind("SharingWizardSyncPage.0"); //$NON-NLS-1$
+				}
+			};
+			// model will be built in the background since we know the compare
+			// input was
 			// created with a subscriber participant
 			input.run(new NullProgressMonitor());
 		} catch (InterruptedException e) {

@@ -37,6 +37,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 
 	private String fName;
 	private String fId;
+	private String secondaryId;
 	private ImageDescriptor fImageDescriptor;
 	protected IConfigurationElement configElement;
 
@@ -112,6 +113,15 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		return fId;
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipant#getId()
+	 */
+	public String getSecondaryId() {
+		return secondaryId;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#isPersistent()
 	 */
@@ -123,7 +133,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#doesSupportRefresh()
 	 */
 	public boolean doesSupportSynchronize() {
-		ISynchronizeParticipantDescriptor d = TeamUI.getSynchronizeManager().getParticipantDescriptor(getId());
+		ISynchronizeParticipantDescriptor d = TeamUI.getSynchronizeManager().getDescriptor(getId());
 		return d == null ? false : d.doesSupportRefresh();
 	}
 	
@@ -194,16 +204,17 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 		if (strIcon != null) {
 			fImageDescriptor = TeamImages.getImageDescriptorFromExtension(configElement.getDeclaringExtension(), strIcon);
 		}
+		
+		this.secondaryId = propertyName;
 	}
 	
-	protected void setInitializationData(ISynchronizeParticipantDescriptor descriptor) throws CoreException {
+	protected void setInitializationData(ISynchronizeParticipantDescriptor descriptor, String secondaryId) throws CoreException {
 		if(descriptor instanceof SynchronizeParticipantDescriptor) {
-			setInitializationData(((SynchronizeParticipantDescriptor)descriptor).getConfigurationElement(), null, null);
+			setInitializationData(((SynchronizeParticipantDescriptor)descriptor).getConfigurationElement(), secondaryId, null);
 		} else {
 			throw new TeamException(Policy.bind("AbstractSynchronizeParticipant.4")); //$NON-NLS-1$
 		}
 	}
-
 	/**
 	 * Sets the name of this console to the specified value and notifies
 	 * property listeners of the change.

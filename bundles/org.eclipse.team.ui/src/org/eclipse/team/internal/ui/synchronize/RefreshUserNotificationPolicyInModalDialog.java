@@ -32,10 +32,12 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 	private boolean rememberInSyncView;
 	private String targetId;
 	private SyncInfoTree syncInfoSet;
+	private ISynchronizeParticipantReference ref;
 
-	public RefreshUserNotificationPolicyInModalDialog(String targetId, SubscriberParticipant participant, SyncInfoTree syncInfoSet) {
+	public RefreshUserNotificationPolicyInModalDialog(String targetId, ISynchronizeParticipantReference ref, SubscriberParticipant participant, SyncInfoTree syncInfoSet) {
 		this.targetId = targetId;
 		this.participant = participant;
+		this.ref = ref;
 		this.syncInfoSet = syncInfoSet;
 	}
 
@@ -44,21 +46,23 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 
 	public void refreshDone(final IRefreshEvent event) {
 		// Ensure that this event was generated for this participant
-		if (event.getSubscriber() != participant.getSubscriberSyncInfoCollector().getSubscriber()) return;
+		if (event.getSubscriber() != participant.getSubscriberSyncInfoCollector().getSubscriber())
+			return;
 		// Operation cancelled, there is no reason to prompt the user
-		if(! event.getStatus().isOK()) return;
 		TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
-
 			public void run() {
-				if (! areChanges()) {
-					MessageDialog.openInformation(Display.getCurrent().getActiveShell(), Policy.bind("OpenComparedDialog.noChangeTitle"), Policy.bind("OpenComparedDialog.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
-					return;
+				if (event.getStatus().isOK()) {
+					if (!areChanges()) {
+						MessageDialog.openInformation(Display.getCurrent().getActiveShell(), Policy.bind("OpenComparedDialog.noChangeTitle"), Policy.bind("OpenComparedDialog.noChangesMessage")); //$NON-NLS-1$ //$NON-NLS-2$
+						return;
+					}
+					if (isSingleFileCompare(event.getResources())) {
+						compareAndOpenEditors(event, participant);
+					} else {
+						compareAndOpenDialog(event, participant);
+					}
 				}
-				if (isSingleFileCompare(event.getResources())) {
-					compareAndOpenEditors(event, participant);
-				} else {
-					compareAndOpenDialog(event, participant);
-				}
+				ref.releaseParticipant();
 			}
 		});
 	}
@@ -105,7 +109,7 @@ public class RefreshUserNotificationPolicyInModalDialog implements IRefreshSubsc
 			Utils.handle(e);
 		}
 		SynchronizeDialog dialog = new SynchronizeDialog(Display.getCurrent().getActiveShell(), participant.getName(), input);
-		dialog.setSynchronizeParticipant(participant);
+		dialog.setSynchronizeParticipant(ref);
 		dialog.setBlockOnOpen(true);
 		dialog.open();
 	}

@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize.subscribers;
 
 import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 
 /**
  * A factory which provides standard listeners to subscriber refresh operations. These
@@ -26,7 +27,7 @@ public interface IRefreshSubscriberListenerFactory {
 	 * a {@link SyncInfoSet} that is different than the default one maintained by
 	 * the given participant.
 	 */
-	public IRefreshSubscriberListener createModalDialogListener(String targetId, SubscriberParticipant participant, SyncInfoTree syncInfoSet);
+	public IRefreshSubscriberListener createModalDialogListener(String targetId, ISynchronizeParticipantReference ref, SubscriberParticipant participant, SyncInfoTree syncInfoSet);
 	
 	/**
 	 * Returns a listener that will prompt at the end of the refresh indicating if changes are

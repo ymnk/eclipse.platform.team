@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IToolBarManager;
@@ -46,7 +45,8 @@ public class CompareParticipant extends SubscriberParticipant {
 		
 		protected void initializeActions(StructuredViewer treeViewer) {
 			super.initializeActions(treeViewer);
-			removeAction = new RemoveSynchronizeParticipantAction(getParticipant());
+			SubscriberParticipant participant = getParticipant();
+			removeAction = new RemoveSynchronizeParticipantAction(participant.getId(), participant.getSecondaryId());
 		}
 		
 		public void setActionBars(IActionBars actionBars) {
@@ -61,20 +61,19 @@ public class CompareParticipant extends SubscriberParticipant {
 		}
 	}
 	
-	public CompareParticipant(CVSCompareSubscriber subscriber) {
+	public CompareParticipant() {
 		super();
-		setMode(BOTH_MODE);
-		setSubscriber(subscriber);
 	}
-		
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.Subscriber)
 	 */
-	protected void setSubscriber(Subscriber subscriber) {
+	public void setSubscriber(Subscriber subscriber) {
 		super.setSubscriber(subscriber);
+		setMode(BOTH_MODE);
 		try {
-			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(CVSCompareSubscriber.ID);
-			setInitializationData(descriptor);
+			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getDescriptor(CVSCompareSubscriber.ID);
+			setInitializationData(descriptor, ((CVSCompareSubscriber)subscriber).getId().getLocalName());
 		} catch (CoreException e) {
 			CVSUIPlugin.log(e);
 		}
@@ -114,13 +113,5 @@ public class CompareParticipant extends SubscriberParticipant {
 	 */
 	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(ISynchronizeView view) {
 		return new CompareParticipantAdvisor(view, this);
-	}
-	
-	/**
-	 * Refresh this participant and show the results in a model dialog.
-	 * @param resources
-	 */
-	public void refresh(IResource[] resources) {
-		refresh(resources, getRefreshListenerFactory().createModalDialogListener(getId(), this, getSubscriberSyncInfoCollector().getSyncInfoTree()), getName(), null);
 	}
 }
