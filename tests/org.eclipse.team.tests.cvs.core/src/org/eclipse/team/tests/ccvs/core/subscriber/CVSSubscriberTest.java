@@ -168,4 +168,46 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Verify that the copy equals the original
 		assertEquals(project, copy);
 	}
+	
+	/*
+	 * Perform a simple test that checks for the different types of outgoing changes
+	 */
+	public void testOutgoingChanges() throws TeamException, CoreException {
+		// Create a test project (which commits it as well)
+		IProject project = createProject("testIncomingChanges", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		
+		// Make some modifications
+		setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
+		addResources(project, new String[] { "folder2/folder3/add.txt" }, false);
+		deleteResources(project, new String[] {"folder1/b.txt"}, false);
+
+		// Get the sync tree for the project
+		assertSyncEquals("testOutgoingChanges", project, 
+			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
+			new int[] {
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.OUTGOING | SyncInfo.CHANGE,
+				SyncInfo.OUTGOING | SyncInfo.DELETION,
+				SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
+				SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
+				SyncInfo.OUTGOING | SyncInfo.ADDITION});
+				
+		// Commit the changes
+		commitResources(project, new String[] {"folder1/a.txt", "folder1/b.txt", "folder2/folder3/add.txt"});
+		
+		// Ensure we're in sync
+		assertSyncEquals("testOutgoingChanges", project, 
+			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
+			new int[] {
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC});
+				
+		// Ensure deleted resource "folder1/b.txt" no longer exists
+		assertDeleted("testOutgoingChanges", project, new String[] {"folder1/b.txt"});
+	}
 }

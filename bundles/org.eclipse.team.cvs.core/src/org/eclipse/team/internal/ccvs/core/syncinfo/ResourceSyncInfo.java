@@ -843,6 +843,9 @@ public class ResourceSyncInfo {
 		if (revision == null) {
 			throw new CVSException(Policy.bind("ResourceSyncInfo.malformedSyncBytes", new String(syncBytes))); //$NON-NLS-1$
 		}
+		if(revision.startsWith(DELETED_PREFIX)) {
+			revision = revision.substring(DELETED_PREFIX.length());
+		}
 		return revision;
 	}
 	
