@@ -274,7 +274,7 @@ public abstract class BackgroundEventHandler {
 					if (Policy.DEBUG_BACKGROUND_EVENTS) {
 						System.out.println("Event processed on " + getName() + ":" + event.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 					}
-					if(isReadyForDispatch()) {
+					if(isReadyForDispatch(true /*wait if queue is empty*/)) {
 						dispatchEvents(Policy.subMonitorFor(subMonitor, 1));
 						eventsDispatched();
 					}
@@ -309,13 +309,13 @@ public abstract class BackgroundEventHandler {
 	 * @return <code>true</code> if processed events should be dispatched and
 	 * <code>false</code> otherwise
 	 */
-	protected boolean isReadyForDispatch() {		
+	protected boolean isReadyForDispatch(boolean wait) {		
 		long duration = System.currentTimeMillis() - processingEventsDuration;
 		if(duration >= DISPATCH_DELAY) {
 			return true;
 		}
 		synchronized(this) {
-			if(! isQueueEmpty()) {
+			if(! isQueueEmpty() || ! wait) {
 				return false;
 			}
 			try {

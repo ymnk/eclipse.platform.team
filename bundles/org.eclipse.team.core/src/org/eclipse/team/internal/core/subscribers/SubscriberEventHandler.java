@@ -236,7 +236,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	}
 	
 	private void handlePendingDispatch(IProgressMonitor monitor) {
-		if (isReadyForDispatch()) {
+		if (isReadyForDispatch(false /*don't wait if queue is empty*/)) {
 			dispatchEvents(Policy.subMonitorFor(monitor, 5));
 			eventsDispatched();
 		}
