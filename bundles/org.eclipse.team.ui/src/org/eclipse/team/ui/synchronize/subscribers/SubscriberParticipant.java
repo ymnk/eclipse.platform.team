@@ -268,14 +268,6 @@ private void internalRefresh(IResource[] resources, final IRefreshSubscriberList
 	}
 	
 	/**
-	 * Returns the viewer advisor which will be used to configure the display of the participant.
-	 * @return
-	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(ISynchronizePageConfiguration configuration, SyncInfoTree syncInfoTree) {
-		return new TreeViewerAdvisor(configuration);
-	}
-	
-	/**
 	 * Get the <code>Subscriber</code> for this participant
 	 * @return a <code>TamSubscriber</code>
 	 */

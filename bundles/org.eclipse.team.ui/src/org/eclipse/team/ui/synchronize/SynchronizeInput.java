@@ -35,6 +35,13 @@ import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 import org.eclipse.ui.progress.IProgressService;
 
+/**
+ * Displays a synchronize participant page combined with the compare/merge
+ * infrastructured. This only works if the synchronize page viewer provides
+ * selections that ITypedElement and ICompareInput. 
+ * 
+ * @since 3.0
+ */
 public class SynchronizeInput implements IContentChangeListener, ICompareContainer {
 
 	private CompareConfiguration cc;
