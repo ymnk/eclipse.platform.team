@@ -12,10 +12,8 @@ package org.eclipse.team.tests.ccvs.core.subscriber;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import junit.framework.AssertionFailedError;
@@ -28,19 +26,14 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
 import org.eclipse.team.core.subscribers.TeamDelta;
-import org.eclipse.team.core.subscribers.TeamProvider;
-import org.eclipse.team.core.sync.RemoteSyncElement;
 import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
@@ -48,130 +41,40 @@ import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberCommitAction;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceUpdateAction;
 import org.eclipse.team.internal.ui.sync.views.SyncResource;
-import org.eclipse.team.internal.ui.sync.views.SyncSet;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
-import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.ui.sync.SyncResourceSet;
 
 /**
  * This class tests the CVSWorkspaceSubscriber
  */
-public class CVSSubscriberTest extends EclipseTest {
-
-	ITeamResourceChangeListener listener;
-	List accumulatedTeamDeltas = new ArrayList();
+public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 	
 	/**
 	 * Constructor for CVSProviderTest
 	 */
-	public CVSSubscriberTest() {
+	public CVSWorkspaceSubscriberTest() {
 		super();
 	}
 
 	/**
 	 * Constructor for CVSProviderTest
 	 */
-	public CVSSubscriberTest(String name) {
+	public CVSWorkspaceSubscriberTest(String name) {
 		super(name);
 	}
 
 	public static Test suite() {
 		String testName = System.getProperty("eclipse.cvs.testName");
 		if (testName == null) {
-			TestSuite suite = new TestSuite(CVSSubscriberTest.class);
+			TestSuite suite = new TestSuite(CVSWorkspaceSubscriberTest.class);
 			return new CVSTestSetup(suite);
 		} else {
-			return new CVSTestSetup(new CVSSubscriberTest(testName));
+			return new CVSTestSetup(new CVSWorkspaceSubscriberTest(testName));
 		}
 	}
 	
-	protected SyncTreeSubscriber getSubscriber() throws TeamException {
-		SyncTreeSubscriber subscriber = TeamProvider.getSubscriber(CVSProviderPlugin.CVS_WORKSPACE_SUBSCRIBER_ID);
-		if (subscriber == null) fail("The CVS sync subsciber is not registered");
-		return subscriber;
-	}
-	
-	/*
-	 * Refresh the subscriber for the given resource
-	 */
-	protected void refresh(IResource resource) throws TeamException {
-		SyncTreeSubscriber subscriber = getSubscriber();
-		subscriber.refresh(new IResource[] { resource}, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
-	}
-	
-	/*
-	 * Assert that the specified resources in the subscriber have the specified sync kind
-	 * Ignore conflict types if they are not specified in the assert statement
-	 */
-	protected void assertSyncEquals(String message, IContainer root, String[] resourcePaths, boolean refresh, int[] syncKinds) throws CoreException, TeamException {
-		assertTrue(resourcePaths.length == syncKinds.length);
-		if (refresh) refresh(root);
-		IResource[] resources = getResources(root, resourcePaths);
-		for (int i=0;i<resources.length;i++) {
-			assertSyncEquals(message, resources[i], syncKinds[i]);
-		}
-		
-	}
-	
-	protected void assertSyncEquals(String message, IResource resource, int syncKind) throws TeamException {
-		SyncTreeSubscriber subscriber = getSubscriber();
-		int conflictTypeMask = 0x0F; // ignore manual and auto merge sync types for now.
-		SyncInfo info = subscriber.getSyncInfo(resource, DEFAULT_MONITOR);
-		int kind;
-		int kindOther = syncKind & conflictTypeMask;
-		if (info == null) {
-			kind = SyncInfo.IN_SYNC;
-		} else {
-			kind = info.getKind() & conflictTypeMask;
-		}
-		assertTrue(message + ": improper sync state for " + resource + " expected " + 
-				   RemoteSyncElement.kindToString(kindOther) + " but was " +
-				   RemoteSyncElement.kindToString(kind), kind == kindOther);
-	}
-	
-	/**
-	 * @param changes
-	 * @param resources
-	 */
-	private void assertSyncChangesMatch(TeamDelta[] changes, IResource[] resources) {
-		// First, ensure that all the resources appear in the delta
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			boolean found = false;
-			for (int j = 0; j < changes.length; j++) {
-				TeamDelta delta = changes[j];
-				if (delta.getResource().equals(resource)) {
-					found = true;
-					break;
-				}
-			}
-			assertTrue("No change reported for " + resource, found);
-		}
-		// TODO: We'll worry about extra deltas later
-//		// Next, ensure there are no extra deltas
-//		List changedResources = new ArrayList(resources.length);
-//		changedResources.addAll(Arrays.asList(resources));
-//		for (int i = 0; i < changes.length; i++) {
-//			TeamDelta change = changes[i];
-//			IResource resource = change.getResource();
-//			assertTrue("Unanticipated change reported for " + resource, changedResources.contains(resource));
-//		}
-	}
-	
-	/* 
-	 * Assert that the named resources have no local resource or sync info
-	 */
-	protected void assertDeleted(String message, IContainer root, String[] resourcePaths) throws CoreException, TeamException {
-		IResource[] resources = getResources(root, resourcePaths);
-		for (int i=0;i<resources.length;i++) {
-			try {
-				if (! resources[i].exists())
-					break;
-			} catch (AssertionFailedError e) {
-				break;
-			}
-			assertTrue(message + ": resource " + resources[i] + " still exists in some form", false);
-		}
+	private SyncTreeSubscriber getSubscriber() throws TeamException {
+		return getWorkspaceSubscriber();
 	}
 	
 	/* (non-Javadoc)
@@ -186,60 +89,16 @@ public class CVSSubscriberTest extends EclipseTest {
 		super.setContentsAndEnsureModified(file);
 		assertSyncEquals("Setting contents: ", file, SyncInfo.OUTGOING | SyncInfo.CHANGE);
 	}
+	
+	private void assertSyncEquals(String string, IProject project, String[] strings, boolean b, int[] is) throws CoreException, TeamException {
+		assertSyncEquals(string, getSubscriber(), project, strings, b, is);
+	}
+	
+	private void assertSyncEquals(String message, IResource resource, int depth) throws TeamException {
+		assertSyncEquals(message, getSubscriber(), resource, depth);
+		
+	}
 
-	public static class ResourceCondition {
-		public boolean matches(IResource resource) throws CoreException, TeamException {
-			return true;
-		}
-	}
-	
-	private IResource[] collect(IResource[] resources, final ResourceCondition condition, int depth) throws CoreException, TeamException {
-		final Set affected = new HashSet();
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			if (resource.exists() || resource.isPhantom()) {
-				resource.accept(new IResourceVisitor() {
-					public boolean visit(IResource r) throws CoreException {
-						try {
-							if (condition.matches(r)) {
-								affected.add(r);
-							}
-						} catch (TeamException e) {
-							throw new CoreException(e.getStatus());
-						}
-						return true;
-					}
-				}, depth, true /* include phantoms */);
-			} else {
-				if (condition.matches(resource)) {
-					affected.add(resource);
-				}
-			}
-		}
-		return (IResource[]) affected.toArray(new IResource[affected.size()]);
-	}
-	
-	/**
-	 * @param resources
-	 * @param condition
-	 * @return
-	 */
-	private IResource[] collectAncestors(IResource[] resources, ResourceCondition condition) throws CoreException, TeamException {
-		Set affected = new HashSet();
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			while (resource.getType() != IResource.ROOT) {
-				if (condition.matches(resource)) {
-					affected.add(resource);
-				} else {
-					break;
-				}
-				resource = resource.getParent();
-			}
-		}
-		return (IResource[]) affected.toArray(new IResource[affected.size()]);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#addResources(org.eclipse.core.resources.IResource[])
 	 */
@@ -279,20 +138,11 @@ public class CVSSubscriberTest extends EclipseTest {
 		}
 	}
 
-	private TeamDelta[] deregisterSubscriberListener() throws TeamException {
-		getSubscriber().removeListener(listener);
-		return (TeamDelta[]) accumulatedTeamDeltas.toArray(new TeamDelta[accumulatedTeamDeltas.size()]);
-	}
-
-	private ITeamResourceChangeListener registerSubscriberListener() throws TeamException {
-		listener = new ITeamResourceChangeListener() {
-			public void teamResourceChanged(TeamDelta[] deltas) {
-				accumulatedTeamDeltas.addAll(Arrays.asList(deltas));
-			}
-		};
-		accumulatedTeamDeltas.clear();
-		getSubscriber().addListener(listener);
-		return listener;
+	/**
+	 * 
+	 */
+	private void registerSubscriberListener() throws TeamException {
+		registerSubscriberListener(getSubscriber());
 	}
 
 	/* (non-Javadoc)
@@ -310,6 +160,13 @@ public class CVSSubscriberTest extends EclipseTest {
 		}
 	}
 	
+	/**
+	 * @return
+	 */
+	private TeamDelta[] deregisterSubscriberListener() throws TeamException {
+		return deregisterSubscriberListener(getSubscriber());
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#commitResources(org.eclipse.core.resources.IResource[])
 	 */
@@ -365,6 +222,14 @@ public class CVSSubscriberTest extends EclipseTest {
 	}
 	
 	/**
+	 * @param resources
+	 * @return
+	 */
+	private SyncResource[] createSyncResources(IResource[] resources) throws TeamException {
+		return createSyncResources(getSubscriber(), resources);
+	}
+
+	/**
 	 * Commit the resources from an existing container to the CVS repository.
 	 * This commit uses the SubscriberCommitAction to perform the commit so that all special
 	 * cases should be handled properly
@@ -374,23 +239,6 @@ public class CVSSubscriberTest extends EclipseTest {
 		SyncResource[] syncResources = createSyncResources(resources);
 		commitResources(syncResources);
 		return resources;
-	}
-	
-	/**
-	 * @param resources
-	 */
-	private SyncResource[] createSyncResources(IResource[] resources) throws TeamException {
-		// TODO: SyncResources needs a SyncSet which contains the SyncInfo
-		// but SyncSet is not API
-		SyncSet syncSet = new SyncSet();
-		SyncTreeSubscriber subscriber = getSubscriber();
-		SyncResource[] result = new SyncResource[resources.length];
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			syncSet.add(subscriber.getSyncInfo(resource, DEFAULT_MONITOR));
-			result[i] = new SyncResource(syncSet, resource);
-		}
-		return result;
 	}
 
 	/**
@@ -461,7 +309,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Verify that the copy equals the original
 		assertEquals(project, copy);
 	}
-	
+
 	/*
 	 * Perform a simple test that checks for the different types of outgoing changes
 	 */
@@ -1111,7 +959,7 @@ public class CVSSubscriberTest extends EclipseTest {
 		
 		// Fetch the tree corresponding to the branch using the original as the base.
 		// XXX This will fail for CVSNT with directory pruning on
-		refresh(project);
+		refresh(getSubscriber(), project);
 	 }
 	 
 	 public void testIgnoredResource() throws CoreException, TeamException {

@@ -192,9 +192,6 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		//TODO: How do we know if the right thing happened to the file contents?	
 	}
 	
-	/**
-	 * Test non-mergable conflicts with no local changes
-	 */
 	public void testUnmergableConflicts() throws TeamException, CVSException, CoreException, IOException {
 		// Create a test project
 		IProject project = createProject("testUnmergableConflicts", new String[] { "delete.txt", "file1.txt", "file2.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
@@ -215,17 +212,33 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		setContentsAndEnsureModified(branchedProject.getFile("folder1/b.txt"));
 		commitProject(branchedProject);
 		
-		// modify HEAD
+		// modify local workspace
 		appendText(project.getFile("file1.txt"), "conflict line\n", true);
 		setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
 		deleteResources(project, new String[] {"delete.txt", "folder1/b.txt"}, false);
 		addResources(project, new String[] {"addition.txt"}, false);
 		appendText(project.getFile("file2.txt"), "conflict line\n", false);
-		commitProject(project);
 		
 		// create a merge subscriber
 		CVSMergeSubscriber subscriber = new CVSMergeSubscriber(new IResource[] { project }, root, branch);
 		
+		// check the sync states
+		assertSyncEquals("testUnmergableConflicts", subscriber, project, 
+			new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt", "folder1/b.txt"}, 
+			true, new int[] {
+				SyncInfo.IN_SYNC, /* TODO: is this OK */
+				SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
+				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+				SyncInfo.CONFLICTING | SyncInfo.ADDITION,
+				SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+				SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+		
+		// TODO: Should actually perform the merge and check the results
+		// However, this would require the changes to be redone
+		
+		// commit to modify HEAD
+		commitProject(project);
+				
 		// check the sync states
 		assertSyncEquals("testUnmergableConflicts", subscriber, project, 
 			new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt", "folder1/b.txt"}, 
@@ -253,4 +266,5 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 				
 		//TODO: How do we know if the right thing happend to the file contents?
 	}
+	
 }
