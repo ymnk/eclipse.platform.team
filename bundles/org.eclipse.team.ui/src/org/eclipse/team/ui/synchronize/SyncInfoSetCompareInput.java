@@ -34,8 +34,9 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	}
 
 	public Viewer createDiffViewer(Composite parent) {
-		SyncInfoDiffTreeViewer v = new SyncInfoDiffTreeViewer(parent, menuId, syncInfoSet);
-		v.updateCompareEditorInput(this);
+		SyncInfoDiffViewerConfiguration configuration = new SyncInfoDiffViewerConfiguration(menuId, syncInfoSet);
+		SyncInfoDiffTreeViewer v = configuration.createDiffTreeViewer(parent);
+		configuration.updateCompareEditorInput(this);
 		v.addOpenListener(new IOpenListener() {
 			public void open(OpenEvent event) {
 				ISelection s = event.getSelection();
@@ -48,7 +49,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 				}
 			}
 		});
-		v.setAcceptParticipantMenuContributions(allowParticipantMenuContributions());
+		configuration.setAcceptParticipantMenuContributions(allowParticipantMenuContributions());
 		return v;
 	}
 

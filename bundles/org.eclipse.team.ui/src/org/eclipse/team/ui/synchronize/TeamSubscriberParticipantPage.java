@@ -264,7 +264,8 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	}
 	
 	public Viewer createChangesViewer(Composite parent) {
-		Viewer viewer =  new SyncInfoDiffViewerForSynchronizeView(parent, getSynchronizeView(), getParticipant(), getParticipant().getSyncInfoSetCollector().getSyncInfoSet());
+		SyncInfoDiffViewerSyncViewConfiguration configuration = new SyncInfoDiffViewerSyncViewConfiguration(getSynchronizeView(), getParticipant());
+		Viewer viewer =  configuration.createDiffTreeViewer(parent);
 		getSite().setSelectionProvider(viewer);		
 		return viewer;
 	}

@@ -11,75 +11,26 @@
 package org.eclipse.team.ui.synchronize;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
-import org.eclipse.compare.*;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.*;
-import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.views.*;
+import org.eclipse.team.internal.ui.synchronize.views.SyncSetContentProvider;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
-import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.IWorkbenchPartSite;
-import org.eclipse.ui.internal.PluginAction;
-import org.eclipse.ui.views.navigator.ResourceSorter;
 
 public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableControl {
 
-	private SyncInfoSet set;
+	private SyncInfoDiffViewerConfiguration configuration;
 	
-	// Actions
-	private Action expandAll;
-	private NavigationAction nextAction;
-	private NavigationAction previousAction;
-	
-	private boolean acceptParticipantMenuContributions = false;
-	
-	private MenuManager menuMgr = null;
-	private String menuId;
-		
-	/**
-	 * Change the tree layout between using compressed folders and regular folders
-	 * when the user setting is changed.
-	 */
-	private IPropertyChangeListener propertyListener = new IPropertyChangeListener() {
-		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().equals(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-				setTreeViewerContentProvider();
-			}
-		}
-	};	
-	
-	public SyncInfoDiffTreeViewer(Composite parent, String menuId, SyncInfoSet set) {
+	public SyncInfoDiffTreeViewer(Composite parent, SyncInfoDiffViewerConfiguration configuration) {
 		super(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		this.menuId = menuId;
-		this.set = set;
-		GridData data = new GridData(GridData.FILL_BOTH);
-		setSorter(new SyncViewerSorter(ResourceSorter.NAME));
-		setLabelProvider(new TeamSubscriberParticipantLabelProvider());
-		getTree().setLayoutData(data);
-		getStore().addPropertyChangeListener(propertyListener);
-		setTreeViewerContentProvider();
-		
-		addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				handleDoubleClick(event);
-			}
-		});
-		
-		getTree().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
-		
+		this.configuration = configuration;
+	}
+
+	protected void initializeNavigation() {
 		INavigatable nav= new INavigatable() {
 			public boolean gotoDifference(boolean next) {
 				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
@@ -87,94 +38,6 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 			}
 		};
 		getTree().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
-		
-		createActions();
-		hookContextMenu();
-		
-		createToolBarActions(parent);			
-		setInput(new SyncInfoDiffNode(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot()));
-	}
-
-	protected Object getTitle() {
-		return "Synchronization Changes";
-	}
-
-	public void setAcceptParticipantMenuContributions(boolean accept) {
-		this.acceptParticipantMenuContributions = accept;
-		if(acceptParticipantMenuContributions) {
-			IWorkbenchPartSite site = Utils.findSite(getControl());
-			if(site == null) {
-				site = Utils.findSite();
-			}
-			if(site != null) {
-				site.registerContextMenu(menuId, menuMgr, this);
-			}
-		}
-	}
-	
-	private void createToolBarActions(Composite parent) {
-		ToolBarManager tbm= CompareViewerPane.getToolBarManager(parent);
-		if (tbm != null) {
-			tbm.removeAll();
-			
-			tbm.add(new Separator("navigation")); //$NON-NLS-1$
-			
-			createToolItems(tbm);
-			tbm.update(true);
-		}
-	}
-
-	protected void createToolItems(IToolBarManager tbm) {
-		nextAction= new NavigationAction(true);
-		tbm.appendToGroup("navigation", nextAction); //$NON-NLS-1$
-
-		previousAction= new NavigationAction(false);
-		tbm.appendToGroup("navigation", previousAction); //$NON-NLS-1$		
-	}
-	
-	protected SyncInfoSet getSyncSet() {
-		return set;
-	}
-
-	private void createActions() {
-		expandAll = new Action() {
-			public void run() {
-				expandAllFromSelection();
-			}
-		};
-		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
-	}
-	
-	protected void expandAllFromSelection() {
-		ISelection selection = getSelection();
-		if(! selection.isEmpty()) {
-			Iterator elements = ((IStructuredSelection)selection).iterator();
-			while (elements.hasNext()) {
-				Object next = elements.next();
-				expandToLevel(next, AbstractTreeViewer.ALL_LEVELS);
-			}
-		}
-	}
-	
-	protected void fillContextMenu(IMenuManager manager) {	
-		manager.add(expandAll);
-		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-	}
-	
-	private void setTreeViewerContentProvider() {
-		if (getStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-			setContentProvider(new CompressedFolderContentProvider());
-		} else {
-			setContentProvider(new SyncSetTreeContentProvider());
-		}
-	}
-	
-	/**
-	 * Return the preference store for this plugin.
-	 * @return IPreferenceStore for this plugin
-	 */
-	private IPreferenceStore getStore() {
-		return TeamUIPlugin.getPlugin().getPreferenceStore();
 	}
 
 	protected void handleLabelProviderChanged(LabelProviderChangedEvent event) {
@@ -204,66 +67,9 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 	 */	
 	protected void handleDispose(DisposeEvent event) {
 		super.handleDispose(event);
-		getStore().removePropertyChangeListener(propertyListener);
+		configuration.dispose();
 	}
-	
-	/**
-	 * Handles a double-click event from the viewer.
-	 * Expands or collapses a folder when double-clicked.
-	 * 
-	 * @param event the double-click event
-	 */
-	protected void handleDoubleClick(DoubleClickEvent event) {
-		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-		Object element = selection.getFirstElement();	
-		// Double-clicking should expand/collapse containers
-		if(isExpandable(element)) {
-			setExpandedState(element, ! getExpandedState(element));
-		}
-	}
-	
-	protected void hookContextMenu() {
-		menuMgr = new MenuManager(menuId); //$NON-NLS-1$
-		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener() {
-			public void menuAboutToShow(IMenuManager manager) {
-				fillContextMenu(manager);
-			}
-		});
-		Menu menu = menuMgr.createContextMenu(getControl());
-		menu.addMenuListener(new MenuListener() {
-			public void menuHidden(MenuEvent e) {
-			}
-			// Hack to allow action contributions to update their
-			// state before the menu is shown. This is required when
-			// the state of the selection changes and the contributions
-			// need to update enablement based on this. 
-			public void menuShown(MenuEvent e) {
-				IContributionItem[] items = menuMgr.getItems();
-				for (int i = 0; i < items.length; i++) {
-					IContributionItem item = items[i];
-					if(item instanceof ActionContributionItem) {
-						IAction actionItem = ((ActionContributionItem)item).getAction();
-						if(actionItem instanceof PluginAction) {
-							((PluginAction)actionItem).selectionChanged(getSelection());
-						}
-					}
-				}
-			}
-		});
-		getControl().setMenu(menu);
-		
-		if(acceptParticipantMenuContributions) {
-			IWorkbenchPartSite site = Utils.findSite(getControl());
-			if(site == null) {
-				site = Utils.findSite();
-			}
-			if(site != null) {
-				site.registerContextMenu(menuId, menuMgr, this);
-			}
-		}
-	}
-	
+
 	protected void inputChanged(Object in, Object oldInput) {
 		super.inputChanged(in, oldInput);		
 		if (in != oldInput) {
@@ -296,11 +102,6 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 	public boolean gotoDifference(int direction) {	
 		boolean next = direction == INavigableControl.NEXT ? true : false;
 		return internalNavigate(next, false);
-	}
-	
-	public void updateCompareEditorInput(CompareEditorInput input) {
-		nextAction.setCompareEditorInput(input);
-		previousAction.setCompareEditorInput(input);
 	}
 	
 	/**
@@ -447,6 +248,29 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 		}
 	}
 
-	
+	protected SyncInfoDiffTreeNavigator.INavigationTarget createNavigationTarget() {
+		return new SyncInfoDiffTreeNavigator.INavigationTarget() {
+			public void setSelection(TreeItem ti, boolean fireOpen) {
+				if (ti != null) {
+					Object data= ti.getData();
+					if (data != null) {
+						// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+						ISelection selection= new StructuredSelection(data);
+						SyncInfoDiffTreeViewer.this.setSelection(selection, true);
+						ISelection currentSelection= getSelection();
+						if (fireOpen && currentSelection != null && selection.equals(currentSelection)) {
+							fireOpen(new OpenEvent(SyncInfoDiffTreeViewer.this, selection));
+						}
+					}
+				}
+			}
+			public Tree getTree() {
+				return (Tree)getControl();
+			}
+			public void createChildren(TreeItem item) {
+				SyncInfoDiffTreeViewer.this.createChildren(item);
+			}
+		};
+	}
 	
 }

@@ -8,37 +8,42 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.synchronize;
+package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
-import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchActionConstants;
 
-public class SyncInfoDiffViewerForSynchronizeView extends SyncInfoDiffTreeViewer {
+/**
+ * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer for the synchroniza view
+ */
+public class SyncInfoDiffViewerSyncViewConfiguration extends SyncInfoDiffViewerConfiguration {
 
+	private ISynchronizeView view;
 	private TeamSubscriberParticipant participant;
-
-	//private ISynchronizeView view;
-
+	
 	private OpenWithActionGroup openWithActions;
 	private RefactorActionGroup refactorActions;
 	private RefreshAction refreshSelectionAction;
 	private Action expandAll;
-	private ISynchronizeView view;
-
-	public SyncInfoDiffViewerForSynchronizeView(Composite parent, ISynchronizeView view, TeamSubscriberParticipant participant, SyncInfoSet set) {
-		super(parent, participant.getId(), set);
+	
+	public SyncInfoDiffViewerSyncViewConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
+		super(participant.getId(), participant.getSyncInfoSetCollector().getSyncInfoSet());
 		this.view = view;
 		this.participant = participant;
+	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffViewerConfiguration#createDiffTreeViewer(org.eclipse.swt.widgets.Composite)
+	 */
+	public SyncInfoDiffTreeViewer createDiffTreeViewer(Composite parent) {
+		SyncInfoDiffTreeViewer treeViewer = super.createDiffTreeViewer(parent);
 
 		openWithActions = new OpenWithActionGroup(view, participant);
 		refactorActions = new RefactorActionGroup(view.getSite().getPage().getActivePart());
@@ -50,12 +55,9 @@ public class SyncInfoDiffViewerForSynchronizeView extends SyncInfoDiffTreeViewer
 		};
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
 		setAcceptParticipantMenuContributions(true);
+		return treeViewer;
 	}
-
-	private void handleOpen(OpenEvent event) {
-		openWithActions.openInCompareEditor();
-	}
-
+	
 	protected void fillContextMenu(IMenuManager manager) {
 		openWithActions.fillContextMenu(manager);
 		refactorActions.fillContextMenu(manager);
@@ -64,25 +66,45 @@ public class SyncInfoDiffViewerForSynchronizeView extends SyncInfoDiffTreeViewer
 		manager.add(expandAll);
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
-
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewer#handleDoubleClick(org.eclipse.jface.viewers.DoubleClickEvent)
+	 */
+	protected void handleDoubleClick(DoubleClickEvent event) {
+		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+		DiffNode node = (DiffNode) selection.getFirstElement();
+		if (node != null && node instanceof SyncInfoDiffNode) {
+			SyncInfoDiffNode syncNode = (SyncInfoDiffNode)node; 
+			SyncInfo info = syncNode.getSyncInfo();
+			if (syncNode != null && syncNode.getResource().getType() == IResource.FILE) {
+				openWithActions.openInCompareEditor();
+				return;
+			}
+		}
+		// Double-clicking should expand/collapse containers
+		super.handleDoubleClick(event);
+	}
+	
 	protected void initializeListeners() {
-		addSelectionChangedListener(new ISelectionChangedListener() {
+		getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				updateStatusLine((IStructuredSelection) event.getSelection());
 			}
 		});
-		addOpenListener(new IOpenListener() {
+		getViewer().addOpenListener(new IOpenListener() {
 			public void open(OpenEvent event) {
-				handleOpen(event);
+				handleOpen();
 			}
 		});
-		addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				handleDoubleClick(event);
-			}
-		});
+		super.initializeListeners();
 	}
-
+	
+	protected void handleOpen() {
+		openWithActions.openInCompareEditor();
+	}
+	
 	/**
 	 * Updates the message shown in the status line.
 	 * 
@@ -119,24 +141,4 @@ public class SyncInfoDiffViewerForSynchronizeView extends SyncInfoDiffTreeViewer
 		}
 		return ""; //$NON-NLS-1$
 	}
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeViewer#handleDoubleClick(org.eclipse.jface.viewers.DoubleClickEvent)
-	 */
-	protected void handleDoubleClick(DoubleClickEvent event) {
-		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-		DiffNode node = (DiffNode) selection.getFirstElement();
-		if (node != null && node instanceof SyncInfoDiffNode) {
-			SyncInfoDiffNode syncNode = (SyncInfoDiffNode)node; 
-			SyncInfo info = syncNode.getSyncInfo();
-			if (syncNode != null && syncNode.getResource().getType() == IResource.FILE) {
-				openWithActions.openInCompareEditor();
-				return;
-			}
-		}
-		// Double-clicking should expand/collapse containers
-		super.handleDoubleClick(event);
-	}
-
 }
