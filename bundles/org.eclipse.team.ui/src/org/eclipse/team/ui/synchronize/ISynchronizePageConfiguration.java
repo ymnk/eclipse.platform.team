@@ -12,6 +12,7 @@ package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.ILabelDecorator;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkingSet;
@@ -370,4 +371,12 @@ public interface ISynchronizePageConfiguration {
 	 * @param modes the supported modes
 	 */
 	void setSupportedModes(int modes);
+
+	/**
+	 * Return the set associated with the P_SYNC_INFO_SET property
+	 * or <code>null</code> if the property is not set.
+	 * @return the set associated with the P_SYNC_INFO_SET property
+	 * or <code>null</code> if the property is not set
+	 */
+	public abstract SyncInfoSet getSyncInfoSet();
 }

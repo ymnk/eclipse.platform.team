@@ -19,8 +19,10 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ILabelDecorator;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.actions.DefaultSynchronizePageActions;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePage;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -62,6 +64,13 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 	 */
 	public static final String P_OPEN_ACTION = TeamUIPlugin.ID + ".P_OPEN_ACTION"; //$NON-NLS-1$
 
+	/**
+	 * Property constant for the style of the view to be used by the page.
+	 */
+	public static final String P_VIEWER_STYLE = TeamUIPlugin.ID + ".P_VIEWER_STYLE"; //$NON-NLS-1$
+
+	public static final int CHECKBOX = TreeViewerAdvisor.CHECKBOX;
+	
 	private ISynchronizeParticipant participant;
 	private ISynchronizePageSite site;
 	private ListenerList propertyChangeListeners = new ListenerList();
@@ -463,5 +472,34 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 	 */
 	public void setPage(ISynchronizePage page) {
 		this.page = page;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getViewerStyle() {
+		Object o = getProperty(P_VIEWER_STYLE);
+		if (o instanceof Integer) {
+			return ((Integer)o).intValue();
+		}
+		return 0;
+	}
+
+	/**
+	 * @param style
+	 */
+	public void setViewerStyle(int style) {
+		setProperty(P_VIEWER_STYLE, new Integer(style));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#getSyncInfoSet()
+	 */
+	public SyncInfoSet getSyncInfoSet() {
+		Object o = getProperty(P_SYNC_INFO_SET);
+		if (o instanceof SyncInfoSet) {
+			return (SyncInfoSet)o;
+		}
+		return null;
 	}
 }

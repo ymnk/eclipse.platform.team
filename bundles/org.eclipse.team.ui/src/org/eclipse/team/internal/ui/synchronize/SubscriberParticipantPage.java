@@ -13,13 +13,7 @@ package org.eclipse.team.internal.ui.synchronize;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -32,19 +26,10 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.actions.SubscriberActionContribution;
-import org.eclipse.team.ui.synchronize.ISynchronizePage;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
-import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
-import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IPageLayout;
-import org.eclipse.ui.IWorkingSet;
-import org.eclipse.ui.part.IShowInSource;
-import org.eclipse.ui.part.IShowInTargetList;
-import org.eclipse.ui.part.Page;
-import org.eclipse.ui.part.ShowInContext;
+import org.eclipse.ui.*;
+import org.eclipse.ui.part.*;
 
 /**
  * A synchronize view page that works with participants that are subclasses of 
@@ -222,13 +207,8 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	}
 	
 	private Viewer createChangesViewer(Composite parent) {
-		TreeViewer viewer = new TreeViewerAdvisor.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		GridData data = new GridData(GridData.FILL_BOTH);
-		viewer.getControl().setLayoutData(data);
-		viewerAdvisor = new TreeViewerAdvisor(configuration);
-		viewerAdvisor.initializeViewer(viewer);
-		getSynchronizePageSite().setSelectionProvider(viewer);
-		return viewer;
+		viewerAdvisor = new TreeViewerAdvisor(parent, configuration);
+		return viewerAdvisor.getViewer();
 	}
 	
 	public StructuredViewerAdvisor getViewerAdvisor() {
