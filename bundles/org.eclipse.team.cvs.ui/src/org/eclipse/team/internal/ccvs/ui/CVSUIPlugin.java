@@ -46,6 +46,7 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.ui.model.CVSAdapterFactory;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryRoot;
+import org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberPage;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
@@ -652,9 +653,22 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		// Commented out until we have fully ported the CVS console to the new API
 		//ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[] {new CVSOutputConsole()});
 		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
-		   new SubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+		   new CVSSubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
 		   				      "CVS Workspace", 
-		   					  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO))});
+		   					  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 6)});
+		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
+		   new CVSSubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+							  "CVS Workspace - 2", 
+							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 2)});
+		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
+		   new CVSSubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+							  "CVS Workspace - 3", 
+							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 3)});
+		TeamUI.getSynchronizeManager().addSynchronizePages(new ISynchronizeViewPage[] {
+		   new CVSSubscriberPage(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), 
+							  "CVS Workspace - 4", 
+							  CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_CVSLOGO), 4)});
+
 	}
 	
 	public static IWorkingSet getWorkingSet(IResource[] resources, String name) {

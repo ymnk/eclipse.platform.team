@@ -16,7 +16,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.internal.ui.actions.TeamAction;
-import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.actions.OpenFileAction;
@@ -30,16 +30,16 @@ public class OpenWithActionGroup extends ActionGroup {
 
 	private OpenFileAction openFileAction;
 	private OpenInCompareAction openInCompareAction;
-	private IWorkbenchSite site;
+	private IViewPart part;
 
-	public OpenWithActionGroup(IWorkbenchSite site) {
-		this.site = site;
+	public OpenWithActionGroup(IViewPart part) {
+		this.part = part;
 		makeActions();
 	}
 
 	protected void makeActions() {
-		openFileAction = new OpenFileAction(site.getPage());
-		openInCompareAction = new OpenInCompareAction(site.getPage());		
+		openFileAction = new OpenFileAction(part.getSite().getPage());
+		openInCompareAction = new OpenInCompareAction(part);		
 	}
 
 	public void fillContextMenu(IMenuManager menu) {
@@ -79,7 +79,7 @@ public class OpenWithActionGroup extends ActionGroup {
 		
 		MenuManager submenu =
 			new MenuManager(ResourceNavigatorMessages.getString("ResourceNavigator.openWith")); //$NON-NLS-1$
-		submenu.add(new OpenWithMenu(site.getPage(), (IFile) resource));
+		submenu.add(new OpenWithMenu(part.getSite().getPage(), (IFile) resource));
 		menu.add(submenu);
 	}
 

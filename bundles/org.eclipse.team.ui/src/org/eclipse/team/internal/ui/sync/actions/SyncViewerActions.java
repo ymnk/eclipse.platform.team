@@ -10,18 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.actions;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.views.INavigableControl;
 import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
@@ -59,8 +54,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private Action toggleLayoutHierarchicalAction;
 	private ExpandAllAction expandAll;
 	private SelectAllAction selectAllAction;
-	private NavigateAction gotoNext;
-	private NavigateAction gotoPrevious;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#updateActionBars()
@@ -103,8 +96,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		
 		expandAll = new ExpandAllAction(this);
 		
-		gotoNext = new NavigateAction(this, INavigableControl.NEXT);
-		gotoPrevious = new NavigateAction(this, INavigableControl.PREVIOUS);
 		
 		toggleLayoutFlatAction = new ToggleViewAction(getSyncView(), SynchronizeView.TABLE_VIEW);
 		toggleLayoutHierarchicalAction = new ToggleViewAction(getSyncView(), SynchronizeView.TREE_VIEW);
@@ -165,8 +156,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		directionsFilters.fillActionBars(actionBars);
 		manager.add(new Separator());
 		manager.add(collapseAll);
-		manager.add(gotoNext);
-		manager.add(gotoPrevious);	
 		
 		// Setup drop down menu
 		IMenuManager dropDownMenu = actionBars.getMenuManager();

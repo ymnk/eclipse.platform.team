@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.sync.views;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.team.ui.sync.actions.INavigableControl;
 
 public class SyncTableViewer extends TableViewer implements INavigableControl {
 

@@ -78,7 +78,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 			}		
 			fMenu= new Menu(parent);
 			ISynchronizeViewPage[] pages = TeamUI.getSynchronizeManager().getSynchronizePages();
-			ISynchronizeViewPage current = fView.getSynchronizeTarget();
+			ISynchronizeViewPage current = fView.getActivePage();
 			for (int i = 0; i < pages.length; i++) {
 				ISynchronizeViewPage page = pages[i];
 				Action action = new ShowSynchronizeViewPage(fView, page);  

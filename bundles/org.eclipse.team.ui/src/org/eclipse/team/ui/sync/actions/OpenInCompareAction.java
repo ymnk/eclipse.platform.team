@@ -28,13 +28,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.sync.compare.SyncInfoCompareInput;
-import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IEditorReference;
-import org.eclipse.ui.IReusableEditor;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.*;
 
 /**
  * Action to open a compare editor from a SyncInfo object.
@@ -44,25 +38,26 @@ import org.eclipse.ui.IWorkbenchPartSite;
  */
 public class OpenInCompareAction extends Action {
 	
-	private IWorkbenchPage page;
+	private IViewPart part;
 	
-	public OpenInCompareAction(IWorkbenchPage page) {
-		this.page = page;
+	public OpenInCompareAction(IViewPart part) {
+		this.part = part;
 		Utils.initAction(this, "action.openInCompareEditor."); //$NON-NLS-1$
 	}
 
 	public void run() {
-		ISelection selection = page.getSelection();
+		ISelection selection = part.getSite().getPage().getSelection();
 		Object obj = ((IStructuredSelection)selection).getFirstElement();
 		SyncInfo info = getSyncInfo(obj);
 		if(info != null) {
-			openCompareEditor(page, info, true /* keep focus */);
+			openCompareEditor(part, info, true /* keep focus */);
 		}
 	}
 	
-	public static SyncInfoCompareInput openCompareEditor(IWorkbenchPage page, SyncInfo info, boolean keepFocus) {
+	public static SyncInfoCompareInput openCompareEditor(IViewPart part, SyncInfo info, boolean keepFocus) {		
 		SyncInfoCompareInput input = getCompareInput(info);
 		if(input != null) {
+			IWorkbenchPage page = part.getSite().getPage();
 			IEditorPart editor = findReusableCompareEditor(page);			
 			
 			if(editor != null) {
@@ -83,7 +78,7 @@ public class OpenInCompareAction extends Action {
 			}
 			
 			if(keepFocus) {
-				 SynchronizeView.showInActivePage(page, false /* don't switch perspectives */);
+				page.activate(part);
 			}
 			return input;
 		}			

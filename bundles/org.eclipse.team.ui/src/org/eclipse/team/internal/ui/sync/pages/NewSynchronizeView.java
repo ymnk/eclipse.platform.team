@@ -66,7 +66,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	public void propertyChange(PropertyChangeEvent event) {
 		Object source = event.getSource();
 		if (source instanceof ISynchronizeViewPage && event.getProperty().equals(IBasicPropertyConstants.P_TEXT)) {
-			if (source.equals(getSynchronizeTarget())) {
+			if (source.equals(getActivePage())) {
 				updateTitle();
 			}
 		}
@@ -83,7 +83,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	/* (non-Javadoc)
 	 * @see org.eclipse.debug.internal.ui.console.IConsoleView#getConsole()
 	 */
-	public ISynchronizeViewPage getSynchronizeTarget() {
+	public ISynchronizeViewPage getActivePage() {
 		return fActivePage;
 	}
 
@@ -100,7 +100,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 	 * Updates the view title based on the active console
 	 */
 	protected void updateTitle() {
-		ISynchronizeViewPage page = getSynchronizeTarget();
+		ISynchronizeViewPage page = getActivePage();
 		if (page == null) {
 			setTitle("Synchronize View");
 		} else {
@@ -199,7 +199,7 @@ public class NewSynchronizeView extends PageBookView implements INewSynchronizeV
 							if (part != null) {
 								partClosed(part);
 							}
-							if (getSynchronizeTarget() == null) {
+							if (getActivePage() == null) {
 								ISynchronizeViewPage[] available = TeamUI.getSynchronizeManager().getSynchronizePages();
 								if (available.length > 0) {
 									display(available[available.length - 1]);

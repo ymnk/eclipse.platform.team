@@ -22,7 +22,7 @@ public class ShowSynchronizeViewPage extends Action {
 	 * @see org.eclipse.jface.action.IAction#run()
 	 */
 	public void run() {
-		if (!fPage.equals(fView.getSynchronizeTarget())) {
+		if (!fPage.equals(fView.getActivePage())) {
 			// only change if required (and un-pin the console if pinned)
 			fView.display(fPage);
 		}
