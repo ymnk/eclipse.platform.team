@@ -150,7 +150,7 @@ abstract public class DetailsDialog extends Dialog {
 			label.setImage(image);
 			label.setLayoutData(new GridData(
 				GridData.HORIZONTAL_ALIGN_CENTER |
-				GridData.VERTICAL_ALIGN_CENTER));
+				GridData.VERTICAL_ALIGN_BEGINNING));
 				
 			// add a composite to the right to contain the custom components
 			Composite right = new Composite(top, SWT.NONE);

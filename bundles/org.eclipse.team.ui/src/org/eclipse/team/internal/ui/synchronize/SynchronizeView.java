@@ -21,16 +21,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.actions.SynchronizePageDropDownAction;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizeParticipantListener;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.part.IPage;
-import org.eclipse.ui.part.IPageBookViewPage;
-import org.eclipse.ui.part.MessagePage;
-import org.eclipse.ui.part.PageBook;
-import org.eclipse.ui.part.PageBookView;
+import org.eclipse.ui.part.*;
 
 /**
  * Implements a Synchronize View that contains multiple synchronize participants. 
@@ -53,6 +46,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	private Map fPartToPage;
 	
 	private SynchronizePageDropDownAction fPageDropDown;
+	private SynchronizeViewWorkbenchPart fOverviewPage;
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
@@ -110,12 +104,14 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		page.dispose();
 		pageRecord.dispose();
 		
-		ISynchronizeParticipant participant = (ISynchronizeParticipant)fPartToPage.get(part);
-		participant.removePropertyChangeListener(this);
+		if(part != fOverviewPage) {
+			ISynchronizeParticipant participant = (ISynchronizeParticipant)fPartToPage.get(part);		
+			participant.removePropertyChangeListener(this);
 				
-		// empty cross-reference cache
-		fPartToPage.remove(part);
-		fPageToPart.remove(participant);
+			// empty cross-reference cache
+			fPartToPage.remove(part);
+			fPageToPart.remove(participant);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -123,13 +119,23 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 */
 	protected PageRec doCreatePage(IWorkbenchPart dummyPart) {
 		SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)dummyPart;
-		ISynchronizeParticipant participant = part.getConsole();
-		IPageBookViewPage page = participant.createPage(this);
-		initPage(page);
-		page.createControl(getPageBook());
-		participant.addPropertyChangeListener(this);
-		PageRec rec = new PageRec(dummyPart, page);
-		return rec;
+		Object component = part.getPage();
+		IPageBookViewPage page = null;
+		if(component instanceof ISynchronizeParticipant) {
+			ISynchronizeParticipant participant = (ISynchronizeParticipant)component;			
+			participant.addPropertyChangeListener(this);
+			page = participant.createPage(this);
+		} else if(component instanceof IPageBookViewPage) {
+			page = (IPageBookViewPage)component;
+		}
+		
+		if(page != null) {
+			initPage(page);
+			page.createControl(getPageBook());
+			PageRec rec = new PageRec(dummyPart, page);
+			return rec;
+		}
+		return null;
 	}
 
 	/* (non-Javadoc)
@@ -151,10 +157,11 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	 * @see org.eclipse.ui.part.PageBookView#createDefaultPage(org.eclipse.ui.part.PageBook)
 	 */
 	protected IPage createDefaultPage(PageBook book) {
-		MessagePage page = new MessagePage();
-		page.createControl(getPageBook());
-		initPage(page);
-		return page;
+		SynchronizeOverviewPage overviewPage = new SynchronizeOverviewPage();
+		this.fOverviewPage = new SynchronizeViewWorkbenchPart(overviewPage, getSite());
+		overviewPage.createControl(getPageBook());
+		initPage(overviewPage);
+		return overviewPage;
 	}
 
 	/* (non-Javadoc)
@@ -301,5 +308,12 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	
 	private boolean isAvailable() {
 		return getPageBook() != null && !getPageBook().isDisposed();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeView#displayOverviewPage()
+	 */
+	public void displayOverviewPage() {
+		partActivated(this.fOverviewPage);
 	}
 }

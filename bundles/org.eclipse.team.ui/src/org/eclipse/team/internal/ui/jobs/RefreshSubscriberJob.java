@@ -10,20 +10,26 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.jobs;
 
+import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.WorkspaceJob;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.*;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
+import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.RefreshCompleteDialog;
+import org.eclipse.team.internal.ui.synchronize.sets.SubscriberInput;
 
 /**
  * Job to refresh a subscriber with its remote state.
@@ -65,13 +71,56 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	 * is running the job is cancelled.
 	 */
 	private IResource[] resources;
-	private TeamSubscriber subscriber;
+	private SubscriberInput input;
 	
-	public RefreshSubscriberJob(String name, IResource[] resources, TeamSubscriber subscriber) {
+	protected class MD extends MessageDialog {
+		public MD(Shell parentShell, String dialogTitle, Image dialogTitleImage, String dialogMessage, int dialogImageType, String[] dialogButtonLabels, int defaultIndex) {
+			super(parentShell, dialogTitle, dialogTitleImage, dialogMessage, dialogImageType, dialogButtonLabels, defaultIndex);
+			setShellStyle(SWT.DIALOG_TRIM | SWT.MODELESS);
+		}
+	}
+	
+	protected class ChangeListener implements ITeamResourceChangeListener {
+		private List changes = new ArrayList();
+		private SubscriberInput input;
+		ChangeListener(SubscriberInput input) {
+			this.input = input;
+		}
+		public void teamResourceChanged(TeamDelta[] deltas) {
+			for (int i = 0; i < deltas.length; i++) {
+				TeamDelta delta = deltas[i];
+				if(delta.getFlags() == TeamDelta.SYNC_CHANGED) {
+					changes.add(delta);
+				}
+			}
+		}
+		public SyncInfo[] getChanges() {
+			try {
+				// wait for inputs to stop processing changes
+				input.getEventHandler().getEventHandlerJob().join();
+			} catch (InterruptedException e) {
+				// continue
+			}
+			List changedSyncInfos = new ArrayList();
+			for (Iterator it = changes.iterator(); it.hasNext(); ) {
+				TeamDelta delta = (TeamDelta) it.next();
+				SyncInfo info = input.getSubscriberSyncSet().getSyncInfo(delta.getResource());
+				if(info != null) {
+					int direction = info.getKind() & SyncInfo.DIRECTION_MASK;
+					if(direction == SyncInfo.INCOMING || direction == SyncInfo.CONFLICTING) {
+						changedSyncInfos.add(info);
+					}
+				}
+			}
+			return (SyncInfo[]) changedSyncInfos.toArray(new SyncInfo[changedSyncInfos.size()]);
+		}
+	}
+		
+	public RefreshSubscriberJob(String name, IResource[] resources, SubscriberInput input) {
 		super(name);
 		
 		this.resources = resources;
-		this.subscriber = subscriber;
+		this.input = input;
 		
 		setPriority(Job.DECORATE);
 		
@@ -126,8 +175,20 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 				if(monitor.isCanceled()) {
 					return Status.CANCEL_STATUS;
 				}
-				try {					
+				try {
+					final ChangeListener listener = new ChangeListener(input);
+					subscriber.addListener(listener);
 					subscriber.refresh(roots, IResource.DEPTH_INFINITE, Policy.subMonitorFor(monitor, 100));
+					subscriber.removeListener(listener);
+
+					TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
+							public void run() {
+								RefreshCompleteDialog d = new RefreshCompleteDialog(
+									new Shell(TeamUIPlugin.getStandardDisplay()), listener.getChanges(), new SubscriberInput[] {input});
+								d.setBlockOnOpen(false);
+								d.open();
+							}
+						});					
 				} catch(TeamException e) {
 					status.merge(e.getStatus());
 				}
@@ -145,7 +206,7 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 	
 	protected TeamSubscriber getSubscriber() {
-		return subscriber;
+		return input.getSubscriber();
 	}
 	
 	public long getScheduleDelay() {

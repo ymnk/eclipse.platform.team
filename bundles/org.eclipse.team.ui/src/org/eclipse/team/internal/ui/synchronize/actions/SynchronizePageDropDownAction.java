@@ -82,6 +82,13 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 				action.setChecked(page.equals(current));
 				addActionToMenu(fMenu, action);
 			}
+			// Add Overview Page
+			addMenuSeparator();
+			addActionToMenu(fMenu, new Action("Overview Page") {
+				public void run() {
+					fView.displayOverviewPage();
+				}
+			});
 			return fMenu;
 		}
 	
