@@ -74,13 +74,16 @@ public class TestSubscriber extends Subscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
 	 */
-	public ISubscriberResourceComparator getDefaultComparisonCriteria() {
+	public ISubscriberResourceComparator getResourceComparator() {
 		return new ISubscriberResourceComparator() {
 			public boolean compare(IResource local, ISubscriberResource remote) {
 				return false;
 			}
 			public boolean compare(ISubscriberResource base, ISubscriberResource remote) {
 				return false;
+			}
+			public boolean isThreeWay() {
+				return true;
 			}
 		};
 	}

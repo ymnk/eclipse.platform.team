@@ -76,6 +76,10 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		}
 	}
 	
+	protected boolean isThreeWay() {
+		return getResourceComparator().isThreeWay();
+	}
+
 	/**
 	 * Method that creates an instance of SyncInfo for the provider local, base and remote.
 	 * Can be overiden by subclasses.
@@ -188,13 +192,6 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.TeamSubscriber#isThreeWay()
-	 */
-	public boolean isThreeWay() {
-		return true;
-	}
-	
 	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
 		return getRemoteResource(resource, getRemoteSynchronizationCache());
 	}
@@ -274,7 +271,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.subscribers.TeamSubscriber#getDefaultComparisonCriteria()
 	 */
-	public ISubscriberResourceComparator getDefaultComparisonCriteria() {
+	public ISubscriberResourceComparator getResourceComparator() {
 		return comparisonCriteria;
 	}
 	

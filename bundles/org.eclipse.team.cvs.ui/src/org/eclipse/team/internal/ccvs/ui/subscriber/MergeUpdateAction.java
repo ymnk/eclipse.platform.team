@@ -87,7 +87,7 @@ public class MergeUpdateAction extends SafeUpdateAction {
 	protected void runSafeUpdate(SyncInfo[] nodes, IProgressMonitor monitor) throws TeamException {
 		if(nodes.length > 0) {
 			// Assumption that all nodes are from the same subscriber.
-			currentSubcriber = nodes[0].getSubscriber();
+			currentSubcriber = ((CVSSyncInfo)nodes[0]).getSubscriber();
 			if (!(currentSubcriber instanceof CVSMergeSubscriber)) {
 				throw new CVSException(Policy.bind("MergeUpdateAction.invalidSubscriber", currentSubcriber.toString())); //$NON-NLS-1$
 			}

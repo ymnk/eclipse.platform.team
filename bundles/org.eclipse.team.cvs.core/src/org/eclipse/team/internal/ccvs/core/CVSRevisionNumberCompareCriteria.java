@@ -87,4 +87,11 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 	public boolean compare(ISubscriberResource base, ISubscriberResource remote) {
 		return compare((ICVSRemoteResource)base, (ICVSRemoteResource)remote);
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.ISubscriberResourceComparator#isThreeWay()
+	 */
+	public boolean isThreeWay() {
+		return true;
+	}
 }

@@ -41,7 +41,7 @@ public abstract class SyncTreeSubscriber extends Subscriber {
 		if (!isSupervised(resource)) return null;
 		ISubscriberResource remoteResource = getRemoteResource(resource);
 		ISubscriberResource baseResource;
-		if (isThreeWay()) {
+		if (getResourceComparator().isThreeWay()) {
 			baseResource= getBaseResource(resource);
 		} else {
 			baseResource = null;
@@ -59,7 +59,7 @@ public abstract class SyncTreeSubscriber extends Subscriber {
 	 * @return
 	 */
 	protected SyncInfo getSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote) throws TeamException {
-		return new SyncInfo(local, base, remote, this);
+		return new SyncInfo(local, base, remote, this.getResourceComparator());
 	}
 
 	public IResource[] members(IResource resource) throws TeamException {

@@ -21,19 +21,11 @@ import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 /**
- * A potentially dynamic collection of {@link SyncInfo} objects that provides
- * several methods for accessing the out-of-sync resources contained in the set. 
- * This class defines the API for accessing the contents of a sync info set.
- * Subclasses, such as {@link MutableSyncInfoSet}, can override to support
- * modification.
- * <p>
- * This class provides access to the sync set contents to clients and provides modification
- * operations to subclasses. In addition, this class defines the protocol for registering 
- * and deregistering change listeners but it is up to subclasses to record changes and 
- * notify any listeners about changes.
- * 
- * </p>
- * @see MutableSyncInfoSet
+ * A dynamic collection of {@link SyncInfo} objects that provides
+ * change notification to registered listeners. Batching of change notifications
+ * can be accomplished using the <code>beginInput/endInput</code> methods or
+ * the <code>run</code> method. 
+ * @see SyncInfoTree
  * @since 3.0
  */
 public class SyncInfoSet {

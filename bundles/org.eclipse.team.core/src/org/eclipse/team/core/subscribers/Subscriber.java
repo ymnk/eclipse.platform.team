@@ -176,16 +176,7 @@ abstract public class Subscriber {
 	 * Returns the comparison criteria that will be used by the sync info
 	 * created by this subscriber.
 	 */
-	abstract public ISubscriberResourceComparator getDefaultComparisonCriteria();
-
-	/**
-	 * Answers <code>true</code> if the base tree is maintained by this
-	 * subscriber. If the base tree is not considered than the subscriber can
-	 * be considered as not supported three-way comparisons. Instead
-	 * comparisons are made between the local and remote only without
-	 * consideration for the base.
-	 */
-	abstract public boolean isThreeWay();
+	abstract public ISubscriberResourceComparator getResourceComparator();
 
 	/**
 	 * Adds a listener to this team subscriber. Has no effect if an identical

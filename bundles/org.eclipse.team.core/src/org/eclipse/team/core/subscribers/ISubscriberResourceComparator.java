@@ -49,4 +49,13 @@ public interface ISubscriberResourceComparator {
 	 * otherwise.
 	 */
 	public boolean compare(ISubscriberResource base, ISubscriberResource remote);
+
+	/**
+	 * Answers <code>true</code> if the base tree is maintained by this
+	 * subscriber. If the base tree is not considered than the subscriber can
+	 * be considered as not supported three-way comparisons. Instead
+	 * comparisons are made between the local and remote only without
+	 * consideration for the base.
+	 */
+	public boolean isThreeWay();
 }

@@ -35,11 +35,17 @@ public class CVSSyncInfo extends SyncInfo {
 	private static final int PARENT_NOT_MANAGED = 3;
 	private static final int REMOTE_DOES_NOT_EXIST = 4;
 	private static final int SYNC_INFO_CONFLICTS = 5;
+	private Subscriber subscriber;
 
 	public CVSSyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, Subscriber subscriber) throws TeamException {
-		super(local, base, remote, subscriber);
+		super(local, base, remote, subscriber.getResourceComparator());
+		this.subscriber = subscriber;
 	}
 
+	public Subscriber getSubscriber() {
+		return subscriber;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.SyncInfo#computeSyncKind(org.eclipse.core.runtime.IProgressMonitor)
 	 */

@@ -140,18 +140,18 @@ public class SyncInfo implements IAdaptable {
 	 private IResource local;
 	 private ISubscriberResource base;
 	 private ISubscriberResource remote;
-	 private Subscriber subscriber;
+	 private ISubscriberResourceComparator comparator;
 	 
 	 private int syncKind;
 	
 	/**
 	 * Construct a sync info object.
 	 */
-	public SyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, Subscriber subscriber) throws TeamException {
+	public SyncInfo(IResource local, ISubscriberResource base, ISubscriberResource remote, ISubscriberResourceComparator comparator) throws TeamException {
 		this.local = local;
 		this.base = base;
 		this.remote = remote;
-		this.subscriber = subscriber;
+		this.comparator = comparator;
 		this.syncKind = calculateKind();
 	}
 	
@@ -209,8 +209,8 @@ public class SyncInfo implements IAdaptable {
 	 * Returns the subscriber that created and maintains this sync info
 	 * object. 
 	 */
-	public Subscriber getSubscriber() {
-		return subscriber;
+	public ISubscriberResourceComparator getComparator() {
+		return comparator;
 	}
 	
 	/**
@@ -324,11 +324,9 @@ public class SyncInfo implements IAdaptable {
 	protected int calculateKind() throws TeamException {
 		int description = IN_SYNC;
 		
-		ISubscriberResourceComparator criteria = subscriber.getDefaultComparisonCriteria();
-		
 		boolean localExists = local.exists();
 		
-		if (subscriber.isThreeWay()) {
+		if (comparator.isThreeWay()) {
 			if (base == null) {
 				if (remote == null) {
 					if (!localExists) {						
@@ -341,7 +339,7 @@ public class SyncInfo implements IAdaptable {
 						description = INCOMING | ADDITION;
 					} else {
 						description = CONFLICTING | ADDITION;
-						if (criteria.compare(local, remote)) {
+						if (comparator.compare(local, remote)) {
 							description |= PSEUDO_CONFLICT;
 						}
 					}
@@ -351,20 +349,20 @@ public class SyncInfo implements IAdaptable {
 					if (remote == null) {
 						description = CONFLICTING | DELETION | PSEUDO_CONFLICT;
 					} else {
-						if (criteria.compare(base, remote))
+						if (comparator.compare(base, remote))
 							description = OUTGOING | DELETION;
 						else						
 							description = CONFLICTING | CHANGE;
 					}
 				} else {
 					if (remote == null) {
-						if (criteria.compare(local, base))
+						if (comparator.compare(local, base))
 							description = INCOMING | DELETION;
 						else
 							description = CONFLICTING | CHANGE;
 					} else {
-						boolean ay = criteria.compare(local, base);
-						boolean am = criteria.compare(base, remote);
+						boolean ay = comparator.compare(local, base);
+						boolean am = comparator.compare(base, remote);
 						if (ay && am) {
 							// in-sync
 						} else if (ay && !am) {
@@ -372,7 +370,7 @@ public class SyncInfo implements IAdaptable {
 						} else if (!ay && am) {
 							description = OUTGOING | CHANGE;
 						} else {
-							if(! criteria.compare(local, remote)) {
+							if(! comparator.compare(local, remote)) {
 								description = CONFLICTING | CHANGE;
 							}
 						}
@@ -391,7 +389,7 @@ public class SyncInfo implements IAdaptable {
 				if (!localExists) {
 					description= ADDITION;
 				} else {
-					if (! criteria.compare(local, remote))
+					if (! comparator.compare(local, remote))
 						description= CHANGE;
 				}
 			}
