@@ -153,6 +153,15 @@ public class CompareOperationTests extends CVSOperationTest {
 		ICVSRemoteResource remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(project);
 		TestRemoteCompareOperation op = new TestRemoteCompareOperation(null, remoteResource, v1);
 		run(op);
+		assertRevisionsMatch(op.getRightTree(), project, new String[] {"folder1/a.txt", "folder1/b.txt"}, null);
+		assertRevisionsMatch(op.getLeftTree(), copy, new String[] {"folder1/a.txt" }, new String[] {"folder1/newFile", "folder2/folder3/add.txt" } /* files with no revision */);
+		
+		
+		// Run the compare operation of the project folder the other way
+		remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(project);
+		remoteResource = ((ICVSRemoteFolder)remoteResource).forTag(v1);
+		op = new TestRemoteCompareOperation(null, remoteResource, CVSTag.DEFAULT);
+		run(op);
 		assertRevisionsMatch(op.getLeftTree(), project, new String[] {"folder1/a.txt"}, new String[] {"folder1/b.txt"});
 		assertRevisionsMatch(op.getRightTree(), copy, new String[] {"folder1/a.txt", "folder1/newFile", "folder2/folder3/add.txt" }, null /* files with no revision */);
 		
@@ -160,15 +169,15 @@ public class CompareOperationTests extends CVSOperationTest {
 		remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(project.getFolder("folder1"));
 		op = new TestRemoteCompareOperation(null, remoteResource, v1);
 		run(op);
-		assertRevisionsMatch(op.getLeftTree(), project, new String[] {"folder1/a.txt"}, new String[] {"folder1/b.txt"});
-		assertRevisionsMatch(op.getRightTree(), copy, new String[] {"folder1/a.txt", "folder1/newFile" }, null /* files with no revision */);
+		assertRevisionsMatch(op.getRightTree(), project, new String[] {"folder1/a.txt", "folder1/b.txt"}, null);
+		assertRevisionsMatch(op.getLeftTree(), copy, new String[] {"folder1/a.txt"}, new String[] {"folder1/newFile" } /* files with no revision */);
 		
 		// Run the operation on a single file
 		remoteResource = CVSWorkspaceRoot.getRemoteResourceFor(project.getFile("folder1/a.txt"));
 		op = new TestRemoteCompareOperation(null, remoteResource, v1);
 		run(op);
-		assertRevisionsMatch(op.getLeftTree(), project, new String[] {"folder1/a.txt"}, null);
-		assertRevisionsMatch(op.getRightTree(), copy, new String[] {"folder1/a.txt" }, null /* files with no revision */);
+		assertRevisionsMatch(op.getRightTree(), project, new String[] {"folder1/a.txt"}, null);
+		assertRevisionsMatch(op.getLeftTree(), copy, new String[] {"folder1/a.txt" }, null /* files with no revision */);
 		
 	}
 

@@ -116,7 +116,7 @@ public class RemoteCompareOperation extends RemoteOperation  implements RDiffSum
 
 	private String[] getOverlappingFilePaths() {
 		String[] leftFiles = getFilePaths(leftTree);
-		String[] rightFiles = getFilePaths(leftTree);
+		String[] rightFiles = getFilePaths(rightTree);
 		Set set = new HashSet();
 		for (int i = 0; i < rightFiles.length; i++) {
 			String rightFile = rightFiles[i];
