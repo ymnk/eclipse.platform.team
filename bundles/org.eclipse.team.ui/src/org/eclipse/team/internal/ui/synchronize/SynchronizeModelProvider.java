@@ -264,4 +264,66 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
     protected final void handleChanges(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
         super.handleChanges(event, monitor);
     }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#handleResourceChanges(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
+     */
+	protected void handleResourceChanges(ISyncInfoTreeChangeEvent event) {
+		// Refresh the viewer for each changed resource
+		SyncInfo[] infos = event.getChangedResources();
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			IResource local = info.getLocal();
+			ISynchronizeModelElement diffNode = getModelObject(local);
+			if (diffNode != null) {
+				handleChange(diffNode, info);
+			}
+		}	
+	}
+
+    /**
+     * The sync state for the existing diff node has changed and the new state
+     * is provided by the given sync info.
+     * @param diffNode the changed diff node
+     * @param info the new sync state
+     */
+	protected void handleChange(ISynchronizeModelElement diffNode, SyncInfo info) {
+		IResource local = info.getLocal();
+
+		if(diffNode instanceof SyncInfoModelElement) {
+			((SyncInfoModelElement)diffNode).update(info);
+			propogateConflictState(diffNode, false);
+			queueForLabelUpdate(diffNode);
+		} else {
+			removeFromViewer(local);
+			addResources(new SyncInfo[] {info});
+		}
+	}
+
+    /**
+     * Add the give sync infos to the provider
+     * @param infos the added infos
+     */
+	protected void addResources(SyncInfo[] added) {
+		for (int i = 0; i < added.length; i++) {
+			SyncInfo info = added[i];
+			ISynchronizeModelElement node = getModelObject(info.getLocal());
+			if (node != null) {
+				// Somehow the node exists. Remove it and read it to ensure
+				// what is shown matches the contents of the sync set
+				removeFromViewer(info.getLocal());
+			}
+			// Add the node to the root
+			node = createModelObject(getModelRoot(), info);
+			buildModelObjects(node);
+		}
+	}
+
+	/**
+	 * Create the model object for the given sync info as a child of the given parent node.
+	 * @param parent the parent
+	 * @param info the info to be used for the new node
+	 * @return the created node
+	 */
+    protected abstract ISynchronizeModelElement createModelObject(ISynchronizeModelElement parent, SyncInfo info);
 }

@@ -379,20 +379,6 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
 	}
 	
 	/* *****************************************************************************
-	 * Model element for the resources in this layout. They are displayed with filename and path
-	 * onto the same line.
-	 */
-	public static class FullPathSyncInfoElement extends SyncInfoModelElement {
-		public FullPathSyncInfoElement(IDiffContainer parent, SyncInfo info) {
-			super(parent, info);
-		}
-		public String getName() {
-			IResource resource = getResource();
-			return resource.getName() + " - " + resource.getFullPath().toString(); //$NON-NLS-1$
-		}
-	}
-	
-	/* *****************************************************************************
 	 * Special sync info that has its kind already calculated.
 	 */
 	public class CVSUpdatableSyncInfo extends CVSSyncInfo {
@@ -1076,4 +1062,13 @@ public class ChangeLogModelProvider extends CompositeModelProvider implements IC
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.CompositeModelProvider#clearModelObjects(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
+     */
+    protected void clearModelObjects(ISynchronizeModelElement node) {
+        super.clearModelObjects(node);
+        if (node == getModelRoot()) {
+            rootToProvider.clear();
+        }
+    }
 }

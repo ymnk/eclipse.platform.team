@@ -282,4 +282,19 @@ public abstract class CompositeModelProvider extends AbstractSynchronizeModelPro
         super.nodeRemoved(node, provider);
     }
     
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#clearModelObjects(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
+     */
+    protected void clearModelObjects(ISynchronizeModelElement node) {
+        super.clearModelObjects(node);
+        if (node == getModelRoot()) {
+            for (Iterator iter = providers.iterator(); iter.hasNext();) {
+                AbstractSynchronizeModelProvider provider = (AbstractSynchronizeModelProvider) iter.next();
+                provider.dispose();
+            }
+            providers.clear();
+            resourceToElements.clear();
+            elementToProvider.clear();
+        }
+    }
 }

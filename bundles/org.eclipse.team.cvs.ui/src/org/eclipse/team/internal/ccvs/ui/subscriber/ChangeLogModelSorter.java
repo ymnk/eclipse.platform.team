@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 
 /**
  * Sorter for the change log model provider. 
@@ -87,20 +85,20 @@ public class ChangeLogModelSorter extends ViewerSorter {
 				return 0;
 		}
 
-		if (o1 instanceof ChangeLogModelProvider.FullPathSyncInfoElement && o2 instanceof ChangeLogModelProvider.FullPathSyncInfoElement) {
-			IResource r1 = ((ISynchronizeModelElement)o1).getResource();
-			IResource r2 = ((ISynchronizeModelElement)o2).getResource();
-			if(resourceCriteria == NAME) 
-				return compareNames(r1.getName(), r2.getName());
-			else if(resourceCriteria == PATH)
-				return compareNames(r1.getFullPath().toString(), r2.getFullPath().toString());
-			else if(resourceCriteria == PARENT_NAME)
-				return compareNames(r1.getParent().getName(), r2.getParent().getName());
-			else return 0;
-		} else if (o1 instanceof ISynchronizeModelElement)
-			return 1;
-		else if (o2 instanceof ISynchronizeModelElement)
-			return -1;
+//		if (o1 instanceof ChangeLogModelProvider.FullPathSyncInfoElement && o2 instanceof ChangeLogModelProvider.FullPathSyncInfoElement) {
+//			IResource r1 = ((ISynchronizeModelElement)o1).getResource();
+//			IResource r2 = ((ISynchronizeModelElement)o2).getResource();
+//			if(resourceCriteria == NAME) 
+//				return compareNames(r1.getName(), r2.getName());
+//			else if(resourceCriteria == PATH)
+//				return compareNames(r1.getFullPath().toString(), r2.getFullPath().toString());
+//			else if(resourceCriteria == PARENT_NAME)
+//				return compareNames(r1.getParent().getName(), r2.getParent().getName());
+//			else return 0;
+//		} else if (o1 instanceof ISynchronizeModelElement)
+//			return 1;
+//		else if (o2 instanceof ISynchronizeModelElement)
+//			return -1;
 		
 		return 0;
 	}
