@@ -78,6 +78,8 @@ public abstract class RepositoryProvider implements IProjectNature {
 
 	private final static List AllProviderTypeIds = initializeAllProviderTypes();
 	
+	private final static IRepositoryMappingListener[] mappingListeners = initializeRepositoryMappingListeners();
+	
 	// the project instance that this nature is assigned to
 	private IProject project;	
 	
@@ -113,8 +115,10 @@ public abstract class RepositoryProvider implements IProjectNature {
 			project.setPersistentProperty(PROVIDER_PROP_KEY, id);		
 			provider.configure();	//xxx not sure if needed since they control with wiz page and can configure all they want
 
-			//adding the nature would've caused project description delta, so trigger one
-			project.setDescription(project.getDescription(), null);	
+			//notify interested parties of the mapping
+			for (int i = 0; i < mappingListeners.length; i++) {
+				mappingListeners[i].repositoryProviderMapped(project);
+			}
 		} catch (CoreException e) {
 			throw TeamPlugin.wrapException(e);
 		}
@@ -161,8 +165,10 @@ public abstract class RepositoryProvider implements IProjectNature {
 			project.setSessionProperty(PROVIDER_PROP_KEY, null);
 			project.setPersistentProperty(PROVIDER_PROP_KEY, null);
 			
-			//removing the nature would've caused project description delta, so trigger one
-			project.setDescription(project.getDescription(), null);	
+			//notify interested parties of the unmapping
+			for (int i = 0; i < mappingListeners.length; i++) {
+				mappingListeners[i].repositoryProviderUnmapped(project);
+			}	
 		} catch (CoreException e) {
 			throw TeamPlugin.wrapException(e);
 		}
@@ -486,5 +492,32 @@ public abstract class RepositoryProvider implements IProjectNature {
 		if(removeNature) {
 			Team.removeNatureFromProject(project, providerId, new NullProgressMonitor());
 		}
+	}
+	
+	private static IRepositoryMappingListener[] initializeRepositoryMappingListeners() {
+		List listeners = new ArrayList();
+		
+		TeamPlugin plugin = TeamPlugin.getPlugin();
+		if (plugin != null) {
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.REPOSITORY_MAPPING_NOTIFICATION_EXTENSION);
+			if (extension != null) {
+				IExtension[] extensions =  extension.getExtensions();
+				for (int i = 0; i < extensions.length; i++) {
+					IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
+					for (int j = 0; j < configElements.length; j++) {
+						try {
+							listeners.add((IRepositoryMappingListener)configElements[j].createExecutableExtension("class")); //$NON-NLS-1$
+						} catch (CoreException e) {
+							// Log the exception and continue processing other listeners
+							TeamPlugin.log(e.getStatus());
+						} catch (ClassCastException e) {
+							// Log the exception and continue processing other listeners
+							TeamPlugin.log(new Status(IStatus.ERROR, TeamPlugin.ID, 0, "Invalid class registered", e));
+						}
+					}
+				}
+			}
+		}
+		return (IRepositoryMappingListener[]) listeners.toArray(new IRepositoryMappingListener[listeners.size()]);
 	}
 }

@@ -522,5 +522,12 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 		if (deconfiguredProjects.isEmpty()) return false;
 		return deconfiguredProjects.contains(resource.getProject());
 	}
+	
+	public void refreshDeconfiguredProject(IProject project) {
+		if (deconfiguredProjects.contains(project)) {
+			deconfiguredProjects.remove(project);
+			refresh(project);
+		}
+	}
 
 }

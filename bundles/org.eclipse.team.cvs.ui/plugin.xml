@@ -700,4 +700,13 @@
 	  	    </action>
 	  </actionSet>
 	</extension>
+	
+	<!-- *************** Repository Mapping Notification **************** -->
+	<extension
+         point="org.eclipse.team.core.repositoryMappingNotification">
+      <repository
+            class="org.eclipse.team.internal.ccvs.ui.RepositoryMappingListener"
+            id="org.eclipse.team.cvs.ui.repositoryMappingListener">
+      </repository>
+	</extension>
 </plugin>
