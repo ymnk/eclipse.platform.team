@@ -18,9 +18,12 @@ import java.util.Set;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 
@@ -75,9 +78,22 @@ public class ReentrantLock {
 			return (IContainer[]) changedFolders.toArray(new IContainer[changedFolders.size()]);
 		}
 		public void flush(IProgressMonitor monitor) throws CVSException {
-			operation.flush(this, monitor);
+			try {
+				operation.flush(this, monitor);
+			} catch (OutOfMemoryError e) {
+				throw e;
+			} catch (Error e) {
+				handleAbortedFlush(e);
+				throw e;
+			} catch (RuntimeException e) {
+				handleAbortedFlush(e);
+				throw e;
+			}
 			changedResources.clear();
 			changedFolders.clear();
+		}
+		private void handleAbortedFlush(Throwable t) {
+			CVSProviderPlugin.log(new CVSStatus(IStatus.ERROR, Policy.bind("ReentrantLock.9"), t)); //$NON-NLS-1$
 		}
 	}
 	
