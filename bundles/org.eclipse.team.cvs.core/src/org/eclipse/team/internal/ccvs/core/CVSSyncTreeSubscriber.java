@@ -79,7 +79,7 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 	}
 	
 	protected boolean isThreeWay() {
-		return getResourceComparator().isThreeWay();
+		return true;
 	}
 
 	/**
