@@ -263,10 +263,10 @@ public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
      * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#fillContextMenu(org.eclipse.jface.action.IMenuManager)
      */
     public void fillContextMenu(IMenuManager menu) {
-        if (getChangeSetCapability().supportsCheckedInChangeSets() && getConfiguration().getMode() == ISynchronizePageConfiguration.INCOMING_MODE) {
+        if (getChangeSetCapability().enableCheckedInChangeSetsFor(getConfiguration())) {
             appendToGroup(menu, ISynchronizePageConfiguration.SORT_GROUP, sortByComment);
         }
-        if (getChangeSetCapability().supportsActiveChangeSets() && getConfiguration().getMode() == ISynchronizePageConfiguration.OUTGOING_MODE) {
+        if (getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
 			appendToGroup(
 					menu, 
 					CHANGE_SET_GROUP, 

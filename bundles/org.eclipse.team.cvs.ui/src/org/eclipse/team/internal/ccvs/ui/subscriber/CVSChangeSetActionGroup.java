@@ -30,7 +30,7 @@ public class CVSChangeSetActionGroup extends SynchronizePageActionGroup {
      * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#fillContextMenu(org.eclipse.jface.action.IMenuManager)
      */
     public void fillContextMenu(IMenuManager menu) {
-        if (getConfiguration().getMode() == ISynchronizePageConfiguration.OUTGOING_MODE) {
+        if (getConfiguration().getParticipant().getChangeSetCapability().enableCheckedInChangeSetsFor(getConfiguration())) {
     		appendToGroup(
     				menu, 
     				ISynchronizePageConfiguration.FILE_GROUP, 

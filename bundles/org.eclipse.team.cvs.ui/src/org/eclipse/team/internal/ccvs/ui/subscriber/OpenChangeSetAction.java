@@ -27,6 +27,7 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteCompareOperation.CompareTreeBuilder;
+import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation.LogEntryCache;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetDiffNode;
 import org.eclipse.team.ui.synchronize.*;
 
@@ -72,10 +73,30 @@ class OpenChangeSetAction extends SynchronizeModelAction {
     }
     
     private ChangeSet getChangeSet(Object[] elements) {
-        // TODO Auto-generated method stub
-        return null;
+        ChangeSet foundSet = null;
+        for (int i = 0; i < elements.length; i++) {
+            Object object = elements[i];
+            ChangeSet set = getChangeSet((ISynchronizeModelElement)object);
+            if (set == null) return null;
+            if (foundSet == null) {
+                foundSet = set;
+            } else if (foundSet != set) {
+                return null;
+            }
+        }
+        return foundSet;
     }
     
+    private ChangeSet getChangeSet(ISynchronizeModelElement element) {
+        if (element == null) return null;
+        if (element instanceof IAdaptable) {
+            ChangeSet set = (ChangeSet)((IAdaptable)element).getAdapter(ChangeSet.class);
+            if (set != null)
+                return set;
+        }
+        return getChangeSet((ISynchronizeModelElement)element.getParent());
+    }
+
     /* (non-Javadoc)
      * @see org.eclipse.team.ui.synchronize.SynchronizeModelAction#updateSelection(org.eclipse.jface.viewers.IStructuredSelection)
      */
@@ -167,7 +188,7 @@ class OpenChangeSetAction extends SynchronizeModelAction {
                         }
                     } else if (remote instanceof ICVSRemoteFile) {
                         try {
-                            ICVSRemoteFile predecessor = OpenChangeSetAction.this.provider.logs.getImmediatePredecessor((ICVSRemoteFile)remote);
+                            ICVSRemoteFile predecessor = getImmediatePredecessor(remote);
                             builder.addToTrees(predecessor, (ICVSRemoteFile)remote);
                         } catch (TeamException e) {
                             handle(e);
@@ -178,5 +199,20 @@ class OpenChangeSetAction extends SynchronizeModelAction {
                 return true;
             }
         };
-    } 
+    }
+
+    private ICVSRemoteFile getImmediatePredecessor(IResourceVariant remote) throws TeamException {
+        CVSChangeSetCollector changeSetCollector = getChangeSetCollector();
+        if (changeSetCollector != null) {
+	        LogEntryCache logs = changeSetCollector.getLogs();
+	        if (logs != null)
+	            return logs.getImmediatePredecessor((ICVSRemoteFile)remote);
+        }
+        return null;
+    }
+
+    private CVSChangeSetCollector getChangeSetCollector() {
+        return (CVSChangeSetCollector)getConfiguration().getProperty(CVSChangeSetCollector.CVS_CHECKED_IN_COLLECTOR);
+    }
+
 }

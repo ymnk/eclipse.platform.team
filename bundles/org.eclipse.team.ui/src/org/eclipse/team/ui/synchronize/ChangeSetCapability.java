@@ -115,4 +115,30 @@ public abstract class ChangeSetCapability {
         return null;
     }
     
+    /**
+     * Returns whether checked-in change sets should be enabled for the given state 
+     * in the configuration. The default is to enable for three-way incoming mode and 
+     * two-way.
+     * @param configuration the configuration for a synchronize page
+     * @return whether checked-in change sets should be enabled for the given state 
+     * in the configuration
+     */
+    public final boolean enableCheckedInChangeSetsFor(ISynchronizePageConfiguration configuration) {
+        return supportsCheckedInChangeSets() && 
+        	(configuration.getMode() == ISynchronizePageConfiguration.INCOMING_MODE ||
+        	        configuration.getComparisonType() == ISynchronizePageConfiguration.TWO_WAY);
+    }
+    
+    /**
+     * Returns whether active change sets should be enabled for the given state 
+     * in the configuration. The default is to enable for three-way outgoing mode.
+     * @param configuration the configuration for a synchronize page
+     * @return whether active change sets should be enabled for the given state 
+     * in the configuration
+     */
+    public final boolean enableActiveChangeSetsFor(ISynchronizePageConfiguration configuration) {
+        return supportsActiveChangeSets() && 
+        	configuration.getMode() == ISynchronizePageConfiguration.OUTGOING_MODE;
+    }
+    
 }

@@ -17,6 +17,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 
@@ -82,13 +83,10 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
 	
     private void updateEnablement() {
         if (toggleCommitSetAction != null) {
-            boolean enabled = false;
-            int mode = getConfiguration().getMode();
-            if (mode == ISynchronizePageConfiguration.INCOMING_MODE) {
-                enabled = getConfiguration().getParticipant().getChangeSetCapability().supportsCheckedInChangeSets();
-            } else if (mode == ISynchronizePageConfiguration.OUTGOING_MODE) {
-                enabled = getConfiguration().getParticipant().getChangeSetCapability().supportsActiveChangeSets();
-            }
+            ISynchronizePageConfiguration configuration = getConfiguration();
+            ChangeSetCapability changeSetCapability = configuration.getParticipant().getChangeSetCapability();
+            boolean enabled = changeSetCapability.enableActiveChangeSetsFor(configuration)
+            	|| changeSetCapability.enableCheckedInChangeSetsFor(configuration);
             toggleCommitSetAction.setEnabled(enabled);
         }
         

@@ -42,6 +42,12 @@ import org.eclipse.team.ui.synchronize.*;
  */
 public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 
+    /*
+     * Constant used to add the collector to the configuration of a page so
+     * it can be accessed by the CVS custom actions
+     */
+    public static final String CVS_CHECKED_IN_COLLECTOR = CVSUIPlugin.ID + ".CVSCheckedInCollector"; //$NON-NLS-1$
+    
 	// Log operation that is used to fetch revision histories from the server. It also
 	// provides caching so we keep it around.
     private LogEntryCache logs;
@@ -51,6 +57,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 	private FetchLogEntriesJob fetchLogEntriesJob;
 	
 	private DefaultCheckedInChangeSet defaultSet;
+
 	
 	/* *****************************************************************************
 	 * Special sync info that has its kind already calculated.
@@ -171,6 +178,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 	
     public CVSChangeSetCollector(ISynchronizePageConfiguration configuration) {
         super(configuration);
+        configuration.setProperty(CVSChangeSetCollector.CVS_CHECKED_IN_COLLECTOR, this);
     }
 
     /* (non-Javadoc)
@@ -444,6 +452,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 		if (logs != null) {
 		    logs.clearEntries();
 		}
+		getConfiguration().setProperty(CVSChangeSetCollector.CVS_CHECKED_IN_COLLECTOR, null);
 		super.dispose();
 	}
 	
@@ -629,5 +638,8 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
 			Policy.checkCanceled(monitor);
 		}
 		monitor.worked(1);
+    }
+    public LogEntryCache getLogs() {
+        return logs;
     }
 }

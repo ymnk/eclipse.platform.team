@@ -182,9 +182,9 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
      * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#handleChanges(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent, org.eclipse.core.runtime.IProgressMonitor)
      */
     protected void handleChanges(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
-        if (checkedInCollector != null && getConfiguration().getMode() == ISynchronizePageConfiguration.INCOMING_MODE) {
+        if (checkedInCollector != null && getChangeSetCapability().enableCheckedInChangeSetsFor(getConfiguration())) {
             checkedInCollector.handleChange(event);
-        } else if (activeCollector != null && getConfiguration().getMode() == ISynchronizePageConfiguration.OUTGOING_MODE) {
+        } else if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
             activeCollector.handleChange(event);
         } else {
             // Forward the event to the root provider
@@ -212,17 +212,21 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 		if (node == getModelRoot()) {
 		    
 	        // First, disable the collectors
-	        checkedInCollector.reset(null);
-	        checkedInCollector.removeListener(checkedInCollectorListener);
-	        activeCollector.reset(null);
-	        activeCollector.getActiveChangeSetManager().removeListener(activeChangeSetListener);
+		    if (checkedInCollector != null) {
+		        checkedInCollector.reset(null);
+		        checkedInCollector.removeListener(checkedInCollectorListener);
+		    }
+		    if (activeCollector != null) { 
+		        activeCollector.reset(null);
+		        activeCollector.getActiveChangeSetManager().removeListener(activeChangeSetListener);
+		    }
 	        
 	        // Then, re-enable the proper collection method
-		    if (checkedInCollector != null && getConfiguration().getMode() == ISynchronizePageConfiguration.INCOMING_MODE) {
+		    if (checkedInCollector != null && getChangeSetCapability().enableCheckedInChangeSetsFor(getConfiguration())) {
 		        checkedInCollector.addListener(checkedInCollectorListener);
 		        checkedInCollector.reset(getSyncInfoSet());
 		        
-		    } else if (activeCollector != null && getConfiguration().getMode() == ISynchronizePageConfiguration.OUTGOING_MODE) {
+		    } else if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
 		        activeCollector.getActiveChangeSetManager().addListener(activeChangeSetListener);
 	            activeCollector.reset(getSyncInfoSet());
 	        } else {
