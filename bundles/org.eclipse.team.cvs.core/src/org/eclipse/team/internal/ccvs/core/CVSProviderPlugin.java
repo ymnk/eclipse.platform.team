@@ -14,7 +14,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.core.internal.settings.SettingsStore;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Preferences;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.settings.IMemento;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
@@ -63,6 +64,8 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 
 public class CVSProviderPlugin extends Plugin {
 	
+	private SettingsStore settings;
+
 	// preference names
 	public static final String READ_ONLY = "cvs.read.only"; //$NON-NLS-1$
 
@@ -336,6 +339,7 @@ public class CVSProviderPlugin extends Plugin {
 		// save the state which includes the known repositories
 		saveState();
 		savePluginPreferences();
+		savePluginSettings();
 		
 		// remove listeners
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
@@ -794,6 +798,28 @@ public class CVSProviderPlugin extends Plugin {
 	}
 
 	private void loadState() {
+		SettingsStore store = getPluginSettings();
+		IMemento memento = store.getMemento("repositories");
+		if (memento == null) {
+			loadOldState();
+			return;
+		}
+		IMemento[] children = memento.getChildren("repository");
+		for (int i = 0; i < children.length; i++) {
+			IMemento child = children[i];
+			try {
+				ICVSRepositoryLocation root = getRepository(child.getString("root"));
+				String programName = child.getString("remote-program-name");
+				if (!programName.equals(CVSRepositoryLocation.DEFAULT_REMOTE_CVS_PROGRAM_NAME)) {
+					((CVSRepositoryLocation)root).setRemoteCVSProgramName(programName);
+				}
+			} catch (CVSException e) {
+				log(e);
+			}
+		}
+	}
+	
+	private void loadOldState() {
 		try {
 			IPath pluginStateLocation = CVSProviderPlugin.getPlugin().getStateLocation().append(REPOSITORIES_STATE_FILE);
 			File file = pluginStateLocation.toFile();
@@ -826,27 +852,16 @@ public class CVSProviderPlugin extends Plugin {
 		}
 	}
 	private void saveState() {
-		try {
-			IPath pluginStateLocation = CVSProviderPlugin.getPlugin().getStateLocation();
-			File tempFile = pluginStateLocation.append(REPOSITORIES_STATE_FILE + ".tmp").toFile(); //$NON-NLS-1$
-			File stateFile = pluginStateLocation.append(REPOSITORIES_STATE_FILE).toFile();
-			try {
-				DataOutputStream dos = new DataOutputStream(new FileOutputStream(tempFile));
-				writeState(dos);
-				dos.close();
-				if (stateFile.exists()) {
-					stateFile.delete();
-				}
-				boolean renamed = tempFile.renameTo(stateFile);
-				if (!renamed) {
-					throw new TeamException(new Status(Status.ERROR, CVSProviderPlugin.ID, TeamException.UNABLE, Policy.bind("CVSProvider.rename", tempFile.getAbsolutePath()), null)); //$NON-NLS-1$
-				}
-			} catch (IOException e) {
-				throw new TeamException(new Status(Status.ERROR, CVSProviderPlugin.ID, TeamException.UNABLE, Policy.bind("CVSProvider.save",stateFile.getAbsolutePath()), e)); //$NON-NLS-1$
-			}
-		} catch (TeamException e) {
-			Util.logError(Policy.bind("CVSProvider.errorSaving"), e);//$NON-NLS-1$
+		SettingsStore store = getPluginSettings();
+		IMemento memento = store.createMemento("repositories");
+		Collection repos = repositories.values();
+		for (Iterator iter = repositories.values().iterator(); iter.hasNext();) {
+			CVSRepositoryLocation repository = (CVSRepositoryLocation) iter.next();
+			IMemento child = memento.createChild("repository");
+			child.putString("root", repository.getLocation());
+			child.putString("remote-program-name", repository.getRemoteCVSProgramName());
 		}
+		store.setValue("repositories", memento);
 	}
 	
 	private void readState(DataInputStream dis) throws IOException, CVSException {
@@ -935,7 +950,43 @@ public class CVSProviderPlugin extends Plugin {
 	 * @return boolean
 	 */
 	public boolean isWatchEditEnabled() {
-		return getPluginPreferences().getBoolean(CVSProviderPlugin.READ_ONLY);
+		return getPluginSettings().getBoolean(CVSProviderPlugin.READ_ONLY);
 	}
 
+	public SettingsStore getPluginSettings() {
+		if (settings == null) {
+			settings = new SettingsStore(getSettingsLocation().toFile());
+			// populate the settings with any preferences
+			Preferences prefs = getPluginPreferences();
+			String[] names = prefs.propertyNames();
+			for (int i = 0; i < names.length; i++) {
+				String name = names[i];
+				settings.setDefault(name, prefs.getDefaultString(name));
+				if (!prefs.isDefault(name)) {
+					settings.setValue(name, prefs.getString(name));
+				}
+			}
+			try {
+				// load any saved since then
+				((SettingsStore)settings).load();
+			} catch (IOException e) {
+				if (isDebugging()) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return settings;
+	}
+	
+	protected void savePluginSettings() {
+		try {
+			settings.store(ID);
+		} catch (IOException e) {
+			log(IStatus.ERROR, "Error saving plugin settings", e);
+		}
+	}
+	
+	public IPath getSettingsLocation() {
+		return getStateLocation().append("settings");
+	}
 }

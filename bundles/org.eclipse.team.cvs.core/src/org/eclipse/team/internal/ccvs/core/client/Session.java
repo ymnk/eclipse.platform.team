@@ -1177,7 +1177,7 @@ public class Session {
 				globalOptions = quietOption.addToEnd(globalOptions);
 			}
 			// Get the user preference for read-only
-			if (CVSProviderPlugin.getPlugin().getPluginPreferences().getBoolean(CVSProviderPlugin.READ_ONLY)) {
+			if (CVSProviderPlugin.getPlugin().getPluginSettings().getBoolean(CVSProviderPlugin.READ_ONLY)) {
 				if (!Command.MAKE_READ_ONLY.isElementOf(globalOptions)) {
 					globalOptions = Command.MAKE_READ_ONLY.addToEnd(globalOptions);
 				}
