@@ -119,6 +119,13 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		public void addOverlay(ImageDescriptor overlay) {
 			this.overlay = overlay;
 		}
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.IDecoration#addOverlay(org.eclipse.jface.resource.ImageDescriptor, int)
+		 */
+		public void addOverlay(ImageDescriptor overlay, int quadrant) {
+			// TODO Auto-generated method stub
+			
+		}
 	}
 	
 	static {

@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
-
 import java.lang.reflect.InvocationTargetException;
 import org.eclipse.compare.*;
 import org.eclipse.compare.internal.CompareEditor;
@@ -20,8 +19,10 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
@@ -101,7 +102,7 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 			
 		}	
 	}
-	
+		
 	/**
 	 * Create a <code>SynchronizeCompareInput</code> whose diff viewer is configured
 	 * using the provided <code>SyncInfoSetCompareConfiguration</code>.
@@ -120,20 +121,61 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 			ISynchronizePageConfiguration c = participant.createPageConfiguration();
 			IPageBookViewPage page = participant.createPage(c);
 			((ISynchronizePage)page).init(new CompareViewerPaneSite());
-			page.createControl(parent);
+			
+			final Composite top = new Composite(parent, SWT.NULL);
+			GridLayout layout = new GridLayout();
+			layout.marginHeight = 0;
+			layout.marginWidth = 0;
+			layout.verticalSpacing = 0;
+			GridData data = new GridData(GridData.FILL_BOTH);
+			data.grabExcessHorizontalSpace = true;
+			top.setLayout(layout);
+			top.setLayoutData(data);
+			top.setBackground(top.getDisplay().getSystemColor(SWT.COLOR_BLUE));
+			page.createControl(top);
+			top.setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
+			top.layout();
 			if(page instanceof ISynchronizePage) {
-				this.viewer = ((ISynchronizePage)page).getViewer();
+				final Viewer pageViewer = ((ISynchronizePage)page).getViewer();
+				initializeDiffViewer(pageViewer);
+				page.setActionBars(getActionBars(CompareViewerPane.getToolBarManager(parent)));
+				viewer = new Viewer() {
+					public Control getControl() {
+						return top;
+					}
+
+					public Object getInput() {
+						//return null;
+						return pageViewer.getInput();
+					}
+
+					public ISelection getSelection() {
+						//return null;
+						return pageViewer.getSelection();
+					}
+
+					public void refresh() {
+						pageViewer.refresh();
+					}
+
+					public void setInput(Object input) {
+						//pageViewer.setInput(input);
+					}
+
+					public void setSelection(ISelection selection, boolean reveal) {
+						pageViewer.setSelection(selection, reveal);
+					}
+					
+					};
 			} else {
 				// If we can't get access to a viewer, there isn't much more to do. Returning null will
 				// force the compare input to leave the diff viewer empty.
 				return null;
 			}
-			page.setActionBars(getActionBars(CompareViewerPane.getToolBarManager(parent)));
 		} catch (PartInitException e) {
 			Utils.handle(e);
 			return null;
 		}
-		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, getTitle());
 		
 		// buffered merge mode, don't ask for save when switching nodes since contents will be buffered in diff nodes
 		// and saved when the input is saved.
@@ -157,8 +199,6 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 //		previousAction = new NavigationAction(false);
 //		nextAction.setCompareEditorInput(this);
 //		previousAction.setCompareEditorInput(this);
-		
-		initializeDiffViewer(viewer);
 		//diffViewerConfiguration.navigate(true);
 		return viewer;
 	}
@@ -334,7 +374,7 @@ public class SynchronizeCompareInput extends CompareEditorInput implements ICont
 	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		return new DiffNode(0) {
+		return new DiffNode(12) {
 			public boolean hasChildren() {
 				return true;
 			}
