@@ -16,12 +16,14 @@ public class Tag extends Command {
 	public static final LocalOption CREATE_BRANCH = new LocalOption("-b", null);	 //$NON-NLS-1$	
 
 	protected Tag() { }
+	
 	protected String getCommandId() {
 		return "tag"; //$NON-NLS-1$
 	}
 
 	protected ICVSResource[] computeWorkResources(Session session, LocalOption[] localOptions,
 		String[] arguments) throws CVSException {
+			
 		if (arguments.length < 1) throw new IllegalArgumentException();
 		String[] allButFirst = new String[arguments.length - 1];
 		System.arraycopy(arguments, 1, allButFirst, 0, arguments.length - 1);
@@ -33,6 +35,6 @@ public class Tag extends Command {
 		throws CVSException {			
 
 		// Send all folders that are already managed to the server
-		sendFileStructure(session, resources, false, false, monitor);
+		new FileStructureVisitor(session, false, false, monitor).visit(resources);
 	}
 }

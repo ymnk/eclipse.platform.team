@@ -49,9 +49,7 @@ public class Diff extends Command {
 		throws CVSException {			
 
 		checkResourcesManaged(resources);
-		FileStructureVisitor fsVisitor = new DiffStructureVisitor(session, false, false,  monitor);
-		for (int i = 0; i < resources.length; i++) {
-			resources[i].accept(fsVisitor);
-		}
+		DiffStructureVisitor visitor = new DiffStructureVisitor(session, monitor);
+		visitor.visit(resources);
 	}
 }

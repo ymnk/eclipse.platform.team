@@ -275,12 +275,10 @@ public abstract class Command {
 	 * @see Command#sendFileStructure(ICVSResource,IProgressMonitor,boolean,boolean,boolean)
 	 */
 	protected void sendFileStructure(Session session, ICVSResource[] resources,
-		boolean modifiedOnly, boolean emptyFolders, IProgressMonitor monitor) throws CVSException {
+		boolean emptyFolders, IProgressMonitor monitor) throws CVSException {
 		checkResourcesManaged(resources);
-		FileStructureVisitor fsVisitor = new FileStructureVisitor(session, modifiedOnly, emptyFolders,  monitor);
-		for (int i = 0; i < resources.length; i++) {
-			resources[i].accept(fsVisitor);
-		}
+		
+		new FileStructureVisitor(session, emptyFolders, true, monitor).visit(resources);
 	}
 
 	/**
