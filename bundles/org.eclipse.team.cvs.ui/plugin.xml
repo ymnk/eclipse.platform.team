@@ -24,6 +24,17 @@
       <import plugin="org.eclipse.compare"/>
    </requires>
 
+<!-- *************** Synchronize View Participant **************** -->
+<extension
+         point="org.eclipse.team.ui.synchronizeParticipants">
+      <participant
+            name="%CVSWorkspaceSynchronizeParticipant.name"
+            icon="icons/full/cview16/console_view.gif"
+            class="org.eclipse.team.internal.ccvs.ui.Console"
+            id="org.eclipse.team.cvs.ui.cvsworkspace_syncparticipant">
+      </participant>
+</extension>
+
 <!-- *************** Authenticator **************** -->
    <extension
          point="org.eclipse.team.cvs.core.authenticator">

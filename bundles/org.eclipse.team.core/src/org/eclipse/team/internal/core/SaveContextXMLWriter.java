@@ -10,24 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.io.*;
+import java.util.*;
 
 import org.apache.xerces.parsers.SAXParser;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Plugin;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
+import org.eclipse.team.core.ISaveContext;
 import org.eclipse.team.core.TeamException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -130,7 +118,7 @@ public class SaveContextXMLWriter extends PrintWriter {
 		}
 		return null;
 	}
-	public void write(SaveContext item) {
+	public void write(ISaveContext item) {
 		
 		// start tag for this element
 		String name = item.getName();
@@ -144,10 +132,10 @@ public class SaveContextXMLWriter extends PrintWriter {
 		startTag(name, attributes);
 		
 		// write out child elements
-		SaveContext[] children = item.getChildren();
+		ISaveContext[] children = item.getChildren();
 		if(children != null) {
 			for (int i = 0; i < children.length; i++) {
-				SaveContext child = children[i];
+				ISaveContext child = children[i];
 				write(child);
 			}
 		}

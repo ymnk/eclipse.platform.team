@@ -31,12 +31,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.WorkbenchException;
 
-/**
- * @author JLemieux
- *
- * To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Generation - Code and Comments
- */
 public class SynchronizeManager implements ISynchronizeManager {
 	/**
 	 * Synchronize View page listeners

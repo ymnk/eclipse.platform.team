@@ -16,7 +16,7 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.part.IPageBookViewPage;
 
-public class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
+public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant {
 	
 	private SubscriberInput input;
 	private SubscriberSynchronizeViewPage page;

@@ -10,9 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.ui.sync;
 
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.team.core.ISaveContext;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -23,14 +24,6 @@ import org.eclipse.ui.part.IPageBookViewPage;
  * @since 3.0
  */
 public interface ISynchronizeParticipant {
-	/**
-	 * Returns the unique id that identifies this participant.
-	 * 
-	 * @return returns the unique id that identifies this participant. Cannot
-	 * be <code>null</code>.
-	 */
-	public QualifiedName getUniqueId();
-	
 	/**
 	 * Returns the name of this synchronize participant.
 	 * 
@@ -55,6 +48,30 @@ public interface ISynchronizeParticipant {
 	 * @return a page book view page representation of this synchronize participant
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view);
+	
+	/**
+	 * Initializes this participant with the given synchronize view.  A save context is passed to
+	 * the participant which contains a snapshot of the participants state from a previous
+	 * session.  Where possible, the participant should try to recreate that state
+	 * within the synchronize view.
+	 * <p>
+	 * This method is automatically called by the team plugin shortly after synchronize 
+	 * view construction.  It marks the start of the views's lifecycle. Clients must 
+	 * not call this method.
+	 * </p>
+	 *
+	 * @param view the synchronize view reconstructing this participant
+	 * @param saveContext the ISynchronizeParticipant state or null if there is no previous saved state
+	 * @exception PartInitException if this participant was not initialized successfully
+	 */
+	public void init(ISynchronizeView view, ISaveContext saveContext) throws PartInitException;
+	
+	/**
+	 * Saves the participants object state within a save context.
+	 *
+	 * @param memento a memento to receive the object state
+	 */
+	public void saveState(ISaveContext saveContext);
 	
 	/**
 	 * Adds a listener for changes to properties of this synchronize participant.

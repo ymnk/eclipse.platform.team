@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.team.core.ISaveContext;
+
 /**
  * Something (as a mark of visible sign) left by a material thing formely present but now 
  * lost or unknown.
@@ -23,7 +25,7 @@ import java.util.Map;
  * TODO: API doc if this class is to remain. Ideally it should replaced by a core mechanism which
  * allows persisting somewhat like IMemento. 
  */
-public class SaveContext {
+public class SaveContext implements ISaveContext {
 	
 	private String name;
 	
@@ -34,6 +36,11 @@ public class SaveContext {
 	private List children = new ArrayList(2);
 	
 	public SaveContext() {}
+	
+	public SaveContext(String name, String value) {
+		setName(name);
+		setValue(value);
+	}
 	
 	public String getAttribute(String name) {
 		if(attributes == null) {
@@ -93,7 +100,7 @@ public class SaveContext {
 		return (String[])attributes.keySet().toArray(new String[attributes.keySet().size()]);
 	}
 	
-	public SaveContext[] getChildren() {
+	public ISaveContext[] getChildren() {
 		return (SaveContext[]) children.toArray(new SaveContext[children.size()]);
 	}
 
@@ -109,11 +116,11 @@ public class SaveContext {
 		attributes = map;
 	}
 
-	public void setChildren(SaveContext[] items) {
+	public void setChildren(ISaveContext[] items) {
 		children = new ArrayList(Arrays.asList(items));
 	}
 	
-	public void putChild(SaveContext child) {
+	public void putChild(ISaveContext child) {
 		children.add(child);
 	}
 
@@ -134,5 +141,12 @@ public class SaveContext {
 	
 	public String toString() {
 		return getName() + " ->" + attributes.toString(); //$NON-NLS-1$
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.ISaveContext#createChild(java.lang.String, java.lang.String)
+	 */
+	public ISaveContext createChild(String name, String value) {
+		return new SaveContext(name, value);
 	}
 }
