@@ -11,10 +11,11 @@
 package org.eclipse.team.internal.ccvs.ui.operations;
 
 import java.util.*;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.*;
+import org.eclipse.core.resources.mapping.IResourceMapper;
+import org.eclipse.core.resources.mapping.IResourceTraversal;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.action.IAction;
@@ -71,7 +72,7 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	     * Add the resources from the traversal to the entry
 	     * @param traversal the traversal
 	     */
-	    public void add(ITraversal traversal) {
+	    public void add(IResourceTraversal traversal) {
 	        IResource[] resources = traversal.getResources();
 	        for (int i = 0; i < resources.length; i++) {
                 IResource resource = resources[i];
@@ -155,7 +156,7 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
             }
             return selection;
         }
-        public ITraversal[] getTraversals(ITraversalContext context, IProgressMonitor monitor) throws CoreException {
+        public IResourceTraversal[] getTraversals(IResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
             return asTraversals(resources);
         }
         public Object getAdapter(Class adapter) {
@@ -171,8 +172,8 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
      * @param resources the resources
      * @return deep traversals for the resources
      */
-    public static ITraversal[] asTraversals(final IResource[] resources) {
-        return new ITraversal[] { new ITraversal() {
+    public static IResourceTraversal[] asTraversals(final IResource[] resources) {
+        return new IResourceTraversal[] { new IResourceTraversal() {
             IProject[] projects;
             public IProject[] getProjects() {
                 if (projects == null) {
@@ -300,9 +301,9 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
 	 */
 	private Map getProviderTraversalMapping() throws CoreException {
 		Map result = new HashMap();
-        ITraversal[] traversals = getTraversals();
+        IResourceTraversal[] traversals = getTraversals();
         for (int i = 0; i < traversals.length; i++) {
-            ITraversal traversal = traversals[i];
+            IResourceTraversal traversal = traversals[i];
             IProject[] projects = traversal.getProjects();
             for (int j = 0; j < projects.length; j++) {
                 IProject project = projects[j];
@@ -429,20 +430,20 @@ public abstract class RepositoryProviderOperation extends CVSOperation {
      */
     protected IResource[] getTraversalRoots() throws CoreException {
         List result = new ArrayList();
-        ITraversal[] traversals = getTraversals();
+        IResourceTraversal[] traversals = getTraversals();
         for (int i = 0; i < traversals.length; i++) {
-            ITraversal traversal = traversals[i];
+            IResourceTraversal traversal = traversals[i];
             result.addAll(Arrays.asList(traversal.getResources()));
         }
         return (IResource[]) result.toArray(new IResource[result.size()]);
     }
     
-    public ITraversal[] getTraversals() throws CoreException {
+    public IResourceTraversal[] getTraversals() throws CoreException {
         List traversals = new ArrayList();
         for (int i = 0; i < mappers.length; i++) {
             IResourceMapper mapper = mappers[i];
             traversals.addAll(Arrays.asList(mapper.getTraversals(null, null)));
         }
-        return (ITraversal[]) traversals.toArray(new ITraversal[traversals.size()]);
+        return (IResourceTraversal[]) traversals.toArray(new IResourceTraversal[traversals.size()]);
     }
 }

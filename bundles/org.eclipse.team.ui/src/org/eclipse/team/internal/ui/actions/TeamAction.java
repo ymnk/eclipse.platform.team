@@ -14,21 +14,9 @@ package org.eclipse.team.internal.ui.actions;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -42,14 +30,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.ui.IObjectActionDelegate;
-import org.eclipse.ui.IViewActionDelegate;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionDelegate;
 
 /**
@@ -199,10 +180,10 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 
     public static IProject[] getProjects(IResourceMapper element) {
         try {
-            ITraversal[] traversals = element.getTraversals(null, null);
+            IResourceTraversal[] traversals = element.getTraversals(null, null);
             Set projects = new HashSet();
             for (int i = 0; i < traversals.length; i++) {
-                ITraversal traversal = traversals[i];
+            	IResourceTraversal traversal = traversals[i];
                 projects.addAll(Arrays.asList(traversal.getProjects()));
             }
             return (IProject[]) projects.toArray(new IProject[projects.size()]);
@@ -217,16 +198,16 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 	 * 
 	 * @return the selected resources based on the available traversals.
 	 */
-	public ITraversal[] getSelectedTraversals(String providerId) throws TeamException {
+	public IResourceTraversal[] getSelectedTraversals(String providerId) throws TeamException {
 		try {
 			Object[] elements = getSelectedAdaptables(selection, IResourceMapper.class);
 			ArrayList providerTraversals = new ArrayList();
 			if(elements.length > 0) {
 				for (int i = 0; i < elements.length; i++) {
 					IResourceMapper element = (IResourceMapper) elements[i];
-					ITraversal[] traversals = element.getTraversals(getModelContext(), null);
+					IResourceTraversal[] traversals = element.getTraversals(getModelContext(), null);
 					for (int j = 0; j < traversals.length; j++) {
-						ITraversal traversal = traversals[j];
+						IResourceTraversal traversal = traversals[j];
 						boolean addIt = true;
 						if(providerId != null) {
 							IProject[] projects = traversal.getProjects();
@@ -242,14 +223,14 @@ public abstract class TeamAction extends ActionDelegate implements IObjectAction
 					}
 				}
 			
-			return (ITraversal[]) providerTraversals.toArray(new ITraversal[providerTraversals.size()]);
+			return (IResourceTraversal[]) providerTraversals.toArray(new IResourceTraversal[providerTraversals.size()]);
 		} catch (CoreException e) {
 			throw TeamException.asTeamException(e);
 		}
 	}
 	
-	protected ITraversalContext getModelContext() {
-		return new ITraversalContext() {
+	protected IResourceMappingContext getModelContext() {
+		return new IResourceMappingContext() {
 			public boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
 				return false;
 			}
