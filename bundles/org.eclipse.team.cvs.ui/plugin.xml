@@ -590,7 +590,7 @@
             id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriberContributions"
             adaptable="true">
           
-        	<filter name="equals" value="org.eclipse.team.cvs.subscribers:workspace-subscriber" />
+        	<filter name="equals" value="org.eclipse.team.cvs.ui.cvsworkspace-participant" />
             
 			<action
                label="%CVSWorkspaceSubscriber.confirmMerged.label"
@@ -645,7 +645,7 @@
 			id="org.eclipse.team.ccvs.ui.CVSMergeSubscriberContributions"
 			adaptable="true">
     
-			<filter name="startsWith" value="org.eclipse.team.cvs.subscribers:merge-" />
+			<filter name="equals" value="org.eclipse.team.cvs.ui.cvsmerge-participant" />
   
 			<action
 				label="%CVSWorkspaceSubscriber.confirmMerged.label"

@@ -103,7 +103,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	public void setWorkingSet(IWorkingSet set) {
-		firePropertyChange(this, P_SYNCVIEWPAGE_WORKINGSET, null, set);
+		page.setWorkingSet(set);
 	}
 	
 	public IWorkingSet getWorkingSet() {

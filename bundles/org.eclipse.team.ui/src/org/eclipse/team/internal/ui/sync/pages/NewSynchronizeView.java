@@ -33,30 +33,40 @@ import org.eclipse.ui.part.MessagePage;
 import org.eclipse.ui.part.PageBook;
 import org.eclipse.ui.part.PageBookView;
 
+/**
+ * @author JLemieux
+ *
+ * To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Generation - Code and Comments
+ */
+/**
+ * @author JLemieux
+ *
+ * To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Generation - Code and Comments
+ */
 public class NewSynchronizeView extends PageBookView implements ISynchronizeView, ISynchronizeParticipantListener, IPropertyChangeListener {
 	
 	/**
-	 * The console being displayed, or <code>null</code> if none
+	 * The participant being displayed, or <code>null</code> if none
 	 */
-	private ISynchronizeParticipant fActivePage = null;
+	private ISynchronizeParticipant activeParticipant = null;
 	
 	/**
-	 * Map of consoles to dummy console parts (used to close pages)
+	 * Map of participants to dummy participant parts (used to close pages)
 	 */
 	private Map fPageToPart;
 	
 	/**
-	 * Map of parts to consoles
+	 * Map of parts to participants
 	 */
 	private Map fPartToPage;
 	
-	// actions
+	/**
+	 * 
+	 */
 	private SynchronizePageDropDownAction fPageDropDown;
 	
-	private boolean isAvailable() {
-		return getPageBook() != null && !getPageBook().isDisposed();
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
@@ -78,10 +88,10 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.debug.internal.ui.console.IConsoleView#getConsole()
+	 * @see org.eclipse.team.ui.sync.ISynchronizeView#getParticipant()
 	 */
 	public ISynchronizeParticipant getParticipant() {
-		return fActivePage;
+		return activeParticipant;
 	}
 
 	/* (non-Javadoc)
@@ -89,12 +99,12 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 	 */
 	protected void showPageRec(PageRec pageRec) {
 		super.showPageRec(pageRec);
-		fActivePage = (ISynchronizeParticipant)fPartToPage.get(pageRec.part);
+		activeParticipant = (ISynchronizeParticipant)fPartToPage.get(pageRec.part);
 		updateTitle();		
 	}
 
-	/**
-	 * Updates the view title based on the active console
+	/*
+	 * Updates the view title based on the active participant
 	 */
 	protected void updateTitle() {
 		ISynchronizeParticipant page = getParticipant();
@@ -113,12 +123,12 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 		page.dispose();
 		pageRecord.dispose();
 		
-		ISynchronizeParticipant console = (ISynchronizeParticipant)fPartToPage.get(part);
-		console.removePropertyChangeListener(this);
+		ISynchronizeParticipant participant = (ISynchronizeParticipant)fPartToPage.get(part);
+		participant.removePropertyChangeListener(this);
 				
 		// empty cross-reference cache
 		fPartToPage.remove(part);
-		fPageToPart.remove(console);
+		fPageToPart.remove(participant);
 	}
 
 	/* (non-Javadoc)
@@ -126,11 +136,11 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 	 */
 	protected PageRec doCreatePage(IWorkbenchPart dummyPart) {
 		SynchronizeViewWorkbenchPart part = (SynchronizeViewWorkbenchPart)dummyPart;
-		ISynchronizeParticipant console = part.getConsole();
-		IPageBookViewPage page = console.createPage(this);
+		ISynchronizeParticipant participant = part.getConsole();
+		IPageBookViewPage page = participant.createPage(this);
 		initPage(page);
 		page.createControl(getPageBook());
-		console.addPropertyChangeListener(this);
+		participant.addPropertyChangeListener(this);
 		PageRec rec = new PageRec(dummyPart, page);
 		return rec;
 	}
@@ -161,18 +171,18 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.console.IConsole[])
+	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipantListener#participantsAdded(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 	 */
-	public void participantsAdded(final ISynchronizeParticipant[] consoles) {
+	public void participantsAdded(final ISynchronizeParticipant[] participants) {
 		if (isAvailable()) {
 			Runnable r = new Runnable() {
 				public void run() {
-					for (int i = 0; i < consoles.length; i++) {
+					for (int i = 0; i < participants.length; i++) {
 						if (isAvailable()) {
-							ISynchronizeParticipant console = consoles[i];
-							SynchronizeViewWorkbenchPart part = new SynchronizeViewWorkbenchPart(console, getSite());
-							fPageToPart.put(console, part);
-							fPartToPage.put(part, console);
+							ISynchronizeParticipant participant = participants[i];
+							SynchronizeViewWorkbenchPart part = new SynchronizeViewWorkbenchPart(participant, getSite());
+							fPageToPart.put(participant, part);
+							fPartToPage.put(part, participant);
 							partActivated(part);
 						}
 					}
@@ -183,7 +193,7 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui.console.IConsole[])
+	 * @see org.eclipse.team.ui.sync.ISynchronizeParticipantListener#participantsRemoved(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 	 */
 	public void participantsRemoved(final ISynchronizeParticipant[] consoles) {
 		if (isAvailable()) {
@@ -211,7 +221,7 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 	}
 
 	/**
-	 * Constructs a console view
+	 * Constructs a synchronize view
 	 */
 	public NewSynchronizeView() {
 		super();
@@ -239,15 +249,20 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 		}
 	}
 
+	/**
+	 * Create the default actions for the view. These will be shown regardless of the
+	 * participant being displayed.
+	 */
 	protected void createActions() {
-		//fPinAction = new PinConsoleAction(this);
 		fPageDropDown = new SynchronizePageDropDownAction(this);
 	}
 
+	/**
+	 * Add the actions to the toolbar
+	 * 
+	 * @param mgr toolbar manager
+	 */
 	protected void configureToolBar(IToolBarManager mgr) {
-//		mgr.add(new Separator(IConsoleConstants.LAUNCH_GROUP));
-//		mgr.add(new Separator(IConsoleConstants.OUTPUT_GROUP));
-//		mgr.add(fPinAction);
 		mgr.add(fPageDropDown);
 	}
 
@@ -297,24 +312,27 @@ public class NewSynchronizeView extends PageBookView implements ISynchronizeView
 	 * @see IWorkbenchPart#createPartControl(Composite)
 	 */
 	public void createPartControl(Composite parent) {
-		//registerPartListener();
 		super.createPartControl(parent);
 		createActions();
 		IToolBarManager tbm= getViewSite().getActionBars().getToolBarManager();
 		configureToolBar(tbm);
-		updateForExistingConsoles();
+		updateForExistingParticipants();
 		getViewSite().getActionBars().updateActionBars();
 	}
 	
 	/**
 	 * Initialize for existing consoles
 	 */
-	private void updateForExistingConsoles() {
+	private void updateForExistingParticipants() {
 		ISynchronizeManager manager = TeamUI.getSynchronizeManager();
 		// create pages for consoles
 		ISynchronizeParticipant[] consoles = manager.getSynchronizeParticipants();
 		participantsAdded(consoles);
 		// add as a listener
 		manager.addSynchronizeParticipantListener(this);		
-	}	
+	}
+	
+	private boolean isAvailable() {
+		return getPageBook() != null && !getPageBook().isDisposed();
+	}
 }

@@ -125,11 +125,11 @@ public class SynchronizeViewNode implements IAdaptable, IActionFilter, ISynchron
 			return false;
 		}
 		TeamSubscriber subscriber = ((SynchronizeViewNode) target).getTeamSubscriber();
-		String id = subscriber.getId().toString();
+		String qualifier = subscriber.getId().getQualifier();
 		if (name.equals("startsWith")) { //$NON-NLS-1$			
-			return id.startsWith(value);
+			return qualifier.startsWith(value);
 		} else if(name.equals("equals")) { //$NON-NLS-1$
-			return id.equals(value);
+			return qualifier.equals(value);
 		}
 		return false;
 	}

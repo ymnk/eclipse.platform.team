@@ -15,12 +15,10 @@ import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.team.ui.sync.ISynchronizeParticipant;
 
 public class ShowSynchronizeViewPage extends Action {
+	
 	private ISynchronizeParticipant fPage;
 	private ISynchronizeView fView;
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.action.IAction#run()
-	 */
 	public void run() {
 		if (!fPage.equals(fView.getParticipant())) {
 			fView.display(fPage);
@@ -28,15 +26,16 @@ public class ShowSynchronizeViewPage extends Action {
 	}
 	
 	/**
-	 * Constructs an action to display the given page.
+	 * Constructs an action to display the given synchronize participant in the
+	 * synchronize view.
 	 * 
 	 * @param view the synchronize view in which the given page is contained
-	 * @param console the console
+	 * @param participant the participant to show
 	 */
-	public ShowSynchronizeViewPage(ISynchronizeView view, ISynchronizeParticipant page) {
-		super(page.getName(), Action.AS_RADIO_BUTTON);
-		fPage = page;
+	public ShowSynchronizeViewPage(ISynchronizeView view, ISynchronizeParticipant participant) {
+		super(participant.getName(), Action.AS_RADIO_BUTTON);
+		fPage = participant;
 		fView = view;
-		setImageDescriptor(page.getImageDescriptor());
+		setImageDescriptor(participant.getImageDescriptor());
 	}
 }

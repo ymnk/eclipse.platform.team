@@ -53,10 +53,6 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 	private IMenuManager menuManager;
 	private IMenuListener menuListener;
 
-	private ISynchronizeParticipant page;
-
-	private ISynchronizeView view;
-	
 	private boolean isMenuDynamic = false;
 
 	/**
@@ -67,8 +63,6 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 	 * 	working set is set
 	 */
 	public WorkingSetFilterActionGroup(Shell shell, IPropertyChangeListener workingSetUpdater, ISynchronizeView view, ISynchronizeParticipant page) {
-		this.view = view;
-		this.page = page;
 		Assert.isNotNull(shell);
 
 		this.workingSetUpdater = workingSetUpdater;
@@ -162,6 +156,9 @@ public class WorkingSetFilterActionGroup extends ActionGroup {
 		// Update action
 		clearWorkingSetAction.setEnabled(newWorkingSet != null);
 		editWorkingSetAction.setEnabled(newWorkingSet != null);
+		
+		if(workingSet != null)
+			PlatformUI.getWorkbench().getWorkingSetManager().addRecentWorkingSet(newWorkingSet);
 		
 		// Update viewer
 		if (workingSetUpdater != null) {

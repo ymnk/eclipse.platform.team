@@ -21,19 +21,19 @@ package org.eclipse.team.ui.sync;
 public interface ISynchronizeParticipantListener {
 	
 	/**
-	 * Notification the given consoles have been added to the console
+	 * Notification the given participants have been added to the synchronize
 	 * manager.
 	 * 
-	 * @param consoles added consoles
+	 * @param participants added participants
 	 */
-	public void participantsAdded(ISynchronizeParticipant[] synchronizeTargets);
+	public void participantsAdded(ISynchronizeParticipant[] participants);
 	
 	/**
-	 * Notification the given consoles have been removed from the
-	 * console manager.
+	 * Notification the given participants have been removed from the
+	 * synchronize manager.
 	 * 
-	 * @param consoles removed consoles
+	 * @param participants removed participants
 	 */
-	public void participantsRemoved(ISynchronizeParticipant[] synchronizeTargets);
+	public void participantsRemoved(ISynchronizeParticipant[] participants);
 
 }

@@ -4,31 +4,80 @@ import java.util.Iterator;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jface.action.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.TableLayout;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.JobBusyCursor;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.views.*;
+import org.eclipse.team.internal.ui.sync.views.SyncSetTableContentProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncTableViewer;
+import org.eclipse.team.internal.ui.sync.views.SyncTreeViewer;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerLabelProvider;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerSorter;
+import org.eclipse.team.internal.ui.sync.views.SyncViewerTableSorter;
 import org.eclipse.team.ui.sync.ISynchronizeView;
 import org.eclipse.team.ui.sync.TeamSubscriberParticipant;
-import org.eclipse.team.ui.sync.actions.*;
+import org.eclipse.team.ui.sync.actions.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.ComparisonCriteriaActionGroup;
+import org.eclipse.team.ui.sync.actions.INavigableControl;
+import org.eclipse.team.ui.sync.actions.NavigateAction;
+import org.eclipse.team.ui.sync.actions.OpenWithActionGroup;
+import org.eclipse.team.ui.sync.actions.PseudoConflictFilter;
+import org.eclipse.team.ui.sync.actions.RefactorActionGroup;
+import org.eclipse.team.ui.sync.actions.RefreshAction;
+import org.eclipse.team.ui.sync.actions.SubscriberAction;
+import org.eclipse.team.ui.sync.actions.SyncInfoChangeTypeFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.SyncViewerShowPreferencesAction;
+import org.eclipse.team.ui.sync.actions.ToggleViewLayoutAction;
 import org.eclipse.team.ui.sync.actions.workingsets.WorkingSetDropDownAction;
 import org.eclipse.team.ui.sync.actions.workingsets.WorkingSetFilterActionGroup;
-import org.eclipse.ui.*;
-import org.eclipse.ui.internal.util.StatusLineContributionItem;
-import org.eclipse.ui.part.*;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.part.IPageBookViewPage;
+import org.eclipse.ui.part.IPageSite;
+import org.eclipse.ui.part.IShowInSource;
+import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IPropertyChangeListener {
@@ -39,7 +88,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 	// the viewer type is switched.
 	private Composite composite = null;
 	private TextToolbarManager tbMgr;
-	private StatusLineManager slMgr;
 	
 	// Viewer type constants
 	private int layout;
@@ -73,8 +121,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 	private ComparisonCriteriaActionGroup comparisonCriteria;
 	private Action collapseAll;
 	private Action expandAll;
-
 	private WorkingSetDropDownAction workingSetGroup;
+	private StatusLineContributionGroup statusLine;
 	
 	/**
 	 * Constructs a new SynchronizeView.
@@ -142,6 +190,8 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 		};
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
 		
+		
+		statusLine = new StatusLineContributionGroup(view.getViewSite().getActionBars().getStatusLineManager(), this.input);
 		page.addPropertyChangeListener(this);
 		updateMode(page.getMode());		
 	}
@@ -232,7 +282,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 	
 	protected void createViewer(Composite parent) {				
 		tbMgr = new TextToolbarManager(SWT.FLAT | SWT.HORIZONTAL);
-		tbMgr.createControl(parent);
+		//tbMgr.createControl(parent);
 		switch(layout) {
 			case TeamSubscriberParticipant.TREE_LAYOUT:
 				createTreeViewerPartControl(parent); 
@@ -241,23 +291,6 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 				createTableViewerPartControl(parent); 
 				break;
 		}		
-		StatusLineContributionItem item1 = new StatusLineContributionItem("1", 20) {
-					public void run() {}};
-		StatusLineContributionItem item2 = new StatusLineContributionItem("2", 2) {
-					public void run() {}};
-		StatusLineContributionItem item3 = new StatusLineContributionItem("3", 2) {
-					public void run() {}};
-		StatusLineContributionItem item4 = new StatusLineContributionItem("4", 2) {
-							public void run() {}};
-		IStatusLineManager mgr = view.getViewSite().getActionBars().getStatusLineManager();
-		item1.setText("1.2");
-		item2.setText("1/3");
-		item3.setText("5/6");
-		item4.setText("Working Set: <None>");
-		mgr.add(item1);
-		mgr.add(item2);
-		mgr.add(item3);
-		mgr.add(item4);
 		viewer.setInput(input);
 		viewer.getControl().setFocus();
 		initializeListeners();
@@ -380,6 +413,7 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 	 */
 	public void dispose() {
 		busyCursor.dispose();
+		statusLine.dispose();
 	}
 	
 	/*
@@ -483,28 +517,30 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 	 */
 	public void setActionBars(final IActionBars actionBars) {
 		if(actionBars != null) {
-			IToolBarManager manager = actionBars.getToolBarManager();
-			manager.add(comparisonCriteria);
+			IToolBarManager manager = actionBars.getToolBarManager();			
 			manager.add(refreshAction);
-			manager.add(new Separator(TeamSubscriberParticipant.MB_MODESGROUP));		
+			manager.add(comparisonCriteria);
+			manager.add(new Separator());		
 			manager.add(gotoNext);
 			manager.add(gotoPrevious);
 			manager.add(collapseAll);
+			manager.add(new Separator());
+			page.setActionsBars(actionBars, actionBars.getToolBarManager());
 			
 			// drop down menu
 			IMenuManager menu = actionBars.getMenuManager();
 			MenuManager layoutMenu = new MenuManager(Policy.bind("action.layout.label")); //$NON-NLS-1$		
 			layoutMenu.add(toggleLayoutTable);
 			layoutMenu.add(toggleLayoutTree);
+			workingSetGroup.fillContextMenu(menu);
 			menu.add(layoutMenu);
 			menu.add(new Separator());
 			menu.add(showPreferences);
 		}
 		
 		// allow overrides
-		tbMgr.add(workingSetGroup);
-		tbMgr.add(new Separator());
-		page.setActionsBars(actionBars, tbMgr);
+		//tbMgr.add(workingSetGroup);
+		//tbMgr.add(new Separator());		
 		tbMgr.update(true);
 	}
 
@@ -527,20 +563,18 @@ public class SubscriberSynchronizeViewPage implements IPageBookViewPage, IProper
 			switchViewerType(((Integer)event.getNewValue()).intValue());
 		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE)) {
 			updateMode(((Integer)event.getNewValue()).intValue());
-		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
-			updateWorkingSet((IWorkingSet)event.getNewValue());
 		} else if(event.getProperty().equals(WorkingSetFilterActionGroup.CHANGE_WORKING_SET)) {
 			Object newValue = event.getNewValue();
 			if (newValue instanceof IWorkingSet) {	
-				page.setWorkingSet((IWorkingSet)newValue);
+				input.setWorkingSet((IWorkingSet)newValue);
 			} else if (newValue == null) {
-				page.setWorkingSet(null);
+				input.setWorkingSet(null);
 			}
 		}
 	}
 
-	private void updateWorkingSet(IWorkingSet set) {
-		input.setWorkingSet(set);
+	public void setWorkingSet(IWorkingSet set) {
+		workingSetGroup.setWorkingSet(set);	
 	}
 
 	private void updateMode(int mode) {

@@ -18,35 +18,35 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
 
 /**
- * Fake part to use as keys in page book for console pages
+ * Fake part to use as keys in page book for synchronize participants
  */
 public class SynchronizeViewWorkbenchPart implements IWorkbenchPart {
 
-	private ISynchronizeParticipant fConsole = null;
-	private IWorkbenchPartSite fSite = null;
+	private ISynchronizeParticipant participant = null;
+	private IWorkbenchPartSite site = null;
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public boolean equals(Object obj) {
 		return (obj instanceof SynchronizeViewWorkbenchPart) &&
-			fConsole.equals(((SynchronizeViewWorkbenchPart)obj).fConsole);
+			participant.equals(((SynchronizeViewWorkbenchPart)obj).participant);
 	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		return fConsole.hashCode();
+		return participant.hashCode();
 	}
 
 	/**
-	 * Constructs a part for the given console that binds to the given
+	 * Constructs a part for the given participant that binds to the given
 	 * site
 	 */
-	public SynchronizeViewWorkbenchPart(ISynchronizeParticipant console, IWorkbenchPartSite site) {
-		fConsole = console;
-		fSite = site;
+	public SynchronizeViewWorkbenchPart(ISynchronizeParticipant participant, IWorkbenchPartSite site) {
+		this.participant = participant;
+		this.site = site;
 	}
 
 	/* (non-Javadoc)
@@ -71,7 +71,7 @@ public class SynchronizeViewWorkbenchPart implements IWorkbenchPart {
 	 * @see org.eclipse.ui.IWorkbenchPart#getSite()
 	 */
 	public IWorkbenchPartSite getSite() {
-		return fSite;
+		return site;
 	}
 
 	/* (non-Javadoc)
@@ -115,11 +115,11 @@ public class SynchronizeViewWorkbenchPart implements IWorkbenchPart {
 	}
 
 	/**
-	 * Returns the console associated with this part.
+	 * Returns the participant associated with this part.
 	 * 
-	 * @return console associated with this part
+	 * @return participant associated with this part
 	 */
 	protected ISynchronizeParticipant getConsole() {
-		return fConsole;
+		return participant;
 	}
 }

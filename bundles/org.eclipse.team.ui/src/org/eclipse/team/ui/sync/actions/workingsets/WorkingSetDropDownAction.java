@@ -19,7 +19,6 @@ import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
@@ -30,22 +29,17 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.IWorkingSet;
 
-public class WorkingSetDropDownAction extends Action implements IMenuCreator, IPropertyChangeListener {
+public class WorkingSetDropDownAction extends Action implements IMenuCreator {
 	
-	private ISynchronizeView fView;
 	private MenuManager fMenu;
 	private WorkingSetFilterActionGroup wsgroup;
-	private IPropertyChangeListener workingSetUpdater;
 	
 	public WorkingSetDropDownAction(Shell shell, IPropertyChangeListener workingSetUpdater, ISynchronizeView view, TeamSubscriberParticipant participant) {
-		fView= view;
 		Utils.initAction(this, "action.workingSets."); //$NON-NLS-1$
 		IKeyBindingService kbs = view.getSite().getKeyBindingService();
 		setMenuCreator(this);
 		wsgroup = new WorkingSetFilterActionGroup(shell, workingSetUpdater, view, participant);
 		wsgroup.setMenuDynamic(true);
-		participant.addPropertyChangeListener(this);
-		updateWorkingSet(participant.getWorkingSet());
 	}
 	
 	/* (non-Javadoc)
@@ -55,8 +49,6 @@ public class WorkingSetDropDownAction extends Action implements IMenuCreator, IP
 		if (fMenu != null) {
 			fMenu.dispose();
 		}
-		
-		fView= null;
 	}
 	
 	/* (non-Javadoc)
@@ -111,25 +103,11 @@ public class WorkingSetDropDownAction extends Action implements IMenuCreator, IP
 		// do nothing - this is a menu
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
-	 */
-	public void propertyChange(PropertyChangeEvent event) {
-		if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
-			Object newValue = event.getNewValue();
-			if (newValue instanceof IWorkingSet) {	
-				updateWorkingSet((IWorkingSet)newValue);
-			} else if (newValue == null) {
-				updateWorkingSet(null);
-			}
-		}
+	public void setWorkingSet(IWorkingSet set) {
+		wsgroup.setWorkingSet(set);
 	}
 	
-	private void updateWorkingSet(IWorkingSet set) {
-//		if (set != null) {	
-//			setText(set.getName());
-//		} else if (set == null) {
-//			setText(Policy.bind("action.workingSets.none"));
-//		}
+	public void fillContextMenu(IMenuManager mgr) {
+		wsgroup.fillContextMenu(mgr);
 	}
 }

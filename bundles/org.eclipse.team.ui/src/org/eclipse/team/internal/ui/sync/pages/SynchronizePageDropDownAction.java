@@ -99,7 +99,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		}
 	
 		/* (non-Javadoc)
-		 * @see org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.console.IConsole[])
+		 * @see org.eclipse.team.ui.sync.ISynchronizeParticipantListener#participantsAdded(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 		 */
 		public void participantsAdded(ISynchronizeParticipant[] consoles) {
 			Display display = TeamUIPlugin.getStandardDisplay();
@@ -111,11 +111,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		}
 
 		/* (non-Javadoc)
-		 * 
-		 * Dispose the menu when a launch is removed, such that the actions in this
-		 * menu do not hang on to associated resources.
-		 * 
-		 * @see org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui.console.IConsole[])
+		 * @see org.eclipse.team.ui.sync.ISynchronizeParticipantListener#participantsRemoved(org.eclipse.team.ui.sync.ISynchronizeParticipant[])
 		 */
 		public void participantsRemoved(ISynchronizeParticipant[] consoles) {
 			Display display = TeamUIPlugin.getStandardDisplay();

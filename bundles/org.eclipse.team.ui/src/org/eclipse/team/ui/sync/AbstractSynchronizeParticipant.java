@@ -29,7 +29,7 @@ public abstract class AbstractSynchronizeParticipant implements ISynchronizePart
 	protected IConfigurationElement configElement;
 		
 	/**
-	 * Used to notify this console of lifecycle methods <code>init()</code>
+	 * Used to notify this participant of lifecycle methods <code>init()</code>
 	 * and <code>dispose()</code>.
 	 */
 	class Lifecycle implements ISynchronizeParticipantListener {
