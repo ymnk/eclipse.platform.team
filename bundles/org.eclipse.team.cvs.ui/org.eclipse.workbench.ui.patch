@@ -1,0 +1,230 @@
+Index: Eclipse UI/org/eclipse/ui/internal/decorators/DecorationScheduler.java
+===================================================================
+retrieving revision 1.31
+diff -u -r1.31 DecorationScheduler.java
+--- Eclipse UI/org/eclipse/ui/internal/decorators/DecorationScheduler.java	29 Sep 2003 18:47:11 -0000	1.31
++++ Eclipse UI/org/eclipse/ui/internal/decorators/DecorationScheduler.java	24 Oct 2003 18:44:15 -0000
+@@ -75,17 +75,59 @@
+ 		if (element == null)
+ 			return text;
+ 
++		// First, check to see if a new decorator has already been calculated
+ 		DecorationResult decoration =
+ 			(DecorationResult) resultCache.get(element);
+ 
+ 		if (decoration == null) {
+ 			queueForDecoration(element, adaptedElement, false);
+-			return text;
++			return applyQuickTextDecoration(text, element, adaptedElement);
+ 		} else
+ 			return decoration.decorateWithText(text);
+ 
+ 	}
+ 	/**
++	 * Apply quick decorations to the text. This is done to reduce flicker when
++	 * resource changes cause decorator updates.
++	 */
++	private String applyQuickTextDecoration(String text, Object element, Object adaptedElement) {
++		DecorationResult decoration = getQuickDecorator(element, adaptedElement);
++		return decoration.decorateWithText(text);
++	}
++
++	/**
++	 * Apply quick decorations to the image. This is done to reduce flicker when
++	 * resource changes cause decorator updates.
++	 */
++	private Image applyQuickImageDecoration(Image image, Object element, Object adaptedElement) {
++		DecorationResult decoration = getQuickDecorator(element, adaptedElement);
++		return decoration.decorateWithOverlays(
++				image,
++				decoratorManager.getLightweightManager().getOverlayCache());
++	}
++	
++	private DecorationResult getQuickDecorator(Object element, Object adaptedElement) {
++		DecorationBuilder builder = new DecorationBuilder();
++		//build for the resource first
++		if (adaptedElement != null) {
++			decoratorManager
++				.getLightweightManager()
++				.getQuickDecorations(
++					adaptedElement,
++					builder,
++					true /* adapted result */);
++		}
++		//then add in the results for the main object
++		decoratorManager
++			.getLightweightManager()
++			.getDecorations(
++				element,
++				builder,
++				false/* adapted result */);
++		return builder.createResult();
++	}
++
++	/**
+ 	 * Queue the element and its adapted value if it has not been
+ 	 * already.
+ 	 * @param element
+@@ -135,7 +177,7 @@
+ 
+ 		if (decoration == null) {
+ 			queueForDecoration(element, adaptedElement, false);
+-			return image;
++			return applyQuickImageDecoration(image, element, adaptedElement);
+ 		} else
+ 			return decoration.decorateWithOverlays(
+ 				image,
+Index: Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorDefinition.java
+===================================================================
+retrieving revision 1.9
+diff -u -r1.9 LightweightDecoratorDefinition.java
+--- Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorDefinition.java	12 Mar 2003 17:45:14 -0000	1.9
++++ Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorDefinition.java	24 Oct 2003 18:44:15 -0000
+@@ -60,16 +60,18 @@
+ 	 * creating the decorator.
+ 	 * This method should not be called unless a check for
+ 	 * enabled to be true is done first.
++	 * @param loadIfNeeded indicates whether the decorator should be
++	 * initialized if it isn't already
+ 	 * @return Returns a ILabelDecorator
+ 	 */
+-	protected ILightweightLabelDecorator internalGetDecorator()
++	protected ILightweightLabelDecorator internalGetDecorator(boolean loadInNeeded)
+ 		throws CoreException {
+ 		if (labelProviderCreationFailed)
+ 			return null;
+ 
+ 		final CoreException[] exceptions = new CoreException[1];
+ 
+-		if (decorator == null) {
++		if (decorator == null && loadInNeeded) {
+ 
+ 			if (definingElement.getAttribute(WizardsRegistryReader.ATT_CLASS)
+ 				== null)
+@@ -122,7 +124,7 @@
+ 	 */
+ 	protected IBaseLabelProvider internalGetLabelProvider()
+ 		throws CoreException {
+-		return internalGetDecorator();
++		return internalGetDecorator(true);
+ 	}
+ 
+ 	/**
+@@ -153,7 +155,7 @@
+ 		try {
+ 			//Internal decorator might be null so be prepared
+ 			ILightweightLabelDecorator currentDecorator =
+-				internalGetDecorator();
++				internalGetDecorator(true);
+ 			if (currentDecorator != null)
+ 				currentDecorator.decorate(element, decoration);
+ 		} catch (CoreException exception) {
+@@ -162,6 +164,22 @@
+ 
+ 	}
+ 
++	/**
++	 * Apply any quick decorations to the element
++	 */
++	public void decorateQuickly(Object element, IDecoration decoration) {
++		try {
++			//Internal decorator might be null so be prepared
++			ILightweightLabelDecorator currentDecorator =
++			internalGetDecorator(false);
++			if (currentDecorator != null && currentDecorator instanceof ILightweightLabelDecorator2)
++				((ILightweightLabelDecorator2)currentDecorator).decorateQuickly(element, decoration);
++		} catch (CoreException exception) {
++			handleCoreException(exception);
++		}
++
++	}
++	
+ 	/**
+ 	 * Returns the lightweight decorator, or <code>null</code> if not enabled.
+ 	 * 
+Index: Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorManager.java
+===================================================================
+retrieving revision 1.9
+diff -u -r1.9 LightweightDecoratorManager.java
+--- Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorManager.java	7 Aug 2003 11:39:21 -0000	1.9
++++ Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorManager.java	24 Oct 2003 18:44:15 -0000
+@@ -32,9 +32,9 @@
+ 	 */
+ 
+ 	private class LightweightRunnable implements ISafeRunnable {
+-		private Object element;
+-		private DecorationBuilder decoration;
+-		private LightweightDecoratorDefinition decorator;
++		Object element;
++		DecorationBuilder decoration;
++		LightweightDecoratorDefinition decorator;
+ 
+ 		void setValues(
+ 			Object object,
+@@ -59,8 +59,31 @@
+ 			decorator.decorate(element, decoration);
+ 		}
+ 	}
++	
++	private class QuickLightweightRunnable extends LightweightRunnable {
++		/*
++		 * @see ISafeRunnable.run
++		 */
++		public void run() throws Exception {
++			decorator.decorateQuickly(element, decoration);
++		}
++		/**
++		 * Calculate the decoration for the given element. The method is sycnrhonized
++		 * to ensure that only one decoration calculation is going on (since the runnable
++		 * is a singleton and multiple threads could do quick decoration.
++		 * @param element
++		 * @param decoration
++		 * @param definition
++		 */
++		public synchronized void run(Object element, DecorationBuilder decoration, LightweightDecoratorDefinition definition) {
++			setValues(element, decoration, definition);
++			Platform.run(this);
++			
++		}
++	}
+ 
+ 	private LightweightRunnable runnable = new LightweightRunnable();
++	private QuickLightweightRunnable quickRunnable = new QuickLightweightRunnable();
+ 
+ 	//The cachedDecorators are a 1-many mapping of type to full decorator.
+ 	private HashMap cachedLightweightDecorators = new HashMap();
+@@ -197,6 +220,34 @@
+ 		}
+ 	}
+ 
++	/**
++	 * Fill the decoration with all of the results of the quick
++	 * decorators.
++	 * 
++	 * @param element The source element
++	 * @param decoration. The DecorationResult we are working on.
++	 * @param adaptableDecoration. If it is true only apply the decorators
++	 *  where adaptable is true.
++	 */
++	void getQuickDecorations(
++			Object element,
++			DecorationBuilder decoration,
++			boolean adaptableDecoration) {
++
++		LightweightDecoratorDefinition[] decorators = getDecoratorsFor(element);
++
++		for (int i = 0; i < decorators.length; i++) {
++			//If we are doing the adaptable one make sure we are
++			//only applying the adaptable decorations
++			if(adaptableDecoration && !decorators[i].isAdaptable())
++				continue;
++			if (decorators[i].getEnablement().isEnabledFor(element)) {
++				decoration.setCurrentDefinition(decorators[i]);
++				quickRunnable.run(element, decoration, decorators[i]);
++			}
++		}
++	}
++	
+ 	/**
+ 	 * Decorate the element receiver in a SafeRunnable.
+ 	 * @param element. The Object to be decorated

@@ -1,0 +1,39 @@
+Index: src/org/eclipse/jface/viewers/ILightweightLabelDecorator2.java
+===================================================================
+RCS file: src/org/eclipse/jface/viewers/ILightweightLabelDecorator2.java
+diff -N src/org/eclipse/jface/viewers/ILightweightLabelDecorator2.java
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ src/org/eclipse/jface/viewers/ILightweightLabelDecorator2.java	1 Jan 1970 00:00:00 -0000
+@@ -0,0 +1,32 @@
++/*******************************************************************************
++ * Copyright (c) 2000, 2003 IBM Corporation and others.
++ * All rights reserved. This program and the accompanying materials 
++ * are made available under the terms of the Common Public License v1.0
++ * which accompanies this distribution, and is available at
++ * http://www.eclipse.org/legal/cpl-v10.html
++ * 
++ * Contributors:
++ *     IBM Corporation - initial API and implementation
++ *******************************************************************************/
++package org.eclipse.jface.viewers;
++
++/**
++ * The <code>ILightweightLabelDecorator2</code> is a <code>ILightweightLabelDecorator</code>
++ * that has the ability to decorate quickly when a label change event occurs.
++ */
++public interface ILightweightLabelDecorator2 extends ILightweightLabelDecorator {
++
++	/**
++	 * Decorate the given element quickly. Quickly means without accessing information
++	 * on disk, obtaining any locks that could potentially block or any other potentially 
++	 * long running operation. The decoration
++	 * provided may be the previous decoration provided for the element if calculating
++	 * the new on is too costly. In this case, the method will return <code>true</code>
++	 * indicating that the decorator manager should recalculate the decorator using
++	 * the <code>decorate()</code> method inherited from <code>ILightweightLabelDecorator</code>.
++	 * @param element the element to be decorated
++	 * @param decoration the resulting decoration
++	 * @return <code>true</code> if this is an interum decoration that needs recalulation
++	 */
++	public boolean decorateQuickly(Object element, IDecoration decoration);
++}

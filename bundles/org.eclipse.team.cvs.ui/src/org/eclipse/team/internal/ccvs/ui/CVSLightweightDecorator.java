@@ -24,10 +24,11 @@ import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
-import org.eclipse.jface.viewers.ILightweightLabelDecorator;
+import org.eclipse.jface.viewers.ILightweightLabelDecorator2;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.swt.graphics.ImageData;
@@ -53,7 +54,7 @@ import org.eclipse.team.ui.ISharedImages;
 
 public class CVSLightweightDecorator
 	extends LabelProvider
-	implements ILightweightLabelDecorator, IResourceStateChangeListener {
+	implements ILightweightLabelDecorator2, IResourceStateChangeListener {
 
 	// Images cached for better performance
 	private static ImageDescriptor dirty;
@@ -65,6 +66,9 @@ public class CVSLightweightDecorator
 	private static ImageDescriptor edited;
 
 	private static ExceptionCollector exceptions;
+	private static final QualifiedName CACHED_IMAGE_OVERLAY = new QualifiedName(CVSUIPlugin.ID, "decorator_image_overlay"); //$NON-NLS-1$
+	/* private */ static final QualifiedName CACHED_TEXT_PREFIX = new QualifiedName(CVSUIPlugin.ID, "decorator_text_prefix"); //$NON-NLS-1$
+	/* private */ static final QualifiedName CACHED_TEXT_SUFFIX = new QualifiedName(CVSUIPlugin.ID, "decorator_text_suffix"); //$NON-NLS-1$
 
 	/*
 	 * Define a cached image descriptor which only creates the image data once
@@ -175,7 +179,6 @@ public class CVSLightweightDecorator
 			}
 		} catch (CVSException e) {
 			// The was an exception in isIgnored. Don't decorate
-			//todo should log this error
 			handleException(e);
 			return;
 		}
@@ -192,14 +195,57 @@ public class CVSLightweightDecorator
 		
 		decorateTextLabel(resource, decoration, isDirty, true);
 		
+		decorateImageLabel(resource, decoration, cvsProvider, isDirty);
+	}
+
+	public boolean decorateQuickly(Object element, IDecoration decoration) {
+		IResource resource = getResource(element);
+		if (resource == null || resource.getType() == IResource.ROOT)
+			return false;
+		try {
+			ImageDescriptor overlay = (ImageDescriptor)resource.getSessionProperty(CACHED_IMAGE_OVERLAY);
+			if (overlay != null) {
+				decoration.addOverlay(overlay);
+			}
+			String prefix = (String)resource.getSessionProperty(CACHED_TEXT_PREFIX);
+			if (prefix != null) {
+				decoration.addPrefix(prefix);
+			}
+			String suffix = (String)resource.getSessionProperty(CACHED_TEXT_SUFFIX);
+			if (suffix != null) {
+				decoration.addSuffix(suffix);
+			}
+		} catch (CoreException e) {
+			// Log and continue
+			CVSUIPlugin.log(e);
+		}
+		// Indicate that a recalculation is needed
+		return true;
+	}
+	
+	private void decorateImageLabel(IResource resource, IDecoration decoration, CVSTeamProvider cvsProvider, boolean isDirty) {
 		ImageDescriptor overlay = getOverlay(resource, isDirty, cvsProvider);
 		if(overlay != null) { //actually sending null arg would work but this makes logic clearer
 			decoration.addOverlay(overlay);
+			try {
+				// cache the overlay with the resource to avoid UI flicker when ask for a fast decorator
+				resource.setSessionProperty(CACHED_IMAGE_OVERLAY, overlay);
+			} catch (CoreException e) {
+				// Log and continue
+				CVSUIPlugin.log(e);
+			}
+		} else {
+			try {
+				resource.setSessionProperty(CACHED_IMAGE_OVERLAY, null);
+			} catch (CoreException e) {
+				// Log and continue
+				CVSUIPlugin.log(e);
+			}
 		}
 	}
 
-//todo the showRevisions flag is temp, a better solution is DecoratorStrategy classes which have most the code below
-	public static void decorateTextLabel(IResource resource, IDecoration decoration, boolean isDirty, boolean showRevisions) {
+	//todo the showRevisions flag is temp, a better solution is DecoratorStrategy classes which have most the code below
+	public static void decorateTextLabel(final IResource resource, final IDecoration decoration, boolean isDirty, boolean showRevisions) {
 		try {
 			Map bindings = new HashMap(3);
 			String format = ""; //$NON-NLS-1$
@@ -263,7 +309,20 @@ public class CVSLightweightDecorator
 				}
 			}
 		
-		CVSDecoratorConfiguration.decorate(decoration, format, bindings);
+		CVSDecoratorConfiguration.decorate(new IDecoration() {
+			public void addPrefix(String prefix) {
+				decoration.addPrefix(prefix);
+				cacheTextLabel(resource, prefix, CACHED_TEXT_PREFIX);
+			}
+			public void addSuffix(String suffix) {
+				decoration.addSuffix(suffix);
+				cacheTextLabel(resource, suffix, CACHED_TEXT_SUFFIX);
+			
+			}
+			public void addOverlay(ImageDescriptor overlay) {
+				// The decorator configuration only adds text
+			}
+		}, format, bindings);
 			
 		} catch (CVSException e) {
 			handleException(e);
@@ -271,6 +330,20 @@ public class CVSLightweightDecorator
 		}
 	}
 
+	/* private */ static void cacheTextLabel(IResource resource, String prefix, QualifiedName key) {
+		try {
+			// cache the overlay with the resource to avoid UI flicker when ask for a fast decorator
+			if(prefix == null || prefix.length() == 0) {
+				resource.setSessionProperty(key, null);
+			} else {
+				resource.setSessionProperty(key, prefix);
+			}
+		} catch (CoreException e) {
+			// Log and continue
+			CVSUIPlugin.log(e);
+		}
+	}
+	
 	/**
 	 * Only show the tag if the resources tag is different than the parents. Or else, tag
 	 * names will clutter the text decorations.
