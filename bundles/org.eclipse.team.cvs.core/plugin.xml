@@ -49,6 +49,14 @@
             id="org.eclipse.team.cvs.core.cvsnature">
       </repository>
 	</extension>
+	
+	<extension
+         point="org.eclipse.team.core.earlyWarning">
+      <repository
+            class="org.eclipse.team.internal.ccvs.core.util.SyncFileChangeListener"
+            id="org.eclipse.team.cvs.core.cvsnature">
+      </repository>
+	</extension>
  
  	<!-- *************** Resource patterns ignored by CVS **************** -->
  	<extension point="org.eclipse.team.core.ignore">

@@ -570,4 +570,13 @@ public abstract class RepositoryProvider implements IProjectNature {
 	public boolean canHandleLinkedResources() {
 		return false;
 	}
+	
+	/**
+	 * Method getProviderId.
+	 * @param project
+	 * @return String
+	 */
+	public static String getProviderId(IProject project) throws CoreException {
+		return project.getPersistentProperty(PROVIDER_PROP_KEY);
+	}
 }	

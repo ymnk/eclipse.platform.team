@@ -53,7 +53,6 @@ import org.eclipse.team.internal.ccvs.core.resources.FileModificationManager;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.AddDeleteMoveListener;
 import org.eclipse.team.internal.ccvs.core.util.ProjectDescriptionManager;
-import org.eclipse.team.internal.ccvs.core.util.SyncFileChangeListener;
 import org.eclipse.team.internal.ccvs.core.util.Util;
 
 public class CVSProviderPlugin extends Plugin {
@@ -108,7 +107,6 @@ public class CVSProviderPlugin extends Plugin {
 	
 	// CVS specific resource delta listeners
 	private IResourceChangeListener projectDescriptionListener;
-	private IResourceChangeListener metaFileSyncListener;
 	private AddDeleteMoveListener addDeleteMoveListener;
 	private FileModificationManager fileModificationManager;
 
@@ -272,16 +270,10 @@ public class CVSProviderPlugin extends Plugin {
 		// Initialize CVS change listeners. Note tha the report type is important.
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		projectDescriptionListener = new ProjectDescriptionManager();
-		metaFileSyncListener = new SyncFileChangeListener();
 		addDeleteMoveListener = new AddDeleteMoveListener();
 		fileModificationManager = new FileModificationManager();
-		// Group the two PRE_AUTO_BUILD listeners together for efficiency
-		workspace.addResourceChangeListener(new IResourceChangeListener() {
-			public void resourceChanged(IResourceChangeEvent event) {
-				projectDescriptionListener.resourceChanged(event);
-				metaFileSyncListener.resourceChanged(event);
-			}
-		}, IResourceChangeEvent.PRE_AUTO_BUILD);
+		// The SyncFileChangeListener is registered with Team through the earlyWarning extension point
+		workspace.addResourceChangeListener(projectDescriptionListener, IResourceChangeEvent.PRE_AUTO_BUILD);
 		workspace.addResourceChangeListener(addDeleteMoveListener, IResourceChangeEvent.POST_AUTO_BUILD);
 		workspace.addResourceChangeListener(fileModificationManager, IResourceChangeEvent.POST_CHANGE);
 		fileModificationManager.registerSaveParticipant();
@@ -303,7 +295,7 @@ public class CVSProviderPlugin extends Plugin {
 		// remove listeners
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		workspace.removeResourceChangeListener(projectDescriptionListener);
-		workspace.removeResourceChangeListener(metaFileSyncListener);
+		workspace.removeResourceChangeListener(fileModificationManager);
 		workspace.removeResourceChangeListener(addDeleteMoveListener);
 		
 		deleteCacheDirectory();

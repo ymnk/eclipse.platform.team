@@ -48,6 +48,8 @@ final public class TeamPlugin extends Plugin {
 	public static final String REPOSITORY_EXTENSION = "repository"; //$NON-NLS-1$
 	// The id of the targets extension point
 	public static final String TARGETS_EXTENSION = "targets"; //$NON-NLS-1$
+	// The id of the earlyWarning extension point
+	public static final String EARLY_WARNING_EXTENSION = "earlyWarning"; //$NON-NLS-1$
 
 
 	// The one and only plug-in instance

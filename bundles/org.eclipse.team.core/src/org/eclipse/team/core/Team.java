@@ -22,10 +22,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -74,7 +76,88 @@ public final class Team {
 	private static Hashtable table;
 
 	// The ignore list that is read at startup from the persisted file
-	private static Map globalIgnore = new HashMap(11);
+	private static Map globalIgnore;
+	
+	// The table of repository provider's early warning delta listeners
+	private static final Map earlyWarningListeners = new HashMap();
+	
+	private static final Object NULL_EARLY_WARNING_LISTENER = new Object();
+	private static IResourceChangeListener getEarlyWarningListener(String id) {
+		if (id == null) return null;
+		Object listener = earlyWarningListeners.get(id);
+		// return null if it is known that there is no listener
+		if (listener == NULL_EARLY_WARNING_LISTENER) 
+			return null;
+		// if there is a listener, return it
+		if (listener != null)
+			return (IResourceChangeListener)listener;
+		// load the listener from the extension point
+		TeamPlugin plugin = TeamPlugin.getPlugin();
+		if (plugin != null) {
+			IExtensionPoint extension = plugin.getDescriptor().getExtensionPoint(TeamPlugin.EARLY_WARNING_EXTENSION);
+			if (extension != null) {
+				IExtension[] extensions =  extension.getExtensions();
+				for (int i = 0; i < extensions.length; i++) {
+					IConfigurationElement [] configElements = extensions[i].getConfigurationElements();
+					for (int j = 0; j < configElements.length; j++) {
+						String extensionId = configElements[j].getAttribute("id"); //$NON-NLS-1$
+						if (extensionId != null && extensionId.equals(id)) {
+							try {
+								IResourceChangeListener newListener = (IResourceChangeListener) configElements[j].createExecutableExtension("class"); //$NON-NLS-1$
+								earlyWarningListeners.put(id, newListener);
+								return newListener;
+							} catch (CoreException e) {
+								TeamPlugin.log(e.getStatus());
+								return null;
+							}
+						}
+					}
+				}
+			}		
+		}
+		// there is no extension defined for the given id
+		earlyWarningListeners.put(id, NULL_EARLY_WARNING_LISTENER);
+		return null;
+	}	
+	
+	private static final class EarlyWarningListener implements IResourceChangeListener {
+		public void resourceChanged(IResourceChangeEvent event) {
+			IResourceDelta[] projectDeltas = event.getDelta().getAffectedChildren();
+			Set earlyWarningSet = new HashSet();
+			for (int i = 0; i < projectDeltas.length; i++) {							
+				IResourceDelta delta = projectDeltas[i];
+				IResource resource = delta.getResource();
+				// Only consider open projects
+				IProject project = resource.getProject();
+				if (!project.isAccessible()) continue;
+				
+				// Call the early warning delta for projects that have a provider
+				// (making sure not to only load the delta listener)
+				try {
+					String id = RepositoryProvider.getProviderId(project);
+					IResourceChangeListener listener = getEarlyWarningListener(id);
+					if (listener != null) earlyWarningSet.add(listener);
+				} catch (CoreException e) {
+					TeamPlugin.log(e.getStatus());
+				}
+				
+				//	For project additions that are moves, make sure the provider is adjusted properly
+				if (delta.getKind() == IResourceDelta.ADDED && (delta.getFlags() & IResourceDelta.MOVED_FROM) != 0) {
+					//	Only consider projects that have a provider
+					RepositoryProvider provider = RepositoryProvider.getProvider(project);
+					if (provider == null) continue;
+					// Only consider providers whose project is not mapped properly already
+					if (provider.getProject().equals(resource.getProject())) continue;
+					// Tell the provider about it's new project
+					provider.setProject(resource.getProject());
+				}
+			}
+			for (Iterator iter = earlyWarningSet.iterator(); iter.hasNext();) {
+				IResourceChangeListener listener = (IResourceChangeListener) iter.next();
+				listener.resourceChanged(event);
+			}
+		}
+	}
 
 	private static class FileTypeInfo implements IFileTypeInfo {
 		private String extension;
@@ -122,6 +205,7 @@ public final class Team {
 	public static int getType(IStorage storage) {
 		String extension = getFileExtension(storage.getName());
 		if (extension == null) return UNKNOWN;
+		Hashtable table = getFileTypeTable();
 		Integer integer = (Integer)table.get(extension);
 		if (integer == null) return UNKNOWN;
 		return integer.intValue();
@@ -174,6 +258,7 @@ public final class Team {
 	 */
 	public static IFileTypeInfo[] getAllTypes() {
 		List result = new ArrayList();
+		Hashtable table = getFileTypeTable();
 		Enumeration e = table.keys();
 		while (e.hasMoreElements()) {
 			String string = (String)e.nextElement();
@@ -187,6 +272,16 @@ public final class Team {
 	 * Returns the list of global ignores.
 	 */
 	public static IIgnoreInfo[] getAllIgnores() {
+		if (globalIgnore == null) {
+			try {
+				readIgnoreState();
+			} catch (TeamException e) {
+				if (globalIgnore == null) 
+					globalIgnore = new HashMap();
+				TeamPlugin.log(IStatus.ERROR, "Error loading ignore state from disk", e);
+			}
+			initializePluginIgnores();
+		}
 		IIgnoreInfo[] result = new IIgnoreInfo[globalIgnore.size()];
 		Iterator e = globalIgnore.keySet().iterator();
 		int i = 0;
@@ -207,6 +302,11 @@ public final class Team {
 		return result;
 	}
 
+	private static Hashtable getFileTypeTable() {
+		if (table == null) loadTextState();
+		return table;
+	}
+	
 	/**
 	 * Set the file type for the give extension to the given type.
 	 *
@@ -321,7 +421,6 @@ public final class Team {
 	 * @throws IOException if an I/O problem occurs
 	 */
 	private static void readTextState(DataInputStream dis) throws IOException {
-		table = new Hashtable(11);
 		int extensionCount = 0;
 		try {
 			extensionCount = dis.readInt();
@@ -346,6 +445,7 @@ public final class Team {
 	 * @throws IOException if an I/O problem occurs
 	 */
 	private static void writeTextState(DataOutputStream dos) throws IOException {
+		Hashtable table = getFileTypeTable();
 		dos.writeInt(table.size());
 		Iterator it = table.keySet().iterator();
 		while (it.hasNext()) {
@@ -363,6 +463,7 @@ public final class Team {
 	 * contents, as well as discovering any values contributed by plug-ins.
 	 */
 	private static void loadTextState() {
+		table = new Hashtable(11);
 		IPath pluginStateLocation = TeamPlugin.getPlugin().getStateLocation().append(STATE_FILE);
 		File f = pluginStateLocation.toFile();
 		if (f.exists()) {
@@ -473,6 +574,7 @@ public final class Team {
 	 */
 	private static void writeIgnoreState(DataOutputStream dos) throws IOException {
 		// write the global ignore list
+		if (globalIgnore == null) getAllIgnores();
 		int ignoreLength = globalIgnore.size();
 		dos.writeInt(ignoreLength);
 		Iterator e = globalIgnore.keySet().iterator();
@@ -528,34 +630,10 @@ public final class Team {
 	 * This method is called by the plug-in upon startup, clients should not call this method
 	 */
 	public static void startup() throws CoreException {
-		try {
-			table = new Hashtable(11);
-			loadTextState();
-			readIgnoreState();
-			initializePluginIgnores();
-			// Register a delta listener that will tell the provider about a project move
-			ResourcesPlugin.getWorkspace().addResourceChangeListener(new IResourceChangeListener() {
-				public void resourceChanged(IResourceChangeEvent event) {
-					IResourceDelta[] projectDeltas = event.getDelta().getAffectedChildren();
-					for (int i = 0; i < projectDeltas.length; i++) {							
-						IResourceDelta delta = projectDeltas[i];
-						IResource resource = delta.getResource();
-						RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
-						// Only consider projects that have a provider
-						if (provider == null) continue;
-						// Only consider project additions that are moves
-						if (delta.getKind() != IResourceDelta.ADDED) continue;
-						if ((delta.getFlags() & IResourceDelta.MOVED_FROM) == 0) continue;
-						// Only consider providers whose project is not mapped properly already
-						if (provider.getProject().equals(resource.getProject())) continue;
-						// Tell the provider about it's new project
-						provider.setProject(resource.getProject());
-					}
-				}
-			}, IResourceChangeEvent.PRE_AUTO_BUILD);
-		} catch (TeamException e) {
-			throw new CoreException(e.getStatus());
-		}
+		// Register a delta listener that will tell the provider about a project move
+		// and make sure any repository providers that have requested it, get early warning
+		// about deltas to their projects
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(new EarlyWarningListener(), IResourceChangeEvent.PRE_AUTO_BUILD);
 	}
 	
 	/**

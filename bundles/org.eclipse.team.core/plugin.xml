@@ -24,6 +24,9 @@
 <extension-point id="repository" name="%Repository"/>
 <extension-point id="targets" name="%Targets"/>
 
+<!-- PROVISIONAL: required for ensuring that team-private members can be hidden -->
+<extension-point id="earlyWarning" name="%EarlyWarning"/>
+
 <!-- Define common known file types -->
      
 <extension point="org.eclipse.team.core.fileTypes">
