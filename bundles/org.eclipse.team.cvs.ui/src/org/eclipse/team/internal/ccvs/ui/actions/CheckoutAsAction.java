@@ -21,6 +21,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
@@ -29,6 +30,7 @@ import org.eclipse.team.internal.ccvs.ui.TagetLocationSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutMultipleProjectsOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.CheckoutSingleProjectOperation;
 import org.eclipse.team.internal.ccvs.ui.operations.HasProjectMetaFileOperation;
+import org.eclipse.team.internal.ccvs.ui.wizards.CheckoutAsWizard;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.NewProjectAction;
 
@@ -43,18 +45,30 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 	 * @see IActionDelegate#run(IAction)
 	 */
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
-		ICVSRemoteFolder[] folders = getSelectedRemoteFolders();
+		final ICVSRemoteFolder[] folders = getSelectedRemoteFolders();
+//		try {
+//			if (folders.length == 1){
+//				checkoutSingleProject(folders[0]);
+//			} else {
+//				checkoutMultipleProjects(folders);
+//			}
+//		} catch (CVSException e) {
+//			throw new InvocationTargetException(e);
+//		}
 		try {
-			if (folders.length == 1){
-				checkoutSingleProject(folders[0]);
-			} else {
-				checkoutMultipleProjects(folders);
-			}
+			CheckoutAsWizard wizard = new CheckoutAsWizard(folders, allowProjectConfiguration(folders));
+			WizardDialog dialog = new WizardDialog(shell, wizard);
+			dialog.open();
 		} catch (CVSException e) {
 			throw new InvocationTargetException(e);
 		}
 	}
 	
+	protected boolean allowProjectConfiguration(ICVSRemoteFolder[] folders) throws CVSException, InterruptedException {
+		if (folders.length != 1) return false;
+		return HasProjectMetaFileOperation.hasMetaFile(getShell(), folders[0], new ProgressMonitorDialog(shell));	
+	}
+			
 	private void checkoutMultipleProjects(final ICVSRemoteFolder[] folders) throws CVSException, InterruptedException {
 		
 		// create the target project handles

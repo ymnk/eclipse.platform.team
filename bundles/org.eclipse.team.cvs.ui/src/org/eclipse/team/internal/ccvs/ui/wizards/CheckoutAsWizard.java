@@ -88,6 +88,9 @@ public class CheckoutAsWizard extends Wizard {
 		
 		projectSelectionPage = new CheckoutAsProjectSelectionPage(substImage, remoteFolders);
 		addPage(projectSelectionPage);
+		
+		locationSelectionPage = new CheckoutAsLocationSelectionPage(substImage, remoteFolders);
+		addPage(locationSelectionPage);
 	}
 
 	/* (non-Javadoc)
@@ -171,7 +174,7 @@ public class CheckoutAsWizard extends Wizard {
 		IProject newProject = getNewProject();
 		if (newProject == null) return false;
 		new CheckoutSingleProjectOperation(getShell(), remoteFolders[0], newProject, null, true)
-			.executeWithProgress();
+			.execute(getContainer());
 		return true;
 	}
 	
@@ -182,7 +185,7 @@ public class CheckoutAsWizard extends Wizard {
 		IProject newProject = ResourcesPlugin.getWorkspace().getRoot().getProject(mainPage.getProjectName());
 		String targetLocation = locationSelectionPage.getTargetLocation();
 		new CheckoutSingleProjectOperation(getShell(), remoteFolders[0], newProject, targetLocation, false)
-			.executeWithProgress();
+			.execute(getContainer());
 		return true;
 	}
 
@@ -193,7 +196,7 @@ public class CheckoutAsWizard extends Wizard {
 	private boolean performMultipleCheckoutAs() throws CVSException, InterruptedException {
 		String targetLocation = locationSelectionPage.getTargetLocation();
 		new CheckoutMultipleProjectsOperation(getShell(), remoteFolders, targetLocation)
-			.executeWithProgress();
+			.execute(getContainer());
 		return true;
 	}
 

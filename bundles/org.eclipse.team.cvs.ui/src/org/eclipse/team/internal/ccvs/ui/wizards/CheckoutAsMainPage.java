@@ -18,6 +18,8 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -73,6 +75,7 @@ public class CheckoutAsMainPage extends CVSWizardPage {
 			createMultipleFoldersArea(composite);
 		}
 
+		updateEnablements();
 	}
 
 	/*
@@ -202,4 +205,17 @@ public class CheckoutAsMainPage extends CVSWizardPage {
 	public boolean isPerformCheckoutAs() {
 		return simpleProjectButton.getSelection();
 	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.wizards.CVSWizardPage#createRadioButton(org.eclipse.swt.widgets.Composite, java.lang.String, int)
+	 */
+	protected Button createRadioButton(Composite parent, String label, int span) {
+		Button radio = super.createRadioButton(parent, label, span);
+		radio.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				updateEnablements();
+			}
+		});
+		return radio;
+	}
+
 }
