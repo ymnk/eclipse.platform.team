@@ -50,7 +50,7 @@
       <test
             id="team.ftp">
          <run
-               class="org.eclipse.team.tests.ftp.ClientTest">
+               class="org.eclipse.team.tests.ftp.FTPClientTest">
          </run>
       </test>
    </extension>
@@ -97,11 +97,11 @@
    </extension>
 
    <extension
-         id="testapplication"
+         id="ftp"
          point="org.eclipse.core.runtime.applications">
       <application>
          <run
-               class="org.eclipse.team.tests.ftp.TestApplication">
+               class="org.eclipse.team.tests.ftp.FTPApplication">
          </run>
       </application>
    </extension>

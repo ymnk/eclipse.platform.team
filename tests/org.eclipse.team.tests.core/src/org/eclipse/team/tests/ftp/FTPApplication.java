@@ -35,7 +35,7 @@ import org.eclipse.team.internal.ftp.client.FTPCommunicationException;
 import org.eclipse.team.internal.ftp.client.FTPDirectoryEntry;
 import org.eclipse.team.internal.ftp.client.IFTPClientListener;
 
-public class TestApplication implements IPlatformRunnable {
+public class FTPApplication implements IPlatformRunnable {
 	protected PrintWriter out;
 	protected BufferedReader in;
 	protected FTPServerLocation location;

@@ -28,22 +28,22 @@ import org.eclipse.team.internal.ftp.client.FTPClient;
 import org.eclipse.team.internal.ftp.client.FTPDirectoryEntry;
 import org.eclipse.team.tests.core.TeamTest;
 
-public class ClientTest extends TeamTest {
+public class FTPClientTest extends TeamTest {
 
 	private static final IProgressMonitor DEFAULT_PROGRESS_MONITOR = new NullProgressMonitor();
 	/**
 	 * Constructor for ClientTest.
 	 * @param name
 	 */
-	public ClientTest(String name) {
+	public FTPClientTest(String name) {
 		super(name);
 	}
-	public ClientTest() {
+	public FTPClientTest() {
 		super();
 	}
 
 	public static Test suite() {
-		TestSuite suite = new TestSuite(ClientTest.class);
+		TestSuite suite = new TestSuite(FTPClientTest.class);
 		return new FTPTestSetup(suite);
 		//return new FTPTestSetup(new ClientTest("testName"));
 	}
