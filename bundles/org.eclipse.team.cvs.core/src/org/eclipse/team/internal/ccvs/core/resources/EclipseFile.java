@@ -36,6 +36,8 @@ import org.eclipse.team.internal.ccvs.core.util.EntryFileDateFormat;
  */
 class EclipseFile extends EclipseResource implements ICVSFile {
 
+	private static final String TEMP_FILE_EXTENSION = ".tmp";
+	
 	/**
 	 * Create a handle based on the given local resource.
 	 */
@@ -71,13 +73,13 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 			public void close() throws IOException {
 				try {
 					IFile file = getIFile();
-					if (responseType == CREATED || ( responseType == UPDATED && ! resource.exists())) {
+					if (responseType == CREATED || (responseType == UPDATED && ! resource.exists())) {
 						file.create(new ByteArrayInputStream(toByteArray()), false /*force*/, null);
 					} else if(responseType == UPDATE_EXISTING) {
 						file.setContents(new ByteArrayInputStream(toByteArray()), false /*force*/, true /*keep history*/, null);
 					} else {
 						// Ensure we don't leave the file in a partially written state
-						IFile tempFile = file.getParent().getFile(new Path(file.getName() + ".tmp"));
+						IFile tempFile = file.getParent().getFile(new Path(file.getName() + TEMP_FILE_EXTENSION));
 						tempFile.create(new ByteArrayInputStream(toByteArray()), true /*force*/, null);
 						file.delete(false, true, null);
 						tempFile.move(new Path(file.getName()), true, true, null);
