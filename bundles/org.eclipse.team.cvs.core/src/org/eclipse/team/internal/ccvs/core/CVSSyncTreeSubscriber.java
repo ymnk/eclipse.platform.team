@@ -12,12 +12,14 @@ package org.eclipse.team.internal.ccvs.core;
 
 import java.util.*;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.helpers.*;
+import org.eclipse.team.core.subscribers.helpers.SubscriberResourceTree;
+import org.eclipse.team.core.subscribers.helpers.SyncTreeSubscriber;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 
 /**
@@ -142,7 +144,20 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 			monitor.done();
 		} 
 	}
+	
+	protected IResource[] refreshBase(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		return getBaseResourceTree().refresh(resources, depth, getCacheFileContentsHint(), monitor);
+	}
 
+	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
+		return getRemoteResourceTree().refresh(resources, depth,  getCacheFileContentsHint(), monitor);
+	}
+	
+	/**
+	 * Return whether the contents for remote resources will be required by the comparison
+	 * criteria of the subscriber.
+	 * @return boolean
+	 */
 	protected boolean getCacheFileContentsHint() {
 		return getCurrentComparisonCriteria().usesFileContents();
 	}
@@ -197,6 +212,31 @@ public abstract class CVSSyncTreeSubscriber extends SyncTreeSubscriber {
 		
 		// Set the default
 		setDefaultComparisonCriteria(revisionNumberComparator);
+	}
+	
+	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
+		return getRemoteResourceTree().getRemoteResource(resource);
+	}
+
+	public ISubscriberResource getBaseResource(IResource resource) throws TeamException {
+		return getBaseResourceTree().getRemoteResource(resource);
+	}
+	
+	/**
+	 * Return the synchronizer that provides the remote resources
+	 */
+	protected abstract SubscriberResourceTree getRemoteResourceTree();
+
+	/**
+	 * Return the synchronizer that provides the base resources
+	 */
+	protected abstract SubscriberResourceTree getBaseResourceTree();
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.subscribers.helpers.SyncTreeSubscriber#hasRemote(org.eclipse.core.resources.IResource)
+	 */
+	protected boolean hasRemote(IResource resource) throws TeamException {
+		return getRemoteResourceTree().hasRemote(resource);
 	}
 
 }

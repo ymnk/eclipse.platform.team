@@ -90,23 +90,16 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 		return (ComparisonCriteria[]) comparisonCriterias.values().toArray(new ComparisonCriteria[comparisonCriterias.size()]);
 	}
 
-	public ISubscriberResource getRemoteResource(IResource resource) throws TeamException {
-		return getRemoteResourceTree().getRemoteResource(resource);
-	}
+	public abstract ISubscriberResource getRemoteResource(IResource resource) throws TeamException;
 
-	public ISubscriberResource getBaseResource(IResource resource) throws TeamException {
-		return getBaseResourceTree().getRemoteResource(resource);
-	}
-
+	public abstract ISubscriberResource getBaseResource(IResource resource) throws TeamException;
+	
 	/**
-	 * Return the synchronizer that provides the remote resources
+	 * Return whether the given local resource has a corresponding remote resource
+	 * @param resource the local resource
+	 * @return <code>true</code> if the locla resource has a corresponding remote
 	 */
-	protected abstract SubscriberResourceTree getRemoteResourceTree();
-
-	/**
-	 * Return the synchronizer that provides the base resources
-	 */
-	protected abstract SubscriberResourceTree getBaseResourceTree();
+	protected abstract boolean hasRemote(IResource resource) throws TeamException;
 
 	public SyncInfo getSyncInfo(IResource resource, IProgressMonitor monitor) throws TeamException {
 		if (!isSupervised(resource)) return null;
@@ -159,7 +152,7 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 				// TODO: consider that there may be several sync states on this resource. There
 				// should instead be a method to check for the existance of a set of sync types on
 				// a resource.
-				if(member.isPhantom() && !getRemoteResourceTree().hasRemote(member)) {
+				if(member.isPhantom() && !hasRemote(member)) {
 					continue;
 				}
 				
@@ -174,42 +167,4 @@ public abstract class SyncTreeSubscriber extends TeamSubscriber {
 		}
 	}
 
-	public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		monitor = Policy.monitorFor(monitor);
-		try {
-			monitor.beginTask(null, isThreeWay() ? 100 : 60);
-			IResource[] baseChanges;
-			if (isThreeWay()) {
-				baseChanges = refreshBase(resources, depth, Policy.subMonitorFor(monitor, 40));
-			} else {
-				baseChanges = new IResource[0];
-			}
-			IResource[] remoteChanges = refreshRemote(resources, depth, Policy.subMonitorFor(monitor, 60));
-			
-			Set allChanges = new HashSet();
-			allChanges.addAll(Arrays.asList(remoteChanges));
-			allChanges.addAll(Arrays.asList(baseChanges));
-			IResource[] changedResources = (IResource[]) allChanges.toArray(new IResource[allChanges.size()]);
-			fireTeamResourceChange(TeamDelta.asSyncChangedDeltas(this, changedResources));
-		} finally {
-			monitor.done();
-		} 
-	}
-	
-	protected IResource[] refreshBase(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		return getBaseResourceTree().refresh(resources, depth, getCacheFileContentsHint(), monitor);
-	}
-
-	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
-		return getRemoteResourceTree().refresh(resources, depth,  getCacheFileContentsHint(), monitor);
-	}
-	
-	/**
-	 * Return whether the contents for remote resources will be required by the comparison
-	 * criteria of the subscriber.
-	 * @return boolean
-	 */
-	protected boolean getCacheFileContentsHint() {
-		return false;
-	}
 }
