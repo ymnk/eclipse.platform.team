@@ -246,6 +246,9 @@ public class GlobalRefreshResourceSelectionPage extends WizardPage {
 			if(! scopeCheckingElement) {
 				if(! selectedResourcesScope.getSelection()) {
 					selectedResourcesScope.setSelection(true);
+					participantScope.setSelection(false);
+					enclosingProjectsScope.setSelection(false);
+					workingSetScope.setSelection(false);
 					updateSelectedResourcesScope();
 				}
 			}

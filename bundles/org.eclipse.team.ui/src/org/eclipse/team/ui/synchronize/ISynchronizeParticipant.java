@@ -13,8 +13,7 @@ package org.eclipse.team.ui.synchronize;
 import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.*;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
@@ -135,6 +134,15 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * participant
 	 */
 	public IPageBookViewPage createPage(ISynchronizePageConfiguration configuration);
+	
+	/**
+	 * Runs the participants action. Typically this would be some action to refresh the synchronizatin
+	 * state of the participant. This action is run from the global synchronize drop-down.
+	 * 
+	 * @param part the part in which the action is run or <code>null</code> if the action
+	 * is not being run in a workbench part.
+	 */
+	public void run(IWorkbenchPart part);
 	
 	/**
 	 * Initializes this participant with the given participant state.  

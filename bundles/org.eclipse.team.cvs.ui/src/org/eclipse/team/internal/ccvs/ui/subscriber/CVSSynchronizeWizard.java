@@ -37,6 +37,9 @@ public class CVSSynchronizeWizard extends Wizard {
 	 */
 	public void addPages() {
 		selectionPage = new GlobalRefreshResourceSelectionPage(getRootResources());
+		selectionPage.setTitle("Create");
+		selectionPage.setDescription("Create CVS Synchronize Participant");
+		selectionPage.setMessage("Select the resources that will be synchronized by the newly created CVS synchronize participant.");
 		addPage(selectionPage);
 	}
 	

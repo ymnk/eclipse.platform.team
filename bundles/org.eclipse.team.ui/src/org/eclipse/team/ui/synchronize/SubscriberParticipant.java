@@ -35,6 +35,7 @@ import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
 import org.eclipse.team.internal.ui.synchronize.SubscriberRefreshSchedule;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.ui.*;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkbenchSite;
 import org.eclipse.ui.PartInitException;
@@ -259,6 +260,12 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 */
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		configuration.setProperty(SynchronizePageConfiguration.P_PARTICIPANT_SYNC_INFO_SET, collector.getSyncInfoSet());
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#run(org.eclipse.ui.IWorkbenchPart)
+	 */
+	public void run(IWorkbenchPart part) {
 	}
 	
 	/**

@@ -19,9 +19,9 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.wizards.GlobalSynchronizeWizard;
-import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.*;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
-import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowPulldownDelegate;
 
@@ -74,6 +74,7 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 				dialog.open();
 			}
 		};
+		synchronizeAction.setImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_SYNC_VIEW));
 		setMenuCreator(this);
 		updateTooltipMessage();
 	}
@@ -113,7 +114,7 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 				addActionToMenu(fMenu, action);
 			}
 		}
-		addMenuSeparator();
+		if(participants.length > 0) addMenuSeparator();
 		addActionToMenu(fMenu, synchronizeAction);
 		return fMenu;
 	}
@@ -140,30 +141,18 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
 	 */
 	public void run(IAction action) {
-		String id = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT);
-		IWizard wizard = new GlobalSynchronizeWizard();
-		if (id.equals(NO_DEFAULT_PARTICPANT)) {
-			synchronizeAction.run();
-		} else {
-			ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(id, null);
-			if (participant != null) {
-				run(participant);
-			}
-		}
+		synchronizeAction.run();
 	}
 		
 	private void run(ISynchronizeParticipantReference participant) {
+		ISynchronizeParticipant p;
 		try {
-			SubscriberParticipant subscriberParticipant = ((SubscriberParticipant)participant.getParticipant());
-			subscriberParticipant.refresh(
-					subscriberParticipant.getResources(), 
-					Policy.bind("Participant.synchronizing"), 
-					Policy.bind("Participant.synchronizingDetails", 
-					subscriberParticipant.getName()),
-					null /* don't have a site */); //$NON-NLS-1$ //$NON-NLS-2$
+			p = participant.getParticipant();
+			p.run(null /* no workbench part */);
 			updateTooltipMessage();
 		} catch (TeamException e) {
-			Utils.handle(e);
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
