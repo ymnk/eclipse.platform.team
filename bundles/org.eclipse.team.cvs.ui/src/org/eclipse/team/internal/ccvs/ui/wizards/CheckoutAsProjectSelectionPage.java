@@ -47,10 +47,8 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 
 /**
- * @author Administrator
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
+ * This page allows the user to select the target parent container for
+ * the folders being checked out.
  */
 public class CheckoutAsProjectSelectionPage extends CVSWizardPage {
 	
@@ -175,11 +173,11 @@ public class CheckoutAsProjectSelectionPage extends CVSWizardPage {
 	}
 
 	private void handleResourceSelection(SelectionChangedEvent event) {
-		ISelection selection = event.getSelection();
-		if (selection.isEmpty()) {
+		ISelection sel = event.getSelection();
+		if (sel.isEmpty()) {
 			this.selection = null;
 		} else if (selection instanceof IStructuredSelection) {
-			this.selection = (IResource)((IStructuredSelection)selection).getFirstElement();
+			this.selection = (IResource)((IStructuredSelection)sel).getFirstElement();
 		}
 		updateWidgetEnablements();
 	}

@@ -83,6 +83,10 @@ public abstract class CVSOperation implements IRunnableWithProgress {
 		}
 	}
 	
+	public void executeWithProgress() throws CVSException, InterruptedException {
+		execute(new ProgressMonitorDialog(getShell()));
+	}
+	
 	/**
 	 * Execute the operation in the runnable context that has been assigned to the operation.
 	 * If a context has not been assigned, the workbench window is used.

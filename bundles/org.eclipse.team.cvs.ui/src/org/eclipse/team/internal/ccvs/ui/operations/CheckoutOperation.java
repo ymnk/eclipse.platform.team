@@ -86,10 +86,10 @@ public abstract class CheckoutOperation extends CVSOperation {
 	/**
 	 * @return
 	 */
-	protected IProject[] getTargetProjects(ICVSRemoteFolder[] remoteFolders) {
+	protected IProject[] getTargetProjects(ICVSRemoteFolder[] folders) {
 		IProject[] projects = new IProject[remoteFolders.length];
 		for (int i = 0; i < projects.length; i++) {
-			projects[i] = ResourcesPlugin.getWorkspace().getRoot().getProject(remoteFolders[i].getName());
+			projects[i] = ResourcesPlugin.getWorkspace().getRoot().getProject(folders[i].getName());
 		}
 		return projects;
 	}

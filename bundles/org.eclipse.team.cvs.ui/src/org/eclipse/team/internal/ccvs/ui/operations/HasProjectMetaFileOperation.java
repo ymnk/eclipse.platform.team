@@ -45,27 +45,27 @@ public class HasProjectMetaFileOperation extends CVSOperation {
 	 * Return true if the provided remote folder contains a valid meta-file 
 	 * (i.e. .project or the older .vcm_meta file).
 	 */
-	private boolean hasMetaFile(ICVSRemoteFolder remoteFolder, IProgressMonitor monitor) throws CVSException {
+	private boolean hasMetaFile(ICVSRemoteFolder folder, IProgressMonitor monitor) throws CVSException {
 		
 		// make a copy of the folder so that we will not effect the original folder when we refetch the members
 		// TODO: this is a strang thing to need to do. We shold fix this.
-		remoteFolder = (ICVSRemoteFolder)remoteFolder.forTag(remoteFolder.getTag());
+		folder = (ICVSRemoteFolder)folder.forTag(remoteFolder.getTag());
 
 		try {
-			remoteFolder.members(monitor);
+			folder.members(monitor);
 		} catch (TeamException e) {
 			throw CVSException.wrapException(e);
 		}
 		// Check for the existance of the .project file
 		try {
-			remoteFolder.getFile(".project"); //$NON-NLS-1$
+			folder.getFile(".project"); //$NON-NLS-1$
 			return true;
 		} catch (TeamException e) {
 			// We couldn't retrieve the meta file so assume it doesn't exist
 		}
 		// If the above failed, look for the old .vcm_meta file
 		try {
-			remoteFolder.getFile(".vcm_meta"); //$NON-NLS-1$
+			folder.getFile(".vcm_meta"); //$NON-NLS-1$
 			return true;
 		} catch (TeamException e) {
 			// We couldn't retrieve the meta file so assume it doesn't exist

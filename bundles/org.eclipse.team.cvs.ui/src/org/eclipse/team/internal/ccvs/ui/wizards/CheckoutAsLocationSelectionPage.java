@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.ui.wizards;
 import java.io.File;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -289,37 +288,17 @@ public class CheckoutAsLocationSelectionPage extends CVSWizardPage {
 	}
 	
 	/**
-	 * Return the project descriptions containing the custom location for 
-	 * each project or null if no custom location was specified.
-	 * In this case, the custom location is the parent of all projects
-	 * being created.
-	 */
-	public IProjectDescription[] getProjectDescriptions() {
-		// create the project descriptions for each project
-		IProjectDescription[] descriptions = new IProjectDescription[remoteFolders.length];
-		for (int i = 0; i < remoteFolders.length; i++) {
-			String projectName = remoteFolders[i].getName();
-			descriptions[i] = ResourcesPlugin.getWorkspace().newProjectDescription(projectName);
-			descriptions[i].setLocation(new Path(targetLocation).append(projectName));
-		}
-		return descriptions;
-	}
-	
-	/**
 	 * Return the custom location for a single project. In this case, the specified
 	 * location is used as the location of the project.
 	 * 
 	 * @param project
 	 * @return
 	 */
-	public IProjectDescription getProjectDescription(IProject project) {
-		if (isCustomLocationSpecified()) {
-			IProjectDescription description = ResourcesPlugin.getWorkspace().newProjectDescription(project.getName());
-			description.setLocation(new Path(targetLocation));
-			return description;
-		} else {
+	public String getTargetLocation() {
+		if (isCustomLocationSpecified())
+			return targetLocation;
+		else
 			return null;
-		}
 	}
 
 	/**
