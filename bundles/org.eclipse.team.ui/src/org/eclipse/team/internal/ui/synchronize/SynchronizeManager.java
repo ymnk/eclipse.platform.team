@@ -25,6 +25,13 @@ import org.eclipse.team.ui.ITeamUIConstants;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.*;
 
+/**
+ * Manages the registered synchronize participants. It handles notification
+ * of participant lifecycles, creation of <code>static</code> participants, 
+ * and the re-creation of persisted participants.
+ * 
+ * @since 3.0
+ */
 public class SynchronizeManager implements ISynchronizeManager {
 	/**
 	 * Synchronize View page listeners
@@ -42,11 +49,11 @@ public class SynchronizeManager implements ISynchronizeManager {
 	private final static int REMOVED = 2;
 	
 	// save context constants
-	private final static String CTX_PARTICIPANTS = "syncparticipants";
-	private final static String CTX_PARTICIPANT = "participant";
-	private final static String CTX_QUALIFIED_NAME = "qualified_name";
-	private final static String CTX_LOCAL_NAME = "local_name";
-	private final static String FILENAME = "syncParticipants.xml";
+	private final static String CTX_PARTICIPANTS = "syncparticipants"; //$NON-NLS-1$
+	private final static String CTX_PARTICIPANT = "participant"; //$NON-NLS-1$
+	private final static String CTX_QUALIFIED_NAME = "qualified_name"; //$NON-NLS-1$
+	private final static String CTX_LOCAL_NAME = "local_name"; //$NON-NLS-1$
+	private final static String FILENAME = "syncParticipants.xml"; //$NON-NLS-1$
 	
 	/**
 	 * Notifies a participant listeners of additions or removals
@@ -61,7 +68,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 		 * @see org.eclipse.core.runtime.ISafeRunnable#handleException(java.lang.Throwable)
 		 */
 		public void handleException(Throwable exception) {
-			TeamUIPlugin.log(IStatus.ERROR, "", exception);
+			TeamUIPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.7"), exception); //$NON-NLS-1$
 		}
 		
 		/* (non-Javadoc)
@@ -182,6 +189,11 @@ public class SynchronizeManager implements ISynchronizeManager {
 		new SynchronizeViewPageNotifier().notify(participants, type);
 	}
 	
+	/**
+	 * Called to display the synchronize view in the given page. If the given
+	 * page is <code>null</code> the synchronize view is shown in the default
+	 * active workbench window.
+	 */
 	public ISynchronizeView showSynchronizeViewInActivePage(IWorkbenchPage activePage) {
 		IWorkbench workbench= TeamUIPlugin.getPlugin().getWorkbench();
 		IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
@@ -206,6 +218,9 @@ public class SynchronizeManager implements ISynchronizeManager {
 		}
 	}
 	
+	/**
+	 *  
+	 */
 	public void restoreParticipants() throws PartInitException, TeamException, CoreException {
 		participantRegistry.readRegistry(Platform.getPluginRegistry(), TeamUIPlugin.ID, ITeamUIConstants.PT_SYNCPARTICIPANTS);
 		restoreSynchronizeParticipants();
