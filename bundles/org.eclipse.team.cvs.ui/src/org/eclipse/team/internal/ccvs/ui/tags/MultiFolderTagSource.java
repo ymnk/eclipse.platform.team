@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.ui.tags;
 
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
 
 /**
  * A tag source for multiple folders.
@@ -39,6 +40,13 @@ public class MultiFolderTagSource extends SingleFolderTagSource {
      * @return
      */
     public ICVSFolder[] getFolders() {
+        return folders;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ccvs.ui.tags.SingleFolderTagSource#getCVSResources()
+     */
+    public ICVSResource[] getCVSResources() {
         return folders;
     }
 }

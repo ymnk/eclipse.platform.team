@@ -33,13 +33,16 @@ public abstract class TagSource {
             return null;
         }
         public String getShortDescription() {
-            return "Empty";
+            return "Empty"; //$NON-NLS-1$
         }
         public CVSTag[] getTags(int type) {
             return new CVSTag[0];
         }
         public void refresh(IProgressMonitor monitor) throws TeamException {
             // No-op
+        }
+        public ICVSResource[] getCVSResources() {
+            return new ICVSResource[0];
         }
     };
     
@@ -72,7 +75,9 @@ public abstract class TagSource {
      * @return a tag source
      */
     public static TagSource create(ICVSResource[] resources) {
-        // TODO Should use a better tag source
+        if (resources.length == 1 && !resources[0].isFolder())
+            return new SingleFileTagSource((ICVSFile)resources[0]);
+        // TODO Should use a better tag source that uses all folders somehow
         return new SingleFolderTagSource(getFirstFolder(resources));
     }
     
@@ -186,4 +191,6 @@ public abstract class TagSource {
             });
         }
     }
+    
+    public abstract ICVSResource[] getCVSResources();
 }

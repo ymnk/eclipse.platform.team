@@ -103,4 +103,11 @@ public class SingleFolderTagSource extends TagSource {
         fireChange();
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.team.internal.ccvs.ui.tags.TagSource#getCVSResources()
+     */
+    public ICVSResource[] getCVSResources() {
+        return new ICVSResource[] { folder };
+    }
+
 }

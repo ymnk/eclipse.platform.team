@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.tags;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 /**
@@ -30,18 +33,23 @@ public class TagSourceResourceAdapter implements IAdaptable, IWorkbenchAdapter {
     private TagSourceResourceAdapter(TagSource tagSource) {
         this.tagSource = tagSource;
     }
-
-    
+  
     /* (non-Javadoc)
      * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
      */
     public Object[] getChildren(Object o) {
-        if (tagSource instanceof MultiFolderTagSource) {
-            
-        } else if (tagSource instanceof SingleFolderTagSource) {
-            return new CVSFolderElement(((SingleFolderTagSource)tagSource).getFolder(), false).getChildren(o);
+        ICVSResource[] children = tagSource.getCVSResources();
+        if (children.length == 0) return new Object[0];
+        List result = new ArrayList();
+        for (int i = 0; i < children.length; i++) {
+            ICVSResource resource = children[i];
+            if (resource.isFolder()) {
+                result.add(new CVSFolderElement((ICVSFolder)resource, false));
+            } else {
+                result.add(new CVSFileElement((ICVSFile)resource));
+            }
         }
-        return new Object[0];
+        return result.toArray(new Object[result.size()]);
     }
 
     /* (non-Javadoc)
@@ -75,18 +83,6 @@ public class TagSourceResourceAdapter implements IAdaptable, IWorkbenchAdapter {
             return this;
         }
         return null;
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ccvs.ui.merge.SingleFolderTagSource#getChildren(java.lang.Object)
-     */
-    public Object[] getFolderElements() {
-        ICVSFolder[] folders = ((MultiFolderTagSource)tagSource).getFolders();
-		CVSFolderElement[] elements = new CVSFolderElement[folders.length];
-		for (int i = 0; i < folders.length; i++) {
-			elements[i] = new CVSFolderElement(folders[i], false);
-		}
-		return elements;
     }
 
 }

@@ -194,6 +194,13 @@ public class TagConfigurationDialog extends Dialog {
         public void commit(CVSTag[] tags, boolean replace, IProgressMonitor monitor) throws CVSException {
             // Not invoked
         }
+
+        /* (non-Javadoc)
+         * @see org.eclipse.team.internal.ccvs.ui.tags.TagSource#getCVSResources()
+         */
+        public ICVSResource[] getCVSResources() {
+            return tagSource.getCVSResources();
+        }
 	}
 	
 	public TagConfigurationDialog(Shell shell, TagSource tagSource) {
@@ -594,15 +601,7 @@ public class TagConfigurationDialog extends Dialog {
 	}
 	
 	private CVSTag[] getTagsFor(ICVSFile file, IProgressMonitor monitor) throws TeamException {
-		Set tagSet = new HashSet();
-		ILogEntry[] entries = file.getLogEntries(monitor);
-		for (int j = 0; j < entries.length; j++) {
-			CVSTag[] tags = entries[j].getTags();
-			for (int k = 0; k < tags.length; k++) {
-				tagSet.add(tags[k]);
-			}
-		}
-		return (CVSTag[])tagSet.toArray(new CVSTag[tagSet.size()]);
+		return SingleFileTagSource.fetchTagsFor(file, monitor);
 	}
 	
 	private void rememberCheckedTags() {
