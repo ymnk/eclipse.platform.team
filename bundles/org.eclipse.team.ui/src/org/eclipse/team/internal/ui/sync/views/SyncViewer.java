@@ -99,7 +99,12 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	/**
 	 * The property id for <code>getCurrentViewType</code>.
 	 */
-	public static int PROP_VIEWTYPE = 0x10;
+	public static final int PROP_VIEWTYPE = 1;
+	
+	/**
+	 * The property id for <code>getWorkingSet</code>.
+	 */
+	public static final int PROP_WORKINGSET = 2;
 
 	/**
 	 * This view's id. The same value as in the plugin.xml.
@@ -459,8 +464,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
 					ActionContext context = new ActionContext(null);
-					context.setInput(input);	
-					input.setWorkingSet(getWorkingSet());				
+					context.setInput(input);				
 					input.prepareInput(monitor);
 					// important to set the context after the input has been initialized. There
 					// are some actions that depend on the sync set to be initialized.
@@ -504,7 +508,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 				 				Policy.bind("LiveSyncView.title"),  //$NON-NLS-1$
 				 				changesText,
 				 				subscriber.getName()}));
-				 	IWorkingSet ws = input.getWorkingSet();
+				 	IWorkingSet ws = getWorkingSet();
 				 	if(ws != null) {
 				 		setTitleToolTip(Policy.bind("LiveSyncView.titleTooltip", subscriber.getDescription(), ws.getName())); //$NON-NLS-1$
 				 	} else {
@@ -887,9 +891,19 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	}
 	
 	/* (non-Javadoc)
+	 * 
+	 * This method sets the working set on the actions which results in a callback to 
+	 * workingSetChanged.
+	 * 
 	 * @see org.eclipse.team.ui.sync.ISyncViewer#setWorkingSet(org.eclipse.ui.IWorkingSet)
 	 */
 	public void setWorkingSet(IWorkingSet workingSet) {
 		actions.setWorkingSet(workingSet);
 	}
+
+	public void workingSetChanged() {
+		updateTitle();
+		fireSafePropertyChange(PROP_WORKINGSET);
+	}
+
 }

@@ -10,44 +10,60 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ITeamResourceChangeListener;
+import org.eclipse.team.core.subscribers.TeamDelta;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
-import org.eclipse.ui.IWorkingSet;
 
 /**
  * SubscriberInput encapsulates the UI model for synchronization changes associated
  * with a TeamSubscriber. 
  */
-public class SubscriberInput implements IPropertyChangeListener {
+public class SubscriberInput implements IPropertyChangeListener, ITeamResourceChangeListener, IResourceChangeListener {
 
 	/*
 	 * The subscriberInput manages a sync set that contains all of the out-of-sync elements
 	 * of a subscriber.  
 	 */
-	private SyncSetInputFromSubscriberWorkingSet subscriberInput;
+	private SyncSetInputFromSubscriber subscriberSyncSet;
 	
 	/*
 	 * The filteredInput manages a sync set that contains a filtered list of the out-of-sync
 	 * elements from another sync set. This is an optimization to allow filters to be applied
 	 * to the subscriber input and is the input for a UI model.
 	 */
-	private SyncSetInputFromSyncSet filteredInput;
+	private SyncSetInputFromSyncSet filteredSyncSet;
+	
+	/*
+	 * Responsible for calculating changes to a set based on events generated
+	 * in the workbench.
+	 */
+	private SubscriberEventHandler eventHandler;
 	
 	SubscriberInput(TeamSubscriber subscriber) {
-		Assert.isNotNull(subscriber);
-		subscriberInput = new SyncSetInputFromSubscriberWorkingSet(subscriber);
-		filteredInput = new SyncSetInputFromSyncSet();		
+		Assert.isNotNull(subscriber);		
+		subscriberSyncSet = new SyncSetInputFromSubscriber(subscriber);
+		filteredSyncSet = new SyncSetInputFromSyncSet(subscriberSyncSet.getSyncSet());
+		eventHandler = new SubscriberEventHandler(subscriberSyncSet);
+		
 		TeamUI.addPropertyChangeListener(this);
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
+		subscriber.addListener(this);
 	}
 	
 	/*
@@ -55,47 +71,34 @@ public class SubscriberInput implements IPropertyChangeListener {
 	 * is a long running operation.
 	 */
 	public void prepareInput(IProgressMonitor monitor) throws TeamException {
-		monitor.beginTask(null, 100);
-		try {			
-			subscriberInput.initialize(Policy.subMonitorFor(monitor, 70));						
-			filteredInput.setInputSyncSet(subscriberInput.getSyncSet(), Policy.subMonitorFor(monitor, 30));
-		} finally {
-			monitor.done();
-		}
+		// TODO: Should not refresh all subscriber roots
+		refreshLocalState(getSubscriber().roots(), Policy.subMonitorFor(monitor, 70));						
 	}
 	
 	public TeamSubscriber getSubscriber() {
-		return subscriberInput.getSubscriber();
+		return subscriberSyncSet.getSubscriber();
 	}
 	
 	public SyncSet getFilteredSyncSet() {
-		return filteredInput.getSyncSet();
+		return filteredSyncSet.getSyncSet();
 	}
 	
 	public SyncSet getSubscriberSyncSet() {
-		return subscriberInput.getSyncSet();
+		return subscriberSyncSet.getSyncSet();
 	}
 
 	public void setFilter(SyncInfoFilter filter, IProgressMonitor monitor) throws TeamException {
-		filteredInput.setFilter(filter, monitor);
+		filteredSyncSet.setFilter(filter, monitor);
 	}
 
 	public void dispose() {
-		subscriberInput.disconnect();
-		filteredInput.disconnect();
+		subscriberSyncSet.disconnect();
+		filteredSyncSet.disconnect();
 		TeamUI.removePropertyChangeListener(this);		
 	}
 
-	public IWorkingSet getWorkingSet() {
-		return subscriberInput.getWorkingSet();
-	}
-
-	public void setWorkingSet(IWorkingSet set) {
-		subscriberInput.setWorkingSet(set);
-	}
-
 	public IResource[] roots() {
-		return subscriberInput.getRoots();
+		return subscriberSyncSet.getRoots();
 	}
 
 	/* (non-Javadoc)
@@ -104,9 +107,97 @@ public class SubscriberInput implements IPropertyChangeListener {
 	public void propertyChange(PropertyChangeEvent event) {
 		if (event.getProperty().equals(TeamUI.GLOBAL_IGNORES_CHANGED)) {
 			try {
-				subscriberInput.reset(new NullProgressMonitor());
+				subscriberSyncSet.reset(new NullProgressMonitor());
 			} catch (TeamException e) {
 				TeamUIPlugin.log(e);
+			}
+		}
+	}
+
+	public void refreshLocalState(IResource[] resources, IProgressMonitor monitor) throws TeamException {
+		eventHandler.collectDeeply(resources);
+	}
+
+	/**
+	 * Process the resource delta
+	 * 
+	 * @param delta
+	 */
+	private void processDelta(IResourceDelta delta) {
+		IResource resource = delta.getResource();
+		int kind = delta.getKind();
+		
+		if (resource.getType() == IResource.PROJECT) {
+			try {
+				// Handle a deleted project	
+				if (((kind & IResourceDelta.REMOVED) != 0)
+					|| !getSubscriber().isSupervised((IProject) resource)) {
+					eventHandler.removeAllChildren((IProject) resource);
+					return;
+				}
+				// Only interested in projects mapped to the provider
+				if (!getSubscriber().isSupervised((IProject) resource)) {
+					return;
+				}
+			} catch (TeamException e) {
+				TeamUIPlugin.log(e);
+				// we return because the children of this project shouldn't be processed.				
+				return;
+			}
+		}
+		
+		// If the resource has changed type, remove the old resource handle
+		// and add the new one
+		if ((delta.getFlags() & IResourceDelta.TYPE) != 0) {
+			eventHandler.removeAllChildren(resource);			
+			eventHandler.collectDeeply(resource);
+		}
+		
+		// Check the flags for changes the SyncSet cares about.
+		// Notice we don't care about MARKERS currently.
+		int changeFlags = delta.getFlags();
+		if ((changeFlags
+			& (IResourceDelta.OPEN | IResourceDelta.CONTENT))
+			!= 0) {
+				eventHandler.handleChange(resource);
+		}
+		
+		// Check the kind and deal with those we care about
+		if ((delta.getKind() & (IResourceDelta.REMOVED | IResourceDelta.ADDED)) != 0) {
+			eventHandler.handleChange(resource);
+		}
+		
+		// Handle changed children .
+		IResourceDelta[] affectedChildren =
+				delta.getAffectedChildren(IResourceDelta.CHANGED | IResourceDelta.REMOVED | IResourceDelta.ADDED);
+		for (int i = 0; i < affectedChildren.length; i++) {
+			processDelta(affectedChildren[i]);
+		}		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
+	 */
+	public void resourceChanged(IResourceChangeEvent event) {
+		processDelta(event.getDelta());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.sync.ITeamResourceChangeListener#teamResourceChanged(org.eclipse.team.core.sync.TeamDelta[])
+	 */
+	public void teamResourceChanged(TeamDelta[] deltas) {
+		for (int i = 0; i < deltas.length; i++) {
+			switch(deltas[i].getFlags()) {
+				case TeamDelta.SYNC_CHANGED:
+					eventHandler.handleChange(deltas[i].getResource());
+					break;
+				case TeamDelta.PROVIDER_DECONFIGURED:
+					eventHandler.removeAllChildren(deltas[i].getResource());
+					break;
+				case TeamDelta.PROVIDER_CONFIGURED:
+					// TODO: get the workbench progress monitor
+					eventHandler.collectDeeply(deltas[i].getResource());
+					break; 						
 			}
 		}
 	}	

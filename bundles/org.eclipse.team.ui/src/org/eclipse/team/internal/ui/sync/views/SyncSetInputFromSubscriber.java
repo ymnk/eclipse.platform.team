@@ -36,43 +36,19 @@ public class SyncSetInputFromSubscriber extends SyncSetInput  implements IResour
 	private TeamSubscriber subscriber;
 	private boolean connected = false;
 
-	private void connect() {
-		if(! connected) {
-			ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
-			subscriber.addListener(this);
-			connected = true;
-		}
+	public SyncSetInputFromSubscriber(TeamSubscriber subscriber) {
+		this.subscriber = subscriber;
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
+		subscriber.addListener(this);
 	}
-	
+		
 	public void disconnect() {
-		if(connected) {
-			ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-			subscriber.removeListener(this);
-			connected = false;
-		}
+		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+		subscriber.removeListener(this);
 	}
 	
 	public TeamSubscriber getSubscriber() {
 		return subscriber;
-	}
-
-	public void setSubscriber(TeamSubscriber subscriber) {
-		if(this.subscriber != null) {
-			disconnect();
-		}
-		this.subscriber = subscriber;
-	}
-
-	/**
-	 * This method changes the subscriber the input is obtained from.
-	 * This method may be long running as the sync state of several resources
-	 * may need to be computed.
-	 * 
-	 * @param subscriber
-	 */
-	public void initialize(IProgressMonitor monitor) throws TeamException {
-		connect();
-		reset(monitor);
 	}
 	
 	/*

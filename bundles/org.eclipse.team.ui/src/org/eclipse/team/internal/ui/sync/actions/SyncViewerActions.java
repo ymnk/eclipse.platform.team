@@ -10,21 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.actions;
 
-import java.lang.reflect.InvocationTargetException;
-
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.sync.views.INavigableControl;
 import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.views.SyncInfoWorkingSetFilter;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.ui.sync.AndSyncInfoFilter;
 import org.eclipse.team.ui.sync.PseudoConflictFilter;
@@ -59,8 +56,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private SyncViewerToolbarDropDownAction chooseSubscriberAction;
 	private SyncViewerToolbarDropDownAction chooseChangeFilterAction;
 	
-	private IWorkingSet workingSet;
-	
 	// other view actions
 	private Action collapseAll;
 	private Action refreshSelectionAction;
@@ -68,6 +63,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private Action open;
 	private ExpandAllAction expandAll;
 	private SelectAllAction selectAllAction;
+	
+	private SyncInfoWorkingSetFilter workingSetFilter = new SyncInfoWorkingSetFilter();
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#updateActionBars()
@@ -209,15 +206,16 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	}
 
 	public void refreshFilters() {
-	final SubscriberInput input = getSubscriberContext();
-	if(input != null) {
-		try {
-			input.setFilter(new AndSyncInfoFilter(
-			new SyncInfoFilter[] {
-				new SyncInfoDirectionFilter(directionsFilters.getDirectionFilter()), 
-				new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters()),
-				new PseudoConflictFilter()
-			}), new NullProgressMonitor());
+		final SubscriberInput input = getSubscriberContext();
+		if(input != null) {
+			try {
+				input.setFilter(new AndSyncInfoFilter(
+				new SyncInfoFilter[] {
+					new SyncInfoDirectionFilter(directionsFilters.getDirectionFilter()), 
+					new SyncInfoChangeTypeFilter(changeFilters.getChangeFilters()),
+					new PseudoConflictFilter(),
+					workingSetFilter
+				}), new NullProgressMonitor() /* TODO: should be a job ? */);
 			} catch (TeamException e) {
 				
 			}
@@ -255,16 +253,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	protected void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
 		refreshSelectionAction.setEnabled(input != null);
-		// This is invoked before the subscriber input is initialized
-		if (input.getWorkingSet() == null) {
-			// set the input to use the last selected working set
-			input.setWorkingSet(getWorkingSet());
-		} else {
-			// set the menu to select the set from the input
-			// the callback will not prepare the input since the set
-			// for the input is the same as the one being passed to the menu
-			workingSetGroup.setWorkingSet(getWorkingSet());
-		}
+		workingSetGroup.setWorkingSet(getWorkingSet());
 		
 		// refresh the selected filter
 		refreshFilters();
@@ -301,42 +290,25 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	 * Get the selected working set from the subscriber input
 	 */
 	public IWorkingSet getWorkingSet() {
-		SubscriberInput input = getSubscriberContext();
-		// There's no subscriber input so use the last selected workingSet
-		if (input == null) return workingSet;
-		IWorkingSet set = input.getWorkingSet();
-		// There's no subscriber working set so use the last selected workingSet
-		if (set == null ) return workingSet;
-		return set;
+		return workingSetFilter.getWorkingSet();
 	}
 	
+	/**
+	 * This is a callback from the workingSetGroup
+	 */
 	protected void changeWorkingSet(IWorkingSet set) {
 		// Keep track of the last working set selected
-		if (set != null) workingSet = set;
-		final SubscriberInput input = getSubscriberContext();
-		if (input == null) return;
-		if (workingSetsEqual(input.getWorkingSet(), set)) return;
-		input.setWorkingSet(set);
-		getSyncView().run(new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-				try {
-					// when the working set changes, recalculate the entire sync set based on
-					// the new input.
-					input.prepareInput(monitor);
-					getSyncView().updateTitle();
-				} catch (TeamException e) {
-					throw new InvocationTargetException(e);
-				}
-			}
-		});
+		if (set != getWorkingSet() && set != null) {
+			workingSetFilter.setWorkingSet(set);
+		}
+		refreshFilters();
+		getSyncView().workingSetChanged();
 	}
 
-	private boolean workingSetsEqual(IWorkingSet set, IWorkingSet set2) {
-		if (set == null && set2 == null) return true;
-		if (set == null || set2 == null) return false;
-		return set.equals(set2);
-	}
-
+	/**
+	 * This method sets the working set through the workingSetGroup 
+	 * which will result in a call to changeWorkingSet().
+	 */
 	public void setWorkingSet(IWorkingSet workingSet) {
 		PlatformUI.getWorkbench().getWorkingSetManager().addRecentWorkingSet(workingSet);
 		workingSetGroup.setWorkingSet(workingSet);
