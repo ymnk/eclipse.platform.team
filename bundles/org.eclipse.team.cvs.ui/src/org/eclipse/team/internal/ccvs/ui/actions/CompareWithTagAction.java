@@ -18,7 +18,9 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.TagSelectionDialog;
 import org.eclipse.team.internal.ccvs.ui.subscriber.CVSLocalCompareConfiguration;
@@ -35,17 +37,26 @@ public class CompareWithTagAction extends WorkspaceAction {
 		// Show the compare viewer
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException {
-				CompareUI.openCompareEditorOnPage(
-				  input,
-				  getTargetPage());
+				CompareUI.openCompareEditorOnPage(input, getTargetPage());
 			}
 		}, false /* cancelable */, PROGRESS_BUSYCURSOR);
 	}
 	
 	private SyncInfoSetCompareInput createCompareInput(IResource[] resources, CVSTag tag) {
-		final SyncInfoSetCompareInput input = new SyncInfoSetCompareInput(
-				new CompareConfiguration(), 
-				CVSLocalCompareConfiguration.create(resources, tag));
+		final CVSLocalCompareConfiguration viewerConfig = CVSLocalCompareConfiguration.create(resources, tag);
+		final SyncInfoSetCompareInput input = new SyncInfoSetCompareInput(new CompareConfiguration(), viewerConfig) {
+				protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					try {
+						return viewerConfig.prepareInput(monitor);
+					} catch (TeamException e) {
+						throw new InvocationTargetException(e);
+					}
+				}
+				public void contributeToToolBar(ToolBarManager tbm) {
+					viewerConfig.contributeToToolBar(tbm);
+					super.contributeToToolBar(tbm);
+				}
+		};
 		return input;
 	}
 

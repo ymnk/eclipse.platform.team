@@ -12,15 +12,14 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.actions.RefreshAction;
 
 /**
@@ -31,6 +30,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	private CVSCompareSubscriber subscriber;
 	private TeamSubscriberSyncInfoCollector collector;
 	private RefreshAction refreshAction;
+	private RefreshAction refreshAllAction;
 	private FilteredSyncInfoCollector filteredSyncSet;
 
 	/**
@@ -63,13 +63,10 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 		super.dispose();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	public SyncInfoDiffNode prepareInput(IProgressMonitor monitor) throws TeamException {
 		subscriber.refresh(subscriber.roots(), IResource.DEPTH_INFINITE, monitor);
 		collector.waitForCollector(monitor);
-		return super.prepareInput(monitor);
+		return super.getInput();
 	}
 	
 	/* (non-Javadoc)
@@ -82,6 +79,13 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#contributeToToolBar(org.eclipse.jface.action.IToolBarManager)
+	 */
+	public void contributeToToolBar(IToolBarManager tbm) {
+		tbm.add(refreshAllAction);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#initializeViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.StructuredViewer)
 	 */
 	public void initializeViewer(Composite parent, StructuredViewer viewer) {
@@ -91,7 +95,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	protected void initializeActions(StructuredViewer viewer) {
 		super.initializeActions(viewer);
 		refreshAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getTeamSubscriber()).getName(), collector, null /* no listener */, false);
-		
+		refreshAllAction = new RefreshAction(viewer, ((CVSSyncTreeSubscriber)collector.getTeamSubscriber()).getName(), collector, null /* no listener */, true);
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#getSyncSet()

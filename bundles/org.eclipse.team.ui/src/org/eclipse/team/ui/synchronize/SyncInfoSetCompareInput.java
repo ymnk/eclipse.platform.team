@@ -13,11 +13,13 @@ package org.eclipse.team.ui.synchronize;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.*;
+import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Utils;
 
@@ -32,6 +34,8 @@ import org.eclipse.team.internal.ui.Utils;
 public class SyncInfoSetCompareInput extends CompareEditorInput {
 
 	private DiffTreeViewerConfiguration diffViewerConfiguration;
+	private NavigationAction nextAction;
+	private NavigationAction previousAction;
 
 	/**
 	 * Create a <code>SyncInfoSetCompareInput</code> whose diff viewer is configured
@@ -45,11 +49,27 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	}
 
 	public final Viewer createDiffViewer(Composite parent) {
-		StructuredViewer v = internalCreateDiffViewer(parent, diffViewerConfiguration);
-		v.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, diffViewerConfiguration.getTitle());
-		diffViewerConfiguration.updateCompareEditorInput(this);
-		initializeDiffViewer(v);
-		return v;
+		final StructuredViewer viewer = internalCreateDiffViewer(parent, diffViewerConfiguration);
+		viewer.getControl().setData(CompareUI.COMPARE_VIEWER_TITLE, diffViewerConfiguration.getTitle());
+		
+		if(viewer instanceof INavigatable) { 
+			INavigatable nav= new INavigatable() {
+				public boolean gotoDifference(boolean next) {
+					// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+					return ((INavigatable)viewer).gotoDifference(next);
+				}
+			};
+			viewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
+			
+			nextAction = new NavigationAction(true);
+			previousAction = new NavigationAction(false);
+			nextAction.setCompareEditorInput(this);
+			previousAction.setCompareEditorInput(this);
+		}
+		
+		initializeToolBar(viewer.getControl().getParent());
+		initializeDiffViewer(viewer);
+		return viewer;
 	}
 
 	/**
@@ -86,11 +106,20 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 		});
 	}
 
-	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-		try {
-			return diffViewerConfiguration.prepareInput(monitor);
-		} catch (TeamException e) {
-			throw new InvocationTargetException(e);
+	public void contributeToToolBar(ToolBarManager tbm) {	
+		if(nextAction != null && previousAction != null) { 
+			tbm.appendToGroup("navigation", nextAction);
+			tbm.appendToGroup("navigation", previousAction);
+		}
+	}
+	
+	private void initializeToolBar(Composite parent) {
+		ToolBarManager tbm= CompareViewerPane.getToolBarManager(parent);
+		if (tbm != null) {
+			tbm.removeAll();
+			tbm.add(new Separator("navigation")); //$NON-NLS-1$
+			contributeToToolBar(tbm);
+			tbm.update(true);
 		}
 	}
 	
@@ -105,5 +134,12 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 			}
 		}
 		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.CompareEditorInput#prepareInput(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+		return diffViewerConfiguration.getInput();
 	}	
 }

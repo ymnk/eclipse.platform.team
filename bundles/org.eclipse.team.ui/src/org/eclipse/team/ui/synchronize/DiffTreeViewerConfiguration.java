@@ -12,11 +12,8 @@ package org.eclipse.team.ui.synchronize;
 
 import java.util.ArrayList;
 
-import org.eclipse.compare.*;
-import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.MenuEvent;
@@ -24,7 +21,6 @@ import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.Utils;
@@ -61,8 +57,17 @@ public class DiffTreeViewerConfiguration {
 	private LogicalViewProvider logicalView;
 	
 	private ExpandAllAction expandAllAction;
-	private NavigationAction nextAction;
-	private NavigationAction previousAction;
+	
+	/**
+	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given sync set
+	 * and menuId. If the menuId is <code>null</code>, then no contributed menus will be shown
+	 * in the diff viewer created from this configuration.
+	 * @param menuId the id of menu objectContributions
+	 * @param set the <code>SyncInfoSet</code> to be displayed in the resulting diff viewer
+	 */
+	public DiffTreeViewerConfiguration(SyncInfoSet set) {
+		this(null, set);
+	}
 	
 	/**
 	 * Create a <code>SyncInfoSetCompareConfiguration</code> for the given sync set
@@ -94,32 +99,12 @@ public class DiffTreeViewerConfiguration {
 		initializeListeners(viewer);
 		hookContextMenu(viewer);
 		initializeActions(viewer);
-		initializeNavigation(viewer);
 		logicalView = getDefaultLogicalViewProvider();
 		setLogicalViewProvider(logicalView);
 		
 		viewer.setInput(getInput());
 	}
 
-	/**
-	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
-	 * to initialize the navigation controller for the diff tree. The navigation control
-	 * is provided by an instance of <code>SyncInfoDiffTreeNavigator</code>.
-	 * @param viewer the viewer to be navigated
-	 * @param target the interface used to navigate the viewer
-	 * @see SyncInfoDiffTreeNavigator
-	 */
-	protected void initializeNavigation(final StructuredViewer viewer) {
-		if(viewer instanceof INavigatable) { 
-			INavigatable nav= new INavigatable() {
-				public boolean gotoDifference(boolean next) {
-					// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
-					return ((INavigatable)viewer).gotoDifference(next);
-				}
-			};
-			viewer.getControl().setData(INavigatable.NAVIGATOR_PROPERTY, nav);
-		}
-	}
 	
 	/**
 	 * Get the input that will be assigned to the viewer initialized by this configuration.
@@ -168,7 +153,6 @@ public class DiffTreeViewerConfiguration {
 	 * @param viewer the viewer being initialize
 	 */
 	protected void initializeActions(StructuredViewer viewer) {
-		createNextPreviousButtons(viewer.getControl().getParent());
 		expandAllAction = new ExpandAllAction((AbstractTreeViewer)viewer);
 		Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
 	}
@@ -182,18 +166,7 @@ public class DiffTreeViewerConfiguration {
 		return set;
 	}
 
-	private void createNextPreviousButtons(Composite parent) {
-		ToolBarManager tbm= CompareViewerPane.getToolBarManager(parent);
-		if (tbm != null) {
-			tbm.removeAll();
-			tbm.add(new Separator("navigation")); //$NON-NLS-1$
-			nextAction = new NavigationAction(true);
-			previousAction = new NavigationAction(false);
-			tbm.appendToGroup("navigation", nextAction);
-			tbm.appendToGroup("navigation", previousAction);
-			tbm.update(true);
-		}
-	}
+	
 
 	/**
 	 * Method invoked from <code>initializeViewer(Composite, StructuredViewer)</code> in order
@@ -254,6 +227,9 @@ public class DiffTreeViewerConfiguration {
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
+	public void contributeToToolBar(IToolBarManager tbm) {
+	}
+	
 	protected LogicalViewProvider getDefaultLogicalViewProvider() {
 		return new DefaultLogicalView(this);
 	}
@@ -273,16 +249,6 @@ public class DiffTreeViewerConfiguration {
 		logicalView.dispose();
 	}
 	
-	/**
-	 * Called from the <code>SyncInfoCompareInput</code> to hook up the navigation
-	 * commands to the compare input
-	 * @param input the compare input
-	 */
-	public void updateCompareEditorInput(CompareEditorInput input) {
-		nextAction.setCompareEditorInput(input);
-		previousAction.setCompareEditorInput(input);
-	}
-
 	/**
 	 * Set the logical view to be used in the diff tree viewer. Passing <code>null</code>
 	 * will remove any logical view and use the standard resource hierarchy view.
@@ -360,17 +326,5 @@ public class DiffTreeViewerConfiguration {
 	 */
 	protected boolean allowParticipantMenuContributions() {
 		return getMenuId() != null;
-	}
-	
-	/**
-	 * Prepare the input that is to be shown in the diff viewer of the configuration's
-	 * compare input. This method may be overridden by sublcass but should only be
-	 * invoked by the compare input
-	 * @param monitor a progress monitor
-	 * @return the input ot the compare input's diff viewer
-	 * @throws TeamException
-	 */
-	public SyncInfoDiffNode prepareInput(IProgressMonitor monitor) throws TeamException {
-		return getInput();
 	}
 }
