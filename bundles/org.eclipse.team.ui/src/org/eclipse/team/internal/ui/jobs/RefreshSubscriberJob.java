@@ -19,12 +19,10 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
-import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.actions.*;
+import org.eclipse.team.internal.ui.synchronize.IRefreshEvent;
+import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
 
 /**
  * Job to refresh a subscriber with its remote state.

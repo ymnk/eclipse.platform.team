@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.team.internal.ui.synchronize.views.ILogicalView;
 import org.eclipse.ui.IWorkbenchPage;
 
 /**
