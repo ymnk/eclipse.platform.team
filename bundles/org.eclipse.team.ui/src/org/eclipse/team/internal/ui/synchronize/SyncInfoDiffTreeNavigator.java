@@ -14,11 +14,13 @@ import java.util.Iterator;
 
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.NavigationAction;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 
 /**
@@ -27,16 +29,20 @@ import org.eclipse.team.ui.synchronize.actions.INavigableControl;
 public class SyncInfoDiffTreeNavigator {
 	
 	private Action expandAll;
+	private Action open;
 	private NavigationAction nextAction;
 	private NavigationAction previousAction;
 	
 	public interface INavigationTarget {
-		void setSelection(TreeItem ti, boolean fireOpen);
+		void openSelection();
 		Tree getTree();
 		void createChildren(TreeItem item);
+		ISelection getSelection();
+		void setSelection(ISelection selection, boolean b);
 	}
 	
 	INavigationTarget target;
+	boolean showOpenAction = true;
 	
 	public SyncInfoDiffTreeNavigator(INavigationTarget target) {
 		this.target = target;
@@ -78,7 +84,7 @@ public class SyncInfoDiffTreeNavigator {
 			if (children != null && children.length > 0) {
 				item= children[0];
 				if (item != null && item.getItemCount() <= 0) {
-					getTarget().setSelection(item, fireOpen);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+					setSelection(item, fireOpen);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
 					return false;
 				}
 			}
@@ -93,12 +99,27 @@ public class SyncInfoDiffTreeNavigator {
 		}
 		
 		if (item != null) {
-			getTarget().setSelection(item, fireOpen);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+			setSelection(item, fireOpen);	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
 			return false;
 		}
 		return true;
 	}
 
+	private void setSelection(TreeItem ti, boolean fireOpen) {
+		if (ti != null) {
+			Object data= ti.getData();
+			if (data != null) {
+				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
+				ISelection selection= new StructuredSelection(data);
+				getTarget().setSelection(selection, true);
+				ISelection currentSelection= getTarget().getSelection();
+				if (fireOpen && currentSelection != null && selection.equals(currentSelection)) {
+					getTarget().openSelection();
+				}
+			}
+		}
+	}
+	
 	private TreeItem findNextPrev(TreeItem item, boolean next) {
 		
 		if (item == null)
@@ -206,15 +227,44 @@ public class SyncInfoDiffTreeNavigator {
 			}
 		};
 		Utils.initAction(expandAll, "action.expandAll."); //$NON-NLS-1$
+		
+		open = new Action() {
+			public void run() {
+				target.openSelection();
+			}
+			// TODO: needs to be invoked when the selection changes
+			public void update() {
+				ISelection selection = target.getSelection();
+				if (selection instanceof IStructuredSelection) {
+					IStructuredSelection ss = (IStructuredSelection)selection;
+					if (ss.size() == 1) {
+						Object element = ss.getFirstElement();
+						if (element instanceof SyncInfoDiffNode) {
+							IResource resource = ((SyncInfoDiffNode)element).getResource();
+							setEnabled(resource != null && resource.getType() == IResource.FILE);
+							return;
+						}
+					}
+				}
+				setEnabled(false);
+			}
+		};
+		Utils.initAction(open, "action.open."); //$NON-NLS-1$
 	}
 	
 	public void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
 		AbstractTreeViewer tree = getAbstractTreeViewer(viewer);
+		if (isShowOpenAction()) {
+			manager.add(open);
+		}
 		if (tree != null) {
+			if (isShowOpenAction()) {
+				manager.add(new Separator());
+			}
 			manager.add(expandAll);
 		}
 	}
-	
+
 	protected void expandAllFromSelection(StructuredViewer viewer) {
 		AbstractTreeViewer tree = getAbstractTreeViewer(viewer);
 		if (tree == null) return;
@@ -242,5 +292,19 @@ public class SyncInfoDiffTreeNavigator {
 		if(tree.isExpandable(element)) {
 			tree.setExpandedState(element, ! tree.getExpandedState(element));
 		}
+	}
+	
+	/**
+	 * @return Returns the showOpenAction.
+	 */
+	public boolean isShowOpenAction() {
+		return showOpenAction;
+	}
+	
+	/**
+	 * @param showOpenAction The showOpenAction to set.
+	 */
+	public void setShowOpenAction(boolean showOpenAction) {
+		this.showOpenAction = showOpenAction;
 	}
 }

@@ -42,7 +42,7 @@ public class CVSLocalCompareConfiguration extends SyncInfoSetCompareConfiguratio
 	}
 	
 	public CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, TeamSubscriberSyncInfoCollector collector) {
-		super(null, collector.getSyncInfoSet());
+		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet());
 		this.subscriber = subscriber;
 		this.collector = collector;
 	}

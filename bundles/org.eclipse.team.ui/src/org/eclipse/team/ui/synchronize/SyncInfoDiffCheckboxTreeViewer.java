@@ -63,23 +63,12 @@ public class SyncInfoDiffCheckboxTreeViewer extends ContainerCheckedTreeViewer i
 		boolean next = direction == INavigableControl.NEXT ? true : false;
 		return configuration.getNavigator().navigate(next, false);
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeNavigator.INavigationTarget#setSelection(org.eclipse.swt.widgets.TreeItem, boolean)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffTreeNavigator.INavigationTarget#openSelection()
 	 */
-	public void setSelection(TreeItem ti, boolean fireOpen) {
-		if (ti != null) {
-			Object data= ti.getData();
-			if (data != null) {
-				// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20106
-				ISelection selection= new StructuredSelection(data);
-				setSelection(selection, true);
-				ISelection currentSelection= getSelection();
-				if (fireOpen && currentSelection != null && selection.equals(currentSelection)) {
-					fireOpen(new OpenEvent(this, selection));
-				}
-			}
-		}
+	public void openSelection() {
+		fireOpen(new OpenEvent(this, getSelection()));
 	}
 
 	/* (non-Javadoc)
