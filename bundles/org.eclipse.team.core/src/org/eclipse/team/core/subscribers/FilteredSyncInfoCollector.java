@@ -64,7 +64,7 @@ public final class FilteredSyncInfoCollector implements ISyncInfoSetChangeListen
 	}
 	
 	/**
-	 * Return the filter used by this collector
+	 * Return the filter used by this collector.
 	 * @return the filter
 	 */
 	public SyncInfoFilter getFilter() {
