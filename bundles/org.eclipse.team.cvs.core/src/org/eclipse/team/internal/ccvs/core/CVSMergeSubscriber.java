@@ -53,7 +53,6 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	
 	public CVSMergeSubscriber(IResource[] roots, CVSTag start, CVSTag end) {		
 		this(getUniqueId(), roots, start, end);
-		this.comparisonCriteria = new ContentComparisonCriteria(false /* don't ignore whitespace */);
 	}
 	
 	protected IResource[] refreshRemote(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
@@ -85,7 +84,8 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber#initialize()
 	 */
-	private void initialize() {				
+	private void initialize() {			
+		this.comparisonCriteria = new CVSRevisionNumberCompareCriteria();
 		QualifiedName id = getId();
 		String syncKeyPrefix = id.getLocalName();
 		remoteSynchronizer = new CVSSynchronizationCache(new QualifiedName(SYNC_KEY_QUALIFIER, syncKeyPrefix + end.getName()));
@@ -210,7 +210,7 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 		for (int i = 0; i < deltas.length; i++) {
 			TeamDelta delta = deltas[i];
 			switch(delta.getFlags()) {
-				case TeamDelta.PROVIDER_DECONFIGURED:
+				case TeamDelta.ROOT_REMOVED:
 					IResource resource = delta.getResource();
 					if(roots.remove(resource))	{
 						fireTeamResourceChange(new TeamDelta[] {delta});

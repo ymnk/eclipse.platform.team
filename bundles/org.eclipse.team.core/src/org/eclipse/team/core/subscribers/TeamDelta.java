@@ -39,13 +39,13 @@ public class TeamDelta {
 	 * Delta kind constant (bit mask) indicating that a team provider has been configured on the resource.
 	 * @see IResourceDelta#getKind
 	 */
-	public static final int PROVIDER_CONFIGURED = 0x2;
+	public static final int ROOT_ADDED = 0x2;
 	
 	/**
 	 * Delta kind constant (bit mask) indicating that a team provider has been de-configured on the resource.
 	 * @see IResourceDelta#getKind
 	 */	
-	public static final int PROVIDER_DECONFIGURED = 0x4;
+	public static final int ROOT_REMOVED = 0x4;
 
 	private TeamSubscriber subscriber; 
 	private int flags;

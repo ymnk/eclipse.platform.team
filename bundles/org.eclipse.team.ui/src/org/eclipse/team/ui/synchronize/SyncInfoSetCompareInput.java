@@ -72,4 +72,5 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	protected boolean allowParticipantMenuContributions() {
 		return menuId != null;
 	}
+	
 }

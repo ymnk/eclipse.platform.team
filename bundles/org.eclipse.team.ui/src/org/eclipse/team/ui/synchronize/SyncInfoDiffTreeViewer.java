@@ -16,6 +16,7 @@ import java.util.Iterator;
 import org.eclipse.compare.*;
 import org.eclipse.compare.internal.INavigatable;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -91,7 +92,7 @@ public class SyncInfoDiffTreeViewer extends TreeViewer implements INavigableCont
 		hookContextMenu();
 		
 		createToolBarActions(parent);			
-		setInput(getSyncSet());
+		setInput(new SyncInfoDiffNode(getSyncSet(), ResourcesPlugin.getWorkspace().getRoot()));
 	}
 
 	protected Object getTitle() {

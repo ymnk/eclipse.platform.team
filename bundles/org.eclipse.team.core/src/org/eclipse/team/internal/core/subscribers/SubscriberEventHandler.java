@@ -80,7 +80,7 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 */
 	public SubscriberEventHandler(SyncSetInputFromSubscriber set) {
 		this.set = set;
-		reset(SubscriberEvent.INITIALIZE);
+		reset(set.getSubscriber().roots(), SubscriberEvent.INITIALIZE);
 	}
 	
 	/**
@@ -96,8 +96,11 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * @param resource
 	 * @param depth
 	 */
-	public void initialize() {
-		reset(SubscriberEvent.CHANGE);
+	public void initialize(IResource[] roots) {
+		if (roots == null) {
+			roots = set.getSubscriber().roots();
+		}
+		reset(roots, SubscriberEvent.CHANGE);
 	}
 	
 	/**
@@ -240,8 +243,8 @@ public class SubscriberEventHandler extends BackgroundEventHandler {
 	 * @param type can be Event.CHANGE to recalculate all states or Event.INITIALIZE to perform the
 	 *   optimized recalculation if supported by the subscriber.
 	 */
-	private void reset(int type) {
-		IResource[] resources = set.getSubscriber().roots();
+	private void reset(IResource[] roots, int type) {
+		IResource[] resources = roots;
 		for (int i = 0; i < resources.length; i++) {
 			queueEvent(new SubscriberEvent(resources[i], type, IResource.DEPTH_INFINITE));
 		}

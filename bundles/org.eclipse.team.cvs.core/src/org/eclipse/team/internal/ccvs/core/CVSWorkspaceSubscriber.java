@@ -156,7 +156,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#projectConfigured(org.eclipse.core.resources.IProject)
 	 */
 	public void projectConfigured(IProject project) {
-		TeamDelta delta = new TeamDelta(this, TeamDelta.PROVIDER_CONFIGURED, project);
+		TeamDelta delta = new TeamDelta(this, TeamDelta.ROOT_ADDED, project);
 		fireTeamResourceChange(new TeamDelta[] {delta});
 	}
 
@@ -169,7 +169,7 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 		} catch (TeamException e) {
 			CVSProviderPlugin.log(e);
 		}
-		TeamDelta delta = new TeamDelta(this, TeamDelta.PROVIDER_DECONFIGURED, project);
+		TeamDelta delta = new TeamDelta(this, TeamDelta.ROOT_REMOVED, project);
 		fireTeamResourceChange(new TeamDelta[] {delta});
 	}
 	

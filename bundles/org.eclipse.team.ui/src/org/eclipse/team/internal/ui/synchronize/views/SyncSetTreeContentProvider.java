@@ -73,12 +73,7 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 			// TODO: Should group added roots by their parent
 			for (int i = 0; i < added.length; i++) {
 				IResource resource = added[i];
-				Object parent;
-				if (resource.getType() == IResource.PROJECT) {
-					parent = getSyncSet();
-				} else {
-					parent = getModelParent(resource);				
-				}
+				Object parent = getModelParent(resource);				
 				Object element = getModelObject(resource);				
 				tree.add(parent, element);
 				updateParentLabels(resource);		

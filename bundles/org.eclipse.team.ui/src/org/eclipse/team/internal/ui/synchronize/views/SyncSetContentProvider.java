@@ -32,41 +32,41 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	// parents who need a label update accumulated while handling sync set changes
 	private Set parentsToUpdate = new HashSet();
 	
+	protected SyncInfoSet getSyncSet(Object input) {
+		if (input == null) {
+			return null;
+		}
+		if(input instanceof SyncInfoDiffNode) {
+			return ((SyncInfoDiffNode)input).getSyncInfoSet();
+		}
+		if(input instanceof SyncInfoSet) {
+			return (SyncInfoSet)input;
+		}
+		return null;
+	}
+	
 	protected SyncInfoSet getSyncSet() {
 		if(viewer == null || viewer.getControl().isDisposed()) {
 			return null;	
 		}
-		if(viewer.getInput() instanceof SyncInfoDiffNode) {
-			return (SyncInfoSet)((SyncInfoDiffNode)viewer.getInput()).getSyncInfoSet();
-		}
-		return (SyncInfoSet)viewer.getInput();
+		return getSyncSet(viewer.getInput());
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
 	public void inputChanged(Viewer v, Object oldInput, Object newInput) {
 		
 		this.viewer = v;
-		SyncInfoSet oldSyncSet = null;
-		SyncInfoSet newSyncSet = null;
-		
-		if(newInput instanceof SyncInfoDiffNode && oldInput != null) {
-			return;
-		}
-		
-		if (oldInput instanceof SyncInfoSet) {
-			oldSyncSet = (SyncInfoSet) oldInput;
-		}
-		if (newInput instanceof SyncInfoSet) {
-			newSyncSet = (SyncInfoSet) newInput;
-		}
+		SyncInfoSet oldSyncSet = getSyncSet(oldInput);
+		SyncInfoSet newSyncSet = getSyncSet(newInput);
+
 		if (oldSyncSet != newSyncSet) {
 			if (oldSyncSet != null) {
-				((SyncInfoSet)oldSyncSet).removeSyncSetChangedListener(this);
+				oldSyncSet.removeSyncSetChangedListener(this);
 			}
 			if (newSyncSet != null) {
-				((SyncInfoSet)newSyncSet).addSyncSetChangedListener(this);
+				newSyncSet.addSyncSetChangedListener(this);
 			}
 		}
 	}
@@ -263,11 +263,7 @@ public abstract class SyncSetContentProvider implements IStructuredContentProvid
 	 * @param resource
 	 */
 	public Object getModelObject(IResource resource) {
-		if (resource.getType() == IResource.ROOT) {
-			return getSyncSet();
-		} else {
-			return new SyncInfoDiffNode(getSyncSet(), resource);
-		}
+		return new SyncInfoDiffNode(getSyncSet(), resource);
 	}
 	
 	protected Object[] getModelObjects(IResource[] resources) {
