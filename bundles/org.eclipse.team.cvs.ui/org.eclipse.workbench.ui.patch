@@ -3,7 +3,7 @@ Index: Eclipse UI/org/eclipse/ui/internal/decorators/DecorationScheduler.java
 retrieving revision 1.31
 diff -u -r1.31 DecorationScheduler.java
 --- Eclipse UI/org/eclipse/ui/internal/decorators/DecorationScheduler.java	29 Sep 2003 18:47:11 -0000	1.31
-+++ Eclipse UI/org/eclipse/ui/internal/decorators/DecorationScheduler.java	24 Oct 2003 18:44:15 -0000
++++ Eclipse UI/org/eclipse/ui/internal/decorators/DecorationScheduler.java	27 Oct 2003 18:21:48 -0000
 @@ -75,17 +75,59 @@
  		if (element == null)
  			return text;
@@ -54,7 +54,7 @@ diff -u -r1.31 DecorationScheduler.java
 +		//then add in the results for the main object
 +		decoratorManager
 +			.getLightweightManager()
-+			.getDecorations(
++			.getQuickDecorations(
 +				element,
 +				builder,
 +				false/* adapted result */);
@@ -79,7 +79,7 @@ Index: Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorDefinit
 retrieving revision 1.9
 diff -u -r1.9 LightweightDecoratorDefinition.java
 --- Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorDefinition.java	12 Mar 2003 17:45:14 -0000	1.9
-+++ Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorDefinition.java	24 Oct 2003 18:44:15 -0000
++++ Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorDefinition.java	27 Oct 2003 18:21:48 -0000
 @@ -60,16 +60,18 @@
  	 * creating the decorator.
  	 * This method should not be called unless a check for
@@ -147,7 +147,7 @@ Index: Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorManager
 retrieving revision 1.9
 diff -u -r1.9 LightweightDecoratorManager.java
 --- Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorManager.java	7 Aug 2003 11:39:21 -0000	1.9
-+++ Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorManager.java	24 Oct 2003 18:44:15 -0000
++++ Eclipse UI/org/eclipse/ui/internal/decorators/LightweightDecoratorManager.java	27 Oct 2003 18:21:48 -0000
 @@ -32,9 +32,9 @@
  	 */
  
