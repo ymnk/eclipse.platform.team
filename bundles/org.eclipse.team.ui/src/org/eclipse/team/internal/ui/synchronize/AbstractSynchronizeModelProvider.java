@@ -10,51 +10,24 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.ISafeRunnable;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.ListenerList;
-import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.AbstractTreeViewer;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.util.*;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.TreeEvent;
 import org.eclipse.swt.events.TreeListener;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
-import org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.core.TeamPlugin;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.ISynchronizePage;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
+import org.eclipse.team.ui.synchronize.*;
 
 /**
  * This class is reponsible for creating and maintaining a presentation model of 
@@ -718,8 +691,31 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * well.
 	 * @param node the root node
 	 */
-	protected void clearModelObjects(ISynchronizeModelElement node) {
-	    // Clear all the children of the node
+	protected final void clearModelObjects(ISynchronizeModelElement node) {
+	    // When clearing model objects, any parents of the node
+	    // That are not out-of-sync, not the model root and that would
+	    // be empty as a result of this clear, should also be cleared.
+	    ISynchronizeModelElement rootToClear = getRootToClear(node);
+	    // Recursively clear the nodes from the root
+	    recursiveClearModelObjects(rootToClear);
+	    if (node == getModelRoot()) {
+	        IDiffElement[] children = node.getChildren();
+	        for (int i = 0; i < children.length; i++) {
+                IDiffElement element = children[i];
+                ((SynchronizeModelElement)node).remove(element);
+            }
+	    } else {
+		    SynchronizeModelElement parent = ((SynchronizeModelElement)node.getParent());
+		    if (parent != null) parent.remove(node);
+	    }
+	}
+	
+	/**
+	 * Method that sublcasses can oiverride when clearing model objects.
+     * @param node the node to be cleared recursively
+     */
+    protected void recursiveClearModelObjects(ISynchronizeModelElement node) {
+        // Clear all the children of the node
 		IDiffElement[] children = node.getChildren();
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
@@ -727,33 +723,27 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 			    ISynchronizeModelElement sme = (ISynchronizeModelElement) element;
                 ISynchronizeModelProvider provider = getProvider(sme);
                 if (provider != null && provider instanceof AbstractSynchronizeModelProvider) {
-                    ((AbstractSynchronizeModelProvider)provider).clearModelObjects(sme);
+                    ((AbstractSynchronizeModelProvider)provider).recursiveClearModelObjects(sme);
                 } else {
-                    clearModelObjects(sme);
+                    recursiveClearModelObjects(sme);
                 }
 			}
 		}
-		// Remove the node from the tree
-		removeToRoot(node);
-		
 		// Notify the update handler that the node has been cleared
 		updateHandler.modelObjectCleared(node);
-	}
-	
-	/*
+    }
+
+    /*
      * Remove to root should only remove to the root of the provider and not the
      * diff tree.
      */
-    private void removeToRoot(ISynchronizeModelElement node) {
-        if (node == getModelRoot()) return;
-		IDiffContainer parent = node.getParent();
-		if (parent != null) {
-		    ISynchronizeModelElement element = (ISynchronizeModelElement)parent;
-            ((SynchronizeModelElement)element).remove(node);
-		    if (!element.hasChildren() && !isOutOfSync(element)) {
-		        removeToRoot(element);
-		    }
+    private ISynchronizeModelElement getRootToClear(ISynchronizeModelElement node) {
+        if (node == getModelRoot()) return node;
+        ISynchronizeModelElement parent = (ISynchronizeModelElement)node.getParent();
+		if (parent != null && parent != getModelRoot() && !isOutOfSync(parent) && parent.getChildren().length == 1) {
+		    return getRootToClear(parent);
 		}
+		return node;
     }
 
     /*
@@ -814,7 +804,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * This is a callback from the model update handler that gets invoked 
 	 * when a node is removed from the viewer. It is only invoked for the
 	 * root level model provider. A removed node may have children for
-	 * which a <code>nodeRemoved</code> callback is not recieved (see
+	 * which a <code>nodeRemoved</code> callback is not received (see
 	 * <code>modelObjectCleared</code>).
 	 * @param node
 	 */
@@ -825,9 +815,9 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
     /**
 	 * This is a callback from the model update handler that gets invoked 
 	 * when a node is cleared from the model. It is only invoked for the
-	 * root level model provider. This calbakc is deep in the sense that 
-	 * a callbakc is sent for each node that is cleared.
-     * @param node the node that was removed.
+	 * root level model provider. This callback is deep in the sense that 
+	 * a callback is sent for each node that is cleared.
+     * @param node the node that was cleared.
      */
     public void modelObjectCleared(ISynchronizeModelElement node) {
         // Default is to do nothing

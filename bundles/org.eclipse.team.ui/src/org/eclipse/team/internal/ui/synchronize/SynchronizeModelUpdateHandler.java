@@ -432,6 +432,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
      * @param node the node that was cleared
      */
     public void modelObjectCleared(ISynchronizeModelElement node) {
+        node.removePropertyChangeListener(listener);
         this.provider.modelObjectCleared(node);
         if (DEBUG) {
             System.out.println("Node cleared: " + getDebugDisplayLabel(node)); //$NON-NLS-1$

@@ -136,7 +136,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
          * @see org.eclipse.team.core.subscribers.ChangeSet#getComment()
          */
         public String getComment() {
-            return getName();
+            return ""; //$NON-NLS-1$
         }
 	    
 	}

@@ -131,8 +131,8 @@ public abstract class SynchronizeModelProvider extends AbstractSynchronizeModelP
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#clearModelObjects(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
 	 */
-	protected void clearModelObjects(ISynchronizeModelElement node) {
-		super.clearModelObjects(node);
+	protected void recursiveClearModelObjects(ISynchronizeModelElement node) {
+		super.recursiveClearModelObjects(node);
 		if (node == getModelRoot()) {
 	        // If we are clearing everything under the root
 	        // than just purge the resource map

@@ -312,8 +312,8 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.CompositeModelProvider#clearModelObjects(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
      */
-    protected void clearModelObjects(ISynchronizeModelElement node) {
-        super.clearModelObjects(node);
+    protected void recursiveClearModelObjects(ISynchronizeModelElement node) {
+        super.recursiveClearModelObjects(node);
         if (node == getModelRoot()) {
             rootToProvider.clear();
             // Throw away the embedded sorter
@@ -402,14 +402,6 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
             ISynchronizeModelProvider provider = getProviderRootedAt(node);
             removeFromViewer(node);
             removeProvider(provider);
-        }
-    }
-    
-    public void createActiveChangeSetModelElements() {
-        ChangeSet[] sets = activeCollector.getActiveChangeSetManager().getSets();
-        for (int i = 0; i < sets.length; i++) {
-            ChangeSet set = sets[i];
-            createChangeSetModelElement(set, activeCollector.getSyncInfoSet(set));
         }
     }
 

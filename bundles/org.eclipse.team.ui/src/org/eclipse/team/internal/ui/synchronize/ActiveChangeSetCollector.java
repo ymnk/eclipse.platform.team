@@ -20,6 +20,7 @@ import java.util.Map;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.ITeamStatus;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ChangeSet;
 import org.eclipse.team.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.core.subscribers.SubscriberChangeSetCollector;
@@ -28,6 +29,7 @@ import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 /**
@@ -117,23 +119,27 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
         
         // Now repopulate
         if (seedSet != null) {
-            // Show all active change sets even if they are empty
-            sets = getActiveChangeSetManager().getSets();
-            for (int i = 0; i < sets.length; i++) {
-                ChangeSet set = sets[i];
-                add(set);
-            }
-            // The above will add all sync info that are contained in sets.
-            // We still need to add uncontained infos to the root set
-            SyncInfo[] syncInfos = seedSet.getSyncInfos();
-            for (int i = 0; i < syncInfos.length; i++) {
-                SyncInfo info = syncInfos[i];
-                if (isLocalChange(info)) {
-                    ChangeSet[] containingSets = findChangeSets(info);
-                    if (containingSets.length == 0) {
-                        rootSet.add(info);
-                    }
-                }
+            if (getConfiguration().getComparisonType() == ISynchronizePageConfiguration.THREE_WAY) {
+	            // Show all active change sets even if they are empty
+	            sets = getActiveChangeSetManager().getSets();
+	            for (int i = 0; i < sets.length; i++) {
+	                ChangeSet set = sets[i];
+	                add(set);
+	            }
+	            // The above will add all sync info that are contained in sets.
+	            // We still need to add uncontained infos to the root set
+	            SyncInfo[] syncInfos = seedSet.getSyncInfos();
+	            for (int i = 0; i < syncInfos.length; i++) {
+	                SyncInfo info = syncInfos[i];
+	                if (isLocalChange(info)) {
+	                    ChangeSet[] containingSets = findChangeSets(info);
+	                    if (containingSets.length == 0) {
+	                        rootSet.add(info);
+	                    }
+	                }
+	            }
+            } else {
+                add(seedSet.getSyncInfos());
             }
         }
     }
@@ -212,6 +218,14 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 	 * Return if this sync info is an outgoing change.
 	 */
 	private boolean isLocalChange(SyncInfo info) {
+	    if (!info.getComparator().isThreeWay()) {
+	        try {
+                // Obtain the sync info from the subscriber and use it to see if the change is local
+                info = getActiveChangeSetManager().getSubscriber().getSyncInfo(info.getLocal());
+            } catch (TeamException e) {
+                TeamUIPlugin.log(e);
+            }
+	    }
 		return (info.getComparator().isThreeWay() 
 		        && ((info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.OUTGOING ||
 		                (info.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING));
@@ -238,17 +252,19 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
         SyncInfoTree sis = (SyncInfoTree)activeSets.get(set);
         // Register the listener last since the add will
         // look for new elements
-        boolean listen = false;
+        boolean added = false;
         if (sis == null) {
             sis = new SyncInfoTree();
             activeSets.put(set, sis);
-            listen = true;
+            added = true;
         } else {
             sis.clear();
         }
         sis.addAll(select(set.getSyncInfoSet().getSyncInfos()));
-        if (listen)
+        if (added) {
             set.getSyncInfoSet().addSyncSetChangedListener(this);
+            listener.setAdded(set);
+        }
         return sis;
     }
 
@@ -273,9 +289,8 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
             sis = new SyncInfoTree();
             set.getSyncInfoSet().addSyncSetChangedListener(this);
             activeSets.put(set, sis);
+	        sis.addAll(select(set.getSyncInfoSet().getSyncInfos()));
         }
-        sis.clear();
-        sis.addAll(select(set.getSyncInfoSet().getSyncInfos()));
         return sis;
     }
 
