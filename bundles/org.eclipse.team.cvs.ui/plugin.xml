@@ -56,6 +56,17 @@
          </filter>
       </page>
       <page
+            objectClass="org.eclipse.core.resources.IFolder"
+            adaptable="true"
+            name="%CVS"
+            class="org.eclipse.team.internal.ccvs.ui.CVSFolderPropertiesPage"
+            id="org.eclipse.team.ccvs.ui.propertyPages.CVSFolderPropertiesPage">
+         <filter
+               name="projectNature"
+               value="org.eclipse.team.cvs.core.cvsnature">
+         </filter>
+      </page>
+      <page
             objectClass="org.eclipse.core.resources.IProject"
             adaptable="true"
             name="%CVS"
@@ -137,6 +148,20 @@
                id="org.eclipse.team.ccvs.ui.tag">
          </action>
          <action
+               label="%MergeAction.label"
+               tooltip="%MergeAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.MergeAction"
+               menubarPath="team.main/group2"
+               id="org.eclipse.team.ccvs.ui.merge">
+         </action>
+         <action
+               label="%BranchAction.label"
+               tooltip="%BranchAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.BranchAction"
+               menubarPath="team.main/group2"
+               id="org.eclipse.team.ccvs.ui.branch">
+         </action>
+         <action
                label="%CompareWithRemoteAction.label"
                tooltip="%CompareWithRemoteAction.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.CompareWithRemoteAction"
@@ -149,6 +174,13 @@
                class="org.eclipse.team.internal.ccvs.ui.actions.ReplaceWithRemoteAction"
                menubarPath="replaceWithMenu/replaceWithGroup"
                id="org.eclipse.team.ccvs.ui.replace">
+         </action>
+         <action
+               label="%ReplaceWithTagAction.label"
+               tooltip="%ReplaceWithTagAction.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.actions.ReplaceWithTagAction"
+               menubarPath="replaceWithMenu/replaceWithGroup"
+               id="org.eclipse.team.ccvs.ui.replaceWithTag">
          </action>
          <action
                label="%GenerateDiff.label"
@@ -193,27 +225,6 @@
                class="org.eclipse.team.internal.ccvs.ui.actions.UnmanageAction"
                menubarPath="team.main/projectGroup"
                id="org.eclipse.team.ccvs.ui.unmanage">
-         </action>
-         <action
-               label="%MergeAction.label"
-               tooltip="%MergeAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.MergeAction"
-               menubarPath="team.main/group2"
-               id="org.eclipse.team.ccvs.ui.merge">
-         </action>
-         <action
-               label="%BranchAction.label"
-               tooltip="%BranchAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.BranchAction"
-               menubarPath="team.main/group2"
-               id="org.eclipse.team.ccvs.ui.branch">
-         </action>
-         <action
-               label="%ReplaceWithTagAction.label"
-               tooltip="%ReplaceWithTagAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.ReplaceWithTagAction"
-               menubarPath="replaceWithMenu/replaceWithGroup"
-               id="org.eclipse.team.ccvs.ui.replaceWithTag">
          </action>
       </objectContribution>
       <objectContribution
