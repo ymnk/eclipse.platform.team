@@ -55,7 +55,8 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
             } else {
                 syncInfoSet = activeCollector.getSyncInfoSet(set);
             }
-            createChangeSetModelElement(set, syncInfoSet);
+            if (syncInfoSet != null)
+                createChangeSetModelElement(set, syncInfoSet);
         }
 
         /* (non-Javadoc)
@@ -369,7 +370,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         ISynchronizeModelElement node = getModelElement(set);
         if (node != null) {
             ISynchronizeModelProvider provider = getProviderRootedAt(node);
-            removeFromViewer(node);
+            removeFromViewer(new ISynchronizeModelElement[] { node });
             removeProvider(provider);
         }
     }

@@ -15,9 +15,10 @@ import org.eclipse.core.resources.mapping.IResourceMapper;
 import org.eclipse.core.resources.mapping.ITraversal;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.ui.IActionFilter;
 
 
-public class PropertyTester extends org.eclipse.core.expressions.PropertyTester {
+public class PropertyTester extends org.eclipse.core.expressions.PropertyTester implements IActionFilter {
 
 	private static final String REPOSITORYID_PROPERTY = "repositoryId"; //$NON-NLS-1$
 	
@@ -49,6 +50,18 @@ public class PropertyTester extends org.eclipse.core.expressions.PropertyTester 
 			// repository provider.
 			if(args == null) return false;
 			String repoId = (String)args[0];
+			return sharedWith(mapper, repoId);
+		}
+		return false;
+	}
+
+	public boolean testAttribute(Object target, String name, String value) {
+		IResourceMapper mapper = (IResourceMapper)target;
+		if(name.equals(REPOSITORYID_PROPERTY)) {
+			// check that all selected resources are shared with the same
+			// repository provider.
+			if(value == null) return false;
+			String repoId = value;
 			return sharedWith(mapper, repoId);
 		}
 		return false;

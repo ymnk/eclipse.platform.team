@@ -60,40 +60,61 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 
         public void setAdded(final ChangeSet set) {
             // Remove any resources that are in the new set
-            provider.runViewUpdate(new Runnable() {
-                public void run() {
+            provider.performUpdate(new IWorkspaceRunnable() {
+                public void run(IProgressMonitor monitor) {
 		            remove(set.getResources());
 		            createSyncInfoSet(set);
                 }
-            });
+            }, true, true);
         }
         
         public void defaultSetChanged(final ChangeSet previousDefault, final ChangeSet set) {
-            provider.runViewUpdate(new Runnable() {
-                public void run() {
+            provider.performUpdate(new IWorkspaceRunnable() {
+                public void run(IProgressMonitor monitor) {
                     listener.defaultSetChanged(previousDefault, set);
                 }
-            });
+            }, true, true);
         }
         
         public void setRemoved(final ChangeSet set) {
-            provider.runViewUpdate(new Runnable() {
-                public void run() {
+            provider.performUpdate(new IWorkspaceRunnable() {
+                public void run(IProgressMonitor monitor) {
                     remove(set);
+                    if (!set.isEmpty()) {
+                        add(set.getSyncInfoSet().getSyncInfos());
+                    }
                 }
-            });
+            }, true, true);
         }
 
         public void nameChanged(final ChangeSet set) {
-            provider.runViewUpdate(new Runnable() {
-                public void run() {
+            provider.performUpdate(new IWorkspaceRunnable() {
+                public void run(IProgressMonitor monitor) {
                     listener.nameChanged(set);
                 }
-            });
+            }, true, true);
         }
 
         public void resourcesChanged(final ChangeSet set, final IResource[] resources) {
-            // Not used by the provider
+            // Look for any resources that were removed from the set but are still out-of sync.
+            // Re-add those resources
+            final List outOfSync = new ArrayList();
+            for (int i = 0; i < resources.length; i++) {
+                IResource resource = resources[i];
+                if (!set.contains(resource)) {
+                    SyncInfo info = provider.getSyncInfoSet().getSyncInfo(resource);
+                    if (info != null && info.getKind() != SyncInfo.IN_SYNC) {
+                        outOfSync.add(info);
+                    }
+                }   
+            }
+            if (!outOfSync.isEmpty()) {
+                provider.performUpdate(new IWorkspaceRunnable() {
+                    public void run(IProgressMonitor monitor) {
+                        add((SyncInfo[]) outOfSync.toArray(new SyncInfo[outOfSync.size()]));
+                    }
+                }, true, true);
+            }
         }
         
     };
@@ -293,19 +314,20 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
         // Register the listener last since the add will
         // look for new elements
         boolean added = false;
-        if (sis == null) {
-            sis = new SyncInfoTree();
-            sis.beginInput();
-            activeSets.put(set, sis);
-            added = true;
-        }
+        // Use a variable to ensure that both begin and end are invoked
         try {
+	        if (sis == null) {
+	            sis = new SyncInfoTree();
+	            activeSets.put(set, sis);
+	            added = true;
+	        }
             sis.beginInput();
             if (!sis.isEmpty())
                 sis.removeAll(sis.getResources());
             sis.addAll(select(set.getSyncInfoSet().getSyncInfos()));
         } finally {
-            sis.endInput(null);
+            if (sis != null)
+                sis.endInput(null);
         }
         if (added) {
             set.getSyncInfoSet().addSyncSetChangedListener(this);
@@ -326,17 +348,11 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
     }
 
     /*
-     * Return the sync info set for the given active change set.
-     * Create one if one doesn't already exist.
+     * Return the sync info set for the given active change set
+     * or null if there isn't one.
      */
     public SyncInfoTree getSyncInfoSet(ChangeSet set) {
         SyncInfoTree sis = (SyncInfoTree)activeSets.get(set);
-        if (sis == null) {
-            sis = new SyncInfoTree();
-            set.getSyncInfoSet().addSyncSetChangedListener(this);
-            activeSets.put(set, sis);
-	        sis.addAll(select(set.getSyncInfoSet().getSyncInfos()));
-        }
         return sis;
     }
 
@@ -356,7 +372,7 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 			        }
 		        }
             }
-        }, true /* preserver expansion */);
+        }, true /* preserver expansion */, true /* run in UI thread */);
     }
 
     /* (non-Javadoc)
@@ -376,7 +392,7 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 	                }
                 }
             }
-        }, true /* preserver expansion */);
+        }, true /* preserver expansion */, true /* run in UI thread */);
     }
 
     private ChangeSet getChangeSet(SyncInfoSet set) {

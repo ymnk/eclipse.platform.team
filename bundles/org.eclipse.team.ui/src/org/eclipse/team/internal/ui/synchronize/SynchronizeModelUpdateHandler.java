@@ -16,11 +16,9 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Control;
@@ -29,8 +27,6 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.BackgroundEventHandler;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 
 /**
@@ -67,7 +63,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
 	class MarkerChangeEvent extends Event {
         private final ISynchronizeModelElement[] elements;
         public MarkerChangeEvent(ISynchronizeModelElement[] elements) {
-            super(ROOT, MARKERS_CHANGED, IResource.DEPTH_INFINITE);
+            super(MARKERS_CHANGED);
             this.elements = elements;
         }
         public ISynchronizeModelElement[] getElements() {
@@ -83,7 +79,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
         private final ISynchronizeModelElement element;
         private final boolean isBusy;
         public BusyStateChangeEvent(ISynchronizeModelElement element, boolean isBusy) {
-            super(ROOT, BUSY_STATE_CHANGED, IResource.DEPTH_INFINITE);
+            super(BUSY_STATE_CHANGED);
             this.element = element;
             this.isBusy = isBusy;
         }
@@ -101,7 +97,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
 	class SyncInfoSetChangeEvent extends Event {
         private final ISyncInfoSetChangeEvent event;
         public SyncInfoSetChangeEvent(ISyncInfoSetChangeEvent event) {
-            super(ROOT, SYNC_INFO_SET_CHANGED, IResource.DEPTH_INFINITE);
+            super(SYNC_INFO_SET_CHANGED);
             this.event = event;
         }
         public ISyncInfoSetChangeEvent getEvent() {
@@ -121,7 +117,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
 		private IWorkspaceRunnable runnable;
 		private boolean preemtive;
 		public RunnableEvent(IWorkspaceRunnable runnable, boolean preemtive) {
-			super(ResourcesPlugin.getWorkspace().getRoot(), RUNNABLE, IResource.DEPTH_ZERO);
+			super(RUNNABLE);
 			this.runnable = runnable;
 			this.preemtive = preemtive;
 		}
@@ -406,7 +402,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
 	 * Queue an event that will reset the provider
 	 */
     private void reset() {
-        queueEvent(new Event(ROOT, RESET, IResource.DEPTH_INFINITE), false);
+        queueEvent(new ResourceEvent(ROOT, RESET, IResource.DEPTH_INFINITE), false);
     }
     
     public void dispose() {
@@ -518,7 +514,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
 				provider.handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
 				firePendingLabelUpdates();
             }
-        });
+        }, true /* preserve expansion */);
     }
 
     /* (non-Javadoc)
@@ -538,9 +534,9 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
         getProvider().getSyncInfoSet().connect(this, monitor);
     }
     
-    public void runViewUpdate(final Runnable runnable) {
+    public void runViewUpdate(final Runnable runnable, final boolean preserveExpansion) {
         if (Utils.canUpdateViewer(getViewer()) || isPerformingBackgroundUpdate()) {
-            internalRunViewUpdate(runnable);
+            internalRunViewUpdate(runnable, preserveExpansion);
         } else {
             if (Thread.currentThread() != getEventHandlerJob().getThread()) {
                 // Run view update should only be called from the UI thread or
@@ -555,7 +551,7 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
 	        			if (!ctrl.isDisposed()) {
 	        				BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
 	        					public void run() {
-	    						    internalRunViewUpdate(runnable);
+	    						    internalRunViewUpdate(runnable, preserveExpansion);
 	        					}
 	        				});
 	        			}
@@ -573,15 +569,32 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
         return Thread.currentThread() == getEventHandlerJob().getThread() && performingBackgroundUpdate;
     }
 
-    private void internalRunViewUpdate(final Runnable runnable) {
+    /*
+     * Method that can be called from the UI thread to update the view model.
+     */
+    private void internalRunViewUpdate(final Runnable runnable, boolean preserveExpansion) {
         StructuredViewer viewer = getViewer();
+        IResource[] expanded = null;
+        IResource[] selected = null;
 		try {
-		    if (Utils.canUpdateViewer(viewer))
+		    if (Utils.canUpdateViewer(viewer)) {
 		        viewer.getControl().setRedraw(false);
+		        if (preserveExpansion) {
+		            expanded = provider.getExpandedResources();
+		            selected = provider.getSelectedResources();
+		        }
+		    }
 			runnable.run();
 		} finally {
-		    if (Utils.canUpdateViewer(viewer))
+		    if (Utils.canUpdateViewer(viewer)) {
+		        if (expanded != null) {
+		            provider.expandResources(expanded);
+		        }
+		        if (selected != null) {
+		            provider.selectResources(selected);
+		        }
 		        viewer.getControl().setRedraw(true);
+		    }
 		}
 
 		ISynchronizeModelElement root = provider.getModelRoot();
@@ -595,52 +608,85 @@ public class SynchronizeModelUpdateHandler extends BackgroundEventHandler implem
      * which esults in the view being updated.
      * @param runnable the runnable which updates the model.
      * @param preserveExpansion whether the expansion of the view should be preserver
+     * @param updateInUIThread if <code>true</code>, the model will be updated in the
+     * UI thread. Otherwise, the model will be updated in the handler thread and the view
+     * updated in the UI thread at the end.
      */
-    public void performUpdate(final IWorkspaceRunnable runnable, boolean preserveExpansion) {
-        queueEvent(new RunnableEvent(getUpdateRunnable(runnable, true), true), true);
+    public void performUpdate(final IWorkspaceRunnable runnable, boolean preserveExpansion, boolean updateInUIThread) {
+        if (updateInUIThread) {
+            queueEvent(new RunnableEvent(getUIUpdateRunnable(runnable, preserveExpansion), true), true);
+        } else {
+	        queueEvent(new RunnableEvent(getBackgroundUpdateRunnable(runnable, preserveExpansion), true), true);
+        }
+    }
+
+    /**
+     * Wrap the runnable in an outer runnable that preserves expansion.
+     */
+    private IWorkspaceRunnable getUIUpdateRunnable(final IWorkspaceRunnable runnable, final boolean preserveExpansion) {
+        return new IWorkspaceRunnable() {
+            public void run(final IProgressMonitor monitor) throws CoreException {
+                final CoreException[] exception = new CoreException[] { null };
+                runViewUpdate(new Runnable() {
+                    public void run() {
+    	                try {
+    		                runnable.run(monitor);
+    	                } catch (CoreException e) {
+                            exception[0] = e;
+                        }
+                    }
+                }, true /* preserve expansion */);
+                if (exception[0] != null)
+                    throw exception[0];
+            }
+        };
     }
 
     /*
      * Wrap the runnable in an outer runnable that preserves expansion if requested
      * and refreshes the view when the update is completed.
      */
-    private IWorkspaceRunnable getUpdateRunnable(final IWorkspaceRunnable runnable, final boolean preserveExpansion) {
+    private IWorkspaceRunnable getBackgroundUpdateRunnable(final IWorkspaceRunnable runnable, final boolean preserveExpansion) {
         return new IWorkspaceRunnable() {
+            IResource[] expanded;
+            IResource[] selected;
             public void run(IProgressMonitor monitor) throws CoreException {
                 IResource[] resources = null;
                 if (preserveExpansion)
-                    resources = getExpandedResources();
+                    recordExpandedResources();
                 try {
                     performingBackgroundUpdate = true;
 	                runnable.run(monitor);
                 } finally {
                     performingBackgroundUpdate = false;
                 }
-                updateView(resources);
+                updateView();
                 
             }
-            private IResource[] getExpandedResources() {
-                final IResource[][] resources = new IResource[1][0];
+            private void recordExpandedResources() {
         	    final StructuredViewer viewer = getViewer();
         		if (viewer != null && !viewer.getControl().isDisposed() && viewer instanceof AbstractTreeViewer) {
         			viewer.getControl().getDisplay().syncExec(new Runnable() {
         				public void run() {
         					if (viewer != null && !viewer.getControl().isDisposed()) {
-        					    resources[0] = provider.getExpandedResources();
+        					    expanded = provider.getExpandedResources();
+        					    selected = provider.getSelectedResources();
         					}
         				}
         			});
         		}
-                return resources[0];
             }
-            private void updateView(final IResource[] resources) {
+            private void updateView() {
+                // Refresh the view and then set the expansion
                 runViewUpdate(new Runnable() {
                     public void run() {
                         provider.getViewer().refresh();
-                        if (resources != null)
-                            provider.expandResources(resources);
+                        if (expanded != null)
+                            provider.expandResources(expanded);
+                        if (selected != null)
+                            provider.selectResources(selected);
                     }
-                });
+                }, false /* do not preserve expansion (since it is done above) */);
             }
         };
     }

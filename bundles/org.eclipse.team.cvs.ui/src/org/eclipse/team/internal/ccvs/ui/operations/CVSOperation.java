@@ -16,6 +16,8 @@ import java.net.URL;
 import java.util.*;
 
 import org.eclipse.core.runtime.*;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -25,6 +27,7 @@ import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.console.CVSOutputConsole;
 import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
@@ -288,4 +291,30 @@ public abstract class CVSOperation extends TeamOperation {
 		// Put CVS jobs in the background by default.
 		return true;
 	}
+	
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.TeamOperation#isSameFamilyAs(org.eclipse.team.ui.TeamOperation)
+     */
+    protected boolean isSameFamilyAs(TeamOperation operation) {
+        // Trat all CVS operations as a single family
+        return operation instanceof CVSOperation;
+    }
+    
+    /*
+     * Action to show the console that can be used by subclasses
+     * that wish to link the progress service to the console
+     */
+    protected IAction getShowConsoleAction() {
+        // Show the console as the goto action
+        return new Action("Show CVS Console") {
+            public void run() {
+                CVSOutputConsole console = CVSUIPlugin.getPlugin().getConsole();
+                if (console != null)
+                    console.show(true);
+            }
+            public String getToolTipText() {
+                return "Show CVS Console";
+            }
+        };
+    }
 }

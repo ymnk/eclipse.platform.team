@@ -10,8 +10,10 @@
  *******************************************************************************/
 package resourcemapping;
 
+import java.util.List;
 import org.eclipse.core.resources.mapping.IResourceMapper;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.actions.TeamAction;
@@ -19,13 +21,17 @@ import org.eclipse.team.internal.ui.actions.TeamAction;
 public class LogicalResourceAction extends TeamAction {
 
 	public void run(IAction action) {
-		IResourceMapper[] m = (IResourceMapper[])getSelectedAdaptables(getSelection(), IResourceMapper.class);
+		List selection = getSelection().toList();	
+		IResourceMapper[] m = (IResourceMapper[])selection.toArray(new IResourceMapper[selection.size()]);
 		ResourceMappingSelectionDialog d = new ResourceMappingSelectionDialog(Display.getDefault().getActiveShell(), m);
 		d.open();
 	}
 	
 	protected boolean isEnabled() throws TeamException {
-		IResourceMapper[] m = (IResourceMapper[])getSelectedAdaptables(getSelection(), IResourceMapper.class);
-		return (m != null && m.length > 0);
+		return getSelection().size() > 0;
+	}
+	
+	public void selectionChanged(IAction action, ISelection selection) {
+		super.selectionChanged(action, selection);
 	}
 }

@@ -10,7 +10,6 @@
    <runtime>
       <library name="teamui.jar">
          <export name="*"/>
-         <packages prefixes="org.eclipse.team.ui, org.eclipse.team.internal.ui"/>
       </library>
    </runtime>
    <requires>
@@ -289,8 +288,10 @@
          point="org.eclipse.team.core.defaultFileModificationValidator">
       <validator class="org.eclipse.team.internal.ui.DefaultUIFileModificationValidator"/>
    </extension>
-   
+
+   <!-- *********************** -->   
    <!-- RESOURCE MAPPINGS TESTS -->
+   <!-- *********************** -->
    
    <extension
          id="org.eclipse.team.ui.resourceMappingAdapters"
@@ -310,6 +311,11 @@
             adaptableType="org.eclipse.core.resources.mapping.IResourceMapper">
             <adapter type=" org.eclipse.ui.model.IWorkbenchAdapter"/>
        </factory>
+       <factory
+            class="resourcemapping.ModelElementlJavaFactory"
+            adaptableType="org.eclipse.core.resources.mapping.IResourceMapper">
+            <adapter type="org.eclipse.ui.IActionFilter"/>
+       </factory>
    </extension>
    
     <extension
@@ -318,11 +324,10 @@
             adaptable="true"
             objectClass="org.eclipse.core.resources.mapping.IResourceMapper"
             id="org.eclipse.team.ui.ResourceMappingContributions">
-            <enablement>
-           <adapt type="org.eclipse.core.resources.mapping.IResourceMapper">
-              <test property="org.eclipse.team.ui.repositoryId" args="org.eclipse.team.cvs.core.cvsnature" />
-           </adapt>
-         </enablement>
+            <filter
+               name="repositoryId"
+               value="org.eclipse.team.cvs.core.cvsnature">
+            </filter>
             <menu
                label="%TeamGroupMenu.label"
                path="additions"
@@ -382,5 +387,9 @@
             properties="repositoryId"
             id="org.eclipse.team.ui.repositoryIdTester"/>
    </extension>
+
+   <!-- *********************** -->   
+   <!-- RESOURCE MAPPINGS TESTS END -->
+   <!-- *********************** -->
 
 </plugin>

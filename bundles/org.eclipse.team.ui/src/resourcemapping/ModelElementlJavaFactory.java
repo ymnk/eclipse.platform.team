@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.internal.ui.JavaWorkbenchAdapter;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.IActionFilter;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class ModelElementlJavaFactory implements IAdapterFactory {
@@ -129,11 +130,13 @@ public class ModelElementlJavaFactory implements IAdapterFactory {
 			return new ResourceModelElement((IResource)o);
 		} else if(adapterType == IWorkbenchAdapter.class && o instanceof IResourceMapper) {
 			return new ResourceMappingWorkbenchAdapter();
+		} else if(adapterType == IActionFilter.class && o instanceof IResourceMapper) {
+			return new PropertyTester();
 		}
 		return null;
 	}
 
 	public Class[] getAdapterList() {
-		return new Class[]{IResourceMapper.class, IWorkbenchAdapter.class};
+		return new Class[]{IResourceMapper.class, IWorkbenchAdapter.class, IActionFilter.class};
 	}
 }

@@ -42,6 +42,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -66,16 +67,15 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 	ICVSRepositoryLocation newLocation = null;
 
 	private static final int TABLE_HEIGHT_HINT = 150;
-	private static final int TABLE_WIDTH_HINT = 300;
 	
 	// Widgets
-	Label methodLabel;
-	Label userLabel;
-	Label hostLabel;
-	Label pathLabel;
-	Label moduleLabel;
-	Label portLabel;
-	Label tagLabel;
+	Text methodText;
+	Text userText;
+	Text hostText;
+	Text pathText;
+	Text moduleText;
+	Text portText;
+	Text tagText;
 	private Button fetchButton;
 	private Button watchEditButton;
 	
@@ -123,14 +123,11 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 		}
 		protected Control createDialogArea(Composite parent) {
 			parent.getShell().setText(Policy.bind("CVSProjectPropertiesPage.Select_a_Repository_1")); //$NON-NLS-1$
-			Composite composite = new Composite(parent, SWT.NONE);
-			composite.setLayout(new GridLayout());
-			composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+			Composite composite = (Composite) super.createDialogArea(parent);
 		
 			createLabel(composite, Policy.bind("CVSProjectPropertiesPage.Select_a_CVS_repository_location_to_share_the_project_with__2"), 1); //$NON-NLS-1$
 			Table table = new Table(composite, SWT.SINGLE | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
-			GridData data = new GridData();
-			data.widthHint = TABLE_WIDTH_HINT;
+			GridData data = new GridData(GridData.FILL_HORIZONTAL);
 			data.heightHint = TABLE_HEIGHT_HINT;
 			table.setLayoutData(data);
 			viewer = new TableViewer(table);
@@ -171,6 +168,9 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 					viewer.refresh();
 				}
 			});
+
+			Dialog.applyDialogFont(parent);
+			
 			return composite;
 		}
 		protected void cancelPressed() {
@@ -195,25 +195,25 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 		composite.setLayout(layout);
 		
 		Label label = createLabel(composite, Policy.bind("CVSProjectPropertiesPage.connectionType"), 1); //$NON-NLS-1$
-		methodLabel = createLabel(composite, "", 1); //$NON-NLS-1$
+		methodText = createReadOnlyText(composite, "", 1); //$NON-NLS-1$
 		
 		label = createLabel(composite, Policy.bind("CVSProjectPropertiesPage.user"), 1); //$NON-NLS-1$
-		userLabel = createLabel(composite, "", 1); //$NON-NLS-1$
+		userText = createReadOnlyText(composite, "", 1); //$NON-NLS-1$
 		
 		label = createLabel(composite, Policy.bind("CVSPropertiesPage.host"), 1); //$NON-NLS-1$
-		hostLabel = createLabel(composite, "", 1); //$NON-NLS-1$
+		hostText = createReadOnlyText(composite, "", 1); //$NON-NLS-1$
 		
 		label = createLabel(composite, Policy.bind("CVSPropertiesPage.port"), 1); //$NON-NLS-1$
-		portLabel = createLabel(composite, "", 1); //$NON-NLS-1$
+		portText = createReadOnlyText(composite, "", 1); //$NON-NLS-1$
 		
 		label = createLabel(composite, Policy.bind("CVSPropertiesPage.path"), 1); //$NON-NLS-1$
-		pathLabel = createLabel(composite, "", 1); //$NON-NLS-1$
+		pathText = createReadOnlyText(composite, "", 1); //$NON-NLS-1$
 		
 		label = createLabel(composite, Policy.bind("CVSPropertiesPage.module"), 1); //$NON-NLS-1$
-		moduleLabel = createLabel(composite, "", 1); //$NON-NLS-1$
+		moduleText = createReadOnlyText(composite, "", 1); //$NON-NLS-1$
 		
 		label = createLabel(composite, Policy.bind("CVSPropertiesPage.tag"), 1); //$NON-NLS-1$
-		tagLabel = createLabel(composite, "", 1); //$NON-NLS-1$
+		tagText = createReadOnlyText(composite, "", 1); //$NON-NLS-1$
 		
 		createLabel(composite, "", 1); //$NON-NLS-1$
 		
@@ -247,12 +247,6 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 		
 		Button changeButton = new Button(composite, SWT.PUSH);
 		changeButton.setText(Policy.bind("CVSProjectPropertiesPage.Change_Sharing_5")); //$NON-NLS-1$
-		data = new GridData();
-		data.horizontalAlignment = GridData.FILL;
-		data.heightHint = convertVerticalDLUsToPixels(IDialogConstants.BUTTON_HEIGHT);
-		int widthHint = convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
-		data.widthHint = Math.max(widthHint, changeButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-		changeButton.setLayoutData(data);
 		changeButton.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event e) {
 				RepositorySelectionDialog dialog = new RepositorySelectionDialog(getShell(), oldLocation);
@@ -285,6 +279,23 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 		data.horizontalAlignment = GridData.FILL;
 		label.setLayoutData(data);
 		return label;
+	}
+	/**
+	 * Utility method that creates a text instance
+	 * and sets the default layout data.
+	 *
+	 * @param parent  the parent for the new label
+	 * @param text  the text for the new text
+	 * @return the new text
+	 */
+	protected Text createReadOnlyText(Composite parent, String text, int span) {
+		Text txt = new Text(parent, SWT.LEFT | SWT.READ_ONLY);
+		txt.setText(text);
+		GridData data = new GridData();
+		data.horizontalSpan = span;
+		data.horizontalAlignment = GridData.FILL;
+		txt.setLayoutData(data);
+		return txt;
 	}
 	/**
 	 * Creates a new checkbox instance and sets the default layout data.
@@ -338,24 +349,24 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 		
 		try {
 			if (!folder.isCVSFolder()) return;
-			methodLabel.setText(location.getMethod().getName());
+			methodText.setText(location.getMethod().getName());
 			info = location.getUserInfo(true);
-			userLabel.setText(info.getUsername());
-			hostLabel.setText(location.getHost());
+			userText.setText(info.getUsername());
+			hostText.setText(location.getHost());
 			int port = location.getPort();
 			if (port == ICVSRepositoryLocation.USE_DEFAULT_PORT) {
-				portLabel.setText(Policy.bind("CVSPropertiesPage.defaultPort")); //$NON-NLS-1$
+                portText.setText(Policy.bind("CVSPropertiesPage.defaultPort")); //$NON-NLS-1$
 			} else {
-				portLabel.setText("" + port); //$NON-NLS-1$
+				portText.setText("" + port); //$NON-NLS-1$
 			}
-			pathLabel.setText(location.getRootDirectory());
+			pathText.setText(location.getRootDirectory());
 			FolderSyncInfo syncInfo = folder.getFolderSyncInfo();
 			if (syncInfo == null) return;
 			String label = syncInfo.getRepository();
 			if (label.equals(FolderSyncInfo.VIRTUAL_DIRECTORY)) {
 				label = Policy.bind("CVSPropertiesPage.virtualModule", label); //$NON-NLS-1$
 			}
-			moduleLabel.setText(label);
+			moduleText.setText(label);
 			fetchButton.setSelection(fetch);
 			watchEditButton.setSelection(watchEdit);
 		} catch (TeamException e) {
@@ -372,7 +383,7 @@ public class CVSProjectPropertiesPage extends CVSPropertiesPage {
 			ICVSFolder local = CVSWorkspaceRoot.getCVSFolderFor(project);
 			CVSTag tag = local.getFolderSyncInfo().getTag();
 			
-			tagLabel.setText(getTagLabel(tag));
+			tagText.setText(getTagLabel(tag));
 
 		} catch (TeamException e) {
 			handle(e);

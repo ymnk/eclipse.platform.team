@@ -251,6 +251,23 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 					TeamPlugin.log(e);
 				}
 			}
+		} else if (resource == null) {
+		    // For non-resource elements, show the same propogaqted marker as the children
+		    IDiffElement[] children = element.getChildren();
+		    for (int i = 0; i < children.length; i++) {
+                IDiffElement child = children[i];
+                if (child instanceof ISynchronizeModelElement) {
+                    ISynchronizeModelElement childElement = (ISynchronizeModelElement)child;
+                    if (childElement.getProperty(ISynchronizeModelElement.PROPAGATED_ERROR_MARKER_PROPERTY)) {
+                        property = ISynchronizeModelElement.PROPAGATED_ERROR_MARKER_PROPERTY;
+                        break;
+                    } else if (childElement.getProperty(ISynchronizeModelElement.PROPAGATED_WARNING_MARKER_PROPERTY)) {
+						property = ISynchronizeModelElement.PROPAGATED_WARNING_MARKER_PROPERTY;
+						// Keep going because there may be errors on other resources
+					}
+                    
+                }   
+            }
 		}
 		return property;
 	}
@@ -361,9 +378,19 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
             // There is still saved state for the expanded resources so use it
             return resourcesToExpand;
         }
-        final StructuredViewer viewer = getViewer();
+        StructuredViewer viewer = getViewer();
         Object[] objects = ((AbstractTreeViewer) viewer).getVisibleExpandedElements();
         return getResources(objects);
+    }
+    
+    /*
+     * Return all the resources that are selected in the page.
+     * This method should only be called in the UI thread
+     * after validating that the viewer is still valid.
+     */
+    protected IResource[] getSelectedResources() {
+        StructuredViewer viewer = getViewer();
+        return getResources(((IStructuredSelection) viewer.getSelection()).toArray());
     }
     
     /*
@@ -451,7 +478,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 				public void run() {
 					if (viewer != null && !viewer.getControl().isDisposed()) {
 					    expandedResources[0] = getExpandedResources();
-					    selectedResources[0] = getResources(((IStructuredSelection) viewer.getSelection()).toArray());
+					    selectedResources[0] = getSelectedResources();
 					}
 				}
 			});
@@ -477,7 +504,11 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		}
 	}
 
-    private void selectResources(IResource[] resourcesToSelect) {
+	/*
+	 * Select the given resources in the view. This method can
+	 * only be invoked from the UI thread.
+	 */
+    protected void selectResources(IResource[] resourcesToSelect) {
         StructuredViewer viewer = getViewer();
         final ArrayList selectedElements = new ArrayList();
         for (int i = 0; i < resourcesToSelect.length; i++) {
@@ -504,9 +535,9 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
             // but may still appear in the view so try to deduce the type
             // from the path
             if (path.endsWith(Character.toString(Path.SEPARATOR))) {
-                resource = container.getFolder(new Path(path));
+                resource = container.getFolder(new Path(null, path));
             } else {
-                resource = container.getFile(new Path(path));
+                resource = container.getFile(new Path(null, path));
             }
         }
         return resource;
@@ -659,7 +690,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
                 public void run() {
                     handleChanges((ISyncInfoTreeChangeEvent)event, monitor);
                 }
-            });
+            }, true /* preserve expansion */);
 		}
     }
     
@@ -686,6 +717,9 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		String property = calculateProblemMarker(node);
 		if (property != null) {
 			node.setProperty(property, true);
+			// Parent resource nodes would have been properly calculated when they were added.
+			// However, non-resource nodes would not so we need to propogate the marker to them
+			propogateMarkerPropertyToParent(node, property);
 		}
 		if (Utils.canUpdateViewer(getViewer())) {
 			doAdd((SynchronizeModelElement)node.getParent(), node);
@@ -693,20 +727,42 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		updateHandler.nodeAdded(node, this);
 	}
 	
-	/**
+	/*
+     * Propogate the marker property to the parent if it is not already there.
+     * Only propogate warnings if the parent isn't an error already.
+     */
+    private void propogateMarkerPropertyToParent(ISynchronizeModelElement node, String property) {
+        ISynchronizeModelElement parent = (ISynchronizeModelElement)node.getParent();
+        if (parent != null 
+                && !parent.getProperty(property) 
+                && !parent.getProperty(ISynchronizeModelElement.PROPAGATED_ERROR_MARKER_PROPERTY)) {
+            parent.setProperty(property, true);
+            propogateMarkerPropertyToParent(parent, property);
+        }
+    }
+
+    /**
 	 * Remove any traces of the model element and any of it's descendants in the
 	 * hiearchy defined by the content provider from the content provider and
 	 * the viewer it is associated with.
-	 * @param node the model element to remove
+	 * @param nodes the model elements to remove
 	 */
-	protected void removeFromViewer(ISynchronizeModelElement node) {
-		ISynchronizeModelElement rootToClear = getRootToClear(node);
-		propogateConflictState(rootToClear, true /* clear the conflict */);
-		clearModelObjects(rootToClear);
+	protected void removeFromViewer(ISynchronizeModelElement[] nodes) {
+	    List rootsToClear = new ArrayList();
+	    for (int i = 0; i < nodes.length; i++) {
+            ISynchronizeModelElement node = nodes[i];
+			ISynchronizeModelElement rootToClear = getRootToClear(node);
+			propogateConflictState(rootToClear, true /* clear the conflict */);
+			clearModelObjects(rootToClear);           
+        }
+	    ISynchronizeModelElement[] roots = (ISynchronizeModelElement[]) rootsToClear.toArray(new ISynchronizeModelElement[rootsToClear.size()]);
 		if (Utils.canUpdateViewer(getViewer())) {
-			doRemove(rootToClear);
+			doRemove(roots);
 		}
-		updateHandler.nodeRemoved(rootToClear, this);
+		for (int i = 0; i < roots.length; i++) {
+            ISynchronizeModelElement element = roots[i];
+			updateHandler.nodeRemoved(element, this);
+        }
 	}
 	
 	/**
@@ -809,9 +865,9 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 	 * Remove the element from the viewer
 	 * @param element the element to be removed
 	 */
-	protected void doRemove(ISynchronizeModelElement element) {
+	protected void doRemove(ISynchronizeModelElement[] elements) {
 		AbstractTreeViewer viewer = (AbstractTreeViewer)getViewer();
-		viewer.remove(element);		
+		viewer.remove(elements);		
 	}
 	
 	/**
@@ -906,10 +962,6 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		monitor.worked(1);
     }
     
-    protected void runViewUpdate(final Runnable runnable) {
-        updateHandler.runViewUpdate(runnable);
-    }
-    
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
@@ -934,7 +986,7 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
      * @param runnable the runnable which updates the model.
      * @param preserveExpansion whether the expansion of the view should be preserver
      */
-    public void performUpdate(IWorkspaceRunnable runnable, boolean preserveExpansion) {
-        updateHandler.performUpdate(runnable, preserveExpansion); 
+    public void performUpdate(IWorkspaceRunnable runnable, boolean preserveExpansion, boolean runInUIThread) {
+        updateHandler.performUpdate(runnable, preserveExpansion, runInUIThread); 
     }
 }
