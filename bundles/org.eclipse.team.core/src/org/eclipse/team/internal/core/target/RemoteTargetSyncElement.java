@@ -8,7 +8,7 @@
  * Contributors:
  * IBM - Initial implementation
  ******************************************************************************/
-package org.eclipse.team.internal.ui.target;
+package org.eclipse.team.internal.core.target;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -20,8 +20,8 @@ import org.eclipse.team.core.sync.RemoteSyncElement;
 import org.eclipse.team.core.target.IRemoteTargetResource;
 import org.eclipse.team.core.target.TargetManager;
 import org.eclipse.team.core.target.TargetProvider;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.core.Policy;
+import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * Is a synchronization element that can calculate three-way sync
@@ -37,22 +37,17 @@ public class RemoteTargetSyncElement extends RemoteSyncElement {
 	private IResource local;
 	private TargetProvider provider;
 
-	public RemoteTargetSyncElement(IResource local, IRemoteTargetResource remote) {
+	public RemoteTargetSyncElement(TargetProvider provider, IResource local, IRemoteTargetResource remote) {
 		this.local = local;
 		this.remote = remote;
-		try {
-			this.provider = TargetManager.getProvider(local.getProject());
-		} catch (TeamException e) {
-			TeamUIPlugin.log(e.getStatus());
-			this.remote = null;		
-		}
+		this.provider = provider;	
 	}
 	
 	/**
 	 * @see RemoteSyncElement#create(boolean, IResource, IRemoteResource, IRemoteResource, Object)
 	 */
 	public IRemoteSyncElement create(boolean isThreeWay, IResource local, IRemoteResource base, IRemoteResource remote, Object data) {
-		return new RemoteTargetSyncElement(local, (IRemoteTargetResource)remote);
+		return new RemoteTargetSyncElement(provider, local, (IRemoteTargetResource)remote);
 	}
 
 	/**
@@ -73,7 +68,7 @@ public class RemoteTargetSyncElement extends RemoteSyncElement {
 	 * @see LocalSyncElement#create(IResource, IRemoteResource, Object)
 	 */
 	public ILocalSyncElement create(IResource local, IRemoteResource base, Object data) {
-		return new RemoteTargetSyncElement(local, remote);
+		return new RemoteTargetSyncElement(provider, local, (IRemoteTargetResource)base);
 	}
 
 	/**
@@ -125,15 +120,16 @@ public class RemoteTargetSyncElement extends RemoteSyncElement {
 		progress.beginTask(null, 100);
 		int description = IN_SYNC;
 		IResource local = getLocal();
-		boolean isDirty = provider.isDirty(local);
-		boolean isOutOfDate;
-		try{
-			isOutOfDate = provider.isOutOfDate(local, Policy.subMonitorFor(progress, 10));
-		} catch(TeamException e) {
-			isOutOfDate = true; // who knows?
-		}
-		
 		boolean localExists = local.exists();
+		boolean hasBase = provider.hasBase(local);
+		// isDirty and isOutOfDate only have meaning if there is a base
+		// XXX The defaults should give the same behavior as before
+		boolean isDirty = localExists;
+		boolean isOutOfDate = remote != null;
+		if (hasBase) {
+			isDirty = provider.isDirty(local);
+			isOutOfDate = isOutOfDate(Policy.subMonitorFor(progress, 10));
+		}
 		
 		if (remote == null) {
 			if (!localExists) {
@@ -141,7 +137,7 @@ public class RemoteTargetSyncElement extends RemoteSyncElement {
 				// Assert.isTrue(false);
 			} else {
 				// no remote but a local
-				if (!isDirty && isOutOfDate) {
+				if (!isDirty && hasBase) {
 					description = INCOMING | DELETION;
 				} else if (isDirty && isOutOfDate) {
 					description = CONFLICTING | CHANGE;
@@ -179,4 +175,27 @@ public class RemoteTargetSyncElement extends RemoteSyncElement {
 		}
 		return description;
 	}
+	/**
+	 * Returns the provider.
+	 * @return TargetProvider
+	 */
+	protected TargetProvider getProvider() {
+		return provider;
+	}
+
+	/**
+	 * Return true if the resource associated with the receiver is out-of-date
+	 */
+	protected boolean isOutOfDate(IProgressMonitor monitor) {
+		IResource local = getLocal();
+		if (provider.hasBase(local)) {
+			try{
+				return provider.isOutOfDate(local, monitor);
+			} catch(TeamException e) {
+				return true; // who knows?
+			}
+		}
+		return false;
+	}
+
 }
