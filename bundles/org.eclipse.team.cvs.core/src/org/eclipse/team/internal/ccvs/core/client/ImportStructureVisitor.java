@@ -110,6 +110,7 @@ class ImportStructureVisitor implements ICVSResourceVisitor {
 		} else {
 			mode = ""; //$NON-NLS-1$
 		}
+		// XXX Is this condition right?
 		boolean binary = mode != null && mode.indexOf(ResourceSyncInfo.BINARY_TAG) != -1;
 		session.sendModified(mFile, binary, monitor);
 	}

@@ -141,7 +141,7 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 		// If the file exists, send the appropriate indication to the server
 		if (mFile.exists()) {
 			if (mFile.isModified()) {
-				boolean binary = (info == null) || ! ResourceSyncInfo.BINARY_TAG.equals(mFile.getSyncInfo().getKeywordMode());
+				boolean binary = (info != null) && ResourceSyncInfo.BINARY_TAG.equals(mFile.getSyncInfo().getKeywordMode());
 				if (sendModifiedContents) {
 					session.sendModified(mFile, binary, monitor);
 				} else {

@@ -887,7 +887,7 @@ public class CVSTeamProvider implements ITeamNature, ITeamProvider {
 		try {
 			// Opening the session takes 20% of the time
 			s.open(Policy.subMonitorFor(progress, 20));
-			status = Command.TAG.execute(s,
+			status = Command.CUSTOM_TAG.execute(s,
 			Command.NO_GLOBAL_OPTIONS,
 			commandOptions,
 			// XXX We should pass the tag to the command

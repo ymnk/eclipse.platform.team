@@ -12,7 +12,7 @@ import org.eclipse.team.internal.ccvs.core.resources.ICVSFile;
 /**
  * Visit the CVS file structure, only sending files if they are modified.
  */
-public class ModifiedFileSender extends FileStructureVisitor {
+class ModifiedFileSender extends FileStructureVisitor {
 
 	public ModifiedFileSender(Session session, IProgressMonitor monitor) {
 		super(session, false, true, monitor);

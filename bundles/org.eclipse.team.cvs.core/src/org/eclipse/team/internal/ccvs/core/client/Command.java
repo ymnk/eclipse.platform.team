@@ -46,6 +46,9 @@ public abstract class Command {
 	public final static Remove REMOVE = new Remove();
 	public final static Status STATUS = new Status();
 	public final static Tag TAG = new Tag();
+	// The CUSTOM_TAG command has special handling for added and removed resources.
+	// This behavior supports branching with local changes in the workspace
+	public final static Tag CUSTOM_TAG = new Tag(true);
 	public final static RTag RTAG = new RTag();
 	public final static Update UPDATE = new Update();
 	public final static ExpandModules EXPAND_MODULES = new ExpandModules();
