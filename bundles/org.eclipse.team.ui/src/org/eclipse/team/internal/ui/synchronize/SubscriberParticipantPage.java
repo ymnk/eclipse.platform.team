@@ -54,6 +54,9 @@ public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage 
 	public SubscriberParticipantPage(ISynchronizePageConfiguration configuration, SubscriberSyncInfoCollector subscriberCollector) {
 		super(configuration);
 		this.participant = (SubscriberParticipant)configuration.getParticipant();
+		configuration.setComparisonType(isThreeWay() 
+						? ISynchronizePageConfiguration.THREE_WAY 
+						: ISynchronizePageConfiguration.TWO_WAY);
 		configuration.addActionContribution(new SubscriberActionContribution());
 		initializeCollector(configuration, subscriberCollector);
 	}
@@ -81,7 +84,7 @@ public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage 
 	 * or <code>BOTH_MODE_FILTER</code>)
 	 */
 	protected void updateMode(int mode) {
-		if(collector != null) {	
+		if(collector != null && isThreeWay()) {	
 		
 			int[] modeFilter = BOTH_MODE_FILTER;
 			switch(mode) {
@@ -113,7 +116,10 @@ public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage 
 		configuration.setProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET, collector.getWorkingSetSyncInfoSet());
 	}
 	
-	public boolean isThreeWay() {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetSynchronizePage#isThreeWay()
+	 */
+	protected boolean isThreeWay() {
 		return getParticipant().getSubscriber().getResourceComparator().isThreeWay();
 	}
 

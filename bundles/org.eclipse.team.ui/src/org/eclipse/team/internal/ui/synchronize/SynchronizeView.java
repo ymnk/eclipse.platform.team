@@ -145,7 +145,6 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 		ISynchronizeParticipant participant = part.getParticipant();	
 		participant.addPropertyChangeListener(this);
 		ISynchronizePageConfiguration configuration = participant.createPageConfiguration();
-		configuration.setProperty(ISynchronizePageConfiguration.P_PAGE_SETTINGS, getDialogSettings(participant));
 		IPageBookViewPage page = participant.createPage(configuration);
 		if(page != null) {
 			initPage(page);
@@ -163,7 +162,7 @@ public class SynchronizeView extends PageBookView implements ISynchronizeView, I
 	protected void initPage(ISynchronizePageConfiguration configuration, IPageBookViewPage page) {
 		// A page site does not provide everything the page may need
 		// Also provide the synchronize page site if the page is a synchronize view page
-		((SynchronizePageConfiguration)configuration).setSite(new WorkbenchPartSynchronizePageSite(this));
+		((SynchronizePageConfiguration)configuration).setSite(new WorkbenchPartSynchronizePageSite(this, getDialogSettings(configuration.getParticipant())));
 		if (page instanceof ISynchronizePage) {
 			try {
 				((ISynchronizePage)page).init(configuration.getSite());

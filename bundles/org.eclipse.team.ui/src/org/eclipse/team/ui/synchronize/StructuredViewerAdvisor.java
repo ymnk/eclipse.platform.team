@@ -351,7 +351,7 @@ public abstract class StructuredViewerAdvisor {
 			IMenuManager menu = actionBars.getMenuManager();
 			if (menu != null) {
 				// Populate the view dropdown menu with the configured groups
-				o = configuration	.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
+				o = configuration.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
 				if (!(o instanceof String[])) {
 					o = ISynchronizePageConfiguration.DEFAULT_VIEW_MENU;
 				}

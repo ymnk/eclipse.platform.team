@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.*;
@@ -80,5 +81,14 @@ public interface ISynchronizePageSite {
 	 * Give the page focus.
 	 */
 	void setFocus();
+	
+	/**
+	 * Return a settings node that can be used by the
+	 * page to save state. A <code>null</code> value
+	 * is returned if the site does not allow for
+	 * persisted settings.
+	 * @return a settings node or <code>null</code>
+	 */
+	IDialogSettings getPageSettings();
 
 }

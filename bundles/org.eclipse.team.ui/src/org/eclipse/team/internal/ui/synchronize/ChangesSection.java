@@ -204,7 +204,7 @@ public class ChangesSection extends Composite {
 	}
 	
 	private boolean isThreeWay() {
-		return page.isThreeWay();
+		return ISynchronizePageConfiguration.THREE_WAY.equals(configuration.getComparisonType());
 	}
 	
 	private Composite getEmptyChangesComposite(Composite parent) {

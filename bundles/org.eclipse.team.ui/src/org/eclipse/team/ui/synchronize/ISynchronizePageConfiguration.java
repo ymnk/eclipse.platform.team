@@ -60,16 +60,6 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_LABEL_DECORATORS = TeamUIPlugin.ID  + ".P_LABEL_DECORATORS"; //$NON-NLS-1$
 
 	/**
-	 * Property constant for the persisted settings node 
-	 * (instance of <code>IDialogSettings</code>) that
-	 * the container of the page has provider. If this
-	 * value is <code>null</code> then no settings
-	 * persistance is desired and the page should
-	 * use appropriate defaults.
-	 */
-	public static final String P_PAGE_SETTINGS = TeamUIPlugin.ID  + ".P_PAGE_SETTINGS"; //$NON-NLS-1$
-
-	/**
 	 * Property constant that defines the groups in the toolbar 
 	 * menu of the page. The value for this
 	 * property should be a string array. If this property is
@@ -113,6 +103,14 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public static final String P_WORKING_SET = TeamUIPlugin.ID + ".P_WORKING_SET"; //$NON-NLS-1$
 
+	/**
+	 * Property constant for the type of comparison used to create
+	 * the <code>SyncInfo</code> in the P_SYNC_INFO_SET property.
+	 * If the comparison type is <code>THREE_WAY</code> then
+	 * modes selection applies.
+	 */
+	public static final String P_COMPARISON_TYPE = TeamUIPlugin.ID + ".P_COMPARISON_TYPE"; //$NON-NLS-1$
+	
 	/**
 	 * Property constant for the mode used to filter the visible
 	 * elements of the model. The value can be one of the mode integer
@@ -222,6 +220,12 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public static final String[] DEFAULT_VIEW_MENU = new String[] { WORKING_SET_GROUP, LAYOUT_GROUP, SYNCHRONIZE_GROUP, PREFERENCES_GROUP };
 
+	/**
+	 * Comparison type contstants
+	 */
+	public final static String TWO_WAY = "two-way"; //$NON-NLS-1$
+	public final static String THREE_WAY = "three-way"; //$NON-NLS-1$
+	
 	/**
 	 * Modes are direction filters for the view
 	 */
@@ -395,4 +399,20 @@ public interface ISynchronizePageConfiguration {
 	 * or <code>null</code> if the property is not set
 	 */
 	public abstract SyncInfoSet getSyncInfoSet();
+	
+	/**
+	 * Return the comparison type used by the page's <code>SyncInfo</code>
+	 * modes.
+	 * @return comparison type (could be <code>TWO_WAY</code>, <code>THREE_WAY</code>
+	 * or a cusom type).
+	 */
+	String getComparisonType();
+	
+	/**
+	 * Set the comparison type used by the page's <code>SyncInfo</code>
+	 * modes. The default type is <code>THREE_WAY</code>.
+	 * @param type the comparison type (could be <code>TWO_WAY</code>, <code>THREE_WAY</code>
+	 * or a cusom type).
+	 */
+	void setComparisonType(String type);
 }

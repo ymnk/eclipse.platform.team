@@ -89,6 +89,7 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 		setProperty(P_CONTEXT_MENU, DEFAULT_CONTEXT_MENU);
 		setProperty(P_TOOLBAR_MENU, DEFAULT_TOOLBAR_MENU);
 		setProperty(P_VIEW_MENU, DEFAULT_VIEW_MENU);
+		setProperty(P_COMPARISON_TYPE, THREE_WAY);
 		addActionContribution(new DefaultSynchronizePageActions());
 	}
 	
@@ -501,5 +502,19 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 			return (SyncInfoSet)o;
 		}
 		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#getComparisonType()
+	 */
+	public String getComparisonType() {
+		return (String)getProperty(P_COMPARISON_TYPE);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration#setComparisonType(java.lang.String)
+	 */
+	public void setComparisonType(String type) {
+		setProperty(P_VIEWER_STYLE,type);
 	}
 }

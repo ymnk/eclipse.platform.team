@@ -10,21 +10,22 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
-import org.eclipse.ui.IKeyBindingService;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.*;
 
 /**
  * Maps a workbench part to a synchronize page site.
  */
 public class WorkbenchPartSynchronizePageSite implements ISynchronizePageSite {
 	private IWorkbenchPart part;
+	private IDialogSettings settings;
 
-	public WorkbenchPartSynchronizePageSite(IWorkbenchPart part) {
+	public WorkbenchPartSynchronizePageSite(IWorkbenchPart part, IDialogSettings settings) {
 		this.part = part;
+		this.settings = settings;
 	}
 
 	/* (non-Javadoc)
@@ -74,5 +75,12 @@ public class WorkbenchPartSynchronizePageSite implements ISynchronizePageSite {
 	 */
 	public void setFocus() {
 		part.getSite().getPage().activate(part);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizePageSite#getPageSettings()
+	 */
+	public IDialogSettings getPageSettings() {
+		return settings;
 	}
 }

@@ -10,11 +10,11 @@ package org.eclipse.team.ui.synchronize;
 import java.util.ArrayList;
 import org.eclipse.compare.*;
 import org.eclipse.compare.internal.CompareEditor;
-import org.eclipse.compare.internal.CompareUIPlugin;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
@@ -94,6 +94,9 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 			return null;
 		}
 		public void setFocus() {
+		}
+		public IDialogSettings getPageSettings() {
+			return null;
 		}	
 	}
 	
@@ -218,7 +221,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 		fStructuredComparePane = new CompareViewerSwitchingPane(hsplitter, SWT.BORDER | SWT.FLAT, true) {
 			protected Viewer getViewer(Viewer oldViewer, Object input) {
 				if (input instanceof ICompareInput)
-					return CompareUIPlugin.findStructureViewer(oldViewer, (ICompareInput) input, this, cc);
+					return CompareUI.findStructureViewer(oldViewer, (ICompareInput) input, this, cc);
 				return null;
 			}
 		};
@@ -262,7 +265,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 		
 		fContentPane = new CompareViewerSwitchingPane(vsplitter, SWT.BORDER | SWT.FLAT) {
 			protected Viewer getViewer(Viewer oldViewer, Object input) {
-				Viewer newViewer= CompareUIPlugin.findContentViewer(oldViewer, input, this, cc);
+				Viewer newViewer= CompareUI.findContentViewer(oldViewer, input, this, cc);
 				boolean isNewViewer= newViewer != oldViewer;
 				if (isNewViewer && newViewer instanceof IPropertyChangeNotifier) {
 					final IPropertyChangeNotifier dsp= (IPropertyChangeNotifier) newViewer;
@@ -372,7 +375,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 		if (right instanceof LocalResourceTypedElement)
 			 ((LocalResourceTypedElement) right).commit(pm);
 		
-		IDiffElement[] children = (IDiffElement[])node.getChildren();
+		IDiffElement[] children = node.getChildren();
 		for (int i = 0; i < children.length; i++) {
 			commit(pm, (DiffNode)children[i]);			
 		}
