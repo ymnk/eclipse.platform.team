@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -248,6 +249,48 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 			session.close();
 		}
 		return (ILogEntry[])entries.toArray(new ILogEntry[entries.size()]);
+	}
+	
+	/**
+	 * @see ICVSRemoteFile#getLogEntries()
+	 */
+	public static ILogEntry[] getLogEntries(RemoteFile[] files, IProgressMonitor monitor) throws CVSException {
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(Policy.bind("RemoteFile.getLogEntries"), 100); //$NON-NLS-1$
+		ILogEntry[] fileEntries = new ILogEntry[files.length];
+		final List entries = new ArrayList(2);
+		// Get the location of the workspace root
+		ICVSFolder root = CVSWorkspaceRoot.getCVSFolderFor(ResourcesPlugin.getWorkspace().getRoot());
+		Session session = new Session(files[0].getRepository(), files[0].getParent(), false /* output to console */);
+		session.open(Policy.subMonitorFor(monitor, 10), false /* read-only */);
+		try {
+			QuietOption quietness = CVSProviderPlugin.getPlugin().getQuietness();
+			try {
+				for (int i = 0; i < files.length; i++) {
+					entries.clear();
+					RemoteFile file = files[i];
+					monitor.subTask(file.getName());
+					IStatus status = Command.LOG.execute(
+							session, 
+							Command.NO_GLOBAL_OPTIONS, 
+							new LocalOption[]{Log.makeRevisionOption(file.getRevision())}, 
+							files, 
+							new LogListener(file, entries), 
+							Policy.subMonitorFor(monitor, 90));
+					if (entries.size() == 1) {
+						fileEntries[i] = (ILogEntry) entries.get(0);
+					}
+					if (status.getCode() == CVSStatus.SERVER_ERROR) {
+						throw new CVSServerException(status);
+					}
+				}
+			} finally {
+				monitor.done();
+			}
+		} finally { 
+			session.close();
+		}
+		return fileEntries;
 	}
 	
 	/**

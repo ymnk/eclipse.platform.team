@@ -73,7 +73,7 @@ public class CompareParticipantPage extends CVSSynchronizeViewPage {
 			toolbar.add(removeAction);
 			IMenuManager mgr = actionBars.getMenuManager();
 			//mgr.add(new Separator());
-			//mgr.add(groupByCommentAction);
+			mgr.add(groupByCommentAction);
 		}
 	}
 		

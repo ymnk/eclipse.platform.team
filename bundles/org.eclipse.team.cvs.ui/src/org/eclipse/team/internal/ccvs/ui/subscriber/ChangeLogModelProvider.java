@@ -144,15 +144,16 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider {
 	}
 
 	private SynchronizeModelElement[] calculateRoots(SyncInfoSet set, IProgressMonitor monitor) {
-		commentRoots.clear();
-		SyncInfo[] infos = set.getSyncInfos();
-		monitor.beginTask("fetching from server", set.size() * 100);
-		for (int i = 0; i < infos.length; i++) {
-			if(monitor.isCanceled()) {
-				break;
-			}
-			ILogEntry logEntry = getSyncInfoComment((CVSSyncInfo) infos[i], monitor);
-			if(logEntry != null) {
+		try {
+			commentRoots.clear();
+			SyncInfo[] infos = set.getSyncInfos();
+			monitor.beginTask("Fetching from server", set.size() * 100);
+			ILogEntry[] entries = getComments(infos, monitor);
+			for (int i = 0; i < infos.length; i++) {
+				if(monitor.isCanceled()) {
+					break;
+				}		
+				ILogEntry logEntry = entries[i];
 				DateComment dateComment = new DateComment(logEntry.getDate(), logEntry.getComment(), logEntry.getAuthor());
 				ChangeLogDiffNode changeRoot = (ChangeLogDiffNode) commentRoots.get(dateComment);
 				if (changeRoot == null) {
@@ -161,49 +162,57 @@ public class ChangeLogModelProvider extends SynchronizeModelProvider {
 				}
 				SynchronizeModelElement element = new FullPathSyncInfoElement(changeRoot, infos[i]);
 				associateDiffNode(element);
+				monitor.worked(100);
 			}
-			monitor.worked(100);
-		}
-		return (ChangeLogDiffNode[]) commentRoots.values().toArray(new ChangeLogDiffNode[commentRoots.size()]);
-	}
-	
-	/**
-	 * How do we tell which revision has the interesting log message? Use the later
-	 * revision, since it probably has the most up-to-date comment.
-	 */
-	private ILogEntry getSyncInfoComment(CVSSyncInfo info, IProgressMonitor monitor) {
-		try {
-			if(info.getLocal().getType() != IResource.FILE) {
-				return null;
-			}
-			
-			ICVSRemoteResource remote = (ICVSRemoteResource)info.getRemote();
-			ICVSRemoteResource base = (ICVSRemoteResource)info.getBase();
-			ICVSRemoteResource local = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(info.getLocal());
-			
-			String baseRevision = getRevisionString(base);
-			String remoteRevision = getRevisionString(remote);
-			String localRevision = getRevisionString(local);
-			
-			// TODO: handle new files where there is no local or remote	
-			boolean useRemote = true;
-			if(local != null && remote != null) {
-				useRemote = ResourceSyncInfo.isLaterRevision(remoteRevision, localRevision);
-			} else if(remote == null) {
-				useRemote = false;
-			}
-			if (useRemote) {
-				return ((RemoteFile) remote).getLogEntry(monitor);
-			} else if (local != null){
-				return ((RemoteFile) local).getLogEntry(monitor);
-			}
-			return null;
+			return (ChangeLogDiffNode[]) commentRoots.values().toArray(new ChangeLogDiffNode[commentRoots.size()]);
 		} catch (CVSException e) {
 			CVSUIPlugin.log(e);
 			return null;
 		}
 	}
 	
+	/**
+	 * How do we tell which revision has the interesting log message? Use the later
+	 * revision, since it probably has the most up-to-date comment.
+	 */
+	private ILogEntry[] getComments(SyncInfo[] infos, IProgressMonitor monitor) throws CVSException {
+		ILogEntry[] entries = new ILogEntry[infos.length];
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			RemoteFile remoteFile = getRemoteFile((CVSSyncInfo) info);
+			entries[i] = remoteFile.getLogEntry(monitor);			
+		}
+		return entries;
+	}
+	
+	private RemoteFile getRemoteFile(CVSSyncInfo info) throws CVSException {
+		if(info.getLocal().getType() != IResource.FILE) {
+			return null;
+		}
+		
+		ICVSRemoteResource remote = (ICVSRemoteResource)info.getRemote();
+		ICVSRemoteResource base = (ICVSRemoteResource)info.getBase();
+		ICVSRemoteResource local = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(info.getLocal());
+		
+		String baseRevision = getRevisionString(base);
+		String remoteRevision = getRevisionString(remote);
+		String localRevision = getRevisionString(local);
+		
+		// TODO: handle new files where there is no local or remote	
+		boolean useRemote = true;
+		if(local != null && remote != null) {
+			useRemote = ResourceSyncInfo.isLaterRevision(remoteRevision, localRevision);
+		} else if(remote == null) {
+			useRemote = false;
+		}
+		if (useRemote) {
+			return ((RemoteFile) remote);
+		} else if (local != null){
+			return ((RemoteFile) local);
+		}
+		return null;
+	}
+		
 	private String getRevisionString(ICVSRemoteResource remoteFile) {
 		if(remoteFile instanceof RemoteFile) {
 			return ((RemoteFile)remoteFile).getRevision();

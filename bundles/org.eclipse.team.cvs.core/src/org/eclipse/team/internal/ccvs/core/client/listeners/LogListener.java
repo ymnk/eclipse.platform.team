@@ -130,8 +130,9 @@ public class LogListener extends CommandOutputListener {
 			LogEntry entry = new LogEntry(file, revision, author, date,
 				comment.toString(), fileState, (CVSTag[]) thisRevisionTags.toArray(new CVSTag[0]));
 			entries.add(entry);
+			tagNames.clear();
+			tagRevisions.clear();
 			state = BEGIN;
-			// XXX should we reset the tagNames and tagRevisions stuff?
 		}
 		return OK;
 	}
