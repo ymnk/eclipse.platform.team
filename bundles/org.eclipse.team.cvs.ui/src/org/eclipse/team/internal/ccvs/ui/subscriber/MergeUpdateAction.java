@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -23,6 +26,7 @@ import org.eclipse.team.core.subscribers.SyncTreeSubscriber;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
+import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.client.Command;
@@ -138,14 +142,31 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateAction#runUpdateShallow(org.eclipse.team.internal.ui.sync.views.SyncResource[], org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected void runUpdateShallow(SyncResource[] nodes, RepositoryManager manager, IProgressMonitor monitor) throws TeamException {
-		mergeWithLocal(nodes, manager, true /* backups */, monitor);
+		// Incoming additions require different handling then incoming changes and deletions
+		List additions = new ArrayList();
+		List changes = new ArrayList();
+		for (int i = 0; i < nodes.length; i++) {
+			SyncResource resource = nodes[i];
+			int kind = resource.getKind();
+			if ((kind & SyncInfo.ADDITION) != 0) {
+				additions.add(resource);
+			} else {
+				changes.add(resource);
+			}
+		}
+		if (!additions.isEmpty()) {
+			mergeWithLocal((SyncResource[]) additions.toArray(new SyncResource[additions.size()]), manager, false /* include start tag */, true /* backups */, monitor);
+		}
+		if (!changes.isEmpty()) {
+			mergeWithLocal((SyncResource[]) changes.toArray(new SyncResource[changes.size()]), manager, true /* include start tag */, true /* backups */, monitor);
+		}
 	}
 	
 	/*
 	 * Use "cvs update -j start -j end ..." to merge changes. This method will result in 
 	 * an error for addition conflicts.
 	 */
-	protected void mergeWithLocal(SyncResource[] nodes, RepositoryManager manager, boolean createBackup, IProgressMonitor monitor) throws TeamException {
+	protected void mergeWithLocal(SyncResource[] nodes, RepositoryManager manager, boolean includeStartTag, boolean createBackup, IProgressMonitor monitor) throws TeamException {
 		SyncTreeSubscriber subscriber = getSubscriber();
 		if (!(subscriber instanceof CVSMergeSubscriber)) {
 			throw new CVSException("Invalid subscriber: " + subscriber.getId());
@@ -153,10 +174,17 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 		CVSTag startTag = ((CVSMergeSubscriber)subscriber).getStartTag();
 		CVSTag endTag = ((CVSMergeSubscriber)subscriber).getEndTag();
 		
-		Command.LocalOption[] options = new Command.LocalOption[] {
-			Command.DO_NOT_RECURSE,
-			Update.makeArgumentOption(Update.JOIN, startTag.getName()),
-			Update.makeArgumentOption(Update.JOIN, endTag.getName()) };
+		Command.LocalOption[] options;
+		if (includeStartTag) {
+			options = new Command.LocalOption[] {
+				Command.DO_NOT_RECURSE,
+				Update.makeArgumentOption(Update.JOIN, startTag.getName()),
+				Update.makeArgumentOption(Update.JOIN, endTag.getName()) };
+		} else {
+			options = new Command.LocalOption[] {
+				Command.DO_NOT_RECURSE,
+				Update.makeArgumentOption(Update.JOIN, endTag.getName()) };
+		}
 
 		// run a join update using the start and end tags and the join points
 		manager.update(getIResourcesFrom(nodes), options, createBackup, monitor);
@@ -251,12 +279,11 @@ public class MergeUpdateAction extends SubscriberUpdateAction {
 			ensureContainerExists(resource.getParent());
 		}
 		// make sure that the folder sync info is set
-		// TODO: the following code uses the remote tag which is wrong
-//		SyncInfo info = resource.getSyncInfo();
-//		if (info instanceof CVSSyncInfo) {
-//			CVSSyncInfo cvsInfo = (CVSSyncInfo)info;
-//			cvsInfo.makeInSync();
-//		}
+		SyncInfo info = resource.getSyncInfo();
+		if (info instanceof CVSSyncInfo) {
+			CVSSyncInfo cvsInfo = (CVSSyncInfo)info;
+			cvsInfo.makeInSync();
+		}
 		// create the folder if it doesn't exist
 		ICVSFolder cvsFolder = CVSWorkspaceRoot.getCVSFolderFor((IContainer)local);
 		if (!cvsFolder.exists()) {
