@@ -24,7 +24,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscriber.*;
 import org.eclipse.ui.*;
 
-public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implements ISyncInfoSetChangeListener {
+public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements ISyncInfoSetChangeListener {
 	
 	private List delegates = new ArrayList(2);
 	private CVSSynchronizeViewCompareConfiguration config;
@@ -55,7 +55,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		}
 	}
 
-	public CVSSynchronizeViewPage(TeamSubscriberParticipant participant, ISynchronizeView view) {
+	public CVSSynchronizeViewPage(SubscriberParticipant participant, ISynchronizeView view) {
 		super(participant, view);
 		groupByComment = new Action("Show incoming grouped by comment", Action.AS_CHECK_BOX) {
 			public void run() {
@@ -77,7 +77,7 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#setActionBars(org.eclipse.ui.IActionBars)
+	 * @see org.eclipse.team.ui.synchronize.SubscriberParticipantPage#setActionBars(org.eclipse.ui.IActionBars)
 	 */
 	public void setActionBars(IActionBars actionBars) {
 		super.setActionBars(actionBars);
@@ -146,9 +146,9 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.TeamSubscriberParticipantPage#createSyncInfoSetCompareConfiguration()
+	 * @see org.eclipse.team.ui.synchronize.SubscriberParticipantPage#createSyncInfoSetCompareConfiguration()
 	 */
-	protected TeamSubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
+	protected SubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
 		if(config == null) {
 			config = new CVSSynchronizeViewCompareConfiguration(getSynchronizeView(), getParticipant());
 		}

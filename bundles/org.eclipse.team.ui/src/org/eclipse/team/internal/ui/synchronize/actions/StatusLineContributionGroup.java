@@ -21,7 +21,7 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.actions.ActionGroup;
 
@@ -40,15 +40,15 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
 	private SubscriberSyncInfoCollector collector;
-	private TeamSubscriberParticipant participant;
+	private SubscriberParticipant participant;
 
-	public StatusLineContributionGroup(final Shell shell, TeamSubscriberParticipant participant) {
+	public StatusLineContributionGroup(final Shell shell, SubscriberParticipant participant) {
 		super();
 		this.participant = participant;
 		this.collector = participant.getSubscriberSyncInfoCollector();
-		this.incoming = createStatusLineContribution(INCOMING_ID, TeamSubscriberParticipant.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
-		this.outgoing = createStatusLineContribution(OUTGOING_ID, TeamSubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
-		this.conflicting = createStatusLineContribution(CONFLICTING_ID, TeamSubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
+		this.incoming = createStatusLineContribution(INCOMING_ID, SubscriberParticipant.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
+		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
+		this.conflicting = createStatusLineContribution(CONFLICTING_ID, SubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
 		collector.getSyncInfoTree().addSyncSetChangedListener(this);
 	}
 

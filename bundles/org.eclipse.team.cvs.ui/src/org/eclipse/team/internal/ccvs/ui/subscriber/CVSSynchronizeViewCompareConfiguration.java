@@ -16,12 +16,12 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberPageDiffTreeViewerConfiguration;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberPageDiffTreeViewerConfiguration;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;
 
-public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDiffTreeViewerConfiguration {
+public class CVSSynchronizeViewCompareConfiguration extends SubscriberPageDiffTreeViewerConfiguration {
 
 	private boolean isGroupIncomingByComment = false;
 
@@ -51,7 +51,7 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 		}
 	}
 	
-	public CVSSynchronizeViewCompareConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
+	public CVSSynchronizeViewCompareConfiguration(ISynchronizeView view, SubscriberParticipant participant) {
 		super(view, participant);
 		participant.addPropertyChangeListener(this);
 	}
@@ -69,7 +69,7 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	
 	public void setGroupIncomingByComment(boolean enabled) {
 		this.isGroupIncomingByComment = enabled;
-		if(getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
+		if(getParticipant().getMode() == SubscriberParticipant.INCOMING_MODE) {
 		}
 	}
 	
@@ -78,11 +78,11 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		String property = event.getProperty();
-		if(property.equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE) && isGroupIncomingByComment()) {
+		if(property.equals(SubscriberParticipant.P_SYNCVIEWPAGE_MODE) && isGroupIncomingByComment()) {
 			int oldMode = ((Integer)event.getOldValue()).intValue();
 			int newMode = ((Integer)event.getNewValue()).intValue();
-			if(newMode == TeamSubscriberParticipant.INCOMING_MODE || 
-			   oldMode == TeamSubscriberParticipant.INCOMING_MODE) {
+			if(newMode == SubscriberParticipant.INCOMING_MODE || 
+			   oldMode == SubscriberParticipant.INCOMING_MODE) {
 				aSyncExec(new Runnable() {
 					public void run() {
 					}

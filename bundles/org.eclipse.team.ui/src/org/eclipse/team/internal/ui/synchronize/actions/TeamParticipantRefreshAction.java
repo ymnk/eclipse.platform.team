@@ -14,7 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.internal.ui.jobs.RefreshUserNotificationPolicy;
 import org.eclipse.team.ui.synchronize.subscriber.RefreshAction;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.ui.IWorkbenchSite;
 
 /**
@@ -23,11 +23,11 @@ import org.eclipse.ui.IWorkbenchSite;
  */
 public class TeamParticipantRefreshAction extends RefreshAction {
 	
-	public TeamParticipantRefreshAction(ISelectionProvider provider, TeamSubscriberParticipant participant, boolean refreshAll) {
+	public TeamParticipantRefreshAction(ISelectionProvider provider, SubscriberParticipant participant, boolean refreshAll) {
 		super(provider, participant.getName(), participant.getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant), refreshAll);
 	}
 	
-	public static void run(IWorkbenchSite site, IResource[] resources, TeamSubscriberParticipant participant) {
+	public static void run(IWorkbenchSite site, IResource[] resources, SubscriberParticipant participant) {
 		run(site, participant.getName(), resources, participant.getSubscriberSyncInfoCollector(), new RefreshUserNotificationPolicy(participant));
 	}
 }

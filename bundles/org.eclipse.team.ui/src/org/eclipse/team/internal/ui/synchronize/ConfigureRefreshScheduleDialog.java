@@ -10,19 +10,19 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberRefreshSchedule;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberRefreshSchedule;
 import org.eclipse.team.internal.ui.Policy;
 
 
 public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 
-	private TeamSubscriberRefreshSchedule schedule;
+	private SubscriberRefreshSchedule schedule;
 	private Button userRefreshOnly;
 	private Button enableBackgroundRefresh;
 	private Text time;
 	private Combo hoursOrSeconds;
 
-	public ConfigureRefreshScheduleDialog(Shell parentShell, TeamSubscriberRefreshSchedule schedule) {
+	public ConfigureRefreshScheduleDialog(Shell parentShell, SubscriberRefreshSchedule schedule) {
 		super(parentShell, Policy.bind("ConfigureRefreshScheduleDialog.0", schedule.getParticipant().getName())); //$NON-NLS-1$
 		this.schedule = schedule;
 	}
@@ -65,7 +65,7 @@ public class ConfigureRefreshScheduleDialog extends DetailsDialog {
 			gridData.horizontalSpan = 2;
 			gridData.widthHint = 250;
 			label.setLayoutData(gridData);
-			label.setText(Policy.bind("ConfigureRefreshScheduleDialog.1", schedule.getParticipant().getName(), TeamSubscriberRefreshSchedule.refreshEventAsString(schedule.getLastRefreshEvent())));			 //$NON-NLS-1$
+			label.setText(Policy.bind("ConfigureRefreshScheduleDialog.1", schedule.getParticipant().getName(), SubscriberRefreshSchedule.refreshEventAsString(schedule.getLastRefreshEvent())));			 //$NON-NLS-1$
 		}
 		{
 			userRefreshOnly = new Button(area, SWT.RADIO);

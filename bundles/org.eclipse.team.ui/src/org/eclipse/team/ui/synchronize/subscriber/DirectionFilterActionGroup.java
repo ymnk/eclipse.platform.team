@@ -27,9 +27,9 @@ import org.eclipse.ui.actions.ActionGroup;
  * button is active at a time.
  * <p>
  * When a modes changes a property change event is fired from the participant 
- * with a value of <code>TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE</code>.
+ * with a value of <code>SubscriberParticipant.P_SYNCVIEWPAGE_MODE</code>.
  * </p>
- * @see TeamSubscriberParticipant
+ * @see SubscriberParticipant
  * @since 3.0 
  */
 public class DirectionFilterActionGroup extends ActionGroup implements IPropertyChangeListener {
@@ -41,7 +41,7 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	private DirectionFilterAction outgoingMode;
 	private DirectionFilterAction bothMode;
 	private DirectionFilterAction conflictsMode;
-	private TeamSubscriberParticipant page;
+	private SubscriberParticipant page;
 	
 	private int supportedModes;
 	
@@ -74,19 +74,19 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	
 	/**
 	 * Creates a direction filter group with the given supported modes. The
-	 * possible values for modes are defined by the {@link TeamSubscriberParticipant}
+	 * possible values for modes are defined by the {@link SubscriberParticipant}
 	 * class.
 	 * 
-	 * @see TeamSubscriberParticipant#BOTH_MODE
-	 * @see TeamSubscriberParticipant#OUTGOING_MODE
-	 * @see TeamSubscriberParticipant#INCOMING_MODE
-	 * @see TeamSubscriberParticipant#CONFLICTING_MODE
-	 * @see TeamSubscriberParticipant#ALL_MODES
+	 * @see SubscriberParticipant#BOTH_MODE
+	 * @see SubscriberParticipant#OUTGOING_MODE
+	 * @see SubscriberParticipant#INCOMING_MODE
+	 * @see SubscriberParticipant#CONFLICTING_MODE
+	 * @see SubscriberParticipant#ALL_MODES
 	 * 
 	 * @param participant the participant showing this group 
 	 * @param supportedModes the modes to be shown
 	 */
-	public DirectionFilterActionGroup(TeamSubscriberParticipant participant, int supportedModes) {		
+	public DirectionFilterActionGroup(SubscriberParticipant participant, int supportedModes) {		
 		this.supportedModes = supportedModes;
 		this.page = participant;
 		createActions();
@@ -99,23 +99,23 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 */
 	private void createActions() {
 		// Create the actions
-		if((supportedModes & TeamSubscriberParticipant.INCOMING_MODE) != 0) {
-			incomingMode = new DirectionFilterAction("action.directionFilterIncoming.", "org.eclipse.team.ui.syncview.incomingFilter",  TeamSubscriberParticipant.INCOMING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+		if((supportedModes & SubscriberParticipant.INCOMING_MODE) != 0) {
+			incomingMode = new DirectionFilterAction("action.directionFilterIncoming.", "org.eclipse.team.ui.syncview.incomingFilter",  SubscriberParticipant.INCOMING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(incomingMode);
 		}
 		
-		if((supportedModes & TeamSubscriberParticipant.OUTGOING_MODE) != 0) {
-			outgoingMode = new DirectionFilterAction("action.directionFilterOutgoing.", "org.eclipse.team.ui.syncview.outgoingFilter",  TeamSubscriberParticipant.OUTGOING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+		if((supportedModes & SubscriberParticipant.OUTGOING_MODE) != 0) {
+			outgoingMode = new DirectionFilterAction("action.directionFilterOutgoing.", "org.eclipse.team.ui.syncview.outgoingFilter",  SubscriberParticipant.OUTGOING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(outgoingMode);
 		}
 		
-		if((supportedModes & TeamSubscriberParticipant.BOTH_MODE) != 0) {
-			bothMode = new DirectionFilterAction("action.directionFilterBoth.", "org.eclipse.team.ui.syncview.bothFilter", TeamSubscriberParticipant.BOTH_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+		if((supportedModes & SubscriberParticipant.BOTH_MODE) != 0) {
+			bothMode = new DirectionFilterAction("action.directionFilterBoth.", "org.eclipse.team.ui.syncview.bothFilter", SubscriberParticipant.BOTH_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(bothMode);
 		}
 		
-		if((supportedModes & TeamSubscriberParticipant.CONFLICTING_MODE) != 0) {
-			conflictsMode = new DirectionFilterAction("action.directionFilterConflicts.", "org.eclipse.team.ui.syncview.conflictsFilter", TeamSubscriberParticipant.CONFLICTING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
+		if((supportedModes & SubscriberParticipant.CONFLICTING_MODE) != 0) {
+			conflictsMode = new DirectionFilterAction("action.directionFilterConflicts.", "org.eclipse.team.ui.syncview.conflictsFilter", SubscriberParticipant.CONFLICTING_MODE); //$NON-NLS-1$ //$NON-NLS-2$
 			actions.add(conflictsMode);
 		}
 	}
@@ -161,7 +161,7 @@ public class DirectionFilterActionGroup extends ActionGroup implements IProperty
 	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
-		if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_MODE)) {
+		if(event.getProperty().equals(SubscriberParticipant.P_SYNCVIEWPAGE_MODE)) {
 			Integer mode = (Integer)event.getNewValue();
 			checkMode(mode.intValue());
 		}

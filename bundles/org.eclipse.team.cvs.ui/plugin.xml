@@ -266,7 +266,7 @@
         <action
                label="%CompareWithRemoteAction.label"
                tooltip="%CompareWithRemoteAction.tooltip"
-               class="org.eclipse.team.internal.ccvs.ui.actions.CompareWithRemoteAction"
+               class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
                menubarPath="compareWithMenu/compareWithGroup"
                helpContextId="org.eclipse.team.cvs.ui.compare_with_latest_action_context"
                id="org.eclipse.team.ccvs.ui.compareWithRemote">

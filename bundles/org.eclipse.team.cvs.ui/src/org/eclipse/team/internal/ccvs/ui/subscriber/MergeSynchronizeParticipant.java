@@ -27,7 +27,7 @@ import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
 
-public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
+public class MergeSynchronizeParticipant extends SubscriberParticipant {
 	
 	private final static String CTX_QUALIFIER = "qualifier"; //$NON-NLS-1$
 	private final static String CTX_LOCALNAME = "localname"; //$NON-NLS-1$
@@ -48,7 +48,7 @@ public class MergeSynchronizeParticipant extends TeamSubscriberParticipant {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.sync.TeamSubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
+	 * @see org.eclipse.team.ui.sync.SubscriberParticipant#setSubscriber(org.eclipse.team.core.subscribers.TeamSubscriber)
 	 */
 	protected void setSubscriber(Subscriber subscriber) {
 		super.setSubscriber(subscriber);

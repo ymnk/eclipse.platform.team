@@ -41,9 +41,9 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private IDialogSettings settings;
 	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
 	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
-	private TeamSubscriberParticipant participant;
+	private SubscriberParticipant participant;
 	
-	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event, TeamSubscriberParticipant participant) {
+	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event, SubscriberParticipant participant) {
 		super(parentShell, Policy.bind("RefreshCompleteDialog.4", participant.getName())); //$NON-NLS-1$
 		this.participant = participant;
 		int shellStyle = getShellStyle();

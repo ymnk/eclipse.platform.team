@@ -17,8 +17,6 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
-import org.eclipse.team.internal.ccvs.ui.sync.CVSSyncCompareInput;
-import org.eclipse.team.internal.ui.sync.SyncCompareInput;
 
 /**
  * Action for catchup/release in popup menus.
@@ -30,10 +28,6 @@ public class SyncAction extends WorkspaceAction {
 		if (resources == null || resources.length == 0) return;
 		
 		CVSUIPlugin.showInSyncView(getShell(), resources, 0 /* no mode in particular */);
-	}
-
-	protected SyncCompareInput getCompareInput(IResource[] resources) throws CVSException {
-		return new CVSSyncCompareInput(resources);
 	}
 	
 	protected IResource[] getResourcesToSync() {

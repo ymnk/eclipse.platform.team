@@ -31,7 +31,7 @@ import org.eclipse.ui.part.*;
 
 /**
  * A synchronize view page that works with participants that are subclasses of 
- * {@link TeamSubscriberParticipant}. It shows changes in the tree or table view
+ * {@link SubscriberParticipant}. It shows changes in the tree or table view
  * and supports navigation, opening, and filtering changes.
  * <p>
  * Clients can subclass to extend the label decoration or add action bar 
@@ -40,7 +40,7 @@ import org.eclipse.ui.part.*;
  * </p> 
  * @since 3.0
  */
-public class TeamSubscriberParticipantPage implements IPageBookViewPage, IPropertyChangeListener, IAdaptable {
+public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyChangeListener, IAdaptable {
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
 	private Composite composite = null;
@@ -48,7 +48,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private boolean settingWorkingSet = false;
 	
 	private ISynchronizeView view;
-	private TeamSubscriberParticipant participant;
+	private SubscriberParticipant participant;
 	private IPageSite site;
 	
 	// Toolbar and status line actions for this page, note that context menu actions shown in 
@@ -61,12 +61,12 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	private Action collapseAll;
 	private WorkingSetFilterActionGroup workingSetGroup;
 	private StatusLineContributionGroup statusLine;
-	private TeamSubscriberPageDiffTreeViewerConfiguration configuration;
+	private SubscriberPageDiffTreeViewerConfiguration configuration;
 		
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public TeamSubscriberParticipantPage(TeamSubscriberParticipant page, ISynchronizeView view) {
+	public SubscriberParticipantPage(SubscriberParticipant page, ISynchronizeView view) {
 		this.participant = page;
 		this.view = view;
 	}
@@ -250,7 +250,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 			participant.setWorkingSet((IWorkingSet)event.getNewValue());
 			settingWorkingSet = false;
 		// Working set changed programatically
-		} else if(event.getProperty().equals(TeamSubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
+		} else if(event.getProperty().equals(SubscriberParticipant.P_SYNCVIEWPAGE_WORKINGSET)) {
 			if(settingWorkingSet) return;
 			settingWorkingSet = true;
 			Object newValue = event.getNewValue();
@@ -272,7 +272,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 	/**
 	 * @return Returns the participant.
 	 */
-	public TeamSubscriberParticipant getParticipant() {
+	public SubscriberParticipant getParticipant() {
 		return participant;
 	}
 	
@@ -290,7 +290,7 @@ public class TeamSubscriberParticipantPage implements IPageBookViewPage, IProper
 		return viewer;
 	}
 
-	protected TeamSubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
-		return new TeamSubscriberPageDiffTreeViewerConfiguration(getSynchronizeView(), getParticipant());
+	protected SubscriberPageDiffTreeViewerConfiguration createSyncInfoSetCompareConfiguration() {
+		return new SubscriberPageDiffTreeViewerConfiguration(getSynchronizeView(), getParticipant());
 	}
 }

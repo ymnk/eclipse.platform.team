@@ -48,14 +48,14 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		return info;
 	}
 	
-	private TeamSubscriberParticipant getParticipant(Subscriber subscriber) {
+	private SubscriberParticipant getParticipant(Subscriber subscriber) {
 		// show the sync view
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			if(participant instanceof TeamSubscriberParticipant) {
-				if(((TeamSubscriberParticipant)participant).getSubscriber() == subscriber) {
-					return (TeamSubscriberParticipant)participant;
+			if(participant instanceof SubscriberParticipant) {
+				if(((SubscriberParticipant)participant).getSubscriber() == subscriber) {
+					return (SubscriberParticipant)participant;
 				}
 			}
 		}
@@ -63,7 +63,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	}
 	
 	private SubscriberSyncInfoCollector getCollector(Subscriber subscriber) {
-		TeamSubscriberParticipant participant = getParticipant(subscriber);
+		SubscriberParticipant participant = getParticipant(subscriber);
 		if (participant == null) return null;
 		SubscriberSyncInfoCollector syncInfoCollector = participant.getSubscriberSyncInfoCollector();
 		EclipseTest.waitForSubscriberInputHandling(syncInfoCollector);

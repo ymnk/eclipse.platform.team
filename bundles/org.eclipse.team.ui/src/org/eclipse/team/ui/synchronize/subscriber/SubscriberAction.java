@@ -27,11 +27,11 @@ import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
  * This is an abstract superclass for actions associated with a 
- * {@link TeamSubscriberParticipant}. It provides helper methods to
+ * {@link SubscriberParticipant}. It provides helper methods to
  * access and filter selections that contain {@link ITeamSubscriberParticipantNode} 
  * instances.
  * <p>
- * It is optional for TeamSubscriberParticipant actions to subclass.
+ * It is optional for SubscriberParticipant actions to subclass.
  * </p>
  * @since 3.0
  */

@@ -29,11 +29,11 @@ import org.eclipse.ui.part.IPageBookViewPage;
  *
  * @since 3.0
  */
-public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
+public abstract class SubscriberParticipant extends AbstractSynchronizeParticipant implements IPropertyChangeListener {
 	
 	private SubscriberSyncInfoCollector collector;
 	
-	private TeamSubscriberRefreshSchedule refreshSchedule;
+	private SubscriberRefreshSchedule refreshSchedule;
 	
 	private int currentMode;
 	
@@ -80,9 +80,9 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	public final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
 	public final static int[] CONFLICTING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING};
 	
-	public TeamSubscriberParticipant() {
+	public SubscriberParticipant() {
 		super();
-		refreshSchedule = new TeamSubscriberRefreshSchedule(this);
+		refreshSchedule = new SubscriberRefreshSchedule(this);
 	}
 	
 	/* (non-Javadoc)
@@ -94,7 +94,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 	}
 	
 	protected IPageBookViewPage doCreatePage(ISynchronizeView view) {
-		return new TeamSubscriberParticipantPage(this, view);
+		return new SubscriberParticipantPage(this, view);
 	}
 	
 	public void setMode(int mode) {
@@ -110,12 +110,12 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		return currentMode;
 	}
 	
-	public void setRefreshSchedule(TeamSubscriberRefreshSchedule schedule) {
+	public void setRefreshSchedule(SubscriberRefreshSchedule schedule) {
 		this.refreshSchedule = schedule;
 		firePropertyChange(this, P_SYNCVIEWPAGE_SCHEDULE, null, schedule);
 	}
 	
-	public TeamSubscriberRefreshSchedule getRefreshSchedule() {
+	public SubscriberRefreshSchedule getRefreshSchedule() {
 		return refreshSchedule;
 	}
 	
@@ -175,7 +175,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		collector.start();
 		
 		// start the refresh how that a subscriber has been added
-		TeamSubscriberRefreshSchedule schedule = getRefreshSchedule();
+		SubscriberRefreshSchedule schedule = getRefreshSchedule();
 		if(schedule.isEnabled()) {
 			getRefreshSchedule().startJob();
 		}
@@ -211,13 +211,13 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 		
 			int[] modeFilter = BOTH_MODE_FILTER;
 			switch(mode) {
-			case TeamSubscriberParticipant.INCOMING_MODE:
+			case SubscriberParticipant.INCOMING_MODE:
 				modeFilter = INCOMING_MODE_FILTER; break;
-			case TeamSubscriberParticipant.OUTGOING_MODE:
+			case SubscriberParticipant.OUTGOING_MODE:
 				modeFilter = OUTGOING_MODE_FILTER; break;
-			case TeamSubscriberParticipant.BOTH_MODE:
+			case SubscriberParticipant.BOTH_MODE:
 				modeFilter = BOTH_MODE_FILTER; break;
-			case TeamSubscriberParticipant.CONFLICTING_MODE:
+			case SubscriberParticipant.CONFLICTING_MODE:
 				modeFilter = CONFLICTING_MODE_FILTER; break;
 			}
 
@@ -238,7 +238,7 @@ public abstract class TeamSubscriberParticipant extends AbstractSynchronizeParti
 			if(settings != null) {
 				String set = settings.getString(P_SYNCVIEWPAGE_WORKINGSET);
 				String mode = settings.getString(P_SYNCVIEWPAGE_MODE);
-				TeamSubscriberRefreshSchedule schedule = TeamSubscriberRefreshSchedule.init(settings.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
+				SubscriberRefreshSchedule schedule = SubscriberRefreshSchedule.init(settings.getChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS), this);
 				setRefreshSchedule(schedule);
 				
 				if(set != null) {

@@ -15,7 +15,7 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscriber.DirectionFilterActionGroup;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 
 public class WorkspaceSynchronizePage extends CVSSynchronizeViewPage {
@@ -25,9 +25,9 @@ public class WorkspaceSynchronizePage extends CVSSynchronizeViewPage {
 	private Action commitToolbar;
 	private Action updateToolbar;
 
-	public WorkspaceSynchronizePage(TeamSubscriberParticipant page, ISynchronizeView view) {
+	public WorkspaceSynchronizePage(SubscriberParticipant page, ISynchronizeView view) {
 		super(page, view);
-		modes = new DirectionFilterActionGroup(getParticipant(), TeamSubscriberParticipant.ALL_MODES);
+		modes = new DirectionFilterActionGroup(getParticipant(), SubscriberParticipant.ALL_MODES);
 
 		commitToolbar = new CVSActionDelegate(new SubscriberCommitAction());
 		WorkspaceUpdateAction action = new WorkspaceUpdateAction();

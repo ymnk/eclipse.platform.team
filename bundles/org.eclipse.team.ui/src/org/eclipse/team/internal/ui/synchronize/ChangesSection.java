@@ -21,8 +21,8 @@ import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipantPage;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipantPage;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.widgets.Hyperlink;
@@ -36,9 +36,9 @@ import org.eclipse.ui.part.PageBook;
  */
 public class ChangesSection extends Composite {
 	
-	private TeamSubscriberParticipant participant;
+	private SubscriberParticipant participant;
 	private Composite parent;
-	private TeamSubscriberParticipantPage page;
+	private SubscriberParticipantPage page;
 			
 	/**
 	 * Page book either shows the diff tree viewer if there are changes or
@@ -82,7 +82,7 @@ public class ChangesSection extends Composite {
 	 * @param parent the parent control 
 	 * @param page the page showing this section
 	 */
-	public ChangesSection(Composite parent, TeamSubscriberParticipantPage page) {
+	public ChangesSection(Composite parent, SubscriberParticipantPage page) {
 		super(parent, SWT.NONE);
 		this.page = page;
 		this.participant = page.getParticipant();
@@ -154,7 +154,7 @@ public class ChangesSection extends Composite {
 		
 		if(changesInFilter == 0 && changesInWorkingSet != 0) {
 			int mode = participant.getMode();
-			final int newMode = outgoingChanges != 0 ? TeamSubscriberParticipant.OUTGOING_MODE : TeamSubscriberParticipant.INCOMING_MODE;
+			final int newMode = outgoingChanges != 0 ? SubscriberParticipant.OUTGOING_MODE : SubscriberParticipant.INCOMING_MODE;
 			long numChanges = outgoingChanges != 0 ? outgoingChanges : incomingChanges;
 			StringBuffer text = new StringBuffer();
 			text.append(Policy.bind("ChangesSection.filterHides", Utils.modeToString(participant.getMode()))); //$NON-NLS-1$

@@ -13,14 +13,14 @@ import org.eclipse.team.internal.ui.synchronize.IRefreshEvent;
 import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
 import org.eclipse.ui.IMemento;
 
-public class TeamSubscriberRefreshSchedule {
+public class SubscriberRefreshSchedule {
 	private long refreshInterval = 3600; // 1 hour default
 	
 	private boolean enabled = false;
 	
 	private RefreshSubscriberJob job;
 	
-	private TeamSubscriberParticipant participant;
+	private SubscriberParticipant participant;
 	
 	private IRefreshEvent lastRefreshEvent;
 	
@@ -45,7 +45,7 @@ public class TeamSubscriberRefreshSchedule {
 	};
 	
 	
-	public TeamSubscriberRefreshSchedule(TeamSubscriberParticipant participant) {
+	public SubscriberRefreshSchedule(SubscriberParticipant participant) {
 		this.participant = participant;
 		RefreshSubscriberJob.addRefreshListener(refreshSubscriberListener);
 	}
@@ -79,7 +79,7 @@ public class TeamSubscriberRefreshSchedule {
 		return refreshInterval;
 	}
 
-	public TeamSubscriberParticipant getParticipant() {
+	public SubscriberParticipant getParticipant() {
 		return participant;
 	}
 	
@@ -100,7 +100,7 @@ public class TeamSubscriberRefreshSchedule {
 			return;
 		}
 		if(job == null) {
-			job = new RefreshSubscriberJob(Policy.bind("TeamSubscriberRefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getSubscriberSyncInfoCollector()); //$NON-NLS-1$
+			job = new RefreshSubscriberJob(Policy.bind("SubscriberRefreshSchedule.14", participant.getName(), getRefreshIntervalAsString()), participant.getSubscriberSyncInfoCollector()); //$NON-NLS-1$
 		} else if(job.getState() != Job.NONE){
 			stopJob();
 		}
@@ -128,8 +128,8 @@ public class TeamSubscriberRefreshSchedule {
 		memento.putInteger(CTX_REFRESHSCHEDULE_INTERVAL, (int)refreshInterval);
 	}
 
-	public static TeamSubscriberRefreshSchedule init(IMemento memento, TeamSubscriberParticipant participant) {
-		TeamSubscriberRefreshSchedule schedule = new TeamSubscriberRefreshSchedule(participant);
+	public static SubscriberRefreshSchedule init(IMemento memento, SubscriberParticipant participant) {
+		SubscriberRefreshSchedule schedule = new SubscriberRefreshSchedule(participant);
 		if(memento != null) {
 			String enabled = memento.getString(CTX_REFRESHSCHEDULE_ENABLED);
 			int interval = memento.getInteger(CTX_REFRESHSCHEDULE_INTERVAL).intValue();
@@ -155,16 +155,16 @@ public class TeamSubscriberRefreshSchedule {
 		}
 		SyncInfo[] changes = event.getChanges();
 		if (changes.length != 0) {
-			text.append(Policy.bind("TeamSubscriberRefreshSchedule.6", Integer.toString(changes.length))); //$NON-NLS-1$
+			text.append(Policy.bind("SubscriberRefreshSchedule.6", Integer.toString(changes.length))); //$NON-NLS-1$
 		} else {
-			text.append(Policy.bind("TeamSubscriberRefreshSchedule.7")); //$NON-NLS-1$
+			text.append(Policy.bind("SubscriberRefreshSchedule.7")); //$NON-NLS-1$
 		}
 		return text.toString();
 	} 
 	
 	public String getScheduleAsString() {
 		if(! isEnabled()) {
-			return Policy.bind("TeamSubscriberRefreshSchedule.8"); //$NON-NLS-1$
+			return Policy.bind("SubscriberRefreshSchedule.8"); //$NON-NLS-1$
 		}		
 		return getRefreshIntervalAsString();
 	}
@@ -186,10 +186,10 @@ public class TeamSubscriberRefreshSchedule {
 		}		
 		String unit;
 		if(minutes >= 1) {
-			unit = (hours ? Policy.bind("TeamSubscriberRefreshSchedule.9") : Policy.bind("TeamSubscriberRefreshSchedule.10")); //$NON-NLS-1$ //$NON-NLS-2$
+			unit = (hours ? Policy.bind("SubscriberRefreshSchedule.9") : Policy.bind("SubscriberRefreshSchedule.10")); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
-			unit = (hours ? Policy.bind("TeamSubscriberRefreshSchedule.11") : Policy.bind("TeamSubscriberRefreshSchedule.12")); //$NON-NLS-1$ //$NON-NLS-2$
+			unit = (hours ? Policy.bind("SubscriberRefreshSchedule.11") : Policy.bind("SubscriberRefreshSchedule.12")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		return Policy.bind("TeamSubscriberRefreshSchedule.13", Long.toString(minutes), unit); //$NON-NLS-1$
+		return Policy.bind("SubscriberRefreshSchedule.13", Long.toString(minutes), unit); //$NON-NLS-1$
 	}
 }

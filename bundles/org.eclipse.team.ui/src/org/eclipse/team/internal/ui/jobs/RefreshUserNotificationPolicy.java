@@ -6,16 +6,16 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 import org.eclipse.team.internal.ui.Policy;
 
 public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener {
 
-	private TeamSubscriberParticipant participant;
+	private SubscriberParticipant participant;
 
-	public RefreshUserNotificationPolicy(TeamSubscriberParticipant participant) {
+	public RefreshUserNotificationPolicy(SubscriberParticipant participant) {
 		this.participant = participant;
 	}
 
@@ -61,7 +61,7 @@ public class RefreshUserNotificationPolicy implements IRefreshSubscriberListener
 
 		// If there are interesting changes, ensure the sync view is showing them
 		if(infos.length > 0) {
-			participant.setMode(TeamSubscriberParticipant.INCOMING_MODE);
+			participant.setMode(SubscriberParticipant.INCOMING_MODE);
 		}
 		
 		// Prompt user if preferences are set for this type of refresh.

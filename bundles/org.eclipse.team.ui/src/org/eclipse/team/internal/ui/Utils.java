@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.ui.TeamImages;
-import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
 
@@ -354,13 +354,13 @@ public class Utils {
 
 	public static String modeToString(int mode) {
 		switch (mode) {
-			case TeamSubscriberParticipant.INCOMING_MODE :
+			case SubscriberParticipant.INCOMING_MODE :
 				return Policy.bind("Utils.22"); //$NON-NLS-1$
-			case TeamSubscriberParticipant.OUTGOING_MODE :
+			case SubscriberParticipant.OUTGOING_MODE :
 				return Policy.bind("Utils.23"); //$NON-NLS-1$
-			case TeamSubscriberParticipant.BOTH_MODE :
+			case SubscriberParticipant.BOTH_MODE :
 				return Policy.bind("Utils.24"); //$NON-NLS-1$
-			case TeamSubscriberParticipant.CONFLICTING_MODE :
+			case SubscriberParticipant.CONFLICTING_MODE :
 				return Policy.bind("Utils.25"); //$NON-NLS-1$
 		}
 		return Policy.bind("Utils.26"); //$NON-NLS-1$

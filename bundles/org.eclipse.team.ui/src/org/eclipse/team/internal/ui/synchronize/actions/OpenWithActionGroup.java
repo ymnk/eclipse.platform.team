@@ -30,7 +30,7 @@ public class OpenWithActionGroup extends ActionGroup {
 
 	private OpenFileInSystemEditorAction openFileAction;
 	private OpenInCompareAction openInCompareAction;
-	private TeamSubscriberParticipantPage page;
+	private SubscriberParticipantPage page;
 	private ISynchronizeView view;
 	private ISynchronizeParticipant participant;
 
