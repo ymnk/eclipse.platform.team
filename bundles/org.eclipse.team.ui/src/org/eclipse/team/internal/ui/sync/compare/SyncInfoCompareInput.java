@@ -19,6 +19,7 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ui.Policy;
 
 public class SyncInfoCompareInput extends CompareEditorInput {
 
@@ -43,6 +44,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		// update the title now that the remote revision number as been fetched from the server
 		setTitle(getTitle());
+		updateLabels();
 		return node;		
 	}
 	
@@ -53,6 +55,13 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 		return node.getName();
 	}
 	
+	protected void updateLabels() {
+		CompareConfiguration config = getCompareConfiguration();
+		config.setLeftLabel(Policy.bind("SyncInfoCompareInput.localLabel"));
+		config.setRightLabel(Policy.bind("SyncInfoCompareInput.remoteLabel"));
+		config.setAncestorLabel(Policy.bind("SyncInfoCompareInput.baseLabel"));
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
