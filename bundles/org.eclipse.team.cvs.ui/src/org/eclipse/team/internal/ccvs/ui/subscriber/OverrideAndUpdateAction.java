@@ -47,7 +47,7 @@ public class OverrideAndUpdateAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	protected void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		try {
 			if(promptForOverwrite(syncSet)) {
 				SyncInfo[] conflicts = syncSet.getNodes(getConflictingAdditionFilter());

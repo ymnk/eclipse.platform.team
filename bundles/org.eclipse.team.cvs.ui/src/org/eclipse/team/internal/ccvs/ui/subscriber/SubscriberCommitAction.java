@@ -45,8 +45,8 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getFilteredSyncInfoSet(org.eclipse.team.internal.ui.sync.views.SyncInfo[])
 	 */
-	protected SelectionSyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
-		SelectionSyncInfoSet syncSet = super.getFilteredSyncInfoSet(selectedResources);
+	protected SyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
+		SyncInfoSet syncSet = super.getFilteredSyncInfoSet(selectedResources);
 		if (!promptForConflictHandling(syncSet)) return null;
 		try {
 			if (!promptForUnaddedHandling(syncSet)) return null;
@@ -56,7 +56,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return syncSet;
 	}
 	
-	protected boolean promptForConflictHandling(SelectionSyncInfoSet syncSet) {
+	protected boolean promptForConflictHandling(SyncInfoSet syncSet) {
 		// If there is a conflict in the syncSet, remove from sync set.
 		if (syncSet.hasConflicts() || syncSet.hasIncomingChanges()) {
 			syncSet.removeConflictingNodes();
@@ -65,7 +65,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return true;
 	}
 
-	private boolean promptForUnaddedHandling(SelectionSyncInfoSet syncSet) throws CVSException {
+	private boolean promptForUnaddedHandling(SyncInfoSet syncSet) throws CVSException {
 		if (syncSet.isEmpty()) return false;
 		
 		// accumulate any resources that are not under version control
@@ -99,7 +99,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 		return true;
 	}
 	
-	private IResource[] getUnaddedResources(SelectionSyncInfoSet syncSet) throws CVSException {
+	private IResource[] getUnaddedResources(SyncInfoSet syncSet) throws CVSException {
 		// TODO: Should only get outgoing additions (since conflicting additions 
 		// could be considered to be under version control already)
 		IResource[] resources = syncSet.getResources();
@@ -135,7 +135,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	public void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		
 		final SyncInfo[] changed = syncSet.getSyncInfos();
 		if (changed.length == 0) return;
@@ -239,7 +239,7 @@ public class SubscriberCommitAction extends CVSSubscriberAction {
 	 * Note: This method is designed to be overridden by test cases.
 	 * @return 0 to sync conflicts, 1 to sync all non-conflicts, 2 to cancel
 	 */
-	protected int promptForConflicts(SelectionSyncInfoSet syncSet) {
+	protected int promptForConflicts(SyncInfoSet syncSet) {
 		String[] buttons = new String[] {IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL, IDialogConstants.CANCEL_LABEL};
 		String question = Policy.bind("CommitSyncAction.questionRelease"); //$NON-NLS-1$
 		String title = Policy.bind("CommitSyncAction.titleRelease"); //$NON-NLS-1$

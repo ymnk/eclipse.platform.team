@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.subscribers.*;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 
 
@@ -56,7 +57,7 @@ public class SyncSetTests extends CVSSyncSubscriberTest {
 	 * that doesn't validate the actual contents of the sync set.
 	 */
 	public void testConcurrentAccessToSyncSet() throws Throwable {
-		final MutableSyncInfoSet set = new MutableSyncInfoSet();
+		final SubscriberSyncInfoSet set = new SubscriberSyncInfoSet(null);
 		final boolean[] done = {false};
 		final IStatus[] error = {null};
 		

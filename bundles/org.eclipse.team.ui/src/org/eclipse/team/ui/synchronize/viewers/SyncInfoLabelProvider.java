@@ -19,7 +19,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.core.subscribers.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.ui.internal.WorkbenchColors;
@@ -212,7 +212,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 		// The subclass which created the node with no resource should have overridden this method
 		if (resource.getType() == IResource.FILE) return false;
 		// If the set has no conflicts then the node doesn't either
-		SyncInfoSet set = node.getSyncInfoSet();
+		SyncInfoTree set = node.getSyncInfoTree();
 		if (set.hasConflicts()) {
 			SyncInfo[] infos = set.getSyncInfos(resource, IResource.DEPTH_INFINITE);
 			for (int i = 0; i < infos.length; i++) {

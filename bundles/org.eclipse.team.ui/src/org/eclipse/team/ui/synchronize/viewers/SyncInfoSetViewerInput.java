@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize.viewers;
 
 import java.util.*;
+
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -62,7 +63,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * 
 	 * @param set the sync set used as the basis for the model created by this input.
 	 */
-	public SyncInfoSetViewerInput(SyncInfoSet set) {
+	public SyncInfoSetViewerInput(SyncInfoTree set) {
 		super(null /* no parent */, set, ResourcesPlugin.getWorkspace().getRoot());
 	}
 
@@ -114,7 +115,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 		try {
 			// Connect to the sync set which will register us as a listener and give us a reset event
 			// in a background thread
-			getSyncInfoSet().connect(this, monitor);
+			getSyncInfoTree().connect(this, monitor);
 		} catch (CoreException e) {
 			// Shouldn't happen
 			TeamPlugin.log(e);
@@ -126,7 +127,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 */
 	public void dispose() {
 		resourceMap.clear();
-		getSyncInfoSet().removeSyncSetChangedListener(this);
+		getSyncInfoTree().removeSyncSetChangedListener(this);
 	}
 
 	/*
@@ -134,7 +135,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged()
 	 */
 	public void syncSetChanged(final ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
-		if (event.isReset()) {
+		if (event.isReset() || ! (event instanceof ISyncInfoTreeChangeEvent)) {
 			reset();
 		} else {
 			final Control ctrl = viewer.getControl();
@@ -146,7 +147,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 							BusyIndicator.showWhile(ctrl.getDisplay(), new Runnable() {
 
 								public void run() {
-									handleChanges(event);
+									handleChanges((ISyncInfoTreeChangeEvent)event);
 								}
 							});
 						}
@@ -184,7 +185,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 			if (resource == null) {
 				resource = ResourcesPlugin.getWorkspace().getRoot();
 			}
-			IResource[] children = parentNode.getSyncInfoSet().members(resource);
+			IResource[] children = parentNode.getSyncInfoTree().members(resource);
 			SyncInfoDiffNode[] nodes = new SyncInfoDiffNode[children.length];
 			for (int i = 0; i < children.length; i++) {
 				nodes[i] = createModelObject(parentNode, children[i]);
@@ -195,7 +196,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	}
 
 	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
-		SyncInfoSet set = parent instanceof SyncInfoDiffNode ? ((SyncInfoDiffNode) parent).getSyncInfoSet() : getSyncInfoSet();
+		SyncInfoTree set = parent instanceof SyncInfoDiffNode ? ((SyncInfoDiffNode) parent).getSyncInfoTree() : getSyncInfoTree();
 		SyncInfoDiffNode node = new SyncInfoDiffNode(parent, set, resource);
 		addToViewer(node);
 		return node;
@@ -271,7 +272,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * @param event
 	 *            the event containing the changed resourcses.
 	 */
-	protected void handleChanges(ISyncInfoSetChangeEvent event) {
+	protected void handleChanges(ISyncInfoTreeChangeEvent event) {
 		try {
 			viewer.getControl().setRedraw(false);
 			handleResourceChanges(event);
@@ -289,7 +290,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * Subclasses may override.
 	 * @param event
 	 */
-	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
+	protected void handleResourceAdditions(ISyncInfoTreeChangeEvent event) {
 		IResource[] added = event.getAddedSubtreeRoots();
 		for (int i = 0; i < added.length; i++) {
 			IResource resource = added[i];
@@ -314,7 +315,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * Subclasses may override.
 	 * @param event
 	 */
-	protected void handleResourceChanges(ISyncInfoSetChangeEvent event) {
+	protected void handleResourceChanges(ISyncInfoTreeChangeEvent event) {
 		// Refresh the viewer for each changed resource
 		SyncInfo[] infos = event.getChangedResources();
 		for (int i = 0; i < infos.length; i++) {
@@ -332,7 +333,7 @@ public class SyncInfoSetViewerInput extends SyncInfoDiffNode implements ISyncInf
 	 * Subclasses may override.
 	 * @param event
 	 */
-	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
+	protected void handleResourceRemovals(ISyncInfoTreeChangeEvent event) {
 		IResource[] removedRoots = event.getRemovedSubtreeRoots();
 		if (removedRoots.length == 0)
 			return;

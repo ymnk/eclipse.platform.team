@@ -22,7 +22,7 @@ public class OverrideAndCommitAction extends SubscriberCommitAction {
 		return new SyncInfoDirectionFilter(new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING});
 	}
 	
-	protected boolean promptForConflictHandling(SelectionSyncInfoSet syncSet) {
+	protected boolean promptForConflictHandling(SyncInfoSet syncSet) {
 		// If there is a conflict in the syncSet, we need to prompt the user before proceeding.
 		if (syncSet.hasConflicts() || syncSet.hasIncomingChanges()) {
 			switch (promptForConflicts(syncSet)) {

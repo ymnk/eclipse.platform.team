@@ -20,8 +20,8 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Item;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
-import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.*;
+import org.eclipse.team.internal.core.subscribers.*;
 import org.eclipse.team.tests.core.TeamTest;
 import org.eclipse.team.tests.ui.views.ContentProviderTestView;
 import org.eclipse.team.tests.ui.views.TestTreeViewer;
@@ -33,7 +33,7 @@ import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 public class SyncInfoSetContentProviderTest extends TeamTest {
 	
 	public static final TestSubscriber subscriber = new TestSubscriber();
-	private MutableSyncInfoSet set;
+	private SubscriberSyncInfoSet set;
 	private ContentProviderTestView view;
 	
 	/**
@@ -59,7 +59,7 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 	 */
 	protected void setUp() throws Exception {
 		super.setUp();
-		set = new MutableSyncInfoSet();
+		set = new SubscriberSyncInfoSet(null);
 		view = ContentProviderTestView.findViewInActivePage(null);
 		view.setInput(set);
 	}
@@ -89,7 +89,7 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 		return createProject(getName(), resources);
 	}
 		
-	private void adjustSet(MutableSyncInfoSet set, IProject project, String[] resourceStrings, int[] syncKind) throws TeamException {
+	private void adjustSet(SyncInfoSet set, IProject project, String[] resourceStrings, int[] syncKind) throws TeamException {
 		IResource[] resources = buildResources(project, resourceStrings);
 		set.beginInput();
 		for (int i = 0; i < resources.length; i++) {
@@ -99,11 +99,7 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 				set.remove(resource);
 			} else {
 				SyncInfo newInfo = subscriber.getSyncInfo(resource, kind);
-				if (set.getSyncInfo(resource) != null) {
-					set.changed(newInfo);
-				} else {
-					set.add(newInfo);
-				}
+				set.add(newInfo);
 			}
 		}
 		set.endInput(new NullProgressMonitor());

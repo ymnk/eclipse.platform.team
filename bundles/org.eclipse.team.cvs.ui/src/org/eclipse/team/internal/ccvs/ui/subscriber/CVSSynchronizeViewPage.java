@@ -137,8 +137,8 @@ public class CVSSynchronizeViewPage extends TeamSubscriberParticipantPage implem
 		CVSUIPlugin.addPropertyChangeListener(this);
 	}
 	
-	private SyncInfoSet getSyncInfoSet() {
-		return getParticipant().getSubscriberSyncInfoCollector().getSyncInfoSet();
+	private SyncInfoTree getSyncInfoSet() {
+		return getParticipant().getSubscriberSyncInfoCollector().getSyncInfoTree();
 	}
 	
 	/* (non-Javadoc)

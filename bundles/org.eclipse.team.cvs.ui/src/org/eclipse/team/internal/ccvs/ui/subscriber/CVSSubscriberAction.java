@@ -144,7 +144,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 //			 boolean result = saveIfNecessary();
 //			 if (!result) return null;
 
-		SelectionSyncInfoSet syncSet = getFilteredSyncInfoSet(getFilteredSyncInfos());
+		SyncInfoSet syncSet = getFilteredSyncInfoSet(getFilteredSyncInfos());
 		if (syncSet == null || syncSet.isEmpty()) return;
 		try {
 			getCVSRunnableContext().run(getJobName(syncSet), getSchedulingRule(syncSet), true, getRunnable(syncSet));
@@ -163,7 +163,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 * @param syncSet
 	 * @return
 	 */
-	public IRunnableWithProgress getRunnable(final SelectionSyncInfoSet syncSet) {
+	public IRunnableWithProgress getRunnable(final SyncInfoSet syncSet) {
 		return new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
@@ -187,7 +187,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 		};
 	}
 
-	protected abstract void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
+	protected abstract void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
 
 	/*
 	 * Return the ICVSRunnableContext which will be used to run the operation.
@@ -246,9 +246,9 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	/**
 	 * Filter the sync resource set using action specific criteria or input from the user.
 	 */
-	protected SelectionSyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
+	protected SyncInfoSet getFilteredSyncInfoSet(SyncInfo[] selectedResources) {
 		// If there are conflicts or outgoing changes in the syncSet, we need to warn the user.
-		return new SelectionSyncInfoSet(selectedResources);
+		return new SyncInfoSet(selectedResources);
 	}
 	
 	protected void pruneEmptyParents(SyncInfo[] nodes) throws CVSException {
@@ -289,7 +289,7 @@ public abstract class CVSSubscriberAction extends SubscriberAction {
 	 * 
 	 * @return whether to perform the overwrite
 	 */
-	protected boolean promptForOverwrite(final SelectionSyncInfoSet syncSet) {
+	protected boolean promptForOverwrite(final SyncInfoSet syncSet) {
 		final int[] result = new int[] {Dialog.CANCEL};
 		TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {
 			public void run() {

@@ -44,7 +44,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	public void run(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		try {
 			if(! promptIfNeeded(syncSet)) return;
 			// First, remove any known failure cases
@@ -61,7 +61,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 			
 			// It is possible that some of the conflicting changes were not auto-mergable.
 			// Accumulate all resources that have not been updated so far
-			final SelectionSyncInfoSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
+			final SyncInfoSet failedSet = createFailedSet(syncSet, willFail, (IFile[]) skippedFiles.toArray(new IFile[skippedFiles.size()]));
 			
 			// Remove all these from the original sync set
 			syncSet.rejectNodes(new FastSyncInfoFilter() {
@@ -77,9 +77,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 					if(promptForOverwrite(failedSet)) {
 						overwriteUpdate(failedSet, Policy.subMonitorFor(monitor, willFail.length * 100));
 						if (!failedSet.isEmpty()) {
-							MutableSyncInfoSet temp = new MutableSyncInfoSet(syncSet.getSyncInfos());
-							temp.addAll(failedSet);
-							syncSet = new SelectionSyncInfoSet(temp.getSyncInfos());
+							syncSet.addAll(failedSet);
 						}
 					}
 				} else {
@@ -105,7 +103,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	 * @param syncSet the set containing the resources to be updated
 	 * @param monitor
 	 */
-	protected void safeUpdate(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	protected void safeUpdate(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		SyncInfo[] changed = syncSet.getSyncInfos();
 		if (changed.length == 0) return;
 		
@@ -198,7 +196,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	 * @param syncSet the set containing the resources to be updated
 	 * @param monitor
 	 */
-	protected abstract void overwriteUpdate(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
+	protected abstract void overwriteUpdate(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException;
 
 	/*
 	 * Return a filter which selects the cases that we know ahead of time
@@ -265,7 +263,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	/*
 	 * Return the complete set of selected resources that failed to update safely
 	 */
-	private SelectionSyncInfoSet createFailedSet(SelectionSyncInfoSet syncSet, SyncInfo[] willFail, IFile[] files) {
+	private SyncInfoSet createFailedSet(SyncInfoSet syncSet, SyncInfo[] willFail, IFile[] files) {
 		List result = new ArrayList();
 		for (int i = 0; i < files.length; i++) {
 			IFile file = files[i];
@@ -275,14 +273,14 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 		for (int i = 0; i < willFail.length; i++) {
 			result.add(willFail[i]);
 		}
-		return new SelectionSyncInfoSet((SyncInfo[]) result.toArray(new SyncInfo[result.size()]));
+		return new SyncInfoSet((SyncInfo[]) result.toArray(new SyncInfo[result.size()]));
 	}
 	
 	/**
 	 * Warn user that some files could not be updated.
 	 * Note: This method is designed to be overridden by test cases.
 	 */
-	protected void warnAboutFailedResources(final SelectionSyncInfoSet syncSet) {
+	protected void warnAboutFailedResources(final SyncInfoSet syncSet) {
 		final int[] result = new int[] {Dialog.CANCEL};
 		TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {
 			public void run() {
@@ -353,7 +351,7 @@ public abstract class SafeUpdateAction extends CVSSubscriberAction {
 	 * @return <code>true</code> if the update operation can continue, and <code>false</code>
 	 * if the update has been cancelled by the user.
 	 */
-	private boolean promptIfNeeded(final SelectionSyncInfoSet set) {
+	private boolean promptIfNeeded(final SyncInfoSet set) {
 		final boolean[] result = new boolean[] {true};
 		if(getPromptBeforeUpdate()) {
 			TeamUIPlugin.getStandardDisplay().syncExec(new Runnable() {

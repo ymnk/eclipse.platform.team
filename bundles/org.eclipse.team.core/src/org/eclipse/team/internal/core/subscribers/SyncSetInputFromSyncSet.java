@@ -52,7 +52,7 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	 * @see org.eclipse.team.ccvs.syncviews.views.ISyncSetChangedListener#syncSetChanged(org.eclipse.team.ccvs.syncviews.views.SyncSetChangedEvent)
 	 */
 	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
-		MutableSyncInfoSet syncSet = getSyncSet();
+		SyncInfoSet syncSet = getSyncSet();
 		try {
 			syncSet.beginInput();
 			if (event.isReset()) {

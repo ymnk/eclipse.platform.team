@@ -89,7 +89,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 	 * @see getWorkingSetSyncInfoSet()
 	 * @return a SyncInfoSet containing out-of-sync resources
 	 */
-	public SyncInfoSet getSyncInfoSet() {
+	public SyncInfoTree getSyncInfoTree() {
 		return filteredInput.getSyncSet();
 	}
 
@@ -170,7 +170,7 @@ public final class SubscriberSyncInfoCollector implements IResourceChangeListene
 			// Only interested in projects mapped to the provider
 			if (!isAncestorOfRoot(resource)) {
 				// If the project has any entries in the sync set, remove them
-				if (getSyncInfoSet().hasMembers(resource)) {
+				if (getSyncInfoTree().hasMembers(resource)) {
 					eventHandler.remove(resource);
 				}
 				return;

@@ -225,6 +225,6 @@ public abstract class CVSSyncSubscriberTest extends EclipseTest {
 		IResource[] resources = getResources(project, resourcePaths);
 		SyncInfo[] infos = createSyncInfos(subscriber, resources);
 		TestMarkAsMergedAction action = new TestMarkAsMergedAction();
-		action.getRunnable(new SelectionSyncInfoSet(infos)).run(DEFAULT_MONITOR);
+		action.getRunnable(new SyncInfoSet(infos)).run(DEFAULT_MONITOR);
 	}
 }

@@ -14,7 +14,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.synchronize.viewers.*;
+import org.eclipse.team.ui.synchronize.viewers.CompressedFolderViewerInput;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;
 import org.eclipse.ui.*;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 import org.eclipse.ui.part.ViewPart;
@@ -47,10 +48,10 @@ public class ContentProviderTestView extends ViewPart {
 		viewer = new TestTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setContentProvider(new BaseWorkbenchContentProvider());
 		viewer.setLabelProvider(new SyncInfoLabelProvider());
-		setInput(new MutableSyncInfoSet(new SyncInfo[0]));
+		setInput(new SyncInfoTree());
 	}
 
-	public void setInput(SyncInfoSet set) {
+	public void setInput(SyncInfoTree set) {
 		CompressedFolderViewerInput root = new CompressedFolderViewerInput(set);
 		viewer.setSorter(root.getViewerSorter());
 		viewer.setInput(root);

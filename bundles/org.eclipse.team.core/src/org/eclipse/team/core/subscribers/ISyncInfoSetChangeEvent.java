@@ -30,6 +30,7 @@ import org.eclipse.core.resources.IResource;
  * @since 3.0
  */
 public interface ISyncInfoSetChangeEvent {
+
 	/**
 	 * Returns newly added out-of-sync <code>SyncInfo</code> elements. 
 	 * 
@@ -37,21 +38,6 @@ public interface ISyncInfoSetChangeEvent {
 	 * doesn't contain added resources.
 	 */
 	public SyncInfo[] getAddedResources();
-	
-	/**
-	 * Returns the highest parent resources of all newly added elements available in this event
-	 * by calling <code>getAddedResources()</code>. In other words, it returns the set of all
-	 * parent containers that did not previously have descendants in the sync set but are direct
-	 * children of containers that did previously have descescendants in the set. 
-	 * <p>
-	 * These roots are provided in order
-	 * to allow listeners to optimize the reconciliation of hierachical views of 
-	 * the <code>SyncInfoSet</code> contents. 
-	 * 
-	 * @return parents of all newly added elements  or an empty list if this event 
-	 * doesn't contain added resources.
-	 */
-	public IResource[] getAddedSubtreeRoots();
 	
 	/**
 	 * Returns changed <code>SyncInfo</code> elements. The returned elements
@@ -71,21 +57,6 @@ public interface ISyncInfoSetChangeEvent {
 	 * doesn't contain removed resources.
 	 */
 	public IResource[] getRemovedResources();
-	
-	/**
-	 * Returns the highest parent resources of all newly removed elements available in this event
-	 * by calling <code>getRemovedResources()</code>. In other words, it returns the set of all
-	 * parent containers that previously had descendants in the sync set but are direct
-	 * children of containers that still have descescendants in the set. 
-	 * <p>
-	 * These roots are provided in order
-	 * to allow listeners to optimize the reconciliation of hierachical views of 
-	 * the <code>SyncInfoSet</code> contents. 
-	 * 
-	 * @return parents of all newly removed elements.  or an empty list if this event 
-	 * doesn't contain added resources.
-	 */
-	public IResource[] getRemovedSubtreeRoots();
 	
 	/**
 	 * Returns the {@link SyncInfoSet} that generated these events.

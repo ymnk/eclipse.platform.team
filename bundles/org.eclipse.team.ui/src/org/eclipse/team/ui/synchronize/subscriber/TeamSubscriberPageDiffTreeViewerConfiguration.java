@@ -33,7 +33,7 @@ public class TeamSubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewe
 	private TeamParticipantRefreshAction refreshSelectionAction;
 
 	public TeamSubscriberPageDiffTreeViewerConfiguration(ISynchronizeView view, TeamSubscriberParticipant participant) {
-		super(participant.getId(), participant.getSubscriberSyncInfoCollector().getSyncInfoSet());
+		super(participant.getId(), participant.getSubscriberSyncInfoCollector().getSyncInfoTree());
 		this.view = view;
 		this.participant = participant;
 	}

@@ -148,7 +148,7 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 		}
 		public IStatus run(IProgressMonitor monitor) {
 			if (set != null && !shutdown) {
-				final SyncInfoDiffNode[] nodes = calculateRoots(getSyncInfoSet(), monitor);				
+				final SyncInfoDiffNode[] nodes = calculateRoots(getSyncInfoTree(), monitor);				
 				UIJob updateUI = new UIJob("updating change log viewers") {
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						AbstractTreeViewer tree = getTreeViewer();	
@@ -169,7 +169,7 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 		}
 	};
 	
-	public ChangeLogViewerInput(SyncInfoSet set) {
+	public ChangeLogViewerInput(SyncInfoTree set) {
 		super(set);
 	}
 
@@ -207,7 +207,7 @@ public class ChangeLogViewerInput extends SyncInfoSetViewerInput {
 				} catch (InterruptedException e) {
 				}
 			}
-			fetchLogEntriesJob.setSyncInfoSet(getSyncInfoSet());
+			fetchLogEntriesJob.setSyncInfoSet(getSyncInfoTree());
 			fetchLogEntriesJob.schedule();						
 		} else {
 			return super.buildModelObjects(node);

@@ -68,11 +68,7 @@ public abstract class SyncSetInput {
 		SyncInfo oldInfo = syncSet.getSyncInfo(info.getLocal());
 		boolean wasOutOfSync = oldInfo != null;
 		if (isOutOfSync) {
-			if (wasOutOfSync) {
-				syncSet.changed(info);
-			} else {
-				syncSet.add(info);
-			}
+			syncSet.add(info);
 		} else if (wasOutOfSync) {
 			syncSet.remove(info.getLocal());
 		}

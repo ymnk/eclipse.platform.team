@@ -28,8 +28,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
-import org.eclipse.team.ui.synchronize.subscriber.*;
-import org.eclipse.team.ui.synchronize.viewers.*;
+import org.eclipse.team.ui.synchronize.subscriber.TeamSubscriberParticipant;
+import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetCompareInput;
 import org.eclipse.ui.help.WorkbenchHelp;
 
 /**
@@ -89,8 +90,8 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		
 		// Create a sync set containing only the resources that will be committed.
 		TeamSubscriberParticipant participant = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
-		SyncInfoSet currentSet = participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
-		MutableSyncInfoSet set = new MutableSyncInfoSet();
+		SyncInfoTree currentSet = participant.getSubscriberSyncInfoCollector().getSyncInfoTree();
+		SyncInfoTree set = new SyncInfoTree();
 		for (int i = 0; i < resourcesToCommit.length; i++) {
 			IResource resource = resourcesToCommit[i];
 			SyncInfo info = currentSet.getSyncInfo(resource);

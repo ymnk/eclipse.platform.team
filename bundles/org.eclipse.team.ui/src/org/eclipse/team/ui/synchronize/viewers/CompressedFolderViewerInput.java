@@ -21,7 +21,7 @@ import org.eclipse.team.core.subscribers.*;
 
 public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 
-	public CompressedFolderViewerInput(SyncInfoSet set) {
+	public CompressedFolderViewerInput(SyncInfoTree set) {
 		super(set);
 	}
 	
@@ -61,7 +61,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 	
 	private IDiffElement[] getFolderChildren(DiffNode parent, IResource resource) {
 		// Folders will only contain out-of-sync children
-		IResource[] children = getSyncInfoSet().members(resource);
+		IResource[] children = getSyncInfoTree().members(resource);
 		List result = new ArrayList();
 		for (int i = 0; i < children.length; i++) {
 			IResource child = children[i];
@@ -75,7 +75,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 	private IDiffElement[] getProjectChildren(DiffNode parent, IProject project) {
 		// The out-of-sync elements could possibly include the project so the code 
 		// below is written to ignore the project
-		SyncInfo[] outOfSync = getSyncInfoSet().getSyncInfos(project, IResource.DEPTH_INFINITE);
+		SyncInfo[] outOfSync = getSyncInfoTree().getSyncInfos(project, IResource.DEPTH_INFINITE);
 		Set result = new HashSet();
 		Set resourcesToShow = new HashSet();
 		for (int i = 0; i < outOfSync.length; i++) {
@@ -108,7 +108,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 	 */
 	protected SyncInfoDiffNode createModelObject(DiffNode parent, IResource resource) {
 		if (resource.getType() == IResource.FOLDER) {
-			SyncInfoDiffNode node = new CompressedFolderDiffNode(parent, getSyncInfoSet(), resource);
+			SyncInfoDiffNode node = new CompressedFolderDiffNode(parent, getSyncInfoTree(), resource);
 			associateDiffNode(resource, node);
 			addToViewer(node);
 			return node;
@@ -122,7 +122,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 	 * Subclasses may override.
 	 * @param event
 	 */
-	protected void handleResourceAdditions(ISyncInfoSetChangeEvent event) {
+	protected void handleResourceAdditions(ISyncInfoTreeChangeEvent event) {
 		SyncInfo[] infos = event.getAddedResources();
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
@@ -158,8 +158,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.sync.views.SyncSetContentProvider#handleResourceRemovals(org.eclipse.team.internal.ui.sync.views.SyncSetChangedEvent)
 	 */
-	protected void handleResourceRemovals(ISyncInfoSetChangeEvent event) {
-		
+	protected void handleResourceRemovals(ISyncInfoTreeChangeEvent event) {
 		IResource[] roots = event.getRemovedSubtreeRoots();
 		Set removals = new HashSet();
 		
@@ -210,7 +209,7 @@ public class CompressedFolderViewerInput extends SyncInfoSetViewerInput {
 			return false;
 		}
 		// Check if the sync set has any file children of the parent
-		IResource[] members = getSyncInfoSet().members(parent);
+		IResource[] members = getSyncInfoTree().members(parent);
 		for (int i = 0; i < members.length; i++) {
 			IResource member = members[i];
 			if (member.getType() == IResource.FILE) {

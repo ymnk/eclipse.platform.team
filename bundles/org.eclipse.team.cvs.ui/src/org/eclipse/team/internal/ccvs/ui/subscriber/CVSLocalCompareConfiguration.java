@@ -55,7 +55,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	}
 	
 	private CVSLocalCompareConfiguration(CVSCompareSubscriber subscriber, SubscriberSyncInfoCollector collector) {
-		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoSet()); //$NON-NLS-1$
+		super("org.eclipse.team.cvs.ui.compare-participant", collector.getSyncInfoTree()); //$NON-NLS-1$
 		this.subscriber = subscriber;
 		this.collector = collector;
 	}
@@ -106,7 +106,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoSetCompareConfiguration#getSyncSet()
 	 */
-	public SyncInfoSet getSyncSet() {
-		return collector.getSyncInfoSet();
+	public SyncInfoTree getSyncInfoTree() {
+		return collector.getSyncInfoTree();
 	}
 }

@@ -16,11 +16,12 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.team.core.subscribers.MutableSyncInfoSet;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
+import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoSet;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
@@ -29,7 +30,7 @@ public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, I
 	private ILogEntry logEntry;
 
 	public ChangeLogDiffNode(DiffNode parent, ILogEntry logEntry) {
-		super(parent, new MutableSyncInfoSet(), ResourcesPlugin.getWorkspace().getRoot());
+		super(parent, new SyncInfoTree(), ResourcesPlugin.getWorkspace().getRoot());
 		this.logEntry = logEntry;
 	}
 
@@ -59,7 +60,7 @@ public class ChangeLogDiffNode extends SyncInfoDiffNode implements IAdaptable, I
 	}
 
 	public void add(SyncInfo info) {
-		((MutableSyncInfoSet)getSyncInfoSet()).add(info);
+		((SubscriberSyncInfoSet)getSyncInfoTree()).add(info);
 	}
 	
 	/* (non-Javadoc)

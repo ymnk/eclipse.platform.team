@@ -61,7 +61,7 @@ public class WorkspaceUpdateAction extends SafeUpdateAction {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.SafeUpdateAction#overwriteUpdate(org.eclipse.team.ui.sync.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected void overwriteUpdate(SelectionSyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
+	protected void overwriteUpdate(SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		try {
 			new ReplaceOperation(getShell(), syncSet.getResources(), null /* tag */, false /* recurse */)
 				.run(monitor);

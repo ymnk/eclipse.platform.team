@@ -36,7 +36,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	}
 	
 	public SyncInfo getSyncInfo(Subscriber subscriber, IResource resource) throws TeamException {
-		SyncInfoSet set = getCollector(subscriber).getSyncInfoSet();
+		SyncInfoSet set = getCollector(subscriber).getSyncInfoTree();
 		SyncInfo info = set.getSyncInfo(resource);
 		if (info == null) {
 			info = subscriber.getSyncInfo(resource);
@@ -74,7 +74,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 	 */
 	protected void assertProjectRemoved(Subscriber subscriber, IProject project) throws TeamException {		
 		super.assertProjectRemoved(subscriber, project);
-		SyncInfoSet set = getCollector(subscriber).getSyncInfoSet();
+		SyncInfoTree set = getCollector(subscriber).getSyncInfoTree();
 		if (set.hasMembers(project)) {
 			throw new AssertionFailedError("The sync set still contains resources from the deleted project " + project.getName());	
 		}

@@ -14,22 +14,18 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.team.core.subscribers.FastSyncInfoFilter.SyncInfoDirectionFilter;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
 /**
  * A potentially dynamic collection of {@link SyncInfo} objects that provides
- * several methods for accessing the out-of-sync resources contained in the set. There are
- * generally two ways in which a sync info sets are used, both of which 
- * are implemented as subclasses of <code>SyncInfoSet</code>:
- * <ul>
- *   <li>{@link MutableSyncInfoSet}: used to dynamically collect changes 
- * from a team subscriber or some other
- * source and maintain the set of out-of-sync resources for display in a view.
- *   <li>{@link SelectionSyncInfoSet}: used to provide input to {@link Subscriber} 
- * specific operations that operate on a collection of {@link SyncInfo}.
- * </ul>
+ * several methods for accessing the out-of-sync resources contained in the set. 
+ * This class defines the API for accessing the contents of a sync info set.
+ * Subclasses, such as {@link MutableSyncInfoSet}, can override to support
+ * modification.
  * <p>
  * This class provides access to the sync set contents to clients and provides modification
  * operations to subclasses. In addition, this class defines the protocol for registering 
@@ -38,10 +34,9 @@ import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
  * 
  * </p>
  * @see MutableSyncInfoSet
- * @see SelectionSyncInfoSet
  * @since 3.0
  */
-public abstract class SyncInfoSet {
+public class SyncInfoSet {
 	// fields used to hold resources of interest
 	// {IPath -> SyncInfo}
 	private Map resources = Collections.synchronizedMap(new HashMap());
@@ -52,9 +47,22 @@ public abstract class SyncInfoSet {
 	/**
 	 * Create an empty set.
 	 */
-	protected SyncInfoSet() {
+	public SyncInfoSet() {
 	}
 
+	/**
+	 * Create a <code>SyncInfoSet</code> containing the given <code>SyncInfo</code>
+	 * instances
+	 * @param infos the <code>SyncInfo</code> instances to be contained by this set
+	 */
+	public SyncInfoSet(SyncInfo[] infos) {
+		this();
+		// use the internal add since we can't have listeners at this point anyway
+		for (int i = 0; i < infos.length; i++) {
+			internalAdd(infos[i]);
+		}
+	}
+	
 	/**
 	 * Return an array of <code>SyncInfo</code> for all out-of-sync resources that are contained by the set.
 	 * This call is equivalent in function to 
@@ -66,121 +74,6 @@ public abstract class SyncInfoSet {
 		return (SyncInfo[]) resources.values().toArray(new SyncInfo[resources.size()]);
 	}
 	
-	/**
-	 * Return the immediate children of the given resource who are either out-of-sync 
-	 * or are ancestors of out-of-sync resources. The default implementation traverses all
-	 * resources returned from <code>members()</code> and selects those that are
-	 * children of the resource. Subclasses may override to optimize.
-	 * 
-	 * @param resource the parent resource 
-	 * @return the children of the resource that are either out-of-sync or are ancestors of
-	 * out-of-sync resources contained in the set
-	 */
-	public IResource[] members(IResource resource) {
-		if (resource.getType() == IResource.FILE) {
-			return new IResource[0];
-		}
-		IContainer container = (IContainer)resource;
-		IPath containerFullPath = container.getFullPath();
-		SyncInfo[] infos = getSyncInfos();
-		Set result = new HashSet();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			IPath fullPath = info.getLocal().getFullPath();
-			if (containerFullPath.segmentCount() > fullPath.segmentCount() 
-					&& containerFullPath.isPrefixOf(fullPath)) {
-				result.add(container.findMember(fullPath.segment(containerFullPath.segmentCount())));
-			}
-		}
-		return (IResource[]) result.toArray(new IResource[result.size()]);
-	}
-	
-	/**
-	 * Return wether the given resource has any children in the sync set. The children
-	 * could be either out-of-sync resources that are contained by the set or containers
-	 * that are ancestors of out-of-sync resources contained by the set. The default implementation
-	 * invokes <code>members(IResource)</code> in order to determine if there are members for the
-	 * resource. Subclasses may override in order to optimize this.
-	 * @param resource the parent resource
-	 * @return the members of the parent in the set.
-	 */
-	public boolean hasMembers(IResource resource) {
-		return members(resource).length > 0;
-	}
-	
-	/**
-	 * Return the <code>SyncInfo</code> for each out-of-sync resource in the subtree rooted at the given resource
-	 * to the depth specified. The depth is one of:
-	 * <ul>
-	 * <li><code>IResource.DEPTH_ZERO</code>: the resource only,
-	 * <li><code>IResource.DEPTH_ONE</code>: the resource or its direct children,
-	 * <li><code>IResource.DEPTH_INFINITE</code>: the resource and all of it's descendants.
-	 * <ul>
-	 * If the given resource is out of sync, it will be included in the result.
-	 * <p>
-	 * The default implementation makes use of <code>getSyncInfo(IResource)</code>,
-	 * <code>members(IResource)</code> and <code>getSyncInfos()</code>
-	 * to provide the varying depths. Subclasses may override to optimize.
-	 * 
-	 * @param resource the root of the resource subtree
-	 * @param depth the depth of the subtree
-	 * @return the <code>SyncInfo</code> for any out-of-sync resources
-	 */
-	public synchronized SyncInfo[] getSyncInfos(IResource resource, int depth) {
-		if (depth == IResource.DEPTH_ZERO || resource.getType() == IResource.FILE) {
-			SyncInfo info = getSyncInfo(resource);
-			if (info == null) {
-				return new SyncInfo[0];
-			} else {
-				return new SyncInfo[] { info };
-			}
-		}
-		if (depth == IResource.DEPTH_ONE) {
-			List result = new ArrayList();
-			SyncInfo info = getSyncInfo(resource);
-			if (info != null) {
-				result.add(info);
-			}
-			IResource[] members = members(resource);
-			for (int i = 0; i < members.length; i++) {
-				IResource member = members[i];
-				info = getSyncInfo(member);
-				if (info != null) {
-					result.add(info);
-				}
-			}
-			return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
-		}
-		// if it's the root then return all out of sync resources.
-		if(resource.getType() == IResource.ROOT) {
-			return getSyncInfos();
-		}
-		// for folders return all children deep.
-		return internalGetDeepSyncInfo((IContainer)resource);
-	}
-
-	/*
-	 * Return the <code>SyncInfo</code> for all out-of-sync resources in the
-	 * set that are at or below the given resource in the resource hierarchy.
-	 * @param resource the root resource. This method is used by 
-	 * <code>getSyncInfos(IResource, int)</code> when the depth is 
-	 * <code>IResource.DEPTH_INFINITE</code> and the resource is a container.
-	 * @return the <code>SyncInfo</code> for all out-of-sync resources at or below the given resource
-	 */
-	private SyncInfo[] internalGetDeepSyncInfo(IContainer container) {
-		IPath containerFullPath = container.getFullPath();
-		SyncInfo[] infos = getSyncInfos();
-		Set result = new HashSet();
-		for (int i = 0; i < infos.length; i++) {
-			SyncInfo info = infos[i];
-			IPath fullPath = info.getLocal().getFullPath();
-			if (containerFullPath.isPrefixOf(fullPath)) {
-				result.add(info);
-			}
-		}
-		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
-	}
-
 	/**
 	 * Return all out-of-sync resources contained in this set. The default implementation
 	 * uses <code>getSyncInfos()</code> to determine the resources contained in the set.
@@ -273,16 +166,15 @@ public abstract class SyncInfoSet {
 	}
 	
 	/**
-	 * Registers the given listener for sync info set notifications if the
-	 * <code>SyncInfoSet</code> implementation supports change notification.
-	 * If change notification is not supported, an <code>UnsupportedOperationException</code>
-	 * is thrown.
-	 * Has no effect if an identical listener is already registered.
+	 * Registers the given listener for sync info set notifications. Has
+	 * no effect if an identical listener is already registered.
 	 * 
 	 * @param listener listener to register
 	 */
 	public void addSyncSetChangedListener(ISyncInfoSetChangeListener listener) {
-		throw new UnsupportedOperationException();
+		synchronized(listeners) {
+			listeners.add(listener);
+		}
 	}
 
 	/**
@@ -292,15 +184,23 @@ public abstract class SyncInfoSet {
 	 * @param listener listener to deregister
 	 */
 	public void removeSyncSetChangedListener(ISyncInfoSetChangeListener listener) {
-		// Do nothing
+		synchronized(listeners) {
+			listeners.remove(listener);
+		}
 	}
 	
 	/**
 	 * Reset the sync set so it is empty.
 	 */
-	protected synchronized void clear() {
-		resources.clear();
-		statistics.clear();
+	public void clear() {
+		beginInput();
+		try {
+			resources.clear();
+			statistics.clear();
+			getChangeEvent().reset();
+		} finally {
+			endInput(null);
+		}
 	}
 
 	/**
@@ -319,7 +219,14 @@ public abstract class SyncInfoSet {
 	 * @param progress a progress monitor or <code>null</code>
 	 */
 	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) throws CoreException {
-		runnable.run(Policy.monitorFor(monitor));		
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(null, 100);
+		beginInput();
+		try {
+			runnable.run(Policy.subMonitorFor(monitor, 80));
+		} finally {
+			endInput(Policy.subMonitorFor(monitor, 20));
+		}
 	}
 	
 	/**
@@ -352,5 +259,289 @@ public abstract class SyncInfoSet {
 				}
 			}
 		}, monitor);
+	}
+
+	private ILock lock = Platform.getJobManager().newLock();
+
+	private Set listeners = Collections.synchronizedSet(new HashSet());
+
+	private SyncSetChangedEvent changes = createEmptyChangeEvent();
+
+	/**
+	 * Add the given <code>SyncInfo</code> to the set. A change event will
+	 * be generated unless the call to this method is nested in between calls
+	 * to <code>beginInput()</code> and <code>endInput(IProgressMonitor)</code>
+	 * in which case the event for this addition and any other sync set
+	 * change will be fired in a batched event when <code>endInput</code>
+	 * is invoked.
+	 * Invoking this method outside of the above mentioned block will result
+	 * in the <code>endInput(IProgressMonitor)</code> being invoked with a null
+	 * progress monitor. If responsiveness is required, the client should always
+	 * nest sync set modifications.
+	 * @param info
+	 */
+	public void add(SyncInfo info) {
+		beginInput();
+		try {
+			boolean alreadyExists = getSyncInfo(info.getLocal()) != null;
+			internalAdd(info);
+			if (alreadyExists) {
+				getChangeEvent().changed(info);
+			} else {
+				getChangeEvent().added(info);
+			}
+		} finally {
+			endInput(null);
+		}
+	}
+
+	/**
+	 * Add all the syncinfo from the given set to this set.
+	 * @param set the set whose sync info should be added to this set
+	 */
+	public void addAll(SyncInfoSet set) {
+		beginInput();
+		try {
+			SyncInfo[] infos = set.getSyncInfos();
+			for (int i = 0; i < infos.length; i++) {
+				add(infos[i]);
+			}
+		} finally {
+			endInput(null);
+		}
+	}
+
+	/**
+	 * Remove the given local resource from the set
+	 * @param resource the local resource to remove
+	 */
+	public synchronized void remove(IResource resource) {
+		beginInput();
+		try {
+			SyncInfo info = internalRemove(resource);
+			getChangeEvent().removed(resource, info);
+		} finally {
+			endInput(null);
+		}
+	}
+
+	/**
+	 * Remove all the given resources from the set.
+	 * @param resources the resources to be removed
+	 */
+	public void removeAll(IResource[] resources) {
+		beginInput();
+		try {
+			for (int i = 0; i < resources.length; i++) {
+				remove(resources[i]);			
+			}
+		} finally {
+			endInput(null);
+		}
+	}
+
+	/**
+	 * Removes all conflicting nodes from this set.
+	 */
+	public void removeConflictingNodes() {
+		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.CONFLICTING));
+	}
+
+	/**
+	 * Removes all outgoing nodes from this set.
+	 */
+	public void removeOutgoingNodes() {
+		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.OUTGOING));
+	}
+
+	/**
+	 * Removes all incoming nodes from this set.
+	 */
+	public void removeIncomingNodes() {
+		rejectNodes(new SyncInfoDirectionFilter(SyncInfo.INCOMING));
+	}
+
+	/**
+	 * Indicate whether the set has nodes matching the given filter.
+	 * @param filter a sync info filter
+	 */
+	public boolean hasNodes(FastSyncInfoFilter filter) {
+		SyncInfo[] infos = getSyncInfos();
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			if (info != null && filter.select(info)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Removes all nodes from this set that do not match the given filter
+	 * leaving only those that do match the filter.
+	 * @param filter a sync info filter
+	 */
+	public void selectNodes(FastSyncInfoFilter filter) {
+		beginInput();
+		try {
+			SyncInfo[] infos = getSyncInfos();
+			for (int i = 0; i < infos.length; i++) {
+				SyncInfo info = infos[i];
+				if (info == null || !filter.select(info)) {
+					remove(info.getLocal());
+				}
+			}
+		} finally {
+			endInput(null);
+		}
+	}
+
+	/**
+	 * Removes all nodes from this set that match the given filter
+	 * leaving those that do not match the filter.
+	 * @param filter a sync info filter
+	 */
+	public void rejectNodes(FastSyncInfoFilter filter) {
+		beginInput();
+		try {
+			SyncInfo[] infos = getSyncInfos();
+			for (int i = 0; i < infos.length; i++) {
+				SyncInfo info = infos[i];
+				if (info != null && filter.select(info)) {
+					remove(info.getLocal());
+				}
+			}
+		} finally {
+			endInput(null);
+		}
+	}
+
+	/**
+	 * Return all nodes in this set that match the given filter.
+	 * @param filter a sync info filter
+	 */
+	public SyncInfo[] getNodes(FastSyncInfoFilter filter) {
+		List result = new ArrayList();
+		SyncInfo[] infos = getSyncInfos();
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			if (info != null && filter.select(info)) {
+				result.add(info);
+			}
+		}
+		return (SyncInfo[]) result.toArray(new SyncInfo[result.size()]);
+	}
+
+	/**
+	 * Returns <code>true</code> if this sync set has incoming changes.
+	 * Note that conflicts are not considered to be incoming changes.
+	 */
+	public boolean hasIncomingChanges() {
+		return countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK) > 0;
+	}
+
+	/**
+	 * Returns <code>true</code> if this sync set has outgoing changes.
+	 * Note that conflicts are not considered to be outgoing changes.
+	 */
+	public boolean hasOutgoingChanges() {
+		return countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK) > 0;
+	}
+
+	/**
+	 * This method is used to obtain a lock on the set which ensures thread safety
+	 * and batches change notification. If the set is locked by another thread, 
+	 * the calling thread will block until the lock 
+	 * becomes available. This method uses an <code>org.eclipse.core.runtime.jobs.ILock</code>.
+	 * <p>
+	 * It is important that the lock is released after it is obtained. Calls to <code>endInput</code>
+	 * should be done in a finally block as illustrated in the following code snippet.
+	 * <pre>
+	 *   set.beginInput();
+	 *   try {
+	 *       // do stuff
+	 *   } finally {
+	 *      set.endInput(progress);
+	 *   }
+	 * </pre>
+	 * Calls to <code>beginInput</code> and <code>endInput</code> can be nested and must be matched.
+	 */
+	public void beginInput() {
+		lock.acquire();
+	}
+
+	/**
+	 * This method is used to release the lock on this set. The prgress monitor is needed to allow
+	 * listeners to perform long-running operations is reponse to the set change. The lock is held
+	 * while the listeners are notified so listeners must be cautious in order to avoid deadlock.
+	 */
+	public void endInput(IProgressMonitor monitor) {
+		if (lock.getDepth() == 1) {
+			// Remain locked while firing the events so the handlers 
+			// can expect the set to remain constant while they process the events
+			fireChanges(Policy.monitorFor(monitor));
+		}
+		lock.release();
+	}
+
+	protected void resetChanges() {
+		changes = createEmptyChangeEvent();
+	}
+
+	/**
+	 * Create an empty change event. Subclass may override to provided specialized event types
+	 * @return an empty change event
+	 */
+	protected SyncSetChangedEvent createEmptyChangeEvent() {
+		return new SyncSetChangedEvent(this);
+	}
+
+	private void fireChanges(final IProgressMonitor monitor) {
+		// Use a synchronized block to ensure that the event we send is static
+		final SyncSetChangedEvent event;
+		synchronized(this) {
+			event = getChangeEvent();
+			resetChanges();
+		}
+		// Ensure that the list of listeners is not changed while events are fired.
+		// Copy the listeners so that addition/removal is not blocked by event listeners
+		if(event.isEmpty() && ! event.isReset()) return;
+		ISyncInfoSetChangeListener[] allListeners = getListeners();
+		// Fire the events using an ISafeRunnable
+		monitor.beginTask(null, 100 * allListeners.length);
+		for (int i = 0; i < allListeners.length; i++) {
+			final ISyncInfoSetChangeListener listener = allListeners[i];
+			Platform.run(new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// don't log the exception....it is already being logged in Platform#run
+				}
+				public void run() throws Exception {
+					listener.syncSetChanged(event, Policy.subMonitorFor(monitor, 100));
+	
+				}
+			});
+		}
+		monitor.done();
+	}
+
+	/**
+	 * Return a copy of all the listeners registered with this set
+	 * @return the listeners
+	 */
+	protected ISyncInfoSetChangeListener[] getListeners() {
+		ISyncInfoSetChangeListener[] allListeners;
+		synchronized(listeners) {
+			allListeners = (ISyncInfoSetChangeListener[]) listeners.toArray(new ISyncInfoSetChangeListener[listeners.size()]);
+		}
+		return allListeners;
+	}
+
+	/**
+	 * Return the change event that is accumulating the changes to the set.
+	 * This can be called by sublasses to access the event.
+	 * @return Returns the changes.
+	 */
+	protected SyncSetChangedEvent getChangeEvent() {
+		return changes;
 	}
 }

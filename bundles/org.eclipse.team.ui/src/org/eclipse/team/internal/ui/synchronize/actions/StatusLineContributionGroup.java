@@ -47,7 +47,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		this.incoming = createStatusLineContribution(INCOMING_ID, TeamSubscriberParticipant.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
 		this.outgoing = createStatusLineContribution(OUTGOING_ID, TeamSubscriberParticipant.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
 		this.conflicting = createStatusLineContribution(CONFLICTING_ID, TeamSubscriberParticipant.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
-		collector.getSyncInfoSet().addSyncSetChangedListener(this);
+		collector.getSyncInfoTree().addSyncSetChangedListener(this);
 	}
 
 	private StatusLineCLabelContribution createStatusLineContribution(String id, final int mode, String label, Image image) {
@@ -63,7 +63,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 
 	public void dispose() {
-		collector.getSyncInfoSet().removeSyncSetChangedListener(this);
+		collector.getSyncInfoTree().removeSyncSetChangedListener(this);
 		incomingImage.dispose();
 		outgoingImage.dispose();
 		conflictingImage.dispose();
@@ -76,7 +76,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	 */
 	public void syncSetChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		if (collector != null) {
-			SyncInfoSet set = collector.getSyncInfoSet();
+			SyncInfoSet set = collector.getSyncInfoTree();
 			final int workspaceConflicting = (int) set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
 			final int workspaceOutgoing = (int) set.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK);
 			final int workspaceIncoming = (int) set.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK);

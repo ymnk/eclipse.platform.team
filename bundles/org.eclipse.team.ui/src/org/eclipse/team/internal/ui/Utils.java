@@ -414,7 +414,7 @@ public class Utils {
 			if (object instanceof SyncInfoDiffNode) {
 				SyncInfoDiffNode syncResource = (SyncInfoDiffNode) object;
 				if(syncResource.hasChildren()) {
-					SyncInfoSet set = syncResource.getSyncInfoSet();
+					SyncInfoTree set = syncResource.getSyncInfoTree();
 					SyncInfo[] infos = set.getSyncInfos(syncResource.getResource(), IResource.DEPTH_INFINITE);
 					result.addAll(Arrays.asList(infos));
 				} else {

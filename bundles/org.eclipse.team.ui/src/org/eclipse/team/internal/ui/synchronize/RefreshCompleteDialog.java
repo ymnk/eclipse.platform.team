@@ -70,7 +70,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 				filter);
 		this.collector.start();
 		this.compareEditorInput = new SyncInfoSetCompareInput(new CompareConfiguration(), 
-				new DiffTreeViewerConfiguration(participant.getId(), collector.getSyncInfoSet())); 
+				new DiffTreeViewerConfiguration(participant.getId(), collector.getSyncInfoTree())); 
 		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$

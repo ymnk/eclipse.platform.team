@@ -20,7 +20,7 @@ import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SyncInfoSet;
+import org.eclipse.team.core.subscribers.SyncInfoTree;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
@@ -64,7 +64,7 @@ import org.eclipse.ui.model.BaseWorkbenchContentProvider;
  */
 public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 
-	private SyncInfoSet set;
+	private SyncInfoTree set;
 	private String menuID;
 	private AbstractTreeViewer viewer;
 	private ExpandAllAction expandAllAction;
@@ -77,7 +77,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 *            the <code>SyncInfoSet</code> to be displayed in the
 	 *            resulting diff viewer.
 	 */
-	public DiffTreeViewerConfiguration(SyncInfoSet set) {
+	public DiffTreeViewerConfiguration(SyncInfoTree set) {
 		this(null, set);
 	}
 
@@ -93,7 +93,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 *            the <code>SyncInfoSet</code> to be displayed in the
 	 *            resulting diff viewer
 	 */
-	public DiffTreeViewerConfiguration(String menuID, SyncInfoSet set) {
+	public DiffTreeViewerConfiguration(String menuID, SyncInfoTree set) {
 		this.menuID = menuID;
 		this.set = set;
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
@@ -162,9 +162,9 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 */
 	protected Object getInput() {
 		if (getShowCompressedFolders()) {
-			return new CompressedFolderViewerInput(getSyncSet());
+			return new CompressedFolderViewerInput(getSyncInfoTree());
 		}
-		return new SyncInfoSetViewerInput(getSyncSet());
+		return new SyncInfoSetViewerInput(getSyncInfoTree());
 	}
 
 	/**
@@ -223,7 +223,7 @@ public class DiffTreeViewerConfiguration implements IPropertyChangeListener {
 	 * associated with this configuration.
 	 * @return a <code>SyncInfoSet</code>
 	 */
-	public SyncInfoSet getSyncSet() {
+	public SyncInfoTree getSyncInfoTree() {
 		return set;
 	}
 

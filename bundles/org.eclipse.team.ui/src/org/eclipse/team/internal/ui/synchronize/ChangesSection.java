@@ -97,11 +97,11 @@ public class ChangesSection extends Composite {
 
 		calculateDescription();
 		
-		participant.getSubscriberSyncInfoCollector().getSyncInfoSet().addSyncSetChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSyncInfoTree().addSyncSetChangedListener(changedListener);
 	}
 	
 	private void calculateDescription() {
-		if(participant.getSubscriberSyncInfoCollector().getSyncInfoSet().size() == 0) {
+		if(participant.getSubscriberSyncInfoCollector().getSyncInfoTree().size() == 0) {
 			TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
 				public void run() {
 					if (changesSectionContainer.isDisposed()) return;
@@ -134,7 +134,7 @@ public class ChangesSection extends Composite {
 		
 		SyncInfoSet workspace = participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
 		SyncInfoSet workingSet = participant.getSubscriberSyncInfoCollector().getWorkingSetSyncInfoSet();
-		SyncInfoSet filteredSet = participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet filteredSet = participant.getSubscriberSyncInfoCollector().getSyncInfoTree();
 		
 		int changesInWorkspace = workspace.size();
 		int changesInWorkingSet = workingSet.size();
@@ -205,7 +205,7 @@ public class ChangesSection extends Composite {
 	
 	public void dispose() {
 		super.dispose();
-		participant.getSubscriberSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
-		participant.getSubscriberSyncInfoCollector().getSyncInfoSet().removeSyncSetChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSyncInfoTree().removeSyncSetChangedListener(changedListener);
+		participant.getSubscriberSyncInfoCollector().getSyncInfoTree().removeSyncSetChangedListener(changedListener);
 	}
 }

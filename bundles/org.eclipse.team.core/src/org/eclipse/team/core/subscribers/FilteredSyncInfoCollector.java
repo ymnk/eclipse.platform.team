@@ -55,7 +55,7 @@ public final class FilteredSyncInfoCollector {
 	 * Return the output <code>SyncInfoSet</code> that contains the filtered <code>SyncInfo</code>.
 	 * @return the output <code>SyncInfoSet</code>
 	 */
-	public SyncInfoSet getSyncInfoSet() {
+	public SyncInfoTree getSyncInfoTree() {
 		return filteredInput.getSyncSet();
 	}
 	

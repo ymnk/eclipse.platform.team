@@ -45,7 +45,7 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  */
 public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbenchAdapter {
 	
-	private SyncInfoSet syncSet;
+	private SyncInfoTree syncSet;
 	private IResource resource;
 	
 	/**
@@ -131,7 +131,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * @param set The set associated with the diff tree veiwer
 	 * @param resource The resource for the node
 	 */
-	public SyncInfoDiffNode(IDiffContainer parent, SyncInfoSet set, IResource resource) {
+	public SyncInfoDiffNode(IDiffContainer parent, SyncInfoTree set, IResource resource) {
 		this(parent, createBaseTypeElement(set, resource), createLocalTypeElement(set, resource), createRemoteTypeElement(set, resource), getSyncKind(set, resource));
 		Assert.isNotNull(resource);
 		Assert.isNotNull(set);
@@ -177,7 +177,7 @@ public class SyncInfoDiffNode extends DiffNode implements IAdaptable, IWorkbench
 	 * Return the <code>SyncInfoSet</code> from which this diff node was derived.
 	 * @return a <code>SyncInfoSet</code>
 	 */
-	public SyncInfoSet getSyncInfoSet() {
+	public SyncInfoTree getSyncInfoTree() {
 		return syncSet;
 	}
 	

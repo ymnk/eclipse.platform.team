@@ -95,7 +95,7 @@ public class TeamSubscriberRefreshSchedule {
 	}
 	
 	protected void startJob() {
-		SyncInfoSet set = participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
+		SyncInfoSet set = participant.getSubscriberSyncInfoCollector().getSyncInfoTree();
 		if(set == null) { 
 			return;
 		}

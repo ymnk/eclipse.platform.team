@@ -19,8 +19,8 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.SelectionSyncInfoSet;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.subscribers.SyncInfoTree;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.compare.LocalResourceTypedElement;
@@ -49,7 +49,7 @@ public class SyncInfoCompareInput extends CompareEditorInput {
 	public SyncInfoCompareInput(SyncInfo sync) {
 		super(new CompareConfiguration());
 		Assert.isNotNull(sync);
-		this.node = new SyncInfoDiffNode(null, new SelectionSyncInfoSet(new SyncInfo[] {sync}), sync.getLocal());
+		this.node = new SyncInfoDiffNode(null, new SyncInfoTree(new SyncInfo[] {sync}), sync.getLocal());
 		initializeContentChangeListeners();
 	}
 
