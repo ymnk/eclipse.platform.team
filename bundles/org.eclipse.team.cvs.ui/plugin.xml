@@ -567,6 +567,13 @@
             subscriberClass="org.eclipse.team.internal.ccvs.core.CVSWorkspaceSubscriber"
             id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriberContributions">
           <action
+               label="%CVSWorkspaceSubscriber.update.label"
+               tooltip="%CVSWorkspaceSubscriber.update.tooltip"
+               class="org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateAction"
+               helpContextId="org.eclipse.team.cvs.ui.workspace_subscriber_update_action"
+               id="org.eclipse.team.ccvs.ui.CVSWorkspaceSubscriber.update">
+         </action>
+         <action
                label="%CVSWorkspaceSubscriber.commit.label"
                tooltip="%CVSWorkspaceSubscriber.commit.tooltip"
                class="org.eclipse.team.internal.ccvs.ui.actions.CommitAction"

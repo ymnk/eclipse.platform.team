@@ -64,7 +64,9 @@ public abstract class SubscriberAction extends TeamAction {
 	/**
 	 * @return
 	 */
-	protected abstract SyncInfoFilter getSyncInfoFilter();
+	protected SyncInfoFilter getSyncInfoFilter() {
+		return new SyncInfoFilter();
+	}
 
 	/**
 	 * Return the selected SyncInfo for which this action is enabled.

@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.tests.ccvs.core.subscriber;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -30,7 +32,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.ITeamResourceChangeListener;
 import org.eclipse.team.core.sync.RemoteSyncElement;
@@ -44,11 +45,13 @@ import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
-import org.eclipse.team.internal.ccvs.core.client.Command;
-import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
+import org.eclipse.team.internal.ccvs.ui.subscriber.SubscriberUpdateAction;
+import org.eclipse.team.internal.ui.sync.views.SyncResource;
+import org.eclipse.team.internal.ui.sync.views.SyncSet;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
+import org.eclipse.team.ui.sync.SyncResourceSet;
 
 /**
  * This class tests the CVSWorkspaceSubscriber
@@ -372,10 +375,51 @@ public class CVSSubscriberTest extends EclipseTest {
 		}
 	}
 	
+	/**
+	 * Update the resources from an existing container with the changes from the CVS repository.
+	 * This update uses the SubscriberUpdateAction to perform the update so that all special
+	 * cases should be handled properly
+	 */
+	public IResource[] updateResources(IContainer container, String[] hierarchy, boolean ignoreLocalChanges) throws CoreException, TeamException {
+		IResource[] resources = getResources(container, hierarchy);
+		SyncResource[] syncResources = createSyncResources(resources);
+		try {
+			updateResources(syncResources);
+		} catch (InvocationTargetException e) {
+			throw CVSException.wrapException(e);
+		} catch (InterruptedException e) {
+			throw CVSException.wrapException(e);
+		}
+		return resources;
+	}
+	/**
+	 * @param resources
+	 */
+	private SyncResource[] createSyncResources(IResource[] resources) throws TeamException {
+		// TODO: SyncResources needs a SyncSet which contains the SyncInfo
+		// but SyncSet is not API
+		SyncSet syncSet = new SyncSet();
+		SyncTreeSubscriber subscriber = getSubscriber();
+		SyncResource[] result = new SyncResource[resources.length];
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			syncSet.add(subscriber.getSyncInfo(resource, DEFAULT_MONITOR));
+			result[i] = new SyncResource(syncSet, resource);
+		}
+		return result;
+	}
+
+	/**
+	 * @param syncResources
+	 */
+	private void updateResources(SyncResource[] syncResources) throws InvocationTargetException, InterruptedException {
+		new SubscriberUpdateAction().run(new SyncResourceSet(syncResources), DEFAULT_MONITOR);	
+	}
+
 	/*
 	 * Perform a simple test that checks for the different types of incoming changes
 	 */
-	public void testIncomingChanges() throws TeamException, CoreException, IOException {
+	public void testIncomingChanges() throws IOException, CoreException, TeamException {
 		// Create a test project
 		IProject project = createProject("testIncomingChanges", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 		
@@ -399,9 +443,15 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.INCOMING | SyncInfo.ADDITION});
 				
 		// Catch up to the incoming changes
-		// XXX SPECIAL CASE: Update must be run on a resource whose parent is managed at the time of the update.
-		makeInSync(project, new String[] {"folder2/", "folder2/folder3/"});
-		updateResources(project, new String[] {"folder1/a.txt", "folder1/b.txt", /* "folder2/", "folder2/folder3/", */ "folder2/folder3/add.txt"}, false);
+		updateResources(
+			project, 
+			new String[] {
+				"folder1/a.txt", 
+				"folder1/b.txt", 
+				"folder2/", 
+				"folder2/folder3/", 
+				"folder2/folder3/add.txt"}, 
+			false /* ignore local changes */);
 		
 		// Verify that we are in sync (except for "folder1/b.txt", which was deleted)
 		assertSyncEquals("testIncomingChanges", project, 
@@ -426,7 +476,7 @@ public class CVSSubscriberTest extends EclipseTest {
 	 */
 	public void testOutgoingChanges() throws TeamException, CoreException {
 		// Create a test project (which commits it as well)
-		IProject project = createProject("testIncomingChanges", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		IProject project = createProject("testOutgoingChanges", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 		
 		// Make some modifications
 		setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
@@ -464,14 +514,69 @@ public class CVSSubscriberTest extends EclipseTest {
 	}
 	
 	/*
+	 * Perform a simple test that checks for the different types of outgoing changes
+	 */
+	public void testOverrideOutgoingChanges() throws CoreException, TeamException, IOException {
+		// Create a test project (which commits it as well)
+		IProject project = createProject("testOverrideOutgoingChanges", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		// Checkout a copy for later verification
+		IProject original = checkoutCopy(project, "-copy");
+		
+		// Make some modifications
+		setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
+		addResources(project, new String[] { "folder2/folder3/add.txt" }, false);
+		deleteResources(project, new String[] {"folder1/b.txt"}, false);
+
+		// Get the sync tree for the project
+		assertSyncEquals("testOverrideOutgoingChanges", project, 
+			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
+			true, new int[] {
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.OUTGOING | SyncInfo.CHANGE,
+				SyncInfo.OUTGOING | SyncInfo.DELETION,
+				SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
+				SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
+				SyncInfo.OUTGOING | SyncInfo.ADDITION});
+				
+		// Commit the changes
+		updateResources(
+			project, 
+			new String[] {
+				"folder1/a.txt", 
+				"folder1/b.txt", 
+				"folder2/folder3/add.txt"},
+			true /* ignore local changes */);
+		
+		// Ensure added resources no longer exist
+		assertDeleted("testOverrideOutgoingChanges", project, new String[] {"folder2/", "folder2/folder3/","folder2/folder3/add.txt"});
+		
+		// Ensure other resources are in sync
+		assertSyncEquals("testOverrideOutgoingChanges", project, 
+			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/"}, 
+			true, new int[] {
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC});
+		
+		// Verify that the original has reverted to its original contents
+		assertEquals(project, original);
+	}
+	
+	/*
 	 * Perform a test that checks for outgoing changes that are CVS questionables (no add or remove)
 	 */
 	public void testOutgoingQuestionables() throws TeamException, CoreException {
 		// Create a test project (which commits it as well)
 		IProject project = createProject("testIncomingChanges", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 		
-		// Make some modifications
+		// Create a new file without adding it to version control
 		buildResources(project, new String[] {"folder2/folder3/add.txt"}, false);
+		
+		// Delete a file without an explicit cvs remove
+		// NOTE: This will result in an implicit cvs remove
 		IFile file = project.getFile("folder1/b.txt");
 		file.delete(true, DEFAULT_MONITOR);
 
@@ -490,7 +595,8 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Update the resource sync info so the resources can be commited
 		// Merge won't work for folders so we'll add them explicilty!!!
 		addResources(project, new String[] {"folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, false);
-		deleteResources(project, new String[] {"folder1/b.txt"}, false);
+		// TODO: the following line is not needed due to implicit remove
+		// deleteResources(project, new String[] {"folder1/b.txt"}, false);
 		commitResources(project, new String[] {"folder1/b.txt", "folder2/folder3/add.txt"});
 		
 		// Ensure we are in sync
@@ -534,9 +640,11 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.CONFLICTING | SyncInfo.CHANGE });
 		
 		// Catch up to the file1.txt conflict using UPDATE with ignoreLocalChanges
-		getProvider(project).update(new IResource[] {project.getFile("file1.txt")}, 
-			new Command.LocalOption[] {Update.IGNORE_LOCAL_CHANGES, Command.DO_NOT_RECURSE}, 
-			null, true /*createBackups*/, DEFAULT_MONITOR);					 
+		updateResources(
+			project,
+			new String[] {"file1.txt"},
+			true /* ignore local changes */);
+								 
 		assertSyncEquals("testFileConflict", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
 			true, new int[] {
@@ -617,15 +725,12 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.IN_SYNC });
 				
 		// Catch-up to conflicting cases using UPDATE
-		// XXX SPECIAL CASE: We need to unmanage the resources and delete it before getting the remote
-		makeIncoming(project, new String[] {"add1a.txt"});
-		IFile file = project.getFile("add1a.txt");
-		file.delete(false, DEFAULT_MONITOR);
-		file = project.getFile("add2a.txt");
-		file.delete(false, DEFAULT_MONITOR);
-		getProvider(project).update(new IResource[] {project.getFile("add1a.txt"), project.getFile("add2a.txt")}, 
-			new Command.LocalOption[] {Command.DO_NOT_RECURSE}, 
-			null, true /*createBackups*/, DEFAULT_MONITOR);
+		updateResources(
+			project,
+			new String[] {"add1a.txt", "add2a.txt"},
+			true /* ignore local changes */);
+
+		
 		assertSyncEquals("testAdditionConflicts", project, 
 			new String[] { "add1a.txt", "add2a.txt"}, 
 			true, new int[] {
@@ -684,19 +789,22 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.IN_SYNC });
 				
 		// Catch up to remote changes.
-		// XXX SPECIAL CASE: delete1.txt must be unmanaged before the catch-up
-		makeIncoming(project, new String[] {"delete1.txt"});
-		// XXX SPECIAL CASE: delete2.txt must be unmanaged before the catch-up
-		makeIncoming(project, new String[] {"delete2.txt"});
-		// XXX SPECIAL CASE: delete3.txt must ignore local changes (and -C doesn't work so we'll unmanage and delete the local resource)
-		makeIncoming(project, new String[] {"delete3.txt"});
-		project.getFile("delete3.txt").delete(false, DEFAULT_MONITOR);
-		updateResources(project, new String[] {"delete1.txt", "delete2.txt", "delete3.txt", "delete4.txt", "delete5.txt"}, true);
+		updateResources(
+			project, 
+			new String[] {
+				"delete1.txt", 
+				"delete2.txt", 
+				"delete3.txt", 
+				"delete4.txt", 
+				"delete5.txt"}, 
+			true /* ignore local changes */);
+		
 		assertSyncEquals("testDeletionConflictsA", project, 
 			new String[] { "delete1.txt", "delete2.txt"}, 
 			true, new int[] {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC });
+		
 		assertDeleted("testDeletionConflictsA", project, new String[] {"delete3.txt", "delete4.txt", "delete5.txt"});
 		
 		// Now redo the test case for case B
@@ -790,7 +898,11 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.INCOMING | SyncInfo.ADDITION,
 				SyncInfo.INCOMING | SyncInfo.ADDITION});
 				
-		makeInSync(project, new String[] {"folder1/"});
+		updateResources(
+			project, 
+			new String[] {"folder1/"}, 
+			false /* ignore local changes */);
+	
 		assertSyncEquals("testFolderConflict", project, 
 			new String[] { "file.txt", "folder1/", "folder1/file.txt", "folder2/", "folder2/file.txt"}, 
 			true, new int[] {
@@ -858,8 +970,10 @@ public class CVSSubscriberTest extends EclipseTest {
 				SyncInfo.INCOMING | SyncInfo.ADDITION});
 		
 		// Catch up to the addition by updating
-		getProvider(project).update(new IResource[] {project.getFile(new Path("folder1/add.txt"))}, new Command.LocalOption[] {Command.DO_NOT_RECURSE}, 
-			null, true /*createBackups*/, DEFAULT_MONITOR);
+		updateResources(
+			project, 
+			new String[] {"folder1/add.txt"}, 
+			false /* ignore local changes */);
 		
 		// Get the sync tree again for the project and ensure the added resource is in sync
 		assertSyncEquals("testIncomingAddition", project, 
@@ -880,12 +994,12 @@ public class CVSSubscriberTest extends EclipseTest {
 		
 		// Checkout a copy and make some modifications
 		IProject copy = checkoutCopy(project, "-copy");
-		appendText(copy.getFile("file1.txt"), "", true);
+		appendText(copy.getFile("file1.txt"), "same text", false);
 		setContentsAndEnsureModified(copy.getFile("folder1/a.txt"));
 		commitProject(copy);
 
 		// Make the same modifications to the original
-		appendText(project.getFile("file1.txt"), "", false);
+		appendText(project.getFile("file1.txt"), "same text", false);
 		setContentsAndEnsureModified(project.getFile("folder1/a.txt"), "unique text");
 		
 		// Get the sync tree for the project
@@ -901,24 +1015,6 @@ public class CVSSubscriberTest extends EclipseTest {
 		getSubscriber().setCurrentComparisonCriteria(oldId);
 
 	 }
-	 
-//	 public void testGetBase() throws TeamException, CoreException, IOException {
-//		// Create a test project (which commits it as well)
-//		IProject project = createProject("testIncomingChanges", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
-//		
-//		// Checkout and modify a copy
-//		IProject copy = checkoutCopy(project, "-copy");
-//		
-//		// Make some modifications
-//		setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
-//		addResources(project, new String[] { "folder1/add.txt" }, false);
-//		deleteResources(project, new String[] {"folder1/b.txt"}, false);
-//		
-//		// Get the sync tree for the project
-//		SyncInfo tree = CVSWorkspaceRoot.getRemoteSyncTree(project, CVSTag.DEFAULT, DEFAULT_MONITOR);
-//		assertEquals(Path.EMPTY, (ICVSResource)tree.getBase(), CVSWorkspaceRoot.getCVSResourceFor(copy), false, false);
-//
-//	 }
 	 
 //	 public void testSimpleMerge() throws TeamException, CoreException, IOException {
 //		// Create a test project (which commits it as well)
@@ -1045,6 +1141,29 @@ public class CVSSubscriberTest extends EclipseTest {
 		// Fetch the tree corresponding to the branch using the original as the base.
 		// XXX This will fail for CVSNT with directory pruning on
 		refresh(project);
+	 }
+	 
+	 public void testIgnoredResource() throws CoreException, TeamException {
+		// Create a test project (which commits it as well)
+		IProject project = createProject("testIgnoredResource", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		
+		// Create a new file without adding it to version control
+		buildResources(project, new String[] {"ignored.txt"}, false);
+	 	
+		// Get the sync tree for the project
+		assertSyncEquals("testIgnoredResource", project, 
+			new String[] { "ignored.txt"}, 
+			true, new int[] {SyncInfo.OUTGOING | SyncInfo.ADDITION});
+			
+		IFile ignores = project.getFile(".cvsignore");
+		ignores.create(new ByteArrayInputStream("ignored.txt".getBytes()), false, DEFAULT_MONITOR);
+		addResources(new IResource[] {ignores});
+		
+		assertSyncEquals("testIgnoredResource", project, 
+			new String[] { "ignored.txt", ".cvsignore"}, 
+			true, new int[] {
+				SyncInfo.IN_SYNC, 
+				SyncInfo.OUTGOING | SyncInfo.ADDITION});
 	 }
 
 }

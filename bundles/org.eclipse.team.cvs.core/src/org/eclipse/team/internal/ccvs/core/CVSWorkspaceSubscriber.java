@@ -83,6 +83,11 @@ public class CVSWorkspaceSubscriber extends CVSSyncTreeSubscriber implements IRe
 				if (resource.getType() == IResource.FILE
 						&& (resource.exists() || resource.isPhantom())) {
 					remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_ZERO);
+				} else if (resource.getType() == IResource.FOLDER) {
+					// If the base has sync info for the folder, purge the remote bytes
+					if (getBaseSynchronizer().getSyncBytes(resource) != null) {
+						remoteSynchronizer.removeSyncBytes(resource, IResource.DEPTH_ZERO);
+					}
 				}
 			} catch (CVSException e) {
 				CVSProviderPlugin.log(e);

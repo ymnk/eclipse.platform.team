@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.views;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,6 +42,10 @@ public class SyncSet {
 	protected SyncSetChangedEvent changes;
 	protected Set listeners = new HashSet();
 
+	public SyncSet() {
+		resetChanges();
+	}
+	
 	/**
 	 * Return the IResource for the given model object that was returned by 
 	 * SyncSet#members(IResource). Return <code>null</code> if the given
@@ -167,7 +169,7 @@ public class SyncSet {
 		listeners.remove(listener);
 	}
 
-	protected void add(SyncInfo info) {
+	public void add(SyncInfo info) {
 		IResource local = info.getLocal();
 		IPath path = local.getFullPath();
 		resources.put(path, info);

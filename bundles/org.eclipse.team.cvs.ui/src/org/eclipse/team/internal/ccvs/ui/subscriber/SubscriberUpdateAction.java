@@ -10,13 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
@@ -34,7 +37,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.client.Command;
+import org.eclipse.team.internal.ccvs.core.client.PruneFolderVisitor;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
@@ -101,7 +107,16 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 		}
 	}
 
-	protected boolean performPrompting(SyncResourceSet syncSet) {
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getFilteredSyncResourceSet(org.eclipse.team.internal.ui.sync.views.SyncResource[])
+	 */
+	protected SyncResourceSet getFilteredSyncResourceSet(SyncResource[] selectedResources) {
+		SyncResourceSet syncSet = super.getFilteredSyncResourceSet(selectedResources);
+		if (!performPrompting(syncSet)) return null;
+		return syncSet;
+	}
+	
+	private boolean performPrompting(SyncResourceSet syncSet) {
 		// If there are conflicts or outgoing changes in the syncSet, we need to warn the user.
 		onlyUpdateAutomergeable = false;
 		if (syncSet.hasConflicts() || syncSet.hasOutgoingChanges()) {
@@ -124,12 +139,10 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 		return true;
 	}
 	
-	protected void run(SyncResourceSet syncSet, IProgressMonitor monitor) {
-// TODO: Saving can change the sync state! How should this be handled?
-//		boolean result = saveIfNecessary();
-//		if (!result) return null;
-	
-		if (!performPrompting(syncSet)) return;
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#run(org.eclipse.team.ui.sync.SyncResourceSet, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void run(SyncResourceSet syncSet, IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 	
 		SyncResource[] changed = syncSet.getSyncResources();
 		if (changed.length == 0) return;
@@ -149,10 +162,10 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 	
 		for (int i = 0; i < changed.length; i++) {
 			SyncResource changedNode = changed[i];
-			SyncResource parent = changedNode.getParent();
 			
 			// Make sure that parent folders exist
-			if (parent != null && !parent.getResource().exists()) {
+			SyncResource parent = changedNode.getParent();
+			if (parent != null && isOutOfSync(parent)) {
 				// We need to ensure that parents that are either incoming folder additions
 				// or previously pruned folders are recreated.
 				parentCreationElements.add(parent);
@@ -160,38 +173,43 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 			
 			IResource resource = changedNode.getResource();
 			int kind = changedNode.getKind();
-			
 			if (resource.getType() == IResource.FILE) {
-				// Not all change types will require a "cvs update"
-				// Identify cases that do not require an "cvs update"
-				// Also, for outgoing and conflicting changes indicate whether
-				// the existing local resource should be deleted before the 
-				// update occurs
+				// add the file to the list of files to be updated
 				updateShallow.add(changedNode);
+				
+				// Not all change types will require a "cvs update"
+				// Some can be deleted locally without performing an update
 				switch (kind & SyncInfo.DIRECTION_MASK) {
 					case SyncInfo.INCOMING:
 						switch (kind & SyncInfo.CHANGE_MASK) {
 							case SyncInfo.DELETION:
+								// Incoming deletions can just be deleted instead of updated
 								updateDeletions.add(changedNode);
 								updateShallow.remove(changedNode);
 								break;
 						}
 						break;
 					case SyncInfo.OUTGOING:
+						// outgoing changes can be deleted before the update
 						deletions.add(changedNode);
 						switch (kind & SyncInfo.CHANGE_MASK) {
 							case SyncInfo.ADDITION:
+								// an outgoing addition does not need an update
 								updateShallow.remove(changedNode);
 								break;
 						}
 						break;
 					case SyncInfo.CONFLICTING:
+						//	conflicts can be deleted before the update
 						deletions.add(changedNode);	
 						switch (kind & SyncInfo.CHANGE_MASK) {
 							case SyncInfo.DELETION:
+								// conflicting deletions do not need an update
 								updateShallow.remove(changedNode);
 								break;
 							case SyncInfo.CHANGE:
+								// some conflicting changes can be handled by an update
+								// (e.g. automergable)
 								if (supportsShallowUpdateFor(changedNode)) {
 									// Don't delete the local resource since the
 									// action can accomodate the shallow update
@@ -205,19 +223,13 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 				// Special handling for folders to support shallow operations on files
 				// (i.e. folder operations are performed using the sync info already
 				// contained in the sync info.
-				if (!resource.exists()) {
-					parentCreationElements.add(parent);
+				if (isOutOfSync(changedNode)) {
+					parentCreationElements.add(changedNode);
 				} else if (((kind & SyncInfo.DIRECTION_MASK) == SyncInfo.OUTGOING)
 						&& ((kind & SyncInfo.CHANGE_MASK) == SyncInfo.ADDITION)) {
 					// The folder is an outgoing addition which is being overridden
 					// Add it to the list of resources to be deleted
-					
-					// TODO: Do we need to do anything special here or will the
-					// operation do the pruning? If we do need to do soemthing,
-					// it probably needs to be different then the below line
-					// since this will not keep the history for the folder's
-					// childen.
-					//deletions.add(changedNode);
+					deletions.add(changedNode);
 				}
 			}
 
@@ -229,6 +241,11 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 
 			RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 
+			// TODO: non of the work should be done until after the connection to
+			// the repository is made
+			// TODO: deleted files that are also being updated should be written to 
+			// a backup file in case the update fails. The backups could be purged after
+			// the update succeeds.
 			if (parentCreationElements.size() > 0) {
 				handleFolderCreations((SyncResource[]) parentCreationElements.toArray(new SyncResource[parentCreationElements.size()]));				
 			}
@@ -242,8 +259,7 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 				runUpdateShallow((SyncResource[])updateShallow.toArray(new SyncResource[updateShallow.size()]), manager, Policy.subMonitorFor(monitor, updateShallow.size() * 100));
 			}
 		} catch (final TeamException e) {
-			handle(e);
-			return;
+			throw new InvocationTargetException(e);
 		} finally {
 			monitor.done();
 		}
@@ -295,8 +311,8 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 			if (!resource.exists()) return;
 			if (resource.getType() == IResource.FILE)
 				((IFile)resource).delete(false /* force */, true /* keep history */, monitor);
-			else
-				resource.delete(false /* force */, monitor);
+			else if (resource.getType() == IResource.FOLDER)
+				((IFolder)resource).delete(false /* force */, true /* keep history */, monitor);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -309,11 +325,28 @@ public class SubscriberUpdateAction extends CVSSubscriberAction {
 			unmanage(node, Policy.subMonitorFor(monitor, 50));
 			deleteAndKeepHistory(node.getResource(), Policy.subMonitorFor(monitor, 50));
 		}
+		pruneEmptyParents(nodes);
 		monitor.done();
 	}
 
+	/**
+	 * @param nodes
+	 */
+	protected void pruneEmptyParents(SyncResource[] nodes) throws CVSException {
+		// TODO: A more explicit tie in to the pruning mechanism would be prefereable.
+		// i.e. I don't like referencing the option and visitor directly
+		if (!CVSProviderPlugin.getPlugin().getPruneEmptyDirectories()) return;
+		ICVSResource[] cvsResources = new ICVSResource[nodes.length];
+		for (int i = 0; i < cvsResources.length; i++) {
+			cvsResources[i] = CVSWorkspaceRoot.getCVSResourceFor(nodes[i].getLocalResource());
+		}
+		new PruneFolderVisitor().visit(
+			CVSWorkspaceRoot.getCVSFolderFor(ResourcesPlugin.getWorkspace().getRoot()),
+			cvsResources);
+	}
+
 	protected void runUpdateDeletions(SyncResource[] nodes, RepositoryManager manager, IProgressMonitor monitor) throws TeamException {
-		// As an optimization, just perform the deletions locally
+		// As an optimization, perform the deletions locally
 		runLocalDeletions(nodes, manager, monitor);
 	}
 

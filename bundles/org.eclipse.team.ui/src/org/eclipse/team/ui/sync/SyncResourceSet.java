@@ -139,4 +139,11 @@ public class SyncResourceSet {
 		
 	}
 	
+	/**
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return set.isEmpty();
+	}
+	
 }

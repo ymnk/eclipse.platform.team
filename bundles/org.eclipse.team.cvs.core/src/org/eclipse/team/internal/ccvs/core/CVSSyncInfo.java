@@ -310,13 +310,13 @@ public class CVSSyncInfo extends SyncInfo {
 		StringBuffer result = new StringBuffer();
 		result.append("Local: ");
 		result.append(getLocal().toString());
-		result.append("Base: ");
+		result.append(" Base: ");
 		if (base == null) {
 			result.append("none");
 		} else {
 			result.append(base.toString());
 		}
-		result.append("Rase: ");
+		result.append(" Remote: ");
 		if (remote == null) {
 			result.append("none");
 		} else {

@@ -105,8 +105,15 @@ public class SyncResource implements IAdaptable {
 	/**
 	 * @return
 	 */
-	public int getChangeDirection() {
+	public int getChangeType() {
 		return getKind() & SyncInfo.CHANGE_MASK;
+	}
+	
+	/**
+	 * @return
+	 */
+	public int getChangeDirection() {
+		return getKind() & SyncInfo.DIRECTION_MASK;
 	}
 
 	/**
