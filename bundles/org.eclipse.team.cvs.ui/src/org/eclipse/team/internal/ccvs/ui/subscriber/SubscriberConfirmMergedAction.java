@@ -19,9 +19,9 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.team.ui.sync.SyncInfoDirectionFilter;
-import org.eclipse.team.ui.sync.SyncInfoFilter;
-import org.eclipse.team.ui.sync.SyncInfoSet;
+import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoSet;
 
 /**
  * This action marks the local resource as merged by updating the base

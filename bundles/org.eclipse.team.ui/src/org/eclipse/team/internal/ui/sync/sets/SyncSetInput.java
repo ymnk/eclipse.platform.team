@@ -14,7 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
-import org.eclipse.team.ui.sync.SyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
 
 /**
  * This is the superclass for all SyncSet input providers

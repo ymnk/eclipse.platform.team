@@ -28,7 +28,7 @@ import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
-import org.eclipse.team.ui.sync.SyncInfoSet;
+import org.eclipse.team.ui.sync.actions.SyncInfoSet;
 
 
 /**

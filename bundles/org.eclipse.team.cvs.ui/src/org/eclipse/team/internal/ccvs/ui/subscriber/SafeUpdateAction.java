@@ -30,11 +30,11 @@ import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.UpdateOnlyMergableOperation;
-import org.eclipse.team.ui.sync.AndSyncInfoFilter;
-import org.eclipse.team.ui.sync.OrSyncInfoFilter;
-import org.eclipse.team.ui.sync.SyncInfoDirectionFilter;
-import org.eclipse.team.ui.sync.SyncInfoFilter;
-import org.eclipse.team.ui.sync.SyncInfoSet;
+import org.eclipse.team.ui.sync.actions.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.OrSyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoSet;
 
 /**
  * This update action will update all mergable resources first and then prompt the

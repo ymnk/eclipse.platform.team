@@ -26,7 +26,7 @@ import org.eclipse.team.core.subscribers.TeamSubscriber;
 import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.sync.SyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
 import org.eclipse.ui.IWorkingSet;
 
 /**

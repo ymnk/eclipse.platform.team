@@ -8,11 +8,19 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.sync;
+package org.eclipse.team.ui.sync.actions;
 
-public abstract class CompoundSyncInfoFilter extends SyncInfoFilter {
-	protected SyncInfoFilter[] filters;
-	public CompoundSyncInfoFilter(SyncInfoFilter[] filters) {
-		this.filters = filters;
+import org.eclipse.team.core.subscribers.SyncInfo;
+
+/**
+ * Selects SyncInfo that are automergable
+ */
+public class AutomergableFilter extends SyncInfoFilter {
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
+	 */
+	public boolean select(SyncInfo info) {
+		return (info.getKind() & SyncInfo.AUTOMERGE_CONFLICT) != 0;
 	}
 }

@@ -42,8 +42,8 @@ import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.CVSBlockingRunnableContext;
 import org.eclipse.team.internal.ccvs.ui.operations.CVSSubscriberNonblockingContext;
 import org.eclipse.team.internal.ccvs.ui.operations.ICVSRunnableContext;
-import org.eclipse.team.ui.sync.SubscriberAction;
-import org.eclipse.team.ui.sync.SyncInfoSet;
+import org.eclipse.team.ui.sync.actions.SubscriberAction;
+import org.eclipse.team.ui.sync.actions.SyncInfoSet;
 
 public abstract class CVSSubscriberAction extends SubscriberAction {
 	

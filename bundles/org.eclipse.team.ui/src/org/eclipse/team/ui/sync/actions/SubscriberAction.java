@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.sync;
+package org.eclipse.team.ui.sync.actions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +23,7 @@ import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
+import org.eclipse.team.ui.sync.ISynchronizeViewNode;
 
 /**
  * This is the abstract superclass for actions associated with a subscriber. 

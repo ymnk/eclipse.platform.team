@@ -21,7 +21,7 @@ import org.eclipse.team.core.subscribers.BackgroundEventHandler;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
-import org.eclipse.team.ui.sync.SubscriberAction;
+import org.eclipse.team.ui.sync.actions.SubscriberAction;
 
 /**
  * This handler collects changes and removals to resources and calculates their

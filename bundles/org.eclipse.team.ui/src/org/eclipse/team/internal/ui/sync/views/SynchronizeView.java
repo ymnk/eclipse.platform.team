@@ -67,13 +67,14 @@ import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
 import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
-import org.eclipse.team.ui.sync.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.ISynchronizeTarget;
 import org.eclipse.team.ui.sync.ISynchronizeView;
-import org.eclipse.team.ui.sync.PseudoConflictFilter;
-import org.eclipse.team.ui.sync.SubscriberAction;
-import org.eclipse.team.ui.sync.SyncInfoChangeTypeFilter;
-import org.eclipse.team.ui.sync.SyncInfoDirectionFilter;
-import org.eclipse.team.ui.sync.SyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.AndSyncInfoFilter;
+import org.eclipse.team.ui.sync.actions.PseudoConflictFilter;
+import org.eclipse.team.ui.sync.actions.SubscriberAction;
+import org.eclipse.team.ui.sync.actions.SyncInfoChangeTypeFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoDirectionFilter;
+import org.eclipse.team.ui.sync.actions.SyncInfoFilter;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
@@ -86,14 +87,14 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.part.IShowInSource;
+import org.eclipse.ui.part.PageBookView;
 import org.eclipse.ui.part.ShowInContext;
-import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
  * The Team Synchronization view.
  */
-public class SynchronizeView extends ViewPart implements ITeamResourceChangeListener, ISyncSetChangedListener, ISynchronizeView {
+public class SynchronizeView extends PageBookView implements ITeamResourceChangeListener, ISyncSetChangedListener, ISynchronizeView {
 	
 	// The property id for <code>getCurrentViewType</code>.
 	public static final int PROP_VIEWTYPE = 1;
@@ -720,8 +721,8 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 		}
 	}
 	
-	public void selectSubscriber(TeamSubscriber subscriber) {
-		activateSubscriber(subscriber);
+	public void display(ISynchronizeTarget synchronizeTarget) {
+		activateSubscriber(synchronizeTarget);
 	}
 	
 	/**

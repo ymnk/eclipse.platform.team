@@ -8,19 +8,37 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.sync;
+package org.eclipse.team.ui.sync.actions;
 
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.core.sync.IRemoteSyncElement;
 
 /**
- * Selects SyncInfo that are automergable
+ * Thsi class filters the SyncInfo by change type (addition, deletion, change)
  */
-public class AutomergableFilter extends SyncInfoFilter {
+public class SyncInfoChangeTypeFilter extends SyncInfoFilter {
 
+	private int[] changeFilters = new int[] {IRemoteSyncElement.ADDITION, IRemoteSyncElement.DELETION, IRemoteSyncElement.CHANGE};
+
+	public SyncInfoChangeTypeFilter(int[] changeFilters) {
+		this.changeFilters = changeFilters;
+	}
+	
+	public SyncInfoChangeTypeFilter(int change) {
+		this(new int[] { change });
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
 	 */
 	public boolean select(SyncInfo info) {
-		return (info.getKind() & SyncInfo.AUTOMERGE_CONFLICT) != 0;
+		int syncKind = info.getKind();
+		for (int i = 0; i < changeFilters.length; i++) {
+			int filter = changeFilters[i];
+			if ((syncKind & SyncInfo.CHANGE_MASK) == filter)
+				return true;
+		}
+		return false;
 	}
+	
 }

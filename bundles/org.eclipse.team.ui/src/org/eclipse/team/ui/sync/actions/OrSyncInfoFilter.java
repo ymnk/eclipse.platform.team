@@ -8,34 +8,26 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.sync;
+package org.eclipse.team.ui.sync.actions;
 
 import org.eclipse.team.core.subscribers.SyncInfo;
 
 /**
- * Filter the SyncInfo by a set of directions (incoming, outgoing, conflict)
+ * Selects SyncInfo that match any of the child filters.
  */
-public class SyncInfoDirectionFilter extends SyncInfoFilter {
-
-	int[] directionFilters = new int[] {SyncInfo.OUTGOING, SyncInfo.INCOMING, SyncInfo.CONFLICTING};
-
-	public SyncInfoDirectionFilter(int[] directionFilters) {
-		this.directionFilters = directionFilters;
+public class OrSyncInfoFilter extends CompoundSyncInfoFilter {
+	public OrSyncInfoFilter(SyncInfoFilter[] filters) {
+		super(filters);
 	}
-	
-	public SyncInfoDirectionFilter(int direction) {
-		this(new int[] { direction });
-	}
-
 	/* (non-Javadoc)
-	 * @see SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
+	 * @see org.eclipse.team.ccvs.syncviews.views.SyncSetFilter#select(org.eclipse.team.core.sync.SyncInfo)
 	 */
 	public boolean select(SyncInfo info) {
-		int syncKind = info.getKind();
-		for (int i = 0; i < directionFilters.length; i++) {
-			int filter = directionFilters[i];
-			if ((syncKind & SyncInfo.DIRECTION_MASK) == filter)
+		for (int i = 0; i < filters.length; i++) {
+			SyncInfoFilter filter = filters[i];
+			if (filter.select(info)) {
 				return true;
+			}
 		}
 		return false;
 	}

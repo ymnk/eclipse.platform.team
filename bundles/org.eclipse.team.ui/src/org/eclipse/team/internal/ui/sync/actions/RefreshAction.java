@@ -29,7 +29,7 @@ import org.eclipse.team.internal.ui.jobs.JobStatusHandler;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SynchronizeView;
-import org.eclipse.team.ui.sync.SubscriberAction;
+import org.eclipse.team.ui.sync.actions.SubscriberAction;
 import org.eclipse.ui.actions.ActionContext;
 
 public class RefreshAction extends Action {

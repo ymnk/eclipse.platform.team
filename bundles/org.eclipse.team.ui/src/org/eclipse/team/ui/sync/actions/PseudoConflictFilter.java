@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.sync;
+package org.eclipse.team.ui.sync.actions;
 
 import org.eclipse.team.core.subscribers.SyncInfo;
 
