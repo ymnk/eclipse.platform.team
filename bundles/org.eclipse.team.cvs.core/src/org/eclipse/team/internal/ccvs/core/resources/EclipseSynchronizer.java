@@ -1232,6 +1232,7 @@ public class EclipseSynchronizer {
 	 * parent should be adjusted
 	 */
 	protected boolean adjustModifiedCount(IContainer container, boolean dirty) throws CVSException {
+		if (container.getType() == IResource.ROOT) return false;
 		Integer property = getDirtyCount(container);
 		boolean updateParent = false;
 		if (property == null) {

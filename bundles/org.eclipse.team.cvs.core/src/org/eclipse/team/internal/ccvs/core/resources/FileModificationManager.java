@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
@@ -28,6 +29,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.ICVSFile;
@@ -65,7 +67,17 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 			event.getDelta().accept(new IResourceDeltaVisitor() {
 				public boolean visit(IResourceDelta delta) throws CoreException {
 					IResource resource = delta.getResource();
-
+					
+					if (resource.getType()==IResource.PROJECT) {
+						IProject project = (IProject)resource;
+						if (!project.isAccessible()) {
+							return false;
+						}
+						if (RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId()) == null) {
+							return false;
+						}
+					}
+					
 					if (resource.getType()==IResource.FILE && delta.getKind() == IResourceDelta.CHANGED) {
 						contentsChanged((IFile)resource);
 					} else if (delta.getKind() == IResourceDelta.ADDED) {

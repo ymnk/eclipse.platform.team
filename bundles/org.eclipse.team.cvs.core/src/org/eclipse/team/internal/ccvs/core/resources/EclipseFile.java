@@ -464,7 +464,18 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	}
 
 	public void syncInfoChanged(ResourceSyncInfo info) throws CVSException {
-		if (isIgnored()) return;
+		if (isIgnored()) {
+			// check to see if the file was previously marked as dirty
+			String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(getIResource());
+			if (indicator == EclipseSynchronizer.IS_DIRTY_INDICATOR) {
+				((EclipseFolder)getParent()).adjustModifiedCount(false);
+			}
+			// make sure the file is no longer marked
+			if (indicator != null) {
+				EclipseSynchronizer.getInstance().setDirtyIndicator(getIResource(), null);
+			}
+			return;
+		}
 		setModified(isModified(info));
 	}
 	

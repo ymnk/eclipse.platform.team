@@ -389,7 +389,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 			adjustParent = EclipseSynchronizer.getInstance().removeDeletedChild((IContainer)getIResource(), file);
 		}
 		if (adjustParent) {
-			((EclipseFolder)getParent()).adjustModifiedCount(modified);
+			adjustModifiedCount(modified);
 		}
 	}
 	

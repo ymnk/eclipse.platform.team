@@ -145,7 +145,8 @@ public class MoveDeleteHook implements IMoveDeleteHook {
 			if (cvsFile.isManaged()) {
 				// If the file is deleted, the AddDeleteMoveListener will update the sync info of the file
 				proceed = checkOutFiles(tree, new IFile[] {file}, monitor);
-			} else if (!cvsFile.isIgnored()) {
+			}
+			if (proceed && !cvsFile.isIgnored()) {
 				prepareToDelete(cvsFile);
 			}
 		} catch (CVSException e) {
@@ -200,9 +201,10 @@ public class MoveDeleteHook implements IMoveDeleteHook {
 		int updateFlags,
 		IProgressMonitor monitor) {
 			
-		// We need to flush any remembered folder deletions for the deleted project
+		// We need to flush any remembered folder deletions for the deleted project.
+		// All other sync info is stored in session and persistant properties, which
+		// are deleted when the associated resources are deleted
 		try {
-			// XXX Should we unmanage the project?
 			EclipseSynchronizer.getInstance().prepareForDeletion(project);
 		} catch (CVSException e) {
 			CVSProviderPlugin.log(e.getStatus());
@@ -232,7 +234,9 @@ public class MoveDeleteHook implements IMoveDeleteHook {
 				else
 					proceed = checkOutFiles(tree, new IFile[] {source}, monitor);
 				// We proceed by saying we didn't handle the move ourselves
-			} else if (!cvsFile.isIgnored()) {
+			}
+			
+			if (proceed && !cvsFile.isIgnored()) {
 				prepareToDelete(cvsFile);
 			}
 		} catch (CVSException e) {

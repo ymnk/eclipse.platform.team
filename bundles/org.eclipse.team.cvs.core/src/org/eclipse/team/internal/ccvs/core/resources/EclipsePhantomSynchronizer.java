@@ -498,7 +498,7 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 			int count = internalGetDirtyCount(parent);
 			if (count == -1) {
 				count = calculateDirtyCountForPhantom(parent);
-				setDirtyCount(parent, count);
+				//setDirtyCount(parent, count);
 			}
 			return new Integer(count);
 		} else {
@@ -583,13 +583,13 @@ public class EclipsePhantomSynchronizer extends EclipseSynchronizer {
 	}
 	
 	private void internalFlushModificationCache(IContainer container) throws CVSException {
-		if (container.exists() || container.isPhantom()) {
-			try {
-				getWorkspaceSynchronizer().flushSyncInfo(DIRTY_COUNT, container, IResource.DEPTH_ZERO);
-			} catch (CoreException e) {
-				throw CVSException.wrapException(e);
-			}
-		}
+//		if (container.exists() || container.isPhantom()) {
+//			try {
+//				getWorkspaceSynchronizer().flushSyncInfo(DIRTY_COUNT, container, IResource.DEPTH_ZERO);
+//			} catch (CoreException e) {
+//				throw CVSException.wrapException(e);
+//			}
+//		}
 	}
 	
 	/**
