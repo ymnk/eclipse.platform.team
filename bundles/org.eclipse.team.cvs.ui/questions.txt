@@ -21,32 +21,39 @@ Should we add this? We could also remove the getProjects() from the traversal.
 
 Pending Items:
 
+ - Action nablement code is not mapping aware
+ 
  - Decide how to convert selected resources into mappers. Choices are a single mapper for multiple resources or 
    a mapper per resource. The advantage of the second approach is that the mapper list will display each resource
    as opposed to a single entry that must be expanded or selected to see the resources it maps to.
  
- - CVS commands need to respect DO_NOT_RECURSE flag [DONE and TESTED for Update, Commit, Add, Tag and Branch]
+ - [DONE] CVS commands need to respect DO_NOT_RECURSE flag 
+ 	- DONE and TESTED for Update, Commit, Add, Tag and Branch
 
  - Workspace subscriber refreshes are always deep but could be optimized to be shallow when possible
 
- - Commit needs to be reworked but I'm postponing this until Silvio is done
+ - [DONE] Commit needs to be reworked but I'm postponing this until Silvio is done
 
- - Sync/Compare with Tag/Merge are a bit more complicated. Deferring until later.
+ - [DEFERRED] Sync/Compare with Tag/Merge are a bit more complicated.
+   - they require a scope that will allow the particpant to access the depth of the traversals
+   - for now, they will be deep on th roots of the traversals
 
- - EditAction, UneditAction, ShowEditorsAction, GenerateDiffFileAction do not follow the standard action/operation pattern. Deferring.
+ - [DEFERRED] EditAction, UneditAction, ShowEditorsAction, GenerateDiffFileAction do not follow the standard action/operation pattern.
+   - The patch is complicated by current architecture (i.e. single resource root)
 
- - TagLocalAction requires dirty prompting: need a dialog which shows mappers and traversals
+ - [DONE] TagLocalAction requires dirty prompting: need a dialog which shows mappers and traversals
     - also the TagAction hierarchy is smelly due to shared code between local and remote tagging
     
- - Need a mapper view that has a list of selected mappers and a details area that shows the resources that each mapper maps to.
-   - this is generally usefule and could be used for TagLocalAction prompt
+ - [DONE] Need a mapper view that has a list of selected mappers and a details area that shows the resources that each mapper maps to.
+   - this is generally useful and could be used for TagLocalAction prompt
  
- - Could also have a mapper view that shows the selected mappers and shows a sync page for the mappers.
+ - [DEFERRED] Could also have a mapper view that shows the selected mappers and shows a sync page for the mappers.
    - this is required for the new commit wizard and could be used for the TagLocalAction prompt
  
- - Synchronize view actions?
+ - [NOOP] Synchronize view actions?
+ 	- always work on the visible resources so no extra action should be needed.
  
- - ResourceMappingScope: resources determined by traversing subscriber. Subcriber changes may adjust the roots of the scope.
+ - [DEFERRED] ResourceMappingScope: resources determined by traversing subscriber. Subcriber changes may adjust the roots of the scope.
    A trickier problem is that, if we keep a participant around, model changes may occur. This is a problem as there is no generic
    model change mechanism.
    
@@ -63,6 +70,9 @@ Summary of changes:
    Subclasses decide on what the depth is using a recurse parameter on the execute method.
    
  - tests added for Update, Commit, Tag, Branch and Add
+ 
+ - introduced MappingSelecitonDialog which aloows the user to select on or more mappings and inspect the
+   resources contained in the mapping.
    
 Actions that don't need to change:
 
