@@ -126,7 +126,7 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 */
 	public static void unmap(IProject project) throws TeamException {
 		try{
-			if(project.getSessionProperty(PROVIDER_PROP_KEY) != null)
+			if(project.getSessionProperty(PROVIDER_PROP_KEY) == null)
 				throw new TeamException(Policy.bind("RepositoryProvider.No_Provider_Registered", project.getName())); //$NON-NLS-1$
 			project.setSessionProperty(PROVIDER_PROP_KEY, null);
 			project.setPersistentProperty(PROVIDER_PROP_KEY, null);
@@ -173,7 +173,7 @@ public abstract class RepositoryProvider implements IProjectNature {
 			configureProject();
 		} catch(CoreException e) {
 			try {
-				Team.removeNatureFromProject(getProject(), getID(), null);
+				RepositoryProvider.unmap(getProject());
 			} catch(TeamException e2) {
 				throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("RepositoryProvider_Error_removing_nature_from_project___1") + getID(), e2)); //$NON-NLS-1$
 			}
@@ -427,6 +427,7 @@ public abstract class RepositoryProvider implements IProjectNature {
 	 * Convert a project that are using natures to mark them as Team projects
 	 * to instead use persistent properties. Optionally remove the nature from the project.
 	 * Do nothing if the project has no Team nature.
+	 * Assume that the same ID is used for both the nature and the persistent property.
 	 */
 	public static void convertNatureToProperty(IProject project, boolean removeNature) throws TeamException {
 		RepositoryProvider provider = RepositoryProvider.getProvider(project);
@@ -436,7 +437,8 @@ public abstract class RepositoryProvider implements IProjectNature {
 		String providerId = provider.getID();	
 		
 		RepositoryProvider.map(project, providerId);
-		if(removeNature)
+		if(removeNature) {
 			Team.removeNatureFromProject(project, providerId, new NullProgressMonitor());
+		}
 	}
 }
