@@ -141,8 +141,8 @@ public class CVSMergeSubscriber extends CVSSyncTreeSubscriber implements IResour
 	 * @see org.eclipse.team.core.sync.TeamSubscriber#cancel()
 	 */
 	public void cancel() {
-		super.cancel();		
-		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);		
+		super.cancel();
+		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 		TeamProvider.deregisterSubscriber(this);		
 		remoteSynchronizer.dispose();
 		baseSynchronizer.dispose();
