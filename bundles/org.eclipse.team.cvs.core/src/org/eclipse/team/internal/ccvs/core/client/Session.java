@@ -115,6 +115,7 @@ public class Session {
 
 	// The resource bundle key that provides the file sending message
 	private String sendFileTitleKey;
+	private Map responseHandlers;
 
 	/**
 	 * Creates a new CVS session, initially in the CLOSED state.
@@ -321,26 +322,15 @@ public class Session {
 		try {
 			connection = location.openConnection(Policy.subMonitorFor(monitor, 50));
 			
-			ResponseHandler mtHandler = Request.getResponseHandler("MT"); //$NON-NLS-1$
-			// accept MT messages for all non-standard server
+			// If we're connected to a CVSNT server or we don't know the platform, 
+			// accept MT. Otherwise don't.
 			boolean useMT = ! (location.getServerPlatform() == CVSRepositoryLocation.CVS_SERVER);
-			try {
-				// If we're connected to a CVSNT server or we don't know the platform, 
-				// accept MT. Otherwise don't.
-				// We only want to disable MT messages for this particular session
-				// since there may be multiple sessions open.
-				if ( ! useMT) {
-					Request.removeResponseHandler("MT"); //$NON-NLS-1$
-				}
-				
-				// tell the server the names of the responses we can handle
-				connection.writeLine("Valid-responses " + Request.makeResponseList()); //$NON-NLS-1$
-			} finally {
-				// Re-register the MT handler since there may be more than one session open
-				if ( ! useMT) {
-					Request.registerResponseHandler(mtHandler);
-				}
+			if ( ! useMT) {
+				removeResponseHandler("MT"); //$NON-NLS-1$
 			}
+			
+			// tell the server the names of the responses we can handle
+			connection.writeLine("Valid-responses " + makeResponseList()); //$NON-NLS-1$
 	
 			// ask for the set of valid requests
 			IStatus status = Request.VALID_REQUESTS.execute(this, Policy.subMonitorFor(monitor, 40));
@@ -1240,4 +1230,41 @@ public class Session {
 		return oldPath.toString();
 	}
 
+	/*
+	 * Get the response handler map to be used for this session. The map is created by making a copy of the global
+	 * reponse handler map.
+	 */
+	protected Map getReponseHandlers() {
+		if (responseHandlers == null) {
+			responseHandlers = Request.getReponseHandlerMap();
+		}
+		return responseHandlers;
+	}
+	
+	/*
+	 * Makes a list of all valid responses; for initializing a session.
+	 * @return a space-delimited list of all valid response strings
+	 */
+	private String makeResponseList() {
+		StringBuffer result = new StringBuffer("ok error M E");  //$NON-NLS-1$
+		Iterator elements = getReponseHandlers().keySet().iterator();
+		while (elements.hasNext()) {
+			result.append(' ');
+			result.append((String) elements.next());
+		}
+		
+		return result.toString();
+	}
+	protected void registerResponseHandler(ResponseHandler handler) {
+		getReponseHandlers().put(handler.getResponseID(), handler);
+	}
+	
+	protected void removeResponseHandler(String responseID) {
+		getReponseHandlers().remove(responseID);
+	}
+	
+	protected ResponseHandler getResponseHandler(String responseID) {
+		return (ResponseHandler)getReponseHandlers().get(responseID);
+	}
+	
 }
