@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ui.sync.views;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 
@@ -35,7 +36,7 @@ public class SyncSetTreeContentProvider extends SyncSetContentProvider implement
 		if (resource != null) {
 			return getSyncSet().members(resource);
 		} else if (element instanceof SyncSet) {
-			return getSyncSet().members(null);
+			return getSyncSet().members(ResourcesPlugin.getWorkspace().getRoot());
 		}
 		return new Object[0];
 	}

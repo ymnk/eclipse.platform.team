@@ -111,6 +111,9 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 		}
 		hookContextMenu();
 		hookOpen();
+		if(input != null) {
+			viewer.setInput(input.getSyncSet());
+		}
 	}
 
 	protected ILabelProvider getLabelProvider() {
@@ -207,6 +210,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener 
 	}
 
 	private void initializeSubscriberInput(final SubscriberInput input) {
+		this.input = input;
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {

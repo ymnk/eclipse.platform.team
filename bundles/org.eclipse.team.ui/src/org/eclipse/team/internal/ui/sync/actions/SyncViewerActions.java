@@ -44,6 +44,8 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private Action toggleViewerType;
 	private Action open;
 	
+	private IMenuManager actionBarMenu;
+	
 	class RefreshAction extends Action {
 		public RefreshAction() {
 			setText("Refresh with Repository");
@@ -124,10 +126,7 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		manager.add(new Separator());
 		manager.add(toggleViewerType);
 		
-		IMenuManager menu = actionBars.getMenuManager();
-		comparisonCriteria.fillContextMenu(menu);
-		menu.add(new Separator());
-		changeFilters.fillContextMenu(menu);
+		actionBarMenu = actionBars.getMenuManager();
 	}
 
 	/* (non-Javadoc)
@@ -198,5 +197,23 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	protected void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
 		refreshAction.setEnabled(input != null);
+		if(input == null) {
+			actionBarMenu.removeAll();
+		} else {
+			actionBarMenu.removeAll();
+			comparisonCriteria.fillContextMenu(actionBarMenu);
+			actionBarMenu.add(new Separator());
+			changeFilters.fillContextMenu(actionBarMenu);
+		}
 	}
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#setContext(org.eclipse.ui.actions.ActionContext)
+	 */
+	public void setContext(ActionContext context) {
+		changeFilters.setContext(context);
+		directionsFilters.setContext(context);
+		comparisonCriteria.setContext(context);
+		super.setContext(context);
+	}
+
 }

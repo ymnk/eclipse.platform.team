@@ -81,7 +81,8 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 	public void initializeActions() {
 		SubscriberInput input = getSubscriberContext(); 
 		if(input != null) {
-			actions = new ComparisonCriteriaAction[criteria.length];
+			this.criteria = input.getSubscriber().getComparisonCriterias();
+			this.actions = new ComparisonCriteriaAction[criteria.length];
 			for (int i = 0; i < criteria.length; i++) {
 				ComparisonCriteria c = criteria[i];
 				actions[i] = new ComparisonCriteriaAction(c);
@@ -89,7 +90,9 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 			}
 		} else {
 			// there aren't any comparison criterias to show!
-			actions = null;
+			this.actions = null;
+			this.criteria = null;
+			
 		}
 	}
 
@@ -111,7 +114,7 @@ public class SyncViewerComparisonCriteria extends SyncViewerActionGroup {
 	 */
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
-		if(getSyncView().getInput() != null) {
+		if(getSubscriberContext() != null) {
 			for (int i = 0; i < actions.length; i++) {
 				ComparisonCriteriaAction action = actions[i];
 				menu.add(action);
