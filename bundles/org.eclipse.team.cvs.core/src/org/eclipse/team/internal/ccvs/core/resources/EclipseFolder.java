@@ -116,22 +116,11 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 				project.open(null);				
 			} else {
 				((IFolder)resource).create(false /*don't force*/, true /*make local*/, null);
-				folderCreated();
+				created();
 			}				
 		} catch (CoreException e) {
 			throw CVSException.wrapException(resource, Policy.bind("EclipseFolder_problem_creating", resource.getFullPath().toString(), e.getStatus().getMessage()), e); //$NON-NLS-1$
 		} 
-	}
-	/**
-	 * Method folderCreated.
-	 */
-	protected void folderCreated() throws CVSException {
-		// flush the dirty cache for the ancestors
-		String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(getIResource());
-		if (indicator != null) {
-			flushWithAncestors();
-		}
-		EclipseSynchronizer.getInstance().folderCreated((IFolder)getIResource());
 	}
 		
 	/**

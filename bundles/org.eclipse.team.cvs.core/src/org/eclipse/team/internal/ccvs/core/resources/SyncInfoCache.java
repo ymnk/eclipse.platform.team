@@ -13,7 +13,6 @@ package org.eclipse.team.internal.ccvs.core.resources;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
@@ -25,7 +24,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 /**
  * The low level cache provides the sync info as bytes
  */
-/*package*/ abstract class LowLevelSyncInfoCache {
+/*package*/ abstract class SyncInfoCache {
 
 	// the resources plugin synchronizer is used to cache and possibly persist. These
 	// are keys for storing the sync info.
@@ -77,46 +76,25 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 	/*package*/ abstract void setCachedFolderSync(IContainer container, FolderSyncInfo info) throws CVSException;
 
 	/**
-	 * If not already cached, loads and caches the resource sync for the children of the container.
-	 * Folder must exist and must not be the workspace root.
+	 * Returns the resource sync info for the given resource. The resource sync
+	 * info for the resource MUST ALREADY BE CACHED.
 	 *
-	 * @param container the container
-	 */
-	/*package*/ abstract void cacheResourceSyncForChildren(IContainer container) throws CVSException;
-
-	/**
-	 * Returns the resource sync info for all children of the container.
-	 * Container must exist and must not be the workspace root.
-	 * The resource sync info for the children of the container MUST ALREADY BE CACHED.
-	 *
-	 * @param container the container
-	 * @return a collection of the resource sync info's for all children
+	 * @param resource the resource
+	 * @return the bytes containing the resource's sync info
 	 * @see #cacheResourceSyncForChildren
 	 */
-	/*package*/ abstract byte[][] getCachedResourceSyncForChildren(IContainer container) throws CVSException;
+	/*package*/ abstract byte[] getCachedSyncBytes(IResource resource) throws CVSException;
 
 	/**
 	 * Sets the resource sync info for the resource; if null, deletes it. Parent
 	 * must exist and must not be the workspace root. The resource sync info for
-	 * the children of the parent container MUST ALREADY BE CACHED.
+	 * the resource MUST ALREADY BE CACHED.
 	 *
 	 * @param resource the resource
-	 * @param info the new resource sync info
+	 * @param syncBytes the bytes containing the new resource sync info
 	 * @see #cacheResourceSyncForChildren
 	 */
-	/*package*/ abstract void setCachedResourceSyncForChildren(IContainer container, byte[][] infos) throws CVSException;
-	
-	/**
-	 * Commits the cache after a series of operations.
-	 *
-	 * Will return STATUS_OK unless there were problems writting sync
-	 * information to disk. If an error occurs a multistatus is returned
-	 * with the list of reasons for the failures. Failures are recovered,
-	 * and all changed resources are given a chance to be written to disk.
-	 *
-	 * @param monitor the progress monitor, may be null
-	 */
-	/*package*/ abstract IStatus commitCache(IProgressMonitor monitor);
+	/*package*/ abstract void setCachedSyncBytes(IResource resource, byte[] syncBytes) throws CVSException;
 	
 	/*package*/ abstract String getDirtyIndicator(IResource resource) throws CVSException;
 	
@@ -145,4 +123,21 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 	/*package*/ abstract boolean removeDeletedChild(IContainer container, IFile file) throws CVSException;
 	
 	/*package*/ abstract boolean isSyncInfoLoaded(IContainer parent) throws CVSException;
+	
+	/**
+	 * Query the low level cache to see if the sync info for the direct children
+	 * of the provided container is loaded.
+	 * 
+	 * @param container
+	 * @return boolean
+	 */
+	/*package*/ abstract boolean isResourceSyncInfoCached(IContainer container) throws CVSException;
+	
+	/**
+	 * Indicate to the low level cache that the sync info for all it's direct
+	 * children have been set so they match what is on disk.
+	 * 
+	 * @param container
+	 */
+	/*package*/ abstract void setResourceSyncInfoCached(IContainer container) throws CVSException;
 }

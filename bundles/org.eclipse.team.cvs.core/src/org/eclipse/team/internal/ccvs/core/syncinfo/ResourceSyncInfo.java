@@ -72,6 +72,7 @@ public class ResourceSyncInfo {
 	// utility constants
 	protected static final String DIRECTORY_PREFIX = "D"; //$NON-NLS-1$
 	protected static final String SEPARATOR = "/"; //$NON-NLS-1$
+	protected static final byte SEPARATOR_BYTE = (byte)'/';
 	
 	// fields describing the synchronization of a resource in CVS parlance
 	protected String name;
@@ -533,5 +534,45 @@ public class ResourceSyncInfo {
 	 */
 	public byte[] getBytes() {
 		return getEntryLine().getBytes();
+	}
+	
+	/**
+	 * Method getName.
+	 * @param syncBytes
+	 * @return String
+	 */
+	public static String getName(byte[] syncBytes) throws CVSException {
+		String name = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 1, false);
+		if (name == null) {
+			throw new CVSException(Policy.bind("Malformed_entry_line,_missing_name___12") + syncBytes);
+		}
+		return name;
+	}
+	
+	/**
+	 * Method isFolder.
+	 * @param syncBytes
+	 * @return boolean
+	 */
+	public static boolean isFolder(byte[] syncBytes) {
+		return syncBytes.length > 0 && syncBytes[0] == 'D';
+	}
+	
+	/**
+	 * Method convertToDeletion.
+	 * @param syncBytes
+	 * @return byte[]
+	 */
+	public static byte[] convertToDeletion(byte[] syncBytes) throws CVSException  {
+		return syncBytes;
+	}
+	
+	/**
+	 * Method convertFromDeletion.
+	 * @param syncBytes
+	 * @return byte[]
+	 */
+	public static byte[] convertFromDeletion(byte[] syncBytes) throws CVSException {
+		return syncBytes;
 	}
 }

@@ -27,8 +27,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ISynchronizer;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
@@ -40,7 +38,7 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  * This cache uses session properties to hold the bytes representing the sync
  * info
  */
-/*package*/ class SynchronizerSyncInfoCache extends LowLevelSyncInfoCache {
+/*package*/ class SynchronizerSyncInfoCache extends SyncInfoCache {
 
 	public SynchronizerSyncInfoCache() {
 		getWorkspaceSynchronizer().add(FOLDER_SYNC_KEY);
@@ -165,22 +163,6 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 		return result;
 	}
 	
-	/**
-	 * Flush any info cahced for the folder
-	 */
-	private void flushPhantomInfo(IContainer container) throws CVSException {
-		try {
-			if (container.exists() || container.isPhantom()) {
-				getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, container, IResource.DEPTH_ZERO);
-			}
-			if (container.exists() || container.isPhantom()) {
-				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, container, IResource.DEPTH_ZERO);
-			}
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-	
 	/*package*/ void flush(IProject project) throws CVSException {
 		try {
 			getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, project, IResource.DEPTH_INFINITE);
@@ -196,7 +178,19 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	 * @param folder
 	 */
 	/*package*/ void flush(IFolder folder) throws CVSException {
-		flushPhantomInfo(folder);
+		try {
+			if (!folder.exists() && !folder.isPhantom()) return;
+			IResource[] children = folder.members(true);
+			for (int i = 0; i < children.length; i++) {
+				IResource resource = children[i];
+				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, resource, IResource.DEPTH_ZERO);
+			}
+			if (folder.exists() || folder.isPhantom()) {
+				getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, folder, IResource.DEPTH_ZERO);
+			}
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
 	}
 	
 	/**
@@ -252,65 +246,33 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 			throw CVSException.wrapException(e);
 		}
 	}
-	
-	/**
-	 * If not already cached, loads and caches the resource sync for the children of the container.
-	 * Folder must exist and must not be the workspace root.
-	 *
-	 * @param container the container
-	 */
-	/*package*/ void cacheResourceSyncForChildren(IContainer container) throws CVSException {
-		// nothing needs to be done since the synchronizer is persisted
-	}
 
 	/**
-	 * Returns the resource sync info for all children of the container.
-	 * Container must exist and must not be the workspace root.
-	 * The resource sync info for the children of the container MUST ALREADY BE CACHED.
-	 *
-	 * @param container the container
-	 * @return a collection of the resource sync info's for all children
-	 * @see #cacheResourceSyncForChildren
+	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#getCachedSyncBytes(org.eclipse.core.resources.IResource)
 	 */
-	/*package*/ byte[][] getCachedResourceSyncForChildren(IContainer container) throws CVSException {
+	/*package*/ byte[] getCachedSyncBytes(IResource resource) throws CVSException {
 		try {
-			byte[] bytes = getWorkspaceSynchronizer().getSyncInfo(RESOURCE_SYNC_KEY, container);
-			if (bytes == null) return null;
-			return getResourceSyncInfo(bytes);
+			return getWorkspaceSynchronizer().getSyncInfo(RESOURCE_SYNC_KEY, resource);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
 	}
-		
+	
 	/**
-	 * Sets the resource sync info for the resource; if null, deletes it. Parent
-	 * must exist and must not be the workspace root. The resource sync info for
-	 * the children of the parent container MUST ALREADY BE CACHED.
-	 *
-	 * @param resource the resource
-	 * @param info the new resource sync info
-	 * @see #cacheResourceSyncForChildren
+	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#setCachedSyncBytes(org.eclipse.core.resources.IResource, byte[])
 	 */
-	/*package*/ void setCachedResourceSyncForChildren(IContainer container, byte[][] infos) throws CVSException {
+	/*package*/ void setCachedSyncBytes(IResource resource, byte[] syncBytes) throws CVSException {
 		try {
-			if (infos == null) {
-				if (container.exists() || container.isPhantom()) {
-					getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, container, IResource.DEPTH_ZERO);
+			if (syncBytes == null) {
+				if (resource.exists() || resource.isPhantom()) {
+					getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, resource, IResource.DEPTH_ZERO);
 				}
 			} else {
-				getWorkspaceSynchronizer().setSyncInfo(RESOURCE_SYNC_KEY, container, getBytes(infos));
+				getWorkspaceSynchronizer().setSyncInfo(RESOURCE_SYNC_KEY, resource, syncBytes);
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
-	}
-	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.resources.LowLevelSyncInfoCache#commitCache(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	IStatus commitCache(IProgressMonitor monitor) {
-		// Nothing needs to be done since the synchronizer is persisted
-		return STATUS_OK;
 	}
 
 	/**
@@ -474,5 +436,20 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	
 	/*package*/ boolean isSyncInfoLoaded(IContainer parent) throws CVSException {
 		return true;
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#isResourceSyncInfoCached(org.eclipse.core.resources.IContainer)
+	 */
+	boolean isResourceSyncInfoCached(IContainer container) throws CVSException {
+		// the sync info is always cahced when using the synchronizer
+		return true;
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#setResourceSyncInfoCached(org.eclipse.core.resources.IContainer)
+	 */
+	void setResourceSyncInfoCached(IContainer container) throws CVSException {
+		// do nothing
 	}
 }

@@ -143,12 +143,14 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 
 		Policy.checkCanceled(monitor);
 
+		// Send the parent folder if it hasn't been sent already
+		sendFolder(mFile.getParent());
+		
 		// Send the file's entry line to the server
-		ResourceSyncInfo info = null;
-		boolean isManaged = mFile.isManaged();
+		ResourceSyncInfo info = mFile.getSyncInfo();
+		boolean isManaged = info != null;
 		if (isManaged) {
 			sendPendingNotification(mFile);
-			info = mFile.getSyncInfo();
 			session.sendEntry(info.getServerEntryLine(mFile.getTimeStamp()));
 		} else {
 			// If the file is not managed, send a questionable to the server if the file exists locally
@@ -159,6 +161,7 @@ abstract class AbstractStructureVisitor implements ICVSResourceVisitor {
 				}
 				return;
 			}
+			// else we are probably doing an import so send the file contents below
 		}
 		
 		// If the file exists, send the appropriate indication to the server

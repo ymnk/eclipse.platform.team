@@ -288,4 +288,16 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 	 * Method syncInfoChanged is invoked by the sync file change listener.
 	 */
 	protected abstract void syncInfoChanged() throws CVSException;
+	
+	/**
+	 * Method created is invoked after a resource is created
+	 */
+	protected void created() throws CVSException {
+		// flush the dirty cache for the ancestors
+		String indicator = EclipseSynchronizer.getInstance().getDirtyIndicator(getIResource());
+		if (indicator != null) {
+			flushWithAncestors();
+		}
+		EclipseSynchronizer.getInstance().created(getIResource());
+	}
 }

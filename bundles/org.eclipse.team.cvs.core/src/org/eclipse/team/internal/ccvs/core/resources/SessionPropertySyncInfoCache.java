@@ -10,23 +10,17 @@
  ******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.resources;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.Policy;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
@@ -35,13 +29,14 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  * This cache uses session properties to hold the bytes representing the sync
  * info
  */
-/*package*/ class SessionPropertySyncInfoCache extends LowLevelSyncInfoCache {
+/*package*/ class SessionPropertySyncInfoCache extends SyncInfoCache {
+	
+	// key used on a folder to indicate that the resource sync has been cahced for it's children
+	private static final QualifiedName RESOURCE_SYNC_CACHED_KEY = new QualifiedName(CVSProviderPlugin.ID, "resource-sync-cached"); //$NON-NLS-1$
+	private static final Object RESOURCE_SYNC_CACHED = new Object();
 	
 	/*package*/ static final String[] NULL_IGNORES = new String[0];
 	private static final FolderSyncInfo NULL_FOLDER_SYNC_INFO = new FolderSyncInfo("", "", null, false); //$NON-NLS-1$ //$NON-NLS-2$
-	
-	private Set changedResourceSync = new HashSet();
-	private Set changedFolderSync = new HashSet();
 	
 	/**
 	 * If not already cached, loads and caches the folder ignores sync for the container.
@@ -97,25 +92,17 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	}
 
 
-	/**
-	 * If not already cached, loads and caches the resource sync for the children of the container.
-	 * Folder must exist and must not be the workspace root.
-	 *
-	 * @param container the container
-	 */
-	/*package*/ void cacheResourceSyncForChildren(IContainer container) throws CVSException {
-		if (!container.exists()) return;
+	/*package*/ boolean isResourceSyncInfoCached(IContainer container) throws CVSException {
 		try {
-			// don't try to load if the information is already cached
-			byte[][] infos = (byte[][])container.getSessionProperty(RESOURCE_SYNC_KEY);
-			if (infos == null) {
-				// load the sync info from disk
-				infos = SyncFileWriter.readAllResourceSync(container);
-				if (infos == null) {
-					infos = EMPTY_RESOURCE_SYNC_INFOS;
-				}
-				container.setSessionProperty(RESOURCE_SYNC_KEY, infos);
-			}
+			return container.getSessionProperty(RESOURCE_SYNC_CACHED_KEY) != null;
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	/*package*/ void setResourceSyncInfoCached(IContainer container) throws CVSException {
+		try {
+			container.setSessionProperty(RESOURCE_SYNC_CACHED_KEY, RESOURCE_SYNC_CACHED);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -146,30 +133,6 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 	}
 
 	/**
-	 * Returns the resource sync info for all children of the container.
-	 * Container must exist and must not be the workspace root.
-	 * The resource sync info for the children of the container MUST ALREADY BE CACHED.
-	 *
-	 * @param container the container
-	 * @return a collection of the resource sync info's for all children
-	 * @see #cacheResourceSyncForChildren
-	 */
-	/*package*/ byte[][] getCachedResourceSyncForChildren(IContainer container) throws CVSException {
-		if (!container.exists()) return EMPTY_RESOURCE_SYNC_INFOS;
-		try {
-			byte[][] infos = (byte[][])container.getSessionProperty(RESOURCE_SYNC_KEY);
-			// todo: move check to caller
-			if (infos == null) {
-				// There should be sync info but it was missing. Report the error
-				throw new CVSException(Policy.bind("EclipseSynchronizer.folderSyncInfoMissing", container.getFullPath().toString())); //$NON-NLS-1$
-			}
-			return infos;
-		} catch(CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-
-	/**
 	 * Purges the cache recursively for all resources beneath the container.
 	 * There must not be any pending uncommitted changes.
 	 */
@@ -177,17 +140,15 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 		if (! container.exists()) return;
 		try {
 			if (container.getType() != IResource.ROOT) {
-				container.setSessionProperty(RESOURCE_SYNC_KEY, null);
 				container.setSessionProperty(IGNORE_SYNC_KEY, null);
 				container.setSessionProperty(FOLDER_SYNC_KEY, null);
 			}
-			if(deep) {
-				IResource[] members = container.members();
-				for (int i = 0; i < members.length; i++) {
-					IResource resource = members[i];
-					if (resource.getType() != IResource.FILE) {
-						purgeCache((IContainer) resource, deep);
-					}
+			IResource[] members = container.members();
+			for (int i = 0; i < members.length; i++) {
+				IResource resource = members[i];
+				resource.setSessionProperty(RESOURCE_SYNC_KEY, null);
+				if (deep && resource.getType() != IResource.FILE) {
+					purgeCache((IContainer) resource, deep);
 				}
 			}
 		} catch (CoreException e) {
@@ -224,125 +185,8 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 		try {
 			if (info == null) info = NULL_FOLDER_SYNC_INFO;
 			container.setSessionProperty(FOLDER_SYNC_KEY, info);
-			changedFolderSync.add(container);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
-		}
-	}
-	
-	/**
-	 * Sets the resource sync info for the resource; if null, deletes it. Parent
-	 * must exist and must not be the workspace root. The resource sync info for
-	 * the children of the parent container MUST ALREADY BE CACHED.
-	 *
-	 * @param resource the resource
-	 * @param info the new resource sync info
-	 * @see #cacheResourceSyncForChildren
-	 */
-	/*package*/ void setCachedResourceSyncForChildren(IContainer container, byte[][] infos) throws CVSException {
-		if (!container.exists()) return;
-		try {
-			if (infos == null)
-				infos = EMPTY_RESOURCE_SYNC_INFOS;
-			container.setSessionProperty(RESOURCE_SYNC_KEY, infos);
-			changedResourceSync.add(container);
-		} catch (CoreException e) {
-			throw CVSException.wrapException(e);
-		}
-	}
-	
-	/**
-	 * Commits the cache after a series of operations.
-	 *
-	 * Will return STATUS_OK unless there were problems writting sync
-	 * information to disk. If an error occurs a multistatus is returned
-	 * with the list of reasons for the failures. Failures are recovered,
-	 * and all changed resources are given a chance to be written to disk.
-	 *
-	 * @param monitor the progress monitor, may be null
-	 */
-	/*package*/ IStatus commitCache(IProgressMonitor monitor) {
-		List errors = new ArrayList();
-		try {
-			/*** prepare operation ***/
-			// find parents of changed resources
-
-			monitor = Policy.monitorFor(monitor);
-			int numDirty = changedResourceSync.size();
-			int numResources = changedFolderSync.size() + numDirty;
-			monitor.beginTask(null, numResources);
-			if(monitor.isCanceled()) {
-				monitor.subTask(Policy.bind("EclipseSynchronizer.UpdatingSyncEndOperationCancelled")); //$NON-NLS-1$
-			} else {
-				monitor.subTask(Policy.bind("EclipseSynchronizer.UpdatingSyncEndOperation")); //$NON-NLS-1$
-			}
-
-			/*** write sync info to disk ***/
-			// folder sync info changes
-			for(Iterator it = changedFolderSync.iterator(); it.hasNext();) {
-				IContainer folder = (IContainer) it.next();
-				if (folder.exists() && folder.getType() != IResource.ROOT) {
-					try {
-						FolderSyncInfo info = getCachedFolderSync(folder);
-						if (info == null) {
-							// deleted folder sync info since we loaded it
-							SyncFileWriter.deleteFolderSync(folder);
-							changedResourceSync.remove(folder);
-						} else {
-							// modified or created new folder sync info since we loaded it
-							SyncFileWriter.writeFolderSync(folder, info);
-						}
-					} catch(CVSException e) {
-						try {
-							purgeCache(folder, true /* deep */);
-						} catch(CVSException pe) {
-							errors.add(pe.getStatus());
-						}
-						errors.add(e.getStatus());
-					}
-				}
-				monitor.worked(1);
-			}
-
-			// update progress for parents we will skip because they were deleted
-			monitor.worked(numDirty - changedResourceSync.size());
-
-			// resource sync info changes
-			for (Iterator it = changedResourceSync.iterator(); it.hasNext();) {
-				IContainer folder = (IContainer) it.next();
-				if (folder.exists() && folder.getType() != IResource.ROOT) {
-					// write sync info for all children in one go
-					try {
-						byte[][] infos = getCachedResourceSyncForChildren(folder);
-						SyncFileWriter.writeAllResourceSync(folder, infos);
-					} catch(CVSException e) {
-						try {
-							purgeCache(folder, false /* depth 1 */);
-						} catch(CVSException pe) {
-							errors.add(pe.getStatus());
-						}
-						errors.add(e.getStatus());
-					}
-				}
-				monitor.worked(1);
-			}
-
-			/*** broadcast events ***/
-			changedResourceSync.clear();
-			changedFolderSync.clear();
-			if ( ! errors.isEmpty()) {
-				MultiStatus status = new MultiStatus(CVSProviderPlugin.ID,
-											CVSStatus.COMMITTING_SYNC_INFO_FAILED,
-											Policy.bind("EclipseSynchronizer.ErrorCommitting"), //$NON-NLS-1$
-											null);
-				for (int i = 0; i < errors.size(); i++) {
-					status.merge((IStatus)errors.get(i));
-				}
-				return status;
-			}
-			return STATUS_OK;
-		} finally {
-			monitor.done();
 		}
 	}
 
@@ -542,5 +386,26 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
 			return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#getCachedSyncBytes(org.eclipse.core.resources.IResource)
+	 */
+	/*package*/ byte[] getCachedSyncBytes(IResource resource) throws CVSException {
+		try {
+			return (byte[])resource.getSessionProperty(RESOURCE_SYNC_KEY);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
+	}
+	/**
+	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#setCachedSyncBytes(org.eclipse.core.resources.IResource, byte[])
+	 */
+	/*package*/ void setCachedSyncBytes(IResource resource, byte[] syncBytes) throws CVSException {
+		try {
+			resource.setSessionProperty(RESOURCE_SYNC_KEY, syncBytes);
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
 	}
 }

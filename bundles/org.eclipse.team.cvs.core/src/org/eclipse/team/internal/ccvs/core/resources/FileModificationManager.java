@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -167,9 +166,9 @@ public class FileModificationManager implements IResourceChangeListener, ISavePa
 		}
 	}
 	
-	public void folderCreated(IFolder folder) throws CVSException {
-		EclipseFolder cvsFolder = (EclipseFolder)CVSWorkspaceRoot.getCVSFolderFor(folder);
-		cvsFolder.folderCreated();
+	public void created(IResource resource) throws CVSException {
+		EclipseResource cvsResource = (EclipseResource)CVSWorkspaceRoot.getCVSResourceFor(resource);
+		cvsResource.created();
 	}
 	
 	/*

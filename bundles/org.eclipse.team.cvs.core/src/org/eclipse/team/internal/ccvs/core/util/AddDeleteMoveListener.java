@@ -145,6 +145,7 @@ public class AddDeleteMoveListener implements IResourceDeltaVisitor, IResourceCh
 	 */
 	private void handleAddedFile(IFile resource) {
 		try {
+			CVSProviderPlugin.getPlugin().getFileModificationManager().created(resource);	
 			ICVSFile mFile = CVSWorkspaceRoot.getCVSFileFor((IFile)resource);
 			if (mFile.isManaged()) {
 				ResourceSyncInfo info = mFile.getSyncInfo();
@@ -173,7 +174,7 @@ public class AddDeleteMoveListener implements IResourceDeltaVisitor, IResourceCh
 	
 	private void handleAddedFolder(IFolder resource) {
 		try {
-			CVSProviderPlugin.getPlugin().getFileModificationManager().folderCreated(resource);			
+			CVSProviderPlugin.getPlugin().getFileModificationManager().created(resource);			
 			ICVSFolder mFolder = CVSWorkspaceRoot.getCVSFolderFor(resource);
 			if (mFolder.isManaged()) {
 				ResourceSyncInfo info = mFolder.getSyncInfo();

@@ -49,7 +49,7 @@ public class Commit extends Command {
 		visitor.visit(session, resources);
 		
 		// Send the changed files as arguments (because this is what other cvs clients do)
-		ICVSFile[] changedFiles = visitor.getSentFiles();
+		ICVSFile[] changedFiles = visitor.getModifiedFiles();
 		for (int i = 0; i < changedFiles.length; i++) {
 			session.sendArgument(changedFiles[i].getRelativePath(session.getLocalRoot()));
 		}
