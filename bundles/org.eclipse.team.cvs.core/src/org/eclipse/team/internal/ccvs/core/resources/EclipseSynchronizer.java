@@ -92,6 +92,10 @@ public class EclipseSynchronizer {
 		}
 	}
 
+	private boolean isValid(IResource resource) {
+		return resource.exists() || resource.isPhantom();
+	}
+	
 	/**
 	 * Sets the folder sync info for the specified folder.
 	 * The folder must exist and must not be the workspace root.
@@ -102,7 +106,7 @@ public class EclipseSynchronizer {
 	 */
 	public void setFolderSync(IContainer folder, FolderSyncInfo info) throws CVSException {
 		Assert.isNotNull(info); // enforce the use of deleteFolderSync
-		if (folder.getType() == IResource.ROOT) {
+		if (folder.getType() == IResource.ROOT || !isValid(folder)) {
 			throw new CVSException(IStatus.ERROR, CVSException.UNABLE,
 				Policy.bind("EclipseSynchronizer.ErrorSettingFolderSync", folder.getFullPath().toString())); //$NON-NLS-1$
 		}
@@ -124,7 +128,7 @@ public class EclipseSynchronizer {
 	 * @see #setFolderSync, #deleteFolderSync
 	 */
 	public FolderSyncInfo getFolderSync(IContainer folder) throws CVSException {
-		if (folder.getType() == IResource.ROOT) return null;
+		if (folder.getType() == IResource.ROOT || !isValid(folder)) return null;
 		try {
 			beginOperation(null);
 			// cache folder sync and return it
@@ -142,7 +146,7 @@ public class EclipseSynchronizer {
 	 * @see #getFolderSync, #setFolderSync
 	 */
 	public void deleteFolderSync(IContainer folder) throws CVSException {
-		if (folder.getType() == IResource.ROOT) return;
+		if (folder.getType() == IResource.ROOT || !isValid(folder)) return;
 		try {
 			beginOperation(null);
 			// delete folder sync
@@ -178,7 +182,7 @@ public class EclipseSynchronizer {
 	public void setResourceSync(IResource resource, ResourceSyncInfo info) throws CVSException {
 		Assert.isNotNull(info); // enforce the use of deleteResourceSync
 		IContainer parent = resource.getParent();
-		if (parent == null || parent.getType() == IResource.ROOT) {
+		if (parent == null || parent.getType() == IResource.ROOT || !isValid(parent)) {
 			throw new CVSException(IStatus.ERROR, CVSException.UNABLE,
 				Policy.bind("EclipseSynchronizer.ErrorSettingResourceSync", resource.getFullPath().toString())); //$NON-NLS-1$
 		}
@@ -202,7 +206,7 @@ public class EclipseSynchronizer {
 	 */
 	public ResourceSyncInfo getResourceSync(IResource resource) throws CVSException {
 		IContainer parent = resource.getParent();
-		if (parent == null || parent.getType() == IResource.ROOT) return null;
+		if (parent == null || parent.getType() == IResource.ROOT || !isValid(parent)) return null;
 		try {
 			beginOperation(null);
 			// cache resource sync for siblings, then return for self
@@ -221,7 +225,7 @@ public class EclipseSynchronizer {
 	 */
 	public void deleteResourceSync(IResource resource) throws CVSException {
 		IContainer parent = resource.getParent();
-		if (parent == null || parent.getType() == IResource.ROOT) return;
+		if (parent == null || parent.getType() == IResource.ROOT || !isValid(parent)) return;
 		try {
 			beginOperation(null);
 			// cache resource sync for siblings, delete for self, then notify
@@ -298,6 +302,7 @@ public class EclipseSynchronizer {
 	 * @return the array of members
 	 */
 	public IResource[] members(IContainer folder) throws CVSException {
+		if (! isValid(folder)) return new IResource[0];
 		try {				
 			beginOperation(null);
 			if (folder.getType() == IResource.ROOT) return folder.members();
@@ -1049,7 +1054,7 @@ public class EclipseSynchronizer {
 	 * parent should be adjusted
 	 */
 	protected boolean adjustModifiedCount(IContainer container, boolean dirty) throws CVSException {
-		if (container.getType() == IResource.ROOT) return false;
+		if (container.getType() == IResource.ROOT || !isValid(container)) return false;
 		int count = getDirtyCount(container);
 		boolean updateParent = false;
 		if (count == -1) {
@@ -1121,7 +1126,7 @@ public class EclipseSynchronizer {
 	
 	protected void flushDirtyCache(IResource resource, int depth) throws CVSException {
 		if (resource.getType() == IResource.ROOT) return;
-		if (!resource.exists() && !resource.isPhantom()) return;
+		if (!isValid(resource)) return;
 		try {
 			final CVSException[] exception = new CVSException[] { null };
 			beginOperation(null);
