@@ -80,6 +80,7 @@ public class CheckoutAsAction extends AddToWorkspaceAction {
 		IProject newProject = null;
 		if ( ! hasProjectMetaFile[0]) {
 			newProject = getNewProject(name);
+			if (newProject == null) return;
 		}
 		
 		final IProject createdProject = newProject;
