@@ -28,9 +28,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.operations.RemoteLogOperation.LogEntryCache;
-import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector;
+import org.eclipse.team.ui.synchronize.*;
 
 /**
  * Collector that fetches the log for incoming CVS change sets
@@ -43,13 +41,15 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
      */
     public static final String CVS_CHECKED_IN_COLLECTOR = CVSUIPlugin.ID + ".CVSCheckedInCollector"; //$NON-NLS-1$
     
+    /*
+     * Constant used to store the log entry handler in the configuration so it can
+     * be kept around over layout changes
+     */
+    private static final String LOG_ENTRY_HANDLER = CVSUIPlugin.ID + ".LogEntryHandler"; //$NON-NLS-1$
+    
     private static final String DEFAULT_INCOMING_SET_NAME = "Unassigned Remote Changes";
     
-    /*
-     * Handler that fetches log entires in the background
-     * and removes stale entries.
-     */
-    private LogEntryCacheUpdateHandler logEntryHandler;
+    boolean disposed = false;
     
 	/* *****************************************************************************
 	 * Special sync info that has its kind already calculated.
@@ -132,8 +132,35 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
     public CVSChangeSetCollector(ISynchronizePageConfiguration configuration) {
         super(configuration);
         configuration.setProperty(CVSChangeSetCollector.CVS_CHECKED_IN_COLLECTOR, this);
-        logEntryHandler = new LogEntryCacheUpdateHandler(configuration);
-        logEntryHandler.setListener(this);
+    }
+
+    public synchronized LogEntryCacheUpdateHandler getLogEntryHandler() {
+        LogEntryCacheUpdateHandler handler = (LogEntryCacheUpdateHandler)getConfiguration().getProperty(LOG_ENTRY_HANDLER);
+        if (handler == null) {
+            handler = initializeLogEntryHandler(getConfiguration());
+        }
+        handler.setListener(this);
+        return handler;
+    }
+    
+    /*
+     * Initialize the log entry handler and place it in the configuration
+     */
+    private LogEntryCacheUpdateHandler initializeLogEntryHandler(ISynchronizePageConfiguration configuration) {
+        final LogEntryCacheUpdateHandler logEntryHandler = new LogEntryCacheUpdateHandler(configuration);
+        configuration.setProperty(LOG_ENTRY_HANDLER, logEntryHandler);
+        // Use an action group to get notified when the configuration is disposed
+        configuration.addActionContribution(new SynchronizePageActionGroup() {
+            public void dispose() {
+                super.dispose();
+                LogEntryCacheUpdateHandler handler = (LogEntryCacheUpdateHandler)getConfiguration().getProperty(LOG_ENTRY_HANDLER);
+                if (handler != null) {
+                    handler.shutdown();
+                    getConfiguration().setProperty(LOG_ENTRY_HANDLER, null);
+                }
+            }
+        });
+        return logEntryHandler;
     }
 
     /* (non-Javadoc)
@@ -149,15 +176,10 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
      * @see org.eclipse.team.ui.synchronize.SyncInfoSetChangeSetCollector#reset(org.eclipse.team.core.synchronize.SyncInfoSet)
      */
     public void reset(SyncInfoSet seedSet) {
-        // Cancel any currently running job
-        // TODO: Needs to change
+        // Notify thet handler to stop any fetches in progress
         LogEntryCacheUpdateHandler handler = getLogEntryHandler();
         if (handler != null) {
-	        try {
-	            handler.getEventHandlerJob().cancel();
-	            handler.getEventHandlerJob().join();
-	        } catch (InterruptedException e) {
-	        }
+            handler.stopFetching();
         }
         super.reset(seedSet);
     }
@@ -166,9 +188,11 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
 	 * @see org.eclipse.team.ui.synchronize.views.HierarchicalModelProvider#dispose()
 	 */
 	public void dispose() {
-	    // TODO: Change to persist in configuration
+	    // No longer listen for log entry changes
+	    // (The handler is disposed with the page)
+	    disposed = true;
         LogEntryCacheUpdateHandler handler = getLogEntryHandler();
-        if (handler != null) handler.shutdown();
+        if (handler != null) handler.setListener(null);
 		getConfiguration().setProperty(CVSChangeSetCollector.CVS_CHECKED_IN_COLLECTOR, null);
 		super.dispose();
 	}
@@ -177,7 +201,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
 	 * Fetch the log histories for the remote changes and use this information
 	 * to add each resource to an appropriate commit set.
      */
-    private void handleRemoteChanges(final SyncInfo[] infos, final LogEntryCache logEntries, final IProgressMonitor monitor) throws CVSException, InterruptedException {
+    private void handleRemoteChanges(final SyncInfo[] infos, final LogEntryCache logEntries, final IProgressMonitor monitor) {
         performUpdate(new IWorkspaceRunnable() {
             public void run(IProgressMonitor monitor) {
                 addLogEntries(infos, logEntries, monitor);
@@ -386,22 +410,12 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector impleme
         }
 		monitor.worked(1);
     }
-    
-    public LogEntryCacheUpdateHandler getLogEntryHandler() {
-        return logEntryHandler;
-    }
 
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ccvs.ui.subscriber.LogEntryCacheUpdateHandler.ILogsFetchedListener#logEntriesFetched(org.eclipse.team.core.synchronize.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
      */
     public void logEntriesFetched(SyncInfoSet set, LogEntryCache logEntryCache, IProgressMonitor monitor) {
-        try {
-            handleRemoteChanges(set.getSyncInfos(), logEntryCache, monitor);
-        } catch (CVSException e) {
-            Utils.handle(e);
-        } catch (InterruptedException e) {
-            // Ignore
-        }
-        
+        if (disposed) return;
+        handleRemoteChanges(set.getSyncInfos(), logEntryCache, monitor);
     }
 }

@@ -226,11 +226,12 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
                 } else if (event.getType() == CHANGE) {
                     change(event.getResource(), ((ResourceEvent)event).getDepth());
                 }
+                // Use the iterator to remove so that updates will not be lost
+                // if the job is cancelled and then restarted.
+                iter.remove();
             }
         } finally {
             collectedInfos.endInput(monitor);
-            // Only clear the updates since the fetches still need to be processed
-            updates.clear();
         }
         return true;
     }
@@ -356,6 +357,8 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
                 fireFetchedNotification(set, Policy.subMonitorFor(monitor, 10));
             }
         } finally {
+            // Clear the fetches even if we were cancelled.
+            // Restarting will need to re-request all infos
             fetches.clear();
             monitor.done();
         }
@@ -577,5 +580,16 @@ public class LogEntryCacheUpdateHandler extends BackgroundEventHandler {
 
     public LogEntryCache getLogEntryCache() {
         return logEntriesCache;
+    }
+
+    /**
+     * Stop any current fetch in process.
+     */
+    public void stopFetching() {
+        try {
+            getEventHandlerJob().cancel();
+            getEventHandlerJob().join();
+        } catch (InterruptedException e) {
+        }
     }
 }
