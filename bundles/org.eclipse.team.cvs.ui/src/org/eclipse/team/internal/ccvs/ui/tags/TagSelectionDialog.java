@@ -11,7 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.tags;
 
  
-import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -21,8 +20,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 
@@ -63,13 +60,9 @@ public class TagSelectionDialog extends Dialog implements IPropertyChangeListene
     private String helpContext;
 
     private boolean showRecurse;
-	
-	public static CVSTag getTagToCompareWith(Shell shell, IProject[] projects) {
-		return getTagToCompareWith(shell, getCVSFoldersFor(projects));
-	}
 		
-	public static CVSTag getTagToCompareWith(Shell shell, ICVSFolder[] folders) {
-		TagSelectionDialog dialog = new TagSelectionDialog(shell, folders, 
+	public static CVSTag getTagToCompareWith(Shell shell, TagSource tagSource) {
+		TagSelectionDialog dialog = new TagSelectionDialog(shell, tagSource, 
 			Policy.bind("CompareWithTagAction.message"),  //$NON-NLS-1$
 			Policy.bind("TagSelectionDialog.Select_a_Tag_1"), //$NON-NLS-1$
 			TagSelectionDialog.INCLUDE_ALL_TAGS, 
@@ -82,31 +75,16 @@ public class TagSelectionDialog extends Dialog implements IPropertyChangeListene
 		}
 		return dialog.getResult();
 	}
-	/**
-	 * Creates a new TagSelectionDialog.
-	 * @param resource The resource to select a version for.
-	 */
-	public TagSelectionDialog(Shell parentShell, IProject[] projects, String title, String message, int includeFlags, boolean showRecurse, String helpContext) {
-		this(parentShell, getCVSFoldersFor(projects), title, message, includeFlags, showRecurse, helpContext); //$NON-NLS-1$		
-	}
-	
-	private static ICVSFolder[] getCVSFoldersFor(IProject[] projects) {
-		ICVSFolder[] folders = new ICVSFolder[projects.length];
-		for (int i = 0; i < projects.length; i++) {
-			folders[i] = CVSWorkspaceRoot.getCVSFolderFor(projects[i]);
-		}
-		return folders;
-	}
 	
 	/**
 	 * Creates a new TagSelectionDialog.
 	 * @param resource The resource to select a version for.
 	 */
-	public TagSelectionDialog(Shell parentShell, ICVSFolder[] folders, String title, String message, int includeFlags, final boolean showRecurse, String helpContext) {
+	public TagSelectionDialog(Shell parentShell, TagSource tagSource, String title, String message, int includeFlags, final boolean showRecurse, String helpContext) {
 		super(parentShell);
 		
 		// Create a tag selection area with a custom recurse option
-		tagSource = TagSource.create(folders);
+		this.tagSource = tagSource;
 		this.message = message;
 		this.includeFlags = includeFlags;
 		this.helpContext = helpContext;

@@ -32,7 +32,7 @@ public class SingleFolderTagSource extends TagSource {
     
     private ICVSFolder folder;
     
-    public SingleFolderTagSource(ICVSFolder folder) {
+    /* package */ SingleFolderTagSource(ICVSFolder folder) {
         this.folder = folder;
     }
 

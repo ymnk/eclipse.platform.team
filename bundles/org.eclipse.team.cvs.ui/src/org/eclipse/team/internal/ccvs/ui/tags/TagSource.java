@@ -82,9 +82,18 @@ public abstract class TagSource {
      * @return a tag source
      */
     public static TagSource create(IResource[] resources) {
-        return create(getCVSResources(resources));
+        return create(getCVSResources(getProjects(resources)));
     }
     
+    private static IResource[] getProjects(IResource[] resources) {
+        Set result = new HashSet();
+        for (int i = 0; i < resources.length; i++) {
+            IResource resource = resources[i];
+            result.add(resource.getProject());
+        }
+        return (IResource[]) result.toArray(new IResource[result.size()]);
+    }
+
     /**
      * Return a tag source for a single remote folder
      * @param remote the remote folder

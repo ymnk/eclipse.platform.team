@@ -22,7 +22,7 @@ public class MultiFolderTagSource extends SingleFolderTagSource {
 
     private final ICVSFolder[] folders;
 
-    public MultiFolderTagSource(ICVSFolder[] folders) {
+    /* package */ MultiFolderTagSource(ICVSFolder[] folders) {
         super(folders[0]);
         this.folders = folders;
     }

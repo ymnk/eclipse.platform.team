@@ -43,10 +43,10 @@ public class UpdateWizard extends Wizard {
 	
 	public void addPages() {
 		ImageDescriptor substImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_CHECKOUT);
-		ICVSFolder[] folders = getCVSFolders();
-        tagSelectionPage = new TagSelectionWizardPage("tagPage", Policy.bind("UpdateWizard.0"), substImage, Policy.bind("UpdateWizard.1"), TagSource.create(folders), TagSourceWorkbenchAdapter.INCLUDE_ALL_TAGS); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        tagSelectionPage = new TagSelectionWizardPage("tagPage", Policy.bind("UpdateWizard.0"), substImage, Policy.bind("UpdateWizard.1"), TagSource.create(resources), TagSourceWorkbenchAdapter.INCLUDE_ALL_TAGS); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		tagSelectionPage.setAllowNoTag(true);
 		tagSelectionPage.setHelpContxtId(IHelpContextIds.UPDATE_TAG_SELETION_PAGE);
+		ICVSFolder[] folders = getCVSFolders();
 		if (folders.length > 0) {
 			try {
 				CVSTag selectedTag = folders[0].getFolderSyncInfo().getTag();

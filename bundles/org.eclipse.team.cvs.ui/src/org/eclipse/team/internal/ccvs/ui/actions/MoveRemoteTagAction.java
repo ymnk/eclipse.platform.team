@@ -27,7 +27,7 @@ public class MoveRemoteTagAction extends TagInRepositoryAction {
 	protected ITagOperation configureOperation() {
 		// Allow the user to select a tag
 		ITagOperation operation = createTagOperation();
-		TagSelectionDialog dialog = new TagSelectionDialog(getShell(), getCVSFolders(operation.getCVSResources()), 
+		TagSelectionDialog dialog = new TagSelectionDialog(getShell(), operation.getTagSource(), 
 			Policy.bind("MoveTagAction.title"), //$NON-NLS-1$
 			Policy.bind("MoveTagAction.message"), //$NON-NLS-1$
 			TagSelectionDialog.INCLUDE_BRANCHES | TagSelectionDialog.INCLUDE_VERSIONS, 
