@@ -268,9 +268,6 @@ public class SyncInfoDiffTreeNavigator {
 			manager.add(open);
 		}
 		if (tree != null) {
-			if (isShowOpenAction()) {
-				manager.add(new Separator());
-			}
 			manager.add(expandAll);
 		}
 	}
