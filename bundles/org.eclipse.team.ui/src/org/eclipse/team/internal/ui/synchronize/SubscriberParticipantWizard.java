@@ -12,10 +12,7 @@ package org.eclipse.team.internal.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.Wizard;
-import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.TeamImages;
-import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 
@@ -37,7 +34,7 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 	public void addPages() {
 		selectionPage = new GlobalRefreshResourceSelectionPage(getRootResources());
 		selectionPage.setTitle("Create");
-		selectionPage.setDescription("Create CVS Synchronize Participant");
+		selectionPage.setDescription("Create a " +  getName() + " Synchronize Participant");
 		selectionPage.setMessage("Select the resources that will be synchronized by the newly created synchronize participant.");
 		addPage(selectionPage);
 	}
@@ -51,7 +48,7 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 			SubscriberParticipant participant = createParticipant(resources);
 			TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 			// We don't know in which site to show progress because a participant could actually be shown in multiple sites.
-			participant.refresh(resources, Policy.bind("Participant.synchronizing"), Policy.bind("Participant.synchronizingDetails", participant.getName()), null); //$NON-NLS-1$ //$NON-NLS-2$
+			participant.run(null /* no site */);
 		}
 		return true;
 	}
@@ -60,4 +57,5 @@ public abstract class SubscriberParticipantWizard extends Wizard {
 	
 	protected abstract SubscriberParticipant createParticipant(IResource[] resources);
 
+	protected abstract String getName();
 }

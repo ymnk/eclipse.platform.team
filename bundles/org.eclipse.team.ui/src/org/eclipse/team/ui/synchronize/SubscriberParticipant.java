@@ -24,6 +24,7 @@ import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoCollector;
+import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
@@ -134,9 +135,9 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * 
 	 * @param resources the resources to be refreshed.
 	 */
-	public final void refresh(IResource[] resources, String jobName, String taskName, IWorkbenchSite site) {
+	public final void refresh(IResource[] resources, String shortTaskName, String longTaskName, IWorkbenchSite site) {
 		IRefreshSubscriberListener listener = new RefreshUserNotificationPolicy(this);
-		internalRefresh(resources, jobName, taskName, site, listener);
+		internalRefresh(resources, shortTaskName, longTaskName, site, listener);
 	}
 	
 	/**
@@ -291,8 +292,31 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#run(org.eclipse.ui.IWorkbenchPart)
 	 */
 	public void run(IWorkbenchPart part) {
+		refresh(getResources(), getShortTaskName(), getLongTaskName(), part != null ? part.getSite() : null);
 	}
 	
+	/**
+	 * Returns the short task name (e.g. no more than 25 characters) to describe the behavior of the
+	 * refresh operation to the user. This is typically shown in the status line when this subcriber is refreshed
+	 * in the backgroud. When refreshed in the foreground, only the long task name is shown.
+	 * 
+	 * @return the short task name to show in the status line.
+	 */
+	protected String getShortTaskName() {
+		return Policy.bind("Participant.synchronizing");
+	}
+	
+	/**
+	 * Returns the short task name (e.g. no more than 25 characters) to describe the behavior of the
+	 * refresh operation to the user. This is typically shown in the status line when this subcriber is refreshed
+	 * in the backgroud. When refreshed in the foreground, only the long task name is shown.
+	 * 
+	 * @return the short task name to show in the status line.
+	 */
+	protected String getLongTaskName() {
+		return Policy.bind("Participant.synchronizing");
+	}
+
 	/**
 	 * This method is invoked before the given configuration is used to
 	 * create the page (see <code>createPage(ISynchronizePageConfiguration)</code>).

@@ -443,6 +443,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 				if (activePage == null)
 					return null;
 			}
+			//IViewPart part = activePage.showView(ISynchronizeView.VIEW_ID, Long.toString(System.currentTimeMillis()), IWorkbenchPage.VIEW_ACTIVATE);
 			IViewPart part = activePage.showView(ISynchronizeView.VIEW_ID);
 			try {
 				return (ISynchronizeView) part;

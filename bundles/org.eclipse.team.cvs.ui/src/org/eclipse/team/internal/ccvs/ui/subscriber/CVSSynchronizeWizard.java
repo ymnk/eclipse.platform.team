@@ -13,6 +13,8 @@ package org.eclipse.team.internal.ccvs.ui.subscriber;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantWizard;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 
 /**
@@ -24,6 +26,19 @@ public class CVSSynchronizeWizard extends SubscriberParticipantWizard {
 		return CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().roots();
 	}
 
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.synchronize.SubscriberParticipantWizard#getName()
+	 */
+	protected String getName() {
+		ISynchronizeParticipantDescriptor desc = TeamUI.getSynchronizeManager().getParticipantDescriptor(WorkspaceSynchronizeParticipant.ID);
+		if(desc != null) {
+			return desc.getName();
+		} else {
+			return "Unknown";
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.synchronize.SubscriberParticipantWizard#createParticipant(org.eclipse.core.resources.IResource[])
 	 */

@@ -20,7 +20,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.wizards.GlobalSynchronizeWizard;
-import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.*;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.texteditor.IUpdate;
 
@@ -35,7 +35,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		 */
 		public void update() {
 			ISynchronizeParticipantReference[] refs = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-			//setEnabled(refs.length >= 1);
+			updateTooltipText();
 		}
 		
 		protected ISynchronizeParticipantReference[] getParticipants(boolean staticOnly) {
@@ -65,7 +65,7 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 					dialog.open();
 				}
 			};
-			
+			synchronizeAction.setImageDescriptor(TeamImages.getImageDescriptor(ISharedImages.IMG_SYNC_VIEW));
 			setMenuCreator(this);		
 			update();
 		}
@@ -126,7 +126,8 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 				ISynchronizeParticipantReference page = refs[i];
 				Action action = new ShowSynchronizeParticipantAction(fView, page);  
 				try {
-					action.setChecked(page.getParticipant().equals(current));
+					boolean isCurrent = page.getParticipant().equals(current);
+					action.setChecked(isCurrent);
 				} catch (TeamException e) {
 					continue;
 				}
@@ -147,7 +148,13 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 		 * @see org.eclipse.jface.action.IAction#run()
 		 */
 		public void run() {
-			synchronizeAction.run();
+			ISynchronizeParticipant current = fView.getParticipant();
+			if(current != null) {
+				current.run(fView);
+			} else {
+				synchronizeAction.run();
+			}
+			update();
 		}
 	
 		/* (non-Javadoc)
@@ -175,5 +182,14 @@ public class SynchronizePageDropDownAction extends Action implements IMenuCreato
 					update();
 				}
 			});
+		}
+		
+		private void updateTooltipText() {
+			ISynchronizeParticipant current = fView.getParticipant();
+			if(current != null) {
+				setToolTipText("Synchronize " + current.getName());
+			} else {
+				setToolTipText("Synchronize");
+			}
 		}
 }

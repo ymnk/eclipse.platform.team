@@ -47,6 +47,7 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 
 		public void run() {
 			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT, participant.getId());
+			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT_SEC_ID, participant.getSecondaryId());
 			GlobalRefreshAction.this.run(participant);
 		}
 
@@ -141,6 +142,15 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
 	 */
 	public void run(IAction action) {
+		String id = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT);
+		String secondaryId = TeamUIPlugin.getPlugin().getPreferenceStore().getString(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT_SEC_ID);
+		IWizard wizard = new GlobalSynchronizeWizard();
+		if (! id.equals(NO_DEFAULT_PARTICPANT)) {
+			ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(id, secondaryId);
+			if (participant != null) {
+				run(participant);
+			}
+		}
 		synchronizeAction.run();
 	}
 		
@@ -166,5 +176,6 @@ public class GlobalRefreshAction extends Action implements IMenuCreator, IWorkbe
 	
 	protected void updateTooltipMessage() {
 		setToolTipText(Policy.bind("GlobalRefreshAction.4")); //$NON-NLS-1$
+		setToolTipText("THIS IS COOL"); //$NON-NLS-1$
 	}
 }
