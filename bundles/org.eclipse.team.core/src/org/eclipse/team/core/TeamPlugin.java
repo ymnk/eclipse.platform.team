@@ -7,6 +7,7 @@ package org.eclipse.team.core;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPluginDescriptor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.internal.FileTypeRegistry;
@@ -34,7 +35,7 @@ final public class TeamPlugin extends Plugin {
 	public static final String ID = "org.eclipse.team.core";
 
 	// The id of the providers extension point
-	public static final String PROVIDER_EXTENSION = "providers";
+	public static final String PROVIDER_EXTENSION = "repository-provider-type";
 	
 	// The id of the file types extension point
 	public static final String FILE_TYPES_EXTENSION = "fileTypes";
@@ -64,13 +65,11 @@ final public class TeamPlugin extends Plugin {
 	 */
 	public void startup() throws CoreException {
 		try {
-			Policy.localize("org.eclipse.team.core.internal.messages");
-			
-			manager = new TeamManager();
-			manager.startup();
-			
+			Policy.localize("org.eclipse.team.core.internal.messages");						
 			registry = new FileTypeRegistry();
 			registry.startup();
+			manager = new TeamManager();
+			manager.startup();
 		} catch(TeamException e) {
 			throw new CoreException(e.getStatus());
 		}
@@ -93,7 +92,7 @@ final public class TeamPlugin extends Plugin {
 	}
 	
 	/**
-	 * Returns the team manager.
+	 * Returns the team manager
 	 */
 	public static ITeamManager getManager() {
 		return manager;
@@ -111,5 +110,12 @@ final public class TeamPlugin extends Plugin {
 	 */
 	public static void log(int severity, String message, Throwable e) {
 		plugin.getLog().log(new Status(severity, ID, 0, message, e));
+	}
+	
+	/**
+	 * Returns the plug-in's log
+	 */
+	public static void log(IStatus status) {
+		plugin.getLog().log(status);
 	}
 }

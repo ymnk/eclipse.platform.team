@@ -1,4 +1,4 @@
-package org.eclipse.team.core.internal;
+package org.eclipse.team.core;
 
 /*
  * (c) Copyright IBM Corp. 2000, 2001.
@@ -10,13 +10,10 @@ import org.eclipse.core.resources.IFileModificationValidator;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.RepositoryProviderType;
-import org.eclipse.team.core.TeamPlugin;
+import org.eclipse.team.core.internal.Policy;
 
 public class FileModificationValidator implements IFileModificationValidator {
-	private static final Status OK = new Status(Status.OK, TeamPlugin.ID, Status.OK, Policy.bind("FileModificationValidator.ok"), null);
-	private static final Status READ_ONLY = new Status(Status.ERROR, TeamPlugin.ID, Status.ERROR, Policy.bind("FileModificationValidator.isReadOnly"), null);
+	private static final Status OK = new Status(Status.OK, TeamPlugin.ID, Status.OK, "OK", null);
 	
 	/*
 	 * @see IFileModificationValidator#validateEdit(IFile[], Object)
@@ -29,17 +26,14 @@ public class FileModificationValidator implements IFileModificationValidator {
 		for (int i = 0; i < files.length; i++) {
 			IFile file = files[i];
 			RepositoryProvider provider = RepositoryProviderType.getProvider(file.getProject());
-			IFileModificationValidator validator = null;
-			if (provider != null) {
-				validator = provider.getFileModificationValidator();
-				if(validator!=null) {
-					fileArray[0] = file;
-					result[i] = validator.validateEdit(fileArray, context);
-				}
-			}	
-				
-			if(validator==null) {	
-				result[i] =	(file.isReadOnly())	? READ_ONLY : OK;
+			if (provider == null) {
+				result[i] = OK;
+			} else {
+				fileArray[0] = file;
+				IFileModificationValidator validator = provider.getFileModificationValidator();
+				if(validator == null)
+					return OK;
+				result[i] = validator.validateEdit(fileArray, context);
 			}
 		}
 		if (result.length == 1) {
@@ -53,12 +47,12 @@ public class FileModificationValidator implements IFileModificationValidator {
 	 */
 	public IStatus validateSave(IFile file) {
 		RepositoryProvider provider = RepositoryProviderType.getProvider(file.getProject());
-		if (provider != null) {
-			IFileModificationValidator validator = provider.getFileModificationValidator();
-			if(validator!=null) {
-				return validator.validateSave(file);
-			}
+		if (provider == null) {
+			return OK;
 		}
-		return OK;
+		IFileModificationValidator validator = provider.getFileModificationValidator();
+		if(validator == null)
+			return OK;
+		return validator.validateSave(file);
 	}
 }

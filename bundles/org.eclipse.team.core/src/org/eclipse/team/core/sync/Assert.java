@@ -1,4 +1,4 @@
-package org.eclipse.team.core.internal;
+package org.eclipse.team.core.sync;
 
 /*
  * (c) Copyright IBM Corp. 2000, 2001.

@@ -31,25 +31,19 @@ import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.IIgnoreInfo;
-import org.eclipse.team.core.IResourceStateChangeListener;
 import org.eclipse.team.core.ITeamManager;
-import org.eclipse.team.core.ITeamNature;
-import org.eclipse.team.core.ITeamProvider;
+import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
 
 public class TeamManager implements ITeamManager {
 
-	private final static String ATT_NATUREID = "natureId";
 	private final static String GLOBALIGNORE_FILE = ".globalIgnores";
 	
-	private static List natureIdsRegistry = new ArrayList(5);
-	private static List listeners = new ArrayList(5);
 	private static Map globalIgnore = new HashMap(11);
 	
 	/**
@@ -60,115 +54,18 @@ public class TeamManager implements ITeamManager {
 	 * team support disabled.
 	 */
 	public void startup() throws TeamException {
-		initializeProviders();
+		// XXX forces loading of all repository plugins, may instead want to
+		// lazilly initialize plugin descriptors then on demand, create the executable
+		// extension.
+		initializeRepositoryProviderTypes();
 		readState();
 		initializePluginIgnores();
-	}
-	
-	protected boolean alreadyMapped(IProject project) {
-		try {
-			String[] natures = project.getDescription().getNatureIds();
-			for (int i = 0; i < natures.length; i++) {
-				if(natureIdsRegistry.contains(natures[i]))
-					return true;			
-			}
-		} catch(CoreException e) {
-			// fall through
-		}
-		return false;
-	}
-	
-	protected String getFirstProviderNatureId(IProject project) {
-		try {
-			String[] natures = project.getDescription().getNatureIds();
-			for (int i = 0; i < natures.length; i++) {
-				if(natureIdsRegistry.contains(natures[i]))
-					return natures[i];			
-			}
-		} catch(CoreException e) {
-			// fall through
-		}
-		return null;			
-	}
-	
-	/**
-	 * @see ITeamManager#setProvider(IProject, String, IProgressMonitor)
-	 */
-	public void setProvider(IProject project, String natureId, Properties configuration, IProgressMonitor progress) throws TeamException {
-		
-		if(alreadyMapped(project)) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.providerAlreadyMapped", 
-												 project.getName(), natureId), null));
-		}
-		
-		if(!natureIdsRegistry.contains(natureId)) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.notTeamNature", 
-												 natureId), null));
-		}
-		
-		addNatureToProject(project, natureId, progress);
-		
-		if(configuration!=null) {
-			setConfiguration(project, natureId, configuration, progress);
-		} 
-	}
-	
-	protected void setConfiguration(IProject project, String natureId, Properties properties, IProgressMonitor progress) throws TeamException {
-		try {
-			ITeamNature teamNature = (ITeamNature)project.getNature(natureId);
-			teamNature.configureProvider(properties);			
-		} catch(ClassCastException e) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.teamNatureBadType", 
-									 project.getName(), natureId), null));
-		} catch(CoreException e) {
-			throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, Policy.bind("manager.cannotGetDescription", 
-									 project.getName(), natureId), null));
-		
-		}	
-	}
-	
-	/**
-	 * @see ITeamManager#getProvider(IResource resource)
-	 */
-	public ITeamProvider getProvider(IResource resource) {
-		IProject project = resource.getProject();
-		String natureId = getFirstProviderNatureId(project);
-
-		if(natureId==null) {
-			return null;
-		}
-
-		try {
-			ITeamNature teamNature = (ITeamNature)project.getNature(natureId);
-			return teamNature.getProvider();
-		} catch(ClassCastException e) {
-			return null;
-		} catch(CoreException e) {
-			return null;
-		} catch(TeamException e) {
-			return null;
-		}
-	}
-	
-	/**
-	 * Un-associate this project with its provider. If the project is not associated with
-	 * a provider this method has no effect.
-	 * 
-	 * @param project to remote the associate to its provider.
-	 */
-	public void removeProvider(IProject project, IProgressMonitor progress) throws TeamException {
-		String natureId = getFirstProviderNatureId(project);
-		if(natureId==null) {
-			return;
-		} else {
-			removeNatureFromProject(project, natureId, progress);
-		}		
 	}
 	
 	/**
 	 * Utility for adding a nature to a project
 	 */
-	protected void addNatureToProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
+	static public void addNatureToProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
 		try {
 			IProjectDescription description = proj.getDescription();
 			String[] prevNatures= description.getNatureIds();
@@ -183,7 +80,7 @@ public class TeamManager implements ITeamManager {
 		}
 	}
 	
-	protected void removeNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
+	static public void removeNatureFromProject(IProject proj, String natureId, IProgressMonitor monitor) throws TeamException {
 		try {
 			IProjectDescription description = proj.getDescription();
 			String[] prevNatures= description.getNatureIds();
@@ -200,7 +97,7 @@ public class TeamManager implements ITeamManager {
 	/**
 	 * Find and initialize all the registered providers
 	 */
-	private void initializeProviders() throws TeamException {
+	private void initializeRepositoryProviderTypes() throws TeamException {
 
 		IExtensionPoint extensionPoint = Platform.getPluginRegistry().getExtensionPoint(TeamPlugin.ID, TeamPlugin.PROVIDER_EXTENSION);
 		if (extensionPoint == null) {
@@ -220,53 +117,25 @@ public class TeamManager implements ITeamManager {
 				continue;
 			}
 			IConfigurationElement config = configs[0];
-			if(config.getName().equalsIgnoreCase(TeamPlugin.PROVIDER_EXTENSION)){
-				String natureId = config.getAttribute(ATT_NATUREID);
-			
-				if(natureId!=null) {
-					natureIdsRegistry.add(natureId);
-				} else {			
-					// failed to instantiate executable extension.
-					// log the error but continue to instantiate other executable extensions.
-					TeamPlugin.log(IStatus.ERROR, Policy.bind("manager.cannotBadFormat", extension.getUniqueIdentifier()), null);
-					continue;
-				}
+			String configName = config.getName();
+			if (!"repository".equals(config.getName())) {
+				String message = Policy.bind("resources.natureFormat", configName);
+				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null));
 			}
-		}	
-	}
-		
-	/*
-	 * @see ITeamManager#addResourceStateChangeListener(IResourceStateChangeListener)
-	 */
-	public void addResourceStateChangeListener(IResourceStateChangeListener listener) {
-		listeners.add(listener);
-	}
 
-	/*
-	 * @see ITeamManager#removeResourceStateChangeListener(IResourceStateChangeListener)
-	 */
-	public void removeResourceStateChangeListener(IResourceStateChangeListener listener) {
-		listeners.remove(listener);
-	}
-	
-	/*
-	 * @see ITeamManager#broadcastResourceStateChanges(IResource[])
-	 */
-	public void broadcastResourceStateChanges(final IResource[] resources) {
-		for(Iterator it=listeners.iterator(); it.hasNext();) {
-			final IResourceStateChangeListener listener = (IResourceStateChangeListener)it.next();
-			ISafeRunnable code = new ISafeRunnable() {
-				public void run() throws Exception {
-					listener.resourceStateChanged(resources);
-				}
-				public void handleException(Throwable e) {
-					// don't log the exception....it is already being logged in Platform#run
-				}
-			};
-			Platform.run(code);
+			try {
+				RepositoryProviderType providerType = (RepositoryProviderType) config.createExecutableExtension("provider-type");
+				RepositoryProviderType.addProviderType(providerType);
+			} catch (ClassCastException e) {
+				String message = Policy.bind("resources.natureImplement", configName);
+				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null));
+			} catch (CoreException e){
+				String message = Policy.bind("resources.natureImplement", configName);
+				throw new TeamException(new Status(IStatus.ERROR, TeamPlugin.ID, 0, message, null));
+			}
 		}
 	}
-	
+		
 	public IIgnoreInfo[] getGlobalIgnore() {
 		IIgnoreInfo[] result = new IIgnoreInfo[globalIgnore.size()];
 		Iterator e = globalIgnore.keySet().iterator();
