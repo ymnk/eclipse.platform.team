@@ -280,14 +280,17 @@ public class CVSResourceVariantTree extends ResourceVariantTree {
 	protected IResource[] refresh(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
 		IResource[] changedResources = null;
 		monitor.beginTask(null, 100);
-		// Wait indefinitely until buidl is done
-		while (isJobInFamilyRunning(ResourcesPlugin.FAMILY_AUTO_BUILD)
-				|| isJobInFamilyRunning(ResourcesPlugin.FAMILY_MANUAL_BUILD)) {
+		// Wait up to 10 seconds for build to finish
+		int count = 0;
+		while (count < 10 
+				&& (isJobInFamilyRunning(ResourcesPlugin.FAMILY_AUTO_BUILD)
+				|| isJobInFamilyRunning(ResourcesPlugin.FAMILY_MANUAL_BUILD))) {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				// Conitinue
 			}	
+			count++;
 			Policy.checkCanceled(monitor);
 		}
 		ISchedulingRule rule = getSchedulingRule(resource);
