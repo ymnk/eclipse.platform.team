@@ -69,7 +69,7 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 	public void setGroupIncomingByComment(boolean enabled) {
 		this.isGroupIncomingByComment = enabled;
 		if(getParticipant().getMode() == TeamSubscriberParticipant.INCOMING_MODE) {
-			getViewer().setInput(getInput());
+			setInput(getViewer());
 		}
 	}
 	
@@ -94,7 +94,11 @@ public class CVSSynchronizeViewCompareConfiguration extends TeamSubscriberPageDi
 			int newMode = ((Integer)event.getNewValue()).intValue();
 			if(newMode == TeamSubscriberParticipant.INCOMING_MODE || 
 			   oldMode == TeamSubscriberParticipant.INCOMING_MODE) {
-				getViewer().setInput(getInput());
+				aSyncExec(new Runnable() {
+					public void run() {
+						setInput(getViewer());
+					}
+				});				
 			}
 		}
 		super.propertyChange(event);
