@@ -102,8 +102,10 @@ public abstract class Command {
 		registerResponseHandler(new StaticHandler(false));
 		registerResponseHandler(new StickyHandler(true));
 		registerResponseHandler(new StickyHandler(false));
-		registerResponseHandler(new UpdatedHandler(true));
-		registerResponseHandler(new UpdatedHandler(false));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_UPDATED));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_UPDATE_EXISTING));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_CREATED));
+		registerResponseHandler(new UpdatedHandler(UpdatedHandler.HANDLE_MERGED));
 		registerResponseHandler(new ValidRequestsHandler());
 		registerResponseHandler(new ModuleExpansionHandler());		
 	}
@@ -384,14 +386,14 @@ public abstract class Command {
 			Option[] gOptions = makeAndSendOptions(session, globalOptions, getDefaultGlobalOptions(globalOptions, localOptions));
 			Option[] lOptions = makeAndSendOptions(session, localOptions, getDefaultLocalOptions(globalOptions, localOptions));
 
+			// send arguments
+			sendArguments(session, arguments);
 			// send local working directory state
 			sendLocalResourceState(session, globalOptions, localOptions,
 				resources, Policy.subMonitorFor(monitor, 10));
 			Policy.checkCanceled(monitor);
 			// send local working directory path
 			sendLocalWorkingDirectory(session);
-			// send arguments
-			sendArguments(session, arguments);
 			// send command
 			session.sendCommand(getCommandId());
 
