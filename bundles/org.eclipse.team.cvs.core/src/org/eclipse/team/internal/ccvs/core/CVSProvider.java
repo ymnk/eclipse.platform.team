@@ -180,7 +180,7 @@ public class CVSProvider implements ICVSProvider {
 				// Register the project with Team
 				// (unless the project already has the proper nature from the project meta-information)
 				if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId())) {
-					Team.addNatureToProject(project, CVSProviderPlugin.getTypeId(), Policy.subMonitorFor(monitor, 100));
+					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 				}
 			}
 			
@@ -485,7 +485,7 @@ public class CVSProvider implements ICVSProvider {
 			// (unless the project already has the proper nature from the project meta-information)
 			try {
 				if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId())) {
-					Team.addNatureToProject(project, CVSProviderPlugin.getTypeId(), Policy.subMonitorFor(monitor, 1));
+					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 				}
 			} catch (CoreException e) {
 				throw wrapException(e);
@@ -550,7 +550,7 @@ public class CVSProvider implements ICVSProvider {
 		// (unless the project already has the proper nature from the project meta-information)
 		try {
 			if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId()))
-				Team.addNatureToProject(project, CVSProviderPlugin.getTypeId(), monitor);
+				RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 		} catch (CoreException e) {
 			throw wrapException(e);
 		}

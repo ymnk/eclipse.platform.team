@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
@@ -150,7 +151,7 @@ public class CVSWorkspaceRoot {
 			tree.makeFoldersInSync(Policy.subMonitorFor(progress, 10));
 			try {
 				if (!project.getDescription().hasNature(CVSProviderPlugin.getTypeId())) {
-					Team.addNatureToProject(project, CVSProviderPlugin.getTypeId(), Policy.subMonitorFor(progress, 10));
+					RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());
 				}
 			} catch (CoreException e) {
 				throw CVSException.wrapException(e);
