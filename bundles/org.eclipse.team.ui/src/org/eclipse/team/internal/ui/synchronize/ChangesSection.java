@@ -345,10 +345,10 @@ public class ChangesSection extends Composite {
 	}
 	
 	private SyncInfoSet getWorkingSetSyncInfoSet() {
-		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
+		return (SyncInfoSet)configuration.getProperty(SynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
 	}
 	
 	private SyncInfoSet getParticpantSyncInfoSet() {
-		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_PARTICIPANT_SYNC_INFO_SET);
+		return (SyncInfoSet)configuration.getProperty(SynchronizePageConfiguration.P_PARTICIPANT_SYNC_INFO_SET);
 	}
 }

@@ -58,6 +58,20 @@ public class SynchronizePageConfiguration extends SynchronizePageActionGroup imp
 	public static final String P_ADVISOR = TeamUIPlugin.ID  + ".P_ADVISOR"; //$NON-NLS-1$
 
 	/**
+	 * Property that gives access to a set the
+	 * contains all out-of-sync resources for the particpant
+	 * in the selected working set.
+	 */
+	public static final String P_WORKING_SET_SYNC_INFO_SET = TeamUIPlugin.ID + ".P_WORKING_SET_SYNC_INFO_SET"; //$NON-NLS-1$
+
+	/**
+	 * Property that gives access to a set the
+	 * contains all out-of-sync resources for the particpant
+	 * before any filtering (working set or modes) is applied.
+	 */
+	public static final String P_PARTICIPANT_SYNC_INFO_SET = TeamUIPlugin.ID + ".P_PARTICIPANT_SYNC_INFO_SET"; //$NON-NLS-1$
+
+	/**
 	 * The hidden configuration property that opens the current selection in the
 	 * page. The registered <code>IAction</code> is invoked on a single or
 	 * double click depending on the open strategy chosen by the user.

@@ -113,7 +113,7 @@ public final class SubscriberParticipantPage extends SyncInfoSetSynchronizePage 
 		updateWorkingSet(configuration.getWorkingSet());
 		collector.reset();
 		configuration.setProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET, collector.getSyncInfoTree());
-		configuration.setProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET, collector.getWorkingSetSyncInfoSet());
+		configuration.setProperty(SynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET, collector.getWorkingSetSyncInfoSet());
 	}
 	
 	/* (non-Javadoc)

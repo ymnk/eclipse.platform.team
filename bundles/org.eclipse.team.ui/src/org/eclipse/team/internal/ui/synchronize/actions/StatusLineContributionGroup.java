@@ -16,17 +16,12 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.ITeamStatus;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent;
-import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
@@ -212,7 +207,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 	
 	private SyncInfoSet getWorkingSetSyncInfoSet() {
-		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
+		return (SyncInfoSet)configuration.getProperty(SynchronizePageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
 	}
 	
 	private SyncInfoTree getParticipantSyncInfoSet() {

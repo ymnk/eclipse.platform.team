@@ -106,7 +106,7 @@ public class SubscriberRefreshSchedule {
 	}
 	
 	protected void startJob() {
-		SyncInfoSet set = participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
+		SyncInfoSet set = participant.getSubscriberSyncInfoCollector().getSyncInfoSet();
 		if(set == null) { 
 			return;
 		}
