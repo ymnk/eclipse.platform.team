@@ -93,58 +93,6 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 	
     private ActiveChangeSetCollector activeCollector;
     
-    private IChangeSetChangeListener activeChangeSetListener = new IChangeSetChangeListener() {
-
-        public void setAdded(final ChangeSet set) {
-            syncExec(new Runnable() {
-                public void run() {
-                    // Remove any resources that are in the new set
-                    activeCollector.remove(set.getResources());
-                    createActiveChangeSetModelElement(set);
-                }
-            });
-
-        }
-        
-        public void defaultSetChanged(final ChangeSet previousDefault, final ChangeSet set) {
-            syncExec(new Runnable() {
-                public void run() {
-		            // Refresh the label for both of the sets involved
-		            refreshLabel(getModelElement(previousDefault));
-		            refreshLabel(getModelElement(set));
-                }
-            });
-        }
-
-        private void refreshLabel(final ISynchronizeModelElement node) {
-            if (node != null) {
-                getViewer().refresh(node);
-            }
-        }
-        
-        public void setRemoved(final ChangeSet set) {
-            syncExec(new Runnable() {
-                public void run() {
-                    removeModelElementForSet(set);
-		            activeCollector.remove(set);
-                }
-            });
-        }
-
-        public void nameChanged(final ChangeSet set) {
-            syncExec(new Runnable() {
-                public void run() {
-                    refreshLabel(getModelElement(set));
-                }
-            });
-        }
-
-        public void resourcesChanged(final ChangeSet set, final IResource[] resources) {
-            // Changes are handled by the sets themselves.
-        }
-        
-    };
-    
 	/* *****************************************************************************
 	 * Descriptor for this model provider
 	 */
@@ -173,7 +121,6 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
         }
         if (changeSetCapability.supportsActiveChangeSets()) {
             activeCollector = new ActiveChangeSetCollector(configuration, this);
-            activeCollector.getActiveChangeSetManager().addListener(activeChangeSetListener);
             configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, ChangeSetActionGroup.CHANGE_SET_GROUP);
         }
     }
@@ -234,7 +181,6 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 		    }
 		    if (activeCollector != null) { 
 		        activeCollector.reset(null);
-		        activeCollector.getActiveChangeSetManager().removeListener(activeChangeSetListener);
 		    }
 	        
 	        // Then, re-enable the proper collection method
@@ -243,7 +189,6 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 		        checkedInCollector.reset(getSyncInfoSet());
 		        
 		    } else if (activeCollector != null && getChangeSetCapability().enableActiveChangeSetsFor(getConfiguration())) {
-		        activeCollector.getActiveChangeSetManager().addListener(activeChangeSetListener);
 	            activeCollector.reset(getSyncInfoSet());
 	        } else {
 		        // Forward the sync info to the root provider and trigger a build
@@ -387,8 +332,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
      * Create a provider and node for the given change set
      */
     private ISynchronizeModelProvider createProvider(ChangeSet set) {
-        ChangeSetDiffNode node = new ChangeSetDiffNode(getModelRoot(), set);
-        return createProviderRootedAt(node, set.getSyncInfoSet());
+        return createProvider(set, set.getSyncInfoSet());
     }
     
     /*
@@ -419,7 +363,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 	        checkedInCollector.dispose();
         }
         if (activeCollector != null) {
-            activeCollector.getActiveChangeSetManager().removeListener(activeChangeSetListener);
+            activeCollector.dispose();
         }
         super.dispose();
     }
@@ -443,7 +387,7 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
 		}
     }
     
-    private void removeModelElementForSet(final ChangeSet set) {
+    void removeModelElementForSet(final ChangeSet set) {
         ISynchronizeModelElement node = getModelElement(set);
         if (node != null) {
             ISynchronizeModelProvider provider = getProviderRootedAt(node);
@@ -468,13 +412,20 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
             provider = getProviderRootedAt(node);
         }
         if (provider == null) {
-            provider = createActiveChangeSetProvider(set, activeCollector.getSyncInfoSet(set));
+            provider = createProvider(set, activeCollector.getSyncInfoSet(set));
         }
         provider.prepareInput(null);
     }
     
-    private ISynchronizeModelProvider createActiveChangeSetProvider(ChangeSet set, SyncInfoTree tree) {
+    private ISynchronizeModelProvider createProvider(ChangeSet set, SyncInfoTree tree) {
         ChangeSetDiffNode node = new ChangeSetDiffNode(getModelRoot(), set);
         return createProviderRootedAt(node, tree);
+    }
+
+    public void refreshLabel(ChangeSet set) {
+        ISynchronizeModelElement node = getModelElement(set);
+        if (node != null) {
+            getViewer().refresh(node);
+        }
     }
 }

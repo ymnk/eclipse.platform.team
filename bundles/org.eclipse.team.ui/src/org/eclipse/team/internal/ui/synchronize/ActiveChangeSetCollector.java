@@ -10,16 +10,24 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.subscribers.ChangeSet;
+import org.eclipse.team.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.core.subscribers.SubscriberChangeSetCollector;
-import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 /**
@@ -42,9 +50,56 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 
     private final ChangeSetModelProvider provider;
 
+    private IChangeSetChangeListener activeChangeSetListener = new IChangeSetChangeListener() {
+
+        public void setAdded(final ChangeSet set) {
+            provider.runViewUpdate(new Runnable() {
+                public void run() {
+                    // Remove any resources that are in the new set
+                    remove(set.getResources());
+                    provider.createActiveChangeSetModelElement(set);
+                }
+            });
+
+        }
+        
+        public void defaultSetChanged(final ChangeSet previousDefault, final ChangeSet set) {
+            provider.runViewUpdate(new Runnable() {
+                public void run() {
+		            // Refresh the label for both of the sets involved
+		            provider.refreshLabel(previousDefault);
+		            provider.refreshLabel(set);
+                }
+            });
+        }
+        
+        public void setRemoved(final ChangeSet set) {
+            provider.runViewUpdate(new Runnable() {
+                public void run() {
+                    provider.removeModelElementForSet(set);
+		            remove(set);
+                }
+            });
+        }
+
+        public void nameChanged(final ChangeSet set) {
+            provider.runViewUpdate(new Runnable() {
+                public void run() {
+                    provider.refreshLabel(set);
+                }
+            });
+        }
+
+        public void resourcesChanged(final ChangeSet set, final IResource[] resources) {
+            // Changes are handled by the sets themselves.
+        }
+        
+    };
+    
     public ActiveChangeSetCollector(ISynchronizePageConfiguration configuration, ChangeSetModelProvider provider) {
         this.configuration = configuration;
         this.provider = provider;
+        getActiveChangeSetManager().addListener(activeChangeSetListener);
     }
 
     public ISynchronizePageConfiguration getConfiguration() {
@@ -72,7 +127,10 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
         activeSets.clear();
         
         // Now repopulate
-        if (seedSet != null) {
+        if (seedSet == null) {
+            getActiveChangeSetManager().removeListener(activeChangeSetListener);
+        } else {
+            getActiveChangeSetManager().addListener(activeChangeSetListener);
             provider.createActiveChangeSetModelElements();
             add(seedSet.getSyncInfos());
         }
@@ -261,5 +319,9 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
      */
     public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
         // Errors are not injected into the active change sets
+    }
+
+    public void dispose() {
+        getActiveChangeSetManager().removeListener(activeChangeSetListener);
     }
 }
