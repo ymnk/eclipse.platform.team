@@ -30,7 +30,7 @@ public class MergeSynchronizeAdvisor extends CVSSynchronizeViewerAdvisor {
 	private DirectionFilterActionGroup modes;
 	private ActionDelegateWrapper updateAdapter;
 	
-	public MergeSynchronizeAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+	public MergeSynchronizeAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		super(configuration, syncInfoTree);		
 	}
 		
@@ -42,14 +42,14 @@ public class MergeSynchronizeAdvisor extends CVSSynchronizeViewerAdvisor {
 		
 		SubscriberParticipant p = getParticipant();
 		removeAction = new RemoveSynchronizeParticipantAction(p);
-		SubscriberConfiguration configuration = getConfiguration();
-		configuration.setSupportedModes(SubscriberConfiguration.INCOMING_MODE | SubscriberConfiguration.CONFLICTING_MODE);
+		SubscriberPageConfiguration configuration = getConfiguration();
+		configuration.setSupportedModes(SubscriberPageConfiguration.INCOMING_MODE | SubscriberPageConfiguration.CONFLICTING_MODE);
 		modes = new DirectionFilterActionGroup(configuration);
 		MergeUpdateAction action = new MergeUpdateAction();
 		action.setPromptBeforeUpdate(true);
 		updateAdapter = new ActionDelegateWrapper(action, getSynchronizeView());
 		Utils.initAction(updateAdapter, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
-		configuration.setMode(SubscriberConfiguration.INCOMING_MODE);
+		configuration.setMode(SubscriberPageConfiguration.INCOMING_MODE);
 	}
 	
 	/* (non-Javadoc)

@@ -31,7 +31,7 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberConfiguration;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberPageConfiguration;
 import org.eclipse.ui.*;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
@@ -377,13 +377,13 @@ public class Utils {
 
 	public static String modeToString(int mode) {
 		switch (mode) {
-			case SubscriberConfiguration.INCOMING_MODE :
+			case SubscriberPageConfiguration.INCOMING_MODE :
 				return Policy.bind("Utils.22"); //$NON-NLS-1$
-			case SubscriberConfiguration.OUTGOING_MODE :
+			case SubscriberPageConfiguration.OUTGOING_MODE :
 				return Policy.bind("Utils.23"); //$NON-NLS-1$
-			case SubscriberConfiguration.BOTH_MODE :
+			case SubscriberPageConfiguration.BOTH_MODE :
 				return Policy.bind("Utils.24"); //$NON-NLS-1$
-			case SubscriberConfiguration.CONFLICTING_MODE :
+			case SubscriberPageConfiguration.CONFLICTING_MODE :
 				return Policy.bind("Utils.25"); //$NON-NLS-1$
 		}
 		return Policy.bind("Utils.26"); //$NON-NLS-1$

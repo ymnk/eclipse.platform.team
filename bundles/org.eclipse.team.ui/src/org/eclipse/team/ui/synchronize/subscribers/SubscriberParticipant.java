@@ -87,16 +87,16 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @see org.eclipse.team.ui.sync.ISynchronizeViewPage#createPage(org.eclipse.team.ui.sync.ISynchronizeView)
 	 */
 	public final IPageBookViewPage createPage(ISynchronizePageConfiguration configuration) {
-		Assert.isTrue(configuration instanceof SubscriberConfiguration);
+		Assert.isTrue(configuration instanceof SubscriberPageConfiguration);
 		validateConfiguration(configuration);
-		return new SubscriberParticipantPage((SubscriberConfiguration)configuration);
+		return new SubscriberParticipantPage((SubscriberPageConfiguration)configuration);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPageConfiguration()
 	 */
 	public final ISynchronizePageConfiguration createPageConfiguration() {
-		SubscriberConfiguration configuration = new SubscriberConfiguration(this);
+		SubscriberPageConfiguration configuration = new SubscriberPageConfiguration(this);
 		initializeConfiguration(configuration);
 		return configuration;
 	}
@@ -235,7 +235,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * Returns the viewer advisor which will be used to configure the display of the participant.
 	 * @return
 	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		return new TreeViewerAdvisor(configuration, syncInfoTree);
 	}
 	

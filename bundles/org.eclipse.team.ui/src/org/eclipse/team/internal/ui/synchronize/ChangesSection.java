@@ -112,7 +112,7 @@ public class ChangesSection extends Composite {
 			calculateDescription();
 		}
 	};
-	private SubscriberConfiguration configuration;
+	private SubscriberPageConfiguration configuration;
 	
 	/**
 	 * Create a changes section on the following page.
@@ -120,7 +120,7 @@ public class ChangesSection extends Composite {
 	 * @param parent the parent control 
 	 * @param page the page showing this section
 	 */
-	public ChangesSection(Composite parent, SubscriberParticipantPage page, SubscriberConfiguration configuration) {
+	public ChangesSection(Composite parent, SubscriberParticipantPage page, SubscriberPageConfiguration configuration) {
 		super(parent, SWT.NONE);
 		this.page = page;
 		this.configuration = configuration;
@@ -237,7 +237,7 @@ public class ChangesSection extends Composite {
 		
 		if(changesInFilter == 0 && changesInWorkingSet != 0) {
 			int mode = configuration.getMode();
-			final int newMode = outgoingChanges != 0 ? SubscriberConfiguration.OUTGOING_MODE : SubscriberConfiguration.INCOMING_MODE;
+			final int newMode = outgoingChanges != 0 ? SubscriberPageConfiguration.OUTGOING_MODE : SubscriberPageConfiguration.INCOMING_MODE;
 			long numChanges = outgoingChanges != 0 ? outgoingChanges : incomingChanges;
 			StringBuffer text = new StringBuffer();
 			text.append(Policy.bind("ChangesSection.filterHides", Utils.modeToString(configuration.getMode()))); //$NON-NLS-1$

@@ -26,6 +26,18 @@ public interface ISynchronizePageConfiguration {
 	public static final String P_MODEL = TeamUIPlugin.ID  + ".P_MODEL"; //$NON-NLS-1$
 	
 	/**
+	 * The configuration property that defines the label provider 
+	 * that is used by the page's viewer. Clients
+	 * who wish to add custom labels should obtain any 
+	 * previously registered provider using <code>getProperty(P_LABEL_PROVIDER)</code>
+	 * and wrap the returned provider (which is an instance of
+	 * <code>ILabelProvider</code>).
+	 * 
+	 * TODO: Should this be a decorator?
+	 */
+	public static final String P_LABEL_PROVIDER = TeamUIPlugin.ID  + ".P_LABEL_PROVIDER"; //$NON-NLS-1$
+	
+	/**
 	 * The configuration property that defines
 	 * the groups in the toolbar menu of the page. The value for this
 	 * property should be a string array.
@@ -47,6 +59,20 @@ public interface ISynchronizePageConfiguration {
 	 */
 	public static final String P_OBJECT_CONTRIBUTION_ID = TeamUIPlugin.ID +  ".P_OBJECT_CONTRIBUTION_ID"; //$NON-NLS-1$
 	
+	/**
+	 * The configuration property that opens the current selection in the
+	 * page. The registered <code>IAction</code> is invoked on a single or
+	 * double click depending on the open strategy chosen by the user.
+	 */
+	public static final String P_OPEN_ACTION = TeamUIPlugin.ID + ".P_OPEN_ACTION"; //$NON-NLS-1$
+
+	/**
+	 * Property constant for the working set used to filter the visible
+	 * elements of the model. The value can be any <code>IWorkingSet</code>
+	 * or <code>null</code>;
+	 */
+	public static final String P_WORKING_SET = TeamUIPlugin.ID + ".P_WORKING_SET"; //$NON-NLS-1$
+
 	/**
 	 * The id of the synchronize group the determines where the synchronize 
 	 * actions appear.
@@ -97,6 +123,8 @@ public interface ISynchronizePageConfiguration {
 	public abstract ISynchronizeParticipant getParticipant();
 	
 	public abstract ISynchronizePageSite getSite();
+	
+	public StructuredViewerAdvisor getAdvisor();
 
 	public abstract void addPropertyChangeListener(IPropertyChangeListener listener);
 

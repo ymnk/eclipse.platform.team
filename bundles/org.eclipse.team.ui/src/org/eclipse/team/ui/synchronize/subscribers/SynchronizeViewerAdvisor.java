@@ -23,9 +23,9 @@ public class SynchronizeViewerAdvisor extends TreeViewerAdvisor {
 
 	private ISynchronizeView view;
 	private SubscriberParticipant participant;
-	private SubscriberConfiguration configuration;
+	private SubscriberPageConfiguration configuration;
 
-	public SynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+	public SynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		super(configuration.getParticipant().getId(), configuration.getPart().getSite(), syncInfoTree);
 		this.configuration = configuration;
 		this.view = view;
@@ -36,7 +36,7 @@ public class SynchronizeViewerAdvisor extends TreeViewerAdvisor {
 		return participant;
 	}
 	
-	protected SubscriberConfiguration getConfiguration() {
+	protected SubscriberPageConfiguration getConfiguration() {
 		return configuration;
 	}
 

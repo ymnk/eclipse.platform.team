@@ -16,11 +16,6 @@ import org.eclipse.ui.IActionBars;
 
 public interface IActionContribution {
 	
-	// Contants used to identify customizable menu areas
-	public static final String FILE_MENU = "File"; //$NON-NLS-1$
-	public static final String EDIT_MENU = "Edit"; //$NON-NLS-1$
-	public static final String NAVIGATE_MENU = "Navigate"; //$NON-NLS-1$
-	
 	/**
 	 * Initialize the actions of this contribution.
 	 * This method will be invoked once before any calls are

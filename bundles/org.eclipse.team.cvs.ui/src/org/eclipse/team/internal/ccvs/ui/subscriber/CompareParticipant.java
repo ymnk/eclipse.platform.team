@@ -40,7 +40,7 @@ public class CompareParticipant extends SubscriberParticipant {
 	private class CompareParticipantAdvisor extends CVSSynchronizeViewerAdvisor {
 		private RemoveSynchronizeParticipantAction removeAction;
 		
-		public CompareParticipantAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+		public CompareParticipantAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 			super(configuration, syncInfoTree);
 		}
 		
@@ -114,7 +114,7 @@ public class CompareParticipant extends SubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#createSynchronizeViewerAdvisor(org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		return new CompareParticipantAdvisor(configuration, syncInfoTree);
 	}
 	

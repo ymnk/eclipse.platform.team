@@ -129,6 +129,7 @@ public abstract class StructuredViewerAdvisor {
 	public StructuredViewerAdvisor(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
 		this.configuration = configuration;
 		this.set = set;
+		((SynchronizePageConfiguration)configuration).setAdvisor(this);
 	}
 		
 	/**
@@ -368,7 +369,11 @@ public abstract class StructuredViewerAdvisor {
 	}
 	
 	private void handleOpen() {
-		// TODO: Invoke an open callbak on the configuration
+		Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_OPEN_ACTION);
+		if (o instanceof IAction) {
+			IAction action = (IAction)o;
+			action.run();
+		}
 	}
 	
 	/**
@@ -426,7 +431,6 @@ public abstract class StructuredViewerAdvisor {
 		return new BaseWorkbenchContentProvider();
 	}
 
-
 	/**
 	 * Get the label provider that will be assigned to the viewer initialized
 	 * by this configuration. Subclass may override but should either wrap the
@@ -439,6 +443,10 @@ public abstract class StructuredViewerAdvisor {
 	 * @see SynchronizeModelElementLabelProvider
 	 */
 	protected ILabelProvider getLabelProvider() {
+		Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_LABEL_PROVIDER);
+		if (o instanceof ILabelProvider) {
+			return (ILabelProvider)o;
+		}
 		return new SynchronizeModelElementLabelProvider();
 	}
 
@@ -469,5 +477,11 @@ public abstract class StructuredViewerAdvisor {
 			});
 		}
 		viewer.setInput(modelProvider.getModelRoot());
+	}
+	/**
+	 * @return Returns the configuration.
+	 */
+	public ISynchronizePageConfiguration getConfiguration() {
+		return configuration;
 	}
 }

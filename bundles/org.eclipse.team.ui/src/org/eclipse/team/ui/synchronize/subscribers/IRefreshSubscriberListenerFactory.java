@@ -13,7 +13,6 @@ package org.eclipse.team.ui.synchronize.subscribers;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.ui.synchronize.*;
 
 /**
  * A factory which provides standard listeners to subscriber refresh operations. These

@@ -53,7 +53,7 @@ public class CVSSynchronizeViewerAdvisor extends SynchronizeViewerAdvisor implem
 		}
 	}
 	
-	public CVSSynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+	public CVSSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		super(configuration, syncInfoTree);
 		
 		// Sync changes are used to update the action state for the update/commit buttons.

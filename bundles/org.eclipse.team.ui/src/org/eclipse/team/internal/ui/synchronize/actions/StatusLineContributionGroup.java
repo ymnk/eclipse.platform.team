@@ -23,7 +23,8 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.SubscriberParticipantPage;
 import org.eclipse.team.ui.ISharedImages;
-import org.eclipse.team.ui.synchronize.subscribers.SubscriberConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberPageConfiguration;
 import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkingSet;
@@ -48,16 +49,16 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	private Image outgoingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_OUTGOING).createImage();
 	private Image conflictingImage = TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_DLG_SYNC_CONFLICTING).createImage();
 	
-	private SubscriberConfiguration configuration;
+	private SubscriberPageConfiguration configuration;
 	private SubscriberParticipantPage page;
 
-	public StatusLineContributionGroup(final Shell shell, SubscriberParticipantPage page, SubscriberConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
+	public StatusLineContributionGroup(final Shell shell, SubscriberParticipantPage page, SubscriberPageConfiguration configuration, final WorkingSetFilterActionGroup setGroup) {
 		super();
 		this.page = page;
 		this.configuration = configuration;
-		this.incoming = createStatusLineContribution(INCOMING_ID, SubscriberConfiguration.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
-		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberConfiguration.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
-		this.conflicting = createStatusLineContribution(CONFLICTING_ID, SubscriberConfiguration.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
+		this.incoming = createStatusLineContribution(INCOMING_ID, SubscriberPageConfiguration.INCOMING_MODE, "0", incomingImage); //$NON-NLS-1$
+		this.outgoing = createStatusLineContribution(OUTGOING_ID, SubscriberPageConfiguration.OUTGOING_MODE, "0", outgoingImage); //$NON-NLS-1$
+		this.conflicting = createStatusLineContribution(CONFLICTING_ID, SubscriberPageConfiguration.CONFLICTING_MODE, "0", conflictingImage); //$NON-NLS-1$
 		
 		this.totalChanges = new StatusLineCLabelContribution(TOTALS_ID, TEXT_FIELD_MAX_SIZE);
 		this.workingSet = new StatusLineCLabelContribution(WORKINGSET_ID, TEXT_FIELD_MAX_SIZE);
@@ -118,7 +119,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 
 	public void propertyChange(PropertyChangeEvent event) {
-		if (event.getProperty().equals(SubscriberConfiguration.P_SYNCVIEWPAGE_WORKINGSET)) {	
+		if (event.getProperty().equals(ISynchronizePageConfiguration.P_WORKING_SET)) {	
 			updateWorkingSetText((IWorkingSet)event.getNewValue());
 			updateCounts();
 		}

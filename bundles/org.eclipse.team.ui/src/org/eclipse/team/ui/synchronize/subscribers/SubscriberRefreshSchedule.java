@@ -2,7 +2,6 @@ package org.eclipse.team.ui.synchronize.subscribers;
 
 import java.text.DateFormat;
 import java.util.Date;
-
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
@@ -10,7 +9,6 @@ import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicy;
-import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IMemento;
 
 /**

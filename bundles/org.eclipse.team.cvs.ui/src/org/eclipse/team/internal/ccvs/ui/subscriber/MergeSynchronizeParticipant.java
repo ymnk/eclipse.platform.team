@@ -47,7 +47,7 @@ public class MergeSynchronizeParticipant extends SubscriberParticipant {
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant#createSynchronizeViewerAdvisor(org.eclipse.team.ui.synchronize.ISynchronizeView)
 	 */
-	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberConfiguration configuration, SyncInfoTree syncInfoTree) {
+	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
 		return new MergeSynchronizeAdvisor(configuration, syncInfoTree);
 	}
 	

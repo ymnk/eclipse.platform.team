@@ -60,7 +60,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	private static final String STORE_MODE = "SubscriberParticipantPage.STORE_MODE"; //$NON-NLS-1$
 	
 	private IDialogSettings settings;
-	private SubscriberConfiguration configuration;
+	private SubscriberPageConfiguration configuration;
 	
 	// Parent composite of this view. It is remembered so that we can dispose of its children when 
 	// the viewer type is switched.
@@ -86,7 +86,7 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	/**
 	 * Constructs a new SynchronizeView.
 	 */
-	public SubscriberParticipantPage(SubscriberConfiguration configuration) {
+	public SubscriberParticipantPage(SubscriberPageConfiguration configuration) {
 		this.participant = (SubscriberParticipant)configuration.getParticipant();
 		IDialogSettings viewsSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		

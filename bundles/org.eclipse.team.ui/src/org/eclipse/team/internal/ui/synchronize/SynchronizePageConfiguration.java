@@ -31,11 +31,12 @@ import org.eclipse.ui.internal.PluginAction;
  */
 public abstract class SynchronizePageConfiguration implements ISynchronizePageConfiguration {
 
-	ISynchronizeParticipant participant;
-	ISynchronizePageSite site;
-	ListenerList propertyChangeListeners = new ListenerList();
-	ListenerList actionContributions = new ListenerList();
-	Map properties = new HashMap();
+	private ISynchronizeParticipant participant;
+	private ISynchronizePageSite site;
+	private ListenerList propertyChangeListeners = new ListenerList();
+	private ListenerList actionContributions = new ListenerList();
+	private Map properties = new HashMap();
+	private StructuredViewerAdvisor advisor;
 	
 	/**
 	 * Create a configuration for creating a page from the given particpant.
@@ -46,6 +47,8 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 		setProperty(P_OBJECT_CONTRIBUTION_ID, participant.getId());
 		setProperty(P_CONTEXT_MENU, DEFAULT_CONTEXT_MENU);
 		setProperty(P_TOOLBAR_MENU, DEFAULT_TOOLBAR_MENU);
+		setProperty(P_LABEL_PROVIDER, new SynchronizeModelElementLabelProvider());
+		addActionContribution(new SynchronizePageActions());
 	}
 	
 	/* (non-Javadoc)
@@ -69,6 +72,17 @@ public abstract class SynchronizePageConfiguration implements ISynchronizePageCo
 	 */
 	public void setSite(ISynchronizePageSite site) {
 		this.site = site;
+	}
+	
+	public StructuredViewerAdvisor getAdvisor() {
+		return advisor;
+	}
+	
+	/**
+	 * @param advisor
+	 */
+	public void setAdvisor(StructuredViewerAdvisor advisor) {
+		this.advisor = advisor;
 	}
 	
 	/* (non-Javadoc)

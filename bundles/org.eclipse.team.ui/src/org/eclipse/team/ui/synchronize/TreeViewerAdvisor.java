@@ -10,17 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import javax.print.attribute.SupportedValuesAttribute;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.synchronize.*;
-import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchSite;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
 /**
@@ -46,7 +43,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	 * selections and navigate.
 	 */
 	public interface ITreeViewerAccessor {
-
 		public void createChildren(TreeItem item);
 		public void openSelection();
 	}
@@ -86,8 +82,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 			fireOpen(new OpenEvent(this, getSelection()));
 		}
 	}
-	
-	//private ExpandAllAction expandAllAction;
 
 	/**
 	 * Create an advisor that will allow viewer contributions with the given <code>targetID</code>. This
@@ -99,26 +93,8 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	 * case a site will be found using the default workbench page.
 	 * @param set the set of <code>SyncInfo</code> objects that are to be shown to the user.
 	 */
-	public TreeViewerAdvisor(String menuId, IWorkbenchPartSite site, SyncInfoTree set) {
-		super(menuId,site, set);
-	}
-	
-	/**
-	 * Create a tree viewer advisor that will provide a presentation model based on the given 
-	 * sync info set. Note that it's important to call {@link #dispose()} when finished with 
-	 * an advisor.
-	 * 
-	 * @param set the set of <code>SyncInfo</code> objects that are to be shown to the user.
-	 */
-	public TreeViewerAdvisor(SyncInfoTree set) {
-		this(null, null, set);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#dispose()
-	 */
-	public void dispose() {
-		super.dispose();
+	public TreeViewerAdvisor(ISynchronizePageConfiguration configuration, SyncInfoTree set) {
+		super(configuration, set);
 	}
 	
 	/* (non-Javadoc)
@@ -133,14 +109,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 	 */
 	public boolean validateViewer(StructuredViewer viewer) {
 		return viewer instanceof AbstractTreeViewer;
-	}
-		
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#fillContextMenu(org.eclipse.jface.viewers.StructuredViewer, org.eclipse.jface.action.IMenuManager)
-	 */
-	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
-		manager.add(expandAllAction);
-		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
 	/* (non-Javadoc)
@@ -185,15 +153,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor {
 			}
 		}
 		return true;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#initializeActions(org.eclipse.jface.viewers.StructuredViewer)
-	 */
-	protected void initializeActions(StructuredViewer viewer) {
-		super.initializeActions(viewer);
-		expandAllAction = new ExpandAllAction((AbstractTreeViewer) viewer);
-		Utils.initAction(expandAllAction, "action.expandAll."); //$NON-NLS-1$
 	}
 	
 	/* (non-Javadoc)

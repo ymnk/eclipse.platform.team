@@ -15,7 +15,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.ConfigureSynchronizeScheduleComposite;
 import org.eclipse.team.internal.ui.synchronize.IPageValidator;
-import org.eclipse.team.ui.synchronize.*;
 
 /**
  * Wizard page that allows configuration a synchronize schedule for a subscriber participant.
