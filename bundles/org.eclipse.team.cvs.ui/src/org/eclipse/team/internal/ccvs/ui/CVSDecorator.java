@@ -30,7 +30,6 @@ import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.ccvs.core.IResourceStateChangeListener;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.internal.ccvs.core.util.ResourceDeltaVisitor;
 import org.eclipse.ui.internal.DecoratorDefinition;
 import org.eclipse.ui.internal.DecoratorManager;
@@ -319,7 +318,7 @@ public class CVSDecorator extends LabelProvider implements ILabelDecorator, IRes
 	 * will be ignored by the decorator.
 	 */
 	private static CVSTeamProvider getCVSProviderFor(IResource resource) {
-		RepositoryProvider p = RepositoryProviderType.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
+		RepositoryProvider p = RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
 		if (p == null) {
 			return null;
 		}

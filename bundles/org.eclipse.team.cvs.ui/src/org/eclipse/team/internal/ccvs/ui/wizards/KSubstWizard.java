@@ -28,13 +28,10 @@ import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.team.ccvs.core.CVSStatus;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
-import org.eclipse.ui.internal.IWorkbenchConstants;
-import org.eclipse.ui.internal.IWorkbenchGraphicConstants;
 
 /**
  * A wizard for changing the keyword substitution mode of files.
@@ -296,7 +293,7 @@ public class KSubstWizard extends Wizard {
 			IFile file = (IFile) entry.getKey();
 			KSubstOption toKSubst = (KSubstOption) entry.getValue();
 			// classify file according to its provider
-			RepositoryProvider provider = RepositoryProviderType.getProvider(file.getProject());
+			RepositoryProvider provider = RepositoryProvider.getProvider(file.getProject());
 			Map providerMap = (Map) table.get(provider);
 			if (providerMap == null) {
 				providerMap = new HashMap();

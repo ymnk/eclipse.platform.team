@@ -64,7 +64,7 @@ import org.eclipse.team.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.ccvs.core.ILogEntry;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.RepositoryProviderType;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.CVSCompareRevisionsInput.HistoryLabelProvider;
@@ -640,7 +640,7 @@ public class HistoryView extends ViewPart implements ISelectionListener {
 		if (resource instanceof IFile) {
 			IFile file = (IFile)resource;
 			this.file = file;
-			RepositoryProvider teamProvider = RepositoryProviderType.getProvider(file.getProject(), CVSProviderPlugin.getTypeId());
+			RepositoryProvider teamProvider = RepositoryProvider.getProvider(file.getProject(), CVSProviderPlugin.getTypeId());
 			if (teamProvider != null) {
 				this.provider = (CVSTeamProvider)teamProvider;
 				try {

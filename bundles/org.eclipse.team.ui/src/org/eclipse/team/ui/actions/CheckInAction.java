@@ -16,7 +16,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.simpleAccess.SimpleAccessOperations;
 import org.eclipse.team.internal.ui.Policy;
@@ -61,7 +60,7 @@ public class CheckInAction extends TeamAction {
 		if (resources.length == 0) return false;
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
-			RepositoryProvider provider = RepositoryProviderType.getProvider(resource.getProject());
+			RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
 			SimpleAccessOperations ops = provider.getSimpleAccess();
 			if (provider == null || ops == null) return false;
 			if (!ops.isCheckedOut(resource)) return false;

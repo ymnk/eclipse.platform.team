@@ -12,12 +12,8 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.resources.team.IResourceTree;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.DefaultMoveDeleteHook;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.RepositoryProviderType;
-import org.eclipse.team.core.TeamPlugin;
 
 public class MoveDeleteManager implements IMoveDeleteHook {
 
@@ -25,8 +21,7 @@ public class MoveDeleteManager implements IMoveDeleteHook {
 	
 	private IMoveDeleteHook getHookFor(IResource resource) {
 		IProject project = resource.getProject();
-		RepositoryProvider provider;
-		provider = RepositoryProviderType.getProvider(project);
+		RepositoryProvider provider = RepositoryProvider.getProvider(project);
 		if(provider==null) {
 			return DEFAULT_HOOK; 
 		}

@@ -1,9 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2002 IBM Corporation and others.
+ * All rights reserved.   This program and the accompanying materials
+ * are made available under the terms of the Common Public License v0.5
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v05.html
+ * 
+ * Contributors:
+ * IBM - Initial API and implementation
+ ******************************************************************************/
 package org.eclipse.team.internal.simpleAccess;
-
-/*
- * (c) Copyright 2001 MyCorporation.
- * All Rights Reserved.
- */
 
 import org.eclipse.team.core.*;
 import org.eclipse.core.resources.IFile;
@@ -12,25 +17,23 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 
-	/*
-	 * This class represents provisional API.  Its here to allow experimentation with 3rd party tools
-	 * calling providers in a repository neutral manner.
-	 * 
-	 * A provider is not required to implement this API.
-	 * Implementers, and those who reference it, do so with the awareness that this class may be
-	 * removed or substantially changed at future times without warning.
- 	 * 
-	 * The <code>SimpleAccessOperations</code> class exposes a basic repository model that
-	 * providers may implement to allow third-party plugins to perform repository operations
-	 * programmatically. For example, a code generation tool may want to get source
-	 * files before generating the code, and check-in the results.  If a provider plugin does
-	 * not adhere to the <i>semantics</i> of the <code>SimpleAccessOperations</code> class
-	 * as described, they are free to opt out of implementing it.
-	 */
-
+/*
+ * This class represents provisional API.  Its here to allow experimentation with 3rd party tools
+ * calling providers in a repository neutral manner.
+ * 
+ * A provider is not required to implement this API.
+ * Implementers, and those who reference it, do so with the awareness that this class may be
+ * removed or substantially changed at future times without warning.
+ * 
+ * The <code>SimpleAccessOperations</code> class exposes a basic repository model that
+ * providers may implement to allow third-party plugins to perform repository operations
+ * programmatically. For example, a code generation tool may want to get source
+ * files before generating the code, and check-in the results.  If a provider plugin does
+ * not adhere to the <i>semantics</i> of the <code>SimpleAccessOperations</code> class
+ * as described, they are free to opt out of implementing it.
+ */
 public interface SimpleAccessOperations {
-	
-	/**
+	/*
 	 * Updates the local resource to have the same content as the corresponding remote
 	 * resource. Where the local resource does not exist, this method will create it.
 	 * <p>
@@ -61,7 +64,7 @@ public interface SimpleAccessOperations {
 	 */
 	public void get(IResource[] resources, int depth, IProgressMonitor progress) throws TeamException;
 
-	/**
+	/*
 	 * Changes the state of the local resource from checked-in to checked-out and transfers the content
 	 * of the remote resource to the local resource.
 	 * <p>
@@ -95,7 +98,7 @@ public interface SimpleAccessOperations {
 	 */
 	public void checkout(IResource[] resources, int depth, IProgressMonitor progress) throws TeamException;
 
-	/**
+	/*
 	 * Transfers the content of the local resource to the corresponding remote resource, and changes the
 	 * state of the local resource from checked-out to checked-in.
 	 * <p>
@@ -128,7 +131,7 @@ public interface SimpleAccessOperations {
 	 */
 	public void checkin(IResource[] resources, int depth, IProgressMonitor progress) throws TeamException;
 
-	/**
+	/*
 	 * Changes the state of the local resource from checked-out to checked-in without updating the contents
 	 * of the remote resource.
 	 * <p>
@@ -160,7 +163,7 @@ public interface SimpleAccessOperations {
 	 */
 	public void uncheckout(IResource[] resources, int depth, IProgressMonitor progress) throws TeamException;
 
-	/**
+	/*
 	 * Deletes the remote resource corresponding to the given local resource.
 	 * <p>
 	 * The notion of delete is simply to make the remote resource unavailable.  Where the provider
@@ -190,7 +193,7 @@ public interface SimpleAccessOperations {
 	 */
 	public void delete(IResource[] resources, IProgressMonitor progress) throws TeamException;
 
-	/**
+	/*
 	 * Informs the provider that a local resource's name or path has changed.
 	 * <p>
 	 * Some providers, such as versioning providers, may require this information to track the resource
@@ -223,7 +226,7 @@ public interface SimpleAccessOperations {
 	 * interface in the future to better reflect their UI-orientation.
 	 */
 
-	/**
+	/*
 	 * Answers if the remote resource state is checked-out. If the resource has never been checked in this
 	 * method will return <code>true</code>.
 	 * <p>
@@ -233,11 +236,10 @@ public interface SimpleAccessOperations {
 	 * @param resource the local resource to test.
 	 * @return <code>true</code> if the resource is checked-out and <code>false</code> if it is not.
 	 * @see checkout(IResource[], int, IProgressMonitor)
-	 * @see refreshState(IResource[], int, IProgressMonitor)
 	 */
 	public boolean isCheckedOut(IResource resource);
 	
-	/**
+	/*
 	 * Answers whether the resource has a corresponding remote resource.
 	 * <p>
 	 * Before a resource is checked-in, the resource will occur locally but not remotely, and calls to this
@@ -253,7 +255,7 @@ public interface SimpleAccessOperations {
 	 */
 	public boolean hasRemote(IResource resource);
 
-	/**
+	/*
 	 * Answer if the local resource currently has a different timestamp to the base timestamp
 	 * for this resource.
 	 * 
