@@ -93,18 +93,21 @@ public class TestDiffNodePresentationModel extends TeamTest {
 		
 	private void adjustSet(SyncInfoSet set, IProject project, String[] resourceStrings, int[] syncKind) throws TeamException {
 		IResource[] resources = buildResources(project, resourceStrings);
-		set.beginInput();
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			int kind = syncKind[i];
-			if (kind == SyncInfo.IN_SYNC) {
-				set.remove(resource);
-			} else {
-				SyncInfo newInfo = new TestSyncInfo(resource, kind);
-				set.add(newInfo);
+		try {
+			set.beginInput();
+			for (int i = 0; i < resources.length; i++) {
+				IResource resource = resources[i];
+				int kind = syncKind[i];
+				if (kind == SyncInfo.IN_SYNC) {
+					set.remove(resource);
+				} else {
+					SyncInfo newInfo = new TestSyncInfo(resource, kind);
+					set.add(newInfo);
+				}
 			}
+		} finally {
+			set.endInput(null);
 		}
-		set.endInput(null);
 	}
 
 	/**

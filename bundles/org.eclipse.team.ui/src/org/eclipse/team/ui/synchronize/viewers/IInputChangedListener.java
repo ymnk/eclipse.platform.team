@@ -22,7 +22,7 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
  */
 public interface IInputChangedListener {
 	/**
-	 * Called whenever the input model showed in a diff node viewer is updated.
+	 * Called whenever the input model shown in a diff node viewer is updated.
 	 *
 	 * @param input the root <code>DiffNode</code> of the model.
 	 */

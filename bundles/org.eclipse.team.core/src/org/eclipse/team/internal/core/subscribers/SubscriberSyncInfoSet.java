@@ -39,7 +39,7 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 		this.handler = handler;
 	}	
 
-	public void run(final IWorkspaceRunnable runnable, IProgressMonitor monitor) throws CoreException {
+	public void run(final IWorkspaceRunnable runnable, IProgressMonitor monitor) {
 		if (handler == null) {
 			super.run(runnable, monitor);
 		} else {
@@ -47,8 +47,8 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 				public void run(IProgressMonitor monitor) throws CoreException {
 					// Perform a beginInput to ensure no modifications are performed on the set
 					// while the runnable is being run in the background job
-					beginInput();
 					try {
+						beginInput();
 						monitor.beginTask(null, 100);
 						runnable.run(Policy.subMonitorFor(monitor, 95));
 					} finally {
@@ -73,8 +73,8 @@ public class SubscriberSyncInfoSet extends SyncInfoTree {
 		} else {
 			handler.run(new IWorkspaceRunnable() {
 				public void run(IProgressMonitor monitor) {
-					beginInput();
 					try {
+						beginInput();
 						monitor.beginTask(null, 100);
 						removeSyncSetChangedListener(listener);
 						addSyncSetChangedListener(listener);

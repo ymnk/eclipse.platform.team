@@ -14,8 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -26,9 +25,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoFilter;
-import org.eclipse.team.internal.core.subscribers.SubscriberSyncInfoSet;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
@@ -48,7 +45,11 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
 	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
 	private SubscriberParticipant participant;
+	private SyncInfoTree syncInfoSet = new SyncInfoTree();
 	
+	/**
+	 * Create the dialog. The <code>initialize</code> methdo must be called to populate the dialog.
+	 */
 	public RefreshCompleteDialog(Shell parentShell, IRefreshEvent event, SubscriberParticipant participant) {
 		super(parentShell, Policy.bind("RefreshCompleteDialog.4", participant.getName())); //$NON-NLS-1$
 		this.participant = participant;
@@ -72,16 +73,24 @@ public class RefreshCompleteDialog extends DetailsDialog {
 			}
 		};
 		this.collector = new FilteredSyncInfoCollector(
-				participant.getSubscriberSyncInfoCollector(), 
-				(SubscriberSyncInfoSet)participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
+				participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet(), 
+				syncInfoSet, 
 				filter);
-		this.collector.start();
 		
 		IDialogSettings workbenchSettings = TeamUIPlugin.getPlugin().getDialogSettings();
 		this.settings = workbenchSettings.getSection("RefreshCompleteDialog");//$NON-NLS-1$
 		if (settings == null) {
 			this.settings = workbenchSettings.addNewSection("RefreshCompleteDialog");//$NON-NLS-1$
-		}	
+		}
+		
+		initialize();
+	}
+
+	/**
+	 * Populate the dialog with the new changes discovered during the refresh
+	 */
+	public void initialize() {
+		this.collector.start(new NullProgressMonitor());
 	}
 
 	/* (non-Javadoc)
@@ -177,7 +186,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	protected Composite createDropDownDialogArea(Composite parent) {
 		try {
 			CompareConfiguration compareConfig = new CompareConfiguration();
-			DiffTreeViewerConfiguration viewerAdvisor = new DiffTreeViewerConfiguration(participant.getId(), collector.getSyncInfoTree());
+			DiffTreeViewerConfiguration viewerAdvisor = new DiffTreeViewerConfiguration(participant.getId(), syncInfoSet);
 			compareEditorInput = new SyncInfoSetCompareInput(compareConfig, viewerAdvisor) {
 				public String getTitle() {
 					return "Resources found during last refresh";

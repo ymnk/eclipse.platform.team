@@ -55,14 +55,14 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	 */
 	public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
 		SyncInfoSet syncSet = getSyncSet();
-		syncSet.beginInput();
 		try {
+			syncSet.beginInput();
 			monitor.beginTask(null, 105);
 			syncSetChanged(event.getChangedResources(), Policy.subMonitorFor(monitor, 50));			
 			syncSetChanged(event.getAddedResources(), Policy.subMonitorFor(monitor, 50));
 			remove(event.getRemovedResources());
 		} finally {
-			getSyncSet().endInput(Policy.subMonitorFor(monitor, 5));
+			syncSet.endInput(Policy.subMonitorFor(monitor, 5));
 		}
 	}
 
@@ -87,13 +87,13 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	 */
 	public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
 		SyncInfoSet syncSet = getSyncSet();
-		syncSet.beginInput();
 		try {
+			syncSet.beginInput();
 			monitor.beginTask(null, 100);
 			syncSet.clear();
 			fetchInput(Policy.subMonitorFor(monitor, 95));
 		} finally {
-			getSyncSet().endInput(Policy.subMonitorFor(monitor, 5));
+			syncSet.endInput(Policy.subMonitorFor(monitor, 5));
 			monitor.done();
 		}
 		
@@ -104,8 +104,8 @@ public class SyncSetInputFromSyncSet extends SyncSetInput implements ISyncInfoSe
 	 */
 	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
 		SubscriberSyncInfoSet syncSet = getSyncSet();
-		syncSet.beginInput();
 		try {
+			syncSet.beginInput();
 			for (int i = 0; i < errors.length; i++) {
 				ITeamStatus status = errors[i];
 				syncSet.addError(status);

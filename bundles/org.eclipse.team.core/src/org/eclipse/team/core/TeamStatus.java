@@ -11,6 +11,7 @@
 package org.eclipse.team.core;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Status;
 
 public class TeamStatus extends Status implements ITeamStatus {
@@ -31,7 +32,11 @@ public class TeamStatus extends Status implements ITeamStatus {
 	 */
 	public TeamStatus(int severity, String pluginId, int code, String message, Throwable exception, IResource resource) {
 		super(severity, pluginId, code, message, exception);
-		this.resource = resource;
+		if (resource == null) {
+			this.resource = ResourcesPlugin.getWorkspace().getRoot();
+		} else {
+			this.resource = resource;
+		}
 	}
 	
 	/**

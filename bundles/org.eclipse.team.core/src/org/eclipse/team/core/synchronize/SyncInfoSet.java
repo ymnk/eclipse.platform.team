@@ -17,9 +17,9 @@ import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.core.ITeamStatus;
+import org.eclipse.team.core.TeamStatus;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter.SyncInfoDirectionFilter;
-import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.core.Policy;
+import org.eclipse.team.internal.core.*;
 import org.eclipse.team.internal.core.subscribers.SyncInfoStatistics;
 import org.eclipse.team.internal.core.subscribers.SyncSetChangedEvent;
 
@@ -195,8 +195,8 @@ public class SyncInfoSet {
 	 * Reset the sync set so it is empty.
 	 */
 	public void clear() {
-		beginInput();
 		try {
+			beginInput();
 			errors.clear();
 			resources.clear();
 			statistics.clear();
@@ -221,12 +221,14 @@ public class SyncInfoSet {
 	 * @param runnable a runnable
 	 * @param progress a progress monitor or <code>null</code>
 	 */
-	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) throws CoreException {
+	public void run(IWorkspaceRunnable runnable, IProgressMonitor monitor) {
 		monitor = Policy.monitorFor(monitor);
 		monitor.beginTask(null, 100);
-		beginInput();
 		try {
+			beginInput();
 			runnable.run(Policy.subMonitorFor(monitor, 80));
+		} catch (CoreException e) {
+			addError(new TeamStatus(IStatus.ERROR, TeamPlugin.ID, ITeamStatus.SYNC_INFO_SET_ERROR, "An internal error occurred", e, null));
 		} finally {
 			endInput(Policy.subMonitorFor(monitor, 20));
 		}
@@ -248,7 +250,7 @@ public class SyncInfoSet {
 	 * @param listener
 	 * @param monitor
 	 */
-	public void connect(final ISyncInfoSetChangeListener listener, IProgressMonitor monitor) throws CoreException {
+	public void connect(final ISyncInfoSetChangeListener listener, IProgressMonitor monitor) {
 		run(new IWorkspaceRunnable() {
 			public void run(IProgressMonitor monitor) {
 				try {
@@ -282,8 +284,8 @@ public class SyncInfoSet {
 	 * @param info
 	 */
 	public void add(SyncInfo info) {
-		beginInput();
 		try {
+			beginInput();
 			boolean alreadyExists = getSyncInfo(info.getLocal()) != null;
 			internalAdd(info);
 			if (alreadyExists) {
@@ -301,8 +303,8 @@ public class SyncInfoSet {
 	 * @param set the set whose sync info should be added to this set
 	 */
 	public void addAll(SyncInfoSet set) {
-		beginInput();
 		try {
+			beginInput();
 			SyncInfo[] infos = set.getSyncInfos();
 			for (int i = 0; i < infos.length; i++) {
 				add(infos[i]);
@@ -317,8 +319,8 @@ public class SyncInfoSet {
 	 * @param resource the local resource to remove
 	 */
 	public synchronized void remove(IResource resource) {
-		beginInput();
 		try {
+			beginInput();
 			SyncInfo info = internalRemove(resource);
 			getChangeEvent().removed(resource, info);
 		} finally {
@@ -331,8 +333,8 @@ public class SyncInfoSet {
 	 * @param resources the resources to be removed
 	 */
 	public void removeAll(IResource[] resources) {
-		beginInput();
 		try {
+			beginInput();
 			for (int i = 0; i < resources.length; i++) {
 				remove(resources[i]);			
 			}
@@ -383,8 +385,8 @@ public class SyncInfoSet {
 	 * @param filter a sync info filter
 	 */
 	public void selectNodes(FastSyncInfoFilter filter) {
-		beginInput();
 		try {
+			beginInput();
 			SyncInfo[] infos = getSyncInfos();
 			for (int i = 0; i < infos.length; i++) {
 				SyncInfo info = infos[i];
@@ -403,8 +405,8 @@ public class SyncInfoSet {
 	 * @param filter a sync info filter
 	 */
 	public void rejectNodes(FastSyncInfoFilter filter) {
-		beginInput();
 		try {
+			beginInput();
 			SyncInfo[] infos = getSyncInfos();
 			for (int i = 0; i < infos.length; i++) {
 				SyncInfo info = infos[i];
@@ -458,8 +460,8 @@ public class SyncInfoSet {
 	 * It is important that the lock is released after it is obtained. Calls to <code>endInput</code>
 	 * should be done in a finally block as illustrated in the following code snippet.
 	 * <pre>
-	 *   set.beginInput();
 	 *   try {
+	 *       set.beginInput();
 	 *       // do stuff
 	 *   } finally {
 	 *      set.endInput(progress);
@@ -572,8 +574,8 @@ public class SyncInfoSet {
 	 * @param status the status that describes the error that occurred.
 	 */
 	public void addError(ITeamStatus status) {
-		beginInput();
 		try {
+			beginInput();
 			errors.put(status.getResource(), status);
 			getChangeEvent().errorOccurred(status);
 		} finally {

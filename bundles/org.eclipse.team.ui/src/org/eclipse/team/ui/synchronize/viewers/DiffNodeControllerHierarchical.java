@@ -16,7 +16,6 @@ import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -26,7 +25,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.Assert;
-import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 /**
@@ -125,15 +123,10 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * Builds the viewer model based on the contents of the sync set.
 	 */
 	public AdaptableDiffNode prepareInput(IProgressMonitor monitor) {
-		try {
-			// Connect to the sync set which will register us as a listener and give us a reset event
-			// in a background thread
-			getSyncInfoTree().connect(this, monitor);
-			return getRoot();
-		} catch (CoreException e) {
-			TeamPlugin.log(e);
-		}
-		return null;
+		// Connect to the sync set which will register us as a listener and give us a reset event
+		// in a background thread
+		getSyncInfoTree().connect(this, monitor);
+		return getRoot();
 	}
 	
 	/**

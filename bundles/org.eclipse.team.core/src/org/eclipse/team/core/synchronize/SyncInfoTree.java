@@ -149,8 +149,8 @@ public class SyncInfoTree extends SyncInfoSet {
 	 * @param info
 	 */
 	public void add(SyncInfo info) {
-		beginInput();
 		try {
+			beginInput();
 			super.add(info);
 			IResource local = info.getLocal();
 			addToParents(local, local);
@@ -164,8 +164,8 @@ public class SyncInfoTree extends SyncInfoSet {
 	 * @param resource the resource to be removed
 	 */
 	public void remove(IResource resource) {
-		beginInput();
 		try {
+			beginInput();
 			super.remove(resource);
 			removeFromParents(resource, resource);
 		} finally {
@@ -178,8 +178,8 @@ public class SyncInfoTree extends SyncInfoSet {
 	 * Reset the sync set so it is empty.
 	 */
 	public void clear() {
-		beginInput();
 		try {
+			beginInput();
 			super.clear();
 			synchronized(this) {
 				parents.clear();
@@ -261,8 +261,8 @@ public class SyncInfoTree extends SyncInfoSet {
 	 * @param depth the depth of the subtree
 	 */
 	public void remove(IResource resource, int depth) {
-		beginInput();
 		try {
+			beginInput();
 			if (getSyncInfo(resource) != null) {
 				remove(resource);
 			}
