@@ -22,8 +22,8 @@ import org.eclipse.team.core.subscribers.*;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.IRefreshEvent;
-import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.team.ui.synchronize.subscriber.IRefreshEvent;
+import org.eclipse.team.ui.synchronize.subscriber.IRefreshSubscriberListener;
 
 /**
  * Job to refresh a subscriber with its remote state.
@@ -186,7 +186,15 @@ public class RefreshSubscriberJob extends WorkspaceJob {
 	}
 	
 	public boolean shouldRun() {
-		return collector != null && getSubscriber() != null;
+		// Ensure that any progress shown as a result of this refresh occurs hidden in a progress group.
+		boolean shouldRun = collector != null && getSubscriber() != null;
+		if(shouldRun) {
+			IProgressMonitor group = Platform.getJobManager().createProgressGroup();
+			group.beginTask("Refreshing " + getSubscriber().getName(), 100);
+			setProgressGroup(group, 80);
+			collector.setProgressGroup(group, 20);
+		}
+		return shouldRun; 
 	}
 	
 	public boolean belongsTo(Object family) {		

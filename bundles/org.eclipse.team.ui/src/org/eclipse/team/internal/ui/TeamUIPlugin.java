@@ -288,9 +288,9 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		createImageDescriptor(plugin, ISharedImages.IMG_CONFLICT_OVR, baseURL);
 		createImageDescriptor(plugin, ISharedImages.IMG_CHECKEDIN_OVR, baseURL);
 		createImageDescriptor(plugin, ISharedImages.IMG_CHECKEDOUT_OVR, baseURL);
-		
-		
+			
 		createImageDescriptor(plugin, ISharedImages.IMG_SYNC_VIEW, baseURL);
+		createImageDescriptor(plugin, ISharedImages.IMG_COMPARE_VIEW, baseURL);
 		
 		// Collapse all
 		createImageDescriptor(plugin, ISharedImages.IMG_COLLAPSE_ALL, baseURL);

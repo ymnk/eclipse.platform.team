@@ -87,4 +87,11 @@ public interface ISynchronizeManager {
 	 * <code>null</code> if a descriptor is not found for that id.
 	 */
 	public ISynchronizeParticipantDescriptor getParticipantDescriptor(String id);
+	
+	/**
+	 * Returns the descriptions of the registered synchronize participants. 
+	 * 
+	 * @return the descriptions of the registered synchronize participants. 
+	 */
+	public ISynchronizeParticipantDescriptor[] getParticipantDescriptors();
 }

@@ -11,15 +11,16 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -28,22 +29,26 @@ import org.eclipse.team.core.subscribers.FilteredSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
+import org.eclipse.team.ui.synchronize.subscriber.IRefreshEvent;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
 import org.eclipse.team.ui.synchronize.viewers.SynchronizeCompareInput;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
+import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
 
 public class RefreshCompleteDialog extends DetailsDialog {
+	// For remembering the dialog sizings
 	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
-	private final static int RESOURCE_LIST_SIZE = 10;
 	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
+	
+	private SyncInfoFilter filter;
 	private FilteredSyncInfoCollector collector;
 	private SynchronizeCompareInput compareEditorInput;
 	private IRefreshEvent event;
 	private SubscriberParticipant participant;
 
-	private Button promptWhenNoChanges;
-	private Button promptWithChanges;
+	private Button currentPersButton;
+	private Button otherPersButton;
+	private Button dontShowAgainButton;
+	
 	private IDialogSettings settings;
 	private SyncInfoTree syncInfoSet = new SyncInfoTree();
 	
@@ -56,8 +61,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		setImageKey(DLG_IMG_INFO);
 		// Set-up a sync info set that contains the resources that where found
 		// when the refresh occured.
-		SyncInfoFilter filter = new SyncInfoFilter() {
-
+		filter = new SyncInfoFilter() {
 			public boolean select(SyncInfo info, IProgressMonitor monitor) {
 				IResource[] resources = getResources();
 				for (int i = 0; i < resources.length; i++) {
@@ -123,11 +127,10 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	protected Composite createDropDownDialogArea(Composite parent) {
 		try {
 			CompareConfiguration compareConfig = new CompareConfiguration();
-			TreeViewerAdvisor viewerAdvisor = new TreeViewerAdvisor(participant.getId(), null, syncInfoSet);
+			TreeViewerAdvisor viewerAdvisor = new TreeViewerAdvisor(syncInfoSet);
 			compareEditorInput = new SynchronizeCompareInput(compareConfig, viewerAdvisor) {
-
 				public String getTitle() {
-					return "Resources found during last refresh";
+					return "Changes in " + participant.getName();
 				}
 			};
 			// Preparing the input should be fast since we haven't started the collector
@@ -151,6 +154,22 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		Control c = compareEditorInput.createContents(result);
 		data = new GridData(GridData.FILL_BOTH);
 		c.setLayoutData(data);
+		
+		Button onlyNewChangesButton = new Button(result, SWT.CHECK);
+		onlyNewChangesButton.setText("Show only the latest new incoming changes");
+		onlyNewChangesButton.setSelection(true);
+		onlyNewChangesButton.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				if(((Button)e.getSource()).getSelection()) {
+					collector.setFilter(filter, new NullProgressMonitor());
+				} else {
+					collector.setFilter(new FastSyncInfoFilter(), new NullProgressMonitor());
+				}
+			}
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
+		
 		return result;
 	}
 
@@ -161,60 +180,38 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		StringBuffer text = new StringBuffer();
 		SyncInfo[] changes = event.getChanges();
 		IResource[] resources = event.getResources();
-		if (changes.length != 0) {
-			text.append(Policy.bind("RefreshCompleteDialog.5", Integer.toString(changes.length))); //$NON-NLS-1$
+		SyncInfoSet set = getSubscriberSyncInfoSet();
+		if (! set.isEmpty()) {
+			String outgoing = Long.toString(set.countFor(SyncInfo.OUTGOING, SyncInfo.DIRECTION_MASK));
+			String incoming = Long.toString(set.countFor(SyncInfo.INCOMING, SyncInfo.DIRECTION_MASK));
+			String conflicting = Long.toString(set.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK));
+			text.append(Policy.bind("RefreshCompleteDialog.5", new Object[] {participant.getName(), outgoing, incoming, conflicting})); //$NON-NLS-1$
+			createLabel(parent, text.toString(), 2);
+			
+			Group perspectiveSwitchingGroup = new Group(parent, SWT.NULL);
+			perspectiveSwitchingGroup.setLayout(new GridLayout());
+			GridData data = new GridData(GridData.FILL_BOTH);
+			perspectiveSwitchingGroup.setLayoutData(data);
+			perspectiveSwitchingGroup.setText("Select where to show the Synchronize View when there are changes");
+			currentPersButton = new Button(perspectiveSwitchingGroup, SWT.RADIO);
+			currentPersButton.setText("Show in the current perspective");
+			otherPersButton = new Button(perspectiveSwitchingGroup, SWT.RADIO);
+			otherPersButton.setText("Show in the default synchronizing perspective");
+			
+			dontShowAgainButton = new Button(parent, SWT.CHECK);
+			dontShowAgainButton.setText("Don't show this dialog again.");
+			dontShowAgainButton.setSelection(false);
 		} else {
 			text.append(Policy.bind("RefreshCompleteDialog.6")); //$NON-NLS-1$
 		}
-		text.append(Policy.bind("RefreshCompleteDialog.7", Integer.toString(resources.length))); //$NON-NLS-1$ //$NON-NLS-2$
-		createLabel(parent, text.toString(), 2);
-		Table table = new Table(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-		GridData data = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL);
-		data.horizontalSpan = 2;
-		data.widthHint = 200;
-		data.heightHint = 125;
-		table.setLayoutData(data);
-		TableViewer resourceList = new TableViewer(table);
-		resourceList.setContentProvider(new ArrayContentProvider());
-		resourceList.setLabelProvider(new WorkbenchLabelProvider());
-		resourceList.setInput(resources);
-		createLabel(parent, "", 2); //$NON-NLS-1$
-		promptWhenNoChanges = new Button(parent, SWT.CHECK);
-		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
-		data.horizontalSpan = 2;
-		promptWhenNoChanges.setLayoutData(data);
-		promptWithChanges = new Button(parent, SWT.CHECK);
-		data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING);
-		data.horizontalSpan = 2;
-		promptWithChanges.setLayoutData(data);
-		if (event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
-			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.13"))); //$NON-NLS-1$
-			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES));
-			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.14"))); //$NON-NLS-1$
-			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES));
-		} else {
-			promptWhenNoChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.15"))); //$NON-NLS-1$
-			promptWhenNoChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES));
-			promptWithChanges.setText(Policy.bind(Policy.bind("RefreshCompleteDialog.16"))); //$NON-NLS-1$
-			promptWithChanges.setSelection(TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES));
-		}
+	
 		Dialog.applyDialogFont(parent);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#getDetailsButtonLabelHide()
-	 */
-	protected String getDetailsButtonLabelHide() {
-		return Policy.bind("RefreshCompleteDialog.18");
+	protected SyncInfoSet getSubscriberSyncInfoSet() {
+		return participant.getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#getDetailsButtonLabelShow()
-	 */
-	protected String getDetailsButtonLabelShow() {
-		return Policy.bind("RefreshCompleteDialog.17");
-	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.window.Window#getInitialSize()
 	 */
@@ -241,7 +238,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeDetailsButton()
 	 */
 	protected boolean includeDetailsButton() {
-		return event.getChanges().length != 0;
+		return ! getSubscriberSyncInfoSet().isEmpty();
 	}
 
 	/* (non-Javadoc)
@@ -255,13 +252,13 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	 * @see org.eclipse.jface.dialogs.Dialog#okPressed()
 	 */
 	protected void okPressed() {
-		if (event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
+		/*if (event.getRefreshType() == IRefreshEvent.USER_REFRESH) {
 			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
 			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_PROMPT_WITH_CHANGES, promptWithChanges.getSelection());
 		} else {
 			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WHEN_NO_CHANGES, promptWhenNoChanges.getSelection());
 			TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCVIEW_VIEW_BKG_PROMPT_WITH_CHANGES, promptWithChanges.getSelection());
-		}
+		}*/
 		TeamUIPlugin.getPlugin().savePluginPreferences();
 		super.okPressed();
 	}
@@ -277,6 +274,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 		label.setText(text);
 		GridData data = new GridData();
 		data.horizontalSpan = columns;
+		data.widthHint = 375;
 		label.setLayoutData(data);
 		return label;
 	}

@@ -624,6 +624,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		store.setDefault(ICVSUIConstants.PREF_DETERMINE_SERVER_VERSION, true);
 		store.setDefault(ICVSUIConstants.PREF_CONFIRM_MOVE_TAG, CVSProviderPlugin.DEFAULT_CONFIRM_MOVE_TAG);
 		store.setDefault(ICVSUIConstants.PREF_DEBUG_PROTOCOL, false);
+		store.setDefault(ICVSUIConstants.PREF_WARN_REMEMBERING_MERGES, true);
 		
 		PreferenceConverter.setDefault(store, ICVSUIConstants.PREF_CONSOLE_COMMAND_COLOR, new RGB(0, 0, 0));
 		PreferenceConverter.setDefault(store, ICVSUIConstants.PREF_CONSOLE_MESSAGE_COLOR, new RGB(0, 0, 255));
@@ -739,7 +740,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			WorkspaceSynchronizeParticipant cvsPage = CVSUIPlugin.getPlugin().getCvsWorkspaceSynchronizeParticipant();
 			view.display(cvsPage);
 			if (resources != null) {
-				cvsPage.refreshWithRemote(resources, false);
+				cvsPage.refresh(resources);
 			}
 			if (mode != 0) {
 				cvsPage.setMode(mode);

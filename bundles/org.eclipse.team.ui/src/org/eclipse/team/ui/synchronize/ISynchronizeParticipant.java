@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IExecutableExtension;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -93,7 +96,13 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
 	 * participant
 	 */
 	public IPageBookViewPage createPage(ISynchronizeView view);
-		
+	
+	/**
+	 * Creates and returns a wizard page used to globally refresh this participant.
+	 * 
+	 */
+	public IWizardPage createRefreshPage();
+	
 	/**
 	 * Initializes this participant with the given participant state.  
 	 * A memento is passed to the participant which contains a snapshot 

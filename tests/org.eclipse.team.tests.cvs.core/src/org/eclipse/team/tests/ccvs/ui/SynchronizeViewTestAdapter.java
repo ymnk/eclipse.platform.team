@@ -123,7 +123,7 @@ public class SynchronizeViewTestAdapter extends SyncInfoSource {
 		ISynchronizeParticipant[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
 		for (int i = 0; i < participants.length; i++) {
 			ISynchronizeParticipant participant = participants[i];
-			if(participant.getId().equals(CVSMergeSubscriber.QUALIFIED_NAME)) {
+			if(participant.getId().equals(CVSMergeSubscriber.ID)) {
 				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
 			}
 		}

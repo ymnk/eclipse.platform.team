@@ -193,14 +193,44 @@
          </showInPart>
       </perspectiveExtension>
    </extension>
-<!-- ***************** Action sets ********************** -->
+<!-- ***************** Actions ********************** -->
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="%teamCategory.name"
+            description="%teamCategory.description"
+            id="org.eclipse.team.ui.category.team">
+      </category>
+      <command
+            name="%ActionDefinition.synchronizeAll.name"
+            category="org.eclipse.team.ui.category.team"
+            description="%ActionDefinition.synchronizeAll.description"
+            id="org.eclipse.team.ui.synchronizeAll">
+      </command>
+      <keyBinding
+            string=""
+            scope="org.eclipse.ui.globalScope"
+            command="org.eclipse.team.ui.synchronizeAll"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+   </extension>
+<!-- action sets -->
    <extension
          point="org.eclipse.ui.actionSets">
       <actionSet
             label="%Team"
             description="%ActionSet.description"
-            visible="false"
+            visible="true"
             id="org.eclipse.team.ui.actionSet">
+         <action
+               label="Synchronize"
+               pulldown="true"
+               style="pulldown"
+               icon="icons/full/cview16/synch_synch.gif"
+               class="org.eclipse.team.internal.ui.synchronize.actions.GlobalRefreshAction"
+               toolbarPath="Normal/Team"
+               id="org.eclipse.team.ui.synchronizeAll">
+         </action>
       </actionSet>
    </extension>
 

@@ -78,6 +78,7 @@ public interface ICVSUIConstants {
 	public final String PREF_DETERMINE_SERVER_VERSION = "pref_determine_server_version"; //$NON-NLS-1$
 	public final String PREF_CONFIRM_MOVE_TAG = "pref_confirm_move_tag"; //$NON-NLS-1$
 	public final String PREF_DEBUG_PROTOCOL = "pref_debug_protocol"; //$NON-NLS-1$
+	public final String PREF_WARN_REMEMBERING_MERGES = "pref_remember_merges"; //$NON-NLS-1$
 	
 	// console preferences
 	public final String PREF_CONSOLE_COMMAND_COLOR = "pref_console_command_color"; //$NON-NLS-1$

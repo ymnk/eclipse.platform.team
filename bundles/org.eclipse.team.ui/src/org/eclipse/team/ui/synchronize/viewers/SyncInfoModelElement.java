@@ -16,8 +16,9 @@ import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.*;
-import org.eclipse.team.core.variants.*;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
+import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.synchronize.LocalResourceTypedElement;
 import org.eclipse.team.internal.ui.synchronize.RemoteResourceTypedElement;
@@ -55,19 +56,39 @@ public class SyncInfoModelElement extends SynchronizeModelElement {
 	 */
 	public SyncInfoModelElement(IDiffContainer parent, SyncInfo info) {
 		super(parent);
-		update(info);
-	}
-
-	public void update(SyncInfo info) {
 		this.info = info;
 		// update state
 		setKind(info.getKind());		
 		// local
 		setLeft(createLocalTypeElement(info));
 		// remote
-		setRight(createRemoteTypeElement(info));
+		setRight(createRemoteTypeElement(info));	
 		// base
 		setAncestor(createBaseTypeElement(info));
+			
+		fireChange();
+	}
+
+	public void update(SyncInfo info) {
+		this.info = info;
+		// update state
+		setKind(info.getKind());		
+		// never have to update the local, it's always the workspace resource
+		// remote
+		RemoteResourceTypedElement rightEl = (RemoteResourceTypedElement)getRight(); 
+		if(rightEl == null && info.getRemote() != null) {
+			setRight(createRemoteTypeElement(info));
+		} else {
+			rightEl.update(info.getRemote());
+		}
+		// base
+		RemoteResourceTypedElement ancestorEl = (RemoteResourceTypedElement)getRight(); 
+		if(ancestorEl == null && info.getBase() != null) {
+			setAncestor(createBaseTypeElement(info));
+		} else {
+			ancestorEl.update(info.getBase());
+		}
+		
 		fireChange();
 	}
 	

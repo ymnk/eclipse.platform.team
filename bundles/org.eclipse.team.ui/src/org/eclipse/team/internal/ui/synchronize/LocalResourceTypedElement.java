@@ -78,6 +78,7 @@ public class LocalResourceTypedElement extends ResourceNode {
 							file.create(is, false, pm);
 						fDirty= false;
 					} finally {
+						fireContentChanged();
 						if (is != null)
 							try {
 								is.close();
@@ -124,6 +125,7 @@ public class LocalResourceTypedElement extends ResourceNode {
 				} catch (CoreException ex) {
 				}
 			}
+			fireContentChanged();
 			return child;
 		}
 		
