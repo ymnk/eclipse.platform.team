@@ -223,7 +223,6 @@ public class MergeSynchronizeParticipant extends CVSParticipant {
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
 		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, TOOLBAR_CONTRIBUTION_GROUP);
-		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP);
 		configuration.addMenuGroup(
 				ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 				CONTEXT_MENU_CONTRIBUTION_GROUP);

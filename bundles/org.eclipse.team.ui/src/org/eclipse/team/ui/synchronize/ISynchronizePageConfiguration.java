@@ -156,13 +156,6 @@ public interface ISynchronizePageConfiguration {
 	public static final String LAYOUT_GROUP = "layout"; //$NON-NLS-1$
 
 	/**
-	 * The id of the group that contains the action to remove a particpant
-	 * from a page view (such as the synchronize view). This group can
-	 * be added to the toolbar menu if a particpant supports cancelation.
-	 */
-	public static final String REMOVE_PARTICPANT_GROUP = "remove_particpant"; //$NON-NLS-1$
-
-	/**
 	 * These are the default groups used for the context menu of a page.
 	 * Clients can remove, add and change the ordering for groups in
 	 * the context menu.

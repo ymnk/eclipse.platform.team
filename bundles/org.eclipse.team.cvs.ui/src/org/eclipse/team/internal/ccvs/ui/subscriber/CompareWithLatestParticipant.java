@@ -69,6 +69,5 @@ public class CompareWithLatestParticipant extends WorkspaceSynchronizeParticipan
 				ISynchronizePageConfiguration.MODE_GROUP,  
 				ISynchronizePageConfiguration.LAYOUT_GROUP, 
 				ISynchronizePageConfiguration.PREFERENCES_GROUP});
-		configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, ISynchronizePageConfiguration.REMOVE_PARTICPANT_GROUP);
 	}
 }

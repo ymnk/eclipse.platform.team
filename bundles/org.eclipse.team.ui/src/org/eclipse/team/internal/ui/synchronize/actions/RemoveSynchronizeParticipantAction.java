@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ui.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -18,6 +19,7 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.ui.PlatformUI;
 
 /**
@@ -26,6 +28,7 @@ import org.eclipse.ui.PlatformUI;
  */
 public class RemoveSynchronizeParticipantAction extends Action {
 	private ISynchronizeParticipant participant;
+	private final ISynchronizeView view;
 
 	/**
 	 * Creates the action to remove the participant from the synchronize
@@ -33,8 +36,8 @@ public class RemoveSynchronizeParticipantAction extends Action {
 	 * @param participant the participant to remove from the synchronize
 	 * manager.
 	 */
-	public RemoveSynchronizeParticipantAction(ISynchronizeParticipant participant) {
-		this.participant = participant;
+	public RemoveSynchronizeParticipantAction(ISynchronizeView view) {
+		this.view = view;
 		Utils.initAction(this, "action.removePage.", Policy.getBundle()); //$NON-NLS-1$
 	}
 	
@@ -52,5 +55,10 @@ public class RemoveSynchronizeParticipantAction extends Action {
 		} catch (InterruptedException e) {
 			// Cancelled. Just ignore
 		}
+	}
+	
+	public void setParticipant(ISynchronizeParticipant participant) {
+		this.participant = participant;
+		setEnabled(participant != null);
 	}
 }
