@@ -5,6 +5,10 @@ package org.eclipse.team.ccvs.core;
  * All Rights Reserved.
  */
  
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -13,11 +17,13 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPluginDescriptor;
+import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
-import org.eclipse.team.core.ITeamProvider;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.TeamPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProvider;
 import org.eclipse.team.internal.ccvs.core.Policy;
@@ -188,8 +194,8 @@ public class CVSProviderPlugin extends Plugin {
 						if (resource.getType() == IResource.PROJECT) {
 							IProject project = (IProject)resource;
 							// Get the team provider for the project and
-							ITeamProvider provider = TeamPlugin.getManager().getProvider(project);
-							if (!(provider instanceof CVSTeamProvider)) continue;
+							RepositoryProvider provider = RepositoryProviderType.getProvider(project);
+							if(!provider.isOfType(NATURE_ID)) continue;
 							/* Check if the project description changed. */
 							if ((delta.getFlags() & IResourceDelta.DESCRIPTION) != 0) {
 								/* The project description changed. Write the file. */
@@ -262,6 +268,39 @@ public class CVSProviderPlugin extends Plugin {
 	public void setFetchAbsentDirectories(boolean fetchAbsentDirectories) {
 		this.fetchAbsentDirectories = fetchAbsentDirectories;
 	}
+	
+	private static List listeners = new ArrayList();
+	
+	/*
+	 * @see ITeamManager#addResourceStateChangeListener(IResourceStateChangeListener)
+	 */
+	public static void addResourceStateChangeListener(IResourceStateChangeListener listener) {
+		listeners.add(listener);
+	}
 
+	/*
+	 * @see ITeamManager#removeResourceStateChangeListener(IResourceStateChangeListener)
+	 */
+	public static void removeResourceStateChangeListener(IResourceStateChangeListener listener) {
+		listeners.remove(listener);
+	}
+	
+	/*
+	 * @see ITeamManager#broadcastResourceStateChanges(IResource[])
+	 */
+	public static void broadcastResourceStateChanges(final IResource[] resources) {
+		for(Iterator it=listeners.iterator(); it.hasNext();) {
+			final IResourceStateChangeListener listener = (IResourceStateChangeListener)it.next();
+			ISafeRunnable code = new ISafeRunnable() {
+				public void run() throws Exception {
+					listener.resourceStateChanged(resources);
+				}
+				public void handleException(Throwable e) {
+					// don't log the exception....it is already being logged in Platform#run
+				}
+			};
+			Platform.run(code);
+		}
+	}
 }
 

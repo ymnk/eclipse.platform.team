@@ -24,7 +24,6 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -33,7 +32,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.team.ccvs.core.*;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSStatus;
 import org.eclipse.team.ccvs.core.CVSTag;
@@ -45,10 +43,11 @@ import org.eclipse.team.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.ccvs.core.IConnectionMethod;
 import org.eclipse.team.core.IFileTypeRegistry;
-import org.eclipse.team.core.ITeamManager;
-import org.eclipse.team.core.ITeamProvider;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.TeamPlugin;
+import org.eclipse.team.core.internal.TeamManager;
 import org.eclipse.team.internal.ccvs.core.client.Checkout;
 import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Import;
@@ -167,7 +166,7 @@ public class CVSProvider implements ICVSProvider {
 				// Register the project with Team
 				// (unless the project already has the proper nature from the project meta-information)
 				if (!project.getDescription().hasNature(CVSProviderPlugin.NATURE_ID)) {
-					TeamPlugin.getManager().setProvider(project, CVSProviderPlugin.NATURE_ID, null, Policy.subMonitorFor(monitor, 10));
+					TeamManager.addNatureToProject(project, CVSProviderPlugin.NATURE_ID, Policy.subMonitorFor(monitor, 100));
 				}
 			}
 			
@@ -461,7 +460,7 @@ public class CVSProvider implements ICVSProvider {
 			// (unless the project already has the proper nature from the project meta-information)
 			try {
 				if (!project.getDescription().hasNature(CVSProviderPlugin.NATURE_ID)) {
-					TeamPlugin.getManager().setProvider(project, CVSProviderPlugin.NATURE_ID, null, Policy.subMonitorFor(monitor, 1));
+					TeamManager.addNatureToProject(project, CVSProviderPlugin.NATURE_ID, Policy.subMonitorFor(monitor, 1));
 				}
 			} catch (CoreException e) {
 				throw wrapException(e);
@@ -538,7 +537,7 @@ public class CVSProvider implements ICVSProvider {
 		// (unless the project already has the proper nature from the project meta-information)
 		try {
 			if (!project.getDescription().hasNature(CVSProviderPlugin.NATURE_ID))
-				TeamPlugin.getManager().setProvider(project, CVSProviderPlugin.NATURE_ID, null, monitor);
+				TeamManager.addNatureToProject(project, CVSProviderPlugin.NATURE_ID, monitor);
 		} catch (CoreException e) {
 			throw wrapException(e);
 		}
@@ -583,11 +582,9 @@ public class CVSProvider implements ICVSProvider {
 			// If the file did not exist, then prime the list of repositories with
 			// the providers with which the projects in the workspace are shared.
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-			ITeamManager manager = TeamPlugin.getManager();
 			for (int i = 0; i < projects.length; i++) {
-				ITeamProvider provider = manager.getProvider(projects[i]);
-				if (provider instanceof CVSTeamProvider) {
-					CVSTeamProvider cvsProvider = (CVSTeamProvider)provider;
+				RepositoryProvider provider = RepositoryProviderType.getProvider(projects[i]);
+				if (provider.isOfType(CVSProviderPlugin.NATURE_ID)) {
 					ICVSFolder folder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(projects[i]);
 					FolderSyncInfo info = folder.getFolderSyncInfo();
 					if (info != null) {
