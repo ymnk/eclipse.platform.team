@@ -190,7 +190,23 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
             // Forward the event to the root provider
             ISynchronizeModelProvider provider = getProviderRootedAt(getModelRoot());
             if (provider != null) {
-                ((SynchronizeModelProvider)provider).syncInfoChanged(event, monitor);
+                SyncInfoSet set = provider.getSyncInfoSet();
+                try {
+                    set.beginInput();
+                    set.removeAll(event.getRemovedResources());
+                    SyncInfo[] added = event.getAddedResources();
+                    for (int i = 0; i < added.length; i++) {
+                        SyncInfo info = added[i];
+                        set.add(info);
+                    }
+                    SyncInfo[] changed = event.getChangedResources();
+                    for (int i = 0; i < changed.length; i++) {
+                        SyncInfo info = changed[i];
+                        set.add(info);
+                    }
+                } finally {
+                    set.endInput(monitor);
+                }
             }
         }
     }
