@@ -15,6 +15,7 @@ import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.core.*;
 import org.eclipse.team.internal.core.registry.DeploymentProviderDescriptor;
 import org.eclipse.team.internal.core.registry.DeploymentProviderRegistry;
@@ -29,7 +30,10 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 
 	// registry for deployment provider extensions
 	private DeploymentProviderRegistry registry;
-		
+	
+	// lock to ensure that map/unmap and getProvider support concurrency
+	private static final ILock mappingLock = Platform.getJobManager().newLock();
+	
 	//	persistence constants
 	private final static String CTX_PROVIDERS = "deploymentProviders"; //$NON-NLS-1$
 	private final static String CTX_PROVIDER = "provider"; //$NON-NLS-1$
@@ -80,100 +84,127 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		registry = new DeploymentProviderRegistry();
 	}
 	
-	public void map(IContainer container, DeploymentProvider teamProvider) throws TeamException {
-		// TODO: make concurrent safe!!
-		// don't allow is overlapping team providers		
-		checkOverlapping(container);
-		
-		// extension point descriptor must exist
-		DeploymentProviderDescriptor descriptor = registry.find(teamProvider.getID());		
-		if(descriptor == null) {
-			throw new TeamException("Cannot map provider " + teamProvider.getID() + ". It's extension point description cannot be found.");
+	public void map(IContainer container, DeploymentProvider deploymentProvider) throws TeamException {
+		try {
+			mappingLock.acquire();
+			if (!deploymentProvider.isMultipleMappingsSupported()) {
+				// don't allow is overlapping deployment providers of the same type
+				checkOverlapping(container, deploymentProvider.getID());
+			}
+			
+			// extension point descriptor must exist
+			DeploymentProviderDescriptor descriptor = registry.find(deploymentProvider.getID());		
+			if(descriptor == null) {
+				throw new TeamException("Cannot map provider " + deploymentProvider.getID() + ". It's extension point description cannot be found.");
+			}
+			
+			// create the new mapping
+			Mapping m = internalMap(container, descriptor);
+			m.setProvider(deploymentProvider);
+			deploymentProvider.setContainer(container);
+			deploymentProvider.init();
+			
+			saveState(container.getProject());
+			// TODO: what kind of event is generated when one is mapped?	
+		} finally {
+			mappingLock.release();
 		}
-		
-		// create the new mapping
-		Mapping m = map(container, descriptor);
-		m.setProvider(teamProvider);
-		teamProvider.setContainer(container);
-		teamProvider.init();
-		//try {
-		// install session property
-		//project.setPersistentProperty();
-		//} catch (CoreException e) {
-		//	throw TeamException.asTeamException(e);
-		//}
-		
-		// initialize provider
-		// teamProvider.init(container);
-		
-		saveState(container.getProject());
-		// TODO: what kind of event is generated when one is mapped?		
 	}
 	
 	public void unmap(IContainer container, DeploymentProvider teamProvider) throws TeamException {
-		// TODO: make concurrent safe!!
-		IProject project = container.getProject();
-		List projectMaps = getMappings(container);
-		Mapping m = getMappingFor(container, teamProvider.getID());
-		if(m != null) {
-			projectMaps.remove(m);
-			if(projectMaps.isEmpty()) {
-				mappings.remove(project);
+		try {
+			mappingLock.acquire();
+			IProject project = container.getProject();
+			List projectMaps = internalGetMappings(container);
+			Mapping[] m = internalGetMappingsFor(container, teamProvider.getID());
+			for (int i = 0; i < m.length; i++) {
+				Mapping mapping = m[i];
+				if (mapping.getProvider() == teamProvider) {
+					projectMaps.remove(mapping);
+					if(projectMaps.isEmpty()) {
+						mappings.remove(project);
+					}
+				}
 			}
+			
+			// dispose of provider
+			teamProvider.dispose();
+			saveState(container.getProject());
+			
+			// TODO: what kind of event is sent when unmapped?
+		} finally {
+			mappingLock.release();
 		}
-		
-		//try {
-			// install session property
-	//		project.setSessionProperty(PROVIDER_SESSION_PROPERTY, teamProvider.getID());
-		//} catch (CoreException e) {
-			//throw TeamException.asTeamException(e);
-		//}
-		
-		// dispose of provider
-		teamProvider.dispose();
-		saveState(container.getProject());
-		
-		// TODO: what kind of event is sent when unmapped?
 	}
 	
-	public DeploymentProvider getMapping(IResource resource) {
-		List projectMappings = getMappings(resource);
+	public DeploymentProvider[] getMappings(IResource resource) {
+		List projectMappings = internalGetMappings(resource);
 		String fullPath = resource.getFullPath().toString();
+		List result = new ArrayList();
 		if(projectMappings != null) {
 			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
 				Mapping m = (Mapping) it.next();
 				if(fullPath.startsWith(m.getContainer().getFullPath().toString())) {
 					try {
 						// lazy initialize of provider must be supported
-						return m.getProvider();
+						// TODO: It is possible that the provider has been unmap concurrently
+						result.add(m.getProvider());
 					} catch (CoreException e) {
 						TeamPlugin.log(e);
 					}
 				}
 			}
 		}
-		return null;
+		return (DeploymentProvider[]) result.toArray(new DeploymentProvider[result.size()]);
+	}
+	
+	public DeploymentProvider[] getMappings(IResource resource, String id) {
+		Mapping[] m = internalGetMappingsFor(resource, id);
+		List result = new ArrayList();
+		for (int i = 0; i < m.length; i++) {
+			Mapping mapping = m[i];
+			try {
+				// lazy initialize of provider must be supported
+				// TODO: It is possible that the provider has been unmap concurrently
+				result.add(mapping.getProvider());
+			} catch (TeamException e) {
+				TeamPlugin.log(e);
+			}
+		}
+		
+		DeploymentProvider[] providers = (DeploymentProvider[]) result.toArray(new DeploymentProvider[result.size()]);
+		// Ensure that multiple providers are not mapped if it is not supported 
+		// by the provider type. This could occur if the deployment configuration 
+		// was loaded from a repository or modified manually
+		if (providers.length > 1 && !providers[0].isMultipleMappingsSupported()) {
+			// Log and ignore all but one of the mappings
+			TeamPlugin.log(IStatus.WARNING, "Resource {0} is mapped to multiple deployment providers of type {1}." +resource +id, null);
+			return new DeploymentProvider[] { providers[0] };
+		}
+		return providers;
 	}
 	
 	public boolean getMappedTo(IResource resource, String id) {
-		return getMappingFor(resource, id) != null;
+		return internalGetMappingsFor(resource, id).length > 0;
 	}
 	
-	private void checkOverlapping(IContainer container) throws TeamException {
-		List projectMappings = getMappings(container);
+	private void checkOverlapping(IContainer container, String id) throws TeamException {
+		List projectMappings = internalGetMappings(container);
 		String fullPath = container.getFullPath().toString();
 		if(projectMappings != null) {
 			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
 				Mapping m = (Mapping) it.next();
 				String first = m.getContainer().getFullPath().toString();
 				if(fullPath.startsWith(first) || first.startsWith(fullPath)) {
-					throw new TeamException(container.getFullPath().toString() + " is already mapped to " + m.getDescription().getId());
+					if (m.getDescription().getId().equals(id)) {
+						throw new TeamException(container.getFullPath().toString() + " is already mapped to " + m.getDescription().getId());
+					}
 				}
 			}
 		}
 	}
 	
-	private Mapping map(IContainer container, DeploymentProviderDescriptor description) {
+	private Mapping internalMap(IContainer container, DeploymentProviderDescriptor description) {
 		Mapping newMapping = new Mapping(description, container);
 		IProject project = container.getProject();
 		List projectMaps = (List)mappings.get(project);
@@ -185,39 +216,43 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 		return newMapping;
 	}
 	
-	private List getMappings(IResource resource) {
-		IProject project = null;
-		if(resource.getType() != IResource.PROJECT) {
-			 project = resource.getProject();
-		} else {
-			project = (IProject) resource;
-		}
-		List m = (List)mappings.get(project);
+	/*
+	 * Loads all the mappings associated with the resource's project.
+	 */
+	private List internalGetMappings(IResource resource) {
 		try {
-			if(project.getSessionProperty(STATE_LOADED_KEY) != null) {
-				return m;
-			}
-			restoreState(project);
-			project.setSessionProperty(STATE_LOADED_KEY, "true");
-		} catch (TeamException e) {
-		} catch (CoreException e) {
-		}		
-		return (List)mappings.get(project);
+			mappingLock.acquire();
+			IProject project = resource.getProject();
+			List m = (List)mappings.get(project);
+			try {
+				if(project.getSessionProperty(STATE_LOADED_KEY) != null) {
+					return m;
+				}
+				restoreState(project);
+				project.setSessionProperty(STATE_LOADED_KEY, "true");
+			} catch (TeamException e) {
+			} catch (CoreException e) {
+			}		
+			return (List)mappings.get(project);
+		} finally {
+			mappingLock.release();
+		}
 	}
 	
-	private Mapping getMappingFor(IResource resource, String id) {
-		List projectMappings = getMappings(resource);
+	private Mapping[] internalGetMappingsFor(IResource resource, String id) {
+		List projectMappings = internalGetMappings(resource);
+		List result = new ArrayList();
 		String fullPath = resource.getFullPath().toString();
 		if(projectMappings != null) {
 			for (Iterator it = projectMappings.iterator(); it.hasNext();) {
 				Mapping m = (Mapping) it.next();				
 				// mapping can be initialize without having provider loaded yet!
 				if(m.getDescription().getId().equals(id) && fullPath.startsWith(m.getContainer().getFullPath().toString())) {
-					return m;
+					result.add(m);
 				}
 			}
 		}
-		return null;
+		return (Mapping[]) result.toArray(new Mapping[result.size()]);
 	}
 	
 	/**
@@ -286,7 +321,7 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 			IContainer container = location.isEmpty() ? (IContainer)project : project.getFolder(location);			
 			DeploymentProviderDescriptor desc = registry.find(id);				
 			if(desc != null) {
-				Mapping m = map(container, desc);
+				Mapping m = internalMap(container, desc);
 				m.setProviderState(memento2.getChild(CTX_PROVIDER_DATA));				
 			} else {
 				TeamPlugin.log(IStatus.ERROR, Policy.bind("SynchronizeManager.9", id), null); //$NON-NLS-1$
@@ -299,10 +334,10 @@ public class DeploymentProviderManager implements IDeploymentProviderManager  {
 	 */
 	public IResource[] getDeploymentProviderRoots(String id) {
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		List roots = new ArrayList();
+		Set roots = new HashSet();
 		for (int i = 0; i < projects.length; i++) {
 			IProject project = projects[i];
-			List mappings = getMappings(project);
+			List mappings = internalGetMappings(project);
 			if (mappings != null) {
 				for (Iterator iter = mappings.iterator(); iter.hasNext();) {
 					Mapping mapping = (Mapping) iter.next();

@@ -77,4 +77,16 @@ public abstract class DeploymentProvider implements IExecutableExtension, IAdapt
 	public Object getAdapter(Class adapter) {		
 		return null;
 	}
+	
+	/**
+	 * Returns whether a resource can be mapped to multiple deployment providers
+	 * of this type. Even if this method returns <code>false</code>, a resource can 
+	 * still be mapped to multiple providers whose id differs. By default,
+	 * multiple mappings are not supported. Subclasses must override this method
+	 * to change this behavior.
+	 * @return whether multiple mappings to providers of this type are supported
+	 */
+	public boolean isMultipleMappingsSupported() {
+		return false;
+	}
 }

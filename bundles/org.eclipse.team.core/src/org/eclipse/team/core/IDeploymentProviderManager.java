@@ -44,15 +44,30 @@ public interface IDeploymentProviderManager {
 	public void unmap(IContainer container, DeploymentProvider provider) throws TeamException;
 	
 	/**
-	 * Returns the provider associated with the given resource. This loads the provider
+	 * Returns the providers associated with the given resource. This loads the providers
 	 * if not already loaded, and can be long running. To check the existance of
-	 * a particular mapping call {@link #getMappedTo(IResource, String)} instead.
+	 * a particular mapping call {@link #getMappedTo(IResource, String)} instead. 
+	 * This method returns an empty array if there are no mappings.
 	 * 
-	 * @param resource the resource to retreive the mapping
-	 * @return the mapping for the resource, or <code>null</code> if a mapping doesn't
-	 * exist for that resource.
+	 * @param resource the resource whose mappings are to be retreived
+	 * @return the mappings for the resource
 	 */
-	public DeploymentProvider getMapping(IResource resource);
+	public DeploymentProvider[] getMappings(IResource resource);
+	
+	/**
+	 * Returns the providers with the given id associated with the given resource. 
+	 * This loads the providers if not already loaded, and can be long running. 
+	 * To check the existance of a particular mapping call 
+	 * {@link #getMappedTo(IResource, String)} instead. 
+	 * This method returns an empty array if there are no mappings. This method will
+	 * only return either an empty array or an array of length 1 if the provider
+	 * of the given type does not support multiple mappings 
+	 * (@see DeploymentProvider#isMultipleMappingsSupported()).
+	 * @param resource the resource whose mappings are to be retreived
+	 * @param id the id of the provider
+	 * @return the mappings for the resource
+	 */
+	public DeploymentProvider[] getMappings(IResource resource, String id);
 	
 	/**
 	 * Returns <code>true</code> if the resource is mapped to the provider with

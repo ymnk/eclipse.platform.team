@@ -27,8 +27,11 @@ public class UnDeployAction extends TeamAction implements IActionDelegate {
 		IContainer container = (IContainer)getSelectedResources()[0];
 		IDeploymentProviderManager manager = Team.getDeploymentManager();
 		try {
-			DeploymentProvider provider = manager.getMapping(container);
-			manager.unmap(container, provider);
+			DeploymentProvider[] providers = manager.getMappings(container, FileSystemDeploymentProvider.ID);
+			for (int i = 0; i < providers.length; i++) {
+				DeploymentProvider provider = providers[i];
+				manager.unmap(container, provider);
+			}
 		} catch (TeamException e) {
 			ErrorDialog.openError(getShell(), "Error", "Un-Mapping", e.getStatus());
 		}
