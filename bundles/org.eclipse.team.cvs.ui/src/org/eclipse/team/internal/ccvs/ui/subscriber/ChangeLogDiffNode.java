@@ -18,9 +18,9 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoModelElement;
 
-public class ChangeLogDiffNode extends SyncInfoDiffNode {
+public class ChangeLogDiffNode extends SyncInfoModelElement {
 
 	private ILogEntry logEntry;
 
@@ -60,7 +60,7 @@ public class ChangeLogDiffNode extends SyncInfoDiffNode {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#toString()
+	 * @see org.eclipse.team.ui.synchronize.SyncInfoModelElement#toString()
 	 */
 	public String toString() {
 		return getLabel(null);

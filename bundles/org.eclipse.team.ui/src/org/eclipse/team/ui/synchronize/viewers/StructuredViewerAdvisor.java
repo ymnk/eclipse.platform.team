@@ -28,7 +28,7 @@ import org.eclipse.ui.internal.PluginAction;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 /**
- * A <code>DiffTreeViewerConfiguration</code> object controls various UI
+ * A <code>TreeViewerAdvisor</code> object controls various UI
  * aspects of sync info viewers like the context menu, toolbar, content
  * provider, and label provider. A configuration is created to display
  * {@link SyncInfo} objects contained in the provided {@link SyncInfoSet}.
@@ -64,7 +64,7 @@ public abstract class StructuredViewerAdvisor {
 	private SyncInfoSet set;
 	private String menuId;
 	private StructuredViewer viewer;
-	private DiffNodeController diffNodeController;
+	private SynchronizeModelProvider diffNodeController;
 	private ListenerList listeners;
 
 	public StructuredViewerAdvisor(SyncInfoSet set) {
@@ -104,13 +104,13 @@ public abstract class StructuredViewerAdvisor {
 		setInput(viewer);
 	}
 		
-	public void addInputChangedListener(IInputChangedListener listener) {
+	public void addInputChangedListener(ISynchronizeModelChangeListener listener) {
 		if (listeners == null)
 			listeners= new ListenerList();
 		listeners.add(listener);
 	}
 
-	public void removeInputChangedListener(IInputChangedListener listener) {
+	public void removeInputChangedListener(ISynchronizeModelChangeListener listener) {
 		if (listeners != null) {
 			listeners.remove(listener);
 			if (listeners.isEmpty())
@@ -122,7 +122,7 @@ public abstract class StructuredViewerAdvisor {
 		if (listeners != null) {
 			Object[] l= listeners.getListeners();
 			for (int i= 0; i < l.length; i++)
-				((IInputChangedListener) l[i]).inputChanged(diffNodeController.getInput());
+				((ISynchronizeModelChangeListener) l[i]).modelChanged(diffNodeController.getInput());
 		}
 	}
 
@@ -147,7 +147,7 @@ public abstract class StructuredViewerAdvisor {
 	 * configuration. Subclass may override.
 	 * @return the viewer input
 	 */
-	protected abstract DiffNodeController getDiffNodeController();
+	protected abstract SynchronizeModelProvider getDiffNodeController();
 
 	/**
 	 * Get the label provider that will be assigned to the viewer initialized
@@ -158,10 +158,10 @@ public abstract class StructuredViewerAdvisor {
 	 * @param logicalProvider
 	 *            the label provider for the selected logical view
 	 * @return a label provider
-	 * @see SyncInfoLabelProvider
+	 * @see SynchronizeModelElementLabelProvider
 	 */
 	protected ILabelProvider getLabelProvider() {
-		return new SyncInfoLabelProvider();
+		return new SynchronizeModelElementLabelProvider();
 	}
 
 	protected IStructuredContentProvider getContentProvider() {

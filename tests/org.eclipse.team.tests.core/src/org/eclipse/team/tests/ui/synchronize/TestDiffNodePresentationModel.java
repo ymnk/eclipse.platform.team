@@ -32,7 +32,7 @@ public class TestDiffNodePresentationModel extends TeamTest {
 	
 	private ContentProviderTestView view;
 	private SyncInfoTree set;
-	private DiffTreeViewerConfiguration configuration;
+	private TreeViewerAdvisor configuration;
 	
 	public TestDiffNodePresentationModel() {
 		super();
@@ -52,8 +52,8 @@ public class TestDiffNodePresentationModel extends TeamTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		this.set = new SyncInfoTree();
-		this.configuration = new DiffTreeViewerConfiguration(set) {
-			protected DiffNodeController getDiffNodeController() {
+		this.configuration = new TreeViewerAdvisor(set) {
+			protected SynchronizeModelProvider getDiffNodeController() {
 				return TestDiffNodePresentationModel.this.getDiffNodeController(set);
 			}
 		};
@@ -70,8 +70,8 @@ public class TestDiffNodePresentationModel extends TeamTest {
 		super.tearDown();
 	}
 	
-	protected DiffNodeController getDiffNodeController(SyncInfoTree set) {
-		return new DiffNodeControllerHierarchical(set);
+	protected SynchronizeModelProvider getDiffNodeController(SyncInfoTree set) {
+		return new HierarchicalModelProvider(set);
 	}
 	
 	/*

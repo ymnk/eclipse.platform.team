@@ -10,7 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize;
 
-import org.eclipse.compare.structuremergeviewer.DiffNode;
+import javax.swing.event.HyperlinkEvent;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -26,9 +27,9 @@ import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipantPage;
-import org.eclipse.team.ui.synchronize.viewers.IInputChangedListener;
+import org.eclipse.team.ui.synchronize.viewers.ISynchronizeModelChangeListener;
+import org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
-import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.widgets.Hyperlink;
 import org.eclipse.ui.part.PageBook;
 
@@ -72,8 +73,8 @@ public class ChangesSection extends Composite {
 	/**
 	 * Listen to sync set changes so that we can update message to user and totals.
 	 */
-	private IInputChangedListener changedListener = new IInputChangedListener() {
-		public void inputChanged(DiffNode input) {
+	private ISynchronizeModelChangeListener changedListener = new ISynchronizeModelChangeListener() {
+		public void modelChanged(SynchronizeModelElement root) {
 			calculateDescription();
 		}
 	};

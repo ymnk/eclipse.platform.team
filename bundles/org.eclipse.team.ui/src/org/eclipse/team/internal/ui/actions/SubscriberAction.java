@@ -27,13 +27,13 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.synchronize.viewers.AdaptableDiffNode;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoModelElement;
 import org.eclipse.ui.*;
 
 /**
  * This action provides utilities for performing operations on selections that
- * contain instances of {@link SyncInfoDiffNode}. Subclasses can use this support
+ * contain instances of {@link SyncInfoModelElement}. Subclasses can use this support
  * to:
  * <ul>
  * <li>provides easy filtering of selection
@@ -43,7 +43,7 @@ import org.eclipse.ui.*;
  * </ul>
  * @see SyncInfo
  * @see SyncInfoSet
- * @see SyncInfoDiffNode
+ * @see SyncInfoModelElement
  * @since 3.0
  */
 public abstract class SubscriberAction implements IObjectActionDelegate, IViewActionDelegate {
@@ -130,8 +130,8 @@ public abstract class SubscriberAction implements IObjectActionDelegate, IViewAc
 		List filtered = new ArrayList();
 		for (int i = 0; i < elements.length; i++) {
 			IDiffElement e = elements[i];
-			if (e instanceof SyncInfoDiffNode) {
-				SyncInfo info = ((SyncInfoDiffNode) e).getSyncInfo();
+			if (e instanceof SyncInfoModelElement) {
+				SyncInfo info = ((SyncInfoModelElement) e).getSyncInfo();
 				if (info != null && getSyncInfoFilter().select(info)) {
 					filtered.add(e);
 				}
@@ -149,8 +149,8 @@ public abstract class SubscriberAction implements IObjectActionDelegate, IViewAc
 		List filtered = new ArrayList();
 		for (int i = 0; i < elements.length; i++) {
 			IDiffElement e = elements[i];
-			if (e instanceof SyncInfoDiffNode) {
-				filtered.add(((SyncInfoDiffNode)e).getSyncInfo());
+			if (e instanceof SyncInfoModelElement) {
+				filtered.add(((SyncInfoModelElement)e).getSyncInfo());
 			}
 		}
 		return (SyncInfo[]) filtered.toArray(new SyncInfo[filtered.size()]);
@@ -159,8 +159,8 @@ public abstract class SubscriberAction implements IObjectActionDelegate, IViewAc
 	private void markBusy(IDiffElement[] elements, boolean isBusy) {
 		for (int i = 0; i < elements.length; i++) {
 			IDiffElement element = elements[i];
-			if (element instanceof AdaptableDiffNode) {
-				((AdaptableDiffNode)element).setPropertyToRoot(AdaptableDiffNode.BUSY_PROPERTY, isBusy);
+			if (element instanceof SynchronizeModelElement) {
+				((SynchronizeModelElement)element).setPropertyToRoot(SynchronizeModelElement.BUSY_PROPERTY, isBusy);
 			}
 		}
 	}

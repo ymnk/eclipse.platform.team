@@ -35,20 +35,20 @@ import org.eclipse.team.ui.ISharedImages;
  * Supports saving the local resource that is changed in the editor.
  * </p>
  * <p>
- * Use {@link SyncInfoSetCompareInput} to display more than one <code>SyncInfo</code>
+ * Use {@link SynchronizeCompareInput} to display more than one <code>SyncInfo</code>
  * in an compare viewer. 
  * </p>
- * @see SyncInfoDiffNode
+ * @see SyncInfoModelElement
  * @since 3.0
  */
 public class SyncInfoCompareInput extends CompareEditorInput {
 
-	private SyncInfoDiffNode node;
+	private SyncInfoModelElement node;
 
 	public SyncInfoCompareInput(SyncInfo sync) {
 		super(new CompareConfiguration());
 		Assert.isNotNull(sync);
-		this.node = new SyncInfoDiffNode(null, sync);
+		this.node = new SyncInfoModelElement(null, sync);
 		initializeContentChangeListeners();
 	}
 

@@ -16,12 +16,12 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
- * This class sorts <code>SyncInfoDiffNode</code> instances.
+ * This class sorts <code>SyncInfoModelElement</code> instances.
  * It is not thread safe so it should not be reused between views.
  */
-public class SyncInfoDiffNodeSorter extends ResourceSorter {
+public class SynchronizeModelElementSorter extends ResourceSorter {
 			
-	public SyncInfoDiffNodeSorter() {
+	public SynchronizeModelElementSorter() {
 		super(ResourceSorter.NAME);
 	}
 

@@ -29,8 +29,8 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetCompareInput;
+import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
+import org.eclipse.team.ui.synchronize.viewers.SynchronizeCompareInput;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class RefreshCompleteDialog extends DetailsDialog {
@@ -38,7 +38,7 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	private final static int RESOURCE_LIST_SIZE = 10;
 	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
 	private FilteredSyncInfoCollector collector;
-	private SyncInfoSetCompareInput compareEditorInput;
+	private SynchronizeCompareInput compareEditorInput;
 	private IRefreshEvent event;
 	private SubscriberParticipant participant;
 
@@ -123,8 +123,8 @@ public class RefreshCompleteDialog extends DetailsDialog {
 	protected Composite createDropDownDialogArea(Composite parent) {
 		try {
 			CompareConfiguration compareConfig = new CompareConfiguration();
-			DiffTreeViewerConfiguration viewerAdvisor = new DiffTreeViewerConfiguration(participant.getId(), syncInfoSet);
-			compareEditorInput = new SyncInfoSetCompareInput(compareConfig, viewerAdvisor) {
+			TreeViewerAdvisor viewerAdvisor = new TreeViewerAdvisor(participant.getId(), syncInfoSet);
+			compareEditorInput = new SynchronizeCompareInput(compareConfig, viewerAdvisor) {
 
 				public String getTitle() {
 					return "Resources found during last refresh";

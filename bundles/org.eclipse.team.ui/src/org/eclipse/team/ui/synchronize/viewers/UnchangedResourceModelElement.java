@@ -13,17 +13,16 @@ package org.eclipse.team.ui.synchronize.viewers;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.team.core.synchronize.SyncInfo;
 
 /**
  * DiffNode that represents a resource that is in sync.
  */
-public class UnchangedResourceDiffNode extends AdaptableDiffNode implements IAdaptable {
+public class UnchangedResourceModelElement extends SynchronizeModelElement implements IAdaptable {
 
 	private IResource resource;
 
-	public UnchangedResourceDiffNode(IDiffContainer parent, IResource resource) {
-		super(parent, SyncInfo.IN_SYNC);
+	public UnchangedResourceModelElement(IDiffContainer parent, IResource resource) {
+		super(parent);
 		this.resource = resource;
 	}
 	

@@ -27,7 +27,7 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 /**
  * @since 3.0
  */
-public class SyncInfoLabelProvider extends LabelProvider implements IColorProvider {
+public class SynchronizeModelElementLabelProvider extends LabelProvider implements IColorProvider {
 
 	// Cache for folder images that have been overlayed with conflict icon
 	private Map fgImageCache;
@@ -73,7 +73,7 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 		}
 	}
 
-	public SyncInfoLabelProvider() {
+	public SynchronizeModelElementLabelProvider() {
 	}
 
 	/*
@@ -81,9 +81,9 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
 	 */
 	public Color getForeground(Object element) {
-		if (element instanceof AdaptableDiffNode) {
-			AdaptableDiffNode node = (AdaptableDiffNode)element;
-			if(node.getProperty(AdaptableDiffNode.BUSY_PROPERTY)) {
+		if (element instanceof SynchronizeModelElement) {
+			SynchronizeModelElement node = (SynchronizeModelElement)element;
+			if(node.getProperty(SynchronizeModelElement.BUSY_PROPERTY)) {
 				return WorkbenchColors.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
 			}
 		}
@@ -181,8 +181,8 @@ public class SyncInfoLabelProvider extends LabelProvider implements IColorProvid
 	 * @return whether the node has descendant conflicts
 	 */
 	private boolean hasDecendantConflicts(DiffNode node) {
-		if(node instanceof AdaptableDiffNode) {
-			return ((AdaptableDiffNode)node).getProperty(AdaptableDiffNode.PROPAGATED_CONFLICT_PROPERTY);
+		if(node instanceof SynchronizeModelElement) {
+			return ((SynchronizeModelElement)node).getProperty(SynchronizeModelElement.PROPAGATED_CONFLICT_PROPERTY);
 		}
 		return false;
 	}

@@ -18,8 +18,8 @@ import org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberPageDiffTreeViewerConfiguration;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoLabelProvider;
+import org.eclipse.team.ui.synchronize.viewers.SyncInfoModelElement;
+import org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElementLabelProvider;
 
 public class CVSSynchronizeViewCompareConfiguration extends SubscriberPageDiffTreeViewerConfiguration {
 
@@ -28,8 +28,8 @@ public class CVSSynchronizeViewCompareConfiguration extends SubscriberPageDiffTr
 	private static class CVSLabelDecorator extends LabelProvider implements ILabelDecorator  {
 		public String decorateText(String input, Object element) {
 			String text = input;
-			if (element instanceof SyncInfoDiffNode) {
-				IResource resource =  ((SyncInfoDiffNode)element).getResource();
+			if (element instanceof SyncInfoModelElement) {
+				IResource resource =  ((SyncInfoModelElement)element).getResource();
 				if(resource != null && resource.getType() != IResource.ROOT) {
 					CVSLightweightDecorator.Decoration decoration = new CVSLightweightDecorator.Decoration();
 					CVSLightweightDecorator.decorateTextLabel(resource, decoration, false, true);
@@ -57,10 +57,10 @@ public class CVSSynchronizeViewCompareConfiguration extends SubscriberPageDiffTr
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#getLabelProvider()
+	 * @see org.eclipse.team.ui.synchronize.TreeViewerAdvisor#getLabelProvider()
 	 */
 	protected ILabelProvider getLabelProvider() {
-		return new SyncInfoLabelProvider.DecoratingColorLabelProvider(new SyncInfoLabelProvider(), new CVSLabelDecorator());
+		return new SynchronizeModelElementLabelProvider.DecoratingColorLabelProvider(new SynchronizeModelElementLabelProvider(), new CVSLabelDecorator());
 	}
 	
 	public boolean isGroupIncomingByComment() {
@@ -74,7 +74,7 @@ public class CVSSynchronizeViewCompareConfiguration extends SubscriberPageDiffTr
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 * @see org.eclipse.team.ui.synchronize.TreeViewerAdvisor#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		String property = event.getProperty();

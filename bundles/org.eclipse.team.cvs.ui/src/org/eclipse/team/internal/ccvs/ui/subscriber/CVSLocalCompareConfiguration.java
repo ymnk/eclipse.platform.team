@@ -19,12 +19,12 @@ import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
 import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.ui.synchronize.subscriber.RefreshAction;
-import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
+import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
 
 /**
  * Provides compare specific support
  */
-public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
+public class CVSLocalCompareConfiguration extends TreeViewerAdvisor {
 
 	private CVSCompareSubscriber subscriber;
 	private SubscriberSyncInfoCollector collector;
@@ -33,11 +33,11 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 
 	/**
 	 * Return a <code>SyncInfoSetCompareConfiguration</code> that can be used in a
-	 * <code>SyncInfoSetCompareInput</code> to show the comparsion between the local
+	 * <code>SynchronizeCompareInput</code> to show the comparsion between the local
 	 * workspace resources and their tagged counterparts on the server.
 	 * @param resources the resources to be compared
 	 * @param tag the tag to be compared with
-	 * @return a configuration for a <code>SyncInfoSetCompareInput</code>
+	 * @return a configuration for a <code>SynchronizeCompareInput</code>
 	 */
 	public static CVSLocalCompareConfiguration create(IResource[] resources, CVSTag tag) {
 		CVSCompareSubscriber subscriber = new CVSCompareSubscriber(resources, tag);
@@ -88,7 +88,7 @@ public class CVSLocalCompareConfiguration extends DiffTreeViewerConfiguration {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.DiffTreeViewerConfiguration#contributeToToolBar(org.eclipse.jface.action.IToolBarManager)
+	 * @see org.eclipse.team.ui.synchronize.TreeViewerAdvisor#contributeToToolBar(org.eclipse.jface.action.IToolBarManager)
 	 */
 	public void contributeToToolBar(IToolBarManager tbm) {
 		tbm.add(refreshAllAction);

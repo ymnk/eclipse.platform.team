@@ -24,7 +24,7 @@ import org.eclipse.team.ui.synchronize.viewers.*;
  * Overrides the SyncInfoDiffViewerConfiguration to configure the diff viewer
  * for the synchroniza view
  */
-public class SubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewerConfiguration {
+public class SubscriberPageDiffTreeViewerConfiguration extends TreeViewerAdvisor {
 
 	private ISynchronizeView view;
 	private SubscriberParticipant participant;
@@ -65,8 +65,8 @@ public class SubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewerCon
 	protected void handleDoubleClick(StructuredViewer viewer, DoubleClickEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 		DiffNode node = (DiffNode) selection.getFirstElement();
-		if (node != null && node instanceof SyncInfoDiffNode) {
-			SyncInfoDiffNode syncNode = (SyncInfoDiffNode) node;
+		if (node != null && node instanceof SyncInfoModelElement) {
+			SyncInfoModelElement syncNode = (SyncInfoModelElement) node;
 			IResource resource = syncNode.getResource();
 			if (syncNode != null && resource != null && resource.getType() == IResource.FILE) {
 				openWithActions.openInCompareEditor();
@@ -117,8 +117,8 @@ public class SubscriberPageDiffTreeViewerConfiguration extends DiffTreeViewerCon
 	private String getStatusLineMessage(IStructuredSelection selection) {
 		if (selection.size() == 1) {
 			Object first = selection.getFirstElement();
-			if (first instanceof SyncInfoDiffNode) {
-				SyncInfoDiffNode node = (SyncInfoDiffNode) first;
+			if (first instanceof SyncInfoModelElement) {
+				SyncInfoModelElement node = (SyncInfoModelElement) first;
 				IResource resource = node.getResource();
 				if (resource == null) {
 					return node.getName();

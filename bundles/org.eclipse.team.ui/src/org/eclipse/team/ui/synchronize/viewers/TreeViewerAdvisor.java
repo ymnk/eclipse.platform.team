@@ -25,7 +25,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
 /**
- * A <code>DiffTreeViewerConfiguration</code> object controls various UI
+ * A <code>TreeViewerAdvisor</code> object controls various UI
  * aspects of sync info viewers like the context menu, toolbar, content
  * provider, and label provider. A configuration is created to display
  * {@link SyncInfo} objects contained in the provided {@link SyncInfoSet}.
@@ -56,7 +56,7 @@ import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
  * </p>
  * @since 3.0
  */
-public class DiffTreeViewerConfiguration extends StructuredViewerAdvisor implements IPropertyChangeListener {
+public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IPropertyChangeListener {
 
 	private ExpandAllAction expandAllAction;
 	
@@ -101,7 +101,7 @@ public class DiffTreeViewerConfiguration extends StructuredViewerAdvisor impleme
 	 *            the <code>SyncInfoSet</code> to be displayed in the
 	 *            resulting diff viewer.
 	 */
-	public DiffTreeViewerConfiguration(SyncInfoTree set) {
+	public TreeViewerAdvisor(SyncInfoTree set) {
 		this(null, set);
 	}
 
@@ -117,7 +117,7 @@ public class DiffTreeViewerConfiguration extends StructuredViewerAdvisor impleme
 	 *            the <code>SyncInfoSet</code> to be displayed in the
 	 *            resulting diff viewer
 	 */
-	public DiffTreeViewerConfiguration(String menuId, SyncInfoTree set) {
+	public TreeViewerAdvisor(String menuId, SyncInfoTree set) {
 		super(menuId, set);
 		TeamUIPlugin.getPlugin().getPreferenceStore().addPropertyChangeListener(this);
 	}
@@ -167,18 +167,18 @@ public class DiffTreeViewerConfiguration extends StructuredViewerAdvisor impleme
 		if (treeViewer.getExpandedState(element)) {
 			treeViewer.collapseToLevel(element, AbstractTreeViewer.ALL_LEVELS);
 		} else {
-			DiffTreeViewerConfiguration.navigate((TreeViewer)getViewer(), true /* next */, false /* no-open */, true /* only-expand */);
+			TreeViewerAdvisor.navigate((TreeViewer)getViewer(), true /* next */, false /* no-open */, true /* only-expand */);
 		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#getDiffNodeController()
 	 */
-	protected DiffNodeController getDiffNodeController() {
+	protected SynchronizeModelProvider getDiffNodeController() {
 		if(getShowCompressedFolders()) {
-			return new DiffNodeControllerCompressedFolders((SyncInfoTree)getSyncInfoSet());
+			return new CompressedFoldersModelProvider((SyncInfoTree)getSyncInfoSet());
 		}
-		return new DiffNodeControllerHierarchical((SyncInfoTree)getSyncInfoSet());
+		return new HierarchicalModelProvider((SyncInfoTree)getSyncInfoSet());
 	}
 	
 	private boolean getShowCompressedFolders() {
@@ -213,7 +213,7 @@ public class DiffTreeViewerConfiguration extends StructuredViewerAdvisor impleme
 	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#navigate(boolean)
 	 */
 	public boolean navigate(boolean next) {
-		return DiffTreeViewerConfiguration.navigate((TreeViewer)getViewer(), next, true, false);
+		return TreeViewerAdvisor.navigate((TreeViewer)getViewer(), next, true, false);
 	}
 	/**
 	 * Selects the next (or previous) node of the current selection.

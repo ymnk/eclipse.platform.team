@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ui.synchronize.ChangesSection;
 import org.eclipse.team.internal.ui.synchronize.ConfigureRefreshScheduleDialog;
 import org.eclipse.team.internal.ui.synchronize.actions.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
-import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
+import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 
@@ -287,7 +287,7 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 	
 	private Viewer createChangesViewer(Composite parent) {
 		configuration = createSyncInfoSetCompareConfiguration();
-		TreeViewer viewer = new DiffTreeViewerConfiguration.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		TreeViewer viewer = new TreeViewerAdvisor.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(data);
 		configuration.initializeViewer(viewer);
@@ -295,7 +295,7 @@ public class SubscriberParticipantPage implements IPageBookViewPage, IPropertyCh
 		return viewer;
 	}
 
-	public DiffTreeViewerConfiguration getViewerConfiguration() {
+	public TreeViewerAdvisor getViewerConfiguration() {
 		return configuration;
 	}
 	

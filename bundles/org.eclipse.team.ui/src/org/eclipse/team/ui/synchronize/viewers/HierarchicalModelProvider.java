@@ -47,7 +47,7 @@ import org.eclipse.team.internal.ui.Policy;
  * NOT ON DEMAND - model is created then maintained!
  * @since 3.0
  */
-public class DiffNodeControllerHierarchical extends DiffNodeController implements ISyncInfoSetChangeListener {
+public class HierarchicalModelProvider extends SynchronizeModelProvider implements ISyncInfoSetChangeListener {
 
 	// Map from resources to model objects. This allows effecient lookup
 	// of model objects based on changes occuring to resources.
@@ -72,7 +72,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		public static final int BATCH_WAIT_INCREMENT = 100;
 		Set nodes = new HashSet();
 		public LabelUpdateJob() {
-			super(Policy.bind("DiffNodeControllerHierarchical.0")); //$NON-NLS-1$
+			super(Policy.bind("HierarchicalModelProvider.0")); //$NON-NLS-1$
 			setSystem(true);
 		}
 		public IStatus runInUIThread(IProgressMonitor monitor) {
@@ -107,7 +107,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	
 	private IPropertyChangeListener listener = new IPropertyChangeListener() {
 		public void propertyChange(final PropertyChangeEvent event) {
-			if (event.getProperty() == AdaptableDiffNode.BUSY_PROPERTY) {
+			if (event.getProperty() == SynchronizeModelElement.BUSY_PROPERTY) {
 				labelUpdater.add(event.getSource(), ((Boolean)event.getNewValue()).booleanValue());
 			}
 		}
@@ -119,21 +119,21 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * 
 	 * @param set the sync set used as the basis for the model created by this input.
 	 */
-	public DiffNodeControllerHierarchical(SyncInfoTree set) {
+	public HierarchicalModelProvider(SyncInfoTree set) {
 		Assert.isNotNull(set);
 		this.root = new RootDiffNode();
 		this.set = set;
 	}
 
 	/**
-	 * Return the model object (i.e. an instance of <code>SyncInfoDiffNode</code>
+	 * Return the model object (i.e. an instance of <code>SyncInfoModelElement</code>
 	 * or one of its subclasses) for the given IResource.
 	 * @param resource
 	 *            the resource
-	 * @return the <code>SyncInfoDiffNode</code> for the given resource
+	 * @return the <code>SyncInfoModelElement</code> for the given resource
 	 */
-	protected AdaptableDiffNode getModelObject(IResource resource) {
-		return (AdaptableDiffNode) resourceMap.get(resource);
+	protected SynchronizeModelElement getModelObject(IResource resource) {
+		return (SynchronizeModelElement) resourceMap.get(resource);
 	}
 
 	/**
@@ -151,13 +151,13 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	}
 
 	public ViewerSorter getViewerSorter() {
-		return new SyncInfoDiffNodeSorter();
+		return new SynchronizeModelElementSorter();
 	}
 
 	/**
 	 * Builds the viewer model based on the contents of the sync set.
 	 */
-	public AdaptableDiffNode prepareInput(IProgressMonitor monitor) {
+	public SynchronizeModelElement prepareInput(IProgressMonitor monitor) {
 		// Connect to the sync set which will register us as a listener and give us a reset event
 		// in a background thread
 		getSyncInfoTree().connect(this, monitor);
@@ -203,12 +203,12 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param node
 	 * @return
 	 */
-	protected IDiffElement[] buildModelObjects(AdaptableDiffNode node) {
+	protected IDiffElement[] buildModelObjects(SynchronizeModelElement node) {
 		IDiffElement[] children = createModelObjects(node);
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
-			if (element instanceof AdaptableDiffNode) {
-				buildModelObjects((AdaptableDiffNode) element);
+			if (element instanceof SynchronizeModelElement) {
+				buildModelObjects((SynchronizeModelElement) element);
 			}
 		}
 		return children;
@@ -221,7 +221,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param container
 	 * @return
 	 */
-	protected IDiffElement[] createModelObjects(AdaptableDiffNode container) {
+	protected IDiffElement[] createModelObjects(SynchronizeModelElement container) {
 		IResource resource = null;
 		if (container == getRoot()) {
 			resource = ResourcesPlugin.getWorkspace().getRoot();
@@ -231,7 +231,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		if(resource != null) {
 			SyncInfoTree infoTree = getSyncInfoTree();
 			IResource[] children = infoTree.members(resource);
-			AdaptableDiffNode[] nodes = new AdaptableDiffNode[children.length];
+			SynchronizeModelElement[] nodes = new SynchronizeModelElement[children.length];
 			for (int i = 0; i < children.length; i++) {
 				nodes[i] = createModelObject(container, children[i]);
 			}
@@ -240,13 +240,13 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		return new IDiffElement[0];
 	}
 
-	protected AdaptableDiffNode createModelObject(AdaptableDiffNode parent, IResource resource) {
+	protected SynchronizeModelElement createModelObject(SynchronizeModelElement parent, IResource resource) {
 		SyncInfo info = getSyncInfoTree().getSyncInfo(resource);
-		AdaptableDiffNode newNode;
+		SynchronizeModelElement newNode;
 		if(info != null) {
-			newNode = new SyncInfoDiffNode(parent, info);
+			newNode = new SyncInfoModelElement(parent, info);
 		} else {
-			newNode = new UnchangedResourceDiffNode(parent, resource);
+			newNode = new UnchangedResourceModelElement(parent, resource);
 		}
 		addToViewer(newNode);
 		return newNode;
@@ -260,12 +260,12 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param node
 	 *            the root node
 	 */
-	protected void clearModelObjects(AdaptableDiffNode node) {
+	protected void clearModelObjects(SynchronizeModelElement node) {
 		IDiffElement[] children = node.getChildren();
 		for (int i = 0; i < children.length; i++) {
 			IDiffElement element = children[i];
-			if (element instanceof AdaptableDiffNode) {
-				clearModelObjects((AdaptableDiffNode) element);
+			if (element instanceof SynchronizeModelElement) {
+				clearModelObjects((SynchronizeModelElement) element);
 			}
 		}
 		IResource resource = node.getResource();
@@ -292,7 +292,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		return result;
 	}
 
-	protected void associateDiffNode(AdaptableDiffNode node) {
+	protected void associateDiffNode(SynchronizeModelElement node) {
 		IResource resource = node.getResource();
 		if(resource != null) {
 			resourceMap.put(resource, node);
@@ -346,7 +346,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		for (int i = 0; i < infos.length; i++) {
 			SyncInfo info = infos[i];
 			IResource local = info.getLocal();
-			AdaptableDiffNode diffNode = getModelObject(local);
+			SynchronizeModelElement diffNode = getModelObject(local);
 			// If a sync info diff node already exists then just update
 			// it, otherwise remove the old diff node and create a new
 			// sub-tree.
@@ -362,13 +362,13 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param diffNode the diff node to be changed
 	 * @param info the new sync info for the diff node
 	 */
-	protected void handleChange(AdaptableDiffNode diffNode, SyncInfo info) {
+	protected void handleChange(SynchronizeModelElement diffNode, SyncInfo info) {
 		IResource local = info.getLocal();
 		// TODO: Get any additional sync bits
-		if(diffNode instanceof SyncInfoDiffNode) {
+		if(diffNode instanceof SyncInfoModelElement) {
 			boolean wasConflict = isConflicting(diffNode);
 			// The update preserves any of the additional sync info bits
-			((SyncInfoDiffNode)diffNode).update(info);
+			((SyncInfoModelElement)diffNode).update(info);
 			boolean isConflict = isConflicting(diffNode);
 			updateLabel(diffNode);
 			if (wasConflict && !isConflict) {
@@ -383,7 +383,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		// TODO: set any additional sync info bits
 	}
 
-	protected boolean isConflicting(AdaptableDiffNode diffNode) {
+	protected boolean isConflicting(SynchronizeModelElement diffNode) {
 		return (diffNode.getKind() & SyncInfo.DIRECTION_MASK) == SyncInfo.CONFLICTING;
 	}
 
@@ -405,7 +405,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		for (int i = 0; i < removedResources.length; i++) {
 			IResource resource = removedResources[i];
 			if (resource.getType() != IResource.FILE) {
-				AdaptableDiffNode node = getModelObject(resource);
+				SynchronizeModelElement node = getModelObject(resource);
 				if (node != null) {
 					removeFromViewer(resource);
 					addResources(new IResource[] {resource});
@@ -460,7 +460,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * @param resource
 	 */
 	protected void removeFromViewer(IResource resource) {
-		AdaptableDiffNode node = getModelObject(resource);
+		SynchronizeModelElement node = getModelObject(resource);
 		if (node == null) return;
 		if (isConflicting(node)) {
 			setParentConflict(node, false);
@@ -472,7 +472,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		}
 	}
 
-	protected void addToViewer(AdaptableDiffNode node) {
+	protected void addToViewer(SynchronizeModelElement node) {
 		associateDiffNode(node);
 		node.addPropertyChangeListener(listener);
 		if (isConflicting(node)) {
@@ -487,14 +487,14 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	protected void addResources(IResource[] added) {
 		for (int i = 0; i < added.length; i++) {
 			IResource resource = added[i];
-			AdaptableDiffNode node = getModelObject(resource);
+			SynchronizeModelElement node = getModelObject(resource);
 			if (node != null) {
 				// Somehow the node exists. Remove it and read it to ensure
 				// what is shown matches the contents of the sync set
 				removeFromViewer(resource);
 			}
 			// Build the sub-tree rooted at this node
-			AdaptableDiffNode parent = getModelObject(resource.getParent());
+			SynchronizeModelElement parent = getModelObject(resource.getParent());
 			if (parent != null) {
 				node = createModelObject(parent, resource);
 				buildModelObjects(node);
@@ -525,9 +525,9 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeController#getInput()
+	 * @see org.eclipse.team.ui.synchronize.viewers.SynchronizeModelProvider#getInput()
 	 */
-	public AdaptableDiffNode getInput() {
+	public SynchronizeModelElement getInput() {
 		return getRoot();
 	}
 	
@@ -536,7 +536,7 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 	 * are accumulated and updated in a single call.
 	 * @param diffNode the diff node to be updated
 	 */
-	protected void updateLabel(AdaptableDiffNode diffNode) {
+	protected void updateLabel(SynchronizeModelElement diffNode) {
 		pendingLabelUpdates.add(diffNode);
 	}
 
@@ -555,15 +555,15 @@ public class DiffNodeControllerHierarchical extends DiffNodeController implement
 		}
 	}
 
-	protected void setParentConflict(AdaptableDiffNode diffNode, boolean value) {
-		diffNode.setPropertyToRoot(AdaptableDiffNode.PROPAGATED_CONFLICT_PROPERTY, value);
+	protected void setParentConflict(SynchronizeModelElement diffNode, boolean value) {
+		diffNode.setPropertyToRoot(SynchronizeModelElement.PROPAGATED_CONFLICT_PROPERTY, value);
 		updateParentLabels(diffNode);
 	}
 
-	private void updateParentLabels(AdaptableDiffNode diffNode) {
+	private void updateParentLabels(SynchronizeModelElement diffNode) {
 		updateLabel(diffNode);
 		while (diffNode.getParent() != null) {
-			diffNode = (AdaptableDiffNode)diffNode.getParent();
+			diffNode = (SynchronizeModelElement)diffNode.getParent();
 			updateLabel(diffNode);
 		}
 	}

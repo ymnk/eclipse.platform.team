@@ -32,8 +32,8 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.dialogs.DetailsDialog;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.DiffTreeViewerConfiguration;
-import org.eclipse.team.ui.synchronize.viewers.SyncInfoSetCompareInput;
+import org.eclipse.team.ui.synchronize.viewers.TreeViewerAdvisor;
+import org.eclipse.team.ui.synchronize.viewers.SynchronizeCompareInput;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.internal.dialogs.ContainerCheckedTreeViewer;
 
@@ -149,13 +149,13 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		try {
 			CompareConfiguration compareConfig = new CompareConfiguration();
 			compareConfig.setLeftEditable(false);
-			DiffTreeViewerConfiguration viewerAdvisor = new DiffTreeViewerConfiguration(set);
-			compareEditorInput = new SyncInfoSetCompareInput(compareConfig, viewerAdvisor) {
+			TreeViewerAdvisor viewerAdvisor = new TreeViewerAdvisor(set);
+			compareEditorInput = new SynchronizeCompareInput(compareConfig, viewerAdvisor) {
 				public String getTitle() {
 					return "Resources to commit";
 				}
-				protected StructuredViewer internalCreateDiffViewer(Composite parent, DiffTreeViewerConfiguration diffViewerConfiguration) {
-					ContainerCheckedTreeViewer viewer = new DiffTreeViewerConfiguration.NavigableCheckboxTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+				protected StructuredViewer internalCreateDiffViewer(Composite parent, TreeViewerAdvisor diffViewerConfiguration) {
+					ContainerCheckedTreeViewer viewer = new TreeViewerAdvisor.NavigableCheckboxTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 					viewer.setCheckedElements(set.getResources());
 					GridData data = new GridData(GridData.FILL_BOTH);
 					viewer.getControl().setLayoutData(data);

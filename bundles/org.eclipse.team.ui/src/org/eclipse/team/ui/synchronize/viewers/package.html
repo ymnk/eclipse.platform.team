@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
 <html>
 <head>
-  <meta content="text/html; charset=iso-8859-1"
- http-equiv="Content-Type">
-  <meta content="IBM" name="Author">
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="Author" content="IBM">
   <title>Package-level Javadoc</title>
 </head>
 <body>
@@ -26,11 +26,12 @@ information in dialogs, wizards, and editors.<br>
 </p>
 <p>The central abstractions for presenting synchronization state are:<br>
 </p>
-<p>- DiffNodeController, AdaptableDiffNode: are the building blocks for
+<p>- SynchronizeModelProvider, SynchronizeModelElement: are the
+building blocks for
 describing the logical structure of a synchronization model.<br>
-- DiffTreeViewerConfiguration, SyncInfoDifftTreeViewer: are used to
+- StructuredViewerAdvisor: are used to
 display the logical structure to the user and define the basics such as
-the DiffNodeController, label provider, and context menus.<br>
+the SynchronizeModelProvider, label provider, and context menus.<br>
 - SyncInfoCompareInput: is used to show a comparison between a local
 resource and a variant in a compare editor.<br>
 - SyncInfoSetCompareInput: is used to showing a set of variants in a

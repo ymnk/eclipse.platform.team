@@ -15,10 +15,15 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.*;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public abstract class AdaptableDiffNode extends DiffNode implements IAdaptable {
+/**
+ * A node that represents synchronization state between elements. 
+ * @since 3.0
+ */
+public abstract class SynchronizeModelElement extends DiffNode implements IAdaptable {
 
 	public static final String BUSY_PROPERTY = TeamUIPlugin.ID + ".busy"; //$NON-NLS-1$
 	public static final String PROPAGATED_CONFLICT_PROPERTY = TeamUIPlugin.ID + ".conflict"; //$NON-NLS-1$
@@ -33,8 +38,8 @@ public abstract class AdaptableDiffNode extends DiffNode implements IAdaptable {
 	private int flags;
 	private ListenerList listeners;
 	
-	public AdaptableDiffNode(IDiffContainer parent, int kind) {
-		super(parent, kind);
+	public SynchronizeModelElement(IDiffContainer parent) {
+		super(parent, SyncInfo.IN_SYNC);
 	}
 	
 	/* (non-Javadoc)
@@ -111,7 +116,7 @@ public abstract class AdaptableDiffNode extends DiffNode implements IAdaptable {
 
 	private void addToRoot(String flag) {
 		setProperty(flag, true);
-		AdaptableDiffNode parent = (AdaptableDiffNode)getParent();
+		SynchronizeModelElement parent = (SynchronizeModelElement)getParent();
 		if (parent != null) {
 			if (parent.getProperty(flag)) return;
 			parent.addToRoot(flag);
@@ -159,7 +164,7 @@ public abstract class AdaptableDiffNode extends DiffNode implements IAdaptable {
 		IDiffElement[] childen = getChildren();
 		for (int i = 0; i < childen.length; i++) {
 			IDiffElement element = childen[i];
-			if (((AdaptableDiffNode)element).getProperty(flag)) {
+			if (((SynchronizeModelElement)element).getProperty(flag)) {
 				return true;
 			}
 		}
@@ -168,7 +173,7 @@ public abstract class AdaptableDiffNode extends DiffNode implements IAdaptable {
 	
 	private void removeToRoot(String flag) {
 		setProperty(flag, false);
-		AdaptableDiffNode parent = (AdaptableDiffNode)getParent();
+		SynchronizeModelElement parent = (SynchronizeModelElement)getParent();
 		if (parent != null) {
 			// If the parent doesn't have the tag, no recalculation is required
 			// Also, if the parent still has a child with the tag, no recalculation is needed

@@ -21,9 +21,9 @@ import org.eclipse.jface.viewers.ViewerSorter;
  * 
  * @since 3.0
  */
-public abstract class DiffNodeController {
+public abstract class SynchronizeModelProvider {
 
-	protected class RootDiffNode extends UnchangedResourceDiffNode {
+	protected class RootDiffNode extends UnchangedResourceModelElement {
 		public RootDiffNode() {
 			super(null, ResourcesPlugin.getWorkspace().getRoot());
 		}
@@ -45,14 +45,14 @@ public abstract class DiffNodeController {
 	 * @param monitor
 	 * @return
 	 */
-	public abstract AdaptableDiffNode prepareInput(IProgressMonitor monitor);
+	public abstract SynchronizeModelElement prepareInput(IProgressMonitor monitor);
 	
 	/**
 	 * Returns the input created by this controller or <code>null</code> if 
 	 * {@link #prepareInput(IProgressMonitor)} hasn't been called on this object yet.
 	 * @return
 	 */
-	public abstract AdaptableDiffNode getInput();
+	public abstract SynchronizeModelElement getInput();
 	
 	public abstract void setViewer(StructuredViewer viewer);
 

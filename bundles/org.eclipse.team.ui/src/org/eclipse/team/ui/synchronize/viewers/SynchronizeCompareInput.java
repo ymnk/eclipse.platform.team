@@ -32,26 +32,26 @@ import org.eclipse.ui.progress.IProgressService;
  * A <code>CompareEditorInput</code> whose diff viewer shows the resources contained
  * in a <code>SyncInfoSet</code>. The configuration of the diff viewer is determined by the 
  * <code>SyncInfoSetCompareConfiguration</code> that is used to create the 
- * <code>SyncInfoSetCompareInput</code>.
+ * <code>SynchronizeCompareInput</code>.
  * 
  * uses the presentation model defined by the configuration.
  * 
  * @since 3.0
  */
-public class SyncInfoSetCompareInput extends CompareEditorInput {
+public class SynchronizeCompareInput extends CompareEditorInput {
 
-	private DiffTreeViewerConfiguration diffViewerConfiguration;
+	private TreeViewerAdvisor diffViewerConfiguration;
 	private Viewer diffViewer;
 	private NavigationAction nextAction;
 	private NavigationAction previousAction;
 
 	/**
-	 * Create a <code>SyncInfoSetCompareInput</code> whose diff viewer is configured
+	 * Create a <code>SynchronizeCompareInput</code> whose diff viewer is configured
 	 * using the provided <code>SyncInfoSetCompareConfiguration</code>.
 	 * @param configuration the compare configuration 
 	 * @param diffViewerConfiguration the diff viewer configuration 
 	 */
-	public SyncInfoSetCompareInput(CompareConfiguration configuration, DiffTreeViewerConfiguration diffViewerConfiguration) {
+	public SynchronizeCompareInput(CompareConfiguration configuration, TreeViewerAdvisor diffViewerConfiguration) {
 		super(configuration);
 		this.diffViewerConfiguration = diffViewerConfiguration;
 	}
@@ -91,15 +91,15 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 	 * @param diffViewerConfiguration the configuration for the diff viewer
 	 * @return the created diff viewer
 	 */
-	protected StructuredViewer internalCreateDiffViewer(Composite parent, DiffTreeViewerConfiguration diffViewerConfiguration) {
-		TreeViewer viewer = new DiffTreeViewerConfiguration.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+	protected StructuredViewer internalCreateDiffViewer(Composite parent, TreeViewerAdvisor diffViewerConfiguration) {
+		TreeViewer viewer = new TreeViewerAdvisor.NavigableTreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		GridData data = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(data);
 		diffViewerConfiguration.initializeViewer(viewer);
 		return viewer;
 	}
 
-	protected DiffTreeViewerConfiguration getViewerConfiguration() {
+	protected TreeViewerAdvisor getViewerConfiguration() {
 		return diffViewerConfiguration;
 	}
 	
@@ -119,7 +119,7 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 			((StructuredViewer) viewer).addOpenListener(new IOpenListener() {
 				public void open(OpenEvent event) {
 					ISelection s = event.getSelection();
-					final SyncInfoDiffNode node = getElement(s);
+					final SyncInfoModelElement node = getElement(s);
 					if (node != null) {
 						IResource resource = node.getResource();
 						int kind = node.getKind();
@@ -170,13 +170,13 @@ public class SyncInfoSetCompareInput extends CompareEditorInput {
 		}
 	}
 	
-	/* private */ SyncInfoDiffNode getElement(ISelection selection) {
+	/* private */ SyncInfoModelElement getElement(ISelection selection) {
 		if (selection != null && selection instanceof IStructuredSelection) {
 			IStructuredSelection ss= (IStructuredSelection) selection;
 			if (ss.size() == 1) {
 				Object o = ss.getFirstElement();
-				if(o instanceof SyncInfoDiffNode) {
-					return (SyncInfoDiffNode)o;
+				if(o instanceof SyncInfoModelElement) {
+					return (SyncInfoModelElement)o;
 				}
 			}
 		}

@@ -21,9 +21,9 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.ISharedImages;
 
-public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHierarchical {
+public class CompressedFoldersModelProvider extends HierarchicalModelProvider {
 
-	protected class UnchangedCompressedDiffNode extends UnchangedResourceDiffNode {
+	protected class UnchangedCompressedDiffNode extends UnchangedResourceModelElement {
 		public UnchangedCompressedDiffNode(IDiffContainer parent, IResource resource) {
 			super(parent, resource);
 		}
@@ -37,7 +37,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		}
 		
 		/* (non-Javadoc)
-		 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getImageDescriptor(java.lang.Object)
+		 * @see org.eclipse.team.ui.synchronize.SyncInfoModelElement#getImageDescriptor(java.lang.Object)
 		 */
 		public ImageDescriptor getImageDescriptor(Object object) {
 			return TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER);
@@ -47,7 +47,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	/**
 	 * A compressed folder appears under a project and contains out-of-sync resources
 	 */
-	public class CompressedFolderDiffNode extends SyncInfoDiffNode {
+	public class CompressedFolderDiffNode extends SyncInfoModelElement {
 
 		public CompressedFolderDiffNode(IDiffContainer parent, SyncInfo info) {
 			super(parent, info);
@@ -62,14 +62,14 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		}
 		
 		/* (non-Javadoc)
-		 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNode#getImageDescriptor(java.lang.Object)
+		 * @see org.eclipse.team.ui.synchronize.SyncInfoModelElement#getImageDescriptor(java.lang.Object)
 		 */
 		public ImageDescriptor getImageDescriptor(Object object) {
 			return TeamUIPlugin.getImageDescriptor(ISharedImages.IMG_COMPRESSED_FOLDER);
 		}
 	}
 	
-	public DiffNodeControllerCompressedFolders(SyncInfoTree set) {
+	public CompressedFoldersModelProvider(SyncInfoTree set) {
 		super(set);
 	}
 	
@@ -77,7 +77,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	 * @see org.eclipse.team.ui.synchronize.SyncInfoDiffNodeRoot#getSorter()
 	 */
 	public ViewerSorter getViewerSorter() {
-		return new SyncInfoDiffNodeSorter() {
+		return new SynchronizeModelElementSorter() {
 			protected int compareNames(IResource resource1, IResource resource2) {
 				if (resource1.getType() == IResource.FOLDER && resource2.getType() == IResource.FOLDER) {
 					return collator.compare(resource1.getProjectRelativePath().toString(), resource2.getProjectRelativePath().toString());
@@ -88,9 +88,9 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
+	 * @see org.eclipse.team.ui.synchronize.viewers.HierarchicalModelProvider#createModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
 	 */	
-	protected IDiffElement[] createModelObjects(AdaptableDiffNode container) {
+	protected IDiffElement[] createModelObjects(SynchronizeModelElement container) {
 		IResource resource = null;
 		if (container == getRoot()) {
 			resource = ResourcesPlugin.getWorkspace().getRoot();
@@ -108,7 +108,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		return super.createModelObjects(container);
 	}
 	
-	private IDiffElement[] getFolderChildren(AdaptableDiffNode parent, IResource resource) {
+	private IDiffElement[] getFolderChildren(SynchronizeModelElement parent, IResource resource) {
 		// Folders will only contain out-of-sync children
 		IResource[] children = getSyncInfoTree().members(resource);
 		List result = new ArrayList();
@@ -121,7 +121,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 		return (IDiffElement[])result.toArray(new IDiffElement[result.size()]);
 	}
 
-	private IDiffElement[] getProjectChildren(AdaptableDiffNode parent, IProject project) {
+	private IDiffElement[] getProjectChildren(SynchronizeModelElement parent, IProject project) {
 		// The out-of-sync elements could possibly include the project so the code 
 		// below is written to ignore the project
 		SyncInfo[] outOfSync = getSyncInfoTree().getSyncInfos(project, IResource.DEPTH_INFINITE);
@@ -149,16 +149,16 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#createChildNode(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.ui.synchronize.views.HierarchicalModelProvider#createChildNode(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
 	 */
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#createModelObject(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
+	 * @see org.eclipse.team.ui.synchronize.viewers.HierarchicalModelProvider#createModelObject(org.eclipse.compare.structuremergeviewer.DiffNode, org.eclipse.core.resources.IResource)
 	 */
-	protected AdaptableDiffNode createModelObject(AdaptableDiffNode parent, IResource resource) {
+	protected SynchronizeModelElement createModelObject(SynchronizeModelElement parent, IResource resource) {
 		if (resource.getType() == IResource.FOLDER) {
 			SyncInfo info = getSyncInfoTree().getSyncInfo(resource);
-			AdaptableDiffNode newNode;
+			SynchronizeModelElement newNode;
 			if(info != null) {
 				newNode = new CompressedFolderDiffNode(parent, info);
 			} else {
@@ -186,12 +186,12 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 	
 	private void addResource(SyncInfo info) {
 		IResource local = info.getLocal();
-		AdaptableDiffNode existingNode = getModelObject(local);
+		SynchronizeModelElement existingNode = getModelObject(local);
 		if (existingNode == null) {
 			if (local.getType() == IResource.FILE) {
-				AdaptableDiffNode parentNode = getModelObject(local.getParent());
+				SynchronizeModelElement parentNode = getModelObject(local.getParent());
 				if (parentNode == null) {
-					AdaptableDiffNode projectNode = getModelObject(local.getProject());
+					SynchronizeModelElement projectNode = getModelObject(local.getProject());
 					if (projectNode == null) {
 						projectNode = createModelObject(getRoot(), local.getProject());
 					}
@@ -203,7 +203,7 @@ public class DiffNodeControllerCompressedFolders extends DiffNodeControllerHiera
 				}
 				createModelObject(parentNode, local);
 			} else {
-				AdaptableDiffNode projectNode = getModelObject(local.getProject());
+				SynchronizeModelElement projectNode = getModelObject(local.getProject());
 				if (projectNode == null) {
 					projectNode = createModelObject(getRoot(), local.getProject());
 				}

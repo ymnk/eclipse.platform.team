@@ -21,11 +21,12 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.ui.synchronize.ISynchronizeView;
 import org.eclipse.team.ui.synchronize.subscriber.*;
-import org.eclipse.team.ui.synchronize.viewers.IInputChangedListener;
+import org.eclipse.team.ui.synchronize.viewers.ISynchronizeModelChangeListener;
+import org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement;
 import org.eclipse.ui.*;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 
-public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements IInputChangedListener {
+public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements ISynchronizeModelChangeListener {
 	
 	private List delegates = new ArrayList(2);
 	private CVSSynchronizeViewCompareConfiguration config;
@@ -143,9 +144,9 @@ public class CVSSynchronizeViewPage extends SubscriberParticipantPage implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.presentation.IInputChangedListener#inputChanged(org.eclipse.team.ui.synchronize.presentation.DiffNodeController)
+	 * @see org.eclipse.team.ui.synchronize.presentation.ISynchronizeModelChangeListener#inputChanged(org.eclipse.team.ui.synchronize.presentation.SynchronizeModelProvider)
 	 */
-	public void inputChanged(DiffNode node) {
-		updateActionEnablement(node);		
+	public void modelChanged(SynchronizeModelElement root) {
+		updateActionEnablement(root);		
 	}
 }

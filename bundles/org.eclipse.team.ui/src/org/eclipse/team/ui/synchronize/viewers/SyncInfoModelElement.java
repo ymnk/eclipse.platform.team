@@ -38,13 +38,13 @@ import org.eclipse.team.internal.ui.synchronize.RemoteResourceTypedElement;
  * @see DiffTreeViewer
  * @see Differencer
  */
-public class SyncInfoDiffNode extends AdaptableDiffNode {
+public class SyncInfoModelElement extends SynchronizeModelElement {
 		
 	private ITypedElement ancestor;
 	private SyncInfo info;
 	
 	/**
-	 * Construct a <code>SyncInfoDiffNode</code> for the given resource. The {@link SyncInfoSet} 
+	 * Construct a <code>SyncInfoModelElement</code> for the given resource. The {@link SyncInfoSet} 
 	 * that contains sync states for this resource must also be provided. This set is used
 	 * to access the underlying sync state model that is the basis for this node this helps for
 	 * providing quick access to the logical containment
@@ -52,8 +52,8 @@ public class SyncInfoDiffNode extends AdaptableDiffNode {
 	 * @param set The set associated with the diff tree veiwer
 	 * @param resource The resource for the node
 	 */
-	public SyncInfoDiffNode(IDiffContainer parent, SyncInfo info) {
-		super(parent, info.getKind());
+	public SyncInfoModelElement(IDiffContainer parent, SyncInfo info) {
+		super(parent);
 		update(info);
 	}
 

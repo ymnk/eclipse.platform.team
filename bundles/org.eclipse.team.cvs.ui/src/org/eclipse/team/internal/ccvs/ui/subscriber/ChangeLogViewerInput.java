@@ -40,7 +40,7 @@ import org.eclipse.ui.progress.UIJob;
  * 
  * {date/time, comment, user} -> {*files}
  */
-public class ChangeLogViewerInput extends DiffNodeControllerHierarchical {
+public class ChangeLogViewerInput extends HierarchicalModelProvider {
 	
 	private Map commentRoots = new HashMap();
 	private PendingUpdateAdapter pendingItem;
@@ -146,7 +146,7 @@ public class ChangeLogViewerInput extends DiffNodeControllerHierarchical {
 		}
 		public IStatus run(IProgressMonitor monitor) {
 			if (set != null && !shutdown) {
-				final SyncInfoDiffNode[] nodes = calculateRoots(getSyncInfoTree(), monitor);				
+				final SyncInfoModelElement[] nodes = calculateRoots(getSyncInfoTree(), monitor);				
 				UIJob updateUI = new UIJob("updating change log viewers") {
 					public IStatus runInUIThread(IProgressMonitor monitor) {
 						AbstractTreeViewer tree = getTreeViewer();	
@@ -173,9 +173,9 @@ public class ChangeLogViewerInput extends DiffNodeControllerHierarchical {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.DiffNodeControllerHierarchical#buildModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
+	 * @see org.eclipse.team.ui.synchronize.viewers.HierarchicalModelProvider#buildModelObjects(org.eclipse.compare.structuremergeviewer.DiffNode)
 	 */
-	protected IDiffElement[] buildModelObjects(AdaptableDiffNode node) {
+	protected IDiffElement[] buildModelObjects(SynchronizeModelElement node) {
 		/*if(node == this) {
 			UIJob job = new UIJob("") {
 				public IStatus runInUIThread(IProgressMonitor monitor) {
@@ -213,7 +213,7 @@ public class ChangeLogViewerInput extends DiffNodeControllerHierarchical {
 		return new IDiffElement[0];
 	}
 
-	private SyncInfoDiffNode[] calculateRoots(SyncInfoSet set, IProgressMonitor monitor) {
+	private SyncInfoModelElement[] calculateRoots(SyncInfoSet set, IProgressMonitor monitor) {
 		commentRoots.clear();
 		/*SyncInfo[] infos = set.getSyncInfos();
 		monitor.beginTask("fetching from server", set.size() * 100);
@@ -280,14 +280,14 @@ public class ChangeLogViewerInput extends DiffNodeControllerHierarchical {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#syncSetChanged(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
+	 * @see org.eclipse.team.ui.synchronize.views.HierarchicalModelProvider#syncSetChanged(org.eclipse.team.core.subscribers.ISyncInfoSetChangeEvent)
 	 */
 	protected void syncSetChanged(ISyncInfoSetChangeEvent event) {
 		reset();
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.views.DiffNodeControllerHierarchical#dispose()
+	 * @see org.eclipse.team.ui.synchronize.views.HierarchicalModelProvider#dispose()
 	 */
 	public void dispose() {
 		shutdown = true;

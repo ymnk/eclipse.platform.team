@@ -30,7 +30,7 @@ import org.eclipse.team.core.synchronize.IResourceVariant;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.synchronize.subscriber.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.viewers.AdaptableDiffNode;
+import org.eclipse.team.ui.synchronize.viewers.SynchronizeModelElement;
 import org.eclipse.ui.*;
 
 public class Utils {
@@ -392,8 +392,8 @@ public class Utils {
 			IResource resource = null;
 			if (element instanceof IResource) {
 				resource = (IResource)element;
-			} else if (element instanceof AdaptableDiffNode){
-				resource = ((AdaptableDiffNode) element).getResource();
+			} else if (element instanceof SynchronizeModelElement){
+				resource = ((SynchronizeModelElement) element).getResource();
 			} else {
 				resource = (IResource)getAdapter(element, IResource.class);
 			}

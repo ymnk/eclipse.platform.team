@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.viewers;
 
-import org.eclipse.compare.structuremergeviewer.DiffNode;
 
 /**
  * Listener that gets informed when the <code>DiffNode</code> model created
@@ -20,11 +19,11 @@ import org.eclipse.compare.structuremergeviewer.DiffNode;
  * </p>
  * @since 3.0
  */
-public interface IInputChangedListener {
+public interface ISynchronizeModelChangeListener {
 	/**
 	 * Called whenever the input model shown in a diff node viewer is updated.
 	 *
 	 * @param input the root <code>DiffNode</code> of the model.
 	 */
-	public void inputChanged(DiffNode input);
+	public void modelChanged(SynchronizeModelElement root);
 }
