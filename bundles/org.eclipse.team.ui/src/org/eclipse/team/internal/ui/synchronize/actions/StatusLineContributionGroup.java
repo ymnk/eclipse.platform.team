@@ -70,7 +70,8 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 		configuration.addPropertyChangeListener(this);
 		
 		// Listen to changes to update the counts
-		page.getFilteredCollector().getSyncInfoTree().addSyncSetChangedListener(this);
+		SyncInfoSet set = getSyncInfoSet();
+		set.addSyncSetChangedListener(this);
 	}
 
 	private boolean isThreeWay() {
@@ -106,7 +107,7 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 
 	public void dispose() {
-		page.getFilteredCollector().getSyncInfoTree().removeSyncSetChangedListener(this);
+		getSyncInfoSet().removeSyncSetChangedListener(this);
 		configuration.removePropertyChangeListener(this);
 		incomingImage.dispose();
 		outgoingImage.dispose();
@@ -130,9 +131,9 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	}
 
 	private void updateCounts() {
-		if (getParticipant().getSubscriberSyncInfoCollector() != null) {
-			SyncInfoSet workspaceSetStats = getParticipant().getSyncInfoSet();
-			SyncInfoSet workingSetSetStats = page.getFilteredCollector().getWorkingSetSyncInfoSet();
+		if (getParticipant().getSubscriber() != null) {
+			SyncInfoSet workspaceSetStats = getParticipantSyncInfoSet();
+			SyncInfoSet workingSetSetStats = getWorkingSetSyncInfoSet();
 
 			final int total = workspaceSetStats.size();
 			final int workspaceConflicting = (int) workspaceSetStats.countFor(SyncInfo.CONFLICTING, SyncInfo.DIRECTION_MASK);
@@ -198,5 +199,17 @@ public class StatusLineContributionGroup extends ActionGroup implements ISyncInf
 	 */
 	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
 		// Nothing to do for errors
+	}
+	
+	private SyncInfoSet getSyncInfoSet() {
+		return (SyncInfoSet)configuration.getProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET);
+	}
+	
+	private SyncInfoSet getWorkingSetSyncInfoSet() {
+		return (SyncInfoSet)configuration.getProperty(SubscriberPageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
+	}
+	
+	private SyncInfoTree getParticipantSyncInfoSet() {
+		return getParticipant().getSyncInfoSet();
 	}
 }

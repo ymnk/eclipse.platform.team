@@ -11,31 +11,26 @@
 package org.eclipse.team.internal.ui.synchronize;
 
 import java.util.*;
-import java.util.ArrayList;
-import java.util.List;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.*;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.team.ui.synchronize.IActionContribution;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.IActionBars;
 
 /**
- * @author mvalenta
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Generation - Code and Comments
+ * Manages the models that can be displayed by a synchronize page
  */
-public abstract class ModelViewController implements IActionContribution {
+public abstract class SynchronizeModelManager implements IActionContribution {
 	
 	private ISynchronizeModelProvider modelProvider;
 	private List toggleModelProviderActions;
 	private ISynchronizePageConfiguration configuration;
+	private StructuredViewerAdvisor advisor;
 	
 	/**
 	 * Action that allows changing the model providers supported by this advisor.
@@ -56,14 +51,13 @@ public abstract class ModelViewController implements IActionContribution {
 			IStructuredSelection selection = null;
 			if(mp != null) {
 				if(mp.getDescriptor().getId().equals(descriptor.getId())) return;	
-				selection = (IStructuredSelection)viewer.getSelection();	
+				selection = (IStructuredSelection)configuration.getSite().getSelectionProvider().getSelection();	
 			}
 			internalPrepareInput(descriptor.getId(), null);
-			setInput(getViewer());
+			setInput();
 			if(selection != null) {
 				setSelection(selection.toArray(), true);
 			}
-			configuration.setProperty(ISynchronizePageConfiguration.P_MODEL, modelProvider.getModelRoot());
 		}
 		
 		public void update() {
@@ -81,6 +75,12 @@ public abstract class ModelViewController implements IActionContribution {
 				update();
 			}
 		}
+	}
+	
+	public SynchronizeModelManager(StructuredViewerAdvisor advisor, ISynchronizePageConfiguration configuration) {
+		this.advisor = advisor;
+		this.configuration = configuration;
+		configuration.addActionContribution(this);
 	}
 	
 	/**
@@ -109,11 +109,54 @@ public abstract class ModelViewController implements IActionContribution {
 		return modelProvider.prepareInput(monitor);
 	}
 	
+	/**
+	 * Gets a new selection that contains the view model objects that
+	 * correspond to the given objects. The advisor will try and
+	 * convert the objects into the appropriate viewer objects. 
+	 * This is required because the model provider controls the actual 
+	 * model elements in the viewer and must be consulted in order to
+	 * understand what objects can be selected in the viewer.
+	 * <p>
+	 * This method does not affect the selection of the viewer itself.
+	 * It's main purpose is for testing and should not be used by other
+	 * clients.
+	 * </p>
+	 * @param object the objects to select
+	 * @return a selection corresponding to the given objects
+	 */
+	public ISelection getSelection(Object[] objects) {
+		if (modelProvider != null) {
+	 		Object[] viewerObjects = new Object[objects.length];
+			for (int i = 0; i < objects.length; i++) {
+				viewerObjects[i] = modelProvider.getMapping(objects[i]);
+			}
+			return new StructuredSelection(viewerObjects);
+		} else {
+			return StructuredSelection.EMPTY;
+		}
+	}
+	
+	/**
+	 * Sets a new selection for this viewer and optionally makes it visible. The advisor will try and
+	 * convert the objects into the appropriate viewer objects. This is required because the model
+	 * provider controls the actual model elements in the viewer and must be consulted in order to
+	 * understand what objects can be selected in the viewer.
+	 * 
+	 * @param object the objects to select
+	 * @param reveal <code>true</code> if the selection is to be made visible, and
+	 *                  <code>false</code> otherwise
+	 */
+	protected void setSelection(Object[] objects, boolean reveal) {
+		ISelection selection = getSelection(objects);
+		if (!selection.isEmpty()) {
+			advisor.setSelection(selection, reveal);
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
 	public void initialize(ISynchronizePageConfiguration configuration) {
-		this.configuration = configuration;
 		ISynchronizeModelProviderDescriptor[] providers = getSupportedModelProviders();
 		// We only need switching of layouts if there is more than one model provider
 		if (providers.length > 1) {
@@ -123,8 +166,22 @@ public abstract class ModelViewController implements IActionContribution {
 				toggleModelProviderActions.add(new ToggleModelProviderAction(provider));
 			}
 		}
+		// The input may of been set already. In that case, don't change it and
+		// simply assign it to the view.
+		if(modelProvider == null) {
+			internalPrepareInput(null, null);
+		}
+		setInput();
 	}
 	
+	/**
+	 * Set the input of the viewer
+	 */
+	protected void setInput() {
+		configuration.setProperty(ISynchronizePageConfiguration.P_MODEL, modelProvider.getModelRoot());
+		advisor.setInput(modelProvider);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
 	 */
@@ -166,5 +223,13 @@ public abstract class ModelViewController implements IActionContribution {
 		if(modelProvider != null) {
 			modelProvider.dispose();
 		}
+		configuration.removeActionContribution(this);
+	}
+	
+	/**
+	 * @return Returns the configuration.
+	 */
+	public ISynchronizePageConfiguration getConfiguration() {
+		return configuration;
 	}
 }

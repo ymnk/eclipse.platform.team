@@ -242,8 +242,6 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 			// status line
 			statusLine.fillActionBars(actionBars);
 			
-			// allow the advisor to contribute
-			getViewerAdvisor().setActionBars(actionBars);
 			((IActionContribution)configuration).setActionBars(actionBars);
 		}		
 	}
@@ -287,9 +285,5 @@ public final class SubscriberParticipantPage extends Page implements ISynchroniz
 	
 	public Viewer getViewer() {
 		return changesViewer;
-	}
-
-	public void setSelection(Object[] objects, boolean reveal) {
-		getViewerAdvisor().setSelection(objects, reveal);
 	}
 }

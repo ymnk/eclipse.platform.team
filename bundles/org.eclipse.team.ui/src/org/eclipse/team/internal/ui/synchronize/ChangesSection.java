@@ -25,7 +25,8 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.subscribers.*;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberPageConfiguration;
+import org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant;
 import org.eclipse.ui.forms.HyperlinkGroup;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
@@ -156,11 +157,11 @@ public class ChangesSection extends Composite {
 		calculateDescription();
 		page.getViewerAdvisor().addInputChangedListener(changedListener);
 		participant.getSyncInfoSet().addSyncSetChangedListener(subscriberListener);
-		page.getFilteredCollector().getSyncInfoTree().addSyncSetChangedListener(outputSetListener);
+		getSyncInfoTree().addSyncSetChangedListener(outputSetListener);
 	}
 	
 	private void calculateDescription() {
-		SyncInfoTree syncInfoTree = page.getFilteredCollector().getSyncInfoTree();
+		SyncInfoTree syncInfoTree = getSyncInfoTree();
 		if (syncInfoTree.getErrors().length > 0) {
 			if (!showingError) {
 				TeamUIPlugin.getStandardDisplay().asyncExec(new Runnable() {
@@ -225,8 +226,8 @@ public class ChangesSection extends Composite {
 		}
 		
 		SyncInfoSet workspace = participant.getSyncInfoSet();
-		SyncInfoSet workingSet = page.getFilteredCollector().getWorkingSetSyncInfoSet();
-		SyncInfoSet filteredSet = page.getFilteredCollector().getSyncInfoTree();
+		SyncInfoSet workingSet = getWorkingSetSyncInfoSet();
+		SyncInfoSet filteredSet = getSyncInfoTree();
 		
 		int changesInWorkspace = workspace.size();
 		int changesInWorkingSet = workingSet.size();
@@ -317,7 +318,7 @@ public class ChangesSection extends Composite {
 		link.setText(Policy.bind("ChangesSection.9")); //$NON-NLS-1$
 		link.addHyperlinkListener(new HyperlinkAdapter() {
 			public void linkActivated(HyperlinkEvent e) {
-				participant.getSubscriberSyncInfoCollector().reset();
+				participant.reset();
 			}
 		});
 		link.setBackground(getBackgroundColor());
@@ -329,7 +330,7 @@ public class ChangesSection extends Composite {
 	}
 	
 	/* private */ void showErrors() {
-		ITeamStatus[] status = page.getFilteredCollector().getSyncInfoTree().getErrors();
+		ITeamStatus[] status = getSyncInfoTree().getErrors();
 		String title = Policy.bind("ChangesSection.11"); //$NON-NLS-1$
 		if (status.length == 1) {
 			ErrorDialog.openError(getShell(), title, status[0].getMessage(), status[0]);
@@ -341,5 +342,13 @@ public class ChangesSection extends Composite {
 	
 	protected Color getBackgroundColor() {
 		return getShell().getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND);
+	}
+	
+	private SyncInfoTree getSyncInfoTree() {
+		return (SyncInfoTree)configuration.getProperty(ISynchronizePageConfiguration.P_SYNC_INFO_SET);
+	}
+	
+	private SyncInfoSet getWorkingSetSyncInfoSet() {
+		return (SyncInfoSet)configuration.getProperty(SubscriberPageConfiguration.P_WORKING_SET_SYNC_INFO_SET);
 	}
 }

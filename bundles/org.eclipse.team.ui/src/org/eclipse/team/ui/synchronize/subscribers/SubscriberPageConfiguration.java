@@ -14,9 +14,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.subscribers.WorkingSetFilteredSyncInfoCollector;
 import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.StructuredViewerAdvisor;
 import org.eclipse.ui.IWorkingSet;
 
 
@@ -30,6 +30,13 @@ import org.eclipse.ui.IWorkingSet;
  */
 public class SubscriberPageConfiguration extends SynchronizePageConfiguration implements ISubscriberPageConfiguration {
 
+	/**
+	 * Private property that gives access to a set the
+	 * contains all out-of-sync resources in the selected working
+	 * set.
+	 */
+	public static final String P_WORKING_SET_SYNC_INFO_SET = TeamUIPlugin.ID + ".P_WORKING_SET_SYNC_INFO_SET"; //$NON-NLS-1$
+	
 	private final static int[] INCOMING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING};
 	private final static int[] OUTGOING_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.OUTGOING};
 	private final static int[] BOTH_MODE_FILTER = new int[] {SyncInfo.CONFLICTING, SyncInfo.INCOMING, SyncInfo.OUTGOING};
@@ -43,12 +50,6 @@ public class SubscriberPageConfiguration extends SynchronizePageConfiguration im
 	public SubscriberPageConfiguration(SubscriberParticipant participant) {
 		super(participant);
 		addActionContribution(new SubscriberActionContribution());
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeConfiguration#initialize(org.eclipse.team.ui.synchronize.StructuredViewerAdvisor)
-	 */
-	public void initialize(StructuredViewerAdvisor advisor) {
 		initializeCollector();
 	}
 	
@@ -57,6 +58,7 @@ public class SubscriberPageConfiguration extends SynchronizePageConfiguration im
 		collector = new WorkingSetFilteredSyncInfoCollector(participant.getSubscriberSyncInfoCollector(), participant.getSubscriber().roots());
 		collector.reset();
 		setProperty(P_SYNC_INFO_SET, collector.getSyncInfoTree());
+		setProperty(P_WORKING_SET_SYNC_INFO_SET, collector.getWorkingSetSyncInfoSet());
 	}
 
 	public void dispose() {

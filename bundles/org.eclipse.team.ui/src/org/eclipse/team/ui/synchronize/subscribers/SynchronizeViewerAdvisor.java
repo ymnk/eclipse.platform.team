@@ -10,9 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize.subscribers;
 
-import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.ui.synchronize.*;
-import org.eclipse.team.ui.synchronize.ISynchronizeView;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
 
 /**
@@ -21,27 +19,12 @@ import org.eclipse.team.ui.synchronize.TreeViewerAdvisor;
  */
 public class SynchronizeViewerAdvisor extends TreeViewerAdvisor {
 
-	private ISynchronizeView view;
-	private SubscriberParticipant participant;
-	private SubscriberPageConfiguration configuration;
-
-	public SynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
-		super(configuration.getParticipant().getId(), configuration.getPart().getSite(), syncInfoTree);
-		this.configuration = configuration;
-		this.view = view;
-		this.participant = (SubscriberParticipant)configuration.getParticipant();
-	}
-
-	protected SubscriberParticipant getParticipant() {
-		return participant;
-	}
-	
-	protected SubscriberPageConfiguration getConfiguration() {
-		return configuration;
-	}
-
-	protected ISynchronizeView getSynchronizeView() {
-		return view;
+	/**
+	 * @param configuration
+	 */
+	public SynchronizeViewerAdvisor(ISynchronizePageConfiguration configuration) {
+		super(configuration);
+		// TODO Auto-generated constructor stub
 	}
 
 }

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -26,6 +27,14 @@ public class WorkspaceParticipantActionContributions implements IActionContribut
 
 	private ActionDelegateWrapper commitToolbar;
 	private ActionDelegateWrapper updateToolbar;
+	private IPropertyChangeListener listener = new IPropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent event) {
+			if (event.getProperty().equals(ISynchronizePageConfiguration.P_MODEL)) {
+				Object o = event.getNewValue();
+				inputChanged(o);
+			}
+		}
+	};
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.IContextMenuContribution#initialize(org.eclipse.jface.viewers.StructuredViewer)
@@ -39,16 +48,11 @@ public class WorkspaceParticipantActionContributions implements IActionContribut
 		Utils.initAction(commitToolbar, "action.SynchronizeViewCommit.", Policy.getBundle()); //$NON-NLS-1$
 		Utils.initAction(updateToolbar, "action.SynchronizeViewUpdate.", Policy.getBundle()); //$NON-NLS-1$
 
-		configuration.addPropertyChangeListener(new IPropertyChangeListener() {
-			public void propertyChange(PropertyChangeEvent event) {
-				if (event.getProperty().equals(ISynchronizePageConfiguration.P_MODEL)) {
-					Object o = event.getNewValue();
-					if (o instanceof ISynchronizeModelElement) {
-						modelChanged((ISynchronizeModelElement)o);
-					}
-				}
-			}
-		});
+		configuration.addPropertyChangeListener(listener);		
+		Object o = configuration.getProperty(ISynchronizePageConfiguration.P_MODEL);
+		if (o != null) {
+			inputChanged(o);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -74,6 +78,21 @@ public class WorkspaceParticipantActionContributions implements IActionContribut
 		// Nothing needs to be disposed
 	}
 
+	/**
+	 * Invoked when the model shown by the page's view changes
+	 */
+	protected void inputChanged(Object o) {
+		if (o instanceof ISynchronizeModelElement) {
+			final ISynchronizeModelElement input = (ISynchronizeModelElement)o;
+			input.addCompareInputChangeListener(new ICompareInputChangeListener() {
+				public void compareInputChanged(ICompareInput source) {
+					modelChanged(input);
+				}
+			});
+			modelChanged(input);
+		}
+	}
+	
 	/**
 	 * @param element
 	 */

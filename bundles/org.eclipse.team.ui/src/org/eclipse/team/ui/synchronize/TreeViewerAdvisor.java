@@ -15,9 +15,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.synchronize.*;
+import org.eclipse.team.internal.ui.synchronize.HierarchicalModelManager;
+import org.eclipse.team.internal.ui.synchronize.SyncInfoModelElement;
 import org.eclipse.team.internal.ui.synchronize.actions.ExpandAllAction;
 import org.eclipse.team.internal.ui.synchronize.actions.NavigateAction;
 import org.eclipse.ui.*;
@@ -44,6 +44,7 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 	private Action collapseAll;
 	private NavigateAction gotoNext;
 	private NavigateAction gotoPrevious;
+	private HierarchicalModelManager modelManager;
 	
 	/**
 	 * Interface used to implement navigation for tree viewers. This interface is used by
@@ -104,6 +105,7 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 	public TreeViewerAdvisor(ISynchronizePageConfiguration configuration) {
 		super(configuration);
 		configuration.addActionContribution(this);
+		modelManager = new HierarchicalModelManager(this, configuration);
 	}
 	
 	/* (non-Javadoc)
@@ -118,29 +120,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 	 */
 	public boolean validateViewer(StructuredViewer viewer) {
 		return viewer instanceof AbstractTreeViewer;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.viewers.StructuredViewerAdvisor#getDiffNodeController()
-	 */
-	protected ISynchronizeModelProvider createModelProvider(String id) {
-		if(id == null) {
-			id = CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID;
-		}
-		if(id.endsWith(CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID)) {
-			return new CompressedFoldersModelProvider((SyncInfoTree)getSyncInfoSet());
-		} else {
-			return new HierarchicalModelProvider((SyncInfoTree)getSyncInfoSet());
-		}
-	}
-			
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.StructuredViewerAdvisor#getSupportedModelProviders()
-	 */
-	protected ISynchronizeModelProviderDescriptor[] getSupportedModelProviders() {
-		return new ISynchronizeModelProviderDescriptor[] {
-				new HierarchicalModelProvider.HierarchicalModelProviderDescriptor(),
-				new CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor() };
 	}
 	
 	/**
@@ -201,15 +180,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 			return selection.size() + Policy.bind("SynchronizeView.13"); //$NON-NLS-1$
 		}
 		return ""; //$NON-NLS-1$
-	}
-	
-	/**
-	 * Return the state of the compressed folder setting.
-	 * 
-	 * @return the state of the compressed folder setting.
-	 */
-	private boolean getShowCompressedFolders() {
-		return TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
 	}
 	
 	private static TreeItem findNextPrev(TreeViewer viewer, TreeItem item, boolean next) {
@@ -385,7 +355,6 @@ public class TreeViewerAdvisor extends StructuredViewerAdvisor implements IActio
 	 * @see org.eclipse.team.ui.synchronize.IActionContribution#setActionBars(org.eclipse.ui.IActionBars)
 	 */
 	public void setActionBars(IActionBars actionBars) {
-		super.setActionBars(actionBars);
 		if(actionBars != null) {
 			IToolBarManager manager = actionBars.getToolBarManager();
 			if (manager.find(ISynchronizePageConfiguration.NAVIGATE_GROUP) != null) {

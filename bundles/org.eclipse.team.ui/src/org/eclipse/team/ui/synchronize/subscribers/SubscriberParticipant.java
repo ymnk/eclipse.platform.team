@@ -233,7 +233,6 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 		collector.dispose();
 	}
 	
-	
 	public SyncInfoTree getSyncInfoSet() {
 		return getSubscriberSyncInfoCollector().getSubscriberSyncInfoSet();
 	}
@@ -280,7 +279,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @return
 	 */
 	protected StructuredViewerAdvisor createSynchronizeViewerAdvisor(SubscriberPageConfiguration configuration, SyncInfoTree syncInfoTree) {
-		return new TreeViewerAdvisor(configuration, syncInfoTree);
+		return new TreeViewerAdvisor(configuration);
 	}
 	
 	/**
@@ -288,6 +287,7 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	 * @return a <code>TamSubscriber</code>
 	 */
 	public Subscriber getSubscriber() {
+		if (collector == null) return null;
 		return collector.getSubscriber();
 	}
 		
@@ -319,5 +319,12 @@ public abstract class SubscriberParticipant extends AbstractSynchronizeParticipa
 	public void saveState(IMemento memento) {
 		IMemento settings = memento.createChild(CTX_SUBSCRIBER_PARTICIPANT_SETTINGS);
 		refreshSchedule.saveState(settings.createChild(CTX_SUBSCRIBER_SCHEDULE_SETTINGS));
+	}
+
+	/**
+	 * Reset the sync set of the particpant by repopulating it from scratch.
+	 */
+	public void reset() {
+		getSubscriberSyncInfoCollector().reset();
 	}
 }

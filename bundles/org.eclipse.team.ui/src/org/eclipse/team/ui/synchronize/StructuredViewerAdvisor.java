@@ -10,15 +10,13 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
-import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.util.ListenerList;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.events.*;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.core.Assert;
@@ -107,13 +105,6 @@ public abstract class StructuredViewerAdvisor {
 		viewer.setLabelProvider(getLabelProvider());
 		viewer.setContentProvider(getContentProvider());
 		hookContextMenu(viewer);
-		
-		// The input may of been set already. In that case, don't change it and
-		// simply assign it to the view.
-		if(modelProvider == null) {
-			prepareInput(null);
-		}
-		setInput(viewer);
 	}
 	
 	/**
@@ -158,8 +149,8 @@ public abstract class StructuredViewerAdvisor {
 	public abstract boolean navigate(boolean next);
 
 	/**
-	 * Sets a new selection for this viewer and optionally makes it visible. The advisor will try and
-	 * convert the objects into the appropriate viewer objects. This is required because the model
+	 * Sets a new selection for this viewer and optionally makes it visible.
+	 * This is required because the model
 	 * provider controls the actual model elements in the viewer and must be consulted in order to
 	 * understand what objects can be selected in the viewer.
 	 * 
@@ -167,54 +158,10 @@ public abstract class StructuredViewerAdvisor {
 	 * @param reveal <code>true</code> if the selection is to be made visible, and
 	 *                  <code>false</code> otherwise
 	 */
-	public void setSelection(Object[] objects, boolean reveal) {
-		ISelection selection = getSelection(objects);
+	public void setSelection(ISelection selection, boolean reveal) {
 		if (!selection.isEmpty()) {
 			viewer.setSelection(selection, reveal);
 		}
-	}
-	
-	/**
-	 * Gets a new selection that contains the view model objects that
-	 * correspond to the given objects. The advisor will try and
-	 * convert the objects into the appropriate viewer objects. 
-	 * This is required because the model provider controls the actual 
-	 * model elements in the viewer and must be consulted in order to
-	 * understand what objects can be selected in the viewer.
-	 * <p>
-	 * This method does not affect the selection of the viewer itself.
-	 * It's main purpose is for testing and should not be used by other
-	 * clients.
-	 * </p>
-	 * @param object the objects to select
-	 * @return a selection corresponding to the given objects
-	 */
-	public ISelection getSelection(Object[] objects) {
-		if (modelProvider != null) {
-	 		Object[] viewerObjects = new Object[objects.length];
-			for (int i = 0; i < objects.length; i++) {
-				viewerObjects[i] = modelProvider.getMapping(objects[i]);
-			}
-			return new StructuredSelection(viewerObjects);
-		} else {
-			return StructuredSelection.EMPTY;
-		}
-	}
-	 
-	/**
-	 * Creates the model that will be shown in the viewers. This can be called before the
-	 * viewer has been created.
-	 * <p>
-	 * The result of this method can be shown used as the input to a viewer. However, the
-	 * prefered method of initializing a viewer is to call {@link #initializeViewer(StructuredViewer)}
-	 * directly. This method only exists when the model must be created before the
-	 * viewer.
-	 * </p>
-	 * @param monitor shows progress while preparing the model
-	 * @return the model that can be shown in a viewer
-	 */
-	public Object prepareInput(IProgressMonitor monitor) {
-		return internalPrepareInput(null, monitor);
 	}
 	
 	/**
@@ -273,25 +220,6 @@ public abstract class StructuredViewerAdvisor {
 	protected abstract boolean validateViewer(StructuredViewer viewer);
 
 	/**
-	 * Run the runnable in the UI thread.
-	 * @param r the runnable to run in the UI thread.
-	 */
-	protected void aSyncExec(Runnable r) {
-		final Control ctrl = viewer.getControl();
-		if (ctrl != null && !ctrl.isDisposed()) {
-			ctrl.getDisplay().asyncExec(r);
-		}
-	}
-
-	private void fireChanges() {
-		if (listeners != null) {
-			Object[] l= listeners.getListeners();
-			for (int i= 0; i < l.length; i++)
-				((ISynchronizeModelChangeListener) l[i]).modelChanged(modelProvider.getModelRoot());
-		}
-	}
-
-	/**
 	 * Returns the content provider for the viewer.
 	 * 
 	 * @return the content provider for the viewer.
@@ -334,19 +262,12 @@ public abstract class StructuredViewerAdvisor {
 	 * 
 	 * @param viewer the viewer to set the input.
 	 */
-	protected final void setInput(ISynchronizeModelProvider modelProvider) {
+	public final void setInput(ISynchronizeModelProvider modelProvider) {
 		modelProvider.setViewer(viewer);
 		viewer.setSorter(modelProvider.getViewerSorter());
-		ISynchronizeModelElement input = modelProvider.getModelRoot();
-		if (input instanceof DiffNode) {
-			((DiffNode) input).addCompareInputChangeListener(new ICompareInputChangeListener() {
-				public void compareInputChanged(ICompareInput source) {
-					fireChanges();
-				}
-			});
-		}
 		viewer.setInput(modelProvider.getModelRoot());
 	}
+	
 	/**
 	 * @return Returns the configuration.
 	 */
