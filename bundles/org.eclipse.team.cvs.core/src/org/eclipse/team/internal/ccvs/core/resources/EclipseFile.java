@@ -191,9 +191,9 @@ class EclipseFile extends EclipseResource implements ICVSFile {
 	/*
 	 * This is to be used by the Copy handler. The filename of the form .#filename
 	 */
-	public void moveTo(String filename) throws CVSException {
+	public void copyTo(String filename) throws CVSException {
 		try {
-			getIFile().move(new Path(filename), true /*force*/, true /*keep history*/, null);
+			getIFile().copy(new Path(filename), true /*force*/, null);
 		} catch(CoreException e) {
 			throw new CVSException(e.getStatus());
 		}

@@ -362,7 +362,7 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile, ICVSFi
 	/**
 	 * @see IManagedFile#moveTo(IManagedFile)
 	 */
-	public void moveTo(String mFile) throws CVSException, ClassCastException {		
+	public void copyTo(String mFile) throws CVSException, ClassCastException {		
 		// Do nothing
 	}
 	
