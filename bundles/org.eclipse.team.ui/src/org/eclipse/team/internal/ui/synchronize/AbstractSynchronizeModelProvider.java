@@ -318,6 +318,95 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
      */
     protected abstract boolean hasViewerState();
 
+    /*
+     * Return all the resources that are expanded in the page.
+     * This method should only be called in the UI thread
+     * after validating that the viewer is still valid.
+     */
+    protected IResource[] getExpandedResources() {
+        final StructuredViewer viewer = getViewer();
+        Object[] objects = ((AbstractTreeViewer) viewer).getVisibleExpandedElements();
+        return getResources(objects);
+    }
+    
+    /*
+     * Expand the resources if they appear in the page.
+     * This method should only be called in the UI thread
+     * after validating that the viewer is still valid.
+     */
+    protected void expandResources(IResource[] resources) {
+        Set expandedElements = new HashSet();
+        StructuredViewer viewer = getViewer();
+        for (int j = 0; j < resources.length; j++) {
+            IResource resource = resources[j];
+			ISynchronizeModelElement[] elements = getModelObjects(resource);
+			for (int i = 0; i < elements.length; i++) {
+                ISynchronizeModelElement element = elements[i];
+                // Add all parents of the element to the expansion set
+                while (element != null) {
+                    expandedElements.add(element);
+                    element = (ISynchronizeModelElement)element.getParent();
+                }
+            }
+		}
+        ((AbstractTreeViewer) viewer).setExpandedElements(expandedElements.toArray());
+    }
+    
+    private ISynchronizeModelElement[] getModelElements(IResource[] resources) {
+        Set result = new HashSet();
+        for (int j = 0; j < resources.length; j++) {
+            IResource resource = resources[j];
+			ISynchronizeModelElement[] elements = getModelObjects(resource);
+			for (int i = 0; i < elements.length; i++) {
+                ISynchronizeModelElement element = elements[i];
+                result.add(element);
+            }
+		}
+        return (ISynchronizeModelElement[]) result.toArray(new ISynchronizeModelElement[result.size()]);
+    }
+    
+    protected IResource[] getResources(Object[] objects) {
+        Set result = new HashSet();
+		if (objects.length > 0) {
+			for (int i = 0; i < objects.length; i++) {
+				if (objects[i] instanceof ISynchronizeModelElement) {
+					IResource resource = ((ISynchronizeModelElement)objects[i]).getResource();
+					if(resource != null)
+						result.add(resource);
+				}
+			}
+		}
+		return (IResource[]) result.toArray(new IResource[result.size()]);
+    }
+    
+    private void cacheResources(IResource[] resources, String configProperty) {
+		if (resources.length > 0) {
+			ISynchronizePageConfiguration config = getConfiguration();
+			ArrayList paths = new ArrayList();
+			for (int i = 0; i < resources.length; i++) {
+				IResource resource = resources[i];
+				paths.add(resource.getFullPath().toString());
+			}
+			config.setProperty(configProperty, paths);
+		}
+    }
+    
+    private IResource[] getCachedResources(String configProperty) {
+        List paths = (List)getConfiguration().getProperty(configProperty);
+		IContainer container = ResourcesPlugin.getWorkspace().getRoot();
+		ArrayList resources = new ArrayList();
+		if (paths != null) {
+			for (Iterator it = paths.iterator(); it.hasNext();) {
+				String path = (String) it.next();
+				IResource resource = getResourceForPath(container, path);
+				if (resource != null) {
+				    resources.add(resource);
+				}
+			}
+		}
+		return (IResource[]) resources.toArray(new IResource[resources.size()]);
+    }
+    
     /**
      * Save the viewer state (expansion and selection)
      */
@@ -325,46 +414,20 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		//	save visible expanded elements and selection
 	    final StructuredViewer viewer = getViewer();
 		if (viewer != null && !viewer.getControl().isDisposed() && viewer instanceof AbstractTreeViewer) {
-			final Object[][] expandedElements = new Object[1][1];
-			final Object[][] selectedElements = new Object[1][1];
+			final IResource[][] expandedResources = new IResource[1][1];
+			final IResource[][] selectedResources = new IResource[1][1];
 			viewer.getControl().getDisplay().syncExec(new Runnable() {
 				public void run() {
 					if (viewer != null && !viewer.getControl().isDisposed()) {
-						expandedElements[0] = ((AbstractTreeViewer) viewer).getVisibleExpandedElements();
-						selectedElements[0] = ((IStructuredSelection) viewer.getSelection()).toArray();
+					    expandedResources[0] = getExpandedResources();
+					    selectedResources[0] = getResources(((IStructuredSelection) viewer.getSelection()).toArray());
 					}
 				}
 			});
-			//
-			// Save expansion
-			//
-			if (expandedElements[0].length > 0) {
-				ISynchronizePageConfiguration config = getConfiguration();
-				ArrayList savedExpansionState = new ArrayList();
-				for (int i = 0; i < expandedElements[0].length; i++) {
-					if (expandedElements[0][i] instanceof ISynchronizeModelElement) {
-						IResource resource = ((ISynchronizeModelElement) expandedElements[0][i]).getResource();
-						if(resource != null)
-							savedExpansionState.add(resource.getFullPath().toString());
-					}
-				}
-				config.setProperty(P_VIEWER_EXPANSION_STATE, savedExpansionState);
-			}
-			//
-			// Save selection
-			//
-			if (selectedElements[0].length > 0) {
-				ISynchronizePageConfiguration config = getConfiguration();
-				ArrayList savedSelectedState = new ArrayList();
-				for (int i = 0; i < selectedElements[0].length; i++) {
-					if (selectedElements[0][i] instanceof ISynchronizeModelElement) {
-						IResource resource = ((ISynchronizeModelElement) selectedElements[0][i]).getResource();
-						if(resource != null)
-							savedSelectedState.add(resource.getFullPath().toString());
-					}
-				}
-				config.setProperty(P_VIEWER_SELECTION_STATE, savedSelectedState);
-			}
+			
+			// Save expansion and selection
+			cacheResources(expandedResources[0], P_VIEWER_EXPANSION_STATE);
+			cacheResources(selectedResources[0], P_VIEWER_SELECTION_STATE);
 		}
 	}
 
@@ -376,43 +439,30 @@ public abstract class AbstractSynchronizeModelProvider implements ISynchronizeMo
 		// restore expansion state and selection state
 	    final StructuredViewer viewer = getViewer();
 		if (viewer != null && !viewer.getControl().isDisposed() && viewer instanceof AbstractTreeViewer) {
-			List savedExpansionState = (List)getConfiguration().getProperty(P_VIEWER_EXPANSION_STATE);
-			List savedSelectionState = (List)getConfiguration().getProperty(P_VIEWER_SELECTION_STATE);
-			IContainer container = ResourcesPlugin.getWorkspace().getRoot();
-			final ArrayList expandedElements = new ArrayList();
-			if (savedExpansionState != null) {
-				for (Iterator it = savedExpansionState.iterator(); it.hasNext();) {
-					String path = (String) it.next();
-					IResource resource = getResourceForPath(container, path);
-					ISynchronizeModelElement[] elements = getModelObjects(resource);
-					for (int i = 0; i < elements.length; i++) {
-                        ISynchronizeModelElement element = elements[i];
-                        // Add all parents of the element to the expansion set
-                        while (element != null) {
-                            expandedElements.add(element);
-                            element = (ISynchronizeModelElement)element.getParent();
-                        }
-                    }
-				}
-			}
-			final ArrayList selectedElements = new ArrayList();
-			if (savedSelectionState != null) {
-				for (Iterator it = savedSelectionState.iterator(); it.hasNext();) {
-					String path = (String) it.next();
-					IResource resource = getResourceForPath(container, path);
-					ISynchronizeModelElement[] elements = getModelObjects(resource);
-					// Only preserve the selection if there is one element for the resource
-					if (elements.length == 1) {
-					    selectedElements.add(elements[0]);
-					}
-				}
-			}
-			((AbstractTreeViewer) viewer).setExpandedElements(expandedElements.toArray());
-			viewer.setSelection(new StructuredSelection(selectedElements));
+		    IResource[] resourcesToExpand = getCachedResources(P_VIEWER_EXPANSION_STATE);
+		    IResource[] resourcesToSelect = getCachedResources(P_VIEWER_SELECTION_STATE);
+		    expandResources(resourcesToExpand);
+			selectResources(resourcesToSelect);
 		}
 	}
 
-	/*
+    private void selectResources(IResource[] resourcesToSelect) {
+        StructuredViewer viewer = getViewer();
+        final ArrayList selectedElements = new ArrayList();
+        if (resourcesToSelect != null) {
+            for (int i = 0; i < resourcesToSelect.length; i++) {
+                IResource resource = resourcesToSelect[i];
+        		ISynchronizeModelElement[] elements = getModelObjects(resource);
+        		// Only preserve the selection if there is one element for the resource
+        		if (elements.length == 1) {
+        		    selectedElements.add(elements[0]);
+        		}
+        	}
+        }
+        viewer.setSelection(new StructuredSelection(selectedElements));
+    }
+
+    /*
      * Convert a path to a resource by first looking in the resource
      * tree and, if that fails, by using the path format to create
      * a handle.

@@ -204,7 +204,7 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 			        }
 		        }
             }
-        });
+        }, true /* preserver expansion */);
     }
 
     /* (non-Javadoc)
@@ -224,7 +224,7 @@ public class ActiveChangeSetCollector implements ISyncInfoSetChangeListener {
 	                }
                 }
             }
-        });
+        }, true /* preserver expansion */);
     }
 
     private ChangeSet getChangeSet(SyncInfoSet set) {

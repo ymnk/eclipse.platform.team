@@ -34,7 +34,7 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
  * This action group contributes actions that support the management
  * of Change sets to a synchronize page.
  */
-public final class ChangeSetActionGroup extends SynchronizePageActionGroup {
+public class ChangeSetActionGroup extends SynchronizePageActionGroup {
 
     /**
      * Menu group that can be added to the context menu

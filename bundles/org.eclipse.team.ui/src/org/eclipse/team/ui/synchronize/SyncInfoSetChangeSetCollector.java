@@ -157,8 +157,8 @@ public abstract class SyncInfoSetChangeSetCollector extends ChangeSetCollector {
         return configuration;
     }
     
-    protected void runViewUpdate(Runnable runnable) {
-        provider.runViewUpdate(runnable);
+    protected void runViewUpdate(Runnable runnable, boolean preserveExpansion) {
+        provider.runViewUpdate(runnable, preserveExpansion);
     }
     
     /* (non-javadoc)

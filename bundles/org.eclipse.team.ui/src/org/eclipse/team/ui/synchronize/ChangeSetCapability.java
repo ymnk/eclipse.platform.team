@@ -140,5 +140,15 @@ public abstract class ChangeSetCapability {
         return supportsActiveChangeSets() && 
         	configuration.getMode() == ISynchronizePageConfiguration.OUTGOING_MODE;
     }
+
+    /**
+     * Return whether change sets should be enabled by default on pages
+     * that display the participant.
+     * @return whether change sets should be enabled by default on pages
+     * that display the participant
+     */
+    public boolean enableChangeSetsByDefault() {
+        return false;
+    }
     
 }

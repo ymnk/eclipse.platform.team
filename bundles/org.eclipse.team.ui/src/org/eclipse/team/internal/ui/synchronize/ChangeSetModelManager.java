@@ -147,7 +147,7 @@ public class ChangeSetModelManager extends HierarchicalModelManager implements I
         // Load our setting before invoking super since the inherited
         // initialize will create the provider
         IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
-        // TODO enabled = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(ICVSUIConstants.PREF_COMMIT_SET_DEFAULT_ENABLEMENT);
+        enabled = getConfiguration().getParticipant().getChangeSetCapability().enableChangeSetsByDefault();
 		if(pageSettings != null && pageSettings.get(P_COMMIT_SET_ENABLED) != null) {
 		    enabled = pageSettings.getBoolean(P_COMMIT_SET_ENABLED);
 		}

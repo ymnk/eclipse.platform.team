@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.subscriber;
 
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.team.ui.synchronize.*;
 
 
@@ -41,5 +43,12 @@ public class CVSChangeSetCapability extends ChangeSetCapability {
      */
     public SynchronizePageActionGroup getActionGroup() {
         return new CVSChangeSetActionGroup();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#enableChangeSetsByDefault()
+     */
+    public boolean enableChangeSetsByDefault() {
+        return CVSUIPlugin.getPlugin().getPreferenceStore().getBoolean(ICVSUIConstants.PREF_COMMIT_SET_DEFAULT_ENABLEMENT);
     }
 }

@@ -264,7 +264,7 @@ public class CVSChangeSetCollector extends SyncInfoSetChangeSetCollector {
             public void run() {
                 addLogEntries(infos, logs, Policy.subMonitorFor(monitor, 10));
             }
-        });
+        }, true  /* preserver expansion */);
     }
     
 	/**

@@ -281,8 +281,17 @@ public class ChangeSetModelProvider extends CompositeModelProvider {
     /* (non-Javadoc)
      * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#runViewUpdate(java.lang.Runnable)
      */
-    public void runViewUpdate(Runnable runnable) {
-        super.runViewUpdate(runnable);
+    public void runViewUpdate(final Runnable runnable,  final boolean preserveExpansion) {
+        runViewUpdate(new Runnable() {
+            public void run() {
+                IResource[] resources = null;
+                if (preserveExpansion)
+                    resources = getExpandedResources();
+                runnable.run();
+                if (resources != null)
+                    expandResources(resources);
+            }
+        });
     }
 
     /* (non-Javadoc)
