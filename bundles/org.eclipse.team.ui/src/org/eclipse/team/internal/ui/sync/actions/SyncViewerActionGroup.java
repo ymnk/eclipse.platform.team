@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.sync.actions;
 
-import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.actions.ActionContext;

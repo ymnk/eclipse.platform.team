@@ -19,6 +19,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.internal.ui.actions.TeamAction;
+import org.eclipse.team.internal.ui.sync.sets.*;
 
 /**
  * This class provides the contents for a StructuredViewer using a SyncSet as the model

@@ -15,6 +15,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.team.internal.ui.sync.sets.*;
 
 /**
  * This class provides the contents for a AbstractTreeViewer using a SyncSet as the model

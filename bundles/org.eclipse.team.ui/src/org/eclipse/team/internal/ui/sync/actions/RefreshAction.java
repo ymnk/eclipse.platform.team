@@ -26,7 +26,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
-import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.ui.actions.ActionContext;
 
@@ -49,7 +49,7 @@ public class RefreshAction extends Action {
 			IResource[] resources = getResources(context.getSelection());
 			if (refreshAll || resources.length == 0) {
 				// If no resources are selected, refresh all the subscriber roots
-				resources = input.roots();
+				resources = input.workingSetRoots();
 			}
 			run(view, resources, input.getSubscriber());
 		}					

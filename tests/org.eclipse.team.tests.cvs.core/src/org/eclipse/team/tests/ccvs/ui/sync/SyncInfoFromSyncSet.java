@@ -18,8 +18,10 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
 import org.eclipse.team.core.subscribers.TeamSubscriber;
-import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.views.SyncSet;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.sets.SyncSet;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
 
@@ -28,10 +30,11 @@ import org.eclipse.team.tests.ccvs.core.subscriber.SyncInfoSource;
  */
 public class SyncInfoFromSyncSet extends SyncInfoSource {
 
-	public SyncInfoFromSyncSet() {
+	public SyncInfoFromSyncSet() {		
 	}
 	
 	public SyncInfo getSyncInfo(TeamSubscriber subscriber, IResource resource) throws TeamException {
+		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.TESTING_SYNCVIEW, true);
 		SubscriberInput input = getInput(subscriber);
 		SyncSet set = input.getFilteredSyncSet();
 		SyncInfo info = set.getSyncInfo(resource);
@@ -51,8 +54,14 @@ public class SyncInfoFromSyncSet extends SyncInfoSource {
 		if (subscriber != input.getSubscriber()) {
 			// ensure that the CVS subscriber is active
 			syncView.activateSubscriber(subscriber);
-			while (Display.getCurrent().readAndDispatch()) {};
+			while (Display.getCurrent().readAndDispatch()) {};			
 			input = syncView.getInput();
+		} else {
+			try {
+				// sleep to let the events propagate
+				Thread.sleep(500);
+				} catch (InterruptedException e) {
+			}
 		}
 		if (subscriber != input.getSubscriber()) {
 			throw new AssertionFailedError();

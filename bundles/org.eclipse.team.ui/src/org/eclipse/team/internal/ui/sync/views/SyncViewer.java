@@ -78,6 +78,10 @@ import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.team.internal.ui.sync.actions.OpenInCompareAction;
 import org.eclipse.team.internal.ui.sync.actions.RefreshAction;
 import org.eclipse.team.internal.ui.sync.actions.SyncViewerActions;
+import org.eclipse.team.internal.ui.sync.sets.ISyncSetChangedListener;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.sets.SyncSet;
+import org.eclipse.team.internal.ui.sync.sets.SyncSetChangedEvent;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.sync.ISyncViewer;
 import org.eclipse.ui.IActionBars;
@@ -248,6 +252,9 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 				createTableViewerPartControl(parent); 
 				break;
 		}
+		Label label = new Label(parent, SWT.WRAP);
+		label.setText("asfdasfd");
+		
 		if(input != null) {
 			viewer.setInput(input.getFilteredSyncSet());
 		}
@@ -501,9 +508,15 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 				 				Policy.bind("LiveSyncView.title"),  //$NON-NLS-1$
 				 				changesText,
 				 				subscriber.getName()}));
-				 	IWorkingSet ws = getWorkingSet();
+				 	IWorkingSet ws = input.getWorkingSet();
 				 	if(ws != null) {
-				 		setTitleToolTip(Policy.bind("LiveSyncView.titleTooltip", subscriber.getDescription(), ws.getName())); //$NON-NLS-1$
+				 		StringBuffer s = new StringBuffer(Policy.bind("LiveSyncView.titleTooltip", subscriber.getDescription(), ws.getName()));
+				 		IResource[] roots = input.workingSetRoots();
+				 		for (int i = 0; i < roots.length; i++) {
+							IResource resource = roots[i];
+							s.append(resource.getFullPath().toString() + "\n");
+						}
+				 		setTitleToolTip(s.toString());
 				 	} else {
 					 	setTitleToolTip(subscriber.getDescription());
 				 	}
@@ -841,7 +854,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 			if(! input.getSubscriber().getId().equals(id)) {
 				initializeSubscriberInput((SubscriberInput)subscriberInputs.get(id));
 			}
-			RefreshAction.run(this, input.roots(), subscriber);
+			RefreshAction.run(this, input.workingSetRoots(), subscriber);
 		}		
 	}
 	
@@ -850,7 +863,7 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 	 */	
 	public void refreshWithRemote() {
 		if(input != null) {
-			RefreshAction.run(this, input.roots(), input.getSubscriber());
+			RefreshAction.run(this, input.workingSetRoots(), input.getSubscriber());
 		}
 	}
 	
@@ -880,22 +893,12 @@ public class SyncViewer extends ViewPart implements ITeamResourceChangeListener,
 		return (SyncSetContentProvider)getViewer().getContentProvider();
 	}
 
-	protected IWorkingSet getWorkingSet() {
-		return actions.getWorkingSet();
-	}
-	
-	/* (non-Javadoc)
-	 * 
-	 * This method sets the working set on the actions which results in a callback to 
-	 * workingSetChanged.
-	 * 
-	 * @see org.eclipse.team.ui.sync.ISyncViewer#setWorkingSet(org.eclipse.ui.IWorkingSet)
-	 */
 	public void setWorkingSet(IWorkingSet workingSet) {
 		actions.setWorkingSet(workingSet);
 	}
 
-	public void workingSetChanged() {
+	public void workingSetChanged(IWorkingSet set) {
+		input.setWorkingSet(set);
 		updateTitle();
 	}
 }

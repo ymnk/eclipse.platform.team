@@ -19,9 +19,8 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.INavigableControl;
-import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
-import org.eclipse.team.internal.ui.sync.views.SyncInfoWorkingSetFilter;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 import org.eclipse.team.ui.sync.AndSyncInfoFilter;
 import org.eclipse.team.ui.sync.PseudoConflictFilter;
@@ -63,8 +62,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	private Action open;
 	private ExpandAllAction expandAll;
 	private SelectAllAction selectAllAction;
-	
-	private SyncInfoWorkingSetFilter workingSetFilter = new SyncInfoWorkingSetFilter();
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.actions.ActionGroup#updateActionBars()
@@ -154,11 +151,11 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 					Object newValue = event.getNewValue();
 					
 					if (newValue instanceof IWorkingSet) {	
-						changeWorkingSet((IWorkingSet) newValue);
+						getSyncView().workingSetChanged((IWorkingSet) newValue);
 					}
 					else 
 					if (newValue == null) {
-						changeWorkingSet(null);
+						getSyncView().workingSetChanged(null);
 					}
 				}
 			}
@@ -221,20 +218,10 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		}
 	}
 	
-	public void refreshWorkingSet() {
-			final SubscriberInput input = getSubscriberContext();
-			if(input != null) {
-				try {
-					input.setWorkingSet(workingSetFilter, new NullProgressMonitor() /* TODO: should be a job ? */);
-				} catch (TeamException e) {
-					// TODO: bad stuff here
-				}
-			}
-		}
-	
 	public void open() {
 		open.run();
 	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ccvs.syncviews.actions.SyncViewerActionGroup#restore(org.eclipse.ui.IMemento)
 	 */
@@ -263,11 +250,9 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 	protected void initializeActions() {
 		SubscriberInput input = getSubscriberContext();
 		refreshSelectionAction.setEnabled(input != null);
-		workingSetGroup.setWorkingSet(getWorkingSet());
 		
 		// refresh the selected filter
 		refreshFilters();
-		refreshWorkingSet();
 	}
 	
 	/* (non-Javadoc)
@@ -297,25 +282,6 @@ public class SyncViewerActions extends SyncViewerActionGroup {
 		subscriberInputs.removeContext(context);	
 	}
 	
-	/*
-	 * Get the selected working set from the subscriber input
-	 */
-	public IWorkingSet getWorkingSet() {
-		return workingSetFilter.getWorkingSet();
-	}
-	
-	/**
-	 * This is a callback from the workingSetGroup
-	 */
-	protected void changeWorkingSet(IWorkingSet set) {
-		// Keep track of the last working set selected
-		if (set != getWorkingSet()) {
-			workingSetFilter.setWorkingSet(set);
-		}
-		refreshWorkingSet();
-		getSyncView().workingSetChanged();
-	}
-
 	/**
 	 * This method sets the working set through the workingSetGroup 
 	 * which will result in a call to changeWorkingSet().

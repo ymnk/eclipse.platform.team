@@ -18,7 +18,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ComparisonCriteria;
-import org.eclipse.team.internal.ui.sync.views.SubscriberInput;
+import org.eclipse.team.internal.ui.sync.sets.SubscriberInput;
 import org.eclipse.team.internal.ui.sync.views.SyncViewer;
 
 /**

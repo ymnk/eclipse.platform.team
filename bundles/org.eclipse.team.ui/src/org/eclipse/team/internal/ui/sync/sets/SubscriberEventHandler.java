@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.views;
+package org.eclipse.team.internal.ui.sync.sets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.SyncInfo;
+import org.eclipse.team.internal.ui.Policy;
 
 public class SubscriberEventHandler {
 	private SyncSetInputFromSubscriber set;
@@ -84,10 +85,12 @@ public class SubscriberEventHandler {
 		
 	public void change(IResource resource, int depth) {
 		queueEvent(new Event(resource, Event.CHANGE, depth));
+		// It's easier to allow sync tests to run with results available synchronously.
 	}
 
 	public void remove(IResource resource) {
 		queueEvent(new Event(resource, Event.REMOVAL, IResource.DEPTH_INFINITE));
+		// It's easier to allow sync tests to run with results available synchronously.
 	}
 		
 	 /**
@@ -102,12 +105,12 @@ public class SubscriberEventHandler {
 		 }
 	 }
 	
-	 /**
+	/**
 	  * Shutdown the decoration.
 	  */
 	 void shutdown() {
 	 	shutdown = true;
-		 eventHandlerJob.cancel();
+		eventHandlerJob.cancel();
 	 }
 
 	 /**
@@ -125,18 +128,17 @@ public class SubscriberEventHandler {
 	  * Create the Thread used for running decoration.
 	  */
 	 private void createEventHandlingJob() {
-			 eventHandlerJob = new Job("updating synchronize states") {//$NON-NLS-1$
+			 eventHandlerJob = new Job(Policy.bind("SubscriberEventHandler.jobName")) { //$NON-NLS-1$
 	
 			 public IStatus run(IProgressMonitor monitor) {
-				 monitor.beginTask("calculating", 100); //$NON-NLS-1$
-				 //will block if there are no resources to be decorated
+				 monitor.beginTask(null, 100); //$NON-NLS-1$
+
 				 Event event;
 				 monitor.worked(20);
 				 while ((event = nextElement()) != null) {
 				 	
-				 	if(monitor.isCanceled()) {
-				 		return Status.CANCEL_STATUS;
-				 	}
+				 	// cancellation is dangerous because this will leave the sync info in a bad state.
+				 	// purposely not checking
 				 	
 				 	try {
 						int type = event.getType();
@@ -156,6 +158,8 @@ public class SubscriberEventHandler {
 						}
 					} catch (TeamException e) {
 						// TODO: 
+						// accumulate but keep processing the other events.
+						// the user may need a way to revalidate 
 					}
 				 	
 					 if (awaitingProcessing.isEmpty() || resultCache.size() > 10) {
@@ -217,15 +221,15 @@ public class SubscriberEventHandler {
 			Event event = events[i];
 			switch(event.getType()) {
 				case Event.CHANGE : 
-					System.out.println("EventHandler: changed " + event.getResource().getFullPath().toString());
+					//System.out.println("EventHandler: changed " + event.getResource().getFullPath().toString());
 					set.collect(event.getResult());
 					break;
 				case Event.REMOVAL :
 					if(event.getDepth() == IResource.DEPTH_INFINITE) {
-						System.out.println("EventHandler: removeAll " + event.getResource().getFullPath().toString());
+						//System.out.println("EventHandler: removeAll " + event.getResource().getFullPath().toString());
 						set.getSyncSet().removeAllChildren(event.getResource());
 					} else {
-						System.out.println("EventHandler: remove " + event.getResource().getFullPath().toString());
+						//System.out.println("EventHandler: remove " + event.getResource().getFullPath().toString());
 						set.remove(event.getResource());
 					}
 					break;

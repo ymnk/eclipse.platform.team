@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.views;
+package org.eclipse.team.internal.ui.sync.sets;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -28,6 +28,7 @@ import org.eclipse.team.internal.core.Assert;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.sync.SyncInfoFilter;
+import org.eclipse.ui.IWorkingSet;
 
 /**
  * SubscriberInput encapsulates the UI model for synchronization changes associated
@@ -42,16 +43,15 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 	private SyncSetInputFromSubscriber subscriberSyncSet;
 	
 	/*
-	 * The filteredInput manages a sync set that contains a filtered list of the out-of-sync
-	 * elements from another sync set. This is an optimization to allow filters to be applied
-	 * to the subscriber input and is the input for a UI model.
+	 * The working set sync set is used to constrain the subscriber's resources to 
+	 * a smaller workset.  
 	 */
-	private SyncSetInputFromSyncSet filteredSyncSet;
+	private WorkingSetSyncSetInput workingRootsSet;
 	
 	/*
-	 * 
+	 * The filtered set contains the changes after direction and kind filters have been applied
 	 */
-	private SyncSetInputFromSyncSet workingRootsSet;
+	private SyncSetInputFromSyncSet filteredSyncSet;
 	
 	/*
 	 * Responsible for calculating changes to a set based on events generated
@@ -59,10 +59,10 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 	 */
 	private SubscriberEventHandler eventHandler;
 	
-	SubscriberInput(TeamSubscriber subscriber) {
+	public SubscriberInput(TeamSubscriber subscriber) {
 		Assert.isNotNull(subscriber);		
 		subscriberSyncSet = new SyncSetInputFromSubscriber(subscriber);
-		workingRootsSet = new SyncSetInputFromSyncSet(subscriberSyncSet.getSyncSet());
+		workingRootsSet = new WorkingSetSyncSetInput(subscriberSyncSet.getSyncSet());
 		filteredSyncSet = new SyncSetInputFromSyncSet(workingRootsSet.getSyncSet());
 		eventHandler = new SubscriberEventHandler(subscriberSyncSet);
 		
@@ -88,21 +88,35 @@ public class SubscriberInput implements IPropertyChangeListener, ITeamResourceCh
 	}
 
 	public void setFilter(SyncInfoFilter filter, IProgressMonitor monitor) throws TeamException {
-		filteredSyncSet.setFilter(filter, monitor);
+		filteredSyncSet.setFilter(filter);
+		filteredSyncSet.reset(monitor);
 	}
 	
-	public void setWorkingSet(SyncInfoFilter filter, IProgressMonitor monitor) throws TeamException {
-		workingRootsSet.setFilter(filter, monitor);
+	public void setWorkingSet(IWorkingSet set) {
+		workingRootsSet.setWorkingSet(set);
+	}
+
+	public IWorkingSet getWorkingSet() {
+		return workingRootsSet.getWorkingSet();
 	}
 
 	public void dispose() {
 		eventHandler.shutdown();
-		subscriberSyncSet.disconnect();
-		filteredSyncSet.disconnect();
+
+		filteredSyncSet.disconnect();		
+		workingRootsSet.disconnect();
+		subscriberSyncSet.disconnect();		
+				
+		getSubscriber().removeListener(this);
+		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);		
 		TeamUI.removePropertyChangeListener(this);		
 	}
 	
-	public IResource[] roots() {
+	public IResource[] workingSetRoots() {
+		return workingRootsSet.roots(getSubscriber());
+	}
+
+	public IResource[] subscriberRoots() {
 		return getSubscriber().roots();
 	}
 

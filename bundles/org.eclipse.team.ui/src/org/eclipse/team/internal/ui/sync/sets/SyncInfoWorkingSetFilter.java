@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.sync.views;
+package org.eclipse.team.internal.ui.sync.sets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
