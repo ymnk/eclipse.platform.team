@@ -106,6 +106,7 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 		tagArea = new TagSelectionArea(getShell(), tagSource, includeFlags, null);
 	    if (tagLabel != null)
 	        tagArea.setTagAreaLabel(tagLabel);
+	    tagArea.setRunnableContext(getContainer());
 		tagArea.createArea(composite);
 		tagArea.addPropertyChangeListener(new IPropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent event) {

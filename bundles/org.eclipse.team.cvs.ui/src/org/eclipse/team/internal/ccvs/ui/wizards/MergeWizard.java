@@ -30,6 +30,7 @@ public class MergeWizard extends Wizard {
 	IResource[] resources;
 
 	public void addPages() {
+	    setNeedsProgressMonitor(true);
 	    TagSource tagSource = TagSource.create(resources);
 		setWindowTitle(Policy.bind("MergeWizard.title")); //$NON-NLS-1$
 		ImageDescriptor mergeImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_MERGE);

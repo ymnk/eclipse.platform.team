@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
@@ -95,6 +96,8 @@ public class TagSelectionArea extends DialogArea {
     private boolean treeVisible = true;
     private boolean includeFilterInputArea = true;
     private String filterPattern = ""; //$NON-NLS-1$
+
+    private IRunnableContext context;
     
     public TagSelectionArea(Shell shell, TagSource tagSource, int includeFlags, String helpContext) {
         this.shell = shell;
@@ -280,6 +283,8 @@ public class TagSelectionArea extends DialogArea {
 	    tagSource.addListener(listener);
         parent.addDisposeListener(disposeListener);
 	    tagRefreshArea = new TagRefreshButtonArea(shell, tagSource);
+	    if (context != null)
+	        tagRefreshArea.setRunnableContext(context);
 	    tagRefreshArea.createArea(parent);
     }
 
@@ -608,5 +613,11 @@ public class TagSelectionArea extends DialogArea {
     public void setFilter(String filter) {
         this.filterPattern = filter;
         updateTagDisplay(false);
+    }
+    
+    public void setRunnableContext(IRunnableContext context) {
+        this.context = context;
+        if (tagRefreshArea != null)
+            tagRefreshArea.setRunnableContext(context);
     }
 }

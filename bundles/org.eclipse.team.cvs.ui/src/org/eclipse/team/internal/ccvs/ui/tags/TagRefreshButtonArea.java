@@ -15,16 +15,17 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.util.Assert;
 import org.eclipse.team.internal.ccvs.ui.*;
-import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ui.dialogs.DialogArea;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.help.WorkbenchHelp;
@@ -37,6 +38,7 @@ public class TagRefreshButtonArea extends DialogArea {
     private TagSource tagSource;
     private final Shell shell;
     private Button refreshButton;
+    private IRunnableContext context;
 
     public TagRefreshButtonArea(Shell shell, TagSource tagSource) {
         Assert.isNotNull(shell);
@@ -61,12 +63,6 @@ public class TagRefreshButtonArea extends DialogArea {
 	 	
 	 	refreshButton = createTagRefreshButton(buttonComp, Policy.bind("TagConfigurationDialog.20")); //$NON-NLS-1$
 		data = new GridData();
-//		if(hHint!=0 && wHint!=0) {
-//			data.heightHint = hHint;
-//			//don't crop labels with large font
-//			//int widthHint = wHint;
-//			//data.widthHint = Math.max(widthHint, refreshButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-//		}
 		data.horizontalAlignment = GridData.END;
 		data.horizontalSpan = 1;
 		refreshButton.setLayoutData (data);		
@@ -74,12 +70,6 @@ public class TagRefreshButtonArea extends DialogArea {
 		Button addButton = new Button(buttonComp, SWT.PUSH);
 		addButton.setText (Policy.bind("TagConfigurationDialog.21")); //$NON-NLS-1$
 		data = new GridData ();
-//		if(hHint!=0 && wHint!=0) {
-//			data.heightHint = hHint;
-//			//don't crop labels with large font
-//			//int widthHint = wHint;
-//			//data.widthHint = Math.max(widthHint, addButton.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-//		}
 		data.horizontalAlignment = GridData.END;
 		data.horizontalSpan = 1;
 		addButton.setLayoutData (data);
@@ -106,15 +96,18 @@ public class TagRefreshButtonArea extends DialogArea {
 		refreshButton.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
 					try {
-						PlatformUI.getWorkbench().getProgressService().run(true, true, new IRunnableWithProgress() {
+						getRunnableContext().run(true, true, new IRunnableWithProgress() {
 							public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 								try {
-								    CVSTag[] tags = tagSource.refresh(false, monitor);
+								    monitor.beginTask("Refreshing tags", 100);
+								    CVSTag[] tags = tagSource.refresh(false, Policy.subMonitorFor(monitor, 70));
 								    if (tags.length == 0 && promptForBestEffort()) {
-								        tagSource.refresh(true, monitor);
+								        tagSource.refresh(true, Policy.subMonitorFor(monitor, 30));
 								    }
 								} catch (TeamException e) {
 									throw new InvocationTargetException(e);
+								} finally {
+								    monitor.done();
 								}
 							}
 						});
@@ -168,5 +161,15 @@ public class TagRefreshButtonArea extends DialogArea {
     public void setTagSource(TagSource tagSource) {
         Assert.isNotNull(tagSource);
         this.tagSource = tagSource;
+    }
+
+    public IRunnableContext getRunnableContext() {
+        if (context == null)
+            return PlatformUI.getWorkbench().getProgressService();
+        return context;
+    }
+    
+    public void setRunnableContext(IRunnableContext context) {
+        this.context = context;
     }
 }
