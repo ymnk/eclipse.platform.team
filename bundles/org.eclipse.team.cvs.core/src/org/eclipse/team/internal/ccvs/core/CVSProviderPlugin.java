@@ -35,7 +35,7 @@ import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Preferences;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.team.core.RemoteContentsCache;
+import org.eclipse.team.core.ResourceVariantCache;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
@@ -321,7 +321,7 @@ public class CVSProviderPlugin extends Plugin {
 		workspace.addResourceChangeListener(fileModificationManager, IResourceChangeEvent.POST_CHANGE);
 		fileModificationManager.registerSaveParticipant();
 		
-		RemoteContentsCache.enableCaching(ID);
+		ResourceVariantCache.enableCaching(ID);
 		
 		getCVSWorkspaceSubscriber();
 	}
@@ -346,7 +346,7 @@ public class CVSProviderPlugin extends Plugin {
 		// each class that added itself as a participant to have to listen to shutdown.
 		workspace.removeSaveParticipant(this);
 		
-		RemoteContentsCache.disableCache(ID);
+		ResourceVariantCache.disableCache(ID);
 		
 		deleteCrashFile();
 	}
@@ -761,7 +761,7 @@ public class CVSProviderPlugin extends Plugin {
 		return crash;
 	}
 	
-	public RemoteContentsCache getRemoteContentsCache() {
-		return RemoteContentsCache.getCache(CVSProviderPlugin.ID);
+	public ResourceVariantCache getRemoteContentsCache() {
+		return ResourceVariantCache.getCache(CVSProviderPlugin.ID);
 	}
 }

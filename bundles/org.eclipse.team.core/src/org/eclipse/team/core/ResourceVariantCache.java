@@ -21,13 +21,14 @@ import java.util.Map;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.team.core.synchronize.ResourceVariant;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 /**
  * This class implements a caching facility that can be used by TeamProviders to cache contents
  */
-public class RemoteContentsCache {
+public class ResourceVariantCache {
 	
 	// Directory to cache file contents
 	private static final String CACHE_DIRECTORY = ".cache"; //$NON-NLS-1$
@@ -54,7 +55,7 @@ public class RemoteContentsCache {
 	 */
 	public static synchronized void enableCaching(String cacheId) {
 		if (isCachingEnabled(cacheId)) return;
-		RemoteContentsCache cache = new RemoteContentsCache(cacheId);
+		ResourceVariantCache cache = new ResourceVariantCache(cacheId);
 		try {
 			cache.createCacheDirectory();
 		} catch (TeamException e) {
@@ -83,7 +84,7 @@ public class RemoteContentsCache {
 	 * @throws TeamException if the cached contents could not be deleted from disk
 	 */
 	public static void disableCache(String cacheId) {
-		RemoteContentsCache cache = getCache(cacheId);
+		ResourceVariantCache cache = getCache(cacheId);
 		if (cache == null) {
 			// There is no cache to dispose of
 			return;
@@ -102,11 +103,11 @@ public class RemoteContentsCache {
 	 * @param cacheId
 	 * @return
 	 */
-	public static synchronized RemoteContentsCache getCache(String cacheId) {
-		return (RemoteContentsCache)caches.get(cacheId);
+	public static synchronized ResourceVariantCache getCache(String cacheId) {
+		return (ResourceVariantCache)caches.get(cacheId);
 	}
 	
-	private RemoteContentsCache(String name) {
+	private ResourceVariantCache(String name) {
 		this.name = name;
 	}
 	
@@ -127,25 +128,25 @@ public class RemoteContentsCache {
 		return TeamPlugin.getPlugin().getStateLocation();
 	}
 	
-	private void clearOldCacheEntries() {
+	private synchronized void clearOldCacheEntries() {
 		long current = new Date().getTime();
 		if ((lastCacheCleanup!=-1) && (current - lastCacheCleanup < CACHE_FILE_LIFESPAN)) return;
 		List stale = new ArrayList();
 		for (Iterator iter = cacheEntries.values().iterator(); iter.hasNext();) {
-			RemoteContentsCacheEntry entry = (RemoteContentsCacheEntry) iter.next();
+			ResourceVariantCacheEntry entry = (ResourceVariantCacheEntry) iter.next();
 			long lastHit = entry.getLastAccessTimeStamp();
 			if ((current - lastHit) > CACHE_FILE_LIFESPAN){
 				stale.add(entry);
 			}
 		}
 		for (Iterator iter = stale.iterator(); iter.hasNext();) {
-			RemoteContentsCacheEntry entry = (RemoteContentsCacheEntry) iter.next();
+			ResourceVariantCacheEntry entry = (ResourceVariantCacheEntry) iter.next();
 			entry.dispose();
 		}
 	}
 	
-	private void purgeFromCache(String id) {
-		RemoteContentsCacheEntry entry = (RemoteContentsCacheEntry)cacheEntries.get(id);
+	private synchronized void purgeFromCache(String id) {
+		ResourceVariantCacheEntry entry = (ResourceVariantCacheEntry)cacheEntries.get(id);
 		File f = entry.getFile();
 		try {
 			deleteFile(f);
@@ -156,7 +157,7 @@ public class RemoteContentsCache {
 		cacheEntries.remove(id);
 	}
 	
-	private void createCacheDirectory() throws TeamException {
+	private synchronized void createCacheDirectory() throws TeamException {
 		IPath cacheLocation = getCachePath();
 		File file = cacheLocation.toFile();
 		if (file.exists()) {
@@ -170,7 +171,7 @@ public class RemoteContentsCache {
 		cacheDirSize = 0;
 	}
 			
-	private void deleteCacheDirectory() throws TeamException {
+	private synchronized void deleteCacheDirectory() throws TeamException {
 		cacheEntries = null;
 		lastCacheCleanup = -1;
 		cacheDirSize = 0;
@@ -200,15 +201,19 @@ public class RemoteContentsCache {
 
 	/**
 	 * Purge the given cache entry from the cache. This method should only be invoked from
-	 * an instance of RemoteContentsCacheEntry after it has set it's state to DISPOSED.
+	 * an instance of ResourceVariantCacheEntry after it has set it's state to DISPOSED.
 	 * @param entry
 	 */
-	protected void purgeFromCache(RemoteContentsCacheEntry entry) {
+	protected void purgeFromCache(ResourceVariantCacheEntry entry) {
 		purgeFromCache(entry.getId());
 	}
 
-	private RemoteContentsCacheEntry internalGetCacheEntry(String id) {
-		RemoteContentsCacheEntry entry = (RemoteContentsCacheEntry)cacheEntries.get(id);
+	private synchronized ResourceVariantCacheEntry internalGetCacheEntry(String id) {
+		if (cacheEntries == null) {
+			// This probably means that the cache has been disposed
+			throw new IllegalStateException(Policy.bind("RemoteContentsCache.cacheDisposed", name)); //$NON-NLS-1$
+		}
+		ResourceVariantCacheEntry entry = (ResourceVariantCacheEntry)cacheEntries.get(id);
 		if (entry != null) {
 			entry.registerHit();
 		}
@@ -219,66 +224,47 @@ public class RemoteContentsCache {
 	 * @param id the id that uniquely identifes the remote resource that is cached.
 	 * @return
 	 */
-	public synchronized RemoteContentsCacheEntry getCacheEntry(String id) {
-		if (cacheEntries == null) {
-			// This probably means that the cache has been disposed
-			throw new IllegalStateException(Policy.bind("RemoteContentsCache.cacheDisposed", name)); //$NON-NLS-1$
-		}
-		RemoteContentsCacheEntry entry = internalGetCacheEntry(id);
+	public ResourceVariantCacheEntry getCacheEntry(String id) {
+		ResourceVariantCacheEntry entry = internalGetCacheEntry(id);
 		if (entry == null) {
 			// cache miss
-			entry = createCacheEntry(id);
+			synchronized(this) {
+				// recheck inside the lock in case another thread created the entry
+				entry = internalGetCacheEntry(id);
+				if (entry == null) {
+					entry = createCacheEntry(id);
+				}
+			}
 		}
 		return entry;
 	}
 	
-	private RemoteContentsCacheEntry createCacheEntry(String id) {
+	public ResourceVariantCacheEntry getCacheEntry(ResourceVariant resource) {
+		String id = resource.getUniquePath();
+		if (hasEntry(id)) {
+			return getCacheEntry(id);
+		} else {
+			synchronized(this) {
+				ResourceVariantCacheEntry entry = getCacheEntry(id);
+				if (entry.getResourceVariant() == null) {
+					// It's possible that another thread created the entry while we didn't hold the lock
+					entry.setResourceVariant(resource);
+				}
+				return entry;
+			}
+		}
+	}
+	
+	private synchronized ResourceVariantCacheEntry createCacheEntry(String id) {
 		clearOldCacheEntries();
 		String filePath = String.valueOf(cacheDirSize++);
-		RemoteContentsCacheEntry entry = new RemoteContentsCacheEntry(this, id, filePath);
+		ResourceVariantCacheEntry entry = new ResourceVariantCacheEntry(this, lock, id, filePath);
 		cacheEntries.put(id, entry);
 		return entry;
 	}
 
 	public String getName() {
 		return name;
-	}
-
-	/**
-	* Provide access to the lock for the cache. This method should only be used by a cache entry.
-	 * @return Returns the lock.
-	 */
-	private ILock getLock() {
-		return lock;
-	}
-
-	/**
-	 * Begin a modification operation on the cache or one of its entries.
-	 * The calling thread will be blocked if another thread has called
-	 * <code>beginOperation</code> and has not yet called <code>endOperation</code>.
-	 * Calls to <code>beginOperation</code> can be nested within a single thread without blocking.
-	 * Callers must have a
-	 * matching call to <code>endOperation</code>. The following code snipet
-	 * shows an example of how this should be done.
-	 * <pre>
-	 * cache.beginOperation();
-	 * try {
-	 *    // modify the cache
-	 * } finally {
-	 *    cache.endOperation();
-	 * }
-	 * </pre>
-	 */
-	public void beginOperation() {
-		getLock().acquire();
-	}
-
-	/**
-	 * End a cache modification operation.
-	 * @see beginOperaton()
-	 */
-	public void endOperation() {
-		getLock().release();
 	}
 
 }

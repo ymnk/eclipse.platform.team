@@ -14,13 +14,14 @@ import java.io.*;
 import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.team.core.synchronize.ResourceVariant;
 import org.eclipse.team.internal.core.Policy;
 
 /**
  * This class provides the implementation for the ICacheEntry
  */
-public class RemoteContentsCacheEntry {
+public class ResourceVariantCacheEntry {
 	
 	public static final int UNINITIALIZED = 0;
 	public static final int READY = 1;
@@ -28,13 +29,15 @@ public class RemoteContentsCacheEntry {
 	
 	private String id;
 	private String filePath;
-	private RemoteContentsCache cache;
+	private ResourceVariantCache cache;
 	private byte[] syncBytes;
 	private int state = UNINITIALIZED;
 	private long lastAccess;
 	private ResourceVariant resourceVariant;
+	private ILock lock;
 
-	public RemoteContentsCacheEntry(RemoteContentsCache cache, String id, String filePath) {
+	public ResourceVariantCacheEntry(ResourceVariantCache cache, ILock lock, String id, String filePath) {
+		this.lock = lock;
 		state = UNINITIALIZED;
 		this.cache = cache;
 		this.id = id;
@@ -81,8 +84,8 @@ public class RemoteContentsCacheEntry {
 	 */
 	public void setContents(InputStream stream, IProgressMonitor monitor) throws TeamException {
 		// Use a lock to only allow one write at a time
+		beginOperation();
 		try {
-			beginOperation();
 			internalSetContents(stream, monitor);
 		} finally {
 			endOperation();
@@ -90,11 +93,11 @@ public class RemoteContentsCacheEntry {
 	}
 	
 	private synchronized void endOperation() {
-		cache.endOperation();
+		lock.release();
 	}
 
 	private synchronized void beginOperation() {
-		cache.beginOperation();
+		lock.acquire();
 	}
 
 	private void internalSetContents(InputStream stream, IProgressMonitor monitor) throws TeamException {
@@ -154,22 +157,6 @@ public class RemoteContentsCacheEntry {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ICacheEntry#getSyncBytes(byte[])
-	 */
-	public byte[] getSyncBytes() {
-		return syncBytes;
-	}
-
-	/**
-	 * Set the sync bytes associated with the cached remote contents.
-	 * This method is sychronized to ensure atomic setting of the bytes.
-	 * @param bytes
-	 */
-	public synchronized void setSyncBytes(byte[] bytes) {
-		syncBytes = bytes;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.ICacheEntry#getState()
 	 */
 	public int getState() {
@@ -206,8 +193,8 @@ public class RemoteContentsCacheEntry {
 
 	public void dispose() {
 		// Use a lock to avoid changing state while another thread may be writting
+		beginOperation();
 		try {
-			beginOperation();
 			state = DISPOSED;
 			cache.purgeFromCache(this);
 		} finally {

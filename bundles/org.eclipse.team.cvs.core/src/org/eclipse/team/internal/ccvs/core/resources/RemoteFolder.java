@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
@@ -588,20 +587,13 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	 * @see org.eclipse.team.core.sync.IRemoteResource#getContentIdentifier()
 	 */
 	public String getContentIdentifier() {
-		return null;
+		return getTag().getName();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.core.sync.IRemoteResource#getCreatorDisplayName()
 	 */
 	public String getCreatorDisplayName() throws TeamException {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.IRemoteResource#getBufferedStorage(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public IStorage getBufferedStorage(IProgressMonitor monitor) throws TeamException {
 		return null;
 	}
 	
@@ -613,10 +605,10 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.ISubscriberResource#getStorage(org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.team.core.synchronize.ResourceVariant#fetchContents(org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-		return null;
+	protected void fetchContents(IProgressMonitor monitor) throws TeamException {
+		// This should not get called for folders
 	}
 
 }

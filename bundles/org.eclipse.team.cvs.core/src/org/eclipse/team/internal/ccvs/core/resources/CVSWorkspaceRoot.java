@@ -433,9 +433,8 @@ public class CVSWorkspaceRoot {
 			remote = getRemoteTreeFromParent(resource, managed, tag, Policy.subMonitorFor(progress, 50));
 			if (cacheFileContentsHint && remote != null && remote instanceof RemoteFile) {
 				RemoteFile file = (RemoteFile)remote;
-				if (!file.isContentsCached()) {
-					file.fetchContents(Policy.subMonitorFor(progress, 50));
-				}
+				// get the storage for the file to ensure that the contents are cached
+				file.getStorage(Policy.subMonitorFor(progress, 50));
 			}
 			progress.done();
 		} else if(resource.getType() == IResource.FILE) {

@@ -20,26 +20,12 @@ import org.eclipse.team.core.*;
  * A resource variant is a partial implementation of a remote resource
  * that caches any fetched contents in a <code>ResourceVariantCache</code>.
  */
-public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
+public abstract class ResourceVariant extends PlatformObject implements IRemoteResource {
 	
 	// holds the storage instance for this resource variant
 	private IStorage storage;
 	
-	/**
-	 * Add the resource variant to the given cache. The provided resource
-	 * will be cached even if another instance was cached previously.
-	 * @param cache the resource variant cache
-	 * @param resource the resource variant to be cached
-	 */
-	public static void cacheResourceVariant(RemoteContentsCache cache, ResourceVariant resource) {
-		cache.beginOperation();
-		try {
-			RemoteContentsCacheEntry entry = cache.getCacheEntry(resource.getUniquePath());
-			entry.setResourceVariant(resource);
-		} finally {
-			cache.endOperation();
-		}
-	}
+
 	
 	/**
 	 * Get the resource variant with the given unique path from the cache.
@@ -48,9 +34,9 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	 * @param id the unique path of the desired resource variant
 	 * @return the cached resource variant or <code>null</code>
 	 */
-	public static ResourceVariant getResourceVariant(RemoteContentsCache cache, String id) {
+	public static ResourceVariant getResourceVariant(ResourceVariantCache cache, String id) {
 		if (!cache.hasEntry(id)) return null;
-		RemoteContentsCacheEntry entry = cache.getCacheEntry(id);
+		ResourceVariantCacheEntry entry = cache.getCacheEntry(id);
 		return entry.getResourceVariant();
 	}
 	
@@ -65,7 +51,7 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 				// on to the storage too long
 				throw new TeamException("There is no cached contents for resource {0}." + getUniquePath());
 			}
-			return getCache().getCacheEntry(getUniquePath()).getContents();
+			return getCachedContents();
 		}
 		public IPath getFullPath() {
 			return getFullPath();
@@ -96,17 +82,6 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	private void ensureContentsCached(IProgressMonitor monitor) throws TeamException {
 		// Ensure that the contents are cached from the server
 		if (!isContentsCached()) {
-			// Ensure that a resource variant handle is cached before fetching the contents
-			getCache().beginOperation();
-			try {
-				if (!isCached()) {
-					cacheResourceVariant(getCache(), this);
-				}
-			} finally {
-				getCache().endOperation();
-			}
-			// Fetching of contents can be done without holding the cache lock.
-			// The lock will be obtained when the contents are set.
 			fetchContents(monitor);
 		}
 	}
@@ -117,7 +92,7 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	 * with a stream containing the fetched contents.
 	 * @param monitor a progress monitor
 	 */
-	protected abstract void fetchContents(IProgressMonitor monitor);
+	protected abstract void fetchContents(IProgressMonitor monitor) throws TeamException;
 
 	/**
 	 * This method should be invoked by subclasses from within their <code>fetchContents</code>
@@ -130,8 +105,8 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 		getCacheEntry().setContents(stream, monitor);
 	}
 	
-	private synchronized RemoteContentsCacheEntry getCacheEntry() {
-		return getCache().getCacheEntry(getUniquePath());
+	private ResourceVariantCacheEntry getCacheEntry() {
+		return getCache().getCacheEntry(this);
 	}
 	
 	/**
@@ -142,11 +117,22 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	 * at the same time.
 	 */
 	protected boolean isContentsCached() {
-		if (!isCached()) {
+		if (!isHandleCached()) {
 			return false;
 		}
-		RemoteContentsCacheEntry entry = getCache().getCacheEntry(getUniquePath());
-		return entry.getState() == RemoteContentsCacheEntry.READY;
+		ResourceVariantCacheEntry entry = getCache().getCacheEntry(getUniquePath());
+		return entry.getState() == ResourceVariantCacheEntry.READY;
+	}
+	
+	/**
+	 * Return the cached contents for this resource variant or <code>null</code>
+	 * if the contents have not been cached.
+	 * @return the cached contents or <code>null</code>
+	 * @throws TeamException
+	 */
+	protected InputStream getCachedContents() throws TeamException {
+		if (!isContentsCached()) return null;
+		return getCache().getCacheEntry(getUniquePath()).getContents();
 	}
 	
 	/**
@@ -157,7 +143,7 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	 * satte information may only be accessible from the cached copy.
 	 * @return whether the variant is cached
 	 */
-	protected boolean isCached() {
+	protected boolean isHandleCached() {
 		return (getCache().hasEntry(getUniquePath()));
 	}
 
@@ -178,8 +164,8 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	 */
 	public long getSize() {
 		if (!isContentsCached()) return 0;
-		RemoteContentsCacheEntry entry = getCacheEntry();
-		if (entry == null || entry.getState() != RemoteContentsCacheEntry.READY) {
+		ResourceVariantCacheEntry entry = getCacheEntry();
+		if (entry == null || entry.getState() != ResourceVariantCacheEntry.READY) {
 			return 0;
 		}
 		return entry.getSize();
@@ -189,7 +175,7 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	 * Return the cache that is used to cache this resource variant and its contents.
 	 * @return Returns the cache.
 	 */
-	protected abstract RemoteContentsCache getCache();
+	protected abstract ResourceVariantCache getCache();
 	
 	/**
 	 * Return the cached handle for this resource variant if there is
@@ -197,16 +183,7 @@ public abstract class ResourceVariant implements IRemoteResource, IAdaptable {
 	 * @return a cached copy of this resource variant
 	 */
 	protected ResourceVariant getCachedHandle() {
-		getCache().beginOperation();
-		try {
-			if (isCached()) {
-				return getResourceVariant(getCache(), getUniquePath());
-			} else {
-				cacheResourceVariant(getCache(), this);
-				return this;
-			}
-		} finally {
-			getCache().endOperation();
-		}
+		return getCache().getCacheEntry(this).getResourceVariant();
 	}
+	
 }
