@@ -207,30 +207,33 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 */
 	public ILogEntry getLogEntry(IProgressMonitor monitor) throws CVSException {
 		if (entry == null) {
-			Session.run(getRepository(), parent, false, new ICVSRunnable() {
-				public void run(IProgressMonitor monitor) throws CVSException {
-					monitor = Policy.monitorFor(monitor);
-					monitor.beginTask(Policy.bind("RemoteFile.getLogEntries"), 100); //$NON-NLS-1$
-					try {
-						final List entries = new ArrayList();
-						IStatus status = Command.LOG.execute(
-							Command.NO_GLOBAL_OPTIONS,
-							new LocalOption[] { 
-								Log.makeRevisionOption(getRevision())},
-							new ICVSResource[] { RemoteFile.this },
-							new LogListener(RemoteFile.this, entries),
-							Policy.subMonitorFor(monitor, 100));
-						if (entries.size() == 1) {
-							entry = (ILogEntry)entries.get(0);
-						}
-						if (status.getCode() == CVSStatus.SERVER_ERROR) {
-							throw new CVSServerException(status);
-						}
-					} finally {
-						monitor.done();
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(Policy.bind("RemoteFile.getLogEntries"), 100); //$NON-NLS-1$
+			Session session = new Session(getRepository(), parent, false /* output to console */);
+			session.open(Policy.subMonitorFor(monitor, 10));
+			try {
+				try {
+					final List entries = new ArrayList();
+					IStatus status = Command.LOG.execute(
+						session,
+						Command.NO_GLOBAL_OPTIONS,
+						new LocalOption[] { 
+							Log.makeRevisionOption(getRevision())},
+						new ICVSResource[] { RemoteFile.this },
+						new LogListener(RemoteFile.this, entries),
+						Policy.subMonitorFor(monitor, 90));
+					if (entries.size() == 1) {
+						entry = (ILogEntry)entries.get(0);
 					}
+					if (status.getCode() == CVSStatus.SERVER_ERROR) {
+						throw new CVSServerException(status);
+					}
+				} finally {
+					monitor.done();
 				}
-			}, monitor);
+			} finally {
+				session.close();
+			}
 		}
 		return entry;
 	}
@@ -239,26 +242,30 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 * @see ICVSRemoteFile#getLogEntries()
 	 */
 	public ILogEntry[] getLogEntries(IProgressMonitor monitor) throws CVSException {
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(Policy.bind("RemoteFile.getLogEntries"), 100); //$NON-NLS-1$
 		final List entries = new ArrayList();
-		Session.run(getRepository(), parent, false, new ICVSRunnable() {
-			public void run(IProgressMonitor monitor) throws CVSException {
-				monitor = Policy.monitorFor(monitor);
-				monitor.beginTask(Policy.bind("RemoteFile.getLogEntries"), 100); //$NON-NLS-1$
-				QuietOption quietness = CVSProviderPlugin.getPlugin().getQuietness();
-				try {
-					CVSProviderPlugin.getPlugin().setQuietness(Command.VERBOSE);
-					IStatus status = Command.LOG.execute(Command.NO_GLOBAL_OPTIONS, Command.NO_LOCAL_OPTIONS,
-						new ICVSResource[] { RemoteFile.this }, new LogListener(RemoteFile.this, entries),
-						Policy.subMonitorFor(monitor, 100));
-					if (status.getCode() == CVSStatus.SERVER_ERROR) {
-						throw new CVSServerException(status);
-					}
-				} finally {
-					CVSProviderPlugin.getPlugin().setQuietness(quietness);
-					monitor.done();
+		Session session = new Session(getRepository(), parent, false /* output to console */);
+		session.open(Policy.subMonitorFor(monitor, 10));
+		try {
+			QuietOption quietness = CVSProviderPlugin.getPlugin().getQuietness();
+			try {
+				CVSProviderPlugin.getPlugin().setQuietness(Command.VERBOSE);
+				IStatus status = Command.LOG.execute(
+					session,
+					Command.NO_GLOBAL_OPTIONS, Command.NO_LOCAL_OPTIONS,
+					new ICVSResource[] { RemoteFile.this }, new LogListener(RemoteFile.this, entries),
+					Policy.subMonitorFor(monitor, 90));
+				if (status.getCode() == CVSStatus.SERVER_ERROR) {
+					throw new CVSServerException(status);
 				}
+			} finally {
+				CVSProviderPlugin.getPlugin().setQuietness(quietness);
+				monitor.done();
 			}
-		}, monitor);
+		} finally { 
+			session.close();
+		}
 		return (ILogEntry[])entries.toArray(new ILogEntry[entries.size()]);
 	}
 	
@@ -476,24 +483,22 @@ public class RemoteFile extends RemoteResource implements ICVSRemoteFile  {
 	 * The revision of the remote file is used as the base for the tagging operation
 	 */
 	 public IStatus tag(final CVSTag tag, final LocalOption[] localOptions, IProgressMonitor monitor) throws CVSException {
-		final IStatus[] result = new IStatus[] { null };
-		Session.run(getRepository(), this.getParent(), true, new ICVSRunnable() {
-			public void run(IProgressMonitor monitor) throws CVSException {
-				result[0] = Command.RTAG.execute(
-					Command.NO_GLOBAL_OPTIONS,
-					localOptions,
-					new CVSTag(getRevision(), CVSTag.VERSION),
-					tag,
-					new ICVSRemoteResource[] { RemoteFile.this },
-					monitor);
-			}
-		}, monitor);
-		return result[0];
+		monitor = Policy.monitorFor(monitor);
+		monitor.beginTask(null, 100);
+		Session session = new Session(getRepository(), getParent(), true /* output to console */);
+		session.open(Policy.subMonitorFor(monitor, 10));
+		try {
+			return Command.RTAG.execute(
+				Command.NO_GLOBAL_OPTIONS,
+				localOptions,
+				new CVSTag(getRevision(), CVSTag.VERSION),
+				tag,
+				new ICVSRemoteResource[] { RemoteFile.this },
+			Policy.subMonitorFor(monitor, 90));
+		} finally {
+			session.close();
+		}
 	 }
-	 
-	public boolean updateRevision(CVSTag tag, IProgressMonitor monitor) throws CVSException {
-		return parent.updateRevision(this, tag, monitor);
-	}
 	
 	public boolean equals(Object target) {
 		if (this == target)

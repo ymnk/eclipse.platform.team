@@ -297,7 +297,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 		progress.beginTask(null, files.size() * 10 + (folders.isEmpty() ? 0 : 10));
 		try {
 			if (!folders.isEmpty()) {
-				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true);
+				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
 				session.open(Policy.subMonitorFor(progress, 2));
 				try {
 					IStatus status = Command.ADD.execute(
@@ -318,7 +318,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 				Map.Entry entry = (Map.Entry) it.next();
 				final KSubstOption ksubst = (KSubstOption) entry.getKey();
 				final Set set = (Set) entry.getValue();
-				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true);
+				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
 				session.open(Policy.subMonitorFor(progress, 2));
 				try {
 					IStatus status = Command.ADD.execute(
@@ -643,32 +643,25 @@ public class CVSTeamProvider extends RepositoryProvider {
 			return;
 		}
 
-		// Make a connection before preparing for the replace to avoid deletion of resources before a failed connection
-		Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */,
-			new ICVSRunnable() {
-				public void run(IProgressMonitor progress) throws CVSException {
-					// Prepare for the replace (special handling for "cvs added" and "cvs removed" resources
-					progress.beginTask(null, 100);
-					try {
-						new PrepareForReplaceVisitor().visitResources(getProject(), resources, "CVSTeamProvider.scrubbingResource", depth, Policy.subMonitorFor(progress, 30)); //$NON-NLS-1$
-									
-						// Perform an update, ignoring any local file modifications
-						List options = new ArrayList();
-						options.add(Update.IGNORE_LOCAL_CHANGES);
-						if(depth != IResource.DEPTH_INFINITE) {
-							options.add(Command.DO_NOT_RECURSE);
-						}
-						LocalOption[] commandOptions = (LocalOption[]) options.toArray(new LocalOption[options.size()]);
-						try {
-							update(resources, commandOptions, tag, true /*createBackups*/, Policy.subMonitorFor(progress, 70));
-						} catch (TeamException e) {
-							throw CVSException.wrapException(e);
-						}
-					} finally {
-						progress.done();
-					}
-				}
-			}, progress);
+		//	Make a connection before preparing for the replace to avoid deletion of resources before a failed connection
+		progress.beginTask(null, 100);
+		Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
+		session.open(Policy.subMonitorFor(progress,10));
+		try {
+			new PrepareForReplaceVisitor().visitResources(getProject(), resources, "CVSTeamProvider.scrubbingResource", depth, Policy.subMonitorFor(progress, 20)); //$NON-NLS-1$
+			
+			List options = new ArrayList();
+			options.add(Update.IGNORE_LOCAL_CHANGES);
+			if(depth != IResource.DEPTH_INFINITE) {
+				options.add(Command.DO_NOT_RECURSE);
+			}
+			LocalOption[] commandOptions = (LocalOption[]) options.toArray(new LocalOption[options.size()]);
+			
+			update(session, resources, commandOptions, tag, true /*createBackups*/, Policy.subMonitorFor(progress, 70));
+		} finally {
+			session.close();
+			progress.done();
+		}
 	}
 	
 	/**
@@ -703,59 +696,60 @@ public class CVSTeamProvider extends RepositoryProvider {
 			final ICVSResource[] arguments = getCVSArguments(resources);
 			
 			// Tag the remote resources
-			Session s = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot());
-			try {
-				final IStatus status[] = new IStatus[] { null };
-				if (versionTag != null) {
-					// Version using a custom tag command that skips added but not commited reesources
-					Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */,
-						new ICVSRunnable(						) {
-							public void run(IProgressMonitor monitor) throws CVSException {
-								status[0] = Command.CUSTOM_TAG.execute(
-									Command.NO_GLOBAL_OPTIONS,
-									Command.NO_LOCAL_OPTIONS,
-									versionTag,
-									arguments,
-									null,
-									monitor);
-							}
-						}, Policy.subMonitorFor(monitor, 40));
-					if (status[0].isOK()) {
-						// Branch using the tag
-						Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */,
-							new ICVSRunnable() {
-								public void run(IProgressMonitor monitor) throws CVSException {
-									status[0] = Command.CUSTOM_TAG.execute(
-										Command.NO_GLOBAL_OPTIONS,
-										Command.NO_LOCAL_OPTIONS,
-										branchTag,
-										arguments,
-										null,
-										monitor);
-								}
-							}, Policy.subMonitorFor(monitor, 20));
+			IStatus status = null;
+			if (versionTag != null) {
+				// Version using a custom tag command that skips added but not commited reesources
+				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
+				session.open(Policy.subMonitorFor(monitor, 5));
+				try {
+					status = Command.CUSTOM_TAG.execute(
+						session,
+						Command.NO_GLOBAL_OPTIONS,
+						Command.NO_LOCAL_OPTIONS,
+						versionTag,
+						arguments,
+						null,
+						Policy.subMonitorFor(monitor, 35));
+				} finally {
+					session.close();
+				}
+				if (status.isOK()) {
+					// Branch using the tag
+					session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
+					session.open(Policy.subMonitorFor(monitor, 5));
+					try {
+						status = Command.CUSTOM_TAG.execute(
+							session,
+							Command.NO_GLOBAL_OPTIONS,
+							Command.NO_LOCAL_OPTIONS,
+							branchTag,
+							arguments,
+							null,
+						Policy.subMonitorFor(monitor, 15));
+					} finally {
+						session.close();
 					}
-				} else {
-					// Just branch using tag
-					Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */,
-						new ICVSRunnable() {
-							public void run(IProgressMonitor monitor) throws CVSException {
-								status[0] = Command.CUSTOM_TAG.execute(
-									Command.NO_GLOBAL_OPTIONS,
-									Command.NO_LOCAL_OPTIONS,
-									branchTag,
-									arguments,
-									null,
-									monitor);
-							}
-						}, Policy.subMonitorFor(monitor, 40));
-	
 				}
-				if ( ! status[0].isOK()) {
-					throw new CVSServerException(status[0]);
+			} else {
+				// Just branch using tag
+				Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
+				session.open(Policy.subMonitorFor(monitor, 5));
+				try {
+					status = Command.CUSTOM_TAG.execute(
+						session,
+						Command.NO_GLOBAL_OPTIONS,
+						Command.NO_LOCAL_OPTIONS,
+						branchTag,
+						arguments,
+						null,
+						Policy.subMonitorFor(monitor, 35));
+				} finally {
+					session.close();
 				}
-			} finally {
-				s.close();
+
+			}
+			if ( ! status.isOK()) {
+				throw new CVSServerException(status);
 			}
 			
 			// Set the tag of the local resources to the branch tag (The update command will not
@@ -890,7 +884,18 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 * 
 	 * @param createBackups if true, creates .# files for updated files
 	 */
-	public void update(IResource[] resources, LocalOption[] options, CVSTag tag, final boolean createBackups, IProgressMonitor progress) throws TeamException {
+	public void update(IResource[] resources, LocalOption[] options, CVSTag tag, boolean createBackups, IProgressMonitor progress) throws TeamException {
+		progress.beginTask(null, 100);
+		Session session = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
+		session.open(Policy.subMonitorFor(progress,10));
+		try {
+			update(session, resources, options, tag, createBackups, Policy.subMonitorFor(progress, 90));
+		} finally {
+			session.close();
+		}
+	}
+	
+	private void update(Session session, IResource[] resources, LocalOption[] options, CVSTag tag, boolean createBackups, IProgressMonitor progress) throws TeamException {
 		// Build the local options
 		List localOptions = new ArrayList();
 		
@@ -904,16 +909,16 @@ public class CVSTeamProvider extends RepositoryProvider {
 		final LocalOption[] commandOptions = (LocalOption[])localOptions.toArray(new LocalOption[localOptions.size()]);
 		final ICVSResource[] arguments = getCVSArguments(resources);
 
-		Session.run(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */,
-			new ICVSRunnable() {
-				public void run(IProgressMonitor monitor) throws CVSException {
-					IStatus status = Command.UPDATE.execute(Command.NO_GLOBAL_OPTIONS, commandOptions, arguments,
-						null, monitor);
-					if (status.getCode() == CVSStatus.SERVER_ERROR) {
-						throw new CVSServerException(status);
-					}
-				}
-			}, progress);
+		IStatus status = Command.UPDATE.execute(
+			session, 
+			Command.NO_GLOBAL_OPTIONS, 
+			commandOptions, 
+			arguments,
+			null, 
+			progress);
+		if (status.getCode() == CVSStatus.SERVER_ERROR) {
+			throw new CVSServerException(status);
+		}
 	}
 	
 	/*
