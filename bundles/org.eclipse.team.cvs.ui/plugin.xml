@@ -1041,7 +1041,7 @@
          <action
                helpContextId="org.eclipse.team.cvs.ui.team_synchronize_action_context"
                label="%Synchronize.label"
-               definitionId="org.eclipse.team.sync.views.SynchronizeView"
+               definitionId="org.eclipse.team.ui.synchronizeLast"
                class="org.eclipse.team.internal.ccvs.ui.actions.SyncAction"
                tooltip="%Synchronize.tooltip"
                menubarPath="cvs.main/group1"

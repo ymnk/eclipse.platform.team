@@ -50,50 +50,67 @@ abstract public class CVSAction extends TeamAction implements IEditorActionDeleg
 	
 	public CVSAction() {
 		super();
-		retargetAction = new RetargetAction(getId(), "");
-		retargetAction
-        .addPropertyChangeListener(new IPropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent event) {
-                if (event.getProperty().equals(IAction.ENABLED)) {
-                    Object val = event.getNewValue();
-                    if (val instanceof Boolean && action != null) {
-                        action.setEnabled(((Boolean) val).booleanValue());
-                    }
-                } else if (event.getProperty().equals(
-                        IAction.CHECKED)) {
-                    Object val = event.getNewValue();
-                    if (val instanceof Boolean && action != null) {
-                        action.setChecked(((Boolean) val).booleanValue());
-                    }
-                } else if (event.getProperty().equals(IAction.TEXT)) {
-                    Object val = event.getNewValue();
-                    if (val instanceof String && action != null) {
-                        action.setText((String) val);
-                    }
-                } else if (event.getProperty().equals(
-                        IAction.TOOL_TIP_TEXT)) {
-                    Object val = event.getNewValue();
-                    if (val instanceof String && action != null) {
-                        action.setToolTipText((String) val);
-                    }
-                }
-            }
-        });
 	}
 	
+	/**
+	 * Initializes a retarget action that will listen to part changes and allow parts to
+	 * override this action's behavior. The retarget action is used if this
+	 * action is shown in a top-level menu or toolbar.
+	 * @param window the workbench window showing this action
+	 * @since 3.1
+	 */
+	private void initializeRetargetAction(IWorkbenchWindow window) {
+		// Don't need to specify a the title because it will use this actions
+		// title instead.
+		retargetAction = new RetargetAction(getId(), ""); //$NON-NLS-1$
+		retargetAction.addPropertyChangeListener(new IPropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent event) {
+				if (event.getProperty().equals(IAction.ENABLED)) {
+					Object val = event.getNewValue();
+					if (val instanceof Boolean && action != null) {
+						action.setEnabled(((Boolean) val).booleanValue());
+					}
+				} else if (event.getProperty().equals(IAction.CHECKED)) {
+					Object val = event.getNewValue();
+					if (val instanceof Boolean && action != null) {
+						action.setChecked(((Boolean) val).booleanValue());
+					}
+				} else if (event.getProperty().equals(IAction.TEXT)) {
+					Object val = event.getNewValue();
+					if (val instanceof String && action != null) {
+						action.setText((String) val);
+					}
+				} else if (event.getProperty().equals(IAction.TOOL_TIP_TEXT)) {
+					Object val = event.getNewValue();
+					if (val instanceof String && action != null) {
+						action.setToolTipText((String) val);
+					}
+				} else if (event.getProperty().equals(SubActionBars.P_ACTION_HANDLERS)) {
+					if(action != null) {
+						action.setEnabled(retargetAction.isEnabled());
+					}
+				}
+			}
+		});
+		window.getPartService().addPartListener(retargetAction);
+		IWorkbenchPart activePart = window.getPartService().getActivePart();
+		if (activePart != null)
+			retargetAction.partActivated(activePart);
+	}
+
 	/**
 	 * Common run method for all CVS actions.
 	 */
 	final public void run(IAction action) {
 		try {
-			if (!beginExecution(action)) return;
-			
+			if (!beginExecution(action)) return;			
 			// If the action has been replaced by another handler, then
 			// call that one instead.
-			if(retargetAction.getActionHandler() != null)
+			if(retargetAction != null && retargetAction.getActionHandler() != null) {
 				retargetAction.run();
-			else
+			} else {
 				execute(action);
+			}
 			endExecution();
 		} catch (InvocationTargetException e) {
 			// Handle the exception and any accumulated errors
@@ -118,17 +135,19 @@ abstract public class CVSAction extends TeamAction implements IEditorActionDeleg
 		return ""; //$NON-NLS-1$
 	}
 	
+	/**
+	 * Called when this action is added to a top-level menu or toolbar (e.g. IWorkbenchWindowDelegate)
+	 * @since 3.1
+	 */
 	public void init(IWorkbenchWindow window) {
 		super.init(window);
-		 window.getPartService().addPartListener(retargetAction);
-         IWorkbenchPart activePart = window.getPartService().getActivePart();
-         if (activePart != null)
-         	retargetAction.partActivated(activePart);
+		initializeRetargetAction(window);
 	}
 	
 	protected boolean isEnabled() throws TeamException {
-		if(retargetAction.getActionHandler() != null)
+		if(retargetAction != null && retargetAction.getActionHandler() != null) {
 			return retargetAction.isEnabled();
+		}
 		// don't know so let subclasses decide
 		return false;
 	}
@@ -140,9 +159,17 @@ abstract public class CVSAction extends TeamAction implements IEditorActionDeleg
         retargetAction = null;
 	}
 	
-	public void selectionChanged(IAction action, ISelection selection) {
+	public void selectionChanged(final IAction action, ISelection selection) {
 		super.selectionChanged(action, selection);
 		this.action = action;
+	}
+	
+	protected void setActionEnablement(IAction action) {
+		if(retargetAction != null && retargetAction.getActionHandler() != null) {
+			action.setEnabled(retargetAction.isEnabled());
+		} else {
+			super.setActionEnablement(action);
+		}
 	}
 
 	/**
