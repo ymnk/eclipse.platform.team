@@ -86,6 +86,7 @@ x memory and sync set disposal in syncsetcompare input!!!! VERY IMPORTANT!!!
 ======================================================================
 - actions in sync view all assume that selection will have a resource (e.g refresh action). 
   - how would a refresh know what to select if a change comment node was selected, for example
+  - could first attempt to obtain resource and, if that fails, visit children to obtain resources
 - sorter is related to input so may need to change when input does
   - there does not appear to be a clean way to change the sorter and input without causing two refreshes
 - SyncInfoSet##getOutOfSyncDescendants(IResource) is speced to include the resource itself if it is out-of-sync

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.tests.ui.synchronize;
 
+import java.util.*;
+
 import junit.framework.Test;
 
 import org.eclipse.core.resources.*;
@@ -24,7 +26,6 @@ import org.eclipse.team.tests.core.TeamTest;
 import org.eclipse.team.tests.ui.views.ContentProviderTestView;
 import org.eclipse.team.tests.ui.views.TestTreeViewer;
 import org.eclipse.team.ui.synchronize.SyncInfoDiffNode;
-import org.eclipse.team.ui.synchronize.views.CompressedFolderDiffNode;
 
 /**
  * Tests for the SyncInfoSet content providers.
@@ -116,6 +117,11 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 	 */
 	private void assertProperVisibleItems() {
 		IResource[] resources = set.getResources();
+		List resourceList = new ArrayList();
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			resourceList.add(resource);
+		}
 		TestTreeViewer viewer = view.getViewer();
 		Item[] items = viewer.getRootItems();
 		if (resources.length ==  0) {
@@ -125,43 +131,22 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 		// Test that all items in the tree are expected
 		for (int i = 0; i < items.length; i++) {
 			Item item = items[i];
-			assertItemValid(item, resources);
+			assertItemValid(item, resourceList);
 		}
 		// Test that all expected resources and their parents are present
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			SyncInfoDiffNode node = new SyncInfoDiffNode(set, resource);
-			assertTrue(
-					"Item for " + resource.getFullPath() + " is missing", 
-					viewer.hasItemFor(node));
-			if (resource.getType() == IResource.PROJECT) continue;
-			IContainer parent = resource.getParent();
-			if (parent.getType() == IResource.PROJECT) continue;
-			if (set.getSyncInfo(parent) == null) {
-				assertTrue(
-						"Compressed parent for " + resource.getFullPath() + " is missing",
-						viewer.hasItemFor(new CompressedFolderDiffNode(set, parent)));
-			}
-		}
+		assertTrue("The tree did not contain all expected resources: " + resourceList.toString(), resourceList.isEmpty());
 	}
 	
-	/**
-	 * @param item
-	 */
-	private void assertItemValid(Item item, IResource[] resources) {
+	private void assertItemValid(Item item, List resources) {
 		Object data = item.getData();
 		if (data instanceof SyncInfoDiffNode) {
 			IResource resource = ((SyncInfoDiffNode)data).getResource();
 			if (resource.getType() == IResource.PROJECT) {
 				assertProjectPresent((IProject)resource, resources);
 			} else if (resource.getType() == IResource.FOLDER) {
-				if (data instanceof CompressedFolderDiffNode) {
-					assertParentOfResource((IFolder)resource, resources);
-				} else {
-					assertResourcePresent(resource, resources);
-				}
+				assertFolderPresent((IFolder)resource, resources);
 			} else if (resource.getType() == IResource.FILE) {
-				assertResourcePresent(resource, resources);
+				assertFilePresent(resource, resources);
 			}
 		}
 		Item[] children = view.getViewer().getChildren(item);
@@ -171,35 +156,54 @@ public class SyncInfoSetContentProviderTest extends TeamTest {
 		}
 	}
 
-	private void assertParentOfResource(IFolder folder, IResource[] resources) {
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
+	private void assertFolderPresent(IFolder folder, List resources) {
+		// First, if the folder is out-of-sync, it should be visible
+		for (Iterator iter = resources.iterator(); iter.hasNext();) {
+			IResource resource = (IResource) iter.next();
 			if (resource.equals(folder)) {
-				fail("Folder " + folder.getFullPath() + " is compressed but should not be.");
+				// The folder should be present.
+				// Remove it since it has been verified
+				iter.remove();
+				return;
 			}
 		}
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
-			if (resource.getParent().equals(folder)) {
+		// If the folder contains a file in the list, it is also OK
+		for (Iterator iter = resources.iterator(); iter.hasNext();) {
+			IResource resource = (IResource) iter.next();
+			if (resource.getType() == IResource.FILE && resource.getParent().equals(folder)) {
+				// The compressed folder is valid since it contains an out-of-sync file
+				// However, the resource is left since it has not been verified (only it's parent)
 				return;
 			}
 		}
 		fail("Folder " + folder.getFullPath() + " should not be visible but is.");
 	}
 
-	private void assertResourcePresent(IResource itemResource, IResource[] resources) {
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
+	private void assertFilePresent(IResource itemResource, List resources) {
+		for (Iterator iter = resources.iterator(); iter.hasNext();) {
+			IResource resource = (IResource) iter.next();
 			if (resource.equals(itemResource)) {
+				// The resource has been verified so it can be removed
+				iter.remove();
 				return;
 			}
 		}
 		fail("Resource " + itemResource.getFullPath() + " should not be visible but is.");
 	}
 
-	private void assertProjectPresent(IProject project, IResource[] resources) {
-		for (int i = 0; i < resources.length; i++) {
-			IResource resource = resources[i];
+	private void assertProjectPresent(IProject project, List resources) {
+//		First, if the project is out-of-sync, it should be visible
+		for (Iterator iter = resources.iterator(); iter.hasNext();) {
+			IResource resource = (IResource) iter.next();
+			if (resource.equals(project)) {
+				// The folder should be present.
+				// Remove it since it has been verified
+				iter.remove();
+				return;
+			}
+		}
+		for (Iterator iter = resources.iterator(); iter.hasNext();) {
+			IResource resource = (IResource) iter.next();
 			if (resource.getProject().equals(project)) {
 				return;
 			}
