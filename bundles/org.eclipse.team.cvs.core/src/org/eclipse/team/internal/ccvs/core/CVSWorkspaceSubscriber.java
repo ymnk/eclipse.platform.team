@@ -51,16 +51,19 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	private static final byte[] NO_REMOTE = new byte[0];
 	
 	// describes this subscriber
-	private QualifiedName id;
+	protected QualifiedName id;
 	private String name;
 	private String description;
 	
 	// options this subscriber supports for determining the sync state of resources
-	private Map comparisonCriterias = new HashMap();
-	private String defaultCriteria;
+	protected Map comparisonCriterias = new HashMap();
+	protected String defaultCriteria;
 	
 	// qualified name for remote sync info
 	private QualifiedName REMOTE_RESOURCE_KEY = new QualifiedName("org.eclipse.team.cvs", "remote-resource-key");
+	
+	CVSWorkspaceSubscriber() {
+	}
 	
 	CVSWorkspaceSubscriber(QualifiedName id, String name, String description) {
 		this.id = id;
@@ -241,6 +244,7 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 			// TODO: when does sync information get updated? For example, on commit. And
 			// when does it get cleared.
 			getSynchronizer().setSyncInfo(getRemoteSyncName(), local, remoteBytes);
+			
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -501,5 +505,19 @@ public class CVSWorkspaceSubscriber extends SyncTreeSubscriber implements IResou
 	public void projectDeconfigured(IProject project) {
 		TeamDelta delta = new TeamDelta(this, TeamDelta.PROVIDER_DECONFIGURED, project);
 		fireTeamResourceChange(new TeamDelta[] {delta});
+	}
+	
+	/**
+	 * @param string
+	 */
+	protected void setDescription(String string) {
+		description = string;
+	}
+
+	/**
+	 * @param string
+	 */
+	protected void setName(String string) {
+		name = string;
 	}
 }

@@ -14,8 +14,11 @@ package org.eclipse.team.internal.ccvs.ui.merge;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.team.core.sync.TeamProvider;
+import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
@@ -62,6 +65,13 @@ public class MergeWizard extends Wizard {
 		CompareUI.openCompareEditorOnPage(
 		  new MergeEditorInput(resources, startTag, endTag),
 		  activePage);
+		  
+		// TODO: also register a merge subscriber. This is required to test the new
+		// experimental merge subscriber;
+		String uniqueId = Long.toString(System.currentTimeMillis());
+		CVSMergeSubscriber s = new CVSMergeSubscriber(new QualifiedName("org.eclipse.team.cvs", "merge-" + uniqueId), 
+			resources, startTag, endTag);
+		TeamProvider.registerSubscriber(s);
 		return true;
 	}
 	

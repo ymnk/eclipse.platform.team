@@ -53,7 +53,7 @@ public class SyncViewerSubscriberListActions extends SyncViewerActionGroup {
 	}
 
 	public void activate(SwitchSubscriberAction activatedAction) {
-		if(! activatedAction.getSubscriberInput().getSubscriber().getId().equals(activeInput.getSubscriber().getId())) {
+		if(activeInput == null || ! activatedAction.getSubscriberInput().getSubscriber().getId().equals(activeInput.getSubscriber().getId())) {
 			for (int i = 0; i < actions.size(); i++) {
 				SwitchSubscriberAction action =
 					(SwitchSubscriberAction) actions.get(i);
