@@ -19,8 +19,8 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.*;
+import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
  * This runnable context executes it's operation in the context of a background job.
@@ -28,13 +28,15 @@ import org.eclipse.ui.PlatformUI;
 public class JobRunnableContext implements ITeamRunnableContext {
 
 	private IJobChangeListener listener;
+	private IWorkbenchSite site;
 
 	public JobRunnableContext() {
-		this(null);
+		this(null, null);
 	}
 	
-	public JobRunnableContext(IJobChangeListener listener) {
+	public JobRunnableContext(IJobChangeListener listener, IWorkbenchSite site) {
 		this.listener = listener;
+		this.site = site;
 	}
 
 	protected IStatus run(IRunnableWithProgress runnable, IProgressMonitor monitor) {
@@ -80,10 +82,17 @@ public class JobRunnableContext implements ITeamRunnableContext {
 		if (listener != null) {
 			job.addJobChangeListener(listener);
 		}
-		schedule(job);
+		schedule(job, site);
 	}
 
-	protected void schedule(Job job) {
+	private void schedule(Job job, IWorkbenchSite site) {
+		if (site != null) {
+			IWorkbenchSiteProgressService siteProgress = (IWorkbenchSiteProgressService) site.getAdapter(IWorkbenchSiteProgressService.class);
+			if (siteProgress != null) {
+				siteProgress.schedule(job);
+				return;
+			}
+		}
 		job.schedule();
 	}
 

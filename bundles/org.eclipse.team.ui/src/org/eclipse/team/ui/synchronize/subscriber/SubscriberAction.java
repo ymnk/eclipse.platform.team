@@ -27,19 +27,20 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.actions.TeamAction;
 import org.eclipse.team.ui.synchronize.viewers.SyncInfoDiffNode;
 import org.eclipse.ui.*;
-import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
- * This action provides utilities for performing operations on diff elements
- * contained in a selection.
- * 1. provides scheduling action via workbench part (provide feedback via view)
- * 2. provides selection filtering
- * 3. provides support for running action in background or foreground
- * 4. provides support for locking workspace resources
- * 5. 
- * <p>
- * It is optional for SubscriberParticipant actions to subclass.
- * </p>
+ * This action provides utilities for performing operations on selections that
+ * contain instances of {@link SyncInfoDiffNode}. Subclasses can use this support
+ * to:
+ * <ul>
+ * <li>provides easy filtering of selection
+ * <li>provides scheduling action via workbench part (provide feedback via view)
+ * <li>provides support for running action in background or foreground
+ * <li>provides support for locking workspace resources
+ * </ul>
+ * @see SyncInfo
+ * @see SyncInfoSet
+ * @see SyncInfoDiffNode
  * @since 3.0
  */
 public abstract class SubscriberAction extends TeamAction implements IViewActionDelegate, IEditorActionDelegate {
@@ -48,7 +49,7 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
 	 */
 	public final void run(IAction action) {
-		// TODO: We used to prompt for unsaved changes to any editor. We don't anymore. Would
+		// TODO: We used to prompt for unsaved changes in any editor. We don't anymore. Would
 		// it be better to prompt for unsaved changes to editors affected by this action?
 		SyncInfoSet syncSet = makeSyncInfoSetFromSelection(getFilteredSyncInfos());
 		if (syncSet == null || syncSet.isEmpty()) return;
@@ -57,17 +58,9 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		} catch (InvocationTargetException e) {
 			handle(e);
 		} catch (InterruptedException e) {
-			// nothing to do;
+			handle(e);
 		}
 	}
-	
-	/**
-	 * Return the job name to be used if the action can run as a job.
-	 * 
-	 * @param syncSet
-	 * @return
-	 */
-	protected abstract String getJobName(SyncInfoSet syncSet);
 	
 	/**
 	 * Subsclasses must override to provide behavior for the action.
@@ -164,33 +157,15 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 		setActivePart(action, targetEditor);
 	}
 	
-	public void markBusy(IDiffElement[] elements, boolean isBusy) {
-		/*for (int i = 0; i < elements.length; i++) {
-			IDiffElement e = elements[i];
-			if(e instanceof IAdaptable) {
-				IBusyWorkbenchAdapter busyAdapter = (IBusyWorkbenchAdapter) ((IAdaptable)e).getAdapter(IBusyWorkbenchAdapter.class);
-				if(busyAdapter != null) {
-					busyAdapter.setBusy(e, isBusy);		
-				}
-			}
-		}*/
-	}
-	
-	public static void schedule(Job job, IWorkbenchSite site) {
-		if (site != null) {
-			IWorkbenchSiteProgressService siteProgress = (IWorkbenchSiteProgressService) site.getAdapter(IWorkbenchSiteProgressService.class);
-			if (siteProgress != null) {
-				siteProgress.schedule(job);
-				return;
-			}
-		}
-		job.schedule();
+	private void markBusy(IDiffElement[] elements, boolean isBusy) {
 	}
 
-	/*
-	 * Return the ITeamRunnableContext which will be used to run the operation.
+	/**
+	 * Uses the {@link #canRunAsJob()} hint to return a {@link ITeamRunnableContext}. 
+	 * 
+	 * @return the runnable context in which to run this action.
 	 */
-	private ITeamRunnableContext getRunnableContext() {
+	protected ITeamRunnableContext getRunnableContext() {
 		if (canRunAsJob()) {
 			// mark resources that will be affected by job
 			final IDiffElement[] affectedElements = getFilteredDiffElements();
@@ -202,25 +177,32 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 					markBusy(affectedElements, false);
 				}
 			};
-			
-			// Schedule via the view
-			return new JobRunnableContext(listener) {
-				protected void schedule(Job job) {
-					IWorkbenchSite site = null;
-					IWorkbenchPart part = getTargetPart();
-					if(part != null) {
-						site = part.getSite();
-					}
-					SubscriberAction.schedule(job, site);
-				}
-			};
+			return new JobRunnableContext(listener, getSite());
 		} else {
 			return new ProgressDialogRunnableContext(shell);
 		}
 	}
 
+	/**
+	 * If this action can safely be run in the background, then subclasses can
+	 * override this method and return <code>true</code>. This will make their
+	 * action run in a {@link Job}. 
+	 * 
+	 * @return <code>true</code> if this action can be run in the background and
+	 * <code>false</code> otherwise.
+	 */
 	protected boolean canRunAsJob() {
 		return false;
+	}
+	
+	/**
+	 * Return the job name to be used if the action can run as a job.
+	 * 
+	 * @param syncSet
+	 * @return
+	 */
+	protected String getJobName(SyncInfoSet syncSet) {
+		return "";
 	}
 
 	/**
@@ -256,5 +238,14 @@ public abstract class SubscriberAction extends TeamAction implements IViewAction
 				}
 			}
 		};
+	}
+	
+	private IWorkbenchSite getSite() {
+		IWorkbenchSite site = null;
+		IWorkbenchPart part = getTargetPart();
+		if(part != null) {
+			site = part.getSite();
+		}
+		return site;
 	}
 }

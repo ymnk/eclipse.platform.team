@@ -13,8 +13,7 @@ package org.eclipse.team.ui.synchronize.subscriber;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.core.subscribers.SubscriberSyncInfoCollector;
@@ -23,6 +22,7 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.jobs.RefreshSubscriberJob;
 import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
 import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 /**
  * A general refresh action that will refresh a subscriber in the background.
@@ -70,7 +70,7 @@ public class RefreshAction extends Action {
 		job.setProgressGroup(group, 70);
 		collector.setProgressGroup(group, 30);
 		
-		SubscriberAction.schedule(job, site);
+		schedule(job, site);
 		job.addJobChangeListener(new JobChangeAdapter() {
 			public void done(IJobChangeEvent event) {
 				collector.setProgressGroup(null, 0);
@@ -84,5 +84,15 @@ public class RefreshAction extends Action {
 	
 	public IWorkbenchSite getWorkbenchSite() {
 		return workbenchSite;
+	}
+	
+	private static void schedule(Job job, IWorkbenchSite site) {
+		if(site == null) {
+			job.schedule();
+		}
+		IWorkbenchSiteProgressService siteProgress = (IWorkbenchSiteProgressService) site.getAdapter(IWorkbenchSiteProgressService.class);
+		if (siteProgress != null) {
+			siteProgress.schedule(job);
+		}
 	}
 }
