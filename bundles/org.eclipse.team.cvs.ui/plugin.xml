@@ -235,11 +235,6 @@
 				label="%ShowHistoryAction.label"
 				tooltip="%ShowHistoryAction.tooltip"
 				class="org.eclipse.team.internal.ccvs.ui.actions.ShowHistoryAction"/>
-			<action 
-				id="org.eclipse.team.ccvs.ui.autoDefine"
-				label="%AutoDefineTagsAction.label"
-				tooltip="%AutoDefineTagsAction.tooltip"
-				class="org.eclipse.team.internal.ccvs.ui.actions.AutoDefineTagsAction"/>
 		</objectContribution>
 		<objectContribution
 			id="org.eclipse.team.ccvs.ui.LogEntryContributions"
@@ -288,12 +283,11 @@
 				tooltip="%RemoveRootAction.tooltip"
 				class="org.eclipse.team.internal.ccvs.ui.actions.RemoveRootAction"/>
 			<action
-				id="org.eclipse.team.ccvs.ui.defineBranch"
-				label="%DefineBranchAction.label"
+				id="org.eclipse.team.ccvs.ui.configureTags"
+				label="%ConfigureTags.label"
 				icon="icons/full/clcl16/newstream_wiz.gif"
-				tooltip="%DefineBranchAction.tooltip"
-				class="org.eclipse.team.internal.ccvs.ui.actions.DefineBranchAction"/>
-		</objectContribution>
+				tooltip="%ConfigureTags.tooltip"
+				class="org.eclipse.team.internal.ccvs.ui.actions.ConfigureTagsFromRepoView"/>		</objectContribution>
 		<objectContribution
 			id="org.eclipse.team.ccvs.ui.BranchCategoryContributions"
 			objectClass="org.eclipse.team.internal.ccvs.ui.model.BranchCategory">

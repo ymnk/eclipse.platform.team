@@ -5,9 +5,10 @@ package org.eclipse.team.internal.ccvs.ui.model;
  * All Rights Reserved.
  */
  
-import java.util.ArrayList;
-import java.util.List;
-import org.eclipse.core.runtime.CoreException;import org.eclipse.core.runtime.IAdaptable;import org.eclipse.jface.resource.ImageDescriptor;import org.eclipse.swt.custom.BusyIndicator;import org.eclipse.swt.widgets.Display;import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.team.ccvs.core.CVSTag;
+import org.eclipse.team.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.ui.model.IWorkbenchAdapter;
@@ -45,7 +46,12 @@ public class BranchCategory extends CVSModelElement implements IAdaptable {
 	 * object has no children.
 	 */
 	public Object[] getChildren(Object o) {
-		return CVSUIPlugin.getPlugin().getRepositoryManager().getKnownBranchTags(repository);
+		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownBranchTags(repository);
+		BranchTag[] branchElements = new BranchTag[tags.length];
+		for (int i = 0; i < tags.length; i++) {
+			branchElements[i] = new BranchTag(tags[i], repository);
+		}
+		return branchElements;
 	}
 	
 	/**

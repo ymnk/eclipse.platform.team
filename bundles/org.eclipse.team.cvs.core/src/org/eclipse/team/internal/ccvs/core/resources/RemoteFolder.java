@@ -235,12 +235,12 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	 * persist the children. Subclasses (namely RemoteFolderTree) may
 	 * persist the children.
 	 */
-	protected ICVSRemoteResource[] getMembers(final CVSTag tag, IProgressMonitor monitor) throws TeamException {
+	protected ICVSRemoteResource[] getMembers(final CVSTag tag, IProgressMonitor monitor) throws CVSException {
 		
 		final IProgressMonitor progress = Policy.monitorFor(monitor);
 		
 		// Forget about any children we used to know about children
-		children = null;
+		children = new ICVSRemoteResource[0];
 		
 		// Create the listener for remote files and folders
 		final List newRemoteDirectories = new ArrayList();
@@ -342,17 +342,16 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	/**
 	 * @see ICVSFolder#getFolders()
 	 */
-	public ICVSFolder[] getFolders() throws CVSException {
+	public ICVSFolder[] getFolders() throws CVSException {		
 		ICVSRemoteResource[] children = getChildren();
-		if (children == null)
-			return new ICVSFolder[0];
-		else {
-			List result = new ArrayList();
-			for (int i=0;i<children.length;i++)
-				if (((ICVSResource)children[i]).isFolder())
-					result.add(children[i]);
-			return (ICVSFolder[])result.toArray(new ICVSFolder[result.size()]);
+		if (children == null) {
+			children = getMembers(getTag(), null);
 		}
+		List result = new ArrayList();
+		for (int i=0;i<children.length;i++)
+			if (((ICVSResource)children[i]).isFolder())
+				result.add(children[i]);
+		return (ICVSFolder[])result.toArray(new ICVSFolder[result.size()]);
 	}
 
 	/**
@@ -360,15 +359,14 @@ public class RemoteFolder extends RemoteResource implements ICVSRemoteFolder, IC
 	 */
 	public ICVSFile[] getFiles() throws CVSException {
 		ICVSRemoteResource[] children = getChildren();
-		if (children == null)
-			return new ICVSFile[0];
-		else {
-			List result = new ArrayList();
-			for (int i=0;i<children.length;i++)
-				if (!((ICVSResource)children[i]).isFolder())
-					result.add(children[i]);
-			return (ICVSFile[])result.toArray(new ICVSFile[result.size()]);
+		if (children == null) {
+			children = getMembers(getTag(), null);
 		}
+		List result = new ArrayList();
+		for (int i=0;i<children.length;i++)
+			if (!((ICVSResource)children[i]).isFolder())
+				result.add(children[i]);
+		return (ICVSFile[])result.toArray(new ICVSFile[result.size()]);
 	}
 
 	/**

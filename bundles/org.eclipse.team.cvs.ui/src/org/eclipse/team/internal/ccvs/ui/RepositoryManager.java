@@ -7,6 +7,7 @@ package org.eclipse.team.internal.ccvs.ui;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,6 +31,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.ccvs.core.CVSTag;
 import org.eclipse.team.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.ccvs.core.ICVSFolder;
 import org.eclipse.team.ccvs.core.ICVSListener;
 import org.eclipse.team.ccvs.core.ICVSProvider;
 import org.eclipse.team.ccvs.core.ICVSRemoteFile;
@@ -40,7 +42,10 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.sync.IRemoteResource;
 import org.eclipse.team.core.sync.IRemoteSyncElement;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProvider;
 import org.eclipse.team.internal.ccvs.core.client.Command;
+import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
 
 /**
@@ -52,10 +57,12 @@ import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
 public class RepositoryManager {
 	private static final String STATE_FILE = ".repositoryManagerState";
 	
-	// Map ICVSRepositoryLocation -> List of Tags
+	// Map ICVSRepositoryLocation -> List of CVSTag
 	Hashtable branchTags = new Hashtable();
-	// Map ICVSRepositoryLocation -> Hashtable of (Project name -> Set of CVSTags)
+	// Map ICVSRepositoryLocation -> Hashtable of (Project name -> Set of CVSTag)
 	Hashtable versionTags = new Hashtable();
+	// Map ICVSRepositoryLocation -> Hashtable of (Project name -> Set of file paths that are project relative)
+	Hashtable autoRefreshFiles = new Hashtable();
 	
 	List listeners = new ArrayList();
 
@@ -69,73 +76,73 @@ public class RepositoryManager {
 		return getCVSProvider().getKnownRepositories();
 	}
 	
-	private ICVSProvider getCVSProvider() {
-		return CVSProviderPlugin.getProvider();
-	}
-	
 	/**
 	 * Get the list of known branch tags for a given remote root.
 	 */
-	public BranchTag[] getKnownBranchTags(ICVSRepositoryLocation root) {
-		Set set = (Set)branchTags.get(root);
-		if (set == null) return new BranchTag[0];
-		return (BranchTag[])set.toArray(new BranchTag[0]);
+	public CVSTag[] getKnownBranchTags(ICVSFolder project) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		return getKnownBranchTags(location);
 	}
+
+	public CVSTag[] getKnownBranchTags(ICVSRepositoryLocation location) {
+		Set set = (Set)branchTags.get(location);
+		if (set == null) return new CVSTag[0];
+		return (CVSTag[])set.toArray(new CVSTag[0]);
+	}
+
 	/**
 	 * Get the list of known version tags for a given project.
-	 * 
-	 * This list includes:
-	 * -All manually defined or auto-defined version tags
-	 * -All tags for the .vcm_meta file, if one exists
-	 * 
-	 * A server hit is incurred on each call to ensure up-to-date results.
 	 */
-	public CVSTag[] getKnownVersionTags(ICVSRemoteResource resource, IProgressMonitor monitor) throws TeamException {
-		// Find tags in .vcm_meta file, optimization for Eclipse users
+	public CVSTag[] getKnownVersionTags(ICVSFolder project) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
 		Set result = new HashSet();
-		ICVSRemoteFile[] vcmMeta = getVCMMeta(resource);
-		for (int j = 0; j < vcmMeta.length; j++) {
-			ICVSRemoteFile iCVSRemoteFile = vcmMeta[j];
-			CVSTag[] tags = getTags(iCVSRemoteFile, new NullProgressMonitor());
-			for (int i = 0; i < tags.length; i++) {
-				if (tags[i].getType() == CVSTag.VERSION) {
-					result.add(tags[i]);
-				}
-			}
-		}
-		
-		Hashtable table = (Hashtable)versionTags.get(resource.getRepository());
+		Hashtable table = (Hashtable)versionTags.get(location);
 		if (table == null) {
 			return (CVSTag[])result.toArray(new CVSTag[result.size()]);
 		}
-		Set set = (Set)table.get(resource.getName());
+		Set set = (Set)table.get(project.getName());
 		if (set == null) {
 			return (CVSTag[])result.toArray(new CVSTag[result.size()]);
 		}
 		result.addAll(set);
 		return (CVSTag[])result.toArray(new CVSTag[0]);
 	}
-	private ICVSRemoteFile[] getVCMMeta(ICVSRemoteResource resource) throws TeamException {
-		// There should be a better way of doing this.
-		List files = new ArrayList();
-		IRemoteResource[] resources = resource.members(new NullProgressMonitor());
-		for (int i = 0; i < resources.length; i++) {
-			if (resources[i] instanceof ICVSRemoteFile && 
-					(resources[i].getName().equals(".vcm_meta") || resources[i].getName().equals(".project"))) {
-				files.add(resources[i]);
+		
+	/*
+	 * Fetches tags from .project and .vcm_meta if they exist. Then fetches tags from the user defined auto-refresh file
+	 * list. The fetched tags are cached in the CVS ui plugin's tag cache.
+	 */
+	public void refreshDefinedTags(ICVSFolder project) throws TeamException {
+		try {
+			ICVSRepositoryLocation location = CVSProvider.getInstance().getRepository(project.getFolderSyncInfo().getRoot());
+			ICVSRemoteFile vcmMeta = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(".vcm_meta"));
+			ICVSRemoteFile dotProject = (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(".project"));
+			addDefinedTagsFor(vcmMeta, project, location);
+			addDefinedTagsFor(dotProject, project, location);
+			String[] relativePaths = getAutoRefreshFiles(project);
+			for (int i = 0; i < relativePaths.length; i++) {
+				ICVSRemoteFile remoteFile =  (ICVSRemoteFile)CVSWorkspaceRoot.getRemoteResourceFor(project.getFile(relativePaths[i]));
+				addDefinedTagsFor(remoteFile, project, location);
 			}
+		} catch(CVSException e) {
+			throw new TeamException(e.getStatus());
 		}
-		return (ICVSRemoteFile[]) files.toArray(new ICVSRemoteFile[files.size()]);
 	}
+	
 	/**
 	 * Add the given branch tags to the list of known tags for the given
 	 * remote root.
 	 */
-	public void addBranchTags(ICVSRepositoryLocation root, BranchTag[] tags) {
-		Set set = (Set)branchTags.get(root);
+	public void addBranchTags(ICVSFolder project, CVSTag[] tags) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		addBranchTags(location, tags);
+	}
+	
+	public void addBranchTags(ICVSRepositoryLocation location, CVSTag[] tags) {
+		Set set = (Set)branchTags.get(location);
 		if (set == null) {
 			set = new HashSet();
-			branchTags.put(root, set);
+			branchTags.put(location, set);
 		}
 		for (int i = 0; i < tags.length; i++) {
 			set.add(tags[i]);
@@ -143,9 +150,10 @@ public class RepositoryManager {
 		Iterator it = listeners.iterator();
 		while (it.hasNext()) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
-			listener.branchTagsAdded(tags, root);
+			listener.branchTagsAdded(tags, location);
 		}
 	}
+	
 	/**
 	 * A repository root has been added. Notify any listeners.
 	 */
@@ -162,10 +170,11 @@ public class RepositoryManager {
 	 * Remove the tags defined for this root and notify any listeners
 	 */
 	public void rootRemoved(ICVSRepositoryLocation root) {
-		BranchTag[] branchTags = getKnownBranchTags(root);
+		CVSTag[] branchTags = getKnownBranchTags(root);
 		Hashtable vTags = (Hashtable)this.versionTags.get(root);
 		this.branchTags.remove(root);
 		this.versionTags.remove(root);
+		this.autoRefreshFiles.remove(root);
 		Iterator it = listeners.iterator();
 		while (it.hasNext()) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
@@ -187,17 +196,17 @@ public class RepositoryManager {
 	 * Add the given version tags to the list of known tags for the given
 	 * remote project.
 	 */
-	public void addVersionTags(ICVSRemoteResource resource, CVSTag[] tags) {
-		String name = resource.getName();
-		Hashtable table = (Hashtable)versionTags.get(resource.getRepository());
+	public void addVersionTags(ICVSFolder project, CVSTag[] tags) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		Hashtable table = (Hashtable)versionTags.get(location);
 		if (table == null) {
 			table = new Hashtable();
-			versionTags.put(resource.getRepository(), table);
+			versionTags.put(location, table);
 		}
-		Set set = (Set)table.get(name);
+		Set set = (Set)table.get(project.getName());
 		if (set == null) {
 			set = new HashSet();
-			table.put(name, set);
+			table.put(project.getName(), set);
 		}
 		for (int i = 0; i < tags.length; i++) {
 			set.add(tags[i]);
@@ -205,15 +214,64 @@ public class RepositoryManager {
 		Iterator it = listeners.iterator();
 		while (it.hasNext()) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
-			listener.versionTagsAdded(tags, resource.getRepository());
+			listener.versionTagsAdded(tags, location);
 		}
 	}
+	
+	public void addAutoRefreshFiles(ICVSFolder project, String[] relativeFilePaths) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		Hashtable table = (Hashtable)autoRefreshFiles.get(location);
+		if (table == null) {
+			table = new Hashtable();
+			autoRefreshFiles.put(location, table);
+		}
+		Set set = (Set)table.get(project.getName());
+		if (set == null) {
+			set = new HashSet();
+			table.put(project.getName(), set);
+		}
+		for (int i = 0; i < relativeFilePaths.length; i++) {
+			set.add(relativeFilePaths[i]);
+		}
+	}
+	
+	public void removeAutoRefreshFiles(ICVSFolder project, String[] relativeFilePaths) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		Hashtable table = (Hashtable)autoRefreshFiles.get(location);
+		if (table == null) return;
+		Set set = (Set)table.get(project.getName());
+		if (set == null) return;
+		for (int i = 0; i < relativeFilePaths.length; i++) {
+			set.remove(relativeFilePaths[i]);
+		}
+	}
+	
+	public String[] getAutoRefreshFiles(ICVSFolder project) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		Set result = new HashSet();
+		Hashtable table = (Hashtable)autoRefreshFiles.get(location);
+		if (table == null) {
+			return (String[])result.toArray(new String[result.size()]);
+		}
+		Set set = (Set)table.get(project.getName());
+		if (set == null) {
+			return (String[])result.toArray(new String[result.size()]);
+		}
+		result.addAll(set);
+		return (String[])result.toArray(new String[0]);
+	}
+	
 	/**
 	 * Remove the given branch tag from the list of known tags for the
 	 * given remote root.
 	 */
-	public void removeBranchTag(ICVSRepositoryLocation root, BranchTag[] tags) {
-		Set set = (Set)branchTags.get(root);
+	public void removeBranchTag(ICVSFolder project, CVSTag[] tags) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		removeBranchTag(location, tags);
+	}
+	
+	public void removeBranchTag(ICVSRepositoryLocation location, CVSTag[] tags) {
+		Set set = (Set)branchTags.get(location);
 		if (set == null) return;
 		for (int i = 0; i < tags.length; i++) {
 			set.remove(tags[i]);
@@ -221,17 +279,19 @@ public class RepositoryManager {
 		Iterator it = listeners.iterator();
 		while (it.hasNext()) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
-			listener.branchTagsRemoved(tags, root);
+			listener.branchTagsRemoved(tags, location);
 		}
 	}
+	
 	/**
 	 * Remove the given tags from the list of known tags for the
 	 * given remote root.
 	 */
-	public void removeVersionTags(ICVSRemoteResource resource, CVSTag[] tags) {
-		Hashtable table = (Hashtable)versionTags.get(resource.getRepository());
+	public void removeVersionTags(ICVSFolder project, CVSTag[] tags) {
+		ICVSRepositoryLocation location = getRepositoryLocationFor(project);
+		Hashtable table = (Hashtable)versionTags.get(location);
 		if (table == null) return;
-		Set set = (Set)table.get(resource.getName());
+		Set set = (Set)table.get(project.getName());
 		if (set == null) return;
 		for (int i = 0; i < tags.length; i++) {
 			set.remove(tags[i]);
@@ -239,7 +299,7 @@ public class RepositoryManager {
 		Iterator it = listeners.iterator();
 		while (it.hasNext()) {
 			IRepositoryListener listener = (IRepositoryListener)it.next();
-			listener.versionTagsRemoved(tags, resource.getRepository());
+			listener.versionTagsRemoved(tags, location);
 		}
 	}
 	
@@ -306,11 +366,11 @@ public class RepositoryManager {
 		while (it.hasNext()) {
 			ICVSRepositoryLocation root = (ICVSRepositoryLocation)it.next();
 			dos.writeUTF(root.getLocation());
-			BranchTag[] branchTags = getKnownBranchTags(root);
+			CVSTag[] branchTags = getKnownBranchTags(root);
 			dos.writeInt(branchTags.length);
 			for (int i = 0; i < branchTags.length; i++) {
-				dos.writeUTF(branchTags[i].getTag().getName());
-				dos.writeInt(branchTags[i].getTag().getType());
+				dos.writeUTF(branchTags[i].getName());
+				dos.writeInt(branchTags[i].getType());
 			}
 			// write number of projects for which there are tags in this root
 			Hashtable table = (Hashtable)versionTags.get(root);
@@ -332,20 +392,43 @@ public class RepositoryManager {
 					}
 				}
 			}
+			// write number of projects for which there were customized auto refresh files
+			table = (Hashtable)autoRefreshFiles.get(root);
+			if (table == null) {
+				dos.writeInt(0);
+			} else {
+				dos.writeInt(table.size());
+				// for each project, write the name of the project, number of filename then each file name
+				Iterator projIt = table.keySet().iterator();
+				while (projIt.hasNext()) {
+					String name = (String)projIt.next();
+					dos.writeUTF(name);
+					Set tagSet = (Set)table.get(name);
+					dos.writeInt(tagSet.size());
+					Iterator filenameIt = tagSet.iterator();
+					while (filenameIt.hasNext()) {
+						String filename = (String)filenameIt.next();
+						dos.writeUTF(filename);
+					}
+				}
+			}
 		}
 	}
 	private void readState(DataInputStream dis) throws IOException, TeamException {
 		int repoSize = dis.readInt();
 		for (int i = 0; i < repoSize; i++) {
 			ICVSRepositoryLocation root = CVSProviderPlugin.getProvider().getRepository(dis.readUTF());
+			
+			// read branch tags associated with this root
 			int tagsSize = dis.readInt();
-			BranchTag[] branchTags = new BranchTag[tagsSize];
+			CVSTag[] branchTags = new CVSTag[tagsSize];
 			for (int j = 0; j < tagsSize; j++) {
 				String tagName = dis.readUTF();
 				int tagType = dis.readInt();
-				branchTags[j] = new BranchTag(new CVSTag(tagName, tagType), root);
+				branchTags[j] = new CVSTag(tagName, tagType);
 			}
 			addBranchTags(root, branchTags);
+			
 			// read the number of projects for this root that have version tags
 			int projSize = dis.readInt();
 			if (projSize > 0) {
@@ -365,6 +448,25 @@ public class RepositoryManager {
 						listener.versionTagsAdded((CVSTag[])tagSet.toArray(new CVSTag[0]), root);
 					}
 				}
+			}
+			// read the auto refresh filenames for this project
+			try {
+				projSize = dis.readInt();
+				if (projSize > 0) {
+					Hashtable autoRefreshTable = new Hashtable();
+					autoRefreshFiles.put(root, autoRefreshTable);
+					for (int j = 0; j < projSize; j++) {
+						String name = dis.readUTF();
+						Set filenames = new HashSet();
+						autoRefreshTable.put(name, filenames);
+						int numFilenames = dis.readInt();
+						for (int k = 0; k < numFilenames; k++) {
+							filenames.add(dis.readUTF());
+						}
+					}
+				}
+			}catch(EOFException e) {
+				// auto refresh files are not persisted, continue and save them next time.
 			}
 		}
 	}
@@ -416,6 +518,7 @@ public class RepositoryManager {
 			provider.delete(providerResources, subMonitor);
 		}		
 	}
+	
 	public void update(IResource[] resources, Command.LocalOption[] options, boolean createBackups, IProgressMonitor monitor) throws TeamException {
 		Hashtable table = getProviderMapping(resources);
 		Set keySet = table.keySet();
@@ -430,6 +533,7 @@ public class RepositoryManager {
 			provider.update(providerResources, options, null, createBackups, subMonitor);
 		}		
 	}
+	
 	/**
 	 * Mark the files as merged.
 	 */
@@ -445,6 +549,7 @@ public class RepositoryManager {
 			provider.merged(providerElements);
 		}		
 	}
+	
 	/**
 	 * Return the entered comment or null.
 	 * Persist the entered release comment for the next caller.
@@ -463,6 +568,7 @@ public class RepositoryManager {
 		if (result[0] != ReleaseCommentDialog.OK) return null;
 		return previousComment;
 	}
+	
 	/**
 	 * Commit the given resources to their associated providers.
 	 * 
@@ -534,44 +640,39 @@ public class RepositoryManager {
 			}
 		}
 		return (CVSTag[])tagSet.toArray(new CVSTag[0]);
-	}		
-
-	/**
-	 * Auto-define version and branch tags for the given files.
-	 */	
-	public void autoDefineTags(ICVSRemoteFile[] files, IProgressMonitor monitor) throws TeamException {
-		for (int i = 0; i < files.length; i++) {
-			ICVSRemoteFile file = files[i];
-			ICVSRepositoryLocation root = file.getRepository();
-			CVSTag[] tags = getTags(file, monitor);
-
-			// Break tags up into version tags and branch tags.
-			List branchTags = new ArrayList();
-			List versionTags = new ArrayList();
-			for (int j = 0; j < tags.length; j++) {
-				CVSTag tag = tags[j];
-				if (tag.getType() == CVSTag.BRANCH) {
-					branchTags.add(new BranchTag(tag, root));
-				} else {
-					versionTags.add(tag);
-				}
+	}
+	
+	public ICVSRepositoryLocation getRepositoryLocationFor(ICVSFolder folder) {
+		try {
+			if(folder.isCVSFolder()) {
+				ICVSRepositoryLocation location = CVSProvider.getInstance().getRepository(folder.getFolderSyncInfo().getRoot());
+				return location;
 			}
-			if (branchTags.size() > 0) {
-				addBranchTags(root, (BranchTag[])branchTags.toArray(new BranchTag[0]));
-			}
-			if (versionTags.size() > 0) {
-				// Current behaviour for version tags is to match the behaviour in VCM 1.0, 
-				// which is to attach them to the top-most folder in CVS. This may change in the future
-				// to allow a more flexible scheme of attaching 'project' semantics to arbitrary
-				// cvs folders. Get the top-most folder now to optimize.
-				ICVSRemoteResource current = file.getRemoteParent();
-				ICVSRemoteResource next = current.getRemoteParent();
-				while (next != null && next.getRemoteParent() != null) {
-					current = next;
-					next = current.getRemoteParent();
-				}
-				addVersionTags(current, (CVSTag[])versionTags.toArray(new CVSTag[0]));
-			}
+			return null;
+		} catch(CVSException e) {
+			CVSUIPlugin.log(e.getStatus());
+			return null;
 		}
+	}
+	
+	/*
+	 * Fetches and caches the tags found on the provided remote file.
+	 */
+	private void addDefinedTagsFor(ICVSRemoteFile remoteFile, ICVSFolder project, ICVSRepositoryLocation location) throws TeamException {
+		if(remoteFile != null && remoteFile.exists(null)) {
+			CVSTag[] tags = getTags(remoteFile, null);
+			for (int i = 0; i < tags.length; i++) {
+				CVSTag tag = tags[i];				
+				if(tag.getType()==CVSTag.BRANCH) {
+					addBranchTags(location, new CVSTag[] {tags[i]});
+				} else if(tag.getType()==CVSTag.VERSION) {
+					addVersionTags(project, new CVSTag[] {tags[i]});
+				}					
+			}
+		}	
+	}
+	
+	private ICVSProvider getCVSProvider() {
+		return CVSProviderPlugin.getProvider();
 	}
 }

@@ -29,6 +29,7 @@ import org.eclipse.team.internal.ccvs.core.client.Update;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.TagConfigurationDialog;
 import org.eclipse.team.internal.ccvs.ui.merge.ProjectElement;
 import org.eclipse.team.internal.ccvs.ui.merge.TagElement;
 import org.eclipse.ui.model.WorkbenchContentProvider;
@@ -103,7 +104,20 @@ public class UpdateWizardPage extends CVSWizardPage {
 		});
 		
 		setControl(composite);
-		tree.setInput(new ProjectElement(remote, getShell()));
+		tree.setInput(new ProjectElement(CVSWorkspaceRoot.getCVSFolderFor(project), true /*show HEAD as tag*/));
+		
+		Runnable refresh = new Runnable() {
+			public void run() {
+				tree.refresh();
+			}
+		};
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, project, refresh, refresh);
+		
+		Label seperator = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
+		data = new GridData (GridData.FILL_BOTH);		
+		data.horizontalSpan = 2;
+		seperator.setLayoutData(data);
+		
 		setPageComplete(false);
 	}
 

@@ -54,7 +54,7 @@ public class ReplaceWithTagAction extends ReplaceWithAction {
 					if (!result[0]) return;
 				}
 				
-				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), resource[0]);
+				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), resource[0].getProject());
 				dialog.setBlockOnOpen(true);
 				if (dialog.open() == Dialog.CANCEL) {
 					return;

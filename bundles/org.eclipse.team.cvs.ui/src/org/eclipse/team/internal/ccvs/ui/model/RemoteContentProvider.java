@@ -7,6 +7,8 @@ package org.eclipse.team.internal.ccvs.ui.model;
  
 import org.eclipse.team.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.ccvs.core.ICVSRemoteResource;
+import org.eclipse.team.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.resources.RemoteResource;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 
 /**
@@ -30,7 +32,12 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 				return ((ICVSRemoteFolder)element).isExpandable();
 			}
 			return ((ICVSRemoteResource)element).isContainer();
+		} else if(element instanceof CVSResourceElement) {
+			ICVSResource r = ((CVSResourceElement)element).getCVSResource();
+			if(r instanceof RemoteResource) {
+				return r.isFolder();
+			}
 		}
-		return true;
+		return super.hasChildren(element);
 	}
 }

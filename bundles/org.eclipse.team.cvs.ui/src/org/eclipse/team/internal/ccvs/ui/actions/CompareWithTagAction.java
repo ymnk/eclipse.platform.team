@@ -47,7 +47,7 @@ public class CompareWithTagAction extends TeamAction {
 				IResource[] resources = getSelectedResources();
 				if (resources.length != 1) return;
 				resource[0] = resources[0];
-				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), resource[0]);
+				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), resource[0].getProject());
 				dialog.setBlockOnOpen(true);
 				int result = dialog.open();
 				if (result == Dialog.CANCEL || dialog.getResult() == null) {
