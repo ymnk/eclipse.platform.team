@@ -46,7 +46,6 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -231,9 +230,9 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 			
 				RefreshSubscriberInputJob refreshJob = TeamUIPlugin.getPlugin().getRefreshJob();
 				refreshJob.setSubscriberInput(input);
+				updateTitle();
 			}
-		});
-		updateTitle();
+		});		
 	}
 	
 	private void disconnectSubscriberInput() {
@@ -263,6 +262,7 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 				viewer.setSelection(oldSelection, true);
 			}
 			fireSafePropertyChange(PROP_VIEWTYPE);
+			updateTitle();
 		}
 	}
 	/**
@@ -486,13 +486,12 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 	 * Synchronize - (showing N of M changes) - {Subscriber name}
 	 */
 	protected void updateTitle() {
-//		Display.getDefault().asyncExec(new Runnable() {
-//			public void run() {
-//				SubscriberInput input = getInput();
-//				if(input != null) {
-//					ViewStatusInformation newStatus = new ViewStatusInformation(input);
-//					if(statusInformation == null || ! statusInformation.equals(newStatus)) {
-//						statusInformation = newStatus;
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				SubscriberInput input = getInput();
+				if(input != null) {	
+					statsPanel.update(new ViewStatusInformation(input));
+				}
 //						
 //						TeamSubscriber subscriber = input.getSubscriber();
 //						String changesText;
@@ -516,8 +515,8 @@ public class SynchronizeView extends ViewPart implements ITeamResourceChangeList
 //					setTitle(Policy.bind("LiveSyncView.title")); //$NON-NLS-1$
 //					setTitleToolTip(""); //$NON-NLS-1$
 //				}
-//			}
-//		});
+			}
+		});
 	}
 	
 	
