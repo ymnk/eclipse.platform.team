@@ -74,7 +74,7 @@ public class TagSelectionWizardPage extends CVSWizardPage {
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
-		composite = createComposite(parent, 1);
+		composite = createComposite(parent, 1, false);
 		setControl(composite);
 		
 		// set F1 help

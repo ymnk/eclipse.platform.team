@@ -18,15 +18,12 @@ import org.eclipse.team.internal.ccvs.core.CVSMergeSubscriber;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.*;
 import org.eclipse.team.internal.ccvs.ui.subscriber.MergeSynchronizeParticipant;
-import org.eclipse.team.internal.ccvs.ui.tags.*;
-import org.eclipse.team.internal.ccvs.ui.tags.TagSelectionArea;
 import org.eclipse.team.internal.ccvs.ui.tags.TagSource;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 
 public class MergeWizard extends Wizard {
-    TagSelectionWizardPage startPage;
-    TagSelectionWizardPage endPage;
+    MergeWizardPage page;
 	IResource[] resources;
 
 	public void addPages() {
@@ -34,26 +31,8 @@ public class MergeWizard extends Wizard {
 	    TagSource tagSource = TagSource.create(resources);
 		setWindowTitle(Policy.bind("MergeWizard.title")); //$NON-NLS-1$
 		ImageDescriptor mergeImage = CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_MERGE);
-		startPage = new TagSelectionWizardPage("startPage", Policy.bind("MergeWizard.start"), mergeImage, Policy.bind("MergeWizardStartPage.description"), tagSource, TagSelectionArea.INCLUDE_VERSIONS); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		startPage.setHelpContxtId(IHelpContextIds.MERGE_START_PAGE);
-		startPage.setTagLabel(Policy.bind("MergeWizard.0")); //$NON-NLS-1$
-		addPage(startPage);
-		endPage = new TagSelectionWizardPage("endPage", Policy.bind("MergeWizard.end"), mergeImage, Policy.bind("MergeWizardEndPage.description"), tagSource, TagSelectionArea.INCLUDE_ALL_TAGS) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		    protected void updateEnablement() {
-		        super.updateEnablement();
-		        if (isPageComplete()) {
-		            setPageComplete(!startPage.getSelectedTag().equals(endPage.getSelectedTag()));
-		            if (!isPageComplete()) {
-		                setMessage(Policy.bind("MergeWizardEndPage.duplicateTagSelected", endPage.getSelectedTag().getName()), WARNING); //$NON-NLS-1$
-		            } else {
-		                setMessage(null);
-		            }
-		        }
-		    }
-		};
-		endPage.setHelpContxtId(IHelpContextIds.MERGE_END_PAGE);
-		endPage.setTagLabel(Policy.bind("MergeWizard.1")); //$NON-NLS-1$
-		addPage(endPage);
+		page = new MergeWizardPage("mergePage", "Select the merge points", mergeImage, "Specify the branch or version to merge from and the common base.", tagSource);
+		addPage(page);
 	}
 
 	/*
@@ -61,8 +40,8 @@ public class MergeWizard extends Wizard {
 	 */
 	public boolean performFinish() {
 		
-		CVSTag startTag = startPage.getSelectedTag();
-		CVSTag endTag = endPage.getSelectedTag();				
+		CVSTag startTag = page.getStartTag();
+		CVSTag endTag = page.getEndTag();				
 		
 		// First check if there is an existing matching participant, if so then re-use it
 		MergeSynchronizeParticipant participant = MergeSynchronizeParticipant.getMatchingParticipant(resources, startTag, endTag);

@@ -254,20 +254,9 @@ public class TagSelectionArea extends DialogArea {
     }
 
     private FilteredTagList createFilteredInput() {
-        return new FilteredTagList(tagSource, convertIncludeFlaqsToTagTypes());
+        return new FilteredTagList(tagSource, TagSource.convertIncludeFlaqsToTagTypes(includeFlags));
     }
-
-    private int[] convertIncludeFlaqsToTagTypes() {
-        if ((includeFlags & INCLUDE_BRANCHES) > 0 && (includeFlags & INCLUDE_VERSIONS) > 0) {
-            return new int [] { CVSTag.VERSION, CVSTag.BRANCH };
-        } else if ((includeFlags & (INCLUDE_BRANCHES)) > 0) {
-            return new int [] { CVSTag.BRANCH };
-        } else if ((includeFlags & (INCLUDE_VERSIONS)) > 0) {
-            return new int [] { CVSTag.VERSION };
-        }
-        return new int[] { };
-    }
-
+    
     private Text createText(Composite parent, int horizontalSpan) {
         Text text = new Text(parent, SWT.BORDER);
 		GridData data = new GridData();

@@ -93,4 +93,16 @@ public class FilteredTagList implements IWorkbenchAdapter, IAdaptable {
         matcher = new StringMatcher(pattern, true, false);
     }
 
+    public CVSTag[] getMatchingTags() {
+        CVSTag[] tags = getTags();
+        List filtered = new ArrayList();
+        for (int i = 0; i < tags.length; i++) {
+            CVSTag tag = tags[i];
+            if (select(tag)) {
+                filtered.add(tag);
+            }
+        }
+        return (CVSTag[])filtered.toArray(new CVSTag[filtered.size()]);
+    }
+
 }

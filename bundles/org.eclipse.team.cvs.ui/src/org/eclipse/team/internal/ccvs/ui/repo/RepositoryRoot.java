@@ -32,7 +32,7 @@ public class RepositoryRoot extends PlatformObject {
 	
 	ICVSRepositoryLocation root;
 	String name;
-	// Map of String (remote folder path) -> Set (CVS tags)
+	// Map of String (remote folder path) -> TagCacheEntry
 	Map versionAndBranchTags = new HashMap();
 	// Map of String (remote folder path) -> Set (file paths that are project relative)
 	Map autoRefreshFiles = new HashMap();
@@ -41,6 +41,26 @@ public class RepositoryRoot extends PlatformObject {
 	Object modulesCacheLock = new Object();
 	// Lis of date tags
 	List dateTags = new ArrayList();
+	
+	public static class TagCacheEntry {
+	    Set tags = new HashSet();
+	    long lastAccessTime;
+        private static final int CACHE_LIFESPAN_IN_DAYS = 7;
+        public TagCacheEntry() {
+            accessed();
+        }
+        public boolean isExpired() {
+            long currentTime = System.currentTimeMillis();
+            long ms = currentTime - lastAccessTime;
+            int seconds = (int)ms / 1000;
+            int hours = seconds / 60 / 60;
+            int days = hours / 24;
+            return days > CACHE_LIFESPAN_IN_DAYS;
+        }
+        public void accessed() {
+            lastAccessTime = System.currentTimeMillis();
+        }
+	}
 	
 	public RepositoryRoot(ICVSRepositoryLocation root) {
 		this.root = root;
@@ -172,6 +192,7 @@ public class RepositoryRoot extends PlatformObject {
 		addDateTags(tags);
 		addVersionAndBranchTags(remotePath, tags);
 	}
+
 	private void addDateTags(CVSTag[] tags){
 		for(int i = 0; i < tags.length; i++){
 			if(tags[i].getType() == CVSTag.DATE){
@@ -184,16 +205,18 @@ public class RepositoryRoot extends PlatformObject {
 		String name = getCachePathFor(remotePath);
 		
 		// Make sure there is a table for the ancestor that holds the tags
-		Set set = (Set)versionAndBranchTags.get(name);
-		if (set == null) {
-			set = new HashSet();
-			versionAndBranchTags.put(name, set);
+		TagCacheEntry entry = (TagCacheEntry)versionAndBranchTags.get(name);
+		if (entry == null) {
+		    entry = new TagCacheEntry();
+			versionAndBranchTags.put(name, entry);
+		} else {
+		    entry.accessed();
 		}
 		
 		// Store the tag with the appropriate ancestor
 		for (int i = 0; i < tags.length; i++) {
 			if(tags[i].getType() != CVSTag.DATE){
-				set.add(tags[i]);
+				entry.tags.add(tags[i]);
 			}
 		}
 	}
@@ -243,15 +266,16 @@ public class RepositoryRoot extends PlatformObject {
 		String name = getCachePathFor(remotePath);
 		
 		// Make sure there is a table for the ancestor that holds the tags
-		Set set = (Set)versionAndBranchTags.get(name);
-		if (set == null) {
+		TagCacheEntry entry = (TagCacheEntry)versionAndBranchTags.get(name);
+		if (entry == null) {
 			return;
 		}
 		
 		// Store the tag with the appropriate ancestor
 		for (int i = 0; i < tags.length; i++) {
-			set.remove(tags[i]);
+			entry.tags.remove(tags[i]);
 		}
+		entry.accessed();
 	}
 
 	/**
@@ -470,10 +494,13 @@ public class RepositoryRoot extends PlatformObject {
 				attributes.put(RepositoriesViewContentHandler.TYPE_ATTRIBUTE, RepositoriesViewContentHandler.DEFINED_MODULE_TYPE);
 			}
 			attributes.put(RepositoriesViewContentHandler.PATH_ATTRIBUTE, name);
+			TagCacheEntry entry = (TagCacheEntry)versionAndBranchTags.get(path);
+			boolean writeOutTags = entry != null && !entry.isExpired();
+			if (writeOutTags)
+			    attributes.put(RepositoriesViewContentHandler.LAST_ACCESS_TIME_ATTRIBUTE, Long.toString(entry.lastAccessTime));
 			writer.startTag(RepositoriesViewContentHandler.MODULE_TAG, attributes, true);
-			Set tagSet = (Set)versionAndBranchTags.get(path);
-			if (tagSet != null) {
-				Iterator tagIt = tagSet.iterator();
+			if (writeOutTags) {
+				Iterator tagIt = entry.tags.iterator();
 				while (tagIt.hasNext()) {
 					CVSTag tag = (CVSTag)tagIt.next();
 					writeATag(writer, attributes, tag, RepositoriesViewContentHandler.TAG_TAG);
@@ -493,9 +520,8 @@ public class RepositoryRoot extends PlatformObject {
 		}
 		writer.endTag(RepositoriesViewContentHandler.REPOSITORY_TAG);
 	}
-	
 
-	private void writeATag(XMLWriter writer, HashMap attributes, CVSTag tag, String s) {
+    private void writeATag(XMLWriter writer, HashMap attributes, CVSTag tag, String s) {
 		attributes.clear();
 		attributes.put(RepositoriesViewContentHandler.NAME_ATTRIBUTE, tag.getName());
 		attributes.put(RepositoriesViewContentHandler.TYPE_ATTRIBUTE, RepositoriesViewContentHandler.TAG_TYPES[tag.getType()]);
@@ -508,9 +534,10 @@ public class RepositoryRoot extends PlatformObject {
 	 * @return CVSTag[]
 	 */
 	public CVSTag[] getAllKnownTags(String remotePath) {
-		Set tagSet = (Set)versionAndBranchTags.get(getCachePathFor(remotePath));
-		if(tagSet != null){
-			CVSTag [] tags1 = (CVSTag[]) tagSet.toArray(new CVSTag[tagSet.size()]);
+	    TagCacheEntry entry = (TagCacheEntry)versionAndBranchTags.get(getCachePathFor(remotePath));
+		if(entry != null){
+		    entry.accessed();
+			CVSTag [] tags1 = (CVSTag[]) entry.tags.toArray(new CVSTag[entry.tags.size()]);
 			CVSTag[] tags2 = getDateTags();
 			int len = tags1.length + tags2.length;
 			CVSTag[] tags = new CVSTag[len];
@@ -591,5 +618,16 @@ public class RepositoryRoot extends PlatformObject {
 	void setRepositoryLocation(ICVSRepositoryLocation root) {
 		this.root = root;
 	}
+
+    /*
+     * Set the last access time of the cache entry for the given path
+     * as it was read from the persitent store.
+     */
+    /* package */ void setLastAccessedTime(String remotePath, long lastAccessTime) {
+	    TagCacheEntry entry = (TagCacheEntry)versionAndBranchTags.get(getCachePathFor(remotePath));
+		if(entry != null){
+		    entry.lastAccessTime = lastAccessTime;
+		}
+    }
 
 }

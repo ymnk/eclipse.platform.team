@@ -13,11 +13,13 @@ package org.eclipse.team.internal.ccvs.ui.tags;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.repo.RepositoryManager;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * A tag source that returns the tags associated with a single remote folder
@@ -108,7 +110,30 @@ public class SingleFolderTagSource extends TagSource {
      * @see org.eclipse.team.internal.ccvs.ui.tags.TagSource#getCVSResources()
      */
     public ICVSResource[] getCVSResources() {
+        final ICVSResource[][] resources = new ICVSResource[][] { null };
+		try {
+            getRunnableContext().run(true, true, new IRunnableWithProgress() {
+            	public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+            		try {
+            		    resources[0] = folder.fetchChildren(monitor);
+            		} catch (TeamException e) {
+            			throw new InvocationTargetException(e);
+            		} finally {
+            		    monitor.done();
+            		}
+            	}
+            });
+	        return resources[0];
+        } catch (InvocationTargetException e) {
+            CVSUIPlugin.log(CVSException.wrapException(e));
+        } catch (InterruptedException e) {
+            // Ignore
+        }
         return new ICVSResource[] { folder };
+    }
+    
+    private IRunnableContext getRunnableContext() {
+        return PlatformUI.getWorkbench().getProgressService();
     }
 
 }

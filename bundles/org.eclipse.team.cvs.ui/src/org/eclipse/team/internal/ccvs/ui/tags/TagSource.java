@@ -56,6 +56,17 @@ public abstract class TagSource {
         void tagsChanged(TagSource source);
     }
     
+    public static int[] convertIncludeFlaqsToTagTypes(int includeFlags) {
+        if ((includeFlags & TagSelectionArea.INCLUDE_BRANCHES) > 0 && (includeFlags & TagSelectionArea.INCLUDE_VERSIONS) > 0) {
+            return new int [] { CVSTag.VERSION, CVSTag.BRANCH };
+        } else if ((includeFlags & (TagSelectionArea.INCLUDE_BRANCHES)) > 0) {
+            return new int [] { CVSTag.BRANCH };
+        } else if ((includeFlags & (TagSelectionArea.INCLUDE_VERSIONS)) > 0) {
+            return new int [] { CVSTag.VERSION };
+        }
+        return new int[] { };
+    }
+    
     /**
      * Create a tag source for the given folders
      * @param folders one or more folders
