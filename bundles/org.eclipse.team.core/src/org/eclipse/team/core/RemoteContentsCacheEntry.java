@@ -10,19 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.core;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.synchronize.ResourceVariant;
 import org.eclipse.team.internal.core.Policy;
 
 /**
@@ -40,6 +32,7 @@ public class RemoteContentsCacheEntry {
 	private byte[] syncBytes;
 	private int state = UNINITIALIZED;
 	private long lastAccess;
+	private ResourceVariant resourceVariant;
 
 	public RemoteContentsCacheEntry(RemoteContentsCache cache, String id, String filePath) {
 		state = UNINITIALIZED;
@@ -97,11 +90,11 @@ public class RemoteContentsCacheEntry {
 	}
 	
 	private synchronized void endOperation() {
-		cache.getLock().release();
+		cache.endOperation();
 	}
 
 	private synchronized void beginOperation() {
-		cache.getLock().acquire();
+		cache.beginOperation();
 	}
 
 	private void internalSetContents(InputStream stream, IProgressMonitor monitor) throws TeamException {
@@ -222,10 +215,16 @@ public class RemoteContentsCacheEntry {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.ICacheEntry#getId()
-	 */
+	
 	public String getId() {
 		return id;
+	}
+	
+	public ResourceVariant getResourceVariant() {
+		return resourceVariant;
+	}
+	
+	public void setResourceVariant(ResourceVariant resourceVariant) {
+		this.resourceVariant = resourceVariant;
 	}
 }

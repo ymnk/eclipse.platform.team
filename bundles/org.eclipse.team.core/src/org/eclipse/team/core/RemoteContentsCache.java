@@ -248,8 +248,37 @@ public class RemoteContentsCache {
 	* Provide access to the lock for the cache. This method should only be used by a cache entry.
 	 * @return Returns the lock.
 	 */
-	protected ILock getLock() {
+	private ILock getLock() {
 		return lock;
+	}
+
+	/**
+	 * Begin a modification operation on the cache or one of its entries.
+	 * The calling thread will be blocked if another thread has called
+	 * <code>beginOperation</code> and has not yet called <code>endOperation</code>.
+	 * Calls to <code>beginOperation</code> can be nested within a single thread without blocking.
+	 * Callers must have a
+	 * matching call to <code>endOperation</code>. The following code snipet
+	 * shows an example of how this should be done.
+	 * <pre>
+	 * cache.beginOperation();
+	 * try {
+	 *    // modify the cache
+	 * } finally {
+	 *    cache.endOperation();
+	 * }
+	 * </pre>
+	 */
+	public void beginOperation() {
+		getLock().acquire();
+	}
+
+	/**
+	 * End a cache modification operation.
+	 * @see beginOperaton()
+	 */
+	public void endOperation() {
+		getLock().release();
 	}
 
 }
