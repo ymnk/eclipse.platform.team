@@ -112,7 +112,7 @@ public class ParticipantComposite extends Composite {
 			}
 			{
 				final Composite composite_1 = new Composite(composite, SWT.NONE);
-				final GridData gridData = new GridData(GridData.VERTICAL_ALIGN_FILL);
+				GridData gridData = new GridData(GridData.VERTICAL_ALIGN_FILL);
 				gridData.verticalSpan = 5;
 				gridData.horizontalSpan = 1;
 				composite_1.setLayoutData(gridData);
@@ -124,31 +124,49 @@ public class ParticipantComposite extends Composite {
 					final Label label = new Label(composite_1, SWT.NONE);
 					label.setText("Last Sync");
 					label.setBackground(getBackgroundColor());
+					gridData = new GridData();
+					gridData.verticalAlignment = GridData.END;
+					label.setLayoutData(gridData);
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
 					label.setText("11/23/03 10:03:12");
 					label.setBackground(getBackgroundColor());
+					gridData = new GridData();
+					gridData.verticalAlignment = GridData.END;
+					label.setLayoutData(gridData);
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
 					label.setText("Schedule");
 					label.setBackground(getBackgroundColor());
+					gridData = new GridData();
+					gridData.verticalAlignment = GridData.END;
+					label.setLayoutData(gridData);
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
 					label.setText("Every hour");
 					label.setBackground(getBackgroundColor());
+					gridData = new GridData();
+					gridData.verticalAlignment = GridData.END;
+					label.setLayoutData(gridData);
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
 					label.setText("Status");
 					label.setBackground(getBackgroundColor());
+					gridData = new GridData();
+					gridData.verticalAlignment = GridData.END;
+					label.setLayoutData(gridData);
 				}
 				{
 					final Label label = new Label(composite_1, SWT.NONE);
 					label.setText("Idle");
 					label.setBackground(getBackgroundColor());
+					gridData = new GridData();
+					gridData.verticalAlignment = GridData.END;
+					label.setLayoutData(gridData);
 				}
 			}
 			{
@@ -195,11 +213,11 @@ public class ParticipantComposite extends Composite {
 				}
 				{
 					final Button button = new Button(composite_1, SWT.FLAT);
-					button.setText("Preferences...");
+					button.setText("Setup...");
 				}
 				{
 					final Button button = new Button(composite_1, SWT.FLAT);
-					button.setText("Changes...");
+					button.setText("Synchronize");
 					button.addSelectionListener(new SelectionAdapter() {
 						public void widgetSelected(SelectionEvent e) {
 							view.display(participant);
