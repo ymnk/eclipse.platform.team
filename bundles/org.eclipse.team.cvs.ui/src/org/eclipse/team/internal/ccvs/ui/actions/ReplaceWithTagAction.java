@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
@@ -64,7 +65,11 @@ public class ReplaceWithTagAction extends ReplaceWithAction {
 				}
 				
 				// show the tags for one of the selected resources
-				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), resources[0].getProject());
+				IProject[] projects = new IProject[resources.length];
+				for (int i = 0; i < resources.length; i++) {
+					projects[i] = resources[i].getProject();
+				}
+				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), projects);
 				dialog.setBlockOnOpen(true);
 				if (dialog.open() == Dialog.CANCEL) {
 					return;

@@ -594,7 +594,7 @@ public class TagConfigurationDialog extends Dialog {
 		button.setToolTipText(tooltip.toString());
 	 }
 	 
-	 public static void createTagDefinitionButtons(final Shell shell, Composite composite, final IProject project, final Runnable afterRefresh, final Runnable afterConfigure) {
+	 public static void createTagDefinitionButtons(final Shell shell, Composite composite, final IProject[] projects, final Runnable afterRefresh, final Runnable afterConfigure) {
 	 	Composite buttonComp = new Composite(composite, SWT.NONE);
 		GridData data = new GridData ();
 		data.horizontalAlignment = GridData.END;		
@@ -605,7 +605,7 @@ public class TagConfigurationDialog extends Dialog {
 		layout.marginWidth = 0;
 		buttonComp.setLayout (layout);
 	 	
-	 	final Button refreshButton = TagConfigurationDialog.createTagRefreshButton(shell, buttonComp, "&Refresh", project, afterRefresh);
+	 	final Button refreshButton = TagConfigurationDialog.createTagRefreshButton(shell, buttonComp, "&Refresh", projects[0], afterRefresh);
 		data = new GridData ();
 		data.horizontalAlignment = GridData.END;
 		data.horizontalSpan = 1;
@@ -619,9 +619,13 @@ public class TagConfigurationDialog extends Dialog {
 		addButton.setLayoutData (data);
 		addButton.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
-					TagConfigurationDialog d = new TagConfigurationDialog(shell, new ICVSFolder[] {CVSWorkspaceRoot.getCVSFolderFor(project)});
+					ICVSFolder[] roots = new ICVSFolder[projects.length];
+					for (int i = 0; i < projects.length; i++) {
+						roots[i] = CVSWorkspaceRoot.getCVSFolderFor(projects[i]);
+					}
+					TagConfigurationDialog d = new TagConfigurationDialog(shell, roots);
 					d.open();
-					TagConfigurationDialog.updateToolTipHelpForRefreshButton(refreshButton, project);
+					TagConfigurationDialog.updateToolTipHelpForRefreshButton(refreshButton, projects[0]);
 					afterConfigure.run();
 				}
 			});		

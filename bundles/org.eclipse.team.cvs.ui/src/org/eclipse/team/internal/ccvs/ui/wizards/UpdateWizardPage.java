@@ -111,7 +111,7 @@ public class UpdateWizardPage extends CVSWizardPage {
 				tree.refresh();
 			}
 		};
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, project, refresh, refresh);
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), composite, new IProject[] {project}, refresh, refresh);
 		
 		Label seperator = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
 		data = new GridData (GridData.FILL_BOTH);		

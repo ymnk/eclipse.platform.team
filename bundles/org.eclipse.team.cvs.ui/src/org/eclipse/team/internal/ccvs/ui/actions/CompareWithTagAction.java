@@ -8,6 +8,7 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareUI;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
@@ -45,7 +46,11 @@ public class CompareWithTagAction extends TeamAction {
 		// Show a busy curesor while popping up the Tag selection dialog
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
-				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), resources[0].getProject());
+				IProject[] projects = new IProject[resources.length];
+				for (int i = 0; i < resources.length; i++) {
+					projects[i] = resources[i].getProject();
+				}
+				TagSelectionDialog dialog = new TagSelectionDialog(getShell(), projects);
 				dialog.setBlockOnOpen(true);
 				int result = dialog.open();
 				if (result == Dialog.CANCEL || dialog.getResult() == null) {

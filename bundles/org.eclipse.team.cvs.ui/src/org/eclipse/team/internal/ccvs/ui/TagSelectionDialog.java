@@ -34,7 +34,7 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
  * Dialog to prompt the user to choose a tag for a selected resource
  */
 public class TagSelectionDialog extends Dialog {
-	private IProject project;
+	private IProject[] projects;
 
 	private CVSTag result;
 	
@@ -50,9 +50,9 @@ public class TagSelectionDialog extends Dialog {
 	 * Creates a new TagSelectionDialog.
 	 * @param resource The resource to select a version for.
 	 */
-	public TagSelectionDialog(Shell parentShell, IProject project) {
+	public TagSelectionDialog(Shell parentShell, IProject[] projects) {
 		super(parentShell);
-		this.project = project;
+		this.projects = projects;
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 	}
 	
@@ -120,13 +120,13 @@ public class TagSelectionDialog extends Dialog {
 		inner.setLayout(layout);
 		
 		tagTree = createTree(inner);
-		tagTree.setInput(new ProjectElement(CVSWorkspaceRoot.getCVSFolderFor(project), true /*show HEAD tag*/));
+		tagTree.setInput(new ProjectElement(CVSWorkspaceRoot.getCVSFolderFor(projects[0]), true /*show HEAD tag*/));
 		Runnable refresh = new Runnable() {
 			public void run() {
 				tagTree.refresh();
 			}
 		};
-		TagConfigurationDialog.createTagDefinitionButtons(getShell(), top, project, refresh, refresh);
+		TagConfigurationDialog.createTagDefinitionButtons(getShell(), top, projects, refresh, refresh);
 		
 		Label seperator = new Label(top, SWT.SEPARATOR | SWT.HORIZONTAL);
 		data = new GridData (GridData.FILL_BOTH);		
