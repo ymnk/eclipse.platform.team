@@ -437,7 +437,7 @@ public class Utils {
 				resource = ((ISynchronizeModelElement) element).getResource();
 			} else {
 				resource = (IResource)getAdapter(element, IResource.class);
-				if(resource.getType() == IResource.ROOT) continue;
+				if(resource != null && resource.getType() == IResource.ROOT) continue;
 			}
 			if (resource != null) {
 				resources.add(resource);
