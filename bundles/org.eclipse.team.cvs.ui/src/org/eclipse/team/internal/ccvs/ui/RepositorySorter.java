@@ -12,7 +12,7 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
+import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
 
 public class RepositorySorter extends ViewerSorter {
 	public int category(Object element) {
@@ -22,6 +22,18 @@ public class RepositorySorter extends ViewerSorter {
 		if (element instanceof ICVSRemoteFile) {
 			return 2;
 		}
+		if (element instanceof CVSTagElement) {
+			CVSTagElement tagElement = (CVSTagElement)element;
+			if (tagElement.getTag().getType() == CVSTag.HEAD) {
+				return 0;
+			} else if (tagElement.getTag().getType() == CVSTag.BRANCH) {
+				return 4;
+			} else if (tagElement.getTag().getType() == CVSTag.VERSION) {
+				return 5;
+			} else {
+				return 6;
+			}
+		}
 		return 0;
 	}
 
@@ -30,22 +42,20 @@ public class RepositorySorter extends ViewerSorter {
 		int cat2 = category(o2);
 		if (cat1 != cat2) return cat1 - cat2;
 		
-		if (o1 instanceof BranchTag && o2 instanceof BranchTag) {
-			CVSTag tag1 = ((BranchTag)o1).getTag();
-			CVSTag tag2 = ((BranchTag)o2).getTag();
-			return tag1.compareTo(tag2);
+		if (o1 instanceof CVSTagElement && o2 instanceof CVSTagElement) {
+			CVSTag tag1 = ((CVSTagElement)o1).getTag();
+			CVSTag tag2 = ((CVSTagElement)o2).getTag();
+			if (tag1.getType() == CVSTag.BRANCH) {
+				return tag1.compareTo(tag2);
+			} else {
+				return -1 * tag1.compareTo(tag2);
+			}
 		}
+		
 		if (o1 instanceof ICVSRepositoryLocation && o2 instanceof ICVSRepositoryLocation) {
 			return ((ICVSRepositoryLocation)o1).getLocation().compareTo(((ICVSRepositoryLocation)o2).getLocation());
 		}
-		// Sort versions in reverse alphabetical order
-		if (o1 instanceof ICVSRemoteFolder && o2 instanceof ICVSRemoteFolder) {
-			ICVSRemoteFolder f1 = (ICVSRemoteFolder)o1;
-			ICVSRemoteFolder f2 = (ICVSRemoteFolder)o2;
-			if (f1.getName().equals(f2.getName())) {
-				return f2.getTag().compareTo(f1.getTag());
-			}
-		}
+		
 		return super.compare(viewer, o1, o2);
 	}
 }

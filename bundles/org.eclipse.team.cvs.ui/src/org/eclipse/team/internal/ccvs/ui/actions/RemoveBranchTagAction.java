@@ -23,7 +23,7 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.Policy;
 import org.eclipse.team.internal.ccvs.ui.RepositoryManager;
-import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
+import org.eclipse.team.internal.ccvs.ui.model.CVSTagElement;
 
 /**
  * RemoveBranchTagAction removes a tag.
@@ -32,25 +32,25 @@ public class RemoveBranchTagAction extends CVSAction {
 	/**
 	 * Returns the selected versions
 	 */
-	protected BranchTag[] getSelectedBranchTags() {
+	protected CVSTagElement[] getSelectedBranchTags() {
 		ArrayList tags = null;
 		if (!selection.isEmpty()) {
 			tags = new ArrayList();
 			Iterator elements = ((IStructuredSelection)selection).iterator();
 			while (elements.hasNext()) {
 				Object next = elements.next();
-				if (next instanceof BranchTag) {
+				if (next instanceof CVSTagElement) {
 					tags.add(next);
 					continue;
 				}
 			}
 		}
 		if (tags != null && !tags.isEmpty()) {
-			BranchTag[] result = new BranchTag[tags.size()];
+			CVSTagElement[] result = new CVSTagElement[tags.size()];
 			tags.toArray(result);
 			return result;
 		}
-		return new BranchTag[0];
+		return new CVSTagElement[0];
 	}
 	/*
 	 * @see IActionDelegate#run(IAction)
@@ -58,11 +58,11 @@ public class RemoveBranchTagAction extends CVSAction {
 	public void execute(IAction action) throws InterruptedException, InvocationTargetException {
 		run(new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException {
-				BranchTag[] tags = getSelectedBranchTags();
+				CVSTagElement[] tags = getSelectedBranchTags();
 				if (tags.length == 0) return;
 				RepositoryManager manager = CVSUIPlugin.getPlugin().getRepositoryManager();
 				for (int i = 0; i < tags.length; i++) {
-					BranchTag tag = tags[i];
+					CVSTagElement tag = tags[i];
 					manager.removeBranchTag(tag.getRoot(), new CVSTag[] {tag.getTag()});
 				}
 			}
@@ -72,7 +72,7 @@ public class RemoveBranchTagAction extends CVSAction {
 	 * @see TeamAction#isEnabled()
 	 */
 	protected boolean isEnabled() throws TeamException {
-		BranchTag[] tags = getSelectedBranchTags();
+		CVSTagElement[] tags = getSelectedBranchTags();
 		if (tags.length == 0) return false;
 		for (int i = 0; i < tags.length; i++) {
 			if (tags[i].getTag().getName().equals("HEAD")) return false; //$NON-NLS-1$

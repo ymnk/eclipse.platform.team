@@ -50,30 +50,12 @@ public class VersionCategory extends CVSModelElement implements IAdaptable {
 	 * object has no children.
 	 */
 	public Object[] getChildren(Object o) {
-		final Object[][] result = new Object[1][];
-		try {
-			CVSUIPlugin.runWithProgress(null, true /*cancelable*/, new IRunnableWithProgress() {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					try {
-						IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
-						ICVSRemoteResource[] resources = repository.members(CVSTag.DEFAULT,
-							store.getBoolean(ICVSUIConstants.PREF_SHOW_MODULES), monitor);
-						Object[] modules = new Object[resources.length];
-						for (int i = 0; i < resources.length; i++) {
-							modules[i] = new RemoteModule((ICVSRemoteFolder)resources[i], VersionCategory.this);
-						}
-						result[0] = modules;
-					} catch (TeamException e) {
-						throw new InvocationTargetException(e);
-					}
-				}
-			});
-		} catch (InterruptedException e) {
-			return new Object[0];
-		} catch (InvocationTargetException e) {
-			handle(e.getTargetException());
+		CVSTag[] tags = CVSUIPlugin.getPlugin().getRepositoryManager().getKnownVersionTags(repository);
+		CVSTagElement[] versionElements = new CVSTagElement[tags.length];
+		for (int i = 0; i < tags.length; i++) {
+			versionElements[i] = new CVSTagElement(tags[i], repository);
 		}
-		return result[0];
+		return versionElements;
 	}
 
 	/**

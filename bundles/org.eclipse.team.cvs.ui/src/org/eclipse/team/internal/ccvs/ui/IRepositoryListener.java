@@ -7,7 +7,6 @@ package org.eclipse.team.internal.ccvs.ui;
 
 import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.ui.model.BranchTag;
 
 public interface IRepositoryListener {
 	public void repositoryAdded(ICVSRepositoryLocation root);

@@ -1,16 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2002 IBM Corporation and others.
+ * All rights reserved.   This program and the accompanying materials
+ * are made available under the terms of the Common Public License v0.5
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/cpl-v05.html
+ * 
+ * Contributors:
+ * IBM - Initial implementation
+ ******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui.model;
-
-/*
- * (c) Copyright IBM Corp. 2000, 2001.
- * All Rights Reserved.
- */
  
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
@@ -19,14 +23,14 @@ import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.ccvs.ui.ICVSUIConstants;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public class BranchTag extends CVSModelElement implements IAdaptable {
+public class CVSTagElement extends CVSModelElement implements IAdaptable {
 	CVSTag tag;
 	ICVSRepositoryLocation root;
 	
 	/**
 	 * Create a branch tag
 	 */
-	public BranchTag(CVSTag tag, ICVSRepositoryLocation root) {
+	public CVSTagElement(CVSTag tag, ICVSRepositoryLocation root) {
 		this.tag = tag;
 		this.root = root;
 	}
@@ -41,8 +45,8 @@ public class BranchTag extends CVSModelElement implements IAdaptable {
 		return tag;
 	}
 	public boolean equals(Object o) {
-		if (!(o instanceof BranchTag)) return false;
-		BranchTag t = (BranchTag)o;
+		if (!(o instanceof CVSTagElement)) return false;
+		CVSTagElement t = (CVSTagElement)o;
 		if (!tag.equals(t.tag)) return false;
 		return root.equals(t.root);
 	}
@@ -59,8 +63,7 @@ public class BranchTag extends CVSModelElement implements IAdaptable {
 			CVSUIPlugin.runWithProgress(null, true /*cancelable*/, new IRunnableWithProgress() {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
-						IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
-						result[0] = root.members(tag, store.getBoolean(ICVSUIConstants.PREF_SHOW_MODULES), monitor);
+						result[0] = CVSUIPlugin.getPlugin().getRepositoryManager().getFoldersForTag(root, tag, monitor);
 					} catch (TeamException e) {
 						throw new InvocationTargetException(e);
 					}
@@ -74,15 +77,22 @@ public class BranchTag extends CVSModelElement implements IAdaptable {
 		return result[0];
 	}
 	public ImageDescriptor getImageDescriptor(Object object) {
-		if (!(object instanceof BranchTag)) return null;
-		return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_TAG);
+		if (!(object instanceof CVSTagElement)) return null;
+		if (tag.getType() == tag.BRANCH || tag.getType() == tag.HEAD) {
+			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_TAG);
+		} else if (tag.getType() == tag.VERSION) {
+			return CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION);
+		} else {
+			// This could be a Date tag
+			return null;
+		}
 	}
 	public String getLabel(Object o) {
-		if (!(o instanceof BranchTag)) return null;
-		return ((BranchTag)o).tag.getName();
+		if (!(o instanceof CVSTagElement)) return null;
+		return ((CVSTagElement)o).tag.getName();
 	}
 	public Object getParent(Object o) {
-		if (!(o instanceof BranchTag)) return null;
-		return ((BranchTag)o).root;
+		if (!(o instanceof CVSTagElement)) return null;
+		return ((CVSTagElement)o).root;
 	}
 }

@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -41,6 +42,7 @@ import org.eclipse.team.internal.ccvs.core.ICVSFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSListener;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.ICVSResource;
 import org.eclipse.team.internal.ccvs.core.ILogEntry;
@@ -115,8 +117,48 @@ public class RepositoryManager {
 		}
 	}
 	
+	/**
+	 * Get the list of known version tags for a given project.
+	 */
+	public CVSTag[] getKnownVersionTags(ICVSRepositoryLocation location) {
+		Set result = new HashSet();
+		// Get the table of tags for the location
+		Hashtable table = (Hashtable)versionTags.get(location);
+		if (table != null) {
+			// The table is keyed by folder
+			for (Iterator iter = table.values().iterator(); iter.hasNext();) {
+				Set tags = (Set)iter.next();
+				result.addAll(tags);
+			}
+		}
+		return (CVSTag[])result.toArray(new CVSTag[0]);
+	}
+	
 	public Map getKnownProjectsAndVersions(ICVSRepositoryLocation location) {
 		return (Hashtable)versionTags.get(location);
+	}
+	
+	public ICVSRemoteResource[] getFoldersForTag(ICVSRepositoryLocation location, CVSTag tag, IProgressMonitor monitor) throws CVSException {
+		if (tag.getType() == tag.BRANCH || tag.getType() == tag.HEAD) {
+			IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
+			return location.members(tag, store.getBoolean(ICVSUIConstants.PREF_SHOW_MODULES), monitor);
+		}
+		Set result = new HashSet();
+		// Get the table of tags for the location
+		Hashtable table = (Hashtable)versionTags.get(location);
+		if (table != null) {
+			// The table is keyed by folder
+			for (Iterator iter = table.keySet().iterator(); iter.hasNext();) {
+				String folderPath = (String) iter.next();
+				Set tags = (Set)table.get(folderPath);
+				if (tags.contains(tag)) {
+					ICVSRemoteFolder remote = location.getRemoteFolder(folderPath, tag);
+					result.add(remote);
+				}
+			}
+			
+		}
+		return (ICVSRemoteResource[])result.toArray(new ICVSRemoteResource[result.size()]);
 	}
 		
 	/*
