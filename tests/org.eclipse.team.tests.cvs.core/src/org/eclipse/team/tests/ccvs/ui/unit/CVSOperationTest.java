@@ -8,34 +8,23 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.tests.core;
+package org.eclipse.team.tests.ccvs.ui.unit;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import org.eclipse.core.tests.harness.EclipseWorkspaceTest;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.ui.operations.CVSOperation;
+import org.eclipse.team.tests.ccvs.core.EclipseTest;
 
-public class AllTeamTests extends EclipseWorkspaceTest {
-
-	/**
-	 * Constructor for CVSClientTest.
-	 */
-	public AllTeamTests() {
+public abstract class CVSOperationTest extends EclipseTest {
+	
+	protected CVSOperationTest() {
 		super();
 	}
 
-	/**
-	 * Constructor for CVSClientTest.
-	 * @param name
-	 */
-	public AllTeamTests(String name) {
+	protected CVSOperationTest(String name) {
 		super(name);
 	}
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite();
-		suite.addTest(RepositoryProviderTests.suite());
-		suite.addTest(StreamTests.suite());
-		return suite;
+	protected void run(CVSOperation op) throws CVSException {
+		executeHeadless(op);
 	}
 }
-

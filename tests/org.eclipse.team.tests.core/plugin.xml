@@ -13,7 +13,6 @@
       </library>
    </runtime>
    <requires>
-      <import plugin="org.apache.xerces"/>
       <import plugin="org.eclipse.core.tests.harness"/>
       <import plugin="org.eclipse.core.resources"/>
       <import plugin="org.eclipse.core.boot"/>
@@ -84,16 +83,6 @@
             class="org.eclipse.team.tests.core.RepositoryProviderWithLinking"
             id="org.eclipse.team.tests.core.linking">
       </repository>
-   </extension>
-<!-- *************** Test application **************** -->
-   <extension
-         id="testapplication"
-         point="org.eclipse.core.runtime.applications">
-      <application>
-         <run
-               class="org.eclipse.team.tests.ftp.TestApplication">
-         </run>
-      </application>
    </extension>
 
 </plugin>
