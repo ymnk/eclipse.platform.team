@@ -96,7 +96,7 @@ public abstract class BenchmarkTest extends EclipseTest {
 				String suffix = performance_groups[i];
 				groups.put(suffix, meter);
 			}
-			perf.tagAsGlobalSummary(meter, globalName, Dimension.CPU_TIME);
+			perf.tagAsGlobalSummary(meter, globalName, Dimension.ELAPSED_PROCESS);
 		} else {
 			// Use a meter for each group, provides fine grain results
 			for (int i = 0; i < performance_groups.length; i++) {
@@ -104,7 +104,7 @@ public abstract class BenchmarkTest extends EclipseTest {
 				meter = perf.createPerformanceMeter(perf.getDefaultScenarioId(this) + suffix);
 				groups.put(suffix, meter);
 				if (globalName != null) {
-					perf.tagAsSummary(meter, suffix, Dimension.CPU_TIME);
+					perf.tagAsSummary(meter, suffix, Dimension.ELAPSED_PROCESS);
 				}
 			}
 		}
@@ -174,9 +174,9 @@ public abstract class BenchmarkTest extends EclipseTest {
 	    // TODO:
 	}
 	
-	protected void syncResources(Subscriber subscriber, IResource[] resources) throws TeamException {
+	protected void syncResources(SyncInfoSource source, Subscriber subscriber, IResource[] resources) throws TeamException {
 	    startTask("Synchronize with Repository action");
-	    getSyncInfoSource().refresh(subscriber, resources);
+	    source.refresh(subscriber, resources);
 	    endTask();
 	}
 
@@ -186,9 +186,9 @@ public abstract class BenchmarkTest extends EclipseTest {
      * @throws CoreException
      * @throws TeamException
      */
-    protected void syncCommitResources(IResource[] resources, String comment) throws TeamException, CoreException {
+    protected void syncCommitResources(SyncInfoSource source, IResource[] resources, String comment) throws TeamException, CoreException {
        startTask("Synchronize outgoing changes");
-       syncResources(getSyncInfoSource().createWorkspaceSubscriber(), resources);
+       syncResources(source, source.createWorkspaceSubscriber(), resources);
        endTask();
        // TODO: Commit all outgoing changes that are children of the given resource
        // by extracting them from the subscriber sync set
@@ -201,9 +201,9 @@ public abstract class BenchmarkTest extends EclipseTest {
      * @param resources
      * @throws TeamException
      */
-    protected void syncUpdateResources(IResource[] resources) throws TeamException {
+    protected void syncUpdateResources(SyncInfoSource source, IResource[] resources) throws TeamException {
         startTask("Synchronize incoming changes");
-        syncResources(getSyncInfoSource().createWorkspaceSubscriber(), resources);
+        syncResources(source, source.createWorkspaceSubscriber(), resources);
         endTask();
         // TODO: Update all incoming changes that are children of the given resource
         // by extracting them from the subscriber sync set
@@ -217,12 +217,5 @@ public abstract class BenchmarkTest extends EclipseTest {
         new CloseAllPerspectivesAction(PlatformUI.getWorkbench().getActiveWorkbenchWindow());
         // Now open our empty perspective
         PlatformUI.getWorkbench().showPerspective("org.eclipse.team.tests.cvs.ui.perspective1", PlatformUI.getWorkbench().getActiveWorkbenchWindow());
-    }
-
-    /**
-     * @return
-     */
-    private SyncInfoSource getSyncInfoSource() {
-        return source;
     }
 }
