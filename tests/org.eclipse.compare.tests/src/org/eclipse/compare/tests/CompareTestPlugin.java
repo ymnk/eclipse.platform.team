@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.compare.tests;
 
+import org.eclipse.core.runtime.IPluginDescriptor;
 import org.eclipse.core.runtime.Plugin;
 
 /**
@@ -21,7 +22,8 @@ public class CompareTestPlugin extends Plugin {
 	
 	private static CompareTestPlugin fgPlugin;
 	
-	public CompareTestPlugin() {
+	public CompareTestPlugin(IPluginDescriptor descriptor) {
+		super(descriptor);
 		fgPlugin= this;
 	}
 
