@@ -10,7 +10,7 @@
 <stringAttribute key="checked" value="[NONE]"/>
 <booleanAttribute key="includeFragments" value="false"/>
 <booleanAttribute key="clearws" value="true"/>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.eclipse.team.tests.ccvs.ui.benchmark.SyncTests"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.eclipse.team.tests.ccvs.ui.benchmark.WorkflowTests"/>
 <stringAttribute key="location1" value="C:\Eclipse\Latest\eclipse-0924\runtime-test-workspace"/>
 <booleanAttribute key="default" value="true"/>
 <stringAttribute key="vmargs" value="-Declipse.cvs.properties=c:\eclipse\repository.properties -DInternalPrintPerformanceResults"/>
@@ -24,5 +24,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="org.eclipse.team.tests.cvs.core"/>
 <booleanAttribute key="askclear" value="false"/>
 <booleanAttribute key="includeOptional" value="true"/>
-<stringAttribute key="location0" value="C:\Eclipse\Latest\eclipse-0924\runtime-test-workspace"/>
+<stringAttribute key="location0" value="C:\Eclipse\Latest\eclipse-30\runtime-test-workspace"/>
 </launchConfiguration>
