@@ -117,6 +117,7 @@ public interface ICVSUIConstants {
 	public final String PREF_SHOW_NEWRESOURCE_DECORATION = "pref_show_newresource"; //$NON-NLS-1$
 	
 	public final String PREF_DIRTY_FLAG = "pref_dirty_flag"; //$NON-NLS-1$
+    public final String PREF_POSSIBLY_DIRTY_FLAG = "pref_possibly_dirty_flag"; //$NON-NLS-1$
 	public final String PREF_ADDED_FLAG = "pref_added_flag"; //$NON-NLS-1$
 	
 	public final String PREF_CALCULATE_DIRTY = "pref_calculate_dirty";	 //$NON-NLS-1$
@@ -194,5 +195,6 @@ public interface ICVSUIConstants {
 	public final String CMD_HISTORY = "org.eclipse.team.cvs.ui.showHistory"; //$NON-NLS-1$
 	public final String CMD_ADD = "org.eclipse.team.cvs.ui.add"; //$NON-NLS-1$
 	public final String CMD_IGNORE = "org.eclipse.team.cvs.ui.ignore"; //$NON-NLS-1$
+
 }
 

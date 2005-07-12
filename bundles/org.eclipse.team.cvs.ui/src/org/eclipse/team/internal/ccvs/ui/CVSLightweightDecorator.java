@@ -14,6 +14,8 @@ package org.eclipse.team.internal.ccvs.ui;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -22,6 +24,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
@@ -29,9 +32,13 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
+import org.eclipse.team.internal.core.BackgroundEventHandler;
 import org.eclipse.team.internal.core.ExceptionCollector;
+import org.eclipse.team.internal.core.BackgroundEventHandler.Event;
+import org.eclipse.team.internal.core.subscribers.SubscriberLocalChangeDeterminationContext;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.decorators.DecoratorManager;
 import org.eclipse.ui.themes.ITheme;
 import org.osgi.framework.Bundle;
 
@@ -40,6 +47,62 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	// Decorator id as defined in the decorator extension point
 	public final static String ID = "org.eclipse.team.cvs.ui.decorator"; //$NON-NLS-1$
 
+    private class ResourceMappingEvent extends Event {
+
+        private final ResourceMapping mapping;
+        private int changeState = ResourceMapping.MAY_HAVE_DIFFERENCE;
+
+        public ResourceMappingEvent(ResourceMapping mapping) {
+            super(0);
+            this.mapping = mapping;
+        }
+
+        public ResourceMapping getMapping() {
+            return mapping;
+        }
+
+        public int getChangeState() {
+            return changeState;
+        }
+
+        public void setChangeState(int changeState) {
+            this.changeState = changeState;
+        }
+        
+    }
+    
+    private class ChangeDeterminationHandler extends BackgroundEventHandler {
+
+        private List result = new ArrayList(); 
+        
+        protected ChangeDeterminationHandler() {
+            super("Calculating Model Change Decorations", "Errors occurred calculating model change decorations");
+        }
+
+        protected boolean doDispatchEvents(IProgressMonitor monitor) throws TeamException {
+            if (!result.isEmpty()) {
+                try {
+                    handleChangeStates((ResourceMappingEvent[]) result.toArray(new ResourceMappingEvent[result.size()]), monitor);
+                } finally {
+                    result.clear();
+                }
+            }
+            return false;
+        }
+
+        protected void processEvent(Event event, IProgressMonitor monitor) throws CoreException {
+            if (event instanceof ResourceMappingEvent) {
+                ResourceMappingEvent rme = (ResourceMappingEvent)event;
+                rme.setChangeState(rme.getMapping().calculateChangeState(getLocalChangeDeterminationContext(true /* can contect server */) , monitor));
+                result.add(rme);
+            }
+        }
+
+        public void calculateChangeState(ResourceMapping mapping) {
+            queueEvent(new ResourceMappingEvent(mapping), false);
+        }
+    }
+    
 	private static ExceptionCollector exceptions = new ExceptionCollector(CVSUIMessages.CVSDecorator_exceptionMessage, CVSUIPlugin.ID, IStatus.ERROR, CVSUIPlugin.getPlugin().getLog()); //$NON-NLS-1$;
 	
 	private static String DECORATOR_FORMAT = "yyyy/MM/dd HH:mm:ss"; //$NON-NLS-1$
@@ -55,6 +118,9 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 			 CVSDecoratorConfiguration.IGNORED_BACKGROUND_COLOR,
 			 CVSDecoratorConfiguration.IGNORED_FOREGROUND_COLOR};
 
+    private ChangeDeterminationHandler changeDeterminationHandler;
+    private Map calculatedChanges = new HashMap();
+
 	public CVSLightweightDecorator() {
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this);
 		TeamUI.addPropertyChangeListener(this);
@@ -66,11 +132,44 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		
 		PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().addPropertyChangeListener(this);
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
+        
+        changeDeterminationHandler = new ChangeDeterminationHandler();
 	}
 	
-	/**
+    /*
+     * Callback from the background change determination handler. 
+     * The provided events contain the mappings and the change states
+     * that were calculated for them.
+     */
+	public void handleChangeStates(ResourceMappingEvent[] events, IProgressMonitor monitor) {
+        // Accumulate the calculated change states
+        calculatedChanges.clear();
+        for (int i = 0; i < events.length; i++) {
+            ResourceMappingEvent event = events[i];
+            // Only interested in re-decorating those items that have a definite change state
+            if (event.changeState != ResourceMapping.MAY_HAVE_DIFFERENCE)
+                calculatedChanges.put(event.getMapping().getModelObject(), event);
+        }
+        // Trigger a re-decoration for all the objects for which we have a new change state
+        if (!calculatedChanges.isEmpty()) {
+            Object[] changes = calculatedChanges.keySet().toArray(new Object[calculatedChanges.keySet().size()]);
+            refresh(changes);
+            // Wait until the decoration is complete before proceeding.
+            // We do this in order to manage the change cache and also to hold
+            // off on more remote fetches until all other decorating is complete.
+            try {
+                Platform.getJobManager().join(DecoratorManager.FAMILY_DECORATE, monitor);
+            } catch (InterruptedException e) {
+                // Ignore
+            }
+            // Clear the accumulated change states
+            calculatedChanges.clear();
+        }
+    }
+
+    /**
 	 * This method will ensure that the fonts and colors used by the decorator
-	 * are cached in the registries. This avoids having to syncExec when
+	 * are cached in the registry. This avoids having to syncExec when
 	 * decorating since we ensure that the fonts and colors are pre-created.
 	 * 
 	 * @param fonts fonts ids to cache
@@ -137,13 +236,15 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	 * @param object  the object to find the resource for
 	 * @return the resource for the given object, or null
 	 */
-	private IResource getResource(Object object) {
-		if (object instanceof IResource) {
-			return (IResource) object;
+	private ResourceMapping getResourceMapping(Object object) {
+		if (object instanceof ResourceMapping) {
+			return (ResourceMapping) object;
 		}
 		if (object instanceof IAdaptable) {
-			return (IResource) ((IAdaptable) object).getAdapter(
-				IResource.class);
+			Object adapter = ((IAdaptable) object).getAdapter(
+                    ResourceMapping.class);
+            if (adapter instanceof ResourceMapping)
+                return (ResourceMapping) adapter;
 		}
 		return null;
 	}
@@ -154,23 +255,23 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	 * @see org.eclipse.jface.viewers.ILightweightLabelDecorator#decorate(java.lang.Object, org.eclipse.jface.viewers.IDecoration)
 	 */
 	public void decorate(Object element, IDecoration decoration) {
-		IResource resource = getResource(element);
-		if (resource == null || resource.getType() == IResource.ROOT)
+		ResourceMapping mapping = getResourceMapping(element);
+		if (mapping == null)
 			return;
 			
-		CVSTeamProvider cvsProvider = getCVSProviderFor(resource);
-		if (cvsProvider == null)
+		if (!isMappedToCVS(mapping))
 			return;	
 		
 		try {
-			CVSDecoration cvsDecoration = decorate(resource, true /* include dirty check */);
-			cvsDecoration.setWatchEditEnabled(cvsProvider.isWatchEditEnabled());	
-			cvsDecoration.apply(decoration);
-		} catch(CVSException e) {
+			CVSDecoration cvsDecoration = decorate(mapping);
+			// cvsDecoration.setWatchEditEnabled(cvsProvider.isWatchEditEnabled());	TODO: How do we handle watch/edit?
+            if (cvsDecoration != null)
+                cvsDecoration.apply(decoration);
+		} catch(CoreException e) {
 			handleException(e);
 		} catch (IllegalStateException e) {
 		    // This is thrown by Core if the workspace is in an illegal state
-		    // If we are not active, ignore it. Otherwise, propogate it.
+		    // If we are not active, ignore it. Otherwise, propagate it.
 		    // (see bug 78303)
 		    if (Platform.getBundle(CVSUIPlugin.ID).getState() == Bundle.ACTIVE) {
 		        throw e;
@@ -178,7 +279,92 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		}
 	}
 
-	public static CVSDecoration decorate(IResource resource, boolean includeDirtyCheck) throws CVSException {
+    private boolean isMappedToCVS(ResourceMapping mapping) {
+        IProject[] projects = mapping.getProjects();
+        boolean mappedProjectFound = false;
+        for (int i = 0; i < projects.length; i++) {
+            IProject project = projects[i];
+            if (getCVSProviderFor(project) == null) {
+                // We do not handle the case where the mapping is mapped to CVS and another provider
+                if (RepositoryProvider.isShared(project))
+                    return false;
+            } else {
+                mappedProjectFound = true;
+            }
+        }
+        return mappedProjectFound;
+    }
+
+    private boolean isMappedToCVS(IResource resource) {
+        return getCVSProviderFor(resource.getProject()) != null;
+    }
+    
+    private CVSDecoration decorate(ResourceMapping mapping) throws CoreException {
+        CVSDecoration result = null;
+        int diffState = calculateChangeState(mapping);
+        ResourceTraversal[] traversals = mapping.getTraversals(null, null);
+        for (int i = 0; i < traversals.length; i++) {
+            ResourceTraversal traversal = traversals[i];
+            IResource[] resources = traversal.getResources();
+            for (int j = 0; j < resources.length; j++) {
+                IResource resource = resources[j];
+                if (resource != null && isMappedToCVS(resource)) {
+                    CVSDecoration resourceDecoration = decorate(resource, traversal.getDepth(), false /* dirty check handled by mapping */);
+                    if (result == null) {
+                        result = resourceDecoration;
+                    } else {
+                        result.combine(resourceDecoration);
+                    }
+                }
+            }
+        }
+        if (result != null) {
+            switch (diffState) {
+            case ResourceMapping.HAS_DIFFERENCE:
+                result.setDirtyState(CVSDecoration.DIRTY);
+                break;
+            case ResourceMapping.NO_DIFFERENCE:
+                result.setDirtyState(CVSDecoration.NOT_DIRTY);
+                break;
+            default:
+                result.setDirtyState(CVSDecoration.POSSIBLY_DIRTY);
+                changeDeterminationHandler.calculateChangeState(mapping);
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param mapping
+     * @return
+     * @throws CoreException
+     */
+    private int calculateChangeState(ResourceMapping mapping) throws CoreException {
+        ResourceMappingEvent event = (ResourceMappingEvent)calculatedChanges.get(mapping.getModelObject());
+        if (event != null) {
+            return event.getChangeState();
+        }
+        return mapping.calculateChangeState(getLocalChangeDeterminationContext(false), new NullProgressMonitor());
+    }
+
+    private SubscriberLocalChangeDeterminationContext getLocalChangeDeterminationContext(boolean canContectServer) {
+        return new SubscriberLocalChangeDeterminationContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), canContectServer) {
+            protected boolean hasResourceDifference(IResource resource, int depth, IProgressMonitor monitor) throws CoreException {
+                return CVSLightweightDecorator.isDirty(resource, depth);
+            }
+        };
+    }
+
+    public static CVSDecoration decorate(IResource resource) throws CVSException {
+        try {
+            return decorate(resource, IResource.DEPTH_INFINITE, true);
+        } catch (CoreException e) {
+            throw CVSException.wrapException(e);
+        }
+    }
+    
+	public static CVSDecoration decorate(IResource resource, int depth, boolean includeDirtyCheck) throws CoreException {
 		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
 		ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
 		CVSDecoration cvsDecoration = new CVSDecoration(resource.getName());
@@ -193,7 +379,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
     			boolean computeDeepDirtyCheck = store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
     			int type = resource.getType();
     			if (type == IResource.FILE || computeDeepDirtyCheck) {
-    				cvsDecoration.setDirty(CVSLightweightDecorator.isDirty(resource));
+    				cvsDecoration.setDirtyState(CVSLightweightDecorator.isDirty(resource, depth) ? CVSDecoration.DIRTY : CVSDecoration.NOT_DIRTY);
     			}
             }
 			// Tag
@@ -232,7 +418,24 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		return cvsDecoration;
 	}
 
-	private static void extractContainerProperties(IContainer resource, CVSDecoration cvsDecoration) throws CVSException {
+	private static boolean isDirty(IResource resource, int depth) throws CoreException {
+        if (depth == IResource.DEPTH_INFINITE || resource.getType() == IResource.FILE) {
+            return CVSLightweightDecorator.isDirty(resource);
+        }
+        if (depth == IResource.DEPTH_ONE && resource.getType() != IResource.FILE) {
+            IContainer container = (IContainer)resource;
+            IResource[] members = container.members();
+            for (int i = 0; i < members.length; i++) {
+                IResource member = members[i];
+                if (member.getType() == IResource.FILE && CVSLightweightDecorator.isDirty(member)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void extractContainerProperties(IContainer resource, CVSDecoration cvsDecoration) throws CVSException {
 		ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(resource);
 		FolderSyncInfo folderInfo = folder.getFolderSyncInfo();
 		if (folderInfo != null) {
@@ -320,8 +523,13 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager().update(CVSUIPlugin.DECORATOR_ID);
 	}
 
+    private void refresh(Object[] changes) {
+        postLabelEvent(new LabelProviderChangedEvent(this, changes));
+        //((DecoratorManager)CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager()).redecorate(changes);
+    }
+    
 	/*
-	 * Update the decorators for every resource in project
+	 * Update the decorator for every resource in project
 	 */
 	 
 	public void refresh(IProject project) {
@@ -419,6 +627,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(false /* disabled */);
 		TeamUI.removePropertyChangeListener(this);
 		CVSUIPlugin.removePropertyChangeListener(this);
+        changeDeterminationHandler.shutdown();
 	}
 	
 	/**

@@ -36,14 +36,15 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
     private final SyncInfoFilter contentDiffFilter;
     
     // Lists used to keep track of resources that have been refreshed
-    Set shallowRefresh = new HashSet();
-    Set deepRefresh = new HashSet();
+    private Set shallowRefresh = new HashSet();
+    private Set deepRefresh = new HashSet();
+    private boolean autoRefresh;
     
     /**
      * Return a resource mapping context suitable for a replace operations.
      * @return a resource mapping context suitable for a replace operations
      */
-    public static ResourceMappingContext getReplaceContext(Subscriber subscriber) {
+    public static RemoteResourceMappingContext getReplaceContext(Subscriber subscriber) {
         return new SubscriberResourceMappingContext(subscriber, new SyncInfoFilter() {
             public boolean select(SyncInfo info, IProgressMonitor monitor) {
                 if (info != null) {
@@ -53,8 +54,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
                 }
                 return false;
             }
-        
-        });
+        }, true);
     }
     
     /**
@@ -63,7 +63,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
      * server to update the local workspace resources.
      * @return a resource mapping context suitable for a update operations
      */
-    public static ResourceMappingContext getUpdateContext(Subscriber subscriber) {
+    public static RemoteResourceMappingContext getUpdateContext(Subscriber subscriber) {
         return new SubscriberResourceMappingContext(subscriber, new SyncInfoFilter() {
             public boolean select(SyncInfo info, IProgressMonitor monitor) {
                 if (info != null) {
@@ -73,8 +73,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
                 }
                 return false;
             }
-        
-        });
+        }, true);
     }
     
     /**
@@ -83,7 +82,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
      * server from the local workspace resources, typically creating a new version of the resource.
      * @return a resource mapping context suitable for a check-in operations
      */
-    public static ResourceMappingContext getCheckInContext(Subscriber subscriber) {
+    public static RemoteResourceMappingContext getCheckInContext(Subscriber subscriber) {
         return new SubscriberResourceMappingContext(subscriber, new SyncInfoFilter() {
             public boolean select(SyncInfo info, IProgressMonitor monitor) {
                 if (info != null) {
@@ -93,8 +92,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
                 }
                 return false;
             }
-        
-        });
+        }, true);
     }
 
     /**
@@ -103,7 +101,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
      * that differ.
      * @return a resource mapping context suitable for compare operations
      */
-    public static ResourceMappingContext getCompareContext(Subscriber subscriber) {
+    public static RemoteResourceMappingContext getCompareContext(Subscriber subscriber) {
         return new SubscriberResourceMappingContext(subscriber, new SyncInfoFilter() {
             public boolean select(SyncInfo info, IProgressMonitor monitor) {
                 if (info != null) {
@@ -111,8 +109,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
                 }
                 return false;
             }
-        
-        });
+        }, true);
     }
     
     /**
@@ -121,9 +118,10 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
      * @param contentDiffFilter filter that is used to determine if the remote contents differ 
      * from the local contents
      */
-    public SubscriberResourceMappingContext(Subscriber subscriber, SyncInfoFilter contentDiffFilter) {
+    public SubscriberResourceMappingContext(Subscriber subscriber, SyncInfoFilter contentDiffFilter, boolean autoRefresh) {
         this.subscriber = subscriber;
         this.contentDiffFilter = contentDiffFilter;
+        this.autoRefresh = autoRefresh;
     }
 
     /* (non-Javadoc)
@@ -213,7 +211,7 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
      * flag is passed. It is up to subclass to handle this.
      * @param resources the resources to be refreshed
      * @param depth the depth of the refresh
-     * @param flags the flags that indicate extra state that shoudl be fetched
+     * @param flags the flags that indicate extra state that should be fetched
      * @param monitor a progress monitor
      * @throws TeamException
      */
@@ -246,18 +244,20 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
      * since the context has been created.
      */
     private void ensureRefreshed(IResource resource, int depth, int flags, IProgressMonitor monitor) throws TeamException {
-		if (depth == IResource.DEPTH_INFINITE) {
-			// If the resource or a parent was refreshed deeply, no need to do it again
-			if (wasRefreshedDeeply(resource))
-				return;
-			// if the resource is a file, a shallow refresh is enough
-			if (resource.getType() == IResource.FILE && wasRefreshedShallow(resource))
-				return;
-		} else {
-			if (wasRefreshedShallow(resource))
-				return;
-		}
-		refresh(new IResource[] { resource }, depth, flags, monitor);
+        if (autoRefresh) {
+    		if (depth == IResource.DEPTH_INFINITE) {
+    			// If the resource or a parent was refreshed deeply, no need to do it again
+    			if (wasRefreshedDeeply(resource))
+    				return;
+    			// if the resource is a file, a shallow refresh is enough
+    			if (resource.getType() == IResource.FILE && wasRefreshedShallow(resource))
+    				return;
+    		} else {
+    			if (wasRefreshedShallow(resource))
+    				return;
+    		}
+    		refresh(new IResource[] { resource }, depth, flags, monitor);
+        }
 	}
 
     /*
@@ -301,5 +301,9 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
             throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, IResourceStatus.RESOURCE_WRONG_TYPE, Messages.SubscriberResourceMappingContext_1 + resource.getFullPath().toString(), null));
         }
         return remote;
+    }
+
+    public void setAutoRefresh(boolean autoRefresh) {
+        this.autoRefresh = autoRefresh;
     }
 }

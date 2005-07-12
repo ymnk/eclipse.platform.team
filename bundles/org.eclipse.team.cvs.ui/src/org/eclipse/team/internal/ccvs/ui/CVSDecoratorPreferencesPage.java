@@ -64,7 +64,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		public void configureDecoration(CVSDecoration decoration) {
 			decoration.setResourceType(type);
 			decoration.setAdded(added);
-			decoration.setDirty(dirty);
+			decoration.setDirtyState(dirty ? CVSDecoration.DIRTY : CVSDecoration.NOT_DIRTY); // TODO: need to include potential dirtyness
 			decoration.setNewResource(newResource);
 			decoration.setIgnored(ignored);
 			decoration.setHasRemote(hasRemote);
@@ -229,6 +229,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		
 		private final Text dirtyFlag;
 		private final Text addedFlag;
+        private final Text possiblyDirtyFlag;
 		
 		public TextDecoratorTab(TabFolder parent) {
 			
@@ -251,6 +252,14 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 			dirtyFlag.setLayoutData(SWTUtils.createHFillGridData(1));
 			dirtyFlag.addModifyListener(this);
 			SWTUtils.createPlaceholder(composite, 1, 1);
+            
+            final Label possiblyDirtyLabel= SWTUtils.createLabel(composite, "Potentially dirty flag:", 1);
+            dirtyLabel.setLayoutData(new GridData());
+            
+            possiblyDirtyFlag = new Text(composite, SWT.BORDER);
+            possiblyDirtyFlag.setLayoutData(SWTUtils.createHFillGridData(1));
+            possiblyDirtyFlag.addModifyListener(this);
+            SWTUtils.createPlaceholder(composite, 1, 1);
 			
 
 			final Label addedLabel= SWTUtils.createLabel(composite, CVSUIMessages.CVSDecoratorPreferencesPage_14, 1); //$NON-NLS-1$
@@ -274,6 +283,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 			fProjectDecoration.initializeValue(store);
 			addedFlag.setText(store.getString(ICVSUIConstants.PREF_ADDED_FLAG));
 			dirtyFlag.setText(store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
+            possiblyDirtyFlag.setText(store.getString(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG));
 		}
 		
 		public void performOk(IPreferenceStore store) {
@@ -282,6 +292,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 			fProjectDecoration.performOk(store);
 			store.setValue(ICVSUIConstants.PREF_ADDED_FLAG, addedFlag.getText());
 			store.setValue(ICVSUIConstants.PREF_DIRTY_FLAG, dirtyFlag.getText());
+            store.setValue(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG, possiblyDirtyFlag.getText());
 		}
 		
 		public void performDefaults(IPreferenceStore store) {
@@ -291,6 +302,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 			
 			addedFlag.setText(store.getDefaultString(ICVSUIConstants.PREF_ADDED_FLAG));
 			dirtyFlag.setText(store.getDefaultString(ICVSUIConstants.PREF_DIRTY_FLAG));
+            possiblyDirtyFlag.setText(store.getDefaultString(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG));
 		}
 
 		public String getFileTextFormat() {
@@ -313,6 +325,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		public void setPreferences(Preferences prefs) {
 			prefs.setDefault(ICVSUIConstants.PREF_CALCULATE_DIRTY, true);
 			prefs.setDefault(ICVSUIConstants.PREF_DIRTY_FLAG, dirtyFlag.getText());
+            prefs.setDefault(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG, possiblyDirtyFlag.getText());
 			prefs.setDefault(ICVSUIConstants.PREF_ADDED_FLAG, addedFlag.getText());
 		}
 	}

@@ -547,7 +547,8 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		
 		store.setDefault(ICVSUIConstants.PREF_FIRST_STARTUP, true);
 		store.setDefault(ICVSUIConstants.PREF_ADDED_FLAG, CVSDecoratorConfiguration.DEFAULT_ADDED_FLAG);
-		store.setDefault(ICVSUIConstants.PREF_DIRTY_FLAG, CVSDecoratorConfiguration.DEFAULT_DIRTY_FLAG);	
+		store.setDefault(ICVSUIConstants.PREF_DIRTY_FLAG, CVSDecoratorConfiguration.DEFAULT_DIRTY_FLAG);
+        store.setDefault(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG, CVSDecoratorConfiguration.DEFAULT_POSSIBLY_DIRTY_FLAG);    
 		store.setDefault(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION, true);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_HASREMOTE_DECORATION, true);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION, false);
