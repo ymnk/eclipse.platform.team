@@ -47,10 +47,19 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         return showAllMappings(selectedMappings, allMappings);
     }
     
-    private ResourceMapping[] showAllMappings(ResourceMapping[] selectedMappings, ResourceMapping[] allMappings) {
-        AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", selectedMappings, allMappings);
-        int result = dialog.open();
-        if (result != Dialog.OK) {
+    private ResourceMapping[] showAllMappings(final ResourceMapping[] selectedMappings, final ResourceMapping[] allMappings) {
+        final boolean[] canceled = new boolean[] { false };
+        
+        getShell().getDisplay().syncExec(new Runnable() {
+            public void run() {
+                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", selectedMappings, allMappings);
+                int result = dialog.open();
+                canceled[0] = result != Dialog.OK;
+            }
+        
+        });
+        
+        if (canceled[0]) {
             return new ResourceMapping[0];
         }
         return allMappings;
