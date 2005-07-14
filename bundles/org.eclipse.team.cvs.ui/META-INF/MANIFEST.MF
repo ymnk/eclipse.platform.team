@@ -28,5 +28,6 @@ Require-Bundle: org.eclipse.ui.ide;resolution:=optional,
  org.eclipse.team.core,
  org.eclipse.team.ui,
  org.eclipse.team.cvs.core,
- org.eclipse.compare
+ org.eclipse.compare,
+ org.eclipse.ltk.core.refactoring
 Eclipse-AutoStart: true

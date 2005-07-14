@@ -14,14 +14,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import org.eclipse.core.internal.resources.mapping.*;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+import org.eclipse.ltk.core.refactoring.participants.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.core.subscribers.SubscriberResourceMappingContext;
+import org.eclipse.team.internal.ui.dialogs.AdditionalMappingsDialog;
 import org.eclipse.ui.PlatformUI;
 
 
@@ -38,9 +42,131 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
      * within a CVS managed project
      */
     protected ResourceMapping[] getCVSResourceMappings() {
-        return getSelectedResourceMappings(CVSProviderPlugin.getTypeId());
+        ResourceMapping[] selectedMappings = getSelectedResourceMappings(CVSProviderPlugin.getTypeId());
+        ResourceMapping[] allMappings = convertToParticipantMappings(selectedMappings);
+        return showAllMappings(selectedMappings, allMappings);
     }
     
+    private ResourceMapping[] showAllMappings(ResourceMapping[] selectedMappings, ResourceMapping[] allMappings) {
+        AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", selectedMappings, allMappings);
+        int result = dialog.open();
+        if (result != Dialog.OK) {
+            return new ResourceMapping[0];
+        }
+        return allMappings;
+    }
+
+    /*
+     * Use the registered teamParticpants to determine if additional mappings should be included
+     * in the operation.
+     */
+    private ResourceMapping[] convertToParticipantMappings(ResourceMapping[] selectedMappings) {
+        TeamProcessor processor = new TeamProcessor() {
+            public String getIdentifier() {
+                return "org.eclipse.team.cvs.ui.teamProcessor";
+            }
+        };
+        RefactoringStatus status = new RefactoringStatus();
+        try {
+            Map result = new HashMap();
+            for (int i = 0; i < selectedMappings.length; i++) {
+                ResourceMapping mapping = selectedMappings[i];
+                result.put(mapping.getModelObject(), mapping);
+            }
+            TeamParticipant[] participants = loadParticipants(status, processor, selectedMappings);
+            for (int i = 0; i < participants.length; i++) {
+                TeamParticipant participant = participants[i];
+                ResourceMapping[] mappings = participant.getMappings();
+                for (int j = 0; j < mappings.length; j++) {
+                    ResourceMapping mapping = mappings[j];
+                    result.put(mapping.getModelObject(), mapping);
+                }
+            }
+            return (ResourceMapping[]) result.values().toArray(new ResourceMapping[result.size()]);
+        } catch (CoreException e) {
+            // TODO: Should notify user directly of error
+            CVSUIPlugin.log(e);
+        }
+        return selectedMappings;
+    }
+
+    private TeamParticipant[] loadParticipants(RefactoringStatus status, TeamProcessor processor, ResourceMapping[] selectedMappings) throws CoreException {
+        List result= new ArrayList();
+        SharableParticipants sharedParticipants = new SharableParticipants();
+        TeamArguments arguments = new TeamArguments() {};
+        String[] natures = getNatures(selectedMappings);
+        for (int i = 0; i < selectedMappings.length; i++) {
+            ResourceMapping mapping = selectedMappings[i];
+            result.addAll(Arrays.asList(ParticipantManager.loadTeamParticipants(
+                status, processor, mapping.getModelObject(), arguments, natures, sharedParticipants)));
+            result.addAll(Arrays.asList(ParticipantManager.loadTeamParticipants(
+                    status, processor, mapping, arguments, natures, sharedParticipants)));
+        }
+        IResource[] resources= getResources(selectedMappings);
+        for (int i= 0; i < resources.length; i++) {
+            IResource resource= resources[i];
+            result.addAll(Arrays.asList(ParticipantManager.loadTeamParticipants(
+                status, processor, resource, arguments, natures, sharedParticipants)));
+            
+        }
+        return (TeamParticipant[])result.toArray(new TeamParticipant[result.size()]);
+    }
+    
+    private IResource[] getResources(ResourceMapping[] selectedMappings) throws CoreException {
+        Set result = new HashSet();
+        for (int i = 0; i < selectedMappings.length; i++) {
+            ResourceMapping mapping = selectedMappings[i];
+            ResourceTraversal[] traversals = mapping.getTraversals(ResourceMappingContext.LOCAL_CONTEXT, new NullProgressMonitor());
+            for (int j = 0; j < traversals.length; j++) {
+                ResourceTraversal traversal = traversals[j];
+                IResource[] resources = traversal.getResources();
+                if (traversal.getDepth() == IResource.DEPTH_INFINITE) {
+                    result.addAll(Arrays.asList(resources));
+                } else if (traversal.getDepth() == IResource.DEPTH_ONE) {
+                    for (int k = 0; k < resources.length; k++) {
+                        IResource resource = resources[k];
+                        if (resource.getType() == IResource.FILE) {
+                            result.add(resource);
+                        } else {
+                            IResource[] members = ((IContainer)resource).members();
+                            for (int index = 0; index < members.length; index++) {
+                                IResource member = members[index];
+                                if (member.getType() == IResource.FILE) {
+                                    result.add(member);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    for (int k = 0; k < resources.length; k++) {
+                        IResource resource = resources[k];
+                        if (resource.getType() == IResource.FILE) {
+                            result.add(resource);
+                        }
+                    }
+                }
+            }
+        }
+        return (IResource[]) result.toArray(new IResource[result.size()]);
+    }
+
+    private String[] getNatures(ResourceMapping[] selectedMappings) {
+        Set result = new HashSet();
+        for (int i = 0; i < selectedMappings.length; i++) {
+            ResourceMapping mapping = selectedMappings[i];
+            IProject[] projects = mapping.getProjects();
+            for (int j = 0; j < projects.length; j++) {
+                IProject project = projects[j];
+                try {
+                    result.addAll(Arrays.asList(project.getDescription().getNatureIds()));
+                } catch (CoreException e) {
+                    CVSUIPlugin.log(e);
+                }
+            }
+        }
+        return (String[]) result.toArray(new String[result.size()]);
+    }
+
     protected static IResource[] getRootTraversalResources(ResourceMapping[] mappings, ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
         List result = new ArrayList();
         for (int i = 0; i < mappings.length; i++) {
