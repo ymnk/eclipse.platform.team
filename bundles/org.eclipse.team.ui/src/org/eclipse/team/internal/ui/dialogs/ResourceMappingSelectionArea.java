@@ -15,7 +15,6 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -28,39 +27,7 @@ import org.eclipse.ui.model.*;
  */
 public class ResourceMappingSelectionArea extends DialogArea {
 
-	public class ResourceMappingLabelProvider extends LabelProvider {
-		WorkbenchLabelProvider provider = new WorkbenchLabelProvider();
-		public String getText(Object element) {
-            String text = provider.getText(element);
-            if (text != null && text.length() > 0)
-                return text;
-			if (element instanceof ResourceMapping) {
-				ResourceMapping mapping = (ResourceMapping) element;
-				text = provider.getText(mapping.getModelObject());
-				if (text != null)
-					return text;
-			}
-			return super.getText(element);
-		}
-		public Image getImage(Object element) {
-            Image image = provider.getImage(element);
-            if (image != null)
-                return image;
-			if (element instanceof ResourceMapping) {
-				ResourceMapping mapping = (ResourceMapping) element;
-				image = provider.getImage(mapping.getModelObject());
-				if (image != null)
-					return image;
-			}
-			return super.getImage(element);
-		}
-        public void dispose() {
-            provider.dispose();
-            super.dispose();
-        }
-	}
-	
-    /**
+	/**
      * Property constant used to indicate that the selected mapping has changed.
      * The object associated with the property is a <code>ResourceMapping</code>.
      */

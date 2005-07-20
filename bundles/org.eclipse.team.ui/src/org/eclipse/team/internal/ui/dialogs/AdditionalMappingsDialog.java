@@ -20,7 +20,7 @@ public class AdditionalMappingsDialog extends DetailsDialog {
     private final ResourceMapping[] mappings;
     private final ResourceMapping[] selectedMappings;
     private ResourceMappingSelectionArea selectedMappingsArea;
-    private ResourceMappingSelectionArea allMappingsArea;
+    private ResourceMappingHierarchyArea allMappingsArea;
 
     public AdditionalMappingsDialog(Shell parentShell, String dialogTitle, ResourceMapping[] selectedMappings, ResourceMapping[] mappings) {
         super(parentShell, dialogTitle);
@@ -53,7 +53,7 @@ public class AdditionalMappingsDialog extends DetailsDialog {
      */
     private void createAllMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
-        allMappingsArea = new ResourceMappingSelectionArea(mappings);
+        allMappingsArea = ResourceMappingHierarchyArea.create(mappings);
         allMappingsArea.setDescription("All elements to be operated on");
         //allMappingsArea.addPropertyChangeListener(this);
         allMappingsArea.createArea(composite);
