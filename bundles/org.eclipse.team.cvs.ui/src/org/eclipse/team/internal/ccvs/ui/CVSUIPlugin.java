@@ -108,7 +108,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	/**
 	 * Creates an image and places it in the image registry.
 	 */
-	protected void createImageDescriptor(String id, URL baseURL) {
+	protected void createImageDescriptor(String id) {
 		URL url = Platform.find(CVSUIPlugin.getPlugin().getBundle(), new Path(ICVSUIConstants.ICON_PATH + id));
 		ImageDescriptor desc = ImageDescriptor.createFromURL(url);
 		imageDescriptors.put(id, desc);
@@ -208,11 +208,11 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 				}
 				String question;
 				if (resources.length == 1) {
-					question = NLS.bind(CVSUIMessages.CVSUIPlugin_refreshQuestion, new String[] { status.getMessage(), resources[0].getFullPath().toString() }); //$NON-NLS-1$
+					question = NLS.bind(CVSUIMessages.CVSUIPlugin_refreshQuestion, new String[] { status.getMessage(), resources[0].getFullPath().toString() }); 
 				} else {
-					question = NLS.bind(CVSUIMessages.CVSUIPlugin_refreshMultipleQuestion, new String[] { status.getMessage() }); //$NON-NLS-1$
+					question = NLS.bind(CVSUIMessages.CVSUIPlugin_refreshMultipleQuestion, new String[] { status.getMessage() }); 
 				}
-				result[0] = MessageDialog.openQuestion(shellToUse, CVSUIMessages.CVSUIPlugin_refreshTitle, question); //$NON-NLS-1$
+				result[0] = MessageDialog.openQuestion(shellToUse, CVSUIMessages.CVSUIPlugin_refreshTitle, question); 
 			}
 		};
 		Display.getDefault().syncExec(runnable);
@@ -279,48 +279,48 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		URL baseURL = getBundle().getEntry("/"); //$NON-NLS-1$
 		
 		// objects
-		createImageDescriptor(ICVSUIConstants.IMG_REPOSITORY, baseURL); 
-		createImageDescriptor(ICVSUIConstants.IMG_REFRESH, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_REFRESH_ENABLED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_REFRESH_DISABLED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_LINK_WITH_EDITOR, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_LINK_WITH_EDITOR_ENABLED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL_ENABLED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_CVSLOGO, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_TAG, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_MODULE, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_CLEAR, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_CLEAR_ENABLED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_CLEAR_DISABLED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_BRANCHES_CATEGORY, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_VERSIONS_CATEGORY, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_DATES_CATEGORY, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_MERGE, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_SHARE, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_DIFF, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_KEYWORD, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_MERGEABLE_CONFLICT, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_QUESTIONABLE, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_MERGED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_EDITED, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_NO_REMOTEDIR, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_CVS_CONSOLE, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_DATE, baseURL);
-		createImageDescriptor(ICVSUIConstants.IMG_CHANGELOG, baseURL);
+		createImageDescriptor(ICVSUIConstants.IMG_REPOSITORY); 
+		createImageDescriptor(ICVSUIConstants.IMG_REFRESH);
+		createImageDescriptor(ICVSUIConstants.IMG_REFRESH_ENABLED);
+		createImageDescriptor(ICVSUIConstants.IMG_REFRESH_DISABLED);
+		createImageDescriptor(ICVSUIConstants.IMG_LINK_WITH_EDITOR);
+		createImageDescriptor(ICVSUIConstants.IMG_LINK_WITH_EDITOR_ENABLED);
+		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL);
+		createImageDescriptor(ICVSUIConstants.IMG_COLLAPSE_ALL_ENABLED);
+		createImageDescriptor(ICVSUIConstants.IMG_NEWLOCATION);
+		createImageDescriptor(ICVSUIConstants.IMG_CVSLOGO);
+		createImageDescriptor(ICVSUIConstants.IMG_TAG);
+		createImageDescriptor(ICVSUIConstants.IMG_MODULE);
+		createImageDescriptor(ICVSUIConstants.IMG_CLEAR);
+		createImageDescriptor(ICVSUIConstants.IMG_CLEAR_ENABLED);
+		createImageDescriptor(ICVSUIConstants.IMG_CLEAR_DISABLED);
+		createImageDescriptor(ICVSUIConstants.IMG_BRANCHES_CATEGORY);
+		createImageDescriptor(ICVSUIConstants.IMG_VERSIONS_CATEGORY);
+		createImageDescriptor(ICVSUIConstants.IMG_DATES_CATEGORY);
+		createImageDescriptor(ICVSUIConstants.IMG_PROJECT_VERSION);
+		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_MERGE);
+		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_SHARE);
+		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_DIFF);
+		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_KEYWORD);
+		createImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION);
+		createImageDescriptor(ICVSUIConstants.IMG_MERGEABLE_CONFLICT);
+		createImageDescriptor(ICVSUIConstants.IMG_QUESTIONABLE);
+		createImageDescriptor(ICVSUIConstants.IMG_MERGED);
+		createImageDescriptor(ICVSUIConstants.IMG_EDITED);
+		createImageDescriptor(ICVSUIConstants.IMG_NO_REMOTEDIR);
+		createImageDescriptor(ICVSUIConstants.IMG_CVS_CONSOLE);
+		createImageDescriptor(ICVSUIConstants.IMG_DATE);
+		createImageDescriptor(ICVSUIConstants.IMG_CHANGELOG);
 		
 		// special
-		createImageDescriptor("glyphs/glyph1.gif", baseURL);  //$NON-NLS-1$
-		createImageDescriptor("glyphs/glyph2.gif", baseURL);  //$NON-NLS-1$
-		createImageDescriptor("glyphs/glyph3.gif", baseURL);  //$NON-NLS-1$
-		createImageDescriptor("glyphs/glyph4.gif", baseURL);  //$NON-NLS-1$
-		createImageDescriptor("glyphs/glyph5.gif", baseURL);  //$NON-NLS-1$
-		createImageDescriptor("glyphs/glyph6.gif", baseURL);  //$NON-NLS-1$
-		createImageDescriptor("glyphs/glyph7.gif", baseURL);  //$NON-NLS-1$
-		createImageDescriptor("glyphs/glyph8.gif", baseURL);  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph1.gif");  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph2.gif");  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph3.gif");  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph4.gif");  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph5.gif");  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph6.gif");  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph7.gif");  //$NON-NLS-1$
+		createImageDescriptor("glyphs/glyph8.gif");  //$NON-NLS-1$
 	}
 	/**
 	 * Convenience method for logging statuses to the plugin log
@@ -332,7 +332,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	}
 	
 	public static void log(CoreException e) {
-		log(e.getStatus().getSeverity(), CVSUIMessages.simpleInternal, e); //$NON-NLS-1$
+		log(e.getStatus().getSeverity(), CVSUIMessages.simpleInternal, e); 
 	}
 	
 	/**
@@ -392,16 +392,16 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 			status = ((TeamException)exception).getStatus();
 			log = ((flags & LOG_TEAM_EXCEPTIONS) > 0);
 		} else if (exception instanceof InterruptedException) {
-			return new CVSStatus(IStatus.OK, CVSUIMessages.ok); //$NON-NLS-1$
+			return new CVSStatus(IStatus.OK, CVSUIMessages.ok); 
 		} else if (exception != null) {
-			status = new CVSStatus(IStatus.ERROR, CVSUIMessages.internal, exception); //$NON-NLS-1$
+			status = new CVSStatus(IStatus.ERROR, CVSUIMessages.internal, exception); 
 			log = ((flags & LOG_OTHER_EXCEPTIONS) > 0);
-			if (title == null) title = CVSUIMessages.internal; //$NON-NLS-1$
+			if (title == null) title = CVSUIMessages.internal; 
 		}
 		
 		// Check for a build error and report it differently
 		if (status.getCode() == IResourceStatus.BUILD_FAILED) {
-			message = CVSUIMessages.buildError; //$NON-NLS-1$
+			message = CVSUIMessages.buildError; 
 			log = true;
 		}
 		
@@ -421,7 +421,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		final IOpenableInShell openable = new IOpenableInShell() {
 			public void open(Shell shell) {
 				if (displayStatus.getSeverity() == IStatus.INFO && !displayStatus.isMultiStatus()) {
-					MessageDialog.openInformation(shell, CVSUIMessages.information, displayStatus.getMessage()); //$NON-NLS-1$
+					MessageDialog.openInformation(shell, CVSUIMessages.information, displayStatus.getMessage()); 
 				} else {
 					ErrorDialog.openError(shell, displayTitle, displayMessage, displayStatus);
 				}
@@ -507,6 +507,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		
 		store.setDefault(ICVSUIConstants.PREF_REPOSITORIES_ARE_BINARY, false);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_COMMENTS, true);
+		store.setDefault(ICVSUIConstants.PREF_WRAP_COMMENTS, true);
 		store.setDefault(ICVSUIConstants.PREF_SHOW_TAGS, true);
 		store.setDefault(ICVSUIConstants.PREF_HISTORY_VIEW_EDITOR_LINKING, false);
 		store.setDefault(ICVSUIConstants.PREF_PRUNE_EMPTY_DIRECTORIES, CVSProviderPlugin.DEFAULT_PRUNE);

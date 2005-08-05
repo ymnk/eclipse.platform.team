@@ -64,6 +64,7 @@ public interface ICVSUIConstants {
 	
 	// preferences
 	public final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	public final String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
 	public final String PREF_SHOW_TAGS = "pref_show_tags"; //$NON-NLS-1$
 	public final String PREF_HISTORY_VIEW_EDITOR_LINKING = "pref_history_view_linking"; //$NON-NLS-1$
 	public final String PREF_PRUNE_EMPTY_DIRECTORIES = "pref_prune_empty_directories";	 //$NON-NLS-1$
@@ -135,7 +136,7 @@ public interface ICVSUIConstants {
 	public final String PREF_EDIT_PROMPT_IF_EDITORS = "only";	 //$NON-NLS-1$
     
     // update preferences
-    public final String PREF_UPDATE_PROMPT = "pref_upate_prompt";
+    public final String PREF_UPDATE_PROMPT = "pref_upate_prompt"; //$NON-NLS-1$
     public final String PREF_UPDATE_PROMPT_NEVER = "never";    //$NON-NLS-1$
     public final String PREF_UPDATE_PROMPT_AUTO = "auto"; //$NON-NLS-1$
     public final String PREF_UPDATE_PROMPT_IF_OUTDATED = "only";  //$NON-NLS-1$
