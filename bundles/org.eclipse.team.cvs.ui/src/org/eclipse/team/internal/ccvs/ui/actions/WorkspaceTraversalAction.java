@@ -85,7 +85,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
             TeamParticipant[] participants = loadParticipants(status, processor, selectedMappings);
             for (int i = 0; i < participants.length; i++) {
                 TeamParticipant participant = participants[i];
-                ResourceMapping[] mappings = participant.getMappings();
+                ResourceMapping[] mappings = participant.getMappings(ResourceMappingContext.LOCAL_CONTEXT, new NullProgressMonitor());
                 for (int j = 0; j < mappings.length; j++) {
                     ResourceMapping mapping = mappings[j];
                     result.put(mapping.getModelObject(), mapping);

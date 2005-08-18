@@ -24,14 +24,14 @@ public class ResourceMappingHierarchyArea extends DialogArea {
 
     private String description;
     private TreeViewer viewer;
-    private final IModelContentProvider contentProvider;
+    private final IResourceMappingContentProvider contentProvider;
     
-    private static class CompositeContentProvider implements IModelContentProvider {
+    private static class CompositeContentProvider implements IResourceMappingContentProvider {
 
-        private final IModelContentProvider[] providers;
+        private final IResourceMappingContentProvider[] providers;
         private final Map providerMap = new HashMap();
 
-        public CompositeContentProvider(IModelContentProvider[] providers) {
+        public CompositeContentProvider(IResourceMappingContentProvider[] providers) {
             this.providers = providers;
         }
 
@@ -43,14 +43,14 @@ public class ResourceMappingHierarchyArea extends DialogArea {
             if (parentElement == this) {
                 List result = new ArrayList();
                 for (int i = 0; i < providers.length; i++) {
-                    IModelContentProvider provider = providers[i];
+                    IResourceMappingContentProvider provider = providers[i];
                     Object element = provider.getRoot();
                     providerMap.put(element, provider);
                     result.add(element);
                 }
                 return result.toArray(new Object[result.size()]);
             } else {
-                IModelContentProvider provider = (IModelContentProvider)providerMap.get(parentElement);
+                IResourceMappingContentProvider provider = (IResourceMappingContentProvider)providerMap.get(parentElement);
                 if (provider != null) {
                     Object[] elements = provider.getChildren(parentElement);
                     for (int i = 0; i < elements.length; i++) {
@@ -78,14 +78,14 @@ public class ResourceMappingHierarchyArea extends DialogArea {
 
         public void dispose() {
             for (int i = 0; i < providers.length; i++) {
-                IModelContentProvider provider = providers[i];
+                IResourceMappingContentProvider provider = providers[i];
                 provider.dispose();
             }
         }
 
         public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
             for (int i = 0; i < providers.length; i++) {
-                IModelContentProvider provider = providers[i];
+                IResourceMappingContentProvider provider = providers[i];
                 provider.inputChanged(viewer, oldInput, newInput);
             }
         }
@@ -96,7 +96,7 @@ public class ResourceMappingHierarchyArea extends DialogArea {
         Map factories = new HashMap();
         for (int i = 0; i < mappings.length; i++) {
             ResourceMapping mapping = mappings[i];
-            IModelContentProviderFactory factory = TeamUI.getFactory(mapping);
+            IResourceMappingContentProviderFactory factory = TeamUI.getFactory(mapping);
             List list = (List)factories.get(factory);
             if (list == null) {
                 list = new ArrayList();
@@ -106,20 +106,20 @@ public class ResourceMappingHierarchyArea extends DialogArea {
         }
         List providers = new ArrayList();
         for (Iterator iter = factories.keySet().iterator(); iter.hasNext();) {
-            IModelContentProviderFactory factory = (IModelContentProviderFactory) iter.next();
+            IResourceMappingContentProviderFactory factory = (IResourceMappingContentProviderFactory) iter.next();
             List list = (List)factories.get(factory);
             providers.add(factory.createContentProvider((ResourceMapping[]) list.toArray(new ResourceMapping[list.size()])));
         }
-        IModelContentProvider provider;
+        IResourceMappingContentProvider provider;
         if (providers.size() == 1) {
-            provider = (IModelContentProvider)providers.get(0);
+            provider = (IResourceMappingContentProvider)providers.get(0);
         } else {
-            provider = new CompositeContentProvider((IModelContentProvider[]) providers.toArray(new IModelContentProvider[providers.size()]));
+            provider = new CompositeContentProvider((IResourceMappingContentProvider[]) providers.toArray(new IResourceMappingContentProvider[providers.size()]));
         }
         return new ResourceMappingHierarchyArea(provider);
     }
     
-    private ResourceMappingHierarchyArea(IModelContentProvider contentProvider) {
+    private ResourceMappingHierarchyArea(IResourceMappingContentProvider contentProvider) {
         this.contentProvider = contentProvider;
     }
     
@@ -149,7 +149,7 @@ public class ResourceMappingHierarchyArea extends DialogArea {
         return getContentProvider().getRoot();
     }
 
-    private IModelContentProvider getContentProvider() {
+    private IResourceMappingContentProvider getContentProvider() {
         return contentProvider;
     }
 

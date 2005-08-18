@@ -10,12 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
+import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.MergeContext;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
 import org.eclipse.team.internal.ui.synchronize.SynchronizeManager;
 import org.eclipse.team.ui.synchronize.ISynchronizeManager;
 import org.eclipse.ui.model.IWorkbenchAdapter;
@@ -30,7 +33,7 @@ public class TeamUI {
 	// manages synchronize participants
 	private static ISynchronizeManager synchronizeManager;
 
-    private static class DefaultContentProvider implements IModelContentProvider {
+    private static class DefaultContentProvider implements IResourceMappingContentProvider {
 
         /**
          * TODO Should root be a resource mapping?
@@ -114,9 +117,19 @@ public class TeamUI {
         }
     }
     
-    private static IModelContentProviderFactory defaultModelContentProviderFactory = new IModelContentProviderFactory() {
-        public IModelContentProvider createContentProvider(ResourceMapping[] mappings) {
+    private static IResourceMappingContentProviderFactory defaultModelContentProviderFactory = new IResourceMappingContentProviderFactory() {
+        public IResourceMappingContentProvider createContentProvider(ResourceMapping[] mappings) {
             return new DefaultContentProvider(mappings);
+        }
+
+        public ISynchronizeModelProvider createSynchronizeModelProvider(ResourceMapping[] mappings, ISynchronizeModelProviderConfiguration configuration) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        public CompareEditorInput[] createCompareEditorInputs(ResourceMapping[] mappings, MergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
+            // TODO Auto-generated method stub
+            return null;
         }     
     };
 
@@ -162,10 +175,10 @@ public class TeamUI {
 		TeamUIPlugin.removePropertyChangeListener(listener);
 	}
     
-    public static IModelContentProviderFactory getFactory(ResourceMapping mapping) {
-        Object o = mapping.getAdapter(IModelContentProviderFactory.class);
-        if (o instanceof IModelContentProviderFactory) {
-            return (IModelContentProviderFactory) o;
+    public static IResourceMappingContentProviderFactory getFactory(ResourceMapping mapping) {
+        Object o = mapping.getAdapter(IResourceMappingContentProviderFactory.class);
+        if (o instanceof IResourceMappingContentProviderFactory) {
+            return (IResourceMappingContentProviderFactory) o;
         }
         return defaultModelContentProviderFactory;
     }

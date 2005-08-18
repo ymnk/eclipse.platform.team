@@ -20,7 +20,7 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
  * a single model) or may be used as one of multiple elements appearing at the top
  * level in the viewer (in cases where the viewer contains multiple models).
  */
-public interface IModelContentProvider extends ITreeContentProvider {
+public interface IResourceMappingContentProvider extends ITreeContentProvider {
     
     /**
      * Returns the root element of the model tree being displayed.
