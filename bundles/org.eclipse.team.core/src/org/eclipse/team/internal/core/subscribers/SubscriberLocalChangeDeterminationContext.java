@@ -10,10 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core.subscribers;
 
-import org.eclipse.core.internal.resources.mapping.ChangeDeterminationResourceMappingContext;
+import org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext;
 import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
-import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
@@ -27,7 +33,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
 /**
  * A change determination context for comparing the local resource state against the base state.
  */
-public class SubscriberLocalChangeDeterminationContext extends ChangeDeterminationResourceMappingContext {
+public class SubscriberLocalChangeDeterminationContext extends RemoteResourceMappingContext {
     
     private final SyncInfoFilter contentDiffFilter = new SyncInfoFilter() {
         public boolean select(SyncInfo info, IProgressMonitor monitor) {
@@ -84,7 +90,7 @@ public class SubscriberLocalChangeDeterminationContext extends ChangeDeterminati
                 return base.getStorage(monitor);
             return null;
         }
-        throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, CONTENTS_NOT_CACHED, NLS.bind("The contents for file {0} are not available.", new String[] { file.getFullPath().toString() }), null));
+        throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, SERVER_CONTACT_PROHIBITED, NLS.bind("The contents for file {0} are not available.", new String[] { file.getFullPath().toString() }), null));
     }
 
     /* (non-Javadoc)

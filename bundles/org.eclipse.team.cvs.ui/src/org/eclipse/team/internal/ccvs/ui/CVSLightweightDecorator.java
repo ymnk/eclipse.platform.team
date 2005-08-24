@@ -93,7 +93,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         protected void processEvent(Event event, IProgressMonitor monitor) throws CoreException {
             if (event instanceof ResourceMappingEvent) {
                 ResourceMappingEvent rme = (ResourceMappingEvent)event;
-                rme.setChangeState(rme.getMapping().calculateChangeState(getLocalChangeDeterminationContext(true /* can contect server */) , true, monitor));
+                rme.setChangeState(rme.getMapping().calculateChangeState(getLocalChangeDeterminationContext(true /* can contect server */) , monitor));
                 result.add(rme);
             }
         }
@@ -219,6 +219,8 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	 * will be ignored by the decorator.
 	 */
 	private CVSTeamProvider getCVSProviderFor(IResource resource) {
+		if (resource == null)
+			return null;
 		RepositoryProvider p =
 			RepositoryProvider.getProvider(
 				resource.getProject(),
@@ -345,7 +347,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         if (event != null) {
             return event.getChangeState();
         }
-        return mapping.calculateChangeState(getLocalChangeDeterminationContext(false), false, new NullProgressMonitor());
+        return mapping.calculateChangeState(getLocalChangeDeterminationContext(false), new NullProgressMonitor());
     }
 
     private SubscriberLocalChangeDeterminationContext getLocalChangeDeterminationContext(boolean canContectServer) {
