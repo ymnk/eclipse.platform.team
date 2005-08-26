@@ -11,7 +11,15 @@
 package org.eclipse.team.internal.ui.dialogs;
 
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.CheckStateChangedEvent;
+import org.eclipse.jface.viewers.CheckboxTableViewer;
+import org.eclipse.jface.viewers.ICheckStateListener;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -19,8 +27,10 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Table;
 import org.eclipse.team.internal.ui.TeamUIMessages;
-import org.eclipse.ui.model.*;
+import org.eclipse.ui.model.AdaptableList;
+import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 /**
  * Dialog area that displays a checkbox list of mappings.
@@ -41,13 +51,17 @@ public class ResourceMappingSelectionArea extends DialogArea {
     public static final String CHECKED_MAPPINGS = "CheckedMappings"; //$NON-NLS-1$
     
     private ResourceMapping[] mappings;
-    private CheckboxTableViewer viewer;
+    private TableViewer viewer;
     private ResourceMapping[] checkedMappings;
     private ResourceMapping selectedMapping;
     private String description;
+	private boolean supportsChecking;
+	private boolean supportsSelection;
     
-    public ResourceMappingSelectionArea(ResourceMapping[] mappings) {
+    public ResourceMappingSelectionArea(ResourceMapping[] mappings, boolean supportSelection, boolean supportChecking) {
         this.mappings = mappings;
+        this.supportsChecking = supportChecking;
+        this.supportsSelection = supportSelection;
     }
 
     /* (non-Javadoc)
@@ -65,7 +79,7 @@ public class ResourceMappingSelectionArea extends DialogArea {
         if (description != null)
             createWrappingLabel(composite, description, 1);
         
-        viewer = CheckboxTableViewer.newCheckList(composite, SWT.SINGLE | SWT.BORDER);
+        createViewer(composite);
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = 100;
         data.widthHint = 300;
@@ -73,23 +87,31 @@ public class ResourceMappingSelectionArea extends DialogArea {
         viewer.setContentProvider(new BaseWorkbenchContentProvider());
         viewer.setLabelProvider(new ResourceMappingLabelProvider());
         viewer.setInput(new AdaptableList(mappings));
-        viewer.addCheckStateListener(new ICheckStateListener() {
-            public void checkStateChanged(CheckStateChangedEvent event) {
-                ResourceMapping[] oldMappings = checkedMappings;
-                checkedMappings = internalGetCheckedMappings();
-                if (oldMappings != checkedMappings)
-                    firePropertyChangeChange(CHECKED_MAPPINGS, oldMappings, checkedMappings);
-            }
+        if (isSupportsSelection()) {
+	        viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+	            public void selectionChanged(SelectionChangedEvent event) {
+	                ResourceMapping oldSelection = selectedMapping;
+	                selectedMapping = internalGetSelectedMapping();
+	                if (oldSelection != selectedMapping)
+	                    firePropertyChangeChange(SELECTED_MAPPING, oldSelection, selectedMapping);
+	            }
+	        });
+        }
+        if (isSupportsChecking())
+        	initializeCheckboxViewer(composite);
+    }
+
+	private void initializeCheckboxViewer(Composite composite) {
+		final CheckboxTableViewer checkboxViewer = getCheckboxTableViewer();
+		checkboxViewer.addCheckStateListener(new ICheckStateListener() {
+        	public void checkStateChanged(CheckStateChangedEvent event) {
+        		ResourceMapping[] oldMappings = checkedMappings;
+        		checkedMappings = internalGetCheckedMappings();
+        		if (oldMappings != checkedMappings)
+        			firePropertyChangeChange(CHECKED_MAPPINGS, oldMappings, checkedMappings);
+        	}
         });
-        viewer.addSelectionChangedListener(new ISelectionChangedListener() {
-            public void selectionChanged(SelectionChangedEvent event) {
-                ResourceMapping oldSelection = selectedMapping;
-                selectedMapping = internalGetSelectedMapping();
-                if (oldSelection != selectedMapping)
-                    firePropertyChangeChange(SELECTED_MAPPING, oldSelection, selectedMapping);
-            }
-        });
-        viewer.setCheckedElements(mappings);
+		checkboxViewer.setCheckedElements(mappings);
         checkedMappings = mappings;
 
         Composite buttons = createEmbeddedButtonComposite(composite);
@@ -99,7 +121,7 @@ public class ResourceMappingSelectionArea extends DialogArea {
         selectAll.setLayoutData(new GridData(GridData.FILL_BOTH));
         selectAll.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
-                viewer.setAllChecked(true);
+            	checkboxViewer.setAllChecked(true);
             }
         });
         
@@ -108,13 +130,27 @@ public class ResourceMappingSelectionArea extends DialogArea {
         deselectAll.setLayoutData(new GridData(GridData.FILL_BOTH));
         deselectAll.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
-                viewer.setAllChecked(false);
+            	checkboxViewer.setAllChecked(false);
             }
         });
-    }
+	}
+
+	private void createViewer(Composite composite) {
+		if (isSupportsChecking())
+			viewer = CheckboxTableViewer.newCheckList(composite, getViewerStyle());
+		else
+			viewer = new TableViewer(new Table(composite, getViewerStyle()));
+	}
+
+	private int getViewerStyle() {
+		int style = SWT.BORDER;
+		if (isSupportsSelection())
+			style |= SWT.SINGLE;
+		return style;
+	}
 
     /* private */ ResourceMapping[] internalGetCheckedMappings() {
-        Object[] checked = viewer.getCheckedElements();
+        Object[] checked = getCheckboxTableViewer().getCheckedElements();
         ResourceMapping[] mappings = new ResourceMapping[checked.length];
         for (int i = 0; i < checked.length; i++) {
             Object object = checked[i];
@@ -157,4 +193,16 @@ public class ResourceMappingSelectionArea extends DialogArea {
     public ResourceMapping getSelectedMapping() {
         return selectedMapping;
     }
+    
+    private CheckboxTableViewer getCheckboxTableViewer() {
+    	return (CheckboxTableViewer)viewer;
+    }
+
+	public boolean isSupportsChecking() {
+		return supportsChecking;
+	}
+
+	public boolean isSupportsSelection() {
+		return supportsSelection;
+	}
 }

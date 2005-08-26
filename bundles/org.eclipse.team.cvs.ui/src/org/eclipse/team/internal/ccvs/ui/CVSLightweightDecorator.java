@@ -32,6 +32,7 @@ import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.KnownRepositories;
 import org.eclipse.team.internal.ccvs.core.util.ResourceStateChangeListeners;
+import org.eclipse.team.internal.ccvs.ui.CVSDecoratorLabelUpdateHandler.ILabelUpdater;
 import org.eclipse.team.internal.core.BackgroundEventHandler;
 import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.core.BackgroundEventHandler.Event;
@@ -42,7 +43,7 @@ import org.eclipse.ui.internal.decorators.DecoratorManager;
 import org.eclipse.ui.themes.ITheme;
 import org.osgi.framework.Bundle;
 
-public class CVSLightweightDecorator extends LabelProvider implements ILightweightLabelDecorator, IResourceStateChangeListener, IPropertyChangeListener {
+public class CVSLightweightDecorator extends LabelProvider implements ILightweightLabelDecorator, IResourceStateChangeListener, IPropertyChangeListener, ILabelUpdater {
 
 	// Decorator id as defined in the decorator extension point
 	public final static String ID = "org.eclipse.team.cvs.ui.decorator"; //$NON-NLS-1$
@@ -120,6 +121,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 
     private ChangeDeterminationHandler changeDeterminationHandler;
     private Map calculatedChanges = new HashMap();
+	private CVSDecoratorLabelUpdateHandler resourceChangeHandler;
 
 	public CVSLightweightDecorator() {
 		ResourceStateChangeListeners.getListener().addResourceStateChangeListener(this);
@@ -134,6 +136,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 		CVSProviderPlugin.broadcastDecoratorEnablementChanged(true /* enabled */);
         
         changeDeterminationHandler = new ChangeDeterminationHandler();
+        resourceChangeHandler = new CVSDecoratorLabelUpdateHandler("Accumulating label changes due to CVS state change", "Error determining CVS decorator labels to update", this);
 	}
 	
     /*
@@ -153,7 +156,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         // Trigger a re-decoration for all the objects for which we have a new change state
         if (!calculatedChanges.isEmpty()) {
             Object[] changes = calculatedChanges.keySet().toArray(new Object[calculatedChanges.keySet().size()]);
-            refresh(changes);
+            updateLabels(changes);
             // Wait until the decoration is complete before proceeding.
             // We do this in order to manage the change cache and also to hold
             // off on more remote fetches until all other decorating is complete.
@@ -350,7 +353,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         return mapping.calculateChangeState(getLocalChangeDeterminationContext(false), new NullProgressMonitor());
     }
 
-    private SubscriberLocalChangeDeterminationContext getLocalChangeDeterminationContext(boolean canContectServer) {
+    public static SubscriberLocalChangeDeterminationContext getLocalChangeDeterminationContext(boolean canContectServer) {
         return new SubscriberLocalChangeDeterminationContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), canContectServer) {
             protected boolean hasResourceDifference(IResource resource, int depth, IProgressMonitor monitor) throws CoreException {
                 return CVSLightweightDecorator.isDirty(resource, depth);
@@ -508,7 +511,6 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	/*
 	 * Add resource and its parents to the List
 	 */
-	 
 	private void addWithParents(IResource resource, Set resources) {
 		IResource current = resource;
 
@@ -524,11 +526,6 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	public static void refresh() {
 		CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager().update(CVSUIPlugin.DECORATOR_ID);
 	}
-
-    private void refresh(Object[] changes) {
-        postLabelEvent(new LabelProviderChangedEvent(this, changes));
-        //((DecoratorManager)CVSUIPlugin.getPlugin().getWorkbench().getDecoratorManager()).redecorate(changes);
-    }
     
 	/*
 	 * Update the decorator for every resource in project
@@ -543,7 +540,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 					return true;
 				}
 			});
-			postLabelEvent(new LabelProviderChangedEvent(this, resources.toArray()));
+			getResourceChangeHandler().updateLabels((IResource[]) resources.toArray(new IResource[resources.size()]));
 		} catch (CoreException e) {
 			handleException(e);
 		}
@@ -574,24 +571,11 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 	 * @see org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener#resourceStateChanged(org.eclipse.core.resources.IResource[])
 	 */
 	public void resourceStateChanged(IResource[] changedResources) {
-		// add depth first so that update thread processes parents first.
-		//System.out.println(">> State Change Event");
-		Set resourcesToUpdate = new HashSet();
+		getResourceChangeHandler().updateLabels(changedResources);
+	}
 
-		IPreferenceStore store = CVSUIPlugin.getPlugin().getPreferenceStore();
-		boolean showingDeepDirtyIndicators = store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY);
-
-		for (int i = 0; i < changedResources.length; i++) {
-			IResource resource = changedResources[i];
-
-			if(showingDeepDirtyIndicators) {
-				addWithParents(resource, resourcesToUpdate);
-			} else {
-				resourcesToUpdate.add(resource);
-			}
-		}
-
-		postLabelEvent(new LabelProviderChangedEvent(this, resourcesToUpdate.toArray()));
+	public void updateLabels(Object[] objects) {
+		postLabelEvent(new LabelProviderChangedEvent(this, objects));
 	}
 	
 	/**
@@ -661,4 +645,8 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
 			|| prop.equals(CVSDecoratorConfiguration.IGNORED_BACKGROUND_COLOR)
 			|| prop.equals(CVSDecoratorConfiguration.IGNORED_FONT);
     }
+
+	public CVSDecoratorLabelUpdateHandler getResourceChangeHandler() {
+		return resourceChangeHandler;
+	}
 }

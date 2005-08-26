@@ -10,18 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
-import org.eclipse.compare.CompareEditorInput;
-import org.eclipse.compare.MergeContext;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
 import org.eclipse.team.internal.ui.synchronize.SynchronizeManager;
 import org.eclipse.team.ui.synchronize.ISynchronizeManager;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
 /**
  * TeamUI contains public API for generic UI-based Team functionality.
@@ -33,105 +26,7 @@ public class TeamUI {
 	// manages synchronize participants
 	private static ISynchronizeManager synchronizeManager;
 
-    private static class DefaultContentProvider implements IResourceMappingContentProvider {
-
-        /**
-         * TODO Should root be a resource mapping?
-         */
-        private final class RootObject implements IWorkbenchAdapter, IAdaptable {
-            private final ResourceMapping[] mappings;
-
-            private RootObject(ResourceMapping[] mappings) {
-                super();
-                this.mappings = mappings;
-            }
-
-            public Object[] getChildren(Object o) {
-                return mappings;
-            }
-
-            public ImageDescriptor getImageDescriptor(Object object) {
-                return null;
-            }
-
-            public String getLabel(Object o) {
-                return "Other Elements";
-            }
-
-            public Object getParent(Object o) {
-                return null;
-            }
-
-            public Object getAdapter(Class adapter) {
-                if (adapter == IWorkbenchAdapter.class)
-                    return this;
-                return null;
-            }
-        }
-
-        private final ResourceMapping[] mappings;
-        private final Object root;
-
-        public DefaultContentProvider(ResourceMapping[] mappings) {
-            this.mappings = mappings;
-            root = new RootObject(mappings);
-        }
-
-        public Object getRoot() {
-            return root;
-        }
-
-        public Object[] getChildren(Object parentElement) {
-            if (parentElement == root)
-                return mappings;
-            return new Object[0];
-        }
-
-        public Object getParent(Object element) {
-            if (element == root)
-                return null;
-            for (int i = 0; i < mappings.length; i++) {
-                ResourceMapping mapping = mappings[i];
-                if (element == mapping)
-                    return root;
-            }
-            return null;
-        }
-
-        public boolean hasChildren(Object element) {
-            if (element == root)
-                return true;
-            return false;
-        }
-
-        public Object[] getElements(Object inputElement) {
-            return getChildren(inputElement);
-        }
-
-        public void dispose() {
-            // Nothing to do
-        }
-
-        public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-            // Nothing to do
-        }
-    }
-    
-    private static IResourceMappingContentProviderFactory defaultModelContentProviderFactory = new IResourceMappingContentProviderFactory() {
-        public IResourceMappingContentProvider createContentProvider(ResourceMapping[] mappings) {
-            return new DefaultContentProvider(mappings);
-        }
-
-        public ISynchronizeModelProvider createSynchronizeModelProvider(ResourceMapping[] mappings, ISynchronizeModelProviderConfiguration configuration) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        public CompareEditorInput[] createCompareEditorInputs(ResourceMapping[] mappings, MergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
-            // TODO Auto-generated method stub
-            return null;
-        }     
-    };
+    private static IResourceMappingContentProviderFactory defaultModelContentProviderFactory = new ResourceMappingContentProviderFactory();
 
 	/**
 	 * Property constant indicating the global ignores list has changed. 

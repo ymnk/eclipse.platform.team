@@ -15,6 +15,7 @@ import org.eclipse.compare.MergeContext;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
 
 /**
@@ -42,6 +43,17 @@ public interface IResourceMappingContentProviderFactory {
      */
     public IResourceMappingContentProvider createContentProvider(
             ResourceMapping[] mappings);
+    
+    /**
+     * Return a label provider that can be used to provide
+     * labels for any resource mappings that adapt to this 
+     * factory and any modle objects that appear in the tree
+     * created by the <code>IResourceMappingContentProvider</code>
+     * returned from the <code>createContentProvider</code>.
+     * method.
+     * @return a label provider
+     */
+    public ILabelProvider getLabelProvider();
 
     /**
      * Returns a model provider that can be used to display the synchronization
@@ -83,5 +95,13 @@ public interface IResourceMappingContentProviderFactory {
     public CompareEditorInput[] createCompareEditorInputs(
             ResourceMapping[] mappings, MergeContext mergeContext,
             IProgressMonitor monitor) throws CoreException;
+    
+    /**
+	 * Return the resource mapping tree that provides the ability to travers the
+	 * model the mapping belongs to.
+	 * 
+	 * @return a resource mapping tree
+	 */
+	public IResourceMappingTree getResourceMappingTree();
 
 }

@@ -39,7 +39,7 @@ public class AdditionalMappingsDialog extends DetailsDialog {
      */
     private void createSelectedMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
-        selectedMappingsArea = new ResourceMappingSelectionArea(selectedMappings);
+        selectedMappingsArea = new ResourceMappingSelectionArea(selectedMappings, false, false);
         selectedMappingsArea.setDescription("Selected Elements");
         //selectedMappingsArea.addPropertyChangeListener(this);
         selectedMappingsArea.createArea(composite);

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 
 /**
@@ -27,7 +28,8 @@ public interface IResourceMappingContentProvider extends ITreeContentProvider {
      * This element may or may not appear in the viewer depending on
      * whether the viewer is displaying a single logical model (in which case
      * the root need not be displayed) or multiple logical models (in which
-     * case the root needs to be displayed).
+     * case the root needs to be displayed to separate the mappings of different
+     * models).
      * @return the root element of the model tree being displayed.
      */
     public Object getRoot();

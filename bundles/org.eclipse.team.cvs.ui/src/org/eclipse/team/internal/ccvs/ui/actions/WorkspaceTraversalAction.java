@@ -48,8 +48,10 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
     }
     
     private ResourceMapping[] showAllMappings(final ResourceMapping[] selectedMappings, final ResourceMapping[] allMappings) {
+    	if (isEqualArrays(selectedMappings, allMappings))
+    		return allMappings;
+    	
         final boolean[] canceled = new boolean[] { false };
-        
         getShell().getDisplay().syncExec(new Runnable() {
             public void run() {
                 AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", selectedMappings, allMappings);
@@ -65,11 +67,29 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         return allMappings;
     }
 
-    /*
+    private boolean isEqualArrays(ResourceMapping[] selectedMappings, ResourceMapping[] allMappings) {
+    	if (selectedMappings.length != allMappings.length)
+    		return false;
+		for (int i = 0; i < allMappings.length; i++) {
+			ResourceMapping mapping = allMappings[i];
+			boolean matchFound = false;
+			for (int j = 0; j < selectedMappings.length; j++) {
+				ResourceMapping selected = selectedMappings[j];
+				if (selected.equals(mapping)) {
+					matchFound = true;
+					break;
+				}
+			}
+			if (!matchFound) return false;
+		}
+		return true;
+	}
+
+	/*
      * Use the registered teamParticpants to determine if additional mappings should be included
      * in the operation.
      */
-    private ResourceMapping[] convertToParticipantMappings(ResourceMapping[] selectedMappings) {
+    public static ResourceMapping[] convertToParticipantMappings(ResourceMapping[] selectedMappings) {
         TeamProcessor processor = new TeamProcessor() {
             public String getIdentifier() {
                 return "org.eclipse.team.cvs.ui.teamProcessor";
@@ -99,7 +119,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         return selectedMappings;
     }
 
-    private TeamParticipant[] loadParticipants(RefactoringStatus status, TeamProcessor processor, ResourceMapping[] selectedMappings) throws CoreException {
+    private static TeamParticipant[] loadParticipants(RefactoringStatus status, TeamProcessor processor, ResourceMapping[] selectedMappings) throws CoreException {
         List result= new ArrayList();
         SharableParticipants sharedParticipants = new SharableParticipants();
         TeamArguments arguments = new TeamArguments() {};
@@ -121,7 +141,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         return (TeamParticipant[])result.toArray(new TeamParticipant[result.size()]);
     }
     
-    private IResource[] getResources(ResourceMapping[] selectedMappings) throws CoreException {
+    private static IResource[] getResources(ResourceMapping[] selectedMappings) throws CoreException {
         Set result = new HashSet();
         for (int i = 0; i < selectedMappings.length; i++) {
             ResourceMapping mapping = selectedMappings[i];
@@ -159,7 +179,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         return (IResource[]) result.toArray(new IResource[result.size()]);
     }
 
-    private String[] getNatures(ResourceMapping[] selectedMappings) {
+    private static String[] getNatures(ResourceMapping[] selectedMappings) {
         Set result = new HashSet();
         for (int i = 0; i < selectedMappings.length; i++) {
             ResourceMapping mapping = selectedMappings[i];
