@@ -75,26 +75,6 @@ public interface IResourceMappingContentProviderFactory {
     public ISynchronizeModelProvider createSynchronizeModelProvider(
             ResourceMapping[] mappings,
             ISynchronizeModelProviderConfiguration configuration);
-
-    /**
-     * Creates one or more compare inputs for performing comparisons and merges
-     * on the provided resource mappings. The merge context gives the model
-     * access to the contents of any remote files (for TWO-WAY and THREE-WAY
-     * comparisons) and ancestor files (for THREE-WAY). It is up to the model to
-     * decide whether all the mappings should be merged individually (i.e.
-     * multiple compare inputs returned) or together in a single compare input.
-     * 
-     * @param mappings the mappings to be compared and/or merged
-     * @param mergeContext the merge content that provides access to the
-     *            ancestor and remote file contents
-     * @param monitor a progress monitor
-     * @return one or more compare inputs for comparing and/or merging the model
-     *         elements.
-     * @throws CoreException
-     */
-    public CompareEditorInput[] createCompareEditorInputs(
-            ResourceMapping[] mappings, MergeContext mergeContext,
-            IProgressMonitor monitor) throws CoreException;
     
     /**
 	 * Return the resource mapping tree that provides the ability to travers the
@@ -102,6 +82,6 @@ public interface IResourceMappingContentProviderFactory {
 	 * 
 	 * @return a resource mapping tree
 	 */
-	public IResourceMappingTree getResourceMappingTree();
+	public IResourceMappingTreeItem getResourceMappingTree();
 
 }

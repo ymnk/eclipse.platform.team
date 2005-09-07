@@ -35,16 +35,11 @@ public class ResourceMappingContentProviderFactory implements IResourceMappingCo
 	    return null;
 	}
 
-	public CompareEditorInput[] createCompareEditorInputs(ResourceMapping[] mappings, MergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
-	    // TODO Auto-generated method stub
-	    return null;
-	}
-
 	public ILabelProvider getLabelProvider() {
 		return RESOURCE_MAPPING_LABEL_PROVIDER;
 	}
 
-	public IResourceMappingTree getResourceMappingTree() {
+	public IResourceMappingTreeItem getResourceMappingTree() {
 		return RESOURCE_MAPPING_TREE;
 	}
 }

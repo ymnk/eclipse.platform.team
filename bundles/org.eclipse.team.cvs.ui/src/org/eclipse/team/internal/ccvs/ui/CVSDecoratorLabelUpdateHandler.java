@@ -24,7 +24,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.ui.actions.WorkspaceTraversalAction;
 import org.eclipse.team.internal.core.BackgroundEventHandler;
 import org.eclipse.team.ui.IResourceMappingContentProviderFactory;
-import org.eclipse.team.ui.IResourceMappingTree;
+import org.eclipse.team.ui.IResourceMappingTreeItem;
 
 public class CVSDecoratorLabelUpdateHandler extends BackgroundEventHandler {
 	
@@ -106,7 +106,7 @@ public class CVSDecoratorLabelUpdateHandler extends BackgroundEventHandler {
 		Object o = mapping.getAdapter(IResourceMappingContentProviderFactory.class);
 		if (o instanceof IResourceMappingContentProviderFactory) {
 			IResourceMappingContentProviderFactory factory = (IResourceMappingContentProviderFactory) o;
-			IResourceMappingTree tree = factory.getResourceMappingTree();
+			IResourceMappingTreeItem tree = factory.getResourceMappingTree();
 			return tree.getParents(mapping);
 		}
 		return new ResourceMapping[0];

@@ -15,10 +15,11 @@ import java.util.List;
 
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.team.ui.IResourceMappingTree;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.ui.IResourceMappingTreeItem;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
-public class ResourceMappingTree implements IResourceMappingTree {
+public class ResourceMappingTree implements IResourceMappingTreeItem {
 
 	public ResourceMapping[] getParents(ResourceMapping mapping) {
 		IWorkbenchAdapter wa = getWorkbenchAdapter(mapping);
@@ -29,7 +30,7 @@ public class ResourceMappingTree implements IResourceMappingTree {
 		return new ResourceMapping[0];
 	}
 
-	public ResourceMapping[] getChildren(ResourceMapping mapping) {
+	public ResourceMapping[] getChildren(ResourceMapping mapping, IProgressMonitor monitor) {
 		IWorkbenchAdapter wa = getWorkbenchAdapter(mapping);
 		if (wa != null) {
 			Object[] objects = wa.getChildren(mapping.getModelObject());
