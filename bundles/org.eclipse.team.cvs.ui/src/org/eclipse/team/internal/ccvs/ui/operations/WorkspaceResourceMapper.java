@@ -18,9 +18,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 /**
- * Utility class used to warp an set of resources in a resource mapper.
- * The resulting mapper will return the workspace root as the model
+ * Utility class used to wrap a set of resources in a resource mapping.
+ * The resulting mapping will return the workspace root as the model
  * object.
+ * 
+ * TODO: The ability to wrap multiple resources in a single mapping
+ * should be provided by the resources plugin.
  * 
  * @since 3.1
  */
@@ -61,4 +64,9 @@ public final class WorkspaceResourceMapper extends ResourceMapping {
     private ResourceTraversal[] asTraversal(IResource resource, final int depth, ResourceMappingContext context) {
         return new ResourceTraversal[] { new ResourceTraversal(new IResource[] { resource }, depth, IResource.NONE)} ;
     }
+
+	public String getModelProviderId() {
+		// Use the resources model provider id
+		return SimpleResourceMapping.MODEL_PROVIDER;
+	}
 }
