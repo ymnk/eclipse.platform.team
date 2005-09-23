@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
-import org.eclipse.compare.MergeContext;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
+import org.eclipse.team.ui.mapping.MergeContext;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 

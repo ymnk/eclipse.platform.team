@@ -12,20 +12,45 @@ package org.eclipse.team.internal.ccvs.ui;
 
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
-import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.viewers.IDecoration;
+import org.eclipse.jface.viewers.ILightweightLabelDecorator;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
+import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.internal.ccvs.core.ICVSFile;
+import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.IResourceStateChangeListener;
 import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
@@ -38,6 +63,7 @@ import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.core.BackgroundEventHandler.Event;
 import org.eclipse.team.internal.core.subscribers.SubscriberLocalChangeDeterminationContext;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.mapping.ResourceMappingWithChangeDetermination;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.decorators.DecoratorManager;
 import org.eclipse.ui.themes.ITheme;
@@ -51,7 +77,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
     private class ResourceMappingEvent extends Event {
 
         private final ResourceMapping mapping;
-        private int changeState = ResourceMapping.MAY_HAVE_DIFFERENCE;
+        private int changeState = ResourceMappingWithChangeDetermination.MAY_HAVE_DIFFERENCE;
 
         public ResourceMappingEvent(ResourceMapping mapping) {
             super(0);
@@ -94,7 +120,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         protected void processEvent(Event event, IProgressMonitor monitor) throws CoreException {
             if (event instanceof ResourceMappingEvent) {
                 ResourceMappingEvent rme = (ResourceMappingEvent)event;
-                rme.setChangeState(rme.getMapping().calculateChangeState(getLocalChangeDeterminationContext(true /* can contect server */) , monitor));
+                rme.setChangeState(CVSLightweightDecorator.this.calculateChangeState(rme.getMapping(), getLocalChangeDeterminationContext(true /* can contect server */) , monitor));
                 result.add(rme);
             }
         }
@@ -150,7 +176,7 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         for (int i = 0; i < events.length; i++) {
             ResourceMappingEvent event = events[i];
             // Only interested in re-decorating those items that have a definite change state
-            if (event.changeState != ResourceMapping.MAY_HAVE_DIFFERENCE)
+            if (event.changeState != ResourceMappingWithChangeDetermination.MAY_HAVE_DIFFERENCE)
                 calculatedChanges.put(event.getMapping().getModelObject(), event);
         }
         // Trigger a re-decoration for all the objects for which we have a new change state
@@ -325,10 +351,10 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         }
         if (result != null) {
             switch (diffState) {
-            case ResourceMapping.HAS_DIFFERENCE:
+            case ResourceMappingWithChangeDetermination.HAS_DIFFERENCE:
                 result.setDirtyState(CVSDecoration.DIRTY);
                 break;
-            case ResourceMapping.NO_DIFFERENCE:
+            case ResourceMappingWithChangeDetermination.NO_DIFFERENCE:
                 result.setDirtyState(CVSDecoration.NOT_DIRTY);
                 break;
             default:
@@ -340,20 +366,20 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
         return result;
     }
 
-    /**
-     * @param mapping
-     * @return
-     * @throws CoreException
-     */
     private int calculateChangeState(ResourceMapping mapping) throws CoreException {
         ResourceMappingEvent event = (ResourceMappingEvent)calculatedChanges.get(mapping.getModelObject());
         if (event != null) {
             return event.getChangeState();
         }
-        return mapping.calculateChangeState(getLocalChangeDeterminationContext(false), new NullProgressMonitor());
+        return calculateChangeState(mapping, getLocalChangeDeterminationContext(false), new NullProgressMonitor());
     }
 
-    public static SubscriberLocalChangeDeterminationContext getLocalChangeDeterminationContext(boolean canContectServer) {
+    protected int calculateChangeState(ResourceMapping mapping, SubscriberLocalChangeDeterminationContext localChangeDeterminationContext, IProgressMonitor monitor) {
+    	// TODO: Need to fill this is
+		return 0;
+	}
+
+	public static SubscriberLocalChangeDeterminationContext getLocalChangeDeterminationContext(boolean canContectServer) {
         return new SubscriberLocalChangeDeterminationContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber(), canContectServer) {
             protected boolean hasResourceDifference(IResource resource, int depth, IProgressMonitor monitor) throws CoreException {
                 return CVSLightweightDecorator.isDirty(resource, depth);

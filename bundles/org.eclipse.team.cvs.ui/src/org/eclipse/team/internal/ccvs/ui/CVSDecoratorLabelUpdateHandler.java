@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.ui.actions.WorkspaceTraversalAction;
 import org.eclipse.team.internal.core.BackgroundEventHandler;
+import org.eclipse.team.internal.core.subscribers.SubscriberLocalChangeDeterminationContext;
 import org.eclipse.team.ui.IResourceMappingContentProviderFactory;
 import org.eclipse.team.ui.IResourceMappingTreeItem;
 
@@ -33,6 +34,7 @@ public class CVSDecoratorLabelUpdateHandler extends BackgroundEventHandler {
 	private final Map cache = new WeakHashMap();
 	
 	private static final int RESOURCE_CHANGE_EVENT = 1;
+	private SubscriberLocalChangeDeterminationContext changeContext;
 	
 	private class ResourceChangeEvent extends Event {
 		
@@ -73,10 +75,12 @@ public class CVSDecoratorLabelUpdateHandler extends BackgroundEventHandler {
 		if (event instanceof ResourceChangeEvent) {
 			ResourceChangeEvent rce = (ResourceChangeEvent) event;
 			IResource[] resources = rce.getResources();
+			changeContext = CVSLightweightDecorator.getLocalChangeDeterminationContext(false);
 			for (int i = 0; i < resources.length; i++) {
 				IResource resource = resources[i];
 				accumulateLabelChanges(resource, monitor);
 			}
+			changeContext = null;
 		}
 
 	}
@@ -126,7 +130,7 @@ public class CVSDecoratorLabelUpdateHandler extends BackgroundEventHandler {
 
 	private boolean hasChangedDirtyState(ResourceMapping mapping, IProgressMonitor monitor) {
 		try {
-			int newChangeState = mapping.calculateChangeState(getContext(), monitor);
+			int newChangeState = calculateChangeState(mapping, getContext(), monitor);
 			Integer oldChangeState = getCachedChangeState(mapping);
 			if (oldChangeState != null && oldChangeState.intValue() == newChangeState) {
 				return false;
@@ -139,6 +143,11 @@ public class CVSDecoratorLabelUpdateHandler extends BackgroundEventHandler {
 		return false;
 	}
 
+	private int calculateChangeState(ResourceMapping mapping, RemoteResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	private void setCacheChangeState(ResourceMapping mapping, Integer integer) {
 		cache.put(mapping, integer);
 	}
@@ -148,7 +157,7 @@ public class CVSDecoratorLabelUpdateHandler extends BackgroundEventHandler {
 	}
 
 	private RemoteResourceMappingContext getContext() {
-		return CVSLightweightDecorator.getLocalChangeDeterminationContext(false);
+		return changeContext;
 	}
 
 	public void updateLabels(IResource[] changedResources) {

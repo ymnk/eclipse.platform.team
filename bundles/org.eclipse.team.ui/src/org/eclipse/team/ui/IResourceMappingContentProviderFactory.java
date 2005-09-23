@@ -11,12 +11,12 @@
 package org.eclipse.team.ui;
 
 import org.eclipse.compare.CompareEditorInput;
-import org.eclipse.compare.MergeContext;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
+import org.eclipse.team.ui.mapping.MergeContext;
 
 /**
  * Factory for creating the content providers and other UI artifacts for
@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
  * a set of resource mappings would be similar to obtaining an
  * <code>IResourceMappingMerger</code>.
  * 
- * @see org.eclipse.compare.IResourceMappingMerger
+ * @see org.eclipse.team.ui.mapping.IResourceMappingMerger
  */
 public interface IResourceMappingContentProviderFactory {
 
