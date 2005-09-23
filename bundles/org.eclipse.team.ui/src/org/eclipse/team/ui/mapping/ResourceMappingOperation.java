@@ -38,6 +38,36 @@ import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
 import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
+/**
+ * Here's a summary of the input determination scheme
+ * <ol>
+ * <li>Obtain selected mappings
+ * <li>Project mappings onto resources using the appropriate
+ * context(s) in order to obtain a set of ResourceTraverals
+ * <li>Determine what model providers are interested in the targeted resources
+ * <li>From those model providers, obtain the set of affected resource mappings
+ * <li>If the original set is the same as the new set, we are done.
+ * <li>if the set differs from the original selection, rerun the mapping process
+ * for any new mappings
+ *     <ul>
+ *     <li>Only need to query model providers for mappings for new resources
+ *     <li>If new mappings are obtained, 
+ *     ask model provider to compress the mappings?
+ *     <li>keep repeating until no new mappings or resources are added
+ *     </ul> 
+ * <li>Use model provider relationships to result?
+ * <li>Display the original set and the new set with an explanation
+ *     <ul>
+ *     <li>The original set and final set may involve mappings from
+ *     multiple providers.
+ *     <li>The number of providers can be reduced by assuming that
+ *     extending models can display the elements of extended models.
+ *     Then we are only left with conflicting models.
+ *     <li>Could use a content provider approach a.k.a. Common Navigator
+ *     or component based approach
+ *     </ul> 
+ * </ol> 
+ */
 public abstract class ResourceMappingOperation extends TeamOperation {
 
 	private ResourceMapping[] mappings;
