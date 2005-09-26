@@ -42,6 +42,7 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.ResourceMappingWithChangeDetermination;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.core.CVSException;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
@@ -61,9 +62,8 @@ import org.eclipse.team.internal.ccvs.ui.CVSDecoratorLabelUpdateHandler.ILabelUp
 import org.eclipse.team.internal.core.BackgroundEventHandler;
 import org.eclipse.team.internal.core.ExceptionCollector;
 import org.eclipse.team.internal.core.BackgroundEventHandler.Event;
-import org.eclipse.team.internal.core.subscribers.SubscriberLocalChangeDeterminationContext;
+import org.eclipse.team.internal.ui.mapping.SubscriberLocalChangeDeterminationContext;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.mapping.ResourceMappingWithChangeDetermination;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.decorators.DecoratorManager;
 import org.eclipse.ui.themes.ITheme;
@@ -375,7 +375,15 @@ public class CVSLightweightDecorator extends LabelProvider implements ILightweig
     }
 
     protected int calculateChangeState(ResourceMapping mapping, SubscriberLocalChangeDeterminationContext localChangeDeterminationContext, IProgressMonitor monitor) {
-    	// TODO: Need to fill this is
+    	// TODO: Needs to be cleaned up
+    	if (mapping instanceof ResourceMappingWithChangeDetermination) {
+			ResourceMappingWithChangeDetermination change = (ResourceMappingWithChangeDetermination) mapping;
+			try {
+				return change.calculateChangeState(mapping, localChangeDeterminationContext, monitor);
+			} catch (CoreException e) {
+				CVSUIPlugin.log(e);
+			}
+		}
 		return 0;
 	}
 

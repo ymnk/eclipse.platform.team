@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.mapping;
+package org.eclipse.team.core;
 
 import org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
@@ -104,9 +104,8 @@ public abstract class ResourceMappingWithChangeDetermination extends ResourceMap
 		}
     }
 
-    protected ResourceTraversal[] getTraversals(ResourceMapping mapping, ResourceMappingChangeDeterminationContext context, IProgressMonitor monitor) {
-		// TODO Auto-generated method stub
-		return null;
+    protected ResourceTraversal[] getTraversals(ResourceMapping mapping, ResourceMappingChangeDeterminationContext context, IProgressMonitor monitor) throws CoreException {
+		return mapping.getTraversals(context, monitor);
 	}
 
 	/**

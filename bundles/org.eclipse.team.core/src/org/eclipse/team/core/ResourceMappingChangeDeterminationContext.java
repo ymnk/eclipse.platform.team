@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.ui.mapping;
+package org.eclipse.team.core;
 
 import org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 
-public abstract class ResourceMappingChangeDeterminationContext {
+public abstract class ResourceMappingChangeDeterminationContext extends RemoteResourceMappingContext {
 
     /**
 	 * Helper method to look for any changes in the given resource to the depth

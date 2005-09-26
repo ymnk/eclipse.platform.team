@@ -45,12 +45,13 @@ import org.eclipse.core.runtime.IStatus;
 public interface IResourceMappingMerger {
 
     /**
-	 * Attempt to automatically merge the out-of-sync resources of the merge
-	 * context. The merge context provides access to the out-of-sync resources (<code>MergeContext#getSyncInfoTree()</code>)
-	 * as well as the resource mappings (<code>MergeContext#getMappings()</code>)
-	 * that were used to determine which resources needed to be merged.
-	 * Implementors of this interface should use the mappings to determine what
-	 * additional semantics can be used to attempt the merge.
+	 * Attempt to automatically merge the mappings of the merge context(<code>MergeContext#getMappings()</code>).
+	 * The merge context provides access to the out-of-sync resources (<code>MergeContext#getSyncInfoTree()</code>)
+	 * associated with the mappings to be merged. However, the set of resources
+	 * may contain additional resources that are not part of the mappings being
+	 * merged. Implementors of this interface should use the mappings to
+	 * determine which resources to merge and what additional semantics can be
+	 * used to attempt the merge.
 	 * <p>
 	 * The type of merge to be performed depends on what is returned by the
 	 * <code>MergeContext#getType()</code> method. If the type is

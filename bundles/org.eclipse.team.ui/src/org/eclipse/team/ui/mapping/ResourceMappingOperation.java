@@ -151,7 +151,7 @@ public abstract class ResourceMappingOperation extends TeamOperation {
     
 	protected ResourceMappingOperation(IWorkbenchPart part, ResourceMapping[] mappings) {
 		super(part);
-		setMappings(mappings);
+		this.mappings = mappings;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
@@ -177,10 +177,15 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 		return mappings;
 	}
 
-	public void setMappings(ResourceMapping[] mappings) {
-		this.mappings = mappings;
-	}
-
+	/**
+	 * Return the auto-merger associated with the given model provider
+	 * view the adaptable mechanism.
+	 * If the model provider does not have a merger associated with
+	 * it, a default merger that performs the merge at the file level
+	 * is returned.
+	 * @param provider the model provider of the elements to be merged
+	 * @return a merger
+	 */
 	protected IResourceMappingMerger getMerger(ModelProvider provider) {
 		Object o = provider.getAdapter(IResourceMappingMerger.class);
 		if (o instanceof IResourceMappingMerger) {
@@ -189,13 +194,20 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 		return new DefaultResourceMappingMerger();
 	}
 	
+	/**
+	 * TODO: Early stages
+	 */
 	protected IResourceMappingManualMerger getManualMerger(ModelProvider provider) {
 		Object o = provider.getAdapter(IResourceMappingManualMerger.class);
 		if (o instanceof IResourceMappingManualMerger) {
 			return (IResourceMappingManualMerger) o;	
 		}
-		return getDefaultMaualMerger();
+		return getDefaultManualMerger();
 	}
 
-	protected abstract IResourceMappingManualMerger getDefaultMaualMerger();
+	/**
+	 * TODO: Early stages
+	 */
+	protected abstract IResourceMappingManualMerger getDefaultManualMerger();
+	
 }

@@ -23,7 +23,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ccvs.ui.actions.WorkspaceTraversalAction;
 import org.eclipse.team.internal.core.BackgroundEventHandler;
-import org.eclipse.team.internal.core.subscribers.SubscriberLocalChangeDeterminationContext;
+import org.eclipse.team.internal.ui.mapping.SubscriberLocalChangeDeterminationContext;
 import org.eclipse.team.ui.IResourceMappingContentProviderFactory;
 import org.eclipse.team.ui.IResourceMappingTreeItem;
 

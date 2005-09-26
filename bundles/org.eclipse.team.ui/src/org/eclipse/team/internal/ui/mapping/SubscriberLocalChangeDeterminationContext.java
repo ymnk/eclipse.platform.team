@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.core.subscribers;
+package org.eclipse.team.internal.ui.mapping;
 
 import org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext;
 import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.team.core.ResourceMappingChangeDeterminationContext;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
@@ -33,7 +34,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
 /**
  * A change determination context for comparing the local resource state against the base state.
  */
-public class SubscriberLocalChangeDeterminationContext extends RemoteResourceMappingContext {
+public class SubscriberLocalChangeDeterminationContext extends ResourceMappingChangeDeterminationContext {
     
     private final SyncInfoFilter contentDiffFilter = new SyncInfoFilter() {
         public boolean select(SyncInfo info, IProgressMonitor monitor) {
@@ -115,5 +116,10 @@ public class SubscriberLocalChangeDeterminationContext extends RemoteResourceMap
         }
         return null;
     }
+
+	public RemoteResourceMappingContext getRemoteContext() {
+		// TODO Auto-generated method stub
+		return this;
+	}
 
 }
