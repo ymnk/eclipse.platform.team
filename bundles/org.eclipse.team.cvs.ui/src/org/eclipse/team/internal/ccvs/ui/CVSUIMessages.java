@@ -5,7 +5,9 @@
  * available at http://www.eclipse.org/legal/epl-v10.html
  * 
  * Contributors: 
- * IBM - Initial API and implementation
+ *     IBM - Initial API and implementation
+ *     Maik Schreiber - bug 102461
+ *     Philippe Ombredanne - bug 84808
  **********************************************************************/
 package org.eclipse.team.internal.ccvs.ui;
 
@@ -147,6 +149,7 @@ public class CVSUIMessages extends NLS {
     public static String CVSDecoratorPreferencesPage_36;
     public static String CVSDecoratorPreferencesPage_37;
     public static String CVSDecoratorPreferencesPage_38;  // repository label
+    public static String CVSDecoratorPreferencesPage_39;
 
 	public static String CVSFilePropertiesPage_ignored;
 	public static String CVSFilePropertiesPage_notManaged;
@@ -225,6 +228,7 @@ public class CVSUIMessages extends NLS {
 	public static String CVSPreferencesPage_42;
 	public static String CVSPreferencesPage_43;
     public static String CVSPreferencesPage_44;
+    public static String CVSPreferencesPage_45;
 	public static String CVSPropertiesPage_virtualModule;
 
 
@@ -566,8 +570,6 @@ public class CVSUIMessages extends NLS {
 	public static String Save_In_Workspace_7;
 	public static String Select_a_folder_then_type_in_the_file_name__8;
 	public static String Fi_le_name__9;
-	public static String Do_not_recurse_into_sub_folders_10;
-	public static String Do_not_include_new_files_in_patch_11;
 	public static String Diff_output_format_12;
 	public static String Unified__format_required_by_Compare_With_Patch_feature__13;
 	public static String Context_14;
@@ -706,6 +708,7 @@ public class CVSUIMessages extends NLS {
 	public static String WatchEditPreferencePage_autoUpdate;
 	public static String WatchEditPreferencePage_promptUpdate;
 	public static String WatchEditPreferencePage_neverUpdate;
+	public static String WatchEditPreferencePage_0;
 
 	public static String Uneditaction_confirmMessage;
 	public static String Uneditaction_confirmTitle;
@@ -796,7 +799,7 @@ public class CVSUIMessages extends NLS {
 	public static String WorkspaceChangeSetCapability_7;
 	public static String WorkspaceChangeSetCapability_8;
 
-	public static String HasProjectMetaFile_taskName;
+	public static String ProjectMetaFile_taskName;
 	public static String TagFromWorkspace_taskName;
 	public static String TagFromRepository_taskName;
 	public static String UpdateOnlyMergeable_taskName;
@@ -821,6 +824,16 @@ public class CVSUIMessages extends NLS {
 	public static String CommitCommentArea_2;
 	public static String CommitCommentArea_3;
 	public static String CommitCommentArea_4;
+    public static String CommitCommentArea_5;
+    public static String CommitCommentArea_6;
+    
+    public static String CommentTemplatesPreferencePage_Description;
+    public static String CommentTemplatesPreferencePage_New;
+    public static String CommentTemplatesPreferencePage_Edit;
+    public static String CommentTemplatesPreferencePage_Remove;
+    public static String CommentTemplatesPreferencePage_Preview;
+    public static String CommentTemplatesPreferencePage_EditCommentTemplateTitle;
+    public static String CommentTemplatesPreferencePage_EditCommentTemplateMessage;
 
 	public static String CheckoutProjectOperation_8;
 	public static String CheckoutProjectOperation_9;
@@ -846,6 +859,16 @@ public class CVSUIMessages extends NLS {
 	public static String GenerateDiffFileOperation_0;
 	public static String GenerateDiffFileOperation_1;
 	public static String GenerateDiffFileOperation_2;
+	public static String DiffOperation_0;
+	public static String DiffOperation_1;
+	public static String GenerateDiffFileWizard_6;
+	public static String GenerateDiffFileWizard_7;
+	public static String GenerateDiffFileWizard_8;
+	public static String GenerateDiffFileWizard_9;
+	public static String GenerateDiffFileWizard_10;
+	public static String GenerateDiffFileWizard_File_multisegments;
+	public static String GenerateDiffFileWizard_SelectAll;
+	public static String GenerateDiffFileWizard_DeselectAll;	
 	public static String GenerateDiffFileWizard_0;
 	public static String GenerateDiffFileWizard_2;
 	public static String GenerateDiffFileWizard_3;
@@ -985,13 +1008,12 @@ public class CVSUIMessages extends NLS {
 	public static String UncommittedChangesDialog_3;
 	public static String UncommittedChangesDialog_4;
 	public static String AddWizard_0;
-
+	
+    public static String OpenChangeSetAction_0;
+    public static String OpenChangeSetAction_1;
+	
 	static {
 		// load message values from bundle file
 		NLS.initializeMessages(BUNDLE_NAME, CVSUIMessages.class);
 	}
-
-    public static String OpenChangeSetAction_0;
-    public static String OpenChangeSetAction_1;
-	public static String CVSDecoratorPreferencesPage_39;
 }

@@ -146,6 +146,12 @@ public final class Team {
 		// The ignores are cached and when the preferences change the
 		// cache is cleared. This makes it faster to lookup without having
 		// to re-parse the preferences.
+		initializeIgnores();
+		IIgnoreInfo[] result = getIgnoreInfo(globalIgnore);
+		return result;
+	}
+
+	private static void initializeIgnores() {
 		if (globalIgnore == null) {
 			globalIgnore = new TreeMap();
 			pluginIgnore = new TreeMap();
@@ -157,8 +163,6 @@ public final class Team {
 			}
 			initializePluginIgnores(pluginIgnore, globalIgnore);
 		}
-		IIgnoreInfo[] result = getIgnoreInfo(globalIgnore);
-		return result;
 	}
 
 	private static IIgnoreInfo[] getIgnoreInfo(Map gIgnore) {
@@ -222,10 +226,11 @@ public final class Team {
 	 * Add patterns to the list of global ignores.
 	 */
 	public static void setAllIgnores(String[] patterns, boolean[] enabled) {
+		initializeIgnores();
 		globalIgnore = new TreeMap();
 		ignoreMatchers = null;
 		for (int i = 0; i < patterns.length; i++) {
-			globalIgnore.put(patterns[i], new Boolean(enabled[i]));
+			globalIgnore.put(patterns[i], Boolean.valueOf(enabled[i]));
 		}
 		// Now set into preferences
 		StringBuffer buf = new StringBuffer();
@@ -272,9 +277,9 @@ public final class Team {
 							}
 							boolean enabled = selected != null && selected.equalsIgnoreCase("true"); //$NON-NLS-1$
 							// if this ignore doesn't already exist, add it to the global list
-							pIgnore.put(pattern, new Boolean(enabled));
+							pIgnore.put(pattern, Boolean.valueOf(enabled));
 							if (!gIgnore.containsKey(pattern)) {
-								gIgnore.put(pattern, new Boolean(enabled));
+								gIgnore.put(pattern, Boolean.valueOf(enabled));
 							}
 						}
 					}
@@ -308,7 +313,7 @@ public final class Team {
 				pattern = tok.nextToken();
 				if (pattern.length()==0) return;
 				enabled = tok.nextToken();
-				globalIgnore.put(pattern, new Boolean(enabled));
+				globalIgnore.put(pattern, Boolean.valueOf(enabled));
 			} 
 		} catch (NoSuchElementException e) {
 			return;
@@ -337,7 +342,7 @@ public final class Team {
 				for (int i = 0; i < ignoreCount; i++) {
 					String pattern = dis.readUTF();
 					boolean enabled = dis.readBoolean();
-					globalIgnore.put(pattern, new Boolean(enabled));
+					globalIgnore.put(pattern, Boolean.valueOf(enabled));
 				}
 			} finally {
 				dis.close();

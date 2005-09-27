@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2004 IBM Corporation and others.
+ * Copyright (c) 2000, 2005 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,30 +10,31 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.wizards;
 
-import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-
-import javax.xml.parsers.*;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.team.core.*;
-import org.eclipse.team.internal.core.TeamPlugin;
-import org.eclipse.team.internal.ui.*;
-import org.eclipse.ui.*;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.internal.ui.ITeamUIImages;
+import org.eclipse.team.internal.ui.ProjectSetImporter;
+import org.eclipse.team.internal.ui.TeamUIMessages;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.ui.IImportWizard;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class ProjectSetImportWizard extends Wizard implements IImportWizard {
 	ImportProjectSetMainPage mainPage;
-	public static String lastFile;
 
 	public ProjectSetImportWizard() {
 		setNeedsProgressMonitor(true);
@@ -42,11 +43,10 @@ public class ProjectSetImportWizard extends Wizard implements IImportWizard {
 	
 	public void addPages() {
 		mainPage = new ImportProjectSetMainPage("projectSetMainPage", TeamUIMessages.ProjectSetImportWizard_Import_a_Project_Set_3, TeamUIPlugin.getImageDescriptor(ITeamUIImages.IMG_PROJECTSET_IMPORT_BANNER)); //$NON-NLS-1$ 
-		mainPage.setFileName(lastFile);
 		addPage(mainPage);
 	}
+
 	public boolean performFinish() {
-		
 		// check if the desired working set exists
 		final String workingSetName = mainPage.getWorkingSetName();
 		if (workingSetName != null) {
@@ -60,87 +60,12 @@ public class ProjectSetImportWizard extends Wizard implements IImportWizard {
 		try {
 			getContainer().run(true, true, new WorkspaceModifyOperation(null) {
 				public void execute(IProgressMonitor monitor) throws InvocationTargetException {
-					InputStreamReader reader = null;
-					try {
-						String filename = mainPage.getFileName();
-						lastFile = filename;
-						reader = new InputStreamReader(new FileInputStream(filename), "UTF-8"); //$NON-NLS-1$
-						
-						SAXParserFactory factory = SAXParserFactory.newInstance();
-						SAXParser parser = factory.newSAXParser();
-						ProjectSetContentHandler handler = new ProjectSetContentHandler();
-						InputSource source = new InputSource(reader);
-						parser.parse(source, handler);
-						
-						Map map = handler.getReferences();
-						List newProjects = new ArrayList();
-						if (map.size() == 0 && handler.isVersionOne()) {
-							IProjectSetSerializer serializer = Team.getProjectSetSerializer("versionOneSerializer"); //$NON-NLS-1$
-							if (serializer != null) {
-								IProject[] projects = serializer.addToWorkspace(new String[0], filename, getShell(), monitor);
-								if (projects != null)
-									newProjects.addAll(Arrays.asList(projects));
-							}
-						} else {
-							UIProjectSetSerializationContext context = new UIProjectSetSerializationContext(getShell(), filename);
-							Iterator it = map.keySet().iterator();
-							List errors = new ArrayList();
-							while (it.hasNext()) {
-								try {
-                                    String id = (String)it.next();
-                                    List references = (List)map.get(id);
-                                    RepositoryProviderType providerType = RepositoryProviderType.getProviderType(id);
-                                    if (providerType == null) {
-                                        // The provider type is absent. Perhaps there is another provider that can import this type
-                                        providerType = TeamPlugin.getAliasType(id);
-                                    }
-                                    if (providerType == null) {
-                                        throw new TeamException(new Status(IStatus.ERROR, TeamUIPlugin.ID, 0, NLS.bind(TeamUIMessages.ProjectSetImportWizard_0, new String[] { id }), null)); 
-                                    }
-                                	ProjectSetCapability serializer = providerType.getProjectSetCapability();
-                                	ProjectSetCapability.ensureBackwardsCompatible(providerType, serializer);
-                                	if (serializer != null) {
-                                		IProject[] projects = serializer.addToWorkspace((String[])references.toArray(new String[references.size()]), context, monitor);
-                                		if (projects != null)
-                                			newProjects.addAll(Arrays.asList(projects));
-                                	}
-                                } catch (TeamException e) {
-                                    errors.add(e);
-                                }
-							}
-							if (!errors.isEmpty()) {
-							    if (errors.size() == 1) {
-							        throw (TeamException)errors.get(0);
-							    } else {
-							        TeamException[] exceptions = (TeamException[]) errors.toArray(new TeamException[errors.size()]);
-							        IStatus[] status = new IStatus[exceptions.length];
-							        for (int i = 0; i < exceptions.length; i++) {
-                                        status[i] = exceptions[i].getStatus();
-                                    }
-							        throw new TeamException(new MultiStatus(TeamUIPlugin.ID, 0, status, TeamUIMessages.ProjectSetImportWizard_1, null)); 
-							    }
-							}
-						}
-						if (workingSetName != null)
-							createWorkingSet(workingSetName, (IProject[]) newProjects.toArray(new IProject[newProjects.size()]));
-						result[0] = true;
-					} catch (IOException e) {
-						throw new InvocationTargetException(e);
-					} catch (SAXException e) {
-						throw new InvocationTargetException(e);
-					} catch (TeamException e) {
-						throw new InvocationTargetException(e);
-					} catch (ParserConfigurationException e) {
-						throw new InvocationTargetException(e);
-					} finally {
-						if (reader != null) {
-							try {
-								reader.close();
-							} catch (IOException e) {
-								throw new InvocationTargetException(e);
-							}
-						}
-					}
+					String psfFile = mainPage.getFileName();
+					PsfFilenameStore.remember(psfFile);
+					IProject[] newProjects= ProjectSetImporter.importProjectSet(psfFile, getShell(), monitor);
+					if (workingSetName != null)
+						createWorkingSet(workingSetName, newProjects);
+					result[0] = true;
 				}
 			});
 		} catch (InterruptedException e) {
@@ -176,7 +101,10 @@ public class ProjectSetImportWizard extends Wizard implements IImportWizard {
 			oldSet.setElements(projects);
 		}	
 	}
-	
+
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
+		// The code that finds "selection" is broken (it is always empty), so we
+		// must dig for the selection in the workbench.
+		PsfFilenameStore.setDefaultFromSelection(workbench);
 	}
 }

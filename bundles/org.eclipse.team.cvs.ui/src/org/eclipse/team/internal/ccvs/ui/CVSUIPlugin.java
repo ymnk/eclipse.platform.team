@@ -7,6 +7,7 @@
  * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Philippe Ombredanne - bug 84808
  *******************************************************************************/
 
 package org.eclipse.team.internal.ccvs.ui;
@@ -81,7 +82,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	private RepositoryManager repositoryManager;
 	
     private SubscriberChangeSetCollector changeSetManager;
-    
+
 	/**
 	 * CVSUIPlugin constructor
 	 * 
@@ -276,8 +277,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	 * Initializes the table of images used in this plugin.
 	 */
 	private void initializeImages() {
-		URL baseURL = getBundle().getEntry("/"); //$NON-NLS-1$
-		
 		// objects
 		createImageDescriptor(ICVSUIConstants.IMG_REPOSITORY); 
 		createImageDescriptor(ICVSUIConstants.IMG_REFRESH);
@@ -500,7 +499,7 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 	/**
 	 * Initializes the preferences for this plugin if necessary.
 	 */
-	protected void initializePreferences() {
+	protected void initializeDefaultPluginPreferences() {
 		IPreferenceStore store = getPreferenceStore();
 		// Get the plugin preferences for CVS Core
 		Preferences corePrefs = CVSProviderPlugin.getPlugin().getPluginPreferences();
@@ -531,6 +530,8 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		store.setDefault(ICVSUIConstants.PREF_COMMIT_SET_DEFAULT_ENABLEMENT, false);
 		store.setDefault(ICVSUIConstants.PREF_AUTO_REFRESH_TAGS_IN_TAG_SELECTION_DIALOG, false);
         store.setDefault(ICVSUIConstants.PREF_AUTO_SHARE_ON_IMPORT, true);
+        store.setDefault(ICVSUIConstants.PREF_ENABLE_WATCH_ON_EDIT, false);
+        store.setDefault(ICVSUIConstants.PREF_USE_PROJECT_NAME_ON_CHECKOUT, false);
         store.setDefault(ICVSUIConstants.PREF_COMMIT_FILES_DISPLAY_THRESHOLD, 1000);
 		
 		PreferenceConverter.setDefault(store, ICVSUIConstants.PREF_CONSOLE_COMMAND_COLOR, new RGB(0, 0, 0));
@@ -597,7 +598,6 @@ public class CVSUIPlugin extends AbstractUIPlugin {
 		super.start(context);
 		
 		initializeImages();
-		initializePreferences();
 		
 		CVSAdapterFactory factory = new CVSAdapterFactory();
 		Platform.getAdapterManager().registerAdapters(factory, ICVSRemoteFile.class);
@@ -700,4 +700,13 @@ public class CVSUIPlugin extends AbstractUIPlugin {
             throw new InvocationTargetException(e);
         }
     }
+
+	/**
+	 * Helper method which access the preference store to determine if the 
+	 * project name from the project description file (.project) should be used
+	 * as the project name on checkout.
+	 */
+	public boolean isUseProjectNameOnCheckout() {
+		return getPreferenceStore().getBoolean(ICVSUIConstants.PREF_USE_PROJECT_NAME_ON_CHECKOUT);
+	}
 }
