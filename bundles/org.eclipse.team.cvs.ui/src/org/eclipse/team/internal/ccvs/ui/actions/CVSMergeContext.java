@@ -11,8 +11,11 @@
 package org.eclipse.team.internal.ccvs.ui.actions;
 
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -56,6 +59,15 @@ public class CVSMergeContext extends MergeContext {
 	public void dispose() {
 		participant.dispose();
 		super.dispose();
+	}
+
+	public SyncInfo getSyncInfo(IResource resource) throws CoreException {
+		return participant.getSubscriber().getSyncInfo(resource);
+	}
+
+	public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
+		IResource[] resources = new ResourceMappingScope("", getMappings(), traversals).getRoots();
+		participant.refreshNow(resources, "TODO: CVS Merge Context Refresh", monitor);
 	}
 
 }

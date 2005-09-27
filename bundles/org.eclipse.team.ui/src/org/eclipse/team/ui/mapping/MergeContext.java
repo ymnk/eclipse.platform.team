@@ -30,7 +30,6 @@ import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.IStreamMerger;
 import org.eclipse.compare.internal.merge.TextStreamMerger;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
-import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
 import org.eclipse.core.resources.IEncodedStorage;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -41,7 +40,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.content.IContentDescription;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.team.core.synchronize.FastSyncInfoFilter;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
@@ -61,13 +59,7 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * @see IResourceMappingMerger
  * @since 3.2
  */
-public abstract class MergeContext {
-
-	/**
-	 * Comparison type constants
-	 */
-	public final static String TWO_WAY = "two-way"; //$NON-NLS-1$
-	public final static String THREE_WAY = "three-way"; //$NON-NLS-1$
+public abstract class MergeContext implements IMergeContext {
 	
     private final String type;
     private final SyncInfoTree tree;
@@ -143,11 +135,17 @@ public abstract class MergeContext {
 	 * <code>MergeStatus.CONFLICTS</code>, the list of failed files can be 
 	 * obtained by calling the <code>MergeStatus#getConflictingFiles()</code>
 	 * method.
+	 * <p>
+	 * Any resource changes triggered by this merge will be reported through the 
+	 * resource delta mechanism and the sync-info tree associated with this context.
 	 * 
 	 * TODO: How do we handle folder removals generically?
 	 * 
+	 * @see SyncInfoSet#addSyncSetChangedListener(ISyncInfoSetChangeListener)
+	 * @see org.eclipse.core.resources.IWorkspace#addResourceChangeListener(IResourceChangeListener)
+	 * 
 	 * @param infos
-	 *            the sync infos to be merged
+	 *            the array of sync info to be merged
 	 * @param monitor
 	 *            a progress monitor
 	 * @return a status indicating success or failure. A code of
