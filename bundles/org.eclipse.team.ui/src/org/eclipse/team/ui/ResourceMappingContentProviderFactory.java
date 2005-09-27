@@ -10,16 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
-import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.team.internal.ui.ResourceMappingContentProvider;
 import org.eclipse.team.internal.ui.ResourceMappingTree;
 import org.eclipse.team.internal.ui.dialogs.ResourceMappingLabelProvider;
 import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
-import org.eclipse.team.ui.mapping.MergeContext;
 
 public class ResourceMappingContentProviderFactory implements IResourceMappingContentProviderFactory {
 	

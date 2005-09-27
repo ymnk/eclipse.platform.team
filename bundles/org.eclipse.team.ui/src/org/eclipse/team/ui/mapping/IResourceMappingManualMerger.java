@@ -34,7 +34,7 @@ public interface IResourceMappingManualMerger {
      * @throws CoreException
      */
     public void performManualMerge(
-            IWorkbenchPart part, MergeContext mergeContext,
+            IWorkbenchPart part, IMergeContext mergeContext,
             IProgressMonitor monitor) throws CoreException;
     
 }

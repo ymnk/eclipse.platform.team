@@ -10,14 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
-import org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext;
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
 import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 
 /**
  * Allows a model provider to build a view of their model that 
@@ -29,6 +30,8 @@ import org.eclipse.team.core.synchronize.SyncInfoTree;
  *    - main case to consider is project addition/removal
  *    - is it OK to say context must be thrown away and re-obtained
  *    - or should we have API to support addition and removal of mappings
+ *    - or should we have a context that considers the entire workspace
+ *    (i.e. have scopes just like participants do)
  * How do we handle mapping changes (i.e. the set of resources covered by
  * a mapping may change?
  *    - may be OK to say that context must be thrown away and re-obtained
@@ -51,10 +54,12 @@ public interface ISynchronizationContext {
 	public final static String THREE_WAY = "three-way"; //$NON-NLS-1$
 
 	/**
-	 * Return the set of mappings for which this context applies.
+	 * Return the scope which defines the set of mappings for which 
+	 * this context applies. Changes in the scope may result in changes
+	 * to the sync-info available in the tree of this context.
 	 * @return the set of mappings for which this context applies.
 	 */
-	public ResourceMapping[] getMappings();
+	public ResourceMappingScope getScope();
 
 	/**
 	 * Return a tree that contains <code>SyncInfo</code> nodes for resources
@@ -120,7 +125,6 @@ public interface ISynchronizationContext {
 	 * @see SyncInfoSet#addSyncSetChangedListener(ISyncInfoSetChangeListener)
 	 * @see org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent
 	 * 
-	 * TODO: do we want this?
 	 * @param traversals the resource traversals which indicate which resources
 	 *            are to be refreshed
 	 * @param flags additional refresh behavior. For instance, if

@@ -56,4 +56,8 @@ public class ResourceMappingScope extends AbstractSynchronizeScope {
 		return roots;
 	}
 
+	public ResourceMapping[] getMappings() {
+		return mappings;
+	}
+
 }

@@ -121,7 +121,7 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 			Map contexts = buildMergeContexts(monitor);
 			for (Iterator iter = contexts.keySet().iterator(); iter.hasNext();) {
 				ModelProvider provider = (ModelProvider) iter.next();	
-				performMerge(provider, (MergeContext)contexts.get(provider), monitor);
+				performMerge(provider, (IMergeContext)contexts.get(provider), monitor);
 			}
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
@@ -136,7 +136,7 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 			List list = (List)providerToMappings.get(provider);
 			ResourceMapping[] providerMappings = (ResourceMapping[]) list.toArray(new ResourceMapping[list.size()]);
 			ResourceMappingScope scope = buildMergeContextScope(provider, providerMappings, monitor);
-			MergeContext context = buildMergeContext(provider, providerMappings, scope, monitor);
+			IMergeContext context = buildMergeContext(provider, providerMappings, scope, monitor);
 			result.put(provider, context);
 		}
 		return result;
@@ -209,7 +209,7 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	 * @param monitor a progress monitor
 	 * @return a merge context for merging the mappings
 	 */
-	protected abstract MergeContext buildMergeContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor);
+	protected abstract IMergeContext buildMergeContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor);
 
 	private Map getProviderToMappingsMap() throws CoreException {
 		if (providerToMappings == null) {
@@ -264,7 +264,7 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	 * @param monitor a progress monitor
 	 * @throws CoreException
 	 */
-	protected void performMerge(ModelProvider provider, MergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
+	protected void performMerge(ModelProvider provider, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
 		try {
 			monitor.beginTask(null, 100);
 			IStatus status = performAutoMerge(provider, mergeContext, Policy.subMonitorFor(monitor, 95));
@@ -293,13 +293,13 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	 * will be a MergeStatus that includes the mappings that could not be merged. 
 	 * @throws CoreException if errors occurred
 	 */
-	protected IStatus performAutoMerge(ModelProvider provider, MergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
+	protected IStatus performAutoMerge(ModelProvider provider, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
 		IResourceMappingMerger merger = getMerger(provider);
 		IStatus status = merger.merge(mergeContext, monitor);
 		return status;
 	}
 
-	protected void performManualMerge(ModelProvider provider, ResourceMapping[] conflictingMappings, MergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
+	protected void performManualMerge(ModelProvider provider, ResourceMapping[] conflictingMappings, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
 //		mergeContext.restrictTo(conflictingMappings, monitor);
 		IResourceMappingManualMerger merger = getManualMerger(provider);
 		merger.performManualMerge(getPart(), mergeContext, monitor);

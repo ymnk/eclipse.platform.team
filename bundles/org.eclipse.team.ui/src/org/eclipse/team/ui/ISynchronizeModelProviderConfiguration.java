@@ -12,7 +12,7 @@ package org.eclipse.team.ui;
 
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider;
-import org.eclipse.team.ui.mapping.MergeContext;
+import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
@@ -33,6 +33,6 @@ public interface ISynchronizeModelProviderConfiguration {
     
     public SyncInfoSet getSyncInfoSet();
     
-    public MergeContext getMergeContext();
+    public IMergeContext getMergeContext();
 
 }

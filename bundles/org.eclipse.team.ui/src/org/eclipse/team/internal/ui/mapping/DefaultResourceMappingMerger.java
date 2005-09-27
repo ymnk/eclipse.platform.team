@@ -14,8 +14,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.mapping.IResourceMappingMerger;
-import org.eclipse.team.ui.mapping.MergeContext;
 import org.eclipse.team.ui.mapping.MergeStatus;
 
 /**
@@ -23,7 +23,7 @@ import org.eclipse.team.ui.mapping.MergeStatus;
  */
 public class DefaultResourceMappingMerger implements IResourceMappingMerger {
 	
-	public IStatus merge(MergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
+	public IStatus merge(IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
 		try {
 			monitor.beginTask(null, 100);
 			IStatus status = mergeContext.merge(mergeContext.getSyncInfoTree(), Policy.subMonitorFor(monitor, 75));
@@ -33,10 +33,10 @@ public class DefaultResourceMappingMerger implements IResourceMappingMerger {
 		}
 	}
 
-	private IStatus covertFilesToMappings(IStatus status, MergeContext mergeContext) {
+	private IStatus covertFilesToMappings(IStatus status, IMergeContext mergeContext) {
 		if (status.getCode() == MergeStatus.CONFLICTS) {
 			// In general, we can't say which mapping failed so return them all
-			return new MergeStatus(status.getPlugin(), status.getMessage(), mergeContext.getMappings());
+			return new MergeStatus(status.getPlugin(), status.getMessage(), mergeContext.getScope().getMappings());
 		}
 		return status;
 	}

@@ -81,7 +81,7 @@ public interface IResourceMappingMerger {
 	 *         <code>MergeStatus#getConflictingMappings()</code>
 	 * @throws CoreException if errors occurred
 	 */
-    public IStatus merge(MergeContext mergeContext,
+    public IStatus merge(IMergeContext mergeContext,
             IProgressMonitor monitor) throws CoreException;
 
 }

@@ -22,9 +22,9 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.internal.ccvs.core.CVSStatus;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
+import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.mapping.MergeContext;
 import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 
@@ -32,7 +32,7 @@ public class CVSMergeContext extends MergeContext {
 	
 	private WorkspaceSynchronizeParticipant participant;
 
-	public static MergeContext createContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
+	public static IMergeContext createContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
 		WorkspaceSynchronizeParticipant participant = new WorkspaceSynchronizeParticipant(scope);
 		participant.refreshNow(participant.getResources(), NLS.bind("Preparing to merge {0}", new String[] { "TODO: mapping description for CVS merge context initialization" }), monitor);
 		return new CVSMergeContext(THREE_WAY, participant, mappings);
@@ -68,6 +68,10 @@ public class CVSMergeContext extends MergeContext {
 	public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
 		IResource[] resources = new ResourceMappingScope("", getMappings(), traversals).getRoots();
 		participant.refreshNow(resources, "TODO: CVS Merge Context Refresh", monitor);
+	}
+
+	public ResourceMappingScope getScope() {
+		return (ResourceMappingScope)participant.getScope();
 	}
 
 }

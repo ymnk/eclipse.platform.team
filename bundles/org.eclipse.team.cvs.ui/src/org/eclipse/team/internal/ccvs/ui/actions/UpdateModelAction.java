@@ -19,8 +19,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.core.subscribers.SubscriberResourceMappingContext;
+import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.mapping.IResourceMappingManualMerger;
-import org.eclipse.team.ui.mapping.MergeContext;
 import org.eclipse.team.ui.mapping.ResourceMappingMergeOperation;
 import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 import org.eclipse.ui.IWorkbenchPart;
@@ -38,7 +38,7 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
 			super(part, mappings);
 		}
 
-		protected MergeContext buildMergeContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
+		protected IMergeContext buildMergeContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
 			return CVSMergeContext.createContext(provider, mappings, scope, monitor);
 		}
 

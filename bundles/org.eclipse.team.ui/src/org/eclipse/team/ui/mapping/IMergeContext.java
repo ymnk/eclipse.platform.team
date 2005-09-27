@@ -35,6 +35,11 @@ public interface IMergeContext extends ISynchronizationContext {
 	 * to signal that the merge is done.This will allow repository providers to
 	 * update the synchronization state of the file to reflect that the file is
 	 * up-to-date with the repository.
+	 * <p>
+	 * Clients should not implement this interface but should instead subclass 
+	 * MergeContext.
+	 * 
+	 * @see MergeContext
 	 * 
 	 * @param file the file that has been merged
 	 * @param monitor a progress monitor
@@ -90,7 +95,7 @@ public interface IMergeContext extends ISynchronizationContext {
 	 * @return a status indicating success or failure. A code of
 	 *         <code>MergeStatus.CONFLICTS</code> indicates that the file contain
 	 *         non-mergable conflicts and must be merged manually.
-	 * @see org.eclipse.team.ui.mapping.MergeContext#merge(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.team.ui.mapping.IMergeContext#merge(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public IStatus merge(SyncInfo info, IProgressMonitor monitor);
 	
