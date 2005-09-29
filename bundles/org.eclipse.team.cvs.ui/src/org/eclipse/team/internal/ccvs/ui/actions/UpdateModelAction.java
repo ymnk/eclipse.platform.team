@@ -39,7 +39,7 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
 		}
 
 		protected IMergeContext buildMergeContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
-			return CVSMergeContext.createContext(provider, mappings, scope, monitor);
+			return CVSMergeContext.createContext(mappings, scope, monitor);
 		}
 
 		protected IResourceMappingManualMerger getDefaultManualMerger() {

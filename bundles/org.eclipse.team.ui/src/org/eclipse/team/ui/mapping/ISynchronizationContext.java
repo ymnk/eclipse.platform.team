@@ -18,24 +18,24 @@ import org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoSet;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
-import org.eclipse.team.ui.synchronize.ResourceMappingScope;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
 /**
- * Allows a model provider to build a view of their model that 
- * includes synchronization information with a remote location
- * (usually a repository).
- * 
- * TODO:
- * How do we handle mapping addition/removal?
- *    - main case to consider is project addition/removal
- *    - is it OK to say context must be thrown away and re-obtained
- *    - or should we have API to support addition and removal of mappings
- *    - or should we have a context that considers the entire workspace
- *    (i.e. have scopes just like participants do)
- * How do we handle mapping changes (i.e. the set of resources covered by
- * a mapping may change?
- *    - may be OK to say that context must be thrown away and re-obtained
- * In general, how do define and maintain the input used to scope the context?
+ * Allows a model provider to build a view of their model that includes
+ * synchronization information with a remote location (usually a repository).
+ * <p>
+ * The scope of the context is defined when the context is created. The creator
+ * of the scope may affect changes on the scope which will result in property
+ * change events from the scope and may result in sync-info change events from
+ * the sync-info tree. Clients should note that it is possible that a change in
+ * the scope will result in new out-of-sync resources being covered by the scope
+ * but not result in a sync-info change event from the sync-info tree. This can
+ * occur because the set may already have contained the out-of-sync resource
+ * with the understanding that the client would have ignored it. Consequently,
+ * clients should listen to both sources in order to guarantee that they update
+ * any dependent state appropriately.
+ * <p>
+ * This interface is not intended to be implemented by clients.
  * 
  * @since 3.2
  */
@@ -54,19 +54,22 @@ public interface ISynchronizationContext {
 	public final static String THREE_WAY = "three-way"; //$NON-NLS-1$
 
 	/**
-	 * Return the scope which defines the set of mappings for which 
-	 * this context applies. Changes in the scope may result in changes
-	 * to the sync-info available in the tree of this context.
+	 * Return the scope of this synchronization context. The scope determines
+	 * the set of resources to which the context applies. Changes in the scope
+	 * may result in changes to the sync-info available in the tree of this
+	 * context.
+	 * 
 	 * @return the set of mappings for which this context applies.
 	 */
-	public ResourceMappingScope getScope();
+	public ISynchronizeScope getScope();
 
 	/**
 	 * Return a tree that contains <code>SyncInfo</code> nodes for resources
 	 * that are out-of-sync. The tree will contain sync-info for any out-of-sync
-	 * resources that are associated with the mappings of this context. The tree
+	 * resources that are within the scope of this context. The tree
 	 * may include additional out-of-sync resources, which should be ignored by
-	 * the client.
+	 * the client. Clients can test for inclusion using the method 
+	 * {@link ISynchronizeScope#contains(IResource)}.
 	 * 
 	 * @return a tree that contains a <code>SyncInfo</code> node for any
 	 *         resources that are out-of-sync.

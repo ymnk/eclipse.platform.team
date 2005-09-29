@@ -11,6 +11,7 @@
 package org.eclipse.team.ui.synchronize;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.ListenerList;
@@ -162,5 +163,20 @@ public abstract class AbstractSynchronizeScope implements ISynchronizeScope {
 	 */
 	protected void init(IMemento memento) {
 		// Do nothing by default
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.synchronize.ISynchronizeScope#contains(org.eclipse.core.resources.IResource)
+	 */
+	public boolean contains(IResource resource) {
+		IResource[] roots = getRoots();
+		IPath resourcePath = resource.getFullPath();
+		for (int i = 0; i < roots.length; i++) {
+			IResource root = roots[i];
+			if (root.getFullPath().isPrefixOf(resourcePath)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

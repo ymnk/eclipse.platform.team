@@ -26,13 +26,14 @@ import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
 import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.mapping.MergeContext;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 
 public class CVSMergeContext extends MergeContext {
 	
 	private WorkspaceSynchronizeParticipant participant;
 
-	public static IMergeContext createContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
+	public static IMergeContext createContext(ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
 		WorkspaceSynchronizeParticipant participant = new WorkspaceSynchronizeParticipant(scope);
 		participant.refreshNow(participant.getResources(), NLS.bind("Preparing to merge {0}", new String[] { "TODO: mapping description for CVS merge context initialization" }), monitor);
 		return new CVSMergeContext(THREE_WAY, participant, mappings);
@@ -70,7 +71,7 @@ public class CVSMergeContext extends MergeContext {
 		participant.refreshNow(resources, "TODO: CVS Merge Context Refresh", monitor);
 	}
 
-	public ResourceMappingScope getScope() {
+	public ISynchronizeScope getScope() {
 		return (ResourceMappingScope)participant.getScope();
 	}
 

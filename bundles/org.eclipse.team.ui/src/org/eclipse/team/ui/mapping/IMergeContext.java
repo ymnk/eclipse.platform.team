@@ -22,7 +22,9 @@ import org.eclipse.team.core.synchronize.SyncInfoSet;
  * or a model specific synchronization view that supports merging.
  * 
  * TODO: Need to have a story for folder merging
- * 
+ * <p>
+ * This interface is not intended to be implemented by clients.
+ *  
  * @see IResourceMappingMerger
  * @since 3.2
  */

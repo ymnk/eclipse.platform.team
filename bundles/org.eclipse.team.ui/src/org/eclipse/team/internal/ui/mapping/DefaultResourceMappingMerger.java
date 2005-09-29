@@ -17,6 +17,7 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.mapping.IResourceMappingMerger;
 import org.eclipse.team.ui.mapping.MergeStatus;
+import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 
 /**
  * A default merger that delegates the merge to the merge context.
@@ -36,7 +37,8 @@ public class DefaultResourceMappingMerger implements IResourceMappingMerger {
 	private IStatus covertFilesToMappings(IStatus status, IMergeContext mergeContext) {
 		if (status.getCode() == MergeStatus.CONFLICTS) {
 			// In general, we can't say which mapping failed so return them all
-			return new MergeStatus(status.getPlugin(), status.getMessage(), mergeContext.getScope().getMappings());
+			// TODO: Should not assume that we are dealing with a resource mapping scope
+			return new MergeStatus(status.getPlugin(), status.getMessage(), ((ResourceMappingScope)mergeContext.getScope()).getMappings());
 		}
 		return status;
 	}
