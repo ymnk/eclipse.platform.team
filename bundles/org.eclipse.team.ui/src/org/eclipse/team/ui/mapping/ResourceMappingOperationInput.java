@@ -52,7 +52,8 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  *     ask model provider to compress the mappings?
  *     <li>keep repeating until no new mappings or resources are added
  *     </ul> 
- * <li>Use model provider relationships to result?
+ * <li>Compress the mappings from each provider
+ * <li>flag overlapping mappings from independent providers
  * <li>Display the original set and the new set with an explanation
  *     <ul>
  *     <li>The original set and final set may involve mappings from

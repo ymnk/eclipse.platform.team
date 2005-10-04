@@ -48,11 +48,6 @@ import org.eclipse.ui.themes.ITheme;
  */
 public class CVSDecoration {
 
-    // Dirty state indicators
-    public static final int NOT_DIRTY = 0;
-    public static final int POSSIBLY_DIRTY = 1;
-    public static final int DIRTY = 2;
-    
 	// Decorations
 	private String prefix;
 	private String suffix;
@@ -64,7 +59,7 @@ public class CVSDecoration {
 	// Properties
 	private int resourceType = IResource.FILE;
 	private boolean watchEditEnabled = false;
-	private int dirtyState = NOT_DIRTY;
+	private boolean isDirty = false;
 	private boolean isIgnored = false;
 	private boolean isAdded = false;
 	private boolean isNewResource = false;
@@ -143,7 +138,6 @@ public class CVSDecoration {
 		prefs.setValue(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION, store.getBoolean(ICVSUIConstants.PREF_SHOW_NEWRESOURCE_DECORATION));
 		prefs.setValue(ICVSUIConstants.PREF_CALCULATE_DIRTY, store.getBoolean(ICVSUIConstants.PREF_CALCULATE_DIRTY));
 		prefs.setValue(ICVSUIConstants.PREF_DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
-        prefs.setValue(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG, store.getString(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG));
 		prefs.setValue(ICVSUIConstants.PREF_ADDED_FLAG, store.getString(ICVSUIConstants.PREF_ADDED_FLAG));
 		prefs.setValue(ICVSUIConstants.PREF_USE_FONT_DECORATORS, store.getString(ICVSUIConstants.PREF_USE_FONT_DECORATORS));
 		
@@ -245,11 +239,9 @@ public class CVSDecoration {
 
 	private void computeText() {
 		Map bindings = new HashMap();
-		if (getDirtyState() == DIRTY) {
+		if (isDirty()) {
 			bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, preferences.getString(ICVSUIConstants.PREF_DIRTY_FLAG));
-		} else if (getDirtyState() == POSSIBLY_DIRTY) {
-            bindings.put(CVSDecoratorConfiguration.DIRTY_FLAG, preferences.getString(ICVSUIConstants.PREF_POSSIBLY_DIRTY_FLAG));
-        }
+		}
 		if (isAdded()) {
 			bindings.put(CVSDecoratorConfiguration.ADDED_FLAG, preferences.getString(ICVSUIConstants.PREF_ADDED_FLAG));
 		} else if(isHasRemote()){
@@ -258,27 +250,22 @@ public class CVSDecoration {
 		}	
 		bindings.put(CVSDecoratorConfiguration.RESOURCE_NAME, getResourceName());
 		bindings.put(CVSDecoratorConfiguration.FILE_KEYWORD, getKeywordSubstitution());
-		if (resourceType != IResource.FILE) {
-            if (location != null) {
-    			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_HOST, location.getHost());
-    			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_METHOD, location.getMethod().getName());
-    			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_USER, location.getUsername());
-    			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_ROOT, location.getRootDirectory());
-    
-                RepositoryManager repositoryManager = CVSUIPlugin.getPlugin().getRepositoryManager();
-                RepositoryRoot root = repositoryManager.getRepositoryRootFor(location);
-                CVSUIPlugin.getPlugin().getRepositoryManager();
-                String label = root.getName();
-                if (label == null) {
-                  label = location.getLocation(true);
-                }
-                bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_LABEL, label);
-            }
-            if (repository != null) {
-                bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_REPOSITORY, repository);
-            }
-        }
+		if (resourceType != IResource.FILE && location != null) {
+			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_HOST, location.getHost());
+			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_METHOD, location.getMethod().getName());
+			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_USER, location.getUsername());
+			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_ROOT, location.getRootDirectory());
+			bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_REPOSITORY, repository);
 
+            RepositoryManager repositoryManager = CVSUIPlugin.getPlugin().getRepositoryManager();
+            RepositoryRoot root = repositoryManager.getRepositoryRootFor(location);
+            CVSUIPlugin.getPlugin().getRepositoryManager();
+            String label = root.getName();
+            if (label == null) {
+              label = location.getLocation(true);
+            }
+            bindings.put(CVSDecoratorConfiguration.REMOTELOCATION_LABEL, label);
+		}
 		CVSDecoratorConfiguration.decorate(this, getTextFormatter(), bindings);
 	}
 
@@ -288,10 +275,9 @@ public class CVSDecoration {
 			return newResource;
 		}
 		// show dirty icon
-		if (preferences.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION) && getDirtyState() == DIRTY) {
+		if (preferences.getBoolean(ICVSUIConstants.PREF_SHOW_DIRTY_DECORATION) && isDirty()) {
 			return dirty;
 		}
-        // TODO: Need an icon for potentially dirty
 		// show added
 		if (preferences.getBoolean(ICVSUIConstants.PREF_SHOW_ADDED_DECORATION) && isAdded()) {
 			return added;
@@ -320,7 +306,7 @@ public class CVSDecoration {
 			setBackgroundColor(current.getColorRegistry().get(CVSDecoratorConfiguration.IGNORED_BACKGROUND_COLOR));
 			setForegroundColor(current.getColorRegistry().get(CVSDecoratorConfiguration.IGNORED_FOREGROUND_COLOR));
 			setFont(current.getFontRegistry().get(CVSDecoratorConfiguration.IGNORED_FONT));
-		} else if(getDirtyState() == DIRTY) {
+		} else if(isDirty()) {
 			setBackgroundColor(current.getColorRegistry().get(CVSDecoratorConfiguration.OUTGOING_CHANGE_BACKGROUND_COLOR));
 			setForegroundColor(current.getColorRegistry().get(CVSDecoratorConfiguration.OUTGOING_CHANGE_FOREGROUND_COLOR));
 			setFont(current.getFontRegistry().get(CVSDecoratorConfiguration.OUTGOING_CHANGE_FONT));
@@ -350,13 +336,13 @@ public class CVSDecoration {
 	public void setAdded(boolean isAdded) {
 		this.isAdded = isAdded;
 	}
-    
-    public int getDirtyState() {
-        return dirtyState;
-    }
 
-	public void setDirtyState(int dirtyState) {
-		this.dirtyState = dirtyState;
+	public boolean isDirty() {
+		return isDirty;
+	}
+
+	public void setDirty(boolean isDirty) {
+		this.isDirty = isDirty;
 	}
 
 	public boolean isIgnored() {
@@ -442,16 +428,15 @@ public class CVSDecoration {
 	public void setVirtualFolder(boolean virtualFolder) {
 		this.virtualFolder = virtualFolder;
 	}
-    
+	
     public ICVSRepositoryLocation getLocation() {
         return location;
     }
     
     public void combine(CVSDecoration resourceDecoration) {
         // dirty if any are dirty
-        int ds = resourceDecoration.getDirtyState();
-        if (resourceDecoration.getDirtyState() == DIRTY || getDirtyState() == NOT_DIRTY)
-            setDirtyState(ds);
+        if (resourceDecoration.isDirty())
+            setDirty(true);
         // ignored only if all are ignored
         if (isIgnored() && !resourceDecoration.isIgnored())
             setIgnored(false);

@@ -64,7 +64,7 @@ public class CVSDecoratorPreferencesPage extends PreferencePage implements IWork
 		public void configureDecoration(CVSDecoration decoration) {
 			decoration.setResourceType(type);
 			decoration.setAdded(added);
-			decoration.setDirtyState(dirty ? CVSDecoration.DIRTY : CVSDecoration.NOT_DIRTY); // TODO: need to include potential dirtyness
+			decoration.setDirty(dirty);
 			decoration.setNewResource(newResource);
 			decoration.setIgnored(ignored);
 			decoration.setHasRemote(hasRemote);
