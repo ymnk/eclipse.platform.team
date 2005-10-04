@@ -46,26 +46,26 @@ public class CVSURI {
 	}
 
 	private static CVSTag getTag(URI uri) {
-		String f = uri.getFragment();
-		int i = f.indexOf(',');
-		if (i == -1) {
+//		String f = uri.getFragment();
+//		int i = f.indexOf(',');
+//		if (i == -1) {
 			return CVSTag.DEFAULT;
-		}
-		String name = f.substring(i + 1);
-		return new CVSTag(name, CVSTag.BRANCH);
+//		}
+//		String name = f.substring(i + 1);
+//		return new CVSTag(name, CVSTag.BRANCH);
 	}
 
 	private static IPath getPath(URI uri) {
-		String path = uri.getFragment();
-		int i = path.indexOf(',');
-		if (i != -1) {
-			path = path.substring(0, i);
-		}
+		String path = uri.getPath();
+//		int i = path.indexOf(',');
+//		if (i != -1) {
+//			path = path.substring(0, i);
+//		}
 		return new Path(path);
 	}
 
 	private static ICVSRepositoryLocation getRepository(URI uri) throws CVSException {
-		String ssp = uri.getSchemeSpecificPart();
+		String ssp = uri.getFragment();
 		return CVSRepositoryLocation.fromString(ssp);
 	}
 	
@@ -79,6 +79,10 @@ public class CVSURI {
 		return new CVSURI(repository, path.append(name), tag);
 	}
 
+	public CVSURI append(IPath childPath) {
+		return new CVSURI(repository, path.append(childPath), tag);
+	}
+	
 	public String getLastSegment() {
 		return path.lastSegment();
 	}
@@ -86,10 +90,10 @@ public class CVSURI {
 	public URI toURI() {
 		try {
 			String fragment = path.toString();
-			if (tag != null && tag.getType() != CVSTag.HEAD) {
-				fragment += ","+tag.getName();
-			}
-			return new URI(SCHEME, repository.getLocation(false), fragment);
+//			if (tag != null && tag.getType() != CVSTag.HEAD) {
+//				fragment += ","+tag.getName();
+//			}
+			return new URI(SCHEME, repository.getHost(), fragment, repository.getLocation(false));
 		} catch (URISyntaxException e) {
 			throw new Error(e.getMessage());
 		}
@@ -117,7 +121,7 @@ public class CVSURI {
 	
 	public ICVSRemoteFile toFile() {
 		// TODO: What about keyword mode?
-		return new RemoteFile((RemoteFolder)removeLastSegment().toFolder(), 0, getLastSegment(), null, null, tag);
+		return RemoteFile.create(path.toString(), repository);
 	}
 
 }
