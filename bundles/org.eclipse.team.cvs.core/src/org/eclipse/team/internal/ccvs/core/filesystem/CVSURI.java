@@ -22,7 +22,6 @@ import org.eclipse.team.internal.ccvs.core.ICVSRemoteFile;
 import org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
-import org.eclipse.team.internal.ccvs.core.resources.CVSEntryLineTag;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolder;
 
@@ -46,26 +45,29 @@ public class CVSURI {
 	}
 
 	private static CVSTag getTag(URI uri) {
-//		String f = uri.getFragment();
-//		int i = f.indexOf(',');
-//		if (i == -1) {
+		String f = uri.getFragment();
+		int i = f.indexOf(',');
+		if (i == -1) {
 			return CVSTag.DEFAULT;
-//		}
-//		String name = f.substring(i + 1);
-//		return new CVSTag(name, CVSTag.BRANCH);
+		}
+		String name = f.substring(i + 1);
+		return new CVSTag(name, CVSTag.BRANCH);
 	}
 
 	private static IPath getPath(URI uri) {
-		String path = uri.getPath();
-//		int i = path.indexOf(',');
-//		if (i != -1) {
-//			path = path.substring(0, i);
-//		}
+		String path = uri.getFragment();
+		int i = path.indexOf(',');
+		if (i != -1) {
+			path = path.substring(0, i);
+		}
 		return new Path(path);
 	}
 
 	private static ICVSRepositoryLocation getRepository(URI uri) throws CVSException {
-		String ssp = uri.getFragment();
+		String ssp = uri.getSchemeSpecificPart();
+		if (!ssp.startsWith(":")) {
+			ssp = ":" + ssp;
+		}
 		return CVSRepositoryLocation.fromString(ssp);
 	}
 	
@@ -90,10 +92,10 @@ public class CVSURI {
 	public URI toURI() {
 		try {
 			String fragment = path.toString();
-//			if (tag != null && tag.getType() != CVSTag.HEAD) {
-//				fragment += ","+tag.getName();
-//			}
-			return new URI(SCHEME, repository.getHost(), fragment, repository.getLocation(false));
+			if (tag != null && tag.getType() != CVSTag.HEAD) {
+				fragment += ","+tag.getName();
+			}
+			return new URI(SCHEME, repository.getLocation(false), fragment);
 		} catch (URISyntaxException e) {
 			throw new Error(e.getMessage());
 		}
