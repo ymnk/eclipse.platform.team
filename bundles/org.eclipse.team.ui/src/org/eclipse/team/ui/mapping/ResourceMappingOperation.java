@@ -11,10 +11,8 @@
 package org.eclipse.team.ui.mapping;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
@@ -27,12 +25,6 @@ import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-import org.eclipse.ltk.core.refactoring.participants.ParticipantManager;
-import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
-import org.eclipse.ltk.core.refactoring.participants.TeamArguments;
-import org.eclipse.ltk.core.refactoring.participants.TeamParticipant;
-import org.eclipse.ltk.core.refactoring.participants.TeamProcessor;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
 import org.eclipse.team.ui.TeamOperation;
@@ -71,28 +63,6 @@ import org.eclipse.ui.IWorkbenchPart;
 public abstract class ResourceMappingOperation extends TeamOperation {
 
 	private ResourceMapping[] mappings;
-
-    public static TeamParticipant[] loadParticipants(RefactoringStatus status, TeamProcessor processor, ResourceMapping[] selectedMappings) throws CoreException {
-        List result= new ArrayList();
-        SharableParticipants sharedParticipants = new SharableParticipants();
-        TeamArguments arguments = new TeamArguments() {};
-        String[] natures = getNatures(selectedMappings);
-        for (int i = 0; i < selectedMappings.length; i++) {
-            ResourceMapping mapping = selectedMappings[i];
-            result.addAll(Arrays.asList(ParticipantManager.loadTeamParticipants(
-                status, processor, mapping.getModelObject(), arguments, natures, sharedParticipants)));
-            result.addAll(Arrays.asList(ParticipantManager.loadTeamParticipants(
-                    status, processor, mapping, arguments, natures, sharedParticipants)));
-        }
-        IResource[] resources= getResources(selectedMappings);
-        for (int i= 0; i < resources.length; i++) {
-            IResource resource= resources[i];
-            result.addAll(Arrays.asList(ParticipantManager.loadTeamParticipants(
-                status, processor, resource, arguments, natures, sharedParticipants)));
-            
-        }
-        return (TeamParticipant[])result.toArray(new TeamParticipant[result.size()]);
-    }
     
     private static IResource[] getResources(ResourceMapping[] selectedMappings) throws CoreException {
         Set result = new HashSet();
