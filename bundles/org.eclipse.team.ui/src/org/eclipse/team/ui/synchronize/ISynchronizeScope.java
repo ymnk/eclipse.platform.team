@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.util.IPropertyChangeListener;
 
@@ -88,4 +89,11 @@ public interface ISynchronizeScope {
 	 * @since 3.2
 	 */
 	public boolean contains(IResource resource);
+
+	/**
+	 * 
+	 * @return
+	 * @since 3.2
+	 */
+	public ResourceMapping[] getResourceMappings();
 }

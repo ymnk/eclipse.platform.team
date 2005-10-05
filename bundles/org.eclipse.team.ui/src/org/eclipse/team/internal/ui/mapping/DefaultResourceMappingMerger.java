@@ -38,7 +38,7 @@ public class DefaultResourceMappingMerger implements IResourceMappingMerger {
 		if (status.getCode() == MergeStatus.CONFLICTS) {
 			// In general, we can't say which mapping failed so return them all
 			// TODO: Should not assume that we are dealing with a resource mapping scope
-			return new MergeStatus(status.getPlugin(), status.getMessage(), ((ResourceMappingScope)mergeContext.getScope()).getMappings());
+			return new MergeStatus(status.getPlugin(), status.getMessage(), ((ResourceMappingScope)mergeContext.getScope()).getResourceMappings());
 		}
 		return status;
 	}

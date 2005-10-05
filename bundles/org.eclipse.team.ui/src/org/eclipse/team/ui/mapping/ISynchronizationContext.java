@@ -39,7 +39,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizeScope;
  * 
  * @since 3.2
  */
-public interface ISynchronizationContext {
+public interface ISynchronizationContext extends ITeamViewerContext {
 
 	/**
 	 * Synchronization type constant that indicates that

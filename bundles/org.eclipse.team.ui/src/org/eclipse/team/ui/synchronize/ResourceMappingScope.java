@@ -72,7 +72,7 @@ public class ResourceMappingScope extends AbstractSynchronizeScope {
 	 * Return the resource mappings used to define this scope.
 	 * @return the resource mappings used to define this scope
 	 */
-	public ResourceMapping[] getMappings() {
+	public ResourceMapping[] getResourceMappings() {
 		return mappings;
 	}
 	

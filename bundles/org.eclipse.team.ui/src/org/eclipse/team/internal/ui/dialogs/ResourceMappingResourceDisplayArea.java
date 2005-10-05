@@ -11,11 +11,22 @@
 package org.eclipse.team.internal.ui.dialogs;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.internal.resources.mapping.*;
-import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext;
+import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.internal.resources.mapping.ResourceMappingContext;
+import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -27,9 +38,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.team.internal.core.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.IResourceMappingContentProviderFactory;
+import org.eclipse.team.ui.mapping.INavigatorContentExtensionFactory;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.model.*;
+import org.eclipse.ui.model.IWorkbenchAdapter;
+import org.eclipse.ui.model.WorkbenchContentProvider;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.views.navigator.ResourceSorter;
 
 /**
@@ -57,13 +70,18 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
      * @return it's label
      */
     public static String getLabel(ResourceMapping mapping) {
-    	Object o = mapping.getAdapter(IResourceMappingContentProviderFactory.class);
-    	if (o instanceof IResourceMappingContentProviderFactory) {
-			IResourceMappingContentProviderFactory factory = (IResourceMappingContentProviderFactory) o;
-			ILabelProvider labelProvider = factory.getLabelProvider();
-			String text = labelProvider.getText(mapping);
-			labelProvider.dispose(); // TODO should keep label provider around
-			return text;
+    	Object o = null;
+    	try {
+			o = mapping.getModelProvider().getAdapter(INavigatorContentExtensionFactory.class);
+			if (o instanceof INavigatorContentExtensionFactory) {
+				INavigatorContentExtensionFactory factory = (INavigatorContentExtensionFactory) o;
+				ILabelProvider labelProvider = factory.getLabelProvider();
+				String text = labelProvider.getText(mapping);
+				labelProvider.dispose(); // TODO should keep label provider around
+				return text;
+			}
+		} catch (CoreException e) {
+			TeamUIPlugin.log(e);
 		}
         o = mapping;
         IWorkbenchAdapter workbenchAdapter = getWorkbenchAdapter((IAdaptable)o);

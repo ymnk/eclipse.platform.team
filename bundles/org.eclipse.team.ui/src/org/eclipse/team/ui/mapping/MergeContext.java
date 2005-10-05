@@ -59,20 +59,19 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * @see IResourceMappingMerger
  * @since 3.2
  */
-public abstract class MergeContext implements IMergeContext {
+public abstract class MergeContext extends TeamViewerContext implements IMergeContext {
 	
     private final String type;
     private final SyncInfoTree tree;
-    private final ResourceMapping[] mappings;
 
 	/**
      * Create a merge context.
 	 * @param type 
      */
     protected MergeContext(String type, SyncInfoTree tree, ResourceMapping[] mappings) {
+    	super(mappings);
 		this.type = type;
 		this.tree = tree;
-		this.mappings = mappings;
     }
     
     /**
@@ -86,14 +85,6 @@ public abstract class MergeContext implements IMergeContext {
      */
     public final String getType() {
     	return type;
-    }
-    
-    /**
-     * Return the set of mappings for which this context applies.
-     * @return the set of mappings for which this context applies.
-     */
-    public ResourceMapping[] getMappings() {
-    	return mappings;
     }
     
     /**

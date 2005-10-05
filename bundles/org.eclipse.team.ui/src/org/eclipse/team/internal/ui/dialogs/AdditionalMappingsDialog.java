@@ -13,19 +13,22 @@ package org.eclipse.team.internal.ui.dialogs;
 import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.ui.mapping.ITeamViewerContext;
 
 public class AdditionalMappingsDialog extends DetailsDialog {
 
-    private final ResourceMapping[] mappings;
     private final ResourceMapping[] selectedMappings;
     private ResourceMappingSelectionArea selectedMappingsArea;
     private ResourceMappingHierarchyArea allMappingsArea;
+	private ITeamViewerContext context;
 
-    public AdditionalMappingsDialog(Shell parentShell, String dialogTitle, ResourceMapping[] selectedMappings, ResourceMapping[] mappings) {
+    public AdditionalMappingsDialog(Shell parentShell, String dialogTitle, ResourceMapping[] selectedMappings, ITeamViewerContext context) {
         super(parentShell, dialogTitle);
         this.selectedMappings = selectedMappings;
-        this.mappings = mappings;
+        this.context = context;
     }
 
     protected void createMainDialogArea(Composite parent) {
@@ -53,7 +56,7 @@ public class AdditionalMappingsDialog extends DetailsDialog {
      */
     private void createAllMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
-        allMappingsArea = ResourceMappingHierarchyArea.create(mappings);
+        allMappingsArea = ResourceMappingHierarchyArea.create(context);
         allMappingsArea.setDescription("All elements to be operated on");
         //allMappingsArea.addPropertyChangeListener(this);
         allMappingsArea.createArea(composite);

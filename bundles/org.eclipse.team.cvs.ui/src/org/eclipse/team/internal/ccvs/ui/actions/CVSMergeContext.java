@@ -67,7 +67,7 @@ public class CVSMergeContext extends MergeContext {
 	}
 
 	public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
-		IResource[] resources = new ResourceMappingScope("", getMappings(), traversals).getRoots();
+		IResource[] resources = new ResourceMappingScope("", getResourceMappings(ALL_MAPPINGS), traversals).getRoots();
 		participant.refreshNow(resources, "TODO: CVS Merge Context Refresh", monitor);
 	}
 

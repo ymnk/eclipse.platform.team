@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
@@ -178,5 +182,15 @@ public abstract class AbstractSynchronizeScope implements ISynchronizeScope {
 			}
 		}
 		return false;
+	}
+	
+	public ResourceMapping[] getResourceMappings() {
+		List result = new ArrayList();
+		IResource[] roots = getRoots();
+		for (int i = 0; i < roots.length; i++) {
+			IResource resource = roots[i];
+			result.add(resource.getAdapter(ResourceMapping.class));
+		}
+		return (ResourceMapping[]) result.toArray(new ResourceMapping[result.size()]);
 	}
 }

@@ -140,7 +140,7 @@ public class ResourceMappingOperationInput {
 
 	private Set internalGetMappingsFromProviders(IResource[] resources, String[] affectedNatures, IProgressMonitor monitor) throws CoreException {
 		Set result = new HashSet();
-		IModelProviderDescriptor[] descriptors = ModelProvider.getModelProviders();
+		IModelProviderDescriptor[] descriptors = ModelProvider.getModelProviderDescriptors();
 		for (int i = 0; i < descriptors.length; i++) {
 			IModelProviderDescriptor descriptor = descriptors[i];
 			ResourceMapping[] mappings = descriptor.getMappings(resources, affectedNatures, contexts, monitor);

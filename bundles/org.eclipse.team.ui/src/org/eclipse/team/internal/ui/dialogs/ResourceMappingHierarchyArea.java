@@ -10,9 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.dialogs;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -21,7 +27,11 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.ui.*;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.ui.IResourceMappingContentProvider;
+import org.eclipse.team.ui.mapping.INavigatorContentExtensionFactory;
+import org.eclipse.team.ui.mapping.ITeamViewerContext;
+import org.eclipse.team.ui.mapping.NavigatorContentExtension;
 
 public class ResourceMappingHierarchyArea extends DialogArea {
 
@@ -31,16 +41,16 @@ public class ResourceMappingHierarchyArea extends DialogArea {
     
     /*
      * TODO: There are some potential problems here
-     *   - the input changed method probably should not be propogated to the
+     *   - the input changed method probably should not be propagated to the
      *     sub-providers. Perhaps an additional method is needed (setViewer)?
-     *   - this content provider has state that is dependant on what is
+     *   - this content provider has state that is dependent on what is
      *     displayed in the view. Should a refresh of the viewer clear this state?
      *     I don't think it needs to unless the input changes (which it never does
      *     after the first set).
      */
     private static class CompositeContentProvider implements IResourceMappingContentProvider, ILabelProvider {
 
-        private final Map providers; // Map of IResourceMappingContentProvider -> ILabelProvider
+        private final Map providers; // Map of ModelProvider -> NavigatorContentExtension
         private final Map providerMap = new HashMap();
         private final ILabelProvider defaultLabelProvider = new ResourceMappingLabelProvider();
 
@@ -52,40 +62,34 @@ public class ResourceMappingHierarchyArea extends DialogArea {
         	IResourceMappingContentProvider provider = getSingleProvider();
         	if (provider != null) {
 				Object root = provider.getRoot();
-        		providerMap.put(root, provider);
+        		providerMap.put(root, getNavigatorContentExtension(root));
 				return root;
         	}
             return this;
         }
 
-		private IResourceMappingContentProvider getSingleProvider() {
-			if (providers.size() == 1) {
-				return (IResourceMappingContentProvider)providers.keySet().iterator().next();
-			}
-			return null;
-		}
-
-        public Object[] getChildren(Object parentElement) {
+		public Object[] getChildren(Object parentElement) {
         	IResourceMappingContentProvider singleProvider = getSingleProvider();
         	if (singleProvider != null) {
         		return singleProvider.getChildren(parentElement);
         	}
             if (parentElement == this) {
                 List result = new ArrayList();
-               	for (Iterator iter = providers.keySet().iterator(); iter.hasNext();) {
-    				IResourceMappingContentProvider provider = (IResourceMappingContentProvider) iter.next();
+               	for (Iterator iter = providers.values().iterator(); iter.hasNext();) {
+               		NavigatorContentExtension extension = (NavigatorContentExtension) iter.next();
+               		IResourceMappingContentProvider provider = extension.getContentProvider();
                     Object element = provider.getRoot();
-                    providerMap.put(element, provider);
+                    providerMap.put(element, extension);
                     result.add(element);
                 }
                 return result.toArray(new Object[result.size()]);
             } else {
-                IResourceMappingContentProvider provider = getProvider(parentElement);
-                if (provider != null) {
-                    Object[] elements = provider.getChildren(parentElement);
+            	NavigatorContentExtension extension = getNavigatorContentExtension(parentElement);
+                if (extension != null) {
+                    Object[] elements = extension.getContentProvider().getChildren(parentElement);
                     for (int i = 0; i < elements.length; i++) {
                         Object element = elements[i];
-                        providerMap.put(element, provider);
+                        providerMap.put(element, extension);
                     }
                     return elements;
                 }
@@ -107,8 +111,24 @@ public class ResourceMappingHierarchyArea extends DialogArea {
             return provider.getParent(element);
         }
 
-		private IResourceMappingContentProvider getProvider(Object element) {
-			return (IResourceMappingContentProvider)providerMap.get(element);
+		private NavigatorContentExtension getNavigatorContentExtension(Object element) {
+			if (providers.size() == 1) {
+				return ((NavigatorContentExtension)providers.values().iterator().next());
+			}
+			return (NavigatorContentExtension)providerMap.get(element);
+		}
+		
+		private IResourceMappingContentProvider getSingleProvider() {
+			if (providers.size() == 1)
+				return getNavigatorContentExtension(this).getContentProvider();
+			return null;
+		}
+		
+        private IResourceMappingContentProvider getProvider(Object element) {
+			NavigatorContentExtension e = getNavigatorContentExtension(element);
+			if (e == null)
+				return null;
+			return e.getContentProvider();
 		}
 
         public boolean hasChildren(Object element) {
@@ -124,7 +144,7 @@ public class ResourceMappingHierarchyArea extends DialogArea {
         	return getChildren(element).length > 0;
         }
 
-        public Object[] getElements(Object inputElement) {
+		public Object[] getElements(Object inputElement) {
         	IResourceMappingContentProvider singleProvider = getSingleProvider();
         	if (singleProvider != null) {
         		return singleProvider.getElements(inputElement);
@@ -139,31 +159,26 @@ public class ResourceMappingHierarchyArea extends DialogArea {
 
         public void dispose() {
         	providerMap.clear();
-        	for (Iterator iter = providers.keySet().iterator(); iter.hasNext();) {
-				IResourceMappingContentProvider provider = (IResourceMappingContentProvider) iter.next();
-				provider.dispose();
-				((ILabelProvider)providers.get(provider)).dispose();
+        	for (Iterator iter = providers.values().iterator(); iter.hasNext();) {
+          		NavigatorContentExtension extension = (NavigatorContentExtension) iter.next();
+           		extension.dispose();
             }
         }
 
         public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
         	providerMap.clear();
-           	for (Iterator iter = providers.keySet().iterator(); iter.hasNext();) {
-				IResourceMappingContentProvider provider = (IResourceMappingContentProvider) iter.next();
+           	for (Iterator iter = providers.values().iterator(); iter.hasNext();) {
+           		NavigatorContentExtension extension = (NavigatorContentExtension) iter.next();
+				IResourceMappingContentProvider provider = extension.getContentProvider();
                 provider.inputChanged(viewer, oldInput, newInput);
             }
         }
 
 		private ILabelProvider getLabelProvider(Object o) {
-        	IResourceMappingContentProvider singleProvider = getSingleProvider();
-        	if (singleProvider != null) {
-        		return (ILabelProvider)providers.get(singleProvider);
-        	}
-			if (o != this) {		
-				IResourceMappingContentProvider provider = getProvider(o);
-				if (provider != null)
-					return (ILabelProvider)providers.get(provider);
-				// The provider for the object is not known so try the parent
+			if (o != this) {
+				NavigatorContentExtension e = getNavigatorContentExtension(o);
+				if (e != null)
+					return e.getLabelProvider();
 				Object parent = getParent(o);
 				if (parent != null)
 					return getLabelProvider(parent);
@@ -182,7 +197,8 @@ public class ResourceMappingHierarchyArea extends DialogArea {
 		public void addListener(ILabelProviderListener listener) {
 			defaultLabelProvider.addListener(listener);
 			for (Iterator iter = providers.values().iterator(); iter.hasNext();) {
-				ILabelProvider lp = (ILabelProvider) iter.next();
+				NavigatorContentExtension extension = (NavigatorContentExtension) iter.next();
+				ILabelProvider lp = extension.getLabelProvider();
 				lp.addListener(listener);
 			}
 		}
@@ -194,37 +210,44 @@ public class ResourceMappingHierarchyArea extends DialogArea {
 		public void removeListener(ILabelProviderListener listener) {
 			defaultLabelProvider.removeListener(listener);
 			for (Iterator iter = providers.values().iterator(); iter.hasNext();) {
-				ILabelProvider lp = (ILabelProvider) iter.next();
+				NavigatorContentExtension extension = (NavigatorContentExtension) iter.next();
+				ILabelProvider lp = extension.getLabelProvider();
 				lp.removeListener(listener);
 			}
 		}
         
     }
     
-    public static ResourceMappingHierarchyArea create(ResourceMapping[] mappings) {
-        Map factories = new HashMap();
-        for (int i = 0; i < mappings.length; i++) {
-            ResourceMapping mapping = mappings[i];
-            IResourceMappingContentProviderFactory factory = TeamUI.getFactory(mapping);
-            List list = (List)factories.get(factory);
-            if (list == null) {
-                list = new ArrayList();
-                factories.put(factory, list);
-            }
-            list.add(mapping);
-        }
-        Map providers = new HashMap();
-        for (Iterator iter = factories.keySet().iterator(); iter.hasNext();) {
-            IResourceMappingContentProviderFactory factory = (IResourceMappingContentProviderFactory) iter.next();
-            List list = (List)factories.get(factory);
-            IResourceMappingContentProvider contentProvider = factory.createContentProvider((ResourceMapping[]) list.toArray(new ResourceMapping[list.size()]));
-			providers.put(contentProvider, factory.getLabelProvider());
-        }
-        CompositeContentProvider provider = new CompositeContentProvider(providers);
+    public static ResourceMappingHierarchyArea create(ITeamViewerContext context) {
+    	ModelProvider[] providers = context.getModelProviders();
+    	Map extensions = new HashMap();
+    	for (int i = 0; i < providers.length; i++) {
+			ModelProvider provider = providers[i];
+			INavigatorContentExtensionFactory factory = getFactory(provider);
+			if (factory == null) {
+				try {
+					ModelProvider resourceModelProvider = ModelProvider.getModelProviderDescriptor(ResourcesPlugin.MODEL_PROVIDER_ID).getModelProvider();
+					if (!extensions.containsKey(resourceModelProvider)) {
+						factory = getFactory(resourceModelProvider);
+					}
+				} catch (CoreException e) {
+					TeamUIPlugin.log(e);
+				}
+			}
+			if (factory != null) {
+				NavigatorContentExtension extension = factory.createProvider(context);
+				extensions.put(provider, extension);
+			}
+		}
+        CompositeContentProvider provider = new CompositeContentProvider(extensions);
         return new ResourceMappingHierarchyArea(provider);
     }
     
-    private ResourceMappingHierarchyArea(CompositeContentProvider contentProvider) {
+    private static INavigatorContentExtensionFactory getFactory(ModelProvider provider) {
+		return (INavigatorContentExtensionFactory) provider.getAdapter(INavigatorContentExtensionFactory.class);
+	}
+
+	private ResourceMappingHierarchyArea(CompositeContentProvider contentProvider) {
         this.contentProvider = contentProvider;
     }
     
