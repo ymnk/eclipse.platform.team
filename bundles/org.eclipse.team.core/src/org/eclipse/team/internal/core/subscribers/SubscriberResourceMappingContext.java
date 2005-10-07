@@ -28,6 +28,8 @@ import org.eclipse.team.internal.core.*;
  * to determine whether the local contents differ from the remote contents.
  * This allows the context to be used for different operations (check-in,
  * update and replace).
+ * 
+ * TODO: Do we want explicit support for differentiating a commit from an update?
  * @since 3.1
  */
 public class SubscriberResourceMappingContext extends RemoteResourceMappingContext {
@@ -125,24 +127,36 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
     }
 
     /* (non-Javadoc)
-     * @see org.eclipse.core.resources.mapping.ResourceMappingContext#contentDiffers(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
+     * @see org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext#hasRemoteChange(org.eclipse.core.resources.IResource, org.eclipse.core.runtime.IProgressMonitor)
      */
-    public final boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
+    public final boolean hasRemoteChange(IResource resource, IProgressMonitor monitor) throws CoreException {
     	try {
 			monitor.beginTask(null, 100);
-			ensureRefreshed(file, IResource.DEPTH_ZERO, NONE, Policy.subMonitorFor(monitor, 10));
-			SyncInfo syncInfo = subscriber.getSyncInfo(file);
-			validateRemote(file, syncInfo);
-			return syncInfo != null && contentDiffFilter.select(syncInfo, Policy.subMonitorFor(monitor, 90));
+			ensureRefreshed(resource, IResource.DEPTH_ONE, NONE, monitor);
+			SyncInfo syncInfo = subscriber.getSyncInfo(resource);
+			validateRemote(resource, syncInfo);
+	    	if (syncInfo == null) return false;
+	    	int direction = SyncInfo.getDirection(syncInfo.getKind());
+			return direction == SyncInfo.OUTGOING || direction == SyncInfo.CONFLICTING;
 		} finally {
 			monitor.done();
 		}
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext#hasLocalChange(org.eclipse.core.resources.IResource, org.eclipse.core.runtime.IProgressMonitor)
+     */
+    public boolean hasLocalChange(IResource resource, IProgressMonitor monitor) throws CoreException {
+    	SyncInfo syncInfo = subscriber.getSyncInfo(resource);
+    	if (syncInfo == null) return false;
+    	int direction = SyncInfo.getDirection(syncInfo.getKind());
+		return direction == SyncInfo.OUTGOING || direction == SyncInfo.CONFLICTING;
     }
 
 	/* (non-Javadoc)
      * @see org.eclipse.core.resources.mapping.ResourceMappingContext#fetchContents(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
      */
-    public final IStorage fetchContents(IFile file, IProgressMonitor monitor) throws CoreException {
+    public final IStorage fetchRemoteContents(IFile file, IProgressMonitor monitor) throws CoreException {
     	try {
 			monitor.beginTask(null, 100);
 	    	ensureRefreshed(file, IResource.DEPTH_ZERO, FILE_CONTENTS_REQUIRED, Policy.subMonitorFor(monitor, 10));
@@ -152,6 +166,24 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
 	            return null;
 	        }
 	        return remote.getStorage(Policy.subMonitorFor(monitor, 90));
+		} finally {
+			monitor.done();
+		}
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext#fetchBaseContents(org.eclipse.core.resources.IFile, org.eclipse.core.runtime.IProgressMonitor)
+     */
+    public final IStorage fetchBaseContents(IFile file, IProgressMonitor monitor) throws CoreException {
+    	try {
+			monitor.beginTask(null, 100);
+	    	ensureRefreshed(file, IResource.DEPTH_ZERO, FILE_CONTENTS_REQUIRED, Policy.subMonitorFor(monitor, 10));
+	        SyncInfo syncInfo = subscriber.getSyncInfo(file);
+	        IResourceVariant base = validateBase(file, syncInfo);
+	        if (base == null) {
+	            return null;
+	        }
+	        return base.getStorage(Policy.subMonitorFor(monitor, 90));
 		} finally {
 			monitor.done();
 		}
@@ -294,16 +326,39 @@ public class SubscriberResourceMappingContext extends RemoteResourceMappingConte
         if (syncInfo == null) return null;
         IResourceVariant remote = syncInfo.getRemote();
         if (remote == null) return null;
-        boolean containerExpected = resource.getType() != IResource.FILE;
+        return validateRemote(resource, remote);
+    }
+
+	private IResourceVariant validateRemote(IResource resource, IResourceVariant remote) throws CoreException {
+		boolean containerExpected = resource.getType() != IResource.FILE;
         if (remote.isContainer() && !containerExpected) {
             throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, IResourceStatus.RESOURCE_WRONG_TYPE, Messages.SubscriberResourceMappingContext_0 + resource.getFullPath().toString(), null));
         } else if (!remote.isContainer() && containerExpected) {
             throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, IResourceStatus.RESOURCE_WRONG_TYPE, Messages.SubscriberResourceMappingContext_1 + resource.getFullPath().toString(), null));
         }
         return remote;
+	}
+    
+	/*
+	 * Validate that the base resource is of the proper type and return the
+	 * base resource if it is OK. A return of null indicates that there is no base.
+	 */
+    private IResourceVariant validateBase(IResource resource, SyncInfo syncInfo) throws CoreException {
+        if (syncInfo == null) return null;
+        IResourceVariant base = syncInfo.getBase();
+        if (base == null) return null;
+        return validateRemote(resource, base);
     }
 
     public void setAutoRefresh(boolean autoRefresh) {
         this.autoRefresh = autoRefresh;
     }
+
+	public boolean isThreeWay() {
+		return subscriber.getResourceComparator().isThreeWay();
+	}
+
+	public boolean contentDiffers(IFile file, IProgressMonitor monitor) throws CoreException {
+		return hasRemoteChange(file, monitor) || hasLocalChange(file, monitor);
+	}
 }

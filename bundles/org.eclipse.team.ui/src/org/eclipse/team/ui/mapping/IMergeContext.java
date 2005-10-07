@@ -41,6 +41,8 @@ public interface IMergeContext extends ISynchronizationContext {
 	 * Clients should not implement this interface but should instead subclass 
 	 * MergeContext.
 	 * 
+	 * TODO: How are these batched? IWorkspace#run?
+	 * 
 	 * @see MergeContext
 	 * 
 	 * @param file the file that has been merged
