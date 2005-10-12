@@ -67,47 +67,14 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * </ol>
  * @since 3.2
  */
-public class ResourceMappingOperationInput {
+public class ResourceMappingOperationInput extends SimpleResourceMappingOperationInput {
 
-	private final ResourceMapping[] inputMappings;
-	private final ResourceMappingContext[] contexts;
 	private final Map inputMappingsToResources = new HashMap();
 	private final Map targetMappingsToResources = new HashMap();
-
-	protected static ResourceTraversal[] combineTraversals(ResourceTraversal[] allTraversals) {
-		Set zero = new HashSet();
-		Set shallow = new HashSet();
-		Set deep = new HashSet();
-		for (int i = 0; i < allTraversals.length; i++) {
-			ResourceTraversal traversal = allTraversals[i];
-			switch (traversal.getDepth()) {
-			case IResource.DEPTH_ZERO:
-				zero.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			case IResource.DEPTH_ONE:
-				shallow.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			case IResource.DEPTH_INFINITE:
-				deep.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			}
-		}
-		List result = new ArrayList();
-		if (!zero.isEmpty()) {
-			result.add(new ResourceTraversal((IResource[]) zero.toArray(new IResource[zero.size()]), IResource.DEPTH_ZERO, IResource.NONE));
-		}
-		if (!shallow.isEmpty()) {
-			result.add(new ResourceTraversal((IResource[]) shallow.toArray(new IResource[shallow.size()]), IResource.DEPTH_ONE, IResource.NONE));
-		}
-		if (!deep.isEmpty()) {
-			result.add(new ResourceTraversal((IResource[]) deep.toArray(new IResource[deep.size()]), IResource.DEPTH_INFINITE, IResource.NONE));
-		}
-		return (ResourceTraversal[]) result.toArray(new ResourceTraversal[result.size()]);
-	}
+	private boolean hasAdditionalMappings;
 	
-	public ResourceMappingOperationInput(ResourceMapping[] mappings, ResourceMappingContext[] contexts) {
-		this.inputMappings = mappings;
-		this.contexts = contexts;
+	public ResourceMappingOperationInput(ResourceMapping[] mappings, ResourceMappingContext context) {
+		super(mappings, context);
 	}
 	
 	public void buildInput(IProgressMonitor monitor) throws CoreException {
@@ -119,6 +86,21 @@ public class ResourceMappingOperationInput {
 			newResources = addToTargetMappingToResourceMap(targetMappings, Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
 			targetMappings = internalGetMappingsFromProviders((IResource[]) newResources.toArray(new IResource[newResources.size()]), getAffectedNatures(targetMappings), Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
 		} while (!newResources.isEmpty());
+		hasAdditionalMappings = internalHasAdditionalMappings();
+	}
+
+	private boolean internalHasAdditionalMappings() {
+		ResourceMapping[] inputMappings = getSeedMappings();
+		if (inputMappings .length == targetMappingsToResources.size()) {
+			for (int i = 0; i < inputMappings.length; i++) {
+				ResourceMapping mapping = inputMappings[i];
+				if (!targetMappingsToResources.containsKey(mapping)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private String[] getAffectedNatures(Set targetMappings) {
@@ -143,7 +125,7 @@ public class ResourceMappingOperationInput {
 		IModelProviderDescriptor[] descriptors = ModelProvider.getModelProviderDescriptors();
 		for (int i = 0; i < descriptors.length; i++) {
 			IModelProviderDescriptor descriptor = descriptors[i];
-			ResourceMapping[] mappings = descriptor.getMappings(resources, affectedNatures, contexts, monitor);
+			ResourceMapping[] mappings = descriptor.getMappings(resources, affectedNatures, getContext(), monitor);
 			result.addAll(Arrays.asList(mappings));
 		}
 		return result;
@@ -154,7 +136,7 @@ public class ResourceMappingOperationInput {
 		for (Iterator iter = targetMappings.iterator(); iter.hasNext();) {
 			ResourceMapping mapping = (ResourceMapping) iter.next();
 			if (!targetMappingsToResources.containsKey(mapping)) {
-				ResourceTraversal[] traversals = getTraversals(mapping, Policy.subMonitorFor(monitor, 100));
+				ResourceTraversal[] traversals = mapping.getTraversals(getContext(), Policy.subMonitorFor(monitor, 100));
 				targetMappingsToResources.put(mapping, traversals);
 				newResources.addAll(internalGetResources(traversals));
 			}
@@ -177,28 +159,39 @@ public class ResourceMappingOperationInput {
 	}
 
 	private void buildInputMappingToResourcesMap(IProgressMonitor monitor) throws CoreException {
+		ResourceMapping[] inputMappings = getSeedMappings();
 		monitor.beginTask(null,	inputMappings.length * 100);
 		for (int i = 0; i < inputMappings.length; i++) {
 			ResourceMapping mapping = inputMappings[i];
-			ResourceTraversal[] traversals = getTraversals(mapping, Policy.subMonitorFor(monitor, 100));
+			ResourceTraversal[] traversals = mapping.getTraversals(getContext(), Policy.subMonitorFor(monitor, 100));
 			inputMappingsToResources.put(mapping, traversals);
 		}
 		monitor.done();
 	}
 
-	private ResourceTraversal[] getTraversals(ResourceMapping mapping, IProgressMonitor monitor) throws CoreException {
-		try {
-			monitor.beginTask(null, contexts.length * 100);
-			List traversals = new ArrayList();
-			for (int i = 0; i < contexts.length; i++) {
-				ResourceMappingContext context = contexts[i];
-				traversals.addAll(Arrays.asList(mapping.getTraversals(context, Policy.subMonitorFor(monitor, 100))));
-				Policy.checkCanceled(monitor);
+	public ResourceMapping[] getInputMappings() {
+		return (ResourceMapping[]) targetMappingsToResources.keySet().toArray(new ResourceMapping[targetMappingsToResources.size()]);
+	}
+
+	public ResourceTraversal[] getInputTraversals() {
+		Collection values = targetMappingsToResources.values();
+		List result = new ArrayList();
+		for (Iterator iter = values.iterator(); iter.hasNext();) {
+			ResourceTraversal[] traversals = (ResourceTraversal[]) iter.next();
+			for (int i = 0; i < traversals.length; i++) {
+				ResourceTraversal traversal = traversals[i];
+				result.add(traversal);
 			}
-			return combineTraversals((ResourceTraversal[]) traversals.toArray(new ResourceTraversal[traversals.size()]));
-		} finally {
-			monitor.done();
 		}
+		return combineTraversals((ResourceTraversal[]) result.toArray(new ResourceTraversal[result.size()]));
+	}
+
+	public ResourceTraversal[] getTraversal(ResourceMapping mapping) {
+		return (ResourceTraversal[])targetMappingsToResources.get(mapping);
+	}
+
+	public boolean hasAdditionalMappings() {
+		return hasAdditionalMappings;
 	}
 
 }

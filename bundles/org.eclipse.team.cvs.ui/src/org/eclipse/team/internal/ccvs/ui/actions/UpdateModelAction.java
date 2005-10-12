@@ -17,10 +17,9 @@ import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.core.subscribers.SubscriberResourceMappingContext;
 import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.mapping.IResourceMappingManualMerger;
+import org.eclipse.team.ui.mapping.IResourceMappingOperationInput;
 import org.eclipse.team.ui.mapping.ResourceMappingMergeOperation;
 import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 import org.eclipse.ui.IWorkbenchPart;
@@ -34,12 +33,12 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
     
 	private class CVSMergeOperation extends ResourceMappingMergeOperation {
 
-		protected CVSMergeOperation(IWorkbenchPart part, ResourceMapping[] mappings) {
-			super(part, mappings);
+		protected CVSMergeOperation(IWorkbenchPart part, IResourceMappingOperationInput input) {
+			super(part, input);
 		}
 
-		protected IMergeContext buildMergeContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
-			return CVSMergeContext.createContext(mappings, scope, monitor);
+		protected IMergeContext buildMergeContext(ResourceMappingScope scope, IProgressMonitor monitor) {
+			return CVSMergeContext.createContext(scope.getResourceMappings(), scope, monitor);
 		}
 
 		protected IResourceMappingManualMerger getDefaultManualMerger() {
@@ -47,14 +46,6 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
 			return null;
 		}
 
-		protected RemoteResourceMappingContext getAncestorContext() {
-			return SubscriberResourceMappingContext.getCheckInContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
-		}
-
-		protected RemoteResourceMappingContext getRemoteContext() {
-			return SubscriberResourceMappingContext.getUpdateContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
-		}
-		
 	}
 	
     /*
@@ -72,9 +63,9 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
     }
     
 	public void execute(IAction action) throws InterruptedException, InvocationTargetException {
-		new CVSMergeOperation(getTargetPart(), getCVSResourceMappings()).run();
+		new CVSMergeOperation(getTargetPart(), getOperationInput()).run();
 	}
-	
+
 	public String getId() {
 		return "org.eclipse.team.cvs.ui.modelupdate";
 	}

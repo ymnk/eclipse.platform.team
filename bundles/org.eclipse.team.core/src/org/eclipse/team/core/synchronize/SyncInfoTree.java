@@ -12,6 +12,7 @@ package org.eclipse.team.core.synchronize;
 
 import java.util.*;
 
+import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.internal.core.Messages;
@@ -348,6 +349,31 @@ public class SyncInfoTree extends SyncInfoSet {
 			}
 		}
 		return (IResource[]) children.toArray(new IResource[children.size()]);
+	}
+
+	/**
+	 * Return the sync info contained in this set that are contained
+	 * in the given traversals.
+	 * @param traversals the traversals
+	 * @return the sync info contained in this set that are contained
+	 * in the given traversals
+	 * @since 3.2
+	 */
+	public SyncInfo[] getSyncInfos(ResourceTraversal[] traversals) {
+		SyncInfoSet set = new SyncInfoSet();
+		for (int i = 0; i < traversals.length; i++) {
+			ResourceTraversal traversal = traversals[i];
+			IResource[] resources = traversal.getResources();
+			for (int j = 0; j < resources.length; j++) {
+				IResource resource = resources[j];
+				SyncInfo[] infos = getSyncInfos(resource, traversal.getDepth());
+				for (int k = 0; k < infos.length; k++) {
+					SyncInfo info = infos[k];
+					set.add(info);
+				}
+			}
+		}
+		return set.getSyncInfos();
 	}
 
 }

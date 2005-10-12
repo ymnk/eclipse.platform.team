@@ -40,8 +40,8 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public class ResourceMappingLoadOperation extends ResourceMappingOperation {
 
-	protected ResourceMappingLoadOperation(IWorkbenchPart part, ResourceMapping[] mappings) {
-		super(part, mappings);
+	protected ResourceMappingLoadOperation(IWorkbenchPart part, IResourceMappingOperationInput input) {
+		super(part, input);
 	}
 
 	protected void execute(IProgressMonitor monitor)

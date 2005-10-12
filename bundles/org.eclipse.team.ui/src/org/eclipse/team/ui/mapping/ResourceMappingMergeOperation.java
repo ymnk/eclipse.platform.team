@@ -105,12 +105,9 @@ import org.eclipse.ui.IWorkbenchPart;
  * the merge at the level selected and not involve participants.
  */
 public abstract class ResourceMappingMergeOperation extends ResourceMappingOperation {
-	
-	private Map providerToMappings;
-	private Map providerToTraversalsMap;
 
-	protected ResourceMappingMergeOperation(IWorkbenchPart part, ResourceMapping[] mappings) {
-		super(part, mappings);
+	protected ResourceMappingMergeOperation(IWorkbenchPart part, IResourceMappingOperationInput input) {
+		super(part, input);
 	}
 
 	/* (non-Javadoc)
@@ -118,87 +115,26 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	 */
 	protected void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		try {
-			Map contexts = buildMergeContexts(monitor);
-			for (Iterator iter = contexts.keySet().iterator(); iter.hasNext();) {
-				ModelProvider provider = (ModelProvider) iter.next();	
-				performMerge(provider, (IMergeContext)contexts.get(provider), monitor);
+			IMergeContext context = buildMergeContext(monitor);
+			ModelProvider[] providers = getInput().getModelProviders();
+			for (int i = 0; i < providers.length; i++) {
+				ModelProvider provider = providers[i];
+				performMerge(provider, context, monitor);
 			}
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
 		}
 	}
 
-	private Map buildMergeContexts(IProgressMonitor monitor) throws CoreException {
-		Map providerToMappings = getProviderToMappingsMap();
-		Map result = new HashMap();
-		for (Iterator iter = providerToMappings.keySet().iterator(); iter.hasNext();) {
-			ModelProvider provider = (ModelProvider) iter.next();
-			List list = (List)providerToMappings.get(provider);
-			ResourceMapping[] providerMappings = (ResourceMapping[]) list.toArray(new ResourceMapping[list.size()]);
-			ResourceMappingScope scope = buildMergeContextScope(provider, providerMappings, monitor);
-			IMergeContext context = buildMergeContext(provider, providerMappings, scope, monitor);
-			result.put(provider, context);
-		}
-		return result;
+	private IMergeContext buildMergeContext(IProgressMonitor monitor) throws CoreException {
+		ResourceMappingScope scope = buildMergeContextScope(monitor);
+		IMergeContext context = buildMergeContext(scope, monitor);
+		return context;
 	}
 
-	private ResourceMappingScope buildMergeContextScope(ModelProvider provider, ResourceMapping[] providerMappings, IProgressMonitor monitor) throws CoreException {
-		RemoteResourceMappingContext context = getRemoteContext();
-		ResourceTraversal[] remoteTraversals = provider.getTraversals(providerMappings, context, monitor);
-		RemoteResourceMappingContext ancestorContext = getAncestorContext();
-		ResourceTraversal[] ancestorTraversals = provider.getTraversals(providerMappings, context, monitor);
-		ResourceTraversal[] traversals = combineTraversals(remoteTraversals, ancestorTraversals);
-		return new ResourceMappingScope("TODO: Provide mapping scope description", providerMappings, traversals);
+	private ResourceMappingScope buildMergeContextScope(IProgressMonitor monitor) throws CoreException {
+		return new ResourceMappingScope("TODO: Provide mapping scope description", getInput().getInputMappings(), getInput().getInputTraversals());
 	}
-
-	private ResourceTraversal[] combineTraversals(ResourceTraversal[] remoteTraversals, ResourceTraversal[] ancestorTraversals) {
-		Set zero = new HashSet();
-		Set shallow = new HashSet();
-		Set deep = new HashSet();
-		for (int i = 0; i < ancestorTraversals.length; i++) {
-			ResourceTraversal traversal = ancestorTraversals[i];
-			switch (traversal.getDepth()) {
-			case IResource.DEPTH_ZERO:
-				zero.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			case IResource.DEPTH_ONE:
-				shallow.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			case IResource.DEPTH_INFINITE:
-				deep.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			}
-		}
-		for (int i = 0; i < remoteTraversals.length; i++) {
-			ResourceTraversal traversal = remoteTraversals[i];
-			switch (traversal.getDepth()) {
-			case IResource.DEPTH_ZERO:
-				zero.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			case IResource.DEPTH_ONE:
-				shallow.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			case IResource.DEPTH_INFINITE:
-				deep.addAll(Arrays.asList(traversal.getResources()));
-				break;
-			}
-		}
-		List result = new ArrayList();
-		if (!zero.isEmpty()) {
-			result.add(new ResourceTraversal((IResource[]) zero.toArray(new IResource[zero.size()]), IResource.DEPTH_ZERO, IResource.NONE));
-		}
-		if (!shallow.isEmpty()) {
-			result.add(new ResourceTraversal((IResource[]) shallow.toArray(new IResource[shallow.size()]), IResource.DEPTH_ONE, IResource.NONE));
-		}
-		if (!deep.isEmpty()) {
-			result.add(new ResourceTraversal((IResource[]) deep.toArray(new IResource[deep.size()]), IResource.DEPTH_INFINITE, IResource.NONE));
-		}
-		return (ResourceTraversal[]) result.toArray(new ResourceTraversal[result.size()]);
-	}
-
-	protected abstract RemoteResourceMappingContext getAncestorContext();
-
-	protected abstract RemoteResourceMappingContext getRemoteContext();
 
 	/**
 	 * Build and initialize a merge context for the given mappings.
@@ -209,50 +145,7 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	 * @param monitor a progress monitor
 	 * @return a merge context for merging the mappings
 	 */
-	protected abstract IMergeContext buildMergeContext(ModelProvider provider, ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor);
-
-	private Map getProviderToMappingsMap() throws CoreException {
-		if (providerToMappings == null) {
-			Map result = new HashMap();
-			ResourceMapping[] mappings = getMappings();
-			for (int i = 0; i < mappings.length; i++) {
-				ResourceMapping mapping = mappings[i];
-				ModelProvider provider = mapping.getModelProvider();
-				List l = (List)result.get(provider);
-				if (l == null) {
-					l = new ArrayList();
-					result.put(provider, l);
-				}
-				l.add(mapping);
-			}
-			providerToMappings = result;
-		}
-		return providerToMappings;
-	}
-
-	protected void buildInput(IProgressMonitor monitor) throws InvocationTargetException {
-		try {
-			promptToIncludeAdditionalMappings();
-			buildProviderToTraversalMap(monitor);
-			// TODO Determine the projection of the selection onto resources
-		} catch (CoreException e) {
-			throw new InvocationTargetException(e);
-		}
-		
-		super.buildInput(monitor);
-	}
-	
-	private void promptToIncludeAdditionalMappings() throws CoreException {
-		Map providerToMappings = getProviderToMappingsMap();
-		// TODO Auto-generated method stub
-		
-	}
-
-	private Map buildProviderToTraversalMap(IProgressMonitor monitor) {
-		// TODO Auto-generated method stub
-		providerToTraversalsMap = new HashMap();
-		return null;
-	}
+	protected abstract IMergeContext buildMergeContext(ResourceMappingScope scope, IProgressMonitor monitor);
 
 	/**
 	 * Merge all the mappings that come from the given provider. By default,
@@ -273,6 +166,7 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 			} else {
 				if (status.getCode() == MergeStatus.CONFLICTS) {
 					MergeStatus ms = (MergeStatus)status;
+					// TODO: Perhaps should be delayed until all models are attempted
 					performManualMerge(provider, ms.getConflictingMappings(), mergeContext, Policy.subMonitorFor(monitor, 5));
 				} else {
 					throw new TeamException(status);
@@ -300,7 +194,6 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	}
 
 	protected void performManualMerge(ModelProvider provider, ResourceMapping[] conflictingMappings, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
-//		mergeContext.restrictTo(conflictingMappings, monitor);
 		IResourceMappingManualMerger merger = getManualMerger(provider);
 		merger.performManualMerge(getPart(), mergeContext, monitor);
 	}

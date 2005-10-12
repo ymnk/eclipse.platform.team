@@ -62,7 +62,7 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public abstract class ResourceMappingOperation extends TeamOperation {
 
-	private ResourceMapping[] mappings;
+	private final IResourceMappingOperationInput input;
     
     private static IResource[] getResources(ResourceMapping[] selectedMappings) throws CoreException {
         Set result = new HashSet();
@@ -101,34 +101,22 @@ public abstract class ResourceMappingOperation extends TeamOperation {
         }
         return (IResource[]) result.toArray(new IResource[result.size()]);
     }
-
-    private static String[] getNatures(ResourceMapping[] selectedMappings) {
-        Set result = new HashSet();
-        for (int i = 0; i < selectedMappings.length; i++) {
-            ResourceMapping mapping = selectedMappings[i];
-            IProject[] projects = mapping.getProjects();
-            for (int j = 0; j < projects.length; j++) {
-                IProject project = projects[j];
-                try {
-                    result.addAll(Arrays.asList(project.getDescription().getNatureIds()));
-                } catch (CoreException e) {
-                    TeamUIPlugin.log(e);
-                }
-            }
-        }
-        return (String[]) result.toArray(new String[result.size()]);
-    }
     
-	protected ResourceMappingOperation(IWorkbenchPart part, ResourceMapping[] mappings) {
+    /**
+     * Create a resource mapping based operation
+     * @param part the workspace part from which the operation was launched
+     * @param input the input to the operation (which must have already been built by
+     * invoking <code>buildInput</code>.
+     */
+	protected ResourceMappingOperation(IWorkbenchPart part, IResourceMappingOperationInput input) {
 		super(part);
-		this.mappings = mappings;
+		this.input = input;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
 		buildInput(monitor);
 		execute(monitor);
-
 	}
 
 	/**
@@ -137,15 +125,16 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 	 * @param monitor 
 	 */
 	protected void buildInput(IProgressMonitor monitor) throws InvocationTargetException {
-		
+		try {
+			input.buildInput(monitor);
+			// TODO: Prompt user if input changed
+		} catch (CoreException e) {
+			throw new InvocationTargetException(e);
+		}
 	}
 
 	protected abstract void execute(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException;
-
-	public ResourceMapping[] getMappings() {
-		return mappings;
-	}
 
 	/**
 	 * Return the auto-merger associated with the given model provider
@@ -161,7 +150,7 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 		if (o instanceof IResourceMappingMerger) {
 			return (IResourceMappingMerger) o;	
 		}
-		return new DefaultResourceMappingMerger();
+		return new DefaultResourceMappingMerger(provider, getInput());
 	}
 	
 	/**
@@ -179,5 +168,9 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 	 * TODO: Early stages
 	 */
 	protected abstract IResourceMappingManualMerger getDefaultManualMerger();
+
+	public IResourceMappingOperationInput getInput() {
+		return input;
+	}
 	
 }

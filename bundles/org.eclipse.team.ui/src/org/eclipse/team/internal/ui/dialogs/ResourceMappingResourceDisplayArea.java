@@ -71,17 +71,13 @@ public class ResourceMappingResourceDisplayArea extends DialogArea {
      */
     public static String getLabel(ResourceMapping mapping) {
     	Object o = null;
-    	try {
-			o = mapping.getModelProvider().getAdapter(INavigatorContentExtensionFactory.class);
-			if (o instanceof INavigatorContentExtensionFactory) {
-				INavigatorContentExtensionFactory factory = (INavigatorContentExtensionFactory) o;
-				ILabelProvider labelProvider = factory.getLabelProvider();
-				String text = labelProvider.getText(mapping);
-				labelProvider.dispose(); // TODO should keep label provider around
-				return text;
-			}
-		} catch (CoreException e) {
-			TeamUIPlugin.log(e);
+		o = mapping.getModelProvider().getAdapter(INavigatorContentExtensionFactory.class);
+		if (o instanceof INavigatorContentExtensionFactory) {
+			INavigatorContentExtensionFactory factory = (INavigatorContentExtensionFactory) o;
+			ILabelProvider labelProvider = factory.getLabelProvider();
+			String text = labelProvider.getText(mapping);
+			labelProvider.dispose(); // TODO should keep label provider around
+			return text;
 		}
         o = mapping;
         IWorkbenchAdapter workbenchAdapter = getWorkbenchAdapter((IAdaptable)o);

@@ -46,11 +46,7 @@ public class TeamViewerContext implements ITeamViewerContext {
 		Set providers = new HashSet();
 		for (int i = 0; i < mappings.length; i++) {
 			ResourceMapping mapping = mappings[i];
-			try {
-				providers.add(mapping.getModelProvider());
-			} catch (CoreException e) {
-				TeamUIPlugin.log(e);
-			}
+			providers.add(mapping.getModelProvider());
 		}
 		return (ModelProvider[]) providers.toArray(new ModelProvider[providers.size()]);
 	}

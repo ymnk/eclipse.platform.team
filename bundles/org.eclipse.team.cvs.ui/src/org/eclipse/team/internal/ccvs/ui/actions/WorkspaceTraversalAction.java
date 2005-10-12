@@ -11,23 +11,29 @@
 package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import org.eclipse.core.internal.resources.mapping.*;
-import org.eclipse.core.resources.*;
-import org.eclipse.core.resources.mapping.IModelProviderDescriptor;
-import org.eclipse.core.resources.mapping.ModelProvider;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.internal.resources.mapping.ResourceMappingContext;
+import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-import org.eclipse.ltk.core.refactoring.participants.*;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.core.subscribers.SubscriberResourceMappingContext;
 import org.eclipse.team.internal.ui.dialogs.AdditionalMappingsDialog;
+import org.eclipse.team.ui.mapping.IResourceMappingOperationInput;
+import org.eclipse.team.ui.mapping.ResourceMappingOperationInput;
+import org.eclipse.team.ui.mapping.SimpleResourceMappingOperationInput;
 import org.eclipse.team.ui.mapping.TeamViewerContext;
 import org.eclipse.ui.PlatformUI;
 
@@ -46,14 +52,20 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
      */
     protected ResourceMapping[] getCVSResourceMappings() {
         ResourceMapping[] selectedMappings = getSelectedResourceMappings(CVSProviderPlugin.getTypeId());
-        ResourceMapping[] allMappings = convertToParticipantMappings(selectedMappings);
-        return showAllMappings(selectedMappings, allMappings);
+        try {
+			IResourceMappingOperationInput input = new ResourceMappingOperationInput(selectedMappings, ResourceMappingContext.LOCAL_CONTEXT);
+			input.buildInput(new NullProgressMonitor());
+			if (input.hasAdditionalMappings()) {
+				ResourceMapping[] allMappings = input.getInputMappings();
+				return showAllMappings(selectedMappings, allMappings);
+			}
+		} catch (CoreException e) {
+			CVSUIPlugin.log(e);
+		}
+		return selectedMappings;
     }
     
     private ResourceMapping[] showAllMappings(final ResourceMapping[] selectedMappings, final ResourceMapping[] allMappings) {
-    	if (isEqualArrays(selectedMappings, allMappings))
-    		return allMappings;
-    	
         final boolean[] canceled = new boolean[] { false };
         getShell().getDisplay().syncExec(new Runnable() {
             public void run() {
@@ -68,104 +80,6 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
             return new ResourceMapping[0];
         }
         return allMappings;
-    }
-
-    private boolean isEqualArrays(ResourceMapping[] selectedMappings, ResourceMapping[] allMappings) {
-    	if (selectedMappings.length != allMappings.length)
-    		return false;
-		for (int i = 0; i < allMappings.length; i++) {
-			ResourceMapping mapping = allMappings[i];
-			boolean matchFound = false;
-			for (int j = 0; j < selectedMappings.length; j++) {
-				ResourceMapping selected = selectedMappings[j];
-				if (selected.equals(mapping)) {
-					matchFound = true;
-					break;
-				}
-			}
-			if (!matchFound) return false;
-		}
-		return true;
-	}
-
-	/*
-     * Use the registered teamParticpants to determine if additional mappings should be included
-     * in the operation.
-     */
-    public static ResourceMapping[] convertToParticipantMappings(ResourceMapping[] selectedMappings) {
-    	try {
-			Map result = new HashMap();
-			// TODO: Result drops original selection
-			IResource[] resources= getResources(selectedMappings);
-			IModelProviderDescriptor[] descriptors = ModelProvider.getModelProviderDescriptors();
-			for (int i = 0; i < descriptors.length; i++) {
-				IModelProviderDescriptor descriptor = descriptors[i];
-				ResourceMapping[] mappings = descriptor.getMappings(resources, getNatures(selectedMappings), new ResourceMappingContext[] { ResourceMappingContext.LOCAL_CONTEXT}, new NullProgressMonitor());
-				for (int j = 0; j < mappings.length; j++) {
-					ResourceMapping mapping = mappings[j];
-					result.put(mapping.getModelObject(), mapping);
-				}
-			}
-			return (ResourceMapping[]) result.values().toArray(new ResourceMapping[result.size()]);
-		} catch (CoreException e) {
-			CVSUIPlugin.log(e);
-		}
-		return selectedMappings;
-    }
-    
-    private static IResource[] getResources(ResourceMapping[] selectedMappings) throws CoreException {
-        Set result = new HashSet();
-        for (int i = 0; i < selectedMappings.length; i++) {
-            ResourceMapping mapping = selectedMappings[i];
-            ResourceTraversal[] traversals = mapping.getTraversals(ResourceMappingContext.LOCAL_CONTEXT, new NullProgressMonitor());
-            for (int j = 0; j < traversals.length; j++) {
-                ResourceTraversal traversal = traversals[j];
-                IResource[] resources = traversal.getResources();
-                if (traversal.getDepth() == IResource.DEPTH_INFINITE) {
-                    result.addAll(Arrays.asList(resources));
-                } else if (traversal.getDepth() == IResource.DEPTH_ONE) {
-                    for (int k = 0; k < resources.length; k++) {
-                        IResource resource = resources[k];
-                        if (resource.getType() == IResource.FILE) {
-                            result.add(resource);
-                        } else {
-                            IResource[] members = ((IContainer)resource).members();
-                            for (int index = 0; index < members.length; index++) {
-                                IResource member = members[index];
-                                if (member.getType() == IResource.FILE) {
-                                    result.add(member);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    for (int k = 0; k < resources.length; k++) {
-                        IResource resource = resources[k];
-                        if (resource.getType() == IResource.FILE) {
-                            result.add(resource);
-                        }
-                    }
-                }
-            }
-        }
-        return (IResource[]) result.toArray(new IResource[result.size()]);
-    }
-
-    private static String[] getNatures(ResourceMapping[] selectedMappings) {
-        Set result = new HashSet();
-        for (int i = 0; i < selectedMappings.length; i++) {
-            ResourceMapping mapping = selectedMappings[i];
-            IProject[] projects = mapping.getProjects();
-            for (int j = 0; j < projects.length; j++) {
-                IProject project = projects[j];
-                try {
-                    result.addAll(Arrays.asList(project.getDescription().getNatureIds()));
-                } catch (CoreException e) {
-                    CVSUIPlugin.log(e);
-                }
-            }
-        }
-        return (String[]) result.toArray(new String[result.size()]);
     }
 
     protected static IResource[] getRootTraversalResources(ResourceMapping[] mappings, ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
@@ -195,7 +109,15 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         return getResourcesToCompare(getCVSResourceMappings(), subscriber);
     }
     
-    public static IResource[] getResourcesToCompare(final ResourceMapping[] mappings, final Subscriber subscriber) throws InvocationTargetException {
+    protected ResourceMappingContext getResourceMappingContext() {
+		return SubscriberResourceMappingContext.getCompareContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
+	}
+
+	protected SimpleResourceMappingOperationInput getOperationInput() {
+		return new SimpleResourceMappingOperationInput(getSelectedResourceMappings(CVSProviderPlugin.getTypeId()), getResourceMappingContext());
+	}
+
+	public static IResource[] getResourcesToCompare(final ResourceMapping[] mappings, final Subscriber subscriber) throws InvocationTargetException {
         // Determine what resources need to be synchronized.
         // Use a resource mapping context to include any relevant remote resources
         final IResource[][] resources = new IResource[][] { null };
