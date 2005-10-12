@@ -17,6 +17,7 @@ import java.util.*;
 
 import org.eclipse.core.internal.resources.mapping.*;
 import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;

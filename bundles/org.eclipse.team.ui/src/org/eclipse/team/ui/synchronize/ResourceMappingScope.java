@@ -13,9 +13,9 @@ package org.eclipse.team.ui.synchronize;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
-import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 
 /**
  * A synchronize scope whose roots are defined by the traversals

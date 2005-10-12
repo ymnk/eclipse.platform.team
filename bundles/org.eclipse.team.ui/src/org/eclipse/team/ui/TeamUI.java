@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.synchronize.SynchronizeManager;

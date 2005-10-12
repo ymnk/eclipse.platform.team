@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.Viewer;

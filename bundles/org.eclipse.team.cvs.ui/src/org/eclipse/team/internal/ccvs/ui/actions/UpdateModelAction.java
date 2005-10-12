@@ -12,9 +12,9 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.internal.resources.mapping.RemoteResourceMappingContext;
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.resources.mapping.RemoteResourceMappingContext;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.ui.mapping.IMergeContext;

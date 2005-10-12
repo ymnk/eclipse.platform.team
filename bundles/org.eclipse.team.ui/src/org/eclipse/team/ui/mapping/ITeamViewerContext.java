@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 
 /**
  * A context determined by Team providers and passed to model views

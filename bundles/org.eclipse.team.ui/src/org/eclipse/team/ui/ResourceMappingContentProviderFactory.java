@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.team.internal.ui.ResourceMappingContentProvider;
 import org.eclipse.team.internal.ui.ResourceMappingTree;

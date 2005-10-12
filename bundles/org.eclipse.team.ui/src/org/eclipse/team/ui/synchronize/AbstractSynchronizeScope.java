@@ -13,8 +13,8 @@ package org.eclipse.team.ui.synchronize;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.util.IPropertyChangeListener;

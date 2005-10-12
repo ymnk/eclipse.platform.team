@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
-import org.eclipse.core.internal.resources.mapping.ResourceTraversal;
 import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -23,7 +23,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * be operated on.
  * <p>
  * This interface is not intended to be implemented by clients
- * @see org.eclipse.core.internal.resources.mapping.ResourceMapping
+ * @see org.eclipse.core.resources.mapping.ResourceMapping
  * @since 3.2
  */
 public interface IResourceMappingOperationInput {

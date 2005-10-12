@@ -1,8 +1,8 @@
 package org.eclipse.team.ui.mapping;
 
 import org.eclipse.compare.IStreamMerger;
-import org.eclipse.core.internal.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
