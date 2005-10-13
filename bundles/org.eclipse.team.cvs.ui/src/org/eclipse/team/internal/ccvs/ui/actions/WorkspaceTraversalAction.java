@@ -11,18 +11,11 @@
 package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.resources.mapping.ResourceMappingContext;
-import org.eclipse.core.resources.mapping.ResourceTraversal;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.resources.mapping.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.RepositoryProvider;
@@ -31,10 +24,7 @@ import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
 import org.eclipse.team.internal.core.subscribers.SubscriberResourceMappingContext;
 import org.eclipse.team.internal.ui.dialogs.AdditionalMappingsDialog;
-import org.eclipse.team.ui.mapping.IResourceMappingOperationInput;
-import org.eclipse.team.ui.mapping.ResourceMappingOperationInput;
-import org.eclipse.team.ui.mapping.SimpleResourceMappingOperationInput;
-import org.eclipse.team.ui.mapping.TeamViewerContext;
+import org.eclipse.team.ui.mapping.*;
 import org.eclipse.ui.PlatformUI;
 
 

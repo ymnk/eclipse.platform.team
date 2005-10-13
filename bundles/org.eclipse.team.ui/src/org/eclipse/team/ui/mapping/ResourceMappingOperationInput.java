@@ -81,10 +81,21 @@ public class ResourceMappingOperationInput extends SimpleResourceMappingOperatio
 		monitor.beginTask(null,	IProgressMonitor.UNKNOWN);
 		buildInputMappingToResourcesMap(Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
 		Set targetMappings = inputMappingsToResources.keySet();
+		Set handledResources = new HashSet();
 		Set newResources;
 		do {
 			newResources = addToTargetMappingToResourceMap(targetMappings, Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
 			targetMappings = internalGetMappingsFromProviders((IResource[]) newResources.toArray(new IResource[newResources.size()]), getAffectedNatures(targetMappings), Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
+			if (!handledResources.isEmpty()) {
+				for (Iterator iter = newResources.iterator(); iter.hasNext();) {
+					IResource resource = (IResource) iter.next();
+					if (handledResources.contains(resource)) {
+						newResources.remove(resource);
+					}
+				}
+			}
+			handledResources.addAll(newResources);
+			
 		} while (!newResources.isEmpty());
 		hasAdditionalMappings = internalHasAdditionalMappings();
 	}
@@ -95,12 +106,12 @@ public class ResourceMappingOperationInput extends SimpleResourceMappingOperatio
 			for (int i = 0; i < inputMappings.length; i++) {
 				ResourceMapping mapping = inputMappings[i];
 				if (!targetMappingsToResources.containsKey(mapping)) {
-					return false;
+					return true;
 				}
 			}
-			return true;
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	private String[] getAffectedNatures(Set targetMappings) {
