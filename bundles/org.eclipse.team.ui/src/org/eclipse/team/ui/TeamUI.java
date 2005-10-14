@@ -26,8 +26,6 @@ public class TeamUI {
 	// manages synchronize participants
 	private static ISynchronizeManager synchronizeManager;
 
-    private static IResourceMappingContentProviderFactory defaultModelContentProviderFactory = new ResourceMappingContentProviderFactory();
-
 	/**
 	 * Property constant indicating the global ignores list has changed. 
 	 */
@@ -69,12 +67,4 @@ public class TeamUI {
 	public static void removePropertyChangeListener(IPropertyChangeListener listener) {
 		TeamUIPlugin.removePropertyChangeListener(listener);
 	}
-    
-    public static IResourceMappingContentProviderFactory getFactory(ResourceMapping mapping) {
-        Object o = mapping.getAdapter(IResourceMappingContentProviderFactory.class);
-        if (o instanceof IResourceMappingContentProviderFactory) {
-            return (IResourceMappingContentProviderFactory) o;
-        }
-        return defaultModelContentProviderFactory;
-    }
 }

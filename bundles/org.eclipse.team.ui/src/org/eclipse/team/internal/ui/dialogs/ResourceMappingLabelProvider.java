@@ -24,7 +24,7 @@ public class ResourceMappingLabelProvider extends LabelProvider {
 		if (element instanceof ResourceMapping) {
 			ResourceMapping mapping = (ResourceMapping) element;
 			text = provider.getText(mapping.getModelObject());
-			if (text != null)
+			if (text != null && text.length() > 0)
 				return text;
 		}
 		return super.getText(element);

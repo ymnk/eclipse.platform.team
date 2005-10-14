@@ -90,7 +90,7 @@ public class ResourceMappingOperationInput extends SimpleResourceMappingOperatio
 				for (Iterator iter = newResources.iterator(); iter.hasNext();) {
 					IResource resource = (IResource) iter.next();
 					if (handledResources.contains(resource)) {
-						newResources.remove(resource);
+						iter.remove();
 					}
 				}
 			}
