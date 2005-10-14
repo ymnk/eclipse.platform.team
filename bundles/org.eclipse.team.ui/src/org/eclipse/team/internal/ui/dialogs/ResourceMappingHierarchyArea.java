@@ -16,8 +16,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.resources.mapping.ResourceModelProvider;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -226,7 +226,7 @@ public class ResourceMappingHierarchyArea extends DialogArea {
 			INavigatorContentExtensionFactory factory = getFactory(provider);
 			if (factory == null) {
 				try {
-					ModelProvider resourceModelProvider = ModelProvider.getModelProviderDescriptor(ResourcesPlugin.MODEL_PROVIDER_ID).getModelProvider();
+					ModelProvider resourceModelProvider = ModelProvider.getModelProviderDescriptor(ResourceModelProvider.MODEL_PROVIDER_ID).getModelProvider();
 					if (!extensions.containsKey(resourceModelProvider)) {
 						factory = getFactory(resourceModelProvider);
 					}

@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.ui.IResourceMappingContentProvider;
+import org.eclipse.team.ui.mapping.ITeamViewerContext;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 public class ResourceMappingContentProvider implements IResourceMappingContentProvider {
@@ -53,12 +54,14 @@ public class ResourceMappingContentProvider implements IResourceMappingContentPr
         }
     }
 
-    private final ResourceMapping[] mappings;
-    final Object root;
+    final RootObject root;
+	private final ITeamViewerContext context;
+	private final String modelId;
 
-    public ResourceMappingContentProvider(ResourceMapping[] mappings) {
-        this.mappings = mappings;
-        root = new RootObject(mappings);
+    public ResourceMappingContentProvider(ITeamViewerContext context, String modelId) {
+        this.context = context;
+		this.modelId = modelId;
+        root = new RootObject(context.getResourceMappings(modelId));
     }
 
     public Object getRoot() {
@@ -67,13 +70,14 @@ public class ResourceMappingContentProvider implements IResourceMappingContentPr
 
     public Object[] getChildren(Object parentElement) {
         if (parentElement == root)
-            return mappings;
+            return root.getChildren(parentElement);
         return new Object[0];
     }
 
     public Object getParent(Object element) {
         if (element == root)
             return null;
+        ResourceMapping[] mappings = (ResourceMapping[])root.getChildren(root);
         for (int i = 0; i < mappings.length; i++) {
             ResourceMapping mapping = mappings[i];
             if (element == mapping)
