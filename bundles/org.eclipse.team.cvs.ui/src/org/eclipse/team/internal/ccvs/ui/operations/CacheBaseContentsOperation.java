@@ -35,10 +35,12 @@ import org.eclipse.ui.IWorkbenchPart;
 public class CacheBaseContentsOperation extends SingleCommandOperation {
 
 	private final SyncInfoTree tree;
+	private final boolean includeOutgoing;
 
-	public CacheBaseContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, SyncInfoTree tree) {
+	public CacheBaseContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, SyncInfoTree tree, boolean includeOutgoing) {
 		super(part, mappers, options);
 		this.tree = tree;
+		this.includeOutgoing = includeOutgoing;
 	}
 
 	protected void execute(CVSTeamProvider provider, IResource[] resources, boolean recurse, IProgressMonitor monitor) throws CVSException, InterruptedException {
@@ -79,7 +81,8 @@ public class CacheBaseContentsOperation extends SingleCommandOperation {
 	 * @return whether the operation is enabled for the given change direction
 	 */
 	protected boolean isEnabledForDirection(int direction) {
-		return direction == SyncInfo.CONFLICTING;
+		return direction == SyncInfo.CONFLICTING || 
+		(includeOutgoing && direction == SyncInfo.OUTGOING);
 	}
 
 	/* (non-Javadoc)
