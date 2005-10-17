@@ -69,11 +69,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 	private static final boolean IS_CRLF_PLATFORM = Arrays.equals(
 		System.getProperty("line.separator").getBytes(), new byte[] { '\r', '\n' }); //$NON-NLS-1$
 	
-	public static final IStatus OK = new Status(IStatus.OK, CVSProviderPlugin.ID, 0, CVSMessages.ok, null); //$NON-NLS-1$
-
-	private static final int UNIFIED_FORMAT = 0;
-	private static final int CONTEXT_FORMAT = 1;
-	private static final int STANDARD_FORMAT = 2;
+	public static final IStatus OK = new Status(IStatus.OK, CVSProviderPlugin.ID, 0, CVSMessages.ok, null); 
 	
 	private CVSWorkspaceRoot workspaceRoot;
 	private IProject project;
@@ -144,186 +140,13 @@ public class CVSTeamProvider extends RepositoryProvider {
 			this.workspaceRoot = new CVSWorkspaceRoot(project);
 			// Ensure that the project has CVS info
 			if (workspaceRoot.getLocalRoot().getFolderSyncInfo() == null) {
-				CVSProviderPlugin.log(new CVSException(new CVSStatus(CVSStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_noFolderInfo, new String[] { project.getName() })))); //$NON-NLS-1$
+				CVSProviderPlugin.log(new CVSException(new CVSStatus(CVSStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_noFolderInfo, new String[] { project.getName() })))); 
 			}
 		} catch (CVSException e) {
 			// Ignore exceptions here. They will be surfaced elsewhere
 		}
 	}
-	
-	/** 
-	 * Diff the resources with the repository and write the output to the provided 
-	 * PrintStream in a form that is usable as a patch. The patch is rooted at the
-	 * project.
-	 */
-	public void diff(IResource resource, LocalOption[] options, PrintStream stream,
-		IProgressMonitor progress) throws TeamException {
-		
-		boolean includeNewFiles = false;
-		boolean doNotRecurse = false;
-		int format = STANDARD_FORMAT;
-		
-		// Determine the command root and arguments arguments list
-		ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-		ICVSFolder commandRoot;
-		String[] arguments;
-		if (cvsResource.isFolder()) {
-			commandRoot = (ICVSFolder)cvsResource;
-			arguments = new String[] {Session.CURRENT_LOCAL_FOLDER};
-		} else {
-			commandRoot = cvsResource.getParent();
-			arguments = new String[] {cvsResource.getName()};
-		}
 
-		Session s = new Session(workspaceRoot.getRemoteLocation(), commandRoot);
-		progress.beginTask(null, 100);
-		try {
-			s.open(Policy.subMonitorFor(progress, 20), false /* read-only */);
-			Command.DIFF.execute(s,
-				Command.NO_GLOBAL_OPTIONS,
-				options,
-				arguments,
-				new DiffListener(stream),
-				Policy.subMonitorFor(progress, 80));
-		} finally {
-			s.close();
-			progress.done();
-		}
-		
-		// Append our diff output to the server diff output.
-		// Our diff output includes new files and new files in new directories.
-			
-		for (int i = 0; i < options.length; i++)  {
-			LocalOption option = options[i];
-			if (option.equals(Diff.INCLUDE_NEWFILES))  {
-				includeNewFiles = true;
-			} else if (option.equals(Diff.DO_NOT_RECURSE))  {
-				doNotRecurse = true;
-			} else if (option.equals(Diff.UNIFIED_FORMAT))  {
-				format = UNIFIED_FORMAT;
-			} else if (option.equals(Diff.CONTEXT_FORMAT))  {
-				format = CONTEXT_FORMAT;
-			}
-		}
-		if (includeNewFiles)  {
-			newFileDiff(cvsResource, stream, doNotRecurse, format);
-		}
-	}
-	
-	/**
-	 * This diff adds new files and directories to the stream.
-	 * @param resource
-	 * @param stream
-	 * @param doNotRecurse
-	 * @param format
-	 * @throws CVSException
-	 */
-	private void newFileDiff(final ICVSResource resource, final PrintStream stream, final boolean doNotRecurse, final int format) throws CVSException {
-		final ICVSFolder rootFolder= resource instanceof ICVSFolder ? (ICVSFolder)resource : resource.getParent();
-		resource.accept(new ICVSResourceVisitor() {
-			public void visitFile(ICVSFile file) throws CVSException {
-				if (!(file.isIgnored() || file.isManaged()))  {
-					addFileToDiff(rootFolder, file, stream, format);
-				}
-			}
-			public void visitFolder(ICVSFolder folder) throws CVSException {
-				// Even if we are not supposed to recurse we still need to go into
-				// the root directory.
-				if (!folder.exists() || folder.isIgnored() || (doNotRecurse && !folder.equals(rootFolder)))  {
-					return;
-				} else  {
-					folder.acceptChildren(this);
-				}
-			}
-		});
-	}
-
-	private void addFileToDiff(ICVSFolder cmdRoot, ICVSFile file, PrintStream stream, int format) throws CVSException {
-		
-		String nullFilePrefix = ""; //$NON-NLS-1$
-		String newFilePrefix = ""; //$NON-NLS-1$
-		String positionInfo = ""; //$NON-NLS-1$
-		String linePrefix = ""; //$NON-NLS-1$
-		
-		String pathString = file.getRelativePath(cmdRoot);
-
-		int lines = 0;
-		BufferedReader fileReader = new BufferedReader(new InputStreamReader(file.getContents()));
-		try {
-			while (fileReader.readLine() != null)  {
-				lines++;
-			}
-		} catch (IOException e) {
-			throw CVSException.wrapException(file.getIResource(), NLS.bind(CVSMessages.CVSTeamProvider_errorAddingFileToDiff, new String[] { pathString }), e); //$NON-NLS-1$
-		} finally {
-			try {
-				fileReader.close();
-			} catch (IOException e1) {
-				//ignore
-			}
-		}
-			
-		// Ignore empty files
-		if (lines == 0)
-			return;
-		
-		switch (format) {
-		case UNIFIED_FORMAT :
-			nullFilePrefix = "--- ";	//$NON-NLS-1$
-			newFilePrefix = "+++ "; 	//$NON-NLS-1$
-			positionInfo = "@@ -0,0 +1," + lines + " @@" ;	//$NON-NLS-1$ //$NON-NLS-2$
-			linePrefix = "+"; //$NON-NLS-1$
-			break;
-			
-		case CONTEXT_FORMAT :
-			nullFilePrefix = "*** ";	//$NON-NLS-1$
-			newFilePrefix = "--- ";		//$NON-NLS-1$
-			positionInfo = "--- 1," + lines + " ----";	//$NON-NLS-1$ //$NON-NLS-2$
-			linePrefix = "+ ";	//$NON-NLS-1$
-			break;
-			
-		default :
-			positionInfo = "0a1," + lines;	//$NON-NLS-1$
-		linePrefix = "> ";	//$NON-NLS-1$
-					break;
-		}
-		
-		fileReader = new BufferedReader(new InputStreamReader(file.getContents()));
-		try {
-				
-			stream.println("Index: " + pathString);		//$NON-NLS-1$
-			stream.println("===================================================================");	//$NON-NLS-1$
-			stream.println("RCS file: " + pathString);	//$NON-NLS-1$
-			stream.println("diff -N " + pathString);	//$NON-NLS-1$
-			
-			
-			if (format != STANDARD_FORMAT)  {
-				stream.println(nullFilePrefix + "/dev/null	1 Jan 1970 00:00:00 -0000");	//$NON-NLS-1$
-				// Technically this date should be the local file date but nobody really cares.
-				stream.println(newFilePrefix + pathString + "	1 Jan 1970 00:00:00 -0000");	//$NON-NLS-1$
-			}
-			
-			if (format == CONTEXT_FORMAT)  {
-				stream.println("***************");	//$NON-NLS-1$
-				stream.println("*** 0 ****");		//$NON-NLS-1$
-			}
-			
-			stream.println(positionInfo);
-			
-			for (int i = 0; i < lines; i++)  {
-				stream.print(linePrefix);
-				stream.println(fileReader.readLine());
-			}
-		} catch (IOException e) {
-			throw CVSException.wrapException(file.getIResource(), NLS.bind(CVSMessages.CVSTeamProvider_errorAddingFileToDiff, new String[] { pathString }), e); //$NON-NLS-1$
-		} finally  {
-			try {
-				fileReader.close();
-			} catch (IOException e1) {
-			}
-		}
-	}
-	
 	/**
 	 * Return the remote location to which the receiver's project is mapped.
 	 */
@@ -398,7 +221,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 						// 256 ticks gives us a maximum of 1024 which seems reasonable for folders is a project
 						progress.beginTask(null, 100);
 						final IProgressMonitor monitor = Policy.infiniteSubMonitorFor(progress, 100);
-						monitor.beginTask(null, 256);  //$NON-NLS-1$
+						monitor.beginTask(null, 256);  
 		
 						// Visit all the children folders in order to set the root in the folder sync info
 						workspaceRoot.getLocalRoot().accept(new ICVSResourceVisitor() {
@@ -407,7 +230,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 								monitor.worked(1);
 								FolderSyncInfo info = folder.getFolderSyncInfo();
 								if (info != null) {
-									monitor.subTask(NLS.bind(CVSMessages.CVSTeamProvider_updatingFolder, new String[] { info.getRepository() })); //$NON-NLS-1$
+									monitor.subTask(NLS.bind(CVSMessages.CVSTeamProvider_updatingFolder, new String[] { info.getRepository() })); 
                                     MutableFolderSyncInfo newInfo = info.cloneMutable();
                                     newInfo.setRoot(root);
 									folder.setFolderSyncInfo(newInfo);
@@ -519,7 +342,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 					totalWork += 1; // Add 1 for each connection that needs to be made
 				}
 				if (totalWork != 0) {
-					monitor.beginTask(CVSMessages.CVSTeamProvider_settingKSubst, totalWork); //$NON-NLS-1$
+					monitor.beginTask(CVSMessages.CVSTeamProvider_settingKSubst, totalWork); 
 					try {
 						// commit files that changed from binary to text
 						// NOTE: The files are committed as text with conversions even if the
@@ -530,7 +353,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 							try {
 								String keywordChangeComment = comment;
 								if (keywordChangeComment == null || keywordChangeComment.length() == 0)
-									keywordChangeComment = CVSMessages.CVSTeamProvider_changingKeywordComment; //$NON-NLS-1$
+									keywordChangeComment = CVSMessages.CVSTeamProvider_changingKeywordComment; 
 								result[0] = Command.COMMIT.execute(
 									session,
 									Command.NO_GLOBAL_OPTIONS,
@@ -613,9 +436,9 @@ public class CVSTeamProvider extends RepositoryProvider {
 			ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
 			file.setContents(bis, false /*force*/, false /*keepHistory*/, progress);
 		} catch (CoreException e) {
-			throw CVSException.wrapException(file, CVSMessages.CVSTeamProvider_cleanLineDelimitersException, e); //$NON-NLS-1$
+			throw CVSException.wrapException(file, CVSMessages.CVSTeamProvider_cleanLineDelimitersException, e); 
 		} catch (IOException e) {
-			throw CVSException.wrapException(file, CVSMessages.CVSTeamProvider_cleanLineDelimitersException, e); //$NON-NLS-1$
+			throw CVSException.wrapException(file, CVSMessages.CVSTeamProvider_cleanLineDelimitersException, e); 
 		}
 	}
 	
@@ -668,10 +491,20 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 * @see CVSTeamProvider#unedit
 	 */
 	public void edit(IResource[] resources, boolean recurse, boolean notifyServer, final boolean notifyForWritable, final int notification, IProgressMonitor progress) throws CVSException {
+		final int notify;
+		if (notification == ICVSFile.NO_NOTIFICATION) {
+			if (CVSProviderPlugin.getPlugin().isWatchOnEdit()) {
+				notify = ICVSFile.NOTIFY_ON_ALL;
+			} else {
+				notify = ICVSFile.NO_NOTIFICATION;
+			}
+		} else {
+			notify = notification;
+		}
 		notifyEditUnedit(resources, recurse, notifyServer, new ICVSResourceVisitor() {
 			public void visitFile(ICVSFile file) throws CVSException {
 				if (notifyForWritable || file.isReadOnly())
-					file.edit(notification, notifyForWritable, Policy.monitorFor(null));
+					file.edit(notify, notifyForWritable, Policy.monitorFor(null));
 			}
 			public void visitFolder(ICVSFolder folder) throws CVSException {
 				// nothing needs to be done here as the recurse will handle the traversal
@@ -784,7 +617,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 			if (property == null) return CVSProviderPlugin.getPlugin().getFetchAbsentDirectories();
 			return Boolean.valueOf(property).booleanValue();
 		} catch (CoreException e) {
-			throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorGettingFetchProperty, new String[] { project.getName() }), e)); //$NON-NLS-1$
+			throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorGettingFetchProperty, new String[] { project.getName() }), e)); 
 		}
 	}
 	
@@ -800,7 +633,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 		try {
 			getProject().setPersistentProperty(FETCH_ABSENT_DIRECTORIES_PROP_KEY, fetchAbsentDirectories);
 		} catch (CoreException e) {
-			throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorSettingFetchProperty, new String[] { project.getName() }), e)); //$NON-NLS-1$
+			throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorSettingFetchProperty, new String[] { project.getName() }), e)); 
 		}
 	}
 	
@@ -819,12 +652,12 @@ public class CVSTeamProvider extends RepositoryProvider {
 		try {
 			if (cvsFolder.isCVSFolder()) {
 				// There is a remote folder that overlaps with the link so disallow
-				return new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_overlappingRemoteFolder, new String[] { resource.getFullPath().toString() })); //$NON-NLS-1$
+				return new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_overlappingRemoteFolder, new String[] { resource.getFullPath().toString() })); 
 			} else {
 				ICVSFile cvsFile = CVSWorkspaceRoot.getCVSFileFor(resource.getParent().getFile(new Path(resource.getName())));
 				if (cvsFile.isManaged()) {
 					// there is an outgoing file deletion that overlaps the link so disallow
-					return new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_overlappingFileDeletion, new String[] { resource.getFullPath().toString() })); //$NON-NLS-1$
+					return new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_overlappingFileDeletion, new String[] { resource.getFullPath().toString() })); 
 				}
 			}
 		} catch (CVSException e) {
@@ -955,7 +788,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 		} catch (CoreException e) {
 			if (project.isAccessible()) {
 				// We only care if the project still exists
-				throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorGettingWatchEdit, new String[] { project.getName() }), e)); //$NON-NLS-1$
+				throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorGettingWatchEdit, new String[] { project.getName() }), e)); 
 			}
 		}
 		return false;
@@ -971,7 +804,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 			project.setPersistentProperty(WATCH_EDIT_PROP_KEY, enabled);
 			project.setSessionProperty(WATCH_EDIT_PROP_KEY, enabled);
 		} catch (CoreException e) {
-			throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorSettingWatchEdit, new String[] { project.getName() }), e)); //$NON-NLS-1$
+			throw new CVSException(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.CVSTeamProvider_errorSettingWatchEdit, new String[] { project.getName() }), e)); 
 		}
 	}
 	

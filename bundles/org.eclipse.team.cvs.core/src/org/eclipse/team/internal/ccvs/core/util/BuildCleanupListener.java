@@ -62,7 +62,11 @@ public class BuildCleanupListener implements IResourceDeltaVisitor, IResourceCha
 						EclipseSynchronizer.getInstance().resourcesRecreated(new IResource[] { resource }, null);
 					}
 					if (resource.getType() == IResource.FOLDER) {
-						handleOrphanedSubtree((IContainer)resource);
+						if (resource.getName().equals(SyncFileWriter.CVS_DIRNAME)) {
+							handleOrphanedSubtree(resource.getParent());
+						} else {
+							handleOrphanedSubtree((IContainer)resource);
+						}
 					}
 				}
 				break;
@@ -108,7 +112,6 @@ public class BuildCleanupListener implements IResourceDeltaVisitor, IResourceCha
 				if (resource.getType() == IResource.PROJECT) {
 					// If the project is not accessible, don't process it
 					if (!resource.isAccessible()) continue;
-					if ((delta.getFlags() & IResourceDelta.OPEN) != 0) continue;
 				}
 				
 				RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());	
@@ -140,14 +143,14 @@ public class BuildCleanupListener implements IResourceDeltaVisitor, IResourceCha
 							try {
 								delta.accept(BuildCleanupListener.this);
 							} catch (CoreException e) {
-								Util.logError(CVSMessages.ResourceDeltaVisitor_visitError, e);//$NON-NLS-1$
+								Util.logError(CVSMessages.ResourceDeltaVisitor_visitError, e);
 							}
 						}
 					}, Policy.monitorFor(null));
 				}
 			}
 		} catch (CVSException e) {
-			Util.logError(CVSMessages.ResourceDeltaVisitor_visitError, e);//$NON-NLS-1$
+			Util.logError(CVSMessages.ResourceDeltaVisitor_visitError, e);
 		}
 	}
 

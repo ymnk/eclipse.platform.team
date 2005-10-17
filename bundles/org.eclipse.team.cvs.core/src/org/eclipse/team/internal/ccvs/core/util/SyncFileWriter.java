@@ -85,7 +85,7 @@ public class SyncFileWriter {
 				} catch (CVSException e) {
 					// There was a problem parsing the entry line.
 					// Log the problem and skip the entry
-					CVSProviderPlugin.log(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.SyncFileWriter_0, new String[] { parent.getFullPath().toString() }), e)); //$NON-NLS-1$
+					CVSProviderPlugin.log(new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.SyncFileWriter_0, new String[] { parent.getFullPath().toString() }), e)); 
 				}			
 			}
 		}
@@ -562,9 +562,7 @@ public class SyncFileWriter {
 			if (target.exists()) {
 				// XXX Should ensure that we haven't already copied it
 				// XXX write the revision to the CVS/Baserev file
-				if (target.isReadOnly()) {
-					target.setReadOnly(false);
-				}
+				setReadOnly(target, false);
 				target.delete(true, Policy.subMonitorFor(monitor, 10));
 			}
 			// Copy the file so the timestamp is maintained
@@ -588,17 +586,32 @@ public class SyncFileWriter {
 			IFolder baseFolder = getBaseDirectory(file);
 			IFile source = baseFolder.getFile(new Path(null, file.getName()));
 			if (!source.exists()) {
-				throw new CVSException(NLS.bind(CVSMessages.SyncFileWriter_baseNotAvailable, new String[] { file.getFullPath().toString() })); //$NON-NLS-1$
+				throw new CVSException(NLS.bind(CVSMessages.SyncFileWriter_baseNotAvailable, new String[] { file.getFullPath().toString() })); 
 			}
 			if (file.exists()) {
 				file.delete(false /* force */, true /* keep history */, Policy.subMonitorFor(monitor, 10));
 			}
+			// Make the source writtable to avoid problems on some file systems (bug 109308)
+			setReadOnly(source, false);
 			// Copy the file so the timestamp is maintained
 			source.move(file.getFullPath(), false /* force */, true /* keep history */,Policy.subMonitorFor(monitor, 100));
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		} finally {
 			monitor.done();
+		}
+	}
+
+	private static void setReadOnly(IFile source, boolean readOnly) {
+		ResourceAttributes attrs = source.getResourceAttributes();
+		if (attrs.isReadOnly() != readOnly) {
+			attrs.setReadOnly(readOnly);
+			try {
+		        source.setResourceAttributes(attrs);
+		    } catch (CoreException e) {
+		    	// Just log the failure since the move may succeed anyway
+		        CVSProviderPlugin.log(e);
+		    }
 		}
 	}
 	
@@ -614,9 +627,7 @@ public class SyncFileWriter {
 			IFolder baseFolder = getBaseDirectory(file);
 			IFile source = baseFolder.getFile(new Path(null, file.getName()));
 			if (source.exists()) {
-				if (source.isReadOnly()) {
-					source.setReadOnly(false);
-				}
+				setReadOnly(source, false);
 				source.delete(false, false, Policy.subMonitorFor(monitor, 100));
 			}
 		} catch (CoreException e) {
@@ -659,7 +670,7 @@ public class SyncFileWriter {
 			String property = System.getProperty("line.separator"); //$NON-NLS-1$
 			if (property != null) return property.getBytes();
 		}
-		return new byte[] { 0x0A }; //$NON-NLS-1$
+		return new byte[] { 0x0A }; 
 	}
 
 }

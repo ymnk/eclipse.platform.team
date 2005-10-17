@@ -53,7 +53,11 @@ public class ResourceSyncInfo {
 	// noted by prefixing the revision with this character.
 	private static final String DELETED_PREFIX = "-"; //$NON-NLS-1$
 	private static final byte DELETED_PREFIX_BYTE = '-';
-	
+
+	// revision can be locked in repository using "cvs admin -l<rev>" command
+	// entry looks like [M revision 1.2.2.3	locked by: igorf;]
+	private static final String LOCKEDBY_SUFFIX = "\tlocked by"; //$NON-NLS-1$
+
 	// a sync element with a revision of '0' is considered a new file that has
 	// not been comitted to the repo. Is visible so that clients can create sync infos
 	// for new files.
@@ -363,7 +367,7 @@ public class ResourceSyncInfo {
 
 		String[] strings = Util.parseIntoSubstrings(entryLine, SEPARATOR);
 		if(strings.length < 6) {
-			throw new CVSException(CVSMessages.Malformed_entry_line___11 + entryLine); //$NON-NLS-1$
+			throw new CVSException(CVSMessages.Malformed_entry_line___11 + entryLine); 
 		}
 		
 		isDirectory = (strings[0].equals(DIRECTORY_PREFIX));
@@ -371,13 +375,13 @@ public class ResourceSyncInfo {
 		name = strings[1];
 		
 		if(name.length()==0) {
-			throw new CVSException(CVSMessages.Malformed_entry_line__missing_name___12 + entryLine); //$NON-NLS-1$
+			throw new CVSException(CVSMessages.Malformed_entry_line__missing_name___12 + entryLine); 
 		}
 		
 		String rev = strings[2];
 		
 		if(rev.length()==0 && !isDirectory()) {
-			throw new CVSException(CVSMessages.Malformed_entry_line__missing_revision___13 + entryLine); //$NON-NLS-1$
+			throw new CVSException(CVSMessages.Malformed_entry_line__missing_revision___13 + entryLine); 
 		} else {
 			setRevision(rev);
 		}
@@ -512,7 +516,7 @@ public class ResourceSyncInfo {
 	public static String getName(byte[] syncBytes) throws CVSException {
 		String name = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 1, false);
 		if (name == null) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		return name;
 	}
@@ -525,7 +529,7 @@ public class ResourceSyncInfo {
 	public static KSubstOption getKeywordMode(byte[] syncBytes) throws CVSException {
 		String mode = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 4, false);
 		if (mode == null) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		return KSubstOption.fromMode(mode);
 	}
@@ -558,7 +562,7 @@ public class ResourceSyncInfo {
 		if (syncBytes == null) return false;
 		String mode = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 4, false);
 		if (mode == null) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		return "-kb".equals(mode); //$NON-NLS-1$
 	}
@@ -581,7 +585,7 @@ public class ResourceSyncInfo {
 		int start = startOfSlot(syncBytes, 2);
 		// There must be a slot and, in the very least, there must be two characters after the slot
 		if (start == -1 || start > syncBytes.length - 3) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		// If the zero is followed by a dot, then it is a valid revision and not an addition
 		return syncBytes[start + 1] == '0' && syncBytes[start + 2] != '.';
@@ -595,7 +599,7 @@ public class ResourceSyncInfo {
 	public static boolean isDeletion(byte[] syncBytes) throws CVSException {
 		int start = startOfSlot(syncBytes, 2);
 		if (start == -1 || start >= syncBytes.length) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		return syncBytes[start + 1] == DELETED_PREFIX_BYTE;
 	}
@@ -608,7 +612,7 @@ public class ResourceSyncInfo {
 	public static byte[] convertToDeletion(byte[] syncBytes) throws CVSException {
 		int index = startOfSlot(syncBytes, 2);
 		if (index == -1) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		if (syncBytes.length > index && syncBytes[index+1] != DELETED_PREFIX_BYTE) {
 			byte[] newSyncBytes = new byte[syncBytes.length + 1];
@@ -628,7 +632,7 @@ public class ResourceSyncInfo {
 	public static byte[] convertFromDeletion(byte[] syncBytes) throws CVSException {
 		int index = startOfSlot(syncBytes, 2);
 		if (index == -1) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		if (syncBytes.length > index && syncBytes[index+1] == DELETED_PREFIX_BYTE) {
 			byte[] newSyncBytes = new byte[syncBytes.length - 1];
@@ -668,7 +672,7 @@ public class ResourceSyncInfo {
 	private static byte[] setSlot(byte[] syncBytes, int slot, byte[] newBytes) throws CVSException {
 		int start = startOfSlot(syncBytes, slot);
 		if (start == -1) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		int end = startOfSlot(syncBytes, slot + 1);
 		int totalLength = start + 1 + newBytes.length;
@@ -696,7 +700,7 @@ public class ResourceSyncInfo {
 		if(fileTimestamp != null) {
 			String syncTimestamp = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 3, false);
 			if (syncTimestamp == null) {
-				throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+				throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 			}
 			int syncType = getSyncType(syncTimestamp);
 			if (syncType != TYPE_REGULAR) {
@@ -765,7 +769,7 @@ public class ResourceSyncInfo {
 	public static byte[] getTagBytes(byte[] syncBytes) throws CVSException {
 		byte[] tag = Util.getBytesForSlot(syncBytes, SEPARATOR_BYTE, 5, true);
 		if (tag == null) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		return tag;
 	}
@@ -803,14 +807,18 @@ public class ResourceSyncInfo {
 	public static String getRevision(byte[] syncBytes) throws CVSException {
 		String revision = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 2, false);
 		if (revision == null) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		if(revision.startsWith(DELETED_PREFIX)) {
 			revision = revision.substring(DELETED_PREFIX.length());
 		}
+		int lockedIdx = revision.indexOf(LOCKEDBY_SUFFIX);
+		if (lockedIdx >= 0) {
+			revision = revision.substring(0, lockedIdx);
+		}
 		return revision;
 	}
-	
+
 	/**
 	 * Method setRevision.
 	 * @param syncBytes
@@ -829,7 +837,7 @@ public class ResourceSyncInfo {
 	public static boolean isMerge(byte[] syncBytes) throws CVSException {
 		String timestamp = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 3, false);
 		if (timestamp == null) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		int syncType = getSyncType(timestamp);
 		return syncType == TYPE_MERGED || syncType == TYPE_MERGED_WITH_CONFLICTS;
@@ -843,7 +851,7 @@ public class ResourceSyncInfo {
 	public static boolean isMergedWithConflicts(byte[] syncBytes) throws CVSException {
 		String timestamp = Util.getSubstring(syncBytes, SEPARATOR_BYTE, 3, false);
 		if (timestamp == null) {
-			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); //$NON-NLS-1$
+			throw new CVSException(NLS.bind(CVSMessages.ResourceSyncInfo_malformedSyncBytes, new String[] { new String(syncBytes) })); 
 		}
 		int syncType = getSyncType(timestamp);
 		return syncType == TYPE_MERGED_WITH_CONFLICTS;

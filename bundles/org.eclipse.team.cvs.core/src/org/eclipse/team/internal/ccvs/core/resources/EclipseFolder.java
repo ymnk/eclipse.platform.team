@@ -118,7 +118,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 				EclipseSynchronizer.getInstance().created(getIResource());;
 			}				
 		} catch (CoreException e) {
-			throw CVSException.wrapException(resource, NLS.bind(CVSMessages.EclipseFolder_problem_creating, new String[] { resource.getFullPath().toString(), e.getStatus().getMessage() }), e); //$NON-NLS-1$
+			throw CVSException.wrapException(resource, NLS.bind(CVSMessages.EclipseFolder_problem_creating, new String[] { resource.getFullPath().toString(), e.getStatus().getMessage() }), e); 
 		} 
 	}
 		
@@ -252,7 +252,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 				IResource resource = members[i];
 				if (resource.getType() == IResource.FILE) {
                     ResourceAttributes attrs = resource.getResourceAttributes();
-                    if (attrs.isReadOnly()) {
+                    if (attrs != null && attrs.isReadOnly()) {
                         attrs.setReadOnly(false);
                         resource.setResourceAttributes(attrs);
                     }
@@ -324,7 +324,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 	public boolean isModified(IProgressMonitor monitor) throws CVSException {
 		try {
 			monitor = Policy.monitorFor(monitor);
-			monitor.beginTask(NLS.bind(CVSMessages.EclipseFolder_isModifiedProgress, new String[] { resource.getFullPath().toString() }), 1000); //$NON-NLS-1$
+			monitor.beginTask(NLS.bind(CVSMessages.EclipseFolder_isModifiedProgress, new String[] { resource.getFullPath().toString() }), 1000); 
 			
 			IContainer container = (IContainer)getIResource();
 			

@@ -33,11 +33,12 @@ public class CVSProviderPlugin extends Plugin {
 	
 	// preference names
 	public static final String READ_ONLY = "cvs.read.only"; //$NON-NLS-1$
+	public static final String ENABLE_WATCH_ON_EDIT = "cvs.watch.on.edit"; //$NON-NLS-1$
 
 	// external command to run for ext connection method
 	public static final String DEFAULT_CVS_RSH = "ssh"; //$NON-NLS-1$
 	// external command parameters
-	public static final String DEFAULT_CVS_RSH_PARAMETERS = "{host} -l {user}"; //$NON-NLS-1$
+	public static final String DEFAULT_CVS_RSH_PARAMETERS = "-l {user} {host}"; //$NON-NLS-1$
 	// remote command to run for ext connection method
 	public static final String DEFAULT_CVS_SERVER = "cvs"; //$NON-NLS-1$
 	// determines if empty directories received from the server should be pruned.
@@ -109,7 +110,7 @@ public class CVSProviderPlugin extends Plugin {
 		if (cvsWorkspaceSubscriber == null) {
 			cvsWorkspaceSubscriber = new CVSWorkspaceSubscriber(
 					CVS_WORKSPACE_SUBSCRIBER_ID, 
-					CVSMessages.CVSProviderPlugin_20); //$NON-NLS-1$
+					CVSMessages.CVSProviderPlugin_20); 
 		}
 		return cvsWorkspaceSubscriber;
 	}
@@ -294,6 +295,7 @@ public class CVSProviderPlugin extends Plugin {
 	protected void initializeDefaultPluginPreferences(){
 		Preferences store = getPluginPreferences();
 		store.setDefault(READ_ONLY, false);
+		store.setDefault(ENABLE_WATCH_ON_EDIT, false);
 	}
 	
 	/**
@@ -459,11 +461,11 @@ public class CVSProviderPlugin extends Plugin {
 					// persisted in the user settings
 					file.delete();
 				} catch (IOException e) {
-					throw new TeamException(new Status(Status.ERROR, CVSProviderPlugin.ID, TeamException.UNABLE, CVSMessages.CVSProvider_ioException, e));  //$NON-NLS-1$
+					throw new TeamException(new Status(Status.ERROR, CVSProviderPlugin.ID, TeamException.UNABLE, CVSMessages.CVSProvider_ioException, e));  
 				}
 			}
 		} catch (TeamException e) {
-			Util.logError(CVSMessages.CVSProvider_errorLoading, e);//$NON-NLS-1$
+			Util.logError(CVSMessages.CVSProvider_errorLoading, e);
 		}
 	}
 	
@@ -485,7 +487,7 @@ public class CVSProviderPlugin extends Plugin {
 				dis.readUTF();
 			}
 		} else {
-			Util.logError(NLS.bind(CVSMessages.CVSProviderPlugin_unknownStateFileVersion, new String[] { new Integer(count).toString() }), null); //$NON-NLS-1$
+			Util.logError(NLS.bind(CVSMessages.CVSProviderPlugin_unknownStateFileVersion, new String[] { new Integer(count).toString() }), null); 
 		}
 	}
 		
@@ -589,4 +591,11 @@ public class CVSProviderPlugin extends Plugin {
     public boolean isAutoshareOnImport() {
         return autoShareOnImport;
     }
+
+	/**
+	 * @return Returns the watchOnEdit.
+	 */
+	public boolean isWatchOnEdit() {
+		return getPluginPreferences().getBoolean(CVSProviderPlugin.ENABLE_WATCH_ON_EDIT);
+	}
 }

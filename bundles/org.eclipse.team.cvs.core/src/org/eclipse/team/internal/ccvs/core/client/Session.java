@@ -15,8 +15,11 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption;
 import org.eclipse.team.internal.ccvs.core.client.Command.QuietOption;
@@ -417,7 +420,7 @@ public class Session {
 	 * @param remoteDir the path of the remote directory relative to repositoryRoot
 	 */
 	public void sendDirectory(String localDir, String remoteDir) throws CVSException {
-		if (localDir.length() == 0) localDir = CURRENT_LOCAL_FOLDER; //$NON-NLS-1$
+		if (localDir.length() == 0) localDir = CURRENT_LOCAL_FOLDER; 
 		connection.writeLine("Directory " + localDir); //$NON-NLS-1$
 		connection.writeLine(remoteDir);
 	}
@@ -426,7 +429,7 @@ public class Session {
 	 * Sends a Directory request for the localRoot.
 	 */
 	public void sendLocalRootDirectory() throws CVSException {
-		sendDirectory(CURRENT_LOCAL_FOLDER, localRoot.getRemoteLocation(localRoot)); //$NON-NLS-1$
+		sendDirectory(CURRENT_LOCAL_FOLDER, localRoot.getRemoteLocation(localRoot)); 
 	}
 
 	/**
@@ -607,8 +610,8 @@ public class Session {
 				textTransferOverrideSet.contains(file)) isBinary = false;
 	
 			// update progress monitor
-			final String title = NLS.bind(getSendFileTitleMessage(), (new Object[]{ Util.toTruncatedPath(file, localRoot, 3) })); //$NON-NLS-1$
-			monitor.subTask(NLS.bind(CVSMessages.Session_transferNoSize, new String[] { title })); //$NON-NLS-1$
+			final String title = NLS.bind(getSendFileTitleMessage(), (new Object[]{ Util.toTruncatedPath(file, localRoot, 3) })); 
+			monitor.subTask(NLS.bind(CVSMessages.Session_transferNoSize, new String[] { title })); 
 			try {
 				InputStream in = null;
 				long length;
@@ -647,7 +650,7 @@ public class Session {
 						};
 						sendUncompressedBytes(in, length);
 					} else {
-						monitor.subTask(NLS.bind(CVSMessages.Session_calculatingCompressedSize, new String[] { Util.toTruncatedPath(file, localRoot, 3) })); //$NON-NLS-1$
+						monitor.subTask(NLS.bind(CVSMessages.Session_calculatingCompressedSize, new String[] { Util.toTruncatedPath(file, localRoot, 3) })); 
 						in = file.getContents();
 						byte[] buffer = new byte[TRANSFER_BUFFER_SIZE];
 						ByteCountOutputStream counter = new ByteCountOutputStream();
@@ -733,8 +736,8 @@ public class Session {
 			textTransferOverrideSet.contains(file)) isBinary = false;
 
 		// update progress monitor
-		final String title = NLS.bind(CVSMessages.Session_receiving, (new Object[]{ Util.toTruncatedPath(file, localRoot, 3) })); //$NON-NLS-1$
-		monitor.subTask(NLS.bind(CVSMessages.Session_transferNoSize, new String[] { title })); //$NON-NLS-1$
+		final String title = NLS.bind(CVSMessages.Session_receiving, (new Object[]{ Util.toTruncatedPath(file, localRoot, 3) })); 
+		monitor.subTask(NLS.bind(CVSMessages.Session_transferNoSize, new String[] { title })); 
 		// get the file size from the server
 		long size;
 		boolean compressed = false;
@@ -752,7 +755,7 @@ public class Session {
 		        handleErrorLine(sizeLine.substring(1).trim(), org.eclipse.core.runtime.Status.OK_STATUS);
 		        return;
 		    } else {
-		        throw new CVSException(CVSMessages.Session_badInt, e); //$NON-NLS-1$
+		        throw new CVSException(CVSMessages.Session_badInt, e); 
 		    }
 		}
 		// create an input stream that spans the next 'size' bytes from the connection
@@ -854,7 +857,7 @@ public class Session {
 	 */
 	String getSendFileTitleMessage() {
 		if (sendFileTitleMessage == null)
-			return CVSMessages.Session_sending; //$NON-NLS-1$
+			return CVSMessages.Session_sending; 
 		return sendFileTitleMessage;
 	}
 
@@ -893,7 +896,7 @@ public class Session {
 				globalOptions = quietOption.addToEnd(globalOptions);
 			}
 			// Get the user preference for read-only
-			if (CVSProviderPlugin.getPlugin().getPluginPreferences().getBoolean(CVSProviderPlugin.READ_ONLY)) {
+			if (isWatchEditEnabled()) {
 				if (!Command.MAKE_READ_ONLY.isElementOf(globalOptions)) {
 					globalOptions = Command.MAKE_READ_ONLY.addToEnd(globalOptions);
 				}
@@ -901,6 +904,27 @@ public class Session {
 		}
 		return globalOptions;
 	}
+
+	private boolean isWatchEditEnabled() {
+		// First, look at the global preference
+		if (CVSProviderPlugin.getPlugin().getPluginPreferences().getBoolean(CVSProviderPlugin.READ_ONLY)) {
+			return true;
+		}
+		// If there is a provider, use the providers setting for watch/edit
+		try {
+			IResource resource = getLocalRoot().getIResource();
+			if (resource != null && resource.getType() != IResource.ROOT) {
+				RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
+				if (provider != null) {
+					return ((CVSTeamProvider) provider).isWatchEditEnabled();
+				}
+			}
+		} catch (CVSException e) {
+			CVSProviderPlugin.log(e);
+		}
+		return false;
+	}
+	
 	/**
 	 * Method setIgnoringLocalChanges.
 	 * @param b
@@ -1000,6 +1024,6 @@ public class Session {
      */
     public void handleResponseError(IStatus status) {
         addError(status);
-        handleErrorLine(NLS.bind(CVSMessages.Session_0, new String[] { status.getMessage() }), status); //$NON-NLS-1$
+        handleErrorLine(NLS.bind(CVSMessages.Session_0, new String[] { status.getMessage() }), status); 
     }
 }

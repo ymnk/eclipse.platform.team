@@ -94,7 +94,7 @@ public class Util {
 		throws CVSException {
 
 		if (!resourceName.startsWith(rootName) || rootName.length() > resourceName.length()) {
-			throw new CVSException(CVSMessages.Util_Internal_error__resource_does_not_start_with_root_3); //$NON-NLS-1$
+			throw new CVSException(CVSMessages.Util_Internal_error__resource_does_not_start_with_root_3); 
 		}
 		
 		// Otherwise we would get an ArrayOutOfBoundException
@@ -160,7 +160,7 @@ public class Util {
 		if (index == -1) {
 			return stringPath;
 		} else {
-			return NLS.bind(CVSMessages.Util_truncatedPath, new String[] { stringPath.substring(index) }); //$NON-NLS-1$
+			return NLS.bind(CVSMessages.Util_truncatedPath, new String[] { stringPath.substring(index) }); 
 		}
 	}
 	
@@ -234,7 +234,7 @@ public class Util {
 				throw (IOException)exception[0];
 		}
 		if (socket[0] == null) {
-			throw new InterruptedIOException(NLS.bind(CVSMessages.Util_timeout, new String[] { host })); //$NON-NLS-1$
+			throw new InterruptedIOException(NLS.bind(CVSMessages.Util_timeout, new String[] { host })); 
 		}
 		return socket[0];
 	}
@@ -304,7 +304,7 @@ public class Util {
 			throw (IOException)exception[0];
 		}
 		if (process[0] == null) {
-			throw new InterruptedIOException(NLS.bind(CVSMessages.Util_processTimeout, new String[] { command[0] })); //$NON-NLS-1$
+			throw new InterruptedIOException(NLS.bind(CVSMessages.Util_processTimeout, new String[] { command[0] })); 
 		}
 		return process[0];
 	}
@@ -507,10 +507,6 @@ public class Util {
 			} else if(parentTag != null){
 				tag = new CVSTag(tag.getName(), parentTag.getType());
 			}
-		} else {
-			// if a file doesn't have tag info, very possible for example
-			// when the file is in HEAD, use the parents.
-			tag = parentTag;
 		}
 		
 		return tag;						
@@ -522,13 +518,9 @@ public class Util {
 	 * @return
 	 */
 	public static String getFullestPath(ICVSResource resource) {
-		try {
-			IResource local = resource.getIResource();
-			if (local != null) {
-				return local.getFullPath().toString();
-			}
-		} catch (CVSException e) {
-			// Ignore and try the next method;
+		IResource local = resource.getIResource();
+		if (local != null) {
+			return local.getFullPath().toString();
 		}
 		try {
 			String remotePath = resource.getRepositoryRelativePath();
