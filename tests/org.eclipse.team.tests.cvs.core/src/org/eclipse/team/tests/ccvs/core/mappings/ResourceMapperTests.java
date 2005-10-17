@@ -548,14 +548,14 @@ public class ResourceMapperTests extends EclipseTest {
         IProject copy = checkoutCopy(project, "-copy");
         
         // First, make some local changes and then cache the bases
-        setContentsAndEnsureModified(project.getFile("changed.txt"));
+        setContentsAndEnsureModified(project.getFile("changed.txt"), "Uncomited text");
         setContentsAndEnsureModified(project.getFile("folder1/b.txt"));
         project.getFile("deleted.txt").delete(false, true, null);
         cacheBase(project, true /* cache for outgoing and conflicting */);
         cacheBase(project, false /* cache for conflicting only*/);
         
         // Next, retry after releasing some changes (to ensure proper contents are fetched)
-        setContentsAndEnsureModified(copy.getFile("changed.txt"));
+        setContentsAndEnsureModified(copy.getFile("changed.txt"), "Text comited from the copy");
         commitProject(copy);
         cacheBase(project, true /* cache for outgoing and conflicting */);
         cacheBase(project, false /* cache for conflicting only */);
@@ -585,6 +585,9 @@ public class ResourceMapperTests extends EclipseTest {
 						IResourceVariant remote = info.getRemote();
 						if (remote != null) {
 							InputStream baseIn = base.getStorage(DEFAULT_MONITOR).getContents();
+							if (baseIn == null) {
+								fail(NLS.bind("Base was not fetched for for {0}", new String[] {info.getLocal().getFullPath().toString()}));
+							}
 							InputStream remoteIn = remote.getStorage(DEFAULT_MONITOR).getContents();
 							if (compareContent(baseIn, remoteIn)) {
 								fail(NLS.bind("The remote was fetched instead of the base for {0}", new String[] {info.getLocal().getFullPath().toString()}));
