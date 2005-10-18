@@ -18,9 +18,6 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
-import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
-import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.ui.IWorkbenchPart;
 
@@ -30,8 +27,8 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public class CacheRemoteContentsOperation extends CacheTreeContentsOperation {
 
-	public CacheRemoteContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, SyncInfoTree tree) {
-		super(part, mappers, options, tree);
+	public CacheRemoteContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, SyncInfoTree tree) {
+		super(part, mappers, tree);
 	}
 
 	protected boolean needsContents(SyncInfo info) {

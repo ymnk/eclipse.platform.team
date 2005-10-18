@@ -27,7 +27,6 @@ import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.variants.CachedResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
-import org.eclipse.team.internal.ccvs.core.client.Command;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTree;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTreeBuilder;
@@ -566,7 +565,7 @@ public class ResourceMapperTests extends EclipseTest {
 		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().refresh(new IProject[] { project }, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 		SyncInfoTree tree = getAllOutOfSync(new IProject[] { project });
 		ResourceMapping[] mappings = new ResourceMapping[] {new SimpleResourceMapping(project)};
-		CacheBaseContentsOperation op = new CacheBaseContentsOperation(null, mappings, Command.NO_LOCAL_OPTIONS, tree, includeOutgoing);
+		CacheBaseContentsOperation op = new CacheBaseContentsOperation(null, mappings, tree, includeOutgoing);
 		executeHeadless(op);
 		ensureBaseCached(tree, includeOutgoing);
 	}

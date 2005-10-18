@@ -35,8 +35,8 @@ public abstract class CacheTreeContentsOperation extends SingleCommandOperation 
 
 	private final SyncInfoTree tree;
 
-	public CacheTreeContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, SyncInfoTree tree) {
-		super(part, mappers, options);
+	public CacheTreeContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, SyncInfoTree tree) {
+		super(part, mappers, Command.NO_LOCAL_OPTIONS);
 		this.tree = tree;
 	}
 	

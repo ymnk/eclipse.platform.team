@@ -12,15 +12,14 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.mapping.ModelProvider;
-import org.eclipse.core.resources.mapping.RemoteResourceMappingContext;
-import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.team.ui.mapping.IMergeContext;
-import org.eclipse.team.ui.mapping.IResourceMappingManualMerger;
-import org.eclipse.team.ui.mapping.IResourceMappingOperationInput;
-import org.eclipse.team.ui.mapping.ResourceMappingMergeOperation;
+import org.eclipse.team.internal.ccvs.core.CVSException;
+import org.eclipse.team.internal.ccvs.ui.CVSUIPlugin;
+import org.eclipse.team.internal.ccvs.ui.Policy;
+import org.eclipse.team.internal.ccvs.ui.operations.CacheBaseContentsOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.CacheRemoteContentsOperation;
+import org.eclipse.team.ui.mapping.*;
 import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 import org.eclipse.ui.IWorkbenchPart;
 
@@ -38,7 +37,22 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
 		}
 
 		protected IMergeContext buildMergeContext(ResourceMappingScope scope, IProgressMonitor monitor) {
-			return CVSMergeContext.createContext(scope.getResourceMappings(), scope, monitor);
+			monitor.beginTask(null, 100);
+			IMergeContext context = CVSMergeContext.createContext(scope.getResourceMappings(), scope, Policy.subMonitorFor(monitor, 50));
+			// cache the base and remote contents
+			// TODO: Refreshing and caching now takes 3 round trips.
+			// OPTIMIZE: remote state and contents could be obtained in 1
+			// OPTIMIZE: Based could be avoided if we always cached base locally
+			try {
+				new CacheBaseContentsOperation(getPart(), scope.getResourceMappings(), context.getSyncInfoTree(), true).run(Policy.subMonitorFor(monitor, 25));
+				new CacheRemoteContentsOperation(getPart(), scope.getResourceMappings(), context.getSyncInfoTree()).run(Policy.subMonitorFor(monitor, 25));
+			} catch (InvocationTargetException e) {
+				CVSUIPlugin.log(CVSException.wrapException(e));
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+			monitor.done();
+			return context;
 		}
 
 		protected IResourceMappingManualMerger getDefaultManualMerger() {

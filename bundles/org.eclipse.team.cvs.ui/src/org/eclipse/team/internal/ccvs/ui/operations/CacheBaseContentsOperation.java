@@ -30,8 +30,8 @@ public class CacheBaseContentsOperation extends CacheTreeContentsOperation {
 
 	private final boolean includeOutgoing;
 
-	public CacheBaseContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, SyncInfoTree tree, boolean includeOutgoing) {
-		super(part, mappers, options, tree);
+	public CacheBaseContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, SyncInfoTree tree, boolean includeOutgoing) {
+		super(part, mappers, tree);
 		this.includeOutgoing = includeOutgoing;
 	}
 	
