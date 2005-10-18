@@ -18,32 +18,32 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.internal.ccvs.core.*;
+import org.eclipse.team.internal.ccvs.core.CVSTeamProvider;
+import org.eclipse.team.internal.ccvs.core.ICVSRemoteResource;
 import org.eclipse.team.internal.ccvs.core.client.Command.LocalOption;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFile;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
- * Operation that ensures that the contents for base
+ * Operation that ensures that the contents for remote
  * of each local resource is cached.
  */
-public class CacheBaseContentsOperation extends CacheTreeContentsOperation {
+public class CacheRemoteContentsOperation extends CacheTreeContentsOperation {
 
-	private final boolean includeOutgoing;
-
-	public CacheBaseContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, SyncInfoTree tree, boolean includeOutgoing) {
+	public CacheRemoteContentsOperation(IWorkbenchPart part, ResourceMapping[] mappers, LocalOption[] options, SyncInfoTree tree) {
 		super(part, mappers, options, tree);
-		this.includeOutgoing = includeOutgoing;
 	}
-	
+
 	protected boolean needsContents(SyncInfo info) {
 		IResource local = info.getLocal();
-		IResourceVariant base = info.getBase();
-		if (base != null && local.getType() == IResource.FILE) {
+		IResourceVariant remote = info.getRemote();
+		if (remote != null && local.getType() == IResource.FILE) {
 			int direction = SyncInfo.getDirection(info.getKind());
-			if (isEnabledForDirection(direction)) {
-		        if (base instanceof RemoteFile) {
-		            RemoteFile remote = (RemoteFile) base;
-		            if (!remote.isContentsCached()) {
+			if (direction == SyncInfo.CONFLICTING || 
+					direction == SyncInfo.INCOMING) {
+		        if (remote instanceof RemoteFile) {
+		            RemoteFile remoteFile = (RemoteFile) remote;
+		            if (!remoteFile.isContentsCached()) {
 		            	return true;
 		            }
 		        }
@@ -52,13 +52,8 @@ public class CacheBaseContentsOperation extends CacheTreeContentsOperation {
 		return false;
 	}
 
-	private boolean isEnabledForDirection(int direction) {
-		return direction == SyncInfo.CONFLICTING || 
-		(includeOutgoing && direction == SyncInfo.OUTGOING);
-	}
-
 	protected ICVSRemoteResource buildTree(CVSTeamProvider provider) throws TeamException {
-		return CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().buildBaseTree(provider.getProject(), true, new NullProgressMonitor());
+		return CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().buildRemoteTree(provider.getProject(), true, new NullProgressMonitor());
 	}
 
 }

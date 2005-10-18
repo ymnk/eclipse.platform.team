@@ -47,6 +47,11 @@ public class SyncInfoTree extends SyncInfoSet {
 	 */
 	public SyncInfoTree(SyncInfo[] infos) {
 		super(infos);
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			IResource local = info.getLocal();
+			addToParents(local, local);
+		}
 	}
 
 	/**
