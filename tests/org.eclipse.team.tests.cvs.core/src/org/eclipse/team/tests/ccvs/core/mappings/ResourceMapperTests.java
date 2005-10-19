@@ -32,6 +32,7 @@ import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTree;
 import org.eclipse.team.internal.ccvs.core.resources.RemoteFolderTreeBuilder;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.operations.CacheBaseContentsOperation;
+import org.eclipse.team.internal.ccvs.ui.operations.CacheRemoteContentsOperation;
 import org.eclipse.team.internal.core.ResourceVariantCache;
 import org.eclipse.team.internal.core.ResourceVariantCacheEntry;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
@@ -559,9 +560,32 @@ public class ResourceMapperTests extends EclipseTest {
         cacheBase(project, true /* cache for outgoing and conflicting */);
         cacheBase(project, false /* cache for conflicting only */);
     }
+    
+    public void testCacheRemote() throws TeamException, CoreException {
+        IProject project = createProject("testCacheRemote", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder1/subfolder1/c.txt"  });
+        IProject copy = checkoutCopy(project, "-copy");
+        
+        // Make some remote changes
+        setContentsAndEnsureModified(copy.getFile("changed.txt"), "Uncomited text");
+        setContentsAndEnsureModified(copy.getFile("folder1/b.txt"));
+        commitProject(copy);
+        // Delete a local file
+        project.getFile("deleted.txt").delete(false, true, null);
+        cacheRemote(project);
+    }
+
+	private void cacheRemote(IProject project) throws TeamException {
+		clearCache(project);
+		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().refresh(new IProject[] { project }, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
+		SyncInfoTree tree = getAllOutOfSync(new IProject[] { project });
+		ResourceMapping[] mappings = new ResourceMapping[] {new SimpleResourceMapping(project)};
+		CacheRemoteContentsOperation op = new CacheRemoteContentsOperation(null, mappings, tree);
+		executeHeadless(op);
+		ensureRemoteCached(tree);
+	}
 
 	private void cacheBase(IProject project, boolean includeOutgoing) throws CoreException {
-		clearCachedBased(project);
+		clearCache(project);
 		CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().refresh(new IProject[] { project }, IResource.DEPTH_INFINITE, DEFAULT_MONITOR);
 		SyncInfoTree tree = getAllOutOfSync(new IProject[] { project });
 		ResourceMapping[] mappings = new ResourceMapping[] {new SimpleResourceMapping(project)};
@@ -570,6 +594,22 @@ public class ResourceMapperTests extends EclipseTest {
 		ensureBaseCached(tree, includeOutgoing);
 	}
 
+	private void ensureRemoteCached(SyncInfoTree tree) {
+		for (Iterator iter = tree.iterator(); iter.hasNext();) {
+			SyncInfo info = (SyncInfo) iter.next();
+			IResourceVariant remote = info.getRemote();
+			if (remote != null) {
+				boolean isCached = ((CachedResourceVariant)remote).isContentsCached();
+				int direction = SyncInfo.getDirection(info.getKind());
+				if (direction == SyncInfo.CONFLICTING || direction == SyncInfo.INCOMING) {
+					assertTrue(NLS.bind("The remote contents should be cached for {0}", new String[] {info.getLocal().getFullPath().toString()}), isCached);
+				} else {
+					assertFalse(NLS.bind("The base contents should NOT be cached for {0}", new String[] {info.getLocal().getFullPath().toString()}), isCached);
+				}
+			}
+		}
+	}
+	
 	private void ensureBaseCached(SyncInfoTree tree, boolean includeOutgoing) throws TeamException, CoreException {
 		for (Iterator iter = tree.iterator(); iter.hasNext();) {
 			SyncInfo info = (SyncInfo) iter.next();
@@ -600,7 +640,7 @@ public class ResourceMapperTests extends EclipseTest {
 		}
 	}
 
-	private void clearCachedBased(IProject project) {
+	private void clearCache(IProject project) {
 		ResourceVariantCache cache = ResourceVariantCache.getCache(CVSProviderPlugin.ID);
 		if (cache != null) {
 			ResourceVariantCacheEntry[] entries = cache.getEntries();
