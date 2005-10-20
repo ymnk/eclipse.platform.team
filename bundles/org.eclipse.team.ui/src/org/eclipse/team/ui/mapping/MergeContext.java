@@ -61,6 +61,8 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  */
 public abstract class MergeContext extends TeamViewerContext implements IMergeContext {
 	
+	private static final String TXT_EXTENTION = "txt"; //$NON-NLS-1$
+	
     private final String type;
     private final SyncInfoTree tree;
 
@@ -270,7 +272,7 @@ public abstract class MergeContext extends TeamViewerContext implements IMergeCo
 		// If we couldn't find a registered merger, fallback to text
 		// since we know we have one of those registered.
 		if (merger == null)
-		    merger = CompareUI.createStreamMerger(TextStreamMerger.EXTENTION);
+		    merger = CompareUI.createStreamMerger(TXT_EXTENTION);
 		if (merger == null)
 		    return  new Status(IStatus.ERROR, TeamPlugin.ID, MergeStatus.INTERNAL_ERROR, NLS.bind("Auto-merge support for {0} is not available.", new String[] { file.getFullPath().toString() }), null);
 		return merge(merger, info, monitor);
