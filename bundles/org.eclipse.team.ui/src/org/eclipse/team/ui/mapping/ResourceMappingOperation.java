@@ -22,10 +22,10 @@ import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.*;
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.dialogs.AdditionalMappingsDialog;
 import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
 import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IWorkbenchPart;
@@ -127,12 +127,40 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 	protected void buildInput(IProgressMonitor monitor) throws InvocationTargetException {
 		try {
 			input.buildInput(monitor);
-			// TODO: Prompt user if input changed
+			if (input.hasAdditionalMappings()) {
+				promptForInputChange(monitor);
+			}
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
 		}
 	}
 
+	/**
+	 * Prompt the user to inform them that additional resource mappings
+	 * have been included in the operations.
+	 * @param monitor a progress monitor
+	 * @throws OperationCanceledException if the user choose to cancel
+	 */
+	protected void promptForInputChange(IProgressMonitor monitor) {
+		showAllMappings(input.getSeedMappings(), input.getInputMappings());
+	}
+
+    private void showAllMappings(final ResourceMapping[] selectedMappings, final ResourceMapping[] allMappings) {
+        final boolean[] canceled = new boolean[] { false };
+        getShell().getDisplay().syncExec(new Runnable() {
+            public void run() {
+                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", selectedMappings, new TeamViewerContext(allMappings));
+                int result = dialog.open();
+                canceled[0] = result != Dialog.OK;
+            }
+        
+        });
+        
+        if (canceled[0]) {
+            throw new OperationCanceledException();
+        }
+    }
+    
 	protected abstract void execute(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException;
 
