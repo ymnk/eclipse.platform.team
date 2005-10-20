@@ -85,7 +85,10 @@ public class ResourceMappingOperationInput extends SimpleResourceMappingOperatio
 		Set newResources;
 		do {
 			newResources = addToTargetMappingToResourceMap(targetMappings, Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
-			targetMappings = internalGetMappingsFromProviders((IResource[]) newResources.toArray(new IResource[newResources.size()]), getAffectedNatures(targetMappings), Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
+			IResource[] adjusted = adjustNewResources(newResources);
+			targetMappings = internalGetMappingsFromProviders(adjusted, getAffectedNatures(targetMappings), Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
+			
+			//TODO: The new resources aren't really just the new ones so reduce the set if needed
 			if (!handledResources.isEmpty()) {
 				for (Iterator iter = newResources.iterator(); iter.hasNext();) {
 					IResource resource = (IResource) iter.next();
@@ -94,10 +97,36 @@ public class ResourceMappingOperationInput extends SimpleResourceMappingOperatio
 					}
 				}
 			}
+	
 			handledResources.addAll(newResources);
 			
 		} while (!newResources.isEmpty());
 		hasAdditionalMappings = internalHasAdditionalMappings();
+	}
+
+	/*
+	 * Give the subclass a chance to add resources to the set of affected resources
+	 */
+	private IResource[] adjustNewResources(Set newResources) {
+		IResource[] resources = (IResource[]) newResources.toArray(new IResource[newResources.size()]);
+		IResource[] adjusted = adjustInputResources(resources);
+		return adjusted;
+	}
+
+	/**
+	 * Adjust the given set of input resources to include any additional
+	 * resources required by a particular repository provider for the current
+	 * operation. By default the original set is returned but subclasses may
+	 * override. Overriding methods should return a set of resources that
+	 * include the original resource either explicitly or implicitly as a child
+	 * of a returned resource.
+	 * 
+	 * @param resources the input resources
+	 * @return the input resources adjusted to include any additional resources
+	 *         required for the current operation
+	 */
+	protected IResource[] adjustInputResources(IResource[] resources) {
+		return resources;
 	}
 
 	private boolean internalHasAdditionalMappings() {
@@ -136,10 +165,15 @@ public class ResourceMappingOperationInput extends SimpleResourceMappingOperatio
 		IModelProviderDescriptor[] descriptors = ModelProvider.getModelProviderDescriptors();
 		for (int i = 0; i < descriptors.length; i++) {
 			IModelProviderDescriptor descriptor = descriptors[i];
-			ResourceMapping[] mappings = descriptor.getMappings(resources, affectedNatures, getContext(), monitor);
+			ResourceMapping[] mappings = getMappings(descriptor, resources, affectedNatures, getContext(), monitor);
 			result.addAll(Arrays.asList(mappings));
 		}
 		return result;
+	}
+	
+	public ResourceMapping[] getMappings(IModelProviderDescriptor descriptor, IResource[] resources, String[] affectedNatures, ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
+		IResource[] matchingResources = descriptor.getMatchingResources(resources, affectedNatures);
+		return descriptor.getModelProvider().getMappings(matchingResources, context, monitor);
 	}
 
 	private Set addToTargetMappingToResourceMap(Set targetMappings, IProgressMonitor monitor) throws CoreException {
