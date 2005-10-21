@@ -12,25 +12,12 @@ package org.eclipse.team.ui.mapping;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ModelProvider;
-import org.eclipse.core.resources.mapping.RemoteResourceMappingContext;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.resources.mapping.ResourceTraversal;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Policy;
-import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
@@ -48,22 +35,17 @@ import org.eclipse.ui.IWorkbenchPart;
  *      <li>if the model does not have a custom merger, ensure that additional
  *      mappings are included (i.e. for many model elements to one resource case)
  * 		</ul>
- * <li>Create a MergeContext for the merge (this will be per model provider)
+ * <li>Create a MergeContext for the merge
  *      <ul>
  * 		<li>Determine the synchronization state of all resources
  *      covered by the input.
  *      <li>Pre-fetch the required contents.
  * 		</ul>
- * <li>Obtain and invoke the merger for the provider
+ * <li>Obtain and invoke the merger for each provider
  *      <ul>
  * 		<li>This will auto-merge as much as possible
  *      <li>If everything was merged, cleanup and stop
  *      <li>Otherwise, a set of un-merged resource mappings is returned
- * 		</ul>
- * <li>Restrict merge context to remaining mappings
- *      <ul>
- * 		<li>This needs to re-determine the traversals
- *      <li>I'm not sure if this step is needed?
  * 		</ul>
  * <li>Delegate manual merge to the model provider
  *      <ul>
@@ -104,8 +86,12 @@ import org.eclipse.ui.IWorkbenchPart;
  * the files. We could provide a preference that the user can set to perform
  * the merge at the level selected and not involve participants.
  * 
- * WARNING: This class is part of a provision API and is subject to change
- * until the release is final.
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This class or interface has been added as
+ * part of a work in progress. There is a guarantee neither that this API will
+ * work nor that it will remain the same. Please do not use this API without
+ * consulting with the Platform/Team team.
+ * </p>
  * 
  * @since 3.2
  */

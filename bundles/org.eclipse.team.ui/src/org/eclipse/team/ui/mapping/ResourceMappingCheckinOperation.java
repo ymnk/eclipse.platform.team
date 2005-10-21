@@ -70,8 +70,12 @@ import org.eclipse.ui.IWorkbenchPart;
  * to indicate to the user what additional resource mappings will be operated
  * on and return an adjusted list. 
  * 
- * WARNING: This class is part of a provision API and is subject to change
- * until the release is final.
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This class or interface has been added as
+ * part of a work in progress. There is a guarantee neither that this API will
+ * work nor that it will remain the same. Please do not use this API without
+ * consulting with the Platform/Team team.
+ * </p>
  * 
  * @since 3.2
  */
