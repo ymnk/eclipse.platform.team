@@ -117,36 +117,39 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		try {
 			IMergeContext context = buildMergeContext(monitor);
 			ModelProvider[] providers = getInput().getModelProviders();
+			List failedMerges = new ArrayList();
 			for (int i = 0; i < providers.length; i++) {
 				ModelProvider provider = providers[i];
-				performMerge(provider, context, monitor);
+				if (!performMerge(provider, context, monitor)) {
+					failedMerges.add(provider);
+				}
+			}
+			if (failedMerges.isEmpty()) {
+				context.dispose();
+			} else {
+				requiresManualMerge((ModelProvider[]) failedMerges.toArray(new ModelProvider[failedMerges.size()]), context);
 			}
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
 		}
 	}
 
-	private IMergeContext buildMergeContext(IProgressMonitor monitor) throws CoreException {
-		ResourceMappingScope scope = buildMergeContextScope(monitor);
-		IMergeContext context = buildMergeContext(scope, monitor);
-		return context;
-	}
-
-	private ResourceMappingScope buildMergeContextScope(IProgressMonitor monitor) throws CoreException {
-		return new ResourceMappingScope("TODO: Provide mapping scope description", getInput().getInputMappings(), getInput().getInputTraversals());
-	}
+	/**
+	 * One or more of the model elements for the given providers
+	 * requires a manual merge. When the manual merge is
+	 * @param providers the providers
+	 * @param context the merge context
+	 * @throws CoreException
+	 */
+	protected abstract void requiresManualMerge(ModelProvider[] providers, IMergeContext context) throws CoreException;
 
 	/**
-	 * Build and initialize a merge context for the given mappings.
-	 * The mappings will all be from the given provider or one
-	 * of the providers the provider extends.
-	 * @param provider the provider that owns the mappings being merged
-	 * @param mappings the mappings being merged
+	 * Build and initialize a merge context for the input of this operation.
 	 * @param monitor a progress monitor
-	 * @return a merge context for merging the mappings
-	 */
-	protected abstract IMergeContext buildMergeContext(ResourceMappingScope scope, IProgressMonitor monitor);
-
+	 * @return a merge context for merging the mappings of the input
+	 */ 
+	protected abstract IMergeContext buildMergeContext(IProgressMonitor monitor);
+	
 	/**
 	 * Merge all the mappings that come from the given provider. By default,
 	 * an automatic merge is attempted. After this, a manual merge (i.e. with user
@@ -157,17 +160,13 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	 * @param monitor a progress monitor
 	 * @throws CoreException
 	 */
-	protected void performMerge(ModelProvider provider, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
+	protected boolean performMerge(ModelProvider provider, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
 		try {
 			monitor.beginTask(null, 100);
 			IStatus status = performAutoMerge(provider, mergeContext, Policy.subMonitorFor(monitor, 95));
-			if (status.isOK()) {
-				mergeContext.dispose();
-			} else {
+			if (!status.isOK()) {
 				if (status.getCode() == MergeStatus.CONFLICTS) {
-					MergeStatus ms = (MergeStatus)status;
-					// TODO: Perhaps should be delayed until all models are attempted
-					performManualMerge(provider, ms.getConflictingMappings(), mergeContext, Policy.subMonitorFor(monitor, 5));
+					return false;
 				} else {
 					throw new TeamException(status);
 				}
@@ -175,6 +174,7 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		} finally {
 			monitor.done();
 		}
+		return true;
 	}
 
 	/**
@@ -191,11 +191,6 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		IResourceMappingMerger merger = getMerger(provider);
 		IStatus status = merger.merge(mergeContext, monitor);
 		return status;
-	}
-
-	protected void performManualMerge(ModelProvider provider, ResourceMapping[] conflictingMappings, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
-		IResourceMappingManualMerger merger = getManualMerger(provider);
-		merger.performManualMerge(getPart(), mergeContext, monitor);
 	}
 
 }

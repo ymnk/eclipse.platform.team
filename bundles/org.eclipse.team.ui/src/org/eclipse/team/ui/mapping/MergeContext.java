@@ -10,39 +10,16 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.IStreamMerger;
-import org.eclipse.compare.internal.merge.TextStreamMerger;
-import org.eclipse.core.resources.IEncodedStorage;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.resources.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.content.IContentDescription;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.core.synchronize.SyncInfoSet;
-import org.eclipse.team.core.synchronize.SyncInfoTree;
+import org.eclipse.team.core.synchronize.*;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
@@ -66,14 +43,17 @@ public abstract class MergeContext extends TeamViewerContext implements IMergeCo
     private final String type;
     private final SyncInfoTree tree;
 
+	private final IResourceMappingOperationInput input;
+
 	/**
      * Create a merge context.
 	 * @param type 
      */
-    protected MergeContext(String type, SyncInfoTree tree, ResourceMapping[] mappings) {
-    	super(mappings);
+    protected MergeContext(String type, SyncInfoTree tree, IResourceMappingOperationInput input) {
+    	super(input.getInputMappings());
 		this.type = type;
 		this.tree = tree;
+		this.input = input;
     }
     
     /**
@@ -376,7 +356,7 @@ public abstract class MergeContext extends TeamViewerContext implements IMergeCo
         try {
             return new BufferedInputStream(new FileInputStream(tmpFile));
         } catch (FileNotFoundException e) {
-            throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, MergeStatus.INTERNAL_ERROR, NLS.bind("Could not read from temp file {0}: {1}", new String[] { tmpFile.getAbsolutePath(), e.getMessage() }), e));
+            throw new CoreException(new Status(IStatus.ERROR, TeamPlugin.ID, MergeStatus.INTERNAL_ERROR, NLS.bind("Could not read from temporary file {0}: {1}", new String[] { tmpFile.getAbsolutePath(), e.getMessage() }), e));
         }
     }
 
@@ -404,7 +384,7 @@ public abstract class MergeContext extends TeamViewerContext implements IMergeCo
         try {
             return new BufferedOutputStream(new FileOutputStream(tmpFile));
         } catch (FileNotFoundException e) {
-            TeamPlugin.log(IStatus.ERROR, NLS.bind("Could not open temp file {0} for writing: {1}", new String[] { tmpFile.getAbsolutePath(), e.getMessage() }), e);
+            TeamPlugin.log(IStatus.ERROR, NLS.bind("Could not open temporary file {0} for writing: {1}", new String[] { tmpFile.getAbsolutePath(), e.getMessage() }), e);
             return new ByteArrayOutputStream();
         }
     }
@@ -421,5 +401,9 @@ public abstract class MergeContext extends TeamViewerContext implements IMergeCo
 	public void dispose() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public IResourceMappingOperationInput getInput() {
+		return input;
 	}
 }

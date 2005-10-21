@@ -12,6 +12,8 @@ package org.eclipse.team.internal.ccvs.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.internal.ccvs.core.CVSException;
@@ -36,16 +38,16 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
 			super(part, input);
 		}
 
-		protected IMergeContext buildMergeContext(ResourceMappingScope scope, IProgressMonitor monitor) {
+		protected IMergeContext buildMergeContext(IProgressMonitor monitor) {
 			monitor.beginTask(null, 100);
-			IMergeContext context = CVSMergeContext.createContext(scope.getResourceMappings(), scope, Policy.subMonitorFor(monitor, 50));
+			IMergeContext context = CVSMergeContext.createContext(getInput(), Policy.subMonitorFor(monitor, 50));
 			// cache the base and remote contents
 			// TODO: Refreshing and caching now takes 3 round trips.
 			// OPTIMIZE: remote state and contents could be obtained in 1
 			// OPTIMIZE: Based could be avoided if we always cached base locally
 			try {
-				new CacheBaseContentsOperation(getPart(), scope.getResourceMappings(), context.getSyncInfoTree(), true).run(Policy.subMonitorFor(monitor, 25));
-				new CacheRemoteContentsOperation(getPart(), scope.getResourceMappings(), context.getSyncInfoTree()).run(Policy.subMonitorFor(monitor, 25));
+				new CacheBaseContentsOperation(getPart(), getInput().getInputMappings(), context.getSyncInfoTree(), true).run(Policy.subMonitorFor(monitor, 25));
+				new CacheRemoteContentsOperation(getPart(), getInput().getInputMappings(), context.getSyncInfoTree()).run(Policy.subMonitorFor(monitor, 25));
 			} catch (InvocationTargetException e) {
 				CVSUIPlugin.log(CVSException.wrapException(e));
 			} catch (InterruptedException e) {
@@ -55,9 +57,8 @@ public class UpdateModelAction extends WorkspaceTraversalAction {
 			return context;
 		}
 
-		protected IResourceMappingManualMerger getDefaultManualMerger() {
-			// TODO Still need to define how manual merges happen
-			return null;
+		protected void requiresManualMerge(ModelProvider[] providers, IMergeContext context) throws CoreException {
+			// TODO Auto-generated method stub
 		}
 
 	}

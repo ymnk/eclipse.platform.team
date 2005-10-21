@@ -11,20 +11,13 @@
 package org.eclipse.team.ui.mapping;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.ModelProvider;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.resources.mapping.ResourceMappingContext;
-import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.dialogs.AdditionalMappingsDialog;
 import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
 import org.eclipse.team.ui.TeamOperation;
@@ -180,22 +173,6 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 		}
 		return new DefaultResourceMappingMerger(provider, getInput());
 	}
-	
-	/**
-	 * TODO: Early stages
-	 */
-	protected IResourceMappingManualMerger getManualMerger(ModelProvider provider) {
-		Object o = provider.getAdapter(IResourceMappingManualMerger.class);
-		if (o instanceof IResourceMappingManualMerger) {
-			return (IResourceMappingManualMerger) o;	
-		}
-		return getDefaultManualMerger();
-	}
-
-	/**
-	 * TODO: Early stages
-	 */
-	protected abstract IResourceMappingManualMerger getDefaultManualMerger();
 
 	public IResourceMappingOperationInput getInput() {
 		return input;

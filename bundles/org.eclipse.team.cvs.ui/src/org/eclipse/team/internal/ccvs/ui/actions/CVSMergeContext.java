@@ -25,8 +25,7 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ccvs.core.CVSSyncInfo;
 import org.eclipse.team.internal.ccvs.ui.operations.CacheBaseContentsOperation;
 import org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant;
-import org.eclipse.team.ui.mapping.IMergeContext;
-import org.eclipse.team.ui.mapping.MergeContext;
+import org.eclipse.team.ui.mapping.*;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 
@@ -34,14 +33,14 @@ public class CVSMergeContext extends MergeContext {
 	
 	private WorkspaceSynchronizeParticipant participant;
 
-	public static IMergeContext createContext(ResourceMapping[] mappings, ResourceMappingScope scope, IProgressMonitor monitor) {
-		WorkspaceSynchronizeParticipant participant = new WorkspaceSynchronizeParticipant(scope);
+	public static IMergeContext createContext(IResourceMappingOperationInput input, IProgressMonitor monitor) {
+		WorkspaceSynchronizeParticipant participant = new WorkspaceSynchronizeParticipant(input.asSynchronizationScope());
 		participant.refreshNow(participant.getResources(), NLS.bind("Preparing to merge {0}", new String[] { "TODO: mapping description for CVS merge context initialization" }), monitor);
-		return new CVSMergeContext(THREE_WAY, participant, mappings);
+		return new CVSMergeContext(THREE_WAY, participant, input);
 	}
 	
-	protected CVSMergeContext(String type, WorkspaceSynchronizeParticipant participant, ResourceMapping[] mappings) {
-		super(type, participant.getSyncInfoSet(), mappings);
+	protected CVSMergeContext(String type, WorkspaceSynchronizeParticipant participant, IResourceMappingOperationInput input) {
+		super(type, participant.getSyncInfoSet(), input);
 		this.participant = participant;
 	}
 

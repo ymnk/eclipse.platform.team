@@ -50,12 +50,4 @@ public class ResourceMappingLoadOperation extends ResourceMappingOperation {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.mapping.ResourceMappingOperation#getDefaultMaualMerger()
-	 */
-	protected IResourceMappingManualMerger getDefaultManualMerger() {
-		// Loading never requires a manual merge
-		throw new UnsupportedOperationException();
-	}
-
 }

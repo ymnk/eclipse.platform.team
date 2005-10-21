@@ -10,25 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.ModelProvider;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.resources.mapping.ResourceMappingContext;
-import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.internal.core.subscribers.SubscriberResourceMappingContext;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
+import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 
 /**
  * A simple implementation of an operation input that
@@ -145,5 +135,10 @@ public class SimpleResourceMappingOperationInput implements
 			}
 		}
 		return (ResourceMapping[]) result.toArray(new ResourceMapping[result.size()]);
+	}
+
+	public ISynchronizeScope asSynchronizationScope() {
+		// TODO Temporary implementation
+		return new ResourceMappingScope("TODO: Need appropriate labels", getInputMappings(), getInputTraversals());
 	}
 }

@@ -15,6 +15,7 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
 /**
  * Interface which defines the protocol for translating
@@ -85,4 +86,6 @@ public interface IResourceMappingOperationInput {
 	public ModelProvider[] getModelProviders();
 
 	public ResourceMapping[] getMappings(ModelProvider provider);
+
+	public ISynchronizeScope asSynchronizationScope();
 }
