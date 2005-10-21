@@ -286,7 +286,7 @@ public class ResourceMapperTests extends EclipseTest {
                     };
             }
 			public String getModelProviderId() {
-				return ResourceModelProvider.MODEL_PROVIDER_ID;
+				return ModelProvider.RESOURCE_MODEL_PROVIDER_ID;
 			}
         };
     }

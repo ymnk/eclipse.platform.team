@@ -10,28 +10,18 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.dialogs;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.eclipse.core.resources.mapping.ModelProvider;
-import org.eclipse.core.resources.mapping.ResourceModelProvider;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.ILabelProviderListener;
-import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.IResourceMappingContentProvider;
-import org.eclipse.team.ui.mapping.INavigatorContentExtensionFactory;
-import org.eclipse.team.ui.mapping.ITeamViewerContext;
-import org.eclipse.team.ui.mapping.NavigatorContentExtension;
+import org.eclipse.team.ui.mapping.*;
 
 public class ResourceMappingHierarchyArea extends DialogArea {
 
@@ -226,7 +216,7 @@ public class ResourceMappingHierarchyArea extends DialogArea {
 			INavigatorContentExtensionFactory factory = getFactory(provider);
 			if (factory == null) {
 				try {
-					ModelProvider resourceModelProvider = ModelProvider.getModelProviderDescriptor(ResourceModelProvider.MODEL_PROVIDER_ID).getModelProvider();
+					ModelProvider resourceModelProvider = ModelProvider.getModelProviderDescriptor(ModelProvider.RESOURCE_MODEL_PROVIDER_ID).getModelProvider();
 					if (!extensions.containsKey(resourceModelProvider)) {
 						factory = getFactory(resourceModelProvider);
 					}

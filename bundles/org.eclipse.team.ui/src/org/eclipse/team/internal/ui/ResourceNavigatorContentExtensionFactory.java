@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui;
 
-import org.eclipse.core.resources.mapping.ResourceModelProvider;
+import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.team.internal.ui.dialogs.ResourceMappingLabelProvider;
 import org.eclipse.team.ui.IResourceMappingContentProvider;
@@ -24,7 +24,7 @@ public class ResourceNavigatorContentExtensionFactory implements
 			private ResourceMappingContentProvider resourceMappingContentProvider;
 			public IResourceMappingContentProvider getContentProvider() {
 				if (resourceMappingContentProvider == null)
-					resourceMappingContentProvider = new ResourceMappingContentProvider(getContext(), ResourceModelProvider.MODEL_PROVIDER_ID);
+					resourceMappingContentProvider = new ResourceMappingContentProvider(getContext(), ModelProvider.RESOURCE_MODEL_PROVIDER_ID);
 				return resourceMappingContentProvider;
 			}
 			public void dispose() {
