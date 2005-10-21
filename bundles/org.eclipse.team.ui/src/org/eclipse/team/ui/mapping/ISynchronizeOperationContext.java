@@ -15,7 +15,10 @@ package org.eclipse.team.ui.mapping;
  * state for the duration of the operation. When the context is disposed,
  * the cache will be cleared.
  * <p>
- * This interface is not intended to be implemented by clients.
+ * This interface is not intended to be implemented by clients. Clients
+ * should instead subclass <@link org.eclipse.team.ui.mapping.SynchronizeOperationContext}
+ * 
+ * @see org.eclipse.team.ui.mapping.SynchronizeOperationContext
  * 
  * @since 3.2
  */

@@ -10,15 +10,10 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 
 public class TeamViewerContext implements ITeamViewerContext {
     

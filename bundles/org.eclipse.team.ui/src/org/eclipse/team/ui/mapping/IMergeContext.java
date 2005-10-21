@@ -28,7 +28,7 @@ import org.eclipse.team.core.synchronize.SyncInfoSet;
  * @see IResourceMappingMerger
  * @since 3.2
  */
-public interface IMergeContext extends ISynchronizationContext {
+public interface IMergeContext extends ISynchronizeOperationContext {
 
 	/**
 	 * Method that allows the model merger to signal that the file in question

@@ -36,24 +36,21 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * @see IResourceMappingMerger
  * @since 3.2
  */
-public abstract class MergeContext extends TeamViewerContext implements IMergeContext {
+public abstract class MergeContext extends SynchronizeOperationContext implements IMergeContext {
 	
 	private static final String TXT_EXTENTION = "txt"; //$NON-NLS-1$
 	
     private final String type;
     private final SyncInfoTree tree;
 
-	private final IResourceMappingOperationInput input;
-
 	/**
      * Create a merge context.
 	 * @param type 
      */
     protected MergeContext(String type, SyncInfoTree tree, IResourceMappingOperationInput input) {
-    	super(input.getInputMappings());
+    	super(input);
 		this.type = type;
 		this.tree = tree;
-		this.input = input;
     }
     
     /**
@@ -392,18 +389,4 @@ public abstract class MergeContext extends TeamViewerContext implements IMergeCo
     private File getTempFile(IFile file) {
         return TeamPlugin.getPlugin().getStateLocation().append(".tmp").append(file.getName() + ".tmp").toFile(); //$NON-NLS-1$ //$NON-NLS-2$
     }
-
-	/**
-	 * Method to be invoked when the merge has been completed.
-	 * Subclasses should override to clean-ip any cached state
-	 * but must also invoke the overridden method.
-	 */
-	public void dispose() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public IResourceMappingOperationInput getInput() {
-		return input;
-	}
 }
