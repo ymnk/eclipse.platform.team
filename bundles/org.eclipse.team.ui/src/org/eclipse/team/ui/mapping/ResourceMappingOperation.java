@@ -66,44 +66,6 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 
 	private final IResourceMappingOperationInput input;
     
-    private static IResource[] getResources(ResourceMapping[] selectedMappings) throws CoreException {
-        Set result = new HashSet();
-        for (int i = 0; i < selectedMappings.length; i++) {
-            ResourceMapping mapping = selectedMappings[i];
-            ResourceTraversal[] traversals = mapping.getTraversals(ResourceMappingContext.LOCAL_CONTEXT, new NullProgressMonitor());
-            for (int j = 0; j < traversals.length; j++) {
-                ResourceTraversal traversal = traversals[j];
-                IResource[] resources = traversal.getResources();
-                if (traversal.getDepth() == IResource.DEPTH_INFINITE) {
-                    result.addAll(Arrays.asList(resources));
-                } else if (traversal.getDepth() == IResource.DEPTH_ONE) {
-                    for (int k = 0; k < resources.length; k++) {
-                        IResource resource = resources[k];
-                        if (resource.getType() == IResource.FILE) {
-                            result.add(resource);
-                        } else {
-                            IResource[] members = ((IContainer)resource).members();
-                            for (int index = 0; index < members.length; index++) {
-                                IResource member = members[index];
-                                if (member.getType() == IResource.FILE) {
-                                    result.add(member);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    for (int k = 0; k < resources.length; k++) {
-                        IResource resource = resources[k];
-                        if (resource.getType() == IResource.FILE) {
-                            result.add(resource);
-                        }
-                    }
-                }
-            }
-        }
-        return (IResource[]) result.toArray(new IResource[result.size()]);
-    }
-    
     /**
      * Create a resource mapping based operation
      * @param part the workspace part from which the operation was launched
