@@ -37,6 +37,9 @@ import org.eclipse.team.ui.synchronize.ISynchronizeScope;
  * <p>
  * This interface is not intended to be implemented by clients.
  * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @since 3.2
  */
 public interface ISynchronizationContext extends ITeamViewerContext {

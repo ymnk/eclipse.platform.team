@@ -20,6 +20,9 @@ package org.eclipse.team.ui.mapping;
  * 
  * @see org.eclipse.team.ui.mapping.SynchronizeOperationContext
  * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @since 3.2
  */
 public interface ISynchronizeOperationContext extends ISynchronizationContext {

@@ -25,6 +25,9 @@ import org.eclipse.team.core.synchronize.SyncInfoSet;
  * <p>
  * This interface is not intended to be implemented by clients.
  *  
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @see IResourceMappingMerger
  * @since 3.2
  */

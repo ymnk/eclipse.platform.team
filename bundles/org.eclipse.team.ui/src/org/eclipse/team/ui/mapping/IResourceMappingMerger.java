@@ -42,6 +42,10 @@ import org.eclipse.core.runtime.*;
  * @see org.eclipse.core.resources.mapping.ResourceMapping
  * @see org.eclipse.core.resources.mapping.ModelProvider
  * @see org.eclipse.team.ui.mapping.IMergeContext
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @since 3.2
  */
 public interface IResourceMappingMerger {

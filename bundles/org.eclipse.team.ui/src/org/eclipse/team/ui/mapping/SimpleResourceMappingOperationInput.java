@@ -23,6 +23,10 @@ import org.eclipse.team.ui.synchronize.ResourceMappingScope;
 /**
  * A simple implementation of an operation input that
  * does not transform the input.
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @since 3.2
  */
 public class SimpleResourceMappingOperationInput implements

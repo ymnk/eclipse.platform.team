@@ -17,6 +17,10 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
  * A context determined by Team providers and passed to model views
  * in order to display a subset of a model that is involved in a team
  * operation
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @since 3.2
  */
 public interface ITeamViewerContext {

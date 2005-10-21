@@ -37,6 +37,11 @@ import org.eclipse.ui.IWorkbenchPart;
  * 		</ul>
  * <li>Perform the replace at the resource level
  * </ol>
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
+ * @since 32
  */
 public class ResourceMappingLoadOperation extends ResourceMappingOperation {
 

@@ -103,6 +103,11 @@ import org.eclipse.ui.IWorkbenchPart;
  * to perform the merge at the file level even though a higher level model owns
  * the files. We could provide a preference that the user can set to perform
  * the merge at the level selected and not involve participants.
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
+ * @since 3.2
  */
 public abstract class ResourceMappingMergeOperation extends ResourceMappingOperation {
 

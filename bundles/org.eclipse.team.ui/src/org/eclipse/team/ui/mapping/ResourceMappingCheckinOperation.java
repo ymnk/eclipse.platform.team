@@ -69,6 +69,11 @@ import org.eclipse.ui.IWorkbenchPart;
  * That is, collect the resource mappings involved and ask the model provider
  * to indicate to the user what additional resource mappings will be operated
  * on and return an adjusted list. 
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
+ * @since 3.2
  */
 public abstract class ResourceMappingCheckinOperation extends ResourceMappingOperation {
 

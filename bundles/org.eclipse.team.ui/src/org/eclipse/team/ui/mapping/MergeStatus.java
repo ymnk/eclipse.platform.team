@@ -15,6 +15,9 @@ import org.eclipse.core.runtime.Status;
  * in which one of the children is a <code>MergeStatus</code> and
  * the others describe other problems that were encountered.
  * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @see org.eclipse.team.ui.mapping.IResourceMappingMerger
  * 
  * @since 3.2

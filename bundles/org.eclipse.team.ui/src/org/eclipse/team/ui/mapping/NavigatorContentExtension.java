@@ -17,6 +17,12 @@ import org.eclipse.team.ui.IResourceMappingContentProvider;
 
 /**
  * Placeholder for Common Navigator extension
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
+ * since 3.2
+ * 
  */
 public abstract class NavigatorContentExtension {
 

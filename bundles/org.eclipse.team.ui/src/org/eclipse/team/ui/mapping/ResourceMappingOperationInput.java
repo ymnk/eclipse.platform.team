@@ -65,6 +65,10 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  *     or component based approach
  *     </ul> 
  * </ol>
+ * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @since 3.2
  */
 public class ResourceMappingOperationInput extends SimpleResourceMappingOperationInput {

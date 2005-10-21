@@ -14,6 +14,9 @@ package org.eclipse.team.ui.mapping;
  * Listener that, when registered with a synchronization context, gets invoked
  * when the context is disposed.
  * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @since 3.2
  */
 public interface IDisposeListener {

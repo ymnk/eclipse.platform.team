@@ -33,6 +33,9 @@ import org.eclipse.team.internal.ui.TeamUIPlugin;
  * 
  * TODO: Need to have a story for folder merging
  * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @see IResourceMappingMerger
  * @since 3.2
  */

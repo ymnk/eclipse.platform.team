@@ -15,6 +15,14 @@ import java.util.*;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 
+/**
+ * A concrete implementation of the <code>ITeamViewerContext</code>
+ *
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ *
+ * @since 3.2
+ */
 public class TeamViewerContext implements ITeamViewerContext {
     
 	private final ResourceMapping[] mappings;

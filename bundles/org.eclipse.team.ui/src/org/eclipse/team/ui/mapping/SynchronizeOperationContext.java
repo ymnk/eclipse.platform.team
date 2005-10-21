@@ -22,6 +22,9 @@ import org.eclipse.jface.util.SafeRunnable;
  * properties relevant to the operation and the registering of
  * dispose listeners.
  * 
+ * WARNING: This class is part of a provision API and is subject to change
+ * until the release is final.
+ * 
  * @see org.eclipse.team.ui.mapping.ISynchronizeOperationContext
  * @since 3.2
  */
