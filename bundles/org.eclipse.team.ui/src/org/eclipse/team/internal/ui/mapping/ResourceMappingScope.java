@@ -217,4 +217,17 @@ public class ResourceMappingScope extends AbstractSynchronizeScope implements
 	public String getName() {
 		return label;
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.mapping.IResourceMappingScope#getMapping(java.lang.Object)
+	 */
+	public ResourceMapping getMapping(Object modelObject) {
+		ResourceMapping[] mappings = getMappings();
+		for (int i = 0; i < mappings.length; i++) {
+			ResourceMapping mapping = mappings[i];
+			if (mapping.getModelObject().equals(modelObject))
+				return mapping;
+		}
+		return null;
+	}
 }

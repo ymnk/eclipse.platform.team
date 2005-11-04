@@ -25,5 +25,6 @@ Require-Bundle: org.eclipse.ui.ide;resolution:=optional,
  org.eclipse.team.core,
  org.eclipse.ui,
  org.eclipse.compare,
- org.eclipse.ui.forms
+ org.eclipse.ui.forms,
+ org.eclipse.ui.navigator
 Eclipse-LazyStart: true

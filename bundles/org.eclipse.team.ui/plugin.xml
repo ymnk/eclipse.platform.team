@@ -325,5 +325,41 @@
          <adapter type="org.eclipse.team.internal.ui.mapping.INavigatorContentExtensionFactory"/>
       </factory>
    </extension>
+   <extension
+         point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            contentProvider="org.eclipse.team.internal.ui.mapping.NavigatorExtensionContentProvider"
+            id="org.eclipse.team.ui.navigatorContent"
+            labelProvider="org.eclipse.team.internal.ui.mapping.NavigatorExtensionLabelProvider"
+            name="Team">         
+         <enablement>
+         <or>         
+            <objectClass
+                  name="org.eclipse.core.resources.IWorkspaceRoot">
+            </objectClass> 
+         </or>
+         </enablement>
+      </navigatorContent>
+   </extension>
+   <extension
+         point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            contentProvider="org.eclipse.team.internal.ui.mapping.ResourceMappingContentProvider"
+            enabledByDefault="true"
+            id="org.eclipse.team.ui.resourceContent"
+            labelProvider="org.eclipse.team.internal.ui.mapping.ResourceMappingLabelProvider"
+            name="Resources">
+         <enablement>
+         <or>         
+            <objectClass
+                  name="org.eclipse.core.resources.mapping.ModelProvider">
+            </objectClass>
+            <objectClass
+                  name="org.eclipse.team.internal.ui.mapping.ResourceAndDepth">
+            </objectClass> 
+         </or>
+         </enablement>
+       </navigatorContent>
+   </extension>
 
 </plugin>

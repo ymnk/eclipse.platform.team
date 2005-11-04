@@ -13,16 +13,15 @@ package org.eclipse.team.internal.ui.mapping;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.ui.mapping.*;
-import org.eclipse.ui.model.IWorkbenchAdapter;
-import org.eclipse.ui.model.WorkbenchAdapter;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.mapping.IResourceMappingScope;
+import org.eclipse.team.ui.mapping.ISynchronizationContext;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.navigator.IExtensionStateModel;
+import org.eclipse.ui.navigator.internal.extensions.ICommonContentProvider;
 
 /**
  * This content provider displays the mappings as a flat list 
@@ -35,80 +34,28 @@ import org.eclipse.ui.model.WorkbenchAdapter;
  * have a model provider registered (this may be considered an error case).
  *
  */
-public class ResourceMappingContentProvider implements IResourceMappingContentProvider {
+public class ResourceMappingContentProvider implements ICommonContentProvider {
 
 	private ISynchronizationContext context;
-	private final ModelProvider provider;
-	private IResourceMappingScope input;
+	private IResourceMappingScope scope;
 	
-	public class ResourceAndDepth extends WorkbenchAdapter implements IAdaptable {
-		Object parent;
-		IResource resource;
-		int depth;
-		
-		public ResourceAndDepth(Object parent, IResource member, int depth) {
-			this.parent = parent;
-			this.resource = member;
-			this.depth = depth;
-		}
+	public ResourceMappingContentProvider() {
+    	// Nothing to do
+    }
 
-		public Object getAdapter(Class adapter) {
-			if (adapter == IWorkbenchAdapter.class)
-				return this;
-			return null;
-		}
-		
-		public Object getParent(Object object) {
-			return parent;
-		}
-		
-		public Object[] getChildren(Object object) {
-			if (resource.getType() == IResource.FILE || depth == IResource.DEPTH_ZERO) {
-				return new Object[0];
-			}
-			List children = new ArrayList();
-			try {
-				IResource[] members = ((IContainer)resource).members();
-				for (int i = 0; i < members.length; i++) {
-					IResource member = members[i];
-					if (depth == IResource.DEPTH_INFINITE) {
-						children.add(new ResourceAndDepth(this, member, IResource.DEPTH_INFINITE));
-					} else if (depth == IResource.DEPTH_ONE && member.getType() == IResource.FILE) {
-						children.add(new ResourceAndDepth(this, member, IResource.DEPTH_ZERO));
-					}
-				}
-				return children.toArray(new Object[children.size()]);
-			} catch (CoreException e) {
-				TeamUIPlugin.log(e);
-				return new Object[0];
-			}
-		}
-
-		public int getDepth() {
-			return depth;
-		}
-
-		public Object getParent() {
-			return parent;
-		}
-
-		public IResource getResource() {
-			return resource;
-		}
+    public ISynchronizationContext getContext() {
+		return context;
 	}
 
-    public ResourceMappingContentProvider(ModelProvider provider) {
-		this.provider = provider;
-    }
+	public IResourceMappingScope getScope() {
+		return scope;
+	}
 
-    public Object getRoot() {
-        return provider;
-    }
-
-    public Object[] getChildren(Object parentElement) {
-        if (parentElement == provider) {
+	public Object[] getChildren(Object parentElement) {
+    	if (parentElement instanceof ModelProvider) {
+			ModelProvider provider = (ModelProvider) parentElement;
         	List children = new ArrayList();
-        	ResourceTraversal[] traversals = getTraversals();
+        	ResourceTraversal[] traversals = getTraversals(provider);
         	for (int i = 0; i < traversals.length; i++) {
 				ResourceTraversal traversal = traversals[i];
 				IResource[] resources = traversal.getResources();
@@ -122,12 +69,12 @@ public class ResourceMappingContentProvider implements IResourceMappingContentPr
         return new Object[0];
     }
 
-	private ResourceTraversal[] getTraversals() {
+	private ResourceTraversal[] getTraversals(ModelProvider provider) {
 		List result = new ArrayList();
-		ResourceMapping[] mappings = input.getMappings(provider.getDescriptor().getId());
+		ResourceMapping[] mappings = scope.getMappings(provider.getDescriptor().getId());
 		for (int i = 0; i < mappings.length; i++) {
 			ResourceMapping mapping = mappings[i];
-			ResourceTraversal[] traversals = input.getTraversals(mapping);
+			ResourceTraversal[] traversals = scope.getTraversals(mapping);
 			for (int j = 0; j < traversals.length; j++) {
 				ResourceTraversal traversal = traversals[j];
 				result.add(traversal);
@@ -145,7 +92,7 @@ public class ResourceMappingContentProvider implements IResourceMappingContentPr
     }
 
     public boolean hasChildren(Object element) {
-        if (element == provider)
+        if (element instanceof ModelProvider)
             return true;
         if (element instanceof ResourceAndDepth) {
 			ResourceAndDepth rad = (ResourceAndDepth) element;
@@ -167,7 +114,30 @@ public class ResourceMappingContentProvider implements IResourceMappingContentPr
     }
 
 	public void init(IResourceMappingScope input, ISynchronizationContext context) {
-		this.input = input;
+		this.scope = input;
 		this.context = context;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.internal.extensions.ICommonContentProvider#init(org.eclipse.ui.navigator.IExtensionStateModel, org.eclipse.ui.IMemento)
+	 */
+	public void init(IExtensionStateModel aStateModel, IMemento aMemento) {
+		init((IResourceMappingScope)aStateModel.getProperty(TeamUI.RESOURCE_MAPPING_SCOPE), (ISynchronizationContext)aStateModel.getProperty(TeamUI.SYNCHRONIZATION_CONTEXT));	
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.IMementoAware#restoreState(org.eclipse.ui.IMemento)
+	 */
+	public void restoreState(IMemento aMemento) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.IMementoAware#saveState(org.eclipse.ui.IMemento)
+	 */
+	public void saveState(IMemento aMemento) {
+		// TODO Auto-generated method stub
+		
 	}
 }
