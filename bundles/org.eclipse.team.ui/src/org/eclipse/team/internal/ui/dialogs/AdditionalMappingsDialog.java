@@ -19,11 +19,11 @@ public class AdditionalMappingsDialog extends DetailsDialog {
 
     private ResourceMappingSelectionArea selectedMappingsArea;
     private ResourceMappingHierarchyArea allMappingsArea;
-	private final IResourceMappingScope input;
+	private final IResourceMappingScope scope;
 
-    public AdditionalMappingsDialog(Shell parentShell, String dialogTitle, IResourceMappingScope input) {
+    public AdditionalMappingsDialog(Shell parentShell, String dialogTitle, IResourceMappingScope scope) {
         super(parentShell, dialogTitle);
-		this.input = input;
+		this.scope = scope;
     }
 
 	protected void createMainDialogArea(Composite parent) {
@@ -37,7 +37,7 @@ public class AdditionalMappingsDialog extends DetailsDialog {
      */
     private void createSelectedMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
-        selectedMappingsArea = new ResourceMappingSelectionArea(input.getInputMappings(), false, false);
+        selectedMappingsArea = new ResourceMappingSelectionArea(scope.getInputMappings(), false, false);
         selectedMappingsArea.setDescription("Selected Elements");
         //selectedMappingsArea.addPropertyChangeListener(this);
         selectedMappingsArea.createArea(composite);
@@ -51,7 +51,7 @@ public class AdditionalMappingsDialog extends DetailsDialog {
      */
     private void createAllMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
-        allMappingsArea = ResourceMappingHierarchyArea.create(input, null);
+        allMappingsArea = ResourceMappingHierarchyArea.create(scope, null);
         allMappingsArea.setDescription("All elements to be operated on");
         //allMappingsArea.addPropertyChangeListener(this);
         allMappingsArea.createArea(composite);

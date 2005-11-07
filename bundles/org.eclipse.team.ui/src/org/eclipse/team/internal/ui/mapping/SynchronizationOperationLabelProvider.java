@@ -19,8 +19,14 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.mapping.IResourceMappingScope;
+import org.eclipse.team.ui.mapping.ISynchronizationContext;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.navigator.ICommonLabelProvider;
+import org.eclipse.ui.navigator.IExtensionStateModel;
 
-public abstract class SynchronizationOperationLabelProvider extends LabelProvider {
+public abstract class SynchronizationOperationLabelProvider implements ICommonLabelProvider {
 
 	// Cache for folder images that have been overlayed with conflict icon
 	private Map fgImageCache;
@@ -28,14 +34,17 @@ public abstract class SynchronizationOperationLabelProvider extends LabelProvide
 	// Contains direction images
 	CompareConfiguration compareConfig = new CompareConfiguration();
 
+	private IResourceMappingScope scope;
+	private ISynchronizationContext context;
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.LabelProvider#getImage(java.lang.Object)
 	 */
 	public Image getImage(Object element) {
-		LabelProvider modelLabelProvider = getModelLabelProvider();
+		ILabelProvider modelLabelProvider = getModelLabelProvider();
 		Image base = modelLabelProvider.getImage(element);
-		if (base != null) {
+		if (base != null && getContext() != null) {
 			int kind = getSyncKind(element);
 			Image decoratedImage;
 			decoratedImage = getCompareImage(base, kind);				
@@ -52,7 +61,7 @@ public abstract class SynchronizationOperationLabelProvider extends LabelProvide
 	 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
 	 */
 	public String getText(Object element) {
-		LabelProvider modelLabelProvider = getModelLabelProvider();
+		ILabelProvider modelLabelProvider = getModelLabelProvider();
 		String base = modelLabelProvider.getText(element);
 		if (isSyncInfoInTextEnabled()) {
 			int kind = getSyncKind(element);
@@ -102,6 +111,18 @@ public abstract class SynchronizationOperationLabelProvider extends LabelProvide
 		}
 	}
 	
+	private void init(IResourceMappingScope input, ISynchronizationContext context) {
+		this.scope = input;
+		this.context = context;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.ICommonLabelProvider#init(org.eclipse.ui.navigator.IExtensionStateModel, org.eclipse.jface.viewers.ITreeContentProvider)
+	 */
+	public void init(IExtensionStateModel aStateModel, ITreeContentProvider aContentProvider) {
+		init((IResourceMappingScope)aStateModel.getProperty(TeamUI.RESOURCE_MAPPING_SCOPE), (ISynchronizationContext)aStateModel.getProperty(TeamUI.SYNCHRONIZATION_CONTEXT));	
+	}
+	
 	/**
 	 * Return the label provider that will return the text and image 
 	 * appropriate for the given model element. Subclasses are responsible for
@@ -109,7 +130,7 @@ public abstract class SynchronizationOperationLabelProvider extends LabelProvide
 	 * @return the label provider that will return the text and image 
 	 * appropriate for the given model element
 	 */
-	protected abstract LabelProvider getModelLabelProvider();
+	protected abstract ILabelProvider getModelLabelProvider();
 	
 	/**
 	 * Return the sync kind of the given element. This is used
@@ -119,5 +140,58 @@ public abstract class SynchronizationOperationLabelProvider extends LabelProvide
 	 * @return the sync kind of the given element
 	 */
 	protected abstract int getSyncKind(Object element);
+
+	/**
+	 * Return the synchronization context associated with the view to which
+	 * this label provider applies.
+	 * @return the synchronization context
+	 */
+	public ISynchronizationContext getContext() {
+		return context;
+	}
+
+	/**
+	 * Return the resource mapping scope associated with the view to which
+	 * this label provider applies.
+	 * @return the esource mapping scope
+	 */
+	public IResourceMappingScope getScope() {
+		return scope;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
+	 */
+	public void addListener(ILabelProviderListener listener) {
+		getModelLabelProvider().addListener(listener);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object, java.lang.String)
+	 */
+	public boolean isLabelProperty(Object element, String property) {
+		return getModelLabelProvider().isLabelProperty(element, property);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
+	 */
+	public void removeListener(ILabelProviderListener listener) {
+		getModelLabelProvider().removeListener(listener);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.IMementoAware#restoreState(org.eclipse.ui.IMemento)
+	 */
+	public void restoreState(IMemento aMemento) {
+		// Do nothing by default
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.IMementoAware#saveState(org.eclipse.ui.IMemento)
+	 */
+	public void saveState(IMemento aMemento) {
+		// Do nothing by default
+	}
 
 }

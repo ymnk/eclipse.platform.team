@@ -347,7 +347,7 @@
             contentProvider="org.eclipse.team.internal.ui.mapping.ResourceMappingContentProvider"
             enabledByDefault="true"
             id="org.eclipse.team.ui.resourceContent"
-            labelProvider="org.eclipse.team.internal.ui.mapping.ResourceMappingLabelProvider"
+            labelProvider="org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider"
             name="Resource Mappings">
          <enablement>
          <or>         
