@@ -18,6 +18,7 @@ import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Policy;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.mapping.*;
 import org.eclipse.ui.IWorkbenchPart;
 
@@ -106,13 +107,41 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		try {
 			monitor.beginTask(null, 100);
 			context = buildMergeContext(Policy.subMonitorFor(monitor, 75));
-			promptForInputChange(monitor);
+			
+			// TODO: Quick and dirty display of sync states
+			calculateStates(context, Policy.subMonitorFor(monitor, 5));
+			promptForInputChange(Policy.subMonitorFor(monitor, 5));
+			// TODO: end of dirtyness
+			
 			execute(context, Policy.subMonitorFor(monitor, 25));
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
 		} finally {
 			monitor.done();
 		}
+	}
+
+	private void calculateStates(ISynchronizationContext context, IProgressMonitor monitor) {
+		monitor.beginTask(null, IProgressMonitor.UNKNOWN);
+		ModelProvider[] providers = getScope().getModelProviders();
+		for (int i = 0; i < providers.length; i++) {
+			ModelProvider provider = providers[i];
+			calculateStates(context, provider, Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
+		}
+		monitor.done();
+	}
+
+	private void calculateStates(ISynchronizationContext context, ModelProvider provider, IProgressMonitor monitor) {
+		Object o = provider.getAdapter(IResourceMappingStateCalculator.class);
+		if (o instanceof IResourceMappingStateCalculator) {
+			IResourceMappingStateCalculator calculator = (IResourceMappingStateCalculator) o;
+			try {
+				calculator.calculateStates(context, monitor);
+			} catch (CoreException e) {
+				TeamUIPlugin.log(e);
+			}
+		}
+		monitor.done();
 	}
 
 	private void execute(IMergeContext context, IProgressMonitor monitor) throws CoreException {
