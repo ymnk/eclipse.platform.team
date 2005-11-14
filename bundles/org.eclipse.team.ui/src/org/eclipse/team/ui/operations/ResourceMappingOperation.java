@@ -18,8 +18,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.team.internal.ui.dialogs.AdditionalMappingsDialog;
 import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
 import org.eclipse.team.ui.TeamOperation;
-import org.eclipse.team.ui.mapping.IResourceMappingMerger;
-import org.eclipse.team.ui.mapping.IResourceMappingScope;
+import org.eclipse.team.ui.mapping.*;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
@@ -62,10 +61,7 @@ import org.eclipse.ui.IWorkbenchPart;
  * @since 3.2
  */
 public abstract class ResourceMappingOperation extends TeamOperation {
-
-	/**
-	 * 
-	 */
+	
 	private static final ScopeGenerator DEFAULT_SCOPE_BUILDER = new ScopeGenerator();
 	private final ResourceMapping[] selectedMappings;
 	private final ResourceMappingContext context;
@@ -123,14 +119,14 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 	 * @throws OperationCanceledException if the user choose to cancel
 	 */
 	protected void promptForInputChange(IProgressMonitor monitor) {
-		showAllMappings(scope.getInputMappings(), scope.getMappings());
+		showAllMappings();
 	}
 
-    private void showAllMappings(final ResourceMapping[] selectedMappings, final ResourceMapping[] allMappings) {
+    private void showAllMappings() {
         final boolean[] canceled = new boolean[] { false };
         getShell().getDisplay().syncExec(new Runnable() {
             public void run() {
-                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", getScope());
+                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", getScope(), getContext());
                 int result = dialog.open();
                 canceled[0] = result != Window.OK;
             }
@@ -142,6 +138,16 @@ public abstract class ResourceMappingOperation extends TeamOperation {
         }
     }
     
+	/**
+	 * Return the synchronization context for the operation or <code>null</code>
+	 * if the operation doesn't have one or if it has not yet been created.
+	 * By default, the method always returns <code>null</code>. Subclasses may override.
+	 * @return the synchronization context for the operation or <code>null</code>
+	 */
+	protected ISynchronizationContext getContext() {
+		return null;
+	}
+
 	protected abstract void execute(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException;
 

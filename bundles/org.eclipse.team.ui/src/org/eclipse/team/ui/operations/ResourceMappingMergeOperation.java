@@ -93,6 +93,8 @@ import org.eclipse.ui.IWorkbenchPart;
  */
 public abstract class ResourceMappingMergeOperation extends ResourceMappingOperation {
 
+	private IMergeContext context;
+
 	protected ResourceMappingMergeOperation(IWorkbenchPart part, ResourceMapping[] selectedMappings, ResourceMappingContext context) {
 		super(part, selectedMappings, context);
 	}
@@ -103,7 +105,8 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	protected void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		try {
 			monitor.beginTask(null, 100);
-			IMergeContext context = buildMergeContext(Policy.subMonitorFor(monitor, 75));
+			context = buildMergeContext(Policy.subMonitorFor(monitor, 75));
+			promptForInputChange(monitor);
 			execute(context, Policy.subMonitorFor(monitor, 25));
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
@@ -187,6 +190,13 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		IResourceMappingMerger merger = getMerger(provider);
 		IStatus status = merger.merge(mergeContext, monitor);
 		return status;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.operations.ResourceMappingOperation#getContext()
+	 */
+	protected ISynchronizationContext getContext() {
+		return context;
 	}
 
 }

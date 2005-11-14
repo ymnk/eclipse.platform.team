@@ -60,7 +60,7 @@ public abstract class WorkspaceTraversalAction extends WorkspaceAction {
         final boolean[] canceled = new boolean[] { false };
         getShell().getDisplay().syncExec(new Runnable() {
             public void run() {
-                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", scope);
+                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", scope, null);
                 int result = dialog.open();
                 canceled[0] = result != Window.OK;
             }

@@ -27,7 +27,7 @@ public class ResourceMappingHierarchyArea extends DialogArea implements INavigat
     /**
 	 * 
 	 */
-	private static final String TEAM_NAVIGATOR_CONTENT = "org.eclipse.team.ui.navigatorContent"; //$NON-NLS-1$
+	private static final String TEAM_NAVIGATOR_CONTENT = "org.eclipse.team.ui.navigatorViewer"; //$NON-NLS-1$
 	private String description;
     private CommonViewer viewer;
 	private final IResourceMappingScope scope;

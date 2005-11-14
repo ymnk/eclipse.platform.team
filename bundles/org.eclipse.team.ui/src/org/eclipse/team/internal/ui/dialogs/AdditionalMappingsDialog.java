@@ -14,16 +14,19 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.team.ui.mapping.IResourceMappingScope;
+import org.eclipse.team.ui.mapping.ISynchronizationContext;
 
 public class AdditionalMappingsDialog extends DetailsDialog {
 
     private ResourceMappingSelectionArea selectedMappingsArea;
     private ResourceMappingHierarchyArea allMappingsArea;
 	private final IResourceMappingScope scope;
+	private final ISynchronizationContext context;
 
-    public AdditionalMappingsDialog(Shell parentShell, String dialogTitle, IResourceMappingScope scope) {
+    public AdditionalMappingsDialog(Shell parentShell, String dialogTitle, IResourceMappingScope scope, ISynchronizationContext context) {
         super(parentShell, dialogTitle);
 		this.scope = scope;
+		this.context = context;
     }
 
 	protected void createMainDialogArea(Composite parent) {
@@ -51,7 +54,7 @@ public class AdditionalMappingsDialog extends DetailsDialog {
      */
     private void createAllMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
-        allMappingsArea = ResourceMappingHierarchyArea.create(scope, null);
+        allMappingsArea = ResourceMappingHierarchyArea.create(scope, context);
         allMappingsArea.setDescription("All elements to be operated on");
         //allMappingsArea.addPropertyChangeListener(this);
         allMappingsArea.createArea(composite);
