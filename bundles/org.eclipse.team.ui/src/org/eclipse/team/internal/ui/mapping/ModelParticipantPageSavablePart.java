@@ -55,19 +55,19 @@ public class ModelParticipantPageSavablePart extends
 	 * @see org.eclipse.team.ui.synchronize.ParticipantPageSaveablePart#findStructureViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.Viewer, org.eclipse.compare.structuremergeviewer.ICompareInput)
 	 */
 	protected Viewer findStructureViewer(Composite parent, Viewer oldViewer, ICompareInput input) {
-		Viewer viewer = super.findStructureViewer(parent, oldViewer, input);
+		Viewer viewer = ((ModelSynchronizePage)getPageConfiguration().getPage()).findStructureViewer(parent, oldViewer, input);
 		if (viewer != null)
 			return viewer;
-		return ((ModelSynchronizePage)getPageConfiguration().getPage()).findStructureViewer(parent, oldViewer, input);
+		return super.findStructureViewer(parent, oldViewer, input);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ParticipantPageSaveablePart#findContentViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.Viewer, org.eclipse.compare.structuremergeviewer.ICompareInput)
 	 */
 	protected Viewer findContentViewer(Composite parent, Viewer oldViewer, ICompareInput input) {
-		Viewer viewer = super.findContentViewer(parent, oldViewer, input);
+		Viewer viewer = ((ModelSynchronizePage)getPageConfiguration().getPage()).findContentViewer(parent, oldViewer, input);
 		if (viewer != null)
 			return viewer;
-		return ((ModelSynchronizePage)getPageConfiguration().getPage()).findContentViewer(parent, oldViewer, input);
+		return super.findContentViewer(parent, oldViewer, input);
 	}
 }
