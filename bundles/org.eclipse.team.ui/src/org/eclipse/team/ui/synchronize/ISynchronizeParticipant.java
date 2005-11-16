@@ -246,4 +246,5 @@ public interface ISynchronizeParticipant extends IExecutableExtension {
      * @since 3.1
      */
     public PreferencePage[] getPreferencePages();
+
 }

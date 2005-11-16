@@ -360,5 +360,16 @@
             rootContentExtensionId="org.eclipse.team.ui.navigatorContent"
             viewerId="org.eclipse.team.ui.navigatorViewer"/>
    </extension>
+   
+   <!-- *************** Synchronize View Participant **************** -->
+   <extension
+         point="org.eclipse.team.ui.synchronizeParticipants">
+      <participant
+            name="Synchronization"
+            icon="$nl$/icons/full/eview16/synch_synch.gif"
+            class="org.eclipse.team.internal.ui.mapping.ModelSynchronizeParticipant"
+            id="org.eclipse.team.ui.synchronization_context_synchronize_participant">
+      </participant>
+   </extension>
 
 </plugin>

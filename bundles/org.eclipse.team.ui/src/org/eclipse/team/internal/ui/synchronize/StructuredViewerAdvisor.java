@@ -66,15 +66,7 @@ import org.eclipse.ui.part.ResourceTransfer;
  * @see TreeViewerAdvisor
  * @since 3.0
  */
-public abstract class StructuredViewerAdvisor implements IAdaptable {
-	
-	// The physical model shown to the user in the provided viewer. The information in 
-	// this set is transformed by the model provider into the actual logical model displayed
-	// in the viewer.
-	private StructuredViewer viewer;
-	
-	// The page configuration
-	private ISynchronizePageConfiguration configuration;
+public abstract class StructuredViewerAdvisor extends AbstractViewerAdvisor implements IAdaptable {
 	
 	// Special actions that could not be contributed using an ActionGroup
 	private StatusLineContributionGroup statusLine;
@@ -89,6 +81,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 		public void propertyChange(PropertyChangeEvent event) {
 			// Change to showing of sync state in text labels preference
 			if(event.getProperty().equals(IPreferenceIds.SYNCVIEW_VIEW_SYNCINFO_IN_LABEL)) {
+				StructuredViewer viewer = getViewer();
 				if(viewer != null && !viewer.getControl().isDisposed()) {
 					viewer.refresh(true /* update labels */);
 				}
@@ -107,7 +100,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	 * @param set the set of <code>SyncInfo</code> objects that are to be shown to the user.
 	 */
 	public StructuredViewerAdvisor(ISynchronizePageConfiguration configuration) {
-		this.configuration = configuration;
+		super(configuration);
 		configuration.setProperty(SynchronizePageConfiguration.P_ADVISOR, this);
 		
 		// Allow the configuration to provide it's own model manager but if one isn't initialized, then
@@ -131,13 +124,10 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	 * Install a viewer to be configured with this advisor. An advisor can only be installed with
 	 * one viewer at a time. When this method completes the viewer is considered initialized and
 	 * can be shown to the user. 
-
 	 * @param viewer the viewer being installed
 	 */
 	public final void initializeViewer(final StructuredViewer viewer) {
-		Assert.isTrue(this.viewer == null, "Can only be initialized once."); //$NON-NLS-1$
-		Assert.isTrue(validateViewer(viewer));
-		this.viewer = viewer;
+		super.initializeViewer(viewer);
 		
 		final DragSourceListener listener = new DragSourceListener() {
 
@@ -189,8 +179,8 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	
 	private void initializeStatusLine() {
 		statusLine = new StatusLineContributionGroup(
-				configuration.getSite().getShell(), 
-				configuration);
+				getConfiguration().getSite().getShell(), 
+				getConfiguration());
 	}
 	
 	/**
@@ -272,15 +262,6 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 			action.run();
 		}
 	}
-	
-	/**
-	 * Subclasses can validate that the viewer being initialized with this advisor
-	 * is of the correct type.
-	 * 
-	 * @param viewer the viewer to validate
-	 * @return <code>true</code> if the viewer is valid, <code>false</code> otherwise.
-	 */
-	protected abstract boolean validateViewer(StructuredViewer viewer);
 
 	/**
 	 * Returns the content provider for the viewer.
@@ -312,15 +293,6 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	}
 
 	/**
-	 * Returns the viewer configured by this advisor.
-	 * 
-	 * @return the viewer configured by this advisor.
-	 */
-	public final StructuredViewer getViewer() {
-		return viewer;
-	}
-
-	/**
 	 * Called to set the input to a viewer. The input to a viewer is always the model created
 	 * by the model provider.
 	 * 
@@ -334,6 +306,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 				getActionGroup().modelChanged(modelRoot);
 			}
 		});
+		final StructuredViewer viewer = getViewer();
 		if (viewer != null) {
 			viewer.setSorter(modelProvider.getViewerSorter());
 			viewer.setInput(modelRoot);
@@ -362,13 +335,6 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	}
 	
 	/**
-	 * @return Returns the configuration.
-	 */
-	public ISynchronizePageConfiguration getConfiguration() {
-		return configuration;
-	}
-	
-	/**
 	 * Method invoked from the synchronize page when the action
 	 * bars are set. The advisor uses the configuration to determine
 	 * which groups appear in the action bar menus and allows all
@@ -380,7 +346,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 			IToolBarManager manager = actionBars.getToolBarManager();
 			
 			// Populate the toobar menu with the configured groups
-			Object o = configuration.getProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU);
+			Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU);
 			if (!(o instanceof String[])) {
 				o = ISynchronizePageConfiguration.DEFAULT_TOOLBAR_MENU;
 			}
@@ -395,7 +361,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 			IMenuManager menu = actionBars.getMenuManager();
 			if (menu != null) {
 				// Populate the view dropdown menu with the configured groups
-				o = configuration.getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
+				o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_VIEW_MENU);
 				if (!(o instanceof String[])) {
 					o = ISynchronizePageConfiguration.DEFAULT_VIEW_MENU;
 				}
@@ -416,7 +382,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 			
 			getActionGroup().fillActionBars(actionBars);
 			updateActionBars((IStructuredSelection) getViewer().getSelection());
-			Object input = viewer.getInput();
+			Object input = getViewer().getInput();
 			if (input instanceof ISynchronizeModelElement) {
 				getActionGroup().modelChanged((ISynchronizeModelElement) input);
 			}
@@ -433,7 +399,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	 */
 	private void hookContextMenu(final StructuredViewer viewer) {
 		String targetID;
-		Object o = configuration.getProperty(ISynchronizePageConfiguration.P_OBJECT_CONTRIBUTION_ID);
+		Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_OBJECT_CONTRIBUTION_ID);
 		if (o instanceof String) {
 			targetID = (String)o;
 		} else {
@@ -474,7 +440,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 		});
 		viewer.getControl().setMenu(menu);
 		if (targetID != null) {
-			IWorkbenchSite workbenchSite = configuration.getSite().getWorkbenchSite();
+			IWorkbenchSite workbenchSite = getConfiguration().getSite().getWorkbenchSite();
 			IWorkbenchPartSite ws = null;
 			if (workbenchSite instanceof IWorkbenchPartSite)
 				ws = (IWorkbenchPartSite)workbenchSite;
@@ -495,7 +461,7 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	 */
 	private void fillContextMenu(StructuredViewer viewer, final IMenuManager manager) {
 		// Populate the menu with the configured groups
-		Object o = configuration.getProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU);
+		Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU);
 		if (!(o instanceof String[])) {
 			o = ISynchronizePageConfiguration.DEFAULT_CONTEXT_MENU;
 		}
@@ -518,11 +484,11 @@ public abstract class StructuredViewerAdvisor implements IAdaptable {
 	}
 	
 	private SynchronizePageActionGroup getActionGroup() {
-		return (SynchronizePageActionGroup)configuration;
+		return (SynchronizePageActionGroup)getConfiguration();
 	}
 	
 	private String getGroupId(String group) {
-		return ((SynchronizePageConfiguration)configuration).getGroupId(group);
+		return ((SynchronizePageConfiguration)getConfiguration()).getGroupId(group);
 	}
 	
 	/*

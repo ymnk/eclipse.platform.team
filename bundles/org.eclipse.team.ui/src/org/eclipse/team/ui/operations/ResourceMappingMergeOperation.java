@@ -14,12 +14,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.mapping.*;
 import org.eclipse.team.ui.mapping.*;
+import org.eclipse.team.ui.synchronize.ParticipantPageDialog;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
@@ -107,18 +111,29 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		try {
 			monitor.beginTask(null, 100);
 			context = buildMergeContext(Policy.subMonitorFor(monitor, 75));
-			
-			// TODO: Quick and dirty display of sync states
-			calculateStates(context, Policy.subMonitorFor(monitor, 5));
-			promptForInputChange(Policy.subMonitorFor(monitor, 5));
-			// TODO: end of dirtyness
-			
-			execute(context, Policy.subMonitorFor(monitor, 25));
+			// TODO: check to see if there are incoming changes. If not terminate
+			if (showPreview(getJobName(), monitor)) {
+				execute(context, Policy.subMonitorFor(monitor, 25));
+			}
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
 		} finally {
 			monitor.done();
 		}
+	}
+
+	private boolean showPreview(final String title, IProgressMonitor monitor) {
+		calculateStates(context, Policy.subMonitorFor(monitor, 5));
+		Display.getDefault().syncExec(new Runnable() {
+			public void run() {
+				ModelSynchronizeParticipant participant = new ModelSynchronizeParticipant(context);
+				CompareConfiguration cc = new CompareConfiguration();
+				ModelParticipantPageSavablePart input = new ModelParticipantPageSavablePart(getShell(), cc, participant.createPageConfiguration(), participant);
+				ParticipantPageDialog dialog = new ParticipantPageDialog(getShell(), input, participant);
+				int result = dialog.open();
+			}
+		});
+		return false;
 	}
 
 	private void calculateStates(ISynchronizationContext context, IProgressMonitor monitor) {
@@ -132,11 +147,11 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	}
 
 	private void calculateStates(ISynchronizationContext context, ModelProvider provider, IProgressMonitor monitor) {
-		Object o = provider.getAdapter(IResourceMappingStateCalculator.class);
-		if (o instanceof IResourceMappingStateCalculator) {
-			IResourceMappingStateCalculator calculator = (IResourceMappingStateCalculator) o;
+		Object o = provider.getAdapter(IModelProviderCompareAdapter.class);
+		if (o instanceof IModelProviderCompareAdapter) {
+			IModelProviderCompareAdapter calculator = (IModelProviderCompareAdapter) o;
 			try {
-				calculator.calculateStates(context, monitor);
+				calculator.prepareContext(context, monitor);
 			} catch (CoreException e) {
 				TeamUIPlugin.log(e);
 			}
