@@ -24,9 +24,9 @@ public class ResourceModelLabelProvider extends
 	private ILabelProvider provider = new ResourceMappingLabelProvider();
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.mapping.SynchronizationOperationLabelProvider#getModelLabelProvider()
+	 * @see org.eclipse.team.internal.ui.mapping.SynchronizationOperationLabelProvider#getBaseLabelProvider()
 	 */
-	protected ILabelProvider getModelLabelProvider() {
+	protected ILabelProvider getBaseLabelProvider() {
 		return provider ;
 	}
 
