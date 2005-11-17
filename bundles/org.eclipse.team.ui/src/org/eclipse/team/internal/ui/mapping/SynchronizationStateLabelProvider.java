@@ -37,7 +37,7 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 	 * @see org.eclipse.jface.viewers.ILabelProvider#getImage(java.lang.Object)
 	 */
 	public Image getImage(Object element) {
-		ILabelProvider modelLabelProvider = getBaseLabelProvider();
+		ILabelProvider modelLabelProvider = getDelegateLabelProvider();
 		Image base = modelLabelProvider.getImage(element);
 		if (isDecorationEnabled() && base != null) {
 			int kind = getSyncKind(element);
@@ -67,7 +67,7 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 	 * @see org.eclipse.jface.viewers.ILabelProvider#getText(java.lang.Object)
 	 */
 	public String getText(Object element) {
-		ILabelProvider modelLabelProvider = getBaseLabelProvider();
+		ILabelProvider modelLabelProvider = getDelegateLabelProvider();
 		String base = modelLabelProvider.getText(element);
 		if (isSyncInfoInTextEnabled()) {
 			int kind = getSyncKind(element);
@@ -83,7 +83,7 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
 	 */
 	public void addListener(ILabelProviderListener listener) {
-		getBaseLabelProvider().addListener(listener);
+		getDelegateLabelProvider().addListener(listener);
 	}
 
 	/* (non-Javadoc)
@@ -104,14 +104,14 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object, java.lang.String)
 	 */
 	public boolean isLabelProperty(Object element, String property) {
-		return getBaseLabelProvider().isLabelProperty(element, property);
+		return getDelegateLabelProvider().isLabelProperty(element, property);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
 	 */
 	public void removeListener(ILabelProviderListener listener) {
-		getBaseLabelProvider().removeListener(listener);
+		getDelegateLabelProvider().removeListener(listener);
 	}
 	
 	/**
@@ -132,7 +132,7 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 	 * @return the label provider that will return the text and image 
 	 * appropriate for the given model element
 	 */
-	protected abstract ILabelProvider getBaseLabelProvider();
+	protected abstract ILabelProvider getDelegateLabelProvider();
 	
 	/**
 	 * Return whether the label provider shoudl decorate with the synchronization state.

@@ -20,6 +20,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.internal.ui.synchronize.*;
 import org.eclipse.team.ui.mapping.ISynchronizationContext;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.ui.IContributorResourceAdapter;
+import org.eclipse.ui.ide.IContributorResourceAdapter2;
 
 /**
  * A synchronize page that uses 
@@ -112,6 +114,11 @@ public class ModelSynchronizePage extends AbstractSynchronizePage {
 			Object adapted = adaptable.getAdapter(ResourceMapping.class);
 			if (adapted instanceof ResourceMapping) {
 				return(ResourceMapping) adapted;
+			}
+			adapted = adaptable.getAdapter(IContributorResourceAdapter.class);
+			if (adapted instanceof IContributorResourceAdapter2) {
+				IContributorResourceAdapter2 cra = (IContributorResourceAdapter2) adapted;
+				return cra.getAdaptedResourceMapping(adaptable);
 			}
 		} else {
 			Object adapted = Platform.getAdapterManager().getAdapter(o, ResourceMapping.class);

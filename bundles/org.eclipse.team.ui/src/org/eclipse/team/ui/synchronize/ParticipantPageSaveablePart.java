@@ -283,8 +283,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 			((ISynchronizePage)page).getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
 				public void selectionChanged(SelectionChangedEvent event) {
 					ICompareInput input = getCompareInput(event.getSelection());
-					if (input != null)
-						setInput(input);
+					setInput(input);
 				}
 			});
 			initializeDiffViewer(((ISynchronizePage)page).getViewer());

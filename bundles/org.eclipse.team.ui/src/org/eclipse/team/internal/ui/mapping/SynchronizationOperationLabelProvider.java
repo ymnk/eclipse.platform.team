@@ -32,7 +32,19 @@ public abstract class SynchronizationOperationLabelProvider extends Synchronizat
 	 * @see org.eclipse.ui.navigator.ICommonLabelProvider#init(org.eclipse.ui.navigator.IExtensionStateModel, org.eclipse.jface.viewers.ITreeContentProvider)
 	 */
 	public void init(IExtensionStateModel aStateModel, ITreeContentProvider aContentProvider) {
-		init((IResourceMappingScope)aStateModel.getProperty(TeamUI.RESOURCE_MAPPING_SCOPE), (ISynchronizationContext)aStateModel.getProperty(TeamUI.SYNCHRONIZATION_CONTEXT));	
+		init((IResourceMappingScope)aStateModel.getProperty(TeamUI.RESOURCE_MAPPING_SCOPE), (ISynchronizationContext)aStateModel.getProperty(TeamUI.SYNCHRONIZATION_CONTEXT));
+		ILabelProvider provider = getDelegateLabelProvider();
+		if (provider instanceof ICommonLabelProvider) {
+			if (aContentProvider instanceof AbstractTeamAwareContentProvider) {
+				// Assume that there is a similary wrapped content provider and that the wrapped label provider
+				// only knows about that one
+				// TODO: This is kind of dangerous to build in. We need to consider alternatives
+				AbstractTeamAwareContentProvider tacp = (AbstractTeamAwareContentProvider) aContentProvider;
+				((ICommonLabelProvider) provider).init(aStateModel, tacp.getDelegateContentProvider());
+			} else {
+				((ICommonLabelProvider) provider).init(aStateModel, aContentProvider);
+			}
+		}
 	}
 
 	/**
@@ -57,14 +69,31 @@ public abstract class SynchronizationOperationLabelProvider extends Synchronizat
 	 * @see org.eclipse.ui.navigator.IMementoAware#restoreState(org.eclipse.ui.IMemento)
 	 */
 	public void restoreState(IMemento aMemento) {
-		// Do nothing by default
+		ILabelProvider provider = getDelegateLabelProvider();
+		if (provider instanceof ICommonLabelProvider) {
+			((ICommonLabelProvider) provider).restoreState(aMemento);
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.navigator.IMementoAware#saveState(org.eclipse.ui.IMemento)
 	 */
 	public void saveState(IMemento aMemento) {
-		// Do nothing by default
+		ILabelProvider provider = getDelegateLabelProvider();
+		if (provider instanceof ICommonLabelProvider) {
+			((ICommonLabelProvider) provider).saveState(aMemento);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.IDescriptionProvider#getDescription(java.lang.Object)
+	 */
+	public String getDescription(Object anElement) {
+		ILabelProvider provider = getDelegateLabelProvider();
+		if (provider instanceof ICommonLabelProvider) {
+			return ((ICommonLabelProvider) provider).getDescription(anElement);
+		}
+		return getDelegateLabelProvider().toString();
 	}
 
 	/* (non-Javadoc)

@@ -26,7 +26,7 @@ public class ResourceModelLabelProvider extends
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.mapping.SynchronizationOperationLabelProvider#getBaseLabelProvider()
 	 */
-	protected ILabelProvider getBaseLabelProvider() {
+	protected ILabelProvider getDelegateLabelProvider() {
 		return provider ;
 	}
 
