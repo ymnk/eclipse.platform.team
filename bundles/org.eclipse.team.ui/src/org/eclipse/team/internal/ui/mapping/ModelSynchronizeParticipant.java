@@ -13,9 +13,9 @@ package org.eclipse.team.internal.ui.mapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.mapping.ISynchronizationContext;
-import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.IPageBookViewPage;
 
@@ -26,8 +26,85 @@ import org.eclipse.ui.part.IPageBookViewPage;
 public class ModelSynchronizeParticipant extends
 		AbstractSynchronizeParticipant {
 
+	/**
+	 * The id of a workspace action group to which additions actions can 
+	 * be added.
+	 */
+	public static final String TOOLBAR_CONTRIBUTION_GROUP = "toolbar_group_1"; //$NON-NLS-1$
+	
 	private ISynchronizationContext context;
 
+	/**
+	 * CVS workspace action contribution
+	 */
+	public class ModelActionContribution extends SynchronizePageActionGroup {
+		private OptimisticUpdateAction updateToolbarAction;
+		
+		public void initialize(ISynchronizePageConfiguration configuration) {
+			super.initialize(configuration);
+			
+			ISynchronizationContext context = ((ModelSynchronizeParticipant)configuration.getParticipant()).getContext();
+			if (context instanceof IMergeContext) {
+				updateToolbarAction = new OptimisticUpdateAction(configuration);
+				appendToGroup(
+						ISynchronizePageConfiguration.P_TOOLBAR_MENU,
+						TOOLBAR_CONTRIBUTION_GROUP,
+						updateToolbarAction);
+			}
+			
+//			appendToGroup(
+//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//					CONTEXT_MENU_CONTRIBUTION_GROUP_1,
+//					new WorkspaceUpdateAction(configuration));
+//			appendToGroup(
+//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//					CONTEXT_MENU_CONTRIBUTION_GROUP_1,
+//					new WorkspaceCommitAction(configuration));
+//			appendToGroup(
+//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
+//					new OverrideAndUpdateAction(configuration));
+//			appendToGroup(
+//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
+//					new OverrideAndCommitAction(configuration));
+//			appendToGroup(
+//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
+//					new ConfirmMergedAction(configuration));		
+//			appendToGroup(
+//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//					CONTEXT_MENU_CONTRIBUTION_GROUP_3,
+//					new CVSActionDelegateWrapper(new IgnoreAction(), configuration));
+//			if (!configuration.getSite().isModal()) {
+//				appendToGroup(
+//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
+//						new CreatePatchAction(configuration));
+//				appendToGroup(
+//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
+//						new CVSActionDelegateWrapper(new BranchAction(), configuration));
+//				appendToGroup(
+//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
+//						new CVSActionDelegateWrapper(new ShowAnnotationAction(), configuration));
+//				appendToGroup(
+//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
+//						new CVSActionDelegateWrapper(new ShowResourceInHistoryAction(), configuration));
+//				appendToGroup(
+//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
+//						new CVSActionDelegateWrapper(new SetKeywordSubstitutionAction(), configuration));	
+//			}
+//			appendToGroup(
+//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+//					CONTEXT_MENU_CONTRIBUTION_GROUP_4,
+//					new RefreshDirtyStateAction(configuration));
+		}
+	}
+	
 	/**
 	 * Create a participant for the given context
 	 * @param context the context
@@ -47,8 +124,11 @@ public class ModelSynchronizeParticipant extends
 	 */
 	protected void initializeConfiguration(
 			ISynchronizePageConfiguration configuration) {
-		// TODO Auto-generated method stub
-
+		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] {ISynchronizePageConfiguration.MODE_GROUP, TOOLBAR_CONTRIBUTION_GROUP});
+		configuration.addActionContribution(new ModelActionContribution());
+		configuration.setProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU, new String[0]);
+		configuration.setSupportedModes(ISynchronizePageConfiguration.ALL_MODES);
+		configuration.setMode(ISynchronizePageConfiguration.INCOMING_MODE);
 	}
 
 	/* (non-Javadoc)

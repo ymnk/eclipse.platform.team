@@ -11,8 +11,13 @@
 package org.eclipse.team.internal.ui.mapping;
 
 import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.team.core.ITeamStatus;
+import org.eclipse.team.core.synchronize.*;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.mapping.IResourceMappingScope;
 import org.eclipse.team.ui.mapping.ISynchronizationContext;
@@ -23,11 +28,12 @@ import org.eclipse.ui.navigator.internal.extensions.ICommonContentProvider;
 /**
  * Abstract team aware content provider that delegates to anotehr content provider
  */
-public abstract class AbstractTeamAwareContentProvider implements ICommonContentProvider {
+public abstract class AbstractTeamAwareContentProvider implements ICommonContentProvider, ISyncInfoSetChangeListener {
 
 	private ModelProvider modelProvider;
 	private IResourceMappingScope scope;
 	private ISynchronizationContext context;
+	private Viewer viewer;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
@@ -74,13 +80,15 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
 	public void dispose() {
-		// Nothing to do
+		if (context != null)
+			context.getSyncInfoTree().removeSyncSetChangedListener(this);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+		this.viewer = viewer;
 		getDelegateContentProvider().inputChanged(viewer, oldInput, newInput);
 	}
 
@@ -90,6 +98,8 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	public void init(IExtensionStateModel aStateModel, IMemento aMemento) {
 		scope = (IResourceMappingScope)aStateModel.getProperty(TeamUI.RESOURCE_MAPPING_SCOPE);
 		context = (ISynchronizationContext)aStateModel.getProperty(TeamUI.SYNCHRONIZATION_CONTEXT);
+		if (context != null)
+			context.getSyncInfoTree().addSyncSetChangedListener(this);
 		ITreeContentProvider provider = getDelegateContentProvider();
 		if (provider instanceof ICommonContentProvider) {
 			((ICommonContentProvider) provider).init(aStateModel, aMemento);	
@@ -124,6 +134,55 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener#syncInfoSetReset(org.eclipse.team.core.synchronize.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetReset(SyncInfoSet set, IProgressMonitor monitor) {
+		// TODO Should refresh the whole view but this is the wrong place
+		// as it would happen once per model.
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener#syncInfoSetErrors(org.eclipse.team.core.synchronize.SyncInfoSet, org.eclipse.team.core.ITeamStatus[], org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoSetErrors(SyncInfoSet set, ITeamStatus[] errors, IProgressMonitor monitor) {
+		// TODO Need to have some way to indicate that an error occurred
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.core.synchronize.ISyncInfoSetChangeListener#syncInfoChanged(org.eclipse.team.core.synchronize.ISyncInfoSetChangeEvent, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void syncInfoChanged(ISyncInfoSetChangeEvent event, IProgressMonitor monitor) {
+		if (event instanceof ISyncInfoTreeChangeEvent) {
+			ISyncInfoTreeChangeEvent treeEvent = (ISyncInfoTreeChangeEvent) event;
+			syncStateChanged(treeEvent, monitor);
+		}
+	}
+	
+	/**
+	 * The set of out-of-sync resources has changed. The changes are described in the event.
+	 * This method is invoked by a non-ui thread.
+	 * 
+	 * TODO: Should reduce the resources to those that apply to this model.
+	 * 
+	 * @param event the event that indicates which resources have change sync state
+	 * @param monitor a progress monitor
+	 */
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.mapping.AbstractTeamAwareContentProvider#syncStateChanged(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	protected void syncStateChanged(ISyncInfoTreeChangeEvent event, IProgressMonitor monitor) {
+		// TODO: for the time being, just refresh everything under the model provider
+		Utils.syncExec(new Runnable() {
+			public void run() {
+				((TreeViewer)getViewer()).refresh(getModelProvider());
+			}
+		
+		}, getViewer().getControl());
+	}
+
 	/**
 	 * Return the model content provider that the team aware content
 	 * provider delegates to.
@@ -152,4 +211,8 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	 * @return the object that acts as the model root
 	 */
 	protected abstract Object getModelRoot();
+
+	protected Viewer getViewer() {
+		return viewer;
+	}
 }

@@ -14,10 +14,9 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.internal.ui.synchronize.AbstractViewerAdvisor;
+import org.eclipse.team.internal.ui.synchronize.StructuredViewerAdvisor;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.navigator.CommonViewer;
 import org.eclipse.ui.navigator.internal.extensions.INavigatorContentServiceListener;
 import org.eclipse.ui.navigator.internal.extensions.NavigatorContentExtension;
@@ -25,7 +24,7 @@ import org.eclipse.ui.navigator.internal.extensions.NavigatorContentExtension;
 /**
  * Provides a Common Navigator based viewer for use by a {@link ModelSynchronizePage}.
  */
-public class CommonViewerAdvisor extends AbstractViewerAdvisor implements INavigatorContentServiceListener {
+public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INavigatorContentServiceListener {
 
 	private static final String TEAM_NAVIGATOR_CONTENT = "org.eclipse.team.ui.navigatorViewer"; //$NON-NLS-1$
 	
@@ -68,11 +67,11 @@ public class CommonViewerAdvisor extends AbstractViewerAdvisor implements INavig
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.AbstractViewerAdvisor#setActionBars(org.eclipse.ui.IActionBars)
+	 * @see org.eclipse.team.internal.ui.synchronize.StructuredViewerAdvisor#navigate(boolean)
 	 */
-	public void setActionBars(IActionBars actionBars) {
+	public boolean navigate(boolean next) {
 		// TODO Auto-generated method stub
-		
+		return false;
 	}
 
 }
