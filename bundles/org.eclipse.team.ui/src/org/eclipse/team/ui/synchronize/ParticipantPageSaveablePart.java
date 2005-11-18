@@ -313,6 +313,7 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 							}
 						}
 					);
+					hookContentChangeListener((ICompareInput)input);
 				}	
 				return newViewer;
 			}

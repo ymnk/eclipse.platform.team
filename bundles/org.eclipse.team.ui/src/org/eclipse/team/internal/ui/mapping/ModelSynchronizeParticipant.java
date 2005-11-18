@@ -26,11 +26,8 @@ import org.eclipse.ui.part.IPageBookViewPage;
 public class ModelSynchronizeParticipant extends
 		AbstractSynchronizeParticipant {
 
-	/**
-	 * The id of a workspace action group to which additions actions can 
-	 * be added.
-	 */
 	public static final String TOOLBAR_CONTRIBUTION_GROUP = "toolbar_group_1"; //$NON-NLS-1$
+	public static final String CONTEXT_MENU_CONTRIBUTION_GROUP = "context_menu_group_1"; //$NON-NLS-1$
 	
 	private ISynchronizationContext context;
 
@@ -38,24 +35,24 @@ public class ModelSynchronizeParticipant extends
 	 * CVS workspace action contribution
 	 */
 	public class ModelActionContribution extends SynchronizePageActionGroup {
-		private OptimisticUpdateAction updateToolbarAction;
+		private MergeIncomingChangesAction updateToolbarAction;
 		
 		public void initialize(ISynchronizePageConfiguration configuration) {
 			super.initialize(configuration);
 			
 			ISynchronizationContext context = ((ModelSynchronizeParticipant)configuration.getParticipant()).getContext();
 			if (context instanceof IMergeContext) {
-				updateToolbarAction = new OptimisticUpdateAction(configuration);
+				updateToolbarAction = new MergeIncomingChangesAction(configuration);
 				appendToGroup(
 						ISynchronizePageConfiguration.P_TOOLBAR_MENU,
 						TOOLBAR_CONTRIBUTION_GROUP,
 						updateToolbarAction);
 			}
 			
-//			appendToGroup(
-//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//					CONTEXT_MENU_CONTRIBUTION_GROUP_1,
-//					new WorkspaceUpdateAction(configuration));
+			appendToGroup(
+					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+					CONTEXT_MENU_CONTRIBUTION_GROUP,
+					new MarkAsMergedAction(configuration));
 //			appendToGroup(
 //					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
 //					CONTEXT_MENU_CONTRIBUTION_GROUP_1,
@@ -126,7 +123,7 @@ public class ModelSynchronizeParticipant extends
 			ISynchronizePageConfiguration configuration) {
 		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] {ISynchronizePageConfiguration.MODE_GROUP, TOOLBAR_CONTRIBUTION_GROUP});
 		configuration.addActionContribution(new ModelActionContribution());
-		configuration.setProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU, new String[0]);
+		configuration.setProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU, new String[] { CONTEXT_MENU_CONTRIBUTION_GROUP });
 		configuration.setSupportedModes(ISynchronizePageConfiguration.ALL_MODES);
 		configuration.setMode(ISynchronizePageConfiguration.INCOMING_MODE);
 	}

@@ -25,10 +25,9 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
- * @author Administrator
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
+ * An operation for performing model provider based operations.
+ * 
+ * @since 3.2
  */
 public abstract class ModelProviderOperation extends TeamOperation {
 
@@ -46,9 +45,16 @@ public abstract class ModelProviderOperation extends TeamOperation {
 	}
 	
 	protected ModelProviderOperation(ISynchronizePageConfiguration configuration) {
-		super(getPart(configuration));
+		this(getPart(configuration));
 	}
 	
+	/**
+	 * @param part
+	 */
+	public ModelProviderOperation(IWorkbenchPart part) {
+		super(part);
+	}
+
 	protected void performMerge(IMergeContext context, IProgressMonitor monitor) throws CoreException {
 		monitor.beginTask(null, IProgressMonitor.UNKNOWN);
 		ModelProvider[] providers = context.getScope().getModelProviders();

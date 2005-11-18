@@ -16,13 +16,14 @@ import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.mapping.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.mapping.*;
-import org.eclipse.team.ui.mapping.*;
+import org.eclipse.team.ui.mapping.IMergeContext;
+import org.eclipse.team.ui.mapping.ISynchronizationContext;
 import org.eclipse.team.ui.synchronize.ParticipantPageDialog;
 import org.eclipse.ui.IWorkbenchPart;
 
@@ -192,49 +193,6 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 	 * @return a merge context for merging the mappings of the input
 	 */ 
 	protected abstract IMergeContext buildMergeContext(IProgressMonitor monitor);
-	
-	/**
-	 * Merge all the mappings that come from the given provider. By default,
-	 * an automatic merge is attempted. After this, a manual merge (i.e. with user
-	 * intervention) is attempted on any mappings that could not be merged
-	 * automatically.
-	 * @param provider the model provider
-	 * @param mappings the mappings to be merged
-	 * @param monitor a progress monitor
-	 * @throws CoreException
-	 */
-	protected boolean performMerge(ModelProvider provider, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
-		try {
-			monitor.beginTask(null, 100);
-			IStatus status = performAutoMerge(provider, mergeContext, Policy.subMonitorFor(monitor, 95));
-			if (!status.isOK()) {
-				if (status.getCode() == IMergeStatus.CONFLICTS) {
-					return false;
-				} else {
-					throw new TeamException(status);
-				}
-			}
-		} finally {
-			monitor.done();
-		}
-		return true;
-	}
-
-	/**
-	 * Attempt to merge automatically. The returned status will indicate which
-	 * mappings could not be merged automatically.
-	 * @param provider the provider for the mappings being merged
-	 * @param mergeContext the context for the merge
-	 * @param monitor a progress monitor
-	 * @return a status indicating success or failure. A failure status
-	 * will be a MergeStatus that includes the mappings that could not be merged. 
-	 * @throws CoreException if errors occurred
-	 */
-	protected IStatus performAutoMerge(ModelProvider provider, IMergeContext mergeContext, IProgressMonitor monitor) throws CoreException {
-		IResourceMappingMerger merger = getMerger(provider);
-		IStatus status = merger.merge(mergeContext, monitor);
-		return status;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.operations.ResourceMappingOperation#getContext()

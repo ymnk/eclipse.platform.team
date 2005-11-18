@@ -12,13 +12,13 @@ package org.eclipse.team.ui.operations;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.mapping.*;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceMappingContext;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.window.Window;
 import org.eclipse.team.internal.ui.dialogs.AdditionalMappingsDialog;
-import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
-import org.eclipse.team.ui.TeamOperation;
-import org.eclipse.team.ui.mapping.*;
+import org.eclipse.team.ui.mapping.IResourceMappingScope;
+import org.eclipse.team.ui.mapping.ISynchronizationContext;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
@@ -60,7 +60,7 @@ import org.eclipse.ui.IWorkbenchPart;
  * 
  * @since 3.2
  */
-public abstract class ResourceMappingOperation extends TeamOperation {
+public abstract class ResourceMappingOperation extends ModelProviderOperation {
 	
 	private static final ScopeGenerator DEFAULT_SCOPE_BUILDER = new ScopeGenerator();
 	private final ResourceMapping[] selectedMappings;
@@ -150,23 +150,6 @@ public abstract class ResourceMappingOperation extends TeamOperation {
 
 	protected abstract void execute(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException;
-
-	/**
-	 * Return the auto-merger associated with the given model provider
-	 * view the adaptable mechanism.
-	 * If the model provider does not have a merger associated with
-	 * it, a default merger that performs the merge at the file level
-	 * is returned.
-	 * @param provider the model provider of the elements to be merged
-	 * @return a merger
-	 */
-	protected IResourceMappingMerger getMerger(ModelProvider provider) {
-		Object o = provider.getAdapter(IResourceMappingMerger.class);
-		if (o instanceof IResourceMappingMerger) {
-			return (IResourceMappingMerger) o;	
-		}
-		return new DefaultResourceMappingMerger(provider);
-	}
 
 	public IResourceMappingScope getScope() {
 		return scope;

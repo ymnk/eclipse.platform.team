@@ -35,7 +35,9 @@ public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INav
 	 * @return a newly created common viewer
 	 */
 	private static CommonViewer createViewer(Composite parent, ISynchronizePageConfiguration configuration) {
-		return new CommonViewer(TEAM_NAVIGATOR_CONTENT, parent, SWT.NONE);
+		CommonViewer v = new CommonViewer(TEAM_NAVIGATOR_CONTENT, parent, SWT.NONE);
+		configuration.getSite().setSelectionProvider(v);
+		return v;
 	}
 	
 	/**
