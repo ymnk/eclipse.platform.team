@@ -115,6 +115,8 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 			// TODO: check to see if there are incoming changes. If not terminate
 			if (showPreview(getJobName(), monitor)) {
 				execute(context, Policy.subMonitorFor(monitor, 25));
+			} else {
+				context.dispose();
 			}
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
