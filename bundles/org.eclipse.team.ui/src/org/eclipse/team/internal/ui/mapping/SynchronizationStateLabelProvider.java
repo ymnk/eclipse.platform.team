@@ -14,13 +14,14 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.TeamUIMessages;
 
 /**
  * A label provider wrapper that adds synchronization state decorations
@@ -39,6 +40,12 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 	public Image getImage(Object element) {
 		ILabelProvider modelLabelProvider = getDelegateLabelProvider();
 		Image base = modelLabelProvider.getImage(element);
+		if (base == null && element instanceof ModelProvider) {
+			base = modelLabelProvider.getImage(getModelRoot());
+			if (base == null) {
+				
+			}
+		}
 		if (isDecorationEnabled() && base != null) {
 			int kind = getSyncKind(element);
 			Image decoratedImage;
@@ -49,6 +56,15 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 			return decoratedImage;				
 		}
 		return base;
+	}
+
+	/**
+	 * Return the root object for the model. By default, it is the
+	 * workspace root. Subclasses may override.
+	 * @return the root object for the model
+	 */
+	protected Object getModelRoot() {
+		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
 	private Image getCompareImage(Image base, int kind) {
@@ -69,6 +85,12 @@ public abstract class SynchronizationStateLabelProvider implements ILabelProvide
 	public String getText(Object element) {
 		ILabelProvider modelLabelProvider = getDelegateLabelProvider();
 		String base = modelLabelProvider.getText(element);
+		if (base == null || base.length() == 0) {
+			if (element instanceof ModelProvider) {
+				ModelProvider provider = (ModelProvider) element;
+				base = provider.getDescriptor().getLabel();
+			}
+		}
 		if (isSyncInfoInTextEnabled()) {
 			int kind = getSyncKind(element);
 			if (kind != SyncInfo.IN_SYNC) {

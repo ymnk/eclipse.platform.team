@@ -75,7 +75,9 @@ public class ModelSynchronizePage extends AbstractSynchronizePage {
 	 * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizePage#createViewerAdvisor(org.eclipse.swt.widgets.Composite)
 	 */
 	protected AbstractViewerAdvisor createViewerAdvisor(Composite parent) {
-		return new CommonViewerAdvisor(parent, getConfiguration());
+		CommonViewerAdvisor commonViewerAdvisor = new CommonViewerAdvisor(parent, getConfiguration());
+		updateMode(getConfiguration().getMode());
+		return commonViewerAdvisor;
 	}
 	
 	/* (non-Javadoc)

@@ -13,8 +13,11 @@ package org.eclipse.team.internal.ui.mapping;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public class NavigatorExtensionLabelProvider extends LabelProvider {
+	
+	WorkbenchLabelProvider provider = new WorkbenchLabelProvider();
 
 	public NavigatorExtensionLabelProvider() {
 	}
@@ -24,7 +27,7 @@ public class NavigatorExtensionLabelProvider extends LabelProvider {
 			ModelProvider provider = (ModelProvider) object;
 			return provider.getDescriptor().getLabel();
 		}
-		return super.getText(object);
+		return provider.getText(object);
 	}
 
 	public Image getImage(Object object) {
@@ -32,7 +35,15 @@ public class NavigatorExtensionLabelProvider extends LabelProvider {
 			// ModelProvider provider = (ModelProvider) object;
 			// TODO: provider.getDescriptor().getImage();
 		}
-		return super.getImage(object);
+		return provider.getImage(object);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.LabelProvider#dispose()
+	 */
+	public void dispose() {
+		provider.dispose();
+		super.dispose();
 	}
 	
 }

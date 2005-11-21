@@ -319,11 +319,6 @@
             class="org.eclipse.team.internal.ui.TeamAdapterFactory">
          <adapter type="org.eclipse.team.ui.mapping.IResourceMappingMerger"/>
       </factory>
-      <factory
-            adaptableType="org.eclipse.core.resources.mapping.ModelProvider"
-            class="org.eclipse.team.internal.ui.TeamAdapterFactory">
-         <adapter type="org.eclipse.team.internal.ui.mapping.INavigatorContentExtensionFactory"/>
-      </factory>
    </extension>
    <extension
          point="org.eclipse.ui.navigator.navigatorContent">
@@ -337,7 +332,7 @@
    <extension
          point="org.eclipse.ui.navigator.navigatorContent">
       <navigatorContent
-            contentProvider="org.eclipse.team.internal.ui.mapping.ResourceMappingContentProvider"
+            contentProvider="org.eclipse.team.internal.ui.mapping.ResourceTeamAwareContentProvider"
             enabledByDefault="true"
             id="org.eclipse.team.ui.resourceContent"
             labelProvider="org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider"
@@ -349,6 +344,9 @@
             </objectClass>
             <objectClass
                   name="org.eclipse.team.internal.ui.mapping.ResourceAndDepth">
+            </objectClass>
+            <objectClass
+                  name="org.eclipse.core.resources.IResource">
             </objectClass> 
          </or>
          </enablement>

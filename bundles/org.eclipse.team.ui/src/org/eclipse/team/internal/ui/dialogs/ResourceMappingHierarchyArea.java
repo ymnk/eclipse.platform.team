@@ -24,9 +24,6 @@ import org.eclipse.ui.navigator.internal.extensions.NavigatorContentExtension;
 
 public class ResourceMappingHierarchyArea extends DialogArea implements INavigatorContentServiceListener {
 
-    /**
-	 * 
-	 */
 	private static final String TEAM_NAVIGATOR_CONTENT = "org.eclipse.team.ui.navigatorViewer"; //$NON-NLS-1$
 	private String description;
     private CommonViewer viewer;
@@ -62,6 +59,7 @@ public class ResourceMappingHierarchyArea extends DialogArea implements INavigat
         viewer.getControl().setLayoutData(data);
         viewer.getNavigatorContentService().addListener(this);
         viewer.setInput(ResourcesPlugin.getWorkspace().getRoot());
+        viewer.refresh();
     }
 
     public void setDescription(String string) {

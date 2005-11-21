@@ -13,6 +13,7 @@ package org.eclipse.team.internal.ui.mapping;
 import java.util.*;
 
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -31,6 +32,7 @@ public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INav
 	private static final String TEAM_NAVIGATOR_CONTENT = "org.eclipse.team.ui.navigatorViewer"; //$NON-NLS-1$
 	
 	Set extensions = new HashSet();
+	Map properties = new HashMap();
 	
 	/**
 	 * Create a common viewer
@@ -39,7 +41,15 @@ public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INav
 	 * @return a newly created common viewer
 	 */
 	private static CommonViewer createViewer(Composite parent, ISynchronizePageConfiguration configuration) {
-		CommonViewer v = new CommonViewer(TEAM_NAVIGATOR_CONTENT, parent, SWT.NONE);
+		CommonViewer v = new CommonViewer(TEAM_NAVIGATOR_CONTENT, parent, SWT.NONE) {
+			/* (non-Javadoc)
+			 * @see org.eclipse.ui.navigator.CommonViewer#wrapLabelProvider(org.eclipse.jface.viewers.ILabelProvider)
+			 */
+			protected ILabelProvider wrapLabelProvider(ILabelProvider provider) {
+				// Don't wrap since we don't want any decoration
+				return provider;
+			}
+		};
 		configuration.getSite().setSelectionProvider(v);
 		return v;
 	}
@@ -67,6 +77,14 @@ public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INav
 		if (getParticipant().getContext() != null) {
 			anExtension.getStateModel().setProperty(TeamUI.SYNCHRONIZATION_CONTEXT, getParticipant().getContext());
 		}
+		for (Iterator iter = properties.keySet().iterator(); iter.hasNext();) {
+			String element = (String) iter.next();
+			Object value = properties.get(element);
+			if (value instanceof Integer) {
+				Integer integer = (Integer) value;
+				anExtension.getStateModel().setIntProperty(element, integer.intValue());
+			}
+		}
 	}
 
 	private ModelSynchronizeParticipant getParticipant() {
@@ -87,6 +105,7 @@ public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INav
 	 * @param value the value
 	 */
 	public void setExtentionProperty(String property, int value) {
+		properties.put(property, new Integer(value));
 		for (Iterator iter = extensions.iterator(); iter.hasNext();) {
 			NavigatorContentExtension extension = (NavigatorContentExtension) iter.next();
 			extension.getStateModel().setIntProperty(property, value);

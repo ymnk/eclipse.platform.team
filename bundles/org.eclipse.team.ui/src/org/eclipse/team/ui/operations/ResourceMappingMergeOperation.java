@@ -11,14 +11,16 @@
 package org.eclipse.team.ui.operations;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.team.core.synchronize.ISyncInfoTree;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.mapping.*;
@@ -112,7 +114,11 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		try {
 			monitor.beginTask(null, 100);
 			context = buildMergeContext(Policy.subMonitorFor(monitor, 75));
-			// TODO: check to see if there are incoming changes. If not terminate
+			if (context.getSyncInfoTree().isEmpty() || !hasIncomingChanges(context.getSyncInfoTree())) {
+				promptForNoChanges();
+				context.dispose();
+				return;
+			}
 			if (showPreview(getJobName(), monitor)) {
 				execute(context, Policy.subMonitorFor(monitor, 25));
 			} else {
@@ -123,6 +129,25 @@ public abstract class ResourceMappingMergeOperation extends ResourceMappingOpera
 		} finally {
 			monitor.done();
 		}
+	}
+
+	private void promptForNoChanges() {
+		Display.getDefault().syncExec(new Runnable() {
+			public void run() {
+				MessageDialog.openInformation(getShell(), "No Incoming Changes", "There are no incoming changes for the selected elements");
+			};
+		});
+	}
+
+	private boolean hasIncomingChanges(ISyncInfoTree syncInfoTree) {
+		for (Iterator iter = syncInfoTree.iterator(); iter.hasNext();) {
+			SyncInfo info = (SyncInfo) iter.next();
+			int direction = SyncInfo.getDirection(info.getKind());
+			if (direction == SyncInfo.INCOMING || direction == SyncInfo.CONFLICTING) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean showPreview(final String title, IProgressMonitor monitor) {

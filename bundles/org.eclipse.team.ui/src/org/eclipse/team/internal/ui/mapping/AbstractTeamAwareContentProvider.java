@@ -10,7 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.mapping;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -65,6 +70,9 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
 	 */
 	public boolean hasChildren(Object element) {
+		if (element instanceof ModelProvider) {
+			element = getModelRoot();
+		}
 		return getDelegateContentProvider().hasChildren(element) && filter(element, getChildren(element)).length > 0;
 	}
 
@@ -226,13 +234,29 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	 * @param children the children
 	 * @return the filtered children
 	 */
-	protected abstract Object[] filter(Object parentElement, Object[] children);
+	protected Object[] filter(Object parentElement, Object[] children) {
+		children = getChildrenInScope(parentElement, children);
+		children = getChildrenInContext(parentElement, children);
+		return children;
+	}
 	
 	/**
 	 * Return the model provider for this content provider.
 	 * @return the model provider for this content provider
 	 */
-	protected abstract ModelProvider getModelProvider();
+	protected final ModelProvider getModelProvider() {
+		try {
+			return ModelProvider.getModelProviderDescriptor(getModelProviderId()).getModelProvider();
+		} catch (CoreException e) {
+			throw new IllegalStateException();
+		}
+	}
+	
+	/**
+	 * Return the id of model provider for this content provider.
+	 * @return the model provider for this content provider
+	 */
+	protected abstract String getModelProviderId();
 	
 	/**
 	 * Return the object that acts as the model root. It is used when getting the children
@@ -244,4 +268,81 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	protected Viewer getViewer() {
 		return viewer;
 	}
+	
+	/**
+	 * Return the subset of the given children that are in the
+	 * scope of the content provider or are parents
+	 * of elements that are in scope. If the content provider
+	 * is not scope (i.e. <code>getScope() == null</code>),
+	 * all the children are returned.
+	 * @param parent the parent of the given children
+	 * @param children all the children of the parent that are in scope.
+	 * @return the subset of the given children that are in the
+	 * scope of the content provider
+	 */
+	protected Object[] getChildrenInScope(Object parent, Object[] children) {
+		IResourceMappingScope scope = getScope();
+		if (scope == null)
+			return children;
+		List result = new ArrayList();
+		for (int i = 0; i < children.length; i++) {
+			Object object = children[i];
+			if (isInScope(parent, object)) {
+				result.add(object);
+			}
+		}
+		return result.toArray(new Object[result.size()]);
+	}
+	
+	/**
+	 * Return the subset of children that are of interest from the given context.
+	 * If there is no context, all the childen ae returned.
+	 * @param parent the parent of the children
+	 * @param children the children
+	 * @return the subset of children that are of interest from the given context
+	 */
+	protected Object[] getChildrenInContext(Object parentElemnt, Object[] children) {
+		ISynchronizationContext context = getContext();
+		if (context == null)
+			return children;
+		List result = new ArrayList();
+		for (int i = 0; i < children.length; i++) {
+			Object object = children[i];
+			ResourceTraversal[] traversals = getTraversals(object);
+			SyncInfo[] infos = context.getSyncInfoTree().getSyncInfos(traversals);
+			if (infos.length > 0) {
+				boolean include = false;
+				for (int j = 0; j < infos.length; j++) {
+					SyncInfo info = infos[j];
+					if (includeKind(info.getKind())) {
+						include = true;
+						break;
+					}
+				}
+				if (include)
+					result.add(object);
+			}
+		}
+		return result.toArray(new Object[result.size()]);
+	}
+
+	/**
+	 * Return the traversals for the given model object. The traversals
+	 * should be obtained from the scope.
+	 * @param object the model object
+	 * @return the traversals for the given object in the scope of this content provider
+	 */
+	protected abstract ResourceTraversal[] getTraversals(Object object);
+
+	/**
+	 * Return whether the given object is within the scope of this
+	 * content provider. The object is in scope if it is part of
+	 * a resource mapping in the scope or is the parent of resources
+	 * covered by one or more resource mappings in the scope.
+	 * @param parent the parent of the object
+	 * @param object the object
+	 * @return whether the given object is within the scope of this
+	 * content provider
+	 */
+	protected abstract boolean isInScope(Object parent, Object object);
 }
