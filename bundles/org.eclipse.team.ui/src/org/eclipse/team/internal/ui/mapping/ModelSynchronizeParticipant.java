@@ -124,7 +124,7 @@ public class ModelSynchronizeParticipant extends
 		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] {ISynchronizePageConfiguration.MODE_GROUP, TOOLBAR_CONTRIBUTION_GROUP});
 		configuration.addActionContribution(new ModelActionContribution());
 		configuration.setProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU, new String[] { CONTEXT_MENU_CONTRIBUTION_GROUP });
-		configuration.setSupportedModes(ISynchronizePageConfiguration.ALL_MODES);
+		configuration.setSupportedModes(ISynchronizePageConfiguration.INCOMING_MODE | ISynchronizePageConfiguration.CONFLICTING_MODE);
 		configuration.setMode(ISynchronizePageConfiguration.INCOMING_MODE);
 	}
 

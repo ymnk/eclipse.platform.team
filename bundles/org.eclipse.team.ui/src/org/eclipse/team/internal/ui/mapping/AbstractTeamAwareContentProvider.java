@@ -12,6 +12,8 @@ package org.eclipse.team.internal.ui.mapping;
 
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.core.ITeamStatus;
 import org.eclipse.team.core.synchronize.*;
@@ -19,6 +21,7 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.mapping.IResourceMappingScope;
 import org.eclipse.team.ui.mapping.ISynchronizationContext;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.navigator.IExtensionStateModel;
 import org.eclipse.ui.navigator.internal.extensions.ICommonContentProvider;
@@ -26,12 +29,13 @@ import org.eclipse.ui.navigator.internal.extensions.ICommonContentProvider;
 /**
  * Abstract team aware content provider that delegates to anotehr content provider
  */
-public abstract class AbstractTeamAwareContentProvider implements ICommonContentProvider, ISyncInfoSetChangeListener {
+public abstract class AbstractTeamAwareContentProvider implements ICommonContentProvider, ISyncInfoSetChangeListener, IPropertyChangeListener {
 
 	private ModelProvider modelProvider;
 	private IResourceMappingScope scope;
 	private ISynchronizationContext context;
 	private Viewer viewer;
+	private IExtensionStateModel stateModel;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
@@ -78,7 +82,7 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
 	public void dispose() {
-		// Nothing to do
+		stateModel.removePropertyChangeListener(this);
 	}
 
 	/* (non-Javadoc)
@@ -93,6 +97,8 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	 * @see org.eclipse.ui.navigator.internal.extensions.ICommonContentProvider#init(org.eclipse.ui.navigator.IExtensionStateModel, org.eclipse.ui.IMemento)
 	 */
 	public void init(IExtensionStateModel aStateModel, IMemento aMemento) {
+		stateModel = aStateModel;
+		stateModel.addPropertyChangeListener(this);
 		scope = (IResourceMappingScope)aStateModel.getProperty(TeamUI.RESOURCE_MAPPING_SCOPE);
 		context = (ISynchronizationContext)aStateModel.getProperty(TeamUI.SYNCHRONIZATION_CONTEXT);
 		ITreeContentProvider provider = getDelegateContentProvider();
@@ -101,6 +107,33 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	public void propertyChange(PropertyChangeEvent event) {
+		// TODO: this could happen at the root as well
+		if (event.getProperty().equals(ISynchronizePageConfiguration.P_MODE)) {
+			refresh();
+		}
+	}
+	
+	protected boolean includeKind(int kind) {
+		int mode = stateModel.getIntProperty(ISynchronizePageConfiguration.P_MODE);
+		switch (mode) {
+		case ISynchronizePageConfiguration.BOTH_MODE:
+			return true;
+		case ISynchronizePageConfiguration.CONFLICTING_MODE:
+			return SyncInfo.getDirection(kind) == SyncInfo.CONFLICTING;
+		case ISynchronizePageConfiguration.INCOMING_MODE:
+			return SyncInfo.getDirection(kind) == SyncInfo.CONFLICTING || SyncInfo.getDirection(kind) == SyncInfo.INCOMING;
+		case ISynchronizePageConfiguration.OUTGOING_MODE:
+			return SyncInfo.getDirection(kind) == SyncInfo.CONFLICTING || SyncInfo.getDirection(kind) == SyncInfo.OUTGOING;
+		default:
+			break;
+		}
+		return true;
+	}
+	
 	protected ISynchronizationContext getContext() {
 		return context;
 	}
@@ -172,7 +205,8 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 	protected void refresh() {
 		Utils.syncExec(new Runnable() {
 			public void run() {
-				((TreeViewer)getViewer()).refresh(getModelProvider());
+				TreeViewer treeViewer = ((TreeViewer)getViewer());
+				treeViewer.refresh(getModelProvider());
 			}
 		
 		}, getViewer().getControl());

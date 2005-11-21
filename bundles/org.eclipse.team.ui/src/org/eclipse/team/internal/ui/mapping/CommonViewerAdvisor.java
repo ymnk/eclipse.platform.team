@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.mapping;
 
+import java.util.*;
+
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -27,6 +29,8 @@ import org.eclipse.ui.navigator.internal.extensions.NavigatorContentExtension;
 public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INavigatorContentServiceListener {
 
 	private static final String TEAM_NAVIGATOR_CONTENT = "org.eclipse.team.ui.navigatorViewer"; //$NON-NLS-1$
+	
+	Set extensions = new HashSet();
 	
 	/**
 	 * Create a common viewer
@@ -58,6 +62,7 @@ public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INav
 	 * @see org.eclipse.ui.navigator.internal.extensions.INavigatorContentServiceListener#onLoad(org.eclipse.ui.navigator.internal.extensions.NavigatorContentExtension)
 	 */
 	public void onLoad(NavigatorContentExtension anExtension) {
+		extensions.add(anExtension);
 		anExtension.getStateModel().setProperty(TeamUI.RESOURCE_MAPPING_SCOPE, getParticipant().getContext().getScope());
 		if (getParticipant().getContext() != null) {
 			anExtension.getStateModel().setProperty(TeamUI.SYNCHRONIZATION_CONTEXT, getParticipant().getContext());
@@ -74,6 +79,18 @@ public class CommonViewerAdvisor extends StructuredViewerAdvisor implements INav
 	public boolean navigate(boolean next) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	/**
+	 * Set the given property for all active extensions.
+	 * @param property the property
+	 * @param value the value
+	 */
+	public void setExtentionProperty(String property, int value) {
+		for (Iterator iter = extensions.iterator(); iter.hasNext();) {
+			NavigatorContentExtension extension = (NavigatorContentExtension) iter.next();
+			extension.getStateModel().setIntProperty(property, value);
+		}
 	}
 
 }
