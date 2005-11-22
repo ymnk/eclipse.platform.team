@@ -126,7 +126,7 @@ public abstract class ResourceMappingOperation extends ModelProviderOperation {
         final boolean[] canceled = new boolean[] { false };
         getShell().getDisplay().syncExec(new Runnable() {
             public void run() {
-                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Participating Elements", getScope(), getContext());
+                AdditionalMappingsDialog dialog = new AdditionalMappingsDialog(getShell(), "Selection Adjustment Required", getScope(), getContext());
                 int result = dialog.open();
                 canceled[0] = result != Window.OK;
             }

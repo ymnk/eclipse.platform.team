@@ -12,8 +12,10 @@ package org.eclipse.team.internal.ui.mapping;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.mapping.ISynchronizationContext;
+import org.eclipse.ui.navigator.IExtensionStateModel;
 
 /**
  * Resource label provider that can decorate using sync state.
@@ -66,4 +68,11 @@ public class ResourceModelLabelProvider extends
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.mapping.SynchronizationOperationLabelProvider#init(org.eclipse.ui.navigator.IExtensionStateModel, org.eclipse.jface.viewers.ITreeContentProvider)
+	 */
+	public void init(IExtensionStateModel aStateModel, ITreeContentProvider aContentProvider) {
+		// TODO Auto-generated method stub
+		super.init(aStateModel, aContentProvider);
+	}
 }

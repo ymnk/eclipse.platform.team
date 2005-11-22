@@ -323,6 +323,7 @@ public abstract class AbstractTeamAwareContentProvider implements ICommonContent
 					result.add(object);
 			}
 		}
+		// TODO: may need to get phatoms as well
 		return result.toArray(new Object[result.size()]);
 	}
 

@@ -17,7 +17,10 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.*;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.team.ui.mapping.IResourceMappingScope;
+import org.eclipse.team.ui.mapping.ISynchronizationContext;
+import org.eclipse.ui.IMemento;
 import org.eclipse.ui.model.WorkbenchContentProvider;
+import org.eclipse.ui.navigator.IExtensionStateModel;
 
 /**
  * This content provider displays the mappings as a flat list 
@@ -85,13 +88,55 @@ public class ResourceTeamAwareContentProvider extends AbstractTeamAwareContentPr
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.mapping.AbstractTeamAwareContentProvider#init(org.eclipse.ui.navigator.IExtensionStateModel, org.eclipse.ui.IMemento)
+	 */
+	public void init(IExtensionStateModel aStateModel, IMemento aMemento) {
+		super.init(aStateModel, aMemento);
+		// TODO: must explicilty register for sync change events (perhaps this should be a flag of some sort)
+		org.eclipse.team.ui.mapping.ISynchronizationContext context = getContext();
+		if (context != null)
+			context.getSyncInfoTree().addSyncSetChangedListener(this);
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.mapping.AbstractTeamAwareContentProvider#dispose()
 	 */
 	public void dispose() {
 		provider.dispose();
+		ISynchronizationContext context = getContext();
+		if (context != null)
+			context.getSyncInfoTree().removeSyncSetChangedListener(this);
 		super.dispose();
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.mapping.AbstractTeamAwareContentProvider#getChildrenInScope(java.lang.Object, java.lang.Object[])
+	 */
+	protected Object[] getChildrenInScope(Object parent, Object[] children) {
+		Object[] objects = super.getChildrenInScope(parent, children);
+		// Add any resources in the context that are also in scope
+		ISynchronizationContext context = getContext();
+		if (context != null) {
+			if (parent instanceof IResource) {
+				Set result = new HashSet();
+				for (int i = 0; i < objects.length; i++) {
+					Object object = objects[i];
+					result.add(object);
+				}
+				IResource resource = (IResource) parent;
+				IResource[] resources = context.getSyncInfoTree().members(resource);
+				for (int i = 0; i < resources.length; i++) {
+					IResource child = resources[i];
+					if (isInScope(parent, child)) {
+						result.add(child);
+					}
+				}
+				return result.toArray(new Object[result.size()]);
+			}
+		}
+		return objects;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.mapping.AbstractTeamAwareContentProvider#getTraversals(java.lang.Object)
 	 */

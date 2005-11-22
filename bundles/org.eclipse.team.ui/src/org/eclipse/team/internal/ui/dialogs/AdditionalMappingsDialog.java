@@ -13,12 +13,13 @@ package org.eclipse.team.internal.ui.dialogs;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.internal.ui.mapping.ResourceMappingInputScope;
 import org.eclipse.team.ui.mapping.IResourceMappingScope;
 import org.eclipse.team.ui.mapping.ISynchronizationContext;
 
 public class AdditionalMappingsDialog extends DetailsDialog {
 
-    private ResourceMappingSelectionArea selectedMappingsArea;
+    private ResourceMappingHierarchyArea selectedMappingsArea;
     private ResourceMappingHierarchyArea allMappingsArea;
 	private final IResourceMappingScope scope;
 	private final ISynchronizationContext context;
@@ -40,9 +41,8 @@ public class AdditionalMappingsDialog extends DetailsDialog {
      */
     private void createSelectedMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
-        selectedMappingsArea = new ResourceMappingSelectionArea(scope.getInputMappings(), false, false);
-        selectedMappingsArea.setDescription("Selected Elements");
-        //selectedMappingsArea.addPropertyChangeListener(this);
+        selectedMappingsArea = ResourceMappingHierarchyArea.create(new ResourceMappingInputScope(scope), null /* no context */);
+        selectedMappingsArea.setDescription("These are the elements you selected");
         selectedMappingsArea.createArea(composite);
         // Create a separator between the two sets of buttons
         Label seperator = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
@@ -55,12 +55,9 @@ public class AdditionalMappingsDialog extends DetailsDialog {
     private void createAllMappingsArea(Composite parent) {
         Composite composite = createComposite(parent);
         allMappingsArea = ResourceMappingHierarchyArea.create(scope, context);
-        allMappingsArea.setDescription("All elements to be operated on");
+        allMappingsArea.setDescription("These are the elements that will be included in the operation");
         //allMappingsArea.addPropertyChangeListener(this);
         allMappingsArea.createArea(composite);
-        // Create a separator between the two sets of buttons
-        Label seperator = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
-        seperator.setLayoutData(new GridData (GridData.FILL_HORIZONTAL));
     }
 
     protected Composite createDropDownDialogArea(Composite parent) {

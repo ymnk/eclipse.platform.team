@@ -10,7 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.dialogs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -52,7 +57,11 @@ public class ResourceMappingHierarchyArea extends DialogArea implements INavigat
         if (description != null)
             createWrappingLabel(composite, description, 1);
         
-        viewer = new CommonViewer(TEAM_NAVIGATOR_CONTENT, composite, SWT.NONE);
+        viewer = new CommonViewer(TEAM_NAVIGATOR_CONTENT, composite, SWT.BORDER) {
+        	protected org.eclipse.jface.viewers.ILabelProvider wrapLabelProvider(org.eclipse.jface.viewers.ILabelProvider provider) {
+        		return provider;
+        	};
+        };
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = 100;
         data.widthHint = 300;
@@ -60,9 +69,23 @@ public class ResourceMappingHierarchyArea extends DialogArea implements INavigat
         viewer.getNavigatorContentService().addListener(this);
         viewer.setInput(ResourcesPlugin.getWorkspace().getRoot());
         viewer.refresh();
+        Object[] objects = getRootModelObjects();
+        viewer.setSelection(new StructuredSelection(objects), true);
     }
 
-    public void setDescription(String string) {
+	private Object[] getRootModelObjects() {
+		if (scope == null)
+			return new Object[0];
+		ResourceMapping[] mappings = scope.getMappings();
+		List result = new ArrayList();
+		for (int i = 0; i < mappings.length; i++) {
+			ResourceMapping mapping = mappings[i];
+			result.add(mapping.getModelObject());
+		}
+		return result.toArray(new Object[result.size()]);
+	}
+
+	public void setDescription(String string) {
         description = string;
     }
 

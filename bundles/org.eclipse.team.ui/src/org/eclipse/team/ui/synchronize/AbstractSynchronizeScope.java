@@ -184,7 +184,7 @@ public abstract class AbstractSynchronizeScope implements ISynchronizeScope {
 		return false;
 	}
 	
-	public ResourceMapping[] getResourceMappings() {
+	public ResourceMapping[] getMappings() {
 		List result = new ArrayList();
 		IResource[] roots = getRoots();
 		for (int i = 0; i < roots.length; i++) {
