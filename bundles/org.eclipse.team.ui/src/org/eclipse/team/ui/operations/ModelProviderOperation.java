@@ -10,12 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.ui.operations;
 
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.synchronize.ISyncInfoTree;
+import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
 import org.eclipse.team.ui.TeamOperation;
@@ -126,6 +129,17 @@ public abstract class ModelProviderOperation extends TeamOperation {
 			return (IResourceMappingMerger) o;	
 		}
 		return new DefaultResourceMappingMerger(provider);
+	}
+	
+	protected boolean hasIncomingChanges(ISyncInfoTree syncInfoTree) {
+		for (Iterator iter = syncInfoTree.iterator(); iter.hasNext();) {
+			SyncInfo info = (SyncInfo) iter.next();
+			int direction = SyncInfo.getDirection(info.getKind());
+			if (direction == SyncInfo.INCOMING || direction == SyncInfo.CONFLICTING) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

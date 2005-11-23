@@ -14,7 +14,9 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.mapping.IMergeContext;
 import org.eclipse.team.ui.operations.ModelProviderOperation;
@@ -41,6 +43,9 @@ public class MergeIncomingChangesAction extends ModelProviderAction {
 						InterruptedException {
 					try {
 						performMerge(context, monitor);
+						if (context.getSyncInfoTree().isEmpty() || !hasIncomingChanges(context.getSyncInfoTree())) {
+							promptForNoChanges();
+						}
 					} catch (CoreException e) {
 						throw new InvocationTargetException(e);
 					}
@@ -52,6 +57,14 @@ public class MergeIncomingChangesAction extends ModelProviderAction {
 		} catch (InterruptedException e) {
 			// Ignore
 		}
+	}
+
+	private void promptForNoChanges() {
+		Display.getDefault().syncExec(new Runnable() {
+			public void run() {
+				MessageDialog.openInformation(getConfiguration().getSite().getShell(), "Merge Success", "All changes were merged successfully");
+			};
+		});
 	}
 
 	/* (non-Javadoc)
