@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.mapping;
 
+import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
@@ -138,13 +139,14 @@ public class ModelSynchronizePage extends AbstractSynchronizePage {
 	 * @param parent the parent composite of the viewer
 	 * @param oldViewer the current viewer which canbe returned if it is appropriate for use with the given input
 	 * @param input the compare input to be viewed
+	 * @param configuration the compare sonfiguration information
 	 * @return a viewer for viewing the structure of the given compare input
 	 */ 
-	public Viewer findStructureViewer(Composite parent, Viewer oldViewer, ICompareInput input) {
+	public Viewer findStructureViewer(Composite parent, Viewer oldViewer, ICompareInput input, CompareConfiguration configuration) {
 		// Get a structure viewer from the model provider's compare adapter
 		IModelProviderCompareAdapter adapter = getModelProviderCompareAdapter(input);
 		if (adapter != null)
-			return adapter.findStructureViewer(parent, oldViewer, input);
+			return adapter.findStructureViewer(parent, oldViewer, input, configuration);
 		return null;
 	}
 
@@ -153,13 +155,14 @@ public class ModelSynchronizePage extends AbstractSynchronizePage {
 	 * @param parent the parent composite of the viewer
 	 * @param oldViewer the current viewer which can be returned if it is appropriate for use with the given input
 	 * @param input the compare input to be viewed
+	 * @param configuration the compare configuration information
 	 * @return a viewer for comparing the content of the given compare input
 	 */ 
-	public Viewer findContentViewer(Composite parent, Viewer oldViewer, ICompareInput input) {
+	public Viewer findContentViewer(Composite parent, Viewer oldViewer, ICompareInput input, CompareConfiguration configuration) {
 		// Get a content viewer from the model provider's compare adapter
 		IModelProviderCompareAdapter adapter = getModelProviderCompareAdapter(input);
 		if (adapter != null)
-			return adapter.findContentViewer(parent, oldViewer, input);
+			return adapter.findContentViewer(parent, oldViewer, input, configuration);
 		return null;
 	}
 

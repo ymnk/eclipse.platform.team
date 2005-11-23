@@ -55,7 +55,7 @@ public class ModelParticipantPageSavablePart extends
 	 * @see org.eclipse.team.ui.synchronize.ParticipantPageSaveablePart#findStructureViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.Viewer, org.eclipse.compare.structuremergeviewer.ICompareInput)
 	 */
 	protected Viewer findStructureViewer(Composite parent, Viewer oldViewer, ICompareInput input) {
-		Viewer viewer = ((ModelSynchronizePage)getPageConfiguration().getPage()).findStructureViewer(parent, oldViewer, input);
+		Viewer viewer = ((ModelSynchronizePage)getPageConfiguration().getPage()).findStructureViewer(parent, oldViewer, input, getCompareConfiguration());
 		if (viewer != null)
 			return viewer;
 		return super.findStructureViewer(parent, oldViewer, input);
@@ -65,7 +65,7 @@ public class ModelParticipantPageSavablePart extends
 	 * @see org.eclipse.team.ui.synchronize.ParticipantPageSaveablePart#findContentViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.viewers.Viewer, org.eclipse.compare.structuremergeviewer.ICompareInput)
 	 */
 	protected Viewer findContentViewer(Composite parent, Viewer oldViewer, ICompareInput input) {
-		Viewer viewer = ((ModelSynchronizePage)getPageConfiguration().getPage()).findContentViewer(parent, oldViewer, input);
+		Viewer viewer = ((ModelSynchronizePage)getPageConfiguration().getPage()).findContentViewer(parent, oldViewer, input, getCompareConfiguration());
 		if (viewer != null)
 			return viewer;
 		return super.findContentViewer(parent, oldViewer, input);

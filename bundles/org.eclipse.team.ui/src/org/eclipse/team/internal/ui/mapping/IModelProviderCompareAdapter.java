@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.mapping;
 
+import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -63,17 +64,19 @@ public interface IModelProviderCompareAdapter {
 	 * @param parent the parent composite of the viewer
 	 * @param oldViewer the current viewer which canbe returned if it is appropriate for use with the given input
 	 * @param input the compare input to be viewed
+	 * @param configuration the compare configuration information
 	 * @return a viewer for viewing the structure of the given compare input
 	 */ 
-	Viewer findStructureViewer(Composite parent, Viewer oldViewer, ICompareInput input);
+	Viewer findStructureViewer(Composite parent, Viewer oldViewer, ICompareInput input, CompareConfiguration configuration);
 
 	/**
 	 * Return a viewer for comparing the content of the given compare input.
 	 * @param parent the parent composite of the viewer
 	 * @param oldViewer the current viewer which can be returned if it is appropriate for use with the given input
 	 * @param input the compare input to be viewed
+	 * @param configuration the compare configuration information
 	 * @return a viewer for comparing the content of the given compare input
 	 */ 
-	Viewer findContentViewer(Composite parent, Viewer oldViewer, ICompareInput input);
+	Viewer findContentViewer(Composite parent, Viewer oldViewer, ICompareInput input, CompareConfiguration configuration);
 
 }

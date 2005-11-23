@@ -221,14 +221,17 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 	 */
 	public void doSave(IProgressMonitor pm) {
 		//super.saveChanges(pm);
-		ISynchronizeModelElement root = (ISynchronizeModelElement)viewer.getInput();
-		if (root != null && root instanceof DiffNode) {
-			try {
-				commit(pm, (DiffNode)root);
-			} catch (CoreException e) {
-				Utils.handle(e);
-			} finally {
-				setDirty(false);
+		Object input = viewer.getInput();
+		if (input instanceof ISynchronizeModelElement) {
+			ISynchronizeModelElement root = (ISynchronizeModelElement)input;
+			if (root != null && root instanceof DiffNode) {
+				try {
+					commit(pm, (DiffNode)root);
+				} catch (CoreException e) {
+					Utils.handle(e);
+				} finally {
+					setDirty(false);
+				}
 			}
 		}
 	}
@@ -583,5 +586,15 @@ public class ParticipantPageSaveablePart extends SaveablePartAdapter implements 
 	 */
 	protected Viewer findContentViewer(Composite parent, Viewer oldViewer, ICompareInput input) {
 		return CompareUI.findContentViewer(oldViewer, input, parent, cc);
+	}
+
+	/**
+	 * Return the compare configuration for this part.
+	 * @return the compare configuration for this part
+	 * 
+	 * @since 3.2
+	 */
+	protected CompareConfiguration getCompareConfiguration() {
+		return cc;
 	}
 }
