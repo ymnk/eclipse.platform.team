@@ -364,14 +364,35 @@
       <viewerContentBinding 
          viewerId="org.eclipse.team.ui.navigatorViewer">                     
          <includes>                     
-            <!-- <contentExtension   
-               pattern="org.eclipse.team.ui.navigatorContent" 
-               isRoot="true"/> -->
             <contentExtension   
                pattern="org.eclipse.team.ui.resourceContent" 
                isRoot="true"/>
-         </includes>   
-       </viewerContentBinding>   
+         </includes>
+       </viewerContentBinding>
+       <viewer
+             viewerId="org.eclipse.team.ui.navigatorViewer">
+           <popupMenu
+                allowsPlatformContributions="true"
+                id="org.eclipse.team.ui.navigatorViewer#PopupMenu">  
+             <insertionPoint name="group.synchronize"/>
+             <insertionPoint
+                   name="group.navigate"
+                   separator="true"/>
+             <insertionPoint name="group.openWith"/>             
+             <insertionPoint
+                   name="group.merge"
+                   separator="true"/>
+             <insertionPoint
+                   name="group.other"
+                   separator="true"/> 
+             <insertionPoint
+                   name="additions"
+                   separator="true"/>              
+             <insertionPoint
+                   name="group.properties"
+                   separator="true"/>
+          </popupMenu>
+       </viewer>
    </extension>
    
    <!-- *************** Synchronize View Participant **************** -->

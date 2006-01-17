@@ -46,13 +46,13 @@ public class ModelSynchronizeParticipant extends
 	 * The id of the merge action group that determines where the merge
 	 * actions (e.g. merge and overwrite) appear in the context menu or toolbar.
 	 */
-	public static final String MERGE_ACTION_GROUP = "merge_action_group"; //$NON-NLS-1$
+	public static final String MERGE_ACTION_GROUP = "merge"; //$NON-NLS-1$
 
 	/**
 	 * The id of the action group that determines where the other
 	 * actions (e.g. mark-as-mered) appear in the context menu.
 	 */
-	public static final String OTHER_ACTION_GROUP = "other_action_group"; //$NON-NLS-1$
+	public static final String OTHER_ACTION_GROUP = "other"; //$NON-NLS-1$
 	
 	private ISynchronizationContext context;
 	
