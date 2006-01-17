@@ -201,6 +201,10 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 	 * @see org.eclipse.team.internal.ui.synchronize.StructuredViewerAdvisor#fillContextMenu(org.eclipse.jface.viewers.StructuredViewer, org.eclipse.jface.action.IMenuManager)
 	 */
 	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
+		if (manager instanceof CommonMenuManager) {
+			CommonMenuManager cmm = (CommonMenuManager) manager;
+			cmm.clearHandlers();
+		}
 		ISelection selection = getViewer().getSelection();
 		actionService.setContext(new ActionContext(selection));
 		actionService.fillContextMenu(manager);
@@ -223,6 +227,13 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 			actionService.setContext(new ActionContext(selection));
 			actionService.fillActionBars(getConfiguration().getSite().getActionBars());
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.synchronize.StructuredViewerAdvisor#createContextMenuManager(java.lang.String)
+	 */
+	protected MenuManager createContextMenuManager(String targetID) {
+		return new CommonMenuManager(targetID);
 	}
 
 }

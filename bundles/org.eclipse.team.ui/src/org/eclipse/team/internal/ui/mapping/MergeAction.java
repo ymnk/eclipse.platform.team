@@ -15,7 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.diff.*;
-import org.eclipse.team.core.diff.IDiffNode;
 import org.eclipse.team.core.mapping.IMergeContext;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.operations.*;
@@ -43,7 +42,7 @@ public class MergeAction extends ModelProviderAction {
 	public void run() {
 		final IMergeContext context = (IMergeContext)((ModelSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
 		try {
-			new ModelProviderOperation(getConfiguration()) {
+			new AbstractResourceMappingOperation(getConfiguration()) {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException,
 						InterruptedException {
 					try {

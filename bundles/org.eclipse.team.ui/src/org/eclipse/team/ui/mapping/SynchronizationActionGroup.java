@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.team.internal.ui.mapping.CommonMenuManager;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.IActionBars;
@@ -99,7 +99,13 @@ public class SynchronizationActionGroup extends CommonActionProvider {
 	 */
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
-		// TODO: Register the handlers
+		if (menu instanceof CommonMenuManager) {
+			CommonMenuManager manager = (CommonMenuManager) menu;
+			for (Iterator iter = handlers.keySet().iterator(); iter.hasNext();) {
+				String actionId = (String) iter.next();
+				manager.registerHandler(actionId, (IHandler)handlers.get(actionId));
+			}
+		}
 	}
 	
 	/* (non-Javadoc)

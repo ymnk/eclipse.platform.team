@@ -23,8 +23,6 @@ import org.eclipse.team.internal.ui.Policy;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.mapping.DefaultResourceMappingMerger;
 import org.eclipse.team.ui.TeamOperation;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
 import org.eclipse.ui.IWorkbenchPart;
 
 /**
@@ -38,37 +36,15 @@ import org.eclipse.ui.IWorkbenchPart;
  * 
  * @since 3.2
  */
-public abstract class ModelProviderOperation extends TeamOperation {
+public abstract class AbstractResourceMappingOperation extends TeamOperation {
 
 	/**
 	 * Create the operation
 	 * @param part the workbench part from which the operation was
 	 * launched or <code>null</code>
 	 */
-	public ModelProviderOperation(IWorkbenchPart part) {
+	public AbstractResourceMappingOperation(IWorkbenchPart part) {
 		super(part);
-	}
-
-	/*
-	 * Helper method for extracting the part safely from a configuration
-	 */
-	private static IWorkbenchPart getPart(ISynchronizePageConfiguration configuration) {
-		if (configuration != null) {
-			ISynchronizePageSite site = configuration.getSite();
-			if (site != null) {
-				return site.getPart();
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * Create a model provider operation
-	 * @param configuration the configuration of the page from which
-	 * the operation was launched
-	 */
-	protected ModelProviderOperation(ISynchronizePageConfiguration configuration) {
-		this(getPart(configuration));
 	}
 	
 	/**

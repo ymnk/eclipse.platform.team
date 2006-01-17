@@ -234,7 +234,7 @@ public abstract class StructuredViewerAdvisor extends AbstractViewerAdvisor {
 	 */
 	private void hookContextMenu(final StructuredViewer viewer) {
 		String targetID = getContextMenuId(viewer);
-		final MenuManager menuMgr = new MenuManager(targetID); 
+		final MenuManager menuMgr = createContextMenuManager(targetID); 
 		
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
@@ -268,6 +268,17 @@ public abstract class StructuredViewerAdvisor extends AbstractViewerAdvisor {
 		});
 		viewer.getControl().setMenu(menu);
 		registerContextMenu(viewer, menuMgr);
+	}
+
+	/**
+	 * Create the menu manager to be used to manage the context
+	 * menu of the viewer.
+	 * @param targetID the context menu id
+	 * @return the menu manager to be used to manage the context
+	 * menu of the viewer
+	 */
+	protected MenuManager createContextMenuManager(String targetID) {
+		return new MenuManager(targetID);
 	}
 
 	/**

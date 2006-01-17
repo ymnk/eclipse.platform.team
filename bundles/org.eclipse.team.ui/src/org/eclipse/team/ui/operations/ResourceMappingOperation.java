@@ -64,7 +64,7 @@ import org.eclipse.ui.IWorkbenchPart;
  * 
  * @since 3.2
  */
-public abstract class ResourceMappingOperation extends ModelProviderOperation {
+public abstract class ResourceMappingOperation extends AbstractResourceMappingOperation {
 	
 	private static final ScopeGenerator DEFAULT_SCOPE_BUILDER = new ScopeGenerator();
 	private final ResourceMapping[] selectedMappings;
