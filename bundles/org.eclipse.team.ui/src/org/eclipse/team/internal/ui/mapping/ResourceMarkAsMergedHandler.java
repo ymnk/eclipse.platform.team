@@ -12,80 +12,95 @@ package org.eclipse.team.internal.ui.mapping;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.MultiRule;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.diff.*;
 import org.eclipse.team.core.mapping.IMergeContext;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.mapping.ModelProviderOperation;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.ui.navigator.IExtensionStateModel;
 
-public class ResourceMarkAsMergedHandler extends MergeActionHandler {
+public class ResourceMarkAsMergedHandler extends SynchronizationActionHandler {
 
-	public Object execute(final ExecutionEvent event) throws ExecutionException {
-		try {
-			new ResourceModelProviderOperation(getConfiguration()) {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException,
-						InterruptedException {
-					try {
-						final IMergeContext context = (IMergeContext)getContext();
-						final IDiffNode[] deltas = getFileDeltas(getStructuredSelection(event));
-						ISchedulingRule rule = getMergeRule(context, deltas);
-						context.run(new IWorkspaceRunnable() {
-							public void run(IProgressMonitor monitor) throws CoreException {
-								markAsMerged(deltas, context, monitor);
-							}
-						
-						}, rule, IResource.NONE, monitor);
-						
-					} catch (CoreException e) {
-						throw new InvocationTargetException(e);
+	public ResourceMarkAsMergedHandler(IExtensionStateModel model) {
+		super(model);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.mapping.MergeActionHandler#createOperation(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration, org.eclipse.jface.viewers.IStructuredSelection)
+	 */
+	protected ModelProviderOperation createOperation(
+			ISynchronizePageConfiguration configuration,
+			IStructuredSelection structuredSelection) {
+		return new ResourceModelProviderOperation(configuration,
+				structuredSelection.toArray()) {
+			/* (non-Javadoc)
+			 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+			 */
+			public void run(IProgressMonitor monitor)
+					throws InvocationTargetException, InterruptedException {
+				try {
+					final IMergeContext context = (IMergeContext) getContext();
+					final IDiffNode[] deltas = getFileDeltas(getElements());
+					ISchedulingRule rule = getMergeRule(context, deltas);
+					context.run(new IWorkspaceRunnable() {
+						public void run(IProgressMonitor monitor)
+								throws CoreException {
+							markAsMerged(deltas, context, monitor);
+						}
+
+					}, rule, IResource.NONE, monitor);
+
+				} catch (CoreException e) {
+					throw new InvocationTargetException(e);
+				}
+			}
+
+			private ISchedulingRule getMergeRule(IMergeContext context,
+					IDiffNode[] deltas) {
+				ISchedulingRule result = null;
+				for (int i = 0; i < deltas.length; i++) {
+					IDiffNode node = deltas[i];
+					ISchedulingRule rule = context.getMergeRule(node);
+					if (result == null) {
+						result = rule;
+					} else {
+						result = MultiRule.combine(result, rule);
 					}
 				}
+				return result;
+			}
 
-				private ISchedulingRule getMergeRule(IMergeContext context, IDiffNode[] deltas) {
-					ISchedulingRule result = null;
-					for (int i = 0; i < deltas.length; i++) {
-						IDiffNode node = deltas[i];
-						ISchedulingRule rule = context.getMergeRule(node);
-						if (result == null) {
-							result = rule;
-						} else {
-							result = MultiRule.combine(result, rule);
-						}
-					}
-					return result;
-				}
+			private void markAsMerged(IDiffNode[] deltas,
+					final IMergeContext context, IProgressMonitor monitor)
+					throws CoreException {
+				context.markAsMerged(deltas, false, monitor);
+			}
 
-				private void markAsMerged(IDiffNode[] deltas, final IMergeContext context, IProgressMonitor monitor) throws CoreException {
-					context.markAsMerged(deltas, false, monitor);
-				}
-
-				protected FastDiffNodeFilter getDiffFilter() {
-					return new FastDiffNodeFilter() {
-						public boolean select(IDiffNode node) {
-							if (node instanceof IThreeWayDiff) {
-								IThreeWayDiff twd = (IThreeWayDiff) node;
-								if (twd.getDirection() == IThreeWayDiff.CONFLICTING || twd.getDirection() == IThreeWayDiff.INCOMING) {
-									return true;
-								}
+			/* (non-Javadoc)
+			 * @see org.eclipse.team.internal.ui.mapping.ResourceModelProviderOperation#getDiffFilter()
+			 */
+			protected FastDiffNodeFilter getDiffFilter() {
+				return new FastDiffNodeFilter() {
+					public boolean select(IDiffNode node) {
+						if (node instanceof IThreeWayDiff) {
+							IThreeWayDiff twd = (IThreeWayDiff) node;
+							if (twd.getDirection() == IThreeWayDiff.CONFLICTING
+									|| twd.getDirection() == IThreeWayDiff.INCOMING) {
+								return true;
 							}
-							return false;
 						}
-					};
-				}
-			
-			}.run();
-		} catch (InvocationTargetException e) {
-			Utils.handle(e);
-		} catch (InterruptedException e) {
-			// Ignore
-		}
-		return null;
+						return false;
+					}
+				};
+			}
+
+		};
 	}
 	
 }

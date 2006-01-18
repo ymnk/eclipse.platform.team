@@ -22,6 +22,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.diff.*;
 import org.eclipse.team.core.mapping.IMergeContext;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.mapping.ModelProviderOperation;
 import org.eclipse.team.ui.operations.*;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
@@ -42,7 +43,7 @@ public class MarkAsMergedAction extends ModelProviderAction {
 	public void run() {
 		final IMergeContext context = (IMergeContext)((ModelSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
 		try {
-			new AbstractResourceMappingOperation(getConfiguration()) {
+			new ModelProviderOperation(getConfiguration()) {
 				public void run(IProgressMonitor monitor) throws InvocationTargetException,
 						InterruptedException {
 					try {

@@ -18,14 +18,13 @@ import org.eclipse.team.internal.ui.mapping.CommonMenuManager;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.navigator.CommonActionProvider;
-import org.eclipse.ui.navigator.CommonActionProviderConfig;
+import org.eclipse.ui.navigator.*;
 
 /**
  * An action group that can be used by models to contribute actions
  * to a team synchronization viewer.
  * <p>
- * This class is not intended to be subclasses by clients
+ * This class may be subclasses by clients
  * <p>
  * <strong>EXPERIMENTAL</strong>. This class or interface has been added as
  * part of a work in progress. There is a guarantee neither that this API will
@@ -35,7 +34,7 @@ import org.eclipse.ui.navigator.CommonActionProviderConfig;
  * 
  * @since 3.2
  */
-public class SynchronizationActionGroup extends CommonActionProvider {
+public class SynchronizationActionProvider extends CommonActionProvider {
 	
 	/**
 	 * Action id constant for the merge action.
@@ -61,8 +60,19 @@ public class SynchronizationActionGroup extends CommonActionProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.navigator.CommonActionProvider#init(org.eclipse.ui.navigator.CommonActionProviderConfig)
 	 */
-	public void init(CommonActionProviderConfig aConfig) {
+	public final void init(CommonActionProviderConfig aConfig) {
 		config = aConfig;
+		initialize();
+	}
+
+	/**
+	 * Method called during action provider initialization.
+	 * It is invoked from the {@link #init(CommonActionProviderConfig)}
+	 * after after the configuration has been recorded. Subclasses
+	 * may override.
+	 */
+	protected void initialize() {
+		// By deault, do nothing
 	}
 
 	/**
@@ -80,7 +90,17 @@ public class SynchronizationActionGroup extends CommonActionProvider {
 	 * the common viewer
 	 */
 	public final ISynchronizePageConfiguration getSynchronizePageConfiguration() {
-		return (ISynchronizePageConfiguration)config.getExtensionStateModel().getProperty(TeamUI.SYNCHRONIZATION_PAGE_CONFIGURATION);
+		return (ISynchronizePageConfiguration)getExtensionStateModel().getProperty(TeamUI.SYNCHRONIZATION_PAGE_CONFIGURATION);
+	}
+
+	/**
+	 * Return the extension state model for the content provider associated with
+	 * action provider.
+	 * @return the extension state model for the content provider associated with
+	 * action provider
+	 */
+	protected IExtensionStateModel getExtensionStateModel() {
+		return config.getExtensionStateModel();
 	}
 	
 	/**

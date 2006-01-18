@@ -347,7 +347,7 @@
             contentProvider="org.eclipse.team.internal.ui.mapping.ResourceTeamAwareContentProvider"
             id="org.eclipse.team.ui.resourceContent"
             labelProvider="org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider"
-            name="Resource Mappings"
+            name="Resources Team Content"
             sorter="org.eclipse.team.internal.ui.mapping.ResourceModelSorter">
          <enablement>
            <or>         
@@ -357,6 +357,7 @@
             <instanceof value="org.eclipse.team.core.mapping.ISynchronizationContext"/>
            </or>
          </enablement>
+         <actionProvider class="org.eclipse.team.internal.ui.mapping.ResourceModelActionProvider"/>
        </navigatorContent>
    </extension>
    <extension

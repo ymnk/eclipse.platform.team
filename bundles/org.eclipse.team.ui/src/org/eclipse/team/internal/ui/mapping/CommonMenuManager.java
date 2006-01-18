@@ -47,4 +47,8 @@ public class CommonMenuManager extends MenuManager {
 		handlers.put(actionId, handler);
 	}
 
+	public IHandler getHandler(String actionId) {
+		return (IHandler)handlers.get(actionId);
+	}
+
 }

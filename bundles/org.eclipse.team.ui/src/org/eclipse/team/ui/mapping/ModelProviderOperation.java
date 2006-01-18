@@ -50,6 +50,14 @@ public abstract class ModelProviderOperation extends AbstractResourceMappingOper
 	protected ISynchronizationContext getContext() {
 		return ((ModelSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
 	}
+	
+	/**
+	 * Make <code>shouldRun</code> public so the result
+	 * can be used to provide handler enablement
+	 */
+	public boolean shouldRun() {
+		return super.shouldRun();
+	}
 
 
 }

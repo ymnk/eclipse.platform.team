@@ -14,6 +14,7 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.mapping.IMergeContext;
@@ -23,6 +24,7 @@ import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.mapping.*;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.mapping.ICompareAdapter;
+import org.eclipse.team.ui.mapping.SynchronizationActionProvider;
 import org.eclipse.team.ui.synchronize.*;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.IPageBookViewPage;
@@ -46,13 +48,13 @@ public class ModelSynchronizeParticipant extends
 	 * The id of the merge action group that determines where the merge
 	 * actions (e.g. merge and overwrite) appear in the context menu or toolbar.
 	 */
-	public static final String MERGE_ACTION_GROUP = "merge"; //$NON-NLS-1$
+	public static final String MERGE_ACTION_GROUP = "group.merge"; //$NON-NLS-1$
 
 	/**
 	 * The id of the action group that determines where the other
 	 * actions (e.g. mark-as-mered) appear in the context menu.
 	 */
-	public static final String OTHER_ACTION_GROUP = "other"; //$NON-NLS-1$
+	public static final String OTHER_ACTION_GROUP = "group.other"; //$NON-NLS-1$
 	
 	private ISynchronizationContext context;
 	
@@ -74,66 +76,8 @@ public class ModelSynchronizeParticipant extends
 						ISynchronizePageConfiguration.P_TOOLBAR_MENU,
 						MERGE_ACTION_GROUP,
 						updateToolbarAction);
-				appendToGroup(
-						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-						MERGE_ACTION_GROUP,
-						new MergeAction(configuration, false));
-				appendToGroup(
-						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-						MERGE_ACTION_GROUP,
-						new MergeAction(configuration, true));
-				appendToGroup(
-						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-						OTHER_ACTION_GROUP,
-						new MarkAsMergedAction(configuration));
+				// TODO: Should add a merge all to the context menu as well?
 			}
-			
-//			appendToGroup(
-//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//					CONTEXT_MENU_CONTRIBUTION_GROUP_1,
-//					new WorkspaceCommitAction(configuration));
-//			appendToGroup(
-//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
-//					new OverrideAndUpdateAction(configuration));
-//			appendToGroup(
-//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
-//					new OverrideAndCommitAction(configuration));
-//			appendToGroup(
-//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//					CONTEXT_MENU_CONTRIBUTION_GROUP_2,
-//					new ConfirmMergedAction(configuration));		
-//			appendToGroup(
-//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//					CONTEXT_MENU_CONTRIBUTION_GROUP_3,
-//					new CVSActionDelegateWrapper(new IgnoreAction(), configuration));
-//			if (!configuration.getSite().isModal()) {
-//				appendToGroup(
-//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
-//						new CreatePatchAction(configuration));
-//				appendToGroup(
-//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
-//						new CVSActionDelegateWrapper(new BranchAction(), configuration));
-//				appendToGroup(
-//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
-//						new CVSActionDelegateWrapper(new ShowAnnotationAction(), configuration));
-//				appendToGroup(
-//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
-//						new CVSActionDelegateWrapper(new ShowResourceInHistoryAction(), configuration));
-//				appendToGroup(
-//						ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//						CONTEXT_MENU_CONTRIBUTION_GROUP_3,
-//						new CVSActionDelegateWrapper(new SetKeywordSubstitutionAction(), configuration));	
-//			}
-//			appendToGroup(
-//					ISynchronizePageConfiguration.P_CONTEXT_MENU, 
-//					CONTEXT_MENU_CONTRIBUTION_GROUP_4,
-//					new RefreshDirtyStateAction(configuration));
 		}
 	}
 	
@@ -283,11 +227,91 @@ public class ModelSynchronizeParticipant extends
 		return false;
 	}
 
+	/**
+	 * Return whether merge capabilities are enabled for this participant.
+	 * If merging is enabled, merge actions can be shown. If merging is disabled, no 
+	 * merge actions should be surfaced.
+	 * @return whether merge capabilities should be enabled for this participant
+	 */
 	public boolean isMergingEnabled() {
 		return mergingEnabled;
 	}
 
+	/**
+	 * Set whether merge capabilities should be enabled for this participant.
+	 * @param mergingEnabled whether merge capabilities should be enabled for this participant
+	 */
 	public void setMergingEnabled(boolean mergingEnabled) {
 		this.mergingEnabled = mergingEnabled;
+	}
+	
+	/**
+	 * Method to add the merge actions to the contetx menu. This method
+	 * is called by the internal synchronization framework and should not
+	 * to be invoked by other clients. Subsclasses can configure the
+	 * merge actions by overriding {@link #configureMergeAction(String, Action)}
+	 * and can control where in the context menu the action appears by 
+	 * overriding {@link #addToContextMenu(String, Action, IMenuManager)}.
+	 * @param cmm the menu manager
+	 */
+	public final void addMergeActions(CommonMenuManager cmm) {
+		if (isMergingEnabled()) {
+			SynchronizationAction merge = new SynchronizationAction(SynchronizationActionProvider.MERGE_ACTION_ID, cmm);
+			configureMergeAction(SynchronizationActionProvider.MERGE_ACTION_ID, merge);
+			addToContextMenu(SynchronizationActionProvider.MERGE_ACTION_ID, merge, cmm);
+			SynchronizationAction overwrite = new SynchronizationAction(SynchronizationActionProvider.OVERWRITE_ACTION_ID, cmm);
+			configureMergeAction(SynchronizationActionProvider.OVERWRITE_ACTION_ID, overwrite);
+			addToContextMenu(SynchronizationActionProvider.OVERWRITE_ACTION_ID, overwrite, cmm);
+			SynchronizationAction markAsMerged = new SynchronizationAction(SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID, cmm);
+			configureMergeAction(SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID, markAsMerged);
+			addToContextMenu(SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID, markAsMerged, cmm);
+		}
+	}
+	
+	/**
+	 * Configure the merge action to have appropriate label, image, etc.
+	 * Subclasses may override but should invoke the overridden
+	 * method for unrecognized ids in order to support future additions.
+	 * @param mergeActionId the id of the merge action (one of 
+	 * {@link SynchronizationActionProvider#MERGE_ACTION_ID},
+	 * {@link SynchronizationActionProvider#OVERWRITE_ACTION_ID} or
+	 * {@link SynchronizationActionProvider#MARK_AS_MERGE_ACTION_ID})
+	 * @param action the action for the given id
+	 */
+	protected void configureMergeAction(String mergeActionId, Action action) {
+		if (mergeActionId == SynchronizationActionProvider.MERGE_ACTION_ID) {
+			Utils.initAction(action, "action.merge."); //$NON-NLS-1$
+		} else if (mergeActionId == SynchronizationActionProvider.OVERWRITE_ACTION_ID) {
+			Utils.initAction(action, "action.overwrite."); //$NON-NLS-1$
+		} else if (mergeActionId == SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID) {
+			Utils.initAction(action, "action.markAsMerged."); //$NON-NLS-1$
+		}
+	}
+	
+	/**
+	 * Add the merge action to the context menu manager. 
+	 * Subclasses may override but should invoke the overridden
+	 * method for unrecognized ids in order to support future additions.
+	 * @param id the id of the merge action (one of 
+	 * {@link SynchronizationActionProvider#MERGE_ACTION_ID},
+	 * {@link SynchronizationActionProvider#OVERWRITE_ACTION_ID} or
+	 * {@link SynchronizationActionProvider#MARK_AS_MERGE_ACTION_ID})
+	 * @param action the action for the given id
+	 * @param manager the context menu manager
+	 */
+	protected void addToContextMenu(String mergeActionId, Action action, IMenuManager manager) {
+		IContributionItem group = null;;
+		if (mergeActionId == SynchronizationActionProvider.MERGE_ACTION_ID) {
+			group = manager.find(MERGE_ACTION_GROUP);
+		} else if (mergeActionId == SynchronizationActionProvider.OVERWRITE_ACTION_ID) {
+			group = manager.find(MERGE_ACTION_GROUP);
+		} else if (mergeActionId == SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID) {
+			group = manager.find(OTHER_ACTION_GROUP);
+		}
+		if (group != null) {
+			manager.appendToGroup(group.getId(), action);
+		} else {
+			manager.add(action);
+		}
 	}
 }

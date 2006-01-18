@@ -12,58 +12,57 @@ package org.eclipse.team.internal.ui.mapping;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.diff.*;
 import org.eclipse.team.core.mapping.IMergeContext;
-import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.mapping.ModelProviderOperation;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.ui.navigator.IExtensionStateModel;
 
-public class ResourceMergeHandler extends MergeActionHandler {
+public class ResourceMergeHandler extends SynchronizationActionHandler {
 	
 	private final boolean overwrite;
 
-	public ResourceMergeHandler(boolean overwrite) {
+	public ResourceMergeHandler(IExtensionStateModel model, boolean overwrite) {
+		super(model);
 		this.overwrite = overwrite;
 	}
 
-	public Object execute(final ExecutionEvent event) throws ExecutionException {
-		try {
-			new ResourceModelProviderOperation(getConfiguration()) {
-				public void run(IProgressMonitor monitor) throws InvocationTargetException,
-						InterruptedException {
-					try {
-						IMergeContext context = (IMergeContext)getContext();
-						IDiffNode[] diffs = getFileDeltas(getStructuredSelection(event));
-						IStatus status = context.merge(diffs, overwrite, monitor);
-						if (!status.isOK())
-							throw new CoreException(status);
-					} catch (CoreException e) {
-						throw new InvocationTargetException(e);
-					}
+	protected ModelProviderOperation createOperation(ISynchronizePageConfiguration configuration, IStructuredSelection structuredSelection) {
+		return new ResourceModelProviderOperation(configuration, structuredSelection.toArray()) {
+			/* (non-Javadoc)
+			 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+			 */
+			public void run(IProgressMonitor monitor) throws InvocationTargetException,
+					InterruptedException {
+				try {
+					IMergeContext context = (IMergeContext)getContext();
+					IDiffNode[] diffs = getFileDeltas(getElements());
+					IStatus status = context.merge(diffs, overwrite, monitor);
+					if (!status.isOK())
+						throw new CoreException(status);
+				} catch (CoreException e) {
+					throw new InvocationTargetException(e);
 				}
-
-				protected FastDiffNodeFilter getDiffFilter() {
-					return new FastDiffNodeFilter() {
-						public boolean select(IDiffNode node) {
-							if (node instanceof IThreeWayDiff) {
-								IThreeWayDiff twd = (IThreeWayDiff) node;
-								if ((twd.getDirection() == IThreeWayDiff.OUTGOING && overwrite) || twd.getDirection() == IThreeWayDiff.CONFLICTING || twd.getDirection() == IThreeWayDiff.INCOMING) {
-									return true;
-								}
+			}
+			/* (non-Javadoc)
+			 * @see org.eclipse.team.internal.ui.mapping.ResourceModelProviderOperation#getDiffFilter()
+			 */
+			protected FastDiffNodeFilter getDiffFilter() {
+				return new FastDiffNodeFilter() {
+					public boolean select(IDiffNode node) {
+						if (node instanceof IThreeWayDiff) {
+							IThreeWayDiff twd = (IThreeWayDiff) node;
+							if ((twd.getDirection() == IThreeWayDiff.OUTGOING && overwrite) || twd.getDirection() == IThreeWayDiff.CONFLICTING || twd.getDirection() == IThreeWayDiff.INCOMING) {
+								return true;
 							}
-							return false;
 						}
-					};
-				}
-			
-			}.run();
-		} catch (InvocationTargetException e) {
-			Utils.handle(e);
-		} catch (InterruptedException e) {
-			// Ignore
-		}
-		return null;
+						return false;
+					}
+				};
+			}
+		};
 	}
 
 }

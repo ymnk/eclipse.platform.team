@@ -16,7 +16,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.diff.*;
 import org.eclipse.team.core.mapping.IResourceDiffTree;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
@@ -27,21 +26,24 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 public abstract class ResourceModelProviderOperation extends ModelProviderOperation {
 
-	protected ResourceModelProviderOperation(ISynchronizePageConfiguration configuration) {
+	private final Object[] elements;
+
+	protected ResourceModelProviderOperation(ISynchronizePageConfiguration configuration, Object[] elements) {
 		super(configuration);
+		this.elements = elements;
 	}
 
 	/**
 	 * Return the file deltas that are either contained in the selection
 	 * or are children of the selection and visible given the current
 	 * mode of the page configuration.
-	 * @param selection the selected
+	 * @param elements the selected elements
 	 * @return the file deltas contained in or descended from the selection
 	 */
-	protected IDiffNode[] getFileDeltas(IStructuredSelection selection) {
+	protected IDiffNode[] getFileDeltas(Object[] elements) {
 		Set result = new HashSet();
-		for (Iterator iter = selection.iterator(); iter.hasNext();) {
-			Object element = iter.next();
+		for (int j = 0; j < elements.length; j++) {
+			Object element = elements[j];
 			IDiffNode[] diffs = getFileDeltas(element);
 			for (int i = 0; i < diffs.length; i++) {
 				IDiffNode node = diffs[i];
@@ -135,5 +137,17 @@ public abstract class ResourceModelProviderOperation extends ModelProviderOperat
 	 * @return the filter used to match diffs to which this action applies
 	 */
 	protected abstract FastDiffNodeFilter getDiffFilter();
+
+	public Object[] getElements() {
+		return elements;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.ui.mapping.ModelProviderOperation#shouldRun()
+	 */
+	public boolean shouldRun() {
+		// TODO: may be too long for enablement
+		return getFileDeltas(getElements()).length > 0;
+	}
 
 }

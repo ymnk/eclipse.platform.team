@@ -208,6 +208,15 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 		ISelection selection = getViewer().getSelection();
 		actionService.setContext(new ActionContext(selection));
 		actionService.fillContextMenu(manager);
+		
+		if (manager instanceof CommonMenuManager) {
+			CommonMenuManager cmm = (CommonMenuManager) manager;
+			addMergeActions(manager, cmm);
+		}
+	}
+
+	private void addMergeActions(IMenuManager manager, CommonMenuManager cmm) {
+		((ModelSynchronizeParticipant)getConfiguration().getParticipant()).addMergeActions(cmm);
 	}
 	
 	/* (non-Javadoc)
