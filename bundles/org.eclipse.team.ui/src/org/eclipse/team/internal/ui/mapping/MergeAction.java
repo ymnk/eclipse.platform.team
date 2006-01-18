@@ -16,9 +16,8 @@ import org.eclipse.core.commands.*;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.team.ui.mapping.SynchronizationActionProvider;
+import org.eclipse.team.ui.mapping.MergeActionHandler;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.ui.navigator.IExtensionStateModel;
 
 /**
  * An action that delegates to an appropriate handler when performing 
@@ -76,19 +75,7 @@ public class MergeAction extends Action {
 	}
 	
 	private IHandler getDefaultHandler() {
-		if (handlerId == SynchronizationActionProvider.MERGE_ACTION_ID) {
-			return new ResourceMergeHandler(configuration, false /* no overwrite */);
-		} else if (handlerId == SynchronizationActionProvider.OVERWRITE_ACTION_ID) {
-			return new ResourceMergeHandler(configuration, true /* overwrite */);
-		} else if (handlerId == SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID) {
-			return new ResourceMarkAsMergedHandler(configuration);
-		}
-		return null;
-	}
-
-	private IExtensionStateModel getExtensionStateModel() {
-		// TODO Auto-generated method stub
-		return null;
+		return MergeActionHandler.getDefaultHandler(handlerId, configuration);
 	}
 
 	/* (non-Javadoc)

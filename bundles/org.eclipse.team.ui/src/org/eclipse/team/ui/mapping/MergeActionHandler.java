@@ -15,6 +15,8 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.commands.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.mapping.ResourceMarkAsMergedHandler;
+import org.eclipse.team.internal.ui.mapping.ResourceMergeHandler;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 /**
@@ -43,6 +45,23 @@ public abstract class MergeActionHandler extends AbstractHandler {
 			updatedEnablement(event);
 		}
 	};
+	
+	/**
+	 * Return an instance of the default handler for the given merge action id.
+	 * @param mergeActionId the merge action id
+	 * @param configuration the ynchronization page configuration
+	 * @return the default handler for the given nerge action or <code>null</code>
+	 */
+	public static IHandler getDefaultHandler(String mergeActionId, ISynchronizePageConfiguration configuration) {
+		if (mergeActionId == SynchronizationActionProvider.MERGE_ACTION_ID) {
+			return new ResourceMergeHandler(configuration, false /* no overwrite */);
+		} else if (mergeActionId == SynchronizationActionProvider.OVERWRITE_ACTION_ID) {
+			return new ResourceMergeHandler(configuration, true /* overwrite */);
+		} else if (mergeActionId == SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID) {
+			return new ResourceMarkAsMergedHandler(configuration);
+		}
+		return null;
+	}
 
 	/**
 	 * Create the handler.

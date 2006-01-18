@@ -14,6 +14,7 @@ import java.util.*;
 
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.ui.mapping.CommonMenuManager;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -102,7 +103,7 @@ public class SynchronizationActionProvider extends CommonActionProvider {
 	 * @return the configuration from the synchronize page that contains
 	 * the common viewer
 	 */
-	public final ISynchronizePageConfiguration getSynchronizePageConfiguration() {
+	protected final ISynchronizePageConfiguration getSynchronizePageConfiguration() {
 		return (ISynchronizePageConfiguration)getExtensionStateModel().getProperty(TeamUI.SYNCHRONIZATION_PAGE_CONFIGURATION);
 	}
 
@@ -112,8 +113,18 @@ public class SynchronizationActionProvider extends CommonActionProvider {
 	 * @return the extension state model for the content provider associated with
 	 * action provider
 	 */
-	protected IExtensionStateModel getExtensionStateModel() {
+	protected final IExtensionStateModel getExtensionStateModel() {
 		return config.getExtensionStateModel();
+	}
+	
+	/**
+	 * Return the synchronization context to which the actions of this provider
+	 * apply.
+	 * @return the synchronization context to which the actions of this provider
+	 * apply
+	 */
+	protected final ISynchronizationContext getSynchronizationContext() {
+		return (ISynchronizationContext)getExtensionStateModel().getProperty(TeamUI.SYNCHRONIZATION_CONTEXT);
 	}
 	
 	/**
