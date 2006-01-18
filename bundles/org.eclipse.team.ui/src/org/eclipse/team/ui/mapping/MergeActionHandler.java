@@ -8,21 +8,22 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.ui.mapping;
+package org.eclipse.team.ui.mapping;
 
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.commands.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.mapping.ModelProviderOperation;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.ui.navigator.IExtensionStateModel;
 
 /**
  * An abstract superclass that enables models to create handlers
  * for the basic merge operations (merge, overwrite and mark-as-merged).
+ * This class makes use of a {@link SynchronizationOperation} to determine its 
+ * enablement state and execute the handler. Enablement is detemermined
+ * using {@link SynchronizationOperation#shouldRun()} and the handler will
+ * invoke {@link SynchronizationOperation#run()} when executed.
  * <p>
  * <strong>EXPERIMENTAL</strong>. This class or interface has been added as
  * part of a work in progress. There is a guarantee neither that this API will
@@ -31,12 +32,12 @@ import org.eclipse.ui.navigator.IExtensionStateModel;
  * </p>
  * 
  * @since 3.2
+ * @see SynchronizationActionProvider
  */
-public abstract class SynchronizationActionHandler extends AbstractHandler {
+public abstract class MergeActionHandler extends AbstractHandler {
 
-	private final IExtensionStateModel model;
+	private final ISynchronizePageConfiguration configuration;
 	private boolean enabled = false;
-	
 	private ISelectionChangedListener listener = new ISelectionChangedListener() {
 		public void selectionChanged(SelectionChangedEvent event) {
 			updatedEnablement(event);
@@ -48,8 +49,8 @@ public abstract class SynchronizationActionHandler extends AbstractHandler {
 	 * @param model the extension state model that contains the state
 	 * provided by the synchronize page display the model.
 	 */
-	public SynchronizationActionHandler(IExtensionStateModel model) {
-		this.model = model;
+	public MergeActionHandler(ISynchronizePageConfiguration configuration) {
+		this.configuration = configuration;
 		getSelectionProvider(null).addSelectionChangedListener(listener);
 		updateEnablement(getSelectionProvider(null).getSelection(), getConfiguration(null));
 	}
@@ -64,12 +65,12 @@ public abstract class SynchronizationActionHandler extends AbstractHandler {
 	}
 
 	private boolean isEnabled(IStructuredSelection selection, ISynchronizePageConfiguration configuration) {
-		ModelProviderOperation op = createOperation(configuration, selection);
+		SynchronizationOperation op = createOperation(configuration, selection);
 		return op.shouldRun();
 	}
 
 	private final ISynchronizePageConfiguration getConfiguration(ExecutionEvent event) {
-		return (ISynchronizePageConfiguration)model.getProperty(TeamUI.SYNCHRONIZATION_PAGE_CONFIGURATION);
+		return configuration;
 	}
 
 	private final IStructuredSelection getStructuredSelection(ExecutionEvent event) {
@@ -112,7 +113,7 @@ public abstract class SynchronizationActionHandler extends AbstractHandler {
 		return null;
 	}
 
-	private ModelProviderOperation createOperation(ExecutionEvent event) {
+	private SynchronizationOperation createOperation(ExecutionEvent event) {
 		ISynchronizePageConfiguration configuration = getConfiguration(event);
 		IStructuredSelection structuredSelection = getStructuredSelection(event);
 		return createOperation(configuration, structuredSelection);
@@ -126,7 +127,7 @@ public abstract class SynchronizationActionHandler extends AbstractHandler {
 	 * @return a model provider operation that can perform
 	 * the desired merge operaton
 	 */
-	protected abstract ModelProviderOperation createOperation(
+	protected abstract SynchronizationOperation createOperation(
 			ISynchronizePageConfiguration configuration, 
 			IStructuredSelection structuredSelection);
 }

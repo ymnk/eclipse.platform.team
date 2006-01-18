@@ -14,24 +14,25 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.mapping.IMergeContext;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.mapping.*;
+import org.eclipse.team.internal.ui.mapping.ModelSynchronizePage;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.mapping.ICompareAdapter;
-import org.eclipse.team.ui.mapping.SynchronizationActionProvider;
-import org.eclipse.team.ui.synchronize.*;
+import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
  * Synchronize participant that obtains it's synchronization state from
  * a {@link ISynchronizationContext}.
+ * <p>
+ * This class may be subclassed by clients
  * <p>
  * <strong>EXPERIMENTAL</strong>. This class or interface has been added as
  * part of a work in progress. There is a guarantee neither that this API will
@@ -41,51 +42,19 @@ import org.eclipse.ui.part.IPageBookViewPage;
  * 
  * @since 3.2
  **/
-public class ModelSynchronizeParticipant extends
+public class ResourceMappingSynchronizeParticipant extends
 		AbstractSynchronizeParticipant {
-
-	/**
-	 * The id of the merge action group that determines where the merge
-	 * actions (e.g. merge and overwrite) appear in the context menu or toolbar.
-	 */
-	public static final String MERGE_ACTION_GROUP = "group.merge"; //$NON-NLS-1$
-
-	/**
-	 * The id of the action group that determines where the other
-	 * actions (e.g. mark-as-mered) appear in the context menu.
-	 */
-	public static final String OTHER_ACTION_GROUP = "group.other"; //$NON-NLS-1$
 	
 	private ISynchronizationContext context;
 	
 	private boolean mergingEnabled = true;
 
 	/**
-	 * Actions for a model participant
-	 */
-	private class ModelActionContribution extends SynchronizePageActionGroup {
-		private MergeIncomingChangesAction updateToolbarAction;
-		
-		public void initialize(ISynchronizePageConfiguration configuration) {
-			super.initialize(configuration);
-			
-			ISynchronizationContext context = ((ModelSynchronizeParticipant)configuration.getParticipant()).getContext();
-			if (context instanceof IMergeContext) {
-				updateToolbarAction = new MergeIncomingChangesAction(configuration);
-				appendToGroup(
-						ISynchronizePageConfiguration.P_TOOLBAR_MENU,
-						MERGE_ACTION_GROUP,
-						updateToolbarAction);
-				// TODO: Should add a merge all to the context menu as well?
-			}
-		}
-	}
-	
-	/**
 	 * Create a participant for the given context
 	 * @param context the synchronization context
+	 * @param name the na,me of the participant
 	 */
-	public ModelSynchronizeParticipant(ISynchronizationContext context, String name) {
+	public ResourceMappingSynchronizeParticipant(ISynchronizationContext context, String name) {
 		initializeContext(context);
 		try {
 			setInitializationData(TeamUI.getSynchronizeManager().getParticipantDescriptor("org.eclipse.team.ui.synchronization_context_synchronize_participant")); //$NON-NLS-1$
@@ -94,6 +63,7 @@ public class ModelSynchronizeParticipant extends
 		}
 		setSecondaryId(Long.toString(System.currentTimeMillis()));
 		setName(name);
+		mergingEnabled = context instanceof IMergeContext;
 	}
 
 	/* (non-Javadoc)
@@ -102,19 +72,29 @@ public class ModelSynchronizeParticipant extends
 	protected void initializeConfiguration(
 			ISynchronizePageConfiguration configuration) {
 		if (isMergingEnabled()) {
-			configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, MERGE_ACTION_GROUP);
-			configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, MERGE_ACTION_GROUP);
-			configuration.addMenuGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, OTHER_ACTION_GROUP);
-			configuration.addActionContribution(new ModelActionContribution());
+			// The contetx menu groups are defined by the org.eclipse.ui.navigator.viewer extension
+			configuration.addMenuGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU, MergeActionGroup.MERGE_ACTION_GROUP);
+			configuration.addActionContribution(createMergeActionGroup());
 		}
 		configuration.setSupportedModes(ISynchronizePageConfiguration.ALL_MODES);
 		configuration.setMode(ISynchronizePageConfiguration.BOTH_MODE);
 	}
 
+	/**
+	 * Create the merge action group for this participant.
+	 * Subclasses can override in order to provide a 
+	 * merge action group that configures certain aspects
+	 * of the merge actions.
+	 * @return the merge action group for this participant
+	 */
+	protected MergeActionGroup createMergeActionGroup() {
+		return new MergeActionGroup();
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#createPage(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
 	 */
-	public IPageBookViewPage createPage(
+	public final IPageBookViewPage createPage(
 			ISynchronizePageConfiguration configuration) {
 		return new ModelSynchronizePage(configuration);
 	}
@@ -243,75 +223,5 @@ public class ModelSynchronizeParticipant extends
 	 */
 	public void setMergingEnabled(boolean mergingEnabled) {
 		this.mergingEnabled = mergingEnabled;
-	}
-	
-	/**
-	 * Method to add the merge actions to the contetx menu. This method
-	 * is called by the internal synchronization framework and should not
-	 * to be invoked by other clients. Subsclasses can configure the
-	 * merge actions by overriding {@link #configureMergeAction(String, Action)}
-	 * and can control where in the context menu the action appears by 
-	 * overriding {@link #addToContextMenu(String, Action, IMenuManager)}.
-	 * @param cmm the menu manager
-	 */
-	public final void addMergeActions(CommonMenuManager cmm) {
-		if (isMergingEnabled()) {
-			SynchronizationAction merge = new SynchronizationAction(SynchronizationActionProvider.MERGE_ACTION_ID, cmm);
-			configureMergeAction(SynchronizationActionProvider.MERGE_ACTION_ID, merge);
-			addToContextMenu(SynchronizationActionProvider.MERGE_ACTION_ID, merge, cmm);
-			SynchronizationAction overwrite = new SynchronizationAction(SynchronizationActionProvider.OVERWRITE_ACTION_ID, cmm);
-			configureMergeAction(SynchronizationActionProvider.OVERWRITE_ACTION_ID, overwrite);
-			addToContextMenu(SynchronizationActionProvider.OVERWRITE_ACTION_ID, overwrite, cmm);
-			SynchronizationAction markAsMerged = new SynchronizationAction(SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID, cmm);
-			configureMergeAction(SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID, markAsMerged);
-			addToContextMenu(SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID, markAsMerged, cmm);
-		}
-	}
-	
-	/**
-	 * Configure the merge action to have appropriate label, image, etc.
-	 * Subclasses may override but should invoke the overridden
-	 * method for unrecognized ids in order to support future additions.
-	 * @param mergeActionId the id of the merge action (one of 
-	 * {@link SynchronizationActionProvider#MERGE_ACTION_ID},
-	 * {@link SynchronizationActionProvider#OVERWRITE_ACTION_ID} or
-	 * {@link SynchronizationActionProvider#MARK_AS_MERGE_ACTION_ID})
-	 * @param action the action for the given id
-	 */
-	protected void configureMergeAction(String mergeActionId, Action action) {
-		if (mergeActionId == SynchronizationActionProvider.MERGE_ACTION_ID) {
-			Utils.initAction(action, "action.merge."); //$NON-NLS-1$
-		} else if (mergeActionId == SynchronizationActionProvider.OVERWRITE_ACTION_ID) {
-			Utils.initAction(action, "action.overwrite."); //$NON-NLS-1$
-		} else if (mergeActionId == SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID) {
-			Utils.initAction(action, "action.markAsMerged."); //$NON-NLS-1$
-		}
-	}
-	
-	/**
-	 * Add the merge action to the context menu manager. 
-	 * Subclasses may override but should invoke the overridden
-	 * method for unrecognized ids in order to support future additions.
-	 * @param id the id of the merge action (one of 
-	 * {@link SynchronizationActionProvider#MERGE_ACTION_ID},
-	 * {@link SynchronizationActionProvider#OVERWRITE_ACTION_ID} or
-	 * {@link SynchronizationActionProvider#MARK_AS_MERGE_ACTION_ID})
-	 * @param action the action for the given id
-	 * @param manager the context menu manager
-	 */
-	protected void addToContextMenu(String mergeActionId, Action action, IMenuManager manager) {
-		IContributionItem group = null;;
-		if (mergeActionId == SynchronizationActionProvider.MERGE_ACTION_ID) {
-			group = manager.find(MERGE_ACTION_GROUP);
-		} else if (mergeActionId == SynchronizationActionProvider.OVERWRITE_ACTION_ID) {
-			group = manager.find(MERGE_ACTION_GROUP);
-		} else if (mergeActionId == SynchronizationActionProvider.MARK_AS_MERGE_ACTION_ID) {
-			group = manager.find(OTHER_ACTION_GROUP);
-		}
-		if (group != null) {
-			manager.appendToGroup(group.getId(), action);
-		} else {
-			manager.add(action);
-		}
 	}
 }

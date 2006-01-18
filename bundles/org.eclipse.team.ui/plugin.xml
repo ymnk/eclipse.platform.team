@@ -373,24 +373,28 @@
        <viewer
              viewerId="org.eclipse.team.ui.navigatorViewer">
            <popupMenu
-                allowsPlatformContributions="true"
+                allowsPlatformContributions="false"
                 id="org.eclipse.team.ui.navigatorViewer#PopupMenu">  
-             <insertionPoint name="group.synchronize"/>
+             <insertionPoint name="file"/>  
+             <insertionPoint name="edit"/>          
+             <insertionPoint name="synchronize"/>
              <insertionPoint
-                   name="group.navigate"
-                   separator="true"/>
-             <insertionPoint name="group.openWith"/>             
-             <insertionPoint
-                   name="group.merge"
+                   name="navigate"
                    separator="true"/>
              <insertionPoint
-                   name="group.other"
+                   name="merge"
+                   separator="true"/>
+             <insertionPoint
+                   name="other"
                    separator="true"/> 
+             <insertionPoint
+                   name="sort"
+                   separator="true"/>
              <insertionPoint
                    name="additions"
                    separator="true"/>              
              <insertionPoint
-                   name="group.properties"
+                   name="properties"
                    separator="true"/>
           </popupMenu>
        </viewer>
@@ -402,7 +406,7 @@
       <participant
             name="Synchronization"
             icon="$nl$/icons/full/eview16/synch_synch.gif"
-            class="org.eclipse.team.ui.operations.ModelSynchronizeParticipant"
+            class="org.eclipse.team.ui.operations.ResourceMappingSynchronizeParticipant"
             id="org.eclipse.team.ui.synchronization_context_synchronize_participant">
       </participant>
    </extension>

@@ -21,10 +21,10 @@ import org.eclipse.team.core.mapping.IResourceDiffTree;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.mapping.ModelProviderOperation;
+import org.eclipse.team.ui.mapping.SynchronizationOperation;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
-public abstract class ResourceModelProviderOperation extends ModelProviderOperation {
+public abstract class ResourceModelProviderOperation extends SynchronizationOperation {
 
 	private final Object[] elements;
 

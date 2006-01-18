@@ -21,20 +21,20 @@ import org.eclipse.core.runtime.jobs.MultiRule;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.diff.*;
 import org.eclipse.team.core.mapping.IMergeContext;
-import org.eclipse.team.ui.mapping.ModelProviderOperation;
+import org.eclipse.team.ui.mapping.MergeActionHandler;
+import org.eclipse.team.ui.mapping.SynchronizationOperation;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.ui.navigator.IExtensionStateModel;
 
-public class ResourceMarkAsMergedHandler extends SynchronizationActionHandler {
+public class ResourceMarkAsMergedHandler extends MergeActionHandler {
 
-	public ResourceMarkAsMergedHandler(IExtensionStateModel model) {
-		super(model);
+	public ResourceMarkAsMergedHandler(ISynchronizePageConfiguration configuration) {
+		super(configuration);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.internal.ui.mapping.MergeActionHandler#createOperation(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration, org.eclipse.jface.viewers.IStructuredSelection)
 	 */
-	protected ModelProviderOperation createOperation(
+	protected SynchronizationOperation createOperation(
 			ISynchronizePageConfiguration configuration,
 			IStructuredSelection structuredSelection) {
 		return new ResourceModelProviderOperation(configuration,

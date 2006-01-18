@@ -325,6 +325,16 @@ public abstract class StructuredViewerAdvisor extends AbstractViewerAdvisor {
 	 * @param manager the menu manager to which actions can be added.
 	 */
 	protected void fillContextMenu(StructuredViewer viewer, final IMenuManager manager) {
+		addContextMenuGroups(manager);
+		getActionGroup().setContext(new ActionContext(viewer.getSelection()));
+		getActionGroup().fillContextMenu(manager);
+	}
+
+	/**
+	 * Add the context menu groups to the context menu.
+	 * @param manager the menu manager
+	 */
+	protected void addContextMenuGroups(final IMenuManager manager) {
 		// Populate the menu with the configured groups
 		Object o = getConfiguration().getProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU);
 		if (!(o instanceof String[])) {
@@ -336,8 +346,6 @@ public abstract class StructuredViewerAdvisor extends AbstractViewerAdvisor {
 			// There is no need to adjust the group ids in a contetx menu (see setActionBars)
 			manager.add(new Separator(group));
 		}
-		getActionGroup().setContext(new ActionContext(viewer.getSelection()));
-		getActionGroup().fillContextMenu(manager);
 	}
 	
 	/**

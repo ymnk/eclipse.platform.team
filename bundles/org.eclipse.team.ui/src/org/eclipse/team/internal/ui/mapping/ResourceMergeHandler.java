@@ -16,20 +16,20 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.diff.*;
 import org.eclipse.team.core.mapping.IMergeContext;
-import org.eclipse.team.ui.mapping.ModelProviderOperation;
+import org.eclipse.team.ui.mapping.MergeActionHandler;
+import org.eclipse.team.ui.mapping.SynchronizationOperation;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.ui.navigator.IExtensionStateModel;
 
-public class ResourceMergeHandler extends SynchronizationActionHandler {
+public class ResourceMergeHandler extends MergeActionHandler {
 	
 	private final boolean overwrite;
 
-	public ResourceMergeHandler(IExtensionStateModel model, boolean overwrite) {
-		super(model);
+	public ResourceMergeHandler(ISynchronizePageConfiguration configuration, boolean overwrite) {
+		super(configuration);
 		this.overwrite = overwrite;
 	}
 
-	protected ModelProviderOperation createOperation(ISynchronizePageConfiguration configuration, IStructuredSelection structuredSelection) {
+	protected SynchronizationOperation createOperation(ISynchronizePageConfiguration configuration, IStructuredSelection structuredSelection) {
 		return new ResourceModelProviderOperation(configuration, structuredSelection.toArray()) {
 			/* (non-Javadoc)
 			 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)

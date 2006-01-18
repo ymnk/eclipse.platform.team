@@ -24,7 +24,7 @@ import org.eclipse.team.internal.ui.registry.TeamContentProviderManager;
 import org.eclipse.team.internal.ui.synchronize.AbstractTreeViewerAdvisor;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.mapping.SynchronizationStateTester;
-import org.eclipse.team.ui.operations.ModelSynchronizeParticipant;
+import org.eclipse.team.ui.operations.ResourceMappingSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionContext;
@@ -142,7 +142,7 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 	}
 
 	private Object getInitialInput() {
-		return ((ModelSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
+		return ((ResourceMappingSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
 	}
 	
 	/* (non-Javadoc)
@@ -165,8 +165,8 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 		}
 	}
 
-	private ModelSynchronizeParticipant getParticipant() {
-		return (ModelSynchronizeParticipant)getConfiguration().getParticipant();
+	private ResourceMappingSynchronizeParticipant getParticipant() {
+		return (ResourceMappingSynchronizeParticipant)getConfiguration().getParticipant();
 	}
 
 	/**
@@ -201,22 +201,19 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 	 * @see org.eclipse.team.internal.ui.synchronize.StructuredViewerAdvisor#fillContextMenu(org.eclipse.jface.viewers.StructuredViewer, org.eclipse.jface.action.IMenuManager)
 	 */
 	protected void fillContextMenu(StructuredViewer viewer, IMenuManager manager) {
+		// Clear any handlers from the menu
 		if (manager instanceof CommonMenuManager) {
 			CommonMenuManager cmm = (CommonMenuManager) manager;
 			cmm.clearHandlers();
 		}
+		
+		// Add the actions from the service (which willalso add the groups)
 		ISelection selection = getViewer().getSelection();
 		actionService.setContext(new ActionContext(selection));
 		actionService.fillContextMenu(manager);
 		
-		if (manager instanceof CommonMenuManager) {
-			CommonMenuManager cmm = (CommonMenuManager) manager;
-			addMergeActions(manager, cmm);
-		}
-	}
-
-	private void addMergeActions(IMenuManager manager, CommonMenuManager cmm) {
-		((ModelSynchronizeParticipant)getConfiguration().getParticipant()).addMergeActions(cmm);
+		// Add any programmatic menu items
+		super.fillContextMenu(viewer, manager);
 	}
 	
 	/* (non-Javadoc)
@@ -234,6 +231,7 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 		super.updateActionBars(selection);
 		if (!getConfiguration().getSite().isModal()) {
 			actionService.setContext(new ActionContext(selection));
+			// TODO: This is non-standard behavior that is required by the common navigator framework (see bug 122808)
 			actionService.fillActionBars(getConfiguration().getSite().getActionBars());
 		}
 	}
@@ -243,6 +241,13 @@ public class CommonViewerAdvisor extends AbstractTreeViewerAdvisor implements IN
 	 */
 	protected MenuManager createContextMenuManager(String targetID) {
 		return new CommonMenuManager(targetID);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.team.internal.ui.synchronize.StructuredViewerAdvisor#addContextMenuGroups(org.eclipse.jface.action.IMenuManager)
+	 */
+	protected void addContextMenuGroups(IMenuManager manager) {
+		// Don't do anything. The groups will be added by the action service
 	}
 
 }

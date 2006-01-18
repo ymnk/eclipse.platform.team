@@ -24,12 +24,12 @@ import org.eclipse.team.core.mapping.IResourceDiffTree;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.ui.operations.ModelSynchronizeParticipant;
+import org.eclipse.team.ui.operations.ResourceMappingSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 /**
- * Model provider actions for use with a {@link ModelSynchronizeParticipant}.
+ * Model provider actions for use with a {@link ResourceMappingSynchronizeParticipant}.
  * <p>
  * <strong>EXPERIMENTAL</strong>. This class or interface has been added as
  * part of a work in progress. There is a guarantee neither that this API will
@@ -105,7 +105,7 @@ public abstract class ModelProviderAction extends BaseSelectionListenerAction {
 	 * @return the synchronization context associated with this action
 	 */
 	protected ISynchronizationContext getContext() {
-		return ((ModelSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
+		return ((ResourceMappingSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
 	}
 	
 	/**

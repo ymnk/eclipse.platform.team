@@ -202,7 +202,18 @@ public class SynchronizationStateTester {
 	public int getState(Object element, int stateMask, IProgressMonitor monitor) throws CoreException {
 		ResourceMapping mapping = Utils.getResourceMapping(element);
 		if (mapping != null) {
-			return subscriber.getState(mapping, stateMask, monitor);
+			try {
+				return subscriber.getState(mapping, stateMask, monitor);
+			} catch (CoreException e) {
+				IProject[] projects = mapping.getProjects();
+				for (int i = 0; i < projects.length; i++) {
+					IProject project = projects[i];
+					// Only through the exception if the project for the mapping is accessible
+					if (project.isAccessible()) {
+						throw e;
+					}
+				}
+			}
 		}
 		return 0;
 	}

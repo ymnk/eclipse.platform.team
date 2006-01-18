@@ -22,7 +22,16 @@ import org.eclipse.ui.navigator.*;
 
 /**
  * An action group that can be used by models to contribute actions
- * to a team synchronization viewer.
+ * to a team synchronization viewer. Subclases should override the
+ * {@link #initialize()} method in order to register handlers for the
+ * following merge actions if they want cutom merge behavior:
+ * <ul>
+ * <li>{@link #MERGE_ACTION_ID}
+ * <li>{@link #OVERWRITE_ACTION_ID}
+ * <li>{@link #OVERWRITE_ACTION_ID}
+ * </ul>
+ * They may also add other actions to the context menu or register action handlers
+ * in the {@link #fillActionBars(IActionBars)} method.
  * <p>
  * This class may be subclasses by clients
  * <p>
@@ -32,6 +41,7 @@ import org.eclipse.ui.navigator.*;
  * consulting with the Platform/Team team.
  * </p>
  * 
+ * @see MergeActionHandler
  * @since 3.2
  */
 public class SynchronizationActionProvider extends CommonActionProvider {
@@ -69,7 +79,10 @@ public class SynchronizationActionProvider extends CommonActionProvider {
 	 * Method called during action provider initialization.
 	 * It is invoked from the {@link #init(CommonActionProviderConfig)}
 	 * after after the configuration has been recorded. Subclasses
-	 * may override.
+	 * may override. Subclasses that want to provide there own merge actions
+	 * handlers can register them in this method.
+	 * @see #registerHandler(String, IHandler)
+	 * @see MergeActionHandler
 	 */
 	protected void initialize() {
 		// By deault, do nothing

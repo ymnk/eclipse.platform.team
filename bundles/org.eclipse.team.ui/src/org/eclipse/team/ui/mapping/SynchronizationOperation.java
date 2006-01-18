@@ -10,14 +10,33 @@
  *******************************************************************************/
 package org.eclipse.team.ui.mapping;
 
+import org.eclipse.team.core.mapping.IMergeContext;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
-import org.eclipse.team.ui.operations.AbstractResourceMappingOperation;
-import org.eclipse.team.ui.operations.ModelSynchronizeParticipant;
+import org.eclipse.team.ui.TeamOperation;
+import org.eclipse.team.ui.operations.ResourceMappingSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
 import org.eclipse.ui.IWorkbenchPart;
 
-public abstract class ModelProviderOperation extends AbstractResourceMappingOperation {
+/**
+ * This operation class can be used by model providers when performing
+ * merge operations triggered from a synchronize participant page
+ * associated with a synchronization or merge context.
+ * <p>
+ * This class may be subclasses by clients
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This class or interface has been added as
+ * part of a work in progress. There is a guarantee neither that this API will
+ * work nor that it will remain the same. Please do not use this API without
+ * consulting with the Platform/Team team.
+ * </p>
+ * 
+ * @see ISynchronizationContext
+ * @see IMergeContext
+ * 
+ * @since 3.2
+ */
+public abstract class SynchronizationOperation extends TeamOperation {
 
 	private final ISynchronizePageConfiguration configuration;
 
@@ -34,7 +53,7 @@ public abstract class ModelProviderOperation extends AbstractResourceMappingOper
 		return null;
 	}
 	
-	protected ModelProviderOperation(ISynchronizePageConfiguration configuration) {
+	protected SynchronizationOperation(ISynchronizePageConfiguration configuration) {
 		super(getPart(configuration));
 		this.configuration = configuration;
 	}
@@ -48,7 +67,7 @@ public abstract class ModelProviderOperation extends AbstractResourceMappingOper
 	 * @return the synchronization context associated with this action
 	 */
 	protected ISynchronizationContext getContext() {
-		return ((ModelSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
+		return ((ResourceMappingSynchronizeParticipant)getConfiguration().getParticipant()).getContext();
 	}
 	
 	/**
