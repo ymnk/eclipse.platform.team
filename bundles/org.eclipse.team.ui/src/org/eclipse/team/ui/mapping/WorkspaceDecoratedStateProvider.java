@@ -13,11 +13,10 @@ package org.eclipse.team.ui.mapping;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.viewers.IDecorationContext;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.diff.IDiff;
@@ -26,62 +25,25 @@ import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.core.IRepositoryProviderListener;
 import org.eclipse.team.internal.core.RepositoryProviderManager;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.ui.IDecoratorManager;
 
-/**
- * A state change tester is used by logical models to communicate the
- * synchronization state of their logical model elements to 
- * the lightweight label decorators of team providers. 
- * <p>
- * There are two different types of elements being decorated: those
- * that have a one-to-one mapping to a resource and those that do not.
- * Those that do should adapt to their corresponding resource. Doing
- * so will ensure that label updates occur when the state of that
- * resource changes (i.e. the team provider will generate label updates
- * for those resources and the modle can translate them to appropriate
- * label updates of their model elements).
- * <p>
- * For those elements that do not have a one-to-one mapping to resources,
- * the model must do extra work. The purpose of this class is to allow
- * the model to decide when a label update for a logical model element is
- * required and to communicate the dirty state of their logical model
- * elements to the team decorator. For logical model elements, the team decorator
- * will only decorate based on the supervised state and the dirty state.
- * This class provides methods for determining both of these so that 
- * logical models can track whether a label update is required for a
- * model element. 
- * <p>
- * Model providers need to re-evaluate the state of a 
- * model element whenever a change in the resources occurs by listening
- * to both resource deltas and subscriber change events.
- * <p>
- * Decoration enablement changes and decoration configuration changes
- * are handled by the {@link IDecoratorManager#update(String)} API.
- * A call to this method will result in label changes to all elements.
- * The {@link #isDecorationEnabled(Object)} API on this class can 
- * be used to determine if an element will receive team decorations.
- * If decoration is disabled. team state changes on the element can
- * be ignored.
- *
- * @since 3.2
- * @see IWorkspace#addResourceChangeListener(IResourceChangeListener)
- * @see Subscriber#addListener(org.eclipse.team.core.subscribers.ISubscriberChangeListener)
- */
-public class SynchronizationStateTester extends DecoratedStateProvider {
+public class WorkspaceDecoratedStateProvider extends DecoratedStateProvider {
 
-	/**
-	 * Constant that is used as the property key on an {@link IDecorationContext}.
-	 * If a context passed to a team decorator has this property, the associated
-	 * state tester will be used by the deocator to determine whether elements
-	 * have an outgoing change.
-	 */
-	public static final String PROP_TESTER = "org.eclipse.team.ui.syncStateTester"; //$NON-NLS-1$
+	private Map providers = new HashMap();
+	private IRepositoryProviderListener sharingListener;
 	
-	/**
-	 * Create a synchronization state tester.
-	 */
-	public SynchronizationStateTester() {
-		super();
+	public WorkspaceDecoratedStateProvider() {
+		sharingListener = new IRepositoryProviderListener() {
+			public void providerUnmapped(IProject project) {
+				// We don't need to worry about this
+			}
+		
+			public void providerMapped(RepositoryProvider provider) {
+				String id = provider.getID();
+				listenerForStateChangesForId(id);
+			}
+		
+		};
+		RepositoryProviderManager.getInstance().addListener(sharingListener);
 	}
 
 	/**
@@ -181,23 +143,63 @@ public class SynchronizationStateTester extends DecoratedStateProvider {
 			return provider.getState(element, stateMask, monitor);
 		return 0;
 	}
-
-	/**
-	 * Return whether state decoration is enabled for the context
-	 * to which this tester is associated. If <code>true</code>
-	 * is returned, team decorators will use the state methods provided
-	 * on this class to calculate the synchronization state of model
-	 * elements for the purpose of decoration. If <code>false</code>
-	 * is returned, team decorators will not decorate the elements with any
-	 * synchronization related decorations. Subclasses will want to disable
-	 * state decoration if state decoration is being provided another way
-	 * (e.g. by a {@link SynchronizationLabelProvider}). By default, 
-	 * <code>true</code>is returned. Subclasses may override.
-	 * @return whether state decoration is enabled
-	 */
-	public boolean isStateDecorationEnabled() {
-		return true;
+	
+	private DecoratedStateProvider getDecoratedStateProvider(Object element) {
+		RepositoryProviderType type = getProviderType(element);
+		if (type != null)
+			return (DecoratedStateProvider)Utils.getAdapter(type, DecoratedStateProvider.class);
+		return null;
 	}
 	
+	private DecoratedStateProvider getDecoratedStateProviderForId(String id) {
+		RepositoryProviderType type = getProviderTypeForId(id);
+		if (type != null)
+			return (DecoratedStateProvider)Utils.getAdapter(type, DecoratedStateProvider.class);
+		return null;
+	}
+
+	private RepositoryProviderType getProviderType(Object element) {
+		ResourceMapping mapping = Utils.getResourceMapping(element);
+		if (mapping != null) {
+			String providerId = getProviderId(mapping.getProjects());
+			if (providerId != null)
+				return getProviderTypeForId(providerId);
+		}
+		return null;
+	}
+
+	private String getProviderId(IProject[] projects) {
+		String id = null;
+		for (int i = 0; i < projects.length; i++) {
+			IProject project = projects[i];
+			String nextId = getProviderId(project);
+			if (id == null)
+				id = nextId;
+			else if (!id.equals(nextId))
+				return null;
+		}
+		return id;
+	}
+
+	private String getProviderId(IProject project) {
+		RepositoryProvider provider = RepositoryProvider.getProvider(project);
+		if (provider != null)
+			return provider.getID();
+		return null;
+	}
+	
+	private RepositoryProviderType getProviderTypeForId(String providerId) {
+		return RepositoryProviderType.getProviderType(providerId);
+	}
+	
+	/* private */ void listenerForStateChangesForId(String id) {
+		if (!providers.containsKey(id)) {
+			DecoratedStateProvider provider = getDecoratedStateProviderForId(id);
+			if (provider != null) {
+				providers.put(id, provider);
+				provider.addDecoratedStateChangeListener(listener);
+			}
+		}
+	}
 
 }
