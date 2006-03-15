@@ -60,7 +60,7 @@ public class WorkspaceTeamStateProvider extends TeamStateProvider
 	public final boolean isDecorationEnabled(Object element) {
 		ITeamStateProvider provider = getDecoratedStateProvider(element);
 		if (provider != null)
-			provider.isDecorationEnabled(element);
+			return provider.isDecorationEnabled(element);
 		return false;
 	}
 
@@ -120,7 +120,7 @@ public class WorkspaceTeamStateProvider extends TeamStateProvider
 		RepositoryProviderType type = getProviderType(element);
 		if (type != null)
 			return (ITeamStateProvider) Utils.getAdapter(type,
-					TeamStateProvider.class);
+					ITeamStateProvider.class);
 		return null;
 	}
 
@@ -128,7 +128,7 @@ public class WorkspaceTeamStateProvider extends TeamStateProvider
 		RepositoryProviderType type = getProviderTypeForId(id);
 		if (type != null)
 			return (ITeamStateProvider) Utils.getAdapter(type,
-					TeamStateProvider.class);
+					ITeamStateProvider.class);
 		return null;
 	}
 
@@ -149,7 +149,7 @@ public class WorkspaceTeamStateProvider extends TeamStateProvider
 			String nextId = getProviderId(project);
 			if (id == null)
 				id = nextId;
-			else if (!id.equals(nextId))
+			else if (nextId != null && !id.equals(nextId))
 				return null;
 		}
 		return id;

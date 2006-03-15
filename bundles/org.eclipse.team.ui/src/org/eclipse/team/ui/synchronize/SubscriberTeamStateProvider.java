@@ -105,6 +105,8 @@ public class SubscriberTeamStateProvider extends TeamStateProvider implements IS
 	public ITeamStateDescription getStateDescription(Object element, int stateMask,
 			String[] properties, IProgressMonitor monitor) throws CoreException {
 		monitor = Policy.monitorFor(monitor);
+		if (stateMask == USE_DECORATED_STATE_MASK)
+			stateMask = getDecoratedStateMask(element);
 		return new TeamStateDescription(getSynchronizationState(element, stateMask, monitor));
 	}
 

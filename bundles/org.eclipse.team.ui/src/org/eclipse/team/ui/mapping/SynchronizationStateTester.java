@@ -179,5 +179,18 @@ public class SynchronizationStateTester {
 		return TeamUIPlugin.getPlugin().getDecoratedStateProvider();
 	}
 	
+	/**
+	 * A callback to the tester made from the team decorator to notify the
+	 * tester that the given element has been decorated with the given state.
+	 * The purpose of the callback is to allow the owner of the tester to 
+	 * cache the decorated state in order to detect whether a future state
+	 * change requires a label update for the element.
+	 * @param element the element that was decorated
+	 * @param description a description of the decorated state of the element
+	 */
+	public void elementDecorated(Object element, ITeamStateDescription description) {
+		// do nothing by default
+	}
+	
 
 }

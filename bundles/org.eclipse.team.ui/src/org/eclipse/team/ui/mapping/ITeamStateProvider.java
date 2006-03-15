@@ -41,6 +41,13 @@ import org.eclipse.team.ui.synchronize.SubscriberTeamStateProvider;
 public interface ITeamStateProvider {
 
 	/**
+	 * A state mask that can be passed to the {@link #getStateDescription(Object, int, String[], IProgressMonitor)}
+	 * method to indicate that only the decorated state flags are desired. It is equivalent to
+	 * passing he mask returned from {@link #getDecoratedStateMask(Object)};
+	 */
+	public static final int USE_DECORATED_STATE_MASK = -1;
+	
+	/**
 	 * Return whether decoration is enabled for the given model element. If
 	 * decoration is not enabled, the model does not need to fire label change
 	 * events when the team state of the element changes.
@@ -107,8 +114,9 @@ public interface ITeamStateProvider {
 	 * is return if the element is not decorated or if decoration is disabled.
 	 * Only the portion of the synchronization state covered by
 	 * <code>stateMask</code> is returned. The <code>stateMask</code> should
-	 * be the flags returned by {@link #getDecoratedStateMask(Object)} and the
-	 * requested properties should be the value returned from
+	 * be {@link #USE_DECORATED_STATE_MASK} or the mask returned from
+	 * {@link #getDecoratedStateMask(Object)} and the requested properties
+	 * should be <code>null</code> or the value returned from
 	 * {@link #getDecoratedProperties(Object)} if the client wishes to obtain
 	 * the current decorated state.
 	 * 
@@ -118,7 +126,8 @@ public interface ITeamStateProvider {
 	 *            the mask that identifies which synchronization state flags are
 	 *            desired if present
 	 * @param properties
-	 *            the set of properties that should be included in the result
+	 *            the set of properties that should be included in the result or
+	 *            <code>null</code> if the decorated properties are desired
 	 * @param monitor
 	 *            a progress monitor
 	 * @return the state for the given element or <code>null</code>
