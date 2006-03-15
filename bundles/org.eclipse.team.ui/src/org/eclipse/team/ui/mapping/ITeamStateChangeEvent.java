@@ -11,30 +11,38 @@
 package org.eclipse.team.ui.mapping;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.ui.synchronize.TeamStateChangeEvent;
 
 /**
  * A description of the decorated synchronization state changes that have occurred.
  * The resource changes contained in this event indicate that a change has occurred
  * that has an effect on the decorated state. However, it may be the case that the state
  * did not actually change. Clients that wish to determine if the state ha changed must
- * cache the previous state and re-obtain the stat when they receive this event.
+ * cache the previous state and re-obtain the state when they receive this event.
+ * <p>
+ * This interface is not intended to be implemented by clients. Clients should instead 
+ * use {@link TeamStateChangeEvent}.
+ * 
+ * @see ITeamStateChangeListener
+ * @see ITeamStateProvider
+ * @see TeamStateChangeEvent
  * 
  * @since 3.2
  */
-public interface IDecoratedStateChangeEvent {
+public interface ITeamStateChangeEvent {
 	
 	/**
-	 * Return the set of resources that were previosuly undecorated
+	 * Return the set of resources that were previously undecorated
 	 * but are now decorated.
-	 * @return the set of resources that were previosuly undecorated
+	 * @return the set of resources that were previously undecorated
 	 * but are now decorated.
 	 */
 	public IResource[] getAddedRoots();
 	
 	/**
-	 * Return the set of resources that were previosuly decorated
+	 * Return the set of resources that were previously decorated
 	 * but are now undecorated.
-	 * @return the set of resources that were previosuly decorated
+	 * @return the set of resources that were previously decorated
 	 * but are now undecorated.
 	 */
 	public IResource[] getRemovedRoots();
@@ -49,7 +57,7 @@ public interface IDecoratedStateChangeEvent {
 	 * Return whether the resource has any state changes. This returns
 	 * <code>true</code> if the resource is included in the set
 	 * of changes returned by {@link #getChangedResources()} or
-	 * if it is a decendant of a root that is present in a set
+	 * if it is a descendant of a root that is present in a set
 	 * returned by {@link #getAddedRoots()} or {@link #getRemovedRoots()}.
 	 * 
 	 * @param resource the resource
