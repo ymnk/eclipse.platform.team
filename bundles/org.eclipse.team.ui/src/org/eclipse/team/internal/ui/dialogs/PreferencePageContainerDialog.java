@@ -16,7 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.compare.internal.TabFolderLayout;
-import org.eclipse.jface.dialogs.*;
+import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.preference.IPersistentPreferenceStore;
 import org.eclipse.jface.preference.IPreferencePageContainer;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -51,7 +52,7 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.team.internal.ui.*;
 import org.eclipse.ui.PlatformUI;
 
-public class PreferencePageContainerDialog extends TrayDialog implements IPreferencePageContainer {
+public class PreferencePageContainerDialog extends Dialog implements IPreferencePageContainer {
 
 	private PreferencePage[] pages;
 	private PreferencePage currentPage;
