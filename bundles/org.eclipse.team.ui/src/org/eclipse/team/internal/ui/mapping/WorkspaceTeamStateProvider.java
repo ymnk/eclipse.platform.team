@@ -128,7 +128,7 @@ public class WorkspaceTeamStateProvider extends TeamStateProvider
 		RepositoryProviderType type = getProviderTypeForId(id);
 		if (type != null)
 			return (ITeamStateProvider) Utils.getAdapter(type,
-					ITeamStateProvider.class);
+					ITeamStateProvider.class, true);
 		return null;
 	}
 

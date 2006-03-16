@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.team.ui.synchronize;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.team.core.diff.IThreeWayDiff;
 import org.eclipse.team.core.diff.provider.Diff;
 import org.eclipse.team.ui.mapping.ITeamStateDescription;
@@ -22,6 +25,7 @@ import org.eclipse.team.ui.mapping.ITeamStateDescription;
 public class TeamStateDescription implements ITeamStateDescription {
 
 	private int state;
+	private Map properties = new HashMap();
 
 	/**
 	 * Create a description with the given state.
@@ -53,17 +57,26 @@ public class TeamStateDescription implements ITeamStateDescription {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.mapping.IDecoratedStateDescription#getProperties()
+	 * @see org.eclipse.team.ui.mapping.ITeamStateDescription#getProperties()
 	 */
 	public String[] getProperties() {
-		return new String[0];
+		return (String[]) properties.keySet().toArray(new String[properties.size()]);
 	}
-
+	
 	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.mapping.IDecoratedStateDescription#getProperty(java.lang.String)
+	 * @see org.eclipse.team.ui.mapping.ITeamStateDescription#getProperty(java.lang.String)
 	 */
 	public Object getProperty(String property) {
-		return null;
+		return properties.get(property);
+	}
+	
+	/**
+	 * Set the given property to the given value
+	 * @param property the property
+	 * @param value the value
+	 */
+	public void setProperty(String property, Object value) {
+		properties.put(property, value);
 	}
 	
 	/* (non-Javadoc)
@@ -83,8 +96,8 @@ public class TeamStateDescription implements ITeamStateDescription {
 							return false;
 						}
 					}
+					return true;
 				}
-				return true;
 			}
 			return false;
 		}
