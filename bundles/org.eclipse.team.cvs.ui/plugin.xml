@@ -1194,7 +1194,7 @@
             name="%ViewCommand.historyView.name"
             description="%ViewCommand.historyView.description"
             category="org.eclipse.ui.category.views"
-            id="org.eclipse.team.ccvs.ui.HistoryView">
+            id="org.eclipse.team.ui.GenericHistoryView">
       </command>
       <command
             name="%ViewCommand.editorsView.name"
