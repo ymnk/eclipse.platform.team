@@ -57,7 +57,7 @@ public class CompareFileRevisionEditorInput extends CompareEditorInput implement
 		if(resource != null){
 			switch (currentSide){
 				case LEFT:
-				left = new TypedBufferedContent(resource);
+				left = new FileDocumentNode(resource);
 				getCompareConfiguration().setLeftEditable(true);
 				break;
 				
@@ -67,7 +67,7 @@ public class CompareFileRevisionEditorInput extends CompareEditorInput implement
 				String leftLabel = cc.getLeftLabel(left);
 				String rightLabel = cc.getRightLabel(right);
 				ITypedElement tempElement = left;
-				left = new TypedBufferedContent(resource);
+				left = new FileDocumentNode(resource);
 				right = tempElement;
 				cc.setLeftEditable(true);
 				cc.setLeftLabel(rightLabel);

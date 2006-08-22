@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.IDocumentAccessor;
 import org.eclipse.compare.IEncodedStreamContentAccessor;
 import org.eclipse.compare.IStreamContentAccessor;
 import org.eclipse.compare.ITypedElement;
@@ -45,6 +46,7 @@ import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
@@ -1587,6 +1589,8 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			return (IDocument) te;
 		if (te instanceof IDocumentRange)
 			return ((IDocumentRange) te).getDocument();
+		if (te instanceof IDocumentAccessor)
+			return ((IDocumentAccessor) te).getDocument();
 		if (te instanceof IStreamContentAccessor)
 			return DocumentManager.get(te);
 		return null;
@@ -1971,6 +1975,17 @@ public class TextMergeViewer extends ContentMergeViewer  {
 
 		} else if (o instanceof IDocument) {
 			newDoc= (IDocument) o;
+			
+		} else if (o instanceof IDocumentAccessor) {
+			newDoc= ((IDocumentAccessor) o).getDocument();
+			Assert.isNotNull(newDoc);
+			
+			// TODO: we may need this code
+//			IDocumentPartitioner partitioner= getDocumentPartitioner();
+//			if (partitioner != null) {
+//				newDoc.setDocumentPartitioner(partitioner);
+//				partitioner.connect(newDoc);
+//			}
 			
 		} else if (o instanceof IStreamContentAccessor) {
 			
