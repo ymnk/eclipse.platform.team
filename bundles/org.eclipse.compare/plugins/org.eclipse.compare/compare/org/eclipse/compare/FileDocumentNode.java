@@ -1,9 +1,13 @@
 package org.eclipse.compare;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import org.eclipse.compare.internal.Utilities;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.part.FileEditorInput;
@@ -45,11 +49,6 @@ public class FileDocumentNode extends DocumentNode implements IEncodedStreamCont
 	public ITypedElement replace(ITypedElement dest, ITypedElement src) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	public void setContent(byte[] newContent) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	/**
@@ -94,6 +93,31 @@ public class FileDocumentNode extends DocumentNode implements IEncodedStreamCont
 	 */
 	public Image getImage() {
 		return CompareUI.getImage(fFile);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.DocumentNode#internalGetContents()
+	 */
+	protected InputStream internalGetContents() throws CoreException {
+		return fFile.getContents();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.DocumentNode#internalSetContents(byte[], org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	protected void internalSetContents(byte[] contents, IProgressMonitor monitor)
+			throws CoreException {
+		if (contents == null) contents = new byte[0];
+		final InputStream is = new ByteArrayInputStream(contents);
+		if (is != null) {
+			if (!fFile.exists()) {
+				fFile.create(is, false, monitor);
+			} else {
+				fFile.setContents(is, false, true, monitor);
+			}
+		} else {
+			fFile.delete(false, true, monitor);
+		}
 	}
 
 }

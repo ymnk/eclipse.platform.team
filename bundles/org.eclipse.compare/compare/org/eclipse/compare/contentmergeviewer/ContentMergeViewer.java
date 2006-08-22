@@ -1048,24 +1048,15 @@ public abstract class ContentMergeViewer extends ContentViewer
 		// write back modified contents
 		IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
 		
-		Object leftContent = content.getLeftContent(oldInput);
-		boolean leftEmpty= leftContent == null;
+		boolean leftEmpty= content.getLeftContent(oldInput) == null;
 		boolean rightEmpty= content.getRightContent(oldInput) == null;
 
 		if (fCompareConfiguration.isLeftEditable() && fLeftSaveAction.isEnabled()) {
-			if (isDocumentProvider(leftContent)) {
-				// The left viewer is showing the document of the left content
-				// so there is no need to copy contents but we need to indicate
-				// that a flush was requested for backwards compatibility
-				//leftContent.flushRequested();
-			} else {
-				// Copy the bytes from the left viewer to the comapre input
-				byte[] bytes= getContents(true);
-				if (leftEmpty && bytes != null && bytes.length == 0)
-					bytes= null;
-				setLeftDirty(false);
-				content.saveLeftContent(oldInput, bytes);
-			}
+			byte[] bytes= getContents(true);
+			if (leftEmpty && bytes != null && bytes.length == 0)
+				bytes= null;
+			setLeftDirty(false);
+			content.saveLeftContent(oldInput, bytes);
 		}
 		
 		if (fCompareConfiguration.isRightEditable() && fRightSaveAction.isEnabled()) {
@@ -1075,10 +1066,5 @@ public abstract class ContentMergeViewer extends ContentViewer
 			setRightDirty(false);
 			content.saveRightContent(oldInput, bytes);
 		}
-	}
-
-	private boolean isDocumentProvider(Object leftContent) {
-		// XXX Auto-generated method stub
-		return false;
 	}
 }

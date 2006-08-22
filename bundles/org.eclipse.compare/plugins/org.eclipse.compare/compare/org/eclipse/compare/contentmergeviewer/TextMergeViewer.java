@@ -30,6 +30,7 @@ import org.eclipse.compare.internal.BufferedCanvas;
 import org.eclipse.compare.internal.CompareMessages;
 import org.eclipse.compare.internal.CompareNavigator;
 import org.eclipse.compare.internal.ComparePreferencePage;
+import org.eclipse.compare.internal.CompareUIPlugin;
 import org.eclipse.compare.internal.DocLineComparator;
 import org.eclipse.compare.internal.DocumentManager;
 import org.eclipse.compare.internal.ICompareContextIds;
@@ -80,6 +81,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
@@ -329,6 +331,8 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	
 	private Button fCenterButton;
 	private Diff fButtonDiff;
+
+	private List fDocumentAccessors = new ArrayList();
 					
 	class HeaderPainter implements PaintListener {
 		
@@ -1117,6 +1121,15 @@ public class TextMergeViewer extends ContentMergeViewer  {
 				}
 			}
 		);
+		composite.addDisposeListener(new DisposeListener() {
+			public void widgetDisposed(DisposeEvent e) {
+				for (Iterator iterator = fDocumentAccessors.iterator(); iterator
+						.hasNext();) {
+					IDocumentAccessor accessor = (IDocumentAccessor) iterator.next();
+					accessor.disconnect();
+				}
+			}
+		});
 	}
 	
 	private void hsynchViewport(final TextViewer tv1, final TextViewer tv2, final TextViewer tv3) {
@@ -1977,15 +1990,27 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			newDoc= (IDocument) o;
 			
 		} else if (o instanceof IDocumentAccessor) {
-			newDoc= ((IDocumentAccessor) o).getDocument();
-			Assert.isNotNull(newDoc);
-			
-			// TODO: we may need this code
-//			IDocumentPartitioner partitioner= getDocumentPartitioner();
-//			if (partitioner != null) {
-//				newDoc.setDocumentPartitioner(partitioner);
-//				partitioner.connect(newDoc);
-//			}
+			newDoc= DocumentManager.get(o);
+			if (newDoc == null) {
+				IDocumentAccessor documentAccessor = ((IDocumentAccessor) o);
+				if (!documentAccessor.isConnected()) {
+					try {
+						documentAccessor.connect();
+						fDocumentAccessors.add(documentAccessor);
+					} catch (CoreException e) {
+						CompareUIPlugin.log(e);
+						// TODO: Could fall back to using stream content if available
+					}
+				}
+				newDoc= documentAccessor.getDocument();
+				DocumentManager.put(o, newDoc);
+				Assert.isNotNull(newDoc);
+				IDocumentPartitioner partitioner= getDocumentPartitioner();
+				if (partitioner != null) {
+					newDoc.setDocumentPartitioner(partitioner);
+					partitioner.connect(newDoc);
+				}
+			}
 			
 		} else if (o instanceof IStreamContentAccessor) {
 			
