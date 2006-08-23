@@ -15,7 +15,8 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-import org.eclipse.compare.*;
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.resources.*;
@@ -1484,7 +1485,7 @@ public class CVSHistoryPage extends HistoryPage implements IAdaptable, IHistoryC
 				Object o = ss.getFirstElement();
 				if (o instanceof IFileRevision){
 					IFileRevision selectedFileRevision = (IFileRevision)o;
-					FileDocumentNode left = new FileDocumentNode((IFile) file.getIResource());
+					TypedBufferedContent left = new TypedBufferedContent((IFile) file.getIResource());
 					FileRevisionTypedElement right = new FileRevisionTypedElement(selectedFileRevision);
 					DiffNode node = new DiffNode(left,right);
 					return node;

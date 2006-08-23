@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.IDocumentAccessor;
 import org.eclipse.compare.IEncodedStreamContentAccessor;
 import org.eclipse.compare.IStreamContentAccessor;
 import org.eclipse.compare.ITypedElement;
@@ -47,7 +46,6 @@ import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.IDiffContainer;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
@@ -78,6 +76,7 @@ import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
@@ -110,11 +109,13 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.progress.IProgressService;
+import org.eclipse.ui.texteditor.IDocumentProvider;
 
 import com.ibm.icu.text.MessageFormat;
 
@@ -332,7 +333,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	private Button fCenterButton;
 	private Diff fButtonDiff;
 
-	private List fDocumentAccessors = new ArrayList();
+	private Map fDocumentAccessors = new HashMap();
 					
 	class HeaderPainter implements PaintListener {
 		
@@ -1123,11 +1124,13 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		);
 		composite.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
-				for (Iterator iterator = fDocumentAccessors.iterator(); iterator
+				for (Iterator iterator = fDocumentAccessors.keySet().iterator(); iterator
 						.hasNext();) {
-					IDocumentAccessor accessor = (IDocumentAccessor) iterator.next();
-					accessor.disconnect();
+					Object key = iterator.next();
+					IDocumentProvider provider = (IDocumentProvider)fDocumentAccessors.get(key);
+					provider.disconnect(key);
 				}
+				fDocumentAccessors.clear();
 			}
 		});
 	}
@@ -1602,8 +1605,6 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			return (IDocument) te;
 		if (te instanceof IDocumentRange)
 			return ((IDocumentRange) te).getDocument();
-		if (te instanceof IDocumentAccessor)
-			return ((IDocumentAccessor) te).getDocument();
 		if (te instanceof IStreamContentAccessor)
 			return DocumentManager.get(te);
 		return null;
@@ -1989,50 +1990,65 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		} else if (o instanceof IDocument) {
 			newDoc= (IDocument) o;
 			
-		} else if (o instanceof IDocumentAccessor) {
-			newDoc= DocumentManager.get(o);
-			if (newDoc == null) {
-				IDocumentAccessor documentAccessor = ((IDocumentAccessor) o);
-				if (!documentAccessor.isConnected()) {
-					try {
-						documentAccessor.connect();
-						fDocumentAccessors.add(documentAccessor);
-					} catch (CoreException e) {
-						CompareUIPlugin.log(e);
-						// TODO: Could fall back to using stream content if available
-					}
-				}
-				newDoc= documentAccessor.getDocument();
-				DocumentManager.put(o, newDoc);
-				Assert.isNotNull(newDoc);
-				IDocumentPartitioner partitioner= getDocumentPartitioner();
-				if (partitioner != null) {
-					newDoc.setDocumentPartitioner(partitioner);
-					partitioner.connect(newDoc);
-				}
-			}
-			
 		} else if (o instanceof IStreamContentAccessor) {
 			
 			newDoc= DocumentManager.get(o);
 			if (newDoc == null) {
-				IStreamContentAccessor sca= (IStreamContentAccessor) o;
-				String s= null;
-				if (encoding == null)
-					encoding= ResourcesPlugin.getEncoding();
-
-				try {
-					s= Utilities.readString(sca.getContents(), encoding);
-				} catch (CoreException ex) {
-					setError(type, ex.getMessage());
+				
+				// If the content provider is a text content provider, attempt to obtain
+				// a shared document (i.e. file buffer)
+				IContentProvider provider = getContentProvider();
+				if (provider instanceof ITextMergeViewerContentProvider) {
+					ITextMergeViewerContentProvider contentProvider = (ITextMergeViewerContentProvider) provider;
+					IEditorInput key = contentProvider.getDocumentKey(o);
+					if (key != null) {
+						IDocumentProvider documentProvider = (IDocumentProvider)fDocumentAccessors.get(key);
+						if (documentProvider != null) {
+							// We've already connected and setup the document
+							newDoc = documentProvider.getDocument(key);
+						} else {
+							documentProvider = contentProvider.getDocumentProvider(o);
+							if (provider != null) {
+								try {
+									documentProvider.connect(key);
+									fDocumentAccessors.put(key, documentProvider);
+									newDoc = documentProvider.getDocument(key);
+									if (documentProvider.canSaveDocument(key)) {
+										if (type == 'L')
+											setLeftDirty(true);
+										else if (type == 'R')
+											setRightDirty(true);
+									}
+								} catch (CoreException e) {
+									// Connection failed. Log the error and continue without a shared document
+									CompareUIPlugin.log(e);
+								}
+							}
+						}
+					}
 				}
+				
+				if (newDoc == null) {
+					IStreamContentAccessor sca= (IStreamContentAccessor) o;
+					String s= null;
+					if (encoding == null)
+						encoding= ResourcesPlugin.getEncoding();
 	
-				newDoc= new Document(s != null ? s : ""); //$NON-NLS-1$
+					try {
+						s= Utilities.readString(sca.getContents(), encoding);
+					} catch (CoreException ex) {
+						setError(type, ex.getMessage());
+					}
+		
+					newDoc= new Document(s != null ? s : ""); //$NON-NLS-1$
+				}
 				DocumentManager.put(o, newDoc);
-				IDocumentPartitioner partitioner= getDocumentPartitioner();
-				if (partitioner != null) {
-					newDoc.setDocumentPartitioner(partitioner);
-					partitioner.connect(newDoc);
+				if (newDoc.getDocumentPartitioner() == null) {
+					IDocumentPartitioner partitioner= getDocumentPartitioner();
+					if (partitioner != null) {
+						newDoc.setDocumentPartitioner(partitioner);
+						partitioner.connect(newDoc);
+					}
 				}
 			}
 		} else if (o == null) {	// deletion on one side
@@ -2124,7 +2140,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 
 		return enabled;
 	}
-	
+
 	private Position getNewRange(char type, Object input) {
 		switch (type) {
 		case 'A':
@@ -4402,4 +4418,85 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		}
 		return viewPos;
 	}
+	
+	/*
+	 * Override save to handle the saving of shared documents
+	 */
+	/* package */ void saveContent(Object oldInput) {
+				
+		// check and handle any shared buffers
+		IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
+		if (content instanceof ITextMergeViewerContentProvider) {
+			
+			Object leftContent = content.getLeftContent(oldInput);
+			Object rightContent = content.getRightContent(oldInput);
+			
+			if (getCompareConfiguration().isLeftEditable() && isLeftDirty()) {
+				if (hasSharedDocument(leftContent)) {
+					if (saveSharedDocument(leftContent))
+						setLeftDirty(false);
+				}
+			}
+			
+			if (getCompareConfiguration().isRightEditable() && isRightDirty()) {
+				if (hasSharedDocument(rightContent)) {
+					if (saveSharedDocument(rightContent))
+						setRightDirty(false);
+				}
+			}
+		}
+		
+		if (!(content instanceof ITextMergeViewerContentProvider) || isLeftDirty() || isRightDirty()) {
+			super.saveContent(oldInput);
+		}
+	}
+	
+	private boolean hasSharedDocument(Object object) {
+		IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
+		if (content instanceof ITextMergeViewerContentProvider) {
+			ITextMergeViewerContentProvider contentProvider = (ITextMergeViewerContentProvider) content;
+			IEditorInput key = contentProvider.getDocumentKey(object);
+			if (key != null) {
+				IDocumentProvider provider = (IDocumentProvider)fDocumentAccessors.get(key);
+				if (provider != null) {
+					IDocument doc = provider.getDocument(key);
+					return doc == DocumentManager.get(object);
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean saveSharedDocument(final Object object) {
+		try {
+			IRunnableWithProgress runnable = new IRunnableWithProgress() {
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					try {
+						doSave(object, monitor);
+					} catch (CoreException e) {
+						throw new InvocationTargetException(e);
+					}
+				}
+			};
+			IProgressService progressService= PlatformUI.getWorkbench().getProgressService();
+			progressService.run(false,false, runnable);
+			return true;
+		} catch (InvocationTargetException e) {
+			// TODO: Should show error to the user
+			Throwable t = e.getTargetException();
+			CompareUIPlugin.log(t);
+		} catch (InterruptedException e) {
+			// Ignore
+		}
+		return false;
+	}
+
+	private void doSave(Object element, IProgressMonitor monitor) throws CoreException {
+		IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
+		if (content instanceof ITextMergeViewerContentProvider) {
+			ITextMergeViewerContentProvider contentProvider = (ITextMergeViewerContentProvider) content;
+			contentProvider.doSave(element, monitor);
+		}
+	}
+	
 }

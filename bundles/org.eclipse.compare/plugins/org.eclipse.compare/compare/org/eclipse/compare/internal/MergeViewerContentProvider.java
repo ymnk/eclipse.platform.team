@@ -10,19 +10,28 @@
  *******************************************************************************/
 package org.eclipse.compare.internal;
 
-import org.eclipse.swt.graphics.Image;
-
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.IEditableContent;
+import org.eclipse.compare.ISharedDocumentAdapter;
+import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider;
+import org.eclipse.compare.structuremergeviewer.ICompareInput;
+import org.eclipse.compare.structuremergeviewer.IDiffContainer;
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.viewers.Viewer;
-
-import org.eclipse.compare.*;
-import org.eclipse.compare.structuremergeviewer.*;
-import org.eclipse.compare.contentmergeviewer.IMergeViewerContentProvider;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.texteditor.DocumentProviderRegistry;
+import org.eclipse.ui.texteditor.IDocumentProvider;
 
 /**
  * Adapts any <code>ContentMergeViewer</code> to work on an <code>ICompareInput</code>
  * e.g. a <code>DiffNode</code>.
  */
-public class MergeViewerContentProvider implements IMergeViewerContentProvider {
+public class MergeViewerContentProvider implements ITextMergeViewerContentProvider {
 	
 	private CompareConfiguration fCompareConfiguration;
 	private String fAncestorError;
@@ -194,6 +203,51 @@ public class MergeViewerContentProvider implements IMergeViewerContentProvider {
 				node.copy(true);
 			}		
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#getDocumentKey(java.lang.Object)
+	 */
+	public IEditorInput getDocumentKey(Object element) {
+		IEditorInput input = (IEditorInput)Utilities.getAdapter(element, IEditorInput.class);
+		if (input != null)
+			return input;
+		ISharedDocumentAdapter sda = (ISharedDocumentAdapter)Utilities.getAdapter(element, ISharedDocumentAdapter.class, true);
+		if (sda != null) {
+			return sda.getDocumentKey(element);
+		}
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#getDocumentProvider(java.lang.Object)
+	 */
+	public IDocumentProvider getDocumentProvider(Object element) {
+		IEditorInput input = getDocumentKey(element);
+		if (input != null)
+			return getDocumentProvider(input);
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#doSave(java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public void doSave(Object element, IProgressMonitor monitor) throws CoreException {
+		IEditorInput input = getDocumentKey(element);
+		IDocumentProvider provider = getDocumentProvider(input);
+		IDocument document = provider.getDocument(input);
+		if (document != null) {
+			try {
+				provider.aboutToChange(input);
+				provider.saveDocument(monitor, input, document, false);
+			} finally {
+				provider.changed(input);
+			}
+		}
+	}
+	
+	private IDocumentProvider getDocumentProvider(IEditorInput input) {
+		return DocumentProviderRegistry.getDefault().getDocumentProvider(input);
 	}
 }
 

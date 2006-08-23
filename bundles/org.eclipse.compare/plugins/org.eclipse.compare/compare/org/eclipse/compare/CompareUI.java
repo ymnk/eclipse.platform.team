@@ -334,10 +334,6 @@ public final class CompareUI {
 	 * @since 3.1
 	 */
 	public static IDocument getDocument(Object input) {
-		if (input instanceof IDocumentAccessor) {
-			IDocumentAccessor da = (IDocumentAccessor) input;
-			return da.getDocument();
-		}
 		return DocumentManager.get(input);
 	}
 
