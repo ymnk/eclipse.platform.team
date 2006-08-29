@@ -1,0 +1,175 @@
+### Eclipse Workspace Patch 1.0
+#P org.eclipse.jdt.ui
+Index: ui/org/eclipse/jdt/internal/ui/compare/JavaStructureCreator.java
+===================================================================
+RCS file: /cvsroot/eclipse/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/compare/JavaStructureCreator.java,v
+retrieving revision 1.49
+diff -u -r1.49 JavaStructureCreator.java
+--- ui/org/eclipse/jdt/internal/ui/compare/JavaStructureCreator.java	17 Jun 2005 15:51:52 -0000	1.49
++++ ui/org/eclipse/jdt/internal/ui/compare/JavaStructureCreator.java	29 Aug 2006 16:17:14 -0000
+@@ -11,27 +11,53 @@
+ package org.eclipse.jdt.internal.ui.compare;
+ 
+ import java.io.UnsupportedEncodingException;
+-import java.util.*;
+-
+-import org.eclipse.jface.text.*;
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.Iterator;
++import java.util.List;
++import java.util.Map;
+ 
+ import org.eclipse.core.runtime.CoreException;
++
+ import org.eclipse.core.resources.IResource;
+ import org.eclipse.core.resources.ResourcesPlugin;
+ 
+-import org.eclipse.jdt.core.*;
+-import org.eclipse.jdt.core.compiler.*;
++import org.eclipse.jface.text.Document;
++import org.eclipse.jface.text.IDocument;
++
++import org.eclipse.compare.CompareUI;
++import org.eclipse.compare.IEditableContent;
++import org.eclipse.compare.IEncodedStreamContentAccessor;
++import org.eclipse.compare.IResourceProvider;
++import org.eclipse.compare.IStreamContentAccessor;
++import org.eclipse.compare.ITypedElement;
++import org.eclipse.compare.structuremergeviewer.DiffNode;
++import org.eclipse.compare.structuremergeviewer.Differencer;
++import org.eclipse.compare.structuremergeviewer.DocumentRangeNode;
++import org.eclipse.compare.structuremergeviewer.ICompareInput;
++import org.eclipse.compare.structuremergeviewer.IDiffContainer;
++import org.eclipse.compare.structuremergeviewer.IDiffElement;
++import org.eclipse.compare.structuremergeviewer.IDocumentManager;
++import org.eclipse.compare.structuremergeviewer.IStructureComparator;
++import org.eclipse.compare.structuremergeviewer.IStructureCreator2;
++
++import org.eclipse.jdt.core.ICompilationUnit;
++import org.eclipse.jdt.core.IJavaElement;
++import org.eclipse.jdt.core.IJavaProject;
++import org.eclipse.jdt.core.IMember;
++import org.eclipse.jdt.core.JavaCore;
++import org.eclipse.jdt.core.ToolFactory;
++import org.eclipse.jdt.core.compiler.IScanner;
++import org.eclipse.jdt.core.compiler.ITerminalSymbols;
++import org.eclipse.jdt.core.compiler.InvalidInputException;
+ import org.eclipse.jdt.core.dom.AST;
+ import org.eclipse.jdt.core.dom.ASTParser;
+ import org.eclipse.jdt.core.dom.CompilationUnit;
+-import org.eclipse.jdt.internal.ui.JavaPlugin;
+ 
+-import org.eclipse.compare.*;
+-import org.eclipse.compare.IResourceProvider;
+-import org.eclipse.compare.structuremergeviewer.*;
++import org.eclipse.jdt.internal.ui.JavaPlugin;
+ 
+ 
+-public class JavaStructureCreator implements IStructureCreator {
++public class JavaStructureCreator implements IStructureCreator2 {
+ 	
+ 	private Map fDefaultCompilerOptions;
+ 	
+@@ -135,7 +161,14 @@
+ 			}
+ 		}
+ 		
++		return createStructureComparator(input, buffer, doc);
++	}
++
++	private IStructureComparator createStructureComparator(final Object input, char[] buffer,
++			IDocument doc) {
++		String contents;
+ 		Map compilerOptions= null;
++		// TODO: Need to ensure that the proper partitioner is set
+ 		if (input instanceof IResourceProvider) {
+ 			IResource resource= ((IResourceProvider) input).getResource();
+ 			if (resource != null) {
+@@ -190,6 +223,7 @@
+ 	}
+ 	
+ 	public void save(IStructureComparator node, Object input) {
++		// TODO No need to save if the document is shared (unless we get a mustSave?)
+ 		if (node instanceof JavaNode && input instanceof IEditableContent) {
+ 			IDocument document= ((JavaNode)node).getDocument();
+ 			IEditableContent bca= (IEditableContent) input;
+@@ -376,11 +410,11 @@
+ 	 * @param input must implement the IStreamContentAccessor interface.
+ 	 */
+ 	public IStructureComparator locate(Object selector, Object input) {
+-		
+ 		if (!(selector instanceof IJavaElement))
+ 			return null;
+ 
+ 		// try to build the JavaNode tree from input
++		// TODO: Could make use of shared document
+ 		IStructureComparator structure= getStructure(input);
+ 		if (structure == null)	// we couldn't parse the structure 
+ 			return null;		// so we can't find anything
+@@ -472,4 +506,43 @@
+ 		}
+ 		return false;
+ 	}
++
++	/* (non-Javadoc)
++	 * @see org.eclipse.compare.structuremergeviewer.IStructureCreator2#getStructure(java.lang.Object, org.eclipse.compare.structuremergeviewer.IDocumentManager)
++	 */
++	public IStructureComparator getStructure(Object input,
++			IDocumentManager manager) {
++		IDocument doc = manager.getDocument(input);
++		if (doc == null) {
++			try {
++				manager.createDocument(input, null);
++				doc = manager.getDocument(input);
++			} catch (CoreException e) {
++				JavaPlugin.log(e);
++				return null;
++			}
++		}
++		return createStructureComparator(input, null, doc);
++	}
++
++	/* (non-Javadoc)
++	 * @see org.eclipse.compare.structuremergeviewer.IStructureCreator2#locate(java.lang.Object, java.lang.Object, org.eclipse.compare.structuremergeviewer.IDocumentManager)
++	 */
++	public IStructureComparator locate(Object selector, Object input,
++			IDocumentManager manager) {
++		if (!(selector instanceof IJavaElement))
++			return null;
++
++		// try to build the JavaNode tree from input
++		// TODO: Could make use of shared document
++		IStructureComparator structure= getStructure(input, manager);
++		if (structure == null)	// we couldn't parse the structure 
++			return null;		// so we can't find anything
++			
++		// build a path
++		String[] path= createPath((IJavaElement) selector);
++			
++		// find the path in the JavaNode tree
++		return find(structure, path, 0);
++	}
+ }
+Index: ui/org/eclipse/jdt/internal/ui/compare/JavaCompareUtilities.java
+===================================================================
+RCS file: /cvsroot/eclipse/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/compare/JavaCompareUtilities.java,v
+retrieving revision 1.41
+diff -u -r1.41 JavaCompareUtilities.java
+--- ui/org/eclipse/jdt/internal/ui/compare/JavaCompareUtilities.java	28 Mar 2006 16:53:31 -0000	1.41
++++ ui/org/eclipse/jdt/internal/ui/compare/JavaCompareUtilities.java	29 Aug 2006 16:17:14 -0000
+@@ -278,9 +278,11 @@
+ 	}
+ 	
+ 	static void setupPropertiesFileDocument(IDocument document) {
+-		IDocumentPartitioner partitioner= new FastPartitioner(new PropertiesFilePartitionScanner(), IPropertiesFilePartitions.PARTITIONS);
+-		document.setDocumentPartitioner(partitioner);
+-		partitioner.connect(document);
++		if (document.getDocumentPartitioner() == null) {
++			IDocumentPartitioner partitioner= new FastPartitioner(new PropertiesFilePartitionScanner(), IPropertiesFilePartitions.PARTITIONS);
++			document.setDocumentPartitioner(partitioner);
++			partitioner.connect(document);
++		}
+ 	}
+ 
+ 	/**
