@@ -4465,14 +4465,15 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			Object leftContent = content.getLeftContent(oldInput);
 			Object rightContent = content.getRightContent(oldInput);
 			
-			if (getCompareConfiguration().isLeftEditable() && isLeftDirty()) {
+			// TODO: How do we handle empty left or right
+			if (leftContent != null && getCompareConfiguration().isLeftEditable() && isLeftDirty()) {
 				if (hasSharedDocument(leftContent)) {
 					if (saveSharedDocument(leftContent))
 						setLeftDirty(false);
 				}
 			}
 			
-			if (getCompareConfiguration().isRightEditable() && isRightDirty()) {
+			if (rightContent != null && getCompareConfiguration().isRightEditable() && isRightDirty()) {
 				if (hasSharedDocument(rightContent)) {
 					if (saveSharedDocument(rightContent))
 						setRightDirty(false);
