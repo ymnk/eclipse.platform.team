@@ -14,9 +14,11 @@ package org.eclipse.compare.structuremergeviewer;
  * An extension to the {@link IStructureCreator} interface that supports the
  * use of shared documents.
  * 
+ * TODO: Should be an abstract class
+ * 
  * @since 3.3
  */
-public interface IStructureCreator2 extends IStructureCreator {
+public interface ITextStructureCreator extends IStructureCreator {
 	
 	/**
 	 * Creates a tree structure consisting of <code>IStructureComparator</code>s

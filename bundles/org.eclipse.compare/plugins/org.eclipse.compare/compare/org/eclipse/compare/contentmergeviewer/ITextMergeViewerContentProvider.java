@@ -23,6 +23,7 @@ import org.eclipse.ui.texteditor.IDocumentProvider;
  * 
  * <p>
  * This interface may be implemented by clients.
+ * TODO: Should we make an abstract class available?
  * 
  * @since 3.3
  */

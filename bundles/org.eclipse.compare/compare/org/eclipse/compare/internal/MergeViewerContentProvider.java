@@ -33,6 +33,10 @@ import org.eclipse.ui.texteditor.IDocumentProvider;
  */
 public class MergeViewerContentProvider implements ITextMergeViewerContentProvider {
 	
+	public static final char ANCESTOR_ELEMENT = 'A';
+	public static final char RIGHT_ELEMENT = 'R';
+	public static final char LEFT_ELEMENT = 'L';
+	
 	private CompareConfiguration fCompareConfiguration;
 	private String fAncestorError;
 	private String fLeftError;

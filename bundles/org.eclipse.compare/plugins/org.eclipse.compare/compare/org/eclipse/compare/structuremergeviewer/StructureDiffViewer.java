@@ -34,9 +34,9 @@ public class StructureDiffViewer extends DiffTreeViewer {
 	private Differencer fDifferencer;
 	private boolean fThreeWay= false;
 	
-	private InputStructure fAncestorStructure = new InputStructure();
-	private InputStructure fLeftStructure = new InputStructure();
-	private InputStructure fRightStructure = new InputStructure();
+	private StructureInfo fAncestorStructure = new StructureInfo();
+	private StructureInfo fLeftStructure = new StructureInfo();
+	private StructureInfo fRightStructure = new StructureInfo();
 	
 	private IStructureCreator fStructureCreator;
 	private IDiffContainer fRoot;
@@ -48,7 +48,7 @@ public class StructureDiffViewer extends DiffTreeViewer {
 	 * A helper class for holding the input and generated structure
 	 * for the ancestor, left and right inputs.
 	 */
-	private class InputStructure {
+	private class StructureInfo {
 		private ITypedElement fInput;
 		private IStructureComparator fStructureComparator;
 		
@@ -82,8 +82,8 @@ public class StructureDiffViewer extends DiffTreeViewer {
 		}
 		
 		private IStructureComparator createStructure(Object element) {
-			if (fStructureCreator instanceof IStructureCreator2) {
-				IStructureCreator2 sc2 = (IStructureCreator2) fStructureCreator;
+			if (fStructureCreator instanceof ITextStructureCreator) {
+				ITextStructureCreator sc2 = (ITextStructureCreator) fStructureCreator;
 				return sc2.getStructure(element, getDocumentManager());
 			}
 			return fStructureCreator.getStructure(element);

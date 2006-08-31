@@ -163,6 +163,10 @@ import com.ibm.icu.text.MessageFormat;
  */
 public class TextMergeViewer extends ContentMergeViewer  {
 	
+	private static final char ANCESTOR_ELEMENT = MergeViewerContentProvider.ANCESTOR_ELEMENT;
+	private static final char RIGHT_ELEMENT = MergeViewerContentProvider.RIGHT_ELEMENT;
+	private static final char LEFT_ELEMENT = MergeViewerContentProvider.LEFT_ELEMENT;
+
 	private static final boolean DEBUG= false;
 	
 	private static final boolean FIX_47640= true;
@@ -266,9 +270,6 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	private int fLeftLineCount;
 	private int fRightLineCount;
 	
-	private String fLeftEncoding;
-	private String fRightEncoding;
-	
 	private boolean fInScrolling;
 	
 	private int fPts[]= new int[8];	// scratch area for polygon drawing
@@ -337,18 +338,10 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			// TODO Not sure what to do
 		}
 		public void elementDirtyStateChanged(Object element, boolean isDirty) {
-			Object input = getInput();
-			Object left = ((IMergeViewerContentProvider)getContentProvider()).getLeftContent(input);
-			IEditorInput leftInput = getDocumentKey(left);
-			if (leftInput != null && leftInput.equals(element)) {
-				updateDirtyState(leftInput, getDocumentProvider(left), 'L');
-			}
-			Object right = ((IMergeViewerContentProvider)getContentProvider()).getRightContent(input);
-			IEditorInput rightInput = getDocumentKey(right);
-			if (rightInput != null && rightInput.equals(element)) {
-				updateDirtyState(rightInput, getDocumentProvider(right), 'R');
-			}
+			fLeftLeg.updateForDirtyStateChange(element);
+			fRightLeg.updateForDirtyStateChange(element);
 		}
+
 		public void elementDeleted(Object element) {
 			// TODO Not sure what to do
 		}
@@ -359,6 +352,249 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			// TODO Not sure what to do
 		}
 	};
+	private LegInfo fLeftLeg;
+	private LegInfo fRightLeg;
+	private LegInfo fAncestorLeg;
+	
+	private class LegInfo {
+		final Object fElement;
+		char fLeg;
+		String fEncoding;
+		IDocumentProvider fDocumentProvider;
+		private boolean connected;
+		private int fLineCount;
+		
+		public LegInfo(Object element, char leg) {
+			fElement = element;
+			if (fElement instanceof IEncodedStreamContentAccessor) {
+				try {
+					fEncoding = ((IEncodedStreamContentAccessor)fElement).getCharset();
+				} catch (CoreException e) {
+					// silently ignored
+				}
+			}
+		}
+		
+		public String getEncoding() {
+			if (fEncoding == null)
+				return ResourcesPlugin.getEncoding();
+			return fEncoding;
+		}
+
+		public void setEncodingIfAbsent(LegInfo otherLeg) {
+			if (fEncoding == null)
+				fEncoding = otherLeg.fEncoding;
+		}
+
+		/*
+		 * Method invoked from a document provider dirty state change
+		 */
+		protected void updateForDirtyStateChange(Object element) {
+			IEditorInput input = getDocumentKey();
+			if (input != null && input.equals(element)) {
+				updateDirtyState(input, getDocumentProvider(), fLeg);
+			}
+		}
+		
+		public void setDocument(MergeSourceViewer viewer) {
+			internalSetDocument(viewer);
+			fLineCount= viewer.getLineCount();
+		}
+		
+		/*
+		 * Returns true if a new Document could be installed.
+		 */
+		private boolean internalSetDocument(MergeSourceViewer tp) {
+			
+			if (tp == null)
+				return false;
+			
+			IDocument newDocument = null;
+			Position range= null;
+
+			if (fElement instanceof IDocumentRange) {
+				newDocument= ((IDocumentRange)fElement).getDocument();
+				range= ((IDocumentRange)fElement).getRange();
+
+			} else if (fElement instanceof IDocument) {
+				newDocument= (IDocument) fElement;
+				
+			} else if (fElement instanceof IStreamContentAccessor) {
+				newDocument= DocumentManager.get(fElement);
+				if (newDocument == null) {
+					newDocument = createDocument();
+					DocumentManager.put(fElement, newDocument);
+					if (newDocument.getDocumentPartitioner() == null) {
+						IDocumentPartitioner partitioner= getDocumentPartitioner();
+						if (partitioner != null) {
+							newDocument.setDocumentPartitioner(partitioner);
+							partitioner.connect(newDocument);
+						}
+					}
+				}
+			} else if (fElement == null) {	// deletion on one side
+				
+				ITypedElement parent= getParent(fLeg);	// we try to find an insertion position within the deletion's parent
+				
+				if (parent instanceof IDocumentRange) {
+					newDocument= ((IDocumentRange)parent).getDocument();
+					newDocument.addPositionCategory(IDocumentRange.RANGE_CATEGORY);
+					Object input= getInput();
+					range= getNewRange(fLeg, input);
+					if (range == null) {
+						int pos= 0;
+						if (input instanceof ICompareInput)
+							pos= findInsertionPosition(fLeg, (ICompareInput)input);
+						range= new Position(pos, 0);
+						try {
+							newDocument.addPosition(IDocumentRange.RANGE_CATEGORY, range);
+						} catch (BadPositionCategoryException ex) {
+							// silently ignored
+							if (DEBUG) System.out.println("BadPositionCategoryException: " + ex);	//$NON-NLS-1$
+						} catch (BadLocationException ex) {
+							// silently ignored
+							if (DEBUG) System.out.println("BadLocationException: " + ex);	//$NON-NLS-1$
+						}
+						addNewRange(fLeg, input, range);
+					}
+				} else if (parent instanceof IDocument) {
+					newDocument= ((IDocumentRange)fElement).getDocument();
+				}
+			}
+
+			boolean enabled= true;
+			if (newDocument == null) {
+				//System.out.println("setDocument: create new Document");
+				newDocument= new Document(""); //$NON-NLS-1$
+				enabled= false;
+			}
+			
+			// Update the viewer document or range
+			IDocument oldDoc= tp.getDocument();
+			if (newDocument != oldDoc) {
+				updateViewerDocument(tp, newDocument, range);
+			} else {	// same document but different range
+				updateViewerDocumentRange(tp, range);
+			}
+			
+			tp.setEnabled(enabled);
+
+			return enabled;
+		}
+
+		/*
+		 * The viewer document is the same but the range has changed
+		 */
+		private void updateViewerDocumentRange(MergeSourceViewer tp, Position range) {
+			tp.setRegion(range);
+			if (fSubDoc) {
+				if (range != null) {
+					IRegion r= normalizeDocumentRegion(tp.getDocument(), toRegion(range));
+					tp.setVisibleRegion(r.getOffset(), r.getLength());
+				} else
+					tp.resetVisibleRegion();
+			} else
+				tp.resetVisibleRegion();
+		}
+
+		/*
+		 * The viewer has a new document
+		 */
+		private void updateViewerDocument(MergeSourceViewer tp, IDocument document, Position range) {
+			unsetDocument(tp);
+			if (document == null)
+				return;
+			
+			// Add a position updater to the document
+			document.addPositionCategory(IDocumentRange.RANGE_CATEGORY);
+			if (fPositionUpdater == null)
+				fPositionUpdater= new ChildPositionUpdater(IDocumentRange.RANGE_CATEGORY);
+			else
+				document.removePositionUpdater(fPositionUpdater);
+			document.addPositionUpdater(fPositionUpdater);
+
+			// install new document	
+			tp.setRegion(range);
+			if (fSubDoc) {
+				if (range != null) {
+					IRegion r= normalizeDocumentRegion(document, toRegion(range));
+					tp.setDocument(document, r.getOffset(), r.getLength());
+				} else
+					tp.setDocument(document);
+			} else
+				tp.setDocument(document);
+							
+			tp.rememberDocument(document);
+			document.addDocumentListener(fDocumentListener);
+			//LeakTester.add(newDoc);
+		}
+		
+		private IDocument createDocument() {
+			// If the content provider is a text content provider, attempt to obtain
+			// a shared document (i.e. file buffer)
+			IDocument newDoc = null;
+			if (canHaveSharedDocument()) {
+				IEditorInput key = getDocumentKey();
+				if (key != null) {
+					IDocumentProvider documentProvider = getCachedDocumentProvider(key);
+					if (documentProvider != null) {
+						// We've already connected and setup the document
+						newDoc = documentProvider.getDocument(key);
+					} else {
+						documentProvider = getDocumentProvider();
+						if (documentProvider != null) {
+							try {
+								// TODO What about the encoding
+								documentProvider.connect(key);
+								setCachedDocumentProvider(key,
+										documentProvider);
+								newDoc = documentProvider.getDocument(key);
+								updateDirtyState(key, documentProvider, fLeg);
+							} catch (CoreException e) {
+								// Connection failed. Log the error and continue without a shared document
+								CompareUIPlugin.log(e);
+							}
+						}
+					}
+				}
+			}
+			
+			if (newDoc == null) {
+				IStreamContentAccessor sca= (IStreamContentAccessor) fElement;
+				String s= null;
+
+				try {
+					s= Utilities.readString(sca.getContents(), getEncoding());
+				} catch (CoreException ex) {
+					setError(fLeg, ex.getMessage());
+				}
+
+				newDoc= new Document(s != null ? s : ""); //$NON-NLS-1$
+			}
+			return newDoc;
+		}
+		
+		/* package*/ IEditorInput getDocumentKey() {
+			IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
+			if (content instanceof ITextMergeViewerContentProvider) {
+				ITextMergeViewerContentProvider contentProvider = (ITextMergeViewerContentProvider) content;
+				return contentProvider.getDocumentKey(fElement);
+			}
+			return null;
+		}
+		
+		/* package*/ IDocumentProvider getDocumentProvider() {
+			IDocumentProvider documentProvider = getCachedDocumentProvider(getDocumentKey());
+			if (documentProvider == null) {
+				IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
+				if (content instanceof ITextMergeViewerContentProvider) {
+					ITextMergeViewerContentProvider contentProvider = (ITextMergeViewerContentProvider) content;
+					return contentProvider.getDocumentProvider(fElement);
+				}
+			}
+			return documentProvider;
+		}
+	}
 					
 	class HeaderPainter implements PaintListener {
 		
@@ -503,11 +739,11 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		
 		Position getPosition(char type) {
 			switch (type) {
-			case 'A':
+			case ANCESTOR_ELEMENT:
 				return fAncestorPos;
-			case 'L':
+			case LEFT_ELEMENT:
 				return fLeftPos;
-			case 'R':
+			case RIGHT_ELEMENT:
 				return fRightPos;
 			}
 			return null;
@@ -979,9 +1215,9 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		fHandlerService= null;
 		
 		Object input= getInput();
-		DocumentManager.remove(getDocument2('A', input));
-		DocumentManager.remove(getDocument2('L', input));
-		DocumentManager.remove(getDocument2('R', input));
+		DocumentManager.remove(getDocument(ANCESTOR_ELEMENT, input));
+		DocumentManager.remove(getDocument(LEFT_ELEMENT, input));
+		DocumentManager.remove(getDocument(RIGHT_ELEMENT, input));
 		
 		if (DEBUG)
 			DocumentManager.dump();
@@ -1612,22 +1848,23 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		}
 	}
 	
-	ITypedElement getLeg(char type, Object input) {
+	private ITypedElement getLeg(char type, Object input) {
+		// TODO: Should delegate to content provider
 		if (input instanceof ICompareInput) {
 			switch (type) {
-			case 'A':
+			case ANCESTOR_ELEMENT:
 				return ((ICompareInput)input).getAncestor();
-			case 'L':
+			case LEFT_ELEMENT:
 				return ((ICompareInput)input).getLeft();
-			case 'R':
+			case RIGHT_ELEMENT:
 				return ((ICompareInput)input).getRight();
 			}
 		}
 		return null;
 	}
 
-	IDocument getDocument(char type, Object input) {
-		ITypedElement te= getLeg(type, input);
+	private IDocument getElementDocument(char type, Object element) {
+		ITypedElement te= getLeg(type, element);
 		if (te instanceof IDocument)
 			return (IDocument) te;
 		if (te instanceof IDocumentRange)
@@ -1637,14 +1874,14 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		return null;
 	}
 	
-	IDocument getDocument2(char type, Object input) {
-		IDocument doc= getDocument(type, input);
+	private IDocument getDocument(char type, Object input) {
+		IDocument doc= getElementDocument(type, input);
 		if (doc != null)
 			return doc;
 			
 		if (input instanceof IDiffElement) {
 			IDiffContainer parent= ((IDiffElement)input).getParent();
-			return getDocument(type, parent);
+			return getElementDocument(type, parent);
 		}
 		return null;
 	}
@@ -1653,8 +1890,8 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	 * Returns true if the given inputs map to the same documents
 	 */
 	boolean sameDoc(char type, Object newInput, Object oldInput) {
-		IDocument newDoc= getDocument2(type, newInput);
-		IDocument oldDoc= getDocument2(type, oldInput);
+		IDocument newDoc= getDocument(type, newInput);
+		IDocument oldDoc= getDocument(type, oldInput);
 		return newDoc == oldDoc;
 	}
 	
@@ -1667,11 +1904,12 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	 */
 	protected boolean doSave(Object newInput, Object oldInput) {
 		//TODO: Logic here is flawed
+		// TODO: Would be good if this could be resarted in terms of Savables and moved up
 		if (oldInput != null && newInput != null) {
 			// check whether underlying documents have changed.
-			if (sameDoc('A', newInput, oldInput) &&
-					sameDoc('L', newInput, oldInput) &&
-						sameDoc('R', newInput, oldInput)) {
+			if (sameDoc(ANCESTOR_ELEMENT, newInput, oldInput) &&
+					sameDoc(LEFT_ELEMENT, newInput, oldInput) &&
+						sameDoc(RIGHT_ELEMENT, newInput, oldInput)) {
 				if (DEBUG) System.out.println("----- Same docs !!!!");	//$NON-NLS-1$
 				return false;
 			}
@@ -1679,17 +1917,21 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		
 		if (DEBUG) System.out.println("***** New docs !!!!");	//$NON-NLS-1$
 		
-		IDocument aDoc= getDocument2('A', oldInput);
-		DocumentManager.remove(aDoc);
-		IDocument lDoc= getDocument2('L', oldInput);
-		DocumentManager.remove(lDoc);
-		IDocument rDoc= getDocument2('R', oldInput);
-		DocumentManager.remove(rDoc);
+		// TODO: The documents should be disconnected in the updateContent method
+		removeFromDocumentManager(ANCESTOR_ELEMENT, oldInput);
+		removeFromDocumentManager(LEFT_ELEMENT, oldInput);
+		removeFromDocumentManager(RIGHT_ELEMENT, oldInput);
 		
 		if (DEBUG)
 			DocumentManager.dump();
 		
 		return super.doSave(newInput, oldInput);
+	}
+	
+	private void removeFromDocumentManager(char leg, Object oldInput) {
+		IDocument document= getDocument(leg, oldInput);
+		if (document != null)
+			DocumentManager.remove(document);
 	}
 	
 	private ITypedElement getParent(char type) {
@@ -1762,26 +2004,24 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			mcp.setRightError(null);
 		}
 
+		fLeftLeg = createLegInfoFor(left, LEFT_ELEMENT);
+		fRightLeg = createLegInfoFor(right, RIGHT_ELEMENT);
+		fAncestorLeg = createLegInfoFor(ancestor, ANCESTOR_ELEMENT);
+		
 		// Get encodings from streams. If an encoding is null, abide by the other one
 		// Defaults to workbench encoding only if both encodings are null
-		fLeftEncoding= getEncoding(left);
-		fRightEncoding= getEncoding(right);
-		if (fLeftEncoding == null && fRightEncoding == null) {
-			fLeftEncoding= fRightEncoding= ResourcesPlugin.getEncoding();
-		} else if (fLeftEncoding == null) {
-			fLeftEncoding= fRightEncoding;
-		} else if (fRightEncoding == null) {
-			fRightEncoding= fLeftEncoding;
-		}
+		fLeftLeg.setEncodingIfAbsent(fRightLeg);
+		fRightLeg.setEncodingIfAbsent(fLeftLeg);
+		fAncestorLeg.setEncodingIfAbsent(fLeftLeg);
 		
 		// set new documents
-		setDocument(fLeft, 'L', left, fLeftEncoding);
+		fLeftLeg.setDocument(fLeft);
 		fLeftLineCount= fLeft.getLineCount();
 		
-		setDocument(fRight, 'R', right, fRightEncoding);
+		fRightLeg.setDocument(fRight);
 		fRightLineCount= fRight.getLineCount();
 		
-		setDocument(fAncestor, 'A', ancestor, fLeftEncoding);
+		fAncestorLeg.setDocument(fAncestor);
 		
 		updateHeader();
 		updateControls();
@@ -1801,9 +2041,9 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			Diff selectDiff= null;
 			if (FIX_47640) {
 				if (leftRange != null)
-				    selectDiff= findDiff('L', leftRange);
+				    selectDiff= findDiff(LEFT_ELEMENT, leftRange);
 				else if (rightRange != null)
-				    selectDiff= findDiff('R', rightRange);
+				    selectDiff= findDiff(RIGHT_ELEMENT, rightRange);
 			}
 			if (selectDiff != null)
 				setCurrentDiff(selectDiff, true);
@@ -1812,14 +2052,18 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		}
 	}
 
+	private LegInfo createLegInfoFor(Object element, char leg) {
+		return new LegInfo(element, leg);
+	}
+	
 	private Diff findDiff(char c, Position range) {
 		
 		MergeSourceViewer v;
 		int start= range.getOffset();
 		int end= start + range.getLength();
-		if (c == 'L')
+		if (c == LEFT_ELEMENT)
 			v= fLeft;
-		else if (c == 'R')
+		else if (c == RIGHT_ELEMENT)
 			v= fRight;
 		else
 			return null;
@@ -1832,17 +2076,6 @@ public class TextMergeViewer extends ContentMergeViewer  {
 				    continue;
 				if (diff.overlaps(v, start, end))
 					return diff;
-			}
-		}
-		return null;
-	}
-
-	private static String getEncoding(Object o) {
-		if (o instanceof IEncodedStreamContentAccessor) {
-			try {
-				return ((IEncodedStreamContentAccessor)o).getCharset();
-			} catch (CoreException e) {
-				// silently ignored
 			}
 		}
 		return null;
@@ -1930,28 +2163,28 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		char otherType= 0;
 		
 		switch (type) {
-		case 'A':
+		case ANCESTOR_ELEMENT:
 			other= input.getLeft();
-			otherType= 'L';
+			otherType= LEFT_ELEMENT;
 			if (other == null) {
 				other= input.getRight();
-				otherType= 'R';
+				otherType= RIGHT_ELEMENT;
 			}
 			break;
-		case 'L':
+		case LEFT_ELEMENT:
 			other= input.getRight();
-			otherType= 'R';
+			otherType= RIGHT_ELEMENT;
 			if (other == null) {
 				other= input.getAncestor();
-				otherType= 'A';
+				otherType= ANCESTOR_ELEMENT;
 			}
 			break;
-		case 'R':
+		case RIGHT_ELEMENT:
 			other= input.getLeft();
-			otherType= 'L';
+			otherType= LEFT_ELEMENT;
 			if (other == null) {
 				other= input.getAncestor();
-				otherType= 'A';
+				otherType= ANCESTOR_ELEMENT;
 			}
 			break;
 		}
@@ -1962,15 +2195,15 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			Diff diff= findDiff(otherType, p.offset);
 			if (diff != null) {
 				switch (type) {
-				case 'A':
+				case ANCESTOR_ELEMENT:
 					if (diff.fAncestorPos != null)
 						return diff.fAncestorPos.offset;
 					break;
-				case 'L':
+				case LEFT_ELEMENT:
 					if (diff.fLeftPos != null)
 						return diff.fLeftPos.offset;
 					break;
-				case 'R':
+				case RIGHT_ELEMENT:
 					if (diff.fRightPos != null)
 						return diff.fRightPos.offset;
 					break;
@@ -1985,182 +2218,18 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		if (cp instanceof MergeViewerContentProvider) {
 			MergeViewerContentProvider mcp= (MergeViewerContentProvider) cp;
 			switch (type) {
-			case 'A':
+			case ANCESTOR_ELEMENT:
 				mcp.setAncestorError(message);
 				break;
-			case 'L':
+			case LEFT_ELEMENT:
 				mcp.setLeftError(message);
 				break;
-			case 'R':
+			case RIGHT_ELEMENT:
 				mcp.setRightError(message);
 				break;
 			}
 		}
 		fHasErrors= true;
-	}
-	
-	/*
-	 * Returns true if a new Document could be installed.
-	 */
-	private boolean setDocument(MergeSourceViewer tp, char type, Object o, String encoding) {
-		
-		if (tp == null)
-			return false;
-				
-		IDocument newDoc= null;
-		Position range= null;
-
-		if (o instanceof IDocumentRange) {
-			newDoc= ((IDocumentRange)o).getDocument();
-			range= ((IDocumentRange)o).getRange();
-
-		} else if (o instanceof IDocument) {
-			newDoc= (IDocument) o;
-			
-		} else if (o instanceof IStreamContentAccessor) {
-			
-			newDoc= DocumentManager.get(o);
-			if (newDoc == null) {
-				
-				// If the content provider is a text content provider, attempt to obtain
-				// a shared document (i.e. file buffer)
-				if (canHaveSharedDocument()) {
-					IEditorInput key = getDocumentKey(o);
-					if (key != null) {
-						IDocumentProvider documentProvider = getCachedDocumentProvider(key);
-						if (documentProvider != null) {
-							// We've already connected and setup the document
-							newDoc = documentProvider.getDocument(key);
-						} else {
-							documentProvider = getDocumentProvider(o);
-							if (documentProvider != null) {
-								try {
-									// TODO What about the encoding
-									documentProvider.connect(key);
-									setCachedDocumentProvider(key,
-											documentProvider);
-									newDoc = documentProvider.getDocument(key);
-									updateDirtyState(key, documentProvider, type);
-								} catch (CoreException e) {
-									// Connection failed. Log the error and continue without a shared document
-									CompareUIPlugin.log(e);
-								}
-							}
-						}
-					}
-				}
-				
-				if (newDoc == null) {
-					IStreamContentAccessor sca= (IStreamContentAccessor) o;
-					String s= null;
-					if (encoding == null)
-						encoding= ResourcesPlugin.getEncoding();
-	
-					try {
-						s= Utilities.readString(sca.getContents(), encoding);
-					} catch (CoreException ex) {
-						setError(type, ex.getMessage());
-					}
-		
-					newDoc= new Document(s != null ? s : ""); //$NON-NLS-1$
-				}
-				DocumentManager.put(o, newDoc);
-				if (newDoc.getDocumentPartitioner() == null) {
-					IDocumentPartitioner partitioner= getDocumentPartitioner();
-					if (partitioner != null) {
-						newDoc.setDocumentPartitioner(partitioner);
-						partitioner.connect(newDoc);
-					}
-				}
-			}
-		} else if (o == null) {	// deletion on one side
-			
-			ITypedElement parent= getParent(type);	// we try to find an insertion position within the deletion's parent
-			
-			if (parent instanceof IDocumentRange) {
-				newDoc= ((IDocumentRange)parent).getDocument();
-				newDoc.addPositionCategory(IDocumentRange.RANGE_CATEGORY);
-				Object input= getInput();
-				range= getNewRange(type, input);
-				if (range == null) {
-					int pos= 0;
-					if (input instanceof ICompareInput)
-						pos= findInsertionPosition(type, (ICompareInput)input);
-					range= new Position(pos, 0);
-					try {
-						newDoc.addPosition(IDocumentRange.RANGE_CATEGORY, range);
-					} catch (BadPositionCategoryException ex) {
-						// silently ignored
-						if (DEBUG) System.out.println("BadPositionCategoryException: " + ex);	//$NON-NLS-1$
-					} catch (BadLocationException ex) {
-						// silently ignored
-						if (DEBUG) System.out.println("BadLocationException: " + ex);	//$NON-NLS-1$
-					}
-					addNewRange(type, input, range);
-				}
-			} else if (parent instanceof IDocument) {
-				newDoc= ((IDocumentRange)o).getDocument();
-			}
-		}
-
-		boolean enabled= true;
-		if (newDoc == null) {
-			//System.out.println("setDocument: create new Document");
-			newDoc= new Document(""); //$NON-NLS-1$
-			enabled= false;
-		}
-		
-		IDocument oldDoc= tp.getDocument();
-		
-		if (newDoc != oldDoc) {
-			
-			// got a new document
-			
-			unsetDocument(tp);
-			
-			if (newDoc != null) {
-				newDoc.addPositionCategory(IDocumentRange.RANGE_CATEGORY);
-				if (fPositionUpdater == null)
-					fPositionUpdater= new ChildPositionUpdater(IDocumentRange.RANGE_CATEGORY);
-				else
-					newDoc.removePositionUpdater(fPositionUpdater);
-				newDoc.addPositionUpdater(fPositionUpdater);
-			}
-
-			// install new document
-			if (newDoc != null) {
-						
-				tp.setRegion(range);
-				if (fSubDoc) {
-					if (range != null) {
-						IRegion r= normalizeDocumentRegion(newDoc, toRegion(range));
-						tp.setDocument(newDoc, r.getOffset(), r.getLength());
-					} else
-						tp.setDocument(newDoc);
-				} else
-					tp.setDocument(newDoc);
-								
-				tp.rememberDocument(newDoc);
-				newDoc.addDocumentListener(fDocumentListener);
-				//LeakTester.add(newDoc);
-			}
-			
-		} else {	// same document but different range
-			
-			tp.setRegion(range);
-			if (fSubDoc) {
-				if (range != null) {
-					IRegion r= normalizeDocumentRegion(newDoc, toRegion(range));
-					tp.setVisibleRegion(r.getOffset(), r.getLength());
-				} else
-					tp.resetVisibleRegion();
-			} else
-				tp.resetVisibleRegion();
-		}
-		
-		tp.setEnabled(enabled);
-
-		return enabled;
 	}
 
 	private boolean canHaveSharedDocument() {
@@ -2169,19 +2238,19 @@ public class TextMergeViewer extends ContentMergeViewer  {
 
 	private void updateDirtyState(IEditorInput key,
 			IDocumentProvider documentProvider, char type) {
-		if (type == 'L')
+		if (type == LEFT_ELEMENT)
 			setLeftDirty(documentProvider.canSaveDocument(key));
-		else if (type == 'R')
+		else if (type == RIGHT_ELEMENT)
 			setRightDirty(documentProvider.canSaveDocument(key));
 	}
 
 	private Position getNewRange(char type, Object input) {
 		switch (type) {
-		case 'A':
+		case ANCESTOR_ELEMENT:
 			return (Position) fNewAncestorRanges.get(input);
-		case 'L':
+		case LEFT_ELEMENT:
 			return (Position) fNewLeftRanges.get(input);
-		case 'R':
+		case RIGHT_ELEMENT:
 			return (Position) fNewRightRanges.get(input);
 		}
 		return null;
@@ -2189,13 +2258,13 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	
 	private void addNewRange(char type, Object input, Position range) {
 		switch (type) {
-		case 'A':
+		case ANCESTOR_ELEMENT:
 			fNewAncestorRanges.put(input, range);
 			break;
-		case 'L':
+		case LEFT_ELEMENT:
 			fNewLeftRanges.put(input, range);
 			break;
-		case 'R':
+		case RIGHT_ELEMENT:
 			fNewRightRanges.put(input, range);
 			break;
 		}
@@ -2239,7 +2308,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 				if (contents != null) {
 					byte[] bytes;
 					try {
-						bytes= contents.getBytes(left ? fLeftEncoding : fRightEncoding);
+						bytes= contents.getBytes(left ? fLeftLeg.getEncoding() : fRightLeg.getEncoding());
 					} catch(UnsupportedEncodingException ex) {
 						// use default encoding
 						bytes= contents.getBytes();
@@ -4467,14 +4536,14 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			
 			// TODO: How do we handle empty left or right
 			if (leftContent != null && getCompareConfiguration().isLeftEditable() && isLeftDirty()) {
-				if (hasSharedDocument(leftContent)) {
+				if (hasSharedDocument(fLeftLeg, leftContent)) {
 					if (saveSharedDocument(leftContent))
 						setLeftDirty(false);
 				}
 			}
 			
 			if (rightContent != null && getCompareConfiguration().isRightEditable() && isRightDirty()) {
-				if (hasSharedDocument(rightContent)) {
+				if (hasSharedDocument(fRightLeg, rightContent)) {
 					if (saveSharedDocument(rightContent))
 						setRightDirty(false);
 				}
@@ -4486,8 +4555,9 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		}
 	}
 	
-	private boolean hasSharedDocument(Object object) {
-		IEditorInput key = getDocumentKey(object);
+	private boolean hasSharedDocument(LegInfo legInfo, Object object) {
+		// TODO: Should confirm that object is element of leg
+		IEditorInput key = legInfo.getDocumentKey();
 		if (key != null) {
 			IDocumentProvider provider = getCachedDocumentProvider(key);
 			if (provider != null) {
@@ -4530,18 +4600,6 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		}
 	}
 	
-	/* package*/ IDocumentProvider getDocumentProvider(Object element) {
-		IDocumentProvider documentProvider = getCachedDocumentProvider(getDocumentKey(element));
-		if (documentProvider == null) {
-			IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
-			if (content instanceof ITextMergeViewerContentProvider) {
-				ITextMergeViewerContentProvider contentProvider = (ITextMergeViewerContentProvider) content;
-				return contentProvider.getDocumentProvider(element);
-			}
-		}
-		return documentProvider;
-	}
-	
 	/*
 	 * Return the cached document provider for the given input
 	 */
@@ -4554,15 +4612,6 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		Object old = fDocumentAccessors.put(key, documentProvider);
 		documentProvider.addElementStateListener(fDocumentProviderListener);
 		return old;
-	}
-	
-	/* package*/ IEditorInput getDocumentKey(Object element) {
-		IMergeViewerContentProvider content= (IMergeViewerContentProvider) getContentProvider();
-		if (content instanceof ITextMergeViewerContentProvider) {
-			ITextMergeViewerContentProvider contentProvider = (ITextMergeViewerContentProvider) content;
-			return contentProvider.getDocumentKey(element);
-		}
-		return null;
 	}
 	
 	protected final synchronized IDocumentManager getDocumentManager() {
