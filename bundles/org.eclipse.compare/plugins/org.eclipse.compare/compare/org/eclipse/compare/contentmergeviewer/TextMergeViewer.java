@@ -343,13 +343,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 				if (newDocument == null) {
 					newDocument = createDocument();
 					DocumentManager.put(fElement, newDocument);
-					if (newDocument.getDocumentPartitioner() == null) {
-						IDocumentPartitioner partitioner= this.viewer.getDocumentPartitioner();
-						if (partitioner != null) {
-							newDocument.setDocumentPartitioner(partitioner);
-							partitioner.connect(newDocument);
-						}
-					}
+					setupDocument(newDocument);
 				}
 			} else if (fElement == null) {	// deletion on one side
 				
@@ -4592,6 +4586,37 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		if (!(content instanceof ITextMergeViewerContentProvider) || isLeftDirty() || isRightDirty()) {
 			super.saveContent(oldInput);
 		}
+	}
+
+	/**
+	 * Setup the given document for use with this viewer. By default,
+	 * the partitioner returned from {@link #getDocumentPartitioner()}
+	 * is registered as the default partitioner for the document.
+	 * @param document the document to be set up
+	 */
+	protected void setupDocument(IDocument document) {
+		String partitioning = getDocumentPartitioning();
+		if (partitioning == null || !(document instanceof IDocumentExtension3)) {
+			if (document.getDocumentPartitioner() == null) {
+				IDocumentPartitioner partitioner= getDocumentPartitioner();
+				if (partitioner != null) {
+					document.setDocumentPartitioner(partitioner);
+					partitioner.connect(document);
+				}
+			}
+		} else {
+			IDocumentExtension3 ex3 = (IDocumentExtension3) document;
+			if (ex3.getDocumentPartitioner(partitioning) != null) {
+				IDocumentPartitioner partitioner= getDocumentPartitioner();
+				if (partitioner != null) {
+					ex3.setDocumentPartitioner(partitioning, partitioner);
+				}
+			}
+		}
+	}
+	
+	protected String getDocumentPartitioning() {
+		return null;
 	}
 	
 }

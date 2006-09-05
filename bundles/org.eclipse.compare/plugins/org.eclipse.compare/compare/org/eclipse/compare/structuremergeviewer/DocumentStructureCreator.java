@@ -87,8 +87,35 @@ public abstract class DocumentStructureCreator implements IStructureCreator2 {
 	 * in case the document is shared via a file buffer.
 	 * @param document a document
 	 */
-	protected abstract void setupDocument(IDocument document);
+	protected void setupDocument(IDocument document) {
+		String partitioning = getDocumentPartitioning();
+		if (partitioning == null || !(document instanceof IDocumentExtension3)) {
+			if (document.getDocumentPartitioner() == null) {
+				IDocumentPartitioner partitioner= getDocumentPartitioner();
+				if (partitioner != null) {
+					document.setDocumentPartitioner(partitioner);
+					partitioner.connect(document);
+				}
+			}
+		} else {
+			IDocumentExtension3 ex3 = (IDocumentExtension3) document;
+			if (ex3.getDocumentPartitioner(partitioning) != null) {
+				IDocumentPartitioner partitioner= getDocumentPartitioner();
+				if (partitioner != null) {
+					ex3.setDocumentPartitioner(partitioning, partitioner);
+				}
+			}
+		}
+	}
 	
+	protected IDocumentPartitioner getDocumentPartitioner() {
+		return null;
+	}
+
+	protected String getDocumentPartitioning() {
+		return null;
+	}
+
 	private IDocumentProvider getDocumentProvider(IEditorInput input) {
 		return DocumentProviderRegistry.getDefault().getDocumentProvider(input);
 	}
