@@ -10,17 +10,9 @@
  *******************************************************************************/
 package org.eclipse.compare.internal;
 
-import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.IEditableContent;
-import org.eclipse.compare.ISharedDocumentAdapter;
-import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.*;
 import org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider;
-import org.eclipse.compare.structuremergeviewer.ICompareInput;
-import org.eclipse.compare.structuremergeviewer.IDiffContainer;
-import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.text.IDocument;
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.IEditorInput;
@@ -41,6 +33,7 @@ public class MergeViewerContentProvider implements ITextMergeViewerContentProvid
 	private String fAncestorError;
 	private String fLeftError;
 	private String fRightError;
+	private Viewer fViewer;
 		
 	public MergeViewerContentProvider(CompareConfiguration cc) {
 		fCompareConfiguration= cc;
@@ -55,7 +48,7 @@ public class MergeViewerContentProvider implements ITextMergeViewerContentProvid
 	}
 	
 	public void inputChanged(Viewer v, Object o1, Object o2) {
-		// we are not interested since we have no state
+		this.fViewer = v;
 	}
 	
 	//---- ancestor
@@ -213,6 +206,8 @@ public class MergeViewerContentProvider implements ITextMergeViewerContentProvid
 	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#getDocumentKey(java.lang.Object)
 	 */
 	public IEditorInput getDocumentKey(Object element) {
+		if (element == null)
+			return null;
 		IEditorInput input = (IEditorInput)Utilities.getAdapter(element, IEditorInput.class);
 		if (input != null)
 			return input;
@@ -220,9 +215,27 @@ public class MergeViewerContentProvider implements ITextMergeViewerContentProvid
 		if (sda != null) {
 			return sda.getDocumentKey(element);
 		}
+		Object viewerInput = fViewer.getInput();
+		if (viewerInput instanceof ICompareInput) {
+			ICompareInput ci = (ICompareInput) viewerInput;
+			char leg = getLeg(ci, element);
+			if (leg != 0)
+				return new ThreeWayTypedElementEditorInput(ci, leg);
+		}
 		return null;
 	}
 	
+	private char getLeg(ICompareInput ci, Object element) {
+		// TODO should pass leg to content provider instead of calculation
+		if (ci.getLeft() == element)
+			return LEFT_ELEMENT;
+		if (ci.getRight() == element)
+			return RIGHT_ELEMENT;
+		if (ci.getAncestor() == element)
+			return ANCESTOR_ELEMENT;
+		return 0;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#getDocumentProvider(java.lang.Object)
 	 */
@@ -231,23 +244,6 @@ public class MergeViewerContentProvider implements ITextMergeViewerContentProvid
 		if (input != null)
 			return getDocumentProvider(input);
 		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#doSave(java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void doSave(Object element, IProgressMonitor monitor) throws CoreException {
-		IEditorInput input = getDocumentKey(element);
-		IDocumentProvider provider = getDocumentProvider(input);
-		IDocument document = provider.getDocument(input);
-		if (document != null) {
-			try {
-				provider.aboutToChange(input);
-				provider.saveDocument(monitor, input, document, false);
-			} finally {
-				provider.changed(input);
-			}
-		}
 	}
 	
 	private IDocumentProvider getDocumentProvider(IEditorInput input) {

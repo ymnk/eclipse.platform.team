@@ -12,8 +12,7 @@ package org.eclipse.compare.internal;
 
 import java.io.*;
 
-import org.eclipse.compare.*;
-import org.eclipse.compare.structuremergeviewer.ICompareInput;
+import org.eclipse.compare.ITypedElement;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -46,9 +45,9 @@ public class TypedElementDocumentProvider extends AbstractDocumentProvider {
 	 * @see org.eclipse.ui.texteditor.AbstractDocumentProvider#createDocument(java.lang.Object)
 	 */
 	protected IDocument createDocument(Object element) throws CoreException {
-		if (element instanceof TypedElementEditorInput) {
+		if (element instanceof AbstractTypedElementEditorInput) {
 			IDocument document= createEmptyDocument();
-			if (setDocumentContent(document, (TypedElementEditorInput) element)) {
+			if (setDocumentContent(document, (AbstractTypedElementEditorInput) element)) {
 				setupDocument(element, document);
 				return document;
 			}
@@ -59,29 +58,9 @@ public class TypedElementDocumentProvider extends AbstractDocumentProvider {
 
 	protected void doSaveDocument(IProgressMonitor monitor, Object element,
 			IDocument document, boolean overwrite) throws CoreException {
-		// TODO: Code is copied from ContentMergeViewer but will only be usable by TextMergeViewers.
-		// We should generalize the code and put it in a place that is accessible from both code paths
-		if (element instanceof TypedElementEditorInput) {
-			TypedElementEditorInput editorInput = (TypedElementEditorInput) element;
-			ICompareInput compareInput= editorInput.getCompareInput();
-			byte[] bytes;
-			try {
-				bytes = document.get().getBytes(getEncoding(element));
-			} catch (UnsupportedEncodingException e) {
-				CompareUIPlugin.log(e);
-				bytes = document.get().getBytes();
-			}
-			ITypedElement typedElement= editorInput.getTypedElement();
-			if (typedElement == null) {
-				// If there is no element on target side, copy the element from the other side
-				compareInput.copy(!editorInput.isLeft());
-				typedElement= editorInput.getTypedElement();
-			}
-			if (typedElement instanceof IEditableContent)
-				((IEditableContent)typedElement).setContent(bytes);
-			// TODO: I would like to removed the following hack if possible
-			if (compareInput instanceof ResourceCompareInput.MyDiffNode)
-				((ResourceCompareInput.MyDiffNode)compareInput).fireChange();		
+		if (element instanceof AbstractTypedElementEditorInput) {
+			AbstractTypedElementEditorInput editorInput = (AbstractTypedElementEditorInput) element;
+			editorInput.doSave(document, monitor);
 		}
 	}
 
@@ -93,8 +72,8 @@ public class TypedElementDocumentProvider extends AbstractDocumentProvider {
 	}
 	
 	private String getEncoding(Object element) {
-		if (element instanceof TypedElementEditorInput) {
-			TypedElementEditorInput editorInput = (TypedElementEditorInput) element;
+		if (element instanceof AbstractTypedElementEditorInput) {
+			AbstractTypedElementEditorInput editorInput = (AbstractTypedElementEditorInput) element;
 			String encoding = editorInput.getEncoding();
 			if (encoding != null)
 				return encoding;
@@ -123,7 +102,7 @@ public class TypedElementDocumentProvider extends AbstractDocumentProvider {
 	 * @return <code>true</code> if the document content could be set, <code>false</code> otherwise
 	 * @throws CoreException if the given editor input cannot be accessed
 	 */
-	private boolean setDocumentContent(IDocument document, TypedElementEditorInput editorInput) throws CoreException {
+	private boolean setDocumentContent(IDocument document, AbstractTypedElementEditorInput editorInput) throws CoreException {
 		InputStream stream= editorInput.getContents();
 		if (stream == null)
 			return false;

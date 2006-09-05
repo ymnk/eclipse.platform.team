@@ -11,8 +11,6 @@
 package org.eclipse.compare.contentmergeviewer;
 
 import org.eclipse.compare.ITypedElement;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.texteditor.DocumentProviderRegistry;
 import org.eclipse.ui.texteditor.IDocumentProvider;
@@ -24,6 +22,7 @@ import org.eclipse.ui.texteditor.IDocumentProvider;
  * <p>
  * This interface may be implemented by clients.
  * TODO: Should we make an abstract class available?
+ * TODO: Or should we make this internal at least to begin with?
  * 
  * @since 3.3
  */
@@ -50,13 +49,4 @@ public interface ITextMergeViewerContentProvider extends IMergeViewerContentProv
 	 */
 	IDocumentProvider getDocumentProvider(Object element);
 	
-	/**
-	 * Save the document for the given element. The document will
-	 * be retrieved from the document provider returned from the 
-	 * {@link #getDocumentProvider(Object)} method for the given element.
-	 * @param element the element
-	 * @param monitor a progress monitor
-	 * @throws CoreException 
-	 */
-	void doSave(Object element, IProgressMonitor monitor) throws CoreException;
 }

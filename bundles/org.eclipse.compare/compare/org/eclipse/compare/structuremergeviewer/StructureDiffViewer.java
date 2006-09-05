@@ -12,9 +12,11 @@ package org.eclipse.compare.structuremergeviewer;
 
 import org.eclipse.compare.*;
 import org.eclipse.compare.internal.*;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.ui.services.IDisposable;
 
 
 /**
@@ -42,7 +44,6 @@ public class StructureDiffViewer extends DiffTreeViewer {
 	private IDiffContainer fRoot;
 	private IContentChangeListener fContentChangedListener;
 	private CompareViewerSwitchingPane fParent;
-	private DocumentManager fDocumentManager;
 	
 	/*
 	 * A helper class for holding the input and generated structure
@@ -59,10 +60,15 @@ public class StructureDiffViewer extends DiffTreeViewer {
 					((IContentChangeNotifier)fInput).removeContentChangeListener(fContentChangedListener);
 				fInput= newInput;
 				if (fInput != null) {
-					fStructureComparator= createStructure(fInput);
+					refresh();
 					changed= true;
-				} else
+				} else {
+					if (fStructureComparator instanceof IDisposable) {
+						IDisposable disposable = (IDisposable) fStructureComparator;
+						disposable.dispose();
+					}
 					fStructureComparator= null;
+				}
 				if (fInput instanceof IContentChangeNotifier)
 					((IContentChangeNotifier)fInput).addContentChangeListener(fContentChangedListener);
 			}
@@ -74,19 +80,36 @@ public class StructureDiffViewer extends DiffTreeViewer {
 		}
 
 		public void refresh() {
-			fStructureComparator= createStructure(fInput);
+			IStructureComparator oldComparator = fStructureComparator;
+			fStructureComparator= createStructure();
+			// Dispose of the old one after in case they are using a shared document
+			if (oldComparator instanceof IDisposable) {
+				IDisposable disposable = (IDisposable) oldComparator;
+				disposable.dispose();
+			}
 		}
 
 		public Object getInput() {
 			return fInput;
 		}
 		
-		private IStructureComparator createStructure(Object element) {
-			if (fStructureCreator instanceof ITextStructureCreator) {
-				ITextStructureCreator sc2 = (ITextStructureCreator) fStructureCreator;
-				return sc2.getStructure(element, getDocumentManager());
+		private IStructureComparator createStructure() {
+			if (fStructureCreator instanceof IStructureCreator2) {
+				IStructureCreator2 sc2 = (IStructureCreator2) fStructureCreator;
+				try {
+					return sc2.createStructure(fInput);
+				} catch (CoreException e) {
+					CompareUIPlugin.log(e);
+				}
 			}
-			return fStructureCreator.getStructure(element);
+			return fStructureCreator.getStructure(fInput);
+		}
+
+		public void dispose() {
+			if (fStructureComparator instanceof IDisposable) {
+				IDisposable disposable = (IDisposable) fStructureComparator;
+				disposable.dispose();
+			}
 		}
 	}
 	
@@ -187,7 +210,6 @@ public class StructureDiffViewer extends DiffTreeViewer {
 	 */
 	protected void inputChanged(Object input, Object oldInput) {
 		if (input instanceof ICompareInput) {
-			//TODO: Should we disconnect from any old documents if they do not overlap with the documents of the new input?
 			compareInputChanged((ICompareInput) input);
 			if (input != oldInput)
 				initialSelection();
@@ -206,9 +228,6 @@ public class StructureDiffViewer extends DiffTreeViewer {
 		compareInputChanged(null);
 		
 		fContentChangedListener= null;
-		
-		if (fDocumentManager != null)
-			fDocumentManager.dispose();
 				
 		super.handleDispose(event);
 	}
@@ -390,12 +409,6 @@ public class StructureDiffViewer extends DiffTreeViewer {
 			fStructureCreator.save(
 							leftToRight ? fRightStructure.getStructureComparator() : fLeftStructure.getStructureComparator(),
 							leftToRight ? fRightStructure.getInput() : fLeftStructure.getInput());
-	}
-	
-	protected final synchronized IDocumentManager getDocumentManager() {
-		if (fDocumentManager == null)
-			fDocumentManager = new DocumentManager();
-		return fDocumentManager;
 	}
 }
 
