@@ -52,17 +52,17 @@ public class ThreeWayTypedElementEditorInput extends AbstractTypedElementEditorI
 	}
 	
 	public ITypedElement getTypedElement() {
-		if (leg == MergeViewerContentProvider.LEFT_ELEMENT)
+		if (leg == MergeViewerContentProvider.LEFT_CONTRIBUTOR)
 			return compareInput.getLeft();
-		if (leg == MergeViewerContentProvider.RIGHT_ELEMENT)
+		if (leg == MergeViewerContentProvider.RIGHT_CONTRIBUTOR)
 			return compareInput.getRight();
-		if (leg == MergeViewerContentProvider.ANCESTOR_ELEMENT)
+		if (leg == MergeViewerContentProvider.ANCESTOR_CONTRIBUTOR)
 			return compareInput.getAncestor();
 		return null;
 	}
 	
 	public ITypedElement getOtherElement() {
-		if (leg == MergeViewerContentProvider.LEFT_ELEMENT) {
+		if (leg == MergeViewerContentProvider.LEFT_CONTRIBUTOR) {
 			return compareInput.getRight();
 		}
 		return compareInput.getLeft();
@@ -91,7 +91,7 @@ public class ThreeWayTypedElementEditorInput extends AbstractTypedElementEditorI
 		if (typedElement == null) {
 			// If there is no element on target side, copy the element from the other side
 			// TODO: This can cause problems as it would change the hash code for this instance
-			compareInput.copy(getLeg() == MergeViewerContentProvider.RIGHT_ELEMENT);
+			compareInput.copy(getLeg() == MergeViewerContentProvider.RIGHT_CONTRIBUTOR);
 			typedElement= getTypedElement();
 		}
 		super.doSave(document, monitor);

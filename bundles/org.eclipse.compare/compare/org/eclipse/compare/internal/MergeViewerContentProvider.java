@@ -11,29 +11,25 @@
 package org.eclipse.compare.internal;
 
 import org.eclipse.compare.*;
-import org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider;
+import org.eclipse.compare.contentmergeviewer.IMergeViewerContentProvider;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.texteditor.DocumentProviderRegistry;
-import org.eclipse.ui.texteditor.IDocumentProvider;
 
 /**
  * Adapts any <code>ContentMergeViewer</code> to work on an <code>ICompareInput</code>
  * e.g. a <code>DiffNode</code>.
  */
-public class MergeViewerContentProvider implements ITextMergeViewerContentProvider {
+public class MergeViewerContentProvider implements IMergeViewerContentProvider {
 	
-	public static final char ANCESTOR_ELEMENT = 'A';
-	public static final char RIGHT_ELEMENT = 'R';
-	public static final char LEFT_ELEMENT = 'L';
+	public static final char ANCESTOR_CONTRIBUTOR = 'A';
+	public static final char RIGHT_CONTRIBUTOR = 'R';
+	public static final char LEFT_CONTRIBUTOR = 'L';
 	
 	private CompareConfiguration fCompareConfiguration;
 	private String fAncestorError;
 	private String fLeftError;
 	private String fRightError;
-	private Viewer fViewer;
 		
 	public MergeViewerContentProvider(CompareConfiguration cc) {
 		fCompareConfiguration= cc;
@@ -48,7 +44,7 @@ public class MergeViewerContentProvider implements ITextMergeViewerContentProvid
 	}
 	
 	public void inputChanged(Viewer v, Object o1, Object o2) {
-		this.fViewer = v;
+		// we are not interested since we have no state
 	}
 	
 	//---- ancestor
@@ -200,54 +196,6 @@ public class MergeViewerContentProvider implements ITextMergeViewerContentProvid
 				node.copy(true);
 			}		
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#getDocumentKey(java.lang.Object)
-	 */
-	public IEditorInput getDocumentKey(Object element) {
-		if (element == null)
-			return null;
-		IEditorInput input = (IEditorInput)Utilities.getAdapter(element, IEditorInput.class);
-		if (input != null)
-			return input;
-		ISharedDocumentAdapter sda = (ISharedDocumentAdapter)Utilities.getAdapter(element, ISharedDocumentAdapter.class, true);
-		if (sda != null) {
-			return sda.getDocumentKey(element);
-		}
-		Object viewerInput = fViewer.getInput();
-		if (viewerInput instanceof ICompareInput) {
-			ICompareInput ci = (ICompareInput) viewerInput;
-			char leg = getLeg(ci, element);
-			if (leg != 0)
-				return new ThreeWayTypedElementEditorInput(ci, leg);
-		}
-		return null;
-	}
-	
-	private char getLeg(ICompareInput ci, Object element) {
-		// TODO should pass leg to content provider instead of calculation
-		if (ci.getLeft() == element)
-			return LEFT_ELEMENT;
-		if (ci.getRight() == element)
-			return RIGHT_ELEMENT;
-		if (ci.getAncestor() == element)
-			return ANCESTOR_ELEMENT;
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.contentmergeviewer.ITextMergeViewerContentProvider#getDocumentProvider(java.lang.Object)
-	 */
-	public IDocumentProvider getDocumentProvider(Object element) {
-		IEditorInput input = getDocumentKey(element);
-		if (input != null)
-			return getDocumentProvider(input);
-		return null;
-	}
-	
-	private IDocumentProvider getDocumentProvider(IEditorInput input) {
-		return DocumentProviderRegistry.getDefault().getDocumentProvider(input);
 	}
 }
 
