@@ -62,5 +62,4 @@ public class DocumentManager {
 	public static void dump() {
 		if (DEBUG) System.out.println("DocumentManager: managed docs:" + fgValues.size());	//$NON-NLS-1$
 	}
-	
 }

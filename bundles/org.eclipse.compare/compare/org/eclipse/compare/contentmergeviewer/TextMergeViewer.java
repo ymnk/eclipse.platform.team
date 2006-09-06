@@ -979,7 +979,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	public TextMergeViewer(Composite parent, CompareConfiguration configuration) {
 		this(parent, SWT.NULL, configuration);
 	}
-
+	
 	/**
 	 * Creates a text merge viewer under the given parent control.
 	 *
@@ -1212,18 +1212,69 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	}
 	
 	/**
+	 * Setup the given document for use with this viewer. By default,
+	 * the partitioner returned from {@link #getDocumentPartitioner()}
+	 * is registered as the default partitioner for the document.
+	 * Subclasses that return a partitioner must also override 
+	 * {@link #getDocumentPartitioning()} if they wish to be able to use shared
+	 * documents (i.e. file buffers).
+	 * @param document the document to be set up
+	 * 
+	 * @since 3.3
+	 */
+	protected void setupDocument(IDocument document) {
+		String partitioning = getDocumentPartitioning();
+		if (partitioning == null || !(document instanceof IDocumentExtension3)) {
+			if (document.getDocumentPartitioner() == null) {
+				IDocumentPartitioner partitioner= getDocumentPartitioner();
+				if (partitioner != null) {
+					document.setDocumentPartitioner(partitioner);
+					partitioner.connect(document);
+				}
+			}
+		} else {
+			IDocumentExtension3 ex3 = (IDocumentExtension3) document;
+			if (ex3.getDocumentPartitioner(partitioning) != null) {
+				IDocumentPartitioner partitioner= getDocumentPartitioner();
+				if (partitioner != null) {
+					ex3.setDocumentPartitioner(partitioning, partitioner);
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Returns a document partitioner which is suitable for the underlying content type.
 	 * This method is only called if the input provided by the content provider is a
-	 * <code>IStreamContentAccessor</code> and an internal document must be created. This
+	 * <code>IStreamContentAccessor</code> and an internal document must be obtained. This
 	 * document is initialized with the partitioner returned from this method.
 	 * <p>
 	 * The <code>TextMergeViewer</code> implementation of this method returns 
 	 * <code>null</code>. Subclasses may reimplement to create a partitioner for a 
-	 * specific content type.
+	 * specific content type. Subclasses that do return a partitioner should also
+	 * return a partitioning from {@link #getDocumentPartitioning()} in order to make
+	 * use of shared documents (e.g. file buffers).
 	 *
 	 * @return a document partitioner, or <code>null</code>
 	 */
 	protected IDocumentPartitioner getDocumentPartitioner() {
+		return null;
+	}
+	
+	/**
+	 * Return the partitioning to which the partitioner returned from
+	 * {@link #getDocumentPartitioner()} is to be associated. Return <code>null</code>
+	 * only if partitioning is not needed or if the subclass
+	 * overrode {@link #setupDocument(IDocument)} directly.
+	 * By default, <code>null</code> is returned which means that shared 
+	 * documents that return a partitioner from {@link #getDocumentPartitioner()}
+	 * will not be able to use shared documents.
+	 * @see IDocumentExtension3
+	 * @return a partitioning
+	 * 
+	 * @since 3.3
+	 */
+	protected String getDocumentPartitioning() {
 		return null;
 	}
 	
@@ -1282,7 +1333,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 			fBirdsEyeCursor.dispose();
 			fBirdsEyeCursor= null;
 		}
-
+		
 		super.handleDispose(event);
   	}
   	  	  				 		
@@ -1868,7 +1919,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		}
 	}
 	
-	private ITypedElement getLeg(char type, Object input) {
+	ITypedElement getLeg(char type, Object input) {
 		if (input instanceof ICompareInput) {
 			switch (type) {
 			case ANCESTOR_CONTRIBUTOR:
@@ -1917,7 +1968,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		return null;
 	}
 	
-	private IDocument getDocument(char type, Object input) {
+	IDocument getDocument(char type, Object input) {
 		IDocument doc= getElementDocument(type, input);
 		if (doc != null)
 			return doc;
@@ -1932,7 +1983,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 	/*
 	 * Returns true if the given inputs map to the same documents
 	 */
-	private boolean sameDoc(char type, Object newInput, Object oldInput) {
+	boolean sameDoc(char type, Object newInput, Object oldInput) {
 		IDocument newDoc= getDocument(type, newInput);
 		IDocument oldDoc= getDocument(type, oldInput);
 		return newDoc == oldDoc;
@@ -2170,7 +2221,7 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		}
 	}
 	
-	private boolean isCurrentDiff(Diff diff) {
+	boolean isCurrentDiff(Diff diff) {
 		if (diff == null)
 			return false;
 		if (diff == fCurrentDiff)
@@ -4602,37 +4653,6 @@ public class TextMergeViewer extends ContentMergeViewer  {
 		if (!(content instanceof MergeViewerContentProvider) || isLeftDirty() || isRightDirty()) {
 			super.saveContent(oldInput);
 		}
-	}
-
-	/**
-	 * Setup the given document for use with this viewer. By default,
-	 * the partitioner returned from {@link #getDocumentPartitioner()}
-	 * is registered as the default partitioner for the document.
-	 * @param document the document to be set up
-	 */
-	protected void setupDocument(IDocument document) {
-		String partitioning = getDocumentPartitioning();
-		if (partitioning == null || !(document instanceof IDocumentExtension3)) {
-			if (document.getDocumentPartitioner() == null) {
-				IDocumentPartitioner partitioner= getDocumentPartitioner();
-				if (partitioner != null) {
-					document.setDocumentPartitioner(partitioner);
-					partitioner.connect(document);
-				}
-			}
-		} else {
-			IDocumentExtension3 ex3 = (IDocumentExtension3) document;
-			if (ex3.getDocumentPartitioner(partitioning) != null) {
-				IDocumentPartitioner partitioner= getDocumentPartitioner();
-				if (partitioner != null) {
-					ex3.setDocumentPartitioner(partitioning, partitioner);
-				}
-			}
-		}
-	}
-	
-	protected String getDocumentPartitioning() {
-		return null;
 	}
 	
 }
