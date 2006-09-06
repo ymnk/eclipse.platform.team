@@ -124,10 +124,11 @@ public abstract class DocumentStructureCreator implements IStructureCreator2 {
 			}
 		} else {
 			IDocumentExtension3 ex3 = (IDocumentExtension3) document;
-			if (ex3.getDocumentPartitioner(partitioning) != null) {
+			if (ex3.getDocumentPartitioner(partitioning) == null) {
 				IDocumentPartitioner partitioner= getDocumentPartitioner();
 				if (partitioner != null) {
 					ex3.setDocumentPartitioner(partitioning, partitioner);
+					partitioner.connect(document);
 				}
 			}
 		}
