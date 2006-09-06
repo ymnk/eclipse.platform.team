@@ -19,6 +19,14 @@ import org.eclipse.ui.services.IDisposable;
 import org.eclipse.ui.texteditor.DocumentProviderRegistry;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 
+/**
+ * An {@link IStructureCreator2} that attempts to use an {@link IDocumentProvider}
+ * to obtain a shared document for an {@link ITypedElement}.
+ * <p>
+ * Clients may subclass this class.
+ * 
+ * @since 3.3
+ */
 public abstract class DocumentStructureCreator implements IStructureCreator2 {
 
 	/* (non-Javadoc)
@@ -77,9 +85,26 @@ public abstract class DocumentStructureCreator implements IStructureCreator2 {
 		
 	}
 	
-	
-	protected abstract IStructureComparator createStructureComparator(Object input,
-			IDocument doc, IDisposable disposable) throws CoreException;
+	/**
+	 * Create an {@link IStructureComparator} for the given element using the
+	 * contents available in the given document. If the provided disposable is
+	 * not <code>null</code> then the {@link IStructureComparator} returned by
+	 * this method should also be an {@link IDisposable} which delegates the
+	 * dispose to the given disposable.
+	 * 
+	 * @param element
+	 *            the element
+	 * @param document
+	 *            the document that has the contents for the element
+	 * @param disposable
+	 *            a disposable that must be disposed when the returned
+	 *            {@link IStructureComparator} is no longer needed (or
+	 *            <code>null</code> if disposal is not needed).
+	 * @return a structure comparator
+	 * @throws CoreException
+	 */
+	protected abstract IStructureComparator createStructureComparator(Object element,
+			IDocument document, IDisposable disposable) throws CoreException;
 
 	/**
 	 * Setup the newly created document as appropriate. Any document partitioners
@@ -108,10 +133,24 @@ public abstract class DocumentStructureCreator implements IStructureCreator2 {
 		}
 	}
 	
+	/**
+	 * Return the partitioner to be associated with the document or
+	 * <code>null</code> is partitioning is not needed or if the subclass
+	 * overrode {@link #setupDocument(IDocument)} directly.
+	 * @return a partitioner
+	 */
 	protected IDocumentPartitioner getDocumentPartitioner() {
 		return null;
 	}
 
+	/**
+	 * Return the partitioning to which the partitioner returned from
+	 * {@link #getDocumentPartitioner()} is to be associated. Return <code>null</code>
+	 * only if partitioning is not needed or if the subclass
+	 * overrode {@link #setupDocument(IDocument)} directly.
+	 * @see IDocumentExtension3
+	 * @return a partitioning
+	 */
 	protected String getDocumentPartitioning() {
 		return null;
 	}

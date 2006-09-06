@@ -17,7 +17,7 @@ import org.eclipse.ui.texteditor.IDocumentProvider;
 
 /**
  * An <code>ISharedDocumentAdapter</code> is used to map an {@link ITypedElement} to
- * a shaered document for the purposes of editing.
+ * a shared document for the purposes of editing.
  * 
  * @since 3.3
  */
