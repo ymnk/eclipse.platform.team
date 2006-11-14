@@ -320,5 +320,13 @@ public class CVSFileHistory extends FileHistory {
 		} finally {
 			monitor.done();
 		}
+	}
+
+	public boolean isInitialized() {
+		return revisions != null;
+	}
+
+	public boolean isIncludeLocal() {
+		return includeLocalRevisions;
 	}		
 }

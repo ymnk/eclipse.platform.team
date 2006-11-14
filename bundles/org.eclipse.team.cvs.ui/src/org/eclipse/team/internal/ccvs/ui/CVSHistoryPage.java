@@ -1106,53 +1106,78 @@ public class CVSHistoryPage extends HistoryPage implements IAdaptable, IHistoryC
 			IStatus status = Status.OK_STATUS;
 			
 			if (fileHistory != null && !shutdown) {
-				//If fileHistory termintates in a bad way, try to fetch the local
+				//If fileHistory terminates in a bad way, try to fetch the local
 				//revisions only
+				boolean localFetched = false;
+				boolean needsUpdate = true;
+				if (!fileHistory.isInitialized() && fileHistory.isIncludeLocal()) {
+					// If this is the first refresh, show the local history before hitting the server
+					fileHistory.fetchLocalOnly(monitor);
+					updateTable();
+					localFetched = true;
+					needsUpdate = false;
+				}
 				try {
 					fileHistory.refresh(monitor);
+					needsUpdate = true;
 				} catch (TeamException ex) {
-					fileHistory.fetchLocalOnly(monitor);
+					if (!localFetched) {
+						fileHistory.fetchLocalOnly(monitor);
+						needsUpdate = true;
+					}
 					status = new CVSStatus(ex.getStatus().getSeverity(), ex.getStatus().getCode(), ex.getMessage(), ex);
 				}
+				if (needsUpdate)
+					updateTable();
+			}
 
-				if (grouping)
-					revisionsFound = sortRevisions();
+			if (status != Status.OK_STATUS ) {
+				this.setProperty(IProgressConstants.KEEP_PROPERTY, Boolean.TRUE);
+				this.setProperty(IProgressConstants.NO_IMMEDIATE_ERROR_PROMPT_PROPERTY, Boolean.TRUE);
+			}
+			
+			return status;
+		}
 
-				Utils.asyncExec(new Runnable() {
-					public void run() {
-						historyTableProvider.setLocalRevisionsDisplayed(fileHistory.getIncludesExists());
-						historyTableProvider.setFile(fileHistory, workspaceFile);
-						//historyTableProvider.setWorkspaceFile(workspaceFile);
-						if (!selectOnly){
-							if (grouping) {
-								mapExpandedElements(treeViewer.getExpandedElements());
-								treeViewer.getTree().setLinesVisible(revisionsFound);
-								treeViewer.getTree().setRedraw(false);
-								treeViewer.setInput(categories);
-								//if user is switching modes and already has expanded elements
-								//selected try to expand those, else expand all
-								if (elementsToExpand.length > 0)
-									treeViewer.setExpandedElements(elementsToExpand);
-								else {
-									treeViewer.expandAll();
-									Object[] el = treeViewer.getExpandedElements();
-									if (el != null && el.length > 0) {
-										treeViewer.setSelection(new StructuredSelection(el[0]));
-										treeViewer.getTree().deselectAll();
-									}
-								}
-								treeViewer.getTree().setRedraw(true);
-							} else {
-								if (fileHistory.getFileRevisions().length > 0) {
-									treeViewer.getTree().setLinesVisible(true);
-									treeViewer.setInput(fileHistory);
-								} else {
-									categories = new AbstractHistoryCategory[] {getErrorMessage()};
-									treeViewer.getTree().setLinesVisible(false);
-									treeViewer.setInput(categories);
+		private void updateTable() {
+			if (grouping)
+				revisionsFound = sortRevisions();
+			
+			Utils.asyncExec(new Runnable() {
+				public void run() {
+					historyTableProvider.setLocalRevisionsDisplayed(fileHistory.getIncludesExists());
+					historyTableProvider.setFile(fileHistory, workspaceFile);
+					//historyTableProvider.setWorkspaceFile(workspaceFile);
+					if (!selectOnly){
+						if (grouping) {
+							mapExpandedElements(treeViewer.getExpandedElements());
+							treeViewer.getTree().setLinesVisible(revisionsFound);
+							treeViewer.getTree().setRedraw(false);
+							treeViewer.setInput(categories);
+							//if user is switching modes and already has expanded elements
+							//selected try to expand those, else expand all
+							if (elementsToExpand.length > 0)
+								treeViewer.setExpandedElements(elementsToExpand);
+							else {
+								treeViewer.expandAll();
+								Object[] el = treeViewer.getExpandedElements();
+								if (el != null && el.length > 0) {
+									treeViewer.setSelection(new StructuredSelection(el[0]));
+									treeViewer.getTree().deselectAll();
 								}
 							}
+							treeViewer.getTree().setRedraw(true);
+						} else {
+							if (fileHistory.getFileRevisions().length > 0) {
+								treeViewer.getTree().setLinesVisible(true);
+								treeViewer.setInput(fileHistory);
+							} else {
+								categories = new AbstractHistoryCategory[] {getErrorMessage()};
+								treeViewer.getTree().setLinesVisible(false);
+								treeViewer.setInput(categories);
+							}
 						}
+					}
 						//Update the history (if it exists) to reflect the new
 						//counts
 						if (historyFilter != null){
@@ -1178,14 +1203,6 @@ public class CVSHistoryPage extends HistoryPage implements IAdaptable, IHistoryC
 					}
 				}, treeViewer);
 			}
-
-			if (status != Status.OK_STATUS ) {
-				this.setProperty(IProgressConstants.KEEP_PROPERTY, Boolean.TRUE);
-				this.setProperty(IProgressConstants.NO_IMMEDIATE_ERROR_PROMPT_PROPERTY, Boolean.TRUE);
-			}
-			
-			return status;
-		}
 
 		private void mapExpandedElements(Object[] expandedElements) {
 			//store the names of the currently expanded categories in a map
