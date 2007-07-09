@@ -581,10 +581,24 @@ public class EditionSelectionDialog extends ResizableDialog {
 		if (format == null)
 			format= "x{0}"; //$NON-NLS-1$
 		
-		return MessageFormat.format(format, new Object[] { target.getName() });
+		return formatString(format, target.getName());
+	}
+
+	private String formatString(String string, String variable) {
+		if (hasVariable(string) || hasDoubleQuotes(string))
+			return MessageFormat.format(string, new Object[] { variable });
+		return string;
 	}
 	
- 	/**
+ 	private boolean hasDoubleQuotes(String string) {
+		return string.indexOf("''") != -1; //$NON-NLS-1$
+	}
+
+	private boolean hasVariable(String string) {
+		return string.indexOf("{0}") != -1; //$NON-NLS-1$
+	}
+
+	/**
  	 * Returns a label for identifying the edition side of a compare viewer.
  	 * This implementation extracts the value for the key "editionLabel" from the resource bundle
  	 * and passes it as the format argument to <code>MessageFormat.format</code>.
@@ -616,7 +630,7 @@ public class EditionSelectionDialog extends ResizableDialog {
 			date= DateFormat.getDateTimeInstance().format(new Date(modDate));
 		}
 		
-		return MessageFormat.format(format, new Object[] { date });
+		return formatString(format, date);
 	}
 	
  	/**
@@ -646,7 +660,7 @@ public class EditionSelectionDialog extends ResizableDialog {
 			format= "x{0}"; //$NON-NLS-1$
 
 		String ds= DateFormat.getTimeInstance().format(date);
-		return MessageFormat.format(format, new Object[] { ds });
+		return formatString(format, ds);
 	}
 	
  	/**
