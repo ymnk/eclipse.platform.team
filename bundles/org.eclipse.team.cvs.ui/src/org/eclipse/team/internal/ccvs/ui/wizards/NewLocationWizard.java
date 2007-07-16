@@ -32,8 +32,8 @@ import org.eclipse.ui.*;
 
 public class NewLocationWizard extends Wizard implements INewWizard {
 	
-	private ConfigurationWizardMainPage mainPage;
-	private Properties properties = null;
+	protected ConfigurationWizardMainPage mainPage;
+	protected Properties properties = null;
 	private boolean switchPerspectives = true;
 	
 	/**
