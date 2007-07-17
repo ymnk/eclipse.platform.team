@@ -14,6 +14,7 @@ import org.eclipse.compare.*;
 import org.eclipse.compare.internal.Utilities;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -326,6 +327,12 @@ public abstract class LocalResourceSaveableComparison extends SaveableComparison
 			if (fileElement instanceof LocalResourceTypedElement) {
 				LocalResourceTypedElement lrte = (LocalResourceTypedElement) fileElement;
 				return new FileEditorInput((IFile)lrte.getResource());
+			}
+		}
+		if (adapter == IResource.class || adapter == IFile.class) {
+			if (fileElement instanceof LocalResourceTypedElement) {
+				LocalResourceTypedElement lrte = (LocalResourceTypedElement) fileElement;
+				return lrte.getResource();
 			}
 		}
 		return super.getAdapter(adapter);
