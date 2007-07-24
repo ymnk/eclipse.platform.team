@@ -327,9 +327,9 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.eclipse.team.internal.ccvs.core.IUserAuthenticator#promptForAlternativeRepository(java.util.Map)
+	 * @see org.eclipse.team.internal.ccvs.core.IUserAuthenticator#promptToConfigureRepositoryLocations(java.util.Map)
 	 */
-	public Map promptForAlternativeRepository(final Map alternativeMap) {
+	public Map promptToConfigureRepositoryLocations(final Map alternativeMap) {
 		final Map[] result = new Map[1];
 		Display display = Display.getCurrent();
 		if (display != null) {
@@ -353,7 +353,7 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 	 *         when canceled.
 	 */
 	private Map openAlternativeRepositoryDialog(Map alternativeMap) {
-		AlternativeRepositoryDialog dialog = new AlternativeRepositoryDialog(
+		ConfigureRepositoryLocationsDialog dialog = new ConfigureRepositoryLocationsDialog(
 				null, alternativeMap);
 		int result = dialog.open();
 		return result == IDialogConstants.CANCEL_ID ? null : dialog

@@ -349,14 +349,14 @@ public class CVSUIMessages extends NLS {
 	public static String CommitWizardFileTypePage_2;
 	public static String CommitWizardFileTypePage_3;
 	
-	public static String AlternativeRepositoryWizard_title;
-	public static String AlternativeRepositoryWizard_message;
-	public static String AlternativeRepositoryWizard_createLocation;
-	public static String AlternativeRepositoryWizard_createLocationTooltip;
-	public static String AlternativeRepositoryWizard_column0;
-	public static String AlternativeRepositoryWizard_column1;
-	public static String AlternativeRepositoryWizard_showConnection;
-	public static String AlternativeRepositoryWizardDialog_finish;
+	public static String ConfigureRepositoryLocationsWizard_title;
+	public static String ConfigureRepositoryLocationsWizard_message;
+	public static String ConfigureRepositoryLocationsWizard_createLocation;
+	public static String ConfigureRepositoryLocationsWizard_createLocationTooltip;
+	public static String ConfigureRepositoryLocationsWizard_column0;
+	public static String ConfigureRepositoryLocationsWizard_column1;
+	public static String ConfigureRepositoryLocationsWizard_showConnection;
+	public static String ConfigureRepositoryLocationsWizardDialog_finish;
 	
 
 	public static String CommitSyncAction_questionRelease;

@@ -25,7 +25,7 @@ import org.eclipse.team.internal.ccvs.core.CVSProjectSetCapability;
 import org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 
-public class AlternativeRepositoryTable implements ICellModifier,
+public class ConfigureRepositoryLocationsTable implements ICellModifier,
 		IStructuredContentProvider, ITableLabelProvider {
 
 	private static final class AlternativeRepositoryComparator extends
@@ -105,14 +105,14 @@ public class AlternativeRepositoryTable implements ICellModifier,
 
 	private boolean fNoDuplicateRepositoryLocationFound;
 
-	public AlternativeRepositoryTable(Map alternativesMap) {
+	public ConfigureRepositoryLocationsTable(Map alternativesMap) {
 		fAlternatives = new ArrayList();
 		Set checkSet = new HashSet();
 		for (Iterator iterator = alternativesMap.entrySet().iterator(); iterator
 				.hasNext();) {
 			Map.Entry entry = (Map.Entry) iterator.next();
 			fAlternatives
-					.add(new AlternativeRepositoryTable.RepositoryLocationItem(
+					.add(new ConfigureRepositoryLocationsTable.RepositoryLocationItem(
 							(ICVSRepositoryLocation) entry.getKey(),
 							(List) entry.getValue()));
 			fNoDuplicateRepositoryLocationFound = checkSet
@@ -147,7 +147,7 @@ public class AlternativeRepositoryTable implements ICellModifier,
 		final TableColumn projectSetRepositoryColumn = new TableColumn(table,
 				SWT.NONE, 0);
 		projectSetRepositoryColumn
-				.setText(CVSUIMessages.AlternativeRepositoryWizard_column0);
+				.setText(CVSUIMessages.ConfigureRepositoryLocationsWizard_column0);
 
 		/**
 		 * The 'Alternative repository locations' column
@@ -155,7 +155,7 @@ public class AlternativeRepositoryTable implements ICellModifier,
 		final TableColumn alternativeRepositoryColums = new TableColumn(table,
 				SWT.NONE, 1);
 		alternativeRepositoryColums
-				.setText(CVSUIMessages.AlternativeRepositoryWizard_column1);
+				.setText(CVSUIMessages.ConfigureRepositoryLocationsWizard_column1);
 
 		composite.addControlListener(new ControlAdapter() {
 			public void controlResized(ControlEvent e) {
@@ -365,7 +365,7 @@ public class AlternativeRepositoryTable implements ICellModifier,
 	public Map getSelected() {
 		Map map = new HashMap();
 		for (Iterator iterator = fAlternatives.iterator(); iterator.hasNext();) {
-			AlternativeRepositoryTable.RepositoryLocationItem rli = (AlternativeRepositoryTable.RepositoryLocationItem) iterator
+			ConfigureRepositoryLocationsTable.RepositoryLocationItem rli = (ConfigureRepositoryLocationsTable.RepositoryLocationItem) iterator
 					.next();
 			map.put(rli.location, rli.alternativeList.get(rli.selected));
 		}

@@ -28,10 +28,10 @@ import org.eclipse.team.internal.ccvs.core.connection.CVSRepositoryLocation;
 import org.eclipse.team.internal.ccvs.ui.wizards.AlternativeLocationWizard;
 import org.eclipse.ui.PlatformUI;
 
-public class AlternativeRepositoryDialog extends TitleAreaDialog {
+public class ConfigureRepositoryLocationsDialog extends TitleAreaDialog {
 
 	private Image dlgTitleImage;
-	private AlternativeRepositoryTable fAlternativeRepositoryTable;
+	private ConfigureRepositoryLocationsTable fConfigureRepositoryLocationsTable;
 
 	/**
 	 * Creates a new AlternativeRepositoryDialog.
@@ -45,10 +45,10 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 	 * @param message
 	 *            a message to display to the user
 	 */
-	public AlternativeRepositoryDialog(Shell parentShell, Map alternativesMap) {
+	public ConfigureRepositoryLocationsDialog(Shell parentShell, Map alternativesMap) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
-		fAlternativeRepositoryTable = new AlternativeRepositoryTable(
+		fConfigureRepositoryLocationsTable = new ConfigureRepositoryLocationsTable(
 				alternativesMap);
 	}
 
@@ -59,8 +59,8 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 	 */
 	protected Control createContents(Composite parent) {
 		Control contents = super.createContents(parent);
-		setTitle(CVSUIMessages.AlternativeRepositoryWizard_title);
-		setMessage(CVSUIMessages.AlternativeRepositoryWizard_message);
+		setTitle(CVSUIMessages.ConfigureRepositoryLocationsWizard_title);
+		setMessage(CVSUIMessages.ConfigureRepositoryLocationsWizard_message);
 		dlgTitleImage = CVSUIPlugin.getPlugin().getImageDescriptor(
 				ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION).createImage();
 		setTitleImage(dlgTitleImage);
@@ -79,7 +79,7 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 	 */
 	protected void configureShell(Shell shell) {
 		super.configureShell(shell);
-		shell.setText(CVSUIMessages.AlternativeRepositoryWizard_title);
+		shell.setText(CVSUIMessages.ConfigureRepositoryLocationsWizard_title);
 		// set F1 help
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(shell,
 				IHelpContextIds.ALTERNATIVE_REPOSITORY_DIALOG);
@@ -94,12 +94,10 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 		final Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout(2, false));
 
-		// TODO: help
-
 		GridData childData = new GridData(GridData.FILL_BOTH);
 		composite.setLayoutData(childData);
 
-		Composite table = fAlternativeRepositoryTable.createControl(composite);
+		Composite table = fConfigureRepositoryLocationsTable.createControl(composite);
 		GridData gridData = new GridData(GridData.VERTICAL_ALIGN_FILL);
 		gridData.horizontalSpan = 2;
 		gridData.horizontalAlignment = GridData.FILL;
@@ -109,30 +107,30 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 
 		final Button showMethodButton = new Button(composite, SWT.CHECK);
 		showMethodButton
-				.setText(CVSUIMessages.AlternativeRepositoryWizard_showConnection);
+				.setText(CVSUIMessages.ConfigureRepositoryLocationsWizard_showConnection);
 		showMethodButton.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event event) {
-				fAlternativeRepositoryTable
+				fConfigureRepositoryLocationsTable
 						.setShowConnectionMethod(showMethodButton
 								.getSelection());
 			}
 		});
-		showMethodButton.setEnabled(fAlternativeRepositoryTable
+		showMethodButton.setEnabled(fConfigureRepositoryLocationsTable
 				.noDuplicateRepositoryLocationFound());
-		showMethodButton.setSelection(!fAlternativeRepositoryTable
+		showMethodButton.setSelection(!fConfigureRepositoryLocationsTable
 				.noDuplicateRepositoryLocationFound());
 		showMethodButton.setLayoutData(new GridData(
 				GridData.HORIZONTAL_ALIGN_BEGINNING));
 
 		final Button createLocationButton = new Button(composite, SWT.PUSH);
 		createLocationButton
-				.setText(CVSUIMessages.AlternativeRepositoryWizard_createLocation);
+				.setText(CVSUIMessages.ConfigureRepositoryLocationsWizard_createLocation);
 		createLocationButton
-				.setToolTipText(CVSUIMessages.AlternativeRepositoryWizard_createLocationTooltip);
+				.setToolTipText(CVSUIMessages.ConfigureRepositoryLocationsWizard_createLocationTooltip);
 		createLocationButton.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event event) {
 
-				CVSRepositoryLocation selectedAlternativeRepository = fAlternativeRepositoryTable
+				CVSRepositoryLocation selectedAlternativeRepository = fConfigureRepositoryLocationsTable
 						.getSelectedAlternativeRepository();
 
 				Properties properties = new Properties();
@@ -155,22 +153,22 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 				AlternativeLocationWizard wizard = new AlternativeLocationWizard(
 						properties);
 				wizard.setSwitchPerspectives(false);
-				WizardDialog dialog = new AlternativeRepositoryWizardDialog(
+				WizardDialog dialog = new ConfigureRepositoryLocationsWizardDialog(
 						getShell(), wizard);
 				dialog.open();
 
 				ICVSRepositoryLocation location = wizard.getLocation();
 				if (location != null)
-					fAlternativeRepositoryTable
+					fConfigureRepositoryLocationsTable
 							.addAlternativeRepositoryToSelection(location);
 			}
 		});
-		createLocationButton.setEnabled(fAlternativeRepositoryTable
+		createLocationButton.setEnabled(fConfigureRepositoryLocationsTable
 				.getSelection().getFirstElement() != null);
 		createLocationButton.setLayoutData(new GridData(
 				GridData.HORIZONTAL_ALIGN_END));
 
-		fAlternativeRepositoryTable.getViewer().addSelectionChangedListener(
+		fConfigureRepositoryLocationsTable.getViewer().addSelectionChangedListener(
 				new ISelectionChangedListener() {
 					public void selectionChanged(SelectionChangedEvent event) {
 						IStructuredSelection sel = (IStructuredSelection) event
@@ -184,7 +182,7 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 	}
 
 	public Map getSelected() {
-		return fAlternativeRepositoryTable.getSelected();
+		return fConfigureRepositoryLocationsTable.getSelected();
 	}
 
 	/*
@@ -208,14 +206,14 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 	protected int getDialogBoundsStrategy() {
 		return DIALOG_PERSISTLOCATION | DIALOG_PERSISTSIZE;
 	}
-
+	
 	/**
 	 * This class is made only to change Wizard's default "Finish" button label
 	 * to "Create".
 	 */
-	private class AlternativeRepositoryWizardDialog extends WizardDialog {
+	private class ConfigureRepositoryLocationsWizardDialog extends WizardDialog {
 
-		public AlternativeRepositoryWizardDialog(Shell parentShell,
+		public ConfigureRepositoryLocationsWizardDialog(Shell parentShell,
 				IWizard newWizard) {
 			super(parentShell, newWizard);
 		}
@@ -223,7 +221,7 @@ public class AlternativeRepositoryDialog extends TitleAreaDialog {
 		protected Button createButton(Composite parent, int id, String label,
 				boolean defaultButton) {
 			if (id == IDialogConstants.FINISH_ID)
-				label = CVSUIMessages.AlternativeRepositoryWizardDialog_finish;
+				label = CVSUIMessages.ConfigureRepositoryLocationsWizardDialog_finish;
 			return super.createButton(parent, id, label, defaultButton);
 		}
 

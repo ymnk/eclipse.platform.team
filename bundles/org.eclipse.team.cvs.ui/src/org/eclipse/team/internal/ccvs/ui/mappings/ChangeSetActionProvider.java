@@ -352,7 +352,7 @@ public class ChangeSetActionProvider extends ResourceModelActionProvider {
 	}
 	
     protected void addChangeSets(IMenuManager manager) {
-        ChangeSet[] sets = getActiveChangeSetManager().getSortedSets();
+        ChangeSet[] sets = getActiveChangeSetManager().getSets();
         ISelection selection = getContext().getSelection();
         createChangeSet.selectionChanged(selection);
 		addToChangeSet.add(createChangeSet);

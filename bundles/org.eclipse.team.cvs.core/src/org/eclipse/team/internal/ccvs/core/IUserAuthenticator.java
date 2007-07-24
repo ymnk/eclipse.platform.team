@@ -141,12 +141,12 @@ public interface IUserAuthenticator {
 	 * 
 	 * @param alternativeMap
 	 *            a map of CVS repository locations form the project set (as
-	 *            keys) and a list of suggested alternative CVS repository
-	 *            locations (as values)
+	 *            keys) and a list of suggested alternative (known) CVS
+	 *            repository locations (as values)
 	 * @return a map of CVS repository locations from the project set (as keys)
 	 *         and confirmed CVS repository locations to be used during checkout
 	 *         (as values) or <code>null</code> if the operation is to be
 	 *         canceled
 	 */
-	public abstract Map promptForAlternativeRepository(Map alternativeMap);
+	public abstract Map promptToConfigureRepositoryLocations(Map alternativeMap);
 }

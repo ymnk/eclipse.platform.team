@@ -102,14 +102,11 @@ public class AlternativeLocationWizard extends NewLocationWizard {
 	 * Creates the wizard pages
 	 */
 	public void addPages() {
-		mainPage = new AlternativeConfigurationWizardMainPage("repositoryPage1", CVSUIMessages.AlternativeLocationWizard_heading, CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION)); //$NON-NLS-1$ 
-		if (properties != null) {
-			mainPage.setProperties(properties);
-		}
-		mainPage.setShowValidate(true);
-		mainPage.setDescription(CVSUIMessages.AlternativeLocationWizard_description); 
-		mainPage.setDialogSettings(getDialogSettings());
-		addPage(mainPage);
+		super.addPages();
+	}
+	
+	protected ConfigurationWizardMainPage createMainPage() {
+		return new AlternativeConfigurationWizardMainPage("repositoryPage1", CVSUIMessages.AlternativeLocationWizard_heading, CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION)); //$NON-NLS-1$
 	}
 	
 	public ICVSRepositoryLocation getLocation() {

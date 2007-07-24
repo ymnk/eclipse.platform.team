@@ -46,7 +46,7 @@ public class TestsUserAuthenticator implements IUserAuthenticator {
         return false;
     }
 
-	public Map promptForAlternativeRepository(Map alternativeMap) {
+	public Map promptToConfigureRepositoryLocations(Map alternativeMap) {
 		return null;
 	}
 }

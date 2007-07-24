@@ -15,8 +15,7 @@ package org.eclipse.team.internal.ccvs.core;
 import java.io.File;
 import java.net.URI;
 import java.util.*;
-
-import org.eclipse.core.resources.*;
+ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.MultiRule;
@@ -121,8 +120,8 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
  		if (projects == null)
  			return new IProject[0];
 
- 		Map alternativeMap = new HashMap();
-		if (isAdditionRepositoryInformationRequired(projects, infoMap, alternativeMap)) {
+ 		Map alternativeMap = isAdditionRepositoryInformationRequired(projects, infoMap);
+		if (!alternativeMap.isEmpty()) {
 			// display the dialog
 			Map alternativeRespositoriesMap = promptForAdditionRepositoryInformation(alternativeMap);
 			// replace repository location from a project load info with one from the prompter
@@ -605,14 +604,15 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 	 * @see org.eclipse.team.internal.ccvs.ui.AlternativeRepositoryTable
 	 * 
 	 * @param projects
-	 *            an array of project to check out
-	 * @param infoMap
-	 *            a mapping of project to project load information
-	 * @param alternativeMap
+	 *            an array of project to check out a mapping of project to
+	 *            project load information
 	 * 
-	 * Initially it's an empty map. When <code>true</code> is returned the map
-	 * will contain a mapping of a repository location (<code>ICVSRepositoryLocation</code>)
-	 * from the project set to a list of suggested, known repositories locations (<code>ICVSRepositoryLocation</code>)
+	 * @return a mapping of project to project load information
+	 * 
+	 * 
+	 * When non-empty map is returned it will contain a mapping of a repository
+	 * location (<code>ICVSRepositoryLocation</code>) from the project set
+	 * to a list of suggested, known repositories locations (<code>ICVSRepositoryLocation</code>)
 	 * to use. The list contains at least one element - a default location (same
 	 * as in the project set). It's always on the first position in the list.
 	 * It's possible that the repository location is known, but even then we
@@ -632,19 +632,16 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 	 * <li>other known locations - no particular order here neither</li>
 	 * </ul>
 	 * </p>
-	 * @return <code>false</code> when the project set file contains all
-	 *         required information or <code>true</code> when Alternative
-	 *         Repository dialog needs to be displayed.
-	 * 
-	 * 
+	 * An empty map is returned when the project set file contains all required
+	 * information.
 	 */
-	private static boolean isAdditionRepositoryInformationRequired(
-			IProject[] projects, final Map infoMap, Map alternativeMap) {
+	private static Map isAdditionRepositoryInformationRequired(
+			IProject[] projects, final Map infoMap) {
 		
 		List confirmedProjectsList = Arrays.asList(projects);
 		
 		if (infoMap == null)
-			return false;
+			return Collections.EMPTY_MAP;
 
 		Set projectSetRepositoryLocations = new HashSet();
 		for (Iterator iterator = infoMap.keySet().iterator(); iterator
@@ -658,12 +655,14 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 		
 		// none of projects from project sets is confirmed to overwrite
 		if (projectSetRepositoryLocations.isEmpty()) {
-			return false;
+			return Collections.EMPTY_MAP;
 		}
 		
 		List knownRepositories = Arrays.asList(KnownRepositories.getInstance()
 				.getRepositories());
-
+		
+		Map resultMap = new HashMap();
+		
 		if (knownRepositories.isEmpty()) {
 			// there are no known repositories so use repository location from
 			// the project set
@@ -673,7 +672,7 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 						.next();
 				ArrayList alternativeList = new ArrayList(1);
 				alternativeList.add(projectSetRepositoryLocation);
-				alternativeMap.put(projectSetRepositoryLocation,
+				resultMap.put(projectSetRepositoryLocation,
 						alternativeList);
 			}
 		} else if (!knownRepositories.containsAll(projectSetRepositoryLocations)) {
@@ -703,13 +702,13 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 				// repository is known.
 				alternativeList.add(0, projectSetRepositoryLocation);
 
-				alternativeMap.put(projectSetRepositoryLocation,
+				resultMap.put(projectSetRepositoryLocation,
 						alternativeList);
 			}
 		} // else { all repositories are known, we don't need to prompt for
 			// additional information }
 		
-		return !alternativeMap.isEmpty();
+		return resultMap;
 	}
 	
 	/**
@@ -730,6 +729,6 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 	
 	private Map promptForAdditionRepositoryInformation(Map alternativeMap) {
 		IUserAuthenticator authenticator = CVSRepositoryLocation.getAuthenticator();
-		return authenticator.promptForAlternativeRepository(alternativeMap);
+		return authenticator.promptToConfigureRepositoryLocations(alternativeMap);
 	}
 }
