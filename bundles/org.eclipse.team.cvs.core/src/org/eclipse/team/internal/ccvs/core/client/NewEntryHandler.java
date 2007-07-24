@@ -12,9 +12,7 @@ package org.eclipse.team.internal.ccvs.core.client;
 
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.ICVSFile;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.MutableResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 
@@ -49,7 +47,7 @@ public class NewEntryHandler extends ResponseHandler {
 		MutableResourceSyncInfo newInfo = fileInfo.cloneMutable();
 		newInfo.setEntryLine(entryLine);
 		// see bug 106876
-		if(newInfo.getTag() != null && !newInfo.getTag().getName().equals("TBASE")){ //$NON-NLS-1$
+		if(newInfo.getTag() != null && newInfo.getTag().getName().equals(CVSTag.BASE.getName())) { 
 			newInfo.setTag(fileInfo.getTag());
 		}
 		mFile.setSyncInfo(newInfo, ICVSFile.UNKNOWN);
