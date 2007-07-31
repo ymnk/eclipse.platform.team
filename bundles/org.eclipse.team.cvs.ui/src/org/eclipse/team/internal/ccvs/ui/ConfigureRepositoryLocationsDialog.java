@@ -194,8 +194,11 @@ public class ConfigureRepositoryLocationsDialog extends TitleAreaDialog {
 		String sectionName = getClass().getName() + "_dialogBounds"; //$NON-NLS-1$
 		IDialogSettings settings = CVSUIPlugin.getPlugin().getDialogSettings();
 		IDialogSettings section = settings.getSection(sectionName);
-		if (section == null)
+		if (section == null) {
 			section = settings.addNewSection(sectionName);
+			section.put("DIALOG_HEIGHT", 300); //$NON-NLS-1$
+			section.put("DIALOG_WIDTH", 600); //$NON-NLS-1$
+		}
 		return section;
 	}
 
