@@ -24,7 +24,7 @@ import org.eclipse.ui.*;
 /**
  * Abstract superclass for tree viewer advisors
  */
-public class AbstractTreeViewerAdvisor extends StructuredViewerAdvisor implements IAdaptable {
+public abstract class AbstractTreeViewerAdvisor extends StructuredViewerAdvisor implements IAdaptable {
 
 	private ICompareNavigator nav;
 	private INavigatable navigatable;
@@ -308,9 +308,6 @@ public class AbstractTreeViewerAdvisor extends StructuredViewerAdvisor implement
 			children = tree.getItems();
 			if (children != null && children.length > 0) {
 				item = children[0];
-				if (item != null && item.getItemCount() <= 0) {
-					return item;
-				}
 			}
 		}
 		return item;
