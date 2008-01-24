@@ -264,6 +264,10 @@ public class HunkResult implements IHunk {
 	public int getStartPosition() {
 		return fHunk.getStart(getConfiguration().isReversed()) + fShift;
 	}
+	
+	public int getEndPosition() {
+		return getStartPosition() + fHunk.getLength(getConfiguration().isReversed());
+	}
 
 	public String getLabel() {
 		return getHunk().getDescription();
@@ -286,5 +290,9 @@ public class HunkResult implements IHunk {
 
 	public String getCharset() {
 		return fDiffResult.getCharset();
+	}
+	
+	public int getFuzz() {
+		return fFuzz;
 	}
 }

@@ -77,6 +77,12 @@ public abstract class PatchCompareEditorInput extends CompareEditorInput {
 					if (hunkNode.isManuallyMerged()) {
 						text = NLS.bind(PatchMessages.Diff_2Args, new String[] {text, PatchMessages.HunkMergePage_Merged});
 					}
+					if (hunkNode.isFuzzUsed()) {
+						text = NLS.bind(PatchMessages.Diff_2Args,
+								new String[] { text, 
+								NLS.bind(hunkNode.isAllContextIgnored() ? PatchMessages.PreviewPatchPage_AllContextIgnored : PatchMessages.PreviewPatchPage_FuzzUsed,
+										new String[] { hunkNode.getHunkResult().getFuzz() + ""}) }); //$NON-NLS-1$
+					}
 				}
 				if (getPatcher().isRetargeted(node.getPatchElement()))	
 					return NLS.bind(PatchMessages.Diff_2Args, 
@@ -110,6 +116,7 @@ public abstract class PatchCompareEditorInput extends CompareEditorInput {
 	private final WorkspacePatcher patcher;
 	private TreeViewer viewer;
 	private boolean fShowAll;
+	private boolean showMatched = false;
 	
 	/**
 	 * Creates a new PatchCompareEditorInput and makes use of the passed in CompareConfiguration
@@ -232,6 +239,9 @@ public abstract class PatchCompareEditorInput extends CompareEditorInput {
 						}
 					});
 				}
+			} 
+			else if (showMatched) {
+				HunkDiffNode.createDiffNode(node, hunkResult, false, true, false);
 			}
 		}
 	}
@@ -253,8 +263,13 @@ public abstract class PatchCompareEditorInput extends CompareEditorInput {
 				IStructuredSelection sel= (IStructuredSelection) event.getSelection();
 				Object obj= sel.getFirstElement();
 				if (obj instanceof HunkDiffNode) {
-					getCompareConfiguration().setLeftLabel(PatchMessages.PreviewPatchPage2_PatchedLocalFile);
-					getCompareConfiguration().setRightLabel(PatchMessages.PreviewPatchPage2_OrphanedHunk);
+					if (((HunkDiffNode) obj).getHunkResult().isOK()) {
+						getCompareConfiguration().setLeftLabel(PatchMessages.PatcherCompareEditorInput_LocalCopy);
+						getCompareConfiguration().setRightLabel(PatchMessages.PreviewPatchPage2_MatchedHunk);
+					} else {
+						getCompareConfiguration().setLeftLabel(PatchMessages.PreviewPatchPage2_PatchedLocalFile);
+						getCompareConfiguration().setRightLabel(PatchMessages.PreviewPatchPage2_OrphanedHunk);
+					}
 				} else {
 					getCompareConfiguration().setLeftLabel(PatchMessages.PatcherCompareEditorInput_LocalCopy);
 					getCompareConfiguration().setRightLabel(PatchMessages.PatcherCompareEditorInput_AfterPatch);
@@ -285,6 +300,14 @@ public abstract class PatchCompareEditorInput extends CompareEditorInput {
 	
 	protected void setShowAll(boolean show) {
 		fShowAll = show;
+	}
+
+	public boolean isShowMatched() {
+		return showMatched;
+	}
+
+	protected void setShowMatched(boolean show) {
+		showMatched = show;
 	}
 
 	public void contributeDiffViewerToolbarItems(Action[] actions, boolean workspacePatch){

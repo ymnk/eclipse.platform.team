@@ -132,8 +132,10 @@ public abstract class CompareViewerSwitchingPane extends CompareViewerPane {
 			if (content != null && !content.isDisposed())
 				content.dispose();
 
-		} else
-			oldEmpty= false;			
+		} else {
+			oldEmpty= false;
+		}
+		
 		setContent(null);
 
 		fViewer= newViewer;

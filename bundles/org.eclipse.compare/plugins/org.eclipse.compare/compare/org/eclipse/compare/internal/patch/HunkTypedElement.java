@@ -37,15 +37,23 @@ public class HunkTypedElement implements ITypedElement, IEncodedStreamContentAcc
 	 * @see org.eclipse.compare.ITypedElement#getImage()
 	 */
 	public Image getImage() {
+		LocalResourceManager imageCache = PatchCompareEditorInput.getImageCache(fHunkResult.getDiffResult().getConfiguration());
+		ImageDescriptor imageDesc = CompareUIPlugin.getImageDescriptor(ICompareUIConstants.HUNK_OBJ);
+		Image image = imageCache.createImage(imageDesc);
 		if (!fHunkResult.isOK()) {
-			LocalResourceManager imageCache = PatchCompareEditorInput.getImageCache(fHunkResult.getDiffResult().getConfiguration());
-			return getHunkErrorImage(null, imageCache, false);
-		} 
-		return null;
+			return getHunkErrorImage(image, imageCache, true);
+		}  else if (fHunkResult.getFuzz()>0) {
+			return getHunkOverlayImage(image, imageCache, ICompareUIConstants.WARNING_OVERLAY, true);
+		}
+		return image;
 	}
 
 	public static Image getHunkErrorImage(Image baseImage, LocalResourceManager imageCache, boolean onLeft) {
-		ImageDescriptor desc = new DiffImageDescriptor(baseImage, CompareUIPlugin.getImageDescriptor(ICompareUIConstants.ERROR_OVERLAY), ICompareUIConstants.COMPARE_IMAGE_WIDTH, onLeft);
+		return getHunkOverlayImage(baseImage, imageCache, ICompareUIConstants.ERRORX_OVERLAY, onLeft);
+	}
+	
+	private static Image getHunkOverlayImage(Image baseImage, LocalResourceManager imageCache, String path, boolean onLeft) {
+		ImageDescriptor desc = new DiffImageDescriptor(baseImage, CompareUIPlugin.getImageDescriptor(path), ICompareUIConstants.COMPARE_IMAGE_WIDTH, onLeft);
 		Image image = imageCache.createImage(desc);
 		return image;
 	}
@@ -90,6 +98,8 @@ public class HunkTypedElement implements ITypedElement, IEncodedStreamContentAcc
 
 	public Object getAdapter(Class adapter) {
 		if (adapter == IHunk.class)
+			return fHunkResult;
+		if (adapter == HunkResult.class)
 			return fHunkResult;
 		return Platform.getAdapterManager().getAdapter(this, adapter);
 	}

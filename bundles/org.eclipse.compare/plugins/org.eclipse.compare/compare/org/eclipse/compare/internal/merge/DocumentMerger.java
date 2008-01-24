@@ -75,7 +75,8 @@ public class DocumentMerger {
 		boolean isPatchHunk();
 
 		boolean isShowPseudoConflicts();
-		
+
+		boolean isPatchHunkOk();
 	}
 	
 	public class Diff {
@@ -227,20 +228,6 @@ public class DocumentMerger {
 			return fResolved;
 		}
 		
-//		private boolean isIncoming() {
-//			switch (fDirection) {
-//			case RangeDifference.RIGHT:
-//				if (fLeftIsLocal)
-//					return true;
-//				break;
-//			case RangeDifference.LEFT:
-//				if (!fLeftIsLocal)
-//					return true;
-//				break;
-//			}
-//			return false;
-//		}
-		
 		public boolean isIncomingOrConflicting() {
 			switch (fDirection) {
 			case RangeDifference.RIGHT:
@@ -256,12 +243,6 @@ public class DocumentMerger {
 			}
 			return false;
 		}
-		
-//		private boolean isUnresolvedIncoming() {
-//			if (fResolved)
-//				return false;
-//			return isIncoming();
-//		}
 		
 		public boolean isUnresolvedIncomingOrConflicting() {
 			if (fResolved)
@@ -402,7 +383,8 @@ public class DocumentMerger {
 		DocLineComparator sancestor= null;
 		if (aDoc != null) {
 			sancestor= new DocLineComparator(aDoc, toRegion(aRegion), ignoreWhiteSpace);
-			if (isPatchHunk()) {
+			//XXX (tzarna): don't do this for hunks which are fine
+			if (isPatchHunk() /*&& !isPatchHunkOk()*/) {
 				if (isHunkOnLeft()) {
 					sright= new DocLineComparator(aDoc, toRegion(aRegion), ignoreWhiteSpace);
 				} else {
@@ -463,13 +445,22 @@ public class DocumentMerger {
 			
 			int rightStart= sright.getTokenStart(es.rightStart());
 			int rightEnd= getTokenEnd2(sright, es.rightStart(), es.rightLength());
-			
+
+			//XXX
 			if (isPatchHunk()) {
-				if (isHunkOnLeft()) {
-					rightStart = rightEnd = getHunkStart();
-				} else {
-					leftStart = leftEnd = getHunkStart();
-				}
+//				if (!isPatchHunkOk()) {
+					if (isHunkOnLeft()) {
+						rightStart = rightEnd = getHunkStart();
+					} else {
+						leftStart = leftEnd = getHunkStart();
+					}
+//				} else { // isOk
+//					if (isHunkOnLeft()) {
+//						leftStart = getHunkStart();
+//					} else {
+//						rightStart = getHunkStart();
+//					}
+//				}
 			}
 			
 			Diff diff= new Diff(null, es.kind(),
@@ -481,6 +472,20 @@ public class DocumentMerger {
 	
 			if (isPatchHunk()) {
 				if (useChange(diff)) {
+					//XXX record only diff related to the hunk
+//					if (isPatchHunkOk()) {
+//						int hunkStart = getHunkStart();
+//						int hunkEnd = getHunkEnd();
+//						if (isHunkOnLeft()) {
+//							int leftEndLine = es.leftStart()+es.leftLength();
+//							if ( leftEndLine <= hunkStart || es.leftStart() >= hunkEnd ) {
+//								continue; //don't record it
+//							}
+//						} else {
+//							if (es.rightStart()+es.rightLength() <= hunkStart)
+//								continue; //don't record it
+//						}
+//					}
 					recordChangeDiff(diff);
 				}
 			} else {
@@ -616,11 +621,19 @@ public class DocumentMerger {
 	private int getHunkStart() {
 		return fInput.getHunkStart();
 	}
-
+	
+//	private int getHunkEnd() {
+//		return fInput.getHunkEnd();
+//	}
+	
 	private boolean isPatchHunk() {
 		return fInput.isPatchHunk();
 	}
-
+	
+//	private boolean isPatchHunkOk() {
+//		return fInput.isPatchHunkOk();
+//	}
+	
 	private boolean isIgnoreWhitespace() {
 		return Utilities.getBoolean(getCompareConfiguration(), CompareConfiguration.IGNORE_WHITESPACE, false);
 	}

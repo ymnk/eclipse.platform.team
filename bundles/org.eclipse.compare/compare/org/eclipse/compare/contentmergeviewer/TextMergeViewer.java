@@ -25,6 +25,7 @@ import org.eclipse.compare.internal.*;
 import org.eclipse.compare.internal.merge.DocumentMerger;
 import org.eclipse.compare.internal.merge.DocumentMerger.Diff;
 import org.eclipse.compare.internal.merge.DocumentMerger.IDocumentMergerInput;
+import org.eclipse.compare.internal.patch.HunkResult;
 import org.eclipse.compare.patch.IHunk;
 import org.eclipse.compare.rangedifferencer.RangeDifference;
 import org.eclipse.compare.structuremergeviewer.*;
@@ -115,7 +116,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	
 	private static final String DIFF_RANGE_CATEGORY = CompareUIPlugin.PLUGIN_ID + ".DIFF_RANGE_CATEGORY"; //$NON-NLS-1$
 
-	static final boolean DEBUG= false;
+	static final boolean DEBUG= true;
 	
 	private static final boolean FIX_47640= true;
 	
@@ -1190,6 +1191,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			public boolean isThreeWay() {
 				return TextMergeViewer.this.isThreeWay();
+			}
+			public boolean isPatchHunkOk() {
+				return TextMergeViewer.this.isPatchHunkOk();
 			}
 			
 		});
@@ -2348,7 +2352,8 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fAncestorContributor.setDocument(fAncestor, false);
 		
 		//if the input is part of a patch hunk, toggle synchronized scrolling
-		if (isPatchHunk()){
+		//XXX (tzarna) use scrolling for hunk that are fine
+		if (isPatchHunk() /*&& !isPatchHunkOk()*/){
 			setSyncScrolling(false);
 		} else {
 			setSyncScrolling(fPreferenceStore.getBoolean(ComparePreferencePage.SYNCHRONIZE_SCROLLING));
@@ -4442,6 +4447,12 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		return Utilities.isHunk(getInput());
 	}
 	
+	private boolean isPatchHunkOk() {
+		if (isPatchHunk())
+			return Utilities.isHunkOk(getInput());
+		return false;
+	}
+	
 	/**
 	 * Return the provided start position of the hunk in the target file.
 	 * @return the provided start position of the hunk in the target file
@@ -4463,6 +4474,29 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 		return 0; 
+	}
+	
+	protected int getHunkEnd() {
+		Object input = getInput();
+		if (input != null && input instanceof DiffNode){
+			ITypedElement right = ((DiffNode) input).getRight();
+			if (right != null) {
+				Object element = Utilities.getAdapter(right, HunkResult.class);
+				if (element instanceof HunkResult) {
+					//XXX (tzarna) private>package
+					return ((HunkResult)element).getEndPosition();
+				}
+			}
+			ITypedElement left = ((DiffNode) input).getLeft();
+			if (left != null) {
+				Object element = Utilities.getAdapter(left, HunkResult.class);
+				if (element instanceof HunkResult) {
+					//XXX (tzarna) private>package
+					return ((HunkResult)element).getEndPosition();
+				}
+			}
+		}
+		return 0;
 	}
 	
 	private IFindReplaceTarget getFindReplaceTarget() {
