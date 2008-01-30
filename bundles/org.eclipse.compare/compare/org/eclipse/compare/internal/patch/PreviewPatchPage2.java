@@ -97,6 +97,7 @@ public class PreviewPatchPage2 extends WizardPage {
 	public void createControl(Composite parent) {
 		FormToolkit toolkit = new FormToolkit(parent.getDisplay());
 		toolkit.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+		
 		final ScrolledForm form = toolkit.createScrolledForm(parent);
 		Composite composite = form.getBody();
 		composite.setLayout(new GridLayout());
@@ -114,7 +115,7 @@ public class PreviewPatchPage2 extends WizardPage {
 			}
 		};
 		
-		buildPatchOptionsGroup(form);
+		buildPatchOptionsGroup(toolkit,form);
 		
 		// Initialize the input
 		try {
@@ -387,40 +388,36 @@ public class PreviewPatchPage2 extends WizardPage {
 	/*
 	 *	Create the group for setting various patch options
 	 */
-		private void buildPatchOptionsGroup(final ScrolledForm form) {
-			Composite parent = form.getBody();
+	private void buildPatchOptionsGroup(FormToolkit toolkit, final ScrolledForm form) {
+		Composite parent = form.getBody();
 			
-//			 		Group group= new Group(parent, SWT.NONE);
-//					group.setLayout(new GridLayout());
-//			 		group.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL|GridData.GRAB_HORIZONTAL));
-					
-					ExpandableComposite ec= new ExpandableComposite(parent, SWT.BORDER, ExpandableComposite.TWISTIE | ExpandableComposite.CLIENT_INDENT);
-					ec.setText(PatchMessages.PreviewPatchPage_PatchOptions_title);
-					ec.setExpanded(false);
-					ec.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT));
-					ec.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-					ec.addExpansionListener(new ExpansionAdapter() {
-						public void expansionStateChanged(ExpansionEvent e) {
-							form.reflow(true);
-						}
-					});
-					
-					Composite c = new Composite(ec, SWT.NONE);
-					ec.setClient(c);
-					GridLayout gl= new GridLayout(); gl.numColumns= 3;
-					c.setLayout(gl);
-					c.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL|GridData.GRAB_HORIZONTAL));
-			 
-			 		// 1st row
-					createStripSegmentCombo(c);
-					createShowMatchedToggle(c);
-					createFuzzFactorChooser(c);
-			 		
-			 		// 2nd row
-					createReversePatchToggle(c);
-					createShowRemovedToggle(c);
-					createGenerateRejectsToggle(c);
-			 		
+		ExpandableComposite ec = toolkit.createExpandableComposite(parent, ExpandableComposite.TWISTIE | ExpandableComposite.CLIENT_INDENT);
+		ec.setText(PatchMessages.PreviewPatchPage_PatchOptions_title);
+		ec.setExpanded(false);
+		ec.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT));
+		ec.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+		ec.addExpansionListener(new ExpansionAdapter() {
+			public void expansionStateChanged(ExpansionEvent e) {
+				form.reflow(true);
+			}
+		});
+
+		Composite c = new Composite(ec, SWT.NONE);
+		ec.setClient(c);
+		GridLayout gl= new GridLayout(); gl.numColumns= 3;
+		c.setLayout(gl);
+		c.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL|GridData.GRAB_HORIZONTAL));
+
+ 		// 1st row
+		createStripSegmentCombo(c);
+		createShowMatchedToggle(c);
+		createFuzzFactorChooser(c);
+
+ 		// 2nd row
+		createReversePatchToggle(c);
+		createShowRemovedToggle(c);
+		createGenerateRejectsToggle(c);
+
 		// register listeners
 		final WorkspacePatcher patcher= getPatcher();
 		if (fStripPrefixSegments!=null)
