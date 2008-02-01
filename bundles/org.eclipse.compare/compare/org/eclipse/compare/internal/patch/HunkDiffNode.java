@@ -19,8 +19,6 @@ public class HunkDiffNode extends PatchDiffNode {
 	private final HunkResult result;
 
 	public static HunkDiffNode createDiffNode(PatchFileDiffNode parent, HunkResult result, boolean fullContext) {
-//		return new HunkDiffNode(result, parent, Differencer.CHANGE, getAncestorElement(result, result.isOK()), getLeftElement(result, fullContext), getRightElement(result, fullContext));
-//		return createDiffNode(parent, result, result.isOK(), fullContext, fullContext);
 		return createDiffNode(parent, result, fullContext, fullContext, fullContext);
 	}
 	
@@ -34,17 +32,6 @@ public class HunkDiffNode extends PatchDiffNode {
 
 	private static ITypedElement getLeftElement(HunkResult result,
 			boolean fullContext) {
-/*		if (fullContext) {
-			if (!result.isOK()) {
-				return new UnmatchedHunkTypedElement(result);
-			}
-			// XXX (tzarna): temporarily use the class for unmatched hunk
-			return new UnmatchedHunkTypedElement(result) {
-				public boolean isEditable() {
-					return false;
-				}
-			};
-		}*/
 		if (fullContext && !result.isOK())
 			return new UnmatchedHunkTypedElement(result);
 		return new HunkTypedElement(result, false /* before state */, fullContext);

@@ -408,12 +408,12 @@ public class PreviewPatchPage2 extends WizardPage {
 		c.setLayout(gl);
 		c.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL|GridData.GRAB_HORIZONTAL));
 
- 		// 1st row
+		// 1st row
 		createStripSegmentCombo(c);
 		createShowMatchedToggle(c);
 		createFuzzFactorChooser(c);
 
- 		// 2nd row
+		// 2nd row
 		createReversePatchToggle(c);
 		createShowRemovedToggle(c);
 		createGenerateRejectsToggle(c);
