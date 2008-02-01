@@ -228,6 +228,20 @@ public class DocumentMerger {
 			return fResolved;
 		}
 		
+//		private boolean isIncoming() {
+//			switch (fDirection) {
+//			case RangeDifference.RIGHT:
+//				if (fLeftIsLocal)
+//					return true;
+//				break;
+//			case RangeDifference.LEFT:
+//				if (!fLeftIsLocal)
+//					return true;
+//				break;
+//			}
+//			return false;
+//		}
+		
 		public boolean isIncomingOrConflicting() {
 			switch (fDirection) {
 			case RangeDifference.RIGHT:
@@ -243,6 +257,12 @@ public class DocumentMerger {
 			}
 			return false;
 		}
+		
+//		private boolean isUnresolvedIncoming() {
+//			if (fResolved)
+//				return false;
+//			return isIncoming();
+//		}
 		
 		public boolean isUnresolvedIncomingOrConflicting() {
 			if (fResolved)
@@ -621,19 +641,11 @@ public class DocumentMerger {
 	private int getHunkStart() {
 		return fInput.getHunkStart();
 	}
-	
-//	private int getHunkEnd() {
-//		return fInput.getHunkEnd();
-//	}
-	
+
 	private boolean isPatchHunk() {
 		return fInput.isPatchHunk();
 	}
-	
-//	private boolean isPatchHunkOk() {
-//		return fInput.isPatchHunkOk();
-//	}
-	
+
 	private boolean isIgnoreWhitespace() {
 		return Utilities.getBoolean(getCompareConfiguration(), CompareConfiguration.IGNORE_WHITESPACE, false);
 	}

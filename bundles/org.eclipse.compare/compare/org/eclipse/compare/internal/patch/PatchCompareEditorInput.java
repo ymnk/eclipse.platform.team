@@ -239,8 +239,7 @@ public abstract class PatchCompareEditorInput extends CompareEditorInput {
 						}
 					});
 				}
-			} 
-			else if (showMatched) {
+			} else if (showMatched) {
 				HunkDiffNode.createDiffNode(node, hunkResult, false, true, false);
 			}
 		}
