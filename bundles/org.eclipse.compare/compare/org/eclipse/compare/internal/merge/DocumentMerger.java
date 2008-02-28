@@ -1200,7 +1200,7 @@ public class DocumentMerger {
 					case RangeDifference.CONFLICT:
 						if (APPEND_CONFLICT) {
 							s= toDoc.get(toStart, toLen);
-							String ls = Utilities.getLineSeparator();
+							String ls = TextUtilities.getDefaultLineDelimiter(toDoc);
 							if (!s.endsWith(ls))
 								s += ls;
 							s+= fromDoc.get(fromStart, fromLen);
