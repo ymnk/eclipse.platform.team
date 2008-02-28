@@ -2350,12 +2350,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		
 		fAncestorContributor.setDocument(fAncestor, false);
 		
-		//if the input is part of a patch hunk, toggle synchronized scrolling
-		if (isPatchHunk()){
-			setSyncScrolling(false);
-		} else {
-			setSyncScrolling(fPreferenceStore.getBoolean(ComparePreferencePage.SYNCHRONIZE_SCROLLING));
-		}
+		setSyncScrolling(fPreferenceStore.getBoolean(ComparePreferencePage.SYNCHRONIZE_SCROLLING));
 		
 		update(false);
 		

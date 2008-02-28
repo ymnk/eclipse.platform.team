@@ -403,14 +403,6 @@ public class DocumentMerger {
 		DocLineComparator sancestor= null;
 		if (aDoc != null) {
 			sancestor= new DocLineComparator(aDoc, toRegion(aRegion), ignoreWhiteSpace);
-			//XXX (tzarna): don't do this for hunks which are fine
-			if (isPatchHunk() /*&& !isPatchHunkOk()*/) {
-				if (isHunkOnLeft()) {
-					sright= new DocLineComparator(aDoc, toRegion(aRegion), ignoreWhiteSpace);
-				} else {
-					sleft= new DocLineComparator(aDoc, toRegion(aRegion), ignoreWhiteSpace);
-				}
-			}
 		}
 			
 		final Object[] result= new Object[1];
@@ -466,23 +458,6 @@ public class DocumentMerger {
 			int rightStart= sright.getTokenStart(es.rightStart());
 			int rightEnd= getTokenEnd2(sright, es.rightStart(), es.rightLength());
 
-			//XXX
-			if (isPatchHunk()) {
-//				if (!isPatchHunkOk()) {
-					if (isHunkOnLeft()) {
-						rightStart = rightEnd = getHunkStart();
-					} else {
-						leftStart = leftEnd = getHunkStart();
-					}
-//				} else { // isOk
-//					if (isHunkOnLeft()) {
-//						leftStart = getHunkStart();
-//					} else {
-//						rightStart = getHunkStart();
-//					}
-//				}
-			}
-			
 			Diff diff= new Diff(null, es.kind(),
 				aDoc, aRegion, ancestorStart, ancestorEnd,
 				lDoc, lRegion, leftStart, leftEnd,
@@ -492,20 +467,6 @@ public class DocumentMerger {
 	
 			if (isPatchHunk()) {
 				if (useChange(diff)) {
-					//XXX record only diff related to the hunk
-//					if (isPatchHunkOk()) {
-//						int hunkStart = getHunkStart();
-//						int hunkEnd = getHunkEnd();
-//						if (isHunkOnLeft()) {
-//							int leftEndLine = es.leftStart()+es.leftLength();
-//							if ( leftEndLine <= hunkStart || es.leftStart() >= hunkEnd ) {
-//								continue; //don't record it
-//							}
-//						} else {
-//							if (es.rightStart()+es.rightLength() <= hunkStart)
-//								continue; //don't record it
-//						}
-//					}
 					recordChangeDiff(diff);
 				}
 			} else {
@@ -634,14 +595,6 @@ public class DocumentMerger {
 		fChangeDiffs.add(diff);	// here we remember only the real diffs
 	}
 	
-	private boolean isHunkOnLeft() {
-		return fInput.isHunkOnLeft();
-	}
-
-	private int getHunkStart() {
-		return fInput.getHunkStart();
-	}
-
 	private boolean isPatchHunk() {
 		return fInput.isPatchHunk();
 	}
