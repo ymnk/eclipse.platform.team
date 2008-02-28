@@ -49,7 +49,7 @@ public class HunkTypedElement implements ITypedElement, IEncodedStreamContentAcc
 	}
 
 	public static Image getHunkErrorImage(Image baseImage, LocalResourceManager imageCache, boolean onLeft) {
-		return getHunkOverlayImage(baseImage, imageCache, ICompareUIConstants.ERRORX_OVERLAY, onLeft);
+		return getHunkOverlayImage(baseImage, imageCache, ICompareUIConstants.ERROR_OVERLAY, onLeft);
 	}
 	
 	private static Image getHunkOverlayImage(Image baseImage, LocalResourceManager imageCache, String path, boolean onLeft) {
