@@ -299,7 +299,7 @@ public class Hunk {
 		return fOldStart;
 	}
 	
-	int getLength(boolean reverse) {
+	private int getLength(boolean reverse) {
 		if (reverse) {
 			return fNewLength;
 		}
