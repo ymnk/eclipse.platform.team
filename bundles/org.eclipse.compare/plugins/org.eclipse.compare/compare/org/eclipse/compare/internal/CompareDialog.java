@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2005 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.Assert;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -97,7 +98,7 @@ public class CompareDialog extends ResizableDialog implements IPropertyChangeLis
 		
 		if (rc == OK && fCompareEditorInput.isSaveNeeded()) {
 						
-			WorkspaceModifyOperation operation= new WorkspaceModifyOperation() {
+			final WorkspaceModifyOperation operation= new WorkspaceModifyOperation() {
 				public void execute(IProgressMonitor pm) throws CoreException {
 					fCompareEditorInput.saveChanges(pm);
 				}
@@ -106,8 +107,13 @@ public class CompareDialog extends ResizableDialog implements IPropertyChangeLis
 			Shell shell= getParentShell();
 			ProgressMonitorDialog pmd= new ProgressMonitorDialog(shell);				
 			try {
-				operation.run(pmd.getProgressMonitor());				
-				
+				pmd.run(false, false, new IRunnableWithProgress() {
+					public void run(IProgressMonitor monitor)
+							throws InvocationTargetException,
+							InterruptedException {
+						operation.run(monitor);
+					}
+				});
 			} catch (InterruptedException x) {
 				// NeedWork
 			} catch (OperationCanceledException x) {
