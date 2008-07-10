@@ -108,6 +108,16 @@ public final class CompareMessages extends NLS {
 	public static String SelectAncestorDialog_title;
 	public static String SelectAncestorDialog_message;
 	public static String SelectAncestorDialog_option;
+	public static String CompareWithOther_fileLabel;
+	public static String CompareWithOther_ancestor;
+	public static String CompareWithOther_rightPanel;
+	public static String CompareWithOther_leftPanel;
+	public static String CompareWithOther_dialogTitle;
+	public static String CompareWithOther_dialogMessage;
+	public static String CompareWithOther_error_not_comparable;
+	public static String CompareWithOther_error_empty;
+	public static String CompareWithOther_clearAll;
+	public static String CompareWithOther_clear;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, CompareMessages.class);

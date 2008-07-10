@@ -19,6 +19,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareUI;
+import org.eclipse.core.resources.IResource;
 
 
 /*
@@ -26,17 +27,31 @@ import org.eclipse.compare.CompareUI;
  */
 public class CompareAction extends BaseCompareAction implements IObjectActionDelegate {
 
-	private ResourceCompareInput fInput;
-	private IWorkbenchPage fWorkbenchPage;
-
+	private static ResourceCompareInput fInput;
+	private static IWorkbenchPage fWorkbenchPage;
 
 	public void run(ISelection selection) {
 		if (fInput != null) {
 			// Pass the shell so setSelection can prompt the user for which
 			// resource should be the ancestor
-			boolean ok = fInput.setSelection(selection,
-				fWorkbenchPage.getWorkbenchWindow().getShell());
-			if (!ok) return;
+			boolean ok = fInput.setSelection(selection, fWorkbenchPage
+					.getWorkbenchWindow().getShell());
+			if (!ok)
+				return;
+			fInput.initializeCompareConfiguration();
+			CompareUI.openCompareEditorOnPage(fInput, fWorkbenchPage);
+			fInput = null; // don't reuse this input!
+		}
+	}
+
+	public static void run(IResource[] resources) {
+		fWorkbenchPage = CompareUIPlugin.getActiveWorkbench()
+				.getActiveWorkbenchWindow().getActivePage();
+		if (fInput != null) {
+			boolean ok = fInput.setSelection(resources, fWorkbenchPage
+					.getWorkbenchWindow().getShell());
+			if (!ok)
+				return;
 			fInput.initializeCompareConfiguration();
 			CompareUI.openCompareEditorOnPage(fInput, fWorkbenchPage);
 			fInput= null;	// don't reuse this input!
@@ -56,6 +71,16 @@ public class CompareAction extends BaseCompareAction implements IObjectActionDel
 			fInput= new ResourceCompareInput(cc);
 		}
 		return fInput.isEnabled(selection);
+	}
+
+	public static boolean isEnabled(IResource[] resources) {
+		if (fInput == null) {
+			CompareConfiguration cc = new CompareConfiguration();
+			cc.setProperty(CompareEditor.CONFIRM_SAVE_PROPERTY, new Boolean(
+					false));
+			fInput = new ResourceCompareInput(cc);
+		}
+		return fInput.isEnabled(resources);
 	}
 
 	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
