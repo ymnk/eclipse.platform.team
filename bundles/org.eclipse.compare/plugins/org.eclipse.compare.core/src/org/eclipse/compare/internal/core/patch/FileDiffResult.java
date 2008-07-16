@@ -8,17 +8,26 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.compare.internal.patch;
+package org.eclipse.compare.internal.core.patch;
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.compare.internal.CompareUIPlugin;
-import org.eclipse.compare.internal.Utilities;
-import org.eclipse.compare.patch.*;
-import org.eclipse.compare.structuremergeviewer.Differencer;
-import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.compare.internal.core.Activator;
+import org.eclipse.compare.internal.core.Messages;
+import org.eclipse.compare.patch.IFilePatchResult;
+import org.eclipse.compare.patch.IHunk;
+import org.eclipse.compare.patch.PatchConfiguration;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.osgi.util.NLS;
 
 public class FileDiffResult implements IFilePatchResult {
@@ -64,13 +73,13 @@ public class FileDiffResult implements IFilePatchResult {
 		charset = Utilities.getCharset(storage);
 		//If this diff is an addition, make sure that it doesn't already exist
 		boolean exists = targetExists(storage);
-		if (fDiff.getDiffType(getConfiguration().isReversed()) == Differencer.ADDITION) {
+		if (fDiff.getDiffType(getConfiguration().isReversed()) == FileDiff.ADDITION) {
 			if ((!exists || isEmpty(storage)) && canCreateTarget(storage)) {
 				fMatches= true;
 			} else {
 				// file already exists
 				fDiffProblem= true;
-				fErrorMessage= PatchMessages.PreviewPatchPage_FileExists_error;
+				fErrorMessage= Messages.FileDiffResult_0;
 			}
 			create= true;
 		} else { //This diff is not an addition, try to find a match for it
@@ -80,7 +89,7 @@ public class FileDiffResult implements IFilePatchResult {
 			} else {
 				// file doesn't exist
 				fDiffProblem= true;
-				fErrorMessage= PatchMessages.PreviewPatchPage_FileDoesNotExist_error;
+				fErrorMessage= Messages.FileDiffResult_1;
 			}
 		}
 
@@ -127,14 +136,14 @@ public class FileDiffResult implements IFilePatchResult {
 	}
 	
 	protected List getLines(IStorage storage, boolean create) {
-		List lines = Patcher.load(storage, create);
+		List lines = LineReader.load(storage, create);
 		return lines;
 	}
 	
 	protected boolean isEmpty(IStorage storage) {
 		if (storage == null)
 			return true;
-		return Patcher.load(storage, false).isEmpty();
+		return LineReader.load(storage, false).isEmpty();
 	}
 
 	/*
@@ -160,7 +169,7 @@ public class FileDiffResult implements IFilePatchResult {
 		fAfterLines = lines;
 	}
 	
-	protected boolean getDiffProblem() {
+	public boolean getDiffProblem() {
 		return fDiffProblem;
 	}
 
@@ -168,7 +177,7 @@ public class FileDiffResult implements IFilePatchResult {
 	 * Returns whether this Diff has any problems
 	 * @return true if this Diff or any of its children Hunks have a problem, false if it doesn't
 	 */
-	protected boolean containsProblems() {
+	public boolean containsProblems() {
 		if (fDiffProblem)
 			return true;
 		for (Iterator iterator = fHunkResults.values().iterator(); iterator.hasNext();) {
@@ -182,7 +191,7 @@ public class FileDiffResult implements IFilePatchResult {
 	public String getLabel() {
 		String label= getTargetPath().toString();
 		if (this.fDiffProblem)
-			return NLS.bind(PatchMessages.Diff_2Args, new String[] {label, fErrorMessage});
+			return NLS.bind(Messages.FileDiffResult_2, new String[] {label, fErrorMessage});
 		return label;
 	}
 	
@@ -209,7 +218,7 @@ public class FileDiffResult implements IFilePatchResult {
 			monitor = new NullProgressMonitor();
 		fBeforeLines = new ArrayList(lines);
 		// TODO: What about deletions?
-		if (fDiff.getDiffType(getConfiguration().isReversed()) == Differencer.ADDITION) {
+		if (fDiff.getDiffType(getConfiguration().isReversed()) == FileDiff.ADDITION) {
 			// Additions don't need to adjust the fuzz factor
 			// TODO: What about the after lines?
 			return -1;
@@ -220,7 +229,7 @@ public class FileDiffResult implements IFilePatchResult {
 		Hunk[] hunks = fDiff.getHunks();
 		for (int j = 0; j < hunks.length; j++) {
 			Hunk h = hunks[j];
-			monitor.subTask(NLS.bind(PatchMessages.PreviewPatchPage_GuessFuzzProgress_format, new String[] {name, Integer.toString(j + 1)}));
+			monitor.subTask(NLS.bind(Messages.FileDiffResult_3, new String[] {name, Integer.toString(j + 1)}));
 			HunkResult result = getHunkResult(h);
 			result.setShift(shift);
 			int fuzz = result.calculateFuzz(lines, monitor);
@@ -246,7 +255,7 @@ public class FileDiffResult implements IFilePatchResult {
 		return result;
 	}
 
-	List getFailedHunks() {
+	public List getFailedHunks() {
 		List failedHunks = new ArrayList();
 		for (Iterator iterator = fHunkResults.values().iterator(); iterator.hasNext();) {
 			HunkResult result = (HunkResult) iterator.next();
@@ -270,11 +279,11 @@ public class FileDiffResult implements IFilePatchResult {
 		return fDiff;
 	}
 
-	List getBeforeLines() {
+	public List getBeforeLines() {
 		return fBeforeLines;
 	}
 
-	List getAfterLines() {
+	public List getAfterLines() {
 		return fAfterLines;
 	}
 
@@ -283,12 +292,12 @@ public class FileDiffResult implements IFilePatchResult {
 	}
 
 	public InputStream getOriginalContents() {
-		String contents = Patcher.createString(isPreserveLineDelimeters(), getBeforeLines());
+		String contents = LineReader.createString(isPreserveLineDelimeters(), getBeforeLines());
 		return asInputStream(contents, getCharset());
 	}
 
 	public InputStream getPatchedContents() {
-		String contents = Patcher.createString(isPreserveLineDelimeters(), getLines());
+		String contents = LineReader.createString(isPreserveLineDelimeters(), getLines());
 		return asInputStream(contents, getCharset());
 	}
 
@@ -296,7 +305,7 @@ public class FileDiffResult implements IFilePatchResult {
 		return charset;
 	}
 
-	protected boolean isPreserveLineDelimeters() {
+	public boolean isPreserveLineDelimeters() {
 		return false;
 	}
 
@@ -314,7 +323,7 @@ public class FileDiffResult implements IFilePatchResult {
 			try {
 				bytes = contents.getBytes(charSet);
 			} catch (UnsupportedEncodingException e) {
-				CompareUIPlugin.log(e);
+				Activator.log(e);
 			}
 		}
 		if (bytes == null) {

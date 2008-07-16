@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.compare.internal.patch;
+package org.eclipse.compare.internal.core.patch;
 
 import java.io.InputStream;
 import java.util.List;
@@ -245,15 +245,17 @@ public class HunkResult implements IHunk {
 			}
 			// Only return the full context if we could apply the hunk
 			if (!problemFound)
-				return Patcher.createString(fDiffResult.isPreserveLineDelimeters(), lines);
+				return LineReader.createString(fDiffResult.isPreserveLineDelimeters(), lines);
 		}
 		return getHunk().getContents(afterState, getConfiguration().isReversed());
 	}
 	
 	private boolean isEnabled(PatchConfiguration configuration) {
-		Patcher patcher = Patcher.getPatcher(configuration);
-		if (patcher != null)
-			return patcher.isEnabled(fHunk);
+		Object property = configuration.getProperty(IHunkFilter.HUNK_FILTER_PROPERTY);
+		if (property instanceof IHunkFilter) {
+			IHunkFilter filter = (IHunkFilter) property;
+			return filter.select(fHunk);
+		}
 		return true;
 	}
 
@@ -274,7 +276,7 @@ public class HunkResult implements IHunk {
 		return asInputStream(contents);
 	}
 
-	protected InputStream asInputStream(String contents) {
+	public InputStream asInputStream(String contents) {
 		String charSet = getCharset();
 		return FileDiffResult.asInputStream(contents, charSet);
 	}

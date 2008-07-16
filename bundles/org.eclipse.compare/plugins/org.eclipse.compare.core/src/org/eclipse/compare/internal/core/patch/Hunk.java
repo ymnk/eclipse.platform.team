@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.compare.internal.patch;
+package org.eclipse.compare.internal.core.patch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,61 +20,56 @@ import org.eclipse.core.runtime.Assert;
  * A Hunk describes a range of changed lines and some context lines.
  */
 public class Hunk {
-	
-	public static final int ADDED = 0x1;
-	public static final int DELETED = 0x2;
-	public static final int CHANGED = 0x4;
-	public static final int UNKNOWN = 0x8;
-	
+
 	private FileDiff fParent;
 	private int fOldStart, fOldLength;
 	private int fNewStart, fNewLength;
 	private String[] fLines;
 	private int hunkType;
 	
-    public Hunk(FileDiff parent, Hunk toCopy) {
-        fParent = parent;
+	public static Hunk createHunk(FileDiff parent, int[] oldRange, int[] newRange, List lines, boolean hasLineAdditions, boolean hasLineDeletions, boolean hasContextLines) {
+		int oldStart = 0;
+		int oldLength = 0;
+		int newStart = 0;
+		int newLength = 0;
+		if (oldRange[0] > 0)
+			oldStart= oldRange[0]-1;	// line number start at 0!
+		else
+			oldStart= 0;
+		oldLength= oldRange[1];
+		if (newRange[0] > 0)
+			newStart= newRange[0]-1;	// line number start at 0!
+		else
+			newStart= 0;
+		newLength= newRange[1];
+		int hunkType = FileDiff.CHANGE;
+		if (!hasContextLines) {
+			if (hasLineAdditions && !hasLineDeletions) {
+				hunkType = FileDiff.ADDITION;
+			} else if (!hasLineAdditions && hasLineDeletions) {
+				hunkType = FileDiff.DELETION;
+			}
+		}
+		return new Hunk(parent, hunkType, oldStart, oldLength, newStart, newLength, (String[]) lines.toArray(new String[lines.size()]));
+	}
+	
+	public Hunk(FileDiff parent, int hunkType, int oldStart, int oldLength,
+			int newStart, int newLength, String[] lines) {
+		fParent = parent;
         if (fParent != null) {
             fParent.add(this);
         }
-        
-        fOldStart = toCopy.fOldStart;
-        fOldLength = toCopy.fOldLength;
-        fNewStart = toCopy.fNewStart;
-        fNewLength = toCopy.fOldLength;
-        fLines = toCopy.fLines;
-        hunkType = toCopy.hunkType;
-    }
-    
-	public Hunk(FileDiff parent, int[] oldRange, int[] newRange, List lines, boolean encounteredPlus, boolean encounteredMinus, boolean encounteredSpace) {
-		
-		fParent= parent;
-		if (fParent != null)
-			fParent.add(this);
-		
-		if (oldRange[0] > 0)
-			fOldStart= oldRange[0]-1;	// line number start at 0!
-		else
-			fOldStart= 0;
-		fOldLength= oldRange[1];
-		if (newRange[0] > 0)
-			fNewStart= newRange[0]-1;	// line number start at 0!
-		else
-			fNewStart= 0;
-		fNewLength= newRange[1];
-		
-		fLines= (String[]) lines.toArray(new String[lines.size()]);
-		
-		if (encounteredSpace && (encounteredPlus || encounteredMinus)){
-			hunkType = CHANGED;
-		} else if (encounteredPlus && !encounteredMinus && !encounteredSpace){
-			hunkType = ADDED;
-		} else if (!encounteredPlus && encounteredMinus && !encounteredSpace) { 
-			hunkType = DELETED;
-		} else {
-			hunkType = UNKNOWN;
-		}
+		this.hunkType = hunkType;
+		fOldLength = oldLength;
+		fOldStart = oldStart;
+		fNewLength = newLength;
+		fNewStart = newStart;
+		fLines = lines;
 	}
+	
+    public Hunk(FileDiff parent, Hunk toCopy) {
+    	this(parent, toCopy.hunkType, toCopy.fOldStart, toCopy.fOldLength, toCopy.fNewStart, toCopy.fNewLength, toCopy.fLines);
+    }
 
 	/*
 	 * Returns the contents of this hunk.
@@ -88,11 +83,11 @@ public class Hunk {
 	 * ' ': no change, context line
 	 * </ul>
 	 */
-	String getContent() {
+	public String getContent() {
 		StringBuffer sb= new StringBuffer();
 		for (int i= 0; i < fLines.length; i++) {
 			String line= fLines[i];
-			sb.append(line.substring(0, Patcher.length(line)));
+			sb.append(line.substring(0, LineReader.length(line)));
 			sb.append('\n');
 		}
 		return sb.toString();
@@ -114,7 +109,7 @@ public class Hunk {
 		return sb.toString();
 	}
 	
-	String getRejectedDescription() {
+	public String getRejectedDescription() {
 		StringBuffer sb= new StringBuffer();
 		sb.append("@@ -"); //$NON-NLS-1$
 		sb.append(Integer.toString(fOldStart));
@@ -130,10 +125,10 @@ public class Hunk {
 	
 	int getHunkType(boolean reverse) {
 		if (reverse) {
-			if (hunkType == ADDED)
-				return DELETED;
-			if (hunkType == DELETED)
-				return ADDED;
+			if (hunkType == FileDiff.ADDITION)
+				return FileDiff.DELETION;
+			if (hunkType == FileDiff.DELETION)
+				return FileDiff.ADDITION;
 		}
 		return hunkType;
 	}
@@ -404,8 +399,8 @@ public class Hunk {
 		if (configuration.isIgnoreWhitespace())
 			return stripWhiteSpace(line1).equals(stripWhiteSpace(line2));
 		if (isIgnoreLineDelimiter()) {
-			int l1= Patcher.length(line1);
-			int l2= Patcher.length(line2);
+			int l1= LineReader.length(line1);
+			int l2= LineReader.length(line2);
 			if (l1 != l2)
 				return false;
 			return line1.regionMatches(0, line2, 0, l1);

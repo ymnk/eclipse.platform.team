@@ -8,15 +8,14 @@
  * Contributors:
  *    IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.compare.internal.patch;
+package org.eclipse.compare.internal.core.patch;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
 /**
  * A diff project represents a project that was read from a workspace patch.
@@ -40,7 +39,7 @@ public class DiffProject {
 	 * Add the file diff to this project.
 	 * @param diff the file diff.
 	 */
-	void add(FileDiff diff) {
+	public void add(FileDiff diff) {
 		fDiffs.add(diff);
 		if (diff.getProject() != this)
 			diff.setProject(this);
@@ -70,15 +69,6 @@ public class DiffProject {
 	 */
 	public IFile getFile(IPath path) {
 		return fProject.getFile(path);
-	}
-
-	public ImageDescriptor getImageDescriptor() {
-		Object o= fProject.getAdapter(IWorkbenchAdapter.class);
-		if (o instanceof IWorkbenchAdapter) {
-			ImageDescriptor id= ((IWorkbenchAdapter) o).getImageDescriptor(fProject);
-			return id;
-		}
-		return null;
 	}
 
 	/**
