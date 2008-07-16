@@ -18,6 +18,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
@@ -55,7 +56,7 @@ import org.eclipse.ui.part.ResourceTransfer;
  */
 public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 
-	public int CLEAR_RETURN_CODE = 150; // any number != 0
+	private int CLEAR_RETURN_CODE = 150; // any number != 0
 
 	private class FileTextDragListener implements DragSourceListener {
 
@@ -93,102 +94,113 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 		}
 
 		public void dragEnter(DropTargetEvent event) {
+
 			if (event.detail == DND.DROP_DEFAULT) {
 				if ((event.operations & DND.DROP_COPY) != 0)
 					event.detail = DND.DROP_COPY;
 				else
 					event.detail = DND.DROP_NONE;
 			}
+
 			for (int i = 0; i < event.dataTypes.length; i++) {
 				if (resourceTransfer.isSupportedType(event.dataTypes[i])) {
 					event.currentDataType = event.dataTypes[i];
 					if (event.detail != DND.DROP_COPY)
 						event.detail = DND.DROP_NONE;
+					break;
 				}
-				break;
 			}
 		}
 
 		public void dragLeave(DropTargetEvent event) {
+			// intentionally empty
 		}
 
 		public void dragOperationChanged(DropTargetEvent event) {
+
 			if (event.detail == DND.DROP_DEFAULT) {
 				if ((event.operations & DND.DROP_COPY) != 0)
 					event.detail = DND.DROP_COPY;
 				else
 					event.detail = DND.DROP_NONE;
-			}
-			if (resourceTransfer.isSupportedType(event.currentDataType)) {
+			} else if (resourceTransfer.isSupportedType(event.currentDataType)) {
 				if (event.detail != DND.DROP_COPY)
 					event.detail = DND.DROP_NONE;
 			}
 		}
 
 		public void dragOver(DropTargetEvent event) {
+			// intentionally empty
 		}
 
 		public void drop(DropTargetEvent event) {
+
 			if (textTransfer.isSupportedType(event.currentDataType)) {
 				String txt = (String) event.data;
-				section.fileText.setText(txt);
 				section.setResource(ResourcesPlugin.getWorkspace().getRoot()
 						.findMember(txt));
-			}
-			if (resourceTransfer.isSupportedType(event.currentDataType)) {
+			} else if (resourceTransfer.isSupportedType(event.currentDataType)) {
 				IResource[] files = (IResource[]) event.data;
 				section.setResource(files[0]);
-				section.fileText.setText(section.getResource().getFullPath()
-						.toString());
 			}
+
+			updateErrorInfo();
 		}
 
 		public void dropAccept(DropTargetEvent event) {
+			// intentionally empty
 		}
 
 	}
 
 	private abstract class InternalSection {
 
-		protected Text fileText;
-		protected IResource resource;
-		protected IResource[] files;
-		protected String fileString = null;
 		protected Group group;
-		protected Button clearButton;
+		private Text fileText;
+		private IResource resource;
+		private Button clearButton;
 
 		public InternalSection(Composite parent) {
 			createContents(parent);
 		}
 
 		public InternalSection() {
+			// not to instantiate
 		}
 
 		public void createContents(Composite parent) {
+			createGroup(parent);
+			createFileLabel();
+			createFileCombo();
+			createClearButton(group);
+			initDrag();
+			initDrop();
 		}
 
 		public IResource getResource() {
-			if (resource == null) {
-				if (fileString != null) { //$NON-NLS-1$
-					IWorkspaceRoot root = ResourcesPlugin.getWorkspace()
-							.getRoot();
-					resource = root.findMember(fileString);
-					if (resource instanceof IWorkspaceRoot)
-						return null;
-					return resource;
-				}
-			}
 			return resource;
 		}
 
 		public void setResource(IResource resource) {
 			this.resource = resource;
-			fileText.setText(resource.getFullPath().toString());
+			String txt = resource.getFullPath().toString();
+			fileText.setText(txt);
+		}
+
+		public void setResource(String s) {
+			IResource tmp = ResourcesPlugin.getWorkspace().getRoot()
+					.findMember(s);
+			if (tmp instanceof IWorkspaceRoot)
+				resource = null;
+			else
+				resource = tmp;
+
 		}
 
 		protected void clearResource() {
 			resource = null;
 			fileText.setText(""); //$NON-NLS-1$
+			updateErrorInfo();
 		}
 
 		protected void initDrag() {
@@ -203,48 +215,42 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 		protected void initDrop() {
 			DropTarget target = new DropTarget(fileText, DND.DROP_MOVE
 					| DND.DROP_COPY | DND.DROP_DEFAULT);
-			final TextTransfer textTransfer = TextTransfer.getInstance();
-			final ResourceTransfer resourceTransfer = ResourceTransfer
-					.getInstance();
-			Transfer[] types = new Transfer[] { textTransfer, resourceTransfer };
+			Transfer[] types = new Transfer[] { TextTransfer.getInstance(),
+					ResourceTransfer.getInstance() };
 			target.setTransfer(types);
 			target.addDropListener(new FileTextDropListener(this));
 		}
 
 		protected void createGroup(Composite parent) {
-			GridLayout layout = new GridLayout();
-			layout.numColumns = 3;
 			group = new Group(parent, SWT.NONE);
-			group.setLayout(layout);
-			GridData gridData = new GridData();
-			gridData.grabExcessHorizontalSpace = true;
-			gridData.grabExcessVerticalSpace = true;
-			group.setLayoutData(gridData);
+			group.setLayout(new GridLayout(3, false));
+			group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		}
 
-		protected void createFileText() {
-			fileText = new Text(group, SWT.SINGLE | SWT.BORDER);
-			fileText.addModifyListener(new ModifyListener() {
+		protected void createFileCombo() {
+			fileText = new Text(group, SWT.BORDER);
+			fileText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+					false));
 
+			fileText.addModifyListener(new ModifyListener() {
 				public void modifyText(ModifyEvent e) {
-					if (files != null)
-						resource = files[0];
-					fileString = fileText.getText();
-					if (fileString == "") //$NON-NLS-1$
-						resource = null;
-					else
-						resource = getResource();
-					if (okButton != null)
-						okButton.setEnabled(comparePossible());
+					setResource(fileText.getText());
+					updateErrorInfo();
+				}
+			});
+
+			fileText.addSelectionListener(new SelectionListener() {
+
+				public void widgetDefaultSelected(SelectionEvent e) {
+					widgetSelected(e);
+				}
+
+				public void widgetSelected(SelectionEvent e) {
+					setResource(fileText.getText());
 					updateErrorInfo();
 				}
 
 			});
-
-			GridData textData = new GridData();
-			textData.grabExcessHorizontalSpace = true;
-			textData.horizontalAlignment = SWT.FILL;
-			fileText.setLayoutData(textData);
 		}
 
 		protected void createFileLabel() {
@@ -256,7 +262,6 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 			clearButton = createButton(parent, CLEAR_RETURN_CODE,
 					CompareMessages.CompareWithOther_clear, false);
 			clearButton.addSelectionListener(new SelectionListener() {
-
 				public void widgetDefaultSelected(SelectionEvent e) {
 					widgetSelected(e);
 				}
@@ -264,30 +269,14 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 				public void widgetSelected(SelectionEvent e) {
 					clearResource();
 				}
-
 			});
 		}
-
-		abstract public void setLayoutData(GridData layoutData);
-
-		abstract public void setText(String text);
-
 	}
 
 	private class InternalGroup extends InternalSection {
 
 		public InternalGroup(Composite parent) {
-			super();
 			createContents(parent);
-		}
-
-		public void createContents(Composite parent) {
-			createGroup(parent);
-			createFileLabel();
-			createFileText();
-			createClearButton(group);
-			initDrag();
-			initDrop();
 		}
 
 		public void setText(String text) {
@@ -304,30 +293,20 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 		private ExpandableComposite expandable;
 
 		public InternalExpandable(Composite parent) {
-			super();
 			createContents(parent);
 		}
 
-		public void createContents(Composite parent) {
-
+		public void createGroup(Composite parent) {
 			final Composite p = parent;
-
 			expandable = new ExpandableComposite(parent, SWT.NONE,
 					ExpandableComposite.TREE_NODE | ExpandableComposite.TWISTIE);
-
-			createGroup(expandable);
+			super.createGroup(expandable);
 			expandable.setClient(group);
 			expandable.addExpansionListener(new ExpansionAdapter() {
 				public void expansionStateChanged(ExpansionEvent e) {
 					p.getShell().pack();
 				}
 			});
-
-			createFileLabel();
-			createFileText();
-			createClearButton(group);
-			initDrag();
-			initDrop();
 		}
 
 		public void setText(String text) {
@@ -338,10 +317,9 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 		public void setLayoutData(GridData layoutData) {
 			expandable.setLayoutData(layoutData);
 		}
-
 	}
 
-	private Button okButton, cancelButton, clearAllButton;
+	private Button okButton, clearAllButton;
 	private InternalGroup rightPanel, leftPanel;
 	private InternalExpandable ancestorPanel;
 	private ISelection fselection;
@@ -372,10 +350,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 	protected Control createDialogArea(Composite parent) {
 
 		Composite mainPanel = new Composite(parent, SWT.NULL);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		layout.makeColumnsEqualWidth = true;
-		mainPanel.setLayout(layout);
+		mainPanel.setLayout(new GridLayout(2, true));
 		mainPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		ancestorPanel = new InternalExpandable(mainPanel);
@@ -386,13 +361,11 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 
 		rightPanel = new InternalGroup(mainPanel);
 		rightPanel.setText(CompareMessages.CompareWithOther_rightPanel);
-		GridData rightGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-		rightPanel.setLayoutData(rightGD);
+		rightPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		leftPanel = new InternalGroup(mainPanel);
 		leftPanel.setText(CompareMessages.CompareWithOther_leftPanel);
-		GridData leftGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-		leftPanel.setLayoutData(leftGD);
+		leftPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		setSelection(fselection);
 		getShell().setText(CompareMessages.CompareWithOther_dialogTitle);
@@ -409,50 +382,13 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 	 * .swt.widgets.Composite)
 	 */
 	protected void createButtonsForButtonBar(Composite parent) {
-		okButton = createButton(parent, OK, IDialogConstants.OK_LABEL, false);
-		okButton.addSelectionListener(new SelectionListener() {
 
-			public void widgetDefaultSelected(SelectionEvent e) {
-				widgetSelected(e);
-			}
-
-			public void widgetSelected(SelectionEvent e) {
-
-				IResource[] resources;
-
-				IResource rightResource = rightPanel.getResource();
-				IResource leftResource = leftPanel.getResource();
-				IResource ancestorResource = ancestorPanel.getResource();
-				if (ancestorResource == null)
-					resources = new IResource[] { leftResource, rightResource };
-				else
-					resources = new IResource[] { ancestorResource,
-							leftResource, rightResource };
-
-				if (CompareAction.isEnabled(resources))
-					CompareAction.run(resources);
-			}
-
-		});
-		okButton.setEnabled(comparePossible());
-
-		cancelButton = createButton(parent, CANCEL,
-				IDialogConstants.CANCEL_LABEL, true);
-		cancelButton.addSelectionListener(new SelectionListener() {
-
-			public void widgetDefaultSelected(SelectionEvent e) {
-				widgetSelected(e);
-			}
-
-			public void widgetSelected(SelectionEvent e) {
-			}
-
-		});
+		super.createButtonsForButtonBar(parent);
+		okButton = getButton(IDialogConstants.OK_ID);
 
 		clearAllButton = createButton(parent, CLEAR_RETURN_CODE,
 				CompareMessages.CompareWithOther_clearAll, false);
 		clearAllButton.addSelectionListener(new SelectionListener() {
-
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
@@ -462,15 +398,14 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 				rightPanel.clearResource();
 				ancestorPanel.clearResource();
 			}
-
 		});
+
+		updateErrorInfo();
 	}
 
 	private void setSelection(ISelection selection) {
 		IResource[] selectedResources = Utilities.getResources(selection);
 		switch (selectedResources.length) {
-		case 0:
-			break;
 		case 1:
 			leftPanel.setResource(selectedResources[0]);
 			break;
@@ -489,26 +424,56 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 
 	private boolean comparePossible() {
 		IResource[] resources;
-		if (ancestorPanel.resource == null)
-			resources = new IResource[] { leftPanel.resource,
-					rightPanel.resource };
-		else
-			resources = new IResource[] { ancestorPanel.resource,
-					leftPanel.resource, rightPanel.resource };
+		if (ancestorPanel.getResource() == null) {
+			resources = new IResource[] { leftPanel.getResource(),
+					rightPanel.getResource() };
+		} else {
+			resources = new IResource[] { ancestorPanel.getResource(),
+					leftPanel.getResource(), rightPanel.getResource() };
+		}
 
 		ResourceCompareInput r = new ResourceCompareInput(
 				new CompareConfiguration());
-		return r.isEnabled(resources);
+		return r.isEnabled(new StructuredSelection(resources));
 	}
 
 	private void updateErrorInfo() {
-		if (leftPanel.resource == null || rightPanel.resource == null)
-			setMessage(CompareMessages.CompareWithOther_error_empty,
-					IMessageProvider.ERROR);
-		else if (!comparePossible())
-			setMessage(CompareMessages.CompareWithOther_error_not_comparable,
-					IMessageProvider.ERROR);
+		if (okButton != null) {
+			if (leftPanel.getResource() == null
+					|| rightPanel.getResource() == null) {
+				setMessage(CompareMessages.CompareWithOther_error_empty,
+						IMessageProvider.ERROR);
+				okButton.setEnabled(false);
+			} else if (!comparePossible()) {
+				setMessage(
+						CompareMessages.CompareWithOther_error_not_comparable,
+						IMessageProvider.ERROR);
+				okButton.setEnabled(false);
+			} else {
+				setMessage(null);
+				okButton.setEnabled(true);
+			}
+		}
+	}
+
+	/**
+	 * Returns table with selected resources. If any resource wasn't chosen in
+	 * the ancestor panel, table has only two elements -- resources chosen in
+	 * left and right panel. In the other case table contains all three
+	 * resources.
+	 * 
+	 * @return table with selected resources
+	 */
+	public IResource[] getResult() {
+		IResource[] resources;
+		IResource rightResource = rightPanel.getResource();
+		IResource leftResource = leftPanel.getResource();
+		IResource ancestorResource = ancestorPanel.getResource();
+		if (ancestorResource == null)
+			resources = new IResource[] { leftResource, rightResource };
 		else
-			setMessage(null);
+			resources = new IResource[] { ancestorResource, leftResource,
+					rightResource };
+		return resources;
 	}
 }

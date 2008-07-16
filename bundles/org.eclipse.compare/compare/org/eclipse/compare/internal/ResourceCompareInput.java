@@ -201,14 +201,11 @@ class ResourceCompareInput extends CompareEditorInput {
 	// to use as the ancestor.  Returns false if the user cancels the prompt,
 	// true otherwise.
 	boolean setSelection(ISelection s, Shell shell) {
-		IResource[] selection = Utilities.getResources(s);
-		return setSelection(selection, shell);
-	}
+		
+		IResource[] selection= Utilities.getResources(s);
 
-	boolean setSelection(IResource[] selection, Shell shell) {
-
-		fThreeWay = selection.length == 3;
-
+		fThreeWay= selection.length == 3;
+		
 		if (fThreeWay) {
 			SelectAncestorDialog dialog =
 				new SelectAncestorDialog(shell, selection);
@@ -236,26 +233,21 @@ class ResourceCompareInput extends CompareEditorInput {
 	 * Returns true if compare can be executed for the given selection.
 	 */
 	public boolean isEnabled(ISelection s) {
-
-		IResource[] selection = Utilities.getResources(s);
-		return isEnabled(selection);
-	}
-
-	public boolean isEnabled(IResource[] resources) {
-		if (resources.length < 2 || resources.length > 3)
+		
+		IResource[] selection= Utilities.getResources(s);
+		if (selection.length < 2 || selection.length > 3)
 			return false;
 
-		boolean threeWay= resources.length == 3;
+		boolean threeWay= selection.length == 3;
 		
-		if (threeWay) {
+		if (threeWay)
 			// It only makes sense if they're all mutually comparable.
 			// If not, the user should compare two of them.
-			return comparable(resources[0], resources[1])
-					&& comparable(resources[0], resources[2])
-					&& comparable(resources[1], resources[2]);
-		}
-
-		return comparable(resources[0], resources[1]);
+			return comparable(selection[0], selection[1])
+				&& comparable(selection[0], selection[2])
+				&& comparable(selection[1], selection[2]);
+		
+		return comparable(selection[0], selection[1]);
 	}
 	
 	/**

@@ -118,6 +118,9 @@ public final class CompareMessages extends NLS {
 	public static String CompareWithOther_error_empty;
 	public static String CompareWithOther_clearAll;
 	public static String CompareWithOther_clear;
+	public static String CompareWithOther_clipboard;
+	public static String CompareWithOther_tmp_file_path;
+	public static String CompareWithOther_clipboard_files;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, CompareMessages.class);
