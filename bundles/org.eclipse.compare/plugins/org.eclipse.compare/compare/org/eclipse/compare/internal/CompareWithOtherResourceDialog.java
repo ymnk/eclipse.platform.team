@@ -49,7 +49,7 @@ import org.eclipse.ui.part.ResourceTransfer;
 
 /**
  * This is a dialog that can invoke the compare editor on chosen files.
- *
+ * 
  * @since 3.4
  */
 public class CompareWithOtherResourceDialog extends TitleAreaDialog {
@@ -166,7 +166,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 			createContents(parent);
 		}
 
-		public InternalSection() {
+		private InternalSection() {
 			// not to instantiate
 		}
 
@@ -337,7 +337,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 
 	/**
 	 * Creates the dialog.
-	 *
+	 * 
 	 * @param shell
 	 *            a shell
 	 * @param selection
@@ -353,7 +353,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see
 	 * org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets
 	 * .Composite)
@@ -389,7 +389,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see
 	 * org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse
 	 * .swt.widgets.Composite)
@@ -398,6 +398,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 		super.createButtonsForButtonBar(parent);
 		okButton = getButton(IDialogConstants.OK_ID);
 		updateErrorInfo();
+		setMessage(CompareMessages.CompareWithOther_info);
 	}
 
 	private void setSelection(ISelection selection) {
@@ -419,7 +420,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 		}
 	}
 
-	private boolean comparePossible() {
+	private boolean isComparePossible() {
 		IResource[] resources;
 		if (ancestorPanel.getResource() == null) {
 			resources = new IResource[] { leftPanel.getResource(),
@@ -445,13 +446,13 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 					&& ancestorPanel.fileText.getText() != "") { //$NON-NLS-1$
 				setMessage(CompareMessages.CompareWithOther_warning_two_way,
 						IMessageProvider.WARNING);
-			} else if (!comparePossible()) {
+			} else if (!isComparePossible()) {
 				setMessage(
 						CompareMessages.CompareWithOther_error_not_comparable,
 						IMessageProvider.ERROR);
 				okButton.setEnabled(false);
 			} else {
-				setMessage(null);
+				setMessage(CompareMessages.CompareWithOther_info);
 				okButton.setEnabled(true);
 			}
 		}
@@ -462,7 +463,7 @@ public class CompareWithOtherResourceDialog extends TitleAreaDialog {
 	 * the ancestor panel, table has only two elements -- resources chosen in
 	 * left and right panel. In the other case table contains all three
 	 * resources.
-	 *
+	 * 
 	 * @return table with selected resources
 	 */
 	public IResource[] getResult() {
