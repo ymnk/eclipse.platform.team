@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -322,12 +322,16 @@ public class RemoteFolderTreeBuilder {
 				if (d.getRevision() == DELETED) {
 					return null;
 				}
+				CVSTag newTag = tagForRemoteFolder(remoteRoot, tag);
+				if (newTag == null && file.getSyncInfo() != null) {
+					newTag = file.getSyncInfo().getTag();
+				}
 				remoteFile = new RemoteFile(remoteRoot, 
 					d.getSyncState(), 
 					file.getName(), 
 					null, /* the revision will be retrieved from the server */
 					getKeywordMode(file), /* use the same keyword mode a the local file */
-					tagForRemoteFolder(remoteRoot, tag));
+					newTag);
 			}
 			// Add the resource to its parent
 			remoteRoot.setChildren(new ICVSRemoteResource[] {remoteFile});
