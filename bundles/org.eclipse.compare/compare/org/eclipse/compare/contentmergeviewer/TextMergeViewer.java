@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2008 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -28,6 +28,7 @@ import org.eclipse.compare.internal.merge.DocumentMerger.IDocumentMergerInput;
 import org.eclipse.compare.patch.IHunk;
 import org.eclipse.compare.rangedifferencer.RangeDifference;
 import org.eclipse.compare.structuremergeviewer.*;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Assert;
@@ -36,6 +37,7 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ColorRegistry;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.Region;
@@ -55,6 +57,8 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.editors.text.IEncodingSupport;
+import org.eclipse.ui.editors.text.IStorageDocumentProvider;
 import org.eclipse.ui.texteditor.*;
 
 import com.ibm.icu.text.MessageFormat;
@@ -363,7 +367,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 	}
 
-	class ContributorInfo implements IElementStateListener, VerifyListener, IDocumentListener {
+	class ContributorInfo implements IElementStateListener, VerifyListener, IDocumentListener, IEncodingSupport {
 		private final TextMergeViewer fViewer;
 		private final Object fElement;
 		private char fLeg;
@@ -387,11 +391,70 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				}
 			}
 		}
-		
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.ui.editors.text.IEncodingSupport#setEncoding(java.lang.String)
+		 */
+		public void setEncoding(String encoding) {
+			if (fDocumentKey == null || fDocumentProvider == null) {
+				return;
+			}
+			if (fDocumentProvider instanceof IStorageDocumentProvider) {
+				IStorageDocumentProvider provider = (IStorageDocumentProvider) fDocumentProvider;
+				String current = provider.getEncoding(fDocumentKey);
+				boolean dirty = fDocumentProvider.canSaveDocument(fDocumentKey);
+				if (!dirty) {
+					String internal = encoding == null ? "" : encoding; //$NON-NLS-1$
+					if (!internal.equals(current)) {
+						provider.setEncoding(fDocumentKey, encoding);
+						try {
+							fDocumentProvider.resetDocument(fDocumentKey);
+						} catch (CoreException e) {
+							CompareUIPlugin.log(e);
+						} finally {
+							update(true);
+						}
+					}
+				}
+			}
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.ui.editors.text.IEncodingSupport#getEncoding()
+		 */
 		public String getEncoding() {
-			if (fEncoding == null)
-				return ResourcesPlugin.getEncoding();
-			return fEncoding;
+			if (fDocumentProvider != null && fDocumentKey != null
+					&& fDocumentProvider instanceof IStorageDocumentProvider) {
+				IStorageDocumentProvider provider = (IStorageDocumentProvider) fDocumentProvider;
+				return provider.getEncoding(fDocumentKey);
+			}
+			return null;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.ui.editors.text.IEncodingSupport#getDefaultEncoding()
+		 */
+		public String getDefaultEncoding() {
+			if (fDocumentProvider != null && fDocumentKey != null
+					&& fDocumentProvider instanceof IStorageDocumentProvider) {
+				IStorageDocumentProvider provider = (IStorageDocumentProvider) fDocumentProvider;
+				return provider.getDefaultEncoding();
+			}
+			return null;
+		}
+
+		private String internalGetEncoding() {
+			if (fElement instanceof IEncodedStreamContentAccessor) {
+				try {
+					fEncoding = ((IEncodedStreamContentAccessor)fElement).getCharset();
+				} catch (CoreException e) {
+					// silently ignored
+				}
+			}
+			if (fEncoding != null) {
+				return fEncoding;
+			}
+			return ResourcesPlugin.getEncoding();
 		}
 
 		public void setEncodingIfAbsent(ContributorInfo otherContributor) {
@@ -582,7 +645,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				String s= null;
 
 				try {
-					String encoding = getEncoding();
+					String encoding = internalGetEncoding();
 					s = Utilities.readString(sca, encoding);
 				} catch (CoreException ex) {
 					this.fViewer.setError(fLeg, ex.getMessage());
@@ -2111,7 +2174,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		
 		// Add the find action to the popup menu of the viewer
 		contributeFindAction(part);
-		
+
+		contributeChangeEncodingAction(part);
+
 		configureTextViewer(part);
 		
 		return part;
@@ -2128,6 +2193,37 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		viewer.addAction(MergeSourceViewer.FIND_ID, action);
 	}
 	
+	private void contributeChangeEncodingAction(MergeSourceViewer viewer) {
+		ResourceBundle bundle = ResourceBundle.getBundle("org.eclipse.ui.texteditor.ConstructedTextEditorMessages"); //$NON-NLS-1$
+		IAction action = new ChangeEncodingAction(bundle, "Editor.ChangeEncodingAction.", getTextEditorAdapter()) { //$NON-NLS-1$
+			public void run() {
+				super.run();
+				encodingChanged();
+			}
+		};
+		viewer.addAction(MergeSourceViewer.CHANGE_ENCODING_ID, action);
+	}
+
+	private void encodingChanged() {
+		ContributorInfo info = null;
+		String key = null;
+		if (fFocusPart == fAncestor && fAncestorContributor != null) {
+			info = fAncestorContributor;
+			key = "ANCESTOR_ENCODING"; //$NON-NLS-1$
+		} else if (fFocusPart == fLeft && fLeftContributor != null) {
+			info = fLeftContributor;
+			key = "LEFT_ENCODING"; //$NON-NLS-1$
+		} else {
+			info = fRightContributor;
+			key = "RIGHT_ENCODING"; //$NON-NLS-1$
+		}
+		IEditorInput input = getEditorInput(info);
+		if (input != null && input.getAdapter(IResource.class) != null) {
+			refresh();
+		}
+		getCompareConfiguration().setProperty(key, null);
+	}
+
 	private void connectGlobalActions(final MergeSourceViewer part) {
 		if (fHandlerService != null) {
 			if (part != null)
@@ -2575,7 +2671,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				if (contents != null) {
 					byte[] bytes;
 					try {
-						bytes= contents.getBytes(left ? fLeftContributor.getEncoding() : fRightContributor.getEncoding());
+						bytes= contents.getBytes(left ? fLeftContributor.internalGetEncoding() : fRightContributor.internalGetEncoding());
 					} catch(UnsupportedEncodingException ex) {
 						// use default encoding
 						bytes= contents.getBytes();
@@ -4511,5 +4607,259 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		else if (fCurrentDiff != null && fCurrentDiff.isToken())
 			return true;
 		return false;
+	}
+
+	/**
+	 * This method returns {@link ITextEditor} used in the
+	 * {@link ChangeEncodingAction}. It provides implementation of methods that
+	 * are used by the action by delegating them to {@link ContributorInfo} that
+	 * corresponds to the side that has focus.
+	 * 
+	 * @return
+	 */
+	private ITextEditor getTextEditorAdapter() {
+		return new ITextEditor () {
+			public void close(boolean save) {
+				// Implementing interface method
+			}
+			public void doRevertToSaved() {
+				// Implementing interface method
+			}
+			public IAction getAction(String actionId) {
+				// Implementing interface method
+				return null;
+			}
+			public IDocumentProvider getDocumentProvider() {
+				// Implementing interface method
+				return null;
+			}
+			public IRegion getHighlightRange() {
+				// Implementing interface method
+				return null;
+			}
+			public ISelectionProvider getSelectionProvider() {
+				// Implementing interface method
+				return null;
+			}
+			public boolean isEditable() {
+				// Implementing interface method
+				return false;
+			}
+			public void removeActionActivationCode(String actionId) {
+				// Implementing interface method
+			}
+			public void resetHighlightRange() {
+				// Implementing interface method
+			}
+			public void selectAndReveal(int offset, int length) {
+				// Implementing interface method
+			}
+			public void setAction(String actionId, IAction action) {
+				// Implementing interface method
+			}
+			public void setActionActivationCode(String actionId,
+					char activationCharacter, int activationKeyCode,
+					int activationStateMask) {
+				// Implementing interface method
+			}
+			public void setHighlightRange(int offset, int length,
+					boolean moveCursor) {
+				// Implementing interface method
+			}
+			public void showHighlightRangeOnly(boolean showHighlightRangeOnly) {
+				// Implementing interface method
+			}
+			public boolean showsHighlightRangeOnly() {
+				// Implementing interface method
+				return false;
+			}
+			public IEditorInput getEditorInput() {
+				if (fFocusPart == fAncestor && fAncestorContributor != null) {
+					return TextMergeViewer.this
+							.getEditorInput(fAncestorContributor);
+				} else if (fFocusPart == fLeft && fLeftContributor != null) {
+					return TextMergeViewer.this
+							.getEditorInput(fLeftContributor);
+				} else if (fFocusPart == fRight && fRightContributor != null) {
+					return TextMergeViewer.this
+							.getEditorInput(fRightContributor);
+				} else {
+					return null;
+				}
+			}
+			public IEditorSite getEditorSite() {
+				// Implementing interface method
+				return null;
+			}
+			public void init(IEditorSite site, IEditorInput input)
+					throws PartInitException {
+				// Implementing interface method
+			}
+			public void addPropertyListener(IPropertyListener listener) {
+				// Implementing interface method
+			}
+			public void createPartControl(Composite parent) {
+				// Implementing interface method
+			}
+			public void dispose() {
+				// Implementing interface method
+			}
+			public IWorkbenchPartSite getSite() {
+				// Implementing interface method
+				return new IWorkbenchPartSite() {
+					public String getId() {
+						// Implementing interface method
+						return null;
+					}
+					public IKeyBindingService getKeyBindingService() {
+						// Implementing interface method
+						return null;
+					}
+					public IWorkbenchPart getPart() {
+						// Implementing interface method
+						return null;
+					}
+					public String getPluginId() {
+						// Implementing interface method
+						return null;
+					}
+					public String getRegisteredName() {
+						// Implementing interface method
+						return null;
+					}
+					public void registerContextMenu(MenuManager menuManager,
+							ISelectionProvider selectionProvider) {
+						// Implementing interface method
+					}
+					public void registerContextMenu(String menuId,
+							MenuManager menuManager,
+							ISelectionProvider selectionProvider) {
+						// Implementing interface method
+					}
+					public IWorkbenchPage getPage() {
+						// Implementing interface method
+						return null;
+					}
+					public ISelectionProvider getSelectionProvider() {
+						// Implementing interface method
+						return null;
+					}
+					public Shell getShell() {
+						return fComposite.getShell();
+					}
+					public IWorkbenchWindow getWorkbenchWindow() {
+						// Implementing interface method
+						return null;
+					}
+					public void setSelectionProvider(ISelectionProvider provider) {
+						// Implementing interface method
+					}
+					public Object getAdapter(Class adapter) {
+						// Implementing interface method
+						return null;
+					}
+					public Object getService(Class api) {
+						// Implementing interface method
+						return null;
+					}
+					public boolean hasService(Class api) {
+						// Implementing interface method
+						return false;
+					}
+				};
+			}
+			public String getTitle() {
+				// Implementing interface method
+				return null;
+			}
+			public Image getTitleImage() {
+				// Implementing interface method
+				return null;
+			}
+			public String getTitleToolTip() {
+				// Implementing interface method
+				return null;
+			}
+			public void removePropertyListener(IPropertyListener listener) {
+				// Implementing interface method
+			}
+			public void setFocus() {
+				// Implementing interface method
+			}
+			public Object getAdapter(Class adapter) {
+				if (adapter == IEncodingSupport.class) {
+					if (fFocusPart == fAncestor) {
+						return fAncestorContributor;
+					} else if (fFocusPart == fLeft) {
+						return fLeftContributor;
+					} else if (fFocusPart == fRight) {
+						return fRightContributor;
+					} else {
+						return null;
+					}
+				}
+				return null;
+			}
+			public void doSave(IProgressMonitor monitor) {
+				// Implementing interface method
+			}
+			public void doSaveAs() {
+				// Implementing interface method
+			}
+			public boolean isDirty() {
+				if (fFocusPart == fLeft) {
+					return isLeftDirty();
+				} else if (fFocusPart == fRight) {
+					return isRightDirty();
+				} 
+				return false;
+			}
+			public boolean isSaveAsAllowed() {
+				// Implementing interface method
+				return false;
+			}
+			public boolean isSaveOnCloseNeeded() {
+				// Implementing interface method
+				return false;
+			}
+		};
+	}
+
+	private IEditorInput getEditorInput(final ContributorInfo contributor) {
+		IEditorInput ret = contributor.getDocumentKey();
+		if (ret != null) {
+			return ret;
+		}
+		return new IEditorInput() {
+			public boolean exists() {
+				// Implementing interface method
+				return false;
+			}
+			public ImageDescriptor getImageDescriptor() {
+				// Implementing interface method
+				return null;
+			}
+			public String getName() {
+				// Implementing interface method
+				return null;
+			}
+			public IPersistableElement getPersistable() {
+				// Implementing interface method
+				return null;
+			}
+			public String getToolTipText() {
+				// Implementing interface method
+				return null;
+			}
+			public Object getAdapter(Class adapter) {
+				if (adapter == IResource.class) {
+					Object input = contributor.getElement();
+					if (input instanceof ResourceNode) {
+						return ((ResourceNode) input).getResource();
+					}
+				}
+				return null;
+			}
+		};
 	}
 }

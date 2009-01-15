@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2008 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -38,6 +38,7 @@ public class ResourceEditionNode implements IStructureComparator, ITypedElement,
 	private ICVSRemoteResource resource;
 	private ResourceEditionNode[] children;
 	private ISharedDocumentAdapter sharedDocumentAdapter;
+	private IEditorInput editorInput;
 
 	/**
 	 * Creates a new ResourceEditionNode on the given resource edition.
@@ -216,8 +217,11 @@ public class ResourceEditionNode implements IStructureComparator, ITypedElement,
 	public IEditorInput getDocumentKey(Object element) {
 		try {
 			if (element == this && getStorage() != null) {
-				return new FileRevisionEditorInput(resource
-						.getAdapter(IFileRevision.class), getStorage());
+				if (editorInput == null) {
+				editorInput = new FileRevisionEditorInput(resource
+							.getAdapter(IFileRevision.class), getStorage());
+				}
+				return editorInput;
 			}
 		} catch (TeamException e) {
 			e.printStackTrace();

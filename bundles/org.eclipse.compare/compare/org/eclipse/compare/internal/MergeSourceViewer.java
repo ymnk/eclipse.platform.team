@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -34,6 +34,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditorPreferenceConstants;
+import org.eclipse.ui.texteditor.ChangeEncodingAction;
 import org.eclipse.ui.texteditor.FindReplaceAction;
 /**
  * Extends the JFace SourceViewer with some convenience methods.
@@ -50,6 +51,7 @@ public class MergeSourceViewer extends SourceViewer
 	public static final String SELECT_ALL_ID= "selectAll"; //$NON-NLS-1$
 	public static final String SAVE_ID= "save"; //$NON-NLS-1$
 	public static final String FIND_ID= "find"; //$NON-NLS-1$
+	public static final String CHANGE_ENCODING_ID= "changeEncoding"; //$NON-NLS-1$
 
 	class TextOperationAction extends MergeViewerAction {
 		
@@ -451,6 +453,7 @@ public class MergeSourceViewer extends SourceViewer
 		addMenu(menu, SELECT_ALL_ID);
 
 		menu.add(new Separator("edit")); //$NON-NLS-1$
+		addMenu(menu, CHANGE_ENCODING_ID);
 		menu.add(new Separator("find")); //$NON-NLS-1$
 		addMenu(menu, FIND_ID);
 		
@@ -501,6 +504,9 @@ public class MergeSourceViewer extends SourceViewer
 				action.update();
 			} if (next instanceof FindReplaceAction) {
 				FindReplaceAction action = (FindReplaceAction) next;
+				action.update();
+			} else if (next instanceof ChangeEncodingAction) {
+				ChangeEncodingAction action = (ChangeEncodingAction) next;
 				action.update();
 			}
 		}
