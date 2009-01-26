@@ -130,6 +130,45 @@ public final class CompareMessages extends NLS {
 	public static String CompareWithOtherResourceDialog_workspaceMainButton;
 	public static String CompareWithOtherResourceDialog_workspaceRadioButton;
 
+	public static String CreatePatchActionTitle;
+	public static String WorkspacePatchDialogTitle;
+	public static String WorkspacePatchDialogDescription;
+	public static String Save_Patch_As_5;
+	public static String Save_To_Clipboard_2;
+	public static String Save_In_File_System_3;
+	public static String Browse____4;
+	public static String patch_txt_6;
+	public static String Save_In_Workspace_7;
+	public static String Fi_le_name__9;
+	public static String Context_14;
+	public static String Standard_15;
+	public static String Diff_output_format_12;
+	public static String Advanced_options_19;
+	public static String Configure_the_options_used_for_the_CVS_diff_command_20;
+	public static String Unified__format_required_by_Compare_With_Patch_feature__13;
+	public static String GenerateLocalDiff_title;
+	public static String GenerateLocalDiff_pageTitle;
+	public static String GenerateLocalDiff_pageDescription;
+	public static String GenerateLocalDiff_Specify_the_file_which_contributes_the_changes;
+	public static String GenerateLocalDiff_overwriteTitle;
+	public static String GenerateLocalDiff_overwriteMsg;
+	public static String GenerateLocalDiff_1;
+	public static String GenerateLocalDiff_2;
+	public static String GenerateDiffFileWizard_6;
+	public static String GenerateDiffFileWizard_7;
+	public static String GenerateDiffFileWizard_8;
+	public static String GenerateDiffFileWizard_9;
+	public static String GenerateDiffFileWizard_10;
+	public static String GenerateDiffFileWizard_0;
+	public static String GenerateDiffFileWizard_2;
+	public static String GenerateDiffFileWizard_3;
+	public static String GenerateDiffFileWizard_4;
+	public static String GenerateDiffFileWizard_5;
+	public static String GenerateDiffFileWizard_browseFilesystem;
+	public static String GenerateDiffFileWizard_FolderExists;
+	public static String GenerateDiffFileWizard_ProjectClosed;
+	public static String GenerateDiffFileWizard_13;
+
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, CompareMessages.class);
 	}

@@ -110,6 +110,7 @@ public class MergeSourceViewer implements ISelectionChangedListener,
 	public static final String SELECT_ALL_ID= "selectAll"; //$NON-NLS-1$
 	public static final String FIND_ID= "find"; //$NON-NLS-1$
 	public static final String GOTO_LINE_ID= "gotoLine"; //$NON-NLS-1$
+	public static final String CREATE_PATCH_ID= "createPatch"; //$NON-NLS-1$
 	public static final String CHANGE_ENCODING_ID= "changeEncoding"; //$NON-NLS-1$
 
 	class TextOperationAction extends MergeViewerAction {
@@ -809,6 +810,7 @@ public class MergeSourceViewer implements ISelectionChangedListener,
 
 		menu.add(new Separator("edit")); //$NON-NLS-1$
 		addMenu(menu, CHANGE_ENCODING_ID);
+		addMenu(menu, CREATE_PATCH_ID);
 		menu.add(new Separator("find")); //$NON-NLS-1$
 		addMenu(menu, FIND_ID);
 		

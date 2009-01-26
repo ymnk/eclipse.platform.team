@@ -49,4 +49,6 @@ public interface ICompareUIConstants {
 	public static final String PREF_VALUE_NEXT = "next"; //$NON-NLS-1$
 
 	public static final String COMMAND_IGNORE_WHITESPACE = PREFIX + "ignoreWhiteSpace"; //$NON-NLS-1$
+
+	public final String IMG_WIZBAN_DIFF = "wizban/createpatch_wizban.png";   //$NON-NLS-1$
 }

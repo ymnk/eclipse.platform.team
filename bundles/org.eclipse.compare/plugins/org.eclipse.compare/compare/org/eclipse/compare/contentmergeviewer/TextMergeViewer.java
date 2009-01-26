@@ -43,6 +43,7 @@ import org.eclipse.compare.internal.CompareHandlerService;
 import org.eclipse.compare.internal.CompareMessages;
 import org.eclipse.compare.internal.ComparePreferencePage;
 import org.eclipse.compare.internal.CompareUIPlugin;
+import org.eclipse.compare.internal.CreatePatchAction;
 import org.eclipse.compare.internal.DocumentManager;
 import org.eclipse.compare.internal.ICompareContextIds;
 import org.eclipse.compare.internal.ICompareUIConstants;
@@ -2023,6 +2024,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				service.activateContext("org.eclipse.ui.textEditorScope"); //$NON-NLS-1$
 			}
 		}
+		
+		contributeCreatePatchAction(fAncestor, false);
+		contributeCreatePatchAction(fLeft, false);
+		contributeCreatePatchAction(fRight, true);
 	}
 	
 	private void hsynchViewport(final TextViewer tv1, final TextViewer tv2, final TextViewer tv3) {
@@ -2574,7 +2579,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					}
 				});
 	}
-
+	
+	private void contributeCreatePatchAction(MergeSourceViewer viewer,
+			boolean rightToLeft) {
+			IAction action = new CreatePatchAction(this, rightToLeft);
+			viewer.addAction(MergeSourceViewer.CREATE_PATCH_ID, action);
+	}
+	
 	private void connectGlobalActions(final MergeSourceViewer part) {
 		if (fHandlerService != null) {
 			if (part != null)

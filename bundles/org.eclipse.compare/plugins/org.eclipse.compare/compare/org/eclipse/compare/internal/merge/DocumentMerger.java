@@ -1345,5 +1345,9 @@ public class DocumentMerger {
 		}
 		return null;
 	}
-	
+
+	public ArrayList getAllDiffs() {
+		return fAllDiffs;
+	}
+
 }
