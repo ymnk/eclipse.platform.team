@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 IBM Corporation and others.
+ * Copyright (c) 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,12 +18,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 import org.eclipse.compare.internal.merge.DocumentMerger;
 import org.eclipse.compare.internal.merge.DocumentMerger.Diff;
@@ -35,54 +33,75 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Display;
 
+import com.ibm.icu.text.DateFormat;
+
 public class UnifiedDiffFormatter {
 
-	public static final char RIGHT_CONTRIBUTOR = 'R';
-	public static final char LEFT_CONTRIBUTOR = 'L';
+	private static final char RIGHT_CONTRIBUTOR = 'R';
+	private static final char LEFT_CONTRIBUTOR = 'L';
 
-	public final static int FORMAT_UNIFIED = 1;
-	public final static int FORMAT_CONTEXT = 2;
-	public final static int FORMAT_STANDARD = 3;
+	private final static int NUMBER_OF_CONTEXT_LINES = 3;
 
 	public static final String INDEX_MARKER = "Index: "; //$NON-NLS-1$
 	public static final String DELIMITER = "==================================================================="; //$NON-NLS-1$
 	public static final String OLD_FILE_PREFIX = "--- "; //$NON-NLS-1$
-	public static final String NEW_FILE_PREFIX = "+++ "; //$NON-NLS-1$	
+	public static final String NEW_FILE_PREFIX = "+++ "; //$NON-NLS-1$
 	public static final String OLD_LINE_PREFIX = "-"; //$NON-NLS-1$
 	public static final String NEW_LINE_PREFIX = "+"; //$NON-NLS-1$
 	public static final String CONTEXT_LINE_PREFIX = " "; //$NON-NLS-1$
+	public static final String RANGE_INFORMATION_PREFIX = "@@ -"; //$NON-NLS-1$
+	public static final String RANGE_INFORMATION_AFFIX = " @@"; //$NON-NLS-1$
 
 	private DocumentMerger merger;
 	private IDocument leftDoc;
 	private IDocument rightDoc;
-	private String resourcePath;
+	private String oldPath;
+	private String newPath;
 	private boolean rightToLeft;
 
 	public UnifiedDiffFormatter(DocumentMerger merger, IDocument leftDoc,
-			IDocument rightDoc, String resourcePath, boolean rightToLeft) {
+			IDocument rightDoc, String oldPath, String newPath,
+			boolean rightToLeft) {
 		this.merger = merger;
 		this.leftDoc = leftDoc;
 		this.rightDoc = rightDoc;
-		this.resourcePath = resourcePath;
+		this.oldPath = oldPath;
+		this.newPath = newPath;
 		this.rightToLeft = rightToLeft;
 	}
 
-	public void generateDiff(Display dis) throws IOException {
+	/**
+	 * Generates diff and writes it into the clipboard.
+	 * 
+	 * GNU diff command has default line format different than Eclipse has.
+	 * This issue is the subject of bug 259636.
+	 * 
+	 * @throws IOException
+	 */
+	public void generateDiff() throws IOException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		PrintStream ps = new PrintStream(bos);
 
-		createDiff(ps);
+		generateDiff(ps);
 		ps.close();
 
 		TextTransfer plainTextTransfer = TextTransfer.getInstance();
-		Clipboard clipboard = new Clipboard(dis);
+		Clipboard clipboard = new Clipboard(Display.getDefault());
 		clipboard.setContents(new String[] { bos.toString() },
 				new Transfer[] { plainTextTransfer });
 		clipboard.dispose();
-
 		bos.close();
 	}
 
+	/**
+	 * Generates diff and writes it into the given file.
+	 * 
+	 * GNU diff command has default line format different than Eclipse has.
+	 * This issue is the subject of bug 259636.
+	 * 
+	 * @param file file where diff will be written
+	 * @throws IOException
+	 */
 	public void generateDiff(File file) throws IOException {
 		FileOutputStream fos = null;
 		PrintStream ps = null;
@@ -90,7 +109,7 @@ public class UnifiedDiffFormatter {
 			fos = new FileOutputStream(file);
 			try {
 				ps = new PrintStream(fos);
-				createDiff(ps);
+				generateDiff(ps);
 				if (ps.checkError()) {
 					throw new IOException("Error while writing patch file: " //$NON-NLS-1$
 							+ file);
@@ -107,21 +126,41 @@ public class UnifiedDiffFormatter {
 		}
 	}
 
-	public void createDiff(PrintStream output) {
+	/**
+	 * Generates diff and writes it into the given output.
+	 * 
+	 * GNU diff command has default line format different than Eclipse has.
+	 * This issue is the subject of bug 259636.
+	 * 
+	 * @param output output to which diff will be written
+	 */
+	private void generateDiff(PrintStream output) {
+		generateDiff(output, false);
+	}
+
+	/**
+	 * Generates diff in the specified format and writes it into the given output.
+	 * 
+	 * GNU diff command has default line format different than Eclipse has.
+	 * This issue is the subject of bug 259636.
+	 * 
+	 * @param output output to which diff will be written
+	 * @param strictUnixFormat determinates if the format should be fully compatible with the Unix one.
+	 */
+	private void generateDiff(PrintStream output, boolean strictUnixFormat) {
 		ArrayList allDiffs = merger.getAllDiffs();
 		// If the first block isn't the only one, or first block is different
 		if (allDiffs.size() > 1 || isPartDifferent(allDiffs, 0)) {
-			output.println(INDEX_MARKER + resourcePath);
+			output.println(INDEX_MARKER + oldPath);
 			output.println(DELIMITER);
-
-			SimpleDateFormat format = new SimpleDateFormat(
-					"dd MMM yyyy hh:mm:ss", Locale.US); //$NON-NLS-1$
-			Date oldDate = Calendar.getInstance(Locale.US).getTime();
-			Date newDate = Calendar.getInstance(Locale.US).getTime();
-			output.println(OLD_FILE_PREFIX + resourcePath + '\t'
-					+ format.format(oldDate) + " -0000"); //$NON-NLS-1$
-			output.println(NEW_FILE_PREFIX + resourcePath + '\t'
-					+ format.format(newDate) + " -0000"); //$NON-NLS-1$
+			Date oldDate = Calendar.getInstance().getTime();
+			Date newDate = Calendar.getInstance().getTime();
+			String oldDateFormat = DateFormat.getDateTimeInstance().format(oldDate);
+			String newDateFormat = DateFormat.getDateTimeInstance().format(newDate);
+			output.println(OLD_FILE_PREFIX + oldPath + '\t'
+					+ oldDateFormat + " -0000"); //$NON-NLS-1$
+			output.println(NEW_FILE_PREFIX + newPath + '\t'
+					+ newDateFormat + " -0000"); //$NON-NLS-1$
 
 			boolean firstHunk = true;
 			Hunk currentHunk = null;
@@ -131,14 +170,14 @@ public class UnifiedDiffFormatter {
 
 			for (int partNumber = 0; partNumber < allDiffs.size(); partNumber++) {
 
-				ArrayList oldPart = getPart(partNumber, 'R');
-				ArrayList newPart = getPart(partNumber, 'L');
+				ArrayList oldPart = getPart(partNumber, LEFT_CONTRIBUTOR);
+				ArrayList newPart = getPart(partNumber, RIGHT_CONTRIBUTOR);
 
 				if (isPartDifferent(allDiffs, partNumber)) {
 					// This part has some changes
 					if (firstHunk) {
 						// Hunk will start with changed block
-						currentHunk = new Hunk(0, 0);
+						currentHunk = new Hunk(0, 0, strictUnixFormat);
 						firstHunk = false;
 					}
 					if (partNumber == (allDiffs.size() - 1)) {
@@ -156,31 +195,32 @@ public class UnifiedDiffFormatter {
 				} else {
 					if (firstHunk) {
 						// Hunk will start with context
-						currentHunk = new Hunk(oldPart.size() - 3, oldPart
-								.size() - 3);
+						currentHunk = new Hunk((oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES,
+								(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES, strictUnixFormat);
 						firstHunk = false;
 						currentHunk.addPartRangeToBoth(oldPart,
-								oldPart.size() - 3, oldPart.size(), false);
+								(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES, oldPart.size(), false);
 					} else {
 						if (partNumber == (allDiffs.size() - 1)) {
 							// If it is the last part
-							currentHunk.addPartRangeToBoth(oldPart, 0, 3, true);
+							currentHunk.addPartRangeToBoth(oldPart, 0, NUMBER_OF_CONTEXT_LINES, true);
 						} else {
-							if (oldPart.size() < 6) {
+							if (oldPart.size() - 1 < 2*NUMBER_OF_CONTEXT_LINES) {
 								// Context too short to start new hunk
 								currentHunk.addPartRangeToBoth(oldPart, 0,
 										oldPart.size(), false);
 							} else {
 								// Context long enough to start new hunk
-								currentHunk.addPartRangeToBoth(oldPart, 0, 3,
+								currentHunk.addPartRangeToBoth(oldPart, 0, NUMBER_OF_CONTEXT_LINES,
 										false);
 								currentHunk.printTo(output);
 								currentHunk = new Hunk(currentLineNumberOld
-										+ oldPart.size() - 3,
-										currentLineNumberNew + oldPart.size()
-												- 3);
-								currentHunk.addPartRangeToBoth(oldPart, oldPart
-										.size() - 3, oldPart.size(), false);
+										+ (oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES,
+										currentLineNumberNew + (oldPart.size() - 1)
+										- NUMBER_OF_CONTEXT_LINES, strictUnixFormat);
+								currentHunk.addPartRangeToBoth(oldPart,
+										(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES,
+										oldPart.size(), false);
 							}
 						}
 					}
@@ -217,7 +257,7 @@ public class UnifiedDiffFormatter {
 				.getPosition(RIGHT_CONTRIBUTOR).length);
 	}
 
-	public boolean isPartDifferent(ArrayList allDiffs, int nr) {
+	private boolean isPartDifferent(ArrayList allDiffs, int nr) {
 		Diff diff = ((Diff) allDiffs.get(nr));
 		if (diff.getKind() == RangeDifference.CHANGE) {
 			return true;
@@ -227,20 +267,24 @@ public class UnifiedDiffFormatter {
 
 	private class Hunk {
 		private int oldStart;
-		private int oldEnd;
+		private int oldLength;
 		private int newStart;
-		private int newEnd;
+		private int newLength;
+		private boolean strictUnixFormat;
+		private boolean printNoNewlineMarker;
 		ArrayList lines;
 
-		public Hunk(int oldStart, int newStart) {
+		public Hunk(int oldStart, int newStart, boolean strictUnixFormat) {
 			if (oldStart < 0)
 				oldStart = 0;
 			if (newStart < 0)
 				newStart = 0;
 			this.oldStart = oldStart;
 			this.newStart = newStart;
-			this.oldEnd = oldStart;
-			this.newEnd = newStart;
+			this.oldLength = 0;
+			this.newLength = 0;
+			this.strictUnixFormat = strictUnixFormat;
+			printNoNewlineMarker = false;
 			lines = new ArrayList();
 		}
 
@@ -248,13 +292,34 @@ public class UnifiedDiffFormatter {
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
-			if (lastPart)
-				end = Math.min(end, part.size());
-			else
+			if (strictUnixFormat) {
+				//in strictUnixFormat, if last line ends with newline character
+				//add additional empty line
+				if ((lastPart) && part.size() != 1)
+					end = Math.min(end, part.size());
+				else
+					end = Math.min(end, part.size() - 1);
+				for (int lineNr = start; lineNr < end; lineNr++) {
+					lines.add(OLD_LINE_PREFIX + part.get(lineNr));
+					oldLength++;
+				}
+			}
+			else {
+				//in not strictUnixFormat, if last line doesn't end with newline character
+				//add an marker saying about this
 				end = Math.min(end, part.size() - 1);
-			for (int lineNr = start; lineNr < end; lineNr++) {
-				lines.add(OLD_LINE_PREFIX + part.get(lineNr));
-				oldEnd++;
+				for (int lineNr = start; lineNr < end; lineNr++) {
+					lines.add(OLD_LINE_PREFIX + part.get(lineNr));
+					oldLength++;
+				}
+				if (!part.get(part.size() - 1).toString().equals(""))	//$NON-NLS-1$
+				{
+					//part doesn't end with newline character
+					//don't cut the last line, because it isn't empty
+					lines.add(OLD_LINE_PREFIX + part.get(part.size() - 1));
+					oldLength++;
+					printNoNewlineMarker = true;
+				}
 			}
 		}
 
@@ -262,13 +327,33 @@ public class UnifiedDiffFormatter {
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
-			if (lastPart)
-				end = Math.min(end, part.size());
-			else
+			if (strictUnixFormat) {
+				//in strictUnixFormat, if last line ends with newline character
+				//add additional empty line
+				if ((lastPart) && part.size() != 1)
+					end = Math.min(end, part.size());
+				else
+					end = Math.min(end, part.size() - 1);
+				for (int lineNr = start; lineNr < end; lineNr++) {
+					lines.add(NEW_LINE_PREFIX + part.get(lineNr));
+					newLength++;
+				}
+			}
+			else {
+				//in not strictUnixFormat, if last line doesn't end with newline character
+				//add an marker saying about this
 				end = Math.min(end, part.size() - 1);
-			for (int lineNr = start; lineNr < end; lineNr++) {
-				lines.add(NEW_LINE_PREFIX + part.get(lineNr));
-				newEnd++;
+				for (int lineNr = start; lineNr < end; lineNr++) {
+					lines.add(NEW_LINE_PREFIX + part.get(lineNr));
+					newLength++;
+				}
+				if (!part.get(part.size() - 1).toString().equals("")) {	//$NON-NLS-1$
+					//part doesn't end with newline character
+					//don't cut the last line, because it isn't empty
+					lines.add(NEW_LINE_PREFIX + part.get(part.size() - 1));
+					newLength++;
+					printNoNewlineMarker = true;
+				}
 			}
 		}
 
@@ -276,26 +361,60 @@ public class UnifiedDiffFormatter {
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
-			if (lastPart)
-				end = Math.min(end, part.size());
-			else
+			if (strictUnixFormat) {
+				//in strictUnixFormat, if last line ends with newline character
+				//add additional empty line
+				if (lastPart)
+					end = Math.min(end, part.size());
+				else
+					end = Math.min(end, part.size() - 1);
+				for (int lineNr = start; lineNr < end; lineNr++) {
+					lines.add(CONTEXT_LINE_PREFIX + part.get(lineNr));
+					oldLength++;
+					newLength++;
+				}
+			}
+			else {
+				//in not strictUnixFormat, if last line doesn't end with newline character
+				//add an marker saying about this
 				end = Math.min(end, part.size() - 1);
-			for (int lineNr = start; lineNr < end; lineNr++) {
-				lines.add(CONTEXT_LINE_PREFIX + part.get(lineNr));
-				oldEnd++;
-				newEnd++;
+				for (int lineNr = start; lineNr < end; lineNr++) {
+					lines.add(CONTEXT_LINE_PREFIX + part.get(lineNr));
+					oldLength++;
+					newLength++;
+				}
+				if (!part.get(part.size() - 1).toString().equals("")) {	//$NON-NLS-1$
+					//part doesn't end with newline character
+					//don't cut the last line, because it isn't empty
+					lines.add(CONTEXT_LINE_PREFIX + part.get(part.size() - 1));
+					oldLength++;
+					newLength++;
+					printNoNewlineMarker = true;
+				}
 			}
 		}
 
 		private void printMarkerTo(PrintStream output) {
-			output.println("@@ -" + oldStart + "," + oldEnd + " +" + newStart //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					+ "," + newEnd + " @@"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (oldLength == 0)
+			{
+				//all lines are new lines
+				oldStart = -1;
+			}
+			if (newLength == 0) {
+				//all lines are old lines
+				newStart = -1;
+			}
+			output.println(RANGE_INFORMATION_PREFIX + (oldStart+1) + "," + oldLength + " +" + (newStart+1) //$NON-NLS-1$ //$NON-NLS-2$
+					+ "," + newLength + RANGE_INFORMATION_AFFIX); //$NON-NLS-1$
 		}
 
 		public void printTo(PrintStream output) {
 			printMarkerTo(output);
 			for (int i = 0; i < lines.size(); i++) {
 				output.println(lines.get(i));
+			}
+			if (printNoNewlineMarker) {
+				output.println("\\ No newline at end of file");	//$NON-NLS-1$
 			}
 		}
 	}

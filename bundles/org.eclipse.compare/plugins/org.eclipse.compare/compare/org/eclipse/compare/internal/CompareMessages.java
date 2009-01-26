@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2008 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,9 @@
  *     IBM Corporation - initial API and implementation
  *     Matt McCutchen (hashproduct+eclipse@gmail.com) - Bug 35390 Three-way compare cannot select (mis-selects) )ancestor resource
  *     Aleksandra Wozniak (aleksandra.k.wozniak@gmail.com) - Bug 239959, Bug 73923
+ *     Krzysztof Poglodzinski (intuicje@gmail.com) - Bug 71374
+ *     Mariusz Tanski (mariusztanski@gmail.com) - Bug 71374
+ *     Kacper Zdanowicz (kacper.zdanowicz@gmail.com) - Bug 71374
  *******************************************************************************/
 package org.eclipse.compare.internal;
 
@@ -144,7 +147,7 @@ public final class CompareMessages extends NLS {
 	public static String Standard_15;
 	public static String Diff_output_format_12;
 	public static String Advanced_options_19;
-	public static String Configure_the_options_used_for_the_CVS_diff_command_20;
+	public static String Configure_options_diff_command;
 	public static String Unified__format_required_by_Compare_With_Patch_feature__13;
 	public static String GenerateLocalDiff_title;
 	public static String GenerateLocalDiff_pageTitle;
@@ -168,6 +171,12 @@ public final class CompareMessages extends NLS {
 	public static String GenerateDiffFileWizard_FolderExists;
 	public static String GenerateDiffFileWizard_ProjectClosed;
 	public static String GenerateDiffFileWizard_13;
+	public static String GenerateDiffFileWizard_Left;
+	public static String GenerateDiffFileWizard_Right;
+	public static String GenerateLocalDiff_3;
+	public static String GenerateLocalDiff_4;
+	public static String GenerateLocalDiff_5;
+	public static String GenerateLocalDiff_6;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, CompareMessages.class);
