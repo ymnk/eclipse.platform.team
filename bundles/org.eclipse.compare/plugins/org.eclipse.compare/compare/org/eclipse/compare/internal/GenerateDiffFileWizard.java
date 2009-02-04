@@ -6,10 +6,10 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Krzysztof Poglodzinski (intuicje@gmail.com) - initial API and implementation
- *     Mariusz Tanski (mariusztanski@gmail.com) - initial API and implementation
- *     Kacper Zdanowicz (kacper.zdanowicz@gmail.com) - initial API and implementation
  *     IBM Corportation - initial API and implementation
+ *     Krzysztof Poglodzinski (intuicje@gmail.com) - Bug 71374 [Patch] Generate diff from "Compare With"
+ *     Mariusz Tanski (mariusztanski@gmail.com) - Bug 71374 [Patch] Generate diff from "Compare With"
+ *     Kacper Zdanowicz (kacper.zdanowicz@gmail.com) - Bug 71374 [Patch] Generate diff from "Compare With"
  *******************************************************************************/
 package org.eclipse.compare.internal;
 
@@ -74,9 +74,8 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.views.navigator.ResourceComparator;
 
 /**
- *	Wizard for generating patch from currently open comparison. Part of the code
- *  is taken from original org.eclipse.team.internal.ccvs.ui.wizards.GenerateDiffFileWizard,
- *  which now has been changed into a subclass of this class.
+ * Wizard for generating patch from currently open comparison. Major part of the
+ * code is taken from original GenerateDiffFileWizard from CVS/UI.
  */
 public class GenerateDiffFileWizard extends Wizard {
 
@@ -1336,77 +1335,77 @@ public class GenerateDiffFileWizard extends Wizard {
 
 		final File file= location != LocationPage.CLIPBOARD? locationPage.getFile() : null;
 
-				if (!(file == null || validateFile(file))) {
-					return false;
-				}
+		if (!(file == null || validateFile(file))) {
+			return false;
+		}
 
-				//Validation of patch root
-				if(optionsPage.getRootSelection() == OptionsPage.ROOT_CUSTOM) {
-					String path = optionsPage.getPath();
-					IFile file2;
-					try {
-						file2 = ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(path));
-					} catch(IllegalArgumentException e) {
-						final String title = CompareMessages.GenerateLocalDiff_3;
-						final String msg = CompareMessages.GenerateLocalDiff_4;
-						final MessageDialog dialog = new MessageDialog(getShell(), title,
-								null, msg, MessageDialog.ERROR,
-								new String[] { IDialogConstants.OK_LABEL }, 0);
-						dialog.open();
-						return false;
-					}
-					if(!validateFile2(file2)) {
-						return false;
-					}
-				}
+		//Validation of patch root
+		if(optionsPage.getRootSelection() == OptionsPage.ROOT_CUSTOM) {
+			String path = optionsPage.getPath();
+			IFile file2;
+			try {
+				file2 = ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(path));
+			} catch(IllegalArgumentException e) {
+				final String title = CompareMessages.GenerateLocalDiff_3;
+				final String msg = CompareMessages.GenerateLocalDiff_4;
+				final MessageDialog dialog = new MessageDialog(getShell(), title,
+						null, msg, MessageDialog.ERROR,
+						new String[] { IDialogConstants.OK_LABEL }, 0);
+				dialog.open();
+				return false;
+			}
+			if(!validateFile2(file2)) {
+				return false;
+			}
+		}
 
-				// Create the patch
-				generateDiffFile(file);
+		// Create the patch
+		generateDiffFile(file);
 
-				/**
-				 * Refresh workspace if necessary and save default selection.
-				 */
-				switch (location) {
+		/**
+		 * Refresh workspace if necessary and save default selection.
+		 */
+		switch (location) {
 
-				case LocationPage.WORKSPACE:
-					final String workspaceResource= locationPage.getWorkspaceLocation();
-					if (workspaceResource != null){
-						defaultValuesStore.storeLocationSelection(LocationPage.WORKSPACE);
-						defaultValuesStore.storeWorkspacePath(workspaceResource);
-						/* try {
+		case LocationPage.WORKSPACE:
+			final String workspaceResource= locationPage.getWorkspaceLocation();
+			if (workspaceResource != null){
+				defaultValuesStore.storeLocationSelection(LocationPage.WORKSPACE);
+				defaultValuesStore.storeWorkspacePath(workspaceResource);
+				/* try {
 	                workspaceResource.getParent().refreshLocal(IResource.DEPTH_ONE, null);
 	            } catch(CoreException e) {
 	                CVSUIPlugin.openError(getShell(), CVSUIMessages.GenerateCVSDiff_error, null, e);
 	                return false;
 	            } */
-					} else {
-						//Problem with workspace location, open with clipboard next time
-						defaultValuesStore.storeLocationSelection(LocationPage.CLIPBOARD);
-					}
-					break;
+			} else {
+				//Problem with workspace location, open with clipboard next time
+				defaultValuesStore.storeLocationSelection(LocationPage.CLIPBOARD);
+			}
+			break;
 
-				case LocationPage.FILESYSTEM:
-					defaultValuesStore.storeFilesystemPath(file.getPath());
-					defaultValuesStore.storeLocationSelection(LocationPage.FILESYSTEM);
-					break;
+		case LocationPage.FILESYSTEM:
+			defaultValuesStore.storeFilesystemPath(file.getPath());
+			defaultValuesStore.storeLocationSelection(LocationPage.FILESYSTEM);
+			break;
 
-				case LocationPage.CLIPBOARD:
-					defaultValuesStore.storeLocationSelection(LocationPage.CLIPBOARD);
-					break;
+		case LocationPage.CLIPBOARD:
+			defaultValuesStore.storeLocationSelection(LocationPage.CLIPBOARD);
+			break;
 
-				default:
-					return false;
-				}
+		default:
+			return false;
+		}
 
 
-				/**
-				 * Save default selections of Options Page
-				 */
+		/**
+		 * Save default selections of Options Page
+		 */
 
-				defaultValuesStore.storeOutputFormat(optionsPage.getFormatSelection());
-				defaultValuesStore.storePatchRoot(optionsPage.getRootSelection());
+		defaultValuesStore.storeOutputFormat(optionsPage.getFormatSelection());
+		defaultValuesStore.storePatchRoot(optionsPage.getRootSelection());
 
-				return true;
+		return true;
 	}
 
 	private void generateDiffFile(File file) {
