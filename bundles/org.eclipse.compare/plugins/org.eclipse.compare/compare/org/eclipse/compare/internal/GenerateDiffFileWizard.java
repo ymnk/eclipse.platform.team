@@ -871,13 +871,7 @@ public class GenerateDiffFileWizard extends Wizard {
 		protected final RadioButtonGroup diffTypeRadioGroup = new RadioButtonGroup();
 		protected final RadioButtonGroup unifiedRadioGroup = new RadioButtonGroup();
 
-		protected IPath patchRoot=ResourcesPlugin.getWorkspace().getRoot().getFullPath();
-
 		private final DefaultValuesStore store;
-
-		public IPath getPatchRoot() {
-			return patchRoot;
-		}
 
 		/**
 		 * Constructor for PatchFileCreationOptionsPage.
@@ -1027,41 +1021,8 @@ public class GenerateDiffFileWizard extends Wizard {
 			return unifiedGroup;
 		}
 
-		public Group getDiffTypeGroup() {
-			return diffTypeGroup;
-		}
-
-		public RadioButtonGroup getDiffTypeRadioGroup() {
-			return diffTypeRadioGroup;
-		}
-
 		public RadioButtonGroup getUnifiedRadioGroup() {
 			return unifiedRadioGroup;
-		}
-
-
-		public Button getUnifiedDiffOption() {
-			return unifiedDiffOption;
-		}
-
-		public Button getContextDiffOption() {
-			return contextDiffOption;
-		}
-
-		public Button getRegularDiffOption() {
-			return regularDiffOption;
-		}
-
-		public Button getUnified_workspaceRelativeOption() {
-			return unified_workspaceRelativeOption;
-		}
-
-		public Button getUnified_projectRelativeOption() {
-			return unified_projectRelativeOption;
-		}
-
-		public Button getUnified_selectionRelativeOption() {
-			return unified_selectionRelativeOption;
 		}
 
 		private void initializeDefaultValues() {
