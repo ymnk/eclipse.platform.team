@@ -28,6 +28,7 @@ public class AllTests {
 		suite.addTestSuite(DocLineComparatorTest.class);
 		suite.addTestSuite(FilterTest.class);
 		suite.addTestSuite(PatchTest.class);
+		suite.addTestSuite(PatchBuilderTest.class);
 		suite.addTestSuite(AsyncExecTests.class);
 		suite.addTestSuite(DiffTest.class);
 		suite.addTestSuite(FileDiffResultTest.class);
