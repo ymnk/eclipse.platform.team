@@ -37,7 +37,7 @@ public class UnifiedDiffFormatterTest extends AbstractPatchTest {
 		super(name);
 	}
 
-	private static final String TESTPATCHFILE = "testPatch.txt";
+	private static final String TESTPATCHFILE = "#testPatch.txt";
 
 	protected void setUp() throws Exception {
 		super.setUp();

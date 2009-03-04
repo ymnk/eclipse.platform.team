@@ -132,6 +132,10 @@ public final class CompareMessages extends NLS {
 	public static String CompareWithOtherResourceDialog_externalFolderRadioButton;
 	public static String CompareWithOtherResourceDialog_workspaceMainButton;
 	public static String CompareWithOtherResourceDialog_workspaceRadioButton;
+	public static String CompareContentViewerSwitchingPane_defaultViewer;
+	public static String CompareContentViewerSwitchingPane_switchButtonTooltip;
+	
+	public static String ReaderCreator_fileIsNotAccessible;
 
 	public static String CreatePatchActionTitle;
 	public static String WorkspacePatchDialogTitle;

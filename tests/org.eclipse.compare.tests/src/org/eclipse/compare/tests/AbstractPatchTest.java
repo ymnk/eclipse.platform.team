@@ -12,6 +12,9 @@ package org.eclipse.compare.tests;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -49,29 +52,50 @@ public abstract class AbstractPatchTest extends TestCase {
 
 	class StringStorage implements IStorage {
 		String fileName;
-
 		public StringStorage(String old) {
 			fileName = old;
 		}
-
 		public Object getAdapter(Class adapter) {
 			return null;
 		}
-
 		public boolean isReadOnly() {
 			return false;
 		}
-
 		public String getName() {
 			return fileName;
 		}
-
 		public IPath getFullPath() {
 			return null;
 		}
-
 		public InputStream getContents() throws CoreException {
 			return new BufferedInputStream(asInputStream(fileName));
+		}
+	}
+
+	class FileStorage implements IStorage {
+		File file;
+		public FileStorage(File file) {
+			this.file = file;
+		}
+		public InputStream getContents() throws CoreException {
+			try {
+				return new FileInputStream(file);
+			} catch (FileNotFoundException e) {
+				// ignore, should never happen
+			}
+			return null;
+		}
+		public IPath getFullPath() {
+			return new Path(file.getAbsolutePath());
+		}
+		public String getName() {
+			return file.getName();
+		}
+		public boolean isReadOnly() {
+			return true;
+		}
+		public Object getAdapter(Class adapter) {
+			return null;
 		}
 	}
 
@@ -95,13 +119,13 @@ public abstract class AbstractPatchTest extends TestCase {
 	}
 
 	protected void patch(final String old, String patch, String expt)
-			throws CoreException, IOException {
+	throws CoreException, IOException {
 		patcherPatch(old, patch, expt);
 		filePatch(old, patch, expt);
 	}
 
 	void filePatch(final String old, String patch, String expt)
-			throws CoreException, IOException {
+	throws CoreException, IOException {
 		LineReader lr = new LineReader(getReader(expt));
 		List inLines = lr.readLines();
 		String expected = LineReader.createString(false, inLines);
