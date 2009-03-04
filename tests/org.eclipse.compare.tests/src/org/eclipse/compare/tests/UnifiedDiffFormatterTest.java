@@ -22,6 +22,7 @@ import org.eclipse.compare.contentmergeviewer.ITokenComparator;
 import org.eclipse.compare.contentmergeviewer.TokenComparator;
 import org.eclipse.compare.internal.MergeViewerContentProvider;
 import org.eclipse.compare.internal.UnifiedDiffFormatter;
+import org.eclipse.compare.internal.core.patch.PatchReader;
 import org.eclipse.compare.internal.merge.DocumentMerger;
 import org.eclipse.compare.internal.merge.DocumentMerger.IDocumentMergerInput;
 import org.eclipse.core.runtime.CoreException;
@@ -37,7 +38,7 @@ public class UnifiedDiffFormatterTest extends AbstractPatchTest {
 		super(name);
 	}
 
-	private static final String TESTPATCHFILE = "#testPatch.txt";
+	private static final String TESTPATCHFILE = "testPatch.txt";
 
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -133,14 +134,15 @@ public class UnifiedDiffFormatterTest extends AbstractPatchTest {
 		patch("addition.txt", "exp_addition2.txt");
 	}
 
-	public void testCreateExamplePatch()throws CoreException, IOException {
+	public void testCreateExamplePatch() throws CoreException, IOException {
 		createPatch("context.txt", "exp_context.txt", "patch_additionD2.txt");
 		patch("context.txt", "exp_context.txt");
 	}
 
-	public void testBothFilesWithoutEndingNewlinePatch()throws CoreException, IOException {
+	public void testBothFilesWithoutEndingNewlinePatch() throws CoreException,
+	IOException {
 		createPatch("no_newline.txt", "exp_no_newline.txt", "patch_no_newline.txt");
-		patch("no_newline.txt",  "exp_no_newline.txt");
+		patch("no_newline.txt", "exp_no_newline.txt");
 	}
 
 	private void patch(final String old, String expt) throws CoreException,	IOException {
@@ -156,19 +158,19 @@ public class UnifiedDiffFormatterTest extends AbstractPatchTest {
 		// Compare Editor calculates diffs while building the UI
 		merger.doDiff();
 
-		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger,
-				fromDoc, toDoc, fromFilePath, toFilePath, false);
+		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger
+				.getAllDiffs(), fromDoc, toDoc, fromFilePath, toFilePath, false);
 		formatter.generateDiff(getTestPatchFile());
 
 		String patchContent = readFileToString(TESTPATCHFILE);
 		String expectedContent = readFileToString(expectedPatch);
 
-		String[] patchContents = patchContent.split("\n");
-		String[] expectedContents = expectedContent.split("\n");
+		String[] patchContents = patchContent.split("\r\n");
+		String[] expectedContents = expectedContent.split("\r\n");
 
 		patchContent = getContentFromLines(patchContents);
 		expectedContent = getContentFromLines(expectedContents);
-		assertEquals(patchContent, expectedContent);
+		assertEquals(expectedContent, patchContent);
 	}
 
 	private File getTestPatchFile() throws IOException {
@@ -193,6 +195,13 @@ public class UnifiedDiffFormatterTest extends AbstractPatchTest {
 				continue;
 			} else if (line.startsWith(UnifiedDiffFormatter.INDEX_MARKER)
 					|| line.startsWith(UnifiedDiffFormatter.DELIMITER)) {
+				continue;
+			} else if (line.startsWith(PatchReader.MULTIPROJECTPATCH_HEADER)
+					|| line.startsWith(PatchReader.MULTIPROJECTPATCH_PROJECT)) {
+				continue;
+			} else if (line.startsWith("RCS file: ")
+					|| line.startsWith("retrieving revision ")
+					|| line.startsWith("diff")) {
 				continue;
 			}
 			patchContent.append(line);

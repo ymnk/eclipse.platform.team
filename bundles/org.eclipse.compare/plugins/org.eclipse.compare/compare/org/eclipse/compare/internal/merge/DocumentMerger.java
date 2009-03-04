@@ -1363,6 +1363,13 @@ public class DocumentMerger {
 		return null;
 	}
 
+	/**
+	 * Return all diffs.
+	 * 
+	 * @return all diffs or <code>null</code> when no diff has been performed
+	 * 
+	 * @since 3.5
+	 */
 	public ArrayList getAllDiffs() {
 		return fAllDiffs;
 	}

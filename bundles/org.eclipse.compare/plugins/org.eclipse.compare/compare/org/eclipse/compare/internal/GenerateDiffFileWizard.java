@@ -1386,12 +1386,12 @@ public class GenerateDiffFileWizard extends Wizard {
 			oldPath = this.rightPath;
 		}
 
-		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger,
-				leftDoc, rightDoc, oldPath, toPath, directionSelectionPage
-				.isRightToLeft());
+		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger
+				.getAllDiffs(), leftDoc, rightDoc, oldPath, toPath,
+				directionSelectionPage.isRightToLeft());
 		try {
 			if (file == null) {
-				formatter.generateDiff();
+				formatter.generateDiffToClipboard();
 			} else {
 				formatter.generateDiff(file);
 			}

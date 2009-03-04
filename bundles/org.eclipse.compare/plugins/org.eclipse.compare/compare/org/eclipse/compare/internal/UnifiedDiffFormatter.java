@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
-import org.eclipse.compare.internal.merge.DocumentMerger;
 import org.eclipse.compare.internal.merge.DocumentMerger.Diff;
 import org.eclipse.compare.rangedifferencer.RangeDifference;
 import org.eclipse.jface.text.BadLocationException;
@@ -52,17 +52,17 @@ public class UnifiedDiffFormatter {
 	public static final String RANGE_INFORMATION_PREFIX = "@@ -"; //$NON-NLS-1$
 	public static final String RANGE_INFORMATION_AFFIX = " @@"; //$NON-NLS-1$
 
-	private DocumentMerger merger;
+	private List fAllDiffs;
 	private IDocument leftDoc;
 	private IDocument rightDoc;
 	private String oldPath;
 	private String newPath;
 	private boolean rightToLeft;
 
-	public UnifiedDiffFormatter(DocumentMerger merger, IDocument leftDoc,
+	public UnifiedDiffFormatter(List allDiffs, IDocument leftDoc,
 			IDocument rightDoc, String oldPath, String newPath,
 			boolean rightToLeft) {
-		this.merger = merger;
+		this.fAllDiffs = allDiffs;
 		this.leftDoc = leftDoc;
 		this.rightDoc = rightDoc;
 		this.oldPath = oldPath;
@@ -78,7 +78,7 @@ public class UnifiedDiffFormatter {
 	 * 
 	 * @throws IOException
 	 */
-	public void generateDiff() throws IOException {
+	public void generateDiffToClipboard() throws IOException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		PrintStream ps = new PrintStream(bos);
 
@@ -148,9 +148,8 @@ public class UnifiedDiffFormatter {
 	 * @param strictUnixFormat determinates if the format should be fully compatible with the Unix one.
 	 */
 	private void generateDiff(PrintStream output, boolean strictUnixFormat) {
-		ArrayList allDiffs = merger.getAllDiffs();
 		// If the first block isn't the only one, or first block is different
-		if (allDiffs.size() > 1 || isPartDifferent(allDiffs, 0)) {
+		if (fAllDiffs.size() > 1 || isPartDifferent(0)) {
 			output.println(INDEX_MARKER + oldPath);
 			output.println(DELIMITER);
 			Date oldDate = Calendar.getInstance().getTime();
@@ -168,19 +167,19 @@ public class UnifiedDiffFormatter {
 			int currentLineNumberOld = 0;
 			int currentLineNumberNew = 0;
 
-			for (int partNumber = 0; partNumber < allDiffs.size(); partNumber++) {
+			for (int i = 0; i < fAllDiffs.size(); i++) {
 
-				ArrayList oldPart = getPart(partNumber, LEFT_CONTRIBUTOR);
-				ArrayList newPart = getPart(partNumber, RIGHT_CONTRIBUTOR);
+				List oldPart = getPart(i, LEFT_CONTRIBUTOR);
+				List newPart = getPart(i, RIGHT_CONTRIBUTOR);
 
-				if (isPartDifferent(allDiffs, partNumber)) {
+				if (isPartDifferent(i)) {
 					// This part has some changes
 					if (firstHunk) {
 						// Hunk will start with changed block
 						currentHunk = new Hunk(0, 0, strictUnixFormat);
 						firstHunk = false;
 					}
-					if (partNumber == (allDiffs.size() - 1)) {
+					if (i == (fAllDiffs.size() - 1)) {
 						// If it is the last part
 						currentHunk.addPartRangeToOld(oldPart, 0, oldPart
 								.size(), true);
@@ -201,7 +200,7 @@ public class UnifiedDiffFormatter {
 						currentHunk.addPartRangeToBoth(oldPart,
 								(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES, oldPart.size(), false);
 					} else {
-						if (partNumber == (allDiffs.size() - 1)) {
+						if (i == (fAllDiffs.size() - 1)) {
 							// If it is the last part
 							currentHunk.addPartRangeToBoth(oldPart, 0, NUMBER_OF_CONTEXT_LINES, true);
 						} else {
@@ -233,11 +232,11 @@ public class UnifiedDiffFormatter {
 		}
 	}
 
-	private ArrayList getPart(int nr, char side) {
+	private List getPart(int i, char side) {
 		try {
-			String s = extract(nr, side).replaceAll("\r\n", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+			String s = extract(i, side).replaceAll("\r\n", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
 			s.replaceAll("\r", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-			ArrayList diffLines = new ArrayList(Arrays
+			List diffLines = new ArrayList(Arrays
 					.asList(s.split("\n", -1))); //$NON-NLS-1$
 			return diffLines;
 		} catch (BadLocationException e) {
@@ -246,8 +245,8 @@ public class UnifiedDiffFormatter {
 		return null;
 	}
 
-	private String extract(int nr, char side) throws BadLocationException {
-		Diff diff = ((Diff) merger.getAllDiffs().get(nr));
+	private String extract(int i, char side) throws BadLocationException {
+		Diff diff = ((Diff) fAllDiffs.get(i));
 		if (side == LEFT_CONTRIBUTOR && !rightToLeft
 				|| side == RIGHT_CONTRIBUTOR && rightToLeft) {
 			return leftDoc.get(diff.getPosition(LEFT_CONTRIBUTOR).offset, diff
@@ -257,8 +256,8 @@ public class UnifiedDiffFormatter {
 				.getPosition(RIGHT_CONTRIBUTOR).length);
 	}
 
-	private boolean isPartDifferent(ArrayList allDiffs, int nr) {
-		Diff diff = ((Diff) allDiffs.get(nr));
+	private boolean isPartDifferent(int i) {
+		Diff diff = ((Diff) fAllDiffs.get(i));
 		if (diff.getKind() == RangeDifference.CHANGE) {
 			return true;
 		}
@@ -272,7 +271,7 @@ public class UnifiedDiffFormatter {
 		private int newLength;
 		private boolean strictUnixFormat;
 		private boolean printNoNewlineMarker;
-		ArrayList lines;
+		List lines;
 
 		public Hunk(int oldStart, int newStart, boolean strictUnixFormat) {
 			if (oldStart < 0)
@@ -288,7 +287,7 @@ public class UnifiedDiffFormatter {
 			lines = new ArrayList();
 		}
 
-		public void addPartRangeToOld(ArrayList part, int start, int end,
+		public void addPartRangeToOld(List part, int start, int end,
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
@@ -323,7 +322,7 @@ public class UnifiedDiffFormatter {
 			}
 		}
 
-		public void addPartRangeToNew(ArrayList part, int start, int end,
+		public void addPartRangeToNew(List part, int start, int end,
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
@@ -357,7 +356,7 @@ public class UnifiedDiffFormatter {
 			}
 		}
 
-		public void addPartRangeToBoth(ArrayList part, int start, int end,
+		public void addPartRangeToBoth(List part, int start, int end,
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
