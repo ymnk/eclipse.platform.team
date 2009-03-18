@@ -1214,9 +1214,9 @@ public class GenerateDiffFileWizard extends Wizard {
 				super.setVisible(visible);
 				if (!initialized && visible) {
 					if (directionSelectionPage.isRightToLeft()) {
-						unified_customRelativeText.setText(leftPath);
-					} else {
 						unified_customRelativeText.setText(rightPath);
+					} else {
+						unified_customRelativeText.setText(leftPath);
 					}
 					targetFileEdited = true;
 				}
@@ -1372,18 +1372,19 @@ public class GenerateDiffFileWizard extends Wizard {
 	private void generateDiffFile(File file) {
 		String toPath, oldPath = null;
 		if (targetFileEdited) {
-			toPath = optionsPage.getPath();
+			oldPath = optionsPage.getPath();
 		} else {
 			if(directionSelectionPage.isRightToLeft()){
-				toPath = this.rightPath;
+				oldPath = this.rightPath;
 			} else {
-				toPath = this.leftPath;
+				oldPath = this.leftPath;
 			}
 		}
+
 		if(directionSelectionPage.isRightToLeft()){
-			oldPath = this.leftPath;
+			toPath = this.leftPath;
 		} else {
-			oldPath = this.rightPath;
+			toPath = this.rightPath;
 		}
 
 		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger
