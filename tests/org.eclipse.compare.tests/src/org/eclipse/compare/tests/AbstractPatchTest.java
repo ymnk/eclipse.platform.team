@@ -25,8 +25,8 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.eclipse.compare.internal.Utilities;
-import org.eclipse.compare.internal.core.patch.FileDiff;
 import org.eclipse.compare.internal.core.patch.FileDiffResult;
+import org.eclipse.compare.internal.core.patch.FilePatch2;
 import org.eclipse.compare.internal.core.patch.LineReader;
 import org.eclipse.compare.internal.patch.WorkspacePatcher;
 import org.eclipse.compare.patch.ApplyPatchOperation;
@@ -158,7 +158,7 @@ public abstract class AbstractPatchTest extends TestCase {
 			e.printStackTrace();
 		}
 
-		FileDiff[] diffs = patcher.getDiffs();
+		FilePatch2[] diffs = patcher.getDiffs();
 		Assert.assertEquals(diffs.length, 1);
 
 		FileDiffResult diffResult = patcher.getDiffResult(diffs[0]);

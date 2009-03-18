@@ -16,9 +16,9 @@ import java.io.IOException;
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.internal.ComparePreferencePage;
 import org.eclipse.compare.internal.CompareUIPlugin;
-import org.eclipse.compare.internal.core.patch.FileDiff;
+import org.eclipse.compare.internal.core.patch.FilePatch2;
 import org.eclipse.compare.internal.core.patch.PatchReader;
-import org.eclipse.compare.internal.patch.FileDiffWrapper;
+import org.eclipse.compare.internal.patch.FilePatch;
 import org.eclipse.compare.internal.patch.PatchWizard;
 import org.eclipse.compare.internal.patch.PatchWizardDialog;
 import org.eclipse.compare.internal.patch.Utilities;
@@ -27,6 +27,7 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -204,13 +205,19 @@ public class ApplyPatchOperation implements Runnable {
 			throws CoreException {
 		BufferedReader reader = Utilities.createReader(storage);
 		try {
-			PatchReader patchReader = new PatchReader();
+			PatchReader patchReader = new PatchReader() {
+				protected FilePatch2 createFileDiff(IPath oldPath, long oldDate,
+						IPath newPath, long newDate) {
+					return new FilePatch(oldPath, oldDate, newPath,
+							newDate);
+				}
+			};
 			patchReader.parse(reader);
-			FileDiff[] fileDiffs = patchReader.getAdjustedDiffs();
+			FilePatch2[] fileDiffs = patchReader.getAdjustedDiffs();
 
 			IFilePatch[] filePatch = new IFilePatch[fileDiffs.length];
 			for (int i = 0; i < fileDiffs.length; i++) {
-				filePatch[i] = new FileDiffWrapper(fileDiffs[i]);
+				filePatch[i] = (FilePatch) fileDiffs[i];
 			}
 
 			return filePatch;

@@ -35,8 +35,8 @@ import java.util.zip.ZipEntry;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 
-import org.eclipse.compare.internal.core.patch.FileDiff;
 import org.eclipse.compare.internal.core.patch.FileDiffResult;
+import org.eclipse.compare.internal.core.patch.FilePatch2;
 import org.eclipse.compare.internal.core.patch.LineReader;
 import org.eclipse.compare.internal.patch.WorkspacePatcher;
 import org.eclipse.compare.patch.ApplyPatchOperation;
@@ -57,7 +57,6 @@ import org.eclipse.core.runtime.Status;
 
 public class PatchTest extends AbstractPatchTest {
 
-	private static final String PATCHDATA = "patchdata";
 	private static final String PATCH_CONFIGURATION = "patchConfiguration.properties";
 
 	Properties defaultPatchProperties;
@@ -111,7 +110,7 @@ public class PatchTest extends AbstractPatchTest {
 	}
 
 	protected String getWorkingFolder() {
-		return PATCHDATA;
+		return "patchdata";
 	}
 
 	protected void setUp() throws Exception {
@@ -503,7 +502,7 @@ public class PatchTest extends AbstractPatchTest {
 		}
 
 		//Sort the diffs by project
-		FileDiff[] diffs= patcher.getDiffs();
+		FilePatch2[] diffs= patcher.getDiffs();
 
 		//Iterate through all of the original files, apply the diffs that belong to the file and compare
 		//with the corresponding outcome file
