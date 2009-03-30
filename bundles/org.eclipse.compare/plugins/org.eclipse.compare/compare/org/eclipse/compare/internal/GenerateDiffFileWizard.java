@@ -35,6 +35,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -594,7 +595,6 @@ public class GenerateDiffFileWizard extends Wizard {
 		 * selected to save the patch in the clipboard or file system.
 		 */
 		public String getWorkspaceLocation() {
-
 			if (pageValid && selectedLocation == WORKSPACE) {
 				final String filename= wsPathText.getText().trim();
 				return filename;
@@ -1017,14 +1017,6 @@ public class GenerateDiffFileWizard extends Wizard {
 			return unified_customRelativeText.getText();
 		}
 
-		public Group getUnifiedGroup() {
-			return unifiedGroup;
-		}
-
-		public RadioButtonGroup getUnifiedRadioGroup() {
-			return unifiedRadioGroup;
-		}
-
 		private void initializeDefaultValues() {
 			// Radio buttons for format
 			diffTypeRadioGroup.setSelection(store.getFormatSelection(), true);
@@ -1074,6 +1066,7 @@ public class GenerateDiffFileWizard extends Wizard {
 			try {
 				value= dialogSettings.getInt(PREF_LAST_SELECTION);
 			} catch (NumberFormatException e) {
+				// do nothing
 			}
 
 			switch (value) {
@@ -1220,6 +1213,18 @@ public class GenerateDiffFileWizard extends Wizard {
 					}
 					targetFileEdited = true;
 				}
+				validateCustomPatchRoot(this.getPath());
+			}
+
+			private void validateCustomPatchRoot(String path) {
+				if (this.getRootSelection() == OptionsPage.ROOT_CUSTOM
+						&& !ResourcesPlugin.getWorkspace().validatePath(path,
+								IResource.FILE).isOK()) {
+					this.setMessage(CompareMessages.GenerateLocalDiff_4,
+							IMessageProvider.WARNING);
+					return;
+				}
+				this.setMessage(null);
 			}
 
 			protected void performSpecificActions() {
@@ -1237,36 +1242,43 @@ public class GenerateDiffFileWizard extends Wizard {
 				unifiedRadioGroup.setEnablement(false, new int[] {
 						ROOT_WORKSPACE, ROOT_PROJECT, ROOT_SELECTION });
 			}
+			
+			private void createCustomRelativeControl() {
+				unified_customRelativeOption = new Button(unifiedGroup, SWT.RADIO);
+				unified_customRelativeOption.setText(CompareMessages.GenerateDiffFileWizard_13);
+				unified_customRelativeOption.setSelection(true);
+				unified_customRelativeOption.setLayoutData(new GridData(
+						SWT.BEGINNING, SWT.CENTER, false, false, 1, 1));
+
+				unified_customRelativeText = new Text(unifiedGroup, SWT.BORDER);
+				unified_customRelativeText.setLayoutData(new GridData(
+						SWT.FILL, SWT.CENTER, true, false, 1, 1));
+
+				unified_customRelativeText.addModifyListener(new ModifyListener(){
+					public void modifyText(ModifyEvent e) {
+						if(e.widget instanceof Text) {
+							String text = ((Text)e.widget).getText();
+							validateCustomPatchRoot(text);
+						}
+					}
+				});
+				
+				unifiedRadioGroup.add(OptionsPage.ROOT_CUSTOM, unified_customRelativeOption);
+				unified_customRelativeOption.addSelectionListener(new SelectionAdapter() {
+					public void widgetSelected(SelectionEvent e) {
+						unifiedRadioGroup.setSelection(OptionsPage.ROOT_CUSTOM, false);
+					}
+				});
+				optionsPage.updateDiffTypeEnablements(new int[] {OptionsPage.FORMAT_CONTEXT, OptionsPage.FORMAT_STANDARD}, OptionsPage.FORMAT_UNIFIED);
+				optionsPage.updateUnifiedEnablements(new int[] {OptionsPage.ROOT_PROJECT, OptionsPage.ROOT_WORKSPACE, OptionsPage.ROOT_SELECTION}, OptionsPage.ROOT_CUSTOM);
+			}
 		};
 		optionsPage.setDescription(pageDescription);
 		addPage(optionsPage);
 	}
 
-	private void createCustomRelativeControl() {
-		Group unifiedGroup = optionsPage.getUnifiedGroup();
-		final RadioButtonGroup unifiedRadioGroup = optionsPage.getUnifiedRadioGroup();
-		unified_customRelativeOption = new Button(unifiedGroup, SWT.RADIO);
-		unified_customRelativeOption.setText(CompareMessages.GenerateDiffFileWizard_13);
-		unified_customRelativeOption.setSelection(true);
-		unified_customRelativeOption.setLayoutData(new GridData(
-				SWT.BEGINNING, SWT.CENTER, false, false, 1, 1));
-
-		unified_customRelativeText = new Text(unifiedGroup, SWT.BORDER);
-		unified_customRelativeText.setLayoutData(new GridData(
-				SWT.FILL, SWT.CENTER, true, false, 1, 1));
-
-		optionsPage.getUnifiedRadioGroup().add(OptionsPage.ROOT_CUSTOM, unified_customRelativeOption);
-		unified_customRelativeOption.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				unifiedRadioGroup.setSelection(OptionsPage.ROOT_CUSTOM, false);
-			}
-		});
-		optionsPage.updateDiffTypeEnablements(new int[] {OptionsPage.FORMAT_CONTEXT, OptionsPage.FORMAT_STANDARD}, OptionsPage.FORMAT_UNIFIED);
-		optionsPage.updateUnifiedEnablements(new int[] {OptionsPage.ROOT_PROJECT, OptionsPage.ROOT_WORKSPACE, OptionsPage.ROOT_SELECTION}, OptionsPage.ROOT_CUSTOM);
-	}
-
 	/**
-	 * Declares the wizard banner iamge descriptor
+	 * Declares the wizard banner image descriptor
 	 */
 	protected void initializeDefaultPageImageDescriptor() {
 		final String iconPath= "icons/full/"; //$NON-NLS-1$
@@ -1280,16 +1292,19 @@ public class GenerateDiffFileWizard extends Wizard {
 		}
 	}
 
-	/* (Non-javadoc)
-	 * Method declared on IWizard.
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.jface.wizard.Wizard#needsProgressMonitor()
 	 */
 	public boolean needsProgressMonitor() {
 		return true;
 	}
 
-	/**
-	 * Completes processing of the wizard. If this method returns <code>
-	 * true</code>, the wizard will close; otherwise, it will stay active.
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.jface.wizard.Wizard#performFinish()
 	 */
 	public boolean performFinish() {
 		final int location = locationPage.getSelectedLocation();
@@ -1298,26 +1313,6 @@ public class GenerateDiffFileWizard extends Wizard {
 
 		if (!(file == null || validateFile(file))) {
 			return false;
-		}
-
-		//Validation of patch root
-		if(optionsPage.getRootSelection() == OptionsPage.ROOT_CUSTOM) {
-			String path = optionsPage.getPath();
-			IFile file2;
-			try {
-				file2 = ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(path));
-			} catch(IllegalArgumentException e) {
-				final String title = CompareMessages.GenerateLocalDiff_3;
-				final String msg = CompareMessages.GenerateLocalDiff_4;
-				final MessageDialog dialog = new MessageDialog(getShell(), title,
-						null, msg, MessageDialog.ERROR,
-						new String[] { IDialogConstants.OK_LABEL }, 0);
-				dialog.open();
-				return false;
-			}
-			if(!validateFile2(file2)) {
-				return false;
-			}
 		}
 
 		// Create the patch
