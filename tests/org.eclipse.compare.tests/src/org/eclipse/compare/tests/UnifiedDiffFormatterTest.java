@@ -158,8 +158,8 @@ public class UnifiedDiffFormatterTest extends AbstractPatchTest {
 		// Compare Editor calculates diffs while building the UI
 		merger.doDiff();
 
-		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger
-				.getAllDiffs(), fromDoc, toDoc, fromFilePath, toFilePath, false);
+		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger,
+				fromFilePath, toFilePath, false);
 		formatter.generateDiff(getTestPatchFile());
 
 		String patchContent = readFileToString(TESTPATCHFILE);

@@ -24,6 +24,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.eclipse.compare.internal.merge.DocumentMerger;
 import org.eclipse.compare.internal.merge.DocumentMerger.Diff;
 import org.eclipse.compare.rangedifferencer.RangeDifference;
 import org.eclipse.jface.text.BadLocationException;
@@ -36,6 +37,22 @@ import org.eclipse.swt.widgets.Display;
 import com.ibm.icu.text.DateFormat;
 
 public class UnifiedDiffFormatter {
+
+		
+	/**
+	 * This is a switch between strict unix format and Eclipse format of the patch.
+	 * GNU diff command has default line format different than Eclipse has.
+	 * <br><br>
+	 * Issues:<br><br>
+	 * In Eclipse format, if last line doesn't end with newline character
+	 * add an marker saying about this
+	 * <br><br>
+	 * In Unix format, if last line ends with newline character
+	 * add additional empty line
+	 * <br><br>
+	 * This issue is the subject of bug 259636.
+	 */
+	private static final boolean STRICT_UNIX_FORMAT = false;
 
 	private static final char RIGHT_CONTRIBUTOR = 'R';
 	private static final char LEFT_CONTRIBUTOR = 'L';
@@ -59,12 +76,10 @@ public class UnifiedDiffFormatter {
 	private String newPath;
 	private boolean rightToLeft;
 
-	public UnifiedDiffFormatter(List allDiffs, IDocument leftDoc,
-			IDocument rightDoc, String oldPath, String newPath,
-			boolean rightToLeft) {
-		this.fAllDiffs = allDiffs;
-		this.leftDoc = leftDoc;
-		this.rightDoc = rightDoc;
+	public UnifiedDiffFormatter(DocumentMerger merger, String oldPath, String newPath, boolean rightToLeft) {
+		this.fAllDiffs = merger.getAllDiffs();
+		this.leftDoc = merger.getDocument(LEFT_CONTRIBUTOR);
+		this.rightDoc = merger.getDocument(RIGHT_CONTRIBUTOR);
 		this.oldPath = oldPath;
 		this.newPath = newPath;
 		this.rightToLeft = rightToLeft;
@@ -72,9 +87,6 @@ public class UnifiedDiffFormatter {
 
 	/**
 	 * Generates diff and writes it into the clipboard.
-	 * 
-	 * GNU diff command has default line format different than Eclipse has.
-	 * This issue is the subject of bug 259636.
 	 * 
 	 * @throws IOException
 	 */
@@ -95,9 +107,6 @@ public class UnifiedDiffFormatter {
 
 	/**
 	 * Generates diff and writes it into the given file.
-	 * 
-	 * GNU diff command has default line format different than Eclipse has.
-	 * This issue is the subject of bug 259636.
 	 * 
 	 * @param file file where diff will be written
 	 * @throws IOException
@@ -129,28 +138,12 @@ public class UnifiedDiffFormatter {
 	/**
 	 * Generates diff and writes it into the given output.
 	 * 
-	 * GNU diff command has default line format different than Eclipse has.
-	 * This issue is the subject of bug 259636.
-	 * 
 	 * @param output output to which diff will be written
 	 */
 	private void generateDiff(PrintStream output) {
-		generateDiff(output, false);
-	}
-
-	/**
-	 * Generates diff in the specified format and writes it into the given output.
-	 * 
-	 * GNU diff command has default line format different than Eclipse has.
-	 * This issue is the subject of bug 259636.
-	 * 
-	 * @param output output to which diff will be written
-	 * @param strictUnixFormat determinates if the format should be fully compatible with the Unix one.
-	 */
-	private void generateDiff(PrintStream output, boolean strictUnixFormat) {
 		// If the first block isn't the only one, or first block is different
 		if (fAllDiffs.size() > 1 || isPartDifferent(0)) {
-			output.println(INDEX_MARKER + oldPath);
+			output.println(INDEX_MARKER + newPath);
 			output.println(DELIMITER);
 			Date oldDate = Calendar.getInstance().getTime();
 			Date newDate = Calendar.getInstance().getTime();
@@ -176,7 +169,7 @@ public class UnifiedDiffFormatter {
 					// This part has some changes
 					if (firstHunk) {
 						// Hunk will start with changed block
-						currentHunk = new Hunk(0, 0, strictUnixFormat);
+						currentHunk = new Hunk(0, 0);
 						firstHunk = false;
 					}
 					if (i == (fAllDiffs.size() - 1)) {
@@ -195,7 +188,7 @@ public class UnifiedDiffFormatter {
 					if (firstHunk) {
 						// Hunk will start with context
 						currentHunk = new Hunk((oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES,
-								(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES, strictUnixFormat);
+								(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES);
 						firstHunk = false;
 						currentHunk.addPartRangeToBoth(oldPart,
 								(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES, oldPart.size(), false);
@@ -216,7 +209,7 @@ public class UnifiedDiffFormatter {
 								currentHunk = new Hunk(currentLineNumberOld
 										+ (oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES,
 										currentLineNumberNew + (oldPart.size() - 1)
-										- NUMBER_OF_CONTEXT_LINES, strictUnixFormat);
+										- NUMBER_OF_CONTEXT_LINES);
 								currentHunk.addPartRangeToBoth(oldPart,
 										(oldPart.size() - 1) - NUMBER_OF_CONTEXT_LINES,
 										oldPart.size(), false);
@@ -234,8 +227,7 @@ public class UnifiedDiffFormatter {
 
 	private List getPart(int i, char side) {
 		try {
-			String s = extract(i, side).replaceAll("\r\n", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-			s.replaceAll("\r", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+			String s = extract(i, side).replaceAll("\r", ""); //$NON-NLS-1$ //$NON-NLS-2$
 			List diffLines = new ArrayList(Arrays
 					.asList(s.split("\n", -1))); //$NON-NLS-1$
 			return diffLines;
@@ -247,8 +239,8 @@ public class UnifiedDiffFormatter {
 
 	private String extract(int i, char side) throws BadLocationException {
 		Diff diff = ((Diff) fAllDiffs.get(i));
-		if (side == LEFT_CONTRIBUTOR && !rightToLeft
-				|| side == RIGHT_CONTRIBUTOR && rightToLeft) {
+		if ((side == LEFT_CONTRIBUTOR && !rightToLeft) || 
+				(side == RIGHT_CONTRIBUTOR && rightToLeft)) {
 			return leftDoc.get(diff.getPosition(LEFT_CONTRIBUTOR).offset, diff
 					.getPosition(LEFT_CONTRIBUTOR).length);
 		}
@@ -269,11 +261,10 @@ public class UnifiedDiffFormatter {
 		private int oldLength;
 		private int newStart;
 		private int newLength;
-		private boolean strictUnixFormat;
 		private boolean printNoNewlineMarker;
 		List lines;
 
-		public Hunk(int oldStart, int newStart, boolean strictUnixFormat) {
+		public Hunk(int oldStart, int newStart) {
 			if (oldStart < 0)
 				oldStart = 0;
 			if (newStart < 0)
@@ -282,7 +273,6 @@ public class UnifiedDiffFormatter {
 			this.newStart = newStart;
 			this.oldLength = 0;
 			this.newLength = 0;
-			this.strictUnixFormat = strictUnixFormat;
 			printNoNewlineMarker = false;
 			lines = new ArrayList();
 		}
@@ -291,9 +281,7 @@ public class UnifiedDiffFormatter {
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
-			if (strictUnixFormat) {
-				//in strictUnixFormat, if last line ends with newline character
-				//add additional empty line
+			if (STRICT_UNIX_FORMAT) {
 				if ((lastPart) && part.size() != 1)
 					end = Math.min(end, part.size());
 				else
@@ -304,8 +292,6 @@ public class UnifiedDiffFormatter {
 				}
 			}
 			else {
-				//in not strictUnixFormat, if last line doesn't end with newline character
-				//add an marker saying about this
 				end = Math.min(end, part.size() - 1);
 				for (int lineNr = start; lineNr < end; lineNr++) {
 					lines.add(OLD_LINE_PREFIX + part.get(lineNr));
@@ -326,9 +312,7 @@ public class UnifiedDiffFormatter {
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
-			if (strictUnixFormat) {
-				//in strictUnixFormat, if last line ends with newline character
-				//add additional empty line
+			if (STRICT_UNIX_FORMAT) {
 				if ((lastPart) && part.size() != 1)
 					end = Math.min(end, part.size());
 				else
@@ -339,8 +323,6 @@ public class UnifiedDiffFormatter {
 				}
 			}
 			else {
-				//in not strictUnixFormat, if last line doesn't end with newline character
-				//add an marker saying about this
 				end = Math.min(end, part.size() - 1);
 				for (int lineNr = start; lineNr < end; lineNr++) {
 					lines.add(NEW_LINE_PREFIX + part.get(lineNr));
@@ -360,9 +342,7 @@ public class UnifiedDiffFormatter {
 				boolean lastPart) {
 			if (start < 0)
 				start = 0;
-			if (strictUnixFormat) {
-				//in strictUnixFormat, if last line ends with newline character
-				//add additional empty line
+			if (STRICT_UNIX_FORMAT) {
 				if (lastPart)
 					end = Math.min(end, part.size());
 				else
@@ -374,8 +354,6 @@ public class UnifiedDiffFormatter {
 				}
 			}
 			else {
-				//in not strictUnixFormat, if last line doesn't end with newline character
-				//add an marker saying about this
 				end = Math.min(end, part.size() - 1);
 				for (int lineNr = start; lineNr < end; lineNr++) {
 					lines.add(CONTEXT_LINE_PREFIX + part.get(lineNr));

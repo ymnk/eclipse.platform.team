@@ -171,10 +171,13 @@ public class GenerateDiffFileWizard extends Wizard {
 					: LEFT_OPTION, true);
 		}
 
+		/**
+		 * Checks, in which direction patch should be generated. 
+		 * @return true if left side contributes changes.
+		 */
 		public boolean isRightToLeft() {
 			return fromRadioGroup.getSelected() == LEFT_OPTION;
 		}
-
 	}
 
 	/**
@@ -1382,9 +1385,9 @@ public class GenerateDiffFileWizard extends Wizard {
 			toPath = this.rightPath;
 		}
 
-		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger
-				.getAllDiffs(), leftDoc, rightDoc, oldPath, toPath,
-				directionSelectionPage.isRightToLeft());
+
+		UnifiedDiffFormatter formatter = new UnifiedDiffFormatter(merger, 
+				oldPath, toPath, directionSelectionPage.isRightToLeft());
 		try {
 			if (file == null) {
 				formatter.generateDiffToClipboard();

@@ -247,20 +247,20 @@ import com.ibm.icu.text.MessageFormat;
  * @see IDocumentRange
  * @see org.eclipse.compare.IStreamContentAccessor
  */
-public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
-
+public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
+	
 	private static final String COPY_LEFT_TO_RIGHT_INDICATOR = ">"; //$NON-NLS-1$
 	private static final String COPY_RIGHT_TO_LEFT_INDICATOR = "<"; //$NON-NLS-1$
 	private static final char ANCESTOR_CONTRIBUTOR = MergeViewerContentProvider.ANCESTOR_CONTRIBUTOR;
 	private static final char RIGHT_CONTRIBUTOR = MergeViewerContentProvider.RIGHT_CONTRIBUTOR;
 	private static final char LEFT_CONTRIBUTOR = MergeViewerContentProvider.LEFT_CONTRIBUTOR;
-
+	
 	private static final String DIFF_RANGE_CATEGORY = CompareUIPlugin.PLUGIN_ID + ".DIFF_RANGE_CATEGORY"; //$NON-NLS-1$
 
 	static final boolean DEBUG= false;
-
+	
 	private static final boolean FIX_47640= true;
-
+	
 	private static final String[] GLOBAL_ACTIONS= {
 		ActionFactory.UNDO.getId(),
 		ActionFactory.REDO.getId(),
@@ -283,15 +283,15 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		MergeSourceViewer.FIND_ID,
 		MergeSourceViewer.GOTO_LINE_ID
 	};
-
+					
 	private static final String BUNDLE_NAME= "org.eclipse.compare.contentmergeviewer.TextMergeViewerResources"; //$NON-NLS-1$
-
+	
 	// the following symbolic constants must match the IDs in Compare's plugin.xml
 	private static final String INCOMING_COLOR= "INCOMING_COLOR"; //$NON-NLS-1$
 	private static final String OUTGOING_COLOR= "OUTGOING_COLOR"; //$NON-NLS-1$
 	private static final String CONFLICTING_COLOR= "CONFLICTING_COLOR"; //$NON-NLS-1$
 	private static final String RESOLVED_COLOR= "RESOLVED_COLOR"; //$NON-NLS-1$
-
+	
 	// constants
 	/** Width of left and right vertical bar */
 	private static final int MARGIN_WIDTH= 6;
@@ -306,64 +306,64 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 	/** line width of change borders */
 	private static final int LW= 1;
-
+		
 	// determines whether a change between left and right is considered incoming or outgoing
 	private boolean fLeftIsLocal;
 	private boolean fShowCurrentOnly= false;
 	private boolean fShowCurrentOnly2= false;
 	private int fMarginWidth= MARGIN_WIDTH;
 	private int fTopInset;
-
+	
 	// Colors
 	private RGB fBackground;
 	private RGB fForeground;
 
 	private boolean fIsUsingSystemForeground= true;
 	private boolean fIsUsingSystemBackground= true;
-
+	
 	private RGB SELECTED_INCOMING;
 	private RGB INCOMING;
 	private RGB INCOMING_FILL;
 	private RGB INCOMING_TEXT_FILL;
-
+	
 	private RGB SELECTED_CONFLICT;
 	private RGB CONFLICT;
 	private RGB CONFLICT_FILL;
 	private RGB CONFLICT_TEXT_FILL;
-
+	
 	private RGB SELECTED_OUTGOING;
 	private RGB OUTGOING;
 	private RGB OUTGOING_FILL;
 	private RGB OUTGOING_TEXT_FILL;
-
+	
 	private RGB RESOLVED;
-
+	
 	private IPreferenceStore fPreferenceStore;
 	private IPropertyChangeListener fPreferenceChangeListener;
-
+	
 	private HashMap fNewAncestorRanges= new HashMap();
 	private HashMap fNewLeftRanges= new HashMap();
 	private HashMap fNewRightRanges= new HashMap();
-
+	
 	private MergeSourceViewer fAncestor;
 	private MergeSourceViewer fLeft;
 	private MergeSourceViewer fRight;
-
+	
 	private int fLeftLineCount;
 	private int fRightLineCount;
-
+	
 	private boolean fInScrolling;
-
+	
 	private int fPts[]= new int[8];	// scratch area for polygon drawing
-
+	
 	private int fInheritedDirection;	// inherited direction
 	private int fTextDirection;			// requested direction for embedded SourceViewer
-
+	
 	private ActionContributionItem fIgnoreAncestorItem;
 	private boolean fHighlightRanges;
-
+	
 	private boolean fShowPseudoConflicts= false;
-
+	
 	private boolean fUseSplines= true;
 	private boolean fUseSingleLine= true;
 	private boolean fUseResolveUI= true;
@@ -375,21 +375,21 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private ActionContributionItem fPreviousDiff;	// goto previous difference
 	private ActionContributionItem fCopyDiffLeftToRightItem;
 	private ActionContributionItem fCopyDiffRightToLeftItem;
-
+	
 	private CompareHandlerService fHandlerService;
-
+	
 	private boolean fSynchronizedScrolling= true;
 	private boolean fShowMoreInfo= false;
-
+	
 	private MergeSourceViewer fFocusPart;
-
+	
 	private boolean fSubDoc= true;
 	private IPositionUpdater fPositionUpdater;
 	private boolean fIsMotif;
 	private boolean fIsCarbon;
-
+	
 	private boolean fHasErrors;
-
+		
 
 	// SWT widgets
 	private BufferedCanvas fAncestorCanvas;
@@ -400,14 +400,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private Canvas fBirdsEyeCanvas;
 	private Canvas fSummaryHeader;
 	private HeaderPainter fHeaderPainter;
-
+	
 	// SWT resources to be disposed
 	private Map fColors;
 	private Cursor fBirdsEyeCursor;
-
+				
 	// points for center curves
 	private double[] fBasicCenterCurve;
-
+	
 	private Button fCenterButton;
 	private Diff fButtonDiff;
 
@@ -440,7 +440,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	 * Preference key for highlight color of current line.
 	 */
 	private final static String CURRENT_LINE_COLOR= AbstractDecoratedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE_COLOR;
-
+	
 	private List fSourceViewerDecorationSupport = new ArrayList(3);
 	// whether enhanced viewer configuration has been done
 	private boolean isConfigured = false;
@@ -461,10 +461,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				});
 				v.addSelectionChangedListener(this);
 			}
-
+				
 			return v;
 		}
-
+		
 		public boolean hasViewerFor(Object input) {
 			return true;
 		}
@@ -492,8 +492,8 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			return null;
 		}
-
-		private Diff findDiff(Position p, boolean left) {
+		
+	    private Diff findDiff(Position p, boolean left) {
 			for (Iterator iterator = fMerger.rangesIterator(); iterator.hasNext();) {
 				Diff diff = (Diff) iterator.next();
 				Position diffPos;
@@ -536,7 +536,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		private int fTopIndex = -1;
 		private boolean fNeedsValidation = false;
 		private MergeSourceViewer fSourceViewer;
-
+		
 		public ContributorInfo(TextMergeViewer viewer, Object element, char leg) {
 			fViewer = viewer;
 			fElement = element;
@@ -606,7 +606,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			if (fElement instanceof IEncodedStreamContentAccessor) {
 				try {
 					fEncoding = ((IEncodedStreamContentAccessor) fElement)
-					.getCharset();
+							.getCharset();
 				} catch (CoreException e) {
 					// silently ignored
 				}
@@ -621,7 +621,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			if (fEncoding == null)
 				fEncoding = otherContributor.fEncoding;
 		}
-
+		
 		public IDocument getDocument() {
 			if (fDocumentProvider != null) {
 				IDocument document = fDocumentProvider.getDocument(getDocumentKey());
@@ -636,7 +636,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				return DocumentManager.get(fElement);
 			return null;
 		}
-
+		
 		public void setDocument(MergeSourceViewer viewer, boolean isEditable) {
 			// Ensure that this method is only called once
 			Assert.isTrue(fSourceViewer == null);
@@ -655,15 +655,15 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				viewer.getSourceViewer().getTextWidget().addVerifyListener(this);
 			}
 		}
-
+		
 		/*
 		 * Returns true if a new Document could be installed.
 		 */
 		private boolean internalSetDocument(MergeSourceViewer tp) {
-
+			
 			if (tp == null)
 				return false;
-
+			
 			IDocument newDocument = null;
 			Position range= null;
 
@@ -674,7 +674,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 			} else if (fElement instanceof IDocument) {
 				newDocument= (IDocument) fElement;
-
+				
 			} else if (fElement instanceof IStreamContentAccessor) {
 				newDocument= DocumentManager.get(fElement);
 				if (newDocument == null) {
@@ -686,9 +686,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					connectToSharedDocument();
 				}
 			} else if (fElement == null) {	// deletion on one side
-
+				
 				ITypedElement parent= this.fViewer.getParent(fLeg);	// we try to find an insertion position within the deletion's parent
-
+				
 				if (parent instanceof IDocumentRange) {
 					newDocument= ((IDocumentRange)parent).getDocument();
 					newDocument.addPositionCategory(DIFF_RANGE_CATEGORY);
@@ -720,7 +720,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				newDocument= new Document(""); //$NON-NLS-1$
 				enabled= false;
 			}
-
+			
 			// Update the viewer document or range
 			IDocument oldDoc= tp.getSourceViewer().getDocument();
 			if (newDocument != oldDoc) {
@@ -729,7 +729,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				updateViewerDocumentRange(tp, range);
 			}
 			newDocument.addDocumentListener(this);
-
+			
 			tp.setEnabled(enabled);
 
 			return enabled;
@@ -757,7 +757,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			unsetDocument(tp);
 			if (document == null)
 				return;
-
+			
 			// Add a position updater to the document
 			document.addPositionCategory(DIFF_RANGE_CATEGORY);
 			if (this.fViewer.fPositionUpdater == null)
@@ -776,10 +776,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					tp.getSourceViewer().setDocument(document);
 			} else
 				tp.getSourceViewer().setDocument(document);
-
+							
 			tp.rememberDocument(document);
 		}
-
+		
 		private void unsetDocument(MergeSourceViewer tp) {
 			IDocument oldDoc= internalGetDocument(tp);
 			if (oldDoc != null) {
@@ -794,12 +794,12 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				oldDoc.removeDocumentListener(this);
 			}
 		}
-
+		
 		private IDocument createDocument() {
 			// If the content provider is a text content provider, attempt to obtain
 			// a shared document (i.e. file buffer)
 			IDocument newDoc = connectToSharedDocument();
-
+			
 			if (newDoc == null) {
 				IStreamContentAccessor sca= (IStreamContentAccessor) fElement;
 				String s= null;
@@ -846,7 +846,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			return null;
 		}
-
+		
 		private void connect(IDocumentProvider documentProvider, IEditorInput input) throws CoreException {
 			final ISharedDocumentAdapter sda = (ISharedDocumentAdapter) Utilities.getAdapter(fElement, ISharedDocumentAdapter.class);
 			if (sda != null) {
@@ -855,7 +855,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				documentProvider.connect(input);
 			}
 		}
-
+		
 		private void disconnect(IDocumentProvider provider, IEditorInput input) {
 			final ISharedDocumentAdapter sda = (ISharedDocumentAdapter) Utilities.getAdapter(fElement, ISharedDocumentAdapter.class);
 			if (sda != null) {
@@ -871,7 +871,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			fDocumentProvider = documentProvider;
 			documentProvider.addElementStateListener(this);
 		}
-
+		
 		public void disconnect() {
 			IDocumentProvider provider = null;
 			IEditorInput input = getDocumentKey();
@@ -906,7 +906,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			if (doc != null)
 				DocumentManager.remove(doc);
 		}
-
+		
 		private IDocument internalGetDocument(MergeSourceViewer tp) {
 			IDocument oldDoc= tp.getSourceViewer().getDocument();
 			if (oldDoc == null) {
@@ -914,7 +914,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			return oldDoc;
 		}
-
+		
 		/**
 		 * Return the document key used to obtain a shared document. A <code>null</code>
 		 * is returned in the following cases:
@@ -936,7 +936,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			return null;
 		}
-
+		
 		private IDocumentProvider getDocumentProvider() {
 			if (fDocumentProvider != null)
 				return fDocumentProvider;
@@ -953,17 +953,17 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		private boolean isUsingDefaultContentProvider() {
 			return fViewer.isUsingDefaultContentProvider();
 		}
-
+		
 		private boolean canHaveSharedDocument() {
 			return fViewer.canHaveSharedDocument();
 		}
-
+		
 		boolean hasSharedDocument(Object object) {
 			return (fElement == object &&
 					fDocumentProvider != null
 					&& fDocumentProvider.getDocument(getDocumentKey()) != null);
 		}
-
+		
 		public boolean flush() throws CoreException {
 			if (fDocumentProvider != null) {
 				IEditorInput input = getDocumentKey();
@@ -985,7 +985,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			return false;
 		}
-
+		
 		public void elementMoved(Object originalElement, Object movedElement) {
 			IEditorInput input = getDocumentKey();
 			if (input != null && input.equals(originalElement)) {
@@ -1079,7 +1079,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fTopIndex = oldContributor.fTopIndex;
 				fEncoding = oldContributor.fEncoding;
 			}
-
+				
 		}
 
 		public boolean validateChange() {
@@ -1123,14 +1123,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				e.doit= false;
 			}
 		}
-
+		
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.text.IDocumentListener#documentAboutToBeChanged(org.eclipse.jface.text.DocumentEvent)
 		 */
 		public void documentAboutToBeChanged(DocumentEvent e) {
 			// nothing to do
 		}
-
+		
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.text.IDocumentListener#documentChanged(org.eclipse.jface.text.DocumentEvent)
 		 */
@@ -1147,18 +1147,18 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	class HeaderPainter implements PaintListener {
-
+		
 		private static final int INSET= BIRDS_EYE_VIEW_INSET;
 
 		private RGB fIndicatorColor;
 		private Color fSeparatorColor;
-
+		
 		public HeaderPainter() {
 			fSeparatorColor= fSummaryHeader.getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
 		}
-
+		
 		/*
 		 * Returns true on color change
 		 */
@@ -1171,21 +1171,21 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				return !color.equals(oldColor);
 			return true;
 		}
-
+		
 		private void drawBevelRect(GC gc, int x, int y, int w, int h, Color topLeft, Color bottomRight) {
 			gc.setForeground(topLeft);
 			gc.drawLine(x, y, x + w -1, y);
 			gc.drawLine(x, y, x, y + h -1);
-
+		
 			gc.setForeground(bottomRight);
 			gc.drawLine(x + w, y, x + w, y + h);
 			gc.drawLine(x, y + h, x + w, y + h);
 		}
-
+		
 		public void paintControl(PaintEvent e) {
-
+			
 			Point s= fSummaryHeader.getSize();
-
+			
 			if (fIndicatorColor != null) {
 				Display d= fSummaryHeader.getDisplay();
 				e.gc.setBackground(getColor(d, fIndicatorColor));
@@ -1207,14 +1207,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	 * the child document ranges to changes of the parent document.
 	 */
 	class ChildPositionUpdater extends DefaultPositionUpdater {
-
+		
 		/*
 		 * Creates the position updated.
 		 */
 		protected ChildPositionUpdater(String category) {
 			super(category);
 		}
-
+		
 		/*
 		 * Child document ranges cannot be deleted other then by calling
 		 * freeChildDocument.
@@ -1222,7 +1222,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		protected boolean notDeleted() {
 			return true;
 		}
-
+		
 		/*
 		 * If an insertion happens at a child document's start offset, the
 		 * position is extended rather than shifted. Also, if something is added
@@ -1230,19 +1230,19 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		 * than kept stable.
 		 */
 		protected void adaptToInsert() {
-
+			
 			if (fPosition == fLeft.getRegion() || fPosition == fRight.getRegion()) {
 				int myStart= fPosition.offset;
 				int myEnd=   fPosition.offset + fPosition.length;
 				myEnd= Math.max(myStart, myEnd);
-
+				
 				int yoursStart= fOffset;
 				int yoursEnd=   fOffset + fReplaceLength -1;
 				yoursEnd= Math.max(yoursStart, yoursEnd);
-
+				
 				if (myEnd < yoursStart)
 					return;
-
+				
 				if (myStart <= yoursStart)
 					fPosition.length += fReplaceLength;
 				else
@@ -1252,7 +1252,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	private class ChangeHighlighter implements ITextPresentationListener {
 
 		private final MergeSourceViewer viewer;
@@ -1297,10 +1297,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			if (length < 0)
 				return null;
-
+			
 			return new StyleRange(start, length, null, cTextFill);
 		}
-
+		
 		private RGB getTextFillColor(Diff diff) {
 			if (isThreeWay() && !isIgnoreAncestor()) {
 				switch (diff.getKind()) {
@@ -1321,9 +1321,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			return OUTGOING_TEXT_FILL;
 		}
-
+		
 	}
-
+	
 	private class FindReplaceTarget implements IFindReplaceTarget {
 
 		public boolean canPerformFind() {
@@ -1350,11 +1350,11 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		public void replaceSelection(String text) {
 			fFocusPart.getSourceViewer().getFindReplaceTarget().replaceSelection(text);
 		}
-
+		
 	}
 
 	//---- MergeTextViewer
-
+	
 	/**
 	 * Creates a text merge viewer under the given parent control.
 	 *
@@ -1364,7 +1364,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	public TextMergeViewer(Composite parent, CompareConfiguration configuration) {
 		this(parent, SWT.NULL, configuration);
 	}
-
+	
 	/**
 	 * Creates a text merge viewer under the given parent control.
 	 *
@@ -1435,9 +1435,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			public boolean isPatchHunkOk() {
 				return TextMergeViewer.this.isPatchHunkOk();
 			}
-
+			
 		});
-
+		
 		int inheritedStyle= parent.getStyle();
 		if ((inheritedStyle & SWT.LEFT_TO_RIGHT) != 0)
 			fInheritedDirection= SWT.LEFT_TO_RIGHT;
@@ -1445,23 +1445,23 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			fInheritedDirection= SWT.RIGHT_TO_LEFT;
 		else
 			fInheritedDirection= SWT.NONE;
-
+		
 		if ((style & SWT.LEFT_TO_RIGHT) != 0)
 			fTextDirection= SWT.LEFT_TO_RIGHT;
 		else if ((style & SWT.RIGHT_TO_LEFT) != 0)
 			fTextDirection= SWT.RIGHT_TO_LEFT;
 		else
 			fTextDirection= SWT.NONE;
-
+		
 		fSymbolicFontName= getSymbolicFontName();
-
+		
 		String platform= SWT.getPlatform();
 		fIsMotif= "motif".equals(platform); //$NON-NLS-1$
 		fIsCarbon= "carbon".equals(platform); //$NON-NLS-1$
-
+		
 		if (fIsMotif)
 			fMarginWidth= 0;
-
+		
 		fPreferenceChangeListener= new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
 				TextMergeViewer.this.handlePropertyChangeEvent(event);
@@ -1471,7 +1471,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fPreferenceStore= createChainedPreferenceStore();
 		if (fPreferenceStore != null) {
 			fPreferenceStore.addPropertyChangeListener(fPreferenceChangeListener);
-
+			
 			fLeftIsLocal= Utilities.getBoolean(getCompareConfiguration(), "LEFT_IS_LOCAL", false); //$NON-NLS-1$
 			fSynchronizedScrolling= fPreferenceStore.getBoolean(ComparePreferencePage.SYNCHRONIZE_SCROLLING);
 			fShowMoreInfo= fPreferenceStore.getBoolean(ComparePreferencePage.SHOW_MORE_INFO);
@@ -1481,9 +1481,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			fHighlightTokenChanges= fPreferenceStore.getBoolean(ComparePreferencePage.HIGHLIGHT_TOKEN_CHANGES);
 			//fUseResolveUI= fPreferenceStore.getBoolean(ComparePreferencePage.USE_RESOLVE_UI);
 		}
-
+		
 		buildControl(parent);
-
+		
 		setColors();
 
 		INavigatable nav= new INavigatable() {
@@ -1505,21 +1505,21 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		};
 		fComposite.setData(INavigatable.NAVIGATOR_PROPERTY, nav);
-
+		
 		fBirdsEyeCursor= new Cursor(parent.getDisplay(), SWT.CURSOR_HAND);
-
+		
 		JFaceResources.getFontRegistry().addListener(fPreferenceChangeListener);
 		JFaceResources.getColorRegistry().addListener(fPreferenceChangeListener);
 		updateFont();
 	}
-
+	
 	private ChainedPreferenceStore createChainedPreferenceStore() {
-		ArrayList stores= new ArrayList(2);
+    	ArrayList stores= new ArrayList(2);
 		stores.add(getCompareConfiguration().getPreferenceStore());
 		stores.add(EditorsUI.getPreferenceStore());
 		return new ChainedPreferenceStore((IPreferenceStore[]) stores.toArray(new IPreferenceStore[stores.size()]));
-	}
-
+    }
+	
 	/**
 	 * Creates a color from the information stored in the given preference store.
 	 * Returns <code>null</code> if there is no such information available.
@@ -1558,7 +1558,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		// use text compare font if no font has been registered for subclass
 		return getClass().getName();
 	}
-
+	
 	private void updateFont() {
 		Font f= JFaceResources.getFont(fSymbolicFontName);
 		if (f != null) {
@@ -1570,7 +1570,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fRight.setFont(f);
 		}
 	}
-
+	
 	private void checkForColorUpdate(Display display) {
 		if (fIsUsingSystemBackground) {
 			RGB bg= display.getSystemColor(SWT.COLOR_LIST_BACKGROUND).getRGB();
@@ -1579,7 +1579,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	/**
 	 * Sets the viewer's background color to the given RGB value.
 	 * If the value is <code>null</code> the system's default background color is used.
@@ -1591,7 +1591,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fBackground= background;
 		updateColors(null);
 	}
-
+	
 	private RGB getBackground(Display display) {
 		if (fBackground != null)
 			return fBackground;
@@ -1601,7 +1601,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 		return display.getSystemColor(SWT.COLOR_LIST_BACKGROUND).getRGB();
 	}
-
+	
 	/**
 	 * Sets the viewer's foreground color to the given RGB value.
 	 * If the value is <code>null</code> the system's default foreground color is used.
@@ -1613,9 +1613,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fForeground= foreground;
 		updateColors(null);
 	}
-
+	
 	private void updateColors(Display display) {
-
+		
 		if (display == null)
 			display = fComposite.getDisplay();
 
@@ -1640,9 +1640,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			fLeft.setForegroundColor(fgColor);
 		if (fRight != null)
 			fRight.setForegroundColor(fgColor);
-
+		
 		ColorRegistry registry= JFaceResources.getColorRegistry();
-
+		
 		RGB bg= getBackground(display);
 		SELECTED_INCOMING= registry.getRGB(INCOMING_COLOR);
 		if (SELECTED_INCOMING == null)
@@ -1657,18 +1657,18 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		OUTGOING= interpolate(SELECTED_OUTGOING, bg, 0.6);
 		OUTGOING_FILL= interpolate(SELECTED_OUTGOING, bg, 0.97);
 		OUTGOING_TEXT_FILL= interpolate(SELECTED_OUTGOING, bg, 0.85);
-
+		
 		SELECTED_CONFLICT= registry.getRGB(CONFLICTING_COLOR);
 		if (SELECTED_CONFLICT == null)
 			SELECTED_CONFLICT= new RGB(255, 0, 0);	// RED
 		CONFLICT= interpolate(SELECTED_CONFLICT, bg, 0.6);
 		CONFLICT_FILL= interpolate(SELECTED_CONFLICT, bg, 0.97);
 		CONFLICT_TEXT_FILL= interpolate(SELECTED_CONFLICT, bg, 0.85);
-
+	
 		RESOLVED= registry.getRGB(RESOLVED_COLOR);
 		if (RESOLVED == null)
 			RESOLVED= new RGB(0, 255, 0);	// GREEN
-
+					
 		updatePresentation();
 	}
 
@@ -1677,7 +1677,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		invalidateLines();
 		invalidateTextPresentation();
 	}
-
+	
 	/**
 	 * Invalidates the current presentation by invalidating the three text viewers.
 	 * @since 2.0
@@ -1690,7 +1690,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		if (fRight != null)
 			fRight.getSourceViewer().invalidateTextPresentation();
 	}
-
+	
 	/**
 	 * Configures the passed text viewer. This method is called after the three
 	 * text viewers have been created for the content areas. The
@@ -1722,7 +1722,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	protected ITokenComparator createTokenComparator(String line) {
 		return new TokenComparator(line);
 	}
-
+	
 	/**
 	 * Setup the given document for use with this viewer. By default,
 	 * the partitioner returned from {@link #getDocumentPartitioner()}
@@ -1755,7 +1755,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	/**
 	 * Returns a document partitioner which is suitable for the underlying content type.
 	 * This method is only called if the input provided by the content provider is a
@@ -1773,7 +1773,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	protected IDocumentPartitioner getDocumentPartitioner() {
 		return null;
 	}
-
+	
 	/**
 	 * Return the partitioning to which the partitioner returned from
 	 * {@link #getDocumentPartitioner()} is to be associated. Return <code>null</code>
@@ -1790,7 +1790,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	protected String getDocumentPartitioning() {
 		return null;
 	}
-
+	
 	/**
 	 * Called on the viewer disposal.
 	 * Unregisters from the compare configuration.
@@ -1803,12 +1803,12 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 		if (fHandlerService != null)
 			fHandlerService.dispose();
-
+		
 		Object input= getInput();
 		removeFromDocumentManager(ANCESTOR_CONTRIBUTOR, input);
 		removeFromDocumentManager(LEFT_CONTRIBUTOR, input);
 		removeFromDocumentManager(RIGHT_CONTRIBUTOR, input);
-
+		
 		if (DEBUG)
 			DocumentManager.dump();
 
@@ -1819,7 +1819,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fPreferenceStore.removePropertyChangeListener(fPreferenceChangeListener);
 			fPreferenceChangeListener= null;
 		}
-
+		
 		fLeftCanvas= null;
 		fRightCanvas= null;
 		fVScrollBar= null;
@@ -1829,25 +1829,25 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fAncestorContributor.unsetDocument(fAncestor);
 		fLeftContributor.unsetDocument(fLeft);
 		fRightContributor.unsetDocument(fRight);
-
+		
 		disconnect(fLeftContributor);
 		disconnect(fRightContributor);
 		disconnect(fAncestorContributor);
-
+		
 		if (fBirdsEyeCursor != null) {
 			fBirdsEyeCursor.dispose();
 			fBirdsEyeCursor= null;
 		}
-
+		
 		if (showWhitespaceAction != null)
 			showWhitespaceAction.dispose();
-
+		
 		if (toggleLineNumbersAction != null)
 			toggleLineNumbersAction.dispose();
-
+		
 		if (fIgnoreWhitespace != null)
 			fIgnoreWhitespace.dispose();
-
+		
 		if (fSourceViewerDecorationSupport != null) {
 			for (Iterator iterator = fSourceViewerDecorationSupport.iterator(); iterator.hasNext();) {
 				((SourceViewerDecorationSupport) iterator.next()).dispose();
@@ -1864,7 +1864,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			fColors= null;
 		}
-
+		
 		if (fAncestor != null)
 			fAncestor.dispose();
 		fAncestor = null;
@@ -1874,10 +1874,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		if (fRight != null)
 			fRight.dispose();
 		fRight = null;
-
+		
 		super.handleDispose(event);
-	}
-
+  	}
+  	  	  				 		
 	private void disconnect(ContributorInfo legInfo) {
 		if (legInfo != null)
 			legInfo.disconnect();
@@ -1886,15 +1886,15 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	//-------------------------------------------------------------------------------------------------------------
 	//--- internal ------------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------------------------
-
+	
 	/*
 	 * Creates the specific SWT controls for the content areas.
 	 * Clients must not call or override this method.
 	 */
 	protected void createControls(Composite composite) {
-
+		
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, ICompareContextIds.TEXT_MERGE_VIEW);
-
+		
 		// 1st row
 		if (fMarginWidth > 0) {
 			fAncestorCanvas= new BufferedCanvas(composite, SWT.NONE) {
@@ -1903,14 +1903,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				}
 			};
 			fAncestorCanvas.addMouseListener(
-					new MouseAdapter() {
-						public void mouseDown(MouseEvent e) {
-							setCurrentDiff2(handleMouseInSides(fAncestorCanvas, fAncestor, e.y), false);
-						}
+				new MouseAdapter() {
+					public void mouseDown(MouseEvent e) {
+						setCurrentDiff2(handleMouseInSides(fAncestorCanvas, fAncestor, e.y), false);
 					}
+				}
 			);
 		}
-
+									
 		fAncestor= createPart(composite);
 		setEditable(fAncestor.getSourceViewer(), false);
 		fAncestor.getSourceViewer().getTextWidget().getAccessible().addAccessibleListener(new AccessibleAdapter() {
@@ -1919,12 +1919,12 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		});
 		fAncestor.getSourceViewer().addTextPresentationListener(new ChangeHighlighter(fAncestor));
-
+		
 		fSummaryHeader= new Canvas(composite, SWT.NONE);
 		fHeaderPainter= new HeaderPainter();
 		fSummaryHeader.addPaintListener(fHeaderPainter);
 		updateResolveStatus();
-
+				
 		// 2nd row
 		if (fMarginWidth > 0) {
 			fLeftCanvas= new BufferedCanvas(composite, SWT.NONE) {
@@ -1933,14 +1933,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				}
 			};
 			fLeftCanvas.addMouseListener(
-					new MouseAdapter() {
-						public void mouseDown(MouseEvent e) {
-							setCurrentDiff2(handleMouseInSides(fLeftCanvas, fLeft, e.y), false);
-						}
+				new MouseAdapter() {
+					public void mouseDown(MouseEvent e) {
+						setCurrentDiff2(handleMouseInSides(fLeftCanvas, fLeft, e.y), false);
 					}
+				}
 			);
 		}
-
+		
 		fLeft= createPart(composite);
 		fLeft.getSourceViewer().getTextWidget().getVerticalBar().setVisible(!fSynchronizedScrolling);
 		fLeft.getSourceViewer().getTextWidget().getAccessible().addAccessibleListener(new AccessibleAdapter() {
@@ -1949,7 +1949,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		});
 		fLeft.getSourceViewer().addTextPresentationListener(new ChangeHighlighter(fLeft));
-
+		
 		fRight= createPart(composite);
 		fRight.getSourceViewer().getTextWidget().getVerticalBar().setVisible(!fSynchronizedScrolling);
 		fRight.getSourceViewer().getTextWidget().getAccessible().addAccessibleListener(new AccessibleAdapter() {
@@ -1958,18 +1958,18 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		});
 		fRight.getSourceViewer().addTextPresentationListener(new ChangeHighlighter(fRight));
-
-		IWorkbenchPart part = getCompareConfiguration().getContainer().getWorkbenchPart();
-		// part is not available for contexts different than editor
-		if (part != null) {
-			ISelectionProvider selectionProvider = part.getSite().getSelectionProvider();
-			if (selectionProvider instanceof CompareEditorSelectionProvider) {
-				CompareEditorSelectionProvider cesp = (CompareEditorSelectionProvider) selectionProvider;
-				SourceViewer focusSourceViewer = fFocusPart == null ? null	: fFocusPart.getSourceViewer();
-				cesp.setViewers(new SourceViewer[] { fLeft.getSourceViewer(), fRight.getSourceViewer(), fAncestor.getSourceViewer() }, focusSourceViewer);
-			}
-		}
-
+		
+		 IWorkbenchPart part = getCompareConfiguration().getContainer().getWorkbenchPart();
+		 // part is not available for contexts different than editor
+		 if (part != null) {
+			 ISelectionProvider selectionProvider = part.getSite().getSelectionProvider();
+			 if (selectionProvider instanceof CompareEditorSelectionProvider) {
+				 CompareEditorSelectionProvider cesp = (CompareEditorSelectionProvider) selectionProvider;
+				 SourceViewer focusSourceViewer = fFocusPart == null ? null	: fFocusPart.getSourceViewer();
+				 cesp.setViewers(new SourceViewer[] { fLeft.getSourceViewer(), fRight.getSourceViewer(), fAncestor.getSourceViewer() }, focusSourceViewer);
+			 }
+		 }
+		
 		hsynchViewport(fAncestor.getSourceViewer(), fLeft.getSourceViewer(), fRight.getSourceViewer());
 		hsynchViewport(fLeft.getSourceViewer(), fAncestor.getSourceViewer(), fRight.getSourceViewer());
 		hsynchViewport(fRight.getSourceViewer(), fAncestor.getSourceViewer(), fLeft.getSourceViewer());
@@ -1981,58 +1981,58 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				}
 			};
 			fRightCanvas.addMouseListener(
-					new MouseAdapter() {
-						public void mouseDown(MouseEvent e) {
-							setCurrentDiff2(handleMouseInSides(fRightCanvas, fRight, e.y), false);
-						}
+				new MouseAdapter() {
+					public void mouseDown(MouseEvent e) {
+						setCurrentDiff2(handleMouseInSides(fRightCanvas, fRight, e.y), false);
 					}
+				}
 			);
 		}
-
+		
 		fScrollCanvas= new Canvas(composite, SWT.V_SCROLL);
 		Rectangle trim= fLeft.getSourceViewer().getTextWidget().computeTrim(0, 0, 0, 0);
 		fTopInset= trim.y;
-
+		
 		fVScrollBar= fScrollCanvas.getVerticalBar();
 		fVScrollBar.setIncrement(1);
 		fVScrollBar.setVisible(true);
 		fVScrollBar.addListener(SWT.Selection,
-				new Listener() {
-			public void handleEvent(Event e) {
-				int vpos= ((ScrollBar)e.widget).getSelection();
-				synchronizedScrollVertical(vpos);
+			new Listener() {
+				public void handleEvent(Event e) {
+					int vpos= ((ScrollBar)e.widget).getSelection();
+					synchronizedScrollVertical(vpos);
+				}
 			}
-		}
 		);
-
+		
 		fBirdsEyeCanvas= new BufferedCanvas(composite, SWT.NONE) {
 			public void doPaint(GC gc) {
 				paintBirdsEyeView(this, gc);
 			}
 		};
 		fBirdsEyeCanvas.addMouseListener(
-				new MouseAdapter() {
-					public void mouseDown(MouseEvent e) {
-						setCurrentDiff2(handlemouseInBirdsEyeView(fBirdsEyeCanvas, e.y), true);
-					}
+			new MouseAdapter() {
+				public void mouseDown(MouseEvent e) {
+					setCurrentDiff2(handlemouseInBirdsEyeView(fBirdsEyeCanvas, e.y), true);
 				}
+			}
 		);
 		fBirdsEyeCanvas.addMouseMoveListener(
-				new MouseMoveListener() {
-
-					private Cursor fLastCursor;
-
-					public void mouseMove(MouseEvent e) {
-						Cursor cursor= null;
-						Diff diff= handlemouseInBirdsEyeView(fBirdsEyeCanvas, e.y);
-						if (diff != null && diff.getKind() != RangeDifference.NOCHANGE)
-							cursor= fBirdsEyeCursor;
-						if (fLastCursor != cursor) {
-							fBirdsEyeCanvas.setCursor(cursor);
-							fLastCursor= cursor;
-						}
+			new MouseMoveListener() {
+				
+				private Cursor fLastCursor;
+				
+				public void mouseMove(MouseEvent e) {
+					Cursor cursor= null;
+					Diff diff= handlemouseInBirdsEyeView(fBirdsEyeCanvas, e.y);
+					if (diff != null && diff.getKind() != RangeDifference.NOCHANGE)
+						cursor= fBirdsEyeCursor;
+					if (fLastCursor != cursor) {
+						fBirdsEyeCanvas.setCursor(cursor);
+						fLastCursor= cursor;
 					}
 				}
+			}
 		);
 
 		IWorkbenchPart workbenchPart = getCompareConfiguration().getContainer().getWorkbenchPart();
@@ -2046,7 +2046,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		contributeCreatePatchAction(fLeft, false);
 		contributeCreatePatchAction(fRight, true);
 	}
-
+	
 	private void hsynchViewport(final TextViewer tv1, final TextViewer tv2, final TextViewer tv3) {
 		final StyledText st1= tv1.getTextWidget();
 		final StyledText st2= tv2.getTextWidget();
@@ -2054,14 +2054,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		final ScrollBar sb1= st1.getHorizontalBar();
 		sb1.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				if (fSynchronizedScrolling) {
+			    if (fSynchronizedScrolling) {
 					int v= sb1.getSelection();
 					if (st2.isVisible())
 						st2.setHorizontalPixel(v);
 					if (st3.isVisible())
 						st3.setHorizontalPixel(v);
 					workaround65205();
-				}
+			    }
 			}
 		});
 	}
@@ -2082,7 +2082,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			setCurrentDiff(diff, reveal);
 		}
 	}
-
+	
 	private Diff handleMouseInSides(Canvas canvas, MergeSourceViewer tp, int my) {
 
 		int lineHeight= tp.getSourceViewer().getTextWidget().getLineHeight();
@@ -2112,14 +2112,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					continue;
 				if (y >= visibleHeight)
 					break;
-
+					
 				if (my >= y && my < y+h)
 					return diff;
 			}
 		}
 		return null;
 	}
-
+	
 	private Diff getDiffUnderMouse(Canvas canvas, int mx, int my, Rectangle r) {
 
 		if (! fSynchronizedScrolling)
@@ -2181,33 +2181,33 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private Diff handlemouseInBirdsEyeView(Canvas canvas, int my) {
 		return fMerger.findDiff(getViewportHeight(), fSynchronizedScrolling, canvas.getSize(), my);
 	}
-
+	
 	private void paintBirdsEyeView(Canvas canvas, GC gc) {
-
+		
 		Color c;
 		Rectangle r= new Rectangle(0, 0, 0, 0);
 		int yy, hh;
-
+		
 		Point size= canvas.getSize();
-
+		
 		int virtualHeight= fSynchronizedScrolling ? fMerger.getVirtualHeight() : fMerger.getRightHeight();
 		if (virtualHeight < getViewportHeight())
 			return;
-
+				
 		Display display= canvas.getDisplay();
 		int y= 0;
 		for (Iterator iterator = fMerger.rangesIterator(); iterator.hasNext();) {
 			Diff diff = (Diff) iterator.next();
 			int h= fSynchronizedScrolling ? diff.getMaxDiffHeight()
-					: diff.getRightHeight();
-
+										  : diff.getRightHeight();
+							
 			if (fMerger.useChange(diff)) {
-
+				
 				yy= (y*size.y)/virtualHeight;
 				hh= (h*size.y)/virtualHeight;
 				if (hh < 3)
 					hh= 3;
-
+				
 				c= getColor(display, getFillColor(diff));
 				if (c != null) {
 					gc.setBackground(c);
@@ -2232,16 +2232,16 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					gc.drawRectangle(r);
 				}
 			}
-
+			
 			y+= h;
 		}
 	}
-
+	
 	private void refreshBirdsEyeView() {
 		if (fBirdsEyeCanvas != null)
 			fBirdsEyeCanvas.redraw();
 	}
-
+	
 	/**
 	 * Override to give focus to the pane that previously had focus or to a suitable
 	 * default pane.
@@ -2275,8 +2275,8 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return false;	// could not set focus
 	}
-
-
+	
+	
 	class HoverResizer extends Resizer {
 		Canvas fCanvas;
 		public HoverResizer(Canvas c, int dir) {
@@ -2289,7 +2289,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			super.mouseMove(e);
 		}
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#createCenterControl(org.eclipse.swt.widgets.Composite)
 	 */
@@ -2301,9 +2301,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				}
 			};
 			if (fUseResolveUI) {
-
+				
 				new HoverResizer(canvas, HORIZONTAL);
-
+								
 				fCenterButton= new Button(canvas, fIsCarbon ? SWT.FLAT : SWT.PUSH);
 				if (fNormalCursor == null) fNormalCursor= new Cursor(canvas.getDisplay(), SWT.CURSOR_ARROW);
 				fCenterButton.setCursor(fNormalCursor);
@@ -2311,27 +2311,27 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fCenterButton.pack();
 				fCenterButton.setVisible(false);
 				fCenterButton.addSelectionListener(
-						new SelectionAdapter() {
-							public void widgetSelected(SelectionEvent e) {
-								fCenterButton.setVisible(false);
-								if (fButtonDiff != null) {
-									setCurrentDiff(fButtonDiff, false);
-									copy(fCurrentDiff,
-											fCenterButton.getText().equals(COPY_LEFT_TO_RIGHT_INDICATOR),
-											fCurrentDiff.getKind() != RangeDifference.CONFLICT);
-								}
+					new SelectionAdapter() {
+						public void widgetSelected(SelectionEvent e) {
+							fCenterButton.setVisible(false);
+							if (fButtonDiff != null) {
+								setCurrentDiff(fButtonDiff, false);
+								copy(fCurrentDiff,
+										fCenterButton.getText().equals(COPY_LEFT_TO_RIGHT_INDICATOR),
+										fCurrentDiff.getKind() != RangeDifference.CONFLICT);
 							}
 						}
+					}
 				);
 			} else {
 				new Resizer(canvas, HORIZONTAL);
 			}
-
+			
 			return canvas;
 		}
 		return super.createCenterControl(parent);
 	}
-
+	
 	private boolean handleMouseMoveOverCenter(Canvas canvas, int x, int y) {
 		Rectangle r= new Rectangle(0, 0, 0, 0);
 		Diff diff= getDiffUnderMouse(canvas, x, y, r);
@@ -2362,7 +2362,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return fButtonDiff != null;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#getCenterWidth()
 	 */
@@ -2411,7 +2411,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	protected ISourceViewer createSourceViewer(Composite parent, int textOrientation) {
 		return new SourceViewer(parent, new CompositeRuler(), textOrientation | SWT.H_SCROLL | SWT.V_SCROLL);
 	}
-
+	
 	/**
 	 * Tells whether the given text viewer is backed by an editor.
 	 * 
@@ -2453,7 +2453,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				return fAncestorContributor.getDocumentKey();
 		return null;
 	}
-
+	
 	/*
 	 * Creates and initializes a text part.
 	 */
@@ -2462,59 +2462,59 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		SourceViewer sourceViewer = (SourceViewer) createSourceViewer(parent, getDirection());
 		final MergeSourceViewer viewer= new MergeSourceViewer(sourceViewer, getResourceBundle(), getCompareConfiguration().getContainer());
 		final StyledText te= viewer.getSourceViewer().getTextWidget();
-
+		
 		if (!fConfirmSave)
 			viewer.hideSaveAction();
-
+		
 		te.addPaintListener(
-				new PaintListener() {
-					public void paintControl(PaintEvent e) {
-						paint(e, viewer);
-					}
+			new PaintListener() {
+				public void paintControl(PaintEvent e) {
+					paint(e, viewer);
 				}
+			}
 		);
 		te.addKeyListener(
-				new KeyAdapter() {
-					public void keyPressed(KeyEvent e) {
-						handleSelectionChanged(viewer);
-					}
+			new KeyAdapter() {
+				public void keyPressed(KeyEvent e) {
+					handleSelectionChanged(viewer);
 				}
+			}
 		);
 		te.addMouseListener(
-				new MouseAdapter() {
-					public void mouseDown(MouseEvent e) {
-						//syncViewport(part);
-						handleSelectionChanged(viewer);
-					}
+			new MouseAdapter() {
+				public void mouseDown(MouseEvent e) {
+					//syncViewport(part);
+					handleSelectionChanged(viewer);
 				}
+			}
 		);
-
+					
 		te.addFocusListener(
-				new FocusAdapter() {
-					public void focusGained(FocusEvent fe) {
-						setActiveViewer(viewer, true);
-					}
-					public void focusLost(FocusEvent fe) {
-						setActiveViewer(viewer, false);
-					}
+			new FocusAdapter() {
+				public void focusGained(FocusEvent fe) {
+					setActiveViewer(viewer, true);
 				}
+				public void focusLost(FocusEvent fe) {
+					setActiveViewer(viewer, false);
+				}
+			}
 		);
-
+		
 		viewer.getSourceViewer().addViewportListener(
-				new IViewportListener() {
-					public void viewportChanged(int verticalPosition) {
-						syncViewport(viewer);
-					}
+			new IViewportListener() {
+				public void viewportChanged(int verticalPosition) {
+					syncViewport(viewer);
 				}
+			}
 		);
-
+		
 		Font font= JFaceResources.getFont(fSymbolicFontName);
 		if (font != null)
 			te.setFont(font);
-
+		
 		if (fBackground != null)	// not default
 			te.setBackground(getColor(parent.getDisplay(), fBackground));
-
+		
 		// Add the find action to the popup menu of the viewer
 		contributeFindAction(viewer);
 
@@ -2554,7 +2554,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		action.setActionDefinitionId(IWorkbenchCommandConstants.EDIT_FINDANDREPLACE);
 		viewer.addAction(MergeSourceViewer.FIND_ID, action);
 	}
-
+	
 	private void contributeGotoLineAction(MergeSourceViewer viewer) {
 		IAction action = new GotoLineAction((ITextEditor) viewer.getAdapter(ITextEditor.class));
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.LINE_GOTO);
@@ -2565,13 +2565,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		IAction action = new ChangeEncodingAction(getTextEditorAdapter());
 		viewer.addAction(MergeSourceViewer.CHANGE_ENCODING_ID, action);
 	}
-
+	
 	private void contributeDiffBackgroundListener(final MergeSourceViewer viewer) {
 		viewer.getSourceViewer().getTextWidget().addLineBackgroundListener(
 				new LineBackgroundListener() {
 					public void lineGetBackground(LineBackgroundEvent event) {
 						StyledText textWidget = viewer.getSourceViewer()
-						.getTextWidget();
+								.getTextWidget();
 						if (textWidget != null) {
 
 							int caret = textWidget.getCaretOffset();
@@ -2639,8 +2639,8 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 							IWorkbenchPart part = getCompareConfiguration().getContainer().getWorkbenchPart();
 							if (part instanceof CompareEditor) {
 								((CompareEditor) part).refreshActionBarsContributor();
-					}
-				}
+							}
+						}
 					}
 				}
 			});
@@ -2685,34 +2685,34 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		// The document is not associated with the input of the viewer so try to find the document
 		return Utilities.getDocument(type, element, isUsingDefaultContentProvider(), canHaveSharedDocument());
 	}
-
+	
 	private boolean isUsingDefaultContentProvider() {
 		return getContentProvider() instanceof MergeViewerContentProvider;
 	}
-
+	
 	private boolean canHaveSharedDocument() {
 		return getDocumentPartitioning() != null
-		|| getDocumentPartitioner() == null;
+			|| getDocumentPartitioner() == null;
 	}
-
+	
 	private IDocument getDocument(ITypedElement te, ContributorInfo info) {
 		if (info != null && info.getElement() == te)
 			return info.getDocument();
 		return null;
 	}
-
+	
 	IDocument getDocument(char type, Object input) {
 		IDocument doc= getElementDocument(type, input);
 		if (doc != null)
 			return doc;
-
+			
 		if (input instanceof IDiffElement) {
 			IDiffContainer parent= ((IDiffElement)input).getParent();
 			return getElementDocument(type, parent);
 		}
 		return null;
 	}
-
+	
 	/*
 	 * Returns true if the given inputs map to the same documents
 	 */
@@ -2721,7 +2721,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		IDocument oldDoc= getDocument(type, oldInput);
 		return newDoc == oldDoc;
 	}
-
+	
 	/**
 	 * Overridden to prevent save confirmation if new input is sub document of current input.
 	 * @param newInput the new input of this viewer, or <code>null</code> if there is no new input
@@ -2735,30 +2735,30 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			// check whether underlying documents have changed.
 			if (sameDoc(ANCESTOR_CONTRIBUTOR, newInput, oldInput) &&
 					sameDoc(LEFT_CONTRIBUTOR, newInput, oldInput) &&
-					sameDoc(RIGHT_CONTRIBUTOR, newInput, oldInput)) {
+						sameDoc(RIGHT_CONTRIBUTOR, newInput, oldInput)) {
 				if (DEBUG) System.out.println("----- Same docs !!!!");	//$NON-NLS-1$
 				return false;
 			}
 		}
-
+		
 		if (DEBUG) System.out.println("***** New docs !!!!");	//$NON-NLS-1$
-
+		
 		removeFromDocumentManager(ANCESTOR_CONTRIBUTOR, oldInput);
 		removeFromDocumentManager(LEFT_CONTRIBUTOR, oldInput);
 		removeFromDocumentManager(RIGHT_CONTRIBUTOR, oldInput);
-
+		
 		if (DEBUG)
 			DocumentManager.dump();
-
+		
 		return super.doSave(newInput, oldInput);
 	}
-
+	
 	private void removeFromDocumentManager(char leg, Object oldInput) {
 		IDocument document= getDocument(leg, oldInput);
 		if (document != null)
 			DocumentManager.remove(document);
 	}
-
+	
 	private ITypedElement getParent(char type) {
 		Object input= getInput();
 		if (input instanceof IDiffElement) {
@@ -2767,40 +2767,40 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return null;
 	}
-
+		
 	/*
 	 * Initializes the text viewers of the three content areas with the given input objects.
 	 * Subclasses may extend.
 	 */
 	protected void updateContent(Object ancestor, Object left, Object right) {
-
+		
 		boolean emptyInput= (ancestor == null && left == null && right == null);
 
 		Object input= getInput();
 
 		Position leftRange= null;
 		Position rightRange= null;
-
+		
 		// if one side is empty use container
 		if (FIX_47640 && !emptyInput && (left == null || right == null)) {
 			if (input instanceof IDiffElement) {
 				IDiffContainer parent= ((IDiffElement)input).getParent();
 				if (parent instanceof ICompareInput) {
-					ICompareInput ci= (ICompareInput) parent;
-
-					if (ci.getAncestor() instanceof IDocumentRange
-							|| ci.getLeft() instanceof IDocumentRange
-							|| ci.getRight() instanceof IDocumentRange) {
-
-						if (left instanceof IDocumentRange)
-							leftRange= ((IDocumentRange)left).getRange();
-						if (right instanceof IDocumentRange)
-							rightRange= ((IDocumentRange)right).getRange();
-
-						ancestor= ci.getAncestor();
-						left= ci.getLeft();
-						right= ci.getRight();
-					}
+				    ICompareInput ci= (ICompareInput) parent;
+				    
+				    if (ci.getAncestor() instanceof IDocumentRange
+				            || ci.getLeft() instanceof IDocumentRange
+				            		|| ci.getRight() instanceof IDocumentRange) {
+				    
+				        	if (left instanceof IDocumentRange)
+				        	    leftRange= ((IDocumentRange)left).getRange();
+				        	if (right instanceof IDocumentRange)
+				        	    rightRange= ((IDocumentRange)right).getRange();
+					    
+					    ancestor= ci.getAncestor();
+					    left= ci.getLeft();
+					    right= ci.getRight();
+				    }
 				}
 			}
 		}
@@ -2811,13 +2811,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		if (right != null)
 			n++;
 		fHighlightRanges= n > 1;
-
+		
 		resetDiffs();
 		fHasErrors= false; // start with no errors
-
+		
 		CompareConfiguration cc= getCompareConfiguration();
 		IMergeViewerContentProvider cp= getMergeContentProvider();
-
+		
 		if (cp instanceof MergeViewerContentProvider) {
 			MergeViewerContentProvider mcp= (MergeViewerContentProvider) cp;
 			mcp.setAncestorError(null);
@@ -2830,36 +2830,36 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		ContributorInfo oldLeftContributor = fLeftContributor;
 		ContributorInfo oldRightContributor = fRightContributor;
 		ContributorInfo oldAncestorContributor = fAncestorContributor;
-
+		
 		// Create the new contributor
 		fLeftContributor = createLegInfoFor(left, LEFT_CONTRIBUTOR);
 		fRightContributor = createLegInfoFor(right, RIGHT_CONTRIBUTOR);
 		fAncestorContributor = createLegInfoFor(ancestor, ANCESTOR_CONTRIBUTOR);
-
+		
 		fLeftContributor.transferContributorStateFrom(oldLeftContributor);
 		fRightContributor.transferContributorStateFrom(oldRightContributor);
 		fAncestorContributor.transferContributorStateFrom(oldAncestorContributor);
-
+		
 		// Now disconnect the old ones
 		disconnect(oldLeftContributor);
 		disconnect(oldRightContributor);
 		disconnect(oldAncestorContributor);
-
+		
 		// Get encodings from streams. If an encoding is null, abide by the other one
 		// Defaults to workbench encoding only if both encodings are null
 		fLeftContributor.setEncodingIfAbsent(fRightContributor);
 		fRightContributor.setEncodingIfAbsent(fLeftContributor);
 		fAncestorContributor.setEncodingIfAbsent(fLeftContributor);
-
+		
 		// set new documents
 		fLeftContributor.setDocument(fLeft, cc.isLeftEditable() && cp.isLeftEditable(input));
 		fLeftLineCount= fLeft.getLineCount();
-
+		
 		fRightContributor.setDocument(fRight, cc.isRightEditable() && cp.isRightEditable(input));
 		fRightLineCount= fRight.getLineCount();
-
+		
 		fAncestorContributor.setDocument(fAncestor, false);
-
+		
 		if (!isConfigured) {
 			configureSourceViewer(fAncestor.getSourceViewer(), false);
 			configureSourceViewer(fLeft.getSourceViewer(), cc.isLeftEditable() && cp.isLeftEditable(input));
@@ -2874,9 +2874,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			setSyncScrolling(fPreferenceStore.getBoolean(ComparePreferencePage.SYNCHRONIZE_SCROLLING));
 		}*/
 		setSyncScrolling(fPreferenceStore.getBoolean(ComparePreferencePage.SYNCHRONIZE_SCROLLING));
-
+		
 		update(false);
-
+		
 		if (!fHasErrors && !emptyInput && !fComposite.isDisposed()) {
 			if (isRefreshing()) {
 				fLeftContributor.updateSelection(fLeft, !fSynchronizedScrolling);
@@ -2895,9 +2895,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					Diff selectDiff= null;
 					if (FIX_47640) {
 						if (leftRange != null)
-							selectDiff= fMerger.findDiff(LEFT_CONTRIBUTOR, leftRange);
+						    selectDiff= fMerger.findDiff(LEFT_CONTRIBUTOR, leftRange);
 						else if (rightRange != null)
-							selectDiff= fMerger.findDiff(RIGHT_CONTRIBUTOR, rightRange);
+						    selectDiff= fMerger.findDiff(RIGHT_CONTRIBUTOR, rightRange);
 					}
 					if (selectDiff != null)
 						setCurrentDiff(selectDiff, true);
@@ -2906,7 +2906,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				}
 			}
 		}
-
+		
 	}
 
 	private void configureSourceViewer(SourceViewer sourceViewer, boolean editable) {
@@ -2957,7 +2957,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private ContributorInfo createLegInfoFor(Object element, char leg) {
 		return new ContributorInfo(this, element, leg);
 	}
-
+	
 	private boolean updateDiffBackground(Diff diff) {
 
 		if (!fHighlightRanges)
@@ -2978,9 +2978,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	 * Implements IDocumentListener.
 	 */
 	private void documentChanged(DocumentEvent e, boolean dirty) {
-
+		
 		IDocument doc= e.getDocument();
-
+		
 		if (doc == fLeft.getSourceViewer().getDocument()) {
 			setLeftDirty(dirty);
 		} else if (doc == fRight.getSourceViewer().getDocument()) {
@@ -2991,7 +2991,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		updateLines(doc);
 	}
-
+	
 	/*
 	 * This method is called if a range of text on one side is copied into an empty sub-document
 	 * on the other side. The method returns the position where the sub-document is placed into the base document.
@@ -3005,10 +3005,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	 * @since 2.0
 	 */
 	protected int findInsertionPosition(char type, ICompareInput input) {
-
+			
 		ITypedElement other= null;
 		char otherType= 0;
-
+		
 		switch (type) {
 		case ANCESTOR_CONTRIBUTOR:
 			other= input.getLeft();
@@ -3035,7 +3035,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			break;
 		}
-
+		
 		if (other instanceof IDocumentRange) {
 			IDocumentRange dr= (IDocumentRange) other;
 			Position p= dr.getRange();
@@ -3044,7 +3044,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return 0;
 	}
-
+	
 	private void setError(char type, String message) {
 		IMergeViewerContentProvider cp= getMergeContentProvider();
 		if (cp instanceof MergeViewerContentProvider) {
@@ -3101,7 +3101,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return null;
 	}
-
+	
 	private void addNewRange(char type, Object input, Position range) {
 		switch (type) {
 		case ANCESTOR_CONTRIBUTOR:
@@ -3115,7 +3115,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			break;
 		}
 	}
-
+	
 	/**
 	 * Returns the contents of the underlying document as an array of bytes using the current workbench encoding.
 	 * 
@@ -3142,29 +3142,29 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return null;
 	}
-
+		
 	private IRegion normalizeDocumentRegion(IDocument doc, IRegion region) {
-
+		
 		if (region == null || doc == null)
 			return region;
-
+			
 		int maxLength= doc.getLength();
-
+		
 		int start= region.getOffset();
 		if (start < 0)
 			start= 0;
 		else if (start > maxLength)
 			start= maxLength;
-
+			
 		int length= region.getLength();
 		if (length < 0)
 			length= 0;
 		else if (start + length > maxLength)
 			length= maxLength - start;
-
+			
 		return new Region(start, length);
 	}
-
+		
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#handleResizeAncestor(int, int, int, int)
 	 */
@@ -3176,7 +3176,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fAncestorCanvas.setVisible(true);
 			if (fAncestor.isControlOkToUse())
 				fAncestor.getSourceViewer().getTextWidget().setVisible(true);
-
+			
 			if (fAncestorCanvas != null) {
 				fAncestorCanvas.setBounds(x, y, fMarginWidth, height-scrollbarHeight);
 				x+= fMarginWidth;
@@ -3198,14 +3198,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#handleResizeLeftRight(int, int, int, int, int, int)
-	 */
-	protected final void handleResizeLeftRight(int x, int y, int width1, int centerWidth, int width2,  int height) {
-
-		if (fBirdsEyeCanvas != null)
-			width2-= BIRDS_EYE_VIEW_WIDTH;
-
+  	/* (non-Javadoc)
+  	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#handleResizeLeftRight(int, int, int, int, int, int)
+  	 */
+  	protected final void handleResizeLeftRight(int x, int y, int width1, int centerWidth, int width2,  int height) {
+  				
+  		if (fBirdsEyeCanvas != null)
+  			width2-= BIRDS_EYE_VIEW_WIDTH;
+  			
 		Rectangle trim= fLeft.getSourceViewer().getTextWidget().computeTrim(0, 0, 0, 0);
 		int scrollbarHeight= trim.height + trim.x;
 
@@ -3217,15 +3217,15 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			x+= fMarginWidth;
 			leftTextWidth-= fMarginWidth;
 		}
-
+		
 		fLeft.setBounds(x, y, leftTextWidth, height);
 		x+= leftTextWidth;
-
+		
 		if (fCenter == null || fCenter.isDisposed())
 			fCenter= createCenterControl(composite);
 		fCenter.setBounds(x, y, centerWidth, height-scrollbarHeight);
 		x+= centerWidth;
-
+		
 		if (!fSynchronizedScrolling) {	// canvas is to the left of text
 			if (fRightCanvas != null) {
 				fRightCanvas.setBounds(x, y, fMarginWidth, height-scrollbarHeight);
@@ -3234,11 +3234,11 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 			// we draw the canvas to the left of the text widget
 		}
-
+		
 		int scrollbarWidth= 0;
 		if (fSynchronizedScrolling && fScrollCanvas != null) {
 			trim= fLeft.getSourceViewer().getTextWidget().computeTrim(0, 0, 0, 0);
-			// one pixel was cut off
+	  		// one pixel was cut off
 			scrollbarWidth= trim.width + 2*trim.x+1;
 		}
 		int rightTextWidth= width2-scrollbarWidth;
@@ -3246,7 +3246,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			rightTextWidth-= fMarginWidth;
 		fRight.setBounds(x, y, rightTextWidth, height);
 		x+= rightTextWidth;
-
+			
 		if (fSynchronizedScrolling) {
 			if (fRightCanvas != null) {	// canvas is to the right of the text
 				fRightCanvas.setBounds(x, y, fMarginWidth, height-scrollbarHeight);
@@ -3255,25 +3255,25 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			if (fScrollCanvas != null)
 				fScrollCanvas.setBounds(x, y, scrollbarWidth, height-scrollbarHeight);
 		}
-
-		if (fBirdsEyeCanvas != null) {
-			int verticalScrollbarButtonHeight= scrollbarWidth;
+		
+  		if (fBirdsEyeCanvas != null) {
+  			int verticalScrollbarButtonHeight= scrollbarWidth;
 			int horizontalScrollbarButtonHeight= scrollbarHeight;
 			if (fIsCarbon) {
 				verticalScrollbarButtonHeight+= 2;
 				horizontalScrollbarButtonHeight= 18;
 			}
-			if (fSummaryHeader != null)
+  			if (fSummaryHeader != null)
 				fSummaryHeader.setBounds(x+scrollbarWidth, y, BIRDS_EYE_VIEW_WIDTH, verticalScrollbarButtonHeight);
-			y+= verticalScrollbarButtonHeight;
-			fBirdsEyeCanvas.setBounds(x+scrollbarWidth, y, BIRDS_EYE_VIEW_WIDTH, height-(2*verticalScrollbarButtonHeight+horizontalScrollbarButtonHeight));
-		}
-
+  			y+= verticalScrollbarButtonHeight;
+  			fBirdsEyeCanvas.setBounds(x+scrollbarWidth, y, BIRDS_EYE_VIEW_WIDTH, height-(2*verticalScrollbarButtonHeight+horizontalScrollbarButtonHeight));
+   		}
+		
 		// doesn't work since TextEditors don't have their correct size yet.
 		updateVScrollBar();
 		refreshBirdsEyeView();
 	}
-
+							
 	/*
 	 * Track selection changes to update the current Diff.
 	 */
@@ -3289,9 +3289,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			return new Region(position.getOffset(), position.getLength());
 		return null;
 	}
-
+	
 	//---- the differencing
-
+	
 	/**
 	 * Perform a two level 2- or 3-way diff.
 	 * The first level is based on line comparison, the second level on token comparison.
@@ -3304,7 +3304,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fAncestor.resetLineBackground();
 		fLeft.resetLineBackground();
 		fRight.resetLineBackground();
-
+		
 		fCurrentDiff= null;
 		try {
 			fMerger.doDiff();
@@ -3318,7 +3318,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 		invalidateTextPresentation();
 	}
-
+	
 	private Diff findDiff(char type, int pos) {
 		try {
 			return fMerger.findDiff(type, pos);
@@ -3331,7 +3331,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			return null;
 		}
 	}
-
+	
 	private void resetPositions(IDocument doc) {
 		if (doc == null)
 			return;
@@ -3342,16 +3342,16 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		doc.addPositionCategory(DIFF_RANGE_CATEGORY);
 	}
-
+	
 	//---- update UI stuff
-
+	
 	private void updateControls() {
 		if (getControl().isDisposed())
 			return;
 
 		boolean leftToRight= false;
 		boolean rightToLeft= false;
-
+		
 		updateStatus(fCurrentDiff);
 		updateResolveStatus();
 
@@ -3364,7 +3364,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				}
 			}
 		}
-
+		
 		if (fDirectionLabel != null) {
 			if (fHighlightRanges && fCurrentDiff != null && isThreeWay() && !isIgnoreAncestor()) {
 				fDirectionLabel.setImage(fCurrentDiff.getImage());
@@ -3372,26 +3372,26 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fDirectionLabel.setImage(null);
 			}
 		}
-
+		
 		if (fCopyDiffLeftToRightItem != null)
 			((Action)fCopyDiffLeftToRightItem.getAction()).setEnabled(leftToRight);
 		if (fCopyDiffRightToLeftItem != null)
 			((Action)fCopyDiffRightToLeftItem.getAction()).setEnabled(rightToLeft);
 
 		if (fNextDiff != null) {
-			IAction a= fNextDiff.getAction();
+			IAction a = fNextDiff.getAction();
 			a.setEnabled(isNavigationButtonEnabled(true, false));
 		}
 		if (fPreviousDiff != null) {
-			IAction a= fPreviousDiff.getAction();
+			IAction a = fPreviousDiff.getAction();
 			a.setEnabled(isNavigationButtonEnabled(false, false));
 		}
 		if (fNextChange != null) {
-			IAction a= fNextChange.getAction();
+			IAction a = fNextChange.getAction();
 			a.setEnabled(isNavigationButtonEnabled(true, true));
 		}
 		if (fPreviousChange != null) {
-			IAction a= fPreviousChange.getAction();
+			IAction a = fPreviousChange.getAction();
 			a.setEnabled(isNavigationButtonEnabled(false, true));
 		}
 	}
@@ -3411,11 +3411,11 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		Assert.isTrue(false);
 		return false;
 	}
-
+	
 	private void updateResolveStatus() {
-
+			
 		RGB rgb= null;
-
+		
 		if (showResolveUI()) {
 			// we only show red or green if there is at least one incoming or conflicting change
 			int incomingOrConflicting= 0;
@@ -3424,7 +3424,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 			if (fMerger.hasChanges()) {
 				for (Iterator iterator = fMerger.changesIterator(); iterator
-				.hasNext();) {
+						.hasNext();) {
 					Diff d = (Diff) iterator.next();
 					if (d.isIncomingOrConflicting() /* && useChange(d.fDirection) && !d.fIsWhitespace */) {
 						incomingOrConflicting++;
@@ -3438,7 +3438,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					}
 				}
 			}
-
+		
 			if (incomingOrConflicting > 0) {
 				if (unresolvedConflicting > 0)
 					rgb= SELECTED_CONFLICT;
@@ -3448,52 +3448,52 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					rgb= RESOLVED;
 			}
 		}
-
+		
 		if (fHeaderPainter.setColor(rgb))
 			fSummaryHeader.redraw();
 	}
 
 	private void updateStatus(Diff diff) {
-
+		
 		if (! fShowMoreInfo)
 			return;
-
+					
 		String diffDescription;
-
+		
 		if (diff == null) {
 			diffDescription= CompareMessages.TextMergeViewer_diffDescription_noDiff_format;
 		} else {
-
+			
 			if (diff.isToken())		// we don't show special info for token diffs
 				diff= diff.getParent();
-
+		
 			String format= CompareMessages.TextMergeViewer_diffDescription_diff_format;
 			diffDescription= MessageFormat.format(format,
-					new String[] {
+				new String[] {
 					getDiffType(diff),						// 0: diff type
 					getDiffNumber(diff),					// 1: diff number
 					getDiffRange(fLeft, diff.getPosition(LEFT_CONTRIBUTOR)),		// 2: left start line
 					getDiffRange(fRight, diff.getPosition(RIGHT_CONTRIBUTOR))	// 3: left end line
-			}
+				}
 			);
 		}
-
+		
 		String format= CompareMessages.TextMergeViewer_statusLine_format;
 		String s= MessageFormat.format(format,
-				new String[] {
+			new String[] {
 				getCursorPosition(fLeft),	// 0: left column
 				getCursorPosition(fRight),	// 1: right column
 				diffDescription				// 2: diff description
-		}
+			}
 		);
-
+	
 		getCompareConfiguration().getContainer().setStatusMessage(s);
 	}
 
 	private void clearStatus() {
 		getCompareConfiguration().getContainer().setStatusMessage(null);
 	}
-
+	
 	private String getDiffType(Diff diff) {
 		String s= ""; 	//$NON-NLS-1$
 		switch(diff.getKind()) {
@@ -3510,7 +3510,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		String format= CompareMessages.TextMergeViewer_diffType_format;
 		return MessageFormat.format(format, new String[] { s, diff.changeType() } );
 	}
-
+	
 	private String getDiffNumber(Diff diff) {
 		// find the diff's number
 		int diffNumber= 0;
@@ -3524,22 +3524,22 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return Integer.toString(diffNumber);
 	}
-
+	
 	private String getDiffRange(MergeSourceViewer v, Position pos) {
 		Point p= v.getLineRange(pos, new Point(0, 0));
 		int startLine= p.x+1;
 		int endLine= p.x+p.y;
-
+		
 		String format;
 		if (endLine < startLine)
 			format= CompareMessages.TextMergeViewer_beforeLine_format;
 		else
 			format= CompareMessages.TextMergeViewer_range_format;
 		return MessageFormat.format(format,
-				new String[] { Integer.toString(startLine),
-				Integer.toString(endLine) } );
+					new String[] { Integer.toString(startLine),
+									Integer.toString(endLine) } );
 	}
-
+	
 	/*
 	 * Returns a description of the cursor position.
 	 * 
@@ -3548,29 +3548,29 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private String getCursorPosition(MergeSourceViewer v) {
 		if (v != null) {
 			StyledText styledText= v.getSourceViewer().getTextWidget();
-
+			
 			IDocument document= v.getSourceViewer().getDocument();
 			if (document != null) {
 				int offset= v.getSourceViewer().getVisibleRegion().getOffset();
 				int caret= offset + styledText.getCaretOffset();
-
+				
 				try {
-
+					
 					int line=document.getLineOfOffset(caret);
-
+					
 					int lineOffset= document.getLineOffset(line);
 					int occurrences= 0;
 					for (int i= lineOffset; i < caret; i++)
 						if ('\t' == document.getChar(i))
 							++ occurrences;
-
+							
 					int tabWidth= styledText.getTabs();
 					int column= caret - lineOffset + (tabWidth -1) * occurrences;
-
+					
 					String format= CompareMessages.TextMergeViewer_cursorPosition_format;
 					return MessageFormat.format(format,
-							new String[] { Integer.toString(line + 1), Integer.toString(column + 1) } );
-
+						new String[] { Integer.toString(line + 1), Integer.toString(column + 1) } );
+					
 				} catch (BadLocationException x) {
 					// silently ignored
 				}
@@ -3580,9 +3580,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	}
 
 	protected void updateHeader() {
-
+		
 		super.updateHeader();
-
+				
 		updateControls();
 	}
 
@@ -3593,7 +3593,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	protected void createToolItems(ToolBarManager tbm) {
 
 		fHandlerService= CompareHandlerService.createFor(getCompareConfiguration().getContainer(), fLeft.getSourceViewer().getControl().getShell());
-
+		
 		final String ignoreAncestorActionKey= "action.IgnoreAncestor.";	//$NON-NLS-1$
 		Action ignoreAncestorAction= new Action() {
 			public void run() {
@@ -3608,13 +3608,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		ignoreAncestorAction.setChecked(isIgnoreAncestor());
 		Utilities.initAction(ignoreAncestorAction, getResourceBundle(), ignoreAncestorActionKey);
 		Utilities.initToggleAction(ignoreAncestorAction, getResourceBundle(), ignoreAncestorActionKey, isIgnoreAncestor());
-
+		
 		fIgnoreAncestorItem= new ActionContributionItem(ignoreAncestorAction);
 		fIgnoreAncestorItem.setVisible(false);
 		tbm.appendToGroup("modes", fIgnoreAncestorItem); //$NON-NLS-1$
 
 		tbm.add(new Separator());
-
+		
 		Action a= new Action() {
 			public void run() {
 				if (navigate(true, false, false)) {
@@ -3626,7 +3626,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fNextDiff= new ActionContributionItem(a);
 		tbm.appendToGroup("navigation", fNextDiff); //$NON-NLS-1$
 		// Don't register this action since it is probably registered by the container
-
+		
 		a= new Action() {
 			public void run() {
 				if (navigate(false, false, false)) {
@@ -3638,7 +3638,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fPreviousDiff= new ActionContributionItem(a);
 		tbm.appendToGroup("navigation", fPreviousDiff); //$NON-NLS-1$
 		// Don't register this action since it is probably registered by the container
-
+		
 		a= new Action() {
 			public void run() {
 				if (navigate(true, false, true)) {
@@ -3650,7 +3650,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fNextChange= new ActionContributionItem(a);
 		tbm.appendToGroup("navigation", fNextChange); //$NON-NLS-1$
 		fHandlerService.registerAction(a, "org.eclipse.compare.selectNextChange");	//$NON-NLS-1$
-
+		
 		a= new Action() {
 			public void run() {
 				if (navigate(false, false, true)) {
@@ -3664,7 +3664,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		fHandlerService.registerAction(a, "org.eclipse.compare.selectPreviousChange");	//$NON-NLS-1$
 
 		CompareConfiguration cc= getCompareConfiguration();
-
+		
 		if (cc.isRightEditable()) {
 			a= new Action() {
 				public void run() {
@@ -3677,7 +3677,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			tbm.appendToGroup("merge", fCopyDiffLeftToRightItem); //$NON-NLS-1$
 			fHandlerService.registerAction(a, "org.eclipse.compare.copyLeftToRight");	//$NON-NLS-1$
 		}
-
+		
 		if (cc.isLeftEditable()) {
 			a= new Action() {
 				public void run() {
@@ -3690,14 +3690,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			tbm.appendToGroup("merge", fCopyDiffRightToLeftItem); //$NON-NLS-1$
 			fHandlerService.registerAction(a, "org.eclipse.compare.copyRightToLeft");	//$NON-NLS-1$
 		}
-
+		
 		fIgnoreWhitespace= ChangePropertyAction.createIgnoreWhiteSpaceAction(getResourceBundle(), getCompareConfiguration());
 		fIgnoreWhitespace.setActionDefinitionId(ICompareUIConstants.COMMAND_IGNORE_WHITESPACE);
 		fLeft.addTextAction(fIgnoreWhitespace);
 		fRight.addTextAction(fIgnoreWhitespace);
 		fAncestor.addTextAction(fIgnoreWhitespace);
 		fHandlerService.registerAction(fIgnoreWhitespace, fIgnoreWhitespace.getActionDefinitionId());
-
+		
 		boolean needsLeftPainter= !isEditorBacked(fLeft.getSourceViewer());
 		boolean needsRightPainter= !isEditorBacked(fLeft.getSourceViewer());
 		boolean needsAncestorPainter= !isEditorBacked(fAncestor.getSourceViewer());
@@ -3705,49 +3705,48 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				new MergeSourceViewer[] {fLeft, fRight, fAncestor},
 				new boolean[] {needsLeftPainter, needsRightPainter, needsAncestorPainter });
 		fHandlerService.registerAction(showWhitespaceAction, ITextEditorActionDefinitionIds.SHOW_WHITESPACE_CHARACTERS);
-
+		
 		toggleLineNumbersAction = new TextEditorPropertyAction(CompareMessages.TextMergeViewer_16, new MergeSourceViewer[] {
 				fLeft, fRight, fAncestor
 		}, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER);
 		fHandlerService.registerAction(toggleLineNumbersAction, ITextEditorActionDefinitionIds.LINENUMBER_TOGGLE);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#handlePropertyChangeEvent(org.eclipse.jface.util.PropertyChangeEvent)
 	 */
 	protected void handlePropertyChangeEvent(PropertyChangeEvent event) {
-
 		String key= event.getProperty();
-
+		
 		if (key.equals(CompareConfiguration.IGNORE_WHITESPACE)
 				|| key.equals(ComparePreferencePage.SHOW_PSEUDO_CONFLICTS)) {
-
+					
 			fShowPseudoConflicts= fPreferenceStore.getBoolean(ComparePreferencePage.SHOW_PSEUDO_CONFLICTS);
-
+			
 			update(true);
 			selectFirstDiff(true);
-
-			//		} else if (key.equals(ComparePreferencePage.USE_SPLINES)) {
-			//			fUseSplines= fPreferenceStore.getBoolean(ComparePreferencePage.USE_SPLINES);
-			//			invalidateLines();
+			
+//		} else if (key.equals(ComparePreferencePage.USE_SPLINES)) {
+//			fUseSplines= fPreferenceStore.getBoolean(ComparePreferencePage.USE_SPLINES);
+//			invalidateLines();
 
 		} else if (key.equals(ComparePreferencePage.USE_SINGLE_LINE)) {
 			fUseSingleLine= fPreferenceStore.getBoolean(ComparePreferencePage.USE_SINGLE_LINE);
-			//			fUseResolveUI= fUseSingleLine;
+//			fUseResolveUI= fUseSingleLine;
 			fBasicCenterCurve= null;
 			updateControls();
 			invalidateLines();
-
+	
 		} else if (key.equals(ComparePreferencePage.HIGHLIGHT_TOKEN_CHANGES)) {
 			fHighlightTokenChanges= fPreferenceStore.getBoolean(ComparePreferencePage.HIGHLIGHT_TOKEN_CHANGES);
 			updateControls();
 			updatePresentation();
-
-			//		} else if (key.equals(ComparePreferencePage.USE_RESOLVE_UI)) {
-			//			fUseResolveUI= fPreferenceStore.getBoolean(ComparePreferencePage.USE_RESOLVE_UI);
-			//			updateResolveStatus();
-			//			invalidateLines();
-
+			
+//		} else if (key.equals(ComparePreferencePage.USE_RESOLVE_UI)) {
+//			fUseResolveUI= fPreferenceStore.getBoolean(ComparePreferencePage.USE_RESOLVE_UI);
+//			updateResolveStatus();
+//			invalidateLines();
+		
 		} else if (key.equals(fSymbolicFontName)) {
 			updateFont();
 			invalidateLines();
@@ -3756,13 +3755,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			updateColors(null);
 			invalidateLines();
 			invalidateTextPresentation();
-
+			
 		} else if (key.equals(ComparePreferencePage.SYNCHRONIZE_SCROLLING)) {
 			boolean b= fPreferenceStore.getBoolean(ComparePreferencePage.SYNCHRONIZE_SCROLLING);
 			setSyncScrolling(b);
-
+		
 		} else if (key.equals(ComparePreferencePage.SHOW_MORE_INFO)) {
-
+			
 			boolean b= fPreferenceStore.getBoolean(ComparePreferencePage.SHOW_MORE_INFO);
 			if (b != fShowMoreInfo) {
 				fShowMoreInfo= b;
@@ -3799,23 +3798,23 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			updateControls();
 		} else {
 			super.handlePropertyChangeEvent(event);
-
+			
 			if (key.equals(ICompareUIConstants.PROP_IGNORE_ANCESTOR)) {
 				update(true);
 				selectFirstDiff(true);
 			}
 		}
 	}
-
+	
 	private void selectFirstDiff(boolean first) {
-
+		
 		if (fLeft == null || fRight == null) {
 			return;
 		}
 		if (fLeft.getSourceViewer().getDocument() == null || fRight.getSourceViewer().getDocument() == null) {
 			return;
 		}
-
+		
 		Diff firstDiff= null;
 		if (first)
 			firstDiff= findNext(fRight, -1, -1, false);
@@ -3823,34 +3822,34 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			firstDiff= findPrev(fRight, 9999999, 9999999, false);
 		setCurrentDiff(firstDiff, true);
 	}
-
-
-
+	
+	
+	
 	private void setSyncScrolling(boolean newMode) {
 		if (fSynchronizedScrolling != newMode) {
 			fSynchronizedScrolling= newMode;
-
+			
 			scrollVertical(0, 0, 0, null);
-
+			
 			// throw away central control (Sash or Canvas)
 			Control center= getCenterControl();
 			if (center != null && !center.isDisposed())
 				center.dispose();
-
+			
 			fLeft.getSourceViewer().getTextWidget().getVerticalBar().setVisible(!fSynchronizedScrolling);
 			fRight.getSourceViewer().getTextWidget().getVerticalBar().setVisible(!fSynchronizedScrolling);
-
+	
 			fComposite.layout(true);
 		}
 	}
-
+					
 	protected void updateToolItems() {
 		//only update toolbar items if diffs need to be calculated (which
 		//dictates whether a toolbar gets added at all)
 		if (!isPatchHunk()){
 			if (fIgnoreAncestorItem != null)
 				fIgnoreAncestorItem.setVisible(isThreeWay());
-
+			
 			if (fCopyDiffLeftToRightItem != null) {
 				IAction a= fCopyDiffLeftToRightItem.getAction();
 				if (a != null)
@@ -3861,18 +3860,18 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				if (a != null)
 					a.setEnabled(a.isEnabled() && !fHasErrors);
 			}
-
+			
 			super.updateToolItems();
 		}
 	}
-
+	
 	//---- painting lines
-
+	
 	private void updateLines(IDocument d) {
 
 		boolean left= false;
 		boolean right= false;
-
+		
 		// FIXME: this optimization is incorrect because
 		// it doesn't take replace operations into account where
 		// the old and new line count does not differ
@@ -3885,9 +3884,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			right= fRightLineCount != l;
 			fRightLineCount= l;
 		}
-
+		
 		if (left || right) {
-
+			
 			if (left) {
 				if (fLeftCanvas != null)
 					fLeftCanvas.redraw();
@@ -3903,7 +3902,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			refreshBirdsEyeView();
 		}
 	}
-
+	
 	private void invalidateLines() {
 		if (isThreeWay()) {
 			if (Utilities.okToUse(fAncestorCanvas))
@@ -3911,23 +3910,23 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			if (fAncestor != null && fAncestor.isControlOkToUse())
 				fAncestor.getSourceViewer().getTextWidget().redraw();
 		}
-
+		
 		if (Utilities.okToUse(fLeftCanvas))
 			fLeftCanvas.redraw();
-
+			
 		if (fLeft != null && fLeft.isControlOkToUse())
 			fLeft.getSourceViewer().getTextWidget().redraw();
-
+			
 		if (Utilities.okToUse(getCenterControl()))
 			getCenterControl().redraw();
-
+			
 		if (fRight != null && fRight.isControlOkToUse())
 			fRight.getSourceViewer().getTextWidget().redraw();
-
+			
 		if (Utilities.okToUse(fRightCanvas))
 			fRightCanvas.redraw();
 	}
-
+	
 	private boolean showResolveUI() {
 		if (!fUseResolveUI || !isThreeWay() || isIgnoreAncestor())
 			return false;
@@ -3938,13 +3937,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		//return (l && !r) || (r && !l);
 		return l || r;
 	}
-
+	
 	private void paintCenter(Canvas canvas, GC g) {
-
+		
 		Display display= canvas.getDisplay();
-
+		
 		checkForColorUpdate(display);
-
+		
 		if (! fSynchronizedScrolling)
 			return;
 
@@ -3955,17 +3954,17 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		Point size= canvas.getSize();
 		int x= 0;
 		int w= size.x;
-
+				
 		g.setBackground(canvas.getBackground());
 		g.fillRectangle(x+1, 0, w-2, size.y);
-
+		
 		if (!fIsMotif) {
 			// draw thin line between center ruler and both texts
 			g.setBackground(display.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
 			g.fillRectangle(0, 0, 1, size.y);
 			g.fillRectangle(w-1, 0, 1, size.y);
 		}
-
+			
 		if (! fHighlightRanges)
 			return;
 
@@ -3974,36 +3973,36 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		if (fMerger.hasChanges()) {
 			int lshift= fLeft.getVerticalScrollOffset();
 			int rshift= fRight.getVerticalScrollOffset();
-
+					
 			Point region= new Point(0, 0);
-
+		
 			for (Iterator iterator = fMerger.changesIterator(); iterator.hasNext();) {
 				Diff diff = (Diff) iterator.next();
 				if (diff.isDeleted())
 					continue;
-
+				
 				if (fShowCurrentOnly2 && !isCurrentDiff(diff))
 					continue;
 
 				fLeft.getLineRange(diff.getPosition(LEFT_CONTRIBUTOR), region);
 				int ly= (region.x * lineHeightLeft) + lshift;
 				int lh= region.y * lineHeightLeft;
-
+	
 				fRight.getLineRange(diff.getPosition(RIGHT_CONTRIBUTOR), region);
 				int ry= (region.x * lineHeightRight) + rshift;
 				int rh= region.y * lineHeightRight;
-
+	
 				if (Math.max(ly+lh, ry+rh) < 0)
 					continue;
 				if (Math.min(ly, ry) >= visibleHeight)
 					break;
-
+	
 				fPts[0]= x;	fPts[1]= ly;	fPts[2]= w;	fPts[3]= ry;
 				fPts[6]= x;	fPts[7]= ly+lh;	fPts[4]= w;	fPts[5]= ry+rh;
-
+				
 				Color fillColor= getColor(display, getFillColor(diff));
 				Color strokeColor= getColor(display, getStrokeColor(diff));
-
+				
 				if (fUseSingleLine) {
 					int w2= 3;
 
@@ -4052,22 +4051,22 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 						g.drawLine(fPts[6], fPts[7], fPts[4], fPts[5]);
 					}
 				}
-
+				
 				if (fUseSingleLine && showResolveUI && diff.isUnresolvedIncomingOrConflicting()) {
 					// draw resolve state
 					int cx= (w-RESOLVE_SIZE)/2;
 					int cy= ((ly+lh/2) + (ry+rh/2) - RESOLVE_SIZE)/2;
-
+					
 					g.setBackground(fillColor);
 					g.fillRectangle(cx, cy, RESOLVE_SIZE, RESOLVE_SIZE);
-
+					
 					g.setForeground(strokeColor);
 					g.drawRectangle(cx, cy, RESOLVE_SIZE, RESOLVE_SIZE);
 				}
 			}
 		}
 	}
-
+	
 	private int[] getCenterCurvePoints(int startx, int starty, int endx, int endy) {
 		if (fBasicCenterCurve == null)
 			buildBaseCenterCurve(endx-startx);
@@ -4091,9 +4090,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	}
 
 	private void paintSides(GC g, MergeSourceViewer tp, Canvas canvas, boolean right) {
-
+		
 		Display display= canvas.getDisplay();
-
+		
 		int lineHeight= tp.getSourceViewer().getTextWidget().getLineHeight();
 		int visibleHeight= tp.getViewportHeight();
 
@@ -4101,7 +4100,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		int x= 0;
 		int w= fMarginWidth;
 		int w2= w/2;
-
+			
 		g.setBackground(canvas.getBackground());
 		g.fillRectangle(x, 0, w, size.y);
 
@@ -4119,32 +4118,32 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 		if (fMerger.hasChanges()) {
 			int shift= tp.getVerticalScrollOffset() + (2-LW);
-
+				
 			Point region= new Point(0, 0);
 			char leg = getLeg(tp);
 			for (Iterator iterator = fMerger.changesIterator(); iterator.hasNext();) {
 				Diff diff = (Diff) iterator.next();
 				if (diff.isDeleted())
 					continue;
-
+				
 				if (fShowCurrentOnly2 && !isCurrentDiff(diff))
 					continue;
 
 				tp.getLineRange(diff.getPosition(leg), region);
 				int y= (region.x * lineHeight) + shift;
 				int h= region.y * lineHeight;
-
+	
 				if (y+h < 0)
 					continue;
 				if (y >= visibleHeight)
 					break;
-
+					
 				g.setBackground(getColor(display, getFillColor(diff)));
 				if (right)
 					g.fillRectangle(x, y, w2, h);
 				else
 					g.fillRectangle(x+w2, y, w2, h);
-
+	
 				g.setLineWidth(0 /* LW */);
 				g.setForeground(getColor(display, getStrokeColor(diff)));
 				if (right)
@@ -4154,9 +4153,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	private void paint(PaintEvent event, MergeSourceViewer tp) {
-
+		
 		if (! fHighlightRanges)
 			return;
 		if (!fMerger.hasChanges())
@@ -4164,37 +4163,37 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 
 		Control canvas= (Control) event.widget;
 		GC g= event.gc;
-
+		
 		Display display= canvas.getDisplay();
-
+		
 		int lineHeight= tp.getSourceViewer().getTextWidget().getLineHeight();
 		int w= canvas.getSize().x;
 		int shift= tp.getVerticalScrollOffset() + (2-LW);
 		int maxh= event.y+event.height; 	// visibleHeight
-
+		
 		//if (fIsMotif)
-		shift+= fTopInset;
-
+			shift+= fTopInset;
+				
 		Point range= new Point(0, 0);
-
+		
 		char leg = getLeg(tp);
 		for (Iterator iterator = fMerger.changesIterator(); iterator.hasNext();) {
 			Diff diff = (Diff) iterator.next();
 			if (diff.isDeleted())
 				continue;
-
+			
 			if (fShowCurrentOnly && !isCurrentDiff(diff))
 				continue;
 
 			tp.getLineRange(diff.getPosition(leg), range);
 			int y= (range.x * lineHeight) + shift;
 			int h= range.y * lineHeight;
-
+			
 			if (y+h < event.y)
 				continue;
 			if (y > maxh)
 				break;
-
+			
 			g.setBackground(getColor(display, getStrokeColor(diff)));
 			g.fillRectangle(0, y-1, w, LW);
 			g.fillRectangle(0, y+h-1, w, LW);
@@ -4223,10 +4222,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return selected ? selected_fill : OUTGOING_FILL;
 	}
-
+	
 	private RGB getStrokeColor(Diff diff) {
 		boolean selected= fCurrentDiff != null && fCurrentDiff.getParent() == diff;
-
+		
 		if (isThreeWay() && !isIgnoreAncestor()) {
 			switch (diff.getKind()) {
 			case RangeDifference.RIGHT:
@@ -4246,7 +4245,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return selected ? SELECTED_OUTGOING : OUTGOING;
 	}
-
+	
 	private Color getColor(Display display, RGB rgb) {
 		if (rgb == null)
 			return null;
@@ -4259,13 +4258,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return c;
 	}
-
+			
 	static RGB interpolate(RGB fg, RGB bg, double scale) {
 		if (fg != null && bg != null)
 			return new RGB(
-					(int)((1.0-scale) * fg.red + scale * bg.red),
-					(int)((1.0-scale) * fg.green + scale * bg.green),
-					(int)((1.0-scale) * fg.blue + scale * bg.blue)
+				(int)((1.0-scale) * fg.red + scale * bg.red),
+				(int)((1.0-scale) * fg.green + scale * bg.green),
+				(int)((1.0-scale) * fg.blue + scale * bg.blue)
 			);
 		if (fg != null)
 			return fg;
@@ -4273,9 +4272,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			return bg;
 		return new RGB(128, 128, 128);	// a gray
 	}
-
+	
 	//---- Navigating and resolving Diffs
-
+	
 	private Diff getNextVisibleDiff(boolean down, boolean deep) {
 		Diff diff= null;
 		MergeSourceViewer part= getNavigationPart();
@@ -4297,7 +4296,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return diff;
 	}
-
+	
 	private Diff internalGetNextDiff(boolean down, boolean deep, MergeSourceViewer part, Point s) {
 		if (fMerger.hasChanges()) {
 			if (down)
@@ -4306,7 +4305,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return null;
 	}
-
+	
 	private MergeSourceViewer getNavigationPart() {
 		MergeSourceViewer part= fFocusPart;
 		if (part == null)
@@ -4317,7 +4316,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private Diff getWrappedDiff(Diff diff, boolean down) {
 		return fMerger.getWrappedDiff(diff, down);
 	}
-
+	
 	/*
 	 * Returns true if end (or beginning) of document reached.
 	 */
@@ -4342,21 +4341,21 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return diff == null;
 	}
-
+	
 	private void endOfDocumentReached(boolean down) {
 		Control c= getControl();
 		if (Utilities.okToUse(c)) {
 			handleEndOfDocumentReached(c.getShell(), down);
 		}
 	}
-
+	
 	private void handleEndOfDocumentReached(Shell shell, boolean next) {
 		IPreferenceStore store = CompareUIPlugin.getDefault().getPreferenceStore();
 		String value = store.getString(ICompareUIConstants.PREF_NAVIGATION_END_ACTION);
 		if (!value.equals(ICompareUIConstants.PREF_VALUE_PROMPT)) {
-				performEndOfDocumentAction(shell, store, ICompareUIConstants.PREF_NAVIGATION_END_ACTION, next);
+			performEndOfDocumentAction(shell, store, ICompareUIConstants.PREF_NAVIGATION_END_ACTION, next);
 		} else {
-		shell.getDisplay().beep();
+			shell.getDisplay().beep();
 			String loopMessage;
 			String nextMessage;
 			String message;
@@ -4395,7 +4394,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	private void performEndOfDocumentAction(Shell shell, IPreferenceStore store, String key, boolean next) {
 		String value = store.getString(key);
 		if (value.equals(ICompareUIConstants.PREF_VALUE_DO_NOTHING)) {
@@ -4411,7 +4410,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			selectFirstDiff(next);
 		}
 	}
-
+	
 	private boolean hasNextElement(boolean down) {
 		ICompareNavigator navigator = getCompareConfiguration().getContainer().getNavigator();
 		if (navigator instanceof CompareNavigator) {
@@ -4430,11 +4429,11 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		char contributor = getLeg(tp);
 		return fMerger.findDiff(contributor, rangeStart, rangeEnd);
 	}
-
+	
 	private Diff findNext(MergeSourceViewer tp, int start, int end, boolean deep) {
 		return fMerger.findNext(getLeg(tp), start, end, deep);
 	}
-
+	
 	private Diff findPrev(MergeSourceViewer tp, int start, int end, boolean deep) {
 		return fMerger.findPrev(getLeg(tp), start, end, deep);
 	}
@@ -4447,7 +4446,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private void setCurrentDiff(Diff d, boolean revealAndSelect) {
 		setCurrentDiff(d, revealAndSelect, false);
 	}
-
+		
 	/*
 	 * Set the currently active Diff and update the toolbars controls and lines.
 	 * If <code>revealAndSelect</code> is <code>true</code> the Diff is revealed and
@@ -4455,14 +4454,14 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	 */
 	private void setCurrentDiff(Diff d, boolean revealAndSelect, boolean deep) {
 
-		//		if (d == fCurrentDiff)
-		//			return;
+//		if (d == fCurrentDiff)
+//			return;
 
 		if (fCenterButton != null && !fCenterButton.isDisposed())
 			fCenterButton.setVisible(false);
 
 		if (d != null && revealAndSelect) {
-
+			
 			// before we set fCurrentDiff we change the selection
 			// so that the paint code uses the old background colors
 			// otherwise selection isn't drawn correctly
@@ -4477,7 +4476,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fLeft.setSelection(new Position(d.getPosition(LEFT_CONTRIBUTOR).offset, 0));
 				fRight.setSelection(new Position(d.getPosition(RIGHT_CONTRIBUTOR).offset, 0));
 			}
-
+			
 			// now switch diffs
 			fCurrentDiff= d;
 			revealDiff(d, d.isToken());
@@ -4494,7 +4493,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	 * Smart determines whether
 	 */
 	private void revealDiff(Diff d, boolean smart) {
-
+		
 		boolean ancestorIsVisible= false;
 		boolean leftIsVisible= false;
 		boolean rightIsVisible= false;
@@ -4504,7 +4503,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			// find the starting line of the diff in all text widgets
 			int ls= fLeft.getLineRange(d.getPosition(LEFT_CONTRIBUTOR), region).x;
 			int rs= fRight.getLineRange(d.getPosition(RIGHT_CONTRIBUTOR), region).x;
-
+			
 			if (isThreeWay() && !isIgnoreAncestor()) {
 				int as= fAncestor.getLineRange(d.getPosition(ANCESTOR_CONTRIBUTOR), region).x;
 				if (as >= fAncestor.getSourceViewer().getTopIndex() && as <= fAncestor.getSourceViewer().getBottomIndex())
@@ -4521,7 +4520,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		// vertical scrolling
 		if (!leftIsVisible || !rightIsVisible) {
 			int avpos= 0, lvpos= 0, rvpos= 0;
-
+			
 			MergeSourceViewer allButThis= null;
 			if (leftIsVisible) {
 				avpos= lvpos= rvpos= realToVirtualPosition(LEFT_CONTRIBUTOR, fLeft.getSourceViewer().getTopIndex());
@@ -4535,7 +4534,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			} else {
 				int vpos= 0;
 				for (Iterator iterator = fMerger.rangesIterator(); iterator
-				.hasNext();) {
+						.hasNext();) {
 					Diff diff = (Diff) iterator.next();
 					if (diff == d)
 						break;
@@ -4560,13 +4559,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				if (rvpos < 0)
 					rvpos= 0;
 			}
-
+							
 			scrollVertical(avpos, lvpos, rvpos, allButThis);
-
+			
 			if (fVScrollBar != null)
 				fVScrollBar.setSelection(avpos);
 		}
-
+		
 		// horizontal scrolling
 		if (d.isToken()) {
 			// we only scroll horizontally for token diffs
@@ -4580,7 +4579,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			hscroll(fRight);
 		}
 	}
-
+	
 	private static void reveal(MergeSourceViewer v, Position p) {
 		if (v != null && p != null) {
 			StyledText st= v.getSourceViewer().getTextWidget();
@@ -4591,7 +4590,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	private static void hscroll(MergeSourceViewer v) {
 		if (v != null) {
 			StyledText st= v.getSourceViewer().getTextWidget();
@@ -4599,9 +4598,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				st.setHorizontalIndex(0);
 		}
 	}
-
+	
 	//--------------------------------------------------------------------------------
-
+	
 	void copyAllUnresolved(boolean leftToRight) {
 		if (fMerger.hasChanges() && isThreeWay() && !isIgnoreAncestor()) {
 			IRewriteTarget target= leftToRight ? fRight.getSourceViewer().getRewriteTarget() : fLeft.getSourceViewer().getRewriteTarget();
@@ -4639,7 +4638,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			}
 		}
 	}
-
+	
 	/*
 	 * Copy whole document from one side to the other.
 	 */
@@ -4709,7 +4708,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private void copyDiffRightToLeft() {
 		copy(fCurrentDiff, false, false);
 	}
-
+		
 	/*
 	 * Copy the contents of the given diff from one side to the other.
 	 */
@@ -4730,7 +4729,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	 * Returns true if copy was successful.
 	 */
 	private boolean copy(Diff diff, boolean leftToRight) {
-
+		
 		if (diff != null && !diff.isResolved()) {
 			if (!validateChange(!leftToRight))
 				return false;
@@ -4753,34 +4752,34 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			info = fLeftContributor;
 		else
 			info = fRightContributor;
-
+		
 		return info.validateChange();
 	}
 
 	//---- scrolling
-
+	
 	/*
 	 * The height of the TextEditors in lines.
 	 */
 	private int getViewportHeight() {
 		StyledText te= fLeft.getSourceViewer().getTextWidget();
-
+		
 		int vh= te.getClientArea().height;
 		if (vh == 0) {
 			Rectangle trim= te.computeTrim(0, 0, 0, 0);
 			int scrollbarHeight= trim.height;
-
+			
 			int headerHeight= getHeaderHeight();
-
+	
 			Composite composite= (Composite) getControl();
 			Rectangle r= composite.getClientArea();
-
+							
 			vh= r.height-headerHeight-scrollbarHeight;
 		}
 
 		return vh / te.getLineHeight();
 	}
-
+	
 	/*
 	 * Returns the virtual position for the given view position.
 	 */
@@ -4789,11 +4788,11 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			return vpos;
 		return fMerger.realToVirtualPosition(contributor, vpos);
 	}
-
+		
 	private void scrollVertical(int avpos, int lvpos, int rvpos, MergeSourceViewer allBut) {
-
+						
 		int s= 0;
-
+		
 		if (fSynchronizedScrolling) {
 			s= fMerger.getVirtualHeight() - rvpos;
 			int height= fRight.getViewportLines()/4;
@@ -4804,7 +4803,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 
 		fInScrolling= true;
-
+				
 		if (isThreeWay() && allBut != fAncestor) {
 			if (fSynchronizedScrolling || allBut == null) {
 				int y= virtualToRealPosition(ANCESTOR_CONTRIBUTOR, avpos+s)-s;
@@ -4825,38 +4824,38 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				fRight.vscroll(y);
 			}
 		}
-
+		
 		fInScrolling= false;
-
+		
 		if (isThreeWay() && fAncestorCanvas != null)
 			fAncestorCanvas.repaint();
-
+		
 		if (fLeftCanvas != null)
 			fLeftCanvas.repaint();
-
+		
 		Control center= getCenterControl();
 		if (center instanceof BufferedCanvas)
 			((BufferedCanvas)center).repaint();
-
+		
 		if (fRightCanvas != null)
 			fRightCanvas.repaint();
 	}
-
+		
 	/*
 	 * Updates Scrollbars with viewports.
 	 */
 	private void syncViewport(MergeSourceViewer w) {
-
+		
 		if (fInScrolling)
 			return;
 
 		int ix= w.getSourceViewer().getTopIndex();
 		int ix2= w.getDocumentRegionOffset();
-
+		
 		int viewPosition= realToVirtualPosition(getLeg(w), ix-ix2);
-
+				
 		scrollVertical(viewPosition, viewPosition, viewPosition, w);	// scroll all but the given views
-
+		
 		if (fVScrollBar != null) {
 			int value= Math.max(0, Math.min(viewPosition, fMerger.getVirtualHeight() - getViewportHeight()));
 			fVScrollBar.setSelection(value);
@@ -4867,19 +4866,19 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	/**
 	 */
 	private void updateVScrollBar() {
-
+		
 		if (Utilities.okToUse(fVScrollBar) && fSynchronizedScrolling) {
 			int virtualHeight= fMerger.getVirtualHeight();
 			int viewPortHeight= getViewportHeight();
 			int pageIncrement= viewPortHeight-1;
 			int thumb= (viewPortHeight > virtualHeight) ? virtualHeight : viewPortHeight;
-
+						
 			fVScrollBar.setPageIncrement(pageIncrement);
 			fVScrollBar.setMaximum(virtualHeight);
 			fVScrollBar.setThumb(thumb);
 		}
 	}
-
+	
 	/*
 	 * maps given virtual position into a real view position of this view.
 	 */
@@ -4888,36 +4887,36 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			return v;
 		return fMerger.virtualToRealPosition(contributor, v);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#flushContent(java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected void flushContent(Object oldInput, IProgressMonitor monitor) {
-
+				
 		// check and handle any shared buffers
 		IMergeViewerContentProvider content= getMergeContentProvider();
 		Object leftContent = content.getLeftContent(oldInput);
 		Object rightContent = content.getRightContent(oldInput);
-
+		
 		if (leftContent != null && getCompareConfiguration().isLeftEditable() && isLeftDirty()) {
 			if (fLeftContributor.hasSharedDocument(leftContent)) {
 				if (flush(fLeftContributor))
 					setLeftDirty(false);
 			}
 		}
-
+		
 		if (rightContent != null && getCompareConfiguration().isRightEditable() && isRightDirty()) {
 			if (fRightContributor.hasSharedDocument(rightContent)) {
 				if (flush(fRightContributor))
 					setRightDirty(false);
 			}
 		}
-
+		
 		if (!(content instanceof MergeViewerContentProvider) || isLeftDirty() || isRightDirty()) {
 			super.flushContent(oldInput, monitor);
 		}
 	}
-
+	
 	private boolean flush(final ContributorInfo info) {
 		try {
 			return info.flush();
@@ -4984,7 +4983,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return null;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.compare.contentmergeviewer.ContentMergeViewer#handleCompareInputChange()
 	 */
@@ -5005,9 +5004,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		if (fSynchronizedScrolling) {
 			fSynchronziedScrollPosition = fVScrollBar.getSelection();
 		}
-
+		
 	}
-
+	
 	private void endRefresh() {
 		isRefreshing = false;
 		fLeftContributor.cacheSelection(null);
@@ -5020,11 +5019,11 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		scrollVertical(vpos, vpos, vpos, null);
 		workaround65205();
 	}
-
+	
 	private boolean isIgnoreAncestor() {
 		return Utilities.getBoolean(getCompareConfiguration(), ICompareUIConstants.PROP_IGNORE_ANCESTOR, false);
 	}
-
+	
 	/* package */ void update(boolean includeControls) {
 		if (getControl().isDisposed())
 			return;
@@ -5033,10 +5032,10 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		} else {
 			doDiff();
 		}
-
+		
 		if (includeControls)
 			updateControls();
-
+		
 		updateVScrollBar();
 		updatePresentation();
 	}
@@ -5053,13 +5052,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 	private boolean isPatchHunk() {
 		return Utilities.isHunk(getInput());
 	}
-
+	
 	private boolean isPatchHunkOk() {
 		if (isPatchHunk())
 			return Utilities.isHunkOk(getInput());
 		return false;
 	}
-
+	
 	/**
 	 * Return the provided start position of the hunk in the target file.
 	 * @return the provided start position of the hunk in the target file
@@ -5082,13 +5081,13 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 		}
 		return 0;
 	}
-
+	
 	private IFindReplaceTarget getFindReplaceTarget() {
 		if (fFindReplaceTarget == null)
 			fFindReplaceTarget= new FindReplaceTarget();
 		return fFindReplaceTarget;
 	}
-
+	
 	/* package */ char getLeg(MergeSourceViewer w) {
 		if (w == fLeft)
 			return LEFT_CONTRIBUTOR;
@@ -5098,7 +5097,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			return ANCESTOR_CONTRIBUTOR;
 		return ANCESTOR_CONTRIBUTOR;
 	}
-
+	
 	private boolean isCurrentDiff(Diff diff) {
 		if (diff == null)
 			return false;
@@ -5108,7 +5107,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 			return true;
 		return false;
 	}
-
+	
 	private boolean isNavigationPossible() {
 		if (fCurrentDiff == null && fMerger.hasChanges())
 			return true;
@@ -5201,7 +5200,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 				return null;
 			}
 			public void init(IEditorSite site, IEditorInput input)
-			throws PartInitException {
+					throws PartInitException {
 				// Implementing interface method
 			}
 			public void addPropertyListener(IPropertyListener listener) {
@@ -5320,7 +5319,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable  {
 					return isLeftDirty();
 				} else if (fFocusPart == fRight) {
 					return isRightDirty();
-				}
+				} 
 				return false;
 			}
 			public boolean isSaveAsAllowed() {
