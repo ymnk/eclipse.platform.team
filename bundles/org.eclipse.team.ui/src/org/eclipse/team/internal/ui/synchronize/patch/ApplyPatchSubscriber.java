@@ -34,6 +34,7 @@ public class ApplyPatchSubscriber extends Subscriber {
 		this.patcher = patcher;
 		this.comparator = new PatchedFileVariantComparator();
 		getPatcher().refresh();
+		// FIXME: create instance, singleton 
 		PatchWorkspace.create(ResourcesPlugin.getWorkspace().getRoot(), getPatcher());
 	}
 	

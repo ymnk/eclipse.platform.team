@@ -593,11 +593,11 @@
       <modelProvider
             class="org.eclipse.team.internal.ui.synchronize.patch.PatchModelProvider"/>
       <extends-model id="org.eclipse.core.resources.modelProvider"/>
-        <enablement>
+        <!--enablement>
            <instanceof
                  value="org.eclipse.core.resources.IResource">
            </instanceof>
-       </enablement>
+       </enablement-->
    </extension>
       <extension
             point="org.eclipse.ui.navigator.navigatorContent">
@@ -611,14 +611,14 @@
                   policy="InvokeAlwaysRegardlessOfSuppressedExt"
                   suppressedExtensionId="org.eclipse.team.ui.resourceContent">
             </override>
-            <triggerPoints>
+            <enablement>
                <or>
-                  <instanceof
+                  <!--instanceof
                         value="org.eclipse.team.core.mapping.ISynchronizationScope">
                   </instanceof>
                   <instanceof
                         value="org.eclipse.team.core.mapping.ISynchronizationContext">
-                  </instanceof>
+                  </instanceof-->
                   <instanceof
                         value="org.eclipse.team.internal.ui.synchronize.patch.PatchWorkspace">
                   </instanceof>
@@ -627,9 +627,12 @@
                   </instanceof>
                   <instanceof
                         value="org.eclipse.team.internal.ui.synchronize.patch.PatchModelProvider">
+                  </instanceof>
+                  <instanceof
+                        value="org.eclipse.core.resources.IResource">
                   </instanceof>               
                </or>
-            </triggerPoints>
+            </enablement>
          </navigatorContent>
       </extension>
       <extension

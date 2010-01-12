@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -67,20 +67,15 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider
 	 */
 	protected ResourceTraversal[] getTraversals(
 			ISynchronizationContext context, Object object) {
-		
-		ResourceMapping mapping = PatchModelProvider.getResourceMapping((IDiffElement) object);
-		ResourceMappingContext rmc = new SynchronizationResourceMappingContext(
-				context);
-		try {
-			// XXX:
-			// Technically speaking, this may end up being too long
-			// running for this
-			// (i.e. we may end up hitting the server) but it will do
-			// for illustration purposes
-			return mapping
-			.getTraversals(rmc, new NullProgressMonitor());
-		} catch (CoreException e) {
-			TeamUIPlugin.log(e);
+		if (object instanceof IDiffElement) {
+			ResourceMapping mapping = PatchModelProvider.getResourceMapping((IDiffElement) object);
+			ResourceMappingContext rmc = new SynchronizationResourceMappingContext(
+					context);
+			try {
+				return mapping.getTraversals(rmc, new NullProgressMonitor());
+			} catch (CoreException e) {
+				TeamUIPlugin.log(e);
+			}
 		}
 		return new ResourceTraversal[0];
 	}
@@ -93,7 +88,7 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider
 			sb.append(children[i].toString()).append(","); //$NON-NLS-1$
 		}
 		System.out
-				.println(">> [super] PatchSyncContentProvider.getChildrenInContext: context-> " + context + "parent-> " + parent.toString() + "; children-> " + sb.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				.println(">> [super] PatchSyncContentProvider.getChildrenInContext: context-> " + context + "; parent-> " + parent.toString() + "; children-> " + sb.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		return super.getChildrenInContext(context, parent, children);
 	}
 
@@ -102,9 +97,11 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider
 	}
 
 	public void getPipelinedElements(Object anInput, Set theCurrentElements) {
-		// Replace any model projects with a DiffProject if the input
-		// is a synchronization context
 		if (anInput instanceof ISynchronizationContext) {
+			// Do not show hunks when all models are visible
+			//XXX
+			return;
+		} else if (anInput == getModelProvider()) {
 			List newProjects = new ArrayList();
 			for (Iterator iter = theCurrentElements.iterator(); iter.hasNext();) {
 				Object element = iter.next();
@@ -128,7 +125,7 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider
 			theCurrentElements.add(getModelProvider());
 		}
 	}
-
+	
 	public Object getPipelinedParent(Object anObject, Object aSuggestedParent) {
 		// TODO Auto-generated method stub
 		System.out
@@ -159,6 +156,16 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider
 		// No need to intercept the update
 		System.out
 				.println(">> [false] PatchSyncContentProvider.interceptUpdate: anUpdateSynchronization-> " + anUpdateSynchronization); //$NON-NLS-1$
+		return false;
+	}
+	
+	protected boolean isInScope(ISynchronizationScope scope, Object parent,
+			Object element) {
+		final IResource resource = PatchModelProvider.getResource(element);
+		if (resource == null)
+			return false;
+		if (scope.contains(resource))
+			return true;
 		return false;
 	}
 }

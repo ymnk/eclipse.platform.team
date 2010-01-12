@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,7 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.diff.IDiff;
@@ -47,16 +48,18 @@ public class PatchSyncLabelProvider extends SynchronizationLabelProvider {
 	}
 
 	protected IDiff getDiff(Object element) {
-		ResourceMapping mapping = PatchModelProvider
-				.getResourceMapping((IDiffElement) element);
-		if (mapping != null) {
-			// XXX: getting IResource for patch model object
-			try {
-				IResource resource = mapping.getTraversals(null, null)[0]
-						.getResources()[0];
-				return getContext().getDiffTree().getDiff(resource);
-			} catch (CoreException e) {
-				TeamUIPlugin.log(e);
+		if (element instanceof IDiffElement) {
+			ResourceMapping mapping = PatchModelProvider
+					.getResourceMapping((IDiffElement) element);
+			if (mapping != null) {
+				// XXX: getting IResource for patch model object
+				try {
+					IResource resource = mapping.getTraversals(null, new NullProgressMonitor())[0]
+							.getResources()[0];
+					return getContext().getDiffTree().getDiff(resource);
+				} catch (CoreException e) {
+					TeamUIPlugin.log(e);
+				}
 			}
 		}
 		return super.getDiff(element);

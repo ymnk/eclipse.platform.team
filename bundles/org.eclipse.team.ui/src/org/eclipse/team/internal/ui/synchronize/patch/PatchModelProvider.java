@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,11 +13,11 @@ package org.eclipse.team.internal.ui.synchronize.patch;
 import org.eclipse.compare.internal.core.patch.FileDiffResult;
 import org.eclipse.compare.internal.patch.*;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.*;
-import org.eclipse.core.resources.mapping.*;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.subscribers.SubscriberResourceMappingContext;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 public class PatchModelProvider extends ModelProvider {
@@ -38,6 +38,7 @@ public class PatchModelProvider extends ModelProvider {
 		return provider;
 	}
 
+	/*
 	public ResourceMapping[] getMappings(IResource resource,
 			ResourceMappingContext context, IProgressMonitor monitor)
 			throws CoreException {
@@ -55,7 +56,7 @@ public class PatchModelProvider extends ModelProvider {
 			}
 		}
 		return super.getMappings(resource, context, monitor);
-	}
+	}*/
 
 	static ResourceMapping getResourceMapping(IDiffElement object) {
 		if (object instanceof PatchProjectDiffNode) {
@@ -101,5 +102,35 @@ public class PatchModelProvider extends ModelProvider {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Returns the resource associated with the corresponding model element.
+	 *
+	 * @param element
+	 *            the model element
+	 * @return the associated resource, or <code>null</code>
+	 */
+	static IResource getResource(final Object element) {
+		IResource resource= null;
+		if (element instanceof PatchProjectDiffNode) {
+			return ((PatchProjectDiffNode) element).getResource();
+		} else if (element instanceof PatchFileDiffNode) {
+			return ((PatchFileDiffNode) element).getResource();
+		} else if (element instanceof HunkDiffNode) {
+			return ((HunkDiffNode) element).getResource();
+		} /*else if (element instanceof IResource) {
+			resource= (IResource) element;
+		} else if (element instanceof IAdaptable) {
+			final IAdaptable adaptable= (IAdaptable) element;
+			final Object adapted= adaptable.getAdapter(IResource.class);
+			if (adapted instanceof IResource)
+				resource= (IResource) adapted;
+		} else {
+			final Object adapted= Platform.getAdapterManager().getAdapter(element, IResource.class);
+			if (adapted instanceof IResource)
+				resource= (IResource) adapted;
+		}*/
+		return resource;
 	}
 }
