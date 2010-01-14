@@ -12,6 +12,7 @@ package org.eclipse.team.internal.ui.synchronize.patch;
 
 import java.util.*;
 
+import org.eclipse.compare.internal.patch.PatchDiffNode;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -110,7 +111,7 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider
 				IResource resource = resources[0];
 				if (resource instanceof IProject) {
 					IProject project = (IProject) resource;
-					IDiffElement diffProject = PatchModelProvider.createModelObject(project/*, getPatcher()*/);
+					IDiffElement diffProject = PatchModelProvider.getModelObject(project/*, getPatcher()*/);
 					if (diffProject != null) {
 						iter.remove();
 						newProjects.add(diffProject);
@@ -158,14 +159,17 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider
 				.println(">> [false] PatchSyncContentProvider.interceptUpdate: anUpdateSynchronization-> " + anUpdateSynchronization); //$NON-NLS-1$
 		return false;
 	}
-	
+
 	protected boolean isInScope(ISynchronizationScope scope, Object parent,
 			Object element) {
-		final IResource resource = PatchModelProvider.getResource(element);
-		if (resource == null)
-			return false;
-		if (scope.contains(resource))
-			return true;
+		if (element instanceof PatchDiffNode) {
+			final IResource resource = PatchModelProvider
+					.getResource((PatchDiffNode) element);
+			if (resource == null)
+				return false;
+			if (scope.contains(resource))
+				return true;
+		}
 		return false;
 	}
 }

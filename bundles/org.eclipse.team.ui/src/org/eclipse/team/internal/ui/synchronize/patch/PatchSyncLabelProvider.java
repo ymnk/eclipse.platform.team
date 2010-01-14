@@ -45,12 +45,13 @@ public class PatchSyncLabelProvider extends SynchronizationLabelProvider {
 
 	protected IDiff getDiff(Object element) {
 		if (element instanceof PatchDiffNode) {
-			IResource resource = PatchModelProvider.getResource(element);
-					return getContext().getDiffTree().getDiff(resource);
+			IResource resource = PatchModelProvider
+					.getResource((PatchDiffNode) element);
+			return getContext().getDiffTree().getDiff(resource);
 		}
 		return super.getDiff(element);
 	}
-	
+
 	protected Image getCompareImage(Image base, int kind) {
 		/*
 		 * Need to swap left and right for PatchDiffNodes as done in Apply Patch
@@ -59,10 +60,10 @@ public class PatchSyncLabelProvider extends SynchronizationLabelProvider {
 		 */
 		switch (kind & Differencer.DIRECTION_MASK) {
 		case Differencer.LEFT:
-			kind= (kind &~ Differencer.LEFT) | Differencer.RIGHT;
+			kind = (kind & ~Differencer.LEFT) | Differencer.RIGHT;
 			break;
 		case Differencer.RIGHT:
-			kind= (kind &~ Differencer.RIGHT) | Differencer.LEFT;
+			kind = (kind & ~Differencer.RIGHT) | Differencer.LEFT;
 			break;
 		}
 		return super.getCompareImage(base, kind);

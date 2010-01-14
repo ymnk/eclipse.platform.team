@@ -64,8 +64,8 @@ public class ApplyPatchSubscriber extends Subscriber {
 							IResourceVariant base = resource.exists() ?  new LocalResourceVariant(resource) : null;
 							SyncInfo info = new SyncInfo(resource, base, variant, getResourceComparator()) {
 								protected int calculateKind() throws TeamException {
-									// TODO: this will work only for files, what about excluding individual hunks
-									if (!getPatcher().isEnabled(((PatchedFileVariant)getRemote()).getDiff()))
+									// TODO: this will work only for files, what about excluding individual hunks?
+									if (!getPatcher().isEnabled(PatchModelProvider.getPatchObject(getLocal(), patcher)))
 										return IN_SYNC;
 									return super.calculateKind();
 								}

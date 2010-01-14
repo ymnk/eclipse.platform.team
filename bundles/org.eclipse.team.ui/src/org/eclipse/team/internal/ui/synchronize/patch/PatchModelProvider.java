@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.patch;
 
-import org.eclipse.compare.internal.core.patch.FileDiffResult;
+import org.eclipse.compare.internal.core.patch.*;
 import org.eclipse.compare.internal.patch.*;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IFile;
@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 public class PatchModelProvider extends ModelProvider {
@@ -72,7 +73,7 @@ public class PatchModelProvider extends ModelProvider {
 		return null;
 	}
 
-	static IDiffElement createModelObject(IResource resource) {
+	static IDiffElement getModelObject(IResource resource) {
 		// TODO: using singleton here is bad
 		PatchWorkspace pw = PatchWorkspace.getInstance();
 		/* pw == null means that we're not applying a patch in the sync view */
@@ -114,7 +115,7 @@ public class PatchModelProvider extends ModelProvider {
 	 *            the model element
 	 * @return the associated resource, or <code>null</code>
 	 */
-	static IResource getResource(final Object element) {
+	static IResource getResource(PatchDiffNode element) {
 		IResource resource= null;
 		if (element instanceof PatchProjectDiffNode) {
 			return ((PatchProjectDiffNode) element).getResource();
@@ -135,5 +136,32 @@ public class PatchModelProvider extends ModelProvider {
 				resource= (IResource) adapted;
 		}*/
 		return resource;
+	}
+
+	static Object getPatchObject(IResource resource, Patcher patcher) {
+		switch (resource.getType()) {
+		case IResource.PROJECT: {
+			if (patcher instanceof WorkspacePatcher) {
+				WorkspacePatcher wp = (WorkspacePatcher) patcher;
+				DiffProject[] diffProjects = wp.getDiffProjects();
+				for (int i = 0; i < diffProjects.length; i++) {
+					if (diffProjects[i].getName().equals(resource.getName()))
+						return diffProjects[i];
+				}
+			}
+			// TODO: else return FilePatch2[] for that project(?)
+		}
+		case IResource.FILE: {
+			FilePatch2[] diffs = patcher.getDiffs();
+			for (int i = 0; i < diffs.length; i++) {
+				IPath path = diffs[i].getPath(patcher.isReversed());
+				// TODO: check project first!
+					if (resource.getProjectRelativePath().equals(path)) {
+						return diffs[i];
+					}
+				}
+			}
+		}
+		return null;
 	}
 }
