@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -62,7 +62,14 @@ public class ApplyPatchSubscriber extends Subscriber {
 							if (diffs[i].getDiffType(patcher.isReversed()) != FilePatch2.DELETION)
 								variant =  new PatchedFileVariant(getPatcher(), diffs[i]);
 							IResourceVariant base = resource.exists() ?  new LocalResourceVariant(resource) : null;
-							SyncInfo info = new SyncInfo(resource, base, variant, getResourceComparator());
+							SyncInfo info = new SyncInfo(resource, base, variant, getResourceComparator()) {
+								protected int calculateKind() throws TeamException {
+									// TODO: this will work only for files, what about excluding individual hunks
+									if (!getPatcher().isEnabled(((PatchedFileVariant)getRemote()).getDiff()))
+										return IN_SYNC;
+									return super.calculateKind();
+								}
+							};
 							info.init();
 							return info;
 						}

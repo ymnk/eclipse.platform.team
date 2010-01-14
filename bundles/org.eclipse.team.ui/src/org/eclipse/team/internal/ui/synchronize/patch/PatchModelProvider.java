@@ -73,6 +73,7 @@ public class PatchModelProvider extends ModelProvider {
 	}
 
 	static IDiffElement createModelObject(IResource resource) {
+		// TODO: using singleton here is bad
 		PatchWorkspace pw = PatchWorkspace.getInstance();
 		/* pw == null means that we're not applying a patch in the sync view */
 		if (pw != null) {
@@ -90,12 +91,14 @@ public class PatchModelProvider extends ModelProvider {
 				for (int i = 0; i < children.length; i++) {
 					IDiffElement[] c = ((PatchProjectDiffNode) children[i])
 							.getChildren();
-					FileDiffResult diffResult = ((PatchFileDiffNode) c[i])
+					for (int j = 0; j < c.length; j++) {
+						FileDiffResult diffResult = ((PatchFileDiffNode) c[j])
 							.getDiffResult();
 					IFile file = ((WorkspaceFileDiffResult) diffResult)
 							.getTargetFile();
 					if (resource.equals(file)) {
-						return c[i];
+							return c[j];
+						}
 					}
 				}
 			}

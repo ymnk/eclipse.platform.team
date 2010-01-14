@@ -10,16 +10,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.patch;
 
+import org.eclipse.compare.internal.patch.PatchDiffNode;
 import org.eclipse.compare.structuremergeviewer.Differencer;
-import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.diff.IDiff;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.ui.mapping.SynchronizationLabelProvider;
 import org.eclipse.ui.navigator.ICommonContentExtensionSite;
 
@@ -48,19 +44,9 @@ public class PatchSyncLabelProvider extends SynchronizationLabelProvider {
 	}
 
 	protected IDiff getDiff(Object element) {
-		if (element instanceof IDiffElement) {
-			ResourceMapping mapping = PatchModelProvider
-					.getResourceMapping((IDiffElement) element);
-			if (mapping != null) {
-				// XXX: getting IResource for patch model object
-				try {
-					IResource resource = mapping.getTraversals(null, new NullProgressMonitor())[0]
-							.getResources()[0];
+		if (element instanceof PatchDiffNode) {
+			IResource resource = PatchModelProvider.getResource(element);
 					return getContext().getDiffTree().getDiff(resource);
-				} catch (CoreException e) {
-					TeamUIPlugin.log(e);
-				}
-			}
 		}
 		return super.getDiff(element);
 	}
