@@ -571,24 +571,25 @@
          point="org.eclipse.team.ui.synchronizeWizards">
       <wizard
             class="org.eclipse.team.internal.ui.synchronize.patch.ApplyPatchSynchronizationWizard"
-            description="description"
-            icon="icons/full/obj/resource_model.gif"
+            description="%PatchSyncWizard_description"
+            icon="icons/full/obj/hunk_obj.gif"
             id="org.eclipse.team.ui.applyPatchWizard"
-            name="Apply Patch">
+            name="%PatchSyncWizard">
       </wizard>
    </extension>
    <extension
          point="org.eclipse.team.ui.synchronizeParticipants">
       <participant
             class="org.eclipse.team.internal.ui.synchronize.patch.ApplyPatchModelSynchronizeParticipant"
+            icon="icons/full/obj/hunk_obj.gif"
             id="org.eclipse.team.ui.applyPatchModelParticipant"
-            name="Apply Patch Model Synchronize Participant"
+            name="%PatchSyncParticipant"
             persistent="false">
       </participant>
    </extension>
    <extension
-         id="patchModel"
-         name="%PatchModel"
+         id="patchModelProvider"
+         name="%PatchModelProvider"
          point="org.eclipse.core.resources.modelProviders">
       <modelProvider
             class="org.eclipse.team.internal.ui.synchronize.patch.PatchModelProvider"/>
@@ -603,10 +604,11 @@
             point="org.eclipse.ui.navigator.navigatorContent">
          <navigatorContent
                contentProvider="org.eclipse.team.internal.ui.synchronize.patch.PatchSyncContentProvider"
+               icon="icons/full/obj/hunk_obj.gif"
                id="org.eclipse.team.ui.patchSyncNavigatorContent"
                labelProvider="org.eclipse.team.internal.ui.synchronize.patch.PatchSyncLabelProvider"
-               name="Patch"
-               priority="highest">
+               name="%PatchNavigatorContent"
+               priority="normal">
             <override
                   policy="InvokeAlwaysRegardlessOfSuppressedExt"
                   suppressedExtensionId="org.eclipse.team.ui.resourceContent">
@@ -628,9 +630,6 @@
                   <instanceof
                         value="org.eclipse.team.internal.ui.synchronize.patch.PatchModelProvider">
                   </instanceof>
-                  <instanceof
-                        value="org.eclipse.core.resources.IResource">
-                  </instanceof>               
                </or>
             </enablement>
          </navigatorContent>
@@ -685,7 +684,8 @@
             point="org.eclipse.team.ui.teamContentProviders">
          <teamContentProvider
                contentExtensionId="org.eclipse.team.ui.patchSyncNavigatorContent"
-               modelProviderId="org.eclipse.team.ui.patchModel">
+               icon="icons/full/obj/hunk_obj.gif"
+               modelProviderId="org.eclipse.team.ui.patchModelProvider">
          </teamContentProvider>
       </extension>	            
 </plugin>

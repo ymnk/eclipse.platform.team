@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.patch;
 
-import org.eclipse.compare.internal.core.patch.DiffProject;
-import org.eclipse.compare.internal.core.patch.FilePatch2;
-import org.eclipse.compare.internal.patch.Patcher;
+import org.eclipse.compare.internal.patch.WorkspacePatcher;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.diff.IDiff;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.subscribers.Subscriber;
@@ -40,34 +39,36 @@ class ApplyPatchSubscriberMergeContext extends SubscriberMergeContext {
 	protected void makeInSync(IDiff diff, IProgressMonitor monitor)
 			throws CoreException {
 		IResource resource = getDiffTree().getResource(diff);
-		// IDiffElement element = PatchModelProvider.createModelObject(resource);
-		Patcher patcher = ((ApplyPatchSubscriber)getSubscriber()).getPatcher();
-		FilePatch2[] diffs = patcher.getDiffs();
-		if (resource.getType() == IResource.FILE) {
-			for (int i = 0; i < diffs.length; i++) {
-				if (diffs[i] instanceof FilePatch2) {
-					DiffProject diffProject = diffs[i].getProject();
-					IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(diffProject.getName());
-					IFile file = project.getFile(diffs[i].getPath(patcher.isReversed()));
-					if (file.equals(resource)) {
-						patcher.setEnabled(diffs[i], false);
-						System.out.println(">> ApplyPatchSubscriberMergeContext.makeInSync: disable " + diffs[i]); //$NON-NLS-1$
-					}
-				}
-			}
-		}
+		WorkspacePatcher patcher = ((ApplyPatchSubscriber) getSubscriber())
+				.getPatcher();
+		Object object = PatchModelProvider.getPatchObject(resource, patcher);
+		patcher.setEnabled(object, false);
 	}
 
 	public void markAsMerged(IDiff node, boolean inSyncHint,
 			IProgressMonitor monitor) throws CoreException {
-		// TODO Auto-generated method stub
-		System.out
-				.println(">> [ignore] ApplyPatchSubscriberMergeContext.markAsMerged: " + node.toDiffString() + ", inSyncHint " + inSyncHint); //$NON-NLS-1$ //$NON-NLS-2$
+		// this action is not shown
 	}
 
 	public void reject(IDiff diff, IProgressMonitor monitor)
 			throws CoreException {
-		// TODO Auto-generated method stub
-		System.out.println(">> [ignore] ApplyPatchSubscriberMergeContext.reject: " + diff.toDiffString()); //$NON-NLS-1$
+		// do nothing
+	}
+
+	public ISchedulingRule getMergeRule(IDiff diff) {
+		IResource resource = getDiffTree().getResource(diff);
+		IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace()
+				.getRuleFactory();
+		if (!resource.exists()) {
+			// for additions return rule for all parents that need to be created
+			IContainer parent = resource.getParent();
+			while (!parent.exists()) {
+				resource = parent;
+				parent = parent.getParent();
+			}
+			return ruleFactory.createRule(resource);
+		} else {
+			return super.getMergeRule(diff);
+		}
 	}
 }

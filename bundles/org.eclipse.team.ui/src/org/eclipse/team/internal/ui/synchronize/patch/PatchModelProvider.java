@@ -13,17 +13,15 @@ package org.eclipse.team.internal.ui.synchronize.patch;
 import org.eclipse.compare.internal.core.patch.*;
 import org.eclipse.compare.internal.patch.*;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 public class PatchModelProvider extends ModelProvider {
 
-	public static final String ID = "org.eclipse.team.ui.patchModel"; //$NON-NLS-1$
+	public static final String ID = "org.eclipse.team.ui.patchModelProvider"; //$NON-NLS-1$
 	private static PatchModelProvider provider;
 
 	public static PatchModelProvider getProvider() {
@@ -95,9 +93,9 @@ public class PatchModelProvider extends ModelProvider {
 					for (int j = 0; j < c.length; j++) {
 						FileDiffResult diffResult = ((PatchFileDiffNode) c[j])
 							.getDiffResult();
-					IFile file = ((WorkspaceFileDiffResult) diffResult)
+						IFile file = ((WorkspaceFileDiffResult) diffResult)
 							.getTargetFile();
-					if (resource.equals(file)) {
+						if (resource.equals(file)) {
 							return c[j];
 						}
 					}
@@ -154,13 +152,16 @@ public class PatchModelProvider extends ModelProvider {
 		case IResource.FILE: {
 			FilePatch2[] diffs = patcher.getDiffs();
 			for (int i = 0; i < diffs.length; i++) {
-				IPath path = diffs[i].getPath(patcher.isReversed());
-				// TODO: check project first!
-					if (resource.getProjectRelativePath().equals(path)) {
+				if (diffs[i] instanceof FilePatch2) {
+					DiffProject diffProject = diffs[i].getProject();
+					IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(diffProject.getName());
+					IFile file = project.getFile(diffs[i].getPath(patcher.isReversed()));
+					if (file.equals(resource)) {
 						return diffs[i];
 					}
 				}
 			}
+		}
 		}
 		return null;
 	}

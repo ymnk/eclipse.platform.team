@@ -37,7 +37,7 @@ public class ApplyPatchSubscriber extends Subscriber {
 		// FIXME: create instance, singleton 
 		PatchWorkspace.create(ResourcesPlugin.getWorkspace().getRoot(), getPatcher());
 	}
-	
+
 	public String getName() {
 		// TODO: change to something like '{0} patch applied'
 		return "Apply Patch Subscriber"; //$NON-NLS-1$
@@ -67,6 +67,8 @@ public class ApplyPatchSubscriber extends Subscriber {
 									// TODO: this will work only for files, what about excluding individual hunks?
 									if (!getPatcher().isEnabled(PatchModelProvider.getPatchObject(getLocal(), patcher)))
 										return IN_SYNC;
+									if (getPatcher().getDiffResult(((PatchedFileVariant)getRemote()).getDiff()).containsProblems())
+										return CONFLICTING;
 									return super.calculateKind();
 								}
 							};
@@ -126,7 +128,7 @@ public class ApplyPatchSubscriber extends Subscriber {
 		System.out
 				.println(">> [ignored] ApplyPatchSubscriber.refresh: " + sb.toString()); //$NON-NLS-1$
 	}
-	
+
 	public IResource[] roots() {
 		IDiffElement[] children = PatchWorkspace.getInstance().getChildren();
 		Set roots = new HashSet();
