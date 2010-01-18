@@ -67,7 +67,8 @@ public class ApplyPatchSubscriber extends Subscriber {
 									// TODO: this will work only for files, what about excluding individual hunks?
 									if (!getPatcher().isEnabled(PatchModelProvider.getPatchObject(getLocal(), patcher)))
 										return IN_SYNC;
-									if (getPatcher().getDiffResult(((PatchedFileVariant)getRemote()).getDiff()).containsProblems())
+									if (getRemote() != null 
+											&& getPatcher().getDiffResult(((PatchedFileVariant)getRemote()).getDiff()).containsProblems())
 										return CONFLICTING;
 									return super.calculateKind();
 								}
