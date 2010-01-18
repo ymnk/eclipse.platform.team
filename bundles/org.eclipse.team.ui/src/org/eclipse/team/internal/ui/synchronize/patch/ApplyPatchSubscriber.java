@@ -12,8 +12,10 @@ package org.eclipse.team.internal.ui.synchronize.patch;
 
 import java.util.*;
 
-import org.eclipse.compare.internal.core.patch.*;
-import org.eclipse.compare.internal.patch.*;
+import org.eclipse.compare.internal.core.patch.DiffProject;
+import org.eclipse.compare.internal.core.patch.FilePatch2;
+import org.eclipse.compare.internal.patch.PatchProjectDiffNode;
+import org.eclipse.compare.internal.patch.WorkspacePatcher;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
@@ -53,29 +55,24 @@ public class ApplyPatchSubscriber extends Subscriber {
 			IResourceVariant variant = null;
 			if (resource.getType() == IResource.FILE) {
 				for (int i = 0; i < diffs.length; i++) {
-					if (diffs[i] instanceof FilePatch2) {
-						DiffProject diffProject = (diffs[i]).getProject();
-						IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(diffProject.getName());
-						IFile file = project.getFile(diffs[i].getPath(getPatcher().isReversed()));
-						if (file.equals(resource)) {
-							// null as 'variant' for deletions
-							if (diffs[i].getDiffType(patcher.isReversed()) != FilePatch2.DELETION)
-								variant =  new PatchedFileVariant(getPatcher(), diffs[i]);
-							IResourceVariant base = resource.exists() ?  new LocalResourceVariant(resource) : null;
-							SyncInfo info = new SyncInfo(resource, base, variant, getResourceComparator()) {
-								protected int calculateKind() throws TeamException {
-									// TODO: this will work only for files, what about excluding individual hunks?
-									if (!getPatcher().isEnabled(PatchModelProvider.getPatchObject(getLocal(), patcher)))
-										return IN_SYNC;
-									if (getRemote() != null 
-											&& getPatcher().getDiffResult(((PatchedFileVariant)getRemote()).getDiff()).containsProblems())
-										return CONFLICTING;
-									return super.calculateKind();
-								}
-							};
-							info.init();
-							return info;
-						}
+					if (resource.equals(PatchModelProvider.getFile(diffs[i], getPatcher()))) {
+						// null as 'variant' for deletions
+						if (diffs[i].getDiffType(patcher.isReversed()) != FilePatch2.DELETION)
+							variant =  new PatchedFileVariant(getPatcher(), diffs[i]);
+						IResourceVariant base = resource.exists() ?  new LocalResourceVariant(resource) : null;
+						SyncInfo info = new SyncInfo(resource, base, variant, getResourceComparator()) {
+							protected int calculateKind() throws TeamException {
+								// TODO: this will work only for files, what about excluding individual hunks?
+								if (!getPatcher().isEnabled(PatchModelProvider.getPatchObject(getLocal(), patcher)))
+									return IN_SYNC;
+								if (getRemote() != null 
+										&& getPatcher().getDiffResult(((PatchedFileVariant)getRemote()).getDiff()).containsProblems())
+									return CONFLICTING;
+								return super.calculateKind();
+							}
+						};
+						info.init();
+						return info;
 					}
 				}
 			}
@@ -85,6 +82,8 @@ public class ApplyPatchSubscriber extends Subscriber {
 		}
 	}
 
+
+
 	public boolean isSupervised(IResource resource) throws TeamException {
 		// TODO Auto-generated method stub
 		System.out.println(">> [true] isSupervised: " + resource.getName()); //$NON-NLS-1$
@@ -92,7 +91,6 @@ public class ApplyPatchSubscriber extends Subscriber {
 	}
 
 	public IResource[] members(IResource resource) throws TeamException {
-		FilePatch2[] diffs = getPatcher().getDiffs();
 		try {
 			if(resource.getType() == IResource.FILE)
 				// file has no members
@@ -103,14 +101,11 @@ public class ApplyPatchSubscriber extends Subscriber {
 			List existingChildren = new ArrayList(Arrays.asList(container.members()));
 
 			// patch members, subscriber location
+			FilePatch2[] diffs = getPatcher().getDiffs();
 			for (int i = 0; i < diffs.length; i++) {
-				DiffProject diffProject = diffs[i].getProject();
-				IProject project = container.getProject();
-				if (project.getName().equals(diffProject.getName())) {
-					IResource file = project.getFile(diffs[i].getPath(getPatcher().isReversed()));
-					if (!existingChildren.contains(file)) {
-						existingChildren.add(file);
-					}
+				IResource file = PatchModelProvider.getFile(diffs[i], getPatcher());
+				if (!container.exists(file.getProjectRelativePath())) {
+					existingChildren.add(file);
 				}
 			}
 			return (IResource[]) existingChildren.toArray(new IResource[existingChildren.size()]);
@@ -131,19 +126,17 @@ public class ApplyPatchSubscriber extends Subscriber {
 	}
 
 	public IResource[] roots() {
-		IDiffElement[] children = PatchWorkspace.getInstance().getChildren();
 		Set roots = new HashSet();
-		for (int i = 0; i < children.length; i++) {
-			if (getPatcher().isWorkspacePatch()) {
+		if (getPatcher().isWorkspacePatch()) {
+			IDiffElement[] children = PatchWorkspace.getInstance().getChildren();
+			for (int i = 0; i < children.length; i++) {
 				// return array of projects from the patch
 				DiffProject diffProject = ((PatchProjectDiffNode)children[i]).getDiffProject();
 				IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(diffProject.getName());
 				roots.add(project);
-			} else {
-				FileDiffResult diffResult = ((PatchFileDiffNode)children[i]).getDiffResult();
-				IFile file = ((WorkspaceFileDiffResult)diffResult).getTargetFile();
-				roots.add(file);
 			}
+		} else {
+			roots.add(getPatcher().getTarget());
 		}
 		return (IResource[]) roots.toArray(new IResource[0]);
 	}

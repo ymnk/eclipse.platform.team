@@ -136,33 +136,45 @@ public class PatchModelProvider extends ModelProvider {
 		return resource;
 	}
 
-	static Object getPatchObject(IResource resource, Patcher patcher) {
+	static Object getPatchObject(IResource resource, WorkspacePatcher patcher) {
 		switch (resource.getType()) {
 		case IResource.PROJECT: {
-			if (patcher instanceof WorkspacePatcher) {
-				WorkspacePatcher wp = (WorkspacePatcher) patcher;
-				DiffProject[] diffProjects = wp.getDiffProjects();
+			if (patcher.isWorkspacePatch()) {
+				DiffProject[] diffProjects = patcher.getDiffProjects();
 				for (int i = 0; i < diffProjects.length; i++) {
 					if (diffProjects[i].getName().equals(resource.getName()))
 						return diffProjects[i];
 				}
+			} else {
+				return patcher.getTarget().getProject();
 			}
-			// TODO: else return FilePatch2[] for that project(?)
 		}
 		case IResource.FILE: {
 			FilePatch2[] diffs = patcher.getDiffs();
 			for (int i = 0; i < diffs.length; i++) {
-				if (diffs[i] instanceof FilePatch2) {
-					DiffProject diffProject = diffs[i].getProject();
-					IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(diffProject.getName());
-					IFile file = project.getFile(diffs[i].getPath(patcher.isReversed()));
-					if (file.equals(resource)) {
-						return diffs[i];
-					}
+				if (resource.equals(getFile(diffs[i], patcher))) {
+					return diffs[i];
 				}
 			}
 		}
 		}
 		return null;
+	}
+	
+	static IFile getFile(FilePatch2 diff, WorkspacePatcher patcher) {
+		IProject project = null;
+		if (patcher.isWorkspacePatch()) {
+			DiffProject diffProject = (diff).getProject();
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject(diffProject.getName());
+			if (project.getName().equals(diffProject.getName())) {
+				return project.getFile(diff.getPath(patcher.isReversed()));
+			}
+		} else {
+			project = patcher.getTarget().getProject();
+			if (project.getName().equals(patcher.getTarget().getProject().getName())) {
+				return project.getFile(diff.getPath(patcher.isReversed()));
+			}
+		}
+		return project.getFile(diff.getPath(patcher.isReversed()));
 	}
 }
