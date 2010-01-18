@@ -609,18 +609,8 @@
                labelProvider="org.eclipse.team.internal.ui.synchronize.patch.PatchSyncLabelProvider"
                name="%PatchNavigatorContent"
                priority="normal">
-            <override
-                  policy="InvokeAlwaysRegardlessOfSuppressedExt"
-                  suppressedExtensionId="org.eclipse.team.ui.resourceContent">
-            </override>
             <enablement>
                <or>
-                  <!--instanceof
-                        value="org.eclipse.team.core.mapping.ISynchronizationScope">
-                  </instanceof>
-                  <instanceof
-                        value="org.eclipse.team.core.mapping.ISynchronizationContext">
-                  </instanceof-->
                   <instanceof
                         value="org.eclipse.team.internal.ui.synchronize.patch.PatchWorkspace">
                   </instanceof>
@@ -632,6 +622,9 @@
                   </instanceof>
                </or>
             </enablement>
+            <actionProvider
+                  class="org.eclipse.team.internal.ui.synchronize.patch.ApplyPatchSynchronizationActionProvider">
+            </actionProvider>
          </navigatorContent>
       </extension>
       <extension
