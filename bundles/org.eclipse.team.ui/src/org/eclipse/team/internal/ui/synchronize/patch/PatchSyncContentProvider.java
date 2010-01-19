@@ -77,18 +77,6 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider {
 		return new ResourceTraversal[0];
 	}
 
-	protected Object[] getChildrenInContext(ISynchronizationContext context,
-			Object parent, Object[] children) {
-		// TODO Auto-generated method stub
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < children.length; i++) {
-			sb.append(children[i].toString()).append(","); //$NON-NLS-1$
-		}
-		System.out
-				.println(">> [super] PatchSyncContentProvider.getChildrenInContext: context-> " + context + "; parent-> " + parent.toString() + "; children-> " + sb.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		return super.getChildrenInContext(context, parent, children);
-	}
-
 	protected boolean isInScope(ISynchronizationScope scope, Object parent,
 			Object element) {
 		if (element instanceof PatchDiffNode) {

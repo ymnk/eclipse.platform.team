@@ -36,8 +36,8 @@ public class PatchedFileVariant implements IResourceVariant {
 	}
 
 	public String getContentIdentifier() {
-		// TODO: use patch file name (?)
-		// currently it's displayed as 'Remote File (After Patch)' for the right side :/
+		// TODO: use patch file name (?), currently it's displayed as 'Remote
+		// File (After Patch)' for the right side
 		return "(After Patch)"; //$NON-NLS-1$
 	}
 

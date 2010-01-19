@@ -39,7 +39,6 @@ public class ApplyPatchSubscriber extends Subscriber {
 	}
 
 	public String getName() {
-		// TODO: change to something like '{0} patch applied'
 		return "Apply Patch Subscriber"; //$NON-NLS-1$
 	}
 
@@ -81,8 +80,6 @@ public class ApplyPatchSubscriber extends Subscriber {
 	}
 
 	public boolean isSupervised(IResource resource) throws TeamException {
-		// TODO Auto-generated method stub
-		System.out.println(">> [true] isSupervised: " + resource.getName()); //$NON-NLS-1$
 		return true;
 	}
 

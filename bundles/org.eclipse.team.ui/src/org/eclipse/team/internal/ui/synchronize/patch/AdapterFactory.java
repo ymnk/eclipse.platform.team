@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,21 +26,24 @@ public class AdapterFactory implements IAdapterFactory {
 		if (adapterType == ResourceMapping.class) {
 			if (adaptableObject instanceof PatchProjectDiffNode) {
 				return new DiffProjectResourceMapping(
-						((PatchProjectDiffNode) adaptableObject).getDiffProject());
+						((PatchProjectDiffNode) adaptableObject)
+								.getDiffProject());
 			}
 			if (adaptableObject instanceof PatchFileDiffNode) {
 				return new FilePatchResourceMapping(
 						((PatchFileDiffNode) adaptableObject).getDiffResult());
 			}
 			if (adaptableObject instanceof HunkDiffNode) {
-				return new HunkResourceMapping(((HunkDiffNode) adaptableObject).getHunkResult());
+				return new HunkResourceMapping(((HunkDiffNode) adaptableObject)
+						.getHunkResult());
 			}
 		}
 		if (adapterType == IWorkbenchAdapter.class)
 			return modelAdapter;
-		if (adapterType == ISynchronizationCompareAdapter.class && adaptableObject instanceof PatchModelProvider) {
+		if (adapterType == ISynchronizationCompareAdapter.class
+				&& adaptableObject instanceof PatchModelProvider) {
 			if (compareAdapter == null) {
-				compareAdapter = new PatchCompareAdapter(/*(PatchModelProvider)adaptableObject*/);
+				compareAdapter = new PatchCompareAdapter();
 			}
 			return compareAdapter;
 		}

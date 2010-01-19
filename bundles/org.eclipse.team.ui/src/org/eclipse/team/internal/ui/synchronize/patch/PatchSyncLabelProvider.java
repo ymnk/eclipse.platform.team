@@ -30,7 +30,6 @@ public class PatchSyncLabelProvider extends SynchronizationLabelProvider {
 	public void init(ICommonContentExtensionSite site) {
 		super.init(site);
 		delegate = new PatchWorkbenchLabelProvider();
-		// delegate(site);
 	}
 
 	public void dispose() {

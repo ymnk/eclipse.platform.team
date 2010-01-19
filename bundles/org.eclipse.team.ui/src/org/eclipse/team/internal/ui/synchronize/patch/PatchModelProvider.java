@@ -39,26 +39,6 @@ public class PatchModelProvider extends ModelProvider {
 		return provider;
 	}
 
-	/*
-	public ResourceMapping[] getMappings(IResource resource,
-			ResourceMappingContext context, IProgressMonitor monitor)
-			throws CoreException {
-		if (context instanceof SubscriberResourceMappingContext) {
-			SubscriberResourceMappingContext srmc = (SubscriberResourceMappingContext) context;
-			if (resource instanceof IProject) {
-				IProject[] projects = srmc.getProjects();
-				for (int i = 0; i < projects.length; i++) {
-					if (projects[i].equals(resource)) {
-						IDiffElement object = createModelObject(resource);
-						if (object != null)
-							return new ResourceMapping[] { getResourceMapping(object) };
-					}
-				}
-			}
-		}
-		return super.getMappings(resource, context, monitor);
-	}*/
-
 	static ResourceMapping getResourceMapping(IDiffElement object) {
 		if (object instanceof PatchProjectDiffNode) {
 			return new DiffProjectResourceMapping(
@@ -73,39 +53,6 @@ public class PatchModelProvider extends ModelProvider {
 		return null;
 	}
 	
-	/*
-	static IDiffElement getModelObject(IResource resource, Subscriber subscriber) {
-		PatchWorkspace pw = getPatchWorkspace(subscriber);
-		if (pw != null) {
-			IDiffElement[] children = pw.getChildren();
-			switch (resource.getType()) {
-			case IResource.PROJECT: {
-				for (int i = 0; i < children.length; i++) {
-					if (((PatchProjectDiffNode) children[i]).getDiffProject()
-							.getName().equals(resource.getName()))
-						return children[i];
-				}
-			}
-			case IResource.FILE: {
-				for (int i = 0; i < children.length; i++) {
-					IDiffElement[] c = ((PatchProjectDiffNode) children[i])
-							.getChildren();
-					for (int j = 0; j < c.length; j++) {
-						FileDiffResult diffResult = ((PatchFileDiffNode) c[j])
-							.getDiffResult();
-						IFile file = ((WorkspaceFileDiffResult) diffResult)
-							.getTargetFile();
-						if (resource.equals(file)) {
-							return c[j];
-						}
-					}
-				}
-			}
-			}
-		}
-		return null;
-	}*/
-
 	/**
 	 * Returns the resource associated with the corresponding model element.
 	 *
@@ -121,18 +68,7 @@ public class PatchModelProvider extends ModelProvider {
 			return ((PatchFileDiffNode) element).getResource();
 		} else if (element instanceof HunkDiffNode) {
 			return ((HunkDiffNode) element).getResource();
-		} /*else if (element instanceof IResource) {
-			resource= (IResource) element;
-		} else if (element instanceof IAdaptable) {
-			final IAdaptable adaptable= (IAdaptable) element;
-			final Object adapted= adaptable.getAdapter(IResource.class);
-			if (adapted instanceof IResource)
-				resource= (IResource) adapted;
-		} else {
-			final Object adapted= Platform.getAdapterManager().getAdapter(element, IResource.class);
-			if (adapted instanceof IResource)
-				resource= (IResource) adapted;
-		}*/
+		}
 		return resource;
 	}
 
