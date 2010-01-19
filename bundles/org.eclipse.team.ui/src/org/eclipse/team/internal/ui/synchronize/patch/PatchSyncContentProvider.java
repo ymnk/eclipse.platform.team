@@ -22,16 +22,16 @@ import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.mapping.SynchronizationResourceMappingContext;
 import org.eclipse.team.ui.mapping.SynchronizationContentProvider;
+import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 import org.eclipse.ui.navigator.ICommonContentExtensionSite;
 
 public class PatchSyncContentProvider extends SynchronizationContentProvider {
 
-	private PatchWorkbenchContentProvider delegate;
+	private BaseWorkbenchContentProvider delegate;
 
 	public void init(ICommonContentExtensionSite site) {
 		super.init(site);
-		delegate = new PatchWorkbenchContentProvider(/*getPatcher()*/);
-		// delegate.init(site);
+		delegate = new BaseWorkbenchContentProvider();
 	}
 
 	public void dispose() {
@@ -49,7 +49,12 @@ public class PatchSyncContentProvider extends SynchronizationContentProvider {
 	}
 
 	protected Object getModelRoot() {
-		return PatchWorkspace.getInstance();
+		if (getContext() instanceof ApplyPatchSubscriberMergeContext) {
+			ApplyPatchSubscriberMergeContext context = (ApplyPatchSubscriberMergeContext) getContext();
+			return PatchModelProvider.getPatchWorkspace(context.getSubscriber());
+		}
+		// TODO: assertion?
+		return null;
 	}
 
 	/*

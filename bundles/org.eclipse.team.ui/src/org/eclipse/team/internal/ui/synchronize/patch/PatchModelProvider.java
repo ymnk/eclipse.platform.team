@@ -10,13 +10,15 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.patch;
 
-import org.eclipse.compare.internal.core.patch.*;
+import org.eclipse.compare.internal.core.patch.DiffProject;
+import org.eclipse.compare.internal.core.patch.FilePatch2;
 import org.eclipse.compare.internal.patch.*;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.core.TeamPlugin;
 
 public class PatchModelProvider extends ModelProvider {
@@ -70,14 +72,12 @@ public class PatchModelProvider extends ModelProvider {
 		}
 		return null;
 	}
-
-	static IDiffElement getModelObject(IResource resource) {
-		// TODO: using singleton here is bad
-		PatchWorkspace pw = PatchWorkspace.getInstance();
-		/* pw == null means that we're not applying a patch in the sync view */
+	
+	/*
+	static IDiffElement getModelObject(IResource resource, Subscriber subscriber) {
+		PatchWorkspace pw = getPatchWorkspace(subscriber);
 		if (pw != null) {
 			IDiffElement[] children = pw.getChildren();
-
 			switch (resource.getType()) {
 			case IResource.PROJECT: {
 				for (int i = 0; i < children.length; i++) {
@@ -104,7 +104,7 @@ public class PatchModelProvider extends ModelProvider {
 			}
 		}
 		return null;
-	}
+	}*/
 
 	/**
 	 * Returns the resource associated with the corresponding model element.
@@ -136,7 +136,7 @@ public class PatchModelProvider extends ModelProvider {
 		return resource;
 	}
 
-	static Object getPatchObject(IResource resource, WorkspacePatcher patcher) {
+	static Object/*DiffProject or FilePatch2*/ getPatchObject(IResource resource, WorkspacePatcher patcher) {
 		switch (resource.getType()) {
 		case IResource.PROJECT: {
 			if (patcher.isWorkspacePatch()) {
@@ -146,7 +146,7 @@ public class PatchModelProvider extends ModelProvider {
 						return diffProjects[i];
 				}
 			} else {
-				return patcher.getTarget().getProject();
+				// TODO:
 			}
 		}
 		case IResource.FILE: {
@@ -176,5 +176,14 @@ public class PatchModelProvider extends ModelProvider {
 			}
 		}
 		return project.getFile(diff.getPath(patcher.isReversed()));
+	}
+
+	public static PatchWorkspace getPatchWorkspace(Subscriber subscriber) {
+		if (subscriber instanceof ApplyPatchSubscriber) {
+			ApplyPatchSubscriber aps = (ApplyPatchSubscriber) subscriber;
+			return new PatchWorkspace(aps.getPatcher());
+		}
+		// TODO: assertion?
+		return null;
 	}
 }

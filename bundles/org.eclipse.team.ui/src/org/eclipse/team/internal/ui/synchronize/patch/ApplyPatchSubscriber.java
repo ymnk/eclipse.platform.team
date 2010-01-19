@@ -36,8 +36,6 @@ public class ApplyPatchSubscriber extends Subscriber {
 		this.patcher = patcher;
 		this.comparator = new PatchedFileVariantComparator();
 		getPatcher().refresh();
-		// FIXME: create instance, singleton 
-		PatchWorkspace.create(ResourcesPlugin.getWorkspace().getRoot(), getPatcher());
 	}
 
 	public String getName() {
@@ -82,8 +80,6 @@ public class ApplyPatchSubscriber extends Subscriber {
 		}
 	}
 
-
-
 	public boolean isSupervised(IResource resource) throws TeamException {
 		// TODO Auto-generated method stub
 		System.out.println(">> [true] isSupervised: " + resource.getName()); //$NON-NLS-1$
@@ -116,19 +112,14 @@ public class ApplyPatchSubscriber extends Subscriber {
 
 	public void refresh(IResource[] resources, int depth,
 			IProgressMonitor monitor) throws TeamException {
-		// TODO Auto-generated method stub
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < resources.length; i++) {
-			sb.append(resources[i].getName()).append(","); //$NON-NLS-1$
-		}
-		System.out
-				.println(">> [ignored] ApplyPatchSubscriber.refresh: " + sb.toString()); //$NON-NLS-1$
+		// TODO: refresh 'resources' only, not the whole patch 
+		getPatcher().refresh();
 	}
 
 	public IResource[] roots() {
 		Set roots = new HashSet();
 		if (getPatcher().isWorkspacePatch()) {
-			IDiffElement[] children = PatchWorkspace.getInstance().getChildren();
+			IDiffElement[] children = PatchModelProvider.getPatchWorkspace(this).getChildren();
 			for (int i = 0; i < children.length; i++) {
 				// return array of projects from the patch
 				DiffProject diffProject = ((PatchProjectDiffNode)children[i]).getDiffProject();
@@ -140,7 +131,7 @@ public class ApplyPatchSubscriber extends Subscriber {
 		}
 		return (IResource[]) roots.toArray(new IResource[0]);
 	}
-	
+
 	WorkspacePatcher getPatcher() {
 		return patcher;
 	}

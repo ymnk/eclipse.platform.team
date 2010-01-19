@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,39 +18,25 @@ import org.eclipse.compare.internal.patch.*;
 import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.internal.runtime.AdapterManager;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
 
 // TODO: extend PatchDiffNode, update navigatorContent triggerPoints when done
 public class PatchWorkspace extends DiffNode implements IAdaptable {
 
-	private static PatchWorkspace instance;
-	private IWorkspaceRoot root;
 	private WorkspacePatcher patcher;
-	
-	private PatchWorkspace(IWorkspaceRoot root, WorkspacePatcher patcher) {
+
+	public PatchWorkspace(WorkspacePatcher patcher) {
 		super(null, Differencer.NO_CHANGE);
-		this.root = root;
 		this.patcher = patcher;
 	}
-	
-	public static PatchWorkspace getInstance() {
-	      return instance;
-	}
-	
-	// this should be called before any getInstance
-	// TODO: don't use singleton!
-	public static Object create(IWorkspaceRoot root, WorkspacePatcher patcher) {
-		instance = new PatchWorkspace(root, patcher);
-		return instance;
-	}
-	
+
 	public WorkspacePatcher getPatcher() {
 		return patcher;
 	}
-	
+
 	public IResource getResource() {
-		return root;
+		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
 	public String getName() {
@@ -86,7 +72,7 @@ public class PatchWorkspace extends DiffNode implements IAdaptable {
 		}
 		return (IDiffElement[]) result.toArray(new IDiffElement[result.size()]);
 	}
-	
+
 	// see org.eclipse.compare.internal.patch.PatchCompareEditorInput.processProjects(DiffProject[])
 	private IDiffElement[] processProjects(DiffProject[] diffProjects) {
 		List result = new ArrayList();
@@ -101,7 +87,7 @@ public class PatchWorkspace extends DiffNode implements IAdaptable {
 		}
 		return (IDiffElement[]) result.toArray(new IDiffElement[result.size()]);
 	}
-	
+
 	// see org.eclipse.compare.internal.patch.PatchCompareEditorInput.processDiff(FilePatch2, DiffNode)
 	private List/*<IDiffElement>*/ processDiff(FilePatch2 diff, DiffNode parent) {
 		List result = new ArrayList();
@@ -116,7 +102,7 @@ public class PatchWorkspace extends DiffNode implements IAdaptable {
 		}
 		return result;
 	}
-	
+
 	// cannot extend PlatformObject (already extends DiffNode) so implement
 	// IAdaptable
 	public Object getAdapter(Class adapter) {
