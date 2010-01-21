@@ -55,15 +55,8 @@ public class ApplyPatchModelSynchronizeParticipant extends
 
 	public class ApplyPatchModelSynchronizeParticipantActionGroup extends
 			ModelSynchronizeParticipantActionGroup {
-		protected void configureMergeAction(String mergeActionId, Action action) {
-			if (mergeActionId == SynchronizationActionProvider.MERGE_ACTION_ID) {
-				// Custom label for merge
-				action.setText("Apply"); //$NON-NLS-1$
-			} else {
-				super.configureMergeAction(mergeActionId, action);
-			}
-		}
-		protected void addToContextMenu(String mergeActionId, Action action, IMenuManager manager) {
+		protected void addToContextMenu(String mergeActionId, Action action,
+				IMenuManager manager) {
 			if (mergeActionId == SynchronizationActionProvider.OVERWRITE_ACTION_ID) {
 				// omit this action
 				return;
