@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.synchronize.patch;
 
+import org.eclipse.compare.internal.core.patch.*;
 import org.eclipse.compare.internal.patch.WorkspacePatcher;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
@@ -38,16 +39,27 @@ class ApplyPatchSubscriberMergeContext extends SubscriberMergeContext {
 
 	protected void makeInSync(IDiff diff, IProgressMonitor monitor)
 			throws CoreException {
-		IResource resource = getDiffTree().getResource(diff);
-		WorkspacePatcher patcher = ((ApplyPatchSubscriber) getSubscriber())
-				.getPatcher();
-		Object object = PatchModelProvider.getPatchObject(resource, patcher);
-		patcher.setEnabled(object, false);
+		markAsMerged(diff, true, monitor);
 	}
 
 	public void markAsMerged(IDiff node, boolean inSyncHint,
 			IProgressMonitor monitor) throws CoreException {
-		// this action is not shown
+		IResource resource = getDiffTree().getResource(node);
+		WorkspacePatcher patcher = ((ApplyPatchSubscriber) getSubscriber())
+				.getPatcher();
+		Object object = PatchModelProvider.getPatchObject(resource, patcher);
+		if (object instanceof FilePatch2) {
+			FilePatch2 filePatch = (FilePatch2) object;
+			FileDiffResult fileDiffResult = patcher.getDiffResult(filePatch);
+			HunkResult[] hunkResults = fileDiffResult.getHunkResults();
+			for (int i = 0; i < hunkResults.length; i++) {
+				// disable hunks that were merged
+				if (hunkResults[i].isOK())
+					patcher.setEnabled(hunkResults[i].getHunk(), false);
+			}
+		} else {
+			patcher.setEnabled(object, false);
+		}
 	}
 
 	public void reject(IDiff diff, IProgressMonitor monitor)
