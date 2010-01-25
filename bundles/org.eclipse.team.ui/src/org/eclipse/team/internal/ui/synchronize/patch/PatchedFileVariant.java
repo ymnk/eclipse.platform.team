@@ -36,19 +36,37 @@ public class PatchedFileVariant implements IResourceVariant {
 	}
 
 	public String getContentIdentifier() {
-		// TODO: use patch file name (?), currently it's displayed as 'Remote
-		// File (After Patch)' for the right side
 		return "(After Patch)"; //$NON-NLS-1$
 	}
 
 	public String getName() {
-		// TODO: is it ever used?
-		return diff.getPath(patcher.isReversed()).lastSegment()
-				+ "(patched) <IResourceVariant>"; //$NON-NLS-1$
+		return diff.getPath(patcher.isReversed()).lastSegment();
 	}
 
 	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-		return new PatchedFileStorage(diff, patcher);
+		return new IStorage() {
+
+			public Object getAdapter(Class adapter) {
+				return null;
+			}
+
+			public boolean isReadOnly() {
+				return true;
+			}
+
+			public String getName() {
+				return PatchedFileVariant.this.getName();
+			}
+
+			public IPath getFullPath() {
+				return null;
+			}
+
+			public InputStream getContents() throws CoreException {
+				FileDiffResult diffResult = patcher.getDiffResult(diff);
+				return diffResult.getPatchedContents();
+			}
+		};
 	}
 
 	public boolean isContainer() {
@@ -57,38 +75,5 @@ public class PatchedFileVariant implements IResourceVariant {
 
 	FilePatch2 getDiff() {
 		return diff;
-	}
-
-	public static class PatchedFileStorage implements IStorage {
-		private FilePatch2 diff;
-		private WorkspacePatcher patcher;
-
-		public PatchedFileStorage(FilePatch2 diff, WorkspacePatcher patcher) {
-			this.diff = diff;
-			this.patcher = patcher;
-		}
-
-		public Object getAdapter(Class adapter) {
-			return null;
-		}
-
-		public boolean isReadOnly() {
-			return true;
-		}
-
-		public String getName() {
-			// TODO: what is it used for?
-			return diff.getPath(patcher.isReversed()).lastSegment()
-					+ "(patched) <IStorage>"; //$NON-NLS-1$
-		}
-
-		public IPath getFullPath() {
-			return null;
-		}
-
-		public InputStream getContents() throws CoreException {
-			FileDiffResult diffResult = patcher.getDiffResult(diff);
-			return diffResult.getPatchedContents();
-		}
 	}
 }
