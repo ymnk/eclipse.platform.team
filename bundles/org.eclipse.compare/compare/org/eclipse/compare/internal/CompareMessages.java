@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -108,6 +108,8 @@ public final class CompareMessages extends NLS {
 	public static String SelectAncestorDialog_title;
 	public static String SelectAncestorDialog_message;
 	public static String SelectAncestorDialog_option;
+	public static String CompareContentViewerSwitchingPane_optimized;
+	public static String CompareContentViewerSwitchingPane_optimizedTooltip;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, CompareMessages.class);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -62,14 +62,10 @@ public class CompareViewerPane extends ViewForm implements ISelectionProvider,
 		
 		marginWidth= 0;
 		marginHeight= 0;
-		
-		CLabel label= new CLabel(this, SWT.NONE) {
-			public Point computeSize(int wHint, int hHint, boolean changed) {
-				return super.computeSize(wHint, Math.max(24, hHint), changed);
-			}
-		};
-		setTopLeft(label);
-		
+
+		Control topLeft = createTopLeft(this);
+		setTopLeft(topLeft);
+
 		MouseAdapter ml= new MouseAdapter() {
 			public void mouseDoubleClick(MouseEvent e) {
 				Control content= getContent();
@@ -82,8 +78,8 @@ public class CompareViewerPane extends ViewForm implements ISelectionProvider,
 		};	
 				
 		addMouseListener(ml);
-		label.addMouseListener(ml);
-		
+		getTopLeft().addMouseListener(ml);
+
 		addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				if (fToolBarManager != null) {
@@ -96,7 +92,25 @@ public class CompareViewerPane extends ViewForm implements ISelectionProvider,
 			}
 		});
 	}
-	
+
+	/**
+	 * @param parent
+	 *            a widget which will be the parent of the control (cannot be
+	 *            null)
+	 * @return the control to be placed in the top left corner of the pane
+	 * @noreference This method is not intended to be referenced by clients.
+	 * @nooverride This method is not intended to be re-implemented or extended
+	 *             by clients.
+	 */
+	protected Control createTopLeft(Composite parent) {
+		CLabel label = new CLabel(this, SWT.NONE) {
+			public Point computeSize(int wHint, int hHint, boolean changed) {
+				return super.computeSize(wHint, Math.max(24, hHint), changed);
+			}
+		};
+		return label;
+	}
+
 	/**
 	 * Set the pane's title text.
 	 * The value <code>null</code> clears it.
