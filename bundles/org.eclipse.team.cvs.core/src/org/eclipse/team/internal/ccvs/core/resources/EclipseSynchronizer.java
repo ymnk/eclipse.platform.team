@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,14 +11,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core.resources;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
@@ -68,8 +61,8 @@ public class EclipseSynchronizer implements IFlushOperation {
 	private ILock lock = Job.getJobManager().newLock();
 	private ReentrantLock resourceLock = new ReentrantLock();
 	
-	private SynchronizerSyncInfoCache synchronizerCache = new SynchronizerSyncInfoCache();
-	private SessionPropertySyncInfoCache sessionPropertyCache = new SessionPropertySyncInfoCache(synchronizerCache);
+	private Map synchronizerCacheMap = new HashMap();
+	private Map sessionPropertyCacheMap = new HashMap();
 	
 	/*
 	 * Package private constructor to allow specialized subclass for handling folder deletions
@@ -87,16 +80,37 @@ public class EclipseSynchronizer implements IFlushOperation {
 		return instance;
 	}
 	
+	private SynchronizerSyncInfoCache getSynchronizerCache(IWorkspace w) {
+		 Object object = synchronizerCacheMap.get(w);
+		 if (object != null && object instanceof SynchronizerSyncInfoCache) {
+			 return (SynchronizerSyncInfoCache) object;
+		 }
+		 SynchronizerSyncInfoCache cache = new SynchronizerSyncInfoCache(w);
+		 synchronizerCacheMap.put(w, cache);
+		 return cache;
+	}
+	
+	private SessionPropertySyncInfoCache getSessionPropertySyncInfoCache(IWorkspace w) {
+		Object object = sessionPropertyCacheMap.get(w);
+		 if (object != null && object instanceof SessionPropertySyncInfoCache) {
+			 return (SessionPropertySyncInfoCache) object;
+		 }
+		 SynchronizerSyncInfoCache synchronizerCache = getSynchronizerCache(w);
+		 SessionPropertySyncInfoCache syncInfoCache = new SessionPropertySyncInfoCache(synchronizerCache);
+		 sessionPropertyCacheMap.put(w, syncInfoCache);
+		 return syncInfoCache;
+	}
+	
 	public SyncInfoCache getSyncInfoCacheFor(IResource resource) {
 		if (resource.exists()  && resource.isLocal(IResource.DEPTH_ZERO)) {
-			return sessionPropertyCache;
+			return getSessionPropertySyncInfoCache(resource.getWorkspace());
 		} else {
-			return synchronizerCache;
+			return getSynchronizerCache(resource.getWorkspace());
 		}
 	}
 
 	private boolean isValid(IResource resource) {
-		return resource.exists() || synchronizerCache.isPhantom(resource);
+		return resource.exists() || getSynchronizerCache(resource.getWorkspace()).isPhantom(resource);
 	}
 	
 	/**
@@ -377,7 +391,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 			return false;
 		}
 		IContainer parent = resource.getParent();
-        FileNameMatcher matcher = sessionPropertyCache.getFolderIgnores(parent, false /* not thread safe */);
+        FileNameMatcher matcher = getSessionPropertySyncInfoCache(resource.getWorkspace()).getFolderIgnores(parent, false /* not thread safe */);
         if (matcher == null) {
     		try {
     			beginOperation();
@@ -458,7 +472,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 		}
 		try {
 			
-			return synchronizerCache.members(folder);
+			return getSynchronizerCache(folder.getWorkspace()).members(folder);
 			
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -541,11 +555,11 @@ public class EclipseSynchronizer implements IFlushOperation {
             // Do not try to acquire the lock if the resources tree is locked
             // The reason for this is that during the resource delta phase (i.e. when the tree is locked)
             // the workspace lock is held. If we obtain our lock, there is 
-            // a chance of dealock. It is OK if we don't as we are still protected
+            // a chance of deadlock. It is OK if we don't as we are still protected
             // by scheduling rules and the workspace lock.
             if (ResourcesPlugin.getWorkspace().isTreeLocked()) return;
         } catch (RuntimeException e) {
-		    // If we are not active, throw a cancel. Otherwise, propogate it.
+		    // If we are not active, throw a cancel. Otherwise, propagate it.
 		    // (see bug 78303)
 		    if (Platform.getBundle(CVSProviderPlugin.ID).getState() == Bundle.ACTIVE) {
 		        throw e;
@@ -604,7 +618,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 				    throw CVSException.wrapException(e);
                 } finally {
 					// Purge the in-memory cache
-					sessionPropertyCache.purgeCache(root, deep);
+                	getSessionPropertySyncInfoCache(root.getWorkspace()).purgeCache(root, deep);
 				}
 			} finally {
 				endOperation();
@@ -628,7 +642,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 				
 			// forget about pruned folders however the top level pruned folder will have resource sync (e.g. 
 			// a line in the Entry file). As a result the folder is managed but is not a CVS folder.
-			synchronizerCache.purgeCache(project, true);
+			getSynchronizerCache(project.getWorkspace()).purgeCache(project, true);
 		} finally {
 			if (rule != null) endBatching(rule, Policy.subMonitorFor(monitor, 5));
 			monitor.done();
@@ -654,13 +668,13 @@ public class EclipseSynchronizer implements IFlushOperation {
                         
                         // Record the previous ignore pattterns
                         FileNameMatcher oldIgnores = null;
-                        if (sessionPropertyCache.isFolderSyncInfoCached(container)) {
+                        if (getSessionPropertySyncInfoCache(container.getWorkspace()).isFolderSyncInfoCached(container)) {
                             oldIgnores = cacheFolderIgnores(container);
                         }
                         
                         // Purge the cached state for direct children of the container
     					changed.addAll(Arrays.asList(
-    						sessionPropertyCache.purgeCache(container, oldIgnores == null /*flush deeply if the old patterns are not known*/)));
+    							getSessionPropertySyncInfoCache(container.getWorkspace()).purgeCache(container, oldIgnores == null /*flush deeply if the old patterns are not known*/)));
                         
                         // Purge the state for any children of previously ignored containers
                         if (oldIgnores != null) {
@@ -673,7 +687,7 @@ public class EclipseSynchronizer implements IFlushOperation {
                                         String name = resource.getName();
                                         if (oldIgnores.match(name) && !newIgnores.match(name)) {
                                             changed.addAll(Arrays.asList(
-                                                    sessionPropertyCache.purgeCache((IContainer)resource, true /*flush deeply*/)));
+                                            		getSessionPropertySyncInfoCache(resource.getWorkspace()).purgeCache((IContainer)resource, true /*flush deeply*/)));
                                         }
                                     }
                                 }
@@ -702,13 +716,13 @@ public class EclipseSynchronizer implements IFlushOperation {
 			IContainer container = changedMetaFiles[i];
 			if (!isWithinActiveOperationScope(container)) {
 				changed.addAll(Arrays.asList(
-					sessionPropertyCache.purgeCache(container, false /*don't flush children*/)));
+						getSessionPropertySyncInfoCache(container.getWorkspace()).purgeCache(container, false /*don't flush children*/)));
 			}
 		}
 		for (int i = 0; i < externalDeletions.length; i++) {
 			IFile file = externalDeletions[i];
 			if (!isWithinActiveOperationScope(file)) {
-				sessionPropertyCache.purgeCache(file.getParent(), false /*don't flush children*/);
+				getSessionPropertySyncInfoCache(file.getWorkspace()).purgeCache(file.getParent(), false /*don't flush children*/);
 				changed.add(file);
 			}
 		}
@@ -749,28 +763,28 @@ public class EclipseSynchronizer implements IFlushOperation {
 							deleteResourceSync(resource);
 						} else {
 							syncBytes = convertToDeletion(syncBytes);
-							synchronizerCache.setCachedSyncBytes(resource, syncBytes, true);
+							getSynchronizerCache(resource.getWorkspace()).setCachedSyncBytes(resource, syncBytes, true);
 						}
-						sessionPropertyCache.purgeResourceSyncCache(resource);
+						getSessionPropertySyncInfoCache(resource.getWorkspace()).purgeResourceSyncCache(resource);
 						resourceChanged(resource);
 					}
 					return false;
 				} else {
 					IContainer container = (IContainer)resource;
 					if (container.getType() == IResource.PROJECT) {
-						synchronizerCache.flush((IProject)container);
+						getSynchronizerCache(container.getWorkspace()).flush((IProject)container);
 						return false;
 					} else {
 						// Move the folder sync info into phantom space
 						FolderSyncInfo info = getFolderSync(container);
 						if (info == null) return false;
-						synchronizerCache.setCachedFolderSync(container, info, true);
+						getSynchronizerCache(container.getWorkspace()).setCachedFolderSync(container, info, true);
 						folderChanged(container);
 						// move the resource sync as well
 						byte[] syncBytes = getSyncBytes(resource);
-						synchronizerCache.setCachedSyncBytes(resource, syncBytes, true);
-						sessionPropertyCache.purgeResourceSyncCache(container);
-						sessionPropertyCache.purgeCache(container, false);
+						getSynchronizerCache(resource.getWorkspace()).setCachedSyncBytes(resource, syncBytes, true);
+						getSessionPropertySyncInfoCache(container.getWorkspace()).purgeResourceSyncCache(container);
+						getSessionPropertySyncInfoCache(container.getWorkspace()).purgeCache(container, false);
 						return true;
 					}
 				}
@@ -988,7 +1002,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 				if (folder.exists() && folder.getType() != IResource.ROOT) {
 					try {
                         beginOperation();
-						FolderSyncInfo info = sessionPropertyCache.getCachedFolderSync(folder, true);
+						FolderSyncInfo info = getSessionPropertySyncInfoCache(folder.getWorkspace()).getCachedFolderSync(folder, true);
 						// Do not write the folder sync for linked resources
 						if (info == null) {
 							// deleted folder sync info since we loaded it
@@ -1002,7 +1016,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 						}
 					} catch(CVSException e) {					
 						try {
-							sessionPropertyCache.purgeCache(folder, true /* deep */);
+							getSessionPropertySyncInfoCache(folder.getWorkspace()).purgeCache(folder, true /* deep */);
 						} catch(CVSException pe) {
 							errors.add(pe.getStatus());
 						}
@@ -1039,14 +1053,14 @@ public class EclipseSynchronizer implements IFlushOperation {
 								(byte[][]) infos.toArray(new byte[infos.size()][]));
 					} catch(CVSException e) {
 						try {
-							sessionPropertyCache.purgeCache(folder, false /* depth 1 */);
+							getSessionPropertySyncInfoCache(folder.getWorkspace()).purgeCache(folder, false /* depth 1 */);
 						} catch(CVSException pe) {
 							errors.add(pe.getStatus());
 						}							
 						errors.add(e.getStatus());
 					} catch (CoreException e) {
 						try {
-							sessionPropertyCache.purgeCache(folder, false /* depth 1 */);
+							getSessionPropertySyncInfoCache(folder.getWorkspace()).purgeCache(folder, false /* depth 1 */);
 						} catch(CVSException pe) {
 							errors.add(pe.getStatus());
 						}							
@@ -1143,7 +1157,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 	 * @return the folder ignore patterns, or an empty array if none
 	 */
 	private FileNameMatcher cacheFolderIgnores(IContainer container) throws CVSException {
-		return sessionPropertyCache.getFolderIgnores(container, true);
+		return getSessionPropertySyncInfoCache(container.getWorkspace()).getFolderIgnores(container, true);
 	}
 	
 	/**
@@ -1154,7 +1168,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 	 * @param ignores the array of ignore patterns
 	 */
 	private void setCachedFolderIgnores(IContainer container, String[] ignores) throws CVSException {
-		sessionPropertyCache.setCachedFolderIgnores(container, ignores);
+		getSessionPropertySyncInfoCache(container.getWorkspace()).setCachedFolderIgnores(container, ignores);
 	}
 	
 	/*
@@ -1660,11 +1674,11 @@ public class EclipseSynchronizer implements IFlushOperation {
 			if (resource.getType() == IResource.FILE) {
 				// Purge any copied sync info so true sync info will 
 				// be obtained from the synchronizer cache
-				sessionPropertyCache.purgeResourceSyncCache(resource);
+				getSessionPropertySyncInfoCache(resource.getWorkspace()).purgeResourceSyncCache(resource);
 			} else {
 				IContainer container = (IContainer)resource;
 				// Purge any copied sync info
-				sessionPropertyCache.purgeCache(container, true /* deep */);
+				getSessionPropertySyncInfoCache(container.getWorkspace()).purgeCache(container, true /* deep */);
 				// Dirty all resources so old sync info will be rewritten to disk
 				try {
 					container.accept(new IResourceVisitor() {
@@ -1785,9 +1799,9 @@ public class EclipseSynchronizer implements IFlushOperation {
 	public boolean wasPhantom(IResource resource) {
 		if (resource.exists()) {
 			try {
-				return (synchronizerCache.getCachedSyncBytes(resource, true) != null 
+				return (getSynchronizerCache(resource.getWorkspace()).getCachedSyncBytes(resource, true) != null 
 					|| (resource.getType() == IResource.FOLDER
-							&& synchronizerCache.hasCachedFolderSync((IContainer)resource)));
+							&& getSynchronizerCache(resource.getWorkspace()).hasCachedFolderSync((IContainer)resource)));
 			} catch (CVSException e) {
 				// Log and assume resource is not a phantom
 				CVSProviderPlugin.log(e);
@@ -1858,7 +1872,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 		try {
 			// set the dirty count using what was cached in the phantom it
 			beginOperation();
-			FolderSyncInfo folderInfo = synchronizerCache.getCachedFolderSync(folder, true);
+			FolderSyncInfo folderInfo = getSynchronizerCache(folder.getWorkspace()).getCachedFolderSync(folder, true);
 			if (folderInfo != null) {
 				// There is folder sync info to restore
 				if (folder.getFolder(SyncFileWriter.CVS_DIRNAME).exists()) {
@@ -1890,7 +1904,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 				// set the sync info using what was cached in the phantom
 				setFolderSync(folder, folderInfo);
 				// purge the dirty cache so any old persisted dirty state is purged
-				sessionPropertyCache.purgeDirtyCache(folder);
+				getSessionPropertySyncInfoCache(folder.getWorkspace()).purgeDirtyCache(folder);
 				// Indicate that a member has changed so the entries file gets written (see bug 181546)
 				IResource[] members = members(folder);
 				IResource changedResource = null;
@@ -1910,7 +1924,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 			try {
 				endOperation();
 			} finally {
-				synchronizerCache.flush(folder);
+				getSynchronizerCache(folder.getWorkspace()).flush(folder);
 			}
 		}
 	}
@@ -1921,7 +1935,7 @@ public class EclipseSynchronizer implements IFlushOperation {
 	private void restoreResourceSync(IResource resource) throws CVSException {
 		try {
 			beginOperation();
-			byte[] syncBytes = synchronizerCache.getCachedSyncBytes(resource, true);
+			byte[] syncBytes = getSynchronizerCache(resource.getWorkspace()).getCachedSyncBytes(resource, true);
 			if (syncBytes != null) {
 				if (!ResourceSyncInfo.isFolder(syncBytes)) {
 					syncBytes = ResourceSyncInfo.convertFromDeletion(syncBytes);
@@ -1939,12 +1953,12 @@ public class EclipseSynchronizer implements IFlushOperation {
 			try {
 				endOperation();
 			} finally {
-				synchronizerCache.setCachedSyncBytes(resource, null, true);
+				getSynchronizerCache(resource.getWorkspace()).setCachedSyncBytes(resource, null, true);
 			}
 		}
 	}
 	
 	private void purgeDirtyCache(IProject project, IProgressMonitor monitor) throws CVSException {
-		sessionPropertyCache.purgeDirtyCache(project);
+		getSessionPropertySyncInfoCache(project.getWorkspace()).purgeDirtyCache(project);
 	}
 }

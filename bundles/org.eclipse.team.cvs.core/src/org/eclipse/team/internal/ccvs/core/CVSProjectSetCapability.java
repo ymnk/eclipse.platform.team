@@ -222,7 +222,7 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 		
 		final List result = new ArrayList();
 		try {
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+			projects[0].getWorkspace().run(new IWorkspaceRunnable() {
 				public void run(IProgressMonitor monitor) throws CoreException {
 					monitor.beginTask("", 1000 * projects.length); //$NON-NLS-1$
 					try {
@@ -384,7 +384,7 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 						pm.beginTask(null, 1000 * resources.length);
 						
 						// Get the location of the workspace root
-						ICVSFolder root = CVSWorkspaceRoot.getCVSFolderFor(ResourcesPlugin.getWorkspace().getRoot());
+						ICVSFolder root = CVSWorkspaceRoot.getCVSFolderFor(projects[0].getWorkspace().getRoot());
 						
 						for (int i=0;i<resources.length;i++) {
 							IProject project = null;
@@ -421,7 +421,7 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 									// Convert the module expansions to local projects
 									String[] expansions = session.getModuleExpansions();
 									for (int j = 0; j < expansions.length; j++) {
-										targetProjects.add(ResourcesPlugin.getWorkspace().getRoot().getProject(new Path(null, expansions[j]).segment(0)));
+										targetProjects.add(projects[0].getWorkspace().getRoot().getProject(new Path(null, expansions[j]).segment(0)));
 									}
 									
 								} else {
@@ -481,7 +481,7 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 					// CoreException and OperationCanceledException are propagated
 				}
 			};
-			ResourcesPlugin.getWorkspace().run(workspaceRunnable, getCheckoutRule(projects), 0, monitor);
+			projects[0].getWorkspace().run(workspaceRunnable, getCheckoutRule(projects), 0, monitor);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		} finally {
@@ -495,11 +495,11 @@ public class CVSProjectSetCapability extends ProjectSetCapability {
 
 	private static ISchedulingRule getCheckoutRule(final IProject[] projects) {
 		if (projects.length == 1) {
-			return ResourcesPlugin.getWorkspace().getRuleFactory().modifyRule(projects[0]);
+			return projects[0].getWorkspace().getRuleFactory().modifyRule(projects[0]);
 		} else {
 			Set rules = new HashSet();
 			for (int i = 0; i < projects.length; i++) {
-				ISchedulingRule modifyRule = ResourcesPlugin.getWorkspace().getRuleFactory().modifyRule(projects[i]);
+				ISchedulingRule modifyRule = projects[0].getWorkspace().getRuleFactory().modifyRule(projects[i]);
 				if (modifyRule instanceof IResource && ((IResource)modifyRule).getType() == IResource.ROOT) {
 					// One of the projects is mapped to a provider that locks the workspace.
 					// Just return the workspace root rule

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,7 @@
 package org.eclipse.team.internal.ccvs.core.resources;
 
 
+import org.eclipse.core.internal.filesystem.local.LocalFile;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.team.core.Team;
@@ -256,7 +257,7 @@ abstract class EclipseResource implements ICVSResource, Comparable {
 		try {
 			// Do not use a scheduling rule in the workspace run since one
 			// will be obtained by the EclipseSynchronizer
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+			getIResource().getWorkspace().run(new IWorkspaceRunnable() {
 				public void run(IProgressMonitor monitor) throws CoreException {
 					try {
 						EclipseSynchronizer.getInstance().run(getIResource(), job, monitor);

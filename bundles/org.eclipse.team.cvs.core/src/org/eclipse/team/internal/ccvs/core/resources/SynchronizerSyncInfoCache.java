@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,19 +12,10 @@ package org.eclipse.team.internal.ccvs.core.resources;
 
 import java.util.*;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.resources.ISynchronizer;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.team.internal.ccvs.core.CVSException;
-import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
-import org.eclipse.team.internal.ccvs.core.ICVSFolder;
-import org.eclipse.team.internal.ccvs.core.ICVSResource;
+import org.eclipse.team.internal.ccvs.core.*;
 import org.eclipse.team.internal.ccvs.core.syncinfo.FolderSyncInfo;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.internal.ccvs.core.util.Util;
@@ -39,15 +30,15 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 	Map pendingCacheWrites = new HashMap();
 	private static final Object BYTES_REMOVED = new byte[0];
 
-	public SynchronizerSyncInfoCache() {
-		getWorkspaceSynchronizer().add(FOLDER_SYNC_KEY);
-		getWorkspaceSynchronizer().add(RESOURCE_SYNC_KEY);
+	public SynchronizerSyncInfoCache(IWorkspace w) {
+		getWorkspaceSynchronizer(w).add(FOLDER_SYNC_KEY);
+		getWorkspaceSynchronizer(w).add(RESOURCE_SYNC_KEY);
 	}
 	/**
 	 * Return the Eclipse Workspace Synchronizer (from org.eclipse.core.resources)
 	 */
-	private ISynchronizer getWorkspaceSynchronizer() {
-		return ResourcesPlugin.getWorkspace().getSynchronizer();
+	private ISynchronizer getWorkspaceSynchronizer(IWorkspace w) {
+		return w.getSynchronizer();
 	}
 	
 	/*package*/ void flush(IProject project) throws CVSException {
@@ -87,7 +78,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 	 */
 	private byte[] internalGetCachedSyncBytes(IContainer container) throws CVSException {
 		try {
-			return getWorkspaceSynchronizer().getSyncInfo(FOLDER_SYNC_KEY, container);
+			return getWorkspaceSynchronizer(container.getWorkspace()).getSyncInfo(FOLDER_SYNC_KEY, container);
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
 		}
@@ -105,10 +96,10 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		try {
 			if (info == null) {
 				if (container.exists() || container.isPhantom()) {
-					getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, container, IResource.DEPTH_ZERO);
+					getWorkspaceSynchronizer(container.getWorkspace()).flushSyncInfo(FOLDER_SYNC_KEY, container, IResource.DEPTH_ZERO);
 				}
 			} else {
-				getWorkspaceSynchronizer().setSyncInfo(FOLDER_SYNC_KEY, container, info.getBytes());
+				getWorkspaceSynchronizer(container.getWorkspace()).setSyncInfo(FOLDER_SYNC_KEY, container, info.getBytes());
 			}
 		} catch (CoreException e) {
 			throw CVSException.wrapException(e);
@@ -124,7 +115,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 			if (!hasPendingCacheRemoval(resource)) {
 				bytes = getPendingCacheWrite(resource);
 				if (bytes == null) {
-					bytes = getWorkspaceSynchronizer().getSyncInfo(RESOURCE_SYNC_KEY, resource);
+					bytes = getWorkspaceSynchronizer(resource.getWorkspace()).getSyncInfo(RESOURCE_SYNC_KEY, resource);
 				}
 			}
 			if (bytes != null && resource.getType() == IResource.FILE) {
@@ -153,7 +144,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 				if (oldBytes != null) {
 					if (canModifyWorkspace) {
 						if (resource.exists() || resource.isPhantom()) {
-							getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, resource, IResource.DEPTH_ZERO);
+							getWorkspaceSynchronizer(resource.getWorkspace()).flushSyncInfo(RESOURCE_SYNC_KEY, resource, IResource.DEPTH_ZERO);
 						}
 						removePendingCacheWrite(resource);
 					} else {
@@ -169,7 +160,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 				// Ignore the 
 				if (oldBytes == null || !equals(syncBytes, oldBytes)) {
 					if (canModifyWorkspace) {
-						getWorkspaceSynchronizer().setSyncInfo(RESOURCE_SYNC_KEY, resource, syncBytes);
+						getWorkspaceSynchronizer(resource.getWorkspace()).setSyncInfo(RESOURCE_SYNC_KEY, resource, syncBytes);
 						removePendingCacheWrite(resource);
 					} else {
 						setPendingCacheWrite(resource, syncBytes);
@@ -294,10 +285,10 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		int depth = deep ? IResource.DEPTH_INFINITE : IResource.DEPTH_ZERO;
 		try {
 			if (root.exists() || root.isPhantom()) {
-				getWorkspaceSynchronizer().flushSyncInfo(RESOURCE_SYNC_KEY, root, depth);
+				getWorkspaceSynchronizer(root.getWorkspace()).flushSyncInfo(RESOURCE_SYNC_KEY, root, depth);
 			}
 			if (root.exists() || root.isPhantom()) {
-				getWorkspaceSynchronizer().flushSyncInfo(FOLDER_SYNC_KEY, root, depth);
+				getWorkspaceSynchronizer(root.getWorkspace()).flushSyncInfo(FOLDER_SYNC_KEY, root, depth);
 			}
 			if (deep) {
 				removePendingCacheWritesUnder(root);
