@@ -11,17 +11,36 @@
 package org.eclipse.compare.internal.merge;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.contentmergeviewer.ITokenComparator;
-import org.eclipse.compare.internal.*;
+import org.eclipse.compare.internal.CompareContentViewerSwitchingPane;
+import org.eclipse.compare.internal.CompareMessages;
+import org.eclipse.compare.internal.ComparePreferencePage;
+import org.eclipse.compare.internal.CompareUIPlugin;
+import org.eclipse.compare.internal.DocLineComparator;
+import org.eclipse.compare.internal.MergeViewerContentProvider;
+import org.eclipse.compare.internal.Utilities;
 import org.eclipse.compare.internal.core.LCS;
-import org.eclipse.compare.rangedifferencer.*;
+import org.eclipse.compare.rangedifferencer.IRangeComparator;
+import org.eclipse.compare.rangedifferencer.RangeDifference;
+import org.eclipse.compare.rangedifferencer.RangeDifferencer;
 import org.eclipse.compare.structuremergeviewer.Differencer;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.text.*;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.BadPositionCategoryException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.Position;
+import org.eclipse.jface.text.Region;
+import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.ui.PlatformUI;
@@ -412,7 +431,7 @@ public class DocumentMerger {
 				}
 			}*/
 		}
-			
+
 		final Object[] result= new Object[1];
 		final DocLineComparator sa= sancestor, sl= sleft, sr= sright;
 		IRunnableWithProgress runnable= new IRunnableWithProgress() {
@@ -532,6 +551,8 @@ public class DocumentMerger {
 
 	private boolean isCapped(DocLineComparator ancestor,
 			DocLineComparator left, DocLineComparator right) {
+		if (isCappingDisabled())
+			return false;
 		int aLength = ancestor == null? 0 : ancestor.getRangeCount();
 		int lLength = left.getRangeCount();
 		int rLength = right.getRangeCount();
@@ -648,6 +669,10 @@ public class DocumentMerger {
 		return Utilities.getBoolean(getCompareConfiguration(), CompareConfiguration.IGNORE_WHITESPACE, false);
 	}
 	
+	private boolean isCappingDisabled() {
+		return CompareUIPlugin.getDefault().getPreferenceStore().getBoolean(ComparePreferencePage.CAPPING_DISABLED);
+	}
+
 	private IDocument getDocument(char contributor) {
 		return fInput.getDocument(contributor);
 	}
