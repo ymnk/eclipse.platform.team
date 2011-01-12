@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,8 @@
 package org.eclipse.team.internal.ccvs.ui.wizards;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.*;
@@ -21,6 +23,7 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.team.core.*;
 import org.eclipse.team.internal.ccvs.core.filesystem.CVSURI;
 import org.eclipse.team.internal.ccvs.ui.CVSUIMessages;
 import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
@@ -31,14 +34,15 @@ import org.eclipse.ui.ide.IDE;
 
 public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImportWizardPage {
 	
-	private URI[] scmUris;
+	private RepositoryProviderType provider;
+	private ScmUrlImportDescription[] descriptions;
 	private Button useHead;
 	private TableViewer bundlesViewer;
 	private Label counterLabel;
 
 	private static final String CVS_PAGE_USE_HEAD = "org.eclipse.team.cvs.ui.import.page.head"; //$NON-NLS-1$
 
-	class CvsLabelProvider extends StyledCellLabelProvider implements ILabelProvider {
+	class CVSLabelProvider extends StyledCellLabelProvider implements ILabelProvider {
 
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ILabelProvider#getImage(java.lang.Object)
@@ -67,9 +71,10 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 
 		private StyledString getStyledText(Object element) {
 			StyledString styledString = new StyledString();
-			if (element instanceof URI) {
-				URI scmUrl = (URI) element;
-				String project = getProject(scmUrl);
+			if (element instanceof ScmUrlImportDescription) {
+				ScmUrlImportDescription description = (ScmUrlImportDescription) element;
+				String project = description.getProject();
+				URI scmUrl = description.getUri();
 				String version = getTag(scmUrl);
 				String host = getServer(scmUrl);
 				styledString.append(project);
@@ -120,7 +125,7 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 		table.setLayoutData(gd);
 
 		bundlesViewer = new TableViewer(table);
-		bundlesViewer.setLabelProvider(new CvsLabelProvider());
+		bundlesViewer.setLabelProvider(new CVSLabelProvider());
 		bundlesViewer.setContentProvider(new ArrayContentProvider());
 		bundlesViewer.setComparator(new ViewerComparator());
 		counterLabel = new Label(comp, SWT.NONE);
@@ -141,8 +146,8 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 		}
 
 		if (!found) {
-			for (int i = 0; i < scmUris.length; i++) {
-				URI scmUrl = scmUris[i];
+			for (int i = 0; i < descriptions.length; i++) {
+				URI scmUrl = descriptions[i].getUri();
 				if (getTag(scmUrl) != null) {
 					head = false;
 					break;
@@ -152,8 +157,8 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 		useHead.setSelection(head);
 		versions.setSelection(!head);
 
-		if (scmUris != null) {
-			bundlesViewer.setInput(scmUris);
+		if (descriptions != null) {
+			bundlesViewer.setInput(descriptions);
 			updateCount();
 		}
 
@@ -183,29 +188,44 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 
 		if (head) {
 			// modify tags on bundle import descriptions
-			for (int i = 0; i < scmUris.length; i++) {
-				URI scmUri = scmUris[i];
-				scmUris[i] = removeTag(scmUri);
+			for (int i = 0; i < descriptions.length; i++) {
+				URI scmUri = descriptions[i].getUri();
+				descriptions[i].setUrl(removeTag(scmUri));
 			}
 		}
+		
+		// TODO: same actions for all providers, this is not specific to CVS, pull up
+		
+		ProjectSetCapability c = getProvider().getProjectSetCapability();
+		List references = new ArrayList();
+		for (int i = 0; i < descriptions.length; i++) {
+			references.add(c.asReference(descriptions[i].getUri(), descriptions[i].getProject()));
+		}
+		try {
+			c.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), null);
+		} catch (TeamException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return true;
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.IScmUrlImportWizardPage#getSelection()
 	 */
-	public URI[] getSelection() {
-		return scmUris;
+	public ScmUrlImportDescription[] getSelection() {
+		return descriptions;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.team.ui.IScmUrlImportWizardPage#getSelection()
 	 */
-	public void setSelection(URI[] scmUris) {
-		this.scmUris = scmUris;
+	public void setSelection(ScmUrlImportDescription[] descriptions) {
+		this.descriptions = descriptions;
 		// fill viewer
 		if (bundlesViewer != null) {
-			bundlesViewer.setInput(scmUris);
+			bundlesViewer.setInput(descriptions);
 			updateCount();
 		}
 	}
@@ -214,24 +234,16 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 	 * Updates the count of bundles that will be imported
 	 */
 	private void updateCount() {
-		counterLabel.setText(NLS.bind(CVSUIMessages.CVSScmUrlImportWizardPage_4, new Integer(scmUris.length)));
+		counterLabel.setText(NLS.bind(CVSUIMessages.CVSScmUrlImportWizardPage_4, new Integer(descriptions.length)));
 		counterLabel.getParent().layout();
-	}
-
-	private static String getProject(URI scmUri) {
-		// TODO: remove once bug 332732 is fixed
-		CVSURI cvsUri = CVSURI.fromUri(scmUri);
-		if (cvsUri.getProjectName() == null)
-			return cvsUri.getPath().lastSegment();
-		return cvsUri.getProjectName();
 	}
 
 	private static String getTag(URI scmUri) {
 		return CVSURI.fromUri(scmUri).getTag().getName();
 	}
 	
-	private static URI removeTag(URI scmUri) {
-		// TODO: move to CVSURI
+	// TODO: move to CVSURI
+	private static String removeTag(URI scmUri) {
 		StringBuffer sb = new StringBuffer();
 		sb.append(scmUri.getScheme()).append(':');
 		String ssp = scmUri.getSchemeSpecificPart();
@@ -252,11 +264,19 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 		} else {
 			sb.append(ssp);
 		}
-		return URI.create(sb.toString());
+		return sb.toString();
 	}
 	
 	private static String getServer(URI scmUri) {
 		return CVSURI.fromUri(scmUri).getRepository().getHost();
+	}
+
+	public void setProvider(RepositoryProviderType provider) {
+		this.provider = provider;
+	}
+
+	public RepositoryProviderType getProvider() {
+		return provider;
 	}
 	
 }

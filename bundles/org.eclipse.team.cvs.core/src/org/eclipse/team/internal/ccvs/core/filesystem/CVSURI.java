@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -175,9 +175,9 @@ public class CVSURI {
 	private static String getProjectName(URI uri) {
 		String f = uri.getFragment();
 		if (f != null) {
-			int i = f.lastIndexOf(',');
+			int i = f.indexOf(',');
 			if (i != -1) {
-				String s = f.substring(i + 1);
+				String s = f.substring(0, i);
 				if (!s.equals("")) //$NON-NLS-1$
 					return s;
 			}

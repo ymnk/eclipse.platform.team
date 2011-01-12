@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,13 +11,11 @@
 package org.eclipse.team.ui;
 
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.team.core.ProjectSetCapability;
-import org.eclipse.team.core.RepositoryProviderType;
+import org.eclipse.team.core.*;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.history.GenericHistoryView;
 import org.eclipse.team.internal.ui.registry.TeamContentProviderManager;
@@ -147,25 +145,27 @@ public class TeamUI {
 	/**
 	 * TODO:
 	 * <strong>EXPERIMENTAL</strong>
+	 * @param descriptions 
 	 * @throws CoreException 
 	 * @since 3.6
 	 */
-	public static IScmUrlImportWizardPage[] getPages(URI[] scmUris) throws CoreException {
+	public static IScmUrlImportWizardPage[] getPages(ScmUrlImportDescription[] descriptions) throws CoreException {
 		// TODO: check scmUrls
 		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(TeamUIPlugin.PLUGIN_ID, IScmUrlImportWizardPage.ATT_EXTENSION);
 		if (elements.length > 0) {
-			Set/*<IConfigurationElement>*/ pages = new HashSet();
+			Set/*<IScmUrlImportWizardPage>*/ pages = new HashSet();
 			for (int i = 0; i < elements.length; i++) {
-				String repository = elements[i].getAttribute("repository"); //$NON-NLS-1$
+				String repository = elements[i].getAttribute(IScmUrlImportWizardPage.ATT_REPOSITORY);
 				RepositoryProviderType providerType = RepositoryProviderType.getProviderType(repository);
-				String scheme = providerType.getFileSystemScheme();
-				Set schemeUris = new HashSet();
-				for (int j = 0; j < scmUris.length; j++) {
-					URI scmUrl = scmUris[j];
-					if (scmUrl != null) {
-						if (ProjectSetCapability.SCHEME_SCM.equals(scmUrl.getScheme())) {
-							if (scmUrl.getSchemeSpecificPart().startsWith(scheme)) {
-								schemeUris.add(scmUrl);
+				String extensionScheme = providerType.getFileSystemScheme();
+				Set/*<URI>*/ schemeUris = new HashSet();
+				// group descriptions by scheme/provider
+				for (int j = 0; j < descriptions.length; j++) {
+					URI scmUri = descriptions[j].getUri();
+					if (scmUri != null) {
+						if (ProjectSetCapability.SCHEME_SCM.equals(scmUri.getScheme())) {
+							if (scmUri.getSchemeSpecificPart().startsWith(extensionScheme)) {
+								schemeUris.add(scmUri);
 							}
 						}
 					}
@@ -174,7 +174,18 @@ public class TeamUI {
 					Object ext = TeamUIPlugin.createExtension(elements[i], IScmUrlImportWizardPage.ATT_PAGE);
 					if (ext instanceof IScmUrlImportWizardPage) {
 						IScmUrlImportWizardPage page = (IScmUrlImportWizardPage) ext;
-						page.setSelection((URI[]) schemeUris.toArray(new URI[0]));
+						page.setProvider(providerType);
+
+						Set/*<ScmUrlImportDescription>*/ d = new HashSet();
+						for (Iterator iterator = schemeUris.iterator(); iterator.hasNext();) {
+							URI uri = (URI) iterator.next();
+							for (int j = 0; j < descriptions.length; j++) {
+								if (descriptions[j].getUri().equals(uri)) {
+									d.add(descriptions[j]);
+								}
+							}
+						}
+						page.setSelection((ScmUrlImportDescription[]) d.toArray(new ScmUrlImportDescription[0]));
 						pages.add(page);
 					}
 				}
