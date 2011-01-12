@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2007 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,14 @@
  *******************************************************************************/
 package org.eclipse.team.ui;
 
+import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.team.core.ProjectSetCapability;
+import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.history.GenericHistoryView;
 import org.eclipse.team.internal.ui.registry.TeamContentProviderManager;
@@ -127,7 +134,7 @@ public class TeamUI {
 	
 	/**
 	 * Return the team content provider manager which gives access to the team
-	 * content proivders registered with the
+	 * content providers registered with the
 	 * <code>org.eclipse.team.ui.teamContentProviders</code> extension point.
 	 * 
 	 * @return the team content provider manager
@@ -135,5 +142,45 @@ public class TeamUI {
 	 */
 	public static ITeamContentProviderManager getTeamContentProviderManager() {
 		return TeamContentProviderManager.getInstance();
+	}
+	
+	/**
+	 * TODO:
+	 * <strong>EXPERIMENTAL</strong>
+	 * @throws CoreException 
+	 * @since 3.6
+	 */
+	public static IScmUrlImportWizardPage[] getPages(URI[] scmUris) throws CoreException {
+		// TODO: check scmUrls
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(TeamUIPlugin.PLUGIN_ID, IScmUrlImportWizardPage.ATT_EXTENSION);
+		if (elements.length > 0) {
+			Set/*<IConfigurationElement>*/ pages = new HashSet();
+			for (int i = 0; i < elements.length; i++) {
+				String repository = elements[i].getAttribute("repository"); //$NON-NLS-1$
+				RepositoryProviderType providerType = RepositoryProviderType.getProviderType(repository);
+				String scheme = providerType.getFileSystemScheme();
+				Set schemeUris = new HashSet();
+				for (int j = 0; j < scmUris.length; j++) {
+					URI scmUrl = scmUris[j];
+					if (scmUrl != null) {
+						if (ProjectSetCapability.SCHEME_SCM.equals(scmUrl.getScheme())) {
+							if (scmUrl.getSchemeSpecificPart().startsWith(scheme)) {
+								schemeUris.add(scmUrl);
+							}
+						}
+					}
+				}
+				if (schemeUris.size() > 0) {
+					Object ext = TeamUIPlugin.createExtension(elements[i], IScmUrlImportWizardPage.ATT_PAGE);
+					if (ext instanceof IScmUrlImportWizardPage) {
+						IScmUrlImportWizardPage page = (IScmUrlImportWizardPage) ext;
+						page.setSelection((URI[]) schemeUris.toArray(new URI[0]));
+						pages.add(page);
+					}
+				}
+			}
+			return (IScmUrlImportWizardPage[]) pages.toArray(new IScmUrlImportWizardPage[0]);
+		}
+		return null;
 	}
 }
