@@ -14,6 +14,19 @@ import java.net.URI;
 
 
 /**
+ * Describes how a bundle import will be executed. A bundle importer delegate
+ * creates bundle import descriptions when it validates bundle manifests for
+ * importing. The result, a set of bundle import descriptions is then passed to
+ * TeamUI, which basing on the info from the descriptions instantiate and
+ * initialize IScmUrlImportWizardPage pages. The pages can be used to alter the
+ * default import configuration e.g. for bundles stored in a CVS repository the
+ * user may want to check out HEAD rather than a specific version.
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This class has been added as part of a work in
+ * progress. There is no guarantee that this API will work or that it will
+ * remain the same. Please do not use this API without consulting with the Team
+ * team.
+ * 
  * @since 3.6
  */
 public class ScmUrlImportDescription {
@@ -25,10 +38,18 @@ public class ScmUrlImportDescription {
 		this.project = project;
 	}
 
+	/**
+	 * @return project name
+	 */
 	public String getProject() {
 		return project;
 	}
 
+	/**
+	 * SCM URL
+	 * 
+	 * @return a string representation of the SCM URL
+	 */
 	public String getUrl() {
 		return url;
 	}
@@ -43,7 +64,7 @@ public class ScmUrlImportDescription {
 
 	public Object getProperty(String plugin) {
 		// TODO Auto-generated method stub
-		// called here: org.eclipse.pde.internal.ui.wizards.imports.PluginImportWizardFirstPage.configureBundleImportPages(IPluginModelBase[])
+		// called by: org.eclipse.pde.internal.ui.wizards.imports.PluginImportWizardFirstPage.configureBundleImportPages(IPluginModelBase[])
 		return null;
 	}
 }

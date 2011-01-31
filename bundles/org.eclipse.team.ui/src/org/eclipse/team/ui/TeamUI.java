@@ -143,10 +143,21 @@ public class TeamUI {
 	}
 	
 	/**
-	 * TODO:
-	 * <strong>EXPERIMENTAL</strong>
-	 * @param descriptions 
-	 * @throws CoreException 
+	 * Return a set of wizard pages for the given descriptions. If no wizard
+	 * page is registered for a SCM URL scheme from a description then a page
+	 * will not be created. If an extension exits, a page will be created and
+	 * initialized with a set of corresponding descriptions.
+	 * 
+	 * <strong>EXPERIMENTAL</strong>. This class has been added as part of
+	 * a work in progress. There is no guarantee that this API will work or that
+	 * it will remain the same. Please do not use this API without consulting
+	 * with the Team team.
+	 * 
+	 * @param descriptions
+	 *            descriptions with SCM URLs
+	 * @return initialized wizard pages
+	 * @throws CoreException
+	 *             if an error occurs while trying to create a page extension
 	 * @since 3.6
 	 */
 	public static IScmUrlImportWizardPage[] getPages(ScmUrlImportDescription[] descriptions) throws CoreException {

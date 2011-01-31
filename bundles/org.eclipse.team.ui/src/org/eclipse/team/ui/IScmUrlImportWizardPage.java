@@ -15,7 +15,13 @@ import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.ScmUrlImportDescription;
 
 /**
- * TODO: <strong>EXPERIMENTAL</strong>
+ * IScmUrlImportWizardPage defines the interface that users of the extension
+ * point <code>org.eclipse.team.ui.scmUrlImportPages</code> must implement.
+ * 
+ * <strong>EXPERIMENTAL</strong>. This class has been added as part of a work
+ * in progress. There is no guarantee that this API will work or that it will
+ * remain the same. Please do not use this API without consulting with the Team
+ * team.
  * 
  * @since 3.6
  */
@@ -34,22 +40,35 @@ public interface IScmUrlImportWizardPage extends IWizardPage {
 	public boolean finish();
 
 	/**
-	 * TODO:
+	 * Return the import descriptions for the page. The descriptions may differ
+	 * from those initially set using
+	 * {@link #setSelection(ScmUrlImportDescription[])} if the user modified
+	 * import configuration.
 	 * 
-	 * @return the SCM URLs edited or created on the page.
+	 * @return the SCM URLs descriptions for the page.
 	 */
 	public ScmUrlImportDescription[] getSelection();
 
 	/**
-	 * TODO:
+	 * Sets the import descriptions to be edited on the page.
+	 * The passed descriptions can be edited and should be 
+	 * returned in {@link #getSelection()}.
 	 * 
-	 * @param scmUrls
-	 *            the SCM URLs edited on the page.
+	 * @param descriptions
+	 *            the SCM URLs descriptions edited on the page.
 	 */
-	public void setSelection(ScmUrlImportDescription[] scmUrls);
+	public void setSelection(ScmUrlImportDescription[] descriptions);
 
+	/**
+	 * TODO:
+	 * @param provider
+	 */
 	public void setProvider(RepositoryProviderType provider);
 
+	/**
+	 * TODO:
+	 * @return provider
+	 */
 	public RepositoryProviderType getProvider();
 
 }
