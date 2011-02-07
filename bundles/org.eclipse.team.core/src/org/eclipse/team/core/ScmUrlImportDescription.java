@@ -11,6 +11,7 @@
 package org.eclipse.team.core;
 
 import java.net.URI;
+import java.util.HashMap;
 
 
 /**
@@ -32,6 +33,7 @@ import java.net.URI;
 public class ScmUrlImportDescription {
 	private String url;
 	private String project;
+	private HashMap properties;
 
 	public ScmUrlImportDescription(String url, String project) {
 		this.url = url;
@@ -62,9 +64,34 @@ public class ScmUrlImportDescription {
 		this.url = url;
 	}
 
-	public Object getProperty(String plugin) {
-		// TODO Auto-generated method stub
-		// called by: org.eclipse.pde.internal.ui.wizards.imports.PluginImportWizardFirstPage.configureBundleImportPages(IPluginModelBase[])
-		return null;
+	/**
+	 * Sets or removes a client property.
+	 * 
+	 * @param key property key
+	 * @param value property value or <code>null</code> to remove the property
+	 */
+	public synchronized void setProperty(String key, Object value) {
+		if (properties == null) {
+			properties = new HashMap();
+		}
+		if (value == null) {
+			properties.remove(key);
+		} else {
+			properties.put(key, value);
+		}
+
+	}
+
+	/**
+	 * Returns the specified client property, or <code>null</code> if none.
+	 * 
+	 * @param key property key
+	 * @return property value or <code>null</code>
+	 */
+	public synchronized Object getProperty(String key) {
+		if (properties == null) {
+			return null;
+		}
+		return properties.get(key);
 	}
 }

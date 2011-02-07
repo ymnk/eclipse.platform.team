@@ -18,8 +18,10 @@ import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
 import org.eclipse.core.runtime.content.IContentType;
+import org.eclipse.team.core.importing.provisional.IBundleImporter;
 import org.eclipse.team.core.mapping.IStorageMerger;
 import org.eclipse.team.internal.core.*;
+import org.eclipse.team.internal.core.importing.BundleImporterExtension;
 
 /**
  * The Team class provides a global point of reference for the global ignore set
@@ -63,6 +65,8 @@ public final class Team {
     
     private final static FileContentManager fFileContentManager;
     
+	private static List fProjectFactories;
+
     static {
         fFileContentManager= new FileContentManager();
     }
@@ -523,4 +527,22 @@ public final class Team {
     public IStorageMerger createStorageMerger(String extension) {
     	return createMerger(extension);
     }
+    
+	/**
+	 * @return IBundleImporter[] returns the available bundle importers
+	 * @since 3.6
+	 */
+	public synchronized static IBundleImporter[] getBundleImporters() {
+		if (fProjectFactories == null) {
+			fProjectFactories = new ArrayList();
+			IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(TeamPlugin.EXTENSION_POINT_BUNDLE_IMPORTERS);
+			if (point != null) {
+				IConfigurationElement[] infos = point.getConfigurationElements();
+				for (int i = 0; i < infos.length; i++) {
+					fProjectFactories.add(new BundleImporterExtension(infos[i]));
+				}
+			}
+		}
+		return (IBundleImporter[]) fProjectFactories.toArray(new IBundleImporter[fProjectFactories.size()]);
+	}
 }
