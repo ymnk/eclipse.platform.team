@@ -10,15 +10,11 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.core;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.*;
-import org.eclipse.osgi.util.ManifestElement;
-import org.eclipse.team.core.*;
-import org.eclipse.team.core.importing.provisional.IBundleImporterDelegate;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.Constants;
+import org.eclipse.team.core.RepositoryProviderType;
+import org.eclipse.team.core.importing.provisional.BundleImporterDelegate;
 
 /**
  * Handles SCM CVS headers of the following form. Tag and project name can be specified
@@ -28,9 +24,8 @@ import org.osgi.framework.Constants;
  * scm:cvs&lt;delimiter&gt;&lt;method&gt;&lt;delimiter&gt;path_to_repository&lt;delimiter&gt;module_name[;tag=version][;project=name]
  * scm:psf&lt;delimiter&gt;&lt;method&gt;&lt;delimiter&gt;path_to_repository&lt;delimiter&gt;module_name[;tag=version][;project=name]
  * </pre>
- * @since 3.7
  */
-public class CvsBundleImporterDelegate implements IBundleImporterDelegate {
+public class CvsBundleImporterDelegate extends BundleImporterDelegate {
 
 	private static Set SUPPORTED_VALUES;
 
@@ -40,12 +35,7 @@ public class CvsBundleImporterDelegate implements IBundleImporterDelegate {
 	private static final String COLON = ":"; //$NON-NLS-1$
 	private static final String PIPE = "|"; //$NON-NLS-1$
 
-	//private static final String ATTR_TAG = "tag"; //$NON-NLS-1$
-	private static final String ATTR_PROJECT = "project"; //$NON-NLS-1$
-
-	public static final String ECLIPSE_SOURCE_REFERENCES = "Eclipse-SourceReferences"; //$NON-NLS-1$
-
-	private static RepositoryProviderType CVS_PROVIDER_TYPE = RepositoryProviderType.getProviderType("org.eclipse.team.cvs.core.cvsnature"); //$NON-NLS-1$
+	private RepositoryProviderType providerType;
 
 	static {
 		SUPPORTED_VALUES = new HashSet();
@@ -54,71 +44,15 @@ public class CvsBundleImporterDelegate implements IBundleImporterDelegate {
 //		SUPPORTED_VALUES.add(SCM + PSF + COLON);
 //		SUPPORTED_VALUES.add(SCM + PSF + PIPE);
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.pde.core.project.IBundleImporterDelegate#validateImport(java.util.Map[])
-	 */
-	public ScmUrlImportDescription[] validateImport(Map[] manifests) {
-		// TODO: this is not CVS specific, the code is the same for all providers
-		ScmUrlImportDescription[] results = new ScmUrlImportDescription[manifests.length];
-		if (CVS_PROVIDER_TYPE != null) {
-			for (int i = 0; i < manifests.length; i++) {
-				Map manifest = manifests[i];
-				String value = (String) manifest.get(ECLIPSE_SOURCE_REFERENCES);
-				if (value != null && value.length() > 8) {
-					String prefix = value.substring(0, 8);
-					if (SUPPORTED_VALUES.contains(prefix)) {
-						try {
-							ManifestElement[] elements = ManifestElement.parseHeader(ECLIPSE_SOURCE_REFERENCES, value);
-							for (int j = 0; j < elements.length; j++) {
-								ManifestElement element = elements[j];
-								String url = element.getValue();
-								//String tag = element.getAttribute(ATTR_TAG);
-								String project = element.getAttribute(ATTR_PROJECT);
-								if (project == null) {
-									String bsn = (String) manifests[i].get(Constants.BUNDLE_SYMBOLICNAME);
-									if (bsn != null) {
-										ManifestElement[] bsnElement = ManifestElement.parseHeader(Constants.BUNDLE_SYMBOLICNAME, bsn);
-										project = bsnElement[0].getValue();
-									}
-								}
-								results[i] = new ScmUrlImportDescription(url, project);
-							}
-						} catch (BundleException e) {
-							//TODO log exception
-							//PDECore.log(e);
-						}
-					}
-				}
-			}
-		}
-		return results;
+	
+	protected Set getSupportedValues() {
+		return SUPPORTED_VALUES;
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.pde.core.importing.IBundleImporterDelegate#performImport(org.eclipse.pde.core.importing.BundleImportDescription[], org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public IProject[] performImport(ScmUrlImportDescription[] descriptions, IProgressMonitor monitor) throws CoreException {
-		// TODO: import takes places when finishing contributed pages. this method can be removed
-		List references = new ArrayList();
-		ProjectSetCapability psfCapability = CVS_PROVIDER_TYPE.getProjectSetCapability();
-		// collect and validate all header values
-		for (int i = 0; i < descriptions.length; i++) {
-			ScmUrlImportDescription description = (ScmUrlImportDescription) descriptions[i];
-			references.add(psfCapability.asReference(description.getUri(), description.getProject()));
-		}
-		// create projects
-		if (!references.isEmpty()) {
-			SubMonitor subMonitor = SubMonitor.convert(monitor, references.size());
-			if (psfCapability != null) {
-				// TODO: specify shell
-				psfCapability.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), subMonitor);
-			} else {
-				//TODO: error
-			}
-			subMonitor.done();
-		}
-		return null;
+	
+	protected RepositoryProviderType getProviderType() {
+		if (providerType == null)
+			providerType = RepositoryProviderType.getProviderType("org.eclipse.team.cvs.core.cvsnature"); //$NON-NLS-1$
+		return providerType;
 	}
 
 }

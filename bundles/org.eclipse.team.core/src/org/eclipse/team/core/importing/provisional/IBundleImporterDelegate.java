@@ -31,7 +31,8 @@ import org.eclipse.team.core.ScmUrlImportDescription;
  * </pre>
  * </p>
  * <p>
- * Clients contributing bundle importer extensions are intended to implement this interface.
+ * Clients contributing bundle importer extensions are intended to implement this interface. 
+ * They can also subclass {@link BundleImporterDelegate}.
  * </p>
  * <p>
  * <strong>EXPERIMENTAL</strong>. This interface has been added as
