@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -529,6 +529,15 @@ public final class Team {
     }
     
 	/**
+	 * Returns the available bundle importers.
+	 * 
+	 * <p>
+	 * <strong>EXPERIMENTAL</strong>. This interface has been added as part of a
+	 * work in progress. There is no guarantee that this API will work or that
+	 * it will remain the same. Please do not use this API without consulting
+	 * with the Team team.
+	 * </p>
+	 * 
 	 * @return IBundleImporter[] returns the available bundle importers
 	 * @since 3.6
 	 */

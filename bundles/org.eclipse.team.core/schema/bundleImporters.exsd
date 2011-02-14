@@ -6,7 +6,7 @@
          <meta.schema plugin="org.eclipse.team.core" id="bundleImporters" name="Bundle Importers"/>
       </appInfo>
       <documentation>
-         &lt;strong&gt;EXPERIMENTAL&lt;/strong&gt;. This extension point has been added as part of a work in progress. There is no guarantee that this API will work or that it will remain the same in future releases. Please do not use this API without consulting with the PDE team.
+         &lt;strong&gt;EXPERIMENTAL&lt;/strong&gt;. This extension point has been added as part of a work in progress. There is no guarantee that this API will work or that it will remain the same in future releases. Please do not use this API without consulting with the Team team.
 &lt;p&gt;
 A bundle importer is capable of creating a project in the workspace based on a bundle manifest. For example, the CVS bundle importer leverages the &apos;Eclipse-SourceReferences&apos; header to import projects from CVS.
 &lt;/p&gt;
@@ -55,10 +55,10 @@ A bundle importer is capable of creating a project in the workspace based on a b
          <attribute name="class" type="string" use="required">
             <annotation>
                <documentation>
-                  Fully qualified name of a Java class providing an implementation of &lt;code&gt;org.eclipse.pde.internal.core.importing.provisional.IBundleImporterDelegate&lt;/code&gt; for this handler.
+                  Fully qualified name of a Java class providing an implementation of &lt;code&gt;org.eclipse.team.core.importing.provisional.IBundleImporterDelegate&lt;/code&gt; for this handler.
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.eclipse.pde.internal.core.importing.provisional.IBundleImporterDelegate"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.team.core.importing.provisional.IBundleImporterDelegate"/>
                </appInfo>
             </annotation>
          </attribute>
@@ -110,7 +110,7 @@ A bundle importer is capable of creating a project in the workspace based on a b
 
 &lt;p&gt;
 &lt;pre&gt;
- &lt;extension point=&quot;org.eclipse.pde.core.bundleImporters&quot;&gt;
+ &lt;extension point=&quot;org.eclipse.team.core.bundleImporters&quot;&gt;
   &lt;importer
    id=&quot;com.example.ExampleIdentifier&quot;
    class=&quot;com.example.ExampleBundleImporter&quot;&gt;
@@ -126,7 +126,7 @@ A bundle importer is capable of creating a project in the workspace based on a b
          <meta.section type="apiinfo"/>
       </appInfo>
       <documentation>
-         Value of a importer&apos;s &lt;b&gt;class&lt;/b&gt; attribute must be a fully qualified name of a Java class that implements the interface &lt;b&gt;org.eclipse.pde.internal.core.importing.provisional.IBundleImporterDelegate&lt;/b&gt;.
+         Value of a importer&apos;s &lt;b&gt;class&lt;/b&gt; attribute must be a fully qualified name of a Java class that implements the interface &lt;b&gt;org.eclipse.team.core.importing.provisional.IBundleImporterDelegate&lt;/b&gt;.
       </documentation>
    </annotation>
 
@@ -135,7 +135,7 @@ A bundle importer is capable of creating a project in the workspace based on a b
          <meta.section type="implementation"/>
       </appInfo>
       <documentation>
-         PDE provides a bundle importer extension capable of importing projects from CVS referenced by &apos;Eclipse-SourceReferences&apos; headers.
+         CVS provides a bundle importer extension capable of importing projects from CVS referenced by &apos;Eclipse-SourceReferences&apos; headers.
       </documentation>
    </annotation>
 

@@ -17,7 +17,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -34,9 +36,12 @@ import org.eclipse.team.core.ProjectSetCapability;
 import org.eclipse.team.core.ProjectSetSerializationContext;
 import org.eclipse.team.core.RepositoryProviderType;
 import org.eclipse.team.core.ScmUrlImportDescription;
+import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.importing.provisional.IBundleImporter;
 import org.eclipse.team.internal.ccvs.core.CVSProviderPlugin;
 import org.eclipse.team.internal.ccvs.core.CVSTag;
+import org.eclipse.team.internal.ccvs.core.CvsBundleImporterDelegate;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSScmUrlImportWizardPage;
 import org.eclipse.team.internal.ui.ProjectSetImporter;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
@@ -266,7 +271,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 		// this is what every bundle importer should do, should this be in PDE?
 		List references = new ArrayList();
 		for (int i = 0; i < selection.length; i++) {
-			references.add(c.asReference(selection[i].getUri(), selection[i].getProject()));
+			references.add(c.asReference(selection[i].getUri(), /*selection[i].getProject()*/ null));
 		}
 		c.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), null);
 		IProject project1 = ResourcesPlugin.getWorkspace().getRoot().getProject("project1");
@@ -314,5 +319,35 @@ public class ProjectSetImporterTests extends EclipseTest {
 		IProject copy = checkoutCopy(project, CVSTag.DEFAULT);
 		// expecting the project to be checked out from HEAD
 		assertEquals(project, copy, false, false);
+	}
+
+	public void testCvsBundleImporter() throws TeamException, CoreException {
+		IBundleImporter[] bundleImporters = Team.getBundleImporters();
+		assertEquals(1, bundleImporters.length);
+		IBundleImporter cvsBundleImporter = null;
+		for (int i = 0; i < bundleImporters.length; i++) {
+			if (bundleImporters[i].getId().equals("org.eclipse.team.core.cvs.importer")) {
+				cvsBundleImporter = bundleImporters[i];
+			} 
+		}
+		// CVS Bundle Importer should be available
+		assertNotNull(cvsBundleImporter);
+		
+		IProject project = createProject("ProjectSetImporterTests-testCvsBundleImporter", new String[0]);
+		project.delete(true, true, null);
+		ensureDoesNotExistInWorkspace(project);
+
+		String s = ProjectSetCapability.SCHEME_SCM + ":cvs:" + CVSTestSetup.REPOSITORY_LOCATION + ":" + project.getName();
+
+		Map[] manifests = new Map[1];
+		Map map = new HashMap();
+		map.put(CvsBundleImporterDelegate.ECLIPSE_SOURCE_REFERENCES, s);
+		manifests[0] = map;
+
+		ScmUrlImportDescription[] descriptions = cvsBundleImporter.validateImport(manifests);
+		assertEquals(1, descriptions.length);
+
+		cvsBundleImporter.performImport(descriptions, null);
+		assertExistsInWorkspace(project);
 	}
 }

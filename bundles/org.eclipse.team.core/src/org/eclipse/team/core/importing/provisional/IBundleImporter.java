@@ -19,7 +19,13 @@ package org.eclipse.team.core.importing.provisional;
  * Clients contributing a bundle importer extension are intended to implement
  * {@link IBundleImporterDelegate}.
  * </p>
- * @since 3.7
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This interface has been added as
+ * part of a work in progress. There is no guarantee that this API will
+ * work or that it will remain the same. Please do not use this API without
+ * consulting with the Team team.
+ * </p> 
+ * @since 3.6
  * @noextend This interface is not intended to be extended by clients.
  * @noimplement This interface is not intended to be implemented by clients.
  */

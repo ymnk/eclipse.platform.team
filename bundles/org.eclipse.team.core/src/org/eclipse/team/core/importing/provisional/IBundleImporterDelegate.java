@@ -22,7 +22,7 @@ import org.eclipse.team.core.ScmUrlImportDescription;
  * <p>
  * Following is an example extension:
  * <pre>
- * &lt;extension point=&quot;org.eclipse.pde.core.bundleImporters&quot;&gt;
+ * &lt;extension point=&quot;org.eclipse.team.core.bundleImporters&quot;&gt;
  *  &lt;importer
  *   id=&quot;com.example.ExampleIdentifier&quot;
  *   class=&quot;com.example.ExampleBundleImporterDelegate&quot;&gt;
@@ -37,9 +37,9 @@ import org.eclipse.team.core.ScmUrlImportDescription;
  * <strong>EXPERIMENTAL</strong>. This interface has been added as
  * part of a work in progress. There is no guarantee that this API will
  * work or that it will remain the same. Please do not use this API without
- * consulting with the PDE team.
+ * consulting with the Team team.
  * </p>
- * @since 3.7
+ * @since 3.6
  * @noextend This interface is not intended to be extended by clients.
  */
 public interface IBundleImporterDelegate {

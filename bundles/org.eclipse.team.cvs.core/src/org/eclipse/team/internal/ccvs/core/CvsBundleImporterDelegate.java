@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.team.internal.core.importing;
+package org.eclipse.team.internal.ccvs.core;
 
 import java.util.*;
 
@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.*;
 import org.eclipse.osgi.util.ManifestElement;
 import org.eclipse.team.core.*;
+import org.eclipse.team.core.importing.provisional.IBundleImporterDelegate;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 
@@ -29,7 +30,7 @@ import org.osgi.framework.Constants;
  * </pre>
  * @since 3.7
  */
-public class CvsBundleImporterDelegate implements org.eclipse.team.core.importing.provisional.IBundleImporterDelegate {
+public class CvsBundleImporterDelegate implements IBundleImporterDelegate {
 
 	private static Set SUPPORTED_VALUES;
 

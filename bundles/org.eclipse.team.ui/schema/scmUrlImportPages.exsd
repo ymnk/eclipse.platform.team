@@ -6,9 +6,15 @@
          <meta.schema plugin="org.eclipse.team.ui" id="scmUrlImportPages" name="SCM URLs Import Pages"/>
       </appInfo>
       <documentation>
-         This extension point is used to register a page to import a project basing on its SCM URL.
+         &lt;strong&gt;EXPERIMENTAL&lt;/strong&gt;. This extension point has been added as part of a work in progress. There is no guarantee that this API will work or that it will remain the same in future releases. Please do not use this API without consulting with the Team team.
+&lt;p&gt;
+This extension point is used to register a page to import projects basing on their SCM URLs.
+&lt;/p&gt;
 &lt;p&gt;
 Providers may provide an extension for this extension point, and an implementation of &lt;samp&gt;org.eclipse.team.ui.IScmUrlImportWizardPage&lt;/samp&gt; which allows to set and retrive project import descriptions.
+&lt;/p&gt;
+
+
       </documentation>
    </annotation>
 
@@ -92,13 +98,13 @@ Providers may provide an extension for this extension point, and an implementati
 &lt;p&gt;
 &lt;pre&gt;
 &lt;extension point=&quot;org.eclipse.team.ui.scmUrlImportPages&quot;&gt;
-	&lt;scmUrlImportPage
-		page=&quot;org.eclipse.team.internal.ccvs.ui.wizards.CVSScmUrlImportWizardPage&quot;
-		repository=&quot;org.eclipse.team.cvs.core.cvsnature&quot;&gt;
-	&lt;/scmUrlImportPage&gt;
+ &lt;scmUrlImportPage
+  page=&quot;org.eclipse.team.internal.ccvs.ui.wizards.CVSScmUrlImportWizardPage&quot;
+  repository=&quot;org.eclipse.team.cvs.core.cvsnature&quot;&gt;
+ &lt;/scmUrlImportPage&gt;
 &lt;/extension&gt;
 &lt;/pre&gt;
-&lt;/p&gt;   
+&lt;/p&gt;
       </documentation>
    </annotation>
 
@@ -107,7 +113,7 @@ Providers may provide an extension for this extension point, and an implementati
          <meta.section type="apiinfo"/>
       </appInfo>
       <documentation>
-         [Enter API information here.]
+         Value of a page&apos;s &lt;b&gt;page&lt;/b&gt; attribute must be a fully qualified name of a Java class that implements the interface &lt;b&gt;org.eclipse.team.ui.IScmUrlImportWizardPage&lt;/b&gt;.
       </documentation>
    </annotation>
 
@@ -116,7 +122,7 @@ Providers may provide an extension for this extension point, and an implementati
          <meta.section type="implementation"/>
       </appInfo>
       <documentation>
-         [Enter information about supplied implementation of this extension point.]
+         CVS UI provides a page extension capable of configuring import from CVS.
       </documentation>
    </annotation>
 

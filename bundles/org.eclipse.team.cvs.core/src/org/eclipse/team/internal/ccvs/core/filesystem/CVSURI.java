@@ -175,9 +175,9 @@ public class CVSURI {
 	private static String getProjectName(URI uri) {
 		String f = uri.getFragment();
 		if (f != null) {
-			int i = f.indexOf(',');
+			int i = f.lastIndexOf(',');
 			if (i != -1) {
-				String s = f.substring(0, i);
+				String s = f.substring(i + 1);
 				if (!s.equals("")) //$NON-NLS-1$
 					return s;
 			}
