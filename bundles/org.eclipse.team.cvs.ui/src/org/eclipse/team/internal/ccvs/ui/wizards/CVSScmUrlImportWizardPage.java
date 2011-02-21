@@ -11,8 +11,6 @@
 package org.eclipse.team.internal.ccvs.ui.wizards;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.*;
@@ -23,7 +21,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.team.core.*;
+import org.eclipse.team.core.RepositoryProviderType;
+import org.eclipse.team.core.ScmUrlImportDescription;
 import org.eclipse.team.internal.ccvs.core.filesystem.CVSURI;
 import org.eclipse.team.internal.ccvs.ui.CVSUIMessages;
 import org.eclipse.team.internal.ccvs.ui.IHelpContextIds;
@@ -192,20 +191,6 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 				URI scmUri = descriptions[i].getUri();
 				descriptions[i].setUrl(removeTag(scmUri));
 			}
-		}
-		
-		// TODO: same actions for all providers, this is not specific to CVS, pull up
-		
-		ProjectSetCapability c = getProvider().getProjectSetCapability();
-		List references = new ArrayList();
-		for (int i = 0; i < descriptions.length; i++) {
-			references.add(c.asReference(descriptions[i].getUri(), descriptions[i].getProject()));
-		}
-		try {
-			c.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), null);
-		} catch (TeamException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		
 		return true;

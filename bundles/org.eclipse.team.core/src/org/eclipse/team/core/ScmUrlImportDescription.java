@@ -13,7 +13,6 @@ package org.eclipse.team.core;
 import java.net.URI;
 import java.util.HashMap;
 
-
 /**
  * Describes how a bundle import will be executed. A bundle importer delegate
  * creates bundle import descriptions when it validates bundle manifests for
@@ -57,7 +56,7 @@ public class ScmUrlImportDescription {
 	}
 
 	public URI getUri() {
-		return URI.create(url);
+		return URI.create(url.replaceAll("\"", "")); //$NON-NLS-1$//$NON-NLS-2$
 	}
 
 	public void setUrl(String url) {
@@ -67,8 +66,10 @@ public class ScmUrlImportDescription {
 	/**
 	 * Sets or removes a client property.
 	 * 
-	 * @param key property key
-	 * @param value property value or <code>null</code> to remove the property
+	 * @param key
+	 *            property key
+	 * @param value
+	 *            property value or <code>null</code> to remove the property
 	 */
 	public synchronized void setProperty(String key, Object value) {
 		if (properties == null) {
@@ -85,7 +86,8 @@ public class ScmUrlImportDescription {
 	/**
 	 * Returns the specified client property, or <code>null</code> if none.
 	 * 
-	 * @param key property key
+	 * @param key
+	 *            property key
 	 * @return property value or <code>null</code>
 	 */
 	public synchronized Object getProperty(String key) {

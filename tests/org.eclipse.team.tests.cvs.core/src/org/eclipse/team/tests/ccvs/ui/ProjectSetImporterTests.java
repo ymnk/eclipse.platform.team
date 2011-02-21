@@ -289,10 +289,10 @@ public class ProjectSetImporterTests extends EclipseTest {
 		final IScmUrlImportWizardPage[] pages = TeamUI.getPages(new ScmUrlImportDescription[] {d});
 		assertEquals(1, pages.length);
 		
-		// simulate clicking "Import from HEAD" on the CVS import page
 		assertTrue(pages[0] instanceof CVSScmUrlImportWizardPage);
 		Wizard wizard = new Wizard() {
 			public boolean performFinish() {
+				// update SCM URLs in descriptions
 				pages[0].finish();
 				return true;
 			}
@@ -301,20 +301,17 @@ public class ProjectSetImporterTests extends EclipseTest {
 		WizardDialog wizardDialog = new WizardDialog(new Shell(Display.getCurrent()), wizard);
 		wizardDialog.setBlockOnOpen(false);
 		wizardDialog.open();
+		// simulate clicking "Import from HEAD" on the CVS import page
 		Button useHead = (Button) ReflectionUtils.getField(pages[0], "useHead");
 		useHead.setSelection(true);
 		wizard.performFinish();
 		wizardDialog.close();
+		
 		// altered selection, check out from HEAD
 		ScmUrlImportDescription[] selection = pages[0].getSelection();
-		ProjectSetCapability c = pages[0].getProvider().getProjectSetCapability();
-
-		// this is what every bundle importer should do, should this be in PDE?
-		List references = new ArrayList();
-		for (int i = 0; i < selection.length; i++) {
-			references.add(c.asReference(selection[i].getUri(), selection[i].getProject()));
-		}
-		c.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), null);
+		IBundleImporter cvsBundleImporter = Team.getBundleImporters()[0];
+		cvsBundleImporter.performImport(selection, null);
+		
 		assertExistsInWorkspace(project);
 		IProject copy = checkoutCopy(project, CVSTag.DEFAULT);
 		// expecting the project to be checked out from HEAD

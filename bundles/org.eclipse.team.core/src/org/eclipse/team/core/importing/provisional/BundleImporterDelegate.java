@@ -51,8 +51,7 @@ public abstract class BundleImporterDelegate implements IBundleImporterDelegate 
 							ManifestElement[] elements = ManifestElement.parseHeader(ECLIPSE_SOURCE_REFERENCES, value);
 							for (int j = 0; j < elements.length; j++) {
 								ManifestElement element = elements[j];
-								String url = element.getValue();
-								//String tag = element.getAttribute(ATTR_TAG);
+								String url = element.toString();
 								String project = element.getAttribute(ATTR_PROJECT);
 								if (project == null) {
 									String bsn = (String) manifests[i].get(Constants.BUNDLE_SYMBOLICNAME);
@@ -77,7 +76,6 @@ public abstract class BundleImporterDelegate implements IBundleImporterDelegate 
 	 * @see org.eclipse.pde.core.importing.IBundleImporterDelegate#performImport(org.eclipse.pde.core.importing.BundleImportDescription[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public IProject[] performImport(ScmUrlImportDescription[] descriptions, IProgressMonitor monitor) throws CoreException {
-		// TODO: import takes places when finishing contributed pages. this method can be removed
 		List references = new ArrayList();
 		ProjectSetCapability psfCapability = getProviderType().getProjectSetCapability();
 		// collect and validate all header values
@@ -86,16 +84,16 @@ public abstract class BundleImporterDelegate implements IBundleImporterDelegate 
 			references.add(psfCapability.asReference(description.getUri(), description.getProject()));
 		}
 		// create projects
+		IProject[] result = null;
 		if (!references.isEmpty()) {
 			SubMonitor subMonitor = SubMonitor.convert(monitor, references.size());
 			if (psfCapability != null) {
-				// TODO: specify shell
-				psfCapability.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), subMonitor);
+				result = psfCapability.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), subMonitor);
 			} else {
 				//TODO: error
 			}
 			subMonitor.done();
 		}
-		return null;
+		return result;
 	}
 }

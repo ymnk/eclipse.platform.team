@@ -168,14 +168,14 @@ public class TeamUI {
 			for (int i = 0; i < elements.length; i++) {
 				String repository = elements[i].getAttribute(IScmUrlImportWizardPage.ATT_REPOSITORY);
 				RepositoryProviderType providerType = RepositoryProviderType.getProviderType(repository);
-				String extensionScheme = providerType.getFileSystemScheme();
+				String providerScheme = providerType.getFileSystemScheme();
 				Set/*<URI>*/ schemeUris = new HashSet();
-				// group descriptions by scheme/provider
+				// filter out descriptions for which provider is not known
 				for (int j = 0; j < descriptions.length; j++) {
 					URI scmUri = descriptions[j].getUri();
 					if (scmUri != null) {
 						if (ProjectSetCapability.SCHEME_SCM.equals(scmUri.getScheme())) {
-							if (scmUri.getSchemeSpecificPart().startsWith(extensionScheme)) {
+							if (scmUri.getSchemeSpecificPart().startsWith(providerScheme)) {
 								schemeUris.add(scmUri);
 							}
 						}
