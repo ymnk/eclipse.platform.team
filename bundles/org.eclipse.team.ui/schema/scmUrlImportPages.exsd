@@ -13,8 +13,6 @@ This extension point is used to register a page to import projects basing on the
 &lt;p&gt;
 Providers may provide an extension for this extension point, and an implementation of &lt;samp&gt;org.eclipse.team.ui.IScmUrlImportWizardPage&lt;/samp&gt; which allows to set and retrive project import descriptions.
 &lt;/p&gt;
-
-
       </documentation>
    </annotation>
 

@@ -18,8 +18,8 @@ import org.eclipse.team.core.ScmUrlImportDescription;
  * IScmUrlImportWizardPage defines the interface that users of the extension
  * point <code>org.eclipse.team.ui.scmUrlImportPages</code> must implement.
  * 
- * <strong>EXPERIMENTAL</strong>. This class has been added as part of a work
- * in progress. There is no guarantee that this API will work or that it will
+ * <strong>EXPERIMENTAL</strong>. This class has been added as part of a work in
+ * progress. There is no guarantee that this API will work or that it will
  * remain the same. Please do not use this API without consulting with the Team
  * team.
  * 
@@ -32,7 +32,9 @@ public interface IScmUrlImportWizardPage extends IWizardPage {
 	public static final String ATT_REPOSITORY = "repository"; //$NON-NLS-1$
 
 	/**
-	 * TODO:
+	 * Called when the import wizard is closed by selecting the finish button.
+	 * Implementers may store the page result (new/changed bundle import
+	 * descriptions in getSelection) here.
 	 * 
 	 * @return if the operation was successful. The wizard will only close when
 	 *         <code>true</code> is returned.
@@ -50,9 +52,9 @@ public interface IScmUrlImportWizardPage extends IWizardPage {
 	public ScmUrlImportDescription[] getSelection();
 
 	/**
-	 * Sets the import descriptions to be edited on the page.
-	 * The passed descriptions can be edited and should be 
-	 * returned in {@link #getSelection()}.
+	 * Sets the import descriptions to be edited on the page. The passed
+	 * descriptions can be edited and should be returned in
+	 * {@link #getSelection()}.
 	 * 
 	 * @param descriptions
 	 *            the SCM URLs descriptions edited on the page.
@@ -60,14 +62,17 @@ public interface IScmUrlImportWizardPage extends IWizardPage {
 	public void setSelection(ScmUrlImportDescription[] descriptions);
 
 	/**
-	 * TODO:
+	 * Sets the RepositoryProviderType for the page.
+	 * 
 	 * @param provider
+	 *            to set
 	 */
 	public void setProvider(RepositoryProviderType provider);
 
 	/**
-	 * TODO:
-	 * @return provider
+	 * Return the RepositoryProviderType associated with the page.
+	 * 
+	 * @return a RepositoryProviderType for the current page
 	 */
 	public RepositoryProviderType getProvider();
 

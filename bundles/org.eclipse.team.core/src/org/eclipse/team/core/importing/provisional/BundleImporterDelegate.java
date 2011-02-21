@@ -21,12 +21,20 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 
 /**
- * Abstract implementation of {@link IBundleImporterDelegate} that can be subclassed by
- * clients.
+ * Abstract implementation of {@link IBundleImporterDelegate}. It is recommended
+ * to subclass this class rather than implementing IBundleImporterDelegate
+ * directly when providing importer delegates.
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This interface has been added as part of a
+ * work in progress. There is no guarantee that this API will work or that it
+ * will remain the same. Please do not use this API without consulting with the
+ * Team team.
+ * </p>
+ * 
+ * @since 3.6
  */
 public abstract class BundleImporterDelegate implements IBundleImporterDelegate {
 
-	//private static final String ATTR_TAG = "tag"; //$NON-NLS-1$
 	private static final String ATTR_PROJECT = "project"; //$NON-NLS-1$
 
 	public static final String ECLIPSE_SOURCE_REFERENCES = "Eclipse-SourceReferences"; //$NON-NLS-1$
@@ -78,21 +86,19 @@ public abstract class BundleImporterDelegate implements IBundleImporterDelegate 
 	public IProject[] performImport(ScmUrlImportDescription[] descriptions, IProgressMonitor monitor) throws CoreException {
 		List references = new ArrayList();
 		ProjectSetCapability psfCapability = getProviderType().getProjectSetCapability();
-		// collect and validate all header values
-		for (int i = 0; i < descriptions.length; i++) {
-			ScmUrlImportDescription description = (ScmUrlImportDescription) descriptions[i];
-			references.add(psfCapability.asReference(description.getUri(), description.getProject()));
-		}
-		// create projects
 		IProject[] result = null;
-		if (!references.isEmpty()) {
-			SubMonitor subMonitor = SubMonitor.convert(monitor, references.size());
-			if (psfCapability != null) {
-				result = psfCapability.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), subMonitor);
-			} else {
-				//TODO: error
+		if (psfCapability != null) {
+			// collect and validate all header values
+			for (int i = 0; i < descriptions.length; i++) {
+				ScmUrlImportDescription description = (ScmUrlImportDescription) descriptions[i];
+				references.add(psfCapability.asReference(description.getUri(), description.getProject()));
 			}
-			subMonitor.done();
+			// create projects
+			if (!references.isEmpty()) {
+				SubMonitor subMonitor = SubMonitor.convert(monitor, references.size());
+				result = psfCapability.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), subMonitor);
+				subMonitor.done();
+			}
 		}
 		return result;
 	}

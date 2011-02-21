@@ -161,8 +161,8 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 			updateCount();
 		}
 
-		// TODO:
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, IHelpContextIds.CVS_SCM_URL_IMPORT_PAGE);
+		// TODO: add help
+		 PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, IHelpContextIds.CVS_SCM_URL_IMPORT_PAGE);
 	}
 
 	/* (non-Javadoc)
@@ -227,7 +227,14 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 		return CVSURI.fromUri(scmUri).getTag().getName();
 	}
 	
-	// TODO: move to CVSURI
+	/**
+	 * Remove tag attributes from the given URI reference. Results in the URI
+	 * pointing to HEAD.
+	 * 
+	 * @param scmUri
+	 *            a SCM URI reference to modify
+	 * @return Returns the content of the stripped URI as a string.
+	 */
 	private static String removeTag(URI scmUri) {
 		StringBuffer sb = new StringBuffer();
 		sb.append(scmUri.getScheme()).append(':');
@@ -239,9 +246,9 @@ public class CVSScmUrlImportWizardPage extends WizardPage implements IScmUrlImpo
 			for (int k = 0; k < params.length; k++) {
 				// PDE way of providing tags
 				if (params[k].startsWith("tag=")) { //$NON-NLS-1$
-					// remove
+					// ignore
 				} else if (params[k].startsWith("version=")) { //$NON-NLS-1$
-					// remove
+					// ignore
 				} else {
 					sb.append(params[k]);
 				}

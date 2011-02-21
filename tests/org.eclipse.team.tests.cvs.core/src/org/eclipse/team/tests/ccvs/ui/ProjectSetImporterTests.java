@@ -232,7 +232,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 				new ProjectSetSerializationContext(), null);
 		// If we got here and no NPE was thrown, we're good.
 	}
-	
+
 	public void testScmUrlImport() throws TeamException, CoreException {
 		IProject project = createProject("ProjectSetImporterTests-testScmUrlImport", new String[0]);
 		project.delete(true, true, null);
@@ -254,7 +254,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 		c.addToWorkspace((String[]) references.toArray(new String[references.size()]), new ProjectSetSerializationContext(), null);
 		assertExistsInWorkspace(project);
 	}
-	
+
 	public void testScmUrlImportWithName() throws TeamException, CoreException {
 		IProject project = createProject("ProjectSetImporterTests-testScmUrlImportWithName", new String[0]);
 		project.delete(true, true, null);
@@ -277,7 +277,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 		IProject project1 = ResourcesPlugin.getWorkspace().getRoot().getProject("project1");
 		assertExistsInWorkspace(project1);
 	}
-	
+
 	public void testScmUrlImportWithTag() throws TeamException, CoreException, IOException {
 		IProject project = createProject("ProjectSetImporterTests-testScmUrlImportWithTag", new String[0]);
 		tagProject(project, new CVSTag("tag", CVSTag.VERSION), false);
@@ -288,7 +288,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 		ScmUrlImportDescription d = new ScmUrlImportDescription(s, project.getName());
 		final IScmUrlImportWizardPage[] pages = TeamUI.getPages(new ScmUrlImportDescription[] {d});
 		assertEquals(1, pages.length);
-		
+
 		assertTrue(pages[0] instanceof CVSScmUrlImportWizardPage);
 		Wizard wizard = new Wizard() {
 			public boolean performFinish() {
@@ -306,12 +306,12 @@ public class ProjectSetImporterTests extends EclipseTest {
 		useHead.setSelection(true);
 		wizard.performFinish();
 		wizardDialog.close();
-		
+
 		// altered selection, check out from HEAD
 		ScmUrlImportDescription[] selection = pages[0].getSelection();
 		IBundleImporter cvsBundleImporter = Team.getBundleImporters()[0];
 		cvsBundleImporter.performImport(selection, null);
-		
+
 		assertExistsInWorkspace(project);
 		IProject copy = checkoutCopy(project, CVSTag.DEFAULT);
 		// expecting the project to be checked out from HEAD
@@ -329,7 +329,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 		}
 		// CVS Bundle Importer should be available
 		assertNotNull(cvsBundleImporter);
-		
+
 		IProject project = createProject("ProjectSetImporterTests-testCvsBundleImporter", new String[0]);
 		project.delete(true, true, null);
 		ensureDoesNotExistInWorkspace(project);

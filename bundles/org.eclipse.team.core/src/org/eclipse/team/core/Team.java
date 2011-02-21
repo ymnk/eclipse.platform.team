@@ -65,7 +65,7 @@ public final class Team {
     
     private final static FileContentManager fFileContentManager;
     
-	private static List fProjectFactories;
+	private static List fBundleImporters;
 
     static {
         fFileContentManager= new FileContentManager();
@@ -527,7 +527,7 @@ public final class Team {
     public IStorageMerger createStorageMerger(String extension) {
     	return createMerger(extension);
     }
-    
+
 	/**
 	 * Returns the available bundle importers.
 	 * 
@@ -542,16 +542,16 @@ public final class Team {
 	 * @since 3.6
 	 */
 	public synchronized static IBundleImporter[] getBundleImporters() {
-		if (fProjectFactories == null) {
-			fProjectFactories = new ArrayList();
+		if (fBundleImporters == null) {
+			fBundleImporters = new ArrayList();
 			IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(TeamPlugin.EXTENSION_POINT_BUNDLE_IMPORTERS);
 			if (point != null) {
 				IConfigurationElement[] infos = point.getConfigurationElements();
 				for (int i = 0; i < infos.length; i++) {
-					fProjectFactories.add(new BundleImporterExtension(infos[i]));
+					fBundleImporters.add(new BundleImporterExtension(infos[i]));
 				}
 			}
 		}
-		return (IBundleImporter[]) fProjectFactories.toArray(new IBundleImporter[fProjectFactories.size()]);
+		return (IBundleImporter[]) fBundleImporters.toArray(new IBundleImporter[fBundleImporters.size()]);
 	}
 }

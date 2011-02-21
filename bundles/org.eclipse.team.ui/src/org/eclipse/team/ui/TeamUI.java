@@ -186,17 +186,16 @@ public class TeamUI {
 					if (ext instanceof IScmUrlImportWizardPage) {
 						IScmUrlImportWizardPage page = (IScmUrlImportWizardPage) ext;
 						page.setProvider(providerType);
-
-						Set/*<ScmUrlImportDescription>*/ d = new HashSet();
+						Set/*<ScmUrlImportDescription>*/ set = new HashSet();
 						for (Iterator iterator = schemeUris.iterator(); iterator.hasNext();) {
 							URI uri = (URI) iterator.next();
 							for (int j = 0; j < descriptions.length; j++) {
 								if (descriptions[j].getUri().equals(uri)) {
-									d.add(descriptions[j]);
+									set.add(descriptions[j]);
 								}
 							}
 						}
-						page.setSelection((ScmUrlImportDescription[]) d.toArray(new ScmUrlImportDescription[0]));
+						page.setSelection((ScmUrlImportDescription[]) set.toArray(new ScmUrlImportDescription[0]));
 						pages.add(page);
 					}
 				}

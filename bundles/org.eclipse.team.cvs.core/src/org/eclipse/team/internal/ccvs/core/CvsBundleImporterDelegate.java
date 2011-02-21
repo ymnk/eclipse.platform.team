@@ -51,7 +51,7 @@ public class CvsBundleImporterDelegate extends BundleImporterDelegate {
 	
 	protected RepositoryProviderType getProviderType() {
 		if (providerType == null)
-			providerType = RepositoryProviderType.getProviderType("org.eclipse.team.cvs.core.cvsnature"); //$NON-NLS-1$
+			providerType = RepositoryProviderType.getProviderType(CVSProviderPlugin.getTypeId());
 		return providerType;
 	}
 
