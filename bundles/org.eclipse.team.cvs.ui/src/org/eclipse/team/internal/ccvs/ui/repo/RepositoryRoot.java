@@ -444,14 +444,15 @@ public class RepositoryRoot extends PlatformObject {
 	}
 	
 	/*
-	 * Return the cache key (path) for the given folder path.
-	 * This has been changed to cache the tags directly 
-	 * with the folder to better support non-root projects.
-	 * However, resources in the local workspace use the folder
-	 * the project is mapped to as the tag source (see TagSource)
+	 * Return the cache key (path) for the given folder path. For root projects
+	 * it returns the folder the project is mapped to as the tag source (see
+	 * TagSource). For non-root projects it returns only the first segment of
+	 * the path because for the time being tag lists are kept for the remote
+	 * ancestors of the resource that is a direct child of the remote root (see
+	 * javadoc for addTags).
 	 */
 	private String getCachePathFor(String remotePath) {
-		return remotePath;
+		return new Path(null, remotePath).segment(0);
 	}
 	
 	/**
