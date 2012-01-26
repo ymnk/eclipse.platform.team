@@ -30,7 +30,6 @@ public class AllUITests extends EclipseTest {
 		suite.addTest(CheckoutOperationTests.suite());
 		suite.addTest(CompareOperationTests.suite());
 		suite.addTest(MiscOperationsTests.suite());
-		suite.addTest(RepositoriesViewTests.suite());
 		suite.addTest(ProjectSetImporterTests.suite());
 		suite.addTest(EditorTests.suite());
 		suite.addTest(PatchWizardRadioButtonGroupTests.suite());
