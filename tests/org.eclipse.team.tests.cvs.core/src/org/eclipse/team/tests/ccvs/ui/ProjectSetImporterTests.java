@@ -45,6 +45,7 @@ import org.eclipse.team.internal.ccvs.core.CVSTag;
 import org.eclipse.team.internal.ccvs.core.CVSTeamProviderType;
 import org.eclipse.team.internal.ccvs.ui.wizards.CVSScmUrlImportWizardPage;
 import org.eclipse.team.internal.ui.ProjectSetImporter;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.ui.IScmUrlImportWizardPage;
@@ -108,7 +109,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 			project2.delete(true, null);
 
 			IProject[] importProjectSet = ProjectSetImporter.importProjectSet(
-					PSF_FILENAME, Display.getDefault().getActiveShell(), null);
+					PSF_FILENAME, Utils.findShell(), null);
 			
 			assertEquals(2, importProjectSet.length);
 			assertEquals(project1, importProjectSet[0]);
@@ -157,7 +158,7 @@ public class ProjectSetImporterTests extends EclipseTest {
 
 			IProject[] importProjectSet = null;
 			importProjectSet = ProjectSetImporter.importProjectSet(
-					PSF_FILENAME, Display.getDefault().getActiveShell(), null);
+					PSF_FILENAME, Utils.findShell(), null);
 
 			assertEquals(project, importProjectSet[0]);
 			assertEquals(project2, importProjectSet[1]);
