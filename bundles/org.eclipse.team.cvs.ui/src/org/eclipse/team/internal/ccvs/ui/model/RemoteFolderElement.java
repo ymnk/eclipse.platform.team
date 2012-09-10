@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2006 IBM Corporation and others.
+ * Copyright (c) 2000, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -57,23 +57,55 @@ public class RemoteFolderElement extends RemoteResourceElement implements IDefer
     public Object[] fetchChildren(Object o, IProgressMonitor monitor) throws TeamException {
         if (!(o instanceof ICVSRemoteFolder))
             return new Object[0];
-        return ((ICVSRemoteFolder) o).members(monitor);
-    }
+		try {
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(NLS.bind(
+					CVSUIMessages.RemoteFolderElement_fetchingRemoteChildren,
+					new String[] { getLabel(o) }), 100);
+			ICVSRemoteFolder folder = (ICVSRemoteFolder) o;
+			ICVSRemoteResource[] cachedChildren = CVSUIPlugin
+					.getPlugin()
+					.getRepositoryManager()
+					.getCachedChildrenForTag(folder.getRepository(), folder,
+							folder.getTag(), Policy.subMonitorFor(monitor, 50));
+			if (cachedChildren.length > 0) {
+				return cachedChildren;
+			}
+			return folder.members(Policy.subMonitorFor(monitor, 50));
+		} finally {
+			monitor.done();
+		}
+	}
 
     public void fetchDeferredChildren(Object o, IElementCollector collector, IProgressMonitor monitor) {
     	// If it's not a folder, return an empty array
 		if (!(o instanceof ICVSRemoteFolder)) {
 			collector.add(new Object[0], monitor);
 		}
-        try {
-            monitor = Policy.monitorFor(monitor);
-            monitor.beginTask(NLS.bind(CVSUIMessages.RemoteFolderElement_fetchingRemoteChildren, new String[] { getLabel(o) }), 100); 
-			FetchMembersOperation operation = new FetchMembersOperation(null, (ICVSRemoteFolder)o, collector);
-			operation.run(Policy.subMonitorFor(monitor, 100));
-        } catch (InvocationTargetException e) {
+		try {
+			monitor = Policy.monitorFor(monitor);
+			monitor.beginTask(NLS.bind(
+					CVSUIMessages.RemoteFolderElement_fetchingRemoteChildren,
+					new String[] { getLabel(o) }), 100);
+			ICVSRemoteFolder folder = (ICVSRemoteFolder) o;
+			ICVSRemoteResource[] cachedChildren = CVSUIPlugin
+					.getPlugin()
+					.getRepositoryManager()
+					.getCachedChildrenForTag(folder.getRepository(), folder,
+							folder.getTag(), Policy.subMonitorFor(monitor, 50));
+			if (cachedChildren.length > 0) {
+				collector.add(cachedChildren, monitor);
+				return;
+			}
+			FetchMembersOperation operation = new FetchMembersOperation(null,
+					folder, collector);
+			operation.run(Policy.subMonitorFor(monitor, 50));
+		} catch (InvocationTargetException e) {
             handle(collector, e);
 		} catch (InterruptedException e) {
 			// Cancelled by the user;
+		} catch (CVSException e) {
+			handle(collector, e);
 		} finally {
             monitor.done();
         }
