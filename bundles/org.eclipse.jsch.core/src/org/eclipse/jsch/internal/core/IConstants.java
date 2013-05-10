@@ -54,4 +54,10 @@ public interface IConstants{
   
   public static final String PREF_PREFERRED_AUTHENTICATION_METHODS="CVSSSH2PreferencePage.PREF_AUTH_METHODS"; //$NON-NLS-1$
   public static final String PREF_PREFERRED_AUTHENTICATION_METHODS_ORDER="CVSSSH2PreferencePage.PREF_AUTH_METHODS_ORDER"; //$NON-NLS-1$
+  
+  public static final String PREF_PREFERRED_KEYEXCHANGE_METHODS="CVSSSH2PreferencePage.PREF_KEX_METHODS"; //$NON-NLS-1$
+  public static final String PREF_PREFERRED_KEYEXCHANGE_METHODS_ORDER="CVSSSH2PreferencePage.PREF_KEX_METHODS_ORDER"; //$NON-NLS-1$
+  
+  public static final String PREF_PREFERRED_MAC_METHODS="CVSSSH2PreferencePage.PREF_MAC_METHODS"; //$NON-NLS-1$
+  public static final String PREF_PREFERRED_MAC_METHODS_ORDER="CVSSSH2PreferencePage.PREF_MAC_METHODS_ORDER"; //$NON-NLS-1$
 }
