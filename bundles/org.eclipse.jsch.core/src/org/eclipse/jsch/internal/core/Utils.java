@@ -241,9 +241,9 @@ public class Utils{
   }
   
   public static String getEnabledPreferredAuthMethods(){
-    IPreferencesService service = Platform.getPreferencesService();
-    return service.getString(JSchCorePlugin.ID,
-        IConstants.PREF_PREFERRED_AUTHENTICATION_METHODS, getDefaultAuthMethods(), null);
+    return getEnabledPreferredMethods(
+        IConstants.PREF_PREFERRED_AUTHENTICATION_METHODS,
+        getDefaultAuthMethods());
   }
 
   public static String getMethodsOrder(){
@@ -253,16 +253,14 @@ public class Utils{
   }
   
   public static void setEnabledPreferredAuthMethods(String methods, String order){
-    IPreferencesService service=Platform.getPreferencesService();
-    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(
-        IConstants.PREF_PREFERRED_AUTHENTICATION_METHODS, methods);
-    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(
-        IConstants.PREF_PREFERRED_AUTHENTICATION_METHODS_ORDER, order);}
+    setEnabledPreferredMethods(methods, order,
+        IConstants.PREF_PREFERRED_AUTHENTICATION_METHODS,
+        IConstants.PREF_PREFERRED_AUTHENTICATION_METHODS_ORDER);
+  }
   
   public static String getEnabledPreferredKEXMethods(){
-    IPreferencesService service = Platform.getPreferencesService();
-    return service.getString(JSchCorePlugin.ID,
-        IConstants.PREF_PREFERRED_KEYEXCHANGE_METHODS, getDefaultKEXMethods(), null);
+    return getEnabledPreferredMethods(
+        IConstants.PREF_PREFERRED_KEYEXCHANGE_METHODS, getDefaultKEXMethods());
   }
   
   public static String getKEXMethodsOrder(){
@@ -272,17 +270,14 @@ public class Utils{
   }
   
   public static void setEnabledPreferredKEXMethods(String methods, String order){
-    IPreferencesService service=Platform.getPreferencesService();
-    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(
-        IConstants.PREF_PREFERRED_KEYEXCHANGE_METHODS, methods);
-    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(
-        IConstants.PREF_PREFERRED_KEYEXCHANGE_METHODS_ORDER, order);
+    setEnabledPreferredMethods(methods, order,
+        IConstants.PREF_PREFERRED_KEYEXCHANGE_METHODS,
+        IConstants.PREF_PREFERRED_KEYEXCHANGE_METHODS_ORDER);
   }
   
   public static String getEnabledPreferredMACMethods(){
-    IPreferencesService service = Platform.getPreferencesService();
-    return service.getString(JSchCorePlugin.ID,
-        IConstants.PREF_PREFERRED_MAC_METHODS, getDefaultMACMethods(), null);
+    return getEnabledPreferredMethods(IConstants.PREF_PREFERRED_MAC_METHODS,
+        getDefaultMACMethods());
   }
   
   public static String getMACMethodsOrder(){
@@ -292,10 +287,19 @@ public class Utils{
   }
   
   public static void setEnabledPreferredMACMethods(String methods, String order){
+    setEnabledPreferredMethods(methods, order,
+        IConstants.PREF_PREFERRED_MAC_METHODS,
+        IConstants.PREF_PREFERRED_MAC_METHODS_ORDER);
+  }
+  
+  private static String getEnabledPreferredMethods(String methods, String default_value){
+    IPreferencesService service = Platform.getPreferencesService();
+    return service.getString(JSchCorePlugin.ID,methods, default_value, null);
+  } 
+  
+  private static void setEnabledPreferredMethods(String methods, String order, String _methods, String _order){
     IPreferencesService service=Platform.getPreferencesService();
-    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(
-        IConstants.PREF_PREFERRED_MAC_METHODS, methods);
-    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(
-        IConstants.PREF_PREFERRED_MAC_METHODS_ORDER, order);
+    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(_methods, methods);
+    service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(_order, order);
   }
 }

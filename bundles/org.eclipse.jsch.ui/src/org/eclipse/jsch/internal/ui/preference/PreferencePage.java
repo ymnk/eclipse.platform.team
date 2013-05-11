@@ -818,8 +818,8 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
   Table preferedKeyExchangeMethodTable;
   Table preferedMACMethodTable;
 
-  Button up;
-  Button down;
+  Button auth_up;
+  Button auth_down;
   Button kex_up;
   Button kex_down;
   Button mac_up;
@@ -975,106 +975,25 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
     layoutData.minimumWidth = 200;
     populateAuthMethods();
     
-    up=new Button(root, SWT.PUSH);
-    up.setText(Messages.CVSSSH2PreferencePage_2);
-    up.setEnabled(false);
-    setButtonLayoutData(up);
+    auth_up=new Button(root, SWT.PUSH);
+    auth_up.setText(Messages.CVSSSH2PreferencePage_2);
+    auth_up.setEnabled(false);
+    setButtonLayoutData(auth_up);
     
-    down=new Button(root, SWT.PUSH);
-    down.setText(Messages.CVSSSH2PreferencePage_3);
-    down.setEnabled(false);
-    setButtonLayoutData(down);
+    auth_down=new Button(root, SWT.PUSH);
+    auth_down.setText(Messages.CVSSSH2PreferencePage_3);
+    auth_down.setEnabled(false);
+    setButtonLayoutData(auth_down);
     
-    preferedAuthMethodTable.addSelectionListener(new SelectionAdapter(){
-      
-      public void widgetSelected(SelectionEvent e){
-        boolean anySelected = false;
-        for(int i = 0; i < preferedAuthMethodTable.getItemCount(); i++){
-          anySelected |= preferedAuthMethodTable.getItem(i).getChecked();
-        }
-        
-        if(anySelected){
-          setErrorMessage(null);
-          setValid(true);
-        }
-        else{
-          setErrorMessage(Messages.CVSSSH2PreferencePage_5);
-          setValid(false);
-        }
-        up.setEnabled(preferedAuthMethodTable.getSelectionIndex()>0);
-        down
-            .setEnabled(preferedAuthMethodTable.getSelectionIndex()<preferedAuthMethodTable
-                .getItemCount()-1);
-      }
-      
-    });
-    up.addSelectionListener(new SelectionAdapter(){
-
-      public void widgetSelected(SelectionEvent e){
-        int selectedIndex=preferedAuthMethodTable.getSelectionIndex();
-        if(selectedIndex == 1){ //this is the last possible swap
-          up.setEnabled(false);
-        }
-        down.setEnabled(true);
-        TableItem sourceItem = preferedAuthMethodTable.getItem(selectedIndex);
-        TableItem targetItem = preferedAuthMethodTable.getItem(selectedIndex-1);
-        
-        //switch text
-        String stemp = targetItem.getText();
-        targetItem.setText(sourceItem.getText());
-        sourceItem.setText(stemp);
-        
-        //switch selection
-        boolean btemp = targetItem.getChecked();
-        targetItem.setChecked(sourceItem.getChecked());
-        sourceItem.setChecked(btemp);
-        
-        preferedAuthMethodTable.setSelection(targetItem);
-      }
-    });
-    
-    down.addSelectionListener(new SelectionAdapter(){
-
-      public void widgetSelected(SelectionEvent e){
-        int selectedIndex=preferedAuthMethodTable.getSelectionIndex();
-        if(selectedIndex == preferedAuthMethodTable.getItemCount()-2){ //this is the last possible swap
-          down.setEnabled(false);
-        }
-        up.setEnabled(true);
-        TableItem sourceItem = preferedAuthMethodTable.getItem(selectedIndex);
-        TableItem targetItem = preferedAuthMethodTable.getItem(selectedIndex+1);
-        
-        //switch text
-        String stemp = targetItem.getText();
-        targetItem.setText(sourceItem.getText());
-        sourceItem.setText(stemp);
-        
-        //switch selection
-        boolean btemp = targetItem.getChecked();
-        targetItem.setChecked(sourceItem.getChecked());
-        sourceItem.setChecked(btemp);
-        
-        preferedAuthMethodTable.setSelection(targetItem);
-      }
-    });
+    initMethodsTable(preferedAuthMethodTable, auth_up, auth_down, Messages.CVSSSH2PreferencePage_5);
     
     return root;
   }
 
   private void populateAuthMethods(){
-    preferedAuthMethodTable.removeAll();
-    String[] methods = Utils.getEnabledPreferredAuthMethods().split(","); //$NON-NLS-1$
-    Set smethods  = new HashSet(Arrays.asList(methods));
-    
-    String[] order = Utils.getMethodsOrder().split(","); //$NON-NLS-1$
-    
-    for(int i=0; i<order.length; i++){
-      TableItem tableItem= new TableItem(preferedAuthMethodTable, SWT.NONE);
-      tableItem.setText(0, order[i]);
-      if(smethods.contains(order[i])){
-        tableItem.setChecked(true);
-      }
-    }
+    populateMethods(preferedAuthMethodTable, 
+        Utils.getEnabledPreferredAuthMethods(),
+        Utils.getMethodsOrder());
   }
   
   private Control createPreferredKeyExchangePage(Composite parent){
@@ -1111,96 +1030,15 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
     kex_down.setEnabled(false);
     setButtonLayoutData(kex_down);
     
-    preferedKeyExchangeMethodTable.addSelectionListener(new SelectionAdapter(){
-      
-      public void widgetSelected(SelectionEvent e){
-        boolean anySelected = false;
-        for(int i = 0; i < preferedKeyExchangeMethodTable.getItemCount(); i++){
-          anySelected |= preferedKeyExchangeMethodTable.getItem(i).getChecked();
-        }
-        
-        if(anySelected){
-          setErrorMessage(null);
-          setValid(true);
-        }
-        else{
-          setErrorMessage(Messages.CVSSSH2PreferencePage_142);
-          setValid(false);
-        }
-        kex_up.setEnabled(preferedKeyExchangeMethodTable.getSelectionIndex()>0);
-        kex_down
-            .setEnabled(preferedKeyExchangeMethodTable.getSelectionIndex()<preferedKeyExchangeMethodTable
-                .getItemCount()-1);
-      }
-      
-    });
-    kex_up.addSelectionListener(new SelectionAdapter(){
-
-      public void widgetSelected(SelectionEvent e){
-        int selectedIndex=preferedKeyExchangeMethodTable.getSelectionIndex();
-        if(selectedIndex == 1){ //this is the last possible swap
-          kex_up.setEnabled(false);
-        }
-        kex_down.setEnabled(true);
-        TableItem sourceItem = preferedKeyExchangeMethodTable.getItem(selectedIndex);
-        TableItem targetItem = preferedKeyExchangeMethodTable.getItem(selectedIndex-1);
-        
-        //switch text
-        String stemp = targetItem.getText();
-        targetItem.setText(sourceItem.getText());
-        sourceItem.setText(stemp);
-        
-        //switch selection
-        boolean btemp = targetItem.getChecked();
-        targetItem.setChecked(sourceItem.getChecked());
-        sourceItem.setChecked(btemp);
-        
-        preferedKeyExchangeMethodTable.setSelection(targetItem);
-      }
-    });
-    
-    kex_down.addSelectionListener(new SelectionAdapter(){
-
-      public void widgetSelected(SelectionEvent e){
-        int selectedIndex=preferedKeyExchangeMethodTable.getSelectionIndex();
-        if(selectedIndex == preferedKeyExchangeMethodTable.getItemCount()-2){ //this is the last possible swap
-          kex_down.setEnabled(false);
-        }
-        kex_up.setEnabled(true);
-        TableItem sourceItem = preferedKeyExchangeMethodTable.getItem(selectedIndex);
-        TableItem targetItem = preferedKeyExchangeMethodTable.getItem(selectedIndex+1);
-        
-        //switch text
-        String stemp = targetItem.getText();
-        targetItem.setText(sourceItem.getText());
-        sourceItem.setText(stemp);
-        
-        //switch selection
-        boolean btemp = targetItem.getChecked();
-        targetItem.setChecked(sourceItem.getChecked());
-        sourceItem.setChecked(btemp);
-        
-        preferedKeyExchangeMethodTable.setSelection(targetItem);
-      }
-    });
+    initMethodsTable(preferedKeyExchangeMethodTable, kex_up, kex_down, Messages.CVSSSH2PreferencePage_142);
     
     return root;
   }
 
   private void populateKeyExchangeMethods(){
-    preferedKeyExchangeMethodTable.removeAll();
-    String[] methods = Utils.getEnabledPreferredKEXMethods().split(","); //$NON-NLS-1$
-    Set smethods  = new HashSet(Arrays.asList(methods));
-    
-    String[] order = Utils.getKEXMethodsOrder().split(","); //$NON-NLS-1$
-    
-    for(int i=0; i<order.length; i++){
-      TableItem tableItem= new TableItem(preferedKeyExchangeMethodTable, SWT.NONE);
-      tableItem.setText(0, order[i]);
-      if(smethods.contains(order[i])){
-        tableItem.setChecked(true);
-      }
-    }
+    populateMethods(preferedKeyExchangeMethodTable, 
+        Utils.getEnabledPreferredKEXMethods(),
+        Utils.getKEXMethodsOrder());
   }
   
   private Control createPreferredMACPage(Composite parent){
@@ -1237,12 +1075,24 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
     mac_down.setEnabled(false);
     setButtonLayoutData(mac_down);
     
-    preferedMACMethodTable.addSelectionListener(new SelectionAdapter(){
+    initMethodsTable(preferedMACMethodTable, mac_up, mac_down, Messages.CVSSSH2PreferencePage_143);
+
+    return root;
+  }
+
+  private void populateMACMethods(){
+    populateMethods(preferedMACMethodTable, 
+        Utils.getEnabledPreferredMACMethods(),
+        Utils.getMACMethodsOrder());
+  }
+  
+  private void initMethodsTable(final Table table, final Button up, final Button down, final String error){
+    table.addSelectionListener(new SelectionAdapter(){
       
       public void widgetSelected(SelectionEvent e){
         boolean anySelected = false;
-        for(int i = 0; i < preferedMACMethodTable.getItemCount(); i++){
-          anySelected |= preferedMACMethodTable.getItem(i).getChecked();
+        for(int i = 0; i < table.getItemCount(); i++){
+          anySelected |= table.getItem(i).getChecked();
         }
         
         if(anySelected){
@@ -1250,26 +1100,26 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
           setValid(true);
         }
         else{
-          setErrorMessage(Messages.CVSSSH2PreferencePage_143);
+          setErrorMessage(error);
           setValid(false);
         }
-        mac_up.setEnabled(preferedMACMethodTable.getSelectionIndex()>0);
-        mac_down
-            .setEnabled(preferedMACMethodTable.getSelectionIndex()<preferedMACMethodTable
+        up.setEnabled(table.getSelectionIndex()>0);
+        down
+            .setEnabled(table.getSelectionIndex()<table
                 .getItemCount()-1);
       }
       
     });
-    mac_up.addSelectionListener(new SelectionAdapter(){
+    up.addSelectionListener(new SelectionAdapter(){
 
       public void widgetSelected(SelectionEvent e){
-        int selectedIndex=preferedMACMethodTable.getSelectionIndex();
+        int selectedIndex=table.getSelectionIndex();
         if(selectedIndex == 1){ //this is the last possible swap
-          mac_up.setEnabled(false);
+          up.setEnabled(false);
         }
-        mac_down.setEnabled(true);
-        TableItem sourceItem = preferedMACMethodTable.getItem(selectedIndex);
-        TableItem targetItem = preferedMACMethodTable.getItem(selectedIndex-1);
+        down.setEnabled(true);
+        TableItem sourceItem = table.getItem(selectedIndex);
+        TableItem targetItem = table.getItem(selectedIndex-1);
         
         //switch text
         String stemp = targetItem.getText();
@@ -1281,20 +1131,20 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
         targetItem.setChecked(sourceItem.getChecked());
         sourceItem.setChecked(btemp);
         
-        preferedMACMethodTable.setSelection(targetItem);
+        table.setSelection(targetItem);
       }
     });
     
-    mac_down.addSelectionListener(new SelectionAdapter(){
+    down.addSelectionListener(new SelectionAdapter(){
 
       public void widgetSelected(SelectionEvent e){
-        int selectedIndex=preferedMACMethodTable.getSelectionIndex();
-        if(selectedIndex == preferedMACMethodTable.getItemCount()-2){ //this is the last possible swap
-          mac_down.setEnabled(false);
+        int selectedIndex=table.getSelectionIndex();
+        if(selectedIndex == table.getItemCount()-2){ //this is the last possible swap
+          down.setEnabled(false);
         }
-        mac_up.setEnabled(true);
-        TableItem sourceItem = preferedMACMethodTable.getItem(selectedIndex);
-        TableItem targetItem = preferedMACMethodTable.getItem(selectedIndex+1);
+        up.setEnabled(true);
+        TableItem sourceItem = table.getItem(selectedIndex);
+        TableItem targetItem = table.getItem(selectedIndex+1);
         
         //switch text
         String stemp = targetItem.getText();
@@ -1306,22 +1156,20 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
         targetItem.setChecked(sourceItem.getChecked());
         sourceItem.setChecked(btemp);
         
-        preferedMACMethodTable.setSelection(targetItem);
+        table.setSelection(targetItem);
       }
     });
-    
-    return root;
   }
-
-  private void populateMACMethods(){
-    preferedMACMethodTable.removeAll();
-    String[] methods = Utils.getEnabledPreferredMACMethods().split(","); //$NON-NLS-1$
+  
+  private void populateMethods(Table table, String _methods, String _order){
+    table.removeAll();
+    String[] methods = _methods.split(","); //$NON-NLS-1$
     Set smethods  = new HashSet(Arrays.asList(methods));
     
-    String[] order = Utils.getMACMethodsOrder().split(","); //$NON-NLS-1$
+    String[] order = _order.split(","); //$NON-NLS-1$
     
     for(int i=0; i<order.length; i++){
-      TableItem tableItem= new TableItem(preferedMACMethodTable, SWT.NONE);
+      TableItem tableItem= new TableItem(table, SWT.NONE);
       tableItem.setText(0, order[i]);
       if(smethods.contains(order[i])){
         tableItem.setChecked(true);
@@ -1444,8 +1292,8 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
     populateAuthMethods();
     populateKeyExchangeMethods();
     populateMACMethods();
-    up.setEnabled(false);
-    down.setEnabled(false);
+    auth_up.setEnabled(false);
+    auth_down.setEnabled(false);
     kex_up.setEnabled(false);
     kex_down.setEnabled(false);
     mac_up.setEnabled(false);
