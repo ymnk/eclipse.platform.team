@@ -64,6 +64,20 @@ public class Utils{
     return getDefaultMethods(PREFERRED_MAC_METHODS);
   }
   
+  private static final String[] PREFERRED_CIPHER_METHODS=new String[] {
+    "aes128-ctr",    //$NON-NLS-1$
+    "aes128-cbc",    //$NON-NLS-1$
+    "3des-ctr",      //$NON-NLS-1$
+    "3des-cbc",      //$NON-NLS-1$
+    "blowfish-cbc",  //$NON-NLS-1$
+    "aes192-cbc",    //$NON-NLS-1$
+    "aes256-cbc"     //$NON-NLS-1$
+  };
+
+  public static String getDefaultCipherMethods(){
+    return getDefaultMethods(PREFERRED_CIPHER_METHODS);
+  }
+  
   private static String getDefaultMethods(String[] methods){
     String defaultValue = methods[0];
     for(int i = 1; i < methods.length; i++){
@@ -131,6 +145,10 @@ public class Utils{
         getEnabledPreferredMACMethods());
     config.put("mac.s2c", //$NON-NLS-1$ 
         getEnabledPreferredMACMethods());
+    config.put("cipher.c2s", //$NON-NLS-1$ 
+        getEnabledPreferredCipherMethods());
+    config.put("cipher.s2c", //$NON-NLS-1$ 
+        getEnabledPreferredCipherMethods());
     session.setConfig(config);
     return session;
   }
@@ -290,6 +308,23 @@ public class Utils{
     setEnabledPreferredMethods(methods, order,
         IConstants.PREF_PREFERRED_MAC_METHODS,
         IConstants.PREF_PREFERRED_MAC_METHODS_ORDER);
+  }
+  
+  public static String getEnabledPreferredCipherMethods(){
+    return getEnabledPreferredMethods(IConstants.PREF_PREFERRED_CIPHER_METHODS,
+        getDefaultCipherMethods());
+  }
+  
+  public static String getCipherMethodsOrder(){
+    IPreferencesService service = Platform.getPreferencesService();
+    return service.getString(JSchCorePlugin.ID,
+        IConstants.PREF_PREFERRED_CIPHER_METHODS_ORDER, getDefaultCipherMethods(), null);
+  }
+  
+  public static void setEnabledPreferredCipherMethods(String methods, String order){
+    setEnabledPreferredMethods(methods, order,
+        IConstants.PREF_PREFERRED_CIPHER_METHODS,
+        IConstants.PREF_PREFERRED_CIPHER_METHODS_ORDER);
   }
   
   private static String getEnabledPreferredMethods(String methods, String default_value){

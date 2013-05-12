@@ -154,6 +154,10 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
     tabItem=new TabItem(tabFolder, SWT.NONE);
     tabItem.setText(Messages.CVSSSH2PreferencePage_145);
     tabItem.setControl(createPreferredMACPage(tabFolder));
+    
+    tabItem=new TabItem(tabFolder, SWT.NONE);
+    tabItem.setText(Messages.CVSSSH2PreferencePage_148);
+    tabItem.setControl(createPreferredCipherPage(tabFolder));
 
     initControls();
 
@@ -817,6 +821,7 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
   Table preferedAuthMethodTable;
   Table preferedKeyExchangeMethodTable;
   Table preferedMACMethodTable;
+  Table preferedCipherMethodTable;
 
   Button auth_up;
   Button auth_down;
@@ -824,6 +829,8 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
   Button kex_down;
   Button mac_up;
   Button mac_down;
+  Button cipher_up;
+  Button cipher_down;
 
   class TableLabelProvider extends LabelProvider implements ITableLabelProvider{
     public String getColumnText(Object element, int columnIndex){
@@ -1086,6 +1093,51 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
         Utils.getMACMethodsOrder());
   }
   
+  private Control createPreferredCipherPage(Composite parent){
+    Composite root = new Composite(parent, SWT.NONE);
+    GridLayout layout=new GridLayout();
+    layout.marginHeight=convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_MARGIN);
+    layout.marginWidth=convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_MARGIN);
+    layout.verticalSpacing=convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_SPACING);
+    layout.horizontalSpacing=convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
+    layout.numColumns = 2;
+    root.setLayout(layout);
+    
+    Label label=new Label(root, SWT.NONE);
+    GridData textLayoutData=new GridData(SWT.BEGINNING, SWT.BEGINNING, true, false);
+    textLayoutData.horizontalSpan = 2;
+    label.setLayoutData(textLayoutData);
+    label.setText(Messages.CVSSSH2PreferencePage_146);
+    
+    preferedCipherMethodTable=new Table(root, SWT.CHECK | SWT.BORDER);
+    GridData layoutData=new GridData(SWT.FILL, SWT.BEGINNING, true, true);
+    layoutData.verticalSpan = 3;
+    preferedCipherMethodTable.setLayoutData(layoutData);
+    layoutData.minimumHeight = 150;
+    layoutData.minimumWidth = 200;
+    populateCipherMethods();
+    
+    cipher_up=new Button(root, SWT.PUSH);
+    cipher_up.setText(Messages.CVSSSH2PreferencePage_2);
+    cipher_up.setEnabled(false);
+    setButtonLayoutData(cipher_up);
+    
+    cipher_down=new Button(root, SWT.PUSH);
+    cipher_down.setText(Messages.CVSSSH2PreferencePage_3);
+    cipher_down.setEnabled(false);
+    setButtonLayoutData(cipher_down);
+    
+    initMethodsTable(preferedCipherMethodTable, cipher_up, cipher_down, Messages.CVSSSH2PreferencePage_147);
+
+    return root;
+  }
+  
+  private void populateCipherMethods(){
+    populateMethods(preferedCipherMethodTable, 
+        Utils.getEnabledPreferredCipherMethods(),
+        Utils.getCipherMethodsOrder());
+  }
+
   private void initMethodsTable(final Table table, final Button up, final Button down, final String error){
     table.addSelectionListener(new SelectionAdapter(){
       
@@ -1292,12 +1344,15 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
     populateAuthMethods();
     populateKeyExchangeMethods();
     populateMACMethods();
+    populateCipherMethods();
     auth_up.setEnabled(false);
     auth_down.setEnabled(false);
     kex_up.setEnabled(false);
     kex_down.setEnabled(false);
     mac_up.setEnabled(false);
     mac_down.setEnabled(false);
+    cipher_up.setEnabled(false);
+    cipher_down.setEnabled(false);
   }
 
   public void init(IWorkbench workbench){
@@ -1323,6 +1378,7 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
     storeAuthenticationMethodSettings();
     storeKeyExchangeMethodSettings();
     storeMACMethodSettings();
+    storeCipherMethodSettings();
     if(result){
       setErrorMessage(null);
       String home=ssh2HomeText.getText();
@@ -1415,6 +1471,28 @@ public class PreferencePage extends org.eclipse.jface.preference.PreferencePage
       }
     }
     Utils.setEnabledPreferredMACMethods(selected, order);
+  }
+
+  private void storeCipherMethodSettings(){
+    String selected = null;
+    String order = null;
+    for(int i = 0; i < preferedCipherMethodTable.getItemCount(); i++){
+      TableItem item=preferedCipherMethodTable.getItem(i);
+      if(item.getChecked()){
+        if(selected==null){
+          selected=item.getText();
+        }
+        else{
+          selected+=","+item.getText(); //$NON-NLS-1$
+        }
+      }
+      if(order == null){
+        order = item.getText();
+      } else {
+        order += "," + item.getText(); //$NON-NLS-1$
+      }
+    }
+    Utils.setEnabledPreferredCipherMethods(selected, order);
   }
 
   public void performApply(){
