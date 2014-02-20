@@ -1,3 +1,4 @@
+/.project
 /*/*/bin/
 *~
 *.rej
@@ -6,3 +7,7 @@ javacore.*
 heapdump.*
 core.*
 Snap.*
+
+# maven
+/*/*/target/
+/bundles/org.eclipse.core.net/fragments/*/target/

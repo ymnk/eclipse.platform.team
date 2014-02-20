@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2011 IBM Corporation and others.
+ * Copyright (c) 2009, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -89,7 +89,8 @@ public class CreatePatchTest extends EclipseTest {
 		testProject.delete(true, null);
 	}
 
-	public void testCreateWorkspacePatch() throws Exception {
+	//TODO Temporary switched off, see Bug 400540
+	public void _testCreateWorkspacePatch() throws Exception {
 		copyIntoWorkspace("exp_addition.txt", "addition.txt");
 
 		openGenerateDiffFileWizard(new IResource[] { testProject });
@@ -269,13 +270,13 @@ public class CreatePatchTest extends EclipseTest {
 	private IWorkbenchPart getActivePart() {
 		IWorkbenchWindow window = PlatformUI.getWorkbench()
 				.getActiveWorkbenchWindow();
-		if (window == null) {
-			return null;
-		}
+		assertNotNull(window);
 		IWorkbenchPage page = window.getActivePage();
 		if (page == null) {
-			return null;
+			window.setActivePage(window.getPages()[0]);
+			page = window.getActivePage();
 		}
+		assertNotNull(page);
 		return page.getActivePart();
 	}
 

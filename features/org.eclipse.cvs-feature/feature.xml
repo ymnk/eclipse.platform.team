@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.cvs"
       label="%featureName"
-      version="1.4.0.qualifier"
+      version="1.4.100.qualifier"
       provider-name="%providerName"   
       license-feature="org.eclipse.license"
       license-feature-version="1.0.0.qualifier">
@@ -18,10 +18,6 @@
    <license url="%licenseURL">
       %license
    </license>
-
-   <requires>
-      <import feature="org.eclipse.platform" version="3.7.0" match="greaterOrEqual"/>
-   </requires>
 
    <plugin
          id="org.eclipse.cvs"

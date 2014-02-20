@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2012 IBM Corporation and others.
+ * Copyright (c) 2007, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -49,6 +49,7 @@ import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
 import org.eclipse.team.tests.ccvs.core.EclipseTest;
 import org.eclipse.team.ui.IScmUrlImportWizardPage;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.ui.PlatformUI;
 
 public class ProjectSetImporterTests extends EclipseTest {
 
@@ -108,7 +109,8 @@ public class ProjectSetImporterTests extends EclipseTest {
 			project2.delete(true, null);
 
 			IProject[] importProjectSet = ProjectSetImporter.importProjectSet(
-					PSF_FILENAME, Display.getDefault().getActiveShell(), null);
+					PSF_FILENAME, PlatformUI.getWorkbench()
+							.getActiveWorkbenchWindow().getShell(), null);
 			
 			assertEquals(2, importProjectSet.length);
 			assertEquals(project1, importProjectSet[0]);
@@ -157,7 +159,8 @@ public class ProjectSetImporterTests extends EclipseTest {
 
 			IProject[] importProjectSet = null;
 			importProjectSet = ProjectSetImporter.importProjectSet(
-					PSF_FILENAME, Display.getDefault().getActiveShell(), null);
+					PSF_FILENAME, PlatformUI.getWorkbench()
+							.getActiveWorkbenchWindow().getShell(), null);
 
 			assertEquals(project, importProjectSet[0]);
 			assertEquals(project2, importProjectSet[1]);
