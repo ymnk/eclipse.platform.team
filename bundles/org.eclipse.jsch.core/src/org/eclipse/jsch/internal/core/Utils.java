@@ -293,7 +293,7 @@ public class Utils{
     IPreferencesService service=Platform.getPreferencesService();
     service.getRootNode().node(InstanceScope.SCOPE).node(JSchCorePlugin.ID).put(
         IConstants.PREF_PREFERRED_SSHAGENT, methods);
-  
+  }
   public static String getEnabledPreferredKEXMethods(){
     IPreferencesService service = Platform.getPreferencesService();
     return service.getString(JSchCorePlugin.ID,
