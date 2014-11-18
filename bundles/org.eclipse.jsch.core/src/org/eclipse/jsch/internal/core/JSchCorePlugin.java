@@ -16,7 +16,7 @@ import java.util.ArrayList;
 
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jsch.core.IIdentityRepositoryFactory;
+import org.eclipse.jsch.core.AbstractIdentityRepositoryFactory;
 import org.eclipse.jsch.core.IJSchService;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.BundleContext;
@@ -163,8 +163,8 @@ public class JSchCorePlugin extends Plugin{
       }
       try{
         IConfigurationElement config=configs[0];
-        IIdentityRepositoryFactory iirf = 
-            (IIdentityRepositoryFactory)config.createExecutableExtension("run");//$NON-NLS-1$ 
+        AbstractIdentityRepositoryFactory iirf = 
+            (AbstractIdentityRepositoryFactory)config.createExecutableExtension("run");//$NON-NLS-1$ 
         tmp.add(iirf.create());
       }
       catch(CoreException ex){
